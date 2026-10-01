@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 01 — Public Core Foundation (complete in PR #1; not yet merged)
+**Current wave:** Wave 02 — Transactions, Memory and Initial Domain
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -119,9 +119,39 @@ Wave 01 is complete only when:
 
 ## Wave 02 — Transactions, Memory and Initial Domain
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Implement Outcome, Objective, WorkItem and criteria with pure rules; application services; repository/transaction ports; transactional memory adapter; rollback; initial claim/complete semantics and Outcome coordination revision in memory.
+
+### Implementation checklist
+
+- [x] Implement Outcome lifecycle rules.
+- [x] Implement Objective lifecycle rules.
+- [x] Implement WorkItem lifecycle rules.
+- [x] Keep archive state orthogonal to Outcome lifecycle.
+- [x] Add versioned SuccessCriterion definitions.
+- [x] Invalidate current assessment when a criterion revision changes.
+- [x] Add minimum attestation assessments for Wave 02.
+- [x] Enforce required-criterion gates before achievement.
+- [x] Preserve explicit Conclusions and historical Conclusions on reopen.
+- [x] Add basic WorkItem claim/complete semantics with Principal, TTL and fencing token.
+- [x] Keep WorkItem completion separate from Objective achievement.
+- [x] Add aggregate optimistic versions.
+- [x] Add repository ports for Outcome, Objective and WorkItem.
+- [x] Add TransactionManager / UnitOfWork / CoordinationStore ports.
+- [x] Add public transactional `storage/memory` adapter.
+- [x] Add rollback behavior to memory transactions.
+- [x] Add in-memory Outcome coordination guard/revision marker.
+- [x] Add application services over ports instead of direct adapter access.
+- [x] Enforce `required_for_outcome` before Outcome achievement.
+- [x] Add human-only end-to-end scenario with no DB, network or Agent dependency.
+- [x] Add failed-command rollback test for state and `outcome_revision`.
+- [ ] Pass repository CI on the declared Go toolchain.
+- [ ] Review any CI findings and close remaining Wave 02 contract gaps.
+
+### Scope boundary
+
+Wave 02 does **not** add Domain Events, IdempotencyStore, command replay or event timeline behavior. Those remain Wave 03.
 
 **Completion gate:** a human-only scenario can create/activate an Outcome and organize Objectives/WorkItems without database, network or Agent dependencies.
 
@@ -356,11 +386,12 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 is technically complete on PR #1 and remains the active repository change until review/merge.
+Wave 01 is merged into `master`. Wave 02 is active on branch `feat/wave-02-transactions-memory-domain`.
 
-1. Review PR #1 and its CI result.
-2. Merge Wave 01 when the repository owner approves it.
-3. Keep Wave 02 as **Planned**; do not implement Outcome, Objective, WorkItem lifecycles, memory transactions, repositories, claims, or other Wave 02 behavior without a new explicit instruction.
-4. Keep the concrete Open Source license decision open until the owner selects it; no license is inferred from Woobe.
+1. Run CI for the Wave 02 branch/PR on the declared Go toolchain.
+2. Fix formatting, compile, race or contract failures found by CI.
+3. Verify the human-only completion scenario and rollback tests in CI.
+4. Mark Wave 02 done only after all checks pass and its completion gate is satisfied.
+5. Keep Wave 03 **Planned** until the repository owner explicitly authorizes it.
 
-No Wave 02 implementation has started in this branch.
+No Event Log or idempotency implementation has started.
