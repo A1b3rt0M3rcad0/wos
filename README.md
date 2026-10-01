@@ -557,15 +557,15 @@ The planned test suite includes:
 - `go test -race`;
 - independence tests proving operation without agents, Sessions, Runs, or Woobe.
 
-## Documentation
+## Documentation and development workflow
 
-The full architecture and implementation specification is stored in:
+The repository maintains three complementary project documents:
 
-```text
-docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md
-```
+- [`AGENTS.md`](./AGENTS.md) — mandatory development contract for humans and AI agents, including architecture boundaries, testing discipline, and the rule that the live roadmap must remain synchronized with implementation.
+- [`ROADMAP.md`](./ROADMAP.md) — live implementation status. This is the source of truth for what is actually complete, in progress, blocked, or still planned.
+- [`docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`](./docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md) — canonical architecture and detailed implementation specification.
 
-That document is the initial canonical design reference for implementation.
+The architecture document defines the target design. The ROADMAP records real implementation state. Planned capabilities must never be presented as implemented until their acceptance criteria are satisfied.
 
 ## License
 
