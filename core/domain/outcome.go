@@ -82,6 +82,9 @@ func (o Outcome) Validate() error {
 	if !o.Priority.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "outcome priority is invalid")
 	}
+	if err := validateActorRefs(o.OwnerRefs, "outcome owner"); err != nil {
+		return err
+	}
 	if o.CreatedAt.IsZero() || o.UpdatedAt.IsZero() {
 		return NewError(ErrorCodeInvalidArgument, "outcome timestamps are required")
 	}

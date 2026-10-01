@@ -72,6 +72,9 @@ func (o Objective) Validate() error {
 	if !o.Priority.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "objective priority is invalid")
 	}
+	if err := validateActorRefs(o.OwnerRefs, "objective owner"); err != nil {
+		return err
+	}
 	return nil
 }
 

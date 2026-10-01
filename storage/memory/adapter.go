@@ -397,6 +397,7 @@ func cloneObjective(v domain.Objective) domain.Objective {
 }
 
 func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
+	v.AssigneeRefs = append([]domain.ActorRef(nil), v.AssigneeRefs...)
 	v.Criteria = cloneCriteria(v.Criteria)
 	v.CurrentConclusion = cloneConclusion(v.CurrentConclusion)
 	v.ConclusionHistory = cloneConclusions(v.ConclusionHistory)
