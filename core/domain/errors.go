@@ -18,7 +18,8 @@ const (
 	ErrorCodeInvalidActorKind  ErrorCode = "invalid_actor_kind"
 	ErrorCodeInvalidActorRef   ErrorCode = "invalid_actor_ref"
 	ErrorCodeInvalidVersion    ErrorCode = "invalid_version"
-	ErrorCodeInvalidConfig     ErrorCode = "invalid_configuration"
+	ErrorCodeInvalidConfig          ErrorCode = "invalid_configuration"
+	ErrorCodeInvalidCommandContext ErrorCode = "invalid_command_context"
 )
 
 // Error is the foundational typed error used by public Core contracts.
