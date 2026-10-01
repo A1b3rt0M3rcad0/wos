@@ -136,6 +136,9 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if err := r.tx.ensureOpen(); err != nil {
 		return err
 	}
+	if err := outcome.Validate(); err != nil {
+		return err
+	}
 	key := outcomeKey(outcome.NamespaceID, outcome.ID)
 	current, ok := r.tx.outcomes[key]
 	if !ok {
@@ -209,6 +212,9 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	if err := r.tx.ensureOpen(); err != nil {
 		return err
 	}
+	if err := objective.Validate(); err != nil {
+		return err
+	}
 	key := entityKey(objective.Scope, objective.ID)
 	current, ok := r.tx.objectives[key]
 	if !ok {
@@ -280,6 +286,9 @@ func (r workItemRepository) Save(ctx context.Context, item domain.WorkItem, expe
 		return err
 	}
 	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := item.Validate(); err != nil {
 		return err
 	}
 	key := entityKey(item.Scope, item.ID)
