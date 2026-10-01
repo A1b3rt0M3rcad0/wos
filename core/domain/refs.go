@@ -114,18 +114,18 @@ func (s Scope) Validate() error {
 type EntityKind string
 
 const (
-	EntityKindOutcome       EntityKind = "outcome"
-	EntityKindObjective     EntityKind = "objective"
-	EntityKindWorkItem      EntityKind = "work_item"
-	EntityKindIssue         EntityKind = "issue"
-	EntityKindBlocker       EntityKind = "blocker"
-	EntityKindArtifact      EntityKind = "artifact"
-	EntityKindEvidence      EntityKind = "evidence"
-	EntityKindDecision      EntityKind = "decision"
-	EntityKindRelation      EntityKind = "relation"
-	EntityKindEvidenceLink  EntityKind = "evidence_link"
-	EntityKindRoadmap       EntityKind = "roadmap"
-	EntityKindTrigger       EntityKind = "trigger"
+	EntityKindOutcome      EntityKind = "outcome"
+	EntityKindObjective    EntityKind = "objective"
+	EntityKindWorkItem     EntityKind = "work_item"
+	EntityKindIssue        EntityKind = "issue"
+	EntityKindBlocker      EntityKind = "blocker"
+	EntityKindArtifact     EntityKind = "artifact"
+	EntityKindEvidence     EntityKind = "evidence"
+	EntityKindDecision     EntityKind = "decision"
+	EntityKindRelation     EntityKind = "relation"
+	EntityKindEvidenceLink EntityKind = "evidence_link"
+	EntityKindRoadmap      EntityKind = "roadmap"
+	EntityKindTrigger      EntityKind = "trigger"
 )
 
 func (kind EntityKind) String() string { return string(kind) }

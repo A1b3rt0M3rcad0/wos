@@ -11,14 +11,14 @@ import (
 type ErrorCode string
 
 const (
-	ErrorCodeInvalidID         ErrorCode = "invalid_id"
-	ErrorCodeInvalidScope      ErrorCode = "invalid_scope"
-	ErrorCodeInvalidEntityKind ErrorCode = "invalid_entity_kind"
-	ErrorCodeInvalidEntityRef  ErrorCode = "invalid_entity_ref"
-	ErrorCodeInvalidActorKind  ErrorCode = "invalid_actor_kind"
-	ErrorCodeInvalidActorRef   ErrorCode = "invalid_actor_ref"
-	ErrorCodeInvalidVersion    ErrorCode = "invalid_version"
-	ErrorCodeInvalidConfig          ErrorCode = "invalid_configuration"
+	ErrorCodeInvalidID             ErrorCode = "invalid_id"
+	ErrorCodeInvalidScope          ErrorCode = "invalid_scope"
+	ErrorCodeInvalidEntityKind     ErrorCode = "invalid_entity_kind"
+	ErrorCodeInvalidEntityRef      ErrorCode = "invalid_entity_ref"
+	ErrorCodeInvalidActorKind      ErrorCode = "invalid_actor_kind"
+	ErrorCodeInvalidActorRef       ErrorCode = "invalid_actor_ref"
+	ErrorCodeInvalidVersion        ErrorCode = "invalid_version"
+	ErrorCodeInvalidConfig         ErrorCode = "invalid_configuration"
 	ErrorCodeInvalidCommandContext ErrorCode = "invalid_command_context"
 )
 
