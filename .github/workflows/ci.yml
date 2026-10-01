@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wave-01:
+    name: Wave 01 foundation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Toolchain
+        run: go version
+
+      - name: Formatting
+        shell: bash
+        run: |
+          files="$(gofmt -l .)"
+          if [ -n "$files" ]; then
+            echo "The following files are not gofmt-formatted:"
+            echo "$files"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Unit and contract tests
+        run: go test ./...
+
+      - name: Race detector
+        run: go test -race ./...
+
+      - name: Build standalone binary
+        run: go build -o ./bin/wos ./cmd/wos
+
+      - name: Smoke version command
+        run: ./bin/wos version
+
+      - name: Smoke configuration validation
+        run: ./bin/wos config validate
