@@ -114,6 +114,26 @@ func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
 	return w.touch(now)
 }
 
+func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
+	if w.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal work item")
+	}
+	if err := w.Criteria.Revise(id, title, description, required, mode); err != nil {
+		return err
+	}
+	return w.touch(now)
+}
+
+func (w *WorkItem) RetireCriterion(id ID, now time.Time) error {
+	if w.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal work item")
+	}
+	if err := w.Criteria.Retire(id); err != nil {
+		return err
+	}
+	return w.touch(now)
+}
+
 func (w *WorkItem) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if err := w.Criteria.AssessAttestation(a); err != nil {
 		return err

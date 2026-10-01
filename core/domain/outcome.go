@@ -101,6 +101,26 @@ func (o *Outcome) AddCriterion(c SuccessCriterion, now time.Time) error {
 	return o.touch(now)
 }
 
+func (o *Outcome) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
+	if o.IsArchived() || o.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on archived or terminal outcome")
+	}
+	if err := o.Criteria.Revise(id, title, description, required, mode); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
+func (o *Outcome) RetireCriterion(id ID, now time.Time) error {
+	if o.IsArchived() || o.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on archived or terminal outcome")
+	}
+	if err := o.Criteria.Retire(id); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
 func (o *Outcome) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if o.IsArchived() {
 		return NewError(ErrorCodeInvalidTransition, "cannot assess archived outcome")

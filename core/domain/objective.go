@@ -88,6 +88,26 @@ func (o *Objective) AddCriterion(c SuccessCriterion, now time.Time) error {
 	return o.touch(now)
 }
 
+func (o *Objective) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
+	if o.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal objective")
+	}
+	if err := o.Criteria.Revise(id, title, description, required, mode); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
+func (o *Objective) RetireCriterion(id ID, now time.Time) error {
+	if o.isTerminal() {
+		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal objective")
+	}
+	if err := o.Criteria.Retire(id); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
 func (o *Objective) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if err := o.Criteria.AssessAttestation(a); err != nil {
 		return err
