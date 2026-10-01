@@ -63,27 +63,27 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ### Remaining
 
-- [ ] Establish `core/domain`.
-- [ ] Establish `core/ports`.
-- [ ] Add foundational ID / UUIDv7 value object.
-- [ ] Add `Scope`.
-- [ ] Add `EntityRef`.
-- [ ] Add `ActorRef`.
-- [ ] Add aggregate `Version` and Outcome revision types.
-- [ ] Add `Clock` port.
-- [ ] Add `IDGenerator` port.
-- [ ] Add stable domain/application error model.
-- [ ] Add `cmd/wos/main.go`.
-- [ ] Add `internal/server` bootstrap/configuration skeleton.
-- [ ] Add version command/output.
-- [ ] Add configuration validation skeleton.
-- [ ] Create `docs/adr/`.
-- [ ] Materialize foundational ADRs relevant to Wave 01.
-- [ ] Add static dependency-boundary verification.
-- [ ] Add unit tests for value objects and enum/ID serialization.
-- [ ] Add an external compile test/example proving that public Core can be imported outside the module's internal packages.
+- [x] Establish `core/domain`.
+- [x] Establish `core/ports`.
+- [x] Add foundational ID / UUIDv7 value object.
+- [x] Add `Scope`.
+- [x] Add `EntityRef`.
+- [x] Add `ActorRef`.
+- [x] Add aggregate `Version` and Outcome revision types.
+- [x] Add `Clock` port.
+- [x] Add `IDGenerator` port.
+- [x] Add stable domain/application error model.
+- [x] Add `cmd/wos/main.go`.
+- [x] Add `internal/server` bootstrap/configuration skeleton.
+- [x] Add version command/output.
+- [x] Add configuration validation skeleton.
+- [x] Create `docs/adr/`.
+- [x] Materialize foundational ADRs relevant to Wave 01.
+- [x] Add static dependency-boundary verification.
+- [x] Add unit tests for value objects and enum/ID serialization.
+- [x] Add an external compile test/example proving that public Core can be imported outside the module's internal packages.
 - [ ] Ensure `go test ./...` passes.
-- [ ] Ensure process can print version and validate configuration.
+- [x] Ensure process can print version and validate configuration.
 
 ### Completion gate
 
