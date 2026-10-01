@@ -82,8 +82,20 @@ func (o Outcome) Validate() error {
 	if !o.Priority.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "outcome priority is invalid")
 	}
+	if !o.Lifecycle.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "outcome lifecycle is invalid")
+	}
 	if err := validateActorRefs(o.OwnerRefs, "outcome owner"); err != nil {
 		return err
+	}
+	if err := o.Criteria.ValidateForOwner(o.Ref()); err != nil {
+		return err
+	}
+	if err := validateConclusionState(o.isTerminal(), o.CurrentConclusion, o.ConclusionHistory, "outcome"); err != nil {
+		return err
+	}
+	if o.Lifecycle == OutcomeLifecycleAchieved && o.CurrentConclusion != nil && len(o.CurrentConclusion.Assessments) == 0 {
+		return NewError(ErrorCodeInvalidArgument, "achieved outcome must reference the assessments that justified achievement")
 	}
 	if o.CreatedAt.IsZero() || o.UpdatedAt.IsZero() {
 		return NewError(ErrorCodeInvalidArgument, "outcome timestamps are required")

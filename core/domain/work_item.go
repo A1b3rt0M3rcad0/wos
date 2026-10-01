@@ -99,8 +99,36 @@ func (w WorkItem) Validate() error {
 	if !w.Priority.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "work item priority is invalid")
 	}
+	if !w.Lifecycle.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "work item lifecycle is invalid")
+	}
 	if err := validateActorRefs(w.AssigneeRefs, "work item assignee"); err != nil {
 		return err
+	}
+	if err := w.Criteria.ValidateForOwner(w.Ref()); err != nil {
+		return err
+	}
+	if err := validateConclusionState(w.isTerminal(), w.CurrentConclusion, w.ConclusionHistory, "work item"); err != nil {
+		return err
+	}
+	if w.Lifecycle == WorkItemLifecycleInProgress {
+		if w.CurrentLease == nil {
+			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires a lease")
+		}
+		if err := w.CurrentLease.Validate(); err != nil {
+			return err
+		}
+		if w.LastFencingToken < w.CurrentLease.FencingToken {
+			return NewError(ErrorCodeInvalidArgument, "work item fencing token is inconsistent with current lease")
+		}
+	} else if w.CurrentLease != nil {
+		return NewError(ErrorCodeInvalidArgument, "only in-progress work item may have a lease")
+	}
+	if w.Lifecycle == WorkItemLifecycleDone && !w.Criteria.HasRequiredActive() && strings.TrimSpace(w.ResultSummary) == "" {
+		return NewError(ErrorCodeInvalidArgument, "done work item without required criteria requires result summary")
+	}
+	if w.CreatedAt.IsZero() || w.UpdatedAt.IsZero() {
+		return NewError(ErrorCodeInvalidArgument, "work item timestamps are required")
 	}
 	return nil
 }
