@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  wave-01:
-    name: Wave 01 foundation
+  verification:
+    name: WOS verification
     runs-on: ubuntu-latest
 
     steps:

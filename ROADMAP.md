@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 02 — Transactions, Memory and Initial Domain
+**Current wave:** Wave 02 — Transactions, Memory and Initial Domain (complete in PR #2; not yet merged)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -119,7 +119,7 @@ Wave 01 is complete only when:
 
 ## Wave 02 — Transactions, Memory and Initial Domain
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done
 
 Implement Outcome, Objective, WorkItem and criteria with pure rules; application services; repository/transaction ports; transactional memory adapter; rollback; initial claim/complete semantics and Outcome coordination revision in memory.
 
@@ -134,7 +134,9 @@ Implement Outcome, Objective, WorkItem and criteria with pure rules; application
 - [x] Add minimum attestation assessments for Wave 02.
 - [x] Enforce required-criterion gates before achievement.
 - [x] Preserve explicit Conclusions and historical Conclusions on reopen.
+- [x] Preserve immutable CriterionAssessment history while keeping a separate current-assessment projection.
 - [x] Add basic WorkItem claim/complete semantics with Principal, TTL and fencing token.
+- [x] Add declarative Outcome/Objective owners and WorkItem assignees, separate from lease ownership.
 - [x] Keep WorkItem completion separate from Objective achievement.
 - [x] Add aggregate optimistic versions.
 - [x] Add repository ports for Outcome, Objective and WorkItem.
@@ -143,11 +145,28 @@ Implement Outcome, Objective, WorkItem and criteria with pure rules; application
 - [x] Add rollback behavior to memory transactions.
 - [x] Add in-memory Outcome coordination guard/revision marker.
 - [x] Add application services over ports instead of direct adapter access.
+- [x] Expose the complete Wave 02 lifecycle command surface through Application services.
 - [x] Enforce `required_for_outcome` before Outcome achievement.
 - [x] Add human-only end-to-end scenario with no DB, network or Agent dependency.
 - [x] Add failed-command rollback test for state and `outcome_revision`.
-- [ ] Pass repository CI on the declared Go toolchain.
-- [ ] Review any CI findings and close remaining Wave 02 contract gaps.
+- [x] Validate aggregate lifecycle/lease/conclusion/criterion invariants at the domain boundary.
+- [x] Reject structurally invalid aggregates before memory adapter saves.
+- [x] Pass repository CI on the declared Go toolchain.
+- [x] Review CI findings and close remaining Wave 02 contract gaps.
+
+### Verification
+
+GitHub Actions validated implementation commit `6590842a76b9fd5d6d4a370f1a8f8f4b0e5e41d2` with Go 1.27.1 on Linux. The successful run executed:
+
+- `gofmt` cleanliness;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- standalone binary build;
+- `wos version` smoke test;
+- `wos config validate` smoke test.
+
+The suite covers pure lifecycle rules, criterion revision/assessment semantics, ownership/assignment separation, optimistic versions, transactional memory rollback, invalid aggregate rejection, Outcome revision markers, required-objective achievement gates and a full human-only scenario without database, network or Agent dependencies.
 
 ### Scope boundary
 
@@ -386,12 +405,11 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 is merged into `master`. Wave 02 is active on branch `feat/wave-02-transactions-memory-domain`.
+Wave 01 is merged into `master`. Wave 02 is technically complete on PR #2 and remains unmerged pending review.
 
-1. Run CI for the Wave 02 branch/PR on the declared Go toolchain.
-2. Fix formatting, compile, race or contract failures found by CI.
-3. Verify the human-only completion scenario and rollback tests in CI.
-4. Mark Wave 02 done only after all checks pass and its completion gate is satisfied.
-5. Keep Wave 03 **Planned** until the repository owner explicitly authorizes it.
+1. Review PR #2 and its final CI result.
+2. Merge Wave 02 only when approved by the repository owner.
+3. Keep Wave 03 as **Planned** until explicitly authorized.
+4. Do not introduce Domain Events, IdempotencyStore, command replay or event timeline behavior as part of Wave 02 follow-up work.
 
-No Event Log or idempotency implementation has started.
+No Wave 03 implementation has started.

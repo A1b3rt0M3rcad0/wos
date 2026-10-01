@@ -1,9 +1,6 @@
 package domain
 
-import (
-	"strings"
-	"time"
-)
+import "strings"
 
 func (l OutcomeLifecycle) Valid() bool {
 	switch l {
@@ -74,7 +71,3 @@ func validateConclusionState(terminal bool, current *Conclusion, history []Concl
 	}
 	return nil
 }
-
-// compile-time assertion that the file continues to use time.Time through
-// WorkLease without introducing a custom timestamp type in the domain.
-var _ time.Time
