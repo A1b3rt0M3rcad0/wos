@@ -151,6 +151,7 @@ type CriterionAssessmentRef struct {
 
 type CriterionSet struct {
 	Items              []SuccessCriterion         `json:"items,omitempty"`
+	Assessments        []CriterionAssessment      `json:"assessments,omitempty"`
 	CurrentAssessments map[ID]CriterionAssessment `json:"current_assessments,omitempty"`
 }
 
@@ -248,8 +249,10 @@ func (s *CriterionSet) AssessAttestation(a CriterionAssessment) error {
 	}
 	s.ensureMap()
 	if current, ok := s.CurrentAssessments[a.CriterionID]; ok {
-		a.SupersedesAssessmentID = &current.ID
+		previousID := current.ID
+		a.SupersedesAssessmentID = &previousID
 	}
+	s.Assessments = append(s.Assessments, a)
 	s.CurrentAssessments[a.CriterionID] = a
 	return nil
 }
@@ -290,4 +293,57 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		return nil, NewError(ErrorCodePreconditionFailed, "at least one required active criterion is required")
 	}
 	return refs, nil
+}
+
+
+func (s CriterionSet) ValidateForOwner(owner EntityRef) error {
+	criteria := make(map[ID]SuccessCriterion, len(s.Items))
+	for _, criterion := range s.Items {
+		if err := criterion.Validate(); err != nil {
+			return err
+		}
+		if criterion.OwnerRef != owner {
+			return NewError(ErrorCodeCriterion, "criterion owner does not match aggregate")
+		}
+		if _, exists := criteria[criterion.ID]; exists {
+			return NewError(ErrorCodeCriterion, "duplicate criterion id")
+		}
+		criteria[criterion.ID] = criterion
+	}
+
+	assessmentIDs := make(map[ID]struct{}, len(s.Assessments))
+	for _, assessment := range s.Assessments {
+		if err := assessment.Validate(); err != nil {
+			return err
+		}
+		criterion, exists := criteria[assessment.CriterionID]
+		if !exists {
+			return NewError(ErrorCodeAssessment, "assessment references unknown criterion")
+		}
+		if assessment.CriterionRevision > criterion.Revision {
+			return NewError(ErrorCodeAssessment, "assessment references future criterion revision")
+		}
+		if _, exists := assessmentIDs[assessment.ID]; exists {
+			return NewError(ErrorCodeAssessment, "duplicate assessment id")
+		}
+		assessmentIDs[assessment.ID] = struct{}{}
+	}
+
+	for criterionID, current := range s.CurrentAssessments {
+		criterion, exists := criteria[criterionID]
+		if !exists {
+			return NewError(ErrorCodeAssessment, "current assessment references unknown criterion")
+		}
+		if criterion.Status != CriterionStatusActive {
+			return NewError(ErrorCodeAssessment, "retired criterion cannot have current assessment")
+		}
+		if current.CriterionID != criterionID || current.CriterionRevision != criterion.Revision {
+			return NewError(ErrorCodeAssessment, "current assessment does not match current criterion revision")
+		}
+		if _, exists := assessmentIDs[current.ID]; !exists {
+			return NewError(ErrorCodeAssessment, "current assessment is missing from immutable assessment history")
+		}
+	}
+
+	return nil
 }

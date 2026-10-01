@@ -415,7 +415,11 @@ func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
 func cloneCriteria(v domain.CriterionSet) domain.CriterionSet {
 	result := domain.CriterionSet{
 		Items:              append([]domain.SuccessCriterion(nil), v.Items...),
+		Assessments:        make([]domain.CriterionAssessment, len(v.Assessments)),
 		CurrentAssessments: make(map[domain.ID]domain.CriterionAssessment, len(v.CurrentAssessments)),
+	}
+	for i, a := range v.Assessments {
+		result.Assessments[i] = cloneAssessment(a)
 	}
 	for k, a := range v.CurrentAssessments {
 		result.CurrentAssessments[k] = cloneAssessment(a)
