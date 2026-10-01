@@ -16,21 +16,21 @@ const (
 )
 
 type Outcome struct {
-	ID                ID           `json:"id"`
-	NamespaceID       ID           `json:"namespace_id"`
-	Version           Version      `json:"version"`
-	Title             string       `json:"title"`
-	Description       string       `json:"description,omitempty"`
-	DesiredState      string       `json:"desired_state"`
+	ID                ID               `json:"id"`
+	NamespaceID       ID               `json:"namespace_id"`
+	Version           Version          `json:"version"`
+	Title             string           `json:"title"`
+	Description       string           `json:"description,omitempty"`
+	DesiredState      string           `json:"desired_state"`
 	Lifecycle         OutcomeLifecycle `json:"lifecycle"`
-	Priority          Priority     `json:"priority"`
-	OwnerRefs         []ActorRef   `json:"owner_refs,omitempty"`
-	ArchivedAt        *time.Time   `json:"archived_at,omitempty"`
-	Criteria          CriterionSet `json:"criteria"`
-	CurrentConclusion *Conclusion  `json:"conclusion,omitempty"`
-	ConclusionHistory []Conclusion `json:"conclusion_history,omitempty"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
+	Priority          Priority         `json:"priority"`
+	OwnerRefs         []ActorRef       `json:"owner_refs,omitempty"`
+	ArchivedAt        *time.Time       `json:"archived_at,omitempty"`
+	Criteria          CriterionSet     `json:"criteria"`
+	CurrentConclusion *Conclusion      `json:"conclusion,omitempty"`
+	ConclusionHistory []Conclusion     `json:"conclusion_history,omitempty"`
+	CreatedAt         time.Time        `json:"created_at"`
+	UpdatedAt         time.Time        `json:"updated_at"`
 }
 
 func NewOutcome(id, namespaceID ID, title, description, desiredState string, priority Priority, createdAt time.Time) (Outcome, error) {

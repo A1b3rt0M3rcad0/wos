@@ -61,10 +61,10 @@ type transaction struct {
 	coordination  coordinationStore
 }
 
-func (tx *transaction) Outcomes() ports.OutcomeRepository       { return tx.outcomeRepo }
-func (tx *transaction) Objectives() ports.ObjectiveRepository   { return tx.objectiveRepo }
-func (tx *transaction) WorkItems() ports.WorkItemRepository     { return tx.workItemRepo }
-func (tx *transaction) Coordination() ports.CoordinationStore   { return tx.coordination }
+func (tx *transaction) Outcomes() ports.OutcomeRepository     { return tx.outcomeRepo }
+func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.objectiveRepo }
+func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
+func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 
 func (tx *transaction) Commit() error {
 	if tx.closed {

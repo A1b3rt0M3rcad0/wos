@@ -20,11 +20,11 @@ type CreateOutcomeCommand struct {
 }
 
 type AddCriterionCommand struct {
-	Owner           domain.EntityRef
-	ExpectedVersion domain.Version
-	Title           string
-	Description     string
-	Required        bool
+	Owner            domain.EntityRef
+	ExpectedVersion  domain.Version
+	Title            string
+	Description      string
+	Required         bool
 	VerificationMode domain.VerificationMode
 }
 

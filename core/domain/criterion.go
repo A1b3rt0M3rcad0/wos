@@ -143,15 +143,15 @@ func (a CriterionAssessment) Validate() error {
 }
 
 type CriterionAssessmentRef struct {
-	AssessmentID       ID                `json:"assessment_id"`
-	CriterionID        ID                `json:"criterion_id"`
-	CriterionRevision  CriterionRevision `json:"criterion_revision"`
-	Result             AssessmentResult  `json:"result"`
+	AssessmentID      ID                `json:"assessment_id"`
+	CriterionID       ID                `json:"criterion_id"`
+	CriterionRevision CriterionRevision `json:"criterion_revision"`
+	Result            AssessmentResult  `json:"result"`
 }
 
 type CriterionSet struct {
-	Items              []SuccessCriterion           `json:"items,omitempty"`
-	CurrentAssessments map[ID]CriterionAssessment   `json:"current_assessments,omitempty"`
+	Items              []SuccessCriterion         `json:"items,omitempty"`
+	CurrentAssessments map[ID]CriterionAssessment `json:"current_assessments,omitempty"`
 }
 
 func NewCriterionSet() CriterionSet {

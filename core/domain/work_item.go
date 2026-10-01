@@ -22,12 +22,12 @@ const (
 )
 
 type WorkLease struct {
-	ClaimID       ID        `json:"claim_id"`
-	PrincipalID   string    `json:"principal_id"`
-	Actor         ActorRef  `json:"actor_ref"`
-	FencingToken  uint64    `json:"fencing_token"`
-	AcquiredAt    time.Time `json:"acquired_at"`
-	ExpiresAt     time.Time `json:"expires_at"`
+	ClaimID      ID        `json:"claim_id"`
+	PrincipalID  string    `json:"principal_id"`
+	Actor        ActorRef  `json:"actor_ref"`
+	FencingToken uint64    `json:"fencing_token"`
+	AcquiredAt   time.Time `json:"acquired_at"`
+	ExpiresAt    time.Time `json:"expires_at"`
 }
 
 func (l WorkLease) ValidAt(now time.Time) bool {
@@ -61,16 +61,16 @@ func NewWorkItem(id ID, scope Scope, title, description string, priority Priorit
 		return WorkItem{}, NewError(ErrorCodeInvalidArgument, "new work item lifecycle must be backlog or todo")
 	}
 	w := WorkItem{
-		ID:        id,
-		Scope:     scope,
-		Version:   InitialVersion,
-		Title:     strings.TrimSpace(title),
+		ID:          id,
+		Scope:       scope,
+		Version:     InitialVersion,
+		Title:       strings.TrimSpace(title),
 		Description: strings.TrimSpace(description),
-		Lifecycle: lifecycle,
-		Priority:  priority,
-		Criteria:  NewCriterionSet(),
-		CreatedAt: createdAt.UTC(),
-		UpdatedAt: createdAt.UTC(),
+		Lifecycle:   lifecycle,
+		Priority:    priority,
+		Criteria:    NewCriterionSet(),
+		CreatedAt:   createdAt.UTC(),
+		UpdatedAt:   createdAt.UTC(),
 	}
 	if err := w.Validate(); err != nil {
 		return WorkItem{}, err
