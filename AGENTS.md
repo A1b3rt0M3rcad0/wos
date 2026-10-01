@@ -291,6 +291,7 @@ Keep these artifacts aligned:
 - `ROADMAP.md`: live implementation state.
 - canonical architecture document: detailed design and original implementation plan.
 - `docs/adr/`: accepted architecture decisions.
+- `docs/dependencies.md`: current toolchain/dependency inventory and dependency admission rules.
 - OpenAPI / JSON Schemas: protocol contracts once implemented.
 
 When a public contract changes, update the related documentation and schemas in the same change.

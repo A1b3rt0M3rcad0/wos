@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** architecture and implementation plan. The capabilities described in this repository are the target contract and must not be interpreted as already implemented.
+> **Project status:** Wave 01 foundation is implemented and verified. Domain lifecycles, persistence, HTTP/MCP transports, coordination workflows, and later-wave capabilities described below remain planned until their roadmap gates are completed.
 
 ## Why WOS
 
@@ -514,7 +514,7 @@ The public Core must stay importable by external Go applications, so it cannot l
 - versioned SQL migrations;
 - optional OpenTelemetry instrumentation at the Server boundary.
 
-Dependency versions will be pinned when implementation starts.
+The current foundation dependency inventory is documented in [`docs/dependencies.md`](./docs/dependencies.md). Wave 01 intentionally has no third-party Go module dependency; future dependencies are introduced and pinned only in the wave that needs them.
 
 ## Development milestones
 
@@ -564,6 +564,7 @@ The repository maintains three complementary project documents:
 - [`AGENTS.md`](./AGENTS.md) — mandatory development contract for humans and AI agents, including architecture boundaries, testing discipline, and the rule that the live roadmap must remain synchronized with implementation.
 - [`ROADMAP.md`](./ROADMAP.md) — live implementation status. This is the source of truth for what is actually complete, in progress, blocked, or still planned.
 - [`docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`](./docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md) — canonical architecture and detailed implementation specification.
+- [`docs/dependencies.md`](./docs/dependencies.md) — current toolchain/dependency inventory and dependency admission rules.
 
 The architecture document defines the target design. The ROADMAP records real implementation state. Planned capabilities must never be presented as implemented until their acceptance criteria are satisfied.
 
@@ -575,8 +576,8 @@ The WOS design specifies that the project is intended to be Open Source and lice
 
 ## Current state
 
-This repository is at the architecture/bootstrap stage.
+Wave 01 — Public Core Foundation is implemented and verified in the current development line. The repository now contains public identity/reference primitives, ActorRef and command context contracts, optimistic version primitives, Clock/IDGenerator ports, a standalone bootstrap/configuration skeleton, foundational ADRs, boundary tests, an external Core import contract, and Go 1.27 CI.
 
-The README describes the intended contract, not completed functionality.
+Wave 02 has **not** started. Outcome, Objective, WorkItem and criterion lifecycles; transactional memory; persistence; HTTP; MCP; leases; Roadmaps; Triggers and the remaining architecture are still planned capabilities until their respective roadmap gates are satisfied.
 
-Implementation should follow the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.
+Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.

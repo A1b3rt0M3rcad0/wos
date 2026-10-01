@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 01 — Public Core Foundation
+**Current wave:** Wave 01 — Public Core Foundation (complete in PR #1; not yet merged)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -47,7 +47,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Wave 01 — Public Core Foundation
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done
 
 **Goal:** establish a Go project usable as a public library and standalone server, with verifiable boundaries.
 
@@ -61,7 +61,7 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Add root `AGENTS.md`.
 - [x] Add live `ROADMAP.md`.
 
-### Remaining
+### Implementation checklist
 
 - [x] Establish `core/domain`.
 - [x] Establish `core/ports`.
@@ -73,6 +73,7 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Add `Clock` port.
 - [x] Add `IDGenerator` port.
 - [x] Add stable domain/application error model.
+- [x] Add transport-neutral `CommandContext` separating authenticated Principal, declared `ActorRef`, and optional external execution correlation.
 - [x] Add `cmd/wos/main.go`.
 - [x] Add `internal/server` bootstrap/configuration skeleton.
 - [x] Add version command/output.
@@ -81,9 +82,26 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Materialize foundational ADRs relevant to Wave 01.
 - [x] Add static dependency-boundary verification.
 - [x] Add unit tests for value objects and enum/ID serialization.
+- [x] Enforce canonical flat `EntityRef` JSON addressing (`namespace_id`, `outcome_id`, `kind`, `id`).
 - [x] Add an external compile test/example proving that public Core can be imported outside the module's internal packages.
-- [ ] Ensure `go test ./...` passes.
+- [x] Add GitHub Actions CI using the Go version declared by `go.mod`.
+- [x] Ensure `go test ./...` passes.
 - [x] Ensure process can print version and validate configuration.
+- [x] Ensure `go vet ./...`, `go test -race ./...`, standalone build and smoke commands pass in CI.
+
+### Verification
+
+GitHub Actions validated commit `b5f7b0868fbf9673f5512fe8ae41cd2a68a2c744` with Go 1.27.1 on Linux. The successful Wave 01 foundation job executed:
+
+- `gofmt` cleanliness check;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- `go build -o ./bin/wos ./cmd/wos`;
+- `./bin/wos version`;
+- `./bin/wos config validate`.
+
+The test suite includes the external-module Core import contract and static dependency-boundary verification, so the four Wave 01 completion gates are satisfied on the declared Go toolchain.
 
 ### Completion gate
 
@@ -338,17 +356,11 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-The current implementation focus is Wave 01.
+Wave 01 is technically complete on PR #1 and remains the active repository change until review/merge.
 
-The next valid engineering actions are:
+1. Review PR #1 and its CI result.
+2. Merge Wave 01 when the repository owner approves it.
+3. Keep Wave 02 as **Planned**; do not implement Outcome, Objective, WorkItem lifecycles, memory transactions, repositories, claims, or other Wave 02 behavior without a new explicit instruction.
+4. Keep the concrete Open Source license decision open until the owner selects it; no license is inferred from Woobe.
 
-1. create the public `core/domain` and `core/ports` foundations;
-2. introduce foundational value objects and stable error contracts;
-3. create the `cmd/wos` and `internal/server` skeleton;
-4. add version/config validation behavior;
-5. create the initial ADR directory/documents;
-6. add boundary/import checks and Wave 01 tests;
-7. run `go test ./...`;
-8. update this ROADMAP with the exact resulting state.
-
-Do not advance Wave 02 status until Wave 01 completion gates are satisfied.
+No Wave 02 implementation has started in this branch.
