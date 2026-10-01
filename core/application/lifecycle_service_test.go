@@ -17,7 +17,7 @@ func TestOutcomeLifecycleCommandsPreserveArchiveAndConclusionSemantics(t *testin
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
 		NamespaceID: namespaceID,
 		Title:       "Lifecycle",
-		DesiredState:"State",
+		DesiredState: "State",
 		Priority:    domain.PriorityNormal,
 	})
 	if err != nil {
@@ -117,7 +117,7 @@ func TestObjectiveAndWorkItemRemainingLifecycleCommands(t *testing.T) {
 	createdOutcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
 		NamespaceID: namespaceID,
 		Title:       "Coordinate",
-		DesiredState:"State",
+		DesiredState: "State",
 		Priority:    domain.PriorityNormal,
 	})
 	if err != nil {

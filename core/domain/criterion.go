@@ -295,7 +295,6 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 	return refs, nil
 }
 
-
 func (s CriterionSet) ValidateForOwner(owner EntityRef) error {
 	criteria := make(map[ID]SuccessCriterion, len(s.Items))
 	for _, criterion := range s.Items {
