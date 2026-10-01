@@ -15,10 +15,10 @@ func TestOutcomeLifecycleCommandsPreserveArchiveAndConclusionSemantics(t *testin
 	namespaceID := id("0199e200-0000-7000-8000-000000000001")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID: namespaceID,
-		Title:       "Lifecycle",
+		NamespaceID:  namespaceID,
+		Title:        "Lifecycle",
 		DesiredState: "State",
-		Priority:    domain.PriorityNormal,
+		Priority:     domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -102,9 +102,6 @@ func TestOutcomeLifecycleCommandsPreserveArchiveAndConclusionSemantics(t *testin
 		t.Fatalf("lifecycle = %q, want abandoned", abandoned.Value.Lifecycle)
 	}
 
-	// Retiring the criterion is a separate path and cannot occur after the
-	// terminal transition, which proves terminal state is enforced by the
-	// aggregate rather than by transport behavior.
 	_ = criterion
 }
 
@@ -115,10 +112,10 @@ func TestObjectiveAndWorkItemRemainingLifecycleCommands(t *testing.T) {
 	namespaceID := id("0199e200-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID: namespaceID,
-		Title:       "Coordinate",
+		NamespaceID:  namespaceID,
+		Title:        "Coordinate",
 		DesiredState: "State",
-		Priority:    domain.PriorityNormal,
+		Priority:     domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
