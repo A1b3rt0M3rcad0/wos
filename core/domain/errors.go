@@ -20,6 +20,15 @@ const (
 	ErrorCodeInvalidVersion        ErrorCode = "invalid_version"
 	ErrorCodeInvalidConfig         ErrorCode = "invalid_configuration"
 	ErrorCodeInvalidCommandContext ErrorCode = "invalid_command_context"
+	ErrorCodeInvalidArgument       ErrorCode = "invalid_argument"
+	ErrorCodeInvalidTransition     ErrorCode = "invalid_transition"
+	ErrorCodePreconditionFailed    ErrorCode = "precondition_failed"
+	ErrorCodeVersionConflict       ErrorCode = "version_conflict"
+	ErrorCodeNotFound              ErrorCode = "not_found"
+	ErrorCodeAlreadyExists         ErrorCode = "already_exists"
+	ErrorCodeCriterion             ErrorCode = "criterion_error"
+	ErrorCodeAssessment            ErrorCode = "assessment_error"
+	ErrorCodeLease                 ErrorCode = "lease_error"
 )
 
 // Error is the foundational typed error used by public Core contracts.
@@ -48,17 +57,14 @@ func (e *Error) Unwrap() error {
 	return e.Cause
 }
 
-// NewError creates a typed WOS error without a wrapped cause.
 func NewError(code ErrorCode, message string) error {
 	return &Error{Code: code, Message: message}
 }
 
-// WrapError creates a typed WOS error while preserving the original cause.
 func WrapError(code ErrorCode, message string, cause error) error {
 	return &Error{Code: code, Message: message, Cause: cause}
 }
 
-// ErrorCodeOf extracts a stable WOS error code from an error chain.
 func ErrorCodeOf(err error) (ErrorCode, bool) {
 	var target *Error
 	if !errors.As(err, &target) || target == nil {
