@@ -114,19 +114,21 @@ func (s Scope) Validate() error {
 type EntityKind string
 
 const (
-	EntityKindOutcome      EntityKind = "outcome"
-	EntityKindObjective    EntityKind = "objective"
-	EntityKindWorkItem     EntityKind = "work_item"
-	EntityKindIssue        EntityKind = "issue"
-	EntityKindBlocker      EntityKind = "blocker"
-	EntityKindArtifact     EntityKind = "artifact"
-	EntityKindEvidence     EntityKind = "evidence"
-	EntityKindDecision     EntityKind = "decision"
-	EntityKindRelation     EntityKind = "relation"
-	EntityKindEvidenceLink EntityKind = "evidence_link"
-	EntityKindRoadmap      EntityKind = "roadmap"
-	EntityKindTrigger      EntityKind = "trigger"
+	EntityKindOutcome       EntityKind = "outcome"
+	EntityKindObjective     EntityKind = "objective"
+	EntityKindWorkItem      EntityKind = "work_item"
+	EntityKindIssue         EntityKind = "issue"
+	EntityKindBlocker       EntityKind = "blocker"
+	EntityKindArtifact      EntityKind = "artifact"
+	EntityKindEvidence      EntityKind = "evidence"
+	EntityKindDecision      EntityKind = "decision"
+	EntityKindRelation      EntityKind = "relation"
+	EntityKindEvidenceLink  EntityKind = "evidence_link"
+	EntityKindRoadmap       EntityKind = "roadmap"
+	EntityKindTrigger       EntityKind = "trigger"
 )
+
+func (kind EntityKind) String() string { return string(kind) }
 
 func (kind EntityKind) Valid() bool {
 	switch kind {
@@ -156,13 +158,32 @@ func ParseEntityKind(value string) (EntityKind, error) {
 	return kind, nil
 }
 
-// EntityRef is an explicit local reference. Namespace and Outcome remain part
-// of the reference even though IDs are globally unique, because authorization
-// and queries are scoped by those boundaries.
+func (kind EntityKind) MarshalText() ([]byte, error) {
+	if !kind.Valid() {
+		return nil, NewError(ErrorCodeInvalidEntityKind, fmt.Sprintf("unsupported entity kind %q", kind))
+	}
+	return []byte(kind), nil
+}
+
+func (kind *EntityKind) UnmarshalText(text []byte) error {
+	if kind == nil {
+		return NewError(ErrorCodeInvalidEntityKind, "cannot unmarshal entity kind into nil receiver")
+	}
+	parsed, err := ParseEntityKind(string(text))
+	if err != nil {
+		return err
+	}
+	*kind = parsed
+	return nil
+}
+
+// EntityRef is an explicit local reference. Scope is embedded so its JSON
+// representation follows the canonical flat addressing contract:
+// namespace_id, outcome_id, kind, id.
 type EntityRef struct {
-	Scope Scope      `json:"scope"`
-	Kind  EntityKind `json:"kind"`
-	ID    ID         `json:"id"`
+	Scope
+	Kind EntityKind `json:"kind"`
+	ID   ID         `json:"id"`
 }
 
 func (ref EntityRef) Validate() error {

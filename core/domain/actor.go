@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // ActorKind describes the declared author of a domain action. ActorRef records
 // attribution; it is not an authentication or authorization credential.
@@ -14,6 +17,8 @@ const (
 	ActorKindExternalSystem ActorKind = "external_system"
 )
 
+func (kind ActorKind) String() string { return string(kind) }
+
 func (kind ActorKind) Valid() bool {
 	switch kind {
 	case ActorKindHuman,
@@ -25,6 +30,33 @@ func (kind ActorKind) Valid() bool {
 	default:
 		return false
 	}
+}
+
+func ParseActorKind(value string) (ActorKind, error) {
+	kind := ActorKind(strings.TrimSpace(value))
+	if !kind.Valid() {
+		return "", NewError(ErrorCodeInvalidActorKind, fmt.Sprintf("unsupported actor kind %q", value))
+	}
+	return kind, nil
+}
+
+func (kind ActorKind) MarshalText() ([]byte, error) {
+	if !kind.Valid() {
+		return nil, NewError(ErrorCodeInvalidActorKind, fmt.Sprintf("unsupported actor kind %q", kind))
+	}
+	return []byte(kind), nil
+}
+
+func (kind *ActorKind) UnmarshalText(text []byte) error {
+	if kind == nil {
+		return NewError(ErrorCodeInvalidActorKind, "cannot unmarshal actor kind into nil receiver")
+	}
+	parsed, err := ParseActorKind(string(text))
+	if err != nil {
+		return err
+	}
+	*kind = parsed
+	return nil
 }
 
 // ActorRef is the declared author/actor associated with a domain action. The
