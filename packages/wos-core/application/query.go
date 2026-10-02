@@ -15,6 +15,10 @@ type OutcomeState struct {
 	Relations                 []domain.Relation                 `json:"relations"`
 	Issues                    []domain.Issue                    `json:"issues"`
 	Blockers                  []domain.Blocker                  `json:"blockers"`
+	Artifacts                 []domain.Artifact                 `json:"artifacts"`
+	Evidence                  []domain.Evidence                 `json:"evidence"`
+	EvidenceLinks             []domain.EvidenceLink             `json:"evidence_links"`
+	Decisions                 []domain.Decision                 `json:"decisions"`
 	BlockingStates            []BlockingState                   `json:"blocking_states"`
 	EvaluatedAt               time.Time                         `json:"evaluated_at"`
 	OutcomeRevision           domain.OutcomeRevision            `json:"outcome_revision"`
@@ -189,6 +193,26 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	if err != nil {
 		return OutcomeState{}, err
 	}
+	artifactsRepo, evidenceRepo, evidenceLinksRepo, decisionsRepo, err := documentaryRepositories(uow)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	artifacts, err := artifactsRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	evidence, err := evidenceRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	evidenceLinks, err := evidenceLinksRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	decisions, err := decisionsRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
 
 	evaluatedAt := s.clock.Now().UTC()
 	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
@@ -252,6 +276,10 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		Relations:                 relations,
 		Issues:                    issues,
 		Blockers:                  blockers,
+		Artifacts:                 artifacts,
+		Evidence:                  evidence,
+		EvidenceLinks:             evidenceLinks,
+		Decisions:                 decisions,
 		BlockingStates:            blockingStates,
 		EvaluatedAt:               evaluatedAt,
 		OutcomeRevision:           coordination.Revision,

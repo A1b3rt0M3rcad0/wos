@@ -46,3 +46,31 @@ type BlockerRepository interface {
 	Insert(ctx context.Context, blocker domain.Blocker) error
 	Save(ctx context.Context, blocker domain.Blocker, expected domain.Version) error
 }
+
+type ArtifactRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Artifact, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Artifact, error)
+	Insert(ctx context.Context, artifact domain.Artifact) error
+	Save(ctx context.Context, artifact domain.Artifact, expected domain.Version) error
+}
+
+type EvidenceRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Evidence, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Evidence, error)
+	Insert(ctx context.Context, evidence domain.Evidence) error
+	Save(ctx context.Context, evidence domain.Evidence, expected domain.Version) error
+}
+
+type EvidenceLinkRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.EvidenceLink, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.EvidenceLink, error)
+	Insert(ctx context.Context, link domain.EvidenceLink) error
+	Save(ctx context.Context, link domain.EvidenceLink, expected domain.Version) error
+}
+
+type DecisionRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Decision, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Decision, error)
+	Insert(ctx context.Context, decision domain.Decision) error
+	Save(ctx context.Context, decision domain.Decision, expected domain.Version) error
+}

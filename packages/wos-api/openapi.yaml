@@ -3,10 +3,10 @@ info:
   title: Woobe Outcome Server HTTP API
   version: 0.1.0-dev
   description: |
-    HTTP contract implemented through Wave 07. The API exposes the same
+    HTTP contract implemented through Wave 09. The API exposes the same
     Application services used by embedded consumers. Namespace and Outcome
-    scope are explicit in every domain path. Issues and Blockers are independent
-    aggregates; compound coordination commands remain explicit and atomic.
+    scope are explicit in every domain path. Documentary records preserve
+    provenance and history; accepted Decision supersession is explicit and atomic.
 servers:
   - url: http://127.0.0.1:8080
 tags:
@@ -17,6 +17,9 @@ tags:
   - name: Relations
   - name: Issues
   - name: Blockers
+  - name: Artifacts
+  - name: Evidence
+  - name: Decisions
   - name: Queries
   - name: Criteria
 
@@ -1198,6 +1201,424 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
 
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts:
+    post:
+      tags: [Artifacts]
+      operationId: registerArtifact
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RegisterArtifactRequest"}
+      responses:
+        "201":
+          description: Artifact reference registered or replayed idempotently.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ArtifactMutationResult"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+    get:
+      tags: [Artifacts]
+      operationId: listArtifacts
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Artifact history in this Outcome.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ArtifactCollection"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts/{artifact_id}:
+    get:
+      tags: [Artifacts]
+      operationId: getArtifact
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ArtifactID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Artifact documentary record.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ArtifactReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts/{artifact_id}/actions/withdraw:
+    post:
+      tags: [Artifacts]
+      operationId: withdrawArtifact
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ArtifactID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody: {$ref: "#/components/requestBodies/ReasonBody"}
+      responses:
+        "200":
+          description: Artifact marked withdrawn; original metadata remains preserved.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ArtifactMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence:
+    post:
+      tags: [Evidence]
+      operationId: registerEvidence
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RegisterEvidenceRequest"}
+      responses:
+        "201":
+          description: Evidence observation registered or replayed idempotently.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceMutationResult"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+    get:
+      tags: [Evidence]
+      operationId: listEvidence
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Evidence observations in this Outcome.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceCollection"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence/{evidence_id}:
+    get:
+      tags: [Evidence]
+      operationId: getEvidence
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/EvidenceID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Evidence documentary record.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence/{evidence_id}/actions/retract:
+    post:
+      tags: [Evidence]
+      operationId: retractEvidence
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/EvidenceID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody: {$ref: "#/components/requestBodies/ReasonBody"}
+      responses:
+        "200":
+          description: Evidence retracted without rewriting the original observation.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links:
+    post:
+      tags: [Evidence]
+      operationId: createEvidenceLink
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateEvidenceLinkRequest"}
+      responses:
+        "201":
+          description: Link created. Stance is local to this target and does not assess a criterion.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceLinkMutationResult"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+    get:
+      tags: [Evidence]
+      operationId: listEvidenceLinks
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Evidence links in this Outcome.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceLinkCollection"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}:
+    get:
+      tags: [Evidence]
+      operationId: getEvidenceLink
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/EvidenceLinkID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Evidence link record.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceLinkReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}/actions/retract:
+    post:
+      tags: [Evidence]
+      operationId: retractEvidenceLink
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/EvidenceLinkID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody: {$ref: "#/components/requestBodies/ReasonBody"}
+      responses:
+        "200":
+          description: Evidence link retracted.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/EvidenceLinkMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions:
+    post:
+      tags: [Decisions]
+      operationId: proposeDecision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProposeDecisionRequest"}
+      responses:
+        "201":
+          description: Proposed Decision created or replayed idempotently.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionMutationResult"}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+    get:
+      tags: [Decisions]
+      operationId: listDecisions
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Complete Decision history for this Outcome.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionCollection"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}:
+    get:
+      tags: [Decisions]
+      operationId: getDecision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/DecisionID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Decision record.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [Decisions]
+      operationId: updateDecision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/DecisionID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/UpdateDecisionRequest"}
+      responses:
+        "200":
+          description: Proposed Decision updated. Terminal Decision content is immutable.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/accept:
+    post:
+      tags: [Decisions]
+      operationId: acceptDecision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/DecisionID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody: {$ref: "#/components/requestBodies/VersionBody"}
+      responses:
+        "200":
+          description: Decision accepted and content frozen.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/reject:
+    post:
+      tags: [Decisions]
+      operationId: rejectDecision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/DecisionID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody: {$ref: "#/components/requestBodies/ReasonBody"}
+      responses:
+        "200":
+          description: Decision rejected with explicit reason.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/supersede:
+    post:
+      tags: [Decisions]
+      operationId: supersedeDecision
+      description: Atomically accepts the new Decision and marks the accepted predecessor superseded.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/DecisionID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SupersedeDecisionRequest"}
+      responses:
+        "201":
+          description: Successor accepted and predecessor superseded in one transaction.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DecisionSupersessionMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
 components:
   parameters:
     NamespaceID:
@@ -1232,6 +1653,26 @@ components:
       schema: {$ref: "#/components/schemas/ID"}
     BlockerID:
       name: blocker_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    ArtifactID:
+      name: artifact_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    EvidenceID:
+      name: evidence_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    EvidenceLinkID:
+      name: evidence_link_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    DecisionID:
+      name: decision_id
       in: path
       required: true
       schema: {$ref: "#/components/schemas/ID"}
@@ -1373,6 +1814,323 @@ components:
     BlockerPropagation:
       type: string
       enum: [direct, subtree]
+
+
+    ArtifactLifecycle:
+      type: string
+      enum: [registered, withdrawn]
+    EvidenceType:
+      type: string
+      enum: [measurement, test_result, inspection, attestation, source, external_evaluation]
+    EvidenceLifecycle:
+      type: string
+      enum: [registered, retracted]
+    EvidenceStance:
+      type: string
+      enum: [supports, contradicts, context]
+    EvidenceLinkLifecycle:
+      type: string
+      enum: [active, retracted]
+    DecisionLifecycle:
+      type: string
+      enum: [proposed, accepted, rejected, superseded]
+
+    DocumentaryTargetRefRequest:
+      type: object
+      additionalProperties: false
+      required: [kind, id]
+      properties:
+        kind:
+          type: string
+          enum: [outcome, objective, work_item, issue, decision]
+        id: {$ref: "#/components/schemas/ID"}
+
+    SourceReference:
+      type: object
+      additionalProperties: false
+      required: [provider]
+      anyOf:
+        - required: [id]
+        - required: [uri]
+      properties:
+        provider: {type: string}
+        id: {type: string}
+        uri: {type: string}
+        display_name: {type: string}
+
+    Measurement:
+      type: object
+      additionalProperties: false
+      required: [value]
+      properties:
+        value: {type: string}
+        unit: {type: string}
+        method: {type: string}
+        conditions: {type: string}
+
+    RegisterArtifactRequest:
+      type: object
+      additionalProperties: false
+      required: [artifact_type, name, uri]
+      properties:
+        artifact_type: {type: string}
+        name: {type: string}
+        uri:
+          type: string
+          description: Opaque external reference. WOS does not dereference it.
+        media_type: {type: string}
+        checksum: {type: string}
+        source_version: {type: string}
+        produced_at: {type: string, format: date-time}
+
+    RegisterEvidenceRequest:
+      type: object
+      additionalProperties: false
+      required: [evidence_type, description, source_ref, captured_at]
+      properties:
+        evidence_type: {$ref: "#/components/schemas/EvidenceType"}
+        description: {type: string}
+        source_ref: {$ref: "#/components/schemas/SourceReference"}
+        captured_at: {type: string, format: date-time}
+        artifact_id: {$ref: "#/components/schemas/ID"}
+        measurement: {$ref: "#/components/schemas/Measurement"}
+        source_version: {type: string}
+        checksum: {type: string}
+
+    CreateEvidenceLinkRequest:
+      type: object
+      additionalProperties: false
+      required: [evidence_id, target_ref, stance, rationale]
+      properties:
+        evidence_id: {$ref: "#/components/schemas/ID"}
+        target_ref: {$ref: "#/components/schemas/DocumentaryTargetRefRequest"}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        stance: {$ref: "#/components/schemas/EvidenceStance"}
+        rationale: {type: string}
+
+    ProposeDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, proposal]
+      properties:
+        title: {type: string}
+        proposal: {type: string}
+        alternatives:
+          type: array
+          items: {type: string}
+        chosen_alternative: {type: string}
+        rationale: {type: string}
+
+    UpdateDecisionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        proposal: {type: string}
+        alternatives:
+          type: array
+          items: {type: string}
+        chosen_alternative: {type: string}
+        rationale: {type: string}
+
+    SupersedeDecisionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, proposal, rationale]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        proposal: {type: string}
+        alternatives:
+          type: array
+          items: {type: string}
+        chosen_alternative: {type: string}
+        rationale: {type: string}
+
+    Artifact:
+      type: object
+      required: [id, scope, version, artifact_type, name, uri, producer_ref, registered_at, lifecycle, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        artifact_type: {type: string}
+        name: {type: string}
+        uri: {type: string}
+        media_type: {type: string}
+        checksum: {type: string}
+        source_version: {type: string}
+        producer_ref: {$ref: "#/components/schemas/ActorRef"}
+        produced_at: {type: string, format: date-time}
+        registered_at: {type: string, format: date-time}
+        lifecycle: {$ref: "#/components/schemas/ArtifactLifecycle"}
+        withdrawal_reason: {type: string}
+        withdrawn_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Evidence:
+      type: object
+      required: [id, scope, version, evidence_type, description, source_ref, producer_ref, captured_at, registered_at, lifecycle, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        evidence_type: {$ref: "#/components/schemas/EvidenceType"}
+        description: {type: string}
+        source_ref: {$ref: "#/components/schemas/SourceReference"}
+        producer_ref: {$ref: "#/components/schemas/ActorRef"}
+        captured_at: {type: string, format: date-time}
+        registered_at: {type: string, format: date-time}
+        artifact_id: {$ref: "#/components/schemas/ID"}
+        measurement: {$ref: "#/components/schemas/Measurement"}
+        source_version: {type: string}
+        checksum: {type: string}
+        lifecycle: {$ref: "#/components/schemas/EvidenceLifecycle"}
+        retraction_reason: {type: string}
+        retracted_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    EvidenceLink:
+      type: object
+      required: [id, scope, version, evidence_id, target_ref, stance, rationale, lifecycle, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        evidence_id: {$ref: "#/components/schemas/ID"}
+        target_ref: {type: object}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        stance: {$ref: "#/components/schemas/EvidenceStance"}
+        rationale: {type: string}
+        lifecycle: {$ref: "#/components/schemas/EvidenceLinkLifecycle"}
+        retraction_reason: {type: string}
+        retracted_at: {type: string, format: date-time}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Decision:
+      type: object
+      required: [id, scope, version, title, proposal, alternatives, lifecycle, proposed_by, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        proposal: {type: string}
+        chosen_alternative: {type: string}
+        rationale: {type: string}
+        alternatives:
+          type: array
+          items: {type: string}
+        lifecycle: {$ref: "#/components/schemas/DecisionLifecycle"}
+        proposed_by: {$ref: "#/components/schemas/ActorRef"}
+        decided_by: {$ref: "#/components/schemas/ActorRef"}
+        decided_at: {type: string, format: date-time}
+        rejection_reason: {type: string}
+        supersedes_decision_id: {$ref: "#/components/schemas/ID"}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    ArtifactReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Artifact"}
+        outcome_revision: {type: integer, minimum: 1}
+    EvidenceReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Evidence"}
+        outcome_revision: {type: integer, minimum: 1}
+    EvidenceLinkReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/EvidenceLink"}
+        outcome_revision: {type: integer, minimum: 1}
+    DecisionReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Decision"}
+        outcome_revision: {type: integer, minimum: 1}
+
+    ArtifactMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Artifact"}
+    EvidenceMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Evidence"}
+    EvidenceLinkMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/EvidenceLink"}
+    DecisionMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Decision"}
+    DecisionSupersession:
+      type: object
+      required: [successor, predecessor]
+      properties:
+        successor: {$ref: "#/components/schemas/Decision"}
+        predecessor: {$ref: "#/components/schemas/Decision"}
+    DecisionSupersessionMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/DecisionSupersession"}
+
+    ArtifactCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Artifact"}
+        outcome_revision: {type: integer, minimum: 1}
+    EvidenceCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Evidence"}
+        outcome_revision: {type: integer, minimum: 1}
+    EvidenceLinkCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/EvidenceLink"}
+        outcome_revision: {type: integer, minimum: 1}
+    DecisionCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Decision"}
+        outcome_revision: {type: integer, minimum: 1}
 
     EntityRefRequest:
       type: object
@@ -2050,7 +2808,7 @@ components:
         outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, blocking_states, evaluated_at, outcome_revision]
+      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, artifacts, evidence, evidence_links, decisions, blocking_states, evaluated_at, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -2071,6 +2829,18 @@ components:
         blockers:
           type: array
           items: {$ref: "#/components/schemas/Blocker"}
+        artifacts:
+          type: array
+          items: {$ref: "#/components/schemas/Artifact"}
+        evidence:
+          type: array
+          items: {$ref: "#/components/schemas/Evidence"}
+        evidence_links:
+          type: array
+          items: {$ref: "#/components/schemas/EvidenceLink"}
+        decisions:
+          type: array
+          items: {$ref: "#/components/schemas/Decision"}
         blocking_states:
           type: array
           items: {$ref: "#/components/schemas/BlockingState"}
