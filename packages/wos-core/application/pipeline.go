@@ -311,6 +311,8 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Decision:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Roadmap:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
 			return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "criterion command is missing owner/version metadata")
@@ -449,6 +451,14 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"decision.accepted"}, nil
 	case "RejectDecision":
 		return []string{"decision.rejected"}, nil
+	case "CreateRoadmap":
+		return []string{"roadmap.created"}, nil
+	case "OpenRoadmapDraft":
+		return []string{"roadmap.draft_opened"}, nil
+	case "ReplaceRoadmapDraft":
+		return []string{"roadmap.draft_updated"}, nil
+	case "DiscardRoadmapDraft":
+		return []string{"roadmap.draft_discarded"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":
