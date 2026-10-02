@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/application"
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
