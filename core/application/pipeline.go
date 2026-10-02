@@ -338,7 +338,7 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"outcome.archived"}, nil
 	case "UnarchiveOutcome":
 		return []string{"outcome.unarchived"}, nil
-	case "SetOutcomeOwners":
+	case "SetOutcomeOwners", "UpdateOutcome":
 		return []string{"outcome.updated"}, nil
 	case "CreateObjective":
 		return []string{"objective.created"}, nil
@@ -350,13 +350,13 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"objective.cancelled"}, nil
 	case "ReopenObjective":
 		return []string{"objective.reopened"}, nil
-	case "SetObjectiveOwners":
+	case "SetObjectiveOwners", "UpdateObjective":
 		return []string{"objective.updated"}, nil
 	case "CreateWorkItem":
 		return []string{"work_item.created"}, nil
 	case "ActivateWorkItem":
 		return []string{"work_item.activated"}, nil
-	case "DeferWorkItem", "SetWorkItemAssignees":
+	case "DeferWorkItem", "SetWorkItemAssignees", "UpdateWorkItem":
 		return []string{"work_item.updated"}, nil
 	case "ClaimWorkItem":
 		return []string{"work_item.claimed"}, nil
