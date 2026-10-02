@@ -70,3 +70,41 @@ jobs:
 
       - name: Smoke configuration validation
         run: ./bin/wos config validate
+
+      - name: Smoke standalone HTTP runtime
+        shell: bash
+        run: |
+          tmpdir="$(mktemp -d)"
+          log="$tmpdir/wos.log"
+          WOS_LISTEN=127.0.0.1:18080 \
+          WOS_SQLITE_PATH="$tmpdir/wos.db" \
+          WOS_LOCAL_PRINCIPAL_ID=ci-local \
+            ./bin/wos serve >"$log" 2>&1 &
+          pid=$!
+
+          cleanup() {
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            rm -rf "$tmpdir"
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:18080/readyz >/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$pid" 2>/dev/null; then
+              cat "$log"
+              exit 1
+            fi
+            sleep 0.2
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            cat "$log"
+            exit 1
+          fi
+
+          curl --fail --silent --show-error http://127.0.0.1:18080/livez >/dev/null
