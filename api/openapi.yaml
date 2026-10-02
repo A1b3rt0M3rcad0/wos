@@ -121,7 +121,7 @@ paths:
         - $ref: "#/components/parameters/CorrelationID"
       responses:
         "200":
-          description: Coherent M1 Outcome state projection.
+          description: Coherent Outcome state projection including Wave 07 blocking state.
           headers:
             Cache-Control:
               schema:
@@ -783,25 +783,34 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
 
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_version_action}:
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_action}:
     post:
       tags: [Issues]
-      operationId: transitionIssueVersionOnly
-      description: Investigate or reopen an Issue. Resolving an Issue never resolves a Blocker implicitly.
+      operationId: transitionIssue
+      description: |
+        Explicit lifecycle action for investigate, reopen, resolve or wont-fix.
+        Investigate/reopen accept a version-only body; resolve/wont-fix require
+        resolution_summary. Resolving an Issue never resolves a Blocker implicitly.
       parameters:
         - $ref: "#/components/parameters/NamespaceID"
         - $ref: "#/components/parameters/OutcomeID"
         - $ref: "#/components/parameters/IssueID"
-        - name: issue_version_action
+        - name: issue_action
           in: path
           required: true
           schema:
             type: string
-            enum: [investigate, reopen]
+            enum: [investigate, reopen, resolve, wont-fix]
         - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/IfMatch"
       requestBody:
-        $ref: "#/components/requestBodies/VersionBody"
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/VersionRequest"
+                - $ref: "#/components/schemas/ResolutionRequest"
       responses:
         "200":
           description: Issue lifecycle transition confirmed.
@@ -813,42 +822,8 @@ paths:
           $ref: "#/components/responses/Conflict"
         "412":
           $ref: "#/components/responses/PreconditionFailed"
-        "428":
-          $ref: "#/components/responses/PreconditionRequired"
-
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_resolution_action}:
-    post:
-      tags: [Issues]
-      operationId: closeIssue
-      parameters:
-        - $ref: "#/components/parameters/NamespaceID"
-        - $ref: "#/components/parameters/OutcomeID"
-        - $ref: "#/components/parameters/IssueID"
-        - name: issue_resolution_action
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [resolve, wont-fix]
-        - $ref: "#/components/parameters/IdempotencyKey"
-        - $ref: "#/components/parameters/IfMatch"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ResolutionRequest"
-      responses:
-        "200":
-          description: Issue closed explicitly.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IssueMutationResult"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "412":
-          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
         "428":
           $ref: "#/components/responses/PreconditionRequired"
 
