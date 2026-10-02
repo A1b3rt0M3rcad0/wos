@@ -26,10 +26,10 @@ func TestSQLiteWave10AssessmentEvidenceSurvivesRestart(t *testing.T) {
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199ef21-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID,
-		Title: "Assessment persistence",
+		NamespaceID:  namespaceID,
+		Title:        "Assessment persistence",
 		DesiredState: "assessment Evidence survives restart",
-		Priority: domain.PriorityNormal,
+		Priority:     domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -39,10 +39,10 @@ func TestSQLiteWave10AssessmentEvidenceSurvivesRestart(t *testing.T) {
 	added, err := service.AddCriterion(ctx, sqliteCommandContext(
 		"0199ef21-0000-7000-8000-000000000102", "",
 	), application.AddCriterionCommand{
-		Owner: outcome.Ref(),
-		ExpectedVersion: outcome.Version,
-		Title: "Evidence reviewed",
-		Required: true,
+		Owner:            outcome.Ref(),
+		ExpectedVersion:  outcome.Version,
+		Title:            "Evidence reviewed",
+		Required:         true,
 		VerificationMode: domain.VerificationModeEvidenceReview,
 	})
 	if err != nil {
@@ -53,11 +53,11 @@ func TestSQLiteWave10AssessmentEvidenceSurvivesRestart(t *testing.T) {
 	evidenceResult, err := service.RegisterEvidence(ctx, sqliteCommandContext(
 		"0199ef21-0000-7000-8000-000000000103", "",
 	), application.RegisterEvidenceCommand{
-		Scope: outcome.Scope(),
+		Scope:        outcome.Scope(),
 		EvidenceType: domain.EvidenceTypeSource,
-		Description: "restart source",
-		SourceRef: domain.SourceReference{Provider: "sqlite-test", ID: "source"},
-		CapturedAt: clock.now,
+		Description:  "restart source",
+		SourceRef:    domain.SourceReference{Provider: "sqlite-test", ID: "source"},
+		CapturedAt:   clock.now,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -69,13 +69,13 @@ func TestSQLiteWave10AssessmentEvidenceSurvivesRestart(t *testing.T) {
 	recorded, err := service.RecordCriterionAssessment(ctx, sqliteCommandContext(
 		"0199ef21-0000-7000-8000-000000000104", "",
 	), application.RecordCriterionAssessmentCommand{
-		Owner: outcome.Ref(),
-		CriterionID: criterion.ID,
+		Owner:             outcome.Ref(),
+		CriterionID:       criterion.ID,
 		CriterionRevision: criterion.Revision,
-		ExpectedVersion: current.Value.Version,
-		Result: domain.AssessmentResultMet,
-		Rationale: "reviewed persisted Evidence",
-		EvidenceIDs: []domain.ID{evidenceResult.Value.ID},
+		ExpectedVersion:   current.Value.Version,
+		Result:            domain.AssessmentResultMet,
+		Rationale:         "reviewed persisted Evidence",
+		EvidenceIDs:       []domain.ID{evidenceResult.Value.ID},
 	})
 	if err != nil {
 		t.Fatal(err)
