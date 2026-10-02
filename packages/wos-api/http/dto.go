@@ -155,3 +155,31 @@ type collectionResponse[T any] struct {
 	Items           []T                    `json:"items"`
 	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
 }
+
+
+type createRoadmapRequest struct {
+	PlanScope domain.RoadmapPlanScope `json:"plan_scope"`
+	Title     string                  `json:"title"`
+}
+
+type openRoadmapDraftRequest struct {
+	ExpectedVersion    *uint64 `json:"expected_version,omitempty"`
+	BaseRevisionNumber *uint64 `json:"base_revision_number,omitempty"`
+}
+
+type replaceRoadmapDraftRequest struct {
+	ExpectedVersion      *uint64                  `json:"expected_version,omitempty"`
+	ExpectedDraftVersion uint64                   `json:"expected_draft_version"`
+	Nodes                []domain.RoadmapNode     `json:"nodes,omitempty"`
+	AfterLinks           []domain.RoadmapAfterLink `json:"after_links,omitempty"`
+}
+
+type roadmapDraftVersionRequest struct {
+	ExpectedVersion      *uint64 `json:"expected_version,omitempty"`
+	ExpectedDraftVersion uint64  `json:"expected_draft_version"`
+}
+
+type roadmapSlotReadResponse struct {
+	Value           *domain.RoadmapActiveSlot `json:"value"`
+	OutcomeRevision domain.OutcomeRevision     `json:"outcome_revision"`
+}

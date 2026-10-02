@@ -473,6 +473,44 @@ func (s *Service) mutateRoadmap(
 	})
 }
 
+func (s *Service) GetRoadmapRevision(
+	ctx context.Context,
+	scope domain.Scope,
+	id domain.ID,
+	revisionNumber uint64,
+) (ReadResult[domain.RoadmapRevision], error) {
+	if revisionNumber == 0 {
+		return ReadResult[domain.RoadmapRevision]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "roadmap revision number must be at least 1")
+	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+	defer uow.Rollback()
+	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+	repo, err := planningRoadmaps(uow)
+	if err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+	value, err := repo.Get(ctx, scope, id)
+	if err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+	if revisionNumber > uint64(len(value.Revisions)) {
+		return ReadResult[domain.RoadmapRevision]{}, domain.NewError(domain.ErrorCodeNotFound, "roadmap revision not found")
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+	return ReadResult[domain.RoadmapRevision]{
+		Value:           value.Revisions[revisionNumber-1],
+		OutcomeRevision: coordination.Revision,
+	}, nil
+}
+
 func (s *Service) GetRoadmap(
 	ctx context.Context,
 	scope domain.Scope,
