@@ -26,6 +26,7 @@ const (
 	ErrorCodeVersionConflict       ErrorCode = "version_conflict"
 	ErrorCodeNotFound              ErrorCode = "not_found"
 	ErrorCodeAlreadyExists         ErrorCode = "already_exists"
+	ErrorCodeForbidden             ErrorCode = "forbidden"
 	ErrorCodeCriterion             ErrorCode = "criterion_error"
 	ErrorCodeAssessment            ErrorCode = "assessment_error"
 	ErrorCodeLease                 ErrorCode = "lease_error"

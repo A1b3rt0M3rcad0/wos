@@ -10,16 +10,26 @@ import (
 )
 
 type Service struct {
-	tx    ports.TransactionManager
-	clock ports.Clock
-	ids   ports.IDGenerator
+	tx         ports.TransactionManager
+	clock      ports.Clock
+	ids        ports.IDGenerator
+	authorizer ports.Authorizer
 }
 
 func NewService(tx ports.TransactionManager, clock ports.Clock, ids ports.IDGenerator) (*Service, error) {
-	if tx == nil || clock == nil || ids == nil {
-		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "transaction manager, clock and id generator are required")
+	return NewServiceWithAuthorizer(tx, clock, ids, ports.DenyPrivilegedAuthorizer{})
+}
+
+func NewServiceWithAuthorizer(
+	tx ports.TransactionManager,
+	clock ports.Clock,
+	ids ports.IDGenerator,
+	authorizer ports.Authorizer,
+) (*Service, error) {
+	if tx == nil || clock == nil || ids == nil || authorizer == nil {
+		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "transaction manager, clock, id generator and authorizer are required")
 	}
-	return &Service{tx: tx, clock: clock, ids: ids}, nil
+	return &Service{tx: tx, clock: clock, ids: ids, authorizer: authorizer}, nil
 }
 
 func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.CommandContext, cmd CreateOutcomeCommand) (MutationResult[domain.Outcome], error) {
