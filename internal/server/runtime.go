@@ -44,12 +44,17 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	}
 
 	ids := uuidV7Generator{}
-	service, err := application.NewService(store, systemClock{}, ids)
+	auth, err := local.New(config.Auth.LocalPrincipalID)
 	if err != nil {
 		_ = store.Close()
 		return nil, err
 	}
-	auth, err := local.New(config.Auth.LocalPrincipalID)
+	authorizer, err := local.NewAuthorizer(config.Auth.LocalPrincipalID, config.Auth.LocalAllowAdministrativeOverrides)
+	if err != nil {
+		_ = store.Close()
+		return nil, err
+	}
+	service, err := application.NewServiceWithAuthorizer(store, systemClock{}, ids, authorizer)
 	if err != nil {
 		_ = store.Close()
 		return nil, err

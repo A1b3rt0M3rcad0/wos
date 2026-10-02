@@ -143,6 +143,8 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/claim", h.claimWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/renew-lease", h.renewWorkItemLease)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/reclaim", h.reclaimWorkItem)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/admin-cancel", h.administrativeCancelWorkItem)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/admin-complete", h.administrativeCompleteWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/release", h.releaseWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/complete", h.completeWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/cancel", h.cancelWorkItem)
@@ -349,6 +351,8 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			status = http.StatusUnprocessableEntity
 		case domain.ErrorCodeNotFound:
 			status = http.StatusNotFound
+		case domain.ErrorCodeForbidden:
+			status = http.StatusForbidden
 		case domain.ErrorCodeVersionConflict:
 			status = http.StatusPreconditionFailed
 		case domain.ErrorCodeAlreadyExists,

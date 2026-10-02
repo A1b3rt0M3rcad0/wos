@@ -131,6 +131,12 @@ type completeRequest struct {
 	Reason          string  `json:"reason"`
 }
 
+type administrativeCompleteRequest struct {
+	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
+	ResultSummary   string  `json:"result_summary"`
+	Reason          string  `json:"reason"`
+}
+
 type errorEnvelope struct {
 	Error errorBody `json:"error"`
 }

@@ -16,5 +16,8 @@ func ConfigFromEnv() Config {
 	if value := strings.TrimSpace(os.Getenv("WOS_LOCAL_PRINCIPAL_ID")); value != "" {
 		cfg.Auth.LocalPrincipalID = value
 	}
+	if value := strings.TrimSpace(os.Getenv("WOS_LOCAL_ADMIN_OVERRIDES")); value != "" {
+		cfg.Auth.LocalAllowAdministrativeOverrides = value == "1" || strings.EqualFold(value, "true")
+	}
 	return cfg
 }

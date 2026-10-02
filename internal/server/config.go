@@ -51,8 +51,9 @@ type StorageConfig struct {
 }
 
 type AuthConfig struct {
-	Mode             string
-	LocalPrincipalID string
+	Mode                              string
+	LocalPrincipalID                  string
+	LocalAllowAdministrativeOverrides bool
 }
 
 func DefaultConfig() Config {
@@ -77,8 +78,9 @@ func DefaultConfig() Config {
 			MigrateOnStart: true,
 		},
 		Auth: AuthConfig{
-			Mode:             AuthModeLocal,
-			LocalPrincipalID: "local-user",
+			Mode:                              AuthModeLocal,
+			LocalPrincipalID:                  "local-user",
+			LocalAllowAdministrativeOverrides: false,
 		},
 	}
 }
