@@ -228,6 +228,21 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	)
 	objective := objectiveResponse.Value.Value
 	objectiveURL := outcomeURL + "/objectives/" + objective.ID.String()
+	patchedObjective := doJSON[application.MutationResult[domain.Objective]](
+		t,
+		client,
+		http.MethodPatch,
+		objectiveURL,
+		[]byte(`{"title":"Prepare HTTP flow updated"}`),
+		map[string]string{
+			"Idempotency-Key": "http-objective-patch-0001",
+			"If-Match":        patchedObjective.Header.Get("ETag"),
+		},
+		http.StatusOK,
+	)
+	if patchedObjective.Value.Value.Title != "Prepare HTTP flow updated" {
+		t.Fatalf("patched objective title = %q", patchedObjective.Value.Value.Title)
+	}
 
 	objectiveCriterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t,
@@ -293,6 +308,23 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 
 	work := workResponse.Value.Value
 	workURL := outcomeURL + "/work-items/" + work.ID.String()
+	patchedWork := doJSON[application.MutationResult[domain.WorkItem]](
+		t,
+		client,
+		http.MethodPatch,
+		workURL,
+		[]byte(`{"title":"Execute HTTP work updated"}`),
+		map[string]string{
+			"Idempotency-Key": "http-work-patch-0001",
+			"If-Match":        patchedWork.Header.Get("ETag"),
+		},
+		http.StatusOK,
+	)
+	if patchedWork.Value.Value.Title != "Execute HTTP work updated" {
+		t.Fatalf("patched work title = %q", patchedWork.Value.Value.Title)
+	}
+	work = patchedWork.Value.Value
+
 	claimResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
 		client,
