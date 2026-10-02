@@ -357,4 +357,3 @@ func nullableVersion(value *domain.Version) any {
 	}
 	return int64(*value)
 }
-

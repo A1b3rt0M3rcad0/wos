@@ -320,8 +320,8 @@ ORDER BY c.created_at, c.id`,
 	for rows.Next() {
 		var (
 			rawID, status, definition, mode string
-			revision                       int64
-			required                       int
+			revision                        int64
+			required                        int
 		)
 		if err := rows.Scan(&rawID, &revision, &status, &definition, &required, &mode); err != nil {
 			rows.Close()
@@ -436,8 +436,8 @@ type rowScanner interface {
 func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 	var (
 		rawID, rawCriterion, result, rationale, principal, actorJSON string
-		revision, assessedAt                                      int64
-		supersedes                                                sql.NullString
+		revision, assessedAt                                         int64
+		supersedes                                                   sql.NullString
 	)
 	if err := scanner.Scan(
 		&rawID, &rawCriterion, &revision, &result, &rationale,
@@ -700,4 +700,3 @@ func actorRefsEqualForStorage(left, right []domain.ActorRef) bool {
 	}
 	return true
 }
-

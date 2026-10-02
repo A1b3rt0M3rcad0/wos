@@ -20,7 +20,7 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 		return domain.Outcome{}, err
 	}
 	var (
-		version                           int64
+		version                          int64
 		title, description, desiredState string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
@@ -163,12 +163,12 @@ func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id dom
 		return domain.Objective{}, err
 	}
 	var (
-		version                              int64
-		title, description                   string
-		parent                               sql.NullString
-		lifecycle, priority                  string
-		required                             int
-		createdAt, updatedAt                 int64
+		version              int64
+		title, description   string
+		parent               sql.NullString
+		lifecycle, priority  string
+		required             int
+		createdAt, updatedAt int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, parent_objective_id, lifecycle, priority,
@@ -341,14 +341,14 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		return domain.WorkItem{}, err
 	}
 	var (
-		version                              int64
-		title, description                   string
-		objectiveID                          sql.NullString
-		lifecycle, priority, resultSummary   string
-		lastFencing                          int64
-		claimID, leasePrincipal, leaseActor  sql.NullString
-		acquiredAt, expiresAt                sql.NullInt64
-		createdAt, updatedAt                 int64
+		version                             int64
+		title, description                  string
+		objectiveID                         sql.NullString
+		lifecycle, priority, resultSummary  string
+		lastFencing                         int64
+		claimID, leasePrincipal, leaseActor sql.NullString
+		acquiredAt, expiresAt               sql.NullInt64
+		createdAt, updatedAt                int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, objective_id, lifecycle, priority,
@@ -756,4 +756,3 @@ func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 func nowUTC() time.Time {
 	return time.Now().UTC()
 }
-

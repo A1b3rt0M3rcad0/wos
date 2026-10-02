@@ -283,10 +283,10 @@ ORDER BY outcome_revision, event_index`,
 func scanEvent(scanner rowScanner, scope domain.Scope) (domain.DomainEvent, error) {
 	var (
 		rawID, eventType, aggregateID, aggregateKind, commandID, principal string
-		schemaVersion, revision, eventIndex, recordedAt                   int64
-		before, after                                                       sql.NullInt64
-		actorJSON, executionJSON, payload                                   string
-		correlation, causation                                              sql.NullString
+		schemaVersion, revision, eventIndex, recordedAt                    int64
+		before, after                                                      sql.NullInt64
+		actorJSON, executionJSON, payload                                  string
+		correlation, causation                                             sql.NullString
 	)
 	if err := scanner.Scan(
 		&rawID, &eventType, &schemaVersion, &revision, &eventIndex,
