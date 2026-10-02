@@ -300,12 +300,16 @@ func (s *Service) SetOutcomeOwners(ctx context.Context, commandContext domain.Co
 	}
 	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
+		}
+		if actorRefsEqual(outcome.OwnerRefs, cmd.OwnerRefs) {
+			return outcome, coordination.Revision, nil
 		}
 		if err := outcome.SetOwners(cmd.OwnerRefs, now); err != nil {
 			return domain.Outcome{}, 0, err
@@ -331,6 +335,13 @@ func (s *Service) SetObjectiveOwners(ctx context.Context, commandContext domain.
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
+		if actorRefsEqual(objective.OwnerRefs, cmd.OwnerRefs) {
+			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return domain.Objective{}, 0, err
+			}
+			return objective, coordination.Revision, nil
+		}
 		if err := objective.SetOwners(cmd.OwnerRefs, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -354,6 +365,13 @@ func (s *Service) SetWorkItemAssignees(ctx context.Context, commandContext domai
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
+		}
+		if actorRefsEqual(item.AssigneeRefs, cmd.AssigneeRefs) {
+			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return domain.WorkItem{}, 0, err
+			}
+			return item, coordination.Revision, nil
 		}
 		if err := item.SetAssignees(cmd.AssigneeRefs, now); err != nil {
 			return domain.WorkItem{}, 0, err

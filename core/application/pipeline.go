@@ -78,7 +78,7 @@ func transactCommand[T any, C any](
 		return MutationResult[T]{Value: zero}, err
 	}
 
-	events, err := service.eventsForCommand(commandContext, meta, value, revision)
+	events, err := eventsForCommand(service, commandContext, meta, value, revision)
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
@@ -215,7 +215,8 @@ func sortedActorRefs(values []domain.ActorRef) []domain.ActorRef {
 	return result
 }
 
-func (s *Service) eventsForCommand[T any](
+func eventsForCommand[T any](
+	s *Service,
 	commandContext domain.CommandContext,
 	meta commandMetadata,
 	value T,
@@ -386,4 +387,18 @@ func cloneIDPointer(value *domain.ID) *domain.ID {
 	}
 	cloned := *value
 	return &cloned
+}
+
+func actorRefsEqual(left, right []domain.ActorRef) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	leftSorted := sortedActorRefs(left)
+	rightSorted := sortedActorRefs(right)
+	for i := range leftSorted {
+		if leftSorted[i] != rightSorted[i] {
+			return false
+		}
+	}
+	return true
 }
