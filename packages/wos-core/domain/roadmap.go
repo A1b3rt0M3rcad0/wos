@@ -119,9 +119,9 @@ type RoadmapNode struct {
 	TargetRef         *EntityRef                `json:"target_ref,omitempty"`
 	Title             string                    `json:"title"`
 	Position          int                       `json:"position"`
-	CriterionRefs     []RoadmapCriterionRef      `json:"criterion_refs,omitempty"`
-	PlannedStart      *time.Time                 `json:"planned_start,omitempty"`
-	PlannedEnd        *time.Time                 `json:"planned_end,omitempty"`
+	CriterionRefs     []RoadmapCriterionRef     `json:"criterion_refs,omitempty"`
+	PlannedStart      *time.Time                `json:"planned_start,omitempty"`
+	PlannedEnd        *time.Time                `json:"planned_end,omitempty"`
 	ReferenceSnapshot *RoadmapReferenceSnapshot `json:"published_reference_snapshot,omitempty"`
 }
 
@@ -290,7 +290,7 @@ type RoadmapRevision struct {
 	RevisionNumber      uint64                      `json:"revision_number"`
 	ContentHash         string                      `json:"content_hash"`
 	Nodes               []RoadmapNode               `json:"nodes,omitempty"`
-	AfterLinks          []RoadmapAfterLink           `json:"after_links,omitempty"`
+	AfterLinks          []RoadmapAfterLink          `json:"after_links,omitempty"`
 	DependencySnapshots []RoadmapDependencySnapshot `json:"dependency_snapshots,omitempty"`
 	PublishedBy         ActorRef                    `json:"published_by"`
 	PublishedAt         time.Time                   `json:"published_at"`

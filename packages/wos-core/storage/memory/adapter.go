@@ -140,7 +140,7 @@ func (tx *transaction) Artifacts() ports.ArtifactRepository         { return tx.
 func (tx *transaction) Evidence() ports.EvidenceRepository          { return tx.evidenceRepo }
 func (tx *transaction) EvidenceLinks() ports.EvidenceLinkRepository { return tx.evidenceLinkRepo }
 func (tx *transaction) Decisions() ports.DecisionRepository         { return tx.decisionRepo }
-func (tx *transaction) Roadmaps() ports.RoadmapRepository            { return tx.roadmapRepo }
+func (tx *transaction) Roadmaps() ports.RoadmapRepository           { return tx.roadmapRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore       { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog                { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore         { return tx.idempotencyStore }

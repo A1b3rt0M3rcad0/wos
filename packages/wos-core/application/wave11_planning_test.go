@@ -59,9 +59,9 @@ func TestWave11ObjectiveScopedRoadmapValidatesOperationalReferences(t *testing.T
 	work := workResult.Value
 
 	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
-		Scope: outcome.Scope(),
+		Scope:     outcome.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeObjective, ID: root.ID},
-		Title: "Root objective plan",
+		Title:     "Root objective plan",
 	})
 	if err != nil {
 		t.Fatal(err)

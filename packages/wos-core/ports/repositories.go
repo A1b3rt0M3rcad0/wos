@@ -75,7 +75,6 @@ type DecisionRepository interface {
 	Save(ctx context.Context, decision domain.Decision, expected domain.Version) error
 }
 
-
 type RoadmapRepository interface {
 	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Roadmap, error)
 	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Roadmap, error)

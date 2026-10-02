@@ -123,7 +123,6 @@ func TestRoadmapScopeIsOutcomeBounded(t *testing.T) {
 	}
 }
 
-
 func TestRoadmapDraftLifecycleAndImmutablePublication(t *testing.T) {
 	scope := roadmapTestScope()
 	now := time.Date(2026, 10, 2, 22, 30, 0, 0, time.UTC)

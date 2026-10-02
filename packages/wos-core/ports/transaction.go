@@ -45,7 +45,6 @@ type DocumentaryUnitOfWork interface {
 	Decisions() DecisionRepository
 }
 
-
 type PlanningUnitOfWork interface {
 	Roadmaps() RoadmapRepository
 }
