@@ -17,6 +17,10 @@ type Store struct {
 	relations   map[string]domain.Relation
 	issues      map[string]domain.Issue
 	blockers    map[string]domain.Blocker
+	artifacts   map[string]domain.Artifact
+	evidence    map[string]domain.Evidence
+	evidenceLinks map[string]domain.EvidenceLink
+	decisions   map[string]domain.Decision
 	revisions   map[string]domain.OutcomeRevision
 	events      []domain.DomainEvent
 	idempotency map[string]idempotencyRecord
@@ -37,6 +41,10 @@ func New() *Store {
 		relations:   make(map[string]domain.Relation),
 		issues:      make(map[string]domain.Issue),
 		blockers:    make(map[string]domain.Blocker),
+		artifacts:   make(map[string]domain.Artifact),
+		evidence:    make(map[string]domain.Evidence),
+		evidenceLinks: make(map[string]domain.EvidenceLink),
+		decisions:   make(map[string]domain.Decision),
 		revisions:   make(map[string]domain.OutcomeRevision),
 		events:      make([]domain.DomainEvent, 0),
 		idempotency: make(map[string]idempotencyRecord),
@@ -58,6 +66,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		relations:   cloneRelations(s.relations),
 		issues:      cloneIssues(s.issues),
 		blockers:    cloneBlockers(s.blockers),
+		artifacts:   cloneArtifacts(s.artifacts),
+		evidence:    cloneEvidence(s.evidence),
+		evidenceLinks: cloneEvidenceLinks(s.evidenceLinks),
+		decisions:   cloneDecisions(s.decisions),
 		revisions:   cloneRevisions(s.revisions),
 		events:      cloneEvents(s.events),
 		idempotency: cloneIdempotency(s.idempotency),
@@ -68,6 +80,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.relationRepo = relationRepository{tx: tx}
 	tx.issueRepo = issueRepository{tx: tx}
 	tx.blockerRepo = blockerRepository{tx: tx}
+	tx.artifactRepo = artifactRepository{tx: tx}
+	tx.evidenceRepo = evidenceRepository{tx: tx}
+	tx.evidenceLinkRepo = evidenceLinkRepository{tx: tx}
+	tx.decisionRepo = decisionRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -83,6 +99,10 @@ type transaction struct {
 	relations   map[string]domain.Relation
 	issues      map[string]domain.Issue
 	blockers    map[string]domain.Blocker
+	artifacts   map[string]domain.Artifact
+	evidence    map[string]domain.Evidence
+	evidenceLinks map[string]domain.EvidenceLink
+	decisions   map[string]domain.Decision
 	revisions   map[string]domain.OutcomeRevision
 	events      []domain.DomainEvent
 	idempotency map[string]idempotencyRecord
@@ -93,6 +113,10 @@ type transaction struct {
 	relationRepo     relationRepository
 	issueRepo        issueRepository
 	blockerRepo      blockerRepository
+	artifactRepo     artifactRepository
+	evidenceRepo     evidenceRepository
+	evidenceLinkRepo evidenceLinkRepository
+	decisionRepo     decisionRepository
 	coordination     coordinationStore
 	eventLog         eventLog
 	idempotencyStore idempotencyStore
@@ -104,6 +128,10 @@ func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workIt
 func (tx *transaction) Relations() ports.RelationRepository   { return tx.relationRepo }
 func (tx *transaction) Issues() ports.IssueRepository         { return tx.issueRepo }
 func (tx *transaction) Blockers() ports.BlockerRepository     { return tx.blockerRepo }
+func (tx *transaction) Artifacts() ports.ArtifactRepository   { return tx.artifactRepo }
+func (tx *transaction) Evidence() ports.EvidenceRepository    { return tx.evidenceRepo }
+func (tx *transaction) EvidenceLinks() ports.EvidenceLinkRepository { return tx.evidenceLinkRepo }
+func (tx *transaction) Decisions() ports.DecisionRepository   { return tx.decisionRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
@@ -118,6 +146,10 @@ func (tx *transaction) Commit() error {
 	tx.store.relations = cloneRelations(tx.relations)
 	tx.store.issues = cloneIssues(tx.issues)
 	tx.store.blockers = cloneBlockers(tx.blockers)
+	tx.store.artifacts = cloneArtifacts(tx.artifacts)
+	tx.store.evidence = cloneEvidence(tx.evidence)
+	tx.store.evidenceLinks = cloneEvidenceLinks(tx.evidenceLinks)
+	tx.store.decisions = cloneDecisions(tx.decisions)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -591,6 +623,183 @@ func (r blockerRepository) Save(ctx context.Context, blocker domain.Blocker, exp
 	return nil
 }
 
+
+type artifactRepository struct{ tx *transaction }
+
+func (r artifactRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Artifact, error) {
+	if err := ctx.Err(); err != nil { return domain.Artifact{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.Artifact{}, err }
+	value, ok := r.tx.artifacts[entityKey(scope, id)]
+	if !ok { return domain.Artifact{}, domain.NewError(domain.ErrorCodeNotFound, "artifact not found") }
+	return cloneArtifact(value), nil
+}
+
+func (r artifactRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Artifact, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.Artifact, 0)
+	for _, item := range r.tx.artifacts {
+		if item.Scope == scope { items = append(items, cloneArtifact(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r artifactRepository) Insert(ctx context.Context, value domain.Artifact) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	if _, exists := r.tx.artifacts[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "artifact already exists") }
+	r.tx.artifacts[key] = cloneArtifact(value)
+	return nil
+}
+
+func (r artifactRepository) Save(ctx context.Context, value domain.Artifact, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	current, ok := r.tx.artifacts[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "artifact not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "artifact expected_version does not match") }
+	if value.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "artifact version must advance exactly once per save") }
+	r.tx.artifacts[key] = cloneArtifact(value)
+	return nil
+}
+
+type evidenceRepository struct{ tx *transaction }
+
+func (r evidenceRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Evidence, error) {
+	if err := ctx.Err(); err != nil { return domain.Evidence{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.Evidence{}, err }
+	value, ok := r.tx.evidence[entityKey(scope, id)]
+	if !ok { return domain.Evidence{}, domain.NewError(domain.ErrorCodeNotFound, "evidence not found") }
+	return cloneEvidenceValue(value), nil
+}
+
+func (r evidenceRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Evidence, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.Evidence, 0)
+	for _, item := range r.tx.evidence {
+		if item.Scope == scope { items = append(items, cloneEvidenceValue(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r evidenceRepository) Insert(ctx context.Context, value domain.Evidence) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	if _, exists := r.tx.evidence[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "evidence already exists") }
+	r.tx.evidence[key] = cloneEvidenceValue(value)
+	return nil
+}
+
+func (r evidenceRepository) Save(ctx context.Context, value domain.Evidence, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	current, ok := r.tx.evidence[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "evidence not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "evidence expected_version does not match") }
+	if value.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "evidence version must advance exactly once per save") }
+	r.tx.evidence[key] = cloneEvidenceValue(value)
+	return nil
+}
+
+type evidenceLinkRepository struct{ tx *transaction }
+
+func (r evidenceLinkRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.EvidenceLink, error) {
+	if err := ctx.Err(); err != nil { return domain.EvidenceLink{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.EvidenceLink{}, err }
+	value, ok := r.tx.evidenceLinks[entityKey(scope, id)]
+	if !ok { return domain.EvidenceLink{}, domain.NewError(domain.ErrorCodeNotFound, "evidence link not found") }
+	return cloneEvidenceLink(value), nil
+}
+
+func (r evidenceLinkRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.EvidenceLink, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.EvidenceLink, 0)
+	for _, item := range r.tx.evidenceLinks {
+		if item.Scope == scope { items = append(items, cloneEvidenceLink(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r evidenceLinkRepository) Insert(ctx context.Context, value domain.EvidenceLink) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	if _, exists := r.tx.evidenceLinks[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "evidence link already exists") }
+	r.tx.evidenceLinks[key] = cloneEvidenceLink(value)
+	return nil
+}
+
+func (r evidenceLinkRepository) Save(ctx context.Context, value domain.EvidenceLink, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	current, ok := r.tx.evidenceLinks[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "evidence link not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "evidence link expected_version does not match") }
+	if value.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "evidence link version must advance exactly once per save") }
+	r.tx.evidenceLinks[key] = cloneEvidenceLink(value)
+	return nil
+}
+
+type decisionRepository struct{ tx *transaction }
+
+func (r decisionRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Decision, error) {
+	if err := ctx.Err(); err != nil { return domain.Decision{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.Decision{}, err }
+	value, ok := r.tx.decisions[entityKey(scope, id)]
+	if !ok { return domain.Decision{}, domain.NewError(domain.ErrorCodeNotFound, "decision not found") }
+	return cloneDecision(value), nil
+}
+
+func (r decisionRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Decision, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.Decision, 0)
+	for _, item := range r.tx.decisions {
+		if item.Scope == scope { items = append(items, cloneDecision(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r decisionRepository) Insert(ctx context.Context, value domain.Decision) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	if _, exists := r.tx.decisions[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "decision already exists") }
+	r.tx.decisions[key] = cloneDecision(value)
+	return nil
+}
+
+func (r decisionRepository) Save(ctx context.Context, value domain.Decision, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := value.Validate(); err != nil { return err }
+	key := entityKey(value.Scope, value.ID)
+	current, ok := r.tx.decisions[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "decision not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "decision expected_version does not match") }
+	if value.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "decision version must advance exactly once per save") }
+	r.tx.decisions[key] = cloneDecision(value)
+	return nil
+}
+
 type coordinationStore struct{ tx *transaction }
 
 func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) (ports.OutcomeCoordination, error) {
@@ -828,6 +1037,58 @@ func cloneBlockers(src map[string]domain.Blocker) map[string]domain.Blocker {
 		dst[k] = cloneBlocker(v)
 	}
 	return dst
+}
+
+
+func cloneArtifacts(src map[string]domain.Artifact) map[string]domain.Artifact {
+	dst := make(map[string]domain.Artifact, len(src))
+	for k, v := range src { dst[k] = cloneArtifact(v) }
+	return dst
+}
+
+func cloneEvidence(src map[string]domain.Evidence) map[string]domain.Evidence {
+	dst := make(map[string]domain.Evidence, len(src))
+	for k, v := range src { dst[k] = cloneEvidenceValue(v) }
+	return dst
+}
+
+func cloneEvidenceLinks(src map[string]domain.EvidenceLink) map[string]domain.EvidenceLink {
+	dst := make(map[string]domain.EvidenceLink, len(src))
+	for k, v := range src { dst[k] = cloneEvidenceLink(v) }
+	return dst
+}
+
+func cloneDecisions(src map[string]domain.Decision) map[string]domain.Decision {
+	dst := make(map[string]domain.Decision, len(src))
+	for k, v := range src { dst[k] = cloneDecision(v) }
+	return dst
+}
+
+func cloneArtifact(v domain.Artifact) domain.Artifact {
+	if v.ProducedAt != nil { value := *v.ProducedAt; v.ProducedAt = &value }
+	if v.WithdrawnAt != nil { value := *v.WithdrawnAt; v.WithdrawnAt = &value }
+	return v
+}
+
+func cloneEvidenceValue(v domain.Evidence) domain.Evidence {
+	if v.ArtifactID != nil { value := *v.ArtifactID; v.ArtifactID = &value }
+	if v.Measurement != nil { value := *v.Measurement; v.Measurement = &value }
+	if v.RetractedAt != nil { value := *v.RetractedAt; v.RetractedAt = &value }
+	return v
+}
+
+func cloneEvidenceLink(v domain.EvidenceLink) domain.EvidenceLink {
+	if v.CriterionID != nil { value := *v.CriterionID; v.CriterionID = &value }
+	if v.RetractedAt != nil { value := *v.RetractedAt; v.RetractedAt = &value }
+	return v
+}
+
+func cloneDecision(v domain.Decision) domain.Decision {
+	v.Alternatives = append([]string(nil), v.Alternatives...)
+	if v.DecidedBy != nil { value := *v.DecidedBy; v.DecidedBy = &value }
+	if v.DecidedAt != nil { value := *v.DecidedAt; v.DecidedAt = &value }
+	if v.SupersedesDecisionID != nil { value := *v.SupersedesDecisionID; v.SupersedesDecisionID = &value }
+	return v
 }
 
 func cloneIssue(v domain.Issue) domain.Issue {
