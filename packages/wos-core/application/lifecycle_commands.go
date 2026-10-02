@@ -1,6 +1,6 @@
 package application
 
-import "github.com/A1b3rt0M3rcad0/wos/core/domain"
+import "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 
 type FailOutcomeCommand struct {
 	Scope           domain.Scope
