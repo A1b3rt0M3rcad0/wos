@@ -2808,7 +2808,7 @@ components:
         outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, blocking_states, evaluated_at, outcome_revision]
+      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, artifacts, evidence, evidence_links, decisions, blocking_states, evaluated_at, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -2829,6 +2829,18 @@ components:
         blockers:
           type: array
           items: {$ref: "#/components/schemas/Blocker"}
+        artifacts:
+          type: array
+          items: {$ref: "#/components/schemas/Artifact"}
+        evidence:
+          type: array
+          items: {$ref: "#/components/schemas/Evidence"}
+        evidence_links:
+          type: array
+          items: {$ref: "#/components/schemas/EvidenceLink"}
+        decisions:
+          type: array
+          items: {$ref: "#/components/schemas/Decision"}
         blocking_states:
           type: array
           items: {$ref: "#/components/schemas/BlockingState"}

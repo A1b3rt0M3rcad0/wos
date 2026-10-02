@@ -148,4 +148,23 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 		retracted.Value.Value.Lifecycle != domain.EvidenceLifecycleRetracted {
 		t.Fatalf("retracted evidence = %#v", retracted.Value.Value)
 	}
+
+	state := doJSON[application.OutcomeState](
+		t, client, http.MethodGet, outcomeURL+"/state", nil, nil, http.StatusOK,
+	)
+	if len(state.Value.Artifacts) != 1 || state.Value.Artifacts[0].ID != artifact.ID {
+		t.Fatalf("state artifacts = %#v", state.Value.Artifacts)
+	}
+	if len(state.Value.Evidence) != 1 || state.Value.Evidence[0].ID != evidence.ID {
+		t.Fatalf("state evidence = %#v", state.Value.Evidence)
+	}
+	if len(state.Value.EvidenceLinks) != 1 || state.Value.EvidenceLinks[0].ID != linkResponse.Value.Value.ID {
+		t.Fatalf("state evidence links = %#v", state.Value.EvidenceLinks)
+	}
+	if len(state.Value.Decisions) != 2 {
+		t.Fatalf("state decisions = %d, want 2", len(state.Value.Decisions))
+	}
+	if state.Header.Get("Cache-Control") != "no-store" {
+		t.Fatalf("state Cache-Control = %q, want no-store", state.Header.Get("Cache-Control"))
+	}
 }

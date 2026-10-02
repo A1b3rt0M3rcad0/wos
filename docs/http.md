@@ -414,12 +414,12 @@ returned as ready.
 Wave 09 adds durable documentary state without turning WOS into a blob store or
 a truth oracle. Artifact URIs are stored as opaque references; WOS does not
 dereference them. Evidence preserves the observation and provenance supplied by
-the caller, while \`EvidenceLink\` records how that Evidence relates to a specific
+the caller, while `EvidenceLink` records how that Evidence relates to a specific
 target.
 
 The HTTP resources are:
 
-\`\`\`text
+```text
 GET|POST /outcomes/{outcome_id}/artifacts
 GET       /outcomes/{outcome_id}/artifacts/{artifact_id}
 POST      /outcomes/{outcome_id}/artifacts/{artifact_id}/actions/withdraw
@@ -437,7 +437,7 @@ GET|PATCH /outcomes/{outcome_id}/decisions/{decision_id}
 POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/accept
 POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/reject
 POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/supersede
-\`\`\`
+```
 
 Registering an Artifact records documentary metadata and an external URI only.
 WOS does not fetch the URI or store arbitrary Artifact bytes. Withdrawal requires
@@ -447,19 +447,19 @@ Evidence content is immutable after registration. Retraction changes lifecycle
 and records the reason while preserving the original observation, source,
 producer, timestamp, checksum and optional Artifact reference.
 
-The Evidence stance belongs to \`EvidenceLink\`, not to Evidence itself. The same
+The Evidence stance belongs to `EvidenceLink`, not to Evidence itself. The same
 Evidence can therefore support one target and contradict another. Supplying a
-\`criterion_id\` identifies which SuccessCriterion the link concerns, but creating
+`criterion_id` identifies which SuccessCriterion the link concerns, but creating
 the link never creates a CriterionAssessment and never marks the criterion as
 met.
 
-A Decision starts as \`proposed\`. Its editable content may be patched only while
+A Decision starts as `proposed`. Its editable content may be patched only while
 it remains proposed. Once accepted or rejected, the documentary content is
 immutable. Rejection requires an explicit reason.
 
 Supersession is a dedicated Decision operation:
 
-\`\`\`bash
+```bash
 curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/decisions/$DECISION_ID/actions/supersede" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-wave09-decision-supersede-0001' \
@@ -471,15 +471,21 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/decisions/$DECISION_ID/actions/super
     "chosen_alternative":"PostgreSQL",
     "rationale":"Remote multi-user operation requires shared durable storage"
   }'
-\`\`\`
+```
 
 The command atomically creates the accepted successor and marks the accepted
-predecessor \`superseded\`. A predecessor may have at most one accepted direct
+predecessor `superseded`. A predecessor may have at most one accepted direct
 successor. A stale version or conflicting supersession aborts the transaction.
 
-All Wave 09 remote mutations require \`Idempotency-Key\`. Versioned lifecycle
-transitions and Decision edits use the same strong ETag / \`If-Match\` contract as
+All Wave 09 remote mutations require `Idempotency-Key`. Versioned lifecycle
+transitions and Decision edits use the same strong ETag / `If-Match` contract as
 the other WOS aggregates.
+
+`GET /outcomes/{outcome_id}/state` is the canonical Outcome-scoped continuity
+projection. In addition to Outcome/Objectives/WorkItems/Relations/Issues/Blockers,
+it includes `artifacts`, `evidence`, `evidence_links` and `decisions`.
+Consumers can therefore reconstruct the current documentary context and Decision
+history from one WOS state read without depending on prior chat/session history.
 
 ## Errors
 
