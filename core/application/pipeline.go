@@ -294,6 +294,14 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Blocker:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Artifact:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Evidence:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Decision:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.EvidenceLink:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
 			return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "criterion command is missing owner/version metadata")
@@ -412,6 +420,22 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"blocker.resolved"}, nil
 	case "CancelBlocker":
 		return []string{"blocker.cancelled"}, nil
+	case "RegisterArtifact":
+		return []string{"artifact.registered"}, nil
+	case "WithdrawArtifact":
+		return []string{"artifact.withdrawn"}, nil
+	case "RegisterEvidence":
+		return []string{"evidence.registered"}, nil
+	case "RetractEvidence":
+		return []string{"evidence.retracted"}, nil
+	case "ProposeDecision":
+		return []string{"decision.proposed"}, nil
+	case "ReviseDecision":
+		return []string{"decision.updated"}, nil
+	case "AcceptDecision":
+		return []string{"decision.accepted"}, nil
+	case "RejectDecision":
+		return []string{"decision.rejected"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":

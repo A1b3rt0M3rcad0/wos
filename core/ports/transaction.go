@@ -37,3 +37,11 @@ type IssueBlockerUnitOfWork interface {
 	Issues() IssueRepository
 	Blockers() BlockerRepository
 }
+
+type DocumentaryUnitOfWork interface {
+	UnitOfWork
+	Artifacts() ArtifactRepository
+	Evidence() EvidenceRepository
+	Decisions() DecisionRepository
+	EvidenceLinks() EvidenceLinkRepository
+}

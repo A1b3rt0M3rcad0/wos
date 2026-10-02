@@ -10,16 +10,20 @@ import (
 )
 
 type Store struct {
-	mu          sync.Mutex
-	outcomes    map[string]domain.Outcome
-	objectives  map[string]domain.Objective
-	workItems   map[string]domain.WorkItem
-	relations   map[string]domain.Relation
-	issues      map[string]domain.Issue
-	blockers    map[string]domain.Blocker
-	revisions   map[string]domain.OutcomeRevision
-	events      []domain.DomainEvent
-	idempotency map[string]idempotencyRecord
+	mu            sync.Mutex
+	outcomes      map[string]domain.Outcome
+	objectives    map[string]domain.Objective
+	workItems     map[string]domain.WorkItem
+	relations     map[string]domain.Relation
+	issues        map[string]domain.Issue
+	blockers      map[string]domain.Blocker
+	artifacts     map[string]domain.Artifact
+	evidence      map[string]domain.Evidence
+	decisions     map[string]domain.Decision
+	evidenceLinks map[string]domain.EvidenceLink
+	revisions     map[string]domain.OutcomeRevision
+	events        []domain.DomainEvent
+	idempotency   map[string]idempotencyRecord
 }
 
 type idempotencyRecord struct {
@@ -31,15 +35,19 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
-		outcomes:    make(map[string]domain.Outcome),
-		objectives:  make(map[string]domain.Objective),
-		workItems:   make(map[string]domain.WorkItem),
-		relations:   make(map[string]domain.Relation),
-		issues:      make(map[string]domain.Issue),
-		blockers:    make(map[string]domain.Blocker),
-		revisions:   make(map[string]domain.OutcomeRevision),
-		events:      make([]domain.DomainEvent, 0),
-		idempotency: make(map[string]idempotencyRecord),
+		outcomes:      make(map[string]domain.Outcome),
+		objectives:    make(map[string]domain.Objective),
+		workItems:     make(map[string]domain.WorkItem),
+		relations:     make(map[string]domain.Relation),
+		issues:        make(map[string]domain.Issue),
+		blockers:      make(map[string]domain.Blocker),
+		artifacts:     make(map[string]domain.Artifact),
+		evidence:      make(map[string]domain.Evidence),
+		decisions:     make(map[string]domain.Decision),
+		evidenceLinks: make(map[string]domain.EvidenceLink),
+		revisions:     make(map[string]domain.OutcomeRevision),
+		events:        make([]domain.DomainEvent, 0),
+		idempotency:   make(map[string]idempotencyRecord),
 	}
 }
 
@@ -51,16 +59,20 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	}
 
 	tx := &transaction{
-		store:       s,
-		outcomes:    cloneOutcomes(s.outcomes),
-		objectives:  cloneObjectives(s.objectives),
-		workItems:   cloneWorkItems(s.workItems),
-		relations:   cloneRelations(s.relations),
-		issues:      cloneIssues(s.issues),
-		blockers:    cloneBlockers(s.blockers),
-		revisions:   cloneRevisions(s.revisions),
-		events:      cloneEvents(s.events),
-		idempotency: cloneIdempotency(s.idempotency),
+		store:         s,
+		outcomes:      cloneOutcomes(s.outcomes),
+		objectives:    cloneObjectives(s.objectives),
+		workItems:     cloneWorkItems(s.workItems),
+		relations:     cloneRelations(s.relations),
+		issues:        cloneIssues(s.issues),
+		blockers:      cloneBlockers(s.blockers),
+		artifacts:     cloneArtifacts(s.artifacts),
+		evidence:      cloneEvidence(s.evidence),
+		decisions:     cloneDecisions(s.decisions),
+		evidenceLinks: cloneEvidenceLinks(s.evidenceLinks),
+		revisions:     cloneRevisions(s.revisions),
+		events:        cloneEvents(s.events),
+		idempotency:   cloneIdempotency(s.idempotency),
 	}
 	tx.outcomeRepo = outcomeRepository{tx: tx}
 	tx.objectiveRepo = objectiveRepository{tx: tx}
@@ -68,6 +80,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.relationRepo = relationRepository{tx: tx}
 	tx.issueRepo = issueRepository{tx: tx}
 	tx.blockerRepo = blockerRepository{tx: tx}
+	tx.artifactRepo = artifactRepository{tx: tx}
+	tx.evidenceRepo = evidenceRepository{tx: tx}
+	tx.decisionRepo = decisionRepository{tx: tx}
+	tx.evidenceLinkRepo = evidenceLinkRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -75,17 +91,21 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
-	store       *Store
-	closed      bool
-	outcomes    map[string]domain.Outcome
-	objectives  map[string]domain.Objective
-	workItems   map[string]domain.WorkItem
-	relations   map[string]domain.Relation
-	issues      map[string]domain.Issue
-	blockers    map[string]domain.Blocker
-	revisions   map[string]domain.OutcomeRevision
-	events      []domain.DomainEvent
-	idempotency map[string]idempotencyRecord
+	store         *Store
+	closed        bool
+	outcomes      map[string]domain.Outcome
+	objectives    map[string]domain.Objective
+	workItems     map[string]domain.WorkItem
+	relations     map[string]domain.Relation
+	issues        map[string]domain.Issue
+	blockers      map[string]domain.Blocker
+	artifacts     map[string]domain.Artifact
+	evidence      map[string]domain.Evidence
+	decisions     map[string]domain.Decision
+	evidenceLinks map[string]domain.EvidenceLink
+	revisions     map[string]domain.OutcomeRevision
+	events        []domain.DomainEvent
+	idempotency   map[string]idempotencyRecord
 
 	outcomeRepo      outcomeRepository
 	objectiveRepo    objectiveRepository
@@ -93,6 +113,10 @@ type transaction struct {
 	relationRepo     relationRepository
 	issueRepo        issueRepository
 	blockerRepo      blockerRepository
+	artifactRepo     artifactRepository
+	evidenceRepo     evidenceRepository
+	decisionRepo     decisionRepository
+	evidenceLinkRepo evidenceLinkRepository
 	coordination     coordinationStore
 	eventLog         eventLog
 	idempotencyStore idempotencyStore
@@ -104,6 +128,12 @@ func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workIt
 func (tx *transaction) Relations() ports.RelationRepository   { return tx.relationRepo }
 func (tx *transaction) Issues() ports.IssueRepository         { return tx.issueRepo }
 func (tx *transaction) Blockers() ports.BlockerRepository     { return tx.blockerRepo }
+func (tx *transaction) Artifacts() ports.ArtifactRepository   { return tx.artifactRepo }
+func (tx *transaction) Evidence() ports.EvidenceRepository    { return tx.evidenceRepo }
+func (tx *transaction) Decisions() ports.DecisionRepository   { return tx.decisionRepo }
+func (tx *transaction) EvidenceLinks() ports.EvidenceLinkRepository {
+	return tx.evidenceLinkRepo
+}
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
@@ -118,6 +148,10 @@ func (tx *transaction) Commit() error {
 	tx.store.relations = cloneRelations(tx.relations)
 	tx.store.issues = cloneIssues(tx.issues)
 	tx.store.blockers = cloneBlockers(tx.blockers)
+	tx.store.artifacts = cloneArtifacts(tx.artifacts)
+	tx.store.evidence = cloneEvidence(tx.evidence)
+	tx.store.decisions = cloneDecisions(tx.decisions)
+	tx.store.evidenceLinks = cloneEvidenceLinks(tx.evidenceLinks)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -830,6 +864,38 @@ func cloneBlockers(src map[string]domain.Blocker) map[string]domain.Blocker {
 	return dst
 }
 
+func cloneArtifacts(src map[string]domain.Artifact) map[string]domain.Artifact {
+	dst := make(map[string]domain.Artifact, len(src))
+	for k, v := range src {
+		dst[k] = cloneArtifact(v)
+	}
+	return dst
+}
+
+func cloneEvidence(src map[string]domain.Evidence) map[string]domain.Evidence {
+	dst := make(map[string]domain.Evidence, len(src))
+	for k, v := range src {
+		dst[k] = cloneEvidenceValue(v)
+	}
+	return dst
+}
+
+func cloneDecisions(src map[string]domain.Decision) map[string]domain.Decision {
+	dst := make(map[string]domain.Decision, len(src))
+	for k, v := range src {
+		dst[k] = cloneDecision(v)
+	}
+	return dst
+}
+
+func cloneEvidenceLinks(src map[string]domain.EvidenceLink) map[string]domain.EvidenceLink {
+	dst := make(map[string]domain.EvidenceLink, len(src))
+	for k, v := range src {
+		dst[k] = cloneEvidenceLink(v)
+	}
+	return dst
+}
+
 func cloneIssue(v domain.Issue) domain.Issue {
 	v.AffectedRefs = append([]domain.EntityRef(nil), v.AffectedRefs...)
 	if v.DuplicateOfIssueID != nil {
@@ -851,6 +917,53 @@ func cloneBlocker(v domain.Blocker) domain.Blocker {
 	if v.ResolvedAt != nil {
 		value := *v.ResolvedAt
 		v.ResolvedAt = &value
+	}
+	return v
+}
+
+func cloneArtifact(v domain.Artifact) domain.Artifact {
+	if v.ProducedAt != nil {
+		value := *v.ProducedAt
+		v.ProducedAt = &value
+	}
+	return v
+}
+
+func cloneEvidenceValue(v domain.Evidence) domain.Evidence {
+	if v.ArtifactID != nil {
+		id := *v.ArtifactID
+		v.ArtifactID = &id
+	}
+	if v.Measurement != nil {
+		measurement := *v.Measurement
+		measurement.Value = append([]byte(nil), v.Measurement.Value...)
+		measurement.Conditions = append([]byte(nil), v.Measurement.Conditions...)
+		v.Measurement = &measurement
+	}
+	return v
+}
+
+func cloneDecision(v domain.Decision) domain.Decision {
+	v.Alternatives = append([]string(nil), v.Alternatives...)
+	if v.DecidedBy != nil {
+		actor := *v.DecidedBy
+		v.DecidedBy = &actor
+	}
+	if v.DecidedAt != nil {
+		value := *v.DecidedAt
+		v.DecidedAt = &value
+	}
+	if v.SupersedesDecisionID != nil {
+		id := *v.SupersedesDecisionID
+		v.SupersedesDecisionID = &id
+	}
+	return v
+}
+
+func cloneEvidenceLink(v domain.EvidenceLink) domain.EvidenceLink {
+	if v.CriterionID != nil {
+		id := *v.CriterionID
+		v.CriterionID = &id
 	}
 	return v
 }
