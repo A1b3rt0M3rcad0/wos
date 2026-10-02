@@ -158,6 +158,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	uow.relations = relationRepository{uow: uow}
 	uow.issues = issueRepository{uow: uow}
 	uow.blockers = blockerRepository{uow: uow}
+	uow.artifacts = artifactRepository{uow: uow}
+	uow.evidence = evidenceRepository{uow: uow}
+	uow.decisions = decisionRepository{uow: uow}
+	uow.evidenceLinks = evidenceLinkRepository{uow: uow}
 	uow.coordination = coordinationStore{uow: uow}
 	uow.events = eventLog{uow: uow}
 	uow.idempotency = idempotencyStore{uow: uow}
@@ -170,15 +174,19 @@ type unitOfWork struct {
 	closed               bool
 	idempotencyRetention time.Duration
 
-	outcomes     outcomeRepository
-	objectives   objectiveRepository
-	workItems    workItemRepository
-	relations    relationRepository
-	issues       issueRepository
-	blockers     blockerRepository
-	coordination coordinationStore
-	events       eventLog
-	idempotency  idempotencyStore
+	outcomes      outcomeRepository
+	objectives    objectiveRepository
+	workItems     workItemRepository
+	relations     relationRepository
+	issues        issueRepository
+	blockers      blockerRepository
+	artifacts     artifactRepository
+	evidence      evidenceRepository
+	decisions     decisionRepository
+	evidenceLinks evidenceLinkRepository
+	coordination  coordinationStore
+	events        eventLog
+	idempotency   idempotencyStore
 }
 
 func (u *unitOfWork) Outcomes() ports.OutcomeRepository     { return u.outcomes }
@@ -187,6 +195,12 @@ func (u *unitOfWork) WorkItems() ports.WorkItemRepository   { return u.workItems
 func (u *unitOfWork) Relations() ports.RelationRepository   { return u.relations }
 func (u *unitOfWork) Issues() ports.IssueRepository         { return u.issues }
 func (u *unitOfWork) Blockers() ports.BlockerRepository     { return u.blockers }
+func (u *unitOfWork) Artifacts() ports.ArtifactRepository   { return u.artifacts }
+func (u *unitOfWork) Evidence() ports.EvidenceRepository    { return u.evidence }
+func (u *unitOfWork) Decisions() ports.DecisionRepository   { return u.decisions }
+func (u *unitOfWork) EvidenceLinks() ports.EvidenceLinkRepository {
+	return u.evidenceLinks
+}
 func (u *unitOfWork) Coordination() ports.CoordinationStore { return u.coordination }
 func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }

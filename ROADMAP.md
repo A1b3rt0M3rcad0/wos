@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 08 — Leases and Fencing (in progress)
+**Current wave:** Wave 09 — Documentary Records and Decisions (in progress)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -426,7 +426,7 @@ The verified suite includes direct/inherited blocking, Issue/Blocker lifecycle i
 
 ## Wave 08 — Leases and Fencing
 
-**Status:** ✅ Implementation complete; pending integration
+**Status:** ✅ Done and merged into `master`
 
 Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, principal-bound leases, TTL, fencing tokens, expiration semantics, attention-needed projection and audited administrative override.
 
@@ -466,11 +466,31 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 09 — Documentary Records and Decisions
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Implement Artifact, Evidence, EvidenceLink and Decision; immutable documentary content; retraction/withdrawal; stance; provenance; explicit acceptance and atomic supersession.
 
-**Completion gate:** another consumer can understand current facts/choices without previous chat history.
+### Initial implementation
+
+- [x] Add Artifact, Evidence, EvidenceLink and Decision domain models with explicit lifecycle validation.
+- [x] Preserve immutable Artifact/Evidence content while allowing audited withdrawal/retraction.
+- [x] Keep Evidence stance on EvidenceLink rather than on Evidence itself.
+- [x] Freeze accepted/rejected Decision content at the domain boundary.
+- [x] Add Application commands and memory repositories for Artifact, Evidence and Decision.
+- [x] Emit Artifact/Evidence/Decision Domain Events through the existing idempotent command pipeline.
+- [x] Allow documentary additions to terminal Outcomes while rejecting archived Outcome mutations.
+- [x] Add SQLite schema/repositories and restart coverage for the first documentary slice.
+
+### Remaining work
+
+- [ ] Add Application commands, integrity validation and events for EvidenceLink creation/retraction.
+- [ ] Implement atomic accepted-Decision supersession, direct-successor uniqueness and cycle prevention.
+- [ ] Enable persisted Decision as a valid Blocker cause without implicit Blocker resolution.
+- [ ] Integrate documentary records and current Decision history into continuity/state queries.
+- [ ] Expose Wave 09 operations through HTTP/OpenAPI/docs.
+- [ ] Complete memory/SQLite parity, concurrency and end-to-end transport verification.
+
+**Completion gate:** still open. The first slice persists immutable facts and explicit accepted decisions, but another consumer does not yet receive the complete documentary graph, EvidenceLink semantics or supersession history from continuity queries.
 
 **Target commit:**  
 `feat(records): add evidence artifacts and explicit decision history`
@@ -612,9 +632,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–07 are merged into `master`. Wave 08 — Leases and Fencing is implementation-complete on `feat/wave-08-leases-fencing` and pending integration.
+Waves 01–08 are merged into `master`. Wave 09 — Documentary Records and Decisions is active on `feat/wave-09-documentary-records-decisions`.
 
-1. Review and merge PR #8 into `master`.
-2. Start Wave 09 — Documentary Records and Decisions only from the integrated Wave 08 baseline.
-3. Implement Artifact, Evidence, EvidenceLink and Decision without weakening the completed lease/fencing contract.
-4. Preserve the Wave 08 authorization port as the seam for the full Namespace grant model planned in Wave 15.
+1. Continue Wave 09 from the initial three-commit documentary slice without treating the wave as complete.
+2. Implement EvidenceLink Application semantics with target/criterion integrity and retraction events.
+3. Implement atomic Decision supersession with uniqueness and cycle protection.
+4. Integrate documentary history into continuity queries before exposing the complete Wave 09 HTTP contract.
