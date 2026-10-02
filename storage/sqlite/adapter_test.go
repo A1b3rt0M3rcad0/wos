@@ -414,8 +414,18 @@ func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	work, err := service.CreateWorkItem(ctx, sqliteCommandContext(
+	activated, err := service.ActivateOutcome(ctx, sqliteCommandContext(
 		"0199e946-0000-7000-8000-000000000102", "",
+	), application.ActivateOutcomeCommand{
+		Scope:           created.Value.Scope(),
+		ExpectedVersion: created.Value.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	work, err := service.CreateWorkItem(ctx, sqliteCommandContext(
+		"0199e946-0000-7000-8000-000000000103", "",
 	), application.CreateWorkItemCommand{
 		Scope:     created.Value.Scope(),
 		Title:     "Claim me",
@@ -427,13 +437,13 @@ func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) 
 	}
 
 	claimContext := sqliteCommandContext(
-		"0199e946-0000-7000-8000-000000000103", "",
+		"0199e946-0000-7000-8000-000000000104", "",
 	)
 	claimContext.PrincipalID = "sqlite-new-principal"
 	claimContext.Actor.ID = "sqlite-new-principal"
 
 	claimed, err := service.ClaimWorkItem(ctx, claimContext, application.ClaimWorkItemCommand{
-		Scope:           created.Value.Scope(),
+		Scope:           activated.Value.Scope(),
 		WorkItemID:      work.Value.ID,
 		ExpectedVersion: work.Value.Version,
 		TTL:             domain.DefaultLeaseTTL,
