@@ -73,7 +73,6 @@ func (h *Handler) addCriterion(w http.ResponseWriter, r *http.Request, owner dom
 		return
 	}
 	setETag(w, owner.Kind, owner.ID, expected+1)
-	setETag(w, owner.Kind, owner.ID, expected+1)
 	writeJSON(w, http.StatusCreated, result)
 }
 
@@ -293,5 +292,6 @@ func (h *Handler) assessCriterion(w http.ResponseWriter, r *http.Request, owner 
 		writeError(w, r, err)
 		return
 	}
+	setETag(w, owner.Kind, owner.ID, expected+1)
 	writeJSON(w, http.StatusCreated, result)
 }
