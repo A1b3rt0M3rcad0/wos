@@ -3,9 +3,10 @@ info:
   title: Woobe Outcome Server HTTP API
   version: 0.1.0-dev
   description: |
-    Initial M1 HTTP contract for WOS. The API exposes the same Application
-    services used by embedded consumers. Namespace and Outcome scope are
-    explicit in every domain path.
+    HTTP contract implemented through Wave 07. The API exposes the same
+    Application services used by embedded consumers. Namespace and Outcome
+    scope are explicit in every domain path. Issues and Blockers are independent
+    aggregates; compound coordination commands remain explicit and atomic.
 servers:
   - url: http://127.0.0.1:8080
 tags:
@@ -14,6 +15,8 @@ tags:
   - name: Objectives
   - name: WorkItems
   - name: Relations
+  - name: Issues
+  - name: Blockers
   - name: Queries
   - name: Criteria
 
@@ -656,6 +659,404 @@ paths:
               schema:
                 $ref: "#/components/schemas/CriterionMutationResult"
 
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues:
+    get:
+      tags: [Issues]
+      operationId: listIssues
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Outcome-local Issues ordered deterministically.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueCollection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Issues]
+      operationId: createIssue
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateIssueRequest"
+      responses:
+        "201":
+          description: Issue created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+            Location:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueMutationResult"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/actions/report-with-blocker:
+    post:
+      tags: [Issues, Blockers]
+      operationId: reportIssueWithBlocker
+      description: Atomically creates an Issue and one Blocker caused by that Issue.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportIssueWithBlockerRequest"
+      responses:
+        "201":
+          description: Both aggregates were confirmed under one outcome_revision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportIssueWithBlockerMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}:
+    get:
+      tags: [Issues]
+      operationId: getIssue
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Persisted Issue representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Issues]
+      operationId: updateIssue
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIssueRequest"
+      responses:
+        "200":
+          description: Issue details updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_version_action}:
+    post:
+      tags: [Issues]
+      operationId: transitionIssueVersionOnly
+      description: Investigate or reopen an Issue. Resolving an Issue never resolves a Blocker implicitly.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - name: issue_version_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [investigate, reopen]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/VersionBody"
+      responses:
+        "200":
+          description: Issue lifecycle transition confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_resolution_action}:
+    post:
+      tags: [Issues]
+      operationId: closeIssue
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - name: issue_resolution_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [resolve, wont-fix]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolutionRequest"
+      responses:
+        "200":
+          description: Issue closed explicitly.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/mark-duplicate:
+    post:
+      tags: [Issues]
+      operationId: markIssueDuplicate
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkIssueDuplicateRequest"
+      responses:
+        "200":
+          description: Issue marked as duplicate after cycle validation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/resolve-with-blockers:
+    post:
+      tags: [Issues, Blockers]
+      operationId: resolveIssueAndBlockers
+      description: |
+        Atomically resolves one Issue and an explicit bounded list of Blockers
+        caused by it. Every listed Blocker requires its own expected_version and
+        release_confirmed=true. Unlisted Blockers are untouched.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IssueID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveIssueAndBlockersRequest"
+      responses:
+        "200":
+          description: Explicit multi-aggregate resolution confirmed atomically.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveIssueAndBlockersMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers:
+    get:
+      tags: [Blockers]
+      operationId: listBlockers
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Outcome-local Blockers ordered deterministically.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerCollection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Blockers]
+      operationId: createBlocker
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlockerRequest"
+      responses:
+        "201":
+          description: Blocker created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+            Location:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers/{blocker_id}:
+    get:
+      tags: [Blockers]
+      operationId: getBlocker
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/BlockerID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Persisted Blocker representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Blockers]
+      operationId: updateBlocker
+      description: Wave 07 allows editing the description of an active Blocker.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/BlockerID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBlockerRequest"
+      responses:
+        "200":
+          description: Blocker description updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers/{blocker_id}/actions/{blocker_action}:
+    post:
+      tags: [Blockers]
+      operationId: closeBlocker
+      description: Resolve or cancel exactly one active Blocker.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/BlockerID"
+        - name: blocker_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [resolve, cancel]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ResolutionRequest"
+                - $ref: "#/components/schemas/ReasonRequest"
+      responses:
+        "200":
+          description: Exactly one Blocker was closed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
 components:
   parameters:
     NamespaceID:
@@ -680,6 +1081,16 @@ components:
       schema: {$ref: "#/components/schemas/ID"}
     RelationID:
       name: relation_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    IssueID:
+      name: issue_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    BlockerID:
+      name: blocker_id
       in: path
       required: true
       schema: {$ref: "#/components/schemas/ID"}
@@ -803,6 +1214,28 @@ components:
     DependencySatisfaction:
       type: string
       enum: [target_completed]
+    IssueSeverity:
+      type: string
+      enum: [critical, major, minor, informational]
+    IssueLifecycle:
+      type: string
+      enum: [open, investigating, resolved, wont_fix, duplicate]
+    BlockerLifecycle:
+      type: string
+      enum: [active, resolved, cancelled]
+    BlockerPropagation:
+      type: string
+      enum: [direct, subtree]
+
+    EntityRefRequest:
+      type: object
+      additionalProperties: false
+      required: [kind, id]
+      properties:
+        kind:
+          type: string
+          enum: [outcome, objective, work_item, issue, blocker, relation]
+        id: {$ref: "#/components/schemas/ID"}
 
     CreateOutcomeRequest:
       type: object
@@ -864,6 +1297,116 @@ components:
         satisfaction:
           $ref: "#/components/schemas/DependencySatisfaction"
         reason: {type: string}
+
+    CreateIssueRequest:
+      type: object
+      additionalProperties: false
+      required: [title, severity]
+      properties:
+        title: {type: string}
+        description: {type: string}
+        severity: {$ref: "#/components/schemas/IssueSeverity"}
+        affected_refs:
+          type: array
+          items: {$ref: "#/components/schemas/EntityRefRequest"}
+
+    UpdateIssueRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        severity: {$ref: "#/components/schemas/IssueSeverity"}
+        affected_refs:
+          type: array
+          items: {$ref: "#/components/schemas/EntityRefRequest"}
+
+    ExternalCause:
+      type: object
+      additionalProperties: false
+      required: [provider, description]
+      properties:
+        provider: {type: string}
+        id: {type: string}
+        uri: {type: string, format: uri}
+        description: {type: string}
+
+    CreateBlockerRequest:
+      type: object
+      additionalProperties: false
+      required: [blocked_ref]
+      properties:
+        blocked_ref: {$ref: "#/components/schemas/EntityRefRequest"}
+        cause_ref: {$ref: "#/components/schemas/EntityRefRequest"}
+        external_cause: {$ref: "#/components/schemas/ExternalCause"}
+        description: {type: string}
+        propagation: {$ref: "#/components/schemas/BlockerPropagation"}
+
+    UpdateBlockerRequest:
+      type: object
+      additionalProperties: false
+      required: [description]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        description: {type: string}
+
+    ResolutionRequest:
+      type: object
+      additionalProperties: false
+      required: [resolution_summary]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        resolution_summary: {type: string}
+
+    MarkIssueDuplicateRequest:
+      type: object
+      additionalProperties: false
+      required: [duplicate_of_issue_id]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        duplicate_of_issue_id: {$ref: "#/components/schemas/ID"}
+
+    ReportIssueWithBlockerRequest:
+      type: object
+      additionalProperties: false
+      required: [issue, blocker]
+      properties:
+        issue:
+          $ref: "#/components/schemas/CreateIssueRequest"
+        blocker:
+          type: object
+          additionalProperties: false
+          required: [blocked_ref]
+          properties:
+            blocked_ref: {$ref: "#/components/schemas/EntityRefRequest"}
+            description: {type: string}
+            propagation: {$ref: "#/components/schemas/BlockerPropagation"}
+
+    BlockerResolutionRequest:
+      type: object
+      additionalProperties: false
+      required: [blocker_id, expected_version, resolution_summary, release_confirmed]
+      properties:
+        blocker_id: {$ref: "#/components/schemas/ID"}
+        expected_version: {$ref: "#/components/schemas/Version"}
+        resolution_summary: {type: string}
+        release_confirmed:
+          type: boolean
+          const: true
+
+    ResolveIssueAndBlockersRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_issue_version, issue_resolution_summary, blockers]
+      properties:
+        expected_issue_version: {$ref: "#/components/schemas/Version"}
+        issue_resolution_summary: {type: string}
+        blockers:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items: {$ref: "#/components/schemas/BlockerResolutionRequest"}
 
     UpdateOutcomeRequest:
       type: object
@@ -1043,6 +1586,62 @@ components:
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
 
+    Issue:
+      type: object
+      required: [id, scope, version, title, severity, affected_refs, lifecycle, reported_by, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        severity: {$ref: "#/components/schemas/IssueSeverity"}
+        affected_refs:
+          type: array
+          items: {type: object}
+        lifecycle: {$ref: "#/components/schemas/IssueLifecycle"}
+        reported_by: {$ref: "#/components/schemas/ActorRef"}
+        resolution_summary: {type: string}
+        duplicate_of_issue_id: {$ref: "#/components/schemas/ID"}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Blocker:
+      type: object
+      required: [id, scope, version, blocked_ref, lifecycle, propagation, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        blocked_ref: {type: object}
+        cause_ref: {type: object}
+        external_cause: {$ref: "#/components/schemas/ExternalCause"}
+        description: {type: string}
+        lifecycle: {$ref: "#/components/schemas/BlockerLifecycle"}
+        propagation: {$ref: "#/components/schemas/BlockerPropagation"}
+        resolved_at: {type: string, format: date-time}
+        resolution_summary: {type: string}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    AppliedBlocker:
+      type: object
+      required: [blocker, inherited]
+      properties:
+        blocker: {$ref: "#/components/schemas/Blocker"}
+        inherited: {type: boolean}
+        inherited_from: {type: object}
+
+    BlockingState:
+      type: object
+      required: [ref, is_blocked, active_blockers]
+      properties:
+        ref: {type: object}
+        is_blocked: {type: boolean}
+        active_blockers:
+          type: array
+          items: {$ref: "#/components/schemas/AppliedBlocker"}
+
     Readiness:
       type: object
       required: [ref, ready, evaluated_at]
@@ -1058,6 +1657,7 @@ components:
               - outcome_not_active
               - outcome_archived
               - objective_terminal
+              - blocked
               - hard_dependency_unsatisfied
               - not_before
               - active_lease
@@ -1123,6 +1723,46 @@ components:
           required: [value]
           properties:
             value: {$ref: "#/components/schemas/Relation"}
+    IssueMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Issue"}
+    BlockerMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Blocker"}
+    ReportIssueWithBlockerMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value:
+              type: object
+              required: [issue, blocker]
+              properties:
+                issue: {$ref: "#/components/schemas/Issue"}
+                blocker: {$ref: "#/components/schemas/Blocker"}
+    ResolveIssueAndBlockersMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value:
+              type: object
+              required: [issue, blockers]
+              properties:
+                issue: {$ref: "#/components/schemas/Issue"}
+                blockers:
+                  type: array
+                  items: {$ref: "#/components/schemas/Blocker"}
 
     OutcomeReadResult:
       type: object
@@ -1147,6 +1787,18 @@ components:
       required: [value, outcome_revision]
       properties:
         value: {$ref: "#/components/schemas/Relation"}
+        outcome_revision: {type: integer, minimum: 1}
+    IssueReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Issue"}
+        outcome_revision: {type: integer, minimum: 1}
+    BlockerReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Blocker"}
         outcome_revision: {type: integer, minimum: 1}
 
     ObjectiveCollection:
@@ -1173,9 +1825,25 @@ components:
           type: array
           items: {$ref: "#/components/schemas/Relation"}
         outcome_revision: {type: integer, minimum: 1}
+    IssueCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Issue"}
+        outcome_revision: {type: integer, minimum: 1}
+    BlockerCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Blocker"}
+        outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, relations, outcome_revision]
+      required: [outcome, objectives, work_items, relations, issues, blockers, blocking_states, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -1187,6 +1855,15 @@ components:
         relations:
           type: array
           items: {$ref: "#/components/schemas/Relation"}
+        issues:
+          type: array
+          items: {$ref: "#/components/schemas/Issue"}
+        blockers:
+          type: array
+          items: {$ref: "#/components/schemas/Blocker"}
+        blocking_states:
+          type: array
+          items: {$ref: "#/components/schemas/BlockingState"}
         outcome_revision: {type: integer, minimum: 1}
 
     ErrorEnvelope:
