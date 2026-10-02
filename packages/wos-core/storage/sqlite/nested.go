@@ -797,6 +797,19 @@ INSERT OR IGNORE INTO conclusion_assessments (
 				return mapSQLError("insert conclusion assessment", err)
 			}
 		}
+		if !conclusion.ID.IsZero() {
+			if _, err := tx.ExecContext(ctx, `
+UPDATE conclusions
+SET public_id = ?
+WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND public_id IS NULL`,
+				conclusion.ID.String(),
+				owner.NamespaceID.String(),
+				owner.OutcomeID.String(),
+				storageID,
+			); err != nil {
+				return mapSQLError("backfill conclusion public id", err)
+			}
+		}
 		if err := verifyConclusionRow(
 			ctx,
 			tx,
@@ -967,6 +980,12 @@ ORDER BY ordinal`,
 				return nil, nil, err
 			}
 			value.ID = parsed
+		} else {
+			derived, err := legacyConclusionPublicID(storageID, decodeTime(recordedAt))
+			if err != nil {
+				return nil, nil, err
+			}
+			value.ID = derived
 		}
 		if ownerVersion.Valid {
 			ownerCopy := owner
