@@ -1,0 +1,952 @@
+openapi: 3.1.0
+info:
+  title: Woobe Outcome Server HTTP API
+  version: 0.1.0-dev
+  description: |
+    Initial M1 HTTP contract for WOS. The API exposes the same Application
+    services used by embedded consumers. Namespace and Outcome scope are
+    explicit in every domain path.
+servers:
+  - url: http://127.0.0.1:8080
+tags:
+  - name: Health
+  - name: Outcomes
+  - name: Objectives
+  - name: WorkItems
+  - name: Criteria
+
+paths:
+  /livez:
+    get:
+      tags: [Health]
+      operationId: live
+      responses:
+        "200":
+          description: Process is live.
+  /readyz:
+    get:
+      tags: [Health]
+      operationId: ready
+      responses:
+        "200":
+          description: Storage is reachable and schema is compatible.
+        "503":
+          description: Server is not ready.
+
+  /api/v1/namespaces/{namespace_id}/outcomes:
+    post:
+      tags: [Outcomes]
+      operationId: createOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOutcomeRequest"
+      responses:
+        "201":
+          description: Outcome created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+            Location:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomeMutationResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}:
+    get:
+      tags: [Outcomes]
+      operationId: getOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Persisted Outcome representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomeReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Outcomes]
+      operationId: updateOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOutcomeRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OutcomeMutation"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/state:
+    get:
+      tags: [Outcomes]
+      operationId: getOutcomeState
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Coherent M1 Outcome state projection.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomeState"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/activate:
+    post:
+      tags: [Outcomes]
+      operationId: activateOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        $ref: "#/components/requestBodies/VersionBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/OutcomeMutation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/achieve:
+    post:
+      tags: [Outcomes]
+      operationId: achieveOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/ReasonBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/OutcomeMutation"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/{outcome_action}:
+    post:
+      tags: [Outcomes]
+      operationId: transitionOutcome
+      description: |
+        Lifecycle action for fail, abandon, reopen, archive or unarchive.
+        Archive accepts the version body; the other actions accept a reason body.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: outcome_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [fail, abandon, reopen, archive, unarchive]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/OutcomeMutation"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives:
+    get:
+      tags: [Objectives]
+      operationId: listObjectives
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+      responses:
+        "200":
+          description: Objective collection for the Outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveCollection"
+    post:
+      tags: [Objectives]
+      operationId: createObjective
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateObjectiveRequest"
+      responses:
+        "201":
+          description: Objective created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives/{objective_id}:
+    get:
+      tags: [Objectives]
+      operationId: getObjective
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ObjectiveID"
+      responses:
+        "200":
+          description: Persisted Objective representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Objectives]
+      operationId: updateObjective
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ObjectiveID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateObjectiveRequest"
+      responses:
+        "200":
+          description: Objective updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives/{objective_id}/actions/{objective_action}:
+    post:
+      tags: [Objectives]
+      operationId: transitionObjective
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ObjectiveID"
+        - name: objective_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [start, achieve, cancel, reopen]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: Objective transition confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items:
+    get:
+      tags: [WorkItems]
+      operationId: listWorkItems
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+      responses:
+        "200":
+          description: WorkItem collection for the Outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemCollection"
+    post:
+      tags: [WorkItems]
+      operationId: createWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkItemRequest"
+      responses:
+        "201":
+          description: WorkItem created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}:
+    get:
+      tags: [WorkItems]
+      operationId: getWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+      responses:
+        "200":
+          description: Persisted WorkItem representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [WorkItems]
+      operationId: updateWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkItemRequest"
+      responses:
+        "200":
+          description: WorkItem updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/claim:
+    post:
+      tags: [WorkItems]
+      operationId: claimWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimWorkItemRequest"
+      responses:
+        "200":
+          description: WorkItem claimed.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/complete:
+    post:
+      tags: [WorkItems]
+      operationId: completeWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteWorkItemRequest"
+      responses:
+        "200":
+          description: WorkItem completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/{work_action}:
+    post:
+      tags: [WorkItems]
+      operationId: transitionWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - name: work_action
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [activate, defer, release, cancel, reopen]
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: WorkItem transition confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria:
+    post:
+      tags: [Criteria]
+      operationId: addOutcomeCriterion
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/CriterionBody"
+      responses:
+        "201":
+          description: Criterion created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CriterionMutationResult"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria:
+    post:
+      tags: [Criteria]
+      operationId: addNestedCriterion
+      description: Adds a criterion to an Objective or WorkItem.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: owner_collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [objectives, work-items]
+        - name: owner_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/CriterionBody"
+      responses:
+        "201":
+          description: Criterion created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CriterionMutationResult"
+
+components:
+  parameters:
+    NamespaceID:
+      name: namespace_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    OutcomeID:
+      name: outcome_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    ObjectiveID:
+      name: objective_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    WorkItemID:
+      name: work_item_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: |
+        Strong ETag of the persisted aggregate, for example
+        "work_item:0199e100-0000-7000-8000-000000000001:v5".
+        Either If-Match or expected_version in the body is required for
+        versioned mutations. If both are present they must agree.
+      schema: {type: string}
+    CorrelationID:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      schema: {type: string}
+
+  requestBodies:
+    VersionBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VersionRequest"
+    ReasonBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ReasonRequest"
+    CriterionBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CriterionRequest"
+
+  responses:
+    OutcomeMutation:
+      description: Outcome mutation confirmed or replayed.
+      headers:
+        ETag:
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/OutcomeMutationResult"
+    BadRequest:
+      description: Invalid request, identifier, JSON or header format.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Resource not found in the explicit Namespace/Outcome scope.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: Lifecycle, lease, criterion or idempotency conflict.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    PreconditionFailed:
+      description: Persisted version did not satisfy the supplied precondition.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    PreconditionRequired:
+      description: A required If-Match or expected_version precondition is absent.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+
+  schemas:
+    ID:
+      type: string
+      format: uuid
+      pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    Version:
+      type: integer
+      minimum: 1
+    Priority:
+      type: string
+      enum: [critical, high, normal, low]
+    OutcomeLifecycle:
+      type: string
+      enum: [draft, active, achieved, failed, abandoned]
+    ObjectiveLifecycle:
+      type: string
+      enum: [planned, in_progress, achieved, cancelled]
+    WorkItemLifecycle:
+      type: string
+      enum: [backlog, todo, in_progress, done, cancelled]
+
+    CreateOutcomeRequest:
+      type: object
+      additionalProperties: false
+      required: [title, desired_state, priority]
+      properties:
+        title: {type: string}
+        description: {type: string}
+        desired_state: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+
+    CreateObjectiveRequest:
+      type: object
+      additionalProperties: false
+      required: [title, priority]
+      properties:
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+        required_for_outcome: {type: boolean, default: false}
+        parent_objective_id: {$ref: "#/components/schemas/ID"}
+
+    CreateWorkItemRequest:
+      type: object
+      additionalProperties: false
+      required: [title, priority]
+      properties:
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+        lifecycle:
+          type: string
+          enum: [backlog, todo]
+          default: backlog
+        objective_id: {$ref: "#/components/schemas/ID"}
+
+    UpdateOutcomeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        desired_state: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+
+    UpdateObjectiveRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+        required_for_outcome: {type: boolean}
+
+    UpdateWorkItemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+
+    VersionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+
+    ReasonRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        reason: {type: string}
+
+    CriterionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, required, verification_mode]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        required: {type: boolean}
+        verification_mode:
+          type: string
+          enum: [attestation, evidence_review, external_evaluation]
+
+    ClaimWorkItemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        lease_ttl_seconds:
+          type: integer
+          minimum: 30
+          maximum: 3600
+
+    CompleteWorkItemRequest:
+      type: object
+      additionalProperties: false
+      required: [claim_id, fencing_token, reason]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        claim_id: {$ref: "#/components/schemas/ID"}
+        fencing_token:
+          type: integer
+          minimum: 1
+        result_summary: {type: string}
+        reason: {type: string}
+
+    ActorRef:
+      type: object
+      required: [kind, provider, id]
+      properties:
+        kind:
+          type: string
+          enum: [human, agent, service, automation, external_system]
+        provider: {type: string}
+        id: {type: string}
+        display_name: {type: string}
+
+    SuccessCriterion:
+      type: object
+      required: [id, owner_ref, title, required, criterion_revision, verification_mode, status]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        owner_ref: {type: object}
+        title: {type: string}
+        description: {type: string}
+        required: {type: boolean}
+        criterion_revision: {type: integer, minimum: 1}
+        verification_mode:
+          type: string
+          enum: [attestation, evidence_review, external_evaluation]
+        status:
+          type: string
+          enum: [active, retired]
+
+    Outcome:
+      type: object
+      required: [id, namespace_id, version, title, desired_state, lifecycle, priority, criteria, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        namespace_id: {$ref: "#/components/schemas/ID"}
+        version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        desired_state: {type: string}
+        lifecycle: {$ref: "#/components/schemas/OutcomeLifecycle"}
+        priority: {$ref: "#/components/schemas/Priority"}
+        criteria: {type: object}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Objective:
+      type: object
+      required: [id, scope, version, title, lifecycle, priority, required_for_outcome, criteria, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        lifecycle: {$ref: "#/components/schemas/ObjectiveLifecycle"}
+        priority: {$ref: "#/components/schemas/Priority"}
+        required_for_outcome: {type: boolean}
+        criteria: {type: object}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    WorkItem:
+      type: object
+      required: [id, scope, version, title, lifecycle, priority, last_fencing_token, criteria, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        objective_id: {$ref: "#/components/schemas/ID"}
+        lifecycle: {$ref: "#/components/schemas/WorkItemLifecycle"}
+        priority: {$ref: "#/components/schemas/Priority"}
+        result_summary: {type: string}
+        current_lease: {type: object}
+        last_fencing_token: {type: integer, minimum: 0}
+        criteria: {type: object}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    MutationMetadata:
+      type: object
+      required: [outcome_revision, command_id, idempotent_replay]
+      properties:
+        outcome_revision: {type: integer, minimum: 1}
+        command_id: {$ref: "#/components/schemas/ID"}
+        idempotent_replay: {type: boolean}
+
+    OutcomeMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Outcome"}
+    ObjectiveMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Objective"}
+    WorkItemMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/WorkItem"}
+    CriterionMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/SuccessCriterion"}
+
+    OutcomeReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Outcome"}
+        outcome_revision: {type: integer, minimum: 1}
+    ObjectiveReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Objective"}
+        outcome_revision: {type: integer, minimum: 1}
+    WorkItemReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/WorkItem"}
+        outcome_revision: {type: integer, minimum: 1}
+
+    ObjectiveCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Objective"}
+        outcome_revision: {type: integer, minimum: 1}
+    WorkItemCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/WorkItem"}
+        outcome_revision: {type: integer, minimum: 1}
+    OutcomeState:
+      type: object
+      required: [outcome, objectives, work_items, outcome_revision]
+      properties:
+        outcome: {$ref: "#/components/schemas/Outcome"}
+        objectives:
+          type: array
+          items: {$ref: "#/components/schemas/Objective"}
+        work_items:
+          type: array
+          items: {$ref: "#/components/schemas/WorkItem"}
+        outcome_revision: {type: integer, minimum: 1}
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, retryable]
+          properties:
+            code: {type: string}
+            message: {type: string}
+            retryable: {type: boolean}
+            correlation_id: {type: string}
