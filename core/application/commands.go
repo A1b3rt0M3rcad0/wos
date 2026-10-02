@@ -7,10 +7,10 @@ import (
 )
 
 type MutationResult[T any] struct {
-	Value             T                      `json:"value"`
-	OutcomeRevision   domain.OutcomeRevision `json:"outcome_revision"`
-	CommandID         domain.ID              `json:"command_id"`
-	IdempotentReplay  bool                   `json:"idempotent_replay"`
+	Value            T                      `json:"value"`
+	OutcomeRevision  domain.OutcomeRevision `json:"outcome_revision"`
+	CommandID        domain.ID              `json:"command_id"`
+	IdempotentReplay bool                   `json:"idempotent_replay"`
 }
 
 type CreateOutcomeCommand struct {

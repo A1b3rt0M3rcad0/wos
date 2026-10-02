@@ -11,9 +11,9 @@ const (
 )
 
 type IdempotencyIdentity struct {
-	NamespaceID   ID     `json:"namespace_id"`
-	PrincipalID   string `json:"principal_id"`
-	CommandName   string `json:"command_name"`
+	NamespaceID    ID     `json:"namespace_id"`
+	PrincipalID    string `json:"principal_id"`
+	CommandName    string `json:"command_name"`
 	IdempotencyKey string `json:"idempotency_key"`
 }
 

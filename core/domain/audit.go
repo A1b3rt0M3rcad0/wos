@@ -9,15 +9,15 @@ import (
 // AdministrativeAuditRecord is deliberately separate from DomainEvent because
 // namespace/credential/grant/endpoint administration has no Outcome revision.
 type AdministrativeAuditRecord struct {
-	RecordID       ID              `json:"record_id"`
-	NamespaceID    ID              `json:"namespace_id"`
-	Action         string          `json:"action"`
-	PrincipalID    string          `json:"principal_id"`
-	Actor          ActorRef        `json:"actor_ref"`
-	RecordedAt     time.Time       `json:"recorded_at"`
-	CommandID      ID              `json:"command_id"`
-	CorrelationID  string          `json:"correlation_id,omitempty"`
-	Payload        json.RawMessage `json:"payload"`
+	RecordID      ID              `json:"record_id"`
+	NamespaceID   ID              `json:"namespace_id"`
+	Action        string          `json:"action"`
+	PrincipalID   string          `json:"principal_id"`
+	Actor         ActorRef        `json:"actor_ref"`
+	RecordedAt    time.Time       `json:"recorded_at"`
+	CommandID     ID              `json:"command_id"`
+	CorrelationID string          `json:"correlation_id,omitempty"`
+	Payload       json.RawMessage `json:"payload"`
 }
 
 func (r AdministrativeAuditRecord) Validate() error {

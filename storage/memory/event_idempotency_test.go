@@ -26,9 +26,9 @@ func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 	identity := domain.IdempotencyIdentity{
-		NamespaceID: namespaceID,
-		PrincipalID: "principal-1",
-		CommandName: "CreateOutcome",
+		NamespaceID:    namespaceID,
+		PrincipalID:    "principal-1",
+		CommandName:    "CreateOutcome",
 		IdempotencyKey: "rollback-key-0001",
 	}
 	reservation, err := tx.Idempotency().Reserve(ctx, identity, "fingerprint-a")
@@ -36,28 +36,28 @@ func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 	event := domain.DomainEvent{
-		EventID: eventID,
-		EventType: "outcome.created",
-		SchemaVersion: domain.DomainEventSchemaVersion,
-		NamespaceID: namespaceID,
-		OutcomeID: outcomeID,
-		OutcomeRevision: 1,
-		EventIndex: 0,
-		AggregateRef: ref,
+		EventID:               eventID,
+		EventType:             "outcome.created",
+		SchemaVersion:         domain.DomainEventSchemaVersion,
+		NamespaceID:           namespaceID,
+		OutcomeID:             outcomeID,
+		OutcomeRevision:       1,
+		EventIndex:            0,
+		AggregateRef:          ref,
 		AggregateVersionAfter: &v1,
-		PrincipalID: "principal-1",
-		Actor: domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "local", ID: "human-1"},
-		RecordedAt: time.Date(2026, 10, 2, 2, 0, 0, 0, time.UTC),
-		CommandID: commandID,
-		Payload: json.RawMessage(`{"title":"x"}`),
+		PrincipalID:           "principal-1",
+		Actor:                 domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "local", ID: "human-1"},
+		RecordedAt:            time.Date(2026, 10, 2, 2, 0, 0, 0, time.UTC),
+		CommandID:             commandID,
+		Payload:               json.RawMessage(`{"title":"x"}`),
 	}
 	if err := tx.Events().Append(ctx, []domain.DomainEvent{event}); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Idempotency().Complete(ctx, reservation, domain.StoredCommandResult{
-		CommandID: commandID,
+		CommandID:       commandID,
 		OutcomeRevision: 1,
-		ResponseJSON: json.RawMessage(`{"ok":true}`),
+		ResponseJSON:    json.RawMessage(`{"ok":true}`),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -79,9 +79,9 @@ func TestIdempotencyReplayAndConflict(t *testing.T) {
 	namespaceID := domain.MustParseID("0199e700-0000-7000-8000-000000000001")
 	commandID := domain.MustParseID("0199e700-0000-7000-8000-000000000030")
 	identity := domain.IdempotencyIdentity{
-		NamespaceID: namespaceID,
-		PrincipalID: "principal-1",
-		CommandName: "CreateWorkItem",
+		NamespaceID:    namespaceID,
+		PrincipalID:    "principal-1",
+		CommandName:    "CreateWorkItem",
 		IdempotencyKey: "stable-replay-0001",
 	}
 
@@ -94,9 +94,9 @@ func TestIdempotencyReplayAndConflict(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := tx.Idempotency().Complete(ctx, reservation, domain.StoredCommandResult{
-		CommandID: commandID,
+		CommandID:       commandID,
 		OutcomeRevision: 7,
-		ResponseJSON: json.RawMessage(`{"id":"original"}`),
+		ResponseJSON:    json.RawMessage(`{"id":"original"}`),
 	}); err != nil {
 		t.Fatal(err)
 	}

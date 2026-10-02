@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	DomainEventSchemaVersion uint32 = 1
-	MaxDomainEventPayloadBytes      = 256 * 1024
+	DomainEventSchemaVersion   uint32 = 1
+	MaxDomainEventPayloadBytes        = 256 * 1024
 )
 
 type DomainEvent struct {
@@ -24,13 +24,13 @@ type DomainEvent struct {
 	AggregateVersionBefore *Version                 `json:"aggregate_version_before,omitempty"`
 	AggregateVersionAfter  *Version                 `json:"aggregate_version_after,omitempty"`
 	PrincipalID            string                   `json:"principal_id"`
-	Actor                   ActorRef                 `json:"actor_ref"`
+	Actor                  ActorRef                 `json:"actor_ref"`
 	RecordedAt             time.Time                `json:"recorded_at"`
 	CommandID              ID                       `json:"command_id"`
 	CorrelationID          string                   `json:"correlation_id,omitempty"`
 	CausationID            *ID                      `json:"causation_id,omitempty"`
 	ExecutionContext       ExternalExecutionContext `json:"execution_context,omitempty"`
-	Payload                 json.RawMessage          `json:"payload"`
+	Payload                json.RawMessage          `json:"payload"`
 }
 
 func (e DomainEvent) Scope() Scope {
