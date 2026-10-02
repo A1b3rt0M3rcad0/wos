@@ -151,6 +151,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	uow.outcomes = outcomeRepository{uow: uow}
 	uow.objectives = objectiveRepository{uow: uow}
 	uow.workItems = workItemRepository{uow: uow}
+	uow.relations = relationRepository{uow: uow}
 	uow.coordination = coordinationStore{uow: uow}
 	uow.events = eventLog{uow: uow}
 	uow.idempotency = idempotencyStore{uow: uow}
@@ -166,6 +167,7 @@ type unitOfWork struct {
 	outcomes     outcomeRepository
 	objectives   objectiveRepository
 	workItems    workItemRepository
+	relations    relationRepository
 	coordination coordinationStore
 	events       eventLog
 	idempotency  idempotencyStore
@@ -174,6 +176,7 @@ type unitOfWork struct {
 func (u *unitOfWork) Outcomes() ports.OutcomeRepository     { return u.outcomes }
 func (u *unitOfWork) Objectives() ports.ObjectiveRepository { return u.objectives }
 func (u *unitOfWork) WorkItems() ports.WorkItemRepository   { return u.workItems }
+func (u *unitOfWork) Relations() ports.RelationRepository     { return u.relations }
 func (u *unitOfWork) Coordination() ports.CoordinationStore { return u.coordination }
 func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }
