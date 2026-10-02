@@ -25,3 +25,10 @@ type WorkItemRepository interface {
 	Insert(ctx context.Context, item domain.WorkItem) error
 	Save(ctx context.Context, item domain.WorkItem, expected domain.Version) error
 }
+
+type RelationRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Relation, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Relation, error)
+	Insert(ctx context.Context, relation domain.Relation) error
+	Save(ctx context.Context, relation domain.Relation, expected domain.Version) error
+}
