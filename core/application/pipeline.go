@@ -370,6 +370,10 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"work_item.updated"}, nil
 	case "ClaimWorkItem":
 		return []string{"work_item.claimed"}, nil
+	case "RenewWorkItemLease":
+		return []string{"work_item.lease_renewed"}, nil
+	case "ReclaimWorkItem":
+		return []string{"work_item.reclaimed"}, nil
 	case "ReleaseWorkItem":
 		return []string{"work_item.released"}, nil
 	case "CompleteWorkItem":
