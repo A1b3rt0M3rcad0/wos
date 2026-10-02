@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 07 — Issues and Blockers (planned)
+**Current wave:** Wave 07 — Issues and Blockers (in progress)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -373,13 +373,20 @@ CI run `37008538950` (#97) validated implementation head `8549346c96e6e2c7f940b3
 
 ## Wave 07 — Issues and Blockers
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Implement independent Issue and Blocker aggregates, typed causes/targets, direct/subtree propagation, explicit resolution, inherited blocking projection and bounded compound commands.
 
+### Planned commit sequence
+
+1. `feat(core): add issue and blocker domain aggregates` — typed lifecycle, severity, targets, causes, propagation and pure invariants.
+2. `feat(application): add issue blocker commands and blocking projection` — transactional commands, explicit resolution and inherited blocking/readiness integration.
+3. `feat(storage): persist issues blockers and blocking state` — memory/SQLite repositories, migration, restart-safe reconstruction and storage parity.
+4. `feat(http): expose issue blocker coordination contracts` — HTTP/OpenAPI surfaces, state/query projection and end-to-end contract coverage.
+
 **Completion gate:** snapshots explain target/cause/inheritance and resolving one impediment never silently resolves another.
 
-**Target commit:**  
+**Target integration commit:**  
 `feat(core): separate issues from blockers and implement blocking projections`
 
 ---
@@ -545,10 +552,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers is the next planned implementation wave.
+Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers is now active.
 
-1. Start Wave 07 from the current `master`.
-2. Implement independent Issue and Blocker aggregates with explicit lifecycle and typed targets/causes.
-3. Add direct/subtree blocking propagation and deterministic inherited blocking projections.
-4. Integrate blocking into readiness without persisting `ready` or `blocked` as competing lifecycle states.
-5. Prove that resolving one impediment never silently resolves another.
+1. Implement Issue and Blocker as independent typed aggregates with explicit lifecycle.
+2. Add transactional Application commands and deterministic direct/inherited blocking projection.
+3. Persist Issue/Blocker state with memory/SQLite parity and restart-safe reconstruction.
+4. Expose HTTP/OpenAPI contracts and prove the Wave 07 completion gate.
