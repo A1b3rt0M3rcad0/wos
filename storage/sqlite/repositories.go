@@ -347,19 +347,19 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		lifecycle, priority, resultSummary  string
 		lastFencing                         int64
 		claimID, leasePrincipal, leaseActor sql.NullString
-		acquiredAt, expiresAt               sql.NullInt64
+		notBefore, acquiredAt, expiresAt    sql.NullInt64
 		createdAt, updatedAt                int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, objective_id, lifecycle, priority,
-       result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
+       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
        lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
 FROM work_items
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
-		&resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
+		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
 		&acquiredAt, &expiresAt, &createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -378,6 +378,10 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		CreatedAt:        decodeTime(createdAt),
 		UpdatedAt:        decodeTime(updatedAt),
 		Criteria:         domain.NewCriterionSet(),
+	}
+	if notBefore.Valid {
+		t := decodeTime(notBefore.Int64)
+		value.NotBefore = &t
 	}
 	if objectiveID.Valid {
 		parsed, err := domain.ParseID(objectiveID.String)
@@ -481,10 +485,10 @@ func (r workItemRepository) Insert(ctx context.Context, item domain.WorkItem) er
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, objective_id, lifecycle, result_summary,
+    title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
     lease_acquired_at, lease_expires_at
-) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ID.String(),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
@@ -496,6 +500,7 @@ INSERT INTO work_items (
 		string(item.Priority),
 		nullableID(item.ObjectiveID),
 		string(item.Lifecycle),
+		encodeOptionalTime(item.NotBefore),
 		item.ResultSummary,
 		int64(item.LastFencingToken),
 		lease.claimID,
@@ -536,7 +541,7 @@ func (r workItemRepository) Save(ctx context.Context, item domain.WorkItem, expe
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE work_items
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    objective_id = ?, lifecycle = ?, result_summary = ?, last_fencing_token = ?,
+    objective_id = ?, lifecycle = ?, not_before = ?, result_summary = ?, last_fencing_token = ?,
     lease_claim_id = ?, lease_principal_id = ?, lease_actor_json = ?,
     lease_acquired_at = ?, lease_expires_at = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
@@ -547,6 +552,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		string(item.Priority),
 		nullableID(item.ObjectiveID),
 		string(item.Lifecycle),
+		encodeOptionalTime(item.NotBefore),
 		item.ResultSummary,
 		int64(item.LastFencingToken),
 		lease.claimID,
