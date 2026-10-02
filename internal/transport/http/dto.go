@@ -27,6 +27,7 @@ type createWorkItemRequest struct {
 	Priority    domain.Priority          `json:"priority"`
 	Lifecycle   domain.WorkItemLifecycle `json:"lifecycle,omitempty"`
 	ObjectiveID *string                  `json:"objective_id,omitempty"`
+	NotBefore  *time.Time                `json:"not_before,omitempty"`
 }
 
 type criterionRequest struct {
