@@ -43,52 +43,70 @@ func TestWave09DocumentaryRecordsAndDecisionSupersession(t *testing.T) {
 	cc := commandContext()
 
 	artifactResult, err := service.RegisterArtifact(ctx, cc, application.RegisterArtifactCommand{
-		Scope: scope, ArtifactType:"document", Name:"benchmark", URI:"file:///benchmark.json", MediaType:"application/json", Checksum:"sha256:abc", SourceVersion:"v1",
+		Scope: scope, ArtifactType: "document", Name: "benchmark", URI: "file:///benchmark.json", MediaType: "application/json", Checksum: "sha256:abc", SourceVersion: "v1",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	artifact := artifactResult.Value
 
 	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
-		Scope: scope, EvidenceType:domain.EvidenceTypeSource, Description:"benchmark result",
-		SourceRef:domain.SourceReference{Provider:"test", URI:"file:///benchmark.json"},
-		CapturedAt:time.Date(2026,10,2,18,0,0,0,time.UTC), ArtifactID:&artifact.ID, SourceVersion:"v1", Checksum:"sha256:abc",
+		Scope: scope, EvidenceType: domain.EvidenceTypeSource, Description: "benchmark result",
+		SourceRef:  domain.SourceReference{Provider: "test", URI: "file:///benchmark.json"},
+		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC), ArtifactID: &artifact.ID, SourceVersion: "v1", Checksum: "sha256:abc",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	evidence := evidenceResult.Value
 
-	objectiveResult, err := service.CreateObjective(ctx, cc, application.CreateObjectiveCommand{Scope:scope, Title:"Meet SLO", Priority:domain.PriorityNormal})
-	if err != nil { t.Fatal(err) }
+	objectiveResult, err := service.CreateObjective(ctx, cc, application.CreateObjectiveCommand{Scope: scope, Title: "Meet SLO", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
 	objective := objectiveResult.Value
 	link1, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
-		Scope:scope, EvidenceID:evidence.ID, TargetRef:objective.Ref(), Stance:domain.EvidenceStanceSupports, Rationale:"measured below threshold",
+		Scope: scope, EvidenceID: evidence.ID, TargetRef: objective.Ref(), Stance: domain.EvidenceStanceSupports, Rationale: "measured below threshold",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	decisionResult, err := service.ProposeDecision(ctx, cc, application.ProposeDecisionCommand{
-		Scope:scope, Title:"Storage", Proposal:"Use SQLite", Alternatives:[]string{"SQLite","PostgreSQL"}, ChosenAlternative:"SQLite", Rationale:"local-first",
+		Scope: scope, Title: "Storage", Proposal: "Use SQLite", Alternatives: []string{"SQLite", "PostgreSQL"}, ChosenAlternative: "SQLite", Rationale: "local-first",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	decision := decisionResult.Value
-	acceptedResult, err := service.AcceptDecision(ctx, cc, application.AcceptDecisionCommand{Scope:scope, DecisionID:decision.ID, ExpectedVersion:decision.Version})
-	if err != nil { t.Fatal(err) }
+	acceptedResult, err := service.AcceptDecision(ctx, cc, application.AcceptDecisionCommand{Scope: scope, DecisionID: decision.ID, ExpectedVersion: decision.Version})
+	if err != nil {
+		t.Fatal(err)
+	}
 	accepted := acceptedResult.Value
 
 	link2, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
-		Scope:scope, EvidenceID:evidence.ID, TargetRef:accepted.Ref(), Stance:domain.EvidenceStanceContradicts, Rationale:"remote deployment needs different storage",
+		Scope: scope, EvidenceID: evidence.ID, TargetRef: accepted.Ref(), Stance: domain.EvidenceStanceContradicts, Rationale: "remote deployment needs different storage",
 	})
-	if err != nil { t.Fatal(err) }
-	if link1.Value.Stance == link2.Value.Stance { t.Fatal("same evidence should support different link-local stances") }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if link1.Value.Stance == link2.Value.Stance {
+		t.Fatal("same evidence should support different link-local stances")
+	}
 
 	title := "mutated"
-	if _, err := service.UpdateDecision(ctx, cc, application.UpdateDecisionCommand{Scope:scope, DecisionID:accepted.ID, ExpectedVersion:accepted.Version, Title:&title}); err == nil {
+	if _, err := service.UpdateDecision(ctx, cc, application.UpdateDecisionCommand{Scope: scope, DecisionID: accepted.ID, ExpectedVersion: accepted.Version, Title: &title}); err == nil {
 		t.Fatal("accepted decision must be immutable")
 	}
 
 	superseded, err := service.SupersedeDecision(ctx, cc, application.SupersedeDecisionCommand{
-		Scope:scope, DecisionID:accepted.ID, ExpectedVersion:accepted.Version,
-		Title:"Storage v2", Proposal:"Use PostgreSQL remotely", Alternatives:[]string{"SQLite","PostgreSQL"}, ChosenAlternative:"PostgreSQL", Rationale:"multi-user deployment",
+		Scope: scope, DecisionID: accepted.ID, ExpectedVersion: accepted.Version,
+		Title: "Storage v2", Proposal: "Use PostgreSQL remotely", Alternatives: []string{"SQLite", "PostgreSQL"}, ChosenAlternative: "PostgreSQL", Rationale: "multi-user deployment",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	if superseded.Value.Predecessor.Lifecycle != domain.DecisionLifecycleSuperseded || superseded.Value.Successor.Lifecycle != domain.DecisionLifecycleAccepted {
 		t.Fatalf("supersession=%#v", superseded.Value)
 	}
@@ -96,8 +114,8 @@ func TestWave09DocumentaryRecordsAndDecisionSupersession(t *testing.T) {
 		t.Fatal("successor does not preserve predecessor reference")
 	}
 	if _, err := service.SupersedeDecision(ctx, cc, application.SupersedeDecisionCommand{
-		Scope:scope, DecisionID:accepted.ID, ExpectedVersion:accepted.Version,
-		Title:"conflict", Proposal:"conflict", Rationale:"conflict",
+		Scope: scope, DecisionID: accepted.ID, ExpectedVersion: accepted.Version,
+		Title: "conflict", Proposal: "conflict", Rationale: "conflict",
 	}); err == nil {
 		t.Fatal("stale/concurrent supersession must fail")
 	}
@@ -105,26 +123,38 @@ func TestWave09DocumentaryRecordsAndDecisionSupersession(t *testing.T) {
 	events := store.SnapshotDomainEvents(scope)
 	foundAccepted, foundSuperseded := false, false
 	for _, event := range events {
-		if event.CommandID == superseded.CommandID && event.EventType == "decision.accepted" { foundAccepted = true }
-		if event.CommandID == superseded.CommandID && event.EventType == "decision.superseded" { foundSuperseded = true }
+		if event.CommandID == superseded.CommandID && event.EventType == "decision.accepted" {
+			foundAccepted = true
+		}
+		if event.CommandID == superseded.CommandID && event.EventType == "decision.superseded" {
+			foundSuperseded = true
+		}
 	}
-	if !foundAccepted || !foundSuperseded { t.Fatal("supersession must emit both decision events atomically") }
+	if !foundAccepted || !foundSuperseded {
+		t.Fatal("supersession must emit both decision events atomically")
+	}
 }
 
 func TestWave09RejectsCrossOutcomeEvidenceLink(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
 	first := setupActiveOutcome(t, service)
-	secondResult, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{NamespaceID:first.NamespaceID, Title:"Other", DesiredState:"Other state", Priority:domain.PriorityNormal})
-	if err != nil { t.Fatal(err) }
+	secondResult, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{NamespaceID: first.NamespaceID, Title: "Other", DesiredState: "Other state", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
 	second := secondResult.Value
 	evidenceResult, err := service.RegisterEvidence(ctx, commandContext(), application.RegisterEvidenceCommand{
-		Scope:first.Scope(), EvidenceType:domain.EvidenceTypeSource, Description:"source",
-		SourceRef:domain.SourceReference{Provider:"test", ID:"e1"}, CapturedAt:time.Date(2026,10,2,18,0,0,0,time.UTC),
+		Scope: first.Scope(), EvidenceType: domain.EvidenceTypeSource, Description: "source",
+		SourceRef: domain.SourceReference{Provider: "test", ID: "e1"}, CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	_, err = service.CreateEvidenceLink(ctx, commandContext(), application.CreateEvidenceLinkCommand{
-		Scope:first.Scope(), EvidenceID:evidenceResult.Value.ID, TargetRef:second.Ref(), Stance:domain.EvidenceStanceContext, Rationale:"cross scope",
+		Scope: first.Scope(), EvidenceID: evidenceResult.Value.ID, TargetRef: second.Ref(), Stance: domain.EvidenceStanceContext, Rationale: "cross scope",
 	})
-	if err == nil { t.Fatal("cross-outcome documentary link must fail") }
+	if err == nil {
+		t.Fatal("cross-outcome documentary link must fail")
+	}
 }

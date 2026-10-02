@@ -17,14 +17,14 @@ type registerArtifactRequest struct {
 }
 
 type registerEvidenceRequest struct {
-	EvidenceType  domain.EvidenceType     `json:"evidence_type"`
-	Description   string                  `json:"description"`
-	SourceRef     domain.SourceReference  `json:"source_ref"`
-	CapturedAt    time.Time               `json:"captured_at"`
-	ArtifactID    *string                 `json:"artifact_id,omitempty"`
-	Measurement   *domain.Measurement     `json:"measurement,omitempty"`
-	SourceVersion string                  `json:"source_version,omitempty"`
-	Checksum      string                  `json:"checksum,omitempty"`
+	EvidenceType  domain.EvidenceType    `json:"evidence_type"`
+	Description   string                 `json:"description"`
+	SourceRef     domain.SourceReference `json:"source_ref"`
+	CapturedAt    time.Time              `json:"captured_at"`
+	ArtifactID    *string                `json:"artifact_id,omitempty"`
+	Measurement   *domain.Measurement    `json:"measurement,omitempty"`
+	SourceVersion string                 `json:"source_version,omitempty"`
+	Checksum      string                 `json:"checksum,omitempty"`
 }
 
 type createEvidenceLinkRequest struct {

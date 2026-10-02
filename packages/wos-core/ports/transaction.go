@@ -38,7 +38,6 @@ type IssueBlockerUnitOfWork interface {
 	Blockers() BlockerRepository
 }
 
-
 type DocumentaryUnitOfWork interface {
 	Artifacts() ArtifactRepository
 	Evidence() EvidenceRepository

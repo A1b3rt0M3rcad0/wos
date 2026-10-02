@@ -86,7 +86,7 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 		t, client, http.MethodPost, decisionURL+"/actions/accept", []byte(`{}`),
 		map[string]string{
 			"Idempotency-Key": "wave09-decision-accept-0001",
-			"If-Match": decisionResponse.Header.Get("ETag"),
+			"If-Match":        decisionResponse.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)
@@ -106,7 +106,7 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 		[]byte(`{"title":"mutated"}`),
 		map[string]string{
 			"Idempotency-Key": "wave09-decision-edit-0001",
-			"If-Match": accepted.Header.Get("ETag"),
+			"If-Match":        accepted.Header.Get("ETag"),
 		},
 	)
 	if immutable.StatusCode != http.StatusConflict {
@@ -119,7 +119,7 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 		[]byte(`{"title":"Storage v2","proposal":"Use PostgreSQL","alternatives":["SQLite","PostgreSQL"],"chosen_alternative":"PostgreSQL","rationale":"remote multi-user operation"}`),
 		map[string]string{
 			"Idempotency-Key": "wave09-decision-supersede-0001",
-			"If-Match": accepted.Header.Get("ETag"),
+			"If-Match":        accepted.Header.Get("ETag"),
 		},
 		http.StatusCreated,
 	)
@@ -140,7 +140,7 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 		[]byte(`{"reason":"source replaced"}`),
 		map[string]string{
 			"Idempotency-Key": "wave09-evidence-retract-0001",
-			"If-Match": evidenceResponse.Header.Get("ETag"),
+			"If-Match":        evidenceResponse.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)

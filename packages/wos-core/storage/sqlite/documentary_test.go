@@ -50,7 +50,7 @@ func TestSQLiteWave09DocumentaryHistorySurvivesRestart(t *testing.T) {
 		"0199ed92-0000-7000-8000-000000000103", "",
 	), application.RegisterEvidenceCommand{
 		Scope: scope, EvidenceType: domain.EvidenceTypeSource, Description: "durable observation",
-		SourceRef: domain.SourceReference{Provider: "sqlite-test", URI: "file:///evidence.json"},
+		SourceRef:  domain.SourceReference{Provider: "sqlite-test", URI: "file:///evidence.json"},
 		CapturedAt: clock.now, ArtifactID: &artifact.ID, Checksum: "sha256:abc",
 	})
 	if err != nil {

@@ -174,34 +174,34 @@ type unitOfWork struct {
 	closed               bool
 	idempotencyRetention time.Duration
 
-	outcomes     outcomeRepository
-	objectives   objectiveRepository
-	workItems    workItemRepository
-	relations    relationRepository
-	issues       issueRepository
-	blockers     blockerRepository
-	artifacts    artifactRepository
-	evidence     evidenceRepository
+	outcomes      outcomeRepository
+	objectives    objectiveRepository
+	workItems     workItemRepository
+	relations     relationRepository
+	issues        issueRepository
+	blockers      blockerRepository
+	artifacts     artifactRepository
+	evidence      evidenceRepository
 	evidenceLinks evidenceLinkRepository
-	decisions    decisionRepository
-	coordination coordinationStore
-	events       eventLog
-	idempotency  idempotencyStore
+	decisions     decisionRepository
+	coordination  coordinationStore
+	events        eventLog
+	idempotency   idempotencyStore
 }
 
-func (u *unitOfWork) Outcomes() ports.OutcomeRepository     { return u.outcomes }
-func (u *unitOfWork) Objectives() ports.ObjectiveRepository { return u.objectives }
-func (u *unitOfWork) WorkItems() ports.WorkItemRepository   { return u.workItems }
-func (u *unitOfWork) Relations() ports.RelationRepository   { return u.relations }
-func (u *unitOfWork) Issues() ports.IssueRepository         { return u.issues }
-func (u *unitOfWork) Blockers() ports.BlockerRepository     { return u.blockers }
-func (u *unitOfWork) Artifacts() ports.ArtifactRepository   { return u.artifacts }
-func (u *unitOfWork) Evidence() ports.EvidenceRepository    { return u.evidence }
+func (u *unitOfWork) Outcomes() ports.OutcomeRepository           { return u.outcomes }
+func (u *unitOfWork) Objectives() ports.ObjectiveRepository       { return u.objectives }
+func (u *unitOfWork) WorkItems() ports.WorkItemRepository         { return u.workItems }
+func (u *unitOfWork) Relations() ports.RelationRepository         { return u.relations }
+func (u *unitOfWork) Issues() ports.IssueRepository               { return u.issues }
+func (u *unitOfWork) Blockers() ports.BlockerRepository           { return u.blockers }
+func (u *unitOfWork) Artifacts() ports.ArtifactRepository         { return u.artifacts }
+func (u *unitOfWork) Evidence() ports.EvidenceRepository          { return u.evidence }
 func (u *unitOfWork) EvidenceLinks() ports.EvidenceLinkRepository { return u.evidenceLinks }
-func (u *unitOfWork) Decisions() ports.DecisionRepository   { return u.decisions }
-func (u *unitOfWork) Coordination() ports.CoordinationStore { return u.coordination }
-func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
-func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }
+func (u *unitOfWork) Decisions() ports.DecisionRepository         { return u.decisions }
+func (u *unitOfWork) Coordination() ports.CoordinationStore       { return u.coordination }
+func (u *unitOfWork) Events() ports.DomainEventLog                { return u.events }
+func (u *unitOfWork) Idempotency() ports.IdempotencyStore         { return u.idempotency }
 
 func (u *unitOfWork) Commit() error {
 	if u.closed {

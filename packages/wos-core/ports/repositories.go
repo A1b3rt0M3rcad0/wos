@@ -47,7 +47,6 @@ type BlockerRepository interface {
 	Save(ctx context.Context, blocker domain.Blocker, expected domain.Version) error
 }
 
-
 type ArtifactRepository interface {
 	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Artifact, error)
 	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Artifact, error)

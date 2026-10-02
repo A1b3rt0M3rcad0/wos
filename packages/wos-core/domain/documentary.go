@@ -63,16 +63,36 @@ func (a Artifact) Ref() EntityRef {
 }
 
 func (a Artifact) Validate() error {
-	if err := a.ID.Validate(); err != nil { return err }
-	if err := a.Scope.Validate(); err != nil { return err }
-	if err := a.Version.Validate(); err != nil { return err }
-	if strings.TrimSpace(a.ArtifactType) == "" { return NewError(ErrorCodeArtifact, "artifact_type is required") }
-	if strings.TrimSpace(a.Name) == "" { return NewError(ErrorCodeArtifact, "artifact name is required") }
-	if strings.TrimSpace(a.URI) == "" { return NewError(ErrorCodeArtifact, "artifact uri is required") }
-	if err := a.ProducerRef.Validate(); err != nil { return WrapError(ErrorCodeArtifact, "artifact producer_ref is invalid", err) }
-	if !a.Lifecycle.Valid() { return NewError(ErrorCodeArtifact, "artifact lifecycle is invalid") }
-	if a.RegisteredAt.IsZero() || a.UpdatedAt.IsZero() { return NewError(ErrorCodeArtifact, "artifact timestamps are required") }
-	if a.ProducedAt != nil && a.ProducedAt.IsZero() { return NewError(ErrorCodeArtifact, "artifact produced_at is invalid") }
+	if err := a.ID.Validate(); err != nil {
+		return err
+	}
+	if err := a.Scope.Validate(); err != nil {
+		return err
+	}
+	if err := a.Version.Validate(); err != nil {
+		return err
+	}
+	if strings.TrimSpace(a.ArtifactType) == "" {
+		return NewError(ErrorCodeArtifact, "artifact_type is required")
+	}
+	if strings.TrimSpace(a.Name) == "" {
+		return NewError(ErrorCodeArtifact, "artifact name is required")
+	}
+	if strings.TrimSpace(a.URI) == "" {
+		return NewError(ErrorCodeArtifact, "artifact uri is required")
+	}
+	if err := a.ProducerRef.Validate(); err != nil {
+		return WrapError(ErrorCodeArtifact, "artifact producer_ref is invalid", err)
+	}
+	if !a.Lifecycle.Valid() {
+		return NewError(ErrorCodeArtifact, "artifact lifecycle is invalid")
+	}
+	if a.RegisteredAt.IsZero() || a.UpdatedAt.IsZero() {
+		return NewError(ErrorCodeArtifact, "artifact timestamps are required")
+	}
+	if a.ProducedAt != nil && a.ProducedAt.IsZero() {
+		return NewError(ErrorCodeArtifact, "artifact produced_at is invalid")
+	}
 	switch a.Lifecycle {
 	case ArtifactLifecycleRegistered:
 		if strings.TrimSpace(a.WithdrawalReason) != "" || a.WithdrawnAt != nil {
@@ -91,9 +111,13 @@ func (a *Artifact) Withdraw(reason string, now time.Time) error {
 		return NewError(ErrorCodeInvalidTransition, "only registered artifact can be withdrawn")
 	}
 	reason = strings.TrimSpace(reason)
-	if reason == "" { return NewError(ErrorCodeArtifact, "artifact withdrawal reason is required") }
+	if reason == "" {
+		return NewError(ErrorCodeArtifact, "artifact withdrawal reason is required")
+	}
 	next, err := nextVersion(a.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	at := now.UTC()
 	a.Version = next
 	a.Lifecycle = ArtifactLifecycleWithdrawn
@@ -106,11 +130,11 @@ func (a *Artifact) Withdraw(reason string, now time.Time) error {
 type EvidenceType string
 
 const (
-	EvidenceTypeMeasurement       EvidenceType = "measurement"
-	EvidenceTypeTestResult        EvidenceType = "test_result"
-	EvidenceTypeInspection        EvidenceType = "inspection"
-	EvidenceTypeAttestation       EvidenceType = "attestation"
-	EvidenceTypeSource            EvidenceType = "source"
+	EvidenceTypeMeasurement        EvidenceType = "measurement"
+	EvidenceTypeTestResult         EvidenceType = "test_result"
+	EvidenceTypeInspection         EvidenceType = "inspection"
+	EvidenceTypeAttestation        EvidenceType = "attestation"
+	EvidenceTypeSource             EvidenceType = "source"
 	EvidenceTypeExternalEvaluation EvidenceType = "external_evaluation"
 )
 
@@ -131,7 +155,9 @@ type SourceReference struct {
 }
 
 func (r SourceReference) Validate() error {
-	if strings.TrimSpace(r.Provider) == "" { return NewError(ErrorCodeEvidence, "source_ref provider is required") }
+	if strings.TrimSpace(r.Provider) == "" {
+		return NewError(ErrorCodeEvidence, "source_ref provider is required")
+	}
 	if strings.TrimSpace(r.ID) == "" && strings.TrimSpace(r.URI) == "" {
 		return NewError(ErrorCodeEvidence, "source_ref requires id or uri")
 	}
@@ -146,7 +172,9 @@ type Measurement struct {
 }
 
 func (m Measurement) Validate() error {
-	if strings.TrimSpace(m.Value) == "" { return NewError(ErrorCodeEvidence, "measurement value is required") }
+	if strings.TrimSpace(m.Value) == "" {
+		return NewError(ErrorCodeEvidence, "measurement value is required")
+	}
 	return nil
 }
 
@@ -199,7 +227,9 @@ func NewEvidence(id ID, scope Scope, evidenceType EvidenceType, description stri
 		Lifecycle:     EvidenceLifecycleRegistered,
 		UpdatedAt:     now.UTC(),
 	}
-	if err := value.Validate(); err != nil { return Evidence{}, err }
+	if err := value.Validate(); err != nil {
+		return Evidence{}, err
+	}
 	return value, nil
 }
 
@@ -208,19 +238,39 @@ func (e Evidence) Ref() EntityRef {
 }
 
 func (e Evidence) Validate() error {
-	if err := e.ID.Validate(); err != nil { return err }
-	if err := e.Scope.Validate(); err != nil { return err }
-	if err := e.Version.Validate(); err != nil { return err }
-	if !e.EvidenceType.Valid() { return NewError(ErrorCodeEvidence, "evidence_type is invalid") }
-	if strings.TrimSpace(e.Description) == "" { return NewError(ErrorCodeEvidence, "evidence description is required") }
-	if err := e.SourceRef.Validate(); err != nil { return err }
-	if err := e.ProducerRef.Validate(); err != nil { return WrapError(ErrorCodeEvidence, "evidence producer_ref is invalid", err) }
-	if e.CapturedAt.IsZero() || e.RegisteredAt.IsZero() || e.UpdatedAt.IsZero() { return NewError(ErrorCodeEvidence, "evidence timestamps are required") }
+	if err := e.ID.Validate(); err != nil {
+		return err
+	}
+	if err := e.Scope.Validate(); err != nil {
+		return err
+	}
+	if err := e.Version.Validate(); err != nil {
+		return err
+	}
+	if !e.EvidenceType.Valid() {
+		return NewError(ErrorCodeEvidence, "evidence_type is invalid")
+	}
+	if strings.TrimSpace(e.Description) == "" {
+		return NewError(ErrorCodeEvidence, "evidence description is required")
+	}
+	if err := e.SourceRef.Validate(); err != nil {
+		return err
+	}
+	if err := e.ProducerRef.Validate(); err != nil {
+		return WrapError(ErrorCodeEvidence, "evidence producer_ref is invalid", err)
+	}
+	if e.CapturedAt.IsZero() || e.RegisteredAt.IsZero() || e.UpdatedAt.IsZero() {
+		return NewError(ErrorCodeEvidence, "evidence timestamps are required")
+	}
 	if e.ArtifactID != nil {
-		if err := e.ArtifactID.Validate(); err != nil { return WrapError(ErrorCodeEvidence, "artifact_id is invalid", err) }
+		if err := e.ArtifactID.Validate(); err != nil {
+			return WrapError(ErrorCodeEvidence, "artifact_id is invalid", err)
+		}
 	}
 	if e.Measurement != nil {
-		if err := e.Measurement.Validate(); err != nil { return err }
+		if err := e.Measurement.Validate(); err != nil {
+			return err
+		}
 	}
 	if e.EvidenceType == EvidenceTypeMeasurement && e.Measurement == nil {
 		return NewError(ErrorCodeEvidence, "measurement evidence requires measurement details")
@@ -228,7 +278,9 @@ func (e Evidence) Validate() error {
 	if e.EvidenceType != EvidenceTypeMeasurement && e.Measurement != nil {
 		return NewError(ErrorCodeEvidence, "measurement details require evidence_type measurement")
 	}
-	if !e.Lifecycle.Valid() { return NewError(ErrorCodeEvidence, "evidence lifecycle is invalid") }
+	if !e.Lifecycle.Valid() {
+		return NewError(ErrorCodeEvidence, "evidence lifecycle is invalid")
+	}
 	switch e.Lifecycle {
 	case EvidenceLifecycleRegistered:
 		if strings.TrimSpace(e.RetractionReason) != "" || e.RetractedAt != nil {
@@ -247,9 +299,13 @@ func (e *Evidence) Retract(reason string, now time.Time) error {
 		return NewError(ErrorCodeInvalidTransition, "only registered evidence can be retracted")
 	}
 	reason = strings.TrimSpace(reason)
-	if reason == "" { return NewError(ErrorCodeEvidence, "evidence retraction reason is required") }
+	if reason == "" {
+		return NewError(ErrorCodeEvidence, "evidence retraction reason is required")
+	}
 	next, err := nextVersion(e.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	at := now.UTC()
 	e.Version = next
 	e.Lifecycle = EvidenceLifecycleRetracted
@@ -312,7 +368,9 @@ func NewEvidenceLink(id ID, scope Scope, evidenceID ID, target EntityRef, criter
 		CreatedAt:   now.UTC(),
 		UpdatedAt:   now.UTC(),
 	}
-	if err := value.Validate(); err != nil { return EvidenceLink{}, err }
+	if err := value.Validate(); err != nil {
+		return EvidenceLink{}, err
+	}
 	return value, nil
 }
 
@@ -321,29 +379,51 @@ func (l EvidenceLink) Ref() EntityRef {
 }
 
 func (l EvidenceLink) Validate() error {
-	if err := l.ID.Validate(); err != nil { return err }
-	if err := l.Scope.Validate(); err != nil { return err }
-	if err := l.Version.Validate(); err != nil { return err }
-	if err := l.EvidenceID.Validate(); err != nil { return WrapError(ErrorCodeEvidenceLink, "evidence_id is invalid", err) }
-	if err := l.TargetRef.Validate(); err != nil { return WrapError(ErrorCodeEvidenceLink, "target_ref is invalid", err) }
-	if l.TargetRef.Scope != l.Scope { return NewError(ErrorCodeEvidenceLink, "target_ref must belong to the same Outcome") }
+	if err := l.ID.Validate(); err != nil {
+		return err
+	}
+	if err := l.Scope.Validate(); err != nil {
+		return err
+	}
+	if err := l.Version.Validate(); err != nil {
+		return err
+	}
+	if err := l.EvidenceID.Validate(); err != nil {
+		return WrapError(ErrorCodeEvidenceLink, "evidence_id is invalid", err)
+	}
+	if err := l.TargetRef.Validate(); err != nil {
+		return WrapError(ErrorCodeEvidenceLink, "target_ref is invalid", err)
+	}
+	if l.TargetRef.Scope != l.Scope {
+		return NewError(ErrorCodeEvidenceLink, "target_ref must belong to the same Outcome")
+	}
 	switch l.TargetRef.Kind {
 	case EntityKindOutcome, EntityKindObjective, EntityKindWorkItem, EntityKindIssue, EntityKindDecision:
 	default:
 		return NewError(ErrorCodeEvidenceLink, "unsupported evidence target kind")
 	}
 	if l.CriterionID != nil {
-		if err := l.CriterionID.Validate(); err != nil { return WrapError(ErrorCodeEvidenceLink, "criterion_id is invalid", err) }
+		if err := l.CriterionID.Validate(); err != nil {
+			return WrapError(ErrorCodeEvidenceLink, "criterion_id is invalid", err)
+		}
 		switch l.TargetRef.Kind {
 		case EntityKindOutcome, EntityKindObjective, EntityKindWorkItem:
 		default:
 			return NewError(ErrorCodeEvidenceLink, "criterion_id requires outcome, objective or work_item target")
 		}
 	}
-	if !l.Stance.Valid() { return NewError(ErrorCodeEvidenceLink, "evidence stance is invalid") }
-	if strings.TrimSpace(l.Rationale) == "" { return NewError(ErrorCodeEvidenceLink, "evidence link rationale is required") }
-	if !l.Lifecycle.Valid() { return NewError(ErrorCodeEvidenceLink, "evidence link lifecycle is invalid") }
-	if l.CreatedAt.IsZero() || l.UpdatedAt.IsZero() { return NewError(ErrorCodeEvidenceLink, "evidence link timestamps are required") }
+	if !l.Stance.Valid() {
+		return NewError(ErrorCodeEvidenceLink, "evidence stance is invalid")
+	}
+	if strings.TrimSpace(l.Rationale) == "" {
+		return NewError(ErrorCodeEvidenceLink, "evidence link rationale is required")
+	}
+	if !l.Lifecycle.Valid() {
+		return NewError(ErrorCodeEvidenceLink, "evidence link lifecycle is invalid")
+	}
+	if l.CreatedAt.IsZero() || l.UpdatedAt.IsZero() {
+		return NewError(ErrorCodeEvidenceLink, "evidence link timestamps are required")
+	}
 	switch l.Lifecycle {
 	case EvidenceLinkLifecycleActive:
 		if strings.TrimSpace(l.RetractionReason) != "" || l.RetractedAt != nil {
@@ -362,9 +442,13 @@ func (l *EvidenceLink) Retract(reason string, now time.Time) error {
 		return NewError(ErrorCodeInvalidTransition, "only active evidence link can be retracted")
 	}
 	reason = strings.TrimSpace(reason)
-	if reason == "" { return NewError(ErrorCodeEvidenceLink, "evidence link retraction reason is required") }
+	if reason == "" {
+		return NewError(ErrorCodeEvidenceLink, "evidence link retraction reason is required")
+	}
 	next, err := nextVersion(l.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	at := now.UTC()
 	l.Version = next
 	l.Lifecycle = EvidenceLinkLifecycleRetracted
@@ -426,22 +510,32 @@ func NewDecision(id ID, scope Scope, title, proposal string, alternatives []stri
 		CreatedAt:         now.UTC(),
 		UpdatedAt:         now.UTC(),
 	}
-	if err := value.Validate(); err != nil { return Decision{}, err }
+	if err := value.Validate(); err != nil {
+		return Decision{}, err
+	}
 	return value, nil
 }
 
 func NewSupersedingDecision(id ID, scope Scope, predecessor ID, title, proposal string, alternatives []string, chosenAlternative, rationale string, actor ActorRef, now time.Time) (Decision, error) {
 	value, err := NewDecision(id, scope, title, proposal, alternatives, chosenAlternative, rationale, actor, now)
-	if err != nil { return Decision{}, err }
-	if err := predecessor.Validate(); err != nil { return Decision{}, WrapError(ErrorCodeDecision, "superseded decision id is invalid", err) }
+	if err != nil {
+		return Decision{}, err
+	}
+	if err := predecessor.Validate(); err != nil {
+		return Decision{}, WrapError(ErrorCodeDecision, "superseded decision id is invalid", err)
+	}
 	value.SupersedesDecisionID = &predecessor
 	value.Lifecycle = DecisionLifecycleAccepted
 	decidedAt := now.UTC()
 	decidedBy := actor
 	value.DecidedBy = &decidedBy
 	value.DecidedAt = &decidedAt
-	if strings.TrimSpace(value.Rationale) == "" { return Decision{}, NewError(ErrorCodeDecision, "accepted decision requires rationale") }
-	if err := value.Validate(); err != nil { return Decision{}, err }
+	if strings.TrimSpace(value.Rationale) == "" {
+		return Decision{}, NewError(ErrorCodeDecision, "accepted decision requires rationale")
+	}
+	if err := value.Validate(); err != nil {
+		return Decision{}, err
+	}
 	return value, nil
 }
 
@@ -450,19 +544,39 @@ func (d Decision) Ref() EntityRef {
 }
 
 func (d Decision) Validate() error {
-	if err := d.ID.Validate(); err != nil { return err }
-	if err := d.Scope.Validate(); err != nil { return err }
-	if err := d.Version.Validate(); err != nil { return err }
-	if strings.TrimSpace(d.Title) == "" { return NewError(ErrorCodeDecision, "decision title is required") }
-	if strings.TrimSpace(d.Proposal) == "" { return NewError(ErrorCodeDecision, "decision proposal is required") }
-	if err := d.ProposedBy.Validate(); err != nil { return WrapError(ErrorCodeDecision, "decision proposed_by is invalid", err) }
-	if !d.Lifecycle.Valid() { return NewError(ErrorCodeDecision, "decision lifecycle is invalid") }
-	if d.CreatedAt.IsZero() || d.UpdatedAt.IsZero() { return NewError(ErrorCodeDecision, "decision timestamps are required") }
+	if err := d.ID.Validate(); err != nil {
+		return err
+	}
+	if err := d.Scope.Validate(); err != nil {
+		return err
+	}
+	if err := d.Version.Validate(); err != nil {
+		return err
+	}
+	if strings.TrimSpace(d.Title) == "" {
+		return NewError(ErrorCodeDecision, "decision title is required")
+	}
+	if strings.TrimSpace(d.Proposal) == "" {
+		return NewError(ErrorCodeDecision, "decision proposal is required")
+	}
+	if err := d.ProposedBy.Validate(); err != nil {
+		return WrapError(ErrorCodeDecision, "decision proposed_by is invalid", err)
+	}
+	if !d.Lifecycle.Valid() {
+		return NewError(ErrorCodeDecision, "decision lifecycle is invalid")
+	}
+	if d.CreatedAt.IsZero() || d.UpdatedAt.IsZero() {
+		return NewError(ErrorCodeDecision, "decision timestamps are required")
+	}
 	seen := make(map[string]struct{}, len(d.Alternatives))
 	for _, item := range d.Alternatives {
 		item = strings.TrimSpace(item)
-		if item == "" { return NewError(ErrorCodeDecision, "decision alternatives cannot contain empty values") }
-		if _, ok := seen[item]; ok { return NewError(ErrorCodeDecision, "decision alternatives cannot contain duplicates") }
+		if item == "" {
+			return NewError(ErrorCodeDecision, "decision alternatives cannot contain empty values")
+		}
+		if _, ok := seen[item]; ok {
+			return NewError(ErrorCodeDecision, "decision alternatives cannot contain duplicates")
+		}
 		seen[item] = struct{}{}
 	}
 	if d.ChosenAlternative != "" {
@@ -471,8 +585,12 @@ func (d Decision) Validate() error {
 		}
 	}
 	if d.SupersedesDecisionID != nil {
-		if err := d.SupersedesDecisionID.Validate(); err != nil { return WrapError(ErrorCodeDecision, "supersedes_decision_id is invalid", err) }
-		if *d.SupersedesDecisionID == d.ID { return NewError(ErrorCodeDecision, "decision cannot supersede itself") }
+		if err := d.SupersedesDecisionID.Validate(); err != nil {
+			return WrapError(ErrorCodeDecision, "supersedes_decision_id is invalid", err)
+		}
+		if *d.SupersedesDecisionID == d.ID {
+			return NewError(ErrorCodeDecision, "decision cannot supersede itself")
+		}
 	}
 	switch d.Lifecycle {
 	case DecisionLifecycleProposed:
@@ -480,18 +598,38 @@ func (d Decision) Validate() error {
 			return NewError(ErrorCodeDecision, "proposed decision cannot contain terminal decision fields")
 		}
 	case DecisionLifecycleAccepted:
-		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() { return NewError(ErrorCodeDecision, "accepted decision requires decided_by and decided_at") }
-		if err := d.DecidedBy.Validate(); err != nil { return WrapError(ErrorCodeDecision, "decision decided_by is invalid", err) }
-		if strings.TrimSpace(d.Rationale) == "" { return NewError(ErrorCodeDecision, "accepted decision requires rationale") }
-		if strings.TrimSpace(d.RejectionReason) != "" { return NewError(ErrorCodeDecision, "accepted decision cannot contain rejection_reason") }
+		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() {
+			return NewError(ErrorCodeDecision, "accepted decision requires decided_by and decided_at")
+		}
+		if err := d.DecidedBy.Validate(); err != nil {
+			return WrapError(ErrorCodeDecision, "decision decided_by is invalid", err)
+		}
+		if strings.TrimSpace(d.Rationale) == "" {
+			return NewError(ErrorCodeDecision, "accepted decision requires rationale")
+		}
+		if strings.TrimSpace(d.RejectionReason) != "" {
+			return NewError(ErrorCodeDecision, "accepted decision cannot contain rejection_reason")
+		}
 	case DecisionLifecycleRejected:
-		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() { return NewError(ErrorCodeDecision, "rejected decision requires decided_by and decided_at") }
-		if err := d.DecidedBy.Validate(); err != nil { return WrapError(ErrorCodeDecision, "decision decided_by is invalid", err) }
-		if strings.TrimSpace(d.RejectionReason) == "" { return NewError(ErrorCodeDecision, "rejected decision requires rejection_reason") }
-		if d.SupersedesDecisionID != nil { return NewError(ErrorCodeDecision, "rejected decision cannot supersede another decision") }
+		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() {
+			return NewError(ErrorCodeDecision, "rejected decision requires decided_by and decided_at")
+		}
+		if err := d.DecidedBy.Validate(); err != nil {
+			return WrapError(ErrorCodeDecision, "decision decided_by is invalid", err)
+		}
+		if strings.TrimSpace(d.RejectionReason) == "" {
+			return NewError(ErrorCodeDecision, "rejected decision requires rejection_reason")
+		}
+		if d.SupersedesDecisionID != nil {
+			return NewError(ErrorCodeDecision, "rejected decision cannot supersede another decision")
+		}
 	case DecisionLifecycleSuperseded:
-		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() { return NewError(ErrorCodeDecision, "superseded decision must preserve original acceptance") }
-		if strings.TrimSpace(d.Rationale) == "" { return NewError(ErrorCodeDecision, "superseded decision must preserve acceptance rationale") }
+		if d.DecidedBy == nil || d.DecidedAt == nil || d.DecidedAt.IsZero() {
+			return NewError(ErrorCodeDecision, "superseded decision must preserve original acceptance")
+		}
+		if strings.TrimSpace(d.Rationale) == "" {
+			return NewError(ErrorCodeDecision, "superseded decision must preserve acceptance rationale")
+		}
 	}
 	return nil
 }
@@ -503,11 +641,21 @@ func (d *Decision) Update(title, proposal, chosenAlternative, rationale *string,
 	nextTitle, nextProposal := d.Title, d.Proposal
 	nextChosen, nextRationale := d.ChosenAlternative, d.Rationale
 	nextAlternatives := append([]string(nil), d.Alternatives...)
-	if title != nil { nextTitle = strings.TrimSpace(*title) }
-	if proposal != nil { nextProposal = strings.TrimSpace(*proposal) }
-	if chosenAlternative != nil { nextChosen = strings.TrimSpace(*chosenAlternative) }
-	if rationale != nil { nextRationale = strings.TrimSpace(*rationale) }
-	if alternatives != nil { nextAlternatives = normalizeAlternatives(*alternatives) }
+	if title != nil {
+		nextTitle = strings.TrimSpace(*title)
+	}
+	if proposal != nil {
+		nextProposal = strings.TrimSpace(*proposal)
+	}
+	if chosenAlternative != nil {
+		nextChosen = strings.TrimSpace(*chosenAlternative)
+	}
+	if rationale != nil {
+		nextRationale = strings.TrimSpace(*rationale)
+	}
+	if alternatives != nil {
+		nextAlternatives = normalizeAlternatives(*alternatives)
+	}
 	if nextTitle == d.Title && nextProposal == d.Proposal && nextChosen == d.ChosenAlternative && nextRationale == d.Rationale && stringSlicesEqual(nextAlternatives, d.Alternatives) {
 		return false, nil
 	}
@@ -516,19 +664,33 @@ func (d *Decision) Update(title, proposal, chosenAlternative, rationale *string,
 	d.ChosenAlternative, d.Rationale = nextChosen, nextRationale
 	d.Alternatives = nextAlternatives
 	next, err := nextVersion(d.Version)
-	if err != nil { *d = original; return false, err }
+	if err != nil {
+		*d = original
+		return false, err
+	}
 	d.Version = next
 	d.UpdatedAt = now.UTC()
-	if err := d.Validate(); err != nil { *d = original; return false, err }
+	if err := d.Validate(); err != nil {
+		*d = original
+		return false, err
+	}
 	return true, nil
 }
 
 func (d *Decision) Accept(actor ActorRef, now time.Time) error {
-	if d.Lifecycle != DecisionLifecycleProposed { return NewError(ErrorCodeInvalidTransition, "only proposed decision can be accepted") }
-	if strings.TrimSpace(d.Rationale) == "" { return NewError(ErrorCodeDecision, "accepted decision requires rationale") }
-	if err := actor.Validate(); err != nil { return err }
+	if d.Lifecycle != DecisionLifecycleProposed {
+		return NewError(ErrorCodeInvalidTransition, "only proposed decision can be accepted")
+	}
+	if strings.TrimSpace(d.Rationale) == "" {
+		return NewError(ErrorCodeDecision, "accepted decision requires rationale")
+	}
+	if err := actor.Validate(); err != nil {
+		return err
+	}
 	next, err := nextVersion(d.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	at := now.UTC()
 	by := actor
 	d.Version = next
@@ -540,12 +702,20 @@ func (d *Decision) Accept(actor ActorRef, now time.Time) error {
 }
 
 func (d *Decision) Reject(reason string, actor ActorRef, now time.Time) error {
-	if d.Lifecycle != DecisionLifecycleProposed { return NewError(ErrorCodeInvalidTransition, "only proposed decision can be rejected") }
+	if d.Lifecycle != DecisionLifecycleProposed {
+		return NewError(ErrorCodeInvalidTransition, "only proposed decision can be rejected")
+	}
 	reason = strings.TrimSpace(reason)
-	if reason == "" { return NewError(ErrorCodeDecision, "decision rejection reason is required") }
-	if err := actor.Validate(); err != nil { return err }
+	if reason == "" {
+		return NewError(ErrorCodeDecision, "decision rejection reason is required")
+	}
+	if err := actor.Validate(); err != nil {
+		return err
+	}
 	next, err := nextVersion(d.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	at := now.UTC()
 	by := actor
 	d.Version = next
@@ -558,9 +728,13 @@ func (d *Decision) Reject(reason string, actor ActorRef, now time.Time) error {
 }
 
 func (d *Decision) MarkSuperseded(now time.Time) error {
-	if d.Lifecycle != DecisionLifecycleAccepted { return NewError(ErrorCodeInvalidTransition, "only accepted decision can be superseded") }
+	if d.Lifecycle != DecisionLifecycleAccepted {
+		return NewError(ErrorCodeInvalidTransition, "only accepted decision can be superseded")
+	}
 	next, err := nextVersion(d.Version)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	d.Version = next
 	d.Lifecycle = DecisionLifecycleSuperseded
 	d.UpdatedAt = now.UTC()
@@ -569,30 +743,44 @@ func (d *Decision) MarkSuperseded(now time.Time) error {
 
 func normalizeAlternatives(values []string) []string {
 	result := make([]string, 0, len(values))
-	for _, value := range values { result = append(result, strings.TrimSpace(value)) }
+	for _, value := range values {
+		result = append(result, strings.TrimSpace(value))
+	}
 	return result
 }
 
 func stringSlicesEqual(left, right []string) bool {
-	if len(left) != len(right) { return false }
-	for i := range left { if left[i] != right[i] { return false } }
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
 	return true
 }
 
 func cloneID(value *ID) *ID {
-	if value == nil { return nil }
+	if value == nil {
+		return nil
+	}
 	copy := *value
 	return &copy
 }
 
 func cloneTime(value *time.Time) *time.Time {
-	if value == nil { return nil }
+	if value == nil {
+		return nil
+	}
 	copy := value.UTC()
 	return &copy
 }
 
 func cloneMeasurement(value *Measurement) *Measurement {
-	if value == nil { return nil }
+	if value == nil {
+		return nil
+	}
 	copy := *value
 	return &copy
 }
