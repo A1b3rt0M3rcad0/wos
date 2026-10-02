@@ -162,6 +162,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	uow.evidence = evidenceRepository{uow: uow}
 	uow.evidenceLinks = evidenceLinkRepository{uow: uow}
 	uow.decisions = decisionRepository{uow: uow}
+	uow.roadmaps = roadmapRepository{uow: uow}
+	uow.roadmapActivations = roadmapActivationStore{uow: uow}
 	uow.coordination = coordinationStore{uow: uow}
 	uow.events = eventLog{uow: uow}
 	uow.idempotency = idempotencyStore{uow: uow}
@@ -183,8 +185,10 @@ type unitOfWork struct {
 	artifacts     artifactRepository
 	evidence      evidenceRepository
 	evidenceLinks evidenceLinkRepository
-	decisions     decisionRepository
-	coordination  coordinationStore
+	decisions          decisionRepository
+	roadmaps           roadmapRepository
+	roadmapActivations roadmapActivationStore
+	coordination       coordinationStore
 	events        eventLog
 	idempotency   idempotencyStore
 }
@@ -199,6 +203,10 @@ func (u *unitOfWork) Artifacts() ports.ArtifactRepository         { return u.art
 func (u *unitOfWork) Evidence() ports.EvidenceRepository          { return u.evidence }
 func (u *unitOfWork) EvidenceLinks() ports.EvidenceLinkRepository { return u.evidenceLinks }
 func (u *unitOfWork) Decisions() ports.DecisionRepository         { return u.decisions }
+func (u *unitOfWork) Roadmaps() ports.RoadmapRepository            { return u.roadmaps }
+func (u *unitOfWork) RoadmapActivations() ports.RoadmapActivationStore {
+	return u.roadmapActivations
+}
 func (u *unitOfWork) Coordination() ports.CoordinationStore       { return u.coordination }
 func (u *unitOfWork) Events() ports.DomainEventLog                { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore         { return u.idempotency }
