@@ -84,6 +84,27 @@ paths:
                 $ref: "#/components/schemas/OutcomeReadResult"
         "404":
           $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Outcomes]
+      operationId: updateOutcome
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOutcomeRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/OutcomeMutation"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
 
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/state:
     get:
@@ -235,6 +256,32 @@ paths:
                 $ref: "#/components/schemas/ObjectiveReadResult"
         "404":
           $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Objectives]
+      operationId: updateObjective
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/ObjectiveID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateObjectiveRequest"
+      responses:
+        "200":
+          description: Objective updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectiveMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
 
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives/{objective_id}/actions/{objective_action}:
     post:
@@ -322,6 +369,32 @@ paths:
                 $ref: "#/components/schemas/WorkItemReadResult"
         "404":
           $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [WorkItems]
+      operationId: updateWorkItem
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkItemRequest"
+      responses:
+        "200":
+          description: WorkItem updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
 
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/claim:
     post:
@@ -559,6 +632,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
+    PreconditionRequired:
+      description: A required If-Match or expected_version precondition is absent.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
 
   schemas:
     ID:
@@ -615,6 +694,35 @@ components:
           enum: [backlog, todo]
           default: backlog
         objective_id: {$ref: "#/components/schemas/ID"}
+
+    UpdateOutcomeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        desired_state: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+
+    UpdateObjectiveRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
+        required_for_outcome: {type: boolean}
+
+    UpdateWorkItemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        title: {type: string}
+        description: {type: string}
+        priority: {$ref: "#/components/schemas/Priority"}
 
     VersionRequest:
       type: object

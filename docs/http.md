@@ -10,7 +10,7 @@ The local profile uses SQLite, local authentication and loopback binding by
 default:
 
 ```bash
-go run ./cmd/wos serve
+go run ./cmd/wos serverr
 ```
 
 Default runtime values:
@@ -199,11 +199,15 @@ Wave 05 mappings are:
 
 | HTTP | Meaning |
 | --- | --- |
-| 400 | malformed JSON, invalid identifiers/format, missing idempotency/version precondition |
+| 400 | malformed JSON, invalid identifiers/format or invalid idempotency key |
 | 404 | entity absent from the explicit Namespace/Outcome scope |
-| 409 | lifecycle, criterion, lease or idempotency conflict |
+| 409 | lifecycle, precondition, lease or idempotency conflict |
 | 412 | stale or mismatched `If-Match` / `expected_version` |
-| 408/504 | request cancellation/deadline conditions |
+| 413 | request body exceeds the supported limit |
+| 422 | syntactically valid request violates a domain field constraint |
+| 428 | required aggregate version precondition is absent |
+| 503 | request deadline or transient infrastructure timeout |
+| 408 | caller/request cancellation |
 
 Local auth intentionally uses the configured local Principal and does not
 pretend to provide multi-user authentication. Token/OAuth authorization remains

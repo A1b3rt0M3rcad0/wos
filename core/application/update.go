@@ -57,6 +57,9 @@ func (s *Service) UpdateOutcome(
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		if outcome.Version != cmd.ExpectedVersion {
+			return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "outcome expected_version is stale")
+		}
 		changed, err := outcome.UpdateDetails(cmd.Title, cmd.Description, cmd.DesiredState, cmd.Priority, now)
 		if err != nil {
 			return domain.Outcome{}, 0, err
@@ -97,6 +100,9 @@ func (s *Service) UpdateObjective(
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
+		if objective.Version != cmd.ExpectedVersion {
+			return domain.Objective{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "objective expected_version is stale")
+		}
 		changed, err := objective.UpdateDetails(cmd.Title, cmd.Description, cmd.Priority, cmd.RequiredForOutcome, now)
 		if err != nil {
 			return domain.Objective{}, 0, err
@@ -136,6 +142,9 @@ func (s *Service) UpdateWorkItem(
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
+		}
+		if item.Version != cmd.ExpectedVersion {
+			return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "work item expected_version is stale")
 		}
 		changed, err := item.UpdateDetails(cmd.Title, cmd.Description, cmd.Priority, now)
 		if err != nil {

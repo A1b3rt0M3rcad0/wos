@@ -104,6 +104,23 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		t.Fatal("create outcome did not return ETag")
 	}
 
+	patchedOutcome := doJSON[application.MutationResult[domain.Outcome]](
+		t,
+		client,
+		http.MethodPatch,
+		outcomeURL,
+		[]byte(`{"title":"HTTP outcome updated"}`),
+		map[string]string{
+			"Idempotency-Key": "http-outcome-patch-0001",
+			"If-Match":        outcomeETagV1,
+		},
+		http.StatusOK,
+	)
+	if patchedOutcome.Value.Value.Title != "HTTP outcome updated" {
+		t.Fatalf("patched title = %q", patchedOutcome.Value.Value.Title)
+	}
+	outcomeETagV1 = patchedOutcome.Header.Get("ETag")
+
 	criterionResponse := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t,
 		client,
@@ -313,6 +330,32 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	}
 	invalidPayload.Body.Close()
 
+	semanticInvalid := doRequest(
+		t,
+		client,
+		http.MethodPost,
+		outcomeURL+"/work-items",
+		[]byte(`{"title":"bad priority","priority":"unsupported"}`),
+		map[string]string{"Idempotency-Key": "http-semantic-invalid-0001"},
+	)
+	if semanticInvalid.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("semantic invalid status = %d, want 422", semanticInvalid.StatusCode)
+	}
+	semanticInvalid.Body.Close()
+
+	tooLarge := doRequest(
+		t,
+		client,
+		http.MethodPost,
+		outcomeURL+"/objectives",
+		bytes.Repeat([]byte("x"), maxJSONBodyBytes+1),
+		map[string]string{"Idempotency-Key": "http-payload-too-large-0001"},
+	)
+	if tooLarge.StatusCode != http.StatusRequestEntityTooLarge {
+		t.Fatalf("payload too large status = %d, want 413", tooLarge.StatusCode)
+	}
+	tooLarge.Body.Close()
+
 	missingVersion := doRequest(
 		t,
 		client,
@@ -321,8 +364,8 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		[]byte(`{"reason":"missing precondition"}`),
 		map[string]string{"Idempotency-Key": "http-missing-version-0001"},
 	)
-	if missingVersion.StatusCode != http.StatusBadRequest {
-		t.Fatalf("missing version status = %d, want 400", missingVersion.StatusCode)
+	if missingVersion.StatusCode != http.StatusPreconditionRequired {
+		t.Fatalf("missing version status = %d, want 428", missingVersion.StatusCode)
 	}
 	missingVersion.Body.Close()
 

@@ -63,7 +63,29 @@ func TestRuntimeHTTPPersistsAcrossRestart(t *testing.T) {
 		response.Body.Close()
 		t.Fatal(err)
 	}
+	etag := response.Header.Get("ETag")
 	response.Body.Close()
+
+	patchRequest, err := http.NewRequest(
+		http.MethodPatch,
+		firstServer.URL+"/api/v1/namespaces/"+namespaceID+"/outcomes/"+created.Value.ID.String(),
+		bytes.NewBufferString(`{"title":"restart updated"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	patchRequest.Header.Set("Content-Type", "application/json")
+	patchRequest.Header.Set("Idempotency-Key", "runtime-restart-patch-0001")
+	patchRequest.Header.Set("If-Match", etag)
+	patchResponse, err := client.Do(patchRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if patchResponse.StatusCode != http.StatusOK {
+		patchResponse.Body.Close()
+		t.Fatalf("patch status = %d, want 200", patchResponse.StatusCode)
+	}
+	patchResponse.Body.Close()
 
 	firstServer.Close()
 	if err := first.Close(); err != nil {
@@ -94,7 +116,7 @@ func TestRuntimeHTTPPersistsAcrossRestart(t *testing.T) {
 	if persisted.Value.ID != created.Value.ID {
 		t.Fatalf("persisted id = %s, want %s", persisted.Value.ID, created.Value.ID)
 	}
-	if persisted.Value.Title != "restart" {
+	if persisted.Value.Title != "restart updated" {
 		t.Fatalf("persisted title = %q", persisted.Value.Title)
 	}
 }
