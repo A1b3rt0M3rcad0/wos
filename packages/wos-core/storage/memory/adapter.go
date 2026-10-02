@@ -23,6 +23,7 @@ type Store struct {
 	evidence      map[string]domain.Evidence
 	evidenceLinks map[string]domain.EvidenceLink
 	decisions     map[string]domain.Decision
+	roadmaps      map[string]domain.Roadmap
 	revisions     map[string]domain.OutcomeRevision
 	events        []domain.DomainEvent
 	idempotency   map[string]idempotencyRecord
@@ -47,6 +48,7 @@ func New() *Store {
 		evidence:      make(map[string]domain.Evidence),
 		evidenceLinks: make(map[string]domain.EvidenceLink),
 		decisions:     make(map[string]domain.Decision),
+		roadmaps:      make(map[string]domain.Roadmap),
 		revisions:     make(map[string]domain.OutcomeRevision),
 		events:        make([]domain.DomainEvent, 0),
 		idempotency:   make(map[string]idempotencyRecord),
@@ -72,6 +74,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		evidence:      cloneEvidence(s.evidence),
 		evidenceLinks: cloneEvidenceLinks(s.evidenceLinks),
 		decisions:     cloneDecisions(s.decisions),
+		roadmaps:      cloneRoadmaps(s.roadmaps),
 		revisions:     cloneRevisions(s.revisions),
 		events:        cloneEvents(s.events),
 		idempotency:   cloneIdempotency(s.idempotency),
@@ -86,6 +89,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.evidenceRepo = evidenceRepository{tx: tx}
 	tx.evidenceLinkRepo = evidenceLinkRepository{tx: tx}
 	tx.decisionRepo = decisionRepository{tx: tx}
+	tx.roadmapRepo = roadmapRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -105,6 +109,7 @@ type transaction struct {
 	evidence      map[string]domain.Evidence
 	evidenceLinks map[string]domain.EvidenceLink
 	decisions     map[string]domain.Decision
+	roadmaps      map[string]domain.Roadmap
 	revisions     map[string]domain.OutcomeRevision
 	events        []domain.DomainEvent
 	idempotency   map[string]idempotencyRecord
@@ -119,6 +124,7 @@ type transaction struct {
 	evidenceRepo     evidenceRepository
 	evidenceLinkRepo evidenceLinkRepository
 	decisionRepo     decisionRepository
+	roadmapRepo      roadmapRepository
 	coordination     coordinationStore
 	eventLog         eventLog
 	idempotencyStore idempotencyStore
@@ -134,6 +140,7 @@ func (tx *transaction) Artifacts() ports.ArtifactRepository         { return tx.
 func (tx *transaction) Evidence() ports.EvidenceRepository          { return tx.evidenceRepo }
 func (tx *transaction) EvidenceLinks() ports.EvidenceLinkRepository { return tx.evidenceLinkRepo }
 func (tx *transaction) Decisions() ports.DecisionRepository         { return tx.decisionRepo }
+func (tx *transaction) Roadmaps() ports.RoadmapRepository            { return tx.roadmapRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore       { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog                { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore         { return tx.idempotencyStore }
@@ -152,6 +159,7 @@ func (tx *transaction) Commit() error {
 	tx.store.evidence = cloneEvidence(tx.evidence)
 	tx.store.evidenceLinks = cloneEvidenceLinks(tx.evidenceLinks)
 	tx.store.decisions = cloneDecisions(tx.decisions)
+	tx.store.roadmaps = cloneRoadmaps(tx.roadmaps)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -173,6 +181,95 @@ func (tx *transaction) ensureOpen() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction is closed")
 	}
+	return nil
+}
+
+type roadmapRepository struct{ tx *transaction }
+
+func (r roadmapRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Roadmap, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.Roadmap{}, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return domain.Roadmap{}, err
+	}
+	value, ok := r.tx.roadmaps[entityKey(scope, id)]
+	if !ok {
+		return domain.Roadmap{}, domain.NewError(domain.ErrorCodeNotFound, "roadmap not found")
+	}
+	return cloneRoadmap(value), nil
+}
+
+func (r roadmapRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Roadmap, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
+	result := make([]domain.Roadmap, 0)
+	for _, value := range r.tx.roadmaps {
+		if value.Scope == scope {
+			result = append(result, cloneRoadmap(value))
+		}
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].CreatedAt.Equal(result[j].CreatedAt) {
+			return result[i].ID.String() < result[j].ID.String()
+		}
+		return result[i].CreatedAt.Before(result[j].CreatedAt)
+	})
+	return result, nil
+}
+
+func (r roadmapRepository) Insert(ctx context.Context, roadmap domain.Roadmap) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := roadmap.Validate(); err != nil {
+		return err
+	}
+	key := entityKey(roadmap.Scope, roadmap.ID)
+	if _, exists := r.tx.roadmaps[key]; exists {
+		return domain.NewError(domain.ErrorCodeAlreadyExists, "roadmap already exists")
+	}
+	r.tx.roadmaps[key] = cloneRoadmap(roadmap)
+	return nil
+}
+
+func (r roadmapRepository) Save(ctx context.Context, roadmap domain.Roadmap, expected domain.Version) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := roadmap.Validate(); err != nil {
+		return err
+	}
+	key := entityKey(roadmap.Scope, roadmap.ID)
+	current, ok := r.tx.roadmaps[key]
+	if !ok {
+		return domain.NewError(domain.ErrorCodeNotFound, "roadmap not found")
+	}
+	if current.Version != expected {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "roadmap expected_version does not match")
+	}
+	if roadmap.Version != expected+1 {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "roadmap version must advance exactly once per save")
+	}
+	if len(roadmap.Revisions) < len(current.Revisions) {
+		return domain.NewError(domain.ErrorCodeRoadmap, "published roadmap revision history is append-only")
+	}
+	for i := range current.Revisions {
+		if !reflect.DeepEqual(current.Revisions[i], roadmap.Revisions[i]) {
+			return domain.NewError(domain.ErrorCodeRoadmap, "published roadmap revision is immutable")
+		}
+	}
+	r.tx.roadmaps[key] = cloneRoadmap(roadmap)
 	return nil
 }
 
@@ -1152,6 +1249,69 @@ func scopeKey(scope domain.Scope) string {
 
 func entityKey(scope domain.Scope, id domain.ID) string {
 	return scopeKey(scope) + "/" + id.String()
+}
+
+func cloneRoadmaps(src map[string]domain.Roadmap) map[string]domain.Roadmap {
+	dst := make(map[string]domain.Roadmap, len(src))
+	for k, v := range src {
+		dst[k] = cloneRoadmap(v)
+	}
+	return dst
+}
+
+func cloneRoadmap(v domain.Roadmap) domain.Roadmap {
+	if v.ArchivedAt != nil {
+		value := *v.ArchivedAt
+		v.ArchivedAt = &value
+	}
+	if v.Draft != nil {
+		draft := *v.Draft
+		if v.Draft.BaseRevisionNumber != nil {
+			value := *v.Draft.BaseRevisionNumber
+			draft.BaseRevisionNumber = &value
+		}
+		if v.Draft.DiscardedAt != nil {
+			value := *v.Draft.DiscardedAt
+			draft.DiscardedAt = &value
+		}
+		draft.Nodes = cloneRoadmapNodes(v.Draft.Nodes)
+		draft.AfterLinks = append([]domain.RoadmapAfterLink(nil), v.Draft.AfterLinks...)
+		v.Draft = &draft
+	}
+	sourceRevisions := v.Revisions
+	v.Revisions = make([]domain.RoadmapRevision, len(sourceRevisions))
+	for i := range sourceRevisions {
+		v.Revisions[i] = sourceRevisions[i]
+		v.Revisions[i].Nodes = cloneRoadmapNodes(sourceRevisions[i].Nodes)
+		v.Revisions[i].AfterLinks = append([]domain.RoadmapAfterLink(nil), sourceRevisions[i].AfterLinks...)
+		v.Revisions[i].DependencySnapshots = append([]domain.RoadmapDependencySnapshot(nil), sourceRevisions[i].DependencySnapshots...)
+	}
+	return v
+}
+
+func cloneRoadmapNodes(src []domain.RoadmapNode) []domain.RoadmapNode {
+	dst := make([]domain.RoadmapNode, len(src))
+	for i := range src {
+		dst[i] = src[i]
+		dst[i].CriterionRefs = append([]domain.RoadmapCriterionRef(nil), src[i].CriterionRefs...)
+		if src[i].TargetRef != nil {
+			value := *src[i].TargetRef
+			dst[i].TargetRef = &value
+		}
+		if src[i].PlannedStart != nil {
+			value := *src[i].PlannedStart
+			dst[i].PlannedStart = &value
+		}
+		if src[i].PlannedEnd != nil {
+			value := *src[i].PlannedEnd
+			dst[i].PlannedEnd = &value
+		}
+		if src[i].ReferenceSnapshot != nil {
+			value := *src[i].ReferenceSnapshot
+			dst[i].ReferenceSnapshot = &value
+		}
+	}
+	return dst
 }
 
 func cloneRevisions(src map[string]domain.OutcomeRevision) map[string]domain.OutcomeRevision {
