@@ -44,6 +44,7 @@ func (s *Service) AddDependency(
 	if err != nil {
 		return MutationResult[domain.Relation]{}, err
 	}
+	relation.Reason = strings.TrimSpace(cmd.Reason)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Relation, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
