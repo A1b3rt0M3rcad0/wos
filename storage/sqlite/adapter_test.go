@@ -305,10 +305,10 @@ func TestSQLiteBackupAndRestore(t *testing.T) {
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e944-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID,
-		Title: "Backup outcome",
+		NamespaceID:  namespaceID,
+		Title:        "Backup outcome",
 		DesiredState: "Survive backup and restore",
-		Priority: domain.PriorityNormal,
+		Priority:     domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)

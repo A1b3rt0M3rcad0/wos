@@ -334,10 +334,10 @@ func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
 	outcomeResult, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e961-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID,
-		Title: "Replay",
+		NamespaceID:  namespaceID,
+		Title:        "Replay",
 		DesiredState: "Replay survives process restart",
-		Priority: domain.PriorityNormal,
+		Priority:     domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
