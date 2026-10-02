@@ -226,3 +226,189 @@ func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
 		t.Fatalf("outcome revision = %d, want %d", state.OutcomeRevision, linkResult.OutcomeRevision)
 	}
 }
+
+
+func TestWave09DocumentaryRecordsDoNotConcludeExecutionState(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	scope := outcome.Scope()
+	cc := commandContext()
+
+	objectiveResult, err := service.CreateObjective(ctx, cc, application.CreateObjectiveCommand{
+		Scope: scope, Title: "Unfinished objective", Priority: domain.PriorityNormal, RequiredForOutcome: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	objective := objectiveResult.Value
+	workResult, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
+		Scope: scope, Title: "Unfinished work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo,
+		ObjectiveID: &objective.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := workResult.Value
+
+	beforeOutcome, err := service.GetOutcome(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifactResult, err := service.RegisterArtifact(ctx, cc, application.RegisterArtifactCommand{
+		Scope: scope, ArtifactType: "result", Name: "result artifact", URI: "file:///result.json",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterOutcome, err := service.GetOutcome(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterObjective, err := service.GetObjective(ctx, scope, objective.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterWork, err := service.GetWorkItem(ctx, scope, work.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if artifactResult.OutcomeRevision <= beforeOutcome.OutcomeRevision {
+		t.Fatal("artifact registration must advance coordination revision")
+	}
+	if afterOutcome.Value.Version != beforeOutcome.Value.Version ||
+		afterOutcome.Value.Lifecycle != beforeOutcome.Value.Lifecycle {
+		t.Fatalf("artifact registration changed Outcome execution state: before=%#v after=%#v", beforeOutcome.Value, afterOutcome.Value)
+	}
+	if afterObjective.Value.Version != objective.Version || afterObjective.Value.Lifecycle != objective.Lifecycle {
+		t.Fatalf("artifact registration changed Objective execution state: %#v", afterObjective.Value)
+	}
+	if afterWork.Value.Version != work.Version || afterWork.Value.Lifecycle != work.Lifecycle {
+		t.Fatalf("artifact registration changed WorkItem execution state: %#v", afterWork.Value)
+	}
+}
+
+func TestWave09EvidenceLinkDoesNotAssessCriterion(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	scope := outcome.Scope()
+	cc := commandContext()
+
+	criterionResult, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{
+		Owner: outcome.Ref(),
+		ExpectedVersion: outcome.Version,
+		Title: "Evidence reviewed",
+		Required: true,
+		VerificationMode: domain.VerificationModeEvidenceReview,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion := criterionResult.Value
+
+	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
+		Scope: scope,
+		EvidenceType: domain.EvidenceTypeSource,
+		Description: "supporting source",
+		SourceRef: domain.SourceReference{Provider: "test", ID: "source-criterion"},
+		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
+		Scope: scope,
+		EvidenceID: evidenceResult.Value.ID,
+		TargetRef: outcome.Ref(),
+		CriterionID: &criterion.ID,
+		Stance: domain.EvidenceStanceSupports,
+		Rationale: "relevant supporting evidence",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	persisted, err := service.GetOutcome(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(persisted.Value.Criteria.CurrentAssessments) != 0 {
+		t.Fatalf("EvidenceLink unexpectedly created criterion assessment: %#v", persisted.Value.Criteria.CurrentAssessments)
+	}
+}
+
+func TestWave09DecisionNoOpDoesNotAdvanceRevisionOrEmitEvent(t *testing.T) {
+	ctx := context.Background()
+	service, store := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	scope := outcome.Scope()
+	cc := commandContext()
+
+	proposed, err := service.ProposeDecision(ctx, cc, application.ProposeDecisionCommand{
+		Scope: scope, Title: "No-op decision", Proposal: "Keep current state", Rationale: "baseline",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeEvents := store.SnapshotDomainEvents(scope)
+	sameTitle := proposed.Value.Title
+	noOp, err := service.UpdateDecision(ctx, cc, application.UpdateDecisionCommand{
+		Scope: scope,
+		DecisionID: proposed.Value.ID,
+		ExpectedVersion: proposed.Value.Version,
+		Title: &sameTitle,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterEvents := store.SnapshotDomainEvents(scope)
+
+	if noOp.Value.Version != proposed.Value.Version {
+		t.Fatalf("no-op decision version = %d, want %d", noOp.Value.Version, proposed.Value.Version)
+	}
+	if noOp.OutcomeRevision != proposed.OutcomeRevision {
+		t.Fatalf("no-op decision revision = %d, want %d", noOp.OutcomeRevision, proposed.OutcomeRevision)
+	}
+	if len(afterEvents) != len(beforeEvents) {
+		t.Fatalf("no-op decision emitted event: before=%d after=%d", len(beforeEvents), len(afterEvents))
+	}
+}
+
+func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	scope := outcome.Scope()
+	cc := commandContext()
+
+	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
+		Scope: scope,
+		EvidenceType: domain.EvidenceTypeSource,
+		Description: "namespace-bound evidence",
+		SourceRef: domain.SourceReference{Provider: "test", ID: "cross-namespace"},
+		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	foreignScope := domain.Scope{
+		NamespaceID: domain.MustParseID("0199edff-0000-7000-8000-000000000001"),
+		OutcomeID: scope.OutcomeID,
+	}
+	_, err = service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
+		Scope: scope,
+		EvidenceID: evidenceResult.Value.ID,
+		TargetRef: domain.EntityRef{Scope: foreignScope, Kind: domain.EntityKindOutcome, ID: scope.OutcomeID},
+		Stance: domain.EvidenceStanceContext,
+		Rationale: "must fail",
+	})
+	if err == nil {
+		t.Fatal("cross-Namespace evidence link must fail")
+	}
+	code, ok := domain.ErrorCodeOf(err)
+	if !ok || code != domain.ErrorCodeEvidenceLink {
+		t.Fatalf("error code = %q, want evidence_link_error: %v", code, err)
+	}
+}
