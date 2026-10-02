@@ -13,6 +13,8 @@ tags:
   - name: Outcomes
   - name: Objectives
   - name: WorkItems
+  - name: Relations
+  - name: Queries
   - name: Criteria
 
 paths:
@@ -128,6 +130,128 @@ paths:
                 $ref: "#/components/schemas/OutcomeState"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/ready-work:
+    get:
+      tags: [Queries]
+      operationId: listReadyWork
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: WorkItems ready at the query evaluation instant.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyWork"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations:
+    get:
+      tags: [Relations]
+      operationId: listRelations
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Outcome-local relations ordered deterministically.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationCollection"
+    post:
+      tags: [Relations]
+      operationId: createRelation
+      description: Wave 06 accepts the canonical depends_on relation type.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRelationRequest"
+      responses:
+        "201":
+          description: Dependency relation created or replayed idempotently.
+          headers:
+            ETag:
+              schema: {type: string}
+            Location:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations/{relation_id}:
+    get:
+      tags: [Relations]
+      operationId: getRelation
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RelationID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Persisted relation representation.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations/{relation_id}/actions/remove:
+    post:
+      tags: [Relations]
+      operationId: removeRelation
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RelationID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        $ref: "#/components/requestBodies/ReasonBody"
+      responses:
+        "200":
+          description: Dependency relation removed while preserving history.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
 
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/activate:
     post:
@@ -554,6 +678,11 @@ components:
       in: path
       required: true
       schema: {$ref: "#/components/schemas/ID"}
+    RelationID:
+      name: relation_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -638,6 +767,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
+    UnprocessableEntity:
+      description: Request format is valid but a domain invariant is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
 
   schemas:
     ID:
@@ -659,6 +794,15 @@ components:
     WorkItemLifecycle:
       type: string
       enum: [backlog, todo, in_progress, done, cancelled]
+    RelationLifecycle:
+      type: string
+      enum: [active, removed]
+    DependencyStrength:
+      type: string
+      enum: [hard, advisory]
+    DependencySatisfaction:
+      type: string
+      enum: [target_completed]
 
     CreateOutcomeRequest:
       type: object
@@ -694,6 +838,32 @@ components:
           enum: [backlog, todo]
           default: backlog
         objective_id: {$ref: "#/components/schemas/ID"}
+        not_before: {type: string, format: date-time}
+
+    RelationEndpointRequest:
+      type: object
+      additionalProperties: false
+      required: [kind, id]
+      properties:
+        kind:
+          type: string
+          enum: [objective, work_item]
+        id: {$ref: "#/components/schemas/ID"}
+
+    CreateRelationRequest:
+      type: object
+      additionalProperties: false
+      required: [source_ref, relation_type, target_ref, strength]
+      properties:
+        source_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+        relation_type:
+          type: string
+          const: depends_on
+        target_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+        strength: {$ref: "#/components/schemas/DependencyStrength"}
+        satisfaction:
+          $ref: "#/components/schemas/DependencySatisfaction"
+        reason: {type: string}
 
     UpdateOutcomeRequest:
       type: object
@@ -846,12 +1016,69 @@ components:
         objective_id: {$ref: "#/components/schemas/ID"}
         lifecycle: {$ref: "#/components/schemas/WorkItemLifecycle"}
         priority: {$ref: "#/components/schemas/Priority"}
+        not_before: {type: string, format: date-time}
         result_summary: {type: string}
         current_lease: {type: object}
         last_fencing_token: {type: integer, minimum: 0}
         criteria: {type: object}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+
+    Relation:
+      type: object
+      required: [id, scope, version, source_ref, relation_type, target_ref, lifecycle, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        source_ref: {type: object}
+        relation_type:
+          type: string
+          enum: [depends_on, relates_to, produces, derived_from]
+        target_ref: {type: object}
+        strength: {$ref: "#/components/schemas/DependencyStrength"}
+        satisfaction: {$ref: "#/components/schemas/DependencySatisfaction"}
+        lifecycle: {$ref: "#/components/schemas/RelationLifecycle"}
+        reason: {type: string}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    Readiness:
+      type: object
+      required: [ref, ready, evaluated_at]
+      properties:
+        ref: {type: object}
+        ready: {type: boolean}
+        reasons:
+          type: array
+          items:
+            type: string
+            enum:
+              - lifecycle_not_ready
+              - outcome_not_active
+              - outcome_archived
+              - objective_terminal
+              - hard_dependency_unsatisfied
+              - not_before
+              - active_lease
+        evaluated_at: {type: string, format: date-time}
+
+    ReadyWorkItem:
+      type: object
+      required: [work_item, readiness]
+      properties:
+        work_item: {$ref: "#/components/schemas/WorkItem"}
+        readiness: {$ref: "#/components/schemas/Readiness"}
+
+    ReadyWork:
+      type: object
+      required: [items, evaluated_at, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/ReadyWorkItem"}
+        evaluated_at: {type: string, format: date-time}
+        outcome_revision: {type: integer, minimum: 1}
 
     MutationMetadata:
       type: object
@@ -889,6 +1116,13 @@ components:
           required: [value]
           properties:
             value: {$ref: "#/components/schemas/SuccessCriterion"}
+    RelationMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/Relation"}
 
     OutcomeReadResult:
       type: object
@@ -908,6 +1142,12 @@ components:
       properties:
         value: {$ref: "#/components/schemas/WorkItem"}
         outcome_revision: {type: integer, minimum: 1}
+    RelationReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Relation"}
+        outcome_revision: {type: integer, minimum: 1}
 
     ObjectiveCollection:
       type: object
@@ -925,9 +1165,17 @@ components:
           type: array
           items: {$ref: "#/components/schemas/WorkItem"}
         outcome_revision: {type: integer, minimum: 1}
+    RelationCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Relation"}
+        outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, outcome_revision]
+      required: [outcome, objectives, work_items, relations, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -936,6 +1184,9 @@ components:
         work_items:
           type: array
           items: {$ref: "#/components/schemas/WorkItem"}
+        relations:
+          type: array
+          items: {$ref: "#/components/schemas/Relation"}
         outcome_revision: {type: integer, minimum: 1}
 
     ErrorEnvelope:
