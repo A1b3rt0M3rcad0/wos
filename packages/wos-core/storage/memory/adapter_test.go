@@ -114,7 +114,6 @@ func TestCommitPersistsAndVersionConflictIsDetected(t *testing.T) {
 	}
 }
 
-
 func TestDocumentaryRepositoriesEnforceHistoricalImmutability(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
