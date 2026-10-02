@@ -45,6 +45,48 @@ func (h *Handler) createWorkItem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, result)
 }
 
+func (h *Handler) updateWorkItem(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "work_item_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request updateWorkItemRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindWorkItem, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.UpdateWorkItem(r.Context(), cc, application.UpdateWorkItemCommand{
+		Scope:           scope,
+		WorkItemID:      id,
+		ExpectedVersion: expected,
+		Title:           request.Title,
+		Description:     request.Description,
+		Priority:        request.Priority,
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindWorkItem, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (h *Handler) getWorkItem(w http.ResponseWriter, r *http.Request) {
 	scope, err := parseScope(r)
 	if err != nil {

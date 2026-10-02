@@ -44,6 +44,29 @@ type assessmentRequest struct {
 	Rationale         string                   `json:"rationale"`
 }
 
+type updateOutcomeRequest struct {
+	ExpectedVersion *uint64          `json:"expected_version,omitempty"`
+	Title           *string          `json:"title,omitempty"`
+	Description     *string          `json:"description,omitempty"`
+	DesiredState    *string          `json:"desired_state,omitempty"`
+	Priority        *domain.Priority `json:"priority,omitempty"`
+}
+
+type updateObjectiveRequest struct {
+	ExpectedVersion    *uint64          `json:"expected_version,omitempty"`
+	Title              *string          `json:"title,omitempty"`
+	Description        *string          `json:"description,omitempty"`
+	Priority           *domain.Priority `json:"priority,omitempty"`
+	RequiredForOutcome *bool            `json:"required_for_outcome,omitempty"`
+}
+
+type updateWorkItemRequest struct {
+	ExpectedVersion *uint64          `json:"expected_version,omitempty"`
+	Title           *string          `json:"title,omitempty"`
+	Description     *string          `json:"description,omitempty"`
+	Priority        *domain.Priority `json:"priority,omitempty"`
+}
+
 type versionRequest struct {
 	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
 }
@@ -86,6 +109,7 @@ type errorEnvelope struct {
 type errorBody struct {
 	Code          string `json:"code"`
 	Message       string `json:"message"`
+	Details       any    `json:"details,omitempty"`
 	Retryable     bool   `json:"retryable"`
 	CorrelationID string `json:"correlation_id,omitempty"`
 }

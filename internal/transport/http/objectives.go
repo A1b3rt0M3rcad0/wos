@@ -45,6 +45,49 @@ func (h *Handler) createObjective(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, result)
 }
 
+func (h *Handler) updateObjective(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "objective_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request updateObjectiveRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindObjective, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.UpdateObjective(r.Context(), cc, application.UpdateObjectiveCommand{
+		Scope:              scope,
+		ObjectiveID:        id,
+		ExpectedVersion:    expected,
+		Title:              request.Title,
+		Description:        request.Description,
+		Priority:           request.Priority,
+		RequiredForOutcome: request.RequiredForOutcome,
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindObjective, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (h *Handler) getObjective(w http.ResponseWriter, r *http.Request) {
 	scope, err := parseScope(r)
 	if err != nil {

@@ -79,7 +79,7 @@ jobs:
           WOS_LISTEN=127.0.0.1:18080 \
           WOS_SQLITE_PATH="$tmpdir/wos.db" \
           WOS_LOCAL_PRINCIPAL_ID=ci-local \
-            ./bin/wos serve >"$log" 2>&1 &
+            ./bin/wos server >"$log" 2>&1 &
           pid=$!
 
           cleanup() {

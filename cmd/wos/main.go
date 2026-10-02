@@ -27,7 +27,7 @@ func run(args []string) int {
 		fmt.Println("configuration valid")
 		return 0
 	}
-	if len(args) == 1 && args[0] == "serve" {
+	if len(args) == 1 && args[0] == "server" {
 		cfg := server.ConfigFromEnv()
 		runtime, err := server.OpenRuntime(cfg)
 		if err != nil {
@@ -45,6 +45,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <serve|version|config validate>")
+	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate>")
 	return 2
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/internal/authentication/local"
 )
 
-const maxJSONBodyBytes = 1 << 20
+const maxJSONBodyBytes = 256 << 10
 
 type Options struct {
 	Prefix         string
@@ -37,6 +37,16 @@ type Handler struct {
 	prefix         string
 	mux            *http.ServeMux
 }
+
+type contractError struct {
+	status    int
+	code      string
+	message   string
+	retryable bool
+	details   any
+}
+
+func (e *contractError) Error() string { return e.message }
 
 type contextKey string
 
@@ -90,6 +100,7 @@ func (h *Handler) routes() {
 
 	outcome := base + "/{outcome_id}"
 	h.mux.HandleFunc("GET "+outcome, h.getOutcome)
+	h.mux.HandleFunc("PATCH "+outcome, h.updateOutcome)
 	h.mux.HandleFunc("GET "+outcome+"/state", h.getOutcomeState)
 	h.mux.HandleFunc("POST "+outcome+"/actions/activate", h.activateOutcome)
 	h.mux.HandleFunc("POST "+outcome+"/actions/achieve", h.achieveOutcome)
@@ -107,6 +118,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/objectives", h.createObjective)
 	h.mux.HandleFunc("GET "+outcome+"/objectives", h.listObjectives)
 	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}", h.getObjective)
+	h.mux.HandleFunc("PATCH "+outcome+"/objectives/{objective_id}", h.updateObjective)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/start", h.startObjective)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/achieve", h.achieveObjective)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/cancel", h.cancelObjective)
@@ -119,6 +131,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/work-items", h.createWorkItem)
 	h.mux.HandleFunc("GET "+outcome+"/work-items", h.listWorkItems)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}", h.getWorkItem)
+	h.mux.HandleFunc("PATCH "+outcome+"/work-items/{work_item_id}", h.updateWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/activate", h.activateWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/defer", h.deferWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/claim", h.claimWorkItem)
@@ -169,12 +182,16 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, target any) error {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
 		if errors.Is(err, io.EOF) {
-			return domain.NewError(domain.ErrorCodeInvalidArgument, "JSON request body is required")
+			return &contractError{status: http.StatusBadRequest, code: "invalid_json", message: "JSON request body is required"}
 		}
-		return domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid JSON request body", err)
+		var maxBytes *http.MaxBytesError
+		if errors.As(err, &maxBytes) {
+			return &contractError{status: http.StatusRequestEntityTooLarge, code: "payload_too_large", message: "request body exceeds the supported limit"}
+		}
+		return &contractError{status: http.StatusBadRequest, code: "invalid_json", message: "invalid JSON request body"}
 	}
 	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
-		return domain.NewError(domain.ErrorCodeInvalidArgument, "request body must contain exactly one JSON value")
+		return &contractError{status: http.StatusBadRequest, code: "invalid_json", message: "request body must contain exactly one JSON value"}
 	}
 	return nil
 }
@@ -222,12 +239,12 @@ func expectedVersion(r *http.Request, body *uint64, kind domain.EntityKind, id d
 	if header != "" {
 		expectedPrefix := "\"" + kind.String() + ":" + id.String() + ":v"
 		if !strings.HasPrefix(header, expectedPrefix) || !strings.HasSuffix(header, "\"") {
-			return 0, domain.NewError(domain.ErrorCodeVersionConflict, "If-Match does not identify the requested resource")
+			return 0, &contractError{status: http.StatusPreconditionFailed, code: "version_conflict", message: "If-Match does not identify the requested resource"}
 		}
 		raw := strings.TrimSuffix(strings.TrimPrefix(header, expectedPrefix), "\"")
 		value, err := strconv.ParseUint(raw, 10, 64)
 		if err != nil {
-			return 0, domain.NewError(domain.ErrorCodeInvalidVersion, "If-Match contains an invalid version")
+			return 0, &contractError{status: http.StatusBadRequest, code: "invalid_version", message: "If-Match contains an invalid version"}
 		}
 		v := domain.Version(value)
 		if err := v.Validate(); err != nil {
@@ -237,10 +254,10 @@ func expectedVersion(r *http.Request, body *uint64, kind domain.EntityKind, id d
 	}
 
 	if headerVersion == nil && bodyVersion == nil {
-		return 0, domain.NewError(domain.ErrorCodeInvalidArgument, "If-Match or expected_version is required")
+		return 0, &contractError{status: http.StatusPreconditionRequired, code: "precondition_required", message: "If-Match or expected_version is required"}
 	}
 	if headerVersion != nil && bodyVersion != nil && *headerVersion != *bodyVersion {
-		return 0, domain.NewError(domain.ErrorCodeVersionConflict, "If-Match and expected_version disagree")
+		return 0, &contractError{status: http.StatusPreconditionFailed, code: "version_conflict", message: "If-Match and expected_version disagree"}
 	}
 	if headerVersion != nil {
 		return *headerVersion, nil
@@ -263,9 +280,17 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	code := "internal_error"
 	message := "internal server error"
 	retryable := false
+	var details any
 
-	if errors.Is(err, context.DeadlineExceeded) {
-		status = http.StatusGatewayTimeout
+	var contract *contractError
+	if errors.As(err, &contract) {
+		status = contract.status
+		code = contract.code
+		message = contract.message
+		retryable = contract.retryable
+		details = contract.details
+	} else if errors.Is(err, context.DeadlineExceeded) {
+		status = http.StatusServiceUnavailable
 		code = "deadline_exceeded"
 		message = "request deadline exceeded"
 		retryable = true
@@ -286,12 +311,12 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			domain.ErrorCodeInvalidActorRef,
 			domain.ErrorCodeInvalidVersion,
 			domain.ErrorCodeInvalidCommandContext,
-			domain.ErrorCodeInvalidArgument,
-			domain.ErrorCodeCriterion,
-			domain.ErrorCodeAssessment,
-			domain.ErrorCodeInvalidEvent,
 			domain.ErrorCodeInvalidIdempotencyKey:
 			status = http.StatusBadRequest
+		case domain.ErrorCodeInvalidArgument,
+			domain.ErrorCodeCriterion,
+			domain.ErrorCodeAssessment:
+			status = http.StatusUnprocessableEntity
 		case domain.ErrorCodeNotFound:
 			status = http.StatusNotFound
 		case domain.ErrorCodeVersionConflict:
@@ -311,6 +336,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	writeJSON(w, status, errorEnvelope{Error: errorBody{
 		Code:          code,
 		Message:       message,
+		Details:       details,
 		Retryable:     retryable,
 		CorrelationID: correlationID(r.Context()),
 	}})

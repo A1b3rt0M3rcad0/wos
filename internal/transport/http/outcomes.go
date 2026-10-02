@@ -54,6 +54,43 @@ func (h *Handler) getOutcome(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 
+func (h *Handler) updateOutcome(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request updateOutcomeRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindOutcome, scope.OutcomeID)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.UpdateOutcome(r.Context(), cc, application.UpdateOutcomeCommand{
+		Scope:           scope,
+		ExpectedVersion: expected,
+		Title:           request.Title,
+		Description:     request.Description,
+		DesiredState:    request.DesiredState,
+		Priority:        request.Priority,
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindOutcome, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (h *Handler) getOutcomeState(w http.ResponseWriter, r *http.Request) {
 	scope, err := parseScope(r)
 	if err != nil {
