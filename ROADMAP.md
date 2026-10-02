@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 09 — Documentary Records and Decisions (in progress)
+**Current wave:** Wave 09 — Documentary Records and Decisions (implementation complete; pending integration)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -467,70 +467,70 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 09 — Documentary Records and Decisions
 
-**Status:** 🚧 In progress
+**Status:** ✅ Implementation complete; pending integration
 
 **Goal:** preserve durable facts, deliverables and explicit choices with enough provenance that another consumer can understand the current state without relying on previous chat/session history.
 
 ### Domain contract
 
-- [ ] Add `Artifact` aggregate with immutable documentary identity/content metadata and `registered|withdrawn` lifecycle.
-- [ ] Add `Evidence` aggregate with immutable observation content and `registered|retracted` lifecycle.
-- [ ] Add `EvidenceLink` aggregate with link-local stance (`supports|contradicts|context`), rationale and `active|retracted` lifecycle.
-- [ ] Add `Decision` aggregate with `proposed|accepted|rejected|superseded` lifecycle.
-- [ ] Permit editing only while a Decision is `proposed`; accepted/rejected/superseded decision content is immutable.
-- [ ] Require explicit reason for Evidence retraction, Artifact withdrawal and Decision rejection.
-- [ ] Preserve producer/source provenance without claiming external authenticity or truth.
-- [ ] Keep Artifact registration reference-only: WOS must not dereference URIs or store arbitrary artifact bytes.
-- [ ] Keep EvidenceLink separate from criterion assessment: linking Evidence never marks a SuccessCriterion as met.
-- [ ] Validate all local targets as same Namespace + Outcome and compatible entity kinds.
-- [ ] Allow Evidence to carry different stances toward different targets.
-- [ ] Model Decision supersession as a dedicated semantic relation, not as a generic `Relation`.
-- [ ] Enforce no supersession cycles and at most one accepted direct successor for an accepted Decision.
-- [ ] Supersede an accepted Decision atomically when the successor Decision is accepted.
+- [x] Add `Artifact` aggregate with immutable documentary identity/content metadata and `registered|withdrawn` lifecycle.
+- [x] Add `Evidence` aggregate with immutable observation content and `registered|retracted` lifecycle.
+- [x] Add `EvidenceLink` aggregate with link-local stance (`supports|contradicts|context`), rationale and `active|retracted` lifecycle.
+- [x] Add `Decision` aggregate with `proposed|accepted|rejected|superseded` lifecycle.
+- [x] Permit editing only while a Decision is `proposed`; accepted/rejected/superseded decision content is immutable.
+- [x] Require explicit reason for Evidence retraction, Artifact withdrawal and Decision rejection.
+- [x] Preserve producer/source provenance without claiming external authenticity or truth.
+- [x] Keep Artifact registration reference-only: WOS must not dereference URIs or store arbitrary artifact bytes.
+- [x] Keep EvidenceLink separate from criterion assessment: linking Evidence never marks a SuccessCriterion as met.
+- [x] Validate all local targets as same Namespace + Outcome and compatible entity kinds.
+- [x] Allow Evidence to carry different stances toward different targets.
+- [x] Model Decision supersession as a dedicated semantic relation, not as a generic `Relation`.
+- [x] Enforce no supersession cycles and at most one accepted direct successor for an accepted Decision.
+- [x] Supersede an accepted Decision atomically when the successor Decision is accepted.
 
 ### Application and transaction contract
 
-- [ ] Add create/read/list commands for Artifact, Evidence, EvidenceLink and Decision.
-- [ ] Add explicit retract/withdraw commands with optimistic `expected_version`.
-- [ ] Add Decision update/accept/reject/supersede commands.
-- [ ] Route all Wave 09 mutations through the existing transaction + idempotency + Domain Event pipeline.
-- [ ] Hold the Outcome coordination guard for cross-aggregate reference validation and Decision supersession.
-- [ ] Emit canonical events: `artifact.registered`, `artifact.withdrawn`, `evidence.registered`, `evidence.retracted`, `evidence.link_created`, `evidence.link_retracted`, `decision.proposed`, `decision.updated`, `decision.accepted`, `decision.rejected`, `decision.superseded`.
-- [ ] Preserve no-op semantics without advancing aggregate version/outcome revision or emitting misleading events.
+- [x] Add create/read/list commands for Artifact, Evidence, EvidenceLink and Decision.
+- [x] Add explicit retract/withdraw commands with optimistic `expected_version`.
+- [x] Add Decision update/accept/reject/supersede commands.
+- [x] Route all Wave 09 mutations through the existing transaction + idempotency + Domain Event pipeline.
+- [x] Hold the Outcome coordination guard for cross-aggregate reference validation and Decision supersession.
+- [x] Emit canonical events: `artifact.registered`, `artifact.withdrawn`, `evidence.registered`, `evidence.retracted`, `evidence.link_created`, `evidence.link_retracted`, `decision.proposed`, `decision.updated`, `decision.accepted`, `decision.rejected`, `decision.superseded`.
+- [x] Preserve no-op semantics without advancing aggregate version/outcome revision or emitting misleading events.
 
 ### Storage contract
 
-- [ ] Extend UnitOfWork/ports with Artifact, Evidence, EvidenceLink and Decision repositories.
-- [ ] Implement transactional memory repositories with clone/rollback parity.
-- [ ] Add SQLite migration `0004_documentary_records.sql`.
-- [ ] Persist provenance, immutable content fields, lifecycle, versions and Decision supersession constraints.
-- [ ] Register Wave 09 aggregates in the local entity registry.
-- [ ] Preserve all records and supersession state across SQLite restart.
-- [ ] Reject cross-scope references at both application and persistence boundaries where possible.
+- [x] Extend UnitOfWork/ports with Artifact, Evidence, EvidenceLink and Decision repositories.
+- [x] Implement transactional memory repositories with clone/rollback parity.
+- [x] Add SQLite migration `0004_documentary_records.sql`.
+- [x] Persist provenance, immutable content fields, lifecycle, versions and Decision supersession constraints.
+- [x] Register Wave 09 aggregates in the local entity registry.
+- [x] Preserve all records and supersession state across SQLite restart.
+- [x] Reject cross-scope references at both application and persistence boundaries where possible.
 
 ### HTTP and contract surface
 
-- [ ] Expose versioned HTTP routes for Artifact, Evidence, EvidenceLink and Decision operations.
-- [ ] Require `Idempotency-Key` on remote mutations.
-- [ ] Preserve ETag / `If-Match` semantics for mutable lifecycle/version transitions.
-- [ ] Extend OpenAPI 3.1 with Wave 09 schemas, enums, requests, responses and error behavior.
-- [ ] Extend `docs/http.md` with reproducible documentary-record scenarios.
+- [x] Expose versioned HTTP routes for Artifact, Evidence, EvidenceLink and Decision operations.
+- [x] Require `Idempotency-Key` on remote mutations.
+- [x] Preserve ETag / `If-Match` semantics for mutable lifecycle/version transitions.
+- [x] Extend OpenAPI 3.1 with Wave 09 schemas, enums, requests, responses and error behavior.
+- [x] Extend `docs/http.md` with reproducible documentary-record scenarios.
 
 ### Verification
 
-- [ ] Prove registering an Artifact cannot conclude an Objective, WorkItem or Outcome.
-- [ ] Prove the same Evidence can support one target and contradict another.
-- [ ] Prove Evidence retraction does not rewrite the original observation.
-- [ ] Prove Artifact withdrawal does not delete historical metadata.
-- [ ] Prove accepted Decision content cannot be edited.
-- [ ] Prove Decision rejection requires a reason.
-- [ ] Prove two concurrent attempts to supersede the same accepted Decision cannot both commit accepted successors.
-- [ ] Prove supersession is atomic: successor acceptance and predecessor superseded state commit/rollback together.
-- [ ] Prove supersession cycles are rejected.
-- [ ] Prove cross-Outcome and cross-Namespace documentary links are rejected.
-- [ ] Prove memory and SQLite behavior parity for the Wave 09 lifecycle.
-- [ ] Prove SQLite restart preserves documentary history and current Decision state.
-- [ ] Pass module hygiene, formatting, vet, full unit/contract tests, race detector, standalone build and HTTP runtime smoke verification.
+- [x] Prove registering an Artifact cannot conclude an Objective, WorkItem or Outcome.
+- [x] Prove the same Evidence can support one target and contradict another.
+- [x] Prove Evidence retraction does not rewrite the original observation.
+- [x] Prove Artifact withdrawal does not delete historical metadata.
+- [x] Prove accepted Decision content cannot be edited.
+- [x] Prove Decision rejection requires a reason.
+- [x] Prove two concurrent attempts to supersede the same accepted Decision cannot both commit accepted successors.
+- [x] Prove supersession is atomic: successor acceptance and predecessor superseded state commit/rollback together.
+- [x] Prove supersession cycles are rejected.
+- [x] Prove cross-Outcome and cross-Namespace documentary links are rejected.
+- [x] Prove memory and SQLite behavior parity for the Wave 09 lifecycle.
+- [x] Prove SQLite restart preserves documentary history and current Decision state.
+- [x] Pass module hygiene, formatting, vet, full unit/contract tests, race detector, standalone build and HTTP runtime smoke verification.
 
 **Completion gate:** another consumer can reconstruct the current factual/documentary context and active choices of an Outcome from WOS state alone, including provenance, contradictory Evidence, withdrawn/retracted records and Decision supersession history, without previous chat history.
 
@@ -673,9 +673,7 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–08 are merged into `master`. Wave 09 — Documentary Records and Decisions is active on `feat/wave-09-documentary-records`.
+Wave 09 implementation is complete on `feat/wave-09-documentary-records` and awaits integration through PR #11.
 
-1. Implement the Wave 09 domain and repository contracts.
-2. Add memory and SQLite parity with transactional documentary history.
-3. Expose the same Application semantics through HTTP/OpenAPI.
-4. Complete restart, concurrency, idempotency and transport verification before integration.
+1. Review and merge PR #11 after the final CI check.
+2. Start Wave 10 — Roadmap and Projection after Wave 09 lands on `master`.

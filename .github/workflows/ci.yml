@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,21 +39,6 @@ jobs:
           if ! git diff --exit-code -- go.mod go.sum; then
             echo "go.mod/go.sum are not tidy"
             exit 1
-          fi
-
-      - name: Prepare Wave 09 branch for validation
-        if: github.head_ref == 'feat/wave-09-documentary-records'
-        shell: bash
-        run: |
-          git fetch origin feat/wave-09-documentary-records
-          git checkout -B feat/wave-09-documentary-records origin/feat/wave-09-documentary-records
-          gofmt -w packages tests
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add packages tests
-            git commit -m "style: gofmt Wave 09 sources"
-            git push origin HEAD:feat/wave-09-documentary-records
           fi
 
       - name: Formatting
