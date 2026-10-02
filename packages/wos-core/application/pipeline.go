@@ -225,6 +225,9 @@ func eventsForCommand[T any](
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if events, handled, err := compoundDocumentaryEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 
 	ref, before, after, noOp, err := commandAggregate(meta, value)
 	if err != nil {
@@ -293,6 +296,14 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 	case domain.Issue:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Blocker:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Artifact:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Evidence:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.EvidenceLink:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Decision:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
@@ -412,6 +423,26 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"blocker.resolved"}, nil
 	case "CancelBlocker":
 		return []string{"blocker.cancelled"}, nil
+	case "RegisterArtifact":
+		return []string{"artifact.registered"}, nil
+	case "WithdrawArtifact":
+		return []string{"artifact.withdrawn"}, nil
+	case "RegisterEvidence":
+		return []string{"evidence.registered"}, nil
+	case "RetractEvidence":
+		return []string{"evidence.retracted"}, nil
+	case "CreateEvidenceLink":
+		return []string{"evidence.link_created"}, nil
+	case "RetractEvidenceLink":
+		return []string{"evidence.link_retracted"}, nil
+	case "ProposeDecision":
+		return []string{"decision.proposed"}, nil
+	case "UpdateDecision":
+		return []string{"decision.updated"}, nil
+	case "AcceptDecision":
+		return []string{"decision.accepted"}, nil
+	case "RejectDecision":
+		return []string{"decision.rejected"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":
