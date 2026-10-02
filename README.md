@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Wave 01 is merged and verified. Wave 02 is implemented and verified on PR #2, pending merge: Outcome/Objective/WorkItem lifecycles, revisioned criteria and attestation assessments, explicit conclusions, transactional application services, declarative ownership/assignments, and in-memory UnitOfWork coordination are available on the development branch. Durable persistence, HTTP/MCP transports, Event Log/idempotency, and later-wave capabilities remain planned.
+> **Project status:** Waves 01 and 02 are merged and verified. Wave 03 is under implementation: immutable Domain Events, command fingerprints, idempotent replay and transactional in-memory audit state are being added over the existing application services. Durable SQLite/PostgreSQL persistence, HTTP/MCP transports and later-wave capabilities remain planned.
 
 ## Why WOS
 
@@ -578,8 +578,10 @@ The WOS design specifies that the project is intended to be Open Source and lice
 
 Wave 01 — Public Core Foundation is merged and verified.
 
-Wave 02 — Transactions, Memory and Initial Domain is implemented and verified on PR #2, pending merge. It provides pure Outcome/Objective/WorkItem lifecycle rules, revisioned criteria, immutable assessment history plus current projections, attestation-based assessments, explicit conclusions, declarative owners/assignees, basic WorkItem claims, repository/UnitOfWork ports, aggregate validation, a transactional in-memory adapter with rollback and Outcome revision markers, complete Wave 02 application commands, and a human-only end-to-end scenario.
+Wave 02 — Transactions, Memory and Initial Domain is merged and verified. It provides pure Outcome/Objective/WorkItem lifecycle rules, revisioned criteria, immutable assessment history plus current projections, attestation-based assessments, explicit conclusions, declarative owners/assignees, basic WorkItem claims, repository/UnitOfWork ports, aggregate validation, a transactional in-memory adapter with rollback and Outcome revision markers, complete Wave 02 application commands, and a human-only end-to-end scenario.
 
-Wave 03 has **not** started. Domain Events, command replay and idempotency remain intentionally outside the current implementation. SQLite, HTTP, MCP, hardened leases, Roadmaps, Triggers and later architecture remain planned until their respective roadmap gates are satisfied.
+Wave 03 — Event Log and Idempotency is currently in progress. The active branch adds immutable Domain Events, ordered event indices under one Outcome revision, command fingerprints, transactional idempotency reservations/results, replay of original command results, and explicit no-op audit semantics.
+
+SQLite, HTTP, MCP, hardened leases, Roadmaps, Triggers and later architecture remain planned until their respective roadmap gates are satisfied.
 
 Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.

@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 02 — Transactions, Memory and Initial Domain (complete in PR #2; not yet merged)
+**Current wave:** Wave 03 — Event Log and Idempotency
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -181,9 +181,37 @@ Wave 02 does **not** add Domain Events, IdempotencyStore, command replay or even
 
 ## Wave 03 — Event Log and Idempotency
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Add command envelope, immutable Domain Events, ordered Outcome revisions, IdempotencyStore, normalized fingerprints and transactional replay.
+
+### Implementation checklist
+
+- [x] Add immutable DomainEvent envelope with command, actor, execution and ordering metadata.
+- [x] Add event validation and 256 KiB payload bound.
+- [x] Add CausationID to transport-neutral CommandContext.
+- [x] Keep administrative audit records structurally separate from Outcome Domain Events.
+- [x] Add IdempotencyIdentity and safe key validation.
+- [x] Add persisted StoredCommandResult contract.
+- [x] Add DomainEventLog and IdempotencyStore ports to UnitOfWork.
+- [x] Add transactional in-memory Event Log.
+- [x] Add transactional in-memory idempotency reservations/results.
+- [x] Ensure rollback discards events and idempotency state.
+- [x] Add normalized SHA-256 command fingerprints excluding retry-observational context.
+- [x] Normalize declarative actor sets before fingerprinting.
+- [x] Wrap all Wave 02 application mutations in the transactional audit/idempotency pipeline.
+- [x] Preserve original IDs, versions, revision and command_id on successful replay.
+- [x] Reject same idempotency identity with a different fingerprint.
+- [x] Emit multiple ordered Events under one outcome_revision for compound command effects.
+- [x] Implement explicit no-op semantics without version/revision advancement or misleading Event.
+- [x] Add memory timeline snapshot ordered by (outcome_revision,event_index).
+- [x] Add replay/conflict/no-op/rollback/event-ordering tests.
+- [ ] Pass repository CI on the declared Go toolchain.
+- [ ] Review CI findings and close remaining Wave 03 contract gaps.
+
+### Scope boundary
+
+Wave 03 does **not** add SQLite persistence, HTTP/MCP transport requirements, Integration Events, trigger firings or outbox delivery. Those remain later waves.
 
 **Completion gate:** repeated CreateWorkItem returns the original ID without duplicate Events, and timeline ordering is stable.
 
@@ -405,11 +433,12 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 is merged into `master`. Wave 02 is technically complete on PR #2 and remains unmerged pending review.
+Wave 01 and Wave 02 are merged into `master`. Wave 03 is active on branch `feat/wave-03-event-log-idempotency`.
 
-1. Review PR #2 and its final CI result.
-2. Merge Wave 02 only when approved by the repository owner.
-3. Keep Wave 03 as **Planned** until explicitly authorized.
-4. Do not introduce Domain Events, IdempotencyStore, command replay or event timeline behavior as part of Wave 02 follow-up work.
+1. Run CI for PR #3 on the declared Go toolchain.
+2. Fix formatting, compile, race or contract failures found by CI.
+3. Verify replay, fingerprint conflict, rollback atomicity, no-op audit and event ordering.
+4. Mark Wave 03 done only after all checks pass and its completion gate is satisfied.
+5. Keep Wave 04 **Planned** until Wave 03 is merged or explicitly authorized.
 
-No Wave 03 implementation has started.
+SQLite implementation has not started.
