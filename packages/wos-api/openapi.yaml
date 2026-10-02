@@ -2683,7 +2683,7 @@ components:
 
     CriterionDefinitionRevision:
       type: object
-      required: [criterion_id, owner_ref, criterion_revision, title, required, verification_mode]
+      required: [criterion_id, owner_ref, criterion_revision, title, required, verification_mode, status]
       properties:
         criterion_id: {$ref: "#/components/schemas/ID"}
         owner_ref: {type: object}
@@ -2694,6 +2694,9 @@ components:
         verification_mode:
           type: string
           enum: [attestation, evidence_review, external_evaluation]
+        status:
+          type: string
+          enum: [active, retired]
 
     CriterionValidationHistory:
       type: object

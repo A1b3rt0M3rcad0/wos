@@ -199,8 +199,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO criterion_revisions (
     namespace_id, outcome_id, criterion_id, criterion_revision,
-    definition_json, required, verification_mode, created_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    definition_json, required, verification_mode, status, created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
 			revision.CriterionID.String(),
@@ -208,6 +208,7 @@ INSERT OR IGNORE INTO criterion_revisions (
 			definition,
 			boolInt(revision.Required),
 			string(revision.VerificationMode),
+			string(revision.Status),
 			encodeTime(changedAt),
 		); err != nil {
 			return mapSQLError("insert criterion revision", err)
@@ -295,23 +296,24 @@ func verifyCriterionRevision(
 	revision domain.CriterionDefinitionRevision,
 	definition string,
 ) error {
-	var existingDefinition, mode string
+	var existingDefinition, mode, status string
 	var required int
 	err := tx.QueryRowContext(ctx, `
-SELECT definition_json, required, verification_mode
+SELECT definition_json, required, verification_mode, status
 FROM criterion_revisions
 WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ? AND criterion_revision = ?`,
 		scope.NamespaceID.String(),
 		scope.OutcomeID.String(),
 		revision.CriterionID.String(),
 		int64(revision.Revision),
-	).Scan(&existingDefinition, &required, &mode)
+	).Scan(&existingDefinition, &required, &mode, &status)
 	if err != nil {
 		return mapSQLError("verify criterion revision", err)
 	}
 	if existingDefinition != definition ||
 		required != boolInt(revision.Required) ||
-		mode != string(revision.VerificationMode) {
+		mode != string(revision.VerificationMode) ||
+		status != string(revision.Status) {
 		return domain.NewError(
 			domain.ErrorCodeCriterion,
 			"criterion revision is immutable and differs from persisted definition",
@@ -472,7 +474,7 @@ ORDER BY c.created_at, c.id`,
 	rows.Close()
 
 	revisionRows, err := tx.QueryContext(ctx, `
-SELECT r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode
+SELECT r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode, r.status
 FROM criterion_revisions r
 JOIN success_criteria c
   ON c.namespace_id = r.namespace_id
@@ -486,10 +488,10 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 		return domain.CriterionSet{}, mapSQLError("load criterion revision history", err)
 	}
 	for revisionRows.Next() {
-		var rawCriterionID, definition, mode string
+		var rawCriterionID, definition, mode, status string
 		var revision int64
 		var required int
-		if err := revisionRows.Scan(&rawCriterionID, &revision, &definition, &required, &mode); err != nil {
+		if err := revisionRows.Scan(&rawCriterionID, &revision, &definition, &required, &mode, &status); err != nil {
 			revisionRows.Close()
 			return domain.CriterionSet{}, err
 		}
@@ -511,6 +513,7 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 			Description:      def.Description,
 			Required:         required == 1,
 			VerificationMode: domain.VerificationMode(mode),
+			Status:           domain.CriterionStatus(status),
 		}
 		if err := value.Validate(); err != nil {
 			revisionRows.Close()

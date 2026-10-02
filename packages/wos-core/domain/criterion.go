@@ -53,6 +53,9 @@ func (r CriterionDefinitionRevision) Validate() error {
 	if !r.VerificationMode.Valid() {
 		return NewError(ErrorCodeCriterion, "criterion revision verification mode is invalid")
 	}
+	if r.Status != CriterionStatusActive && r.Status != CriterionStatusRetired {
+		return NewError(ErrorCodeCriterion, "criterion revision status is invalid")
+	}
 	return nil
 }
 
@@ -118,6 +121,7 @@ func (c SuccessCriterion) DefinitionRevision() CriterionDefinitionRevision {
 		Description:      c.Description,
 		Required:         c.Required,
 		VerificationMode: c.VerificationMode,
+		Status:           c.Status,
 	}
 }
 
@@ -301,7 +305,15 @@ func (s *CriterionSet) Retire(id ID) error {
 	if err != nil {
 		return err
 	}
+	if c.Status != CriterionStatusActive {
+		return NewError(ErrorCodeCriterion, "criterion is already retired")
+	}
+	if c.Revision == ^CriterionRevision(0) {
+		return NewError(ErrorCodeCriterion, "criterion revision overflow")
+	}
 	c.Status = CriterionStatusRetired
+	c.Revision++
+	s.DefinitionRevisions = append(s.DefinitionRevisions, c.DefinitionRevision())
 	s.ensureMap()
 	delete(s.CurrentAssessments, id)
 	return nil
