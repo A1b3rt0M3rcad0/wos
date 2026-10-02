@@ -47,4 +47,5 @@ type DocumentaryUnitOfWork interface {
 
 type PlanningUnitOfWork interface {
 	Roadmaps() RoadmapRepository
+	RoadmapActivations() RoadmapActivationStore
 }

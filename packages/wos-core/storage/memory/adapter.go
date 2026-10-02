@@ -23,8 +23,10 @@ type Store struct {
 	evidence      map[string]domain.Evidence
 	evidenceLinks map[string]domain.EvidenceLink
 	decisions     map[string]domain.Decision
-	roadmaps      map[string]domain.Roadmap
-	revisions     map[string]domain.OutcomeRevision
+	roadmaps                 map[string]domain.Roadmap
+	roadmapSlots             map[string]domain.RoadmapActiveSlot
+	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
+	revisions                map[string]domain.OutcomeRevision
 	events        []domain.DomainEvent
 	idempotency   map[string]idempotencyRecord
 }
@@ -48,8 +50,10 @@ func New() *Store {
 		evidence:      make(map[string]domain.Evidence),
 		evidenceLinks: make(map[string]domain.EvidenceLink),
 		decisions:     make(map[string]domain.Decision),
-		roadmaps:      make(map[string]domain.Roadmap),
-		revisions:     make(map[string]domain.OutcomeRevision),
+		roadmaps:                 make(map[string]domain.Roadmap),
+		roadmapSlots:             make(map[string]domain.RoadmapActiveSlot),
+		roadmapActivationHistory: make(map[string][]domain.RoadmapActivationRecord),
+		revisions:                make(map[string]domain.OutcomeRevision),
 		events:        make([]domain.DomainEvent, 0),
 		idempotency:   make(map[string]idempotencyRecord),
 	}
@@ -74,8 +78,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		evidence:      cloneEvidence(s.evidence),
 		evidenceLinks: cloneEvidenceLinks(s.evidenceLinks),
 		decisions:     cloneDecisions(s.decisions),
-		roadmaps:      cloneRoadmaps(s.roadmaps),
-		revisions:     cloneRevisions(s.revisions),
+		roadmaps:                 cloneRoadmaps(s.roadmaps),
+		roadmapSlots:             cloneRoadmapSlots(s.roadmapSlots),
+		roadmapActivationHistory: cloneRoadmapActivationHistory(s.roadmapActivationHistory),
+		revisions:                cloneRevisions(s.revisions),
 		events:        cloneEvents(s.events),
 		idempotency:   cloneIdempotency(s.idempotency),
 	}
@@ -90,6 +96,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.evidenceLinkRepo = evidenceLinkRepository{tx: tx}
 	tx.decisionRepo = decisionRepository{tx: tx}
 	tx.roadmapRepo = roadmapRepository{tx: tx}
+	tx.roadmapActivations = roadmapActivationStore{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -109,8 +116,10 @@ type transaction struct {
 	evidence      map[string]domain.Evidence
 	evidenceLinks map[string]domain.EvidenceLink
 	decisions     map[string]domain.Decision
-	roadmaps      map[string]domain.Roadmap
-	revisions     map[string]domain.OutcomeRevision
+	roadmaps                 map[string]domain.Roadmap
+	roadmapSlots             map[string]domain.RoadmapActiveSlot
+	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
+	revisions                map[string]domain.OutcomeRevision
 	events        []domain.DomainEvent
 	idempotency   map[string]idempotencyRecord
 
@@ -124,8 +133,9 @@ type transaction struct {
 	evidenceRepo     evidenceRepository
 	evidenceLinkRepo evidenceLinkRepository
 	decisionRepo     decisionRepository
-	roadmapRepo      roadmapRepository
-	coordination     coordinationStore
+	roadmapRepo        roadmapRepository
+	roadmapActivations roadmapActivationStore
+	coordination       coordinationStore
 	eventLog         eventLog
 	idempotencyStore idempotencyStore
 }
@@ -141,6 +151,9 @@ func (tx *transaction) Evidence() ports.EvidenceRepository          { return tx.
 func (tx *transaction) EvidenceLinks() ports.EvidenceLinkRepository { return tx.evidenceLinkRepo }
 func (tx *transaction) Decisions() ports.DecisionRepository         { return tx.decisionRepo }
 func (tx *transaction) Roadmaps() ports.RoadmapRepository           { return tx.roadmapRepo }
+func (tx *transaction) RoadmapActivations() ports.RoadmapActivationStore {
+	return tx.roadmapActivations
+}
 func (tx *transaction) Coordination() ports.CoordinationStore       { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog                { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore         { return tx.idempotencyStore }
@@ -160,6 +173,8 @@ func (tx *transaction) Commit() error {
 	tx.store.evidenceLinks = cloneEvidenceLinks(tx.evidenceLinks)
 	tx.store.decisions = cloneDecisions(tx.decisions)
 	tx.store.roadmaps = cloneRoadmaps(tx.roadmaps)
+	tx.store.roadmapSlots = cloneRoadmapSlots(tx.roadmapSlots)
+	tx.store.roadmapActivationHistory = cloneRoadmapActivationHistory(tx.roadmapActivationHistory)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -182,6 +197,105 @@ func (tx *transaction) ensureOpen() error {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction is closed")
 	}
 	return nil
+}
+
+type roadmapActivationStore struct{ tx *transaction }
+
+func (s roadmapActivationStore) GetActive(
+	ctx context.Context,
+	scope domain.Scope,
+	planScope domain.RoadmapPlanScope,
+) (*domain.RoadmapActiveSlot, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
+	value, ok := s.tx.roadmapSlots[roadmapSlotKey(scope, planScope)]
+	if !ok {
+		return nil, nil
+	}
+	cloned := value
+	return &cloned, nil
+}
+
+func (s roadmapActivationStore) SetActive(
+	ctx context.Context,
+	slot domain.RoadmapActiveSlot,
+	history []domain.RoadmapActivationRecord,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := slot.Validate(); err != nil {
+		return err
+	}
+	for _, record := range history {
+		if err := record.Validate(); err != nil {
+			return err
+		}
+		if record.Scope != slot.Scope || record.PlanScope != slot.PlanScope {
+			return domain.NewError(domain.ErrorCodeRoadmap, "roadmap activation history does not match active slot scope")
+		}
+	}
+	key := roadmapSlotKey(slot.Scope, slot.PlanScope)
+	s.tx.roadmapSlots[key] = slot
+	s.tx.roadmapActivationHistory[key] = append(s.tx.roadmapActivationHistory[key], history...)
+	return nil
+}
+
+func (s roadmapActivationStore) ClearActive(
+	ctx context.Context,
+	expected domain.RoadmapActiveSlot,
+	record domain.RoadmapActivationRecord,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := expected.Validate(); err != nil {
+		return err
+	}
+	if err := record.Validate(); err != nil {
+		return err
+	}
+	key := roadmapSlotKey(expected.Scope, expected.PlanScope)
+	current, ok := s.tx.roadmapSlots[key]
+	if !ok {
+		return domain.NewError(domain.ErrorCodePreconditionFailed, "roadmap scope has no active revision")
+	}
+	if current.RoadmapID != expected.RoadmapID || current.RevisionNumber != expected.RevisionNumber {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "active roadmap slot changed")
+	}
+	if record.Action != domain.RoadmapActivationDeactivated ||
+		record.RoadmapID != current.RoadmapID ||
+		record.RevisionNumber != current.RevisionNumber {
+		return domain.NewError(domain.ErrorCodeRoadmap, "deactivation record does not match active slot")
+	}
+	delete(s.tx.roadmapSlots, key)
+	s.tx.roadmapActivationHistory[key] = append(s.tx.roadmapActivationHistory[key], record)
+	return nil
+}
+
+func (s roadmapActivationStore) ListHistory(
+	ctx context.Context,
+	scope domain.Scope,
+	planScope domain.RoadmapPlanScope,
+) ([]domain.RoadmapActivationRecord, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
+	values := s.tx.roadmapActivationHistory[roadmapSlotKey(scope, planScope)]
+	return append([]domain.RoadmapActivationRecord(nil), values...), nil
 }
 
 type roadmapRepository struct{ tx *transaction }
@@ -1249,6 +1363,34 @@ func scopeKey(scope domain.Scope) string {
 
 func entityKey(scope domain.Scope, id domain.ID) string {
 	return scopeKey(scope) + "/" + id.String()
+}
+
+func roadmapSlotKey(scope domain.Scope, planScope domain.RoadmapPlanScope) string {
+	return scopeKey(scope) + "/roadmap-slot/" + string(planScope.Kind) + "/" + planScope.ID.String()
+}
+
+func cloneRoadmapSlots(src map[string]domain.RoadmapActiveSlot) map[string]domain.RoadmapActiveSlot {
+	dst := make(map[string]domain.RoadmapActiveSlot, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
+func cloneRoadmapActivationHistory(src map[string][]domain.RoadmapActivationRecord) map[string][]domain.RoadmapActivationRecord {
+	dst := make(map[string][]domain.RoadmapActivationRecord, len(src))
+	for k, values := range src {
+		cloned := make([]domain.RoadmapActivationRecord, len(values))
+		for i := range values {
+			cloned[i] = values[i]
+			if values[i].Replacement != nil {
+				value := *values[i].Replacement
+				cloned[i].Replacement = &value
+			}
+		}
+		dst[k] = cloned
+	}
+	return dst
 }
 
 func cloneRoadmaps(src map[string]domain.Roadmap) map[string]domain.Roadmap {

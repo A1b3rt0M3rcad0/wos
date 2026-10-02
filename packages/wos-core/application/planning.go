@@ -47,6 +47,32 @@ type PublishRoadmapDraftCommand struct {
 	ExpectedDraftVersion uint64
 }
 
+type ActivateRoadmapRevisionCommand struct {
+	Scope           domain.Scope
+	RoadmapID       domain.ID
+	ExpectedVersion domain.Version
+	RevisionNumber  uint64
+}
+
+type DeactivateRoadmapRevisionCommand struct {
+	Scope           domain.Scope
+	RoadmapID       domain.ID
+	ExpectedVersion domain.Version
+	RevisionNumber  uint64
+}
+
+type ArchiveRoadmapCommand struct {
+	Scope           domain.Scope
+	RoadmapID       domain.ID
+	ExpectedVersion domain.Version
+}
+
+type ReopenRoadmapCommand struct {
+	Scope           domain.Scope
+	RoadmapID       domain.ID
+	ExpectedVersion domain.Version
+}
+
 func (s *Service) CreateRoadmap(
 	ctx context.Context,
 	cc domain.CommandContext,
@@ -172,6 +198,246 @@ func (s *Service) PublishRoadmapDraft(
 	})
 }
 
+func (s *Service) ActivateRoadmapRevision(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd ActivateRoadmapRevisionCommand,
+) (MutationResult[domain.RoadmapActiveSlot], error) {
+	if err := cc.Validate(); err != nil {
+		return MutationResult[domain.RoadmapActiveSlot]{}, err
+	}
+	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (domain.RoadmapActiveSlot, domain.OutcomeRevision, error) {
+		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		repo, activations, err := planningStores(uow)
+		if err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		roadmap, err := repo.Get(ctx, cmd.Scope, cmd.RoadmapID)
+		if err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		if roadmap.Version != cmd.ExpectedVersion {
+			return domain.RoadmapActiveSlot{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "roadmap expected_version does not match")
+		}
+		if roadmap.Lifecycle != domain.RoadmapLifecycleOpen {
+			return domain.RoadmapActiveSlot{}, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "archived roadmap cannot be activated")
+		}
+		if cmd.RevisionNumber == 0 || cmd.RevisionNumber > uint64(len(roadmap.Revisions)) {
+			return domain.RoadmapActiveSlot{}, 0, domain.NewError(domain.ErrorCodeNotFound, "published roadmap revision not found")
+		}
+		now := s.clock.Now().UTC()
+		current, err := activations.GetActive(ctx, cmd.Scope, roadmap.PlanScope)
+		if err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		if current != nil && current.RoadmapID == roadmap.ID && current.RevisionNumber == cmd.RevisionNumber {
+			return domain.RoadmapActiveSlot{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "roadmap revision is already active")
+		}
+
+		history := make([]domain.RoadmapActivationRecord, 0, 2)
+		if current != nil {
+			id, err := s.ids.NewID()
+			if err != nil {
+				return domain.RoadmapActiveSlot{}, 0, err
+			}
+			replacement := domain.RoadmapRevisionPointer{RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber}
+			history = append(history, domain.RoadmapActivationRecord{
+				ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
+				Action: domain.RoadmapActivationSuperseded,
+				RoadmapID: current.RoadmapID, RevisionNumber: current.RevisionNumber,
+				Replacement: &replacement, Actor: cc.Actor, RecordedAt: now,
+			})
+		}
+		id, err := s.ids.NewID()
+		if err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		history = append(history, domain.RoadmapActivationRecord{
+			ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
+			Action: domain.RoadmapActivationActivated,
+			RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber,
+			Actor: cc.Actor, RecordedAt: now,
+		})
+		slot := domain.RoadmapActiveSlot{
+			Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
+			RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber,
+			ActivatedBy: cc.Actor, ActivatedAt: now,
+		}
+		if err := activations.SetActive(ctx, slot, history); err != nil {
+			return domain.RoadmapActiveSlot{}, 0, err
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		return slot, revision, err
+	})
+}
+
+func (s *Service) DeactivateRoadmapRevision(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd DeactivateRoadmapRevisionCommand,
+) (MutationResult[domain.RoadmapActivationRecord], error) {
+	if err := cc.Validate(); err != nil {
+		return MutationResult[domain.RoadmapActivationRecord]{}, err
+	}
+	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (domain.RoadmapActivationRecord, domain.OutcomeRevision, error) {
+		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		repo, activations, err := planningStores(uow)
+		if err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		roadmap, err := repo.Get(ctx, cmd.Scope, cmd.RoadmapID)
+		if err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		if roadmap.Version != cmd.ExpectedVersion {
+			return domain.RoadmapActivationRecord{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "roadmap expected_version does not match")
+		}
+		current, err := activations.GetActive(ctx, cmd.Scope, roadmap.PlanScope)
+		if err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		if current == nil || current.RoadmapID != roadmap.ID || current.RevisionNumber != cmd.RevisionNumber {
+			return domain.RoadmapActivationRecord{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "requested roadmap revision is not active")
+		}
+		id, err := s.ids.NewID()
+		if err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		record := domain.RoadmapActivationRecord{
+			ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
+			Action: domain.RoadmapActivationDeactivated,
+			RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber,
+			Actor: cc.Actor, RecordedAt: s.clock.Now().UTC(),
+		}
+		if err := activations.ClearActive(ctx, *current, record); err != nil {
+			return domain.RoadmapActivationRecord{}, 0, err
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		return record, revision, err
+	})
+}
+
+func (s *Service) ArchiveRoadmap(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd ArchiveRoadmapCommand,
+) (MutationResult[domain.Roadmap], error) {
+	if err := cc.Validate(); err != nil {
+		return MutationResult[domain.Roadmap]{}, err
+	}
+	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (domain.Roadmap, domain.OutcomeRevision, error) {
+		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		repo, activations, err := planningStores(uow)
+		if err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		roadmap, err := repo.Get(ctx, cmd.Scope, cmd.RoadmapID)
+		if err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		if roadmap.Version != cmd.ExpectedVersion {
+			return domain.Roadmap{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "roadmap expected_version does not match")
+		}
+		current, err := activations.GetActive(ctx, cmd.Scope, roadmap.PlanScope)
+		if err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		if current != nil && current.RoadmapID == roadmap.ID {
+			id, err := s.ids.NewID()
+			if err != nil {
+				return domain.Roadmap{}, 0, err
+			}
+			record := domain.RoadmapActivationRecord{
+				ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
+				Action: domain.RoadmapActivationDeactivated,
+				RoadmapID: current.RoadmapID, RevisionNumber: current.RevisionNumber,
+				Actor: cc.Actor, RecordedAt: s.clock.Now().UTC(),
+			}
+			if err := activations.ClearActive(ctx, *current, record); err != nil {
+				return domain.Roadmap{}, 0, err
+			}
+		}
+		if err := roadmap.Archive(s.clock.Now().UTC()); err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		if err := repo.Save(ctx, roadmap, cmd.ExpectedVersion); err != nil {
+			return domain.Roadmap{}, 0, err
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		return roadmap, revision, err
+	})
+}
+
+func (s *Service) ReopenRoadmap(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd ReopenRoadmapCommand,
+) (MutationResult[domain.Roadmap], error) {
+	return s.mutateRoadmap(ctx, cc, cmd, cmd.Scope, cmd.RoadmapID, cmd.ExpectedVersion, func(
+		_ context.Context,
+		_ ports.UnitOfWork,
+		value *domain.Roadmap,
+	) error {
+		return value.Reopen(s.clock.Now().UTC())
+	})
+}
+
+func (s *Service) GetActiveRoadmapSlot(
+	ctx context.Context,
+	scope domain.Scope,
+	planScope domain.RoadmapPlanScope,
+) (*domain.RoadmapActiveSlot, domain.OutcomeRevision, error) {
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer uow.Rollback()
+	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
+	_, activations, err := planningStores(uow)
+	if err != nil {
+		return nil, 0, err
+	}
+	slot, err := activations.GetActive(ctx, scope, planScope)
+	if err != nil {
+		return nil, 0, err
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	return slot, coordination.Revision, err
+}
+
+func (s *Service) ListRoadmapActivationHistory(
+	ctx context.Context,
+	scope domain.Scope,
+	planScope domain.RoadmapPlanScope,
+) ([]domain.RoadmapActivationRecord, domain.OutcomeRevision, error) {
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer uow.Rollback()
+	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
+	_, activations, err := planningStores(uow)
+	if err != nil {
+		return nil, 0, err
+	}
+	history, err := activations.ListHistory(ctx, scope, planScope)
+	if err != nil {
+		return nil, 0, err
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	return history, coordination.Revision, err
+}
+
 func (s *Service) mutateRoadmap(
 	ctx context.Context,
 	cc domain.CommandContext,
@@ -263,11 +529,16 @@ func (s *Service) ListRoadmaps(
 }
 
 func planningRoadmaps(uow ports.UnitOfWork) (ports.RoadmapRepository, error) {
+	repo, _, err := planningStores(uow)
+	return repo, err
+}
+
+func planningStores(uow ports.UnitOfWork) (ports.RoadmapRepository, ports.RoadmapActivationStore, error) {
 	planning, ok := uow.(ports.PlanningUnitOfWork)
 	if !ok {
-		return nil, domain.NewError(domain.ErrorCodeRoadmap, "storage does not expose planning repositories")
+		return nil, nil, domain.NewError(domain.ErrorCodeRoadmap, "storage does not expose planning repositories")
 	}
-	return planning.Roadmaps(), nil
+	return planning.Roadmaps(), planning.RoadmapActivations(), nil
 }
 
 func validateRoadmapPlanScope(ctx context.Context, uow ports.UnitOfWork, roadmap domain.Roadmap) error {

@@ -81,3 +81,11 @@ type RoadmapRepository interface {
 	Insert(ctx context.Context, roadmap domain.Roadmap) error
 	Save(ctx context.Context, roadmap domain.Roadmap, expected domain.Version) error
 }
+
+
+type RoadmapActivationStore interface {
+	GetActive(ctx context.Context, scope domain.Scope, planScope domain.RoadmapPlanScope) (*domain.RoadmapActiveSlot, error)
+	SetActive(ctx context.Context, slot domain.RoadmapActiveSlot, history []domain.RoadmapActivationRecord) error
+	ClearActive(ctx context.Context, expected domain.RoadmapActiveSlot, record domain.RoadmapActivationRecord) error
+	ListHistory(ctx context.Context, scope domain.Scope, planScope domain.RoadmapPlanScope) ([]domain.RoadmapActivationRecord, error)
+}
