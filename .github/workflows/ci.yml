@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,20 +41,20 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare formatted Wave 09 validation tree
+      - name: Prepare Wave 09 branch for validation
         if: github.head_ref == 'feat/wave-09-documentary-records'
         shell: bash
         run: |
-          gofmt -w .
-          tar -czf /tmp/wave09-formatted.tar.gz packages tests
-
-      - name: Upload formatted Wave 09 tree
-        if: github.head_ref == 'feat/wave-09-documentary-records'
-        uses: actions/upload-artifact@v4
-        with:
-          name: wave09-formatted
-          path: /tmp/wave09-formatted.tar.gz
-          retention-days: 1
+          git fetch origin feat/wave-09-documentary-records
+          git checkout -B feat/wave-09-documentary-records origin/feat/wave-09-documentary-records
+          gofmt -w packages tests
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add packages tests
+            git commit -m "style: gofmt Wave 09 sources"
+            git push origin HEAD:feat/wave-09-documentary-records
+          fi
 
       - name: Formatting
         shell: bash

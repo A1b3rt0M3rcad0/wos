@@ -17,7 +17,7 @@ func newWave09TestHandler(t *testing.T) *Handler {
 	store := memory.New()
 	service, err := application.NewService(
 		store,
-		fixedClock{now: time.Date(2026, 10, 2, 21, 0, 0, 0, time.UTC)},
+		fixedClock{value: time.Date(2026, 10, 2, 21, 0, 0, 0, time.UTC)},
 		&sequenceIDs{prefix: "0199eda0", next: 1},
 	)
 	if err != nil {
