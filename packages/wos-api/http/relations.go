@@ -3,8 +3,8 @@ package httptransport
 import (
 	"net/http"
 
-	"github.com/A1b3rt0M3rcad0/wos/core/application"
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
 func (h *Handler) createRelation(w http.ResponseWriter, r *http.Request) {
