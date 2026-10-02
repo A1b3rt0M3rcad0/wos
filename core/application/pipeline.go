@@ -384,6 +384,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"relation.removed"}, nil
 	case "CreateIssue":
 		return []string{"issue.created"}, nil
+	case "UpdateIssue":
+		return []string{"issue.updated"}, nil
 	case "InvestigateIssue":
 		return []string{"issue.investigating"}, nil
 	case "ResolveIssue":
@@ -396,6 +398,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"issue.reopened"}, nil
 	case "CreateBlocker":
 		return []string{"blocker.created"}, nil
+	case "UpdateBlockerDescription":
+		return []string{"blocker.updated"}, nil
 	case "ResolveBlocker":
 		return []string{"blocker.resolved"}, nil
 	case "CancelBlocker":

@@ -191,19 +191,41 @@ func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected 
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE issues
-SET version = ?, lifecycle = ?, resolution_summary = ?, duplicate_of_issue_id = ?, updated_at = ?
+SET version = ?, title = ?, description = ?, severity = ?, lifecycle = ?,
+    resolution_summary = ?, duplicate_of_issue_id = ?, updated_at = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
-		int64(issue.Version), string(issue.Lifecycle), issue.ResolutionSummary,
-		nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
+		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle),
+		issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
 		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save issue", err)
 	}
-	return requireVersionedUpdate(
+	if err := requireVersionedUpdate(
 		ctx, r.uow.tx, result, "issues",
 		issue.Scope.NamespaceID, issue.Scope.OutcomeID, issue.ID, expected,
-	)
+	); err != nil {
+		return err
+	}
+	if _, err := r.uow.tx.ExecContext(ctx, `
+DELETE FROM issue_affected_refs
+WHERE namespace_id = ? AND outcome_id = ? AND issue_id = ?`,
+		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+	); err != nil {
+		return mapSQLError("replace issue affected refs", err)
+	}
+	for _, ref := range issue.AffectedRefs {
+		if _, err := r.uow.tx.ExecContext(ctx, `
+INSERT INTO issue_affected_refs (
+    namespace_id, outcome_id, issue_id, affected_id, affected_kind
+) VALUES (?, ?, ?, ?, ?)`,
+			issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+			ref.ID.String(), ref.Kind.String(),
+		); err != nil {
+			return mapSQLError("replace issue affected ref", err)
+		}
+	}
+	return nil
 }
 
 type blockerRepository struct{ uow *unitOfWork }
@@ -369,9 +391,9 @@ func (r blockerRepository) Save(ctx context.Context, blocker domain.Blocker, exp
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE blockers
-SET version = ?, lifecycle = ?, resolved_at = ?, resolution_summary = ?, updated_at = ?
+SET version = ?, description = ?, lifecycle = ?, resolved_at = ?, resolution_summary = ?, updated_at = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
-		int64(blocker.Version), string(blocker.Lifecycle), encodeOptionalTime(blocker.ResolvedAt),
+		int64(blocker.Version), blocker.Description, string(blocker.Lifecycle), encodeOptionalTime(blocker.ResolvedAt),
 		blocker.ResolutionSummary, encodeTime(blocker.UpdatedAt),
 		blocker.Scope.NamespaceID.String(), blocker.Scope.OutcomeID.String(), blocker.ID.String(), int64(expected),
 	)
