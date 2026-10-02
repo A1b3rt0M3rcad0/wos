@@ -162,8 +162,7 @@ Preserve these semantics unless an explicit ADR changes them.
 Product package dependency direction:
 
 ```text
-wos-server ──> wos-api ──> wos-core
-     └────────────────────> wos-core
+wos-api ──> wos-core
 ```
 
 Inside Core:
@@ -183,7 +182,7 @@ Rules:
 - `packages/wos-core/storage/*` implements ports.
 - `packages/wos-api/http` and `packages/wos-api/mcp` map protocol DTOs to the same Application services.
 - Transports never write storage directly.
-- `packages/wos-server` owns the standalone composition root and remains outside Domain.
+- `packages/wos-api` owns transports and the standalone composition root; both remain outside Domain.
 - Public embedded functionality cannot live only in Go `internal/`.
 - Do not create microservices for components that are only logical boundaries in the current design.
 

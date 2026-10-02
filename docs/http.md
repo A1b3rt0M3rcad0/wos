@@ -8,7 +8,7 @@ The local profile uses SQLite, local authentication and loopback binding by
 default:
 
 ```bash
-go run ./packages/wos-server/cmd/wos server
+go run ./packages/wos-api/cmd/wos server
 ```
 
 Default runtime values:
@@ -30,7 +30,7 @@ export WOS_SQLITE_PATH=./data/wos.db
 export WOS_LOCAL_PRINCIPAL_ID=local-user
 # Optional and disabled by default:
 export WOS_LOCAL_ADMIN_OVERRIDES=true
-go run ./packages/wos-server/cmd/wos server
+go run ./packages/wos-api/cmd/wos server
 ```
 
 MCP is disabled in the standalone default until its own implementation wave.

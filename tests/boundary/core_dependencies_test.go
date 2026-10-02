@@ -49,7 +49,6 @@ func assertAllowedCoreImport(t *testing.T, file, coreRoot, importPath string) {
 	for _, prefix := range []string{
 		"net/http",
 		modulePath + "/packages/wos-api",
-		modulePath + "/packages/wos-server",
 	} {
 		if importPath == prefix || strings.HasPrefix(importPath, prefix+"/") {
 			t.Errorf("%s imports forbidden dependency %q", file, importPath)
@@ -72,37 +71,6 @@ func assertAllowedCoreImport(t *testing.T, file, coreRoot, importPath string) {
 	}
 }
 
-func TestAPIDoesNotImportServer(t *testing.T) {
-	root := repositoryRoot(t)
-	apiRoot := filepath.Join(root, "packages", "wos-api")
-
-	err := filepath.WalkDir(apiRoot, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() || filepath.Ext(path) != ".go" || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-		file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
-		if err != nil {
-			return err
-		}
-		for _, spec := range file.Imports {
-			importPath, err := strconv.Unquote(spec.Path.Value)
-			if err != nil {
-				return err
-			}
-			if importPath == modulePath+"/packages/wos-server" || strings.HasPrefix(importPath, modulePath+"/packages/wos-server/") {
-				t.Errorf("%s imports server dependency %q", path, importPath)
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("walk api imports: %v", err)
-	}
-}
-
 func TestLegacyProductRootsAreRemoved(t *testing.T) {
 	root := repositoryRoot(t)
 	for _, legacy := range []string{"core", "api", "storage", "internal", "cmd"} {
@@ -114,6 +82,17 @@ func TestLegacyProductRootsAreRemoved(t *testing.T) {
 		if !os.IsNotExist(err) {
 			t.Fatalf("stat legacy product root %q: %v", legacy, err)
 		}
+	}
+}
+
+func TestStandaloneServerPackageIsRemoved(t *testing.T) {
+	root := repositoryRoot(t)
+	_, err := os.Stat(filepath.Join(root, "packages", "wos-server"))
+	if err == nil {
+		t.Fatal("packages/wos-server must not exist; standalone runtime belongs to wos-api")
+	}
+	if !os.IsNotExist(err) {
+		t.Fatalf("stat packages/wos-server: %v", err)
 	}
 }
 

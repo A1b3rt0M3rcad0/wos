@@ -6,26 +6,28 @@
 
 ## Context
 
-WOS has three distinct distribution concerns: an embeddable Go Core, reusable protocol adapters/contracts, and a standalone server process. Keeping these concerns spread across root-level `core/`, `storage/`, `api/`, `internal/`, and `cmd/` obscures the product boundary and diverges from the package-oriented repository organization used by Woobe.
+WOS has two real distribution concerns: an embeddable Go engine and an executable/API surface that exposes that engine over supported protocols.
 
-The refactor must preserve embedded use, keep protocol code out of the domain, and prevent the standalone server from becoming a second business layer.
+A separate `wos-server` product package would split process bootstrap from transports even though both belong to the same deployed WOS API artifact. That creates an extra release boundary without an independent product or deployment unit.
+
+The architecture must preserve embedded use, keep protocol/process code out of Core, and avoid turning bootstrap into a second business layer.
 
 ## Decision
 
-Product code lives under `packages/` in three explicit boundaries:
+Product code lives under `packages/` in two explicit boundaries:
 
 - `packages/wos-core` — public embeddable library containing Domain, Application, Ports, storage adapters and migrations.
-- `packages/wos-api` — reusable protocol layer containing HTTP/MCP transports, protocol contracts, OpenAPI/JSON Schema artifacts and API-facing authentication adapters.
-- `packages/wos-server` — standalone composition root, executable, runtime bootstrap, process configuration, observability and server-only integrations.
+- `packages/wos-api` — executable/API package containing HTTP/MCP transports, authentication adapters, protocol contracts, OpenAPI/JSON Schema artifacts, runtime bootstrap, process configuration and the `wos` binary.
 
 Dependency direction is:
 
 ```text
-wos-server ──> wos-api ──> wos-core
-     └────────────────────> wos-core
+wos-api ──> wos-core
 ```
 
-`wos-core` must not import `wos-api` or `wos-server`. `wos-api` must not import `wos-server`. Transports call the same Application services and do not write storage directly.
+`wos-core` must not import `wos-api`. HTTP and MCP remain adapters over the same Core Application services and do not write storage directly.
+
+Inside `wos-api`, protocol and process concerns remain separated by subpackages such as `http/`, `authentication/`, `cmd/wos/` and `internal/server/`. This internal separation does not create additional product packages.
 
 The Go module remains `github.com/A1b3rt0M3rcad0/wos`; this changes package import paths, not module identity.
 
@@ -33,10 +35,10 @@ The Go module remains `github.com/A1b3rt0M3rcad0/wos`; this changes package impo
 
 External embedded consumers import Core through `github.com/A1b3rt0M3rcad0/wos/packages/wos-core/...`.
 
-The standalone binary is built from `./packages/wos-server/cmd/wos`.
+The standalone binary is built from `./packages/wos-api/cmd/wos`.
 
-Storage remains part of the public Core release boundary instead of becoming an artificial standalone package or service.
+Storage remains part of the public Core boundary.
 
-HTTP and future MCP adapters have an explicit reusable package boundary independent from process bootstrap.
+HTTP, future MCP, configuration, health endpoints and process lifecycle belong to the API distribution.
 
-Repository boundary tests and CI enforce the new topology.
+Repository boundary tests and CI enforce the two-package topology.

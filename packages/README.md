@@ -1,25 +1,35 @@
 # WOS product packages
 
-`packages/` contains the three product boundaries of WOS.
+`packages/` contains two product boundaries.
 
 | Package | Responsibility | Deployment role |
 | --- | --- | --- |
-| `wos-core` | Domain, Application services, Ports, storage adapters and migrations | Embeddable Go library; not a standalone process |
-| `wos-api` | HTTP/MCP transports, API authentication adapters and protocol contracts | Reusable protocol layer; composed by Server or another host |
-| `wos-server` | Standalone runtime, configuration, process bootstrap and `wos` binary | Independently runnable WOS server |
+| `wos-core` | Domain, Application services, Ports, storage adapters and migrations | Public embeddable Go library; not a standalone process |
+| `wos-api` | HTTP/MCP transports, authentication adapters, protocol contracts, standalone runtime/configuration and the `wos` binary | Executable/API distribution of WOS |
 
-## Dependency rules
+## Dependency rule
 
 ```text
-wos-server ──> wos-api ──> wos-core
-     └────────────────────> wos-core
+wos-api ──> wos-core
 ```
 
-- `wos-core` must never import `wos-api` or `wos-server`.
-- `wos-api` may depend on `wos-core`, but must not depend on `wos-server`.
-- `wos-server` is the composition root and may depend on both.
-- Protocol transports do not own business rules and do not write storage directly.
-- Storage adapters remain inside the Core release boundary because embedded consumers need them directly.
-- Repository-wide tests, documentation and development tooling remain outside `packages/`.
+`wos-core` is the reusable engine. It must never import `wos-api`.
 
-This organization mirrors Woobe's product-package approach while preserving WOS's Go-specific embedded mode.
+`wos-api` owns every process/protocol concern required to expose Core as a standalone WOS service. Internal separation remains explicit:
+
+```text
+wos-api/
+├── authentication/
+├── http/
+├── mcp/
+├── contracts/
+├── openapi.yaml
+├── cmd/
+│   └── wos/
+└── internal/
+    └── server/
+```
+
+HTTP, MCP and server bootstrap are internal architectural concerns of the API product package, not separate release units. Protocol handlers call the same Core Application services and never own business rules or write storage directly.
+
+Storage adapters remain inside `wos-core` because embedded consumers can use them without depending on the standalone API/runtime.

@@ -29,7 +29,7 @@ The architecture document describes what should exist. This ROADMAP records what
 | Repository ignore rules | ✅ | Go, local DB/data, environment/secrets, IDE files |
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
 | Live implementation roadmap | ✅ | Root `ROADMAP.md` |
-| Product package topology | ✅ | `packages/wos-core`, `packages/wos-api`, `packages/wos-server`; ADR-011 |
+| Product package topology | ✅ | `packages/wos-core` + `packages/wos-api`; ADR-011 |
 | Concrete Open Source license | 🧭 | Must be chosen before first public release; do not inherit Woobe license implicitly |
 
 ## Milestones
@@ -75,8 +75,8 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Add `IDGenerator` port.
 - [x] Add stable domain/application error model.
 - [x] Add transport-neutral `CommandContext` separating authenticated Principal, declared `ActorRef`, and optional external execution correlation.
-- [x] Add `packages/wos-server/cmd/wos/main.go`.
-- [x] Add `packages/wos-server/internal/server` bootstrap/configuration skeleton.
+- [x] Add `packages/wos-api/cmd/wos/main.go`.
+- [x] Add `packages/wos-api/internal/server` bootstrap/configuration skeleton.
 - [x] Add version command/output.
 - [x] Add configuration validation skeleton.
 - [x] Create `docs/adr/`.

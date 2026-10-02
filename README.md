@@ -453,14 +453,12 @@ packages/
 │       ├── memory/
 │       ├── sqlite/
 │       └── postgres/
-├── wos-api/
-│   ├── authentication/
-│   ├── http/
-│   ├── mcp/
-│   ├── contracts/
-│   ├── openapi.yaml
-│   └── jsonschema/
-└── wos-server/
+└── wos-api/
+    ├── authentication/
+    ├── http/
+    ├── mcp/
+    ├── contracts/
+    ├── openapi.yaml
     ├── cmd/
     │   └── wos/
     │       └── main.go
@@ -475,9 +473,9 @@ examples/
 deploy/
 ```
 
-`wos-core` is the public embeddable Go library and owns the domain, application layer, ports, persistence adapters and migrations. `wos-api` exposes protocol adapters and contracts over the same Core services. `wos-server` is the standalone composition root and executable.
+`wos-core` is the public embeddable Go library and owns the domain, application layer, ports, persistence adapters and migrations. `wos-api` is the executable/API distribution: it exposes HTTP/MCP, owns protocol contracts and composes the standalone runtime and `wos` binary.
 
-Package dependency direction is `wos-server -> wos-api -> wos-core`, while `wos-server` may also compose `wos-core` directly. Core must never depend on API or Server.
+Package dependency direction is simply `wos-api -> wos-core`. Core must never depend on API.
 
 ## Initial implementation stack
 
