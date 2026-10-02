@@ -122,7 +122,6 @@ func refPtr(ref domain.EntityRef) *domain.EntityRef {
 	return &value
 }
 
-
 func TestWave11OutcomeRoadmapAcceptsOutcomeCriterionMilestone(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
