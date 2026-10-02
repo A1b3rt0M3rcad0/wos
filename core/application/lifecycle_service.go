@@ -14,7 +14,7 @@ func (s *Service) FailOutcome(ctx context.Context, commandContext domain.Command
 	}
 	now := s.clock.Now().UTC()
 	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -39,7 +39,7 @@ func (s *Service) AbandonOutcome(ctx context.Context, commandContext domain.Comm
 	}
 	now := s.clock.Now().UTC()
 	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -63,7 +63,7 @@ func (s *Service) ReopenOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -87,7 +87,7 @@ func (s *Service) ArchiveOutcome(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -111,7 +111,7 @@ func (s *Service) UnarchiveOutcome(ctx context.Context, commandContext domain.Co
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -136,7 +136,7 @@ func (s *Service) CancelObjective(ctx context.Context, commandContext domain.Com
 	}
 	now := s.clock.Now().UTC()
 	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -160,7 +160,7 @@ func (s *Service) ReopenObjective(ctx context.Context, commandContext domain.Com
 		return MutationResult[domain.Objective]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -184,7 +184,7 @@ func (s *Service) DeferWorkItem(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -208,7 +208,7 @@ func (s *Service) ReleaseWorkItem(ctx context.Context, commandContext domain.Com
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -233,7 +233,7 @@ func (s *Service) CancelWorkItem(ctx context.Context, commandContext domain.Comm
 	}
 	now := s.clock.Now().UTC()
 	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -257,7 +257,7 @@ func (s *Service) ReopenWorkItem(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -281,7 +281,7 @@ func (s *Service) RetireCriterion(ctx context.Context, commandContext domain.Com
 		return MutationResult[domain.SuccessCriterion]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.SuccessCriterion, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.SuccessCriterion, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.SuccessCriterion{}, 0, err
 		}
@@ -299,13 +299,17 @@ func (s *Service) SetOutcomeOwners(ctx context.Context, commandContext domain.Co
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+		coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
+		}
+		if actorRefsEqual(outcome.OwnerRefs, cmd.OwnerRefs) {
+			return outcome, coordination.Revision, nil
 		}
 		if err := outcome.SetOwners(cmd.OwnerRefs, now); err != nil {
 			return domain.Outcome{}, 0, err
@@ -323,13 +327,20 @@ func (s *Service) SetObjectiveOwners(ctx context.Context, commandContext domain.
 		return MutationResult[domain.Objective]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
 			return domain.Objective{}, 0, err
+		}
+		if actorRefsEqual(objective.OwnerRefs, cmd.OwnerRefs) {
+			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return domain.Objective{}, 0, err
+			}
+			return objective, coordination.Revision, nil
 		}
 		if err := objective.SetOwners(cmd.OwnerRefs, now); err != nil {
 			return domain.Objective{}, 0, err
@@ -347,13 +358,20 @@ func (s *Service) SetWorkItemAssignees(ctx context.Context, commandContext domai
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	return transact(ctx, s.tx, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
+		}
+		if actorRefsEqual(item.AssigneeRefs, cmd.AssigneeRefs) {
+			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return domain.WorkItem{}, 0, err
+			}
+			return item, coordination.Revision, nil
 		}
 		if err := item.SetAssignees(cmd.AssigneeRefs, now); err != nil {
 			return domain.WorkItem{}, 0, err

@@ -29,6 +29,10 @@ const (
 	ErrorCodeCriterion             ErrorCode = "criterion_error"
 	ErrorCodeAssessment            ErrorCode = "assessment_error"
 	ErrorCodeLease                 ErrorCode = "lease_error"
+	ErrorCodeInvalidEvent          ErrorCode = "invalid_event"
+	ErrorCodeInvalidIdempotencyKey ErrorCode = "invalid_idempotency_key"
+	ErrorCodeIdempotencyConflict   ErrorCode = "idempotency_conflict"
+	ErrorCodeIdempotencyState      ErrorCode = "idempotency_state"
 )
 
 // Error is the foundational typed error used by public Core contracts.

@@ -21,6 +21,8 @@ type UnitOfWork interface {
 	Objectives() ObjectiveRepository
 	WorkItems() WorkItemRepository
 	Coordination() CoordinationStore
+	Events() DomainEventLog
+	Idempotency() IdempotencyStore
 	Commit() error
 	Rollback() error
 }

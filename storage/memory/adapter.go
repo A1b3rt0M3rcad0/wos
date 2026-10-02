@@ -10,19 +10,30 @@ import (
 )
 
 type Store struct {
-	mu         sync.Mutex
-	outcomes   map[string]domain.Outcome
-	objectives map[string]domain.Objective
-	workItems  map[string]domain.WorkItem
-	revisions  map[string]domain.OutcomeRevision
+	mu          sync.Mutex
+	outcomes    map[string]domain.Outcome
+	objectives  map[string]domain.Objective
+	workItems   map[string]domain.WorkItem
+	revisions   map[string]domain.OutcomeRevision
+	events      []domain.DomainEvent
+	idempotency map[string]idempotencyRecord
+}
+
+type idempotencyRecord struct {
+	Identity    domain.IdempotencyIdentity
+	Fingerprint string
+	Completed   bool
+	Result      domain.StoredCommandResult
 }
 
 func New() *Store {
 	return &Store{
-		outcomes:   make(map[string]domain.Outcome),
-		objectives: make(map[string]domain.Objective),
-		workItems:  make(map[string]domain.WorkItem),
-		revisions:  make(map[string]domain.OutcomeRevision),
+		outcomes:    make(map[string]domain.Outcome),
+		objectives:  make(map[string]domain.Objective),
+		workItems:   make(map[string]domain.WorkItem),
+		revisions:   make(map[string]domain.OutcomeRevision),
+		events:      make([]domain.DomainEvent, 0),
+		idempotency: make(map[string]idempotencyRecord),
 	}
 }
 
@@ -34,37 +45,47 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	}
 
 	tx := &transaction{
-		store:      s,
-		outcomes:   cloneOutcomes(s.outcomes),
-		objectives: cloneObjectives(s.objectives),
-		workItems:  cloneWorkItems(s.workItems),
-		revisions:  cloneRevisions(s.revisions),
+		store:       s,
+		outcomes:    cloneOutcomes(s.outcomes),
+		objectives:  cloneObjectives(s.objectives),
+		workItems:   cloneWorkItems(s.workItems),
+		revisions:   cloneRevisions(s.revisions),
+		events:      cloneEvents(s.events),
+		idempotency: cloneIdempotency(s.idempotency),
 	}
 	tx.outcomeRepo = outcomeRepository{tx: tx}
 	tx.objectiveRepo = objectiveRepository{tx: tx}
 	tx.workItemRepo = workItemRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
+	tx.eventLog = eventLog{tx: tx}
+	tx.idempotencyStore = idempotencyStore{tx: tx}
 	return tx, nil
 }
 
 type transaction struct {
-	store      *Store
-	closed     bool
-	outcomes   map[string]domain.Outcome
-	objectives map[string]domain.Objective
-	workItems  map[string]domain.WorkItem
-	revisions  map[string]domain.OutcomeRevision
+	store       *Store
+	closed      bool
+	outcomes    map[string]domain.Outcome
+	objectives  map[string]domain.Objective
+	workItems   map[string]domain.WorkItem
+	revisions   map[string]domain.OutcomeRevision
+	events      []domain.DomainEvent
+	idempotency map[string]idempotencyRecord
 
-	outcomeRepo   outcomeRepository
-	objectiveRepo objectiveRepository
-	workItemRepo  workItemRepository
-	coordination  coordinationStore
+	outcomeRepo      outcomeRepository
+	objectiveRepo    objectiveRepository
+	workItemRepo     workItemRepository
+	coordination     coordinationStore
+	eventLog         eventLog
+	idempotencyStore idempotencyStore
 }
 
 func (tx *transaction) Outcomes() ports.OutcomeRepository     { return tx.outcomeRepo }
 func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.objectiveRepo }
 func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
+func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
+func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
 
 func (tx *transaction) Commit() error {
 	if tx.closed {
@@ -74,6 +95,8 @@ func (tx *transaction) Commit() error {
 	tx.store.objectives = cloneObjectives(tx.objectives)
 	tx.store.workItems = cloneWorkItems(tx.workItems)
 	tx.store.revisions = cloneRevisions(tx.revisions)
+	tx.store.events = cloneEvents(tx.events)
+	tx.store.idempotency = cloneIdempotency(tx.idempotency)
 	tx.closed = true
 	tx.store.mu.Unlock()
 	return nil
@@ -337,6 +360,146 @@ func (s coordinationStore) AdvanceOutcome(ctx context.Context, scope domain.Scop
 	return next, nil
 }
 
+type eventLog struct{ tx *transaction }
+
+func (l eventLog) Append(ctx context.Context, events []domain.DomainEvent) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := l.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if len(events) == 0 {
+		return nil
+	}
+
+	for i, event := range events {
+		if err := event.Validate(); err != nil {
+			return err
+		}
+		if i > 0 {
+			prev := events[i-1]
+			if event.Scope() != prev.Scope() || event.OutcomeRevision != prev.OutcomeRevision {
+				return domain.NewError(domain.ErrorCodeInvalidEvent, "events in one append must share scope and outcome_revision")
+			}
+			if event.EventIndex != prev.EventIndex+1 {
+				return domain.NewError(domain.ErrorCodeInvalidEvent, "event_index must be contiguous within one command")
+			}
+		}
+		for _, existing := range l.tx.events {
+			if existing.EventID == event.EventID {
+				return domain.NewError(domain.ErrorCodeAlreadyExists, "domain event already exists")
+			}
+			if existing.Scope() == event.Scope() &&
+				existing.OutcomeRevision == event.OutcomeRevision &&
+				existing.EventIndex == event.EventIndex {
+				return domain.NewError(domain.ErrorCodeAlreadyExists, "domain event ordering slot already exists")
+			}
+		}
+		l.tx.events = append(l.tx.events, cloneEvent(event))
+	}
+	return nil
+}
+
+type idempotencyStore struct{ tx *transaction }
+
+func (s idempotencyStore) Reserve(ctx context.Context, identity domain.IdempotencyIdentity, fingerprint string) (domain.IdempotencyReservation, error) {
+	if err := ctx.Err(); err != nil {
+		return domain.IdempotencyReservation{}, err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return domain.IdempotencyReservation{}, err
+	}
+	if err := identity.Validate(); err != nil {
+		return domain.IdempotencyReservation{}, err
+	}
+	if fingerprint == "" {
+		return domain.IdempotencyReservation{}, domain.NewError(domain.ErrorCodeIdempotencyState, "fingerprint is required")
+	}
+
+	key := idempotencyKey(identity)
+	if existing, ok := s.tx.idempotency[key]; ok {
+		if existing.Fingerprint != fingerprint {
+			return domain.IdempotencyReservation{}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "idempotency key was already used with a different command fingerprint")
+		}
+		reservation := domain.IdempotencyReservation{Identity: identity, Fingerprint: fingerprint}
+		if existing.Completed {
+			result := cloneStoredCommandResult(existing.Result)
+			reservation.Replay = &result
+			return reservation, nil
+		}
+		return domain.IdempotencyReservation{}, domain.NewError(domain.ErrorCodeIdempotencyState, "idempotency reservation is still processing")
+	}
+
+	s.tx.idempotency[key] = idempotencyRecord{
+		Identity:    identity,
+		Fingerprint: fingerprint,
+	}
+	return domain.IdempotencyReservation{Identity: identity, Fingerprint: fingerprint}, nil
+}
+
+func (s idempotencyStore) Complete(ctx context.Context, reservation domain.IdempotencyReservation, result domain.StoredCommandResult) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := s.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if reservation.IsReplay() {
+		return domain.NewError(domain.ErrorCodeIdempotencyState, "replay reservation cannot be completed again")
+	}
+	if err := reservation.Identity.Validate(); err != nil {
+		return err
+	}
+	if err := result.Validate(); err != nil {
+		return err
+	}
+	key := idempotencyKey(reservation.Identity)
+	record, ok := s.tx.idempotency[key]
+	if !ok {
+		return domain.NewError(domain.ErrorCodeIdempotencyState, "idempotency reservation does not exist")
+	}
+	if record.Fingerprint != reservation.Fingerprint {
+		return domain.NewError(domain.ErrorCodeIdempotencyConflict, "reservation fingerprint changed")
+	}
+	if record.Completed {
+		return domain.NewError(domain.ErrorCodeIdempotencyState, "idempotency result already completed")
+	}
+	record.Completed = true
+	record.Result = cloneStoredCommandResult(result)
+	s.tx.idempotency[key] = record
+	return nil
+}
+
+func (s *Store) SnapshotDomainEvents(scope domain.Scope) []domain.DomainEvent {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	result := make([]domain.DomainEvent, 0)
+	for _, event := range s.events {
+		if event.Scope() == scope {
+			result = append(result, cloneEvent(event))
+		}
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].OutcomeRevision == result[j].OutcomeRevision {
+			return result[i].EventIndex < result[j].EventIndex
+		}
+		return result[i].OutcomeRevision < result[j].OutcomeRevision
+	})
+	return result
+}
+
+func (s *Store) IdempotencyRecordCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.idempotency)
+}
+
+func idempotencyKey(identity domain.IdempotencyIdentity) string {
+	return identity.NamespaceID.String() + "/" + identity.PrincipalID + "/" + identity.CommandName + "/" + identity.IdempotencyKey
+}
+
 func outcomeKey(namespaceID, outcomeID domain.ID) string {
 	return namespaceID.String() + "/" + outcomeID.String()
 }
@@ -460,4 +623,43 @@ func cloneConclusions(src []domain.Conclusion) []domain.Conclusion {
 		dst[i].Assessments = append([]domain.CriterionAssessmentRef(nil), src[i].Assessments...)
 	}
 	return dst
+}
+
+func cloneEvents(src []domain.DomainEvent) []domain.DomainEvent {
+	dst := make([]domain.DomainEvent, len(src))
+	for i := range src {
+		dst[i] = cloneEvent(src[i])
+	}
+	return dst
+}
+
+func cloneEvent(event domain.DomainEvent) domain.DomainEvent {
+	event.Payload = append([]byte(nil), event.Payload...)
+	if event.AggregateVersionBefore != nil {
+		value := *event.AggregateVersionBefore
+		event.AggregateVersionBefore = &value
+	}
+	if event.AggregateVersionAfter != nil {
+		value := *event.AggregateVersionAfter
+		event.AggregateVersionAfter = &value
+	}
+	if event.CausationID != nil {
+		value := *event.CausationID
+		event.CausationID = &value
+	}
+	return event
+}
+
+func cloneIdempotency(src map[string]idempotencyRecord) map[string]idempotencyRecord {
+	dst := make(map[string]idempotencyRecord, len(src))
+	for key, value := range src {
+		value.Result = cloneStoredCommandResult(value.Result)
+		dst[key] = value
+	}
+	return dst
+}
+
+func cloneStoredCommandResult(result domain.StoredCommandResult) domain.StoredCommandResult {
+	result.ResponseJSON = append([]byte(nil), result.ResponseJSON...)
+	return result
 }

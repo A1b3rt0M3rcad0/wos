@@ -35,6 +35,7 @@ type CommandContext struct {
 	Actor          ActorRef                 `json:"actor"`
 	Execution      ExternalExecutionContext `json:"execution,omitempty"`
 	CorrelationID  string                   `json:"correlation_id,omitempty"`
+	CausationID    *ID                      `json:"causation_id,omitempty"`
 	CommandID      ID                       `json:"command_id"`
 	IdempotencyKey string                   `json:"idempotency_key,omitempty"`
 }
@@ -51,6 +52,11 @@ func (c CommandContext) Validate() error {
 	}
 	if err := c.CommandID.Validate(); err != nil {
 		return WrapError(ErrorCodeInvalidCommandContext, "command_id is invalid", err)
+	}
+	if c.CausationID != nil {
+		if err := c.CausationID.Validate(); err != nil {
+			return WrapError(ErrorCodeInvalidCommandContext, "causation_id is invalid", err)
+		}
 	}
 	return nil
 }

@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 02 — Transactions, Memory and Initial Domain (complete in PR #2; not yet merged)
+**Current wave:** Wave 03 — Event Log and Idempotency (complete in PR #3; not yet merged)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -181,9 +181,51 @@ Wave 02 does **not** add Domain Events, IdempotencyStore, command replay or even
 
 ## Wave 03 — Event Log and Idempotency
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done
 
 Add command envelope, immutable Domain Events, ordered Outcome revisions, IdempotencyStore, normalized fingerprints and transactional replay.
+
+### Implementation checklist
+
+- [x] Add immutable DomainEvent envelope with command, actor, execution and ordering metadata.
+- [x] Add event validation and 256 KiB payload bound.
+- [x] Add CausationID to transport-neutral CommandContext.
+- [x] Keep administrative audit records structurally separate from Outcome Domain Events.
+- [x] Add IdempotencyIdentity and safe key validation.
+- [x] Add persisted StoredCommandResult contract.
+- [x] Add DomainEventLog and IdempotencyStore ports to UnitOfWork.
+- [x] Add transactional in-memory Event Log.
+- [x] Add transactional in-memory idempotency reservations/results.
+- [x] Ensure rollback discards events and idempotency state.
+- [x] Add normalized SHA-256 command fingerprints excluding retry-observational context.
+- [x] Normalize declarative actor sets before fingerprinting.
+- [x] Wrap all Wave 02 application mutations in the transactional audit/idempotency pipeline.
+- [x] Preserve original IDs, versions, revision and command_id on successful replay.
+- [x] Reject same idempotency identity with a different fingerprint.
+- [x] Emit multiple ordered Events under one outcome_revision for compound command effects.
+- [x] Implement explicit no-op semantics without version/revision advancement or misleading Event.
+- [x] Add memory timeline snapshot ordered by (outcome_revision,event_index).
+- [x] Add replay/conflict/no-op/rollback/event-ordering tests.
+- [x] Pass repository CI on the declared Go toolchain.
+- [x] Review CI findings and close remaining Wave 03 contract gaps.
+
+### Verification
+
+GitHub Actions validated commit `d9d380712721b58c7484c4a59c9244894cac73da` with Go 1.27.1 on Linux. The successful `WOS verification` run executed:
+
+- `gofmt` cleanliness;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- standalone binary build;
+- `wos version` smoke test;
+- `wos config validate` smoke test.
+
+The suite verifies same-payload replay, different-payload conflict, transactional rollback of Event/idempotency state, multiple ordered Events under one Outcome revision, original result replay and explicit no-op behavior without misleading Events.
+
+### Scope boundary
+
+Wave 03 does **not** add SQLite persistence, HTTP/MCP transport requirements, Integration Events, trigger firings or outbox delivery. Those remain later waves.
 
 **Completion gate:** repeated CreateWorkItem returns the original ID without duplicate Events, and timeline ordering is stable.
 
@@ -405,11 +447,11 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 is merged into `master`. Wave 02 is technically complete on PR #2 and remains unmerged pending review.
+Wave 01 and Wave 02 are merged into `master`. Wave 03 is technically complete on PR #3 and remains unmerged pending review.
 
-1. Review PR #2 and its final CI result.
-2. Merge Wave 02 only when approved by the repository owner.
-3. Keep Wave 03 as **Planned** until explicitly authorized.
-4. Do not introduce Domain Events, IdempotencyStore, command replay or event timeline behavior as part of Wave 02 follow-up work.
+1. Review PR #3 and its final CI result.
+2. Merge Wave 03 only when approved by the repository owner.
+3. Keep Wave 04 — SQLite Persistence and Migrations as **Planned** until that merge/authorization.
+4. Do not move SQLite persistence concerns into Wave 03 follow-up work.
 
-No Wave 03 implementation has started.
+Wave 04 implementation has not started.
