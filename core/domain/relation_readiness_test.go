@@ -11,7 +11,7 @@ func TestDependencyRelationValidationAndCycle(t *testing.T) {
 		OutcomeID:   MustParseID("0199f000-0000-7000-8000-000000000002"),
 	}
 	ref := func(kind EntityKind, suffix string) EntityRef {
-		return EntityRef{Scope: scope, Kind: kind, ID: MustParseID("0199f000-0000-7000-8000-"+suffix)}
+		return EntityRef{Scope: scope, Kind: kind, ID: MustParseID("0199f000-0000-7000-8000-" + suffix)}
 	}
 	now := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
 	a := ref(EntityKindWorkItem, "000000000011")
@@ -44,7 +44,9 @@ func TestReadinessUsesHardDependenciesAndNotBefore(t *testing.T) {
 	}
 	now := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
 	outcome, err := NewOutcome(scope.OutcomeID, scope.NamespaceID, "Outcome", "", "Done", PriorityNormal, now)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	outcome.Lifecycle = OutcomeLifecycleActive
 	item, err := NewWorkItem(MustParseID("0199f001-0000-7000-8000-000000000003"), scope, "Work", "", PriorityNormal, WorkItemLifecycleTodo, now)
 	if err != nil { t.Fatal(err) }
