@@ -14,11 +14,11 @@ func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.
 		return domain.Issue{}, err
 	}
 	var (
-		version                                    int64
-		title, description, severity, lifecycle    string
-		reportedByJSON, resolutionSummary          string
-		duplicateRaw                               sql.NullString
-		createdAt, updatedAt                       int64
+		version                                 int64
+		title, description, severity, lifecycle string
+		reportedByJSON, resolutionSummary       string
+		duplicateRaw                            sql.NullString
+		createdAt, updatedAt                    int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, severity, lifecycle, reported_by_json,
@@ -213,7 +213,7 @@ func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domai
 		return domain.Blocker{}, err
 	}
 	var (
-		version                                                    int64
+		version                                                     int64
 		blockedID, blockedKind, description, lifecycle, propagation string
 		causeID, causeKind, externalJSON                            sql.NullString
 		resolvedAt                                                  sql.NullInt64

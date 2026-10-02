@@ -222,6 +222,10 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+
 	ref, before, after, noOp, err := commandAggregate(meta, value)
 	if err != nil {
 		return nil, err
