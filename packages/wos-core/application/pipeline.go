@@ -449,7 +449,7 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{ownerPrefix + ".criterion_revised"}, nil
 	case "RetireCriterion":
 		return []string{ownerPrefix + ".criterion_retired"}, nil
-	case "AttestCriterion":
+	case "RecordCriterionAssessment", "AttestCriterion":
 		return []string{ownerPrefix + ".assessment_recorded"}, nil
 	default:
 		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "no event mapping exists for command "+meta.Name)

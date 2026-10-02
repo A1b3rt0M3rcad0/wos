@@ -40,6 +40,17 @@ type ReviseCriterionCommand struct {
 	VerificationMode domain.VerificationMode
 }
 
+type RecordCriterionAssessmentCommand struct {
+	Owner             domain.EntityRef
+	CriterionID       domain.ID
+	CriterionRevision domain.CriterionRevision
+	ExpectedVersion   domain.Version
+	Result            domain.AssessmentResult
+	Rationale         string
+	EvidenceIDs       []domain.ID
+	EvaluatorRef      *domain.EvaluatorRef
+}
+
 type AttestCriterionCommand struct {
 	Owner             domain.EntityRef
 	CriterionID       domain.ID

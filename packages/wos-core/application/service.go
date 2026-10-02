@@ -102,6 +102,56 @@ func (s *Service) ReviseCriterion(ctx context.Context, commandContext domain.Com
 	})
 }
 
+func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext domain.CommandContext, cmd RecordCriterionAssessmentCommand) (MutationResult[domain.CriterionAssessment], error) {
+	if err := commandContext.Validate(); err != nil {
+		return MutationResult[domain.CriterionAssessment]{}, err
+	}
+
+	waiverAuthorized := false
+	if cmd.Result == domain.AssessmentResultWaived {
+		if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
+			NamespaceID: cmd.Owner.Scope.NamespaceID,
+			PrincipalID: commandContext.PrincipalID,
+			Permission:  ports.PermissionAssessmentWaive,
+		}); err != nil {
+			return MutationResult[domain.CriterionAssessment]{}, err
+		}
+		waiverAuthorized = true
+	}
+
+	id, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.CriterionAssessment]{}, err
+	}
+	now := s.clock.Now().UTC()
+	assessment := domain.CriterionAssessment{
+		ID:                id,
+		CriterionID:       cmd.CriterionID,
+		CriterionRevision: cmd.CriterionRevision,
+		Result:            cmd.Result,
+		Rationale:         cmd.Rationale,
+		EvidenceIDs:       append([]domain.ID(nil), cmd.EvidenceIDs...),
+		EvaluatorRef:      cloneEvaluatorRef(cmd.EvaluatorRef),
+		PrincipalID:       commandContext.PrincipalID,
+		Actor:             commandContext.Actor,
+		AssessedAt:        now,
+	}
+
+	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
+		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		if err := validateAssessmentEvidence(ctx, uow, cmd.Owner.Scope, assessment.EvidenceIDs); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		if err := recordCriterionAssessment(ctx, uow, cmd.Owner, cmd.ExpectedVersion, assessment, waiverAuthorized, now); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Owner.Scope)
+		return assessment, revision, err
+	})
+}
+
 func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.CommandContext, cmd AttestCriterionCommand) (MutationResult[domain.CriterionAssessment], error) {
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.CriterionAssessment]{}, err
@@ -551,6 +601,81 @@ func reviseCriterion(ctx context.Context, uow ports.UnitOfWork, cmd ReviseCriter
 	default:
 		return domain.SuccessCriterion{}, domain.NewError(domain.ErrorCodeInvalidArgument, "owner kind does not support criteria")
 	}
+}
+
+func validateAssessmentEvidence(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope, evidenceIDs []domain.ID) error {
+	if len(evidenceIDs) == 0 {
+		return nil
+	}
+	_, evidenceRepo, _, _, err := documentaryRepositories(uow)
+	if err != nil {
+		return err
+	}
+	seen := make(map[domain.ID]struct{}, len(evidenceIDs))
+	for _, evidenceID := range evidenceIDs {
+		if _, exists := seen[evidenceID]; exists {
+			return domain.NewError(domain.ErrorCodeAssessment, "assessment evidence_ids cannot contain duplicates")
+		}
+		seen[evidenceID] = struct{}{}
+		evidence, err := evidenceRepo.Get(ctx, scope, evidenceID)
+		if err != nil {
+			return err
+		}
+		if evidence.Lifecycle != domain.EvidenceLifecycleRegistered {
+			return domain.NewError(domain.ErrorCodePreconditionFailed, "retracted evidence cannot support a new assessment")
+		}
+	}
+	return nil
+}
+
+func recordCriterionAssessment(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	owner domain.EntityRef,
+	expected domain.Version,
+	assessment domain.CriterionAssessment,
+	waiverAuthorized bool,
+	now time.Time,
+) error {
+	switch owner.Kind {
+	case domain.EntityKindOutcome:
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		if err != nil {
+			return err
+		}
+		if err := value.RecordCriterionAssessment(assessment, waiverAuthorized, now); err != nil {
+			return err
+		}
+		return uow.Outcomes().Save(ctx, value, expected)
+	case domain.EntityKindObjective:
+		value, err := uow.Objectives().Get(ctx, owner.Scope, owner.ID)
+		if err != nil {
+			return err
+		}
+		if err := value.RecordCriterionAssessment(assessment, waiverAuthorized, now); err != nil {
+			return err
+		}
+		return uow.Objectives().Save(ctx, value, expected)
+	case domain.EntityKindWorkItem:
+		value, err := uow.WorkItems().Get(ctx, owner.Scope, owner.ID)
+		if err != nil {
+			return err
+		}
+		if err := value.RecordCriterionAssessment(assessment, waiverAuthorized, now); err != nil {
+			return err
+		}
+		return uow.WorkItems().Save(ctx, value, expected)
+	default:
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "owner kind does not support assessments")
+	}
+}
+
+func cloneEvaluatorRef(value *domain.EvaluatorRef) *domain.EvaluatorRef {
+	if value == nil {
+		return nil
+	}
+	copyValue := *value
+	return &copyValue
 }
 
 func assessCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.EntityRef, expected domain.Version, assessment domain.CriterionAssessment, now time.Time) error {

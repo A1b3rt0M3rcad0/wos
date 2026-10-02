@@ -126,6 +126,13 @@ func (o *Objective) RetireCriterion(id ID, now time.Time) error {
 	return o.touch(now)
 }
 
+func (o *Objective) RecordCriterionAssessment(a CriterionAssessment, waiverAuthorized bool, now time.Time) error {
+	if err := o.Criteria.RecordAssessment(a, waiverAuthorized); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
 func (o *Objective) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if err := o.Criteria.AssessAttestation(a); err != nil {
 		return err

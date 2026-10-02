@@ -170,6 +170,13 @@ func (w *WorkItem) RetireCriterion(id ID, now time.Time) error {
 	return w.touch(now)
 }
 
+func (w *WorkItem) RecordCriterionAssessment(a CriterionAssessment, waiverAuthorized bool, now time.Time) error {
+	if err := w.Criteria.RecordAssessment(a, waiverAuthorized); err != nil {
+		return err
+	}
+	return w.touch(now)
+}
+
 func (w *WorkItem) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if err := w.Criteria.AssessAttestation(a); err != nil {
 		return err

@@ -136,6 +136,16 @@ func (o *Outcome) RetireCriterion(id ID, now time.Time) error {
 	return o.touch(now)
 }
 
+func (o *Outcome) RecordCriterionAssessment(a CriterionAssessment, waiverAuthorized bool, now time.Time) error {
+	if o.IsArchived() {
+		return NewError(ErrorCodeInvalidTransition, "cannot assess archived outcome")
+	}
+	if err := o.Criteria.RecordAssessment(a, waiverAuthorized); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
 func (o *Outcome) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if o.IsArchived() {
 		return NewError(ErrorCodeInvalidTransition, "cannot assess archived outcome")
