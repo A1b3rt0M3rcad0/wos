@@ -37,11 +37,11 @@ type relationEndpointRequest struct {
 
 type createRelationRequest struct {
 	SourceRef    relationEndpointRequest       `json:"source_ref"`
-	RelationType domain.RelationType            `json:"relation_type"`
+	RelationType domain.RelationType           `json:"relation_type"`
 	TargetRef    relationEndpointRequest       `json:"target_ref"`
-	Strength     domain.DependencyStrength      `json:"strength,omitempty"`
-	Satisfaction domain.DependencySatisfaction  `json:"satisfaction,omitempty"`
-	Reason       string                         `json:"reason,omitempty"`
+	Strength     domain.DependencyStrength     `json:"strength,omitempty"`
+	Satisfaction domain.DependencySatisfaction `json:"satisfaction,omitempty"`
+	Reason       string                        `json:"reason,omitempty"`
 }
 
 type criterionRequest struct {
