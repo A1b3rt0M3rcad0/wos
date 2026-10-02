@@ -35,6 +35,7 @@ type CriterionDefinitionRevision struct {
 	Description      string            `json:"description,omitempty"`
 	Required         bool              `json:"required"`
 	VerificationMode VerificationMode  `json:"verification_mode"`
+	Status           CriterionStatus   `json:"status"`
 }
 
 func (r CriterionDefinitionRevision) Validate() error {
