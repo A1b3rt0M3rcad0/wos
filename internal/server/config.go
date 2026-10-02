@@ -67,7 +67,7 @@ func DefaultConfig() Config {
 			RequestTimeout: 15 * time.Second,
 		},
 		MCP: MCPConfig{
-			Enabled:   true,
+			Enabled:   false,
 			Path:      "/mcp",
 			Stateless: true,
 		},
