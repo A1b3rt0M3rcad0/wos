@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–06 are merged and verified. WOS now has typed Outcome-local dependencies, guarded DAG validation, deterministic readiness, durable `not_before`, relation APIs and ready-work queries. Wave 07 — Issues and Blockers is next.
+> **Project status:** Waves 01–06 are merged and verified. Wave 07 — Issues and Blockers is implementation-complete on PR #7 and pending integration. The branch adds independent Issue/Blocker lifecycles, inherited blocking projections, atomic compound commands, durable SQLite state and HTTP/OpenAPI contracts.
 
 ## Why WOS
 
@@ -587,5 +587,7 @@ Wave 04 — SQLite Persistence and Migrations is merged and verified. It adds du
 Wave 05 — HTTP Vertical Slice is merged and verified. It adds the standalone SQLite-backed HTTP runtime, local principal resolution, health endpoints, Outcome/Objective/WorkItem/criteria routes, idempotency-key enforcement, ETags and version preconditions, stable errors, the first durable Outcome state query, OpenAPI and restart-safe HTTP integration coverage.
 
 Wave 06 — Dependencies, Graph and Readiness is merged and verified. It adds typed `depends_on` Relations, hard/advisory semantics, Outcome-guarded DAG validation, deterministic readiness reasons, durable `not_before`, ready-work queries, relation HTTP/OpenAPI contracts, memory/SQLite parity coverage and concurrent cycle-rejection tests.
+
+Wave 07 — Issues and Blockers is implementation-complete on PR #7 and pending integration. It adds independent Issue and Blocker aggregates, typed causes and propagation, direct/inherited blocking state, readiness integration, explicit multi-aggregate commands, SQLite durability, idempotent HTTP contracts and Wave 07 OpenAPI/documentation. Resolving an Issue never releases its Blockers implicitly, and resolving one Blocker never releases another.
 
 Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.

@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 07 — Issues and Blockers (in progress)
+**Current wave:** Wave 07 — Issues and Blockers (implementation complete on PR #7; pending integration)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -373,18 +373,51 @@ CI run `37008538950` (#97) validated implementation head `8549346c96e6e2c7f940b3
 
 ## Wave 07 — Issues and Blockers
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done on implementation branch; pending integration into `master`
 
 Implement independent Issue and Blocker aggregates, typed causes/targets, direct/subtree propagation, explicit resolution, inherited blocking projection and bounded compound commands.
 
-### Planned commit sequence
+### Completed
 
-1. `feat(core): add issue and blocker domain aggregates` — typed lifecycle, severity, targets, causes, propagation and pure invariants.
-2. `feat(application): add issue blocker commands and blocking projection` — transactional commands, explicit resolution and inherited blocking/readiness integration.
-3. `feat(storage): persist issues blockers and blocking state` — memory/SQLite repositories, migration, restart-safe reconstruction and storage parity.
-4. `feat(http): expose issue blocker coordination contracts` — HTTP/OpenAPI surfaces, state/query projection and end-to-end contract coverage.
+- [x] Add independent Issue and Blocker aggregates with explicit versions and lifecycles.
+- [x] Add Issue severity, affected references, investigation, resolution, wont-fix, duplicate and reopen semantics.
+- [x] Reject duplicate-Issue cycles with a bounded chain walk.
+- [x] Add Blocker targets for Outcome, Objective and WorkItem with direct/subtree propagation rules.
+- [x] Support persisted local causes and explicit external causes while keeping Issue and Blocker lifecycles independent.
+- [x] Reject new active Blockers on terminal targets.
+- [x] Derive deterministic direct/inherited blocking state with explicit origin information.
+- [x] Apply active blocking to WorkItem readiness without hiding the underlying Blockers.
+- [x] Ensure resolving an Issue never resolves any Blocker implicitly.
+- [x] Ensure resolving one Blocker never releases another active impediment.
+- [x] Add `ReportIssueWithBlocker` as one atomic multi-aggregate command with separate per-aggregate Domain Events.
+- [x] Add bounded `ResolveIssueAndBlockers` with explicit Blocker IDs, versions and `release_confirmed` values.
+- [x] Keep compound mutations under one `command_id` and one `outcome_revision` while emitting one Event per changed aggregate.
+- [x] Add versioned Issue detail updates and active-Blocker description updates with explicit no-op semantics.
+- [x] Validate Issue `affected_refs` against persisted entities before mutation so memory and SQLite fail consistently.
+- [x] Keep Decision as a reserved Blocker-cause domain kind but reject it at the Application boundary until persisted Decision records exist in Wave 09.
+- [x] Persist Issues, affected references and Blockers through memory and SQLite UnitOfWork repositories.
+- [x] Add SQLite migration and restart-safe reconstruction of Issue/Blocker state and blocking projection.
+- [x] Extend Outcome state snapshots with Issues, Blockers and `blocking_states`.
+- [x] Expose Issue/Blocker create/read/list/update/lifecycle operations through HTTP.
+- [x] Expose the atomic report and explicit multi-aggregate resolution commands through HTTP.
+- [x] Preserve idempotent replay, ETags and optimistic version preconditions for the new transport surface.
+- [x] Extend OpenAPI and HTTP documentation through Wave 07.
+- [x] Prove inherited subtree blocking, independent resolution, terminal-target rejection and duplicate-cycle rejection.
+- [x] Prove compound rollback when one expected version is stale and prove unlisted Blockers remain active.
+- [x] Prove the end-to-end HTTP contract, including replay, state projection, explicit release and external causes.
+- [x] Pass formatting, vet, full unit/contract tests, race detector, standalone build and runtime smoke verification.
 
-**Completion gate:** snapshots explain target/cause/inheritance and resolving one impediment never silently resolves another.
+### Verification
+
+GitHub Actions run `37020264539` validated implementation head `c21e454071f2159538af57e5e927330c52d7c979` with module hygiene, formatting, `go vet ./...`, the complete unit/contract suite, `go test -race ./...`, standalone build and all smoke checks.
+
+The verified suite includes direct/inherited blocking, Issue/Blocker lifecycle independence, SQLite restart durability, atomic compound commands, rollback on stale multi-aggregate versions, explicit release confirmation, idempotent HTTP replay, versioned HTTP mutations and readiness recovery only after every applicable Blocker is closed.
+
+### Scope boundary
+
+`Decision` is already a valid Blocker-cause kind in the domain model, but Wave 07 does not invent non-persisted Decisions. The Application layer therefore rejects a Decision cause until the documentary-record implementation in Wave 09 can resolve that reference identically in every storage adapter.
+
+**Completion gate:** satisfied — snapshots explain direct/inherited target/cause state, and resolving an Issue or one Blocker never silently resolves any other active Blocker.
 
 **Target integration commit:**  
 `feat(core): separate issues from blockers and implement blocking projections`
@@ -552,9 +585,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers is now active.
+Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers satisfies its implementation and verification gate on PR #7 and is pending integration.
 
-1. Implement Issue and Blocker as independent typed aggregates with explicit lifecycle.
-2. Add transactional Application commands and deterministic direct/inherited blocking projection.
-3. Persist Issue/Blocker state with memory/SQLite parity and restart-safe reconstruction.
-4. Expose HTTP/OpenAPI contracts and prove the Wave 07 completion gate.
+1. Review and merge PR #7 into `master`.
+2. Start Wave 08 — Leases and Fencing from the integrated Wave 07 baseline.
+3. Harden Claim/Renew/Release/Reclaim semantics, TTL expiration and fencing-token behavior.
+4. Prove that a stale claimant cannot complete a WorkItem after reclaim.
