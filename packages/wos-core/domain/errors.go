@@ -43,6 +43,7 @@ const (
 	ErrorCodeEvidence              ErrorCode = "evidence_error"
 	ErrorCodeEvidenceLink          ErrorCode = "evidence_link_error"
 	ErrorCodeDecision              ErrorCode = "decision_error"
+	ErrorCodeRoadmap               ErrorCode = "roadmap_error"
 )
 
 // Error is the foundational typed error used by public Core contracts.
