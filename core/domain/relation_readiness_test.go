@@ -49,13 +49,17 @@ func TestReadinessUsesHardDependenciesAndNotBefore(t *testing.T) {
 	}
 	outcome.Lifecycle = OutcomeLifecycleActive
 	item, err := NewWorkItem(MustParseID("0199f001-0000-7000-8000-000000000003"), scope, "Work", "", PriorityNormal, WorkItemLifecycleTodo, now)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	future := now.Add(time.Minute)
 	item.NotBefore = &future
 
 	target := EntityRef{Scope: scope, Kind: EntityKindObjective, ID: MustParseID("0199f001-0000-7000-8000-000000000004")}
 	dep, err := NewDependencyRelation(MustParseID("0199f001-0000-7000-8000-000000000005"), item.Ref(), target, DependencyStrengthHard, now)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	result := WorkItemReadiness(item, outcome, nil, []DependencyEvaluation{{Relation: dep, Satisfied: false}}, now)
 	if result.Ready {
