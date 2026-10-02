@@ -473,6 +473,11 @@ func (r workItemRepository) Insert(ctx context.Context, item domain.WorkItem) er
 	if err != nil {
 		return err
 	}
+	if item.CurrentLease != nil {
+		if err := ensurePrincipal(ctx, r.uow.tx, item.CurrentLease.PrincipalID); err != nil {
+			return err
+		}
+	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
@@ -522,6 +527,11 @@ func (r workItemRepository) Save(ctx context.Context, item domain.WorkItem, expe
 	lease, err := encodeLease(item.CurrentLease)
 	if err != nil {
 		return err
+	}
+	if item.CurrentLease != nil {
+		if err := ensurePrincipal(ctx, r.uow.tx, item.CurrentLease.PrincipalID); err != nil {
+			return err
+		}
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE work_items

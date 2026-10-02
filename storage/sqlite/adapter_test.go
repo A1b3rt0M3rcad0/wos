@@ -390,3 +390,73 @@ func TestSQLiteCancelledTransactionStopsRepositoryWork(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "wos.db"))
+	service, err := application.NewService(
+		store,
+		sqliteFixedClock{now: time.Date(2026, 10, 2, 4, 40, 0, 0, time.UTC)},
+		&sqliteSequenceIDs{prefix: "0199e946", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	namespaceID := testID("0199e946-0000-7000-8000-000000000001")
+	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
+		"0199e946-0000-7000-8000-000000000101", "",
+	), application.CreateOutcomeCommand{
+		NamespaceID:  namespaceID,
+		Title:        "Principal FK",
+		DesiredState: "A new principal can claim persisted work",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work, err := service.CreateWorkItem(ctx, sqliteCommandContext(
+		"0199e946-0000-7000-8000-000000000102", "",
+	), application.CreateWorkItemCommand{
+		Scope:     created.Value.Scope(),
+		Title:     "Claim me",
+		Priority:  domain.PriorityNormal,
+		Lifecycle: domain.WorkItemLifecycleTodo,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	claimContext := sqliteCommandContext(
+		"0199e946-0000-7000-8000-000000000103", "",
+	)
+	claimContext.PrincipalID = "sqlite-new-principal"
+	claimContext.Actor.ID = "sqlite-new-principal"
+
+	claimed, err := service.ClaimWorkItem(ctx, claimContext, application.ClaimWorkItemCommand{
+		Scope:           created.Value.Scope(),
+		WorkItemID:      work.Value.ID,
+		ExpectedVersion: work.Value.Version,
+		TTL:             domain.DefaultLeaseTTL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if claimed.Value.CurrentLease == nil {
+		t.Fatal("claim did not persist a lease")
+	}
+	if claimed.Value.CurrentLease.PrincipalID != "sqlite-new-principal" {
+		t.Fatalf("lease principal = %q", claimed.Value.CurrentLease.PrincipalID)
+	}
+
+	var count int
+	if err := store.db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) FROM principals WHERE id = ?",
+		"sqlite-new-principal",
+	).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("new lease principal count = %d, want 1", count)
+	}
+}

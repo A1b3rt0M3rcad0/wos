@@ -3,6 +3,8 @@ package sqlite
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
+	"errors"
 	"embed"
 	"encoding/hex"
 	"fmt"
@@ -81,8 +83,8 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 				fmt.Sprintf("sqlite migration %d checksum mismatch", item.version),
 			)
 		}
-		return tx.Rollback()
-	case err != nil && !strings.Contains(strings.ToLower(err.Error()), "no rows"):
+		return nil
+	case !errors.Is(err, sql.ErrNoRows):
 		return mapSQLError("read migration checksum", err)
 	}
 
