@@ -64,7 +64,6 @@ func TestWave10HTTPRecordsEvidenceAwareAssessment(t *testing.T) {
 	}
 }
 
-
 func TestWave10HTTPReadsValidationAndConclusionHistory(t *testing.T) {
 	handler := newWave09TestHandler(t)
 	server := httptest.NewServer(handler)

@@ -128,7 +128,6 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 	}
 }
 
-
 func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
