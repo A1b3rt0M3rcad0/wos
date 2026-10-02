@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 04 — SQLite Persistence and Migrations (complete in PR #4; not yet merged)
+**Current wave:** Wave 05 — HTTP Vertical Slice (complete in PR #5; pending merge)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -35,7 +35,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 | Milestone | Status | Definition |
 | --- | --- | --- |
-| M1 — Local vertical slice | ⬜ | Core + SQLite + HTTP with Outcome, Objective, WorkItem and criteria |
+| M1 — Local vertical slice | ✅ | Core + SQLite + HTTP with Outcome, Objective, WorkItem and criteria |
 | M2 — Full coordination | ⬜ | Dependencies, Blockers, Issues, leases and documentary records |
 | M3 — Planning and continuity | ⬜ | Roadmaps, snapshot/graph/timeline and MCP |
 | M4 — Complete standalone | ⬜ | PostgreSQL parity, triggers/outbox, auth and packaging |
@@ -304,11 +304,31 @@ Wave 04 does **not** add the HTTP transport, transport-level authentication/loca
 
 ## Wave 05 — HTTP Vertical Slice
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done
 
 Expose the M1 domain through HTTP with DTOs, auth-local mode, version preconditions, idempotency keys, ETags, error mapping, OpenAPI and first state query.
 
-**Completion gate:** standalone binary can create, modify and query durable state through HTTP with reproducible documentation.
+### Completed
+
+- [x] Add standalone SQLite + local-auth HTTP runtime and `wos server` command.
+- [x] Add `/livez` and storage-backed `/readyz` health endpoints.
+- [x] Expose Outcome, Objective, WorkItem and SuccessCriterion operations through versioned HTTP routes.
+- [x] Require `Idempotency-Key` on remote mutations.
+- [x] Translate aggregate versions through strong ETags and `If-Match` / `expected_version`.
+- [x] Preserve/request correlation IDs and return a stable JSON error envelope.
+- [x] Add the first coherent Outcome state query.
+- [x] Add OpenAPI 3.1 contract under `api/openapi.yaml`.
+- [x] Add reproducible HTTP documentation under `docs/http.md`.
+- [x] Add transport contract coverage for replay, stale versions, no-op writes, invalid payloads, scope isolation and payload bounds.
+- [x] Add durable SQLite HTTP restart coverage.
+- [x] Add standalone HTTP runtime smoke verification to CI.
+- [x] Pass formatting, vet, unit/contract tests, race detector, standalone build and runtime smoke verification.
+
+### Verification
+
+GitHub Actions run `36967299973` validated head `9a6cc4af2526420b6a8a6b6bbff209bed480f24a` with the complete verification job, including the standalone HTTP runtime smoke test. The suite includes a durable create/update/restart/read scenario over SQLite and an M1 HTTP contract scenario for Outcome, Objective, WorkItem and criteria.
+
+**Completion gate:** satisfied — the standalone binary can create, modify, persist, restart and query durable state through HTTP, with reproducible documentation and a machine-readable OpenAPI contract.
 
 **Target commit:**  
 `feat(http): expose versioned outcome coordination API`
