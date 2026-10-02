@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"reflect"
 	"strings"
 	"time"
 )
@@ -41,6 +42,9 @@ func (s RoadmapPlanScope) Validate(boundary Scope) error {
 	}
 	if s.Kind == RoadmapScopeOutcome && s.ID != boundary.OutcomeID {
 		return NewError(ErrorCodeRoadmap, "outcome-scoped roadmap must use the containing Outcome id")
+	}
+	if s.Kind == RoadmapScopeObjective && s.ID == boundary.OutcomeID {
+		return NewError(ErrorCodeRoadmap, "objective-scoped roadmap requires an Objective id")
 	}
 	return nil
 }
@@ -262,7 +266,7 @@ func (d RoadmapDraft) Validate(scope Scope) error {
 }
 
 type RoadmapDependencySnapshot struct {
-	DependentRef  EntityRef `json:"dependent_ref"`
+	DependentRef    EntityRef `json:"dependent_ref"`
 	PrerequisiteRef EntityRef `json:"prerequisite_ref"`
 }
 
@@ -322,17 +326,17 @@ func (r RoadmapRevision) Validate(scope Scope) error {
 }
 
 type Roadmap struct {
-	ID                 ID               `json:"id"`
-	Scope              Scope            `json:"scope"`
-	Version            Version          `json:"version"`
-	PlanScope          RoadmapPlanScope `json:"plan_scope"`
-	Title              string           `json:"title"`
-	Lifecycle          RoadmapLifecycle `json:"lifecycle"`
-	Draft              *RoadmapDraft    `json:"draft,omitempty"`
-	Revisions          []RoadmapRevision `json:"revisions,omitempty"`
-	CreatedAt          time.Time        `json:"created_at"`
-	UpdatedAt          time.Time        `json:"updated_at"`
-	ArchivedAt         *time.Time       `json:"archived_at,omitempty"`
+	ID         ID                `json:"id"`
+	Scope      Scope             `json:"scope"`
+	Version    Version           `json:"version"`
+	PlanScope  RoadmapPlanScope  `json:"plan_scope"`
+	Title      string            `json:"title"`
+	Lifecycle  RoadmapLifecycle  `json:"lifecycle"`
+	Draft      *RoadmapDraft     `json:"draft,omitempty"`
+	Revisions  []RoadmapRevision `json:"revisions,omitempty"`
+	CreatedAt  time.Time         `json:"created_at"`
+	UpdatedAt  time.Time         `json:"updated_at"`
+	ArchivedAt *time.Time        `json:"archived_at,omitempty"`
 }
 
 func NewRoadmap(id ID, scope Scope, planScope RoadmapPlanScope, title string, now time.Time) (Roadmap, error) {
@@ -384,7 +388,7 @@ func (r Roadmap) Validate() error {
 			return NewError(ErrorCodeRoadmap, "open roadmap cannot contain archived_at")
 		}
 	case RoadmapLifecycleArchived:
-		if r.ArivedAt == nil {
+		if r.ArchivedAt == nil || r.ArchivedAt.IsZero() {
 			return NewError(ErrorCodeRoadmap, "archived roadmap requires archived_at")
 		}
 	}
@@ -404,6 +408,204 @@ func (r Roadmap) Validate() error {
 		expected++
 	}
 	return nil
+}
+
+func (r *Roadmap) OpenDraft(baseRevisionNumber *uint64, now time.Time) error {
+	if r.Lifecycle != RoadmapLifecycleOpen {
+		return NewError(ErrorCodeInvalidTransition, "only open roadmap can open a draft")
+	}
+	if r.Draft != nil && r.Draft.Lifecycle == RoadmapDraftOpen {
+		return NewError(ErrorCodeRoadmap, "roadmap already has an open draft")
+	}
+
+	draft := RoadmapDraft{
+		DraftVersion: 1,
+		Lifecycle:    RoadmapDraftOpen,
+		CreatedAt:    now.UTC(),
+		UpdatedAt:    now.UTC(),
+	}
+	if baseRevisionNumber != nil {
+		if *baseRevisionNumber == 0 || *baseRevisionNumber > uint64(len(r.Revisions)) {
+			return NewError(ErrorCodeRoadmap, "base roadmap revision does not exist")
+		}
+		base := r.Revisions[*baseRevisionNumber-1]
+		baseNumber := *baseRevisionNumber
+		draft.BaseRevisionNumber = &baseNumber
+		draft.Nodes = cloneRoadmapNodesForDraft(base.Nodes)
+		draft.AfterLinks = append([]RoadmapAfterLink(nil), base.AfterLinks...)
+	}
+	if err := draft.Validate(r.Scope); err != nil {
+		return err
+	}
+	r.Draft = &draft
+	return r.touch(now)
+}
+
+func (r *Roadmap) ReplaceDraft(
+	expectedDraftVersion uint64,
+	nodes []RoadmapNode,
+	afterLinks []RoadmapAfterLink,
+	now time.Time,
+) error {
+	if r.Lifecycle != RoadmapLifecycleOpen {
+		return NewError(ErrorCodeInvalidTransition, "archived roadmap cannot edit draft")
+	}
+	if r.Draft == nil || r.Draft.Lifecycle != RoadmapDraftOpen {
+		return NewError(ErrorCodeRoadmap, "roadmap has no open draft")
+	}
+	if r.Draft.DraftVersion != expectedDraftVersion {
+		return NewError(ErrorCodeVersionConflict, "roadmap draft version conflict")
+	}
+	next := *r.Draft
+	next.DraftVersion++
+	next.Nodes = cloneRoadmapNodes(nodes)
+	next.AfterLinks = append([]RoadmapAfterLink(nil), afterLinks...)
+	next.UpdatedAt = now.UTC()
+	if err := next.Validate(r.Scope); err != nil {
+		return err
+	}
+	r.Draft = &next
+	return r.touch(now)
+}
+
+func (r *Roadmap) DiscardDraft(expectedDraftVersion uint64, now time.Time) error {
+	if r.Lifecycle != RoadmapLifecycleOpen {
+		return NewError(ErrorCodeInvalidTransition, "archived roadmap cannot discard draft")
+	}
+	if r.Draft == nil || r.Draft.Lifecycle != RoadmapDraftOpen {
+		return NewError(ErrorCodeRoadmap, "roadmap has no open draft")
+	}
+	if r.Draft.DraftVersion != expectedDraftVersion {
+		return NewError(ErrorCodeVersionConflict, "roadmap draft version conflict")
+	}
+	next := *r.Draft
+	next.DraftVersion++
+	at := now.UTC()
+	next.Lifecycle = RoadmapDraftDiscarded
+	next.UpdatedAt = at
+	next.DiscardedAt = &at
+	if err := next.Validate(r.Scope); err != nil {
+		return err
+	}
+	r.Draft = &next
+	return r.touch(now)
+}
+
+func (r *Roadmap) PublishDraft(
+	expectedDraftVersion uint64,
+	contentHash string,
+	publishedNodes []RoadmapNode,
+	dependencySnapshots []RoadmapDependencySnapshot,
+	publishedBy ActorRef,
+	now time.Time,
+) (RoadmapRevision, error) {
+	if r.Lifecycle != RoadmapLifecycleOpen {
+		return RoadmapRevision{}, NewError(ErrorCodeInvalidTransition, "archived roadmap cannot publish draft")
+	}
+	if r.Draft == nil || r.Draft.Lifecycle != RoadmapDraftOpen {
+		return RoadmapRevision{}, NewError(ErrorCodeRoadmap, "roadmap has no publishable draft")
+	}
+	if r.Draft.DraftVersion != expectedDraftVersion {
+		return RoadmapRevision{}, NewError(ErrorCodeVersionConflict, "roadmap draft version conflict")
+	}
+	if len(publishedNodes) != len(r.Draft.Nodes) {
+		return RoadmapRevision{}, NewError(ErrorCodeRoadmap, "published nodes must match draft content")
+	}
+	for i := range r.Draft.Nodes {
+		if !roadmapPublishedNodeMatchesDraft(publishedNodes[i], r.Draft.Nodes[i]) {
+			return RoadmapRevision{}, NewError(ErrorCodeRoadmap, "published node content differs from draft")
+		}
+	}
+
+	revision := RoadmapRevision{
+		RevisionNumber:      uint64(len(r.Revisions)) + 1,
+		ContentHash:         strings.TrimSpace(contentHash),
+		Nodes:               cloneRoadmapNodes(publishedNodes),
+		AfterLinks:          append([]RoadmapAfterLink(nil), r.Draft.AfterLinks...),
+		DependencySnapshots: append([]RoadmapDependencySnapshot(nil), dependencySnapshots...),
+		PublishedBy:         publishedBy,
+		PublishedAt:         now.UTC(),
+	}
+	if err := revision.Validate(r.Scope); err != nil {
+		return RoadmapRevision{}, err
+	}
+	r.Revisions = append(r.Revisions, revision)
+	r.Draft = nil
+	if err := r.touch(now); err != nil {
+		return RoadmapRevision{}, err
+	}
+	return revision, nil
+}
+
+func (r *Roadmap) Archive(now time.Time) error {
+	if r.Lifecycle != RoadmapLifecycleOpen {
+		return NewError(ErrorCodeInvalidTransition, "only open roadmap can be archived")
+	}
+	if r.Draft != nil && r.Draft.Lifecycle == RoadmapDraftOpen {
+		return NewError(ErrorCodePreconditionFailed, "discard or publish the open draft before archiving roadmap")
+	}
+	at := now.UTC()
+	r.Lifecycle = RoadmapLifecycleArchived
+	r.ArchivedAt = &at
+	return r.touch(now)
+}
+
+func (r *Roadmap) Reopen(now time.Time) error {
+	if r.Lifecycle != RoadmapLifecycleArchived {
+		return NewError(ErrorCodeInvalidTransition, "only archived roadmap can be reopened")
+	}
+	r.Lifecycle = RoadmapLifecycleOpen
+	r.ArchivedAt = nil
+	return r.touch(now)
+}
+
+func (r *Roadmap) touch(now time.Time) error {
+	next, err := nextVersion(r.Version)
+	if err != nil {
+		return err
+	}
+	r.Version = next
+	r.UpdatedAt = now.UTC()
+	return r.Validate()
+}
+
+func cloneRoadmapNodesForDraft(src []RoadmapNode) []RoadmapNode {
+	result := cloneRoadmapNodes(src)
+	for i := range result {
+		result[i].ReferenceSnapshot = nil
+	}
+	return result
+}
+
+func cloneRoadmapNodes(src []RoadmapNode) []RoadmapNode {
+	result := make([]RoadmapNode, len(src))
+	for i := range src {
+		result[i] = src[i]
+		result[i].CriterionRefs = append([]RoadmapCriterionRef(nil), src[i].CriterionRefs...)
+		if src[i].TargetRef != nil {
+			ref := *src[i].TargetRef
+			result[i].TargetRef = &ref
+		}
+		if src[i].PlannedStart != nil {
+			value := *src[i].PlannedStart
+			result[i].PlannedStart = &value
+		}
+		if src[i].PlannedEnd != nil {
+			value := *src[i].PlannedEnd
+			result[i].PlannedEnd = &value
+		}
+		if src[i].ReferenceSnapshot != nil {
+			value := *src[i].ReferenceSnapshot
+			result[i].ReferenceSnapshot = &value
+		}
+	}
+	return result
+}
+
+func roadmapPublishedNodeMatchesDraft(published, draft RoadmapNode) bool {
+	copyPublished := published
+	copyPublished.ReferenceSnapshot = nil
+	return reflect.DeepEqual(copyPublished, draft)
 }
 
 func validateRoadmapPlanContent(scope Scope, nodes []RoadmapNode, afterLinks []RoadmapAfterLink, published bool) error {
@@ -429,8 +631,12 @@ func validateRoadmapPlanContent(scope Scope, nodes []RoadmapNode, afterLinks []R
 		if node.ParentNodeKey == "" {
 			continue
 		}
-		if _, exists := byKey[node.ParentNodeKey]; !exists {
+		parent, exists := byKey[node.ParentNodeKey]
+		if !exists {
 			return NewError(ErrorCodeRoadmap, "roadmap parent_node_key references unknown node")
+		}
+		if parent.NodeType != RoadmapNodePhase {
+			return NewError(ErrorCodeRoadmap, "roadmap parent node must be a phase")
 		}
 		if node.ParentNodeKey == key {
 			return NewError(ErrorCodeRoadmap, "roadmap node cannot parent itself")
