@@ -913,7 +913,6 @@ func nullableJSON(value any) (any, error) {
 	return marshalJSON(value)
 }
 
-
 func sortRoadmapRevisions(values []domain.RoadmapRevision) {
 	sort.Slice(values, func(i, j int) bool {
 		return values[i].RevisionNumber < values[j].RevisionNumber
