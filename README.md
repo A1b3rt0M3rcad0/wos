@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Wave 01 foundation is implemented and verified. Domain lifecycles, persistence, HTTP/MCP transports, coordination workflows, and later-wave capabilities described below remain planned until their roadmap gates are completed.
+> **Project status:** Wave 01 is merged and verified. Wave 02 is implemented and verified on PR #2, pending merge: Outcome/Objective/WorkItem lifecycles, revisioned criteria and attestation assessments, explicit conclusions, transactional application services, declarative ownership/assignments, and in-memory UnitOfWork coordination are available on the development branch. Durable persistence, HTTP/MCP transports, Event Log/idempotency, and later-wave capabilities remain planned.
 
 ## Why WOS
 
@@ -576,8 +576,10 @@ The WOS design specifies that the project is intended to be Open Source and lice
 
 ## Current state
 
-Wave 01 — Public Core Foundation is implemented and verified in the current development line. The repository now contains public identity/reference primitives, ActorRef and command context contracts, optimistic version primitives, Clock/IDGenerator ports, a standalone bootstrap/configuration skeleton, foundational ADRs, boundary tests, an external Core import contract, and Go 1.27 CI.
+Wave 01 — Public Core Foundation is merged and verified.
 
-Wave 02 has **not** started. Outcome, Objective, WorkItem and criterion lifecycles; transactional memory; persistence; HTTP; MCP; leases; Roadmaps; Triggers and the remaining architecture are still planned capabilities until their respective roadmap gates are satisfied.
+Wave 02 — Transactions, Memory and Initial Domain is implemented and verified on PR #2, pending merge. It provides pure Outcome/Objective/WorkItem lifecycle rules, revisioned criteria, immutable assessment history plus current projections, attestation-based assessments, explicit conclusions, declarative owners/assignees, basic WorkItem claims, repository/UnitOfWork ports, aggregate validation, a transactional in-memory adapter with rollback and Outcome revision markers, complete Wave 02 application commands, and a human-only end-to-end scenario.
+
+Wave 03 has **not** started. Domain Events, command replay and idempotency remain intentionally outside the current implementation. SQLite, HTTP, MCP, hardened leases, Roadmaps, Triggers and later architecture remain planned until their respective roadmap gates are satisfied.
 
 Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.
