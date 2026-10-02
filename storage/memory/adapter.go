@@ -72,11 +72,11 @@ type transaction struct {
 	events      []domain.DomainEvent
 	idempotency map[string]idempotencyRecord
 
-	outcomeRepo       outcomeRepository
-	objectiveRepo     objectiveRepository
-	workItemRepo      workItemRepository
-	coordination      coordinationStore
-	eventLog          eventLog
+	outcomeRepo      outcomeRepository
+	objectiveRepo    objectiveRepository
+	workItemRepo     workItemRepository
+	coordination     coordinationStore
+	eventLog         eventLog
 	idempotencyStore idempotencyStore
 }
 
@@ -85,7 +85,7 @@ func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.object
 func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
-func (tx *transaction) Idempotency() ports.IdempotencyStore    { return tx.idempotencyStore }
+func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
 
 func (tx *transaction) Commit() error {
 	if tx.closed {
