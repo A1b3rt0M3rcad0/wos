@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/core/ports"
@@ -200,4 +201,84 @@ func requireHardDependenciesSatisfied(
 		}
 	}
 	return nil
+}
+
+func evaluateObjectiveReadiness(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	objective domain.Objective,
+	now time.Time,
+) (domain.Readiness, error) {
+	outcome, err := uow.Outcomes().Get(ctx, objective.Scope.NamespaceID, objective.Scope.OutcomeID)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	relations, err := uow.Relations().ListByOutcome(ctx, objective.Scope)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	evaluations, err := dependencyEvaluationsForSource(ctx, uow, objective.Ref(), relations)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	return domain.ObjectiveReadiness(objective, outcome, evaluations, now), nil
+}
+
+func evaluateWorkItemReadiness(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	item domain.WorkItem,
+	now time.Time,
+) (domain.Readiness, error) {
+	outcome, err := uow.Outcomes().Get(ctx, item.Scope.NamespaceID, item.Scope.OutcomeID)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	var objective *domain.Objective
+	if item.ObjectiveID != nil {
+		value, err := uow.Objectives().Get(ctx, item.Scope, *item.ObjectiveID)
+		if err != nil {
+			return domain.Readiness{}, err
+		}
+		objective = &value
+	}
+	relations, err := uow.Relations().ListByOutcome(ctx, item.Scope)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	evaluations, err := dependencyEvaluationsForSource(ctx, uow, item.Ref(), relations)
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	return domain.WorkItemReadiness(item, outcome, objective, evaluations, now), nil
+}
+
+func requireObjectiveReady(ctx context.Context, uow ports.UnitOfWork, objective domain.Objective, now time.Time) error {
+	readiness, err := evaluateObjectiveReadiness(ctx, uow, objective, now)
+	if err != nil {
+		return err
+	}
+	if readiness.Ready {
+		return nil
+	}
+	reasons := make([]string, len(readiness.Reasons))
+	for i, reason := range readiness.Reasons {
+		reasons[i] = string(reason)
+	}
+	return domain.NewError(domain.ErrorCodePreconditionFailed, "objective is not ready: "+strings.Join(reasons, ","))
+}
+
+func requireWorkItemReady(ctx context.Context, uow ports.UnitOfWork, item domain.WorkItem, now time.Time) error {
+	readiness, err := evaluateWorkItemReadiness(ctx, uow, item, now)
+	if err != nil {
+		return err
+	}
+	if readiness.Ready {
+		return nil
+	}
+	reasons := make([]string, len(readiness.Reasons))
+	for i, reason := range readiness.Reasons {
+		reasons[i] = string(reason)
+	}
+	return domain.NewError(domain.ErrorCodePreconditionFailed, "work item is not ready: "+strings.Join(reasons, ","))
 }
