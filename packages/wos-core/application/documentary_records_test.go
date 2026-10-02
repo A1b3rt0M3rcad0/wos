@@ -158,3 +158,71 @@ func TestWave09RejectsCrossOutcomeEvidenceLink(t *testing.T) {
 		t.Fatal("cross-outcome documentary link must fail")
 	}
 }
+
+
+func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	scope := outcome.Scope()
+	cc := commandContext()
+
+	artifactResult, err := service.RegisterArtifact(ctx, cc, application.RegisterArtifactCommand{
+		Scope: scope, ArtifactType: "report", Name: "state report", URI: "file:///state-report.json",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifact := artifactResult.Value
+
+	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
+		Scope: scope,
+		EvidenceType: domain.EvidenceTypeSource,
+		Description: "state evidence",
+		SourceRef: domain.SourceReference{Provider: "test", URI: "file:///state-report.json"},
+		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+		ArtifactID: &artifact.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decisionResult, err := service.ProposeDecision(ctx, cc, application.ProposeDecisionCommand{
+		Scope: scope, Title: "State decision", Proposal: "Expose documentary state", Rationale: "completion gate",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	decision := decisionResult.Value
+
+	linkResult, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
+		Scope: scope,
+		EvidenceID: evidenceResult.Value.ID,
+		TargetRef: decision.Ref(),
+		Stance: domain.EvidenceStanceSupports,
+		Rationale: "evidence supports the proposed state projection",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	state, err := service.GetOutcomeState(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Artifacts) != 1 || state.Artifacts[0].ID != artifact.ID {
+		t.Fatalf("artifacts projection = %#v", state.Artifacts)
+	}
+	if len(state.Evidence) != 1 || state.Evidence[0].ID != evidenceResult.Value.ID {
+		t.Fatalf("evidence projection = %#v", state.Evidence)
+	}
+	if len(state.EvidenceLinks) != 1 || state.EvidenceLinks[0].ID != linkResult.Value.ID {
+		t.Fatalf("evidence links projection = %#v", state.EvidenceLinks)
+	}
+	if len(state.Decisions) != 1 || state.Decisions[0].ID != decision.ID {
+		t.Fatalf("decisions projection = %#v", state.Decisions)
+	}
+	if state.OutcomeRevision != linkResult.OutcomeRevision {
+		t.Fatalf("outcome revision = %d, want %d", state.OutcomeRevision, linkResult.OutcomeRevision)
+	}
+}
