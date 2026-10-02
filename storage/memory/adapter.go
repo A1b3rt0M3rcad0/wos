@@ -442,43 +442,75 @@ func (r relationRepository) Save(ctx context.Context, relation domain.Relation, 
 type issueRepository struct{ tx *transaction }
 
 func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Issue, error) {
-	if err := ctx.Err(); err != nil { return domain.Issue{}, err }
-	if err := r.tx.ensureOpen(); err != nil { return domain.Issue{}, err }
+	if err := ctx.Err(); err != nil {
+		return domain.Issue{}, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return domain.Issue{}, err
+	}
 	value, ok := r.tx.issues[entityKey(scope, id)]
-	if !ok { return domain.Issue{}, domain.NewError(domain.ErrorCodeNotFound, "issue not found") }
+	if !ok {
+		return domain.Issue{}, domain.NewError(domain.ErrorCodeNotFound, "issue not found")
+	}
 	return cloneIssue(value), nil
 }
 
 func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Issue, error) {
-	if err := ctx.Err(); err != nil { return nil, err }
-	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
 	items := make([]domain.Issue, 0)
 	for _, item := range r.tx.issues {
-		if item.Scope == scope { items = append(items, cloneIssue(item)) }
+		if item.Scope == scope {
+			items = append(items, cloneIssue(item))
+		}
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
 	return items, nil
 }
 
 func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
-	if err := ctx.Err(); err != nil { return err }
-	if err := r.tx.ensureOpen(); err != nil { return err }
-	if err := issue.Validate(); err != nil { return err }
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := issue.Validate(); err != nil {
+		return err
+	}
 	key := entityKey(issue.Scope, issue.ID)
-	if _, exists := r.tx.issues[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "issue already exists") }
+	if _, exists := r.tx.issues[key]; exists {
+		return domain.NewError(domain.ErrorCodeAlreadyExists, "issue already exists")
+	}
 	r.tx.issues[key] = cloneIssue(issue)
 	return nil
 }
 
 func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected domain.Version) error {
-	if err := ctx.Err(); err != nil { return err }
-	if err := r.tx.ensureOpen(); err != nil { return err }
-	if err := issue.Validate(); err != nil { return err }
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := issue.Validate(); err != nil {
+		return err
+	}
 	key := entityKey(issue.Scope, issue.ID)
 	current, ok := r.tx.issues[key]
-	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "issue not found") }
-	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "issue expected_version does not match") }
-	if issue.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "issue version must advance exactly once per save") }
+	if !ok {
+		return domain.NewError(domain.ErrorCodeNotFound, "issue not found")
+	}
+	if current.Version != expected {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "issue expected_version does not match")
+	}
+	if issue.Version != expected+1 {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "issue version must advance exactly once per save")
+	}
 	r.tx.issues[key] = cloneIssue(issue)
 	return nil
 }
@@ -486,43 +518,75 @@ func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected 
 type blockerRepository struct{ tx *transaction }
 
 func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Blocker, error) {
-	if err := ctx.Err(); err != nil { return domain.Blocker{}, err }
-	if err := r.tx.ensureOpen(); err != nil { return domain.Blocker{}, err }
+	if err := ctx.Err(); err != nil {
+		return domain.Blocker{}, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return domain.Blocker{}, err
+	}
 	value, ok := r.tx.blockers[entityKey(scope, id)]
-	if !ok { return domain.Blocker{}, domain.NewError(domain.ErrorCodeNotFound, "blocker not found") }
+	if !ok {
+		return domain.Blocker{}, domain.NewError(domain.ErrorCodeNotFound, "blocker not found")
+	}
 	return cloneBlocker(value), nil
 }
 
 func (r blockerRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Blocker, error) {
-	if err := ctx.Err(); err != nil { return nil, err }
-	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
 	items := make([]domain.Blocker, 0)
 	for _, item := range r.tx.blockers {
-		if item.Scope == scope { items = append(items, cloneBlocker(item)) }
+		if item.Scope == scope {
+			items = append(items, cloneBlocker(item))
+		}
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
 	return items, nil
 }
 
 func (r blockerRepository) Insert(ctx context.Context, blocker domain.Blocker) error {
-	if err := ctx.Err(); err != nil { return err }
-	if err := r.tx.ensureOpen(); err != nil { return err }
-	if err := blocker.Validate(); err != nil { return err }
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := blocker.Validate(); err != nil {
+		return err
+	}
 	key := entityKey(blocker.Scope, blocker.ID)
-	if _, exists := r.tx.blockers[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "blocker already exists") }
+	if _, exists := r.tx.blockers[key]; exists {
+		return domain.NewError(domain.ErrorCodeAlreadyExists, "blocker already exists")
+	}
 	r.tx.blockers[key] = cloneBlocker(blocker)
 	return nil
 }
 
 func (r blockerRepository) Save(ctx context.Context, blocker domain.Blocker, expected domain.Version) error {
-	if err := ctx.Err(); err != nil { return err }
-	if err := r.tx.ensureOpen(); err != nil { return err }
-	if err := blocker.Validate(); err != nil { return err }
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return err
+	}
+	if err := blocker.Validate(); err != nil {
+		return err
+	}
 	key := entityKey(blocker.Scope, blocker.ID)
 	current, ok := r.tx.blockers[key]
-	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "blocker not found") }
-	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "blocker expected_version does not match") }
-	if blocker.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "blocker version must advance exactly once per save") }
+	if !ok {
+		return domain.NewError(domain.ErrorCodeNotFound, "blocker not found")
+	}
+	if current.Version != expected {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "blocker expected_version does not match")
+	}
+	if blocker.Version != expected+1 {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "blocker version must advance exactly once per save")
+	}
 	r.tx.blockers[key] = cloneBlocker(blocker)
 	return nil
 }
@@ -752,26 +816,42 @@ func cloneRelations(src map[string]domain.Relation) map[string]domain.Relation {
 
 func cloneIssues(src map[string]domain.Issue) map[string]domain.Issue {
 	dst := make(map[string]domain.Issue, len(src))
-	for k, v := range src { dst[k] = cloneIssue(v) }
+	for k, v := range src {
+		dst[k] = cloneIssue(v)
+	}
 	return dst
 }
 
 func cloneBlockers(src map[string]domain.Blocker) map[string]domain.Blocker {
 	dst := make(map[string]domain.Blocker, len(src))
-	for k, v := range src { dst[k] = cloneBlocker(v) }
+	for k, v := range src {
+		dst[k] = cloneBlocker(v)
+	}
 	return dst
 }
 
 func cloneIssue(v domain.Issue) domain.Issue {
 	v.AffectedRefs = append([]domain.EntityRef(nil), v.AffectedRefs...)
-	if v.DuplicateOfIssueID != nil { id := *v.DuplicateOfIssueID; v.DuplicateOfIssueID = &id }
+	if v.DuplicateOfIssueID != nil {
+		id := *v.DuplicateOfIssueID
+		v.DuplicateOfIssueID = &id
+	}
 	return v
 }
 
 func cloneBlocker(v domain.Blocker) domain.Blocker {
-	if v.CauseRef != nil { ref := *v.CauseRef; v.CauseRef = &ref }
-	if v.ExternalCause != nil { cause := *v.ExternalCause; v.ExternalCause = &cause }
-	if v.ResolvedAt != nil { value := *v.ResolvedAt; v.ResolvedAt = &value }
+	if v.CauseRef != nil {
+		ref := *v.CauseRef
+		v.CauseRef = &ref
+	}
+	if v.ExternalCause != nil {
+		cause := *v.ExternalCause
+		v.ExternalCause = &cause
+	}
+	if v.ResolvedAt != nil {
+		value := *v.ResolvedAt
+		v.ResolvedAt = &value
+	}
 	return v
 }
 

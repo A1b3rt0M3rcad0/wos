@@ -80,7 +80,11 @@ func Open(path string, opts Options) (*Store, error) {
 		busyTimeout:          opts.BusyTimeout,
 		idempotencyRetention: opts.IdempotencyRetention,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), opts.BusyTimeout)
+	bootstrapTimeout := opts.BusyTimeout
+	if bootstrapTimeout < 5*time.Second {
+		bootstrapTimeout = 5 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), bootstrapTimeout)
 	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
 		_ = db.Close()
@@ -152,6 +156,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	uow.objectives = objectiveRepository{uow: uow}
 	uow.workItems = workItemRepository{uow: uow}
 	uow.relations = relationRepository{uow: uow}
+	uow.issues = issueRepository{uow: uow}
+	uow.blockers = blockerRepository{uow: uow}
 	uow.coordination = coordinationStore{uow: uow}
 	uow.events = eventLog{uow: uow}
 	uow.idempotency = idempotencyStore{uow: uow}
@@ -168,6 +174,8 @@ type unitOfWork struct {
 	objectives   objectiveRepository
 	workItems    workItemRepository
 	relations    relationRepository
+	issues       issueRepository
+	blockers     blockerRepository
 	coordination coordinationStore
 	events       eventLog
 	idempotency  idempotencyStore
@@ -177,6 +185,8 @@ func (u *unitOfWork) Outcomes() ports.OutcomeRepository     { return u.outcomes 
 func (u *unitOfWork) Objectives() ports.ObjectiveRepository { return u.objectives }
 func (u *unitOfWork) WorkItems() ports.WorkItemRepository   { return u.workItems }
 func (u *unitOfWork) Relations() ports.RelationRepository   { return u.relations }
+func (u *unitOfWork) Issues() ports.IssueRepository         { return u.issues }
+func (u *unitOfWork) Blockers() ports.BlockerRepository     { return u.blockers }
 func (u *unitOfWork) Coordination() ports.CoordinationStore { return u.coordination }
 func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }

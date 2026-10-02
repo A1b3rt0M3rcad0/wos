@@ -73,7 +73,9 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 		}
 		readiness := domain.WorkItemReadiness(item, outcome, objective, evaluations, snapshotTime)
 		blocking, err := blockingStateForRef(ctx, uow, item.Ref())
-		if err != nil { return ReadyWork{}, err }
+		if err != nil {
+			return ReadyWork{}, err
+		}
 		readiness = domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked)
 		if readiness.Ready {
 			items = append(items, ReadyWorkItem{WorkItem: item, Readiness: readiness})
