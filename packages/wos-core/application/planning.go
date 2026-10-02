@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"sort"
+	"strings"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -40,11 +41,29 @@ type DiscardRoadmapDraftCommand struct {
 	ExpectedDraftVersion uint64
 }
 
+type RoadmapDependencyChangeAction string
+
+const (
+	RoadmapDependencyChangeAdd    RoadmapDependencyChangeAction = "add"
+	RoadmapDependencyChangeRemove RoadmapDependencyChangeAction = "remove"
+)
+
+type RoadmapDependencyChange struct {
+	Action          RoadmapDependencyChangeAction
+	RelationID      domain.ID
+	ExpectedVersion domain.Version
+	SourceRef       domain.EntityRef
+	TargetRef       domain.EntityRef
+	Strength        domain.DependencyStrength
+	Reason          string
+}
+
 type PublishRoadmapDraftCommand struct {
 	Scope                domain.Scope
 	RoadmapID            domain.ID
 	ExpectedVersion      domain.Version
 	ExpectedDraftVersion uint64
+	DependencyChanges    []RoadmapDependencyChange
 }
 
 type ActivateRoadmapRevisionCommand struct {
@@ -174,6 +193,17 @@ func (s *Service) PublishRoadmapDraft(
 		if value.Draft.DraftVersion != cmd.ExpectedDraftVersion {
 			return domain.NewError(domain.ErrorCodeVersionConflict, "roadmap draft version conflict")
 		}
+		now := s.clock.Now().UTC()
+		if err := applyRoadmapDependencyChanges(
+			ctx,
+			uow,
+			*value,
+			cmd.DependencyChanges,
+			now,
+			s.ids,
+		); err != nil {
+			return err
+		}
 		publishedNodes, dependencySnapshots, err := buildRoadmapPublicationSnapshot(ctx, uow, *value)
 		if err != nil {
 			return err
@@ -192,7 +222,7 @@ func (s *Service) PublishRoadmapDraft(
 			publishedNodes,
 			dependencySnapshots,
 			cc.Actor,
-			s.clock.Now().UTC(),
+			now,
 		)
 		return err
 	})
@@ -749,6 +779,121 @@ func validateRoadmapCriterionRef(
 		}
 	default:
 		return domain.NewError(domain.ErrorCodeRoadmap, "milestone criterion owner kind is invalid")
+	}
+	return nil
+}
+
+func applyRoadmapDependencyChanges(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	roadmap domain.Roadmap,
+	changes []RoadmapDependencyChange,
+	now time.Time,
+	ids ports.IDGenerator,
+) error {
+	if len(changes) == 0 {
+		return nil
+	}
+	if roadmap.Draft == nil || roadmap.Draft.Lifecycle != domain.RoadmapDraftOpen {
+		return domain.NewError(domain.ErrorCodeRoadmap, "roadmap has no open draft for dependency changes")
+	}
+	if err := requireOpenOutcome(ctx, uow, roadmap.Scope); err != nil {
+		return err
+	}
+
+	referenced := make(map[domain.EntityRef]struct{})
+	for _, node := range roadmap.Draft.Nodes {
+		if node.TargetRef != nil {
+			referenced[*node.TargetRef] = struct{}{}
+		}
+	}
+
+	for _, change := range changes {
+		switch change.Action {
+		case RoadmapDependencyChangeAdd:
+			if _, ok := referenced[change.SourceRef]; !ok {
+				return domain.NewError(domain.ErrorCodeRoadmap, "dependency source must be referenced by the published Roadmap draft")
+			}
+			if _, ok := referenced[change.TargetRef]; !ok {
+				return domain.NewError(domain.ErrorCodeRoadmap, "dependency target must be referenced by the published Roadmap draft")
+			}
+			sourceState, err := dependencyEndpointState(ctx, uow, change.SourceRef)
+			if err != nil {
+				return err
+			}
+			if _, err := dependencyEndpointState(ctx, uow, change.TargetRef); err != nil {
+				return err
+			}
+			if sourceState.terminal {
+				return domain.NewError(domain.ErrorCodeInvalidTransition, "terminal dependency source must be reopened before changing dependencies")
+			}
+			reason := strings.TrimSpace(change.Reason)
+			if sourceState.inProgress && reason == "" {
+				return domain.NewError(domain.ErrorCodeInvalidArgument, "adding dependency to in-progress source requires reason")
+			}
+			id, err := ids.NewID()
+			if err != nil {
+				return err
+			}
+			relation, err := domain.NewDependencyRelation(
+				id,
+				change.SourceRef,
+				change.TargetRef,
+				change.Strength,
+				now,
+			)
+			if err != nil {
+				return err
+			}
+			relation.Reason = reason
+			existing, err := uow.Relations().ListByOutcome(ctx, roadmap.Scope)
+			if err != nil {
+				return err
+			}
+			if err := domain.ValidateDependencyAcyclic(existing, relation, domain.DefaultDependencyGraphLimit); err != nil {
+				return err
+			}
+			if err := uow.Relations().Insert(ctx, relation); err != nil {
+				return err
+			}
+
+		case RoadmapDependencyChangeRemove:
+			if err := change.RelationID.Validate(); err != nil {
+				return domain.WrapError(domain.ErrorCodeInvalidArgument, "dependency removal relation_id is invalid", err)
+			}
+			if change.ExpectedVersion == 0 {
+				return domain.NewError(domain.ErrorCodeInvalidArgument, "dependency removal expected_version is required")
+			}
+			relation, err := uow.Relations().Get(ctx, roadmap.Scope, change.RelationID)
+			if err != nil {
+				return err
+			}
+			if relation.RelationType != domain.RelationTypeDependsOn {
+				return domain.NewError(domain.ErrorCodeInvalidRelation, "relation is not a dependency")
+			}
+			if _, ok := referenced[relation.SourceRef]; !ok {
+				return domain.NewError(domain.ErrorCodeRoadmap, "removed dependency source must be referenced by the published Roadmap draft")
+			}
+			if _, ok := referenced[relation.TargetRef]; !ok {
+				return domain.NewError(domain.ErrorCodeRoadmap, "removed dependency target must be referenced by the published Roadmap draft")
+			}
+			sourceState, err := dependencyEndpointState(ctx, uow, relation.SourceRef)
+			if err != nil {
+				return err
+			}
+			if sourceState.terminal {
+				return domain.NewError(domain.ErrorCodeInvalidTransition, "terminal dependency source must be reopened before changing dependencies")
+			}
+			if err := relation.Remove(change.Reason, now); err != nil {
+				return err
+			}
+			if err := uow.Relations().Save(ctx, relation, change.ExpectedVersion); err != nil {
+				return err
+			}
+
+		default:
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "roadmap dependency change action must be add or remove")
+		}
 	}
 	return nil
 }
