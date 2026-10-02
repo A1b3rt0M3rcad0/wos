@@ -9,6 +9,7 @@ const (
 	ReadinessReasonOutcomeNotActive          ReadinessReason = "outcome_not_active"
 	ReadinessReasonOutcomeArchived           ReadinessReason = "outcome_archived"
 	ReadinessReasonObjectiveTerminal         ReadinessReason = "objective_terminal"
+	ReadinessReasonBlocked                   ReadinessReason = "blocked"
 	ReadinessReasonHardDependencyUnsatisfied ReadinessReason = "hard_dependency_unsatisfied"
 	ReadinessReasonNotBefore                 ReadinessReason = "not_before"
 	ReadinessReasonActiveLease               ReadinessReason = "active_lease"
@@ -81,4 +82,19 @@ func hasUnsatisfiedHardDependency(values []DependencyEvaluation) bool {
 		}
 	}
 	return false
+}
+
+func ApplyBlockingToReadiness(value Readiness, blocked bool) Readiness {
+	if !blocked {
+		return value
+	}
+	for _, reason := range value.Reasons {
+		if reason == ReadinessReasonBlocked {
+			value.Ready = false
+			return value
+		}
+	}
+	value.Reasons = append(value.Reasons, ReadinessReasonBlocked)
+	value.Ready = false
+	return value
 }

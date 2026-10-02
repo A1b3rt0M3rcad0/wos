@@ -286,6 +286,10 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Relation:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Issue:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Blocker:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
 			return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "criterion command is missing owner/version metadata")
@@ -374,6 +378,24 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"relation.created"}, nil
 	case "RemoveDependency":
 		return []string{"relation.removed"}, nil
+	case "CreateIssue":
+		return []string{"issue.created"}, nil
+	case "InvestigateIssue":
+		return []string{"issue.investigating"}, nil
+	case "ResolveIssue":
+		return []string{"issue.resolved"}, nil
+	case "MarkIssueWontFix":
+		return []string{"issue.wont_fix"}, nil
+	case "MarkIssueDuplicate":
+		return []string{"issue.duplicate"}, nil
+	case "ReopenIssue":
+		return []string{"issue.reopened"}, nil
+	case "CreateBlocker":
+		return []string{"blocker.created"}, nil
+	case "ResolveBlocker":
+		return []string{"blocker.resolved"}, nil
+	case "CancelBlocker":
+		return []string{"blocker.cancelled"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":

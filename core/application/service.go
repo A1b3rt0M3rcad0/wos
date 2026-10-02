@@ -137,6 +137,9 @@ func (s *Service) ActivateOutcome(ctx context.Context, commandContext domain.Com
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		if err := requireNotBlocked(ctx, uow, outcome.Ref()); err != nil {
+			return domain.Outcome{}, 0, err
+		}
 		if err := outcome.Activate(now); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -161,6 +164,9 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
 		if err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		if err := requireNotBlocked(ctx, uow, outcome.Ref()); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		objectives, err := uow.Objectives().ListByOutcome(ctx, cmd.Scope)
@@ -261,6 +267,9 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		}
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
+			return domain.Objective{}, 0, err
+		}
+		if err := requireNotBlocked(ctx, uow, objective.Ref()); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		if err := requireHardDependenciesSatisfied(ctx, uow, objective.Ref()); err != nil {
@@ -388,6 +397,9 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		}
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := requireNotBlocked(ctx, uow, item.Ref()); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := requireHardDependenciesSatisfied(ctx, uow, item.Ref()); err != nil {

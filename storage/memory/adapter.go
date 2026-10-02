@@ -15,6 +15,8 @@ type Store struct {
 	objectives  map[string]domain.Objective
 	workItems   map[string]domain.WorkItem
 	relations   map[string]domain.Relation
+	issues      map[string]domain.Issue
+	blockers    map[string]domain.Blocker
 	revisions   map[string]domain.OutcomeRevision
 	events      []domain.DomainEvent
 	idempotency map[string]idempotencyRecord
@@ -33,6 +35,8 @@ func New() *Store {
 		objectives:  make(map[string]domain.Objective),
 		workItems:   make(map[string]domain.WorkItem),
 		relations:   make(map[string]domain.Relation),
+		issues:      make(map[string]domain.Issue),
+		blockers:    make(map[string]domain.Blocker),
 		revisions:   make(map[string]domain.OutcomeRevision),
 		events:      make([]domain.DomainEvent, 0),
 		idempotency: make(map[string]idempotencyRecord),
@@ -52,6 +56,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		objectives:  cloneObjectives(s.objectives),
 		workItems:   cloneWorkItems(s.workItems),
 		relations:   cloneRelations(s.relations),
+		issues:      cloneIssues(s.issues),
+		blockers:    cloneBlockers(s.blockers),
 		revisions:   cloneRevisions(s.revisions),
 		events:      cloneEvents(s.events),
 		idempotency: cloneIdempotency(s.idempotency),
@@ -60,6 +66,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.objectiveRepo = objectiveRepository{tx: tx}
 	tx.workItemRepo = workItemRepository{tx: tx}
 	tx.relationRepo = relationRepository{tx: tx}
+	tx.issueRepo = issueRepository{tx: tx}
+	tx.blockerRepo = blockerRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -73,6 +81,8 @@ type transaction struct {
 	objectives  map[string]domain.Objective
 	workItems   map[string]domain.WorkItem
 	relations   map[string]domain.Relation
+	issues      map[string]domain.Issue
+	blockers    map[string]domain.Blocker
 	revisions   map[string]domain.OutcomeRevision
 	events      []domain.DomainEvent
 	idempotency map[string]idempotencyRecord
@@ -81,6 +91,8 @@ type transaction struct {
 	objectiveRepo    objectiveRepository
 	workItemRepo     workItemRepository
 	relationRepo     relationRepository
+	issueRepo        issueRepository
+	blockerRepo      blockerRepository
 	coordination     coordinationStore
 	eventLog         eventLog
 	idempotencyStore idempotencyStore
@@ -90,6 +102,8 @@ func (tx *transaction) Outcomes() ports.OutcomeRepository     { return tx.outcom
 func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.objectiveRepo }
 func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
 func (tx *transaction) Relations() ports.RelationRepository   { return tx.relationRepo }
+func (tx *transaction) Issues() ports.IssueRepository         { return tx.issueRepo }
+func (tx *transaction) Blockers() ports.BlockerRepository     { return tx.blockerRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
@@ -102,6 +116,8 @@ func (tx *transaction) Commit() error {
 	tx.store.objectives = cloneObjectives(tx.objectives)
 	tx.store.workItems = cloneWorkItems(tx.workItems)
 	tx.store.relations = cloneRelations(tx.relations)
+	tx.store.issues = cloneIssues(tx.issues)
+	tx.store.blockers = cloneBlockers(tx.blockers)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -423,6 +439,94 @@ func (r relationRepository) Save(ctx context.Context, relation domain.Relation, 
 	return nil
 }
 
+type issueRepository struct{ tx *transaction }
+
+func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Issue, error) {
+	if err := ctx.Err(); err != nil { return domain.Issue{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.Issue{}, err }
+	value, ok := r.tx.issues[entityKey(scope, id)]
+	if !ok { return domain.Issue{}, domain.NewError(domain.ErrorCodeNotFound, "issue not found") }
+	return cloneIssue(value), nil
+}
+
+func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Issue, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.Issue, 0)
+	for _, item := range r.tx.issues {
+		if item.Scope == scope { items = append(items, cloneIssue(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := issue.Validate(); err != nil { return err }
+	key := entityKey(issue.Scope, issue.ID)
+	if _, exists := r.tx.issues[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "issue already exists") }
+	r.tx.issues[key] = cloneIssue(issue)
+	return nil
+}
+
+func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := issue.Validate(); err != nil { return err }
+	key := entityKey(issue.Scope, issue.ID)
+	current, ok := r.tx.issues[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "issue not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "issue expected_version does not match") }
+	if issue.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "issue version must advance exactly once per save") }
+	r.tx.issues[key] = cloneIssue(issue)
+	return nil
+}
+
+type blockerRepository struct{ tx *transaction }
+
+func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Blocker, error) {
+	if err := ctx.Err(); err != nil { return domain.Blocker{}, err }
+	if err := r.tx.ensureOpen(); err != nil { return domain.Blocker{}, err }
+	value, ok := r.tx.blockers[entityKey(scope, id)]
+	if !ok { return domain.Blocker{}, domain.NewError(domain.ErrorCodeNotFound, "blocker not found") }
+	return cloneBlocker(value), nil
+}
+
+func (r blockerRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Blocker, error) {
+	if err := ctx.Err(); err != nil { return nil, err }
+	if err := r.tx.ensureOpen(); err != nil { return nil, err }
+	items := make([]domain.Blocker, 0)
+	for _, item := range r.tx.blockers {
+		if item.Scope == scope { items = append(items, cloneBlocker(item)) }
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	return items, nil
+}
+
+func (r blockerRepository) Insert(ctx context.Context, blocker domain.Blocker) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := blocker.Validate(); err != nil { return err }
+	key := entityKey(blocker.Scope, blocker.ID)
+	if _, exists := r.tx.blockers[key]; exists { return domain.NewError(domain.ErrorCodeAlreadyExists, "blocker already exists") }
+	r.tx.blockers[key] = cloneBlocker(blocker)
+	return nil
+}
+
+func (r blockerRepository) Save(ctx context.Context, blocker domain.Blocker, expected domain.Version) error {
+	if err := ctx.Err(); err != nil { return err }
+	if err := r.tx.ensureOpen(); err != nil { return err }
+	if err := blocker.Validate(); err != nil { return err }
+	key := entityKey(blocker.Scope, blocker.ID)
+	current, ok := r.tx.blockers[key]
+	if !ok { return domain.NewError(domain.ErrorCodeNotFound, "blocker not found") }
+	if current.Version != expected { return domain.NewError(domain.ErrorCodeVersionConflict, "blocker expected_version does not match") }
+	if blocker.Version != expected+1 { return domain.NewError(domain.ErrorCodeVersionConflict, "blocker version must advance exactly once per save") }
+	r.tx.blockers[key] = cloneBlocker(blocker)
+	return nil
+}
+
 type coordinationStore struct{ tx *transaction }
 
 func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) (ports.OutcomeCoordination, error) {
@@ -644,6 +748,31 @@ func cloneRelations(src map[string]domain.Relation) map[string]domain.Relation {
 		dst[k] = v
 	}
 	return dst
+}
+
+func cloneIssues(src map[string]domain.Issue) map[string]domain.Issue {
+	dst := make(map[string]domain.Issue, len(src))
+	for k, v := range src { dst[k] = cloneIssue(v) }
+	return dst
+}
+
+func cloneBlockers(src map[string]domain.Blocker) map[string]domain.Blocker {
+	dst := make(map[string]domain.Blocker, len(src))
+	for k, v := range src { dst[k] = cloneBlocker(v) }
+	return dst
+}
+
+func cloneIssue(v domain.Issue) domain.Issue {
+	v.AffectedRefs = append([]domain.EntityRef(nil), v.AffectedRefs...)
+	if v.DuplicateOfIssueID != nil { id := *v.DuplicateOfIssueID; v.DuplicateOfIssueID = &id }
+	return v
+}
+
+func cloneBlocker(v domain.Blocker) domain.Blocker {
+	if v.CauseRef != nil { ref := *v.CauseRef; v.CauseRef = &ref }
+	if v.ExternalCause != nil { cause := *v.ExternalCause; v.ExternalCause = &cause }
+	if v.ResolvedAt != nil { value := *v.ResolvedAt; v.ResolvedAt = &value }
+	return v
 }
 
 func cloneOutcome(v domain.Outcome) domain.Outcome {

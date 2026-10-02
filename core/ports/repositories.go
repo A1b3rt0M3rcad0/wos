@@ -32,3 +32,17 @@ type RelationRepository interface {
 	Insert(ctx context.Context, relation domain.Relation) error
 	Save(ctx context.Context, relation domain.Relation, expected domain.Version) error
 }
+
+type IssueRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Issue, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Issue, error)
+	Insert(ctx context.Context, issue domain.Issue) error
+	Save(ctx context.Context, issue domain.Issue, expected domain.Version) error
+}
+
+type BlockerRepository interface {
+	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Blocker, error)
+	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Blocker, error)
+	Insert(ctx context.Context, blocker domain.Blocker) error
+	Save(ctx context.Context, blocker domain.Blocker, expected domain.Version) error
+}
