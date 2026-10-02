@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -695,6 +696,9 @@ func (r artifactRepository) Save(ctx context.Context, value domain.Artifact, exp
 	if value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "artifact version must advance exactly once per save")
 	}
+	if !sameArtifactContent(current, value) {
+		return domain.NewError(domain.ErrorCodeArtifact, "artifact content is immutable")
+	}
 	r.tx.artifacts[key] = cloneArtifact(value)
 	return nil
 }
@@ -770,6 +774,9 @@ func (r evidenceRepository) Save(ctx context.Context, value domain.Evidence, exp
 	}
 	if value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "evidence version must advance exactly once per save")
+	}
+	if !sameEvidenceContent(current, value) {
+		return domain.NewError(domain.ErrorCodeEvidence, "evidence content is immutable")
 	}
 	r.tx.evidence[key] = cloneEvidenceValue(value)
 	return nil
@@ -847,6 +854,9 @@ func (r evidenceLinkRepository) Save(ctx context.Context, value domain.EvidenceL
 	if value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "evidence link version must advance exactly once per save")
 	}
+	if !sameEvidenceLinkContent(current, value) {
+		return domain.NewError(domain.ErrorCodeEvidenceLink, "evidence link content is immutable")
+	}
 	r.tx.evidenceLinks[key] = cloneEvidenceLink(value)
 	return nil
 }
@@ -922,6 +932,9 @@ func (r decisionRepository) Save(ctx context.Context, value domain.Decision, exp
 	}
 	if value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "decision version must advance exactly once per save")
+	}
+	if current.Lifecycle != domain.DecisionLifecycleProposed && !sameDecisionContent(current, value) {
+		return domain.NewError(domain.ErrorCodeDecision, "accepted/rejected/superseded decision content is immutable")
 	}
 	r.tx.decisions[key] = cloneDecision(value)
 	return nil
@@ -1164,6 +1177,87 @@ func cloneBlockers(src map[string]domain.Blocker) map[string]domain.Blocker {
 		dst[k] = cloneBlocker(v)
 	}
 	return dst
+}
+
+func sameArtifactContent(a, b domain.Artifact) bool {
+	return a.ID == b.ID &&
+		a.Scope == b.Scope &&
+		a.ArtifactType == b.ArtifactType &&
+		a.Name == b.Name &&
+		a.URI == b.URI &&
+		a.MediaType == b.MediaType &&
+		a.Checksum == b.Checksum &&
+		a.SourceVersion == b.SourceVersion &&
+		a.ProducerRef == b.ProducerRef &&
+		optionalTimeEqual(a.ProducedAt, b.ProducedAt) &&
+		a.RegisteredAt.Equal(b.RegisteredAt)
+}
+
+func sameEvidenceContent(a, b domain.Evidence) bool {
+	return a.ID == b.ID &&
+		a.Scope == b.Scope &&
+		a.EvidenceType == b.EvidenceType &&
+		a.Description == b.Description &&
+		a.SourceRef == b.SourceRef &&
+		a.ProducerRef == b.ProducerRef &&
+		a.CapturedAt.Equal(b.CapturedAt) &&
+		a.RegisteredAt.Equal(b.RegisteredAt) &&
+		optionalIDEqual(a.ArtifactID, b.ArtifactID) &&
+		optionalMeasurementEqual(a.Measurement, b.Measurement) &&
+		a.SourceVersion == b.SourceVersion &&
+		a.Checksum == b.Checksum
+}
+
+func sameEvidenceLinkContent(a, b domain.EvidenceLink) bool {
+	return a.ID == b.ID &&
+		a.Scope == b.Scope &&
+		a.EvidenceID == b.EvidenceID &&
+		a.TargetRef == b.TargetRef &&
+		optionalIDEqual(a.CriterionID, b.CriterionID) &&
+		a.Stance == b.Stance &&
+		a.Rationale == b.Rationale &&
+		a.CreatedAt.Equal(b.CreatedAt)
+}
+
+func sameDecisionContent(a, b domain.Decision) bool {
+	if a.ID != b.ID ||
+		a.Scope != b.Scope ||
+		a.Title != b.Title ||
+		a.Proposal != b.Proposal ||
+		a.ChosenAlternative != b.ChosenAlternative ||
+		a.Rationale != b.Rationale ||
+		a.ProposedBy != b.ProposedBy ||
+		!optionalIDEqual(a.SupersedesDecisionID, b.SupersedesDecisionID) ||
+		len(a.Alternatives) != len(b.Alternatives) {
+		return false
+	}
+	for i := range a.Alternatives {
+		if a.Alternatives[i] != b.Alternatives[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func optionalIDEqual(a, b *domain.ID) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
+}
+
+func optionalTimeEqual(a, b *time.Time) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return a.Equal(*b)
+}
+
+func optionalMeasurementEqual(a, b *domain.Measurement) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
 }
 
 func cloneArtifacts(src map[string]domain.Artifact) map[string]domain.Artifact {
