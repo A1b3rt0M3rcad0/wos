@@ -5,13 +5,13 @@ import "time"
 type ReadinessReason string
 
 const (
-	ReadinessReasonLifecycleNotReady       ReadinessReason = "lifecycle_not_ready"
-	ReadinessReasonOutcomeNotActive        ReadinessReason = "outcome_not_active"
-	ReadinessReasonOutcomeArchived         ReadinessReason = "outcome_archived"
-	ReadinessReasonObjectiveTerminal       ReadinessReason = "objective_terminal"
+	ReadinessReasonLifecycleNotReady         ReadinessReason = "lifecycle_not_ready"
+	ReadinessReasonOutcomeNotActive          ReadinessReason = "outcome_not_active"
+	ReadinessReasonOutcomeArchived           ReadinessReason = "outcome_archived"
+	ReadinessReasonObjectiveTerminal         ReadinessReason = "objective_terminal"
 	ReadinessReasonHardDependencyUnsatisfied ReadinessReason = "hard_dependency_unsatisfied"
-	ReadinessReasonNotBefore               ReadinessReason = "not_before"
-	ReadinessReasonActiveLease             ReadinessReason = "active_lease"
+	ReadinessReasonNotBefore                 ReadinessReason = "not_before"
+	ReadinessReasonActiveLease               ReadinessReason = "active_lease"
 )
 
 type DependencyEvaluation struct {
@@ -20,10 +20,10 @@ type DependencyEvaluation struct {
 }
 
 type Readiness struct {
-	Ref         EntityRef        `json:"ref"`
-	Ready       bool             `json:"ready"`
+	Ref         EntityRef         `json:"ref"`
+	Ready       bool              `json:"ready"`
 	Reasons     []ReadinessReason `json:"reasons,omitempty"`
-	EvaluatedAt time.Time        `json:"evaluated_at"`
+	EvaluatedAt time.Time         `json:"evaluated_at"`
 }
 
 func WorkItemReadiness(item WorkItem, outcome Outcome, objective *Objective, dependencies []DependencyEvaluation, now time.Time) Readiness {
