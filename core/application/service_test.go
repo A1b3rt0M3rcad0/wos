@@ -2,7 +2,7 @@ package application_test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -22,7 +22,9 @@ type sequenceIDs struct {
 
 func (g *sequenceIDs) NewID() (domain.ID, error) {
 	if g.next >= len(g.values) {
-		return "", errors.New("id sequence exhausted")
+		value := domain.MustParseID(fmt.Sprintf("0199e2ff-0000-7000-8000-%012x", g.next+1))
+		g.next++
+		return value, nil
 	}
 	id := g.values[g.next]
 	g.next++
@@ -253,13 +255,36 @@ func TestHumanOnlyScenarioCreatesAndCompletesOutcome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tx.Rollback()
 	coord, err := tx.Coordination().LockOutcome(ctx, outcome.Scope())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if coord.Revision != 14 {
 		t.Fatalf("outcome revision = %d, want 14", coord.Revision)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+
+	events := store.SnapshotDomainEvents(outcome.Scope())
+	var released, completedEvent *domain.DomainEvent
+	for i := range events {
+		switch events[i].EventType {
+		case "work_item.released":
+			if events[i].AggregateRef.ID == work.ID {
+				released = &events[i]
+			}
+		case "work_item.completed":
+			if events[i].AggregateRef.ID == work.ID {
+				completedEvent = &events[i]
+			}
+		}
+	}
+	if released == nil || completedEvent == nil {
+		t.Fatalf("completion did not emit both ordered events: released=%#v completed=%#v", released, completedEvent)
+	}
+	if released.OutcomeRevision != completedEvent.OutcomeRevision || released.EventIndex != 0 || completedEvent.EventIndex != 1 {
+		t.Fatalf("completion event ordering is unstable: released=%#v completed=%#v", released, completedEvent)
 	}
 }
 
