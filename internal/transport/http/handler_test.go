@@ -236,7 +236,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		[]byte(`{"title":"Prepare HTTP flow updated"}`),
 		map[string]string{
 			"Idempotency-Key": "http-objective-patch-0001",
-			"If-Match":        patchedObjective.Header.Get("ETag"),
+			"If-Match":        objectiveResponse.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)
@@ -256,7 +256,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		}`),
 		map[string]string{
 			"Idempotency-Key": "http-objective-criterion-0001",
-			"If-Match":        objectiveResponse.Header.Get("ETag"),
+			"If-Match":        patchedObjective.Header.Get("ETag"),
 		},
 		http.StatusCreated,
 	)
@@ -316,7 +316,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		[]byte(`{"title":"Execute HTTP work updated"}`),
 		map[string]string{
 			"Idempotency-Key": "http-work-patch-0001",
-			"If-Match":        patchedWork.Header.Get("ETag"),
+			"If-Match":        workResponse.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)
@@ -333,7 +333,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		[]byte(`{"lease_ttl_seconds":300}`),
 		map[string]string{
 			"Idempotency-Key": "http-work-claim-0001",
-			"If-Match":        workResponse.Header.Get("ETag"),
+			"If-Match":        patchedWork.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)
