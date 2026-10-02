@@ -39,6 +39,10 @@ const (
 	ErrorCodeGraphLimitExceeded    ErrorCode = "graph_limit_exceeded"
 	ErrorCodeIssue                 ErrorCode = "issue_error"
 	ErrorCodeBlocker               ErrorCode = "blocker_error"
+	ErrorCodeArtifact              ErrorCode = "artifact_error"
+	ErrorCodeEvidence              ErrorCode = "evidence_error"
+	ErrorCodeEvidenceLink          ErrorCode = "evidence_link_error"
+	ErrorCodeDecision              ErrorCode = "decision_error"
 )
 
 // Error is the foundational typed error used by public Core contracts.
