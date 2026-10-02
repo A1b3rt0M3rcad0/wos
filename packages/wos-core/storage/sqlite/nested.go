@@ -328,8 +328,8 @@ func verifyCriterionAssessment(
 ) error {
 	var (
 		rawCriterionID, result, rationale, principalID, actorJSON string
-		revision, assessedAt                                     int64
-		evaluatorJSON, supersedes                                sql.NullString
+		revision, assessedAt                                      int64
+		evaluatorJSON, supersedes                                 sql.NullString
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT criterion_id, criterion_revision, result, rationale, principal_id,
@@ -835,9 +835,9 @@ func verifyConclusionRow(
 ) error {
 	var (
 		rawOwnerID, lifecycleResult, principalID, actorJSON, rationale, obligationsJSON string
-		recordedAt                                                           int64
-		ownerVersion                                                         sql.NullInt64
-		publicID                                                             sql.NullString
+		recordedAt                                                                      int64
+		ownerVersion                                                                    sql.NullInt64
+		publicID                                                                        sql.NullString
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT owner_id, owner_version, lifecycle_result, principal_id, actor_json,
