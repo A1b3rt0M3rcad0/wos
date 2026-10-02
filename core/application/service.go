@@ -235,6 +235,9 @@ func (s *Service) StartObjective(ctx context.Context, commandContext domain.Comm
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
+		if err := requireObjectiveReady(ctx, uow, objective, now); err != nil {
+			return domain.Objective{}, 0, err
+		}
 		if err := objective.Start(now); err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -350,7 +353,6 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -359,14 +361,9 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if item.ObjectiveID != nil {
-			objective, err := uow.Objectives().Get(ctx, cmd.Scope, *item.ObjectiveID)
-			if err != nil {
-				return domain.WorkItem{}, 0, err
-			}
-			if objective.Lifecycle == domain.ObjectiveLifecycleAchieved || objective.Lifecycle == domain.ObjectiveLifecycleCancelled {
-				return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "associated objective is terminal")
-			}
+		now := s.clock.Now().UTC()
+		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
+			return domain.WorkItem{}, 0, err
 		}
 		if err := item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
 			return domain.WorkItem{}, 0, err
