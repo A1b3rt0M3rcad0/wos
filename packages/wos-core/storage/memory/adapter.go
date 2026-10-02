@@ -1434,6 +1434,11 @@ func cloneCriteria(v domain.CriterionSet) domain.CriterionSet {
 }
 
 func cloneAssessment(v domain.CriterionAssessment) domain.CriterionAssessment {
+	v.EvidenceIDs = append([]domain.ID(nil), v.EvidenceIDs...)
+	if v.EvaluatorRef != nil {
+		evaluator := *v.EvaluatorRef
+		v.EvaluatorRef = &evaluator
+	}
 	if v.SupersedesAssessmentID != nil {
 		id := *v.SupersedesAssessmentID
 		v.SupersedesAssessmentID = &id

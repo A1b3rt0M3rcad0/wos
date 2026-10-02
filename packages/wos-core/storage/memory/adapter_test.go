@@ -217,3 +217,88 @@ func TestDocumentaryRepositoriesEnforceHistoricalImmutability(t *testing.T) {
 		t.Fatal("memory decision repository accepted terminal content rewrite")
 	}
 }
+
+
+func TestAssessmentProvenanceIsDeepCopied(t *testing.T) {
+	ctx := context.Background()
+	store := memory.New()
+	now := time.Date(2026, 10, 2, 23, 0, 0, 0, time.UTC)
+	namespaceID := domain.MustParseID("0199ef30-0000-7000-8000-000000000001")
+	outcomeID := domain.MustParseID("0199ef30-0000-7000-8000-000000000010")
+	scope := domain.Scope{NamespaceID: namespaceID, OutcomeID: outcomeID}
+
+	outcome, err := domain.NewOutcome(outcomeID, namespaceID, "Clone assessment", "", "preserve provenance", domain.PriorityNormal, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion, err := domain.NewSuccessCriterion(
+		domain.MustParseID("0199ef30-0000-7000-8000-000000000020"),
+		outcome.Ref(),
+		"External result",
+		"",
+		true,
+		domain.VerificationModeExternalEvaluation,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := outcome.AddCriterion(criterion, now); err != nil {
+		t.Fatal(err)
+	}
+	assessment := domain.CriterionAssessment{
+		ID:                domain.MustParseID("0199ef30-0000-7000-8000-000000000030"),
+		CriterionID:       criterion.ID,
+		CriterionRevision: criterion.Revision,
+		Result:            domain.AssessmentResultMet,
+		Rationale:         "external validation",
+		EvidenceIDs:       []domain.ID{domain.MustParseID("0199ef30-0000-7000-8000-000000000040")},
+		EvaluatorRef:      &domain.EvaluatorRef{Provider: "validator", ID: "engine", Version: "1"},
+		PrincipalID:       "tester",
+		Actor:             domain.ActorRef{Kind: domain.ActorKindService, Provider: "test", ID: "tester"},
+		AssessedAt:        now,
+	}
+	if err := outcome.RecordCriterionAssessment(assessment, false, now); err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Outcomes().Insert(ctx, outcome); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Coordination().AdvanceOutcome(ctx, scope); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	readTx, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, err := readTx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	current := stored.Criteria.CurrentAssessments[criterion.ID]
+	current.EvidenceIDs[0] = domain.MustParseID("0199ef30-0000-7000-8000-000000000099")
+	current.EvaluatorRef.Version = "mutated"
+	_ = readTx.Rollback()
+
+	verifyTx, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer verifyTx.Rollback()
+	again, err := verifyTx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted := again.Criteria.CurrentAssessments[criterion.ID]
+	if persisted.EvidenceIDs[0] == current.EvidenceIDs[0] || persisted.EvaluatorRef.Version == "mutated" {
+		t.Fatalf("assessment provenance leaked through clone: %#v", persisted)
+	}
+}
