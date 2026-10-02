@@ -110,6 +110,9 @@ func (s *Service) ReportIssueWithBlocker(
 		if err := validateBlockerTarget(ctx, uow, cmd.BlockedRef); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
 		}
+		if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, issue.AffectedRefs); err != nil {
+			return ReportIssueWithBlockerResult{}, 0, err
+		}
 		if err := issues.Insert(ctx, issue); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
 		}

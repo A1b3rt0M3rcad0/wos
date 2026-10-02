@@ -45,7 +45,7 @@ func (s *Service) UpdateIssue(
 		if err != nil {
 			return domain.Issue{}, 0, err
 		}
-		issues, _, err := issueBlockerRepositories(uow)
+		issues, blockers, err := issueBlockerRepositories(uow)
 		if err != nil {
 			return domain.Issue{}, 0, err
 		}
@@ -55,6 +55,11 @@ func (s *Service) UpdateIssue(
 		}
 		if issue.Version != cmd.ExpectedVersion {
 			return domain.Issue{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "issue expected_version is stale")
+		}
+		if cmd.AffectedRefs != nil {
+			if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, *cmd.AffectedRefs); err != nil {
+				return domain.Issue{}, 0, err
+			}
 		}
 		changed, err := issue.UpdateDetails(cmd.Title, cmd.Description, cmd.Severity, cmd.AffectedRefs, now)
 		if err != nil {

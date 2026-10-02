@@ -93,8 +93,11 @@ func (s *Service) CreateIssue(ctx context.Context, cc domain.CommandContext, cmd
 		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Issue{}, 0, err
 		}
-		issues, _, err := issueBlockerRepositories(uow)
+		issues, blockers, err := issueBlockerRepositories(uow)
 		if err != nil {
+			return domain.Issue{}, 0, err
+		}
+		if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, issue.AffectedRefs); err != nil {
 			return domain.Issue{}, 0, err
 		}
 		if err := issues.Insert(ctx, issue); err != nil {
@@ -453,10 +456,46 @@ func validateBlockerCause(ctx context.Context, uow ports.UnitOfWork, issues port
 		_, err := uow.WorkItems().Get(ctx, ref.Scope, ref.ID)
 		return err
 	case domain.EntityKindDecision:
-		return nil
+		return domain.NewError(domain.ErrorCodeBlocker, "decision blocker causes are unavailable until Decision records are implemented")
 	default:
 		return domain.NewError(domain.ErrorCodeBlocker, "unsupported blocker cause kind")
 	}
+}
+
+func validateIssueAffectedRefs(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	issues ports.IssueRepository,
+	blockers ports.BlockerRepository,
+	refs []domain.EntityRef,
+) error {
+	for _, ref := range refs {
+		var err error
+		switch ref.Kind {
+		case domain.EntityKindOutcome:
+			if ref.ID != ref.Scope.OutcomeID {
+				err = domain.NewError(domain.ErrorCodeIssue, "outcome affected_ref id must equal outcome scope id")
+			} else {
+				_, err = uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
+			}
+		case domain.EntityKindObjective:
+			_, err = uow.Objectives().Get(ctx, ref.Scope, ref.ID)
+		case domain.EntityKindWorkItem:
+			_, err = uow.WorkItems().Get(ctx, ref.Scope, ref.ID)
+		case domain.EntityKindIssue:
+			_, err = issues.Get(ctx, ref.Scope, ref.ID)
+		case domain.EntityKindBlocker:
+			_, err = blockers.Get(ctx, ref.Scope, ref.ID)
+		case domain.EntityKindRelation:
+			_, err = uow.Relations().Get(ctx, ref.Scope, ref.ID)
+		default:
+			err = domain.NewError(domain.ErrorCodeIssue, "affected_ref kind is unavailable in the current implementation")
+		}
+		if err != nil {
+			return domain.WrapError(domain.ErrorCodeIssue, "affected_ref does not resolve to a persisted entity", err)
+		}
+	}
+	return nil
 }
 
 func blockingStateForRef(ctx context.Context, uow ports.UnitOfWork, ref domain.EntityRef) (BlockingState, error) {
