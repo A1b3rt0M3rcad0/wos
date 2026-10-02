@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–03 are merged and verified. Wave 04 is implemented and verified on PR #4, pending merge: WOS now has durable SQLite persistence, versioned migrations, SQL UnitOfWork coordination, persisted Events/idempotency, restart-safe aggregate state, optimistic locking and local backup/restore. PostgreSQL persistence, HTTP/MCP transports and later-wave capabilities remain planned.
+> **Project status:** Waves 01–04 are merged and verified. Wave 05 is implemented and verified on PR #5, pending merge: WOS now has a standalone SQLite-backed HTTP runtime, local principal mode, durable M1 Outcome/Objective/WorkItem/criteria APIs, idempotency keys, ETags/preconditions, health endpoints, OpenAPI and restart-safe HTTP state recovery. MCP, dependency/readiness graphs, PostgreSQL and later-wave capabilities remain planned.
 
 ## Why WOS
 
@@ -582,8 +582,8 @@ Wave 02 — Transactions, Memory and Initial Domain is merged and verified. It p
 
 Wave 03 — Event Log and Idempotency is merged and verified. It provides immutable Domain Events, ordered event indices under one Outcome revision, normalized command fingerprints, transactional idempotency reservations/results, replay of original command results, conflict detection and explicit no-op audit semantics.
 
-Wave 04 — SQLite Persistence and Migrations is implemented and verified on PR #4, pending merge. It adds durable normalized SQLite state, versioned/checksummed migrations, immediate writer acquisition, Outcome coordination rows, optimistic `expected_version` writes, persisted Domain Events/idempotency, restart-safe reconstruction, backup/restore and SQLite concurrency/cancellation tests.
+Wave 04 — SQLite Persistence and Migrations is merged and verified. It adds durable normalized SQLite state, versioned/checksummed migrations, immediate writer acquisition, Outcome coordination rows, optimistic `expected_version` writes, persisted Domain Events/idempotency, restart-safe reconstruction, backup/restore and SQLite concurrency/cancellation tests.
 
-Wave 05 has **not** started. HTTP, MCP, PostgreSQL, hardened leases, Roadmaps, Triggers and later architecture remain planned until their respective roadmap gates are satisfied.
+Wave 05 — HTTP Vertical Slice is implemented and verified on PR #5, pending merge. It adds the standalone SQLite-backed HTTP runtime, local principal resolution, health endpoints, Outcome/Objective/WorkItem/criteria routes, idempotency-key enforcement, ETags and version preconditions, stable errors, the first durable Outcome state query, OpenAPI and restart-safe HTTP integration coverage.
 
 Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.
