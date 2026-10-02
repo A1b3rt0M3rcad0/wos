@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-01  
 **Current target:** Release 0.1  
-**Current wave:** Wave 03 — Event Log and Idempotency
+**Current wave:** Wave 03 — Event Log and Idempotency (complete in PR #3; not yet merged)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -181,7 +181,7 @@ Wave 02 does **not** add Domain Events, IdempotencyStore, command replay or even
 
 ## Wave 03 — Event Log and Idempotency
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done
 
 Add command envelope, immutable Domain Events, ordered Outcome revisions, IdempotencyStore, normalized fingerprints and transactional replay.
 
@@ -206,8 +206,22 @@ Add command envelope, immutable Domain Events, ordered Outcome revisions, Idempo
 - [x] Implement explicit no-op semantics without version/revision advancement or misleading Event.
 - [x] Add memory timeline snapshot ordered by (outcome_revision,event_index).
 - [x] Add replay/conflict/no-op/rollback/event-ordering tests.
-- [ ] Pass repository CI on the declared Go toolchain.
-- [ ] Review CI findings and close remaining Wave 03 contract gaps.
+- [x] Pass repository CI on the declared Go toolchain.
+- [x] Review CI findings and close remaining Wave 03 contract gaps.
+
+### Verification
+
+GitHub Actions validated commit `d9d380712721b58c7484c4a59c9244894cac73da` with Go 1.27.1 on Linux. The successful `WOS verification` run executed:
+
+- `gofmt` cleanliness;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- standalone binary build;
+- `wos version` smoke test;
+- `wos config validate` smoke test.
+
+The suite verifies same-payload replay, different-payload conflict, transactional rollback of Event/idempotency state, multiple ordered Events under one Outcome revision, original result replay and explicit no-op behavior without misleading Events.
 
 ### Scope boundary
 
@@ -433,12 +447,11 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 and Wave 02 are merged into `master`. Wave 03 is active on branch `feat/wave-03-event-log-idempotency`.
+Wave 01 and Wave 02 are merged into `master`. Wave 03 is technically complete on PR #3 and remains unmerged pending review.
 
-1. Run CI for PR #3 on the declared Go toolchain.
-2. Fix formatting, compile, race or contract failures found by CI.
-3. Verify replay, fingerprint conflict, rollback atomicity, no-op audit and event ordering.
-4. Mark Wave 03 done only after all checks pass and its completion gate is satisfied.
-5. Keep Wave 04 **Planned** until Wave 03 is merged or explicitly authorized.
+1. Review PR #3 and its final CI result.
+2. Merge Wave 03 only when approved by the repository owner.
+3. Keep Wave 04 — SQLite Persistence and Migrations as **Planned** until that merge/authorization.
+4. Do not move SQLite persistence concerns into Wave 03 follow-up work.
 
-SQLite implementation has not started.
+Wave 04 implementation has not started.
