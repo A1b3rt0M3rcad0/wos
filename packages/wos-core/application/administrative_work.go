@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
-	"github.com/A1b3rt0M3rcad0/wos/core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
 type AdministrativeCancelWorkItemCommand struct {
