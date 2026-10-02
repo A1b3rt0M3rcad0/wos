@@ -459,6 +459,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"roadmap.draft_updated"}, nil
 	case "DiscardRoadmapDraft":
 		return []string{"roadmap.draft_discarded"}, nil
+	case "PublishRoadmapDraft":
+		return []string{"roadmap.revision_published"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":

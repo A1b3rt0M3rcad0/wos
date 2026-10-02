@@ -2,6 +2,10 @@ package application
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"sort"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -30,6 +34,13 @@ type ReplaceRoadmapDraftCommand struct {
 }
 
 type DiscardRoadmapDraftCommand struct {
+	Scope                domain.Scope
+	RoadmapID            domain.ID
+	ExpectedVersion      domain.Version
+	ExpectedDraftVersion uint64
+}
+
+type PublishRoadmapDraftCommand struct {
 	Scope                domain.Scope
 	RoadmapID            domain.ID
 	ExpectedVersion      domain.Version
@@ -118,6 +129,46 @@ func (s *Service) DiscardRoadmapDraft(
 		value *domain.Roadmap,
 	) error {
 		return value.DiscardDraft(cmd.ExpectedDraftVersion, s.clock.Now().UTC())
+	})
+}
+
+func (s *Service) PublishRoadmapDraft(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd PublishRoadmapDraftCommand,
+) (MutationResult[domain.Roadmap], error) {
+	return s.mutateRoadmap(ctx, cc, cmd, cmd.Scope, cmd.RoadmapID, cmd.ExpectedVersion, func(
+		ctx context.Context,
+		uow ports.UnitOfWork,
+		value *domain.Roadmap,
+	) error {
+		if value.Draft == nil || value.Draft.Lifecycle != domain.RoadmapDraftOpen {
+			return domain.NewError(domain.ErrorCodeRoadmap, "roadmap has no publishable draft")
+		}
+		if value.Draft.DraftVersion != cmd.ExpectedDraftVersion {
+			return domain.NewError(domain.ErrorCodeVersionConflict, "roadmap draft version conflict")
+		}
+		publishedNodes, dependencySnapshots, err := buildRoadmapPublicationSnapshot(ctx, uow, *value)
+		if err != nil {
+			return err
+		}
+		contentHash, err := roadmapRevisionContentHash(
+			publishedNodes,
+			value.Draft.AfterLinks,
+			dependencySnapshots,
+		)
+		if err != nil {
+			return err
+		}
+		_, err = value.PublishDraft(
+			cmd.ExpectedDraftVersion,
+			contentHash,
+			publishedNodes,
+			dependencySnapshots,
+			cc.Actor,
+			s.clock.Now().UTC(),
+		)
+		return err
 	})
 }
 
@@ -391,6 +442,225 @@ func validateRoadmapCriterionRef(
 		return domain.NewError(domain.ErrorCodeRoadmap, "milestone criterion owner kind is invalid")
 	}
 	return nil
+}
+
+func buildRoadmapPublicationSnapshot(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	roadmap domain.Roadmap,
+) ([]domain.RoadmapNode, []domain.RoadmapDependencySnapshot, error) {
+	if roadmap.Draft == nil {
+		return nil, nil, domain.NewError(domain.ErrorCodeRoadmap, "roadmap draft is required")
+	}
+	if err := validateRoadmapDraftReferences(ctx, uow, roadmap, roadmap.Draft.Nodes); err != nil {
+		return nil, nil, err
+	}
+
+	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.NamespaceID, roadmap.Scope.OutcomeID)
+	if err != nil {
+		return nil, nil, err
+	}
+	objectives, err := uow.Objectives().ListByOutcome(ctx, roadmap.Scope)
+	if err != nil {
+		return nil, nil, err
+	}
+	workItems, err := uow.WorkItems().ListByOutcome(ctx, roadmap.Scope)
+	if err != nil {
+		return nil, nil, err
+	}
+	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
+	for _, objective := range objectives {
+		objectiveByID[objective.ID] = objective
+	}
+	workByID := make(map[domain.ID]domain.WorkItem, len(workItems))
+	for _, item := range workItems {
+		workByID[item.ID] = item
+	}
+
+	nodes := make([]domain.RoadmapNode, len(roadmap.Draft.Nodes))
+	referenced := make(map[domain.EntityRef]struct{})
+	for i, node := range roadmap.Draft.Nodes {
+		nodes[i] = cloneRoadmapNode(node)
+		if node.TargetRef != nil {
+			title, err := roadmapTargetTitle(*node.TargetRef, objectiveByID, workByID)
+			if err != nil {
+				return nil, nil, err
+			}
+			nodes[i].ReferenceSnapshot = &domain.RoadmapReferenceSnapshot{
+				TargetRef: *node.TargetRef,
+				Title:     title,
+			}
+			referenced[*node.TargetRef] = struct{}{}
+		}
+		if node.NodeType == domain.RoadmapNodeMilestone {
+			nodes[i].CriterionSnapshots = make([]domain.RoadmapCriterionSnapshot, 0, len(node.CriterionRefs))
+			for _, ref := range node.CriterionRefs {
+				criterion, err := roadmapCriterion(ref, outcome, objectiveByID, workByID)
+				if err != nil {
+					return nil, nil, err
+				}
+				nodes[i].CriterionSnapshots = append(nodes[i].CriterionSnapshots, domain.RoadmapCriterionSnapshot{
+					OwnerRef:          ref.OwnerRef,
+					CriterionID:       criterion.ID,
+					CriterionRevision: criterion.Revision,
+					Title:             criterion.Title,
+					Required:          criterion.Required,
+					VerificationMode:  criterion.VerificationMode,
+				})
+			}
+		}
+	}
+
+	relations, err := uow.Relations().ListByOutcome(ctx, roadmap.Scope)
+	if err != nil {
+		return nil, nil, err
+	}
+	dependencies := make([]domain.RoadmapDependencySnapshot, 0)
+	for _, relation := range relations {
+		if relation.Lifecycle != domain.RelationLifecycleActive ||
+			relation.RelationType != domain.RelationTypeDependsOn {
+			continue
+		}
+		if _, ok := referenced[relation.SourceRef]; !ok {
+			continue
+		}
+		if _, ok := referenced[relation.TargetRef]; !ok {
+			continue
+		}
+		dependencies = append(dependencies, domain.RoadmapDependencySnapshot{
+			DependentRef:    relation.SourceRef,
+			PrerequisiteRef: relation.TargetRef,
+			Strength:        relation.Strength,
+			Satisfaction:    relation.Satisfaction,
+		})
+	}
+	sort.Slice(dependencies, func(i, j int) bool {
+		left := dependencies[i].DependentRef.Kind.String() + "/" + dependencies[i].DependentRef.ID.String() + "/" +
+			dependencies[i].PrerequisiteRef.Kind.String() + "/" + dependencies[i].PrerequisiteRef.ID.String()
+		right := dependencies[j].DependentRef.Kind.String() + "/" + dependencies[j].DependentRef.ID.String() + "/" +
+			dependencies[j].PrerequisiteRef.Kind.String() + "/" + dependencies[j].PrerequisiteRef.ID.String()
+		return left < right
+	})
+	return nodes, dependencies, nil
+}
+
+func roadmapRevisionContentHash(
+	nodes []domain.RoadmapNode,
+	afterLinks []domain.RoadmapAfterLink,
+	dependencies []domain.RoadmapDependencySnapshot,
+) (string, error) {
+	canonicalNodes := append([]domain.RoadmapNode(nil), nodes...)
+	sort.Slice(canonicalNodes, func(i, j int) bool { return canonicalNodes[i].NodeKey < canonicalNodes[j].NodeKey })
+	canonicalLinks := append([]domain.RoadmapAfterLink(nil), afterLinks...)
+	sort.Slice(canonicalLinks, func(i, j int) bool {
+		if canonicalLinks[i].NodeKey == canonicalLinks[j].NodeKey {
+			return canonicalLinks[i].AfterNodeKey < canonicalLinks[j].AfterNodeKey
+		}
+		return canonicalLinks[i].NodeKey < canonicalLinks[j].NodeKey
+	})
+	canonicalDependencies := append([]domain.RoadmapDependencySnapshot(nil), dependencies...)
+	sort.Slice(canonicalDependencies, func(i, j int) bool {
+		left := canonicalDependencies[i].DependentRef.Kind.String() + "/" + canonicalDependencies[i].DependentRef.ID.String() + "/" +
+			canonicalDependencies[i].PrerequisiteRef.Kind.String() + "/" + canonicalDependencies[i].PrerequisiteRef.ID.String()
+		right := canonicalDependencies[j].DependentRef.Kind.String() + "/" + canonicalDependencies[j].DependentRef.ID.String() + "/" +
+			canonicalDependencies[j].PrerequisiteRef.Kind.String() + "/" + canonicalDependencies[j].PrerequisiteRef.ID.String()
+		return left < right
+	})
+	payload, err := json.Marshal(struct {
+		Nodes        []domain.RoadmapNode               `json:"nodes"`
+		AfterLinks   []domain.RoadmapAfterLink          `json:"after_links"`
+		Dependencies []domain.RoadmapDependencySnapshot `json:"dependency_snapshots"`
+	}{
+		Nodes:        canonicalNodes,
+		AfterLinks:   canonicalLinks,
+		Dependencies: canonicalDependencies,
+	})
+	if err != nil {
+		return "", domain.WrapError(domain.ErrorCodeRoadmap, "roadmap revision content cannot be encoded", err)
+	}
+	sum := sha256.Sum256(payload)
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
+}
+
+func cloneRoadmapNode(node domain.RoadmapNode) domain.RoadmapNode {
+	result := node
+	result.CriterionRefs = append([]domain.RoadmapCriterionRef(nil), node.CriterionRefs...)
+	result.CriterionSnapshots = append([]domain.RoadmapCriterionSnapshot(nil), node.CriterionSnapshots...)
+	if node.TargetRef != nil {
+		value := *node.TargetRef
+		result.TargetRef = &value
+	}
+	if node.PlannedStart != nil {
+		value := *node.PlannedStart
+		result.PlannedStart = &value
+	}
+	if node.PlannedEnd != nil {
+		value := *node.PlannedEnd
+		result.PlannedEnd = &value
+	}
+	if node.ReferenceSnapshot != nil {
+		value := *node.ReferenceSnapshot
+		result.ReferenceSnapshot = &value
+	}
+	return result
+}
+
+func roadmapTargetTitle(
+	ref domain.EntityRef,
+	objectives map[domain.ID]domain.Objective,
+	workItems map[domain.ID]domain.WorkItem,
+) (string, error) {
+	switch ref.Kind {
+	case domain.EntityKindObjective:
+		value, ok := objectives[ref.ID]
+		if !ok {
+			return "", domain.NewError(domain.ErrorCodeNotFound, "roadmap target Objective not found")
+		}
+		return value.Title, nil
+	case domain.EntityKindWorkItem:
+		value, ok := workItems[ref.ID]
+		if !ok {
+			return "", domain.NewError(domain.ErrorCodeNotFound, "roadmap target WorkItem not found")
+		}
+		return value.Title, nil
+	default:
+		return "", domain.NewError(domain.ErrorCodeRoadmap, "roadmap target kind is invalid")
+	}
+}
+
+func roadmapCriterion(
+	ref domain.RoadmapCriterionRef,
+	outcome domain.Outcome,
+	objectives map[domain.ID]domain.Objective,
+	workItems map[domain.ID]domain.WorkItem,
+) (domain.SuccessCriterion, error) {
+	var criteria domain.CriterionSet
+	switch ref.OwnerRef.Kind {
+	case domain.EntityKindOutcome:
+		criteria = outcome.Criteria
+	case domain.EntityKindObjective:
+		value, ok := objectives[ref.OwnerRef.ID]
+		if !ok {
+			return domain.SuccessCriterion{}, domain.NewError(domain.ErrorCodeNotFound, "roadmap criterion Objective not found")
+		}
+		criteria = value.Criteria
+	case domain.EntityKindWorkItem:
+		value, ok := workItems[ref.OwnerRef.ID]
+		if !ok {
+			return domain.SuccessCriterion{}, domain.NewError(domain.ErrorCodeNotFound, "roadmap criterion WorkItem not found")
+		}
+		criteria = value.Criteria
+	default:
+		return domain.SuccessCriterion{}, domain.NewError(domain.ErrorCodeRoadmap, "roadmap criterion owner kind is invalid")
+	}
+	criterion, err := criteria.Find(ref.CriterionID)
+	if err != nil {
+		return domain.SuccessCriterion{}, err
+	}
+	if criterion.Status != domain.CriterionStatusActive {
+		return domain.SuccessCriterion{}, domain.NewError(domain.ErrorCodeRoadmap, "roadmap criterion must be active at publication")
+	}
+	return *criterion, nil
 }
 
 func criterionExists(criteria domain.CriterionSet, id domain.ID) bool {

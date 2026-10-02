@@ -1294,6 +1294,7 @@ func cloneRoadmapNodes(src []domain.RoadmapNode) []domain.RoadmapNode {
 	for i := range src {
 		dst[i] = src[i]
 		dst[i].CriterionRefs = append([]domain.RoadmapCriterionRef(nil), src[i].CriterionRefs...)
+		dst[i].CriterionSnapshots = append([]domain.RoadmapCriterionSnapshot(nil), src[i].CriterionSnapshots...)
 		if src[i].TargetRef != nil {
 			value := *src[i].TargetRef
 			dst[i].TargetRef = &value

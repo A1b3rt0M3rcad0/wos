@@ -94,6 +94,37 @@ type RoadmapReferenceSnapshot struct {
 	Title     string    `json:"title"`
 }
 
+type RoadmapCriterionSnapshot struct {
+	OwnerRef          EntityRef         `json:"owner_ref"`
+	CriterionID       ID                `json:"criterion_id"`
+	CriterionRevision CriterionRevision `json:"criterion_revision"`
+	Title             string            `json:"title"`
+	Required          bool              `json:"required"`
+	VerificationMode  VerificationMode  `json:"verification_mode"`
+}
+
+func (s RoadmapCriterionSnapshot) Validate(scope Scope) error {
+	if err := s.OwnerRef.Validate(); err != nil {
+		return WrapError(ErrorCodeRoadmap, "roadmap criterion snapshot owner is invalid", err)
+	}
+	if s.OwnerRef.Scope != scope {
+		return NewError(ErrorCodeRoadmap, "roadmap criterion snapshot owner must belong to the same Outcome")
+	}
+	if err := s.CriterionID.Validate(); err != nil {
+		return WrapError(ErrorCodeRoadmap, "roadmap criterion snapshot id is invalid", err)
+	}
+	if s.CriterionRevision < InitialCriterionRevision {
+		return NewError(ErrorCodeRoadmap, "roadmap criterion snapshot revision is invalid")
+	}
+	if strings.TrimSpace(s.Title) == "" {
+		return NewError(ErrorCodeRoadmap, "roadmap criterion snapshot title is required")
+	}
+	if !s.VerificationMode.Valid() {
+		return NewError(ErrorCodeRoadmap, "roadmap criterion snapshot verification mode is invalid")
+	}
+	return nil
+}
+
 func (s RoadmapReferenceSnapshot) Validate(scope Scope) error {
 	if err := s.TargetRef.Validate(); err != nil {
 		return WrapError(ErrorCodeRoadmap, "roadmap reference snapshot target is invalid", err)
@@ -119,8 +150,9 @@ type RoadmapNode struct {
 	TargetRef         *EntityRef                `json:"target_ref,omitempty"`
 	Title             string                    `json:"title"`
 	Position          int                       `json:"position"`
-	CriterionRefs     []RoadmapCriterionRef     `json:"criterion_refs,omitempty"`
-	PlannedStart      *time.Time                `json:"planned_start,omitempty"`
+	CriterionRefs      []RoadmapCriterionRef      `json:"criterion_refs,omitempty"`
+	CriterionSnapshots []RoadmapCriterionSnapshot `json:"criterion_snapshots,omitempty"`
+	PlannedStart       *time.Time                 `json:"planned_start,omitempty"`
 	PlannedEnd        *time.Time                `json:"planned_end,omitempty"`
 	ReferenceSnapshot *RoadmapReferenceSnapshot `json:"published_reference_snapshot,omitempty"`
 }
@@ -164,8 +196,8 @@ func (n RoadmapNode) Validate(scope Scope, published bool) error {
 		default:
 			return NewError(ErrorCodeRoadmap, "reference node may target only Objective or WorkItem")
 		}
-		if len(n.CriterionRefs) != 0 {
-			return NewError(ErrorCodeRoadmap, "reference node cannot contain criterion_refs")
+		if len(n.CriterionRefs) != 0 || len(n.CriterionSnapshots) != 0 {
+			return NewError(ErrorCodeRoadmap, "reference node cannot contain criterion refs or snapshots")
 		}
 		if published {
 			if n.ReferenceSnapshot == nil {
@@ -181,7 +213,7 @@ func (n RoadmapNode) Validate(scope Scope, published bool) error {
 			return NewError(ErrorCodeRoadmap, "draft reference node cannot contain published snapshot")
 		}
 	case RoadmapNodePhase:
-		if n.TargetRef != nil || n.ReferenceSnapshot != nil || len(n.CriterionRefs) != 0 {
+		if n.TargetRef != nil || n.ReferenceSnapshot != nil || len(n.CriterionRefs) != 0 || len(n.CriterionSnapshots) != 0 {
 			return NewError(ErrorCodeRoadmap, "phase node cannot target operational state or criteria")
 		}
 	case RoadmapNodeMilestone:
@@ -197,6 +229,27 @@ func (n RoadmapNode) Validate(scope Scope, published bool) error {
 				return NewError(ErrorCodeRoadmap, "milestone criterion_refs cannot contain duplicates")
 			}
 			seen[ref] = struct{}{}
+		}
+		if published {
+			if len(n.CriterionSnapshots) != len(n.CriterionRefs) {
+				return NewError(ErrorCodeRoadmap, "published milestone requires one snapshot per criterion_ref")
+			}
+			snapshots := make(map[RoadmapCriterionRef]struct{}, len(n.CriterionSnapshots))
+			for _, snapshot := range n.CriterionSnapshots {
+				if err := snapshot.Validate(scope); err != nil {
+					return err
+				}
+				key := RoadmapCriterionRef{OwnerRef: snapshot.OwnerRef, CriterionID: snapshot.CriterionID}
+				if _, exists := seen[key]; !exists {
+					return NewError(ErrorCodeRoadmap, "criterion snapshot must correspond to criterion_ref")
+				}
+				if _, exists := snapshots[key]; exists {
+					return NewError(ErrorCodeRoadmap, "criterion snapshots cannot contain duplicates")
+				}
+				snapshots[key] = struct{}{}
+			}
+		} else if len(n.CriterionSnapshots) != 0 {
+			return NewError(ErrorCodeRoadmap, "draft milestone cannot contain criterion snapshots")
 		}
 	}
 	return nil
@@ -266,8 +319,10 @@ func (d RoadmapDraft) Validate(scope Scope) error {
 }
 
 type RoadmapDependencySnapshot struct {
-	DependentRef    EntityRef `json:"dependent_ref"`
-	PrerequisiteRef EntityRef `json:"prerequisite_ref"`
+	DependentRef    EntityRef              `json:"dependent_ref"`
+	PrerequisiteRef EntityRef              `json:"prerequisite_ref"`
+	Strength        DependencyStrength     `json:"strength"`
+	Satisfaction    DependencySatisfaction `json:"satisfaction"`
 }
 
 func (s RoadmapDependencySnapshot) Validate(scope Scope) error {
@@ -282,6 +337,12 @@ func (s RoadmapDependencySnapshot) Validate(scope Scope) error {
 	}
 	if s.DependentRef == s.PrerequisiteRef {
 		return NewError(ErrorCodeRoadmap, "dependency snapshot cannot self-reference")
+	}
+	if !s.Strength.Valid() {
+		return NewError(ErrorCodeRoadmap, "dependency snapshot strength is invalid")
+	}
+	if !s.Satisfaction.Valid() {
+		return NewError(ErrorCodeRoadmap, "dependency snapshot satisfaction is invalid")
 	}
 	return nil
 }
@@ -573,6 +634,7 @@ func cloneRoadmapNodesForDraft(src []RoadmapNode) []RoadmapNode {
 	result := cloneRoadmapNodes(src)
 	for i := range result {
 		result[i].ReferenceSnapshot = nil
+		result[i].CriterionSnapshots = nil
 	}
 	return result
 }
@@ -582,6 +644,7 @@ func cloneRoadmapNodes(src []RoadmapNode) []RoadmapNode {
 	for i := range src {
 		result[i] = src[i]
 		result[i].CriterionRefs = append([]RoadmapCriterionRef(nil), src[i].CriterionRefs...)
+		result[i].CriterionSnapshots = append([]RoadmapCriterionSnapshot(nil), src[i].CriterionSnapshots...)
 		if src[i].TargetRef != nil {
 			ref := *src[i].TargetRef
 			result[i].TargetRef = &ref
@@ -605,6 +668,7 @@ func cloneRoadmapNodes(src []RoadmapNode) []RoadmapNode {
 func roadmapPublishedNodeMatchesDraft(published, draft RoadmapNode) bool {
 	copyPublished := published
 	copyPublished.ReferenceSnapshot = nil
+	copyPublished.CriterionSnapshots = nil
 	return reflect.DeepEqual(copyPublished, draft)
 }
 
