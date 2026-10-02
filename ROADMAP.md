@@ -540,7 +540,7 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 10 — Assessments and Verifiable Conclusions
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done and merged into `master`
 
 **Goal:** make every positive conclusion reproducible from immutable criterion definitions, immutable assessments and an explicit obligation snapshot, while preserving later contradictory evidence/assessments as contestations rather than silently rewriting lifecycle.
 
@@ -615,11 +615,86 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 11 — Roadmaps and Planning History
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
-Implement Roadmap/Revision/Node, editable versioned drafts, immutable publication, active slots, activation history, scopes, phase/reference/milestone nodes and atomic publication with explicit dependency changes.
+**Goal:** preserve planning and re-planning as durable history without creating a second operational graph or changing live execution state implicitly.
 
-**Completion gate:** historical revisions remain recoverable; active slot is unique; operational work is never duplicated into plan state.
+### Domain contract
+
+- [ ] Introduce Roadmap as an Outcome-scoped aggregate with `scope_kind=outcome|objective`, `scope_id`, title, lifecycle `open|archived` and optimistic `version`.
+- [ ] Keep Roadmap ownership separate from operational entities: Roadmap references Objectives/WorkItems and never owns or duplicates them.
+- [ ] Introduce editable Roadmap drafts with `draft_version` independent from aggregate `version` and published `revision_number`.
+- [ ] Introduce immutable RoadmapRevision records with content hash and publication metadata.
+- [ ] Introduce stable `node_key` identity across revisions.
+- [ ] Support RoadmapNode kinds `reference|phase|milestone`.
+- [ ] For reference nodes, allow only Objective or WorkItem targets from the same Outcome and permitted Roadmap scope.
+- [ ] Keep phase/milestone planning-only; they do not gain operational lifecycle, Blockers or leases.
+- [ ] Support optional parent grouping, presentation `position`, `after` ordering links, planned start/end and criterion references.
+- [ ] Reject duplicate reference targets within one revision.
+- [ ] Reject cycles in parent grouping and `after` plan ordering.
+- [ ] Snapshot published reference labels/scope so historical revisions remain understandable after live entities change.
+- [ ] Snapshot informative live dependency edges between referenced entities at publication time; do not duplicate operational dependencies as mutable Roadmap state.
+
+### Publication and activation contract
+
+- [ ] Draft editing requires both `expected_roadmap_version` and `expected_draft_version`.
+- [ ] Published revision content is immutable.
+- [ ] Publishing computes/stores a deterministic content hash.
+- [ ] Publishing validates all references, scope restrictions, criterion references and plan DAG invariants.
+- [ ] `PublishRoadmapRevision` may include an explicit batch of operational dependency changes and applies plan publication + dependency changes atomically.
+- [ ] Absence of a plan edge or dependency never implies an execution command.
+- [ ] Introduce one active Roadmap revision slot per scope.
+- [ ] Activation only accepts a published revision belonging to the matching scope.
+- [ ] Activation history is append-only and distinguishes activation/supersession/deactivation without mutating published revision content.
+- [ ] Archiving a Roadmap clears its active slot in the same transaction.
+- [ ] Reopening a Roadmap never silently reactivates a prior revision.
+
+### Storage contract
+
+- [ ] Add repository ports for Roadmap aggregate, drafts, published revisions and active-slot/history access.
+- [ ] Implement Memory adapter with deep-copy and append-only publication/history enforcement.
+- [ ] Add SQLite migrations/tables for roadmaps, drafts, revisions, nodes, plan edges, reference snapshots, active slots and activation history.
+- [ ] Enforce unique active slot per scope and unique published revision number per Roadmap.
+- [ ] Preserve all published revisions and activation history across restart.
+- [ ] Keep Memory/SQLite behavior equivalent.
+
+### Application contract
+
+- [ ] Create Roadmap in Outcome or Objective scope.
+- [ ] Open a draft from empty content or an existing published revision.
+- [ ] Edit draft metadata/nodes/ordering with optimistic concurrency.
+- [ ] Discard draft explicitly; discarded draft cannot later be published.
+- [ ] Publish a draft atomically into an immutable RoadmapRevision.
+- [ ] Activate/deactivate a published revision for its scope.
+- [ ] Archive/reopen Roadmap with explicit lifecycle commands.
+- [ ] Ensure removing a node from a plan does not cancel/delete the referenced Objective/WorkItem.
+- [ ] Ensure cancelling operational work does not mutate historical Roadmap revisions.
+- [ ] Emit canonical Roadmap draft/publication/activation/archive Domain Events.
+
+### HTTP and contract surface
+
+- [ ] Expose Roadmap create/read/list operations scoped to Outcome.
+- [ ] Expose draft open/edit/discard/publish operations with ETag/If-Match + Idempotency-Key.
+- [ ] Expose revision history and immutable revision reads.
+- [ ] Expose active Roadmap slots for Outcome and Objective scopes.
+- [ ] Extend OpenAPI 3.1 and `docs/http.md` with planning semantics and examples.
+
+### Verification
+
+- [ ] Prove historical revisions remain byte/semantically stable after later draft edits.
+- [ ] Prove concurrent publication of the same draft has one winner.
+- [ ] Prove stale draft/roadmap versions fail explicitly.
+- [ ] Prove invalid cross-Outcome and invalid Objective-subtree references are rejected.
+- [ ] Prove parent and `after` cycles are rejected.
+- [ ] Prove one entity cannot appear twice as a reference in one revision.
+- [ ] Prove active slot uniqueness under concurrent activation.
+- [ ] Prove archived Roadmap clears the active slot and reopen does not reactivate it.
+- [ ] Prove node removal does not cancel live WorkItems/Objectives.
+- [ ] Prove cancelling live work does not rewrite prior revisions.
+- [ ] Prove title/criterion/reference snapshots survive live-entity mutation and SQLite restart.
+- [ ] Pass module hygiene, gofmt, vet, tests, race detector, standalone build and HTTP runtime smoke.
+
+**Completion gate:** historical published revisions remain recoverable and immutable; each scope has at most one active published revision; Roadmap state never duplicates or silently mutates operational work.
 
 **Target commit:**  
 `feat(planning): add immutable roadmap revisions and scoped activation`
@@ -735,9 +810,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–09 are merged into `master`. Wave 10 — Assessments and Verifiable Conclusions is active on `feat/wave-10-verifiable-conclusions`.
+Waves 01–10 are merged into `master`. Wave 11 — Roadmaps and Planning History is active on `feat/wave-11-roadmap-planning-history`.
 
-1. Establish immutable criterion-revision and generic assessment domain contracts.
-2. Add waiver authorization and Evidence-aware assessment validation.
-3. Introduce first-class Conclusion snapshots and contestation projection.
-4. Complete storage/HTTP parity only after domain/application invariants are stable.
+1. Establish the Roadmap/RoadmapRevision/RoadmapNode domain model and scope invariants.
+2. Add draft versioning and immutable publication semantics.
+3. Add scoped active slots and append-only activation history.
+4. Add persistence/API only after the planning invariants are stable.
