@@ -77,14 +77,14 @@ type transaction struct {
 	workItemRepo      workItemRepository
 	coordination      coordinationStore
 	eventLog          eventLog
-	idempotencyStore  idempotencyStore
+	idempotencyStore idempotencyStore
 }
 
 func (tx *transaction) Outcomes() ports.OutcomeRepository     { return tx.outcomeRepo }
 func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.objectiveRepo }
 func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
-func (tx *transaction) Events() ports.DomainEventLog           { return tx.eventLog }
+func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore    { return tx.idempotencyStore }
 
 func (tx *transaction) Commit() error {
@@ -359,7 +359,6 @@ func (s coordinationStore) AdvanceOutcome(ctx context.Context, scope domain.Scop
 	s.tx.revisions[scopeKey(scope)] = next
 	return next, nil
 }
-
 
 type eventLog struct{ tx *transaction }
 

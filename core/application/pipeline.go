@@ -266,7 +266,7 @@ func eventsForCommand[T any](
 			CorrelationID:          commandContext.CorrelationID,
 			CausationID:            cloneIDPointer(commandContext.CausationID),
 			ExecutionContext:       commandContext.Execution,
-			Payload:                 payload,
+			Payload:                payload,
 		}
 		if err := event.Validate(); err != nil {
 			return nil, err
