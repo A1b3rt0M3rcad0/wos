@@ -2,19 +2,22 @@ package application
 
 import (
 	"context"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
 )
 
 type OutcomeState struct {
-	Outcome         domain.Outcome         `json:"outcome"`
-	Objectives      []domain.Objective     `json:"objectives"`
-	WorkItems       []domain.WorkItem      `json:"work_items"`
-	Relations       []domain.Relation      `json:"relations"`
-	Issues          []domain.Issue         `json:"issues"`
-	Blockers        []domain.Blocker       `json:"blockers"`
-	BlockingStates  []BlockingState        `json:"blocking_states"`
-	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
+	Outcome                   domain.Outcome                    `json:"outcome"`
+	Objectives                []domain.Objective                `json:"objectives"`
+	WorkItems                 []domain.WorkItem                 `json:"work_items"`
+	WorkItemOperationalStates []domain.WorkItemOperationalState `json:"work_item_operational_states"`
+	Relations                 []domain.Relation                 `json:"relations"`
+	Issues                    []domain.Issue                    `json:"issues"`
+	Blockers                  []domain.Blocker                  `json:"blockers"`
+	BlockingStates            []BlockingState                   `json:"blocking_states"`
+	EvaluatedAt               time.Time                         `json:"evaluated_at"`
+	OutcomeRevision           domain.OutcomeRevision            `json:"outcome_revision"`
 }
 
 type ReadResult[T any] struct {
@@ -187,7 +190,9 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		return OutcomeState{}, err
 	}
 
+	evaluatedAt := s.clock.Now().UTC()
 	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
+	blockingByRef := make(map[domain.EntityRef]BlockingState, 1+len(objectives)+len(workItems))
 	refs := make([]domain.EntityRef, 0, 1+len(objectives)+len(workItems))
 	refs = append(refs, outcome.Ref())
 	for _, objective := range objectives {
@@ -202,6 +207,37 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 			return OutcomeState{}, err
 		}
 		blockingStates = append(blockingStates, state)
+		blockingByRef[ref] = state
+	}
+
+	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
+	for _, objective := range objectives {
+		objectiveByID[objective.ID] = objective
+	}
+	workOperationalStates := make([]domain.WorkItemOperationalState, 0, len(workItems))
+	for _, item := range workItems {
+		var objective *domain.Objective
+		if item.ObjectiveID != nil {
+			value, ok := objectiveByID[*item.ObjectiveID]
+			if !ok {
+				return OutcomeState{}, domain.NewError(domain.ErrorCodeNotFound, "work item objective is missing")
+			}
+			copyValue := value
+			objective = &copyValue
+		}
+		dependencies, err := dependencyEvaluationsForSource(ctx, uow, item.Ref(), relations)
+		if err != nil {
+			return OutcomeState{}, err
+		}
+		blocking := blockingByRef[item.Ref()]
+		workOperationalStates = append(workOperationalStates, domain.ProjectWorkItemOperationalState(
+			item,
+			outcome,
+			objective,
+			dependencies,
+			blocking.IsBlocked,
+			evaluatedAt,
+		))
 	}
 
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
@@ -209,13 +245,15 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		return OutcomeState{}, err
 	}
 	return OutcomeState{
-		Outcome:         outcome,
-		Objectives:      objectives,
-		WorkItems:       workItems,
-		Relations:       relations,
-		Issues:          issues,
-		Blockers:        blockers,
-		BlockingStates:  blockingStates,
-		OutcomeRevision: coordination.Revision,
+		Outcome:                   outcome,
+		Objectives:                objectives,
+		WorkItems:                 workItems,
+		WorkItemOperationalStates: workOperationalStates,
+		Relations:                 relations,
+		Issues:                    issues,
+		Blockers:                  blockers,
+		BlockingStates:            blockingStates,
+		EvaluatedAt:               evaluatedAt,
+		OutcomeRevision:           coordination.Revision,
 	}, nil
 }
