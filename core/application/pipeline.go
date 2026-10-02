@@ -284,6 +284,8 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.WorkItem:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Relation:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
 			return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "criterion command is missing owner/version metadata")
@@ -368,6 +370,10 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"work_item.cancelled"}, nil
 	case "ReopenWorkItem":
 		return []string{"work_item.reopened"}, nil
+	case "AddDependency":
+		return []string{"relation.created"}, nil
+	case "RemoveDependency":
+		return []string{"relation.removed"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":
