@@ -89,7 +89,7 @@ type CreateWorkItemCommand struct {
 	Priority    domain.Priority
 	Lifecycle   domain.WorkItemLifecycle
 	ObjectiveID *domain.ID
-	NotBefore  *time.Time
+	NotBefore   *time.Time
 }
 
 type ActivateWorkItemCommand struct {
