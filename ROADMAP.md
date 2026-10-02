@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 06 — Dependencies, Graph and Readiness (complete in PR #6; pending merge)
+**Current wave:** Wave 07 — Issues and Blockers (planned)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -545,10 +545,10 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–05 are merged into `master`. Wave 06 is complete and verified on PR #6, pending merge.
+Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers is the next planned implementation wave.
 
-1. Merge PR #6 after the final documentation-only CI gate remains green.
-2. Start Wave 07 — Issues and Blockers from the updated `master`.
-3. Implement independent Issue and Blocker aggregates with explicit lifecycle and typed targets/causes.
-4. Add direct/subtree blocking propagation and deterministic inherited blocking projections.
+1. Start Wave 07 from the current `master`.
+2. Implement independent Issue and Blocker aggregates with explicit lifecycle and typed targets/causes.
+3. Add direct/subtree blocking propagation and deterministic inherited blocking projections.
+4. Integrate blocking into readiness without persisting `ready` or `blocked` as competing lifecycle states.
 5. Prove that resolving one impediment never silently resolves another.
