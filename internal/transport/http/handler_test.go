@@ -103,6 +103,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	if outcomeETagV1 == "" {
 		t.Fatal("create outcome did not return ETag")
 	}
+	initialOutcomeETag := outcomeETagV1
 
 	patchedOutcome := doJSON[application.MutationResult[domain.Outcome]](
 		t,
@@ -120,6 +121,44 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		t.Fatalf("patched title = %q", patchedOutcome.Value.Value.Title)
 	}
 	outcomeETagV1 = patchedOutcome.Header.Get("ETag")
+
+	stalePatch := doRequest(
+		t,
+		client,
+		http.MethodPatch,
+		outcomeURL,
+		[]byte(`{"description":"stale update"}`),
+		map[string]string{
+			"Idempotency-Key": "http-outcome-patch-stale-0001",
+			"If-Match":        initialOutcomeETag,
+		},
+	)
+	if stalePatch.StatusCode != http.StatusPreconditionFailed {
+		t.Fatalf("stale patch status = %d, want 412", stalePatch.StatusCode)
+	}
+	stalePatch.Body.Close()
+
+	noOpPatch := doJSON[application.MutationResult[domain.Outcome]](
+		t,
+		client,
+		http.MethodPatch,
+		outcomeURL,
+		[]byte(`{"title":"HTTP outcome updated"}`),
+		map[string]string{
+			"Idempotency-Key": "http-outcome-patch-noop-0001",
+			"If-Match":        outcomeETagV1,
+		},
+		http.StatusOK,
+	)
+	if noOpPatch.Value.Value.Version != patchedOutcome.Value.Value.Version {
+		t.Fatalf("no-op patch version = %d, want %d", noOpPatch.Value.Value.Version, patchedOutcome.Value.Value.Version)
+	}
+	if noOpPatch.Value.OutcomeRevision != patchedOutcome.Value.OutcomeRevision {
+		t.Fatalf("no-op patch outcome revision = %d, want %d", noOpPatch.Value.OutcomeRevision, patchedOutcome.Value.OutcomeRevision)
+	}
+	if noOpPatch.Header.Get("ETag") != outcomeETagV1 {
+		t.Fatalf("no-op patch ETag = %q, want %q", noOpPatch.Header.Get("ETag"), outcomeETagV1)
+	}
 
 	criterionResponse := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t,
