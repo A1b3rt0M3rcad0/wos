@@ -2,16 +2,42 @@ package application_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 )
+
+type wave09IDs struct {
+	next uint64
+}
+
+func (g *wave09IDs) NewID() (domain.ID, error) {
+	value := domain.MustParseID(fmt.Sprintf("0199ed90-0000-7000-8000-%012x", g.next))
+	g.next++
+	return value, nil
+}
+
+func newWave09Service(t *testing.T) (*application.Service, *memory.Store) {
+	t.Helper()
+	store := memory.New()
+	service, err := application.NewService(
+		store,
+		fixedClock{now: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC)},
+		&wave09IDs{next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return service, store
+}
 
 func TestWave09DocumentaryRecordsAndDecisionSupersession(t *testing.T) {
 	ctx := context.Background()
-	service, store := newService(t)
+	service, store := newWave09Service(t)
 	outcome := setupActiveOutcome(t, service)
 	scope := outcome.Scope()
 	cc := commandContext()
@@ -87,7 +113,7 @@ func TestWave09DocumentaryRecordsAndDecisionSupersession(t *testing.T) {
 
 func TestWave09RejectsCrossOutcomeEvidenceLink(t *testing.T) {
 	ctx := context.Background()
-	service, _ := newService(t)
+	service, _ := newWave09Service(t)
 	first := setupActiveOutcome(t, service)
 	secondResult, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{NamespaceID:first.NamespaceID, Title:"Other", DesiredState:"Other state", Priority:domain.PriorityNormal})
 	if err != nil { t.Fatal(err) }
