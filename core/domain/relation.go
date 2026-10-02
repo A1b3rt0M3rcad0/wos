@@ -64,7 +64,7 @@ type Relation struct {
 	Strength      DependencyStrength     `json:"strength,omitempty"`
 	Satisfaction  DependencySatisfaction `json:"satisfaction,omitempty"`
 	Lifecycle     RelationLifecycle      `json:"lifecycle"`
-	RemovalReason string                 `json:"removal_reason,omitempty"`
+	Reason        string                 `json:"reason,omitempty"`
 	CreatedAt     time.Time              `json:"created_at"`
 	UpdatedAt     time.Time              `json:"updated_at"`
 }
@@ -132,8 +132,8 @@ func (r Relation) Validate() error {
 			return NewError(ErrorCodeInvalidRelation, "dependency satisfaction is invalid")
 		}
 	}
-	if r.Lifecycle == RelationLifecycleRemoved && strings.TrimSpace(r.RemovalReason) == "" {
-		return NewError(ErrorCodeInvalidRelation, "removed relation requires a removal reason")
+	if r.Lifecycle == RelationLifecycleRemoved && strings.TrimSpace(r.Reason) == "" {
+		return NewError(ErrorCodeInvalidRelation, "removed relation requires a reason")
 	}
 	if r.CreatedAt.IsZero() || r.UpdatedAt.IsZero() {
 		return NewError(ErrorCodeInvalidRelation, "relation timestamps are required")
@@ -155,7 +155,7 @@ func (r *Relation) Remove(reason string, now time.Time) error {
 	}
 	r.Version = next
 	r.Lifecycle = RelationLifecycleRemoved
-	r.RemovalReason = reason
+	r.Reason = reason
 	r.UpdatedAt = now.UTC()
 	return r.Validate()
 }
