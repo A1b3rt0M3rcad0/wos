@@ -225,6 +225,9 @@ func eventsForCommand[T any](
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if events, handled, err := compoundDecisionEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 
 	ref, before, after, noOp, err := commandAggregate(meta, value)
 	if err != nil {

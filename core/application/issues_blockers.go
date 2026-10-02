@@ -456,7 +456,12 @@ func validateBlockerCause(ctx context.Context, uow ports.UnitOfWork, issues port
 		_, err := uow.WorkItems().Get(ctx, ref.Scope, ref.ID)
 		return err
 	case domain.EntityKindDecision:
-		return domain.NewError(domain.ErrorCodeBlocker, "decision blocker causes are unavailable until Decision records are implemented")
+		documentary, err := documentaryRepositories(uow)
+		if err != nil {
+			return err
+		}
+		_, err = documentary.decisions.Get(ctx, ref.Scope, ref.ID)
+		return err
 	default:
 		return domain.NewError(domain.ErrorCodeBlocker, "unsupported blocker cause kind")
 	}
