@@ -60,7 +60,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 			"title":"Observed but non-blocking",
 			"description":"A problem can exist without being an impediment.",
 			"severity":"minor",
-			"affected_refs":[{"kind":"work_item","id":"` + work.ID.String() + `"}]
+			"affected_refs":[{"kind":"work_item","id":"`+work.ID.String()+`"}]
 		}`),
 		map[string]string{"Idempotency-Key": "wave07-issue-independent-0001"},
 		http.StatusCreated,
@@ -124,7 +124,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	secondBlockerResponse := doJSON[application.MutationResult[domain.Blocker]](
 		t, client, http.MethodPost, outcomeURL+"/blockers",
 		[]byte(`{
-			"blocked_ref":{"kind":"work_item","id":"` + work.ID.String() + `"},
+			"blocked_ref":{"kind":"work_item","id":"`+work.ID.String()+`"},
 			"cause_ref":{"kind":"issue","id":"`+issue.ID.String()+`"},
 			"description":"A second independent release confirmation is required."
 		}`),
