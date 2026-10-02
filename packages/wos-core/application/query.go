@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
 type OutcomeState struct {
@@ -30,6 +31,19 @@ type ReadResult[T any] struct {
 	Value           T                      `json:"value"`
 	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
 }
+
+type CriterionValidationHistory struct {
+	Criterion           domain.SuccessCriterion            `json:"criterion"`
+	DefinitionRevisions []domain.CriterionDefinitionRevision `json:"definition_revisions"`
+	Assessments         []domain.CriterionAssessment       `json:"assessments"`
+	CurrentAssessment   *domain.CriterionAssessment        `json:"current_assessment,omitempty"`
+}
+
+type ConclusionHistory struct {
+	Current *domain.Conclusion  `json:"current,omitempty"`
+	History []domain.Conclusion `json:"history"`
+}
+
 
 func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResult[domain.Outcome], error) {
 	if err := scope.Validate(); err != nil {
@@ -107,6 +121,155 @@ func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain
 		Value:           value,
 		OutcomeRevision: coordination.Revision,
 	}, nil
+}
+
+func (s *Service) GetCriterionHistory(
+	ctx context.Context,
+	owner domain.EntityRef,
+	criterionID domain.ID,
+) (ReadResult[CriterionValidationHistory], error) {
+	if err := owner.Validate(); err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	if err := criterionID.Validate(); err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	defer uow.Rollback()
+
+	criteria, _, _, err := validationStateForOwner(ctx, uow, owner)
+	if err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	criterion, err := criteria.Find(criterionID)
+	if err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	value := CriterionValidationHistory{
+		Criterion:           *criterion,
+		DefinitionRevisions: make([]domain.CriterionDefinitionRevision, 0),
+		Assessments:         make([]domain.CriterionAssessment, 0),
+	}
+	for _, revision := range criteria.DefinitionRevisions {
+		if revision.CriterionID == criterionID {
+			value.DefinitionRevisions = append(value.DefinitionRevisions, revision)
+		}
+	}
+	for _, assessment := range criteria.Assessments {
+		if assessment.CriterionID == criterionID {
+			value.Assessments = append(value.Assessments, assessment)
+		}
+	}
+	if current, ok := criteria.CurrentAssessments[criterionID]; ok {
+		copyValue := current
+		value.CurrentAssessment = &copyValue
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, owner.Scope)
+	if err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+	return ReadResult[CriterionValidationHistory]{
+		Value:           value,
+		OutcomeRevision: coordination.Revision,
+	}, nil
+}
+
+func (s *Service) ListConclusions(
+	ctx context.Context,
+	owner domain.EntityRef,
+) (ReadResult[ConclusionHistory], error) {
+	if err := owner.Validate(); err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
+	defer uow.Rollback()
+
+	_, current, history, err := validationStateForOwner(ctx, uow, owner)
+	if err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
+	value := ConclusionHistory{
+		Current: current,
+		History: append([]domain.Conclusion(nil), history...),
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, owner.Scope)
+	if err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
+	return ReadResult[ConclusionHistory]{
+		Value:           value,
+		OutcomeRevision: coordination.Revision,
+	}, nil
+}
+
+func (s *Service) GetConclusion(
+	ctx context.Context,
+	owner domain.EntityRef,
+	conclusionID domain.ID,
+) (ReadResult[domain.Conclusion], error) {
+	if err := owner.Validate(); err != nil {
+		return ReadResult[domain.Conclusion]{}, err
+	}
+	if err := conclusionID.Validate(); err != nil {
+		return ReadResult[domain.Conclusion]{}, err
+	}
+	history, err := s.ListConclusions(ctx, owner)
+	if err != nil {
+		return ReadResult[domain.Conclusion]{}, err
+	}
+	if history.Value.Current != nil && history.Value.Current.ID == conclusionID {
+		return ReadResult[domain.Conclusion]{
+			Value:           *history.Value.Current,
+			OutcomeRevision: history.OutcomeRevision,
+		}, nil
+	}
+	for _, conclusion := range history.Value.History {
+		if conclusion.ID == conclusionID {
+			return ReadResult[domain.Conclusion]{
+				Value:           conclusion,
+				OutcomeRevision: history.OutcomeRevision,
+			}, nil
+		}
+	}
+	return ReadResult[domain.Conclusion]{}, domain.NewError(domain.ErrorCodeNotFound, "conclusion not found")
+}
+
+func validationStateForOwner(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	owner domain.EntityRef,
+) (domain.CriterionSet, *domain.Conclusion, []domain.Conclusion, error) {
+	switch owner.Kind {
+	case domain.EntityKindOutcome:
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		if err != nil {
+			return domain.CriterionSet{}, nil, nil, err
+		}
+		return value.Criteria, value.CurrentConclusion, value.ConclusionHistory, nil
+	case domain.EntityKindObjective:
+		value, err := uow.Objectives().Get(ctx, owner.Scope, owner.ID)
+		if err != nil {
+			return domain.CriterionSet{}, nil, nil, err
+		}
+		return value.Criteria, value.CurrentConclusion, value.ConclusionHistory, nil
+	case domain.EntityKindWorkItem:
+		value, err := uow.WorkItems().Get(ctx, owner.Scope, owner.ID)
+		if err != nil {
+			return domain.CriterionSet{}, nil, nil, err
+		}
+		return value.Criteria, value.CurrentConclusion, value.ConclusionHistory, nil
+	default:
+		return domain.CriterionSet{}, nil, nil, domain.NewError(
+			domain.ErrorCodeInvalidArgument,
+			"owner kind does not expose validation history",
+		)
+	}
 }
 
 func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Relation], error) {
