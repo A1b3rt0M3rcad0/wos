@@ -63,7 +63,7 @@ jobs:
         run: go test -race ./...
 
       - name: Build standalone binary
-        run: go build -o ./bin/wos ./cmd/wos
+        run: go build -o ./bin/wos ./packages/wos-server/cmd/wos
 
       - name: Smoke version command
         run: ./bin/wos version
