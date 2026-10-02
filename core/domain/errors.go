@@ -33,7 +33,10 @@ const (
 	ErrorCodeInvalidIdempotencyKey ErrorCode = "invalid_idempotency_key"
 	ErrorCodeIdempotencyConflict   ErrorCode = "idempotency_conflict"
 	ErrorCodeIdempotencyState      ErrorCode = "idempotency_state"
-	ErrorCodeInvalidRelation       ErrorCode = "invalid_relation"\n	ErrorCodeDependencyCycle       ErrorCode = "dependency_cycle"\n	ErrorCodeGraphLimitExceeded    ErrorCode = "graph_limit_exceeded"\n)
+	ErrorCodeInvalidRelation       ErrorCode = "invalid_relation"
+	ErrorCodeDependencyCycle       ErrorCode = "dependency_cycle"
+	ErrorCodeGraphLimitExceeded    ErrorCode = "graph_limit_exceeded"
+)
 
 // Error is the foundational typed error used by public Core contracts.
 // Details may be added by higher layers, but Code remains the stable field
