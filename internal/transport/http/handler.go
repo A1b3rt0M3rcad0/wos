@@ -220,11 +220,11 @@ func expectedVersion(r *http.Request, body *uint64, kind domain.EntityKind, id d
 	header := strings.TrimSpace(r.Header.Get("If-Match"))
 	var headerVersion *domain.Version
 	if header != "" {
-		expectedPrefix := """ + kind.String() + ":" + id.String() + ":v"
-		if !strings.HasPrefix(header, expectedPrefix) || !strings.HasSuffix(header, """) {
+		expectedPrefix := "\"" + kind.String() + ":" + id.String() + ":v"
+		if !strings.HasPrefix(header, expectedPrefix) || !strings.HasSuffix(header, "\"") {
 			return 0, domain.NewError(domain.ErrorCodeVersionConflict, "If-Match does not identify the requested resource")
 		}
-		raw := strings.TrimSuffix(strings.TrimPrefix(header, expectedPrefix), """)
+		raw := strings.TrimSuffix(strings.TrimPrefix(header, expectedPrefix), "\"")
 		value, err := strconv.ParseUint(raw, 10, 64)
 		if err != nil {
 			return 0, domain.NewError(domain.ErrorCodeInvalidVersion, "If-Match contains an invalid version")
