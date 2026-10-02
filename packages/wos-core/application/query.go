@@ -33,17 +33,16 @@ type ReadResult[T any] struct {
 }
 
 type CriterionValidationHistory struct {
-	Criterion           domain.SuccessCriterion            `json:"criterion"`
+	Criterion           domain.SuccessCriterion              `json:"criterion"`
 	DefinitionRevisions []domain.CriterionDefinitionRevision `json:"definition_revisions"`
-	Assessments         []domain.CriterionAssessment       `json:"assessments"`
-	CurrentAssessment   *domain.CriterionAssessment        `json:"current_assessment,omitempty"`
+	Assessments         []domain.CriterionAssessment         `json:"assessments"`
+	CurrentAssessment   *domain.CriterionAssessment          `json:"current_assessment,omitempty"`
 }
 
 type ConclusionHistory struct {
 	Current *domain.Conclusion  `json:"current,omitempty"`
 	History []domain.Conclusion `json:"history"`
 }
-
 
 func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResult[domain.Outcome], error) {
 	if err := scope.Validate(); err != nil {

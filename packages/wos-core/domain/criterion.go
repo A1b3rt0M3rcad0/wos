@@ -227,10 +227,10 @@ type CriterionAssessmentRef struct {
 }
 
 type CriterionSet struct {
-	Items               []SuccessCriterion             `json:"items,omitempty"`
-	DefinitionRevisions []CriterionDefinitionRevision  `json:"definition_revisions,omitempty"`
-	Assessments         []CriterionAssessment          `json:"assessments,omitempty"`
-	CurrentAssessments  map[ID]CriterionAssessment     `json:"current_assessments,omitempty"`
+	Items               []SuccessCriterion            `json:"items,omitempty"`
+	DefinitionRevisions []CriterionDefinitionRevision `json:"definition_revisions,omitempty"`
+	Assessments         []CriterionAssessment         `json:"assessments,omitempty"`
+	CurrentAssessments  map[ID]CriterionAssessment    `json:"current_assessments,omitempty"`
 }
 
 func NewCriterionSet() CriterionSet {
