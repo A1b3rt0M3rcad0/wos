@@ -179,9 +179,19 @@ ON CONFLICT(id) DO UPDATE SET
 			return mapSQLError("upsert success criterion", err)
 		}
 
+		if _, err := tx.ExecContext(ctx, `
+DELETE FROM criterion_current_assessments
+WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
+			owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String(),
+		); err != nil {
+			return mapSQLError("clear current criterion assessment", err)
+		}
+	}
+
+	for _, revision := range set.DefinitionRevisions {
 		definition, err := marshalJSON(criterionDefinition{
-			Title:       criterion.Title,
-			Description: criterion.Description,
+			Title:       revision.Title,
+			Description: revision.Description,
 		})
 		if err != nil {
 			return err
@@ -193,27 +203,17 @@ INSERT OR IGNORE INTO criterion_revisions (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
-			criterion.ID.String(),
-			int64(criterion.Revision),
+			revision.CriterionID.String(),
+			int64(revision.Revision),
 			definition,
-			boolInt(criterion.Required),
-			string(criterion.VerificationMode),
+			boolInt(revision.Required),
+			string(revision.VerificationMode),
 			encodeTime(changedAt),
 		); err != nil {
 			return mapSQLError("insert criterion revision", err)
 		}
-		if err := verifyCriterionRevision(
-			ctx, tx, owner.Scope, criterion, definition,
-		); err != nil {
+		if err := verifyCriterionRevision(ctx, tx, owner.Scope, revision, definition); err != nil {
 			return err
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-DELETE FROM criterion_current_assessments
-WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
-			owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String(),
-		); err != nil {
-			return mapSQLError("clear current criterion assessment", err)
 		}
 	}
 
@@ -289,7 +289,7 @@ func verifyCriterionRevision(
 	ctx context.Context,
 	tx *sql.Tx,
 	scope domain.Scope,
-	criterion domain.SuccessCriterion,
+	revision domain.CriterionDefinitionRevision,
 	definition string,
 ) error {
 	var existingDefinition, mode string
@@ -300,15 +300,15 @@ FROM criterion_revisions
 WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ? AND criterion_revision = ?`,
 		scope.NamespaceID.String(),
 		scope.OutcomeID.String(),
-		criterion.ID.String(),
-		int64(criterion.Revision),
+		revision.CriterionID.String(),
+		int64(revision.Revision),
 	).Scan(&existingDefinition, &required, &mode)
 	if err != nil {
 		return mapSQLError("verify criterion revision", err)
 	}
 	if existingDefinition != definition ||
-		required != boolInt(criterion.Required) ||
-		mode != string(criterion.VerificationMode) {
+		required != boolInt(revision.Required) ||
+		mode != string(revision.VerificationMode) {
 		return domain.NewError(
 			domain.ErrorCodeCriterion,
 			"criterion revision is immutable and differs from persisted definition",
@@ -375,6 +375,59 @@ ORDER BY c.created_at, c.id`,
 		return domain.CriterionSet{}, err
 	}
 	rows.Close()
+
+	revisionRows, err := tx.QueryContext(ctx, `
+SELECT r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode
+FROM criterion_revisions r
+JOIN success_criteria c
+  ON c.namespace_id = r.namespace_id
+ AND c.outcome_id = r.outcome_id
+ AND c.id = r.criterion_id
+WHERE c.namespace_id = ? AND c.outcome_id = ? AND c.owner_id = ? AND c.owner_kind = ?
+ORDER BY r.criterion_id, r.criterion_revision`,
+		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+	)
+	if err != nil {
+		return domain.CriterionSet{}, mapSQLError("load criterion revision history", err)
+	}
+	for revisionRows.Next() {
+		var rawCriterionID, definition, mode string
+		var revision int64
+		var required int
+		if err := revisionRows.Scan(&rawCriterionID, &revision, &definition, &required, &mode); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		criterionID, err := domain.ParseID(rawCriterionID)
+		if err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		var def criterionDefinition
+		if err := unmarshalJSON(definition, &def); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		value := domain.CriterionDefinitionRevision{
+			CriterionID:      criterionID,
+			OwnerRef:         owner,
+			Revision:         domain.CriterionRevision(revision),
+			Title:            def.Title,
+			Description:      def.Description,
+			Required:         required == 1,
+			VerificationMode: domain.VerificationMode(mode),
+		}
+		if err := value.Validate(); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		set.DefinitionRevisions = append(set.DefinitionRevisions, value)
+	}
+	if err := revisionRows.Err(); err != nil {
+		revisionRows.Close()
+		return domain.CriterionSet{}, err
+	}
+	revisionRows.Close()
 
 	assessmentRows, err := tx.QueryContext(ctx, `
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,

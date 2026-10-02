@@ -227,9 +227,10 @@ type CriterionAssessmentRef struct {
 }
 
 type CriterionSet struct {
-	Items              []SuccessCriterion         `json:"items,omitempty"`
-	Assessments        []CriterionAssessment      `json:"assessments,omitempty"`
-	CurrentAssessments map[ID]CriterionAssessment `json:"current_assessments,omitempty"`
+	Items               []SuccessCriterion             `json:"items,omitempty"`
+	DefinitionRevisions []CriterionDefinitionRevision  `json:"definition_revisions,omitempty"`
+	Assessments         []CriterionAssessment          `json:"assessments,omitempty"`
+	CurrentAssessments  map[ID]CriterionAssessment     `json:"current_assessments,omitempty"`
 }
 
 func NewCriterionSet() CriterionSet {
@@ -252,6 +253,7 @@ func (s *CriterionSet) Add(c SuccessCriterion) error {
 		}
 	}
 	s.Items = append(s.Items, c)
+	s.DefinitionRevisions = append(s.DefinitionRevisions, c.DefinitionRevision())
 	s.ensureMap()
 	return nil
 }
@@ -288,6 +290,7 @@ func (s *CriterionSet) Revise(id ID, title, description string, required bool, m
 	c.Required = required
 	c.VerificationMode = mode
 	c.Revision++
+	s.DefinitionRevisions = append(s.DefinitionRevisions, c.DefinitionRevision())
 	s.ensureMap()
 	delete(s.CurrentAssessments, id)
 	return nil
@@ -430,6 +433,47 @@ func (s CriterionSet) ValidateForOwner(owner EntityRef) error {
 			return NewError(ErrorCodeCriterion, "duplicate criterion id")
 		}
 		criteria[criterion.ID] = criterion
+	}
+
+	revisionsByCriterion := make(map[ID]map[CriterionRevision]CriterionDefinitionRevision, len(s.Items))
+	for _, revision := range s.DefinitionRevisions {
+		if err := revision.Validate(); err != nil {
+			return err
+		}
+		criterion, exists := criteria[revision.CriterionID]
+		if !exists {
+			return NewError(ErrorCodeCriterion, "criterion revision references unknown criterion")
+		}
+		if revision.OwnerRef != owner {
+			return NewError(ErrorCodeCriterion, "criterion revision owner does not match aggregate")
+		}
+		if revision.Revision > criterion.Revision {
+			return NewError(ErrorCodeCriterion, "criterion revision history references a future revision")
+		}
+		byRevision := revisionsByCriterion[revision.CriterionID]
+		if byRevision == nil {
+			byRevision = make(map[CriterionRevision]CriterionDefinitionRevision)
+			revisionsByCriterion[revision.CriterionID] = byRevision
+		}
+		if _, exists := byRevision[revision.Revision]; exists {
+			return NewError(ErrorCodeCriterion, "duplicate criterion definition revision")
+		}
+		byRevision[revision.Revision] = revision
+	}
+	for criterionID, criterion := range criteria {
+		history := revisionsByCriterion[criterionID]
+		if len(history) != int(criterion.Revision) {
+			return NewError(ErrorCodeCriterion, "criterion definition revision history is incomplete")
+		}
+		for revision := InitialCriterionRevision; revision <= criterion.Revision; revision++ {
+			if _, exists := history[revision]; !exists {
+				return NewError(ErrorCodeCriterion, "criterion definition revision history has a gap")
+			}
+		}
+		current := history[criterion.Revision]
+		if current != criterion.DefinitionRevision() {
+			return NewError(ErrorCodeCriterion, "current criterion definition does not match revision history")
+		}
 	}
 
 	assessmentIDs := make(map[ID]struct{}, len(s.Assessments))
