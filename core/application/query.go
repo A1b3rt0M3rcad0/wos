@@ -11,6 +11,9 @@ type OutcomeState struct {
 	Objectives      []domain.Objective     `json:"objectives"`
 	WorkItems       []domain.WorkItem      `json:"work_items"`
 	Relations       []domain.Relation      `json:"relations"`
+	Issues          []domain.Issue         `json:"issues"`
+	Blockers        []domain.Blocker       `json:"blockers"`
+	BlockingStates  []BlockingState        `json:"blocking_states"`
 	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
 }
 
@@ -171,6 +174,36 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	if err != nil {
 		return OutcomeState{}, err
 	}
+	issuesRepo, blockersRepo, err := issueBlockerRepositories(uow)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	issues, err := issuesRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	blockers, err := blockersRepo.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+
+	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
+	refs := make([]domain.EntityRef, 0, 1+len(objectives)+len(workItems))
+	refs = append(refs, outcome.Ref())
+	for _, objective := range objectives {
+		refs = append(refs, objective.Ref())
+	}
+	for _, workItem := range workItems {
+		refs = append(refs, workItem.Ref())
+	}
+	for _, ref := range refs {
+		state, err := blockingStateForRef(ctx, uow, ref)
+		if err != nil {
+			return OutcomeState{}, err
+		}
+		blockingStates = append(blockingStates, state)
+	}
+
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return OutcomeState{}, err
@@ -180,6 +213,9 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		Objectives:      objectives,
 		WorkItems:       workItems,
 		Relations:       relations,
+		Issues:          issues,
+		Blockers:        blockers,
+		BlockingStates:  blockingStates,
 		OutcomeRevision: coordination.Revision,
 	}, nil
 }

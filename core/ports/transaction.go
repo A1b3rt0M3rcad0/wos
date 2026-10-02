@@ -31,3 +31,9 @@ type UnitOfWork interface {
 type TransactionManager interface {
 	Begin(ctx context.Context) (UnitOfWork, error)
 }
+
+type IssueBlockerUnitOfWork interface {
+	UnitOfWork
+	Issues() IssueRepository
+	Blockers() BlockerRepository
+}

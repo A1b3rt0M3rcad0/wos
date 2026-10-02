@@ -1,6 +1,6 @@
-# WOS HTTP — Waves 05–06
+# WOS HTTP — Waves 05–07
 
-Waves 05–06 expose the M1 domain plus dependency/readiness coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, readiness, lease, idempotency or concurrency rules.
+Waves 05–07 expose the M1 domain plus dependency/readiness and Issue/Blocker coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, blocking, readiness, lease, idempotency or concurrency rules.
 
 ## Start the local server
 
@@ -226,7 +226,105 @@ curl -i "$BASE/outcomes/$OUTCOME_ID/state"
 ```
 
 The state response is `Cache-Control: no-store` and contains the persisted
-Outcome, Objectives, WorkItems, Relations and the current `outcome_revision`.
+Outcome, Objectives, WorkItems, Relations, Issues, Blockers, derived
+`blocking_states` and the current `outcome_revision`.
+
+## Issues and Blockers
+
+Issues and Blockers are independent aggregates. An Issue records a problem or
+observation; it does not block work by itself. A Blocker records an active
+impediment against exactly one Outcome, Objective or WorkItem. Outcome and
+Objective Blockers may propagate through their subtree; WorkItem Blockers are
+always direct.
+
+Create an Issue and its first Blocker atomically:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/issues/actions/report-with-blocker" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-report-issue-blocker-0001' \
+  -d '{
+    "issue": {
+      "title": "Dependência externa indisponível",
+      "severity": "major",
+      "affected_refs": [{"kind": "work_item", "id": "<work-id>"}]
+    },
+    "blocker": {
+      "blocked_ref": {"kind": "work_item", "id": "<work-id>"},
+      "description": "O trabalho não pode prosseguir"
+    }
+  }'
+```
+
+This is one idempotent command and one `outcome_revision`, but it produces
+separate Issue and Blocker aggregates and separate Domain Events. Retrying with
+the same key returns the original pair.
+
+The normal endpoints are:
+
+```text
+GET|POST  /outcomes/{outcome_id}/issues
+GET|PATCH /outcomes/{outcome_id}/issues/{issue_id}
+POST      /outcomes/{outcome_id}/issues/{issue_id}/actions/investigate
+POST      /outcomes/{outcome_id}/issues/{issue_id}/actions/resolve
+POST      /outcomes/{outcome_id}/issues/{issue_id}/actions/reopen
+POST      /outcomes/{outcome_id}/issues/{issue_id}/actions/wont-fix
+POST      /outcomes/{outcome_id}/issues/{issue_id}/actions/mark-duplicate
+
+GET|POST  /outcomes/{outcome_id}/blockers
+GET|PATCH /outcomes/{outcome_id}/blockers/{blocker_id}
+POST      /outcomes/{outcome_id}/blockers/{blocker_id}/actions/resolve
+POST      /outcomes/{outcome_id}/blockers/{blocker_id}/actions/cancel
+```
+
+Resolving an Issue alone intentionally leaves every Blocker active. To resolve
+an Issue and selected Blockers in one transaction, the caller must enumerate
+each Blocker and confirm its release explicitly:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/issues/$ISSUE_ID/actions/resolve-with-blockers" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-resolve-issue-blockers-0001' \
+  -d '{
+    "expected_issue_version": 3,
+    "issue_resolution_summary": "Causa corrigida e verificada",
+    "blockers": [{
+      "blocker_id": "<blocker-id>",
+      "expected_version": 2,
+      "resolution_summary": "Liberação confirmada",
+      "release_confirmed": true
+    }]
+  }'
+```
+
+The command accepts between 1 and 64 explicit Blockers. Every Blocker must have
+that Issue as its persisted `cause_ref`; stale versions, a missing release
+confirmation or a non-matching cause abort the whole transaction. Unlisted
+Blockers are never inferred or silently resolved.
+
+A Blocker may instead point to a persisted Objective or WorkItem cause, or to
+an explicit external cause:
+
+```json
+{
+  "blocked_ref": {"kind": "work_item", "id": "<work-id>"},
+  "external_cause": {
+    "provider": "vendor",
+    "id": "incident-42",
+    "description": "Vendor outage"
+  },
+  "description": "Waiting for recovery"
+}
+```
+
+The domain already reserves `decision` as a valid Blocker cause kind, but the
+Application layer rejects Decision causes until persisted Decision records are
+implemented. This keeps memory and SQLite semantics identical.
+
+`blocking_states` explains whether each Outcome, Objective and WorkItem is
+blocked, which active Blockers apply and whether each one is direct or inherited.
+The ready-work query applies the same projection, so blocked WorkItems are not
+returned as ready.
 
 ## Errors
 

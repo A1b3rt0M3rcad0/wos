@@ -216,7 +216,12 @@ func evaluateObjectiveReadiness(
 	if err != nil {
 		return domain.Readiness{}, err
 	}
-	return domain.ObjectiveReadiness(objective, outcome, evaluations, now), nil
+	readiness := domain.ObjectiveReadiness(objective, outcome, evaluations, now)
+	blocking, err := blockingStateForRef(ctx, uow, objective.Ref())
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	return domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked), nil
 }
 
 func evaluateWorkItemReadiness(
@@ -245,7 +250,12 @@ func evaluateWorkItemReadiness(
 	if err != nil {
 		return domain.Readiness{}, err
 	}
-	return domain.WorkItemReadiness(item, outcome, objective, evaluations, now), nil
+	readiness := domain.WorkItemReadiness(item, outcome, objective, evaluations, now)
+	blocking, err := blockingStateForRef(ctx, uow, item.Ref())
+	if err != nil {
+		return domain.Readiness{}, err
+	}
+	return domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked), nil
 }
 
 func requireObjectiveReady(ctx context.Context, uow ports.UnitOfWork, objective domain.Objective, now time.Time) error {

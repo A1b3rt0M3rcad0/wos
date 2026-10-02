@@ -222,6 +222,10 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+
 	ref, before, after, noOp, err := commandAggregate(meta, value)
 	if err != nil {
 		return nil, err
@@ -285,6 +289,10 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 	case domain.WorkItem:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Relation:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Issue:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Blocker:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
@@ -374,6 +382,28 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"relation.created"}, nil
 	case "RemoveDependency":
 		return []string{"relation.removed"}, nil
+	case "CreateIssue":
+		return []string{"issue.created"}, nil
+	case "UpdateIssue":
+		return []string{"issue.updated"}, nil
+	case "InvestigateIssue":
+		return []string{"issue.investigating"}, nil
+	case "ResolveIssue":
+		return []string{"issue.resolved"}, nil
+	case "MarkIssueWontFix":
+		return []string{"issue.wont_fix"}, nil
+	case "MarkIssueDuplicate":
+		return []string{"issue.duplicate"}, nil
+	case "ReopenIssue":
+		return []string{"issue.reopened"}, nil
+	case "CreateBlocker":
+		return []string{"blocker.created"}, nil
+	case "UpdateBlockerDescription":
+		return []string{"blocker.updated"}, nil
+	case "ResolveBlocker":
+		return []string{"blocker.resolved"}, nil
+	case "CancelBlocker":
+		return []string{"blocker.cancelled"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":
