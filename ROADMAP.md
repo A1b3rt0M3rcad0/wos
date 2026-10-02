@@ -483,14 +483,14 @@ Implement Artifact, Evidence, EvidenceLink and Decision; immutable documentary c
 
 ### Remaining work
 
-- [ ] Add Application commands, integrity validation and events for EvidenceLink creation/retraction.
-- [ ] Implement atomic accepted-Decision supersession, direct-successor uniqueness and cycle prevention.
-- [ ] Enable persisted Decision as a valid Blocker cause without implicit Blocker resolution.
-- [ ] Integrate documentary records and current Decision history into continuity/state queries.
+- [x] Add Application commands, integrity validation and events for EvidenceLink creation/retraction.
+- [x] Implement atomic accepted-Decision supersession, direct-successor uniqueness and cycle prevention.
+- [x] Enable persisted Decision as a valid Blocker cause without implicit Blocker resolution.
+- [x] Integrate documentary records and current Decision history into continuity/state queries.
 - [ ] Expose Wave 09 operations through HTTP/OpenAPI/docs.
 - [ ] Complete memory/SQLite parity, concurrency and end-to-end transport verification.
 
-**Completion gate:** still open. The first slice persists immutable facts and explicit accepted decisions, but another consumer does not yet receive the complete documentary graph, EvidenceLink semantics or supersession history from continuity queries.
+**Completion gate:** application semantics are now satisfied: one coherent Outcome state read exposes documentary history, registered/active facts and current accepted decisions without prior chat/session context. The Wave remains open until HTTP/OpenAPI exposure and final adapter/transport parity verification are complete.
 
 **Target commit:**  
 `feat(records): add evidence artifacts and explicit decision history`
@@ -634,7 +634,7 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 Waves 01–08 are merged into `master`. Wave 09 — Documentary Records and Decisions is active on `feat/wave-09-documentary-records-decisions`.
 
-1. Continue Wave 09 from the initial three-commit documentary slice without treating the wave as complete.
-2. Implement EvidenceLink Application semantics with target/criterion integrity and retraction events.
-3. Implement atomic Decision supersession with uniqueness and cycle protection.
-4. Integrate documentary history into continuity queries before exposing the complete Wave 09 HTTP contract.
+1. Expose the completed Wave 09 documentary commands and state projection through HTTP/OpenAPI/docs.
+2. Add concentrated memory/SQLite parity and concurrency coverage for EvidenceLink and Decision supersession.
+3. Verify end-to-end transport behavior and the Wave 09 completion gate before marking the wave done.
+4. Keep Wave 10 assessment work separate until the documentary transport contract is complete.

@@ -16,6 +16,7 @@ type OutcomeState struct {
 	Issues                    []domain.Issue                    `json:"issues"`
 	Blockers                  []domain.Blocker                  `json:"blockers"`
 	BlockingStates            []BlockingState                   `json:"blocking_states"`
+	Documentary               DocumentaryState                  `json:"documentary"`
 	EvaluatedAt               time.Time                         `json:"evaluated_at"`
 	OutcomeRevision           domain.OutcomeRevision            `json:"outcome_revision"`
 }
@@ -189,6 +190,27 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	if err != nil {
 		return OutcomeState{}, err
 	}
+	documentaryRepositories, err := documentaryRepositories(uow)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	artifacts, err := documentaryRepositories.artifacts.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	evidence, err := documentaryRepositories.evidence.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	evidenceLinks, err := documentaryRepositories.evidenceLinks.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	decisions, err := documentaryRepositories.decisions.ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	documentaryState := ProjectDocumentaryState(artifacts, evidence, evidenceLinks, decisions)
 
 	evaluatedAt := s.clock.Now().UTC()
 	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
@@ -253,6 +275,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		Issues:                    issues,
 		Blockers:                  blockers,
 		BlockingStates:            blockingStates,
+		Documentary:               documentaryState,
 		EvaluatedAt:               evaluatedAt,
 		OutcomeRevision:           coordination.Revision,
 	}, nil
