@@ -34,12 +34,15 @@ func TestWave11RoadmapDependencyChangeRequestMapping(t *testing.T) {
 		t.Fatalf("change count = %d, want 2", len(changes))
 	}
 	if changes[0].Action != application.RoadmapDependencyChangeAdd ||
+		changes[0].SourceRef == nil ||
+		changes[0].TargetRef == nil ||
 		changes[0].SourceRef.Scope != scope ||
 		changes[0].TargetRef.Scope != scope {
 		t.Fatalf("mapped add change = %#v", changes[0])
 	}
 	if changes[1].Action != application.RoadmapDependencyChangeRemove ||
-		changes[1].ExpectedVersion != 3 {
+		changes[1].ExpectedVersion == nil ||
+		*changes[1].ExpectedVersion != 3 {
 		t.Fatalf("mapped remove change = %#v", changes[1])
 	}
 }

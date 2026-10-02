@@ -360,10 +360,12 @@ func roadmapDependencyChanges(
 			if err != nil {
 				return nil, err
 			}
+			sourceRef := source
+			targetRef := target
 			result = append(result, application.RoadmapDependencyChange{
 				Action:    application.RoadmapDependencyChangeAdd,
-				SourceRef: source,
-				TargetRef: target,
+				SourceRef: &sourceRef,
+				TargetRef: &targetRef,
 				Strength:  request.Strength,
 				Reason:    request.Reason,
 			})
@@ -378,10 +380,12 @@ func roadmapDependencyChanges(
 					"remove dependency change requires expected_version",
 				)
 			}
+			expectedVersion := domain.Version(*request.ExpectedVersion)
+			relationIDValue := relationID
 			result = append(result, application.RoadmapDependencyChange{
 				Action:          application.RoadmapDependencyChangeRemove,
-				RelationID:      relationID,
-				ExpectedVersion: domain.Version(*request.ExpectedVersion),
+				RelationID:      &relationIDValue,
+				ExpectedVersion: &expectedVersion,
 				Reason:          request.Reason,
 			})
 		default:

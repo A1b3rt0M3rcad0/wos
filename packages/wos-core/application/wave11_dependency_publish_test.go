@@ -80,6 +80,8 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	missingRelationID := domain.MustParseID("0199f320-0000-7000-8000-000000000099")
+	expectedRelationVersion := domain.InitialVersion
 	_, err = service.PublishRoadmapDraft(ctx, cc, application.PublishRoadmapDraftCommand{
 		Scope:                outcome.Scope(),
 		RoadmapID:            roadmap.ID,
@@ -88,13 +90,13 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 		DependencyChanges: []application.RoadmapDependencyChange{
 			{
 				Action:    application.RoadmapDependencyChangeAdd,
-				SourceRef: second.Ref(), TargetRef: first.Ref(),
+				SourceRef: refPtr(second.Ref()), TargetRef: refPtr(first.Ref()),
 				Strength: domain.DependencyStrengthHard,
 			},
 			{
 				Action:          application.RoadmapDependencyChangeRemove,
-				RelationID:      domain.MustParseID("0199f320-0000-7000-8000-000000000099"),
-				ExpectedVersion: domain.InitialVersion,
+				RelationID:      &missingRelationID,
+				ExpectedVersion: &expectedRelationVersion,
 				Reason:          "force rollback",
 			},
 		},
@@ -139,7 +141,7 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 		DependencyChanges: []application.RoadmapDependencyChange{
 			{
 				Action:    application.RoadmapDependencyChangeAdd,
-				SourceRef: second.Ref(), TargetRef: first.Ref(),
+				SourceRef: refPtr(second.Ref()), TargetRef: refPtr(first.Ref()),
 				Strength: domain.DependencyStrengthHard,
 			},
 		},

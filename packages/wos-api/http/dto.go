@@ -179,13 +179,13 @@ type roadmapDraftVersionRequest struct {
 }
 
 type roadmapDependencyChangeRequest struct {
-	Action          string                  `json:"action"`
-	RelationID      string                  `json:"relation_id,omitempty"`
-	ExpectedVersion *uint64                 `json:"expected_version,omitempty"`
-	SourceRef       relationEndpointRequest `json:"source_ref,omitempty"`
-	TargetRef       relationEndpointRequest `json:"target_ref,omitempty"`
+	Action          string                    `json:"action"`
+	RelationID      string                    `json:"relation_id,omitempty"`
+	ExpectedVersion *uint64                   `json:"expected_version,omitempty"`
+	SourceRef       relationEndpointRequest   `json:"source_ref,omitempty"`
+	TargetRef       relationEndpointRequest   `json:"target_ref,omitempty"`
 	Strength        domain.DependencyStrength `json:"strength,omitempty"`
-	Reason          string                  `json:"reason,omitempty"`
+	Reason          string                    `json:"reason,omitempty"`
 }
 
 type publishRoadmapDraftRequest struct {

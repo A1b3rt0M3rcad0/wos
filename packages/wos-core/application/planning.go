@@ -51,10 +51,10 @@ const (
 
 type RoadmapDependencyChange struct {
 	Action          RoadmapDependencyChangeAction
-	RelationID      domain.ID
-	ExpectedVersion domain.Version
-	SourceRef       domain.EntityRef
-	TargetRef       domain.EntityRef
+	RelationID      *domain.ID
+	ExpectedVersion *domain.Version
+	SourceRef       *domain.EntityRef
+	TargetRef       *domain.EntityRef
 	Strength        domain.DependencyStrength
 	Reason          string
 }
@@ -812,17 +812,22 @@ func applyRoadmapDependencyChanges(
 	for _, change := range changes {
 		switch change.Action {
 		case RoadmapDependencyChangeAdd:
-			if _, ok := referenced[change.SourceRef]; !ok {
+			if change.SourceRef == nil || change.TargetRef == nil {
+				return domain.NewError(domain.ErrorCodeInvalidArgument, "add dependency change requires source_ref and target_ref")
+			}
+			sourceRef := *change.SourceRef
+			targetRef := *change.TargetRef
+			if _, ok := referenced[sourceRef]; !ok {
 				return domain.NewError(domain.ErrorCodeRoadmap, "dependency source must be referenced by the published Roadmap draft")
 			}
-			if _, ok := referenced[change.TargetRef]; !ok {
+			if _, ok := referenced[targetRef]; !ok {
 				return domain.NewError(domain.ErrorCodeRoadmap, "dependency target must be referenced by the published Roadmap draft")
 			}
-			sourceState, err := dependencyEndpointState(ctx, uow, change.SourceRef)
+			sourceState, err := dependencyEndpointState(ctx, uow, sourceRef)
 			if err != nil {
 				return err
 			}
-			if _, err := dependencyEndpointState(ctx, uow, change.TargetRef); err != nil {
+			if _, err := dependencyEndpointState(ctx, uow, targetRef); err != nil {
 				return err
 			}
 			if sourceState.terminal {
@@ -838,8 +843,8 @@ func applyRoadmapDependencyChanges(
 			}
 			relation, err := domain.NewDependencyRelation(
 				id,
-				change.SourceRef,
-				change.TargetRef,
+				sourceRef,
+				targetRef,
 				change.Strength,
 				now,
 			)
@@ -859,13 +864,16 @@ func applyRoadmapDependencyChanges(
 			}
 
 		case RoadmapDependencyChangeRemove:
+			if change.RelationID == nil {
+				return domain.NewError(domain.ErrorCodeInvalidArgument, "dependency removal relation_id is required")
+			}
 			if err := change.RelationID.Validate(); err != nil {
 				return domain.WrapError(domain.ErrorCodeInvalidArgument, "dependency removal relation_id is invalid", err)
 			}
-			if change.ExpectedVersion == 0 {
+			if change.ExpectedVersion == nil || *change.ExpectedVersion == 0 {
 				return domain.NewError(domain.ErrorCodeInvalidArgument, "dependency removal expected_version is required")
 			}
-			relation, err := uow.Relations().Get(ctx, roadmap.Scope, change.RelationID)
+			relation, err := uow.Relations().Get(ctx, roadmap.Scope, *change.RelationID)
 			if err != nil {
 				return err
 			}
@@ -888,7 +896,7 @@ func applyRoadmapDependencyChanges(
 			if err := relation.Remove(change.Reason, now); err != nil {
 				return err
 			}
-			if err := uow.Relations().Save(ctx, relation, change.ExpectedVersion); err != nil {
+			if err := uow.Relations().Save(ctx, relation, *change.ExpectedVersion); err != nil {
 				return err
 			}
 

@@ -584,6 +584,16 @@ title, required flag and verification mode. Active `depends_on` Relations
 between entities represented in the plan are captured as informational
 dependency snapshots.
 
+Publication may also carry an explicit `dependency_changes` batch. Each
+`add` names source/target references and dependency strength; each `remove`
+names the persisted Relation plus its expected version and removal reason.
+Only entities represented by reference nodes in the draft may be changed
+through this path. The dependency batch and immutable RoadmapRevision are
+committed in the same WOS transaction: if any dependency mutation, graph
+validation, snapshot construction or publication step fails, none of them are
+committed. Omitting `dependency_changes` performs no operational dependency
+mutation; `after` links never imply one.
+
 The revision `content_hash` is a deterministic SHA-256 over canonicalized
 published nodes, plan ordering links and dependency snapshots. Published
 revision content is append-only. Opening a later draft from an old revision
@@ -608,7 +618,18 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/roadmaps/$ROADMAP_ID/draft/actions/p
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-wave11-publish-0001' \
   -H "If-Match: $ROADMAP_ETAG" \
-  -d '{"expected_draft_version":2}'
+  -d '{
+    "expected_draft_version": 2,
+    "dependency_changes": [
+      {
+        "action": "add",
+        "source_ref": {"kind": "work_item", "id": "<dependent-work-id>"},
+        "target_ref": {"kind": "work_item", "id": "<prerequisite-work-id>"},
+        "strength": "hard",
+        "reason": "Explicit dependency introduced with this published plan"
+      }
+    ]
+  }'
 ```
 
 Planning commands never start, complete, cancel or claim referenced WorkItems.
