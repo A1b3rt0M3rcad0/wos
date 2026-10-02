@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
 func TestCommandContextSeparatesPrincipalActorAndExecution(t *testing.T) {

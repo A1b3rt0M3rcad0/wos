@@ -9,7 +9,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
-	"github.com/A1b3rt0M3rcad0/wos/storage/memory"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 )
 
 func newAdministrativeOverrideHandler(t *testing.T, allow bool) *Handler {
