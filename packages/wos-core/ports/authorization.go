@@ -11,11 +11,12 @@ type Permission string
 const (
 	PermissionWorkAdminCancel   Permission = "work:admin_cancel"
 	PermissionWorkAdminComplete Permission = "work:admin_complete"
+	PermissionAssessmentWaive    Permission = "assessment:waive"
 )
 
 func (p Permission) Valid() bool {
 	switch p {
-	case PermissionWorkAdminCancel, PermissionWorkAdminComplete:
+	case PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
 		return true
 	default:
 		return false

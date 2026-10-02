@@ -27,6 +27,35 @@ func (m VerificationMode) Valid() bool {
 	}
 }
 
+type CriterionDefinitionRevision struct {
+	CriterionID      ID                `json:"criterion_id"`
+	OwnerRef         EntityRef         `json:"owner_ref"`
+	Revision         CriterionRevision `json:"criterion_revision"`
+	Title            string            `json:"title"`
+	Description      string            `json:"description,omitempty"`
+	Required         bool              `json:"required"`
+	VerificationMode VerificationMode  `json:"verification_mode"`
+}
+
+func (r CriterionDefinitionRevision) Validate() error {
+	if err := r.CriterionID.Validate(); err != nil {
+		return WrapError(ErrorCodeCriterion, "criterion revision id is invalid", err)
+	}
+	if err := r.OwnerRef.Validate(); err != nil {
+		return WrapError(ErrorCodeCriterion, "criterion revision owner is invalid", err)
+	}
+	if r.Revision < InitialCriterionRevision {
+		return NewError(ErrorCodeCriterion, "criterion revision must be at least 1")
+	}
+	if strings.TrimSpace(r.Title) == "" {
+		return NewError(ErrorCodeCriterion, "criterion revision title is required")
+	}
+	if !r.VerificationMode.Valid() {
+		return NewError(ErrorCodeCriterion, "criterion revision verification mode is invalid")
+	}
+	return nil
+}
+
 type CriterionStatus string
 
 const (
@@ -80,6 +109,18 @@ func NewSuccessCriterion(id ID, owner EntityRef, title, description string, requ
 	return c, nil
 }
 
+func (c SuccessCriterion) DefinitionRevision() CriterionDefinitionRevision {
+	return CriterionDefinitionRevision{
+		CriterionID:      c.ID,
+		OwnerRef:         c.OwnerRef,
+		Revision:         c.Revision,
+		Title:            c.Title,
+		Description:      c.Description,
+		Required:         c.Required,
+		VerificationMode: c.VerificationMode,
+	}
+}
+
 func (c SuccessCriterion) Validate() error {
 	if err := c.ID.Validate(); err != nil {
 		return WrapError(ErrorCodeCriterion, "criterion id is invalid", err)
@@ -102,12 +143,33 @@ func (c SuccessCriterion) Validate() error {
 	return nil
 }
 
+type EvaluatorRef struct {
+	Provider string `json:"provider"`
+	ID       string `json:"id"`
+	Version  string `json:"version"`
+}
+
+func (r EvaluatorRef) Validate() error {
+	if strings.TrimSpace(r.Provider) == "" {
+		return NewError(ErrorCodeAssessment, "evaluator_ref provider is required")
+	}
+	if strings.TrimSpace(r.ID) == "" {
+		return NewError(ErrorCodeAssessment, "evaluator_ref id is required")
+	}
+	if strings.TrimSpace(r.Version) == "" {
+		return NewError(ErrorCodeAssessment, "evaluator_ref version is required")
+	}
+	return nil
+}
+
 type CriterionAssessment struct {
 	ID                     ID                `json:"id"`
 	CriterionID            ID                `json:"criterion_id"`
 	CriterionRevision      CriterionRevision `json:"criterion_revision"`
 	Result                 AssessmentResult  `json:"result"`
 	Rationale              string            `json:"rationale"`
+	EvidenceIDs            []ID              `json:"evidence_ids,omitempty"`
+	EvaluatorRef           *EvaluatorRef     `json:"evaluator_ref,omitempty"`
 	PrincipalID            string            `json:"principal_id"`
 	Actor                  ActorRef          `json:"actor_ref"`
 	AssessedAt             time.Time         `json:"assessed_at"`
@@ -129,6 +191,21 @@ func (a CriterionAssessment) Validate() error {
 	}
 	if strings.TrimSpace(a.Rationale) == "" {
 		return NewError(ErrorCodeAssessment, "assessment rationale is required")
+	}
+	seenEvidence := make(map[ID]struct{}, len(a.EvidenceIDs))
+	for _, evidenceID := range a.EvidenceIDs {
+		if err := evidenceID.Validate(); err != nil {
+			return WrapError(ErrorCodeAssessment, "assessment evidence id is invalid", err)
+		}
+		if _, exists := seenEvidence[evidenceID]; exists {
+			return NewError(ErrorCodeAssessment, "assessment evidence_ids cannot contain duplicates")
+		}
+		seenEvidence[evidenceID] = struct{}{}
+	}
+	if a.EvaluatorRef != nil {
+		if err := a.EvaluatorRef.Validate(); err != nil {
+			return err
+		}
 	}
 	if strings.TrimSpace(a.PrincipalID) == "" {
 		return NewError(ErrorCodeAssessment, "assessment principal_id is required")
@@ -227,7 +304,7 @@ func (s *CriterionSet) Retire(id ID) error {
 	return nil
 }
 
-func (s *CriterionSet) AssessAttestation(a CriterionAssessment) error {
+func (s *CriterionSet) RecordAssessment(a CriterionAssessment, waiverAuthorized bool) error {
 	if err := a.Validate(); err != nil {
 		return err
 	}
@@ -238,14 +315,30 @@ func (s *CriterionSet) AssessAttestation(a CriterionAssessment) error {
 	if c.Status != CriterionStatusActive {
 		return NewError(ErrorCodeAssessment, "criterion is not active")
 	}
-	if c.VerificationMode != VerificationModeAttestation {
-		return NewError(ErrorCodeAssessment, "criterion does not accept attestation")
-	}
 	if a.CriterionRevision != c.Revision {
 		return NewError(ErrorCodeAssessment, "assessment targets a stale criterion revision")
 	}
-	if a.Result == AssessmentResultWaived {
-		return NewError(ErrorCodeAssessment, "waiver authorization is not part of the Wave 02 attestation path")
+	if a.Result == AssessmentResultWaived && !waiverAuthorized {
+		return NewError(ErrorCodeForbidden, "waived assessment requires assessment:waive authorization")
+	}
+	switch c.VerificationMode {
+	case VerificationModeAttestation:
+		if a.EvaluatorRef != nil {
+			return NewError(ErrorCodeAssessment, "attestation assessment must not include evaluator_ref")
+		}
+	case VerificationModeEvidenceReview:
+		if len(a.EvidenceIDs) == 0 {
+			return NewError(ErrorCodeAssessment, "evidence_review assessment requires evidence_ids")
+		}
+		if a.EvaluatorRef != nil {
+			return NewError(ErrorCodeAssessment, "evidence_review assessment must not include evaluator_ref")
+		}
+	case VerificationModeExternalEvaluation:
+		if a.EvaluatorRef == nil {
+			return NewError(ErrorCodeAssessment, "external_evaluation assessment requires evaluator_ref")
+		}
+	default:
+		return NewError(ErrorCodeAssessment, "criterion verification mode is invalid")
 	}
 	s.ensureMap()
 	if current, ok := s.CurrentAssessments[a.CriterionID]; ok {
@@ -255,6 +348,20 @@ func (s *CriterionSet) AssessAttestation(a CriterionAssessment) error {
 	s.Assessments = append(s.Assessments, a)
 	s.CurrentAssessments[a.CriterionID] = a
 	return nil
+}
+
+func (s *CriterionSet) AssessAttestation(a CriterionAssessment) error {
+	c, err := s.Find(a.CriterionID)
+	if err != nil {
+		return err
+	}
+	if c.VerificationMode != VerificationModeAttestation {
+		return NewError(ErrorCodeAssessment, "criterion does not accept attestation")
+	}
+	if a.Result == AssessmentResultWaived {
+		return NewError(ErrorCodeAssessment, "waiver authorization is not part of the attestation compatibility path")
+	}
+	return s.RecordAssessment(a, false)
 }
 
 func (s CriterionSet) HasRequiredActive() bool {
