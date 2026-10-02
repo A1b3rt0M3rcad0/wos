@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/A1b3rt0M3rcad0/wos/core/application"
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
-	"github.com/A1b3rt0M3rcad0/wos/internal/authentication/local"
-	httptransport "github.com/A1b3rt0M3rcad0/wos/internal/transport/http"
-	"github.com/A1b3rt0M3rcad0/wos/storage/sqlite"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
+	httptransport "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 )
 
 type Runtime struct {

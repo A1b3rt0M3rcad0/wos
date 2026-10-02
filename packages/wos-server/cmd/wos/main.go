@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/A1b3rt0M3rcad0/wos/internal/server"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-server/internal/server"
 )
 
 func main() {
