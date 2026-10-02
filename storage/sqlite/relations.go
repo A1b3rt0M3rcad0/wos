@@ -14,11 +14,11 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		return domain.Relation{}, err
 	}
 	var (
-		version                               int64
-		sourceID, sourceKind, relationType    string
-		targetID, targetKind, lifecycle       string
-		strength, satisfaction, reason        sql.NullString
-		createdAt, updatedAt                  int64
+		version                            int64
+		sourceID, sourceKind, relationType string
+		targetID, targetKind, lifecycle    string
+		strength, satisfaction, reason     sql.NullString
+		createdAt, updatedAt               int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, source_id, source_kind, relation_type, target_id, target_kind,
@@ -50,18 +50,18 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		return domain.Relation{}, err
 	}
 	value := domain.Relation{
-		ID:            id,
-		Scope:         scope,
-		Version:       domain.Version(version),
-		SourceRef:     domain.EntityRef{Scope: scope, Kind: sourceKindParsed, ID: sourceParsed},
-		RelationType:  domain.RelationType(relationType),
-		TargetRef:     domain.EntityRef{Scope: scope, Kind: targetKindParsed, ID: targetParsed},
-		Strength:      domain.DependencyStrength(strength.String),
-		Satisfaction:  domain.DependencySatisfaction(satisfaction.String),
-		Lifecycle:     domain.RelationLifecycle(lifecycle),
-		Reason:        reason.String,
-		CreatedAt:     decodeTime(createdAt),
-		UpdatedAt:     decodeTime(updatedAt),
+		ID:           id,
+		Scope:        scope,
+		Version:      domain.Version(version),
+		SourceRef:    domain.EntityRef{Scope: scope, Kind: sourceKindParsed, ID: sourceParsed},
+		RelationType: domain.RelationType(relationType),
+		TargetRef:    domain.EntityRef{Scope: scope, Kind: targetKindParsed, ID: targetParsed},
+		Strength:     domain.DependencyStrength(strength.String),
+		Satisfaction: domain.DependencySatisfaction(satisfaction.String),
+		Lifecycle:    domain.RelationLifecycle(lifecycle),
+		Reason:       reason.String,
+		CreatedAt:    decodeTime(createdAt),
+		UpdatedAt:    decodeTime(updatedAt),
 	}
 	if err := value.Validate(); err != nil {
 		return domain.Relation{}, domain.WrapError(domain.ErrorCodeInvalidRelation, "persisted relation is invalid", err)
