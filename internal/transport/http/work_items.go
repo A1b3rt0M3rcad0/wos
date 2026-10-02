@@ -35,6 +35,7 @@ func (h *Handler) createWorkItem(w http.ResponseWriter, r *http.Request) {
 		Priority:    request.Priority,
 		Lifecycle:   request.Lifecycle,
 		ObjectiveID: objectiveID,
+		NotBefore:  request.NotBefore,
 	})
 	if err != nil {
 		writeError(w, r, err)
