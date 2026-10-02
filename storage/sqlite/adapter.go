@@ -176,7 +176,7 @@ type unitOfWork struct {
 func (u *unitOfWork) Outcomes() ports.OutcomeRepository     { return u.outcomes }
 func (u *unitOfWork) Objectives() ports.ObjectiveRepository { return u.objectives }
 func (u *unitOfWork) WorkItems() ports.WorkItemRepository   { return u.workItems }
-func (u *unitOfWork) Relations() ports.RelationRepository     { return u.relations }
+func (u *unitOfWork) Relations() ports.RelationRepository   { return u.relations }
 func (u *unitOfWork) Coordination() ports.CoordinationStore { return u.coordination }
 func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }
