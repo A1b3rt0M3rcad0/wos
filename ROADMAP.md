@@ -426,7 +426,7 @@ The verified suite includes direct/inherited blocking, Issue/Blocker lifecycle i
 
 ## Wave 08 — Leases and Fencing
 
-**Status:** 🚧 In progress
+**Status:** ✅ Implementation complete; pending integration
 
 Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, principal-bound leases, TTL, fencing tokens, expiration semantics, attention-needed projection and audited administrative override.
 
@@ -443,12 +443,21 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 ### Remaining work
 
 - [x] Integrate the operational projection into the broader Outcome continuity/state queries.
-- [ ] Add audited administrative override semantics and the required authorization boundary.
+- [x] Add audited administrative override semantics and the required authorization boundary.
 - [x] Expose Renew/Reclaim and operational lease state through HTTP, OpenAPI and HTTP documentation.
 - [x] Add SQLite restart/parity and concentrated concurrent-claim/reclaim contract coverage for the hardened semantics.
-- [ ] Complete the Wave 08 end-to-end transport and concurrency verification before marking the wave done.
+- [x] Complete the Wave 08 end-to-end transport and concurrency verification before marking the wave done.
 
-**Completion gate:** at most one current lease exists and a stale claimant cannot complete after reclaim. The stale-claimant invariant is covered by the initial implementation; the full gate remains open until adapter/transport/concurrency verification is complete.
+### Administrative override boundary
+
+- [x] Normal cancellation cannot silently terminate an in-progress leased WorkItem.
+- [x] Add explicit `work:admin_cancel` and `work:admin_complete` permissions behind a transport-neutral Authorizer port.
+- [x] Default privileged authorization to deny unless a deployment composes an explicit authorizer.
+- [x] Keep local standalone overrides disabled unless `WOS_LOCAL_ADMIN_OVERRIDES=true` is explicitly configured.
+- [x] Audit privileged state changes through Outcome-scoped Domain Events with principal, actor, command and reason.
+- [x] Administrative completion overrides lease ownership/expiry only; Blocker, hard-dependency and completion-evidence gates remain active.
+
+**Completion gate:** satisfied on the implementation branch — only one current lease can survive claim/reclaim races, fencing tokens advance monotonically, stale claimants cannot complete after reclaim, and bypassing lease ownership requires an explicit privileged permission and auditable reason.
 
 **Target commit:**  
 `feat(coordination): add work item leases and fencing tokens`
@@ -603,9 +612,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–07 are merged into `master`. Wave 08 — Leases and Fencing is active on `feat/wave-08-leases-fencing`.
+Waves 01–07 are merged into `master`. Wave 08 — Leases and Fencing is implementation-complete on `feat/wave-08-leases-fencing` and pending integration.
 
-1. Add the audited administrative override boundary without bypassing principal/lease ownership semantics.
-2. Complete final Wave 08 transport/concurrency verification and document its CI evidence.
-3. Keep Wave 08 open until the administrative override contract is implemented and verified.
-4. Begin Wave 09 only after the Wave 08 completion gate is explicitly closed.
+1. Review and merge PR #8 into `master`.
+2. Start Wave 09 — Documentary Records and Decisions only from the integrated Wave 08 baseline.
+3. Implement Artifact, Evidence, EvidenceLink and Decision without weakening the completed lease/fencing contract.
+4. Preserve the Wave 08 authorization port as the seam for the full Namespace grant model planned in Wave 15.

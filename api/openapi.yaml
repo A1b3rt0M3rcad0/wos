@@ -644,6 +644,82 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
 
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-cancel:
+    post:
+      tags: [WorkItems]
+      operationId: administrativeCancelWorkItem
+      description: |
+        Cancels in-progress leased work without lease ownership. Requires the
+        deployment authorizer to grant work:admin_cancel and a non-empty audit reason.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+      responses:
+        "200":
+          description: Leased WorkItem administratively cancelled and audited.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-complete:
+    post:
+      tags: [WorkItems]
+      operationId: administrativeCompleteWorkItem
+      description: |
+        Completes in-progress leased work while overriding lease ownership or expiry.
+        Requires work:admin_complete. Criteria, dependency and Blocker gates remain enforced.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdministrativeCompleteWorkItemRequest"
+      responses:
+        "200":
+          description: Leased WorkItem administratively completed and audited.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/complete:
     post:
       tags: [WorkItems]
@@ -1231,6 +1307,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: Authenticated principal lacks the required privileged permission.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
     PreconditionFailed:
       description: Persisted version did not satisfy the supplied precondition.
       content:
@@ -1553,6 +1635,15 @@ components:
           type: integer
           minimum: 30
           maximum: 3600
+
+    AdministrativeCompleteWorkItemRequest:
+      type: object
+      additionalProperties: false
+      required: [result_summary, reason]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        result_summary: {type: string}
+        reason: {type: string}
 
     CompleteWorkItemRequest:
       type: object

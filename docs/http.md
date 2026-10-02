@@ -28,6 +28,8 @@ Supported environment overrides:
 export WOS_LISTEN=127.0.0.1:8080
 export WOS_SQLITE_PATH=./data/wos.db
 export WOS_LOCAL_PRINCIPAL_ID=local-user
+# Optional and disabled by default:
+export WOS_LOCAL_ADMIN_OVERRIDES=true
 go run ./cmd/wos server
 ```
 
@@ -263,6 +265,53 @@ Outcome, Objectives, WorkItems, Relations, Issues and Blockers plus derived
 and the current `outcome_revision`. Lease expiration can therefore change the
 projection without changing persisted lifecycle or `outcome_revision`.
 
+
+## Administrative WorkItem overrides
+
+Administrative override is intentionally separate from normal lease ownership.
+The Application layer calls an explicit `Authorizer` port and defaults to
+deny for privileged operations. The two Wave 08 permissions are:
+
+```text
+work:admin_cancel
+work:admin_complete
+```
+
+In the standalone local profile these permissions remain disabled unless
+`WOS_LOCAL_ADMIN_OVERRIDES=true` is set. This is an explicit local-development
+opt-in; the Namespace grant/token model remains Wave 15.
+
+Normal `CancelWorkItem` no longer cancels an `in_progress` leased WorkItem.
+An operator with `work:admin_cancel` may use:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/admin-cancel" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-admin-cancel-work-0001' \
+  -H "If-Match: $WORK_ETAG" \
+  -d '{"reason":"Operador encerrou execução abandonada"}'
+```
+
+Administrative completion is restricted to `in_progress` leased work. It
+overrides lease ownership/expiry only; it still enforces active Blockers, hard
+dependencies, SuccessCriteria and result requirements:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/admin-complete" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-admin-complete-work-0001' \
+  -H "If-Match: $WORK_ETAG" \
+  -d '{
+    "result_summary":"Resultado externo verificado pelo operador",
+    "reason":"Executor original ficou indisponível após produzir o resultado"
+  }'
+```
+
+Both operations are idempotent, version-checked and produce Outcome-scoped
+Domain Events (`work_item.admin_cancelled` or `work_item.admin_completed`)
+containing the authenticated principal, declared actor, command ID and audit
+reason in the command payload.
+
 ## Issues and Blockers
 
 Issues and Blockers are independent aggregates. An Issue records a problem or
@@ -380,6 +429,7 @@ Current mappings are:
 | HTTP | Meaning |
 | --- | --- |
 | 400 | malformed JSON, invalid identifiers/format or invalid idempotency key |
+| 403 | authenticated principal lacks a required privileged permission |
 | 404 | entity absent from the explicit Namespace/Outcome scope |
 | 409 | lifecycle, dependency cycle/graph limit, precondition, lease or idempotency conflict |
 | 412 | stale or mismatched `If-Match` / `expected_version` |
