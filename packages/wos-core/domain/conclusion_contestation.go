@@ -17,9 +17,9 @@ func (k ConclusionContestationKind) Valid() bool {
 }
 
 type ConclusionContestation struct {
-	OwnerRef     EntityRef                   `json:"owner_ref"`
-	Kind         ConclusionContestationKind  `json:"kind"`
-	CriterionID  ID                          `json:"criterion_id"`
-	AssessmentID ID                          `json:"assessment_id"`
-	EvidenceID   *ID                         `json:"evidence_id,omitempty"`
+	OwnerRef     EntityRef                  `json:"owner_ref"`
+	Kind         ConclusionContestationKind `json:"kind"`
+	CriterionID  ID                         `json:"criterion_id"`
+	AssessmentID ID                         `json:"assessment_id"`
+	EvidenceID   *ID                        `json:"evidence_id,omitempty"`
 }

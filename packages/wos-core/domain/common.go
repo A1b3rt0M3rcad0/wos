@@ -24,9 +24,9 @@ func (p Priority) Valid() bool {
 }
 
 type CriterionObligationSnapshot struct {
-	CriterionID      ID                `json:"criterion_id"`
+	CriterionID       ID                `json:"criterion_id"`
 	CriterionRevision CriterionRevision `json:"criterion_revision"`
-	VerificationMode VerificationMode  `json:"verification_mode"`
+	VerificationMode  VerificationMode  `json:"verification_mode"`
 }
 
 func (o CriterionObligationSnapshot) Validate() error {
@@ -43,9 +43,9 @@ func (o CriterionObligationSnapshot) Validate() error {
 }
 
 type ConclusionObligations struct {
-	RequiredCriteria     []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
-	RequiredObjectiveIDs []ID                          `json:"required_objective_ids,omitempty"`
-	ResultSummaryRequired bool                         `json:"result_summary_required,omitempty"`
+	RequiredCriteria      []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
+	RequiredObjectiveIDs  []ID                          `json:"required_objective_ids,omitempty"`
+	ResultSummaryRequired bool                          `json:"result_summary_required,omitempty"`
 }
 
 func (o ConclusionObligations) Validate() error {

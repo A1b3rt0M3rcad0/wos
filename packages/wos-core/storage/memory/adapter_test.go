@@ -218,7 +218,6 @@ func TestDocumentaryRepositoriesEnforceHistoricalImmutability(t *testing.T) {
 	}
 }
 
-
 func TestAssessmentProvenanceIsDeepCopied(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
