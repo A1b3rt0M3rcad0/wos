@@ -22,8 +22,8 @@ func TestLeaseRenewAndReclaimAreAuditedAndFenceStaleClaimant(t *testing.T) {
 
 	ccOld := domain.CommandContext{
 		PrincipalID: "worker-old",
-		Actor: domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-old"},
-		CommandID: id("0199f210-0000-7000-8000-000000000001"),
+		Actor:       domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-old"},
+		CommandID:   id("0199f210-0000-7000-8000-000000000001"),
 	}
 	namespaceID := id("0199f210-0000-7000-8000-000000000002")
 
@@ -87,8 +87,8 @@ func TestLeaseRenewAndReclaimAreAuditedAndFenceStaleClaimant(t *testing.T) {
 	reclaimAt := renewAt.Add(domain.MinLeaseTTL)
 	ccNew := domain.CommandContext{
 		PrincipalID: "worker-new",
-		Actor: domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-new"},
-		CommandID: id("0199f210-0000-7000-8000-000000000003"),
+		Actor:       domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-new"},
+		CommandID:   id("0199f210-0000-7000-8000-000000000003"),
 	}
 	reclaimService, err := application.NewService(store, fixedClock{now: reclaimAt}, &sequenceIDs{next: 600})
 	if err != nil {

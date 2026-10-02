@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 07 — Issues and Blockers (implementation complete on PR #7; pending integration)
+**Current wave:** Wave 08 — Leases and Fencing (in progress)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -373,7 +373,7 @@ CI run `37008538950` (#97) validated implementation head `8549346c96e6e2c7f940b3
 
 ## Wave 07 — Issues and Blockers
 
-**Status:** ✅ Done on implementation branch; pending integration into `master`
+**Status:** ✅ Done and merged into `master`
 
 Implement independent Issue and Blocker aggregates, typed causes/targets, direct/subtree propagation, explicit resolution, inherited blocking projection and bounded compound commands.
 
@@ -426,11 +426,29 @@ The verified suite includes direct/inherited blocking, Issue/Blocker lifecycle i
 
 ## Wave 08 — Leases and Fencing
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, principal-bound leases, TTL, fencing tokens, expiration semantics, attention-needed projection and audited administrative override.
 
-**Completion gate:** at most one current lease exists and a stale claimant cannot complete after reclaim.
+### Initial implementation
+
+- [x] Preserve the existing Claim/Release contract and harden lease TTL validation.
+- [x] Add owner-bound lease renewal without rotating claim identity or fencing token.
+- [x] Add explicit reclaim of expired in-progress work with a new claim ID and monotonically increasing fencing token.
+- [x] Reject stale claimant completion after reclaim.
+- [x] Add Application commands for Renew/Reclaim through the existing transaction, idempotency and Domain Event pipeline.
+- [x] Emit explicit `work_item.lease_renewed` and `work_item.reclaimed` events.
+- [x] Add deterministic `lease_status` and WorkItem `display_state` projection, including `attention_needed` for expired leases.
+
+### Remaining work
+
+- [ ] Integrate the operational projection into the broader Outcome continuity/state queries.
+- [ ] Add audited administrative override semantics and the required authorization boundary.
+- [ ] Expose Renew/Reclaim and operational lease state through HTTP, OpenAPI and HTTP documentation.
+- [ ] Add SQLite restart/parity and concentrated concurrent-claim/reclaim contract coverage for the hardened semantics.
+- [ ] Complete the Wave 08 end-to-end transport and concurrency verification before marking the wave done.
+
+**Completion gate:** at most one current lease exists and a stale claimant cannot complete after reclaim. The stale-claimant invariant is covered by the initial implementation; the full gate remains open until adapter/transport/concurrency verification is complete.
 
 **Target commit:**  
 `feat(coordination): add work item leases and fencing tokens`
@@ -585,9 +603,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–06 are merged into `master`. Wave 07 — Issues and Blockers satisfies its implementation and verification gate on PR #7 and is pending integration.
+Waves 01–07 are merged into `master`. Wave 08 — Leases and Fencing is active on `feat/wave-08-leases-fencing`.
 
-1. Review and merge PR #7 into `master`.
-2. Start Wave 08 — Leases and Fencing from the integrated Wave 07 baseline.
-3. Harden Claim/Renew/Release/Reclaim semantics, TTL expiration and fencing-token behavior.
-4. Prove that a stale claimant cannot complete a WorkItem after reclaim.
+1. Continue Wave 08 from the first three implementation commits without treating the wave as complete.
+2. Integrate lease/attention projections into continuity queries and add adapter parity/concurrency coverage.
+3. Add the audited administrative override boundary.
+4. Expose the completed lease coordination contract through HTTP/OpenAPI and verify the Wave 08 completion gate.
