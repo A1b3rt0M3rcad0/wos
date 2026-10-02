@@ -17,18 +17,18 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		version                               int64
 		sourceID, sourceKind, relationType    string
 		targetID, targetKind, lifecycle       string
-		strength, satisfaction, removalReason sql.NullString
+		strength, satisfaction, reason        sql.NullString
 		createdAt, updatedAt                  int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, source_id, source_kind, relation_type, target_id, target_kind,
-       strength, satisfaction, lifecycle, removal_reason, created_at, updated_at
+       strength, satisfaction, lifecycle, reason, created_at, updated_at
 FROM relations
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
 		&version, &sourceID, &sourceKind, &relationType, &targetID, &targetKind,
-		&strength, &satisfaction, &lifecycle, &removalReason, &createdAt, &updatedAt,
+		&strength, &satisfaction, &lifecycle, &reason, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return domain.Relation{}, mapSQLError("get relation", err)
@@ -59,7 +59,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		Strength:      domain.DependencyStrength(strength.String),
 		Satisfaction:  domain.DependencySatisfaction(satisfaction.String),
 		Lifecycle:     domain.RelationLifecycle(lifecycle),
-		RemovalReason: removalReason.String,
+		Reason:        reason.String,
 		CreatedAt:     decodeTime(createdAt),
 		UpdatedAt:     decodeTime(updatedAt),
 	}
@@ -122,7 +122,7 @@ func (r relationRepository) Insert(ctx context.Context, relation domain.Relation
 INSERT INTO relations (
     id, namespace_id, outcome_id, kind, version,
     source_id, source_kind, relation_type, target_id, target_kind,
-    strength, satisfaction, lifecycle, removal_reason, created_at, updated_at
+    strength, satisfaction, lifecycle, reason, created_at, updated_at
 ) VALUES (?, ?, ?, 'relation', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		relation.ID.String(),
 		relation.Scope.NamespaceID.String(),
@@ -136,7 +136,7 @@ INSERT INTO relations (
 		nullableString(string(relation.Strength)),
 		nullableString(string(relation.Satisfaction)),
 		string(relation.Lifecycle),
-		relation.RemovalReason,
+		relation.Reason,
 		encodeTime(relation.CreatedAt),
 		encodeTime(relation.UpdatedAt),
 	)
@@ -155,11 +155,11 @@ func (r relationRepository) Save(ctx context.Context, relation domain.Relation, 
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE relations
-SET version = ?, lifecycle = ?, removal_reason = ?, updated_at = ?
+SET version = ?, lifecycle = ?, reason = ?, updated_at = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(relation.Version),
 		string(relation.Lifecycle),
-		relation.RemovalReason,
+		relation.Reason,
 		encodeTime(relation.UpdatedAt),
 		relation.Scope.NamespaceID.String(),
 		relation.Scope.OutcomeID.String(),
