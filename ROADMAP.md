@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 05 — HTTP Vertical Slice (complete in PR #5; pending merge)
+**Current wave:** Wave 06 — Dependencies, Graph and Readiness (in progress)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -337,7 +337,7 @@ GitHub Actions run `36967299973` validated head `9a6cc4af2526420b6a8a6b6bbff209b
 
 ## Wave 06 — Dependencies, Graph and Readiness
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
 Implement canonical `depends_on` relations, hard/advisory semantics, DAG validation, Objective hierarchy constraints, deterministic readiness, `not_before`, readiness reasons and ready-work queries.
 
@@ -522,11 +522,12 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–03 are merged into `master`. Wave 04 is technically complete on PR #4 and remains unmerged pending review.
+Waves 01–05 are merged into `master`. Wave 06 is active on `feat/wave-06-dependencies-readiness`.
 
-1. Review PR #4 and its final CI result.
-2. Merge Wave 04 only when approved by the repository owner.
-3. Keep Wave 05 — HTTP Vertical Slice as **Planned** until that merge/authorization.
-4. Do not move HTTP transport concerns into Wave 04 follow-up work.
+1. Complete the typed `Relation/depends_on` aggregate and persistence contracts.
+2. Enforce Outcome-scoped DAG validation under the Outcome coordination guard.
+3. Expose deterministic Objective/WorkItem readiness with explicit reasons and `not_before`.
+4. Prove memory/SQLite parity and concurrent cycle rejection.
+5. Add the ready-work HTTP surface only after the Core/storage contract is stable.
 
-Wave 05 implementation has not started.
+Wave 06 implementation has started.
