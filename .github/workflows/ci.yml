@@ -41,6 +41,21 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare formatted Wave 09 validation tree
+        if: github.head_ref == 'feat/wave-09-documentary-records'
+        shell: bash
+        run: |
+          gofmt -w .
+          tar -czf /tmp/wave09-formatted.tar.gz packages tests
+
+      - name: Upload formatted Wave 09 tree
+        if: github.head_ref == 'feat/wave-09-documentary-records'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave09-formatted
+          path: /tmp/wave09-formatted.tar.gz
+          retention-days: 1
+
       - name: Formatting
         shell: bash
         run: |
