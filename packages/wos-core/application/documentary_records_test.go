@@ -159,7 +159,6 @@ func TestWave09RejectsCrossOutcomeEvidenceLink(t *testing.T) {
 	}
 }
 
-
 func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
@@ -176,12 +175,12 @@ func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
 	artifact := artifactResult.Value
 
 	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
-		Scope: scope,
+		Scope:        scope,
 		EvidenceType: domain.EvidenceTypeSource,
-		Description: "state evidence",
-		SourceRef: domain.SourceReference{Provider: "test", URI: "file:///state-report.json"},
-		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
-		ArtifactID: &artifact.ID,
+		Description:  "state evidence",
+		SourceRef:    domain.SourceReference{Provider: "test", URI: "file:///state-report.json"},
+		CapturedAt:   time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+		ArtifactID:   &artifact.ID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -196,11 +195,11 @@ func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
 	decision := decisionResult.Value
 
 	linkResult, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
-		Scope: scope,
+		Scope:      scope,
 		EvidenceID: evidenceResult.Value.ID,
-		TargetRef: decision.Ref(),
-		Stance: domain.EvidenceStanceSupports,
-		Rationale: "evidence supports the proposed state projection",
+		TargetRef:  decision.Ref(),
+		Stance:     domain.EvidenceStanceSupports,
+		Rationale:  "evidence supports the proposed state projection",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -226,7 +225,6 @@ func TestWave09OutcomeStateProjectsDocumentaryContext(t *testing.T) {
 		t.Fatalf("outcome revision = %d, want %d", state.OutcomeRevision, linkResult.OutcomeRevision)
 	}
 }
-
 
 func TestWave09DocumentaryRecordsDoNotConcludeExecutionState(t *testing.T) {
 	ctx := context.Background()
@@ -297,10 +295,10 @@ func TestWave09EvidenceLinkDoesNotAssessCriterion(t *testing.T) {
 	cc := commandContext()
 
 	criterionResult, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{
-		Owner: outcome.Ref(),
-		ExpectedVersion: outcome.Version,
-		Title: "Evidence reviewed",
-		Required: true,
+		Owner:            outcome.Ref(),
+		ExpectedVersion:  outcome.Version,
+		Title:            "Evidence reviewed",
+		Required:         true,
 		VerificationMode: domain.VerificationModeEvidenceReview,
 	})
 	if err != nil {
@@ -309,22 +307,22 @@ func TestWave09EvidenceLinkDoesNotAssessCriterion(t *testing.T) {
 	criterion := criterionResult.Value
 
 	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
-		Scope: scope,
+		Scope:        scope,
 		EvidenceType: domain.EvidenceTypeSource,
-		Description: "supporting source",
-		SourceRef: domain.SourceReference{Provider: "test", ID: "source-criterion"},
-		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+		Description:  "supporting source",
+		SourceRef:    domain.SourceReference{Provider: "test", ID: "source-criterion"},
+		CapturedAt:   time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
-		Scope: scope,
-		EvidenceID: evidenceResult.Value.ID,
-		TargetRef: outcome.Ref(),
+		Scope:       scope,
+		EvidenceID:  evidenceResult.Value.ID,
+		TargetRef:   outcome.Ref(),
 		CriterionID: &criterion.ID,
-		Stance: domain.EvidenceStanceSupports,
-		Rationale: "relevant supporting evidence",
+		Stance:      domain.EvidenceStanceSupports,
+		Rationale:   "relevant supporting evidence",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -354,10 +352,10 @@ func TestWave09DecisionNoOpDoesNotAdvanceRevisionOrEmitEvent(t *testing.T) {
 	beforeEvents := store.SnapshotDomainEvents(scope)
 	sameTitle := proposed.Value.Title
 	noOp, err := service.UpdateDecision(ctx, cc, application.UpdateDecisionCommand{
-		Scope: scope,
-		DecisionID: proposed.Value.ID,
+		Scope:           scope,
+		DecisionID:      proposed.Value.ID,
 		ExpectedVersion: proposed.Value.Version,
-		Title: &sameTitle,
+		Title:           &sameTitle,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -383,11 +381,11 @@ func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
 	cc := commandContext()
 
 	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
-		Scope: scope,
+		Scope:        scope,
 		EvidenceType: domain.EvidenceTypeSource,
-		Description: "namespace-bound evidence",
-		SourceRef: domain.SourceReference{Provider: "test", ID: "cross-namespace"},
-		CapturedAt: time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
+		Description:  "namespace-bound evidence",
+		SourceRef:    domain.SourceReference{Provider: "test", ID: "cross-namespace"},
+		CapturedAt:   time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -395,14 +393,14 @@ func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
 
 	foreignScope := domain.Scope{
 		NamespaceID: domain.MustParseID("0199edff-0000-7000-8000-000000000001"),
-		OutcomeID: scope.OutcomeID,
+		OutcomeID:   scope.OutcomeID,
 	}
 	_, err = service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
-		Scope: scope,
+		Scope:      scope,
 		EvidenceID: evidenceResult.Value.ID,
-		TargetRef: domain.EntityRef{Scope: foreignScope, Kind: domain.EntityKindOutcome, ID: scope.OutcomeID},
-		Stance: domain.EvidenceStanceContext,
-		Rationale: "must fail",
+		TargetRef:  domain.EntityRef{Scope: foreignScope, Kind: domain.EntityKindOutcome, ID: scope.OutcomeID},
+		Stance:     domain.EvidenceStanceContext,
+		Rationale:  "must fail",
 	})
 	if err == nil {
 		t.Fatal("cross-Namespace evidence link must fail")
