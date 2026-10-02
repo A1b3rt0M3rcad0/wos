@@ -87,7 +87,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		},
 		http.StatusCreated,
 	)
-	outcome := createOutcomeResponse.Value
+	outcome := createOutcomeResponse.Value.Value
 	if outcome.NamespaceID.String() != namespaceID {
 		t.Fatalf("outcome namespace = %s, want %s", outcome.NamespaceID, namespaceID)
 	}
@@ -152,8 +152,8 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		},
 		http.StatusOK,
 	)
-	if activateResponse.Value.Lifecycle != domain.OutcomeLifecycleActive {
-		t.Fatalf("outcome lifecycle = %q, want active", activateResponse.Value.Lifecycle)
+	if activateResponse.Value.Value.Lifecycle != domain.OutcomeLifecycleActive {
+		t.Fatalf("outcome lifecycle = %q, want active", activateResponse.Value.Value.Lifecycle)
 	}
 
 	objectiveResponse := doJSON[application.MutationResult[domain.Objective]](
@@ -169,7 +169,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		map[string]string{"Idempotency-Key": "http-objective-create-0001"},
 		http.StatusCreated,
 	)
-	objective := objectiveResponse.Value
+	objective := objectiveResponse.Value.Value
 	objectiveURL := outcomeURL + "/objectives/" + objective.ID.String()
 
 	objectiveCriterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
@@ -200,8 +200,8 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		},
 		http.StatusOK,
 	)
-	if startedObjective.Value.Lifecycle != domain.ObjectiveLifecycleInProgress {
-		t.Fatalf("objective lifecycle = %q, want in_progress", startedObjective.Value.Lifecycle)
+	if startedObjective.Value.Value.Lifecycle != domain.ObjectiveLifecycleInProgress {
+		t.Fatalf("objective lifecycle = %q, want in_progress", startedObjective.Value.Value.Lifecycle)
 	}
 
 	workBody := []byte(`{
@@ -248,13 +248,13 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		},
 		http.StatusOK,
 	)
-	if claimResponse.Value.CurrentLease == nil {
+	if claimResponse.Value.Value.CurrentLease == nil {
 		t.Fatal("claim did not return a lease")
 	}
 
 	completeBody, err := json.Marshal(completeRequest{
-		ClaimID:       claimResponse.Value.CurrentLease.ClaimID.String(),
-		FencingToken:  claimResponse.Value.CurrentLease.FencingToken,
+		ClaimID:       claimResponse.Value.Value.CurrentLease.ClaimID.String(),
+		FencingToken:  claimResponse.Value.Value.CurrentLease.FencingToken,
 		ResultSummary: "HTTP work completed",
 		Reason:        "completed through local HTTP transport",
 	})
@@ -273,8 +273,8 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		},
 		http.StatusOK,
 	)
-	if completed.Value.Lifecycle != domain.WorkItemLifecycleDone {
-		t.Fatalf("completed lifecycle = %q, want done", completed.Value.Lifecycle)
+	if completed.Value.Value.Lifecycle != domain.WorkItemLifecycleDone {
+		t.Fatalf("completed lifecycle = %q, want done", completed.Value.Value.Lifecycle)
 	}
 
 	stateResponse := doJSON[application.OutcomeState](
