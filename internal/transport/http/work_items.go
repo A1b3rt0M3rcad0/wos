@@ -108,6 +108,26 @@ func (h *Handler) getWorkItem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 
+func (h *Handler) getWorkItemOperationalState(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "work_item_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.GetWorkItemOperationalState(r.Context(), scope, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (h *Handler) listWorkItems(w http.ResponseWriter, r *http.Request) {
 	scope, err := parseScope(r)
 	if err != nil {
@@ -153,6 +173,129 @@ func (h *Handler) claimWorkItem(w http.ResponseWriter, r *http.Request) {
 		WorkItemID:      id,
 		ExpectedVersion: expected,
 		TTL:             request.leaseTTL(),
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindWorkItem, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) renewWorkItemLease(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "work_item_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request renewLeaseRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindWorkItem, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	claimID, err := domain.ParseID(request.ClaimID)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.RenewWorkItemLease(r.Context(), cc, application.RenewWorkItemLeaseCommand{
+		Scope:           scope,
+		WorkItemID:      id,
+		ExpectedVersion: expected,
+		ClaimID:         claimID,
+		FencingToken:    request.FencingToken,
+		TTL:             request.leaseTTL(),
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindWorkItem, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) reclaimWorkItem(w http.ResponseWriter, r *http.Request) {
+	scope, id, request, cc, ok := h.workClaimInput(w, r)
+	if !ok {
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindWorkItem, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.ReclaimWorkItem(r.Context(), cc, application.ReclaimWorkItemCommand{
+		Scope:           scope,
+		WorkItemID:      id,
+		ExpectedVersion: expected,
+		TTL:             request.leaseTTL(),
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindWorkItem, result.Value.ID, result.Value.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) administrativeCancelWorkItem(w http.ResponseWriter, r *http.Request) {
+	h.workReasonAction(w, r, func(scope domain.Scope, id domain.ID, expected domain.Version, reason string, cc domain.CommandContext) (application.MutationResult[domain.WorkItem], error) {
+		return h.service.AdministrativeCancelWorkItem(r.Context(), cc, application.AdministrativeCancelWorkItemCommand{
+			Scope:           scope,
+			WorkItemID:      id,
+			ExpectedVersion: expected,
+			Reason:          reason,
+		})
+	})
+}
+
+func (h *Handler) administrativeCompleteWorkItem(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "work_item_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request administrativeCompleteRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindWorkItem, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.AdministrativeCompleteWorkItem(r.Context(), cc, application.AdministrativeCompleteWorkItemCommand{
+		Scope:           scope,
+		WorkItemID:      id,
+		ExpectedVersion: expected,
+		ResultSummary:   request.ResultSummary,
+		Reason:          request.Reason,
 	})
 	if err != nil {
 		writeError(w, r, err)

@@ -1,0 +1,351 @@
+package sqlite
+
+import (
+	"context"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/A1b3rt0M3rcad0/wos/core/application"
+	"github.com/A1b3rt0M3rcad0/wos/core/domain"
+)
+
+func sqliteLeaseCommandContext(principal, commandID string) domain.CommandContext {
+	return domain.CommandContext{
+		PrincipalID: principal,
+		Actor: domain.ActorRef{
+			Kind:     domain.ActorKindAgent,
+			Provider: "sqlite-test",
+			ID:       principal,
+		},
+		CommandID: domain.MustParseID(commandID),
+	}
+}
+
+func createSQLiteClaimedWork(
+	t *testing.T,
+	store *Store,
+	now time.Time,
+	idPrefix string,
+	namespaceID domain.ID,
+) (domain.Outcome, domain.WorkItem) {
+	t.Helper()
+	ctx := context.Background()
+	service, err := application.NewService(
+		store,
+		sqliteFixedClock{now: now},
+		&sqliteSequenceIDs{prefix: idPrefix, next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := sqliteLeaseCommandContext("lease-owner", "0199eb00-0000-7000-8000-000000000101")
+
+	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  namespaceID,
+		Title:        "Lease durability",
+		DesiredState: "lease coordination survives restart",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome := created.Value
+	if _, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{
+		Owner:            outcome.Ref(),
+		ExpectedVersion:  outcome.Version,
+		Title:            "verified",
+		Required:         true,
+		VerificationMode: domain.VerificationModeAttestation,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	outcome.Version++
+	activated, err := service.ActivateOutcome(ctx, cc, application.ActivateOutcomeCommand{
+		Scope:           outcome.Scope(),
+		ExpectedVersion: outcome.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome = activated.Value
+
+	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
+		Scope:     outcome.Scope(),
+		Title:     "leased work",
+		Priority:  domain.PriorityNormal,
+		Lifecycle: domain.WorkItemLifecycleTodo,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := createdWork.Value
+	claimed, err := service.ClaimWorkItem(ctx, cc, application.ClaimWorkItemCommand{
+		Scope:           outcome.Scope(),
+		WorkItemID:      work.ID,
+		ExpectedVersion: work.Version,
+		TTL:             domain.MinLeaseTTL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return outcome, claimed.Value
+}
+
+func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "wos.db")
+	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	claimedAt := time.Date(2026, 10, 2, 23, 0, 0, 0, time.UTC)
+	namespaceID := domain.MustParseID("0199eb01-0000-7000-8000-000000000001")
+	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb02", namespaceID)
+	oldClaimID := work.CurrentLease.ClaimID
+	oldToken := work.CurrentLease.FencingToken
+
+	renewAt := claimedAt.Add(10 * time.Second)
+	renewService, err := application.NewService(
+		store,
+		sqliteFixedClock{now: renewAt},
+		&sqliteSequenceIDs{prefix: "0199eb03", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	renewed, err := renewService.RenewWorkItemLease(
+		ctx,
+		sqliteLeaseCommandContext("lease-owner", "0199eb01-0000-7000-8000-000000000102"),
+		application.RenewWorkItemLeaseCommand{
+			Scope:           outcome.Scope(),
+			WorkItemID:      work.ID,
+			ExpectedVersion: work.Version,
+			ClaimID:         oldClaimID,
+			FencingToken:    oldToken,
+			TTL:             domain.MinLeaseTTL,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	work = renewed.Value
+	renewedExpiry := work.CurrentLease.ExpiresAt
+
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	readService, err := application.NewService(
+		reopened,
+		sqliteFixedClock{now: renewAt},
+		&sqliteSequenceIDs{prefix: "0199eb04", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := readService.GetWorkItem(ctx, outcome.Scope(), work.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persisted.Value.CurrentLease == nil {
+		t.Fatal("renewed lease disappeared after restart")
+	}
+	if persisted.Value.CurrentLease.ClaimID != oldClaimID ||
+		persisted.Value.CurrentLease.FencingToken != oldToken ||
+		!persisted.Value.CurrentLease.ExpiresAt.Equal(renewedExpiry) {
+		t.Fatalf("restored renewed lease = %#v", persisted.Value.CurrentLease)
+	}
+
+	reclaimService, err := application.NewService(
+		reopened,
+		sqliteFixedClock{now: renewedExpiry},
+		&sqliteSequenceIDs{prefix: "0199eb05", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reclaimed, err := reclaimService.ReclaimWorkItem(
+		ctx,
+		sqliteLeaseCommandContext("lease-reclaimer", "0199eb01-0000-7000-8000-000000000103"),
+		application.ReclaimWorkItemCommand{
+			Scope:           outcome.Scope(),
+			WorkItemID:      work.ID,
+			ExpectedVersion: persisted.Value.Version,
+			TTL:             domain.DefaultLeaseTTL,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	work = reclaimed.Value
+	if work.CurrentLease.PrincipalID != "lease-reclaimer" {
+		t.Fatalf("reclaimed principal = %q, want lease-reclaimer", work.CurrentLease.PrincipalID)
+	}
+	if work.CurrentLease.ClaimID == oldClaimID || work.CurrentLease.FencingToken != oldToken+1 {
+		t.Fatalf("reclaim did not rotate claim/fence: %#v", work.CurrentLease)
+	}
+
+	staleService, err := application.NewService(
+		reopened,
+		sqliteFixedClock{now: renewedExpiry.Add(time.Second)},
+		&sqliteSequenceIDs{prefix: "0199eb06", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := staleService.CompleteWorkItem(
+		ctx,
+		sqliteLeaseCommandContext("lease-owner", "0199eb01-0000-7000-8000-000000000104"),
+		application.CompleteWorkItemCommand{
+			Scope:           outcome.Scope(),
+			WorkItemID:      work.ID,
+			ExpectedVersion: work.Version,
+			ClaimID:         oldClaimID,
+			FencingToken:    oldToken,
+			ResultSummary:   "stale completion",
+			Reason:          "old worker returned",
+		},
+	); err == nil {
+		t.Fatal("stale claimant completed work after reclaim")
+	}
+
+	if err := reopened.Close(); err != nil {
+		t.Fatal(err)
+	}
+	restarted, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+
+	finalService, err := application.NewService(
+		restarted,
+		sqliteFixedClock{now: renewedExpiry.Add(time.Second)},
+		&sqliteSequenceIDs{prefix: "0199eb07", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	final, err := finalService.GetWorkItem(ctx, outcome.Scope(), work.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if final.Value.CurrentLease == nil ||
+		final.Value.CurrentLease.PrincipalID != "lease-reclaimer" ||
+		final.Value.CurrentLease.FencingToken != oldToken+1 {
+		t.Fatalf("reclaimed lease did not survive restart: %#v", final.Value.CurrentLease)
+	}
+
+	events, err := restarted.SnapshotDomainEvents(ctx, outcome.Scope())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var renewEvent, reclaimEvent bool
+	for _, event := range events {
+		switch event.EventType {
+		case "work_item.lease_renewed":
+			renewEvent = true
+		case "work_item.reclaimed":
+			reclaimEvent = true
+		}
+	}
+	if !renewEvent || !reclaimEvent {
+		t.Fatalf("persisted lease events missing: renew=%v reclaim=%v", renewEvent, reclaimEvent)
+	}
+}
+
+func TestSQLiteConcurrentReclaimAllowsSingleWinner(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "wos.db")
+	store, err := Open(path, Options{BusyTimeout: 2 * time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	claimedAt := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
+	namespaceID := domain.MustParseID("0199eb10-0000-7000-8000-000000000001")
+	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb13", namespaceID)
+	expiredAt := work.CurrentLease.ExpiresAt
+	oldToken := work.CurrentLease.FencingToken
+
+	serviceA, err := application.NewService(
+		store,
+		sqliteFixedClock{now: expiredAt},
+		&sqliteSequenceIDs{prefix: "0199eb14", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	serviceB, err := application.NewService(
+		store,
+		sqliteFixedClock{now: expiredAt},
+		&sqliteSequenceIDs{prefix: "0199eb15", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	type reclaimResult struct {
+		principal string
+		err       error
+	}
+	start := make(chan struct{})
+	results := make(chan reclaimResult, 2)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	run := func(service *application.Service, principal, commandID string) {
+		defer wg.Done()
+		<-start
+		_, err := service.ReclaimWorkItem(
+			ctx,
+			sqliteLeaseCommandContext(principal, commandID),
+			application.ReclaimWorkItemCommand{
+				Scope:           outcome.Scope(),
+				WorkItemID:      work.ID,
+				ExpectedVersion: work.Version,
+				TTL:             domain.DefaultLeaseTTL,
+			},
+		)
+		results <- reclaimResult{principal: principal, err: err}
+	}
+	go run(serviceA, "reclaimer-a", "0199eb10-0000-7000-8000-000000000102")
+	go run(serviceB, "reclaimer-b", "0199eb10-0000-7000-8000-000000000103")
+	close(start)
+	wg.Wait()
+	close(results)
+
+	successes := 0
+	var winner string
+	for result := range results {
+		if result.err == nil {
+			successes++
+			winner = result.principal
+		}
+	}
+	if successes != 1 {
+		t.Fatalf("successful reclaims = %d, want exactly 1", successes)
+	}
+
+	persisted, err := serviceA.GetWorkItem(ctx, outcome.Scope(), work.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persisted.Value.CurrentLease == nil {
+		t.Fatal("winning reclaim did not persist a lease")
+	}
+	if persisted.Value.CurrentLease.PrincipalID != winner {
+		t.Fatalf("persisted principal = %q, want winner %q", persisted.Value.CurrentLease.PrincipalID, winner)
+	}
+	if persisted.Value.CurrentLease.FencingToken != oldToken+1 {
+		t.Fatalf("fencing token = %d, want %d", persisted.Value.CurrentLease.FencingToken, oldToken+1)
+	}
+}

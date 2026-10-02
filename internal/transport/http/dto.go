@@ -103,6 +103,20 @@ func (r claimRequest) leaseTTL() time.Duration {
 	return time.Duration(r.LeaseTTLSeconds) * time.Second
 }
 
+type renewLeaseRequest struct {
+	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
+	ClaimID         string  `json:"claim_id"`
+	FencingToken    uint64  `json:"fencing_token"`
+	LeaseTTLSeconds int64   `json:"lease_ttl_seconds,omitempty"`
+}
+
+func (r renewLeaseRequest) leaseTTL() time.Duration {
+	if r.LeaseTTLSeconds == 0 {
+		return 0
+	}
+	return time.Duration(r.LeaseTTLSeconds) * time.Second
+}
+
 type releaseRequest struct {
 	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
 	ClaimID         string  `json:"claim_id"`
@@ -113,6 +127,12 @@ type completeRequest struct {
 	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
 	ClaimID         string  `json:"claim_id"`
 	FencingToken    uint64  `json:"fencing_token"`
+	ResultSummary   string  `json:"result_summary"`
+	Reason          string  `json:"reason"`
+}
+
+type administrativeCompleteRequest struct {
+	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
 	ResultSummary   string  `json:"result_summary"`
 	Reason          string  `json:"reason"`
 }

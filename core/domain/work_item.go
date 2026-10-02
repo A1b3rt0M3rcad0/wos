@@ -271,7 +271,10 @@ func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64,
 }
 
 func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
-	if w.Lifecycle != WorkItemLifecycleBacklog && w.Lifecycle != WorkItemLifecycleTodo && w.Lifecycle != WorkItemLifecycleInProgress {
+	if w.Lifecycle != WorkItemLifecycleBacklog && w.Lifecycle != WorkItemLifecycleTodo {
+		if w.Lifecycle == WorkItemLifecycleInProgress {
+			return NewError(ErrorCodeInvalidTransition, "in-progress work item requires administrative cancellation")
+		}
 		return NewError(ErrorCodeInvalidTransition, "work item cannot be cancelled from current lifecycle")
 	}
 	if err := conclusion.Validate(); err != nil {
@@ -280,6 +283,50 @@ func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
 	w.CurrentConclusion = &conclusion
 	w.CurrentLease = nil
 	w.Lifecycle = WorkItemLifecycleCancelled
+	return w.touch(now)
+}
+
+// CancelAdministratively terminates leased work without requiring lease
+// ownership. Authorization is intentionally enforced by the Application layer.
+func (w *WorkItem) CancelAdministratively(conclusion Conclusion, now time.Time) error {
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "administrative cancellation requires in-progress leased work")
+	}
+	if err := conclusion.Validate(); err != nil {
+		return err
+	}
+	w.CurrentConclusion = &conclusion
+	w.CurrentLease = nil
+	w.Lifecycle = WorkItemLifecycleCancelled
+	return w.touch(now)
+}
+
+// CompleteAdministratively records completion of leased work while overriding
+// lease ownership/expiry. It does not bypass criteria or result requirements.
+func (w *WorkItem) CompleteAdministratively(resultSummary string, conclusion Conclusion, now time.Time) error {
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "administrative completion requires in-progress leased work")
+	}
+
+	var refs []CriterionAssessmentRef
+	var err error
+	if w.Criteria.HasRequiredActive() {
+		refs, err = w.Criteria.RequiredSatisfied()
+		if err != nil {
+			return err
+		}
+	} else if strings.TrimSpace(resultSummary) == "" {
+		return NewError(ErrorCodePreconditionFailed, "work item without required criteria needs result summary")
+	}
+
+	conclusion.Assessments = refs
+	if err := conclusion.Validate(); err != nil {
+		return err
+	}
+	w.ResultSummary = strings.TrimSpace(resultSummary)
+	w.CurrentConclusion = &conclusion
+	w.CurrentLease = nil
+	w.Lifecycle = WorkItemLifecycleDone
 	return w.touch(now)
 }
 

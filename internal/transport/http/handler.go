@@ -137,9 +137,14 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+outcome+"/work-items", h.listWorkItems)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}", h.getWorkItem)
 	h.mux.HandleFunc("PATCH "+outcome+"/work-items/{work_item_id}", h.updateWorkItem)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/operational-state", h.getWorkItemOperationalState)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/activate", h.activateWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/defer", h.deferWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/claim", h.claimWorkItem)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/renew-lease", h.renewWorkItemLease)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/reclaim", h.reclaimWorkItem)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/admin-cancel", h.administrativeCancelWorkItem)
+	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/admin-complete", h.administrativeCompleteWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/release", h.releaseWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/complete", h.completeWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/cancel", h.cancelWorkItem)
@@ -346,6 +351,8 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			status = http.StatusUnprocessableEntity
 		case domain.ErrorCodeNotFound:
 			status = http.StatusNotFound
+		case domain.ErrorCodeForbidden:
+			status = http.StatusForbidden
 		case domain.ErrorCodeVersionConflict:
 			status = http.StatusPreconditionFailed
 		case domain.ErrorCodeAlreadyExists,
