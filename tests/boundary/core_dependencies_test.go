@@ -4,6 +4,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -68,6 +69,52 @@ func assertAllowedCoreImport(t *testing.T, file, coreRoot, importPath string) {
 	}
 	if strings.HasPrefix(rel, "application/") && strings.HasPrefix(importPath, modulePath+"/packages/wos-core/storage/") {
 		t.Errorf("application must depend on ports, not storage adapters: %s imports %q", file, importPath)
+	}
+}
+
+
+func TestAPIDoesNotImportServer(t *testing.T) {
+	root := repositoryRoot(t)
+	apiRoot := filepath.Join(root, "packages", "wos-api")
+
+	err := filepath.WalkDir(apiRoot, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || filepath.Ext(path) != ".go" || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
+		if err != nil {
+			return err
+		}
+		for _, spec := range file.Imports {
+			importPath, err := strconv.Unquote(spec.Path.Value)
+			if err != nil {
+				return err
+			}
+			if importPath == modulePath+"/packages/wos-server" || strings.HasPrefix(importPath, modulePath+"/packages/wos-server/") {
+				t.Errorf("%s imports server dependency %q", path, importPath)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk api imports: %v", err)
+	}
+}
+
+func TestLegacyProductRootsAreRemoved(t *testing.T) {
+	root := repositoryRoot(t)
+	for _, legacy := range []string{"core", "api", "storage", "internal", "cmd"} {
+		_, err := os.Stat(filepath.Join(root, legacy))
+		if err == nil {
+			t.Errorf("legacy product root %q still exists", legacy)
+			continue
+		}
+		if !os.IsNotExist(err) {
+			t.Fatalf("stat legacy product root %q: %v", legacy, err)
+		}
 	}
 }
 
