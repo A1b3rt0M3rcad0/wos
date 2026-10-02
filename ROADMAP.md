@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-01  
+**Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 03 — Event Log and Idempotency (complete in PR #3; not yet merged)
+**Current wave:** Wave 04 — SQLite Persistence and Migrations (complete in PR #4; not yet merged)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -236,11 +236,66 @@ Wave 03 does **not** add SQLite persistence, HTTP/MCP transport requirements, In
 
 ## Wave 04 — SQLite Persistence and Migrations
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done
 
 Implement SQLite adapter, schema migrations, SQL UnitOfWork, registry/coordination rows, repository contracts, idempotency/event persistence, restart-safe state and SQLite writer coordination.
 
-**Completion gate:** Wave 02 scenario survives process restart and all writes enforce expected version.
+### Implementation checklist
+
+- [x] Pin the SQLite `database/sql` driver used by the adapter.
+- [x] Record the SQLite driver/writer-acquisition decision in ADR 0006.
+- [x] Enable `foreign_keys` for every adapter connection.
+- [x] Enable WAL and synchronous NORMAL for the local durability profile.
+- [x] Configure bounded `busy_timeout` integrated with command contexts.
+- [x] Acquire the SQLite writer lock at transaction start with the immediate transaction profile.
+- [x] Restrict the Store to one writer connection instead of pretending SQLite has parallel writers.
+- [x] Add embedded, forward-only numbered migrations.
+- [x] Add `schema_migrations` with SHA-256 checksum verification.
+- [x] Add the canonical UTC microsecond timestamp codec.
+- [x] Add Namespace, Principal, entity registry and Outcome coordination tables.
+- [x] Add normalized relational persistence for Outcome, Objective and WorkItem.
+- [x] Add normalized ownership/assignee links.
+- [x] Persist revisioned SuccessCriteria and immutable CriterionAssessment history/current projection.
+- [x] Persist current and historical Conclusions.
+- [x] Persist Domain Events in the same SQL UnitOfWork as current state.
+- [x] Persist idempotency reservations/results in the same SQL UnitOfWork.
+- [x] Enforce optimistic writes with `UPDATE ... WHERE version = ?`.
+- [x] Distinguish not-found from stale-version conflicts after zero-row updates.
+- [x] Persist lease principals before FK-protected WorkItem lease writes.
+- [x] Add restart-safe reconstruction of Wave 02 aggregates and nested state.
+- [x] Add persisted idempotent replay across process restart.
+- [x] Add compound rollback coverage for state + Outcome revision + Event + idempotency.
+- [x] Add cross-scope foreign-key rejection coverage.
+- [x] Add SQLite connection-profile and migration-idempotency tests.
+- [x] Add consistent `VACUUM ... INTO` backup plus closed-destination restore.
+- [x] Add writer-contention/busy-timeout context coverage.
+- [x] Add transaction-cancellation coverage.
+- [x] Add explicit claim-by-new-principal FK coverage.
+- [x] Pin and verify the Go module graph with CI module hygiene.
+- [x] Pass `go vet`, full unit/contract tests and race detector.
+
+### Verification
+
+GitHub Actions validated implementation commit `1895c642d2c7155c737d1d3adf9d95923d0889d0` with Go 1.27.1 on Linux in run `36963863527`.
+
+The successful verification executed:
+
+- module graph/tidy verification;
+- `gofmt` cleanliness;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- standalone binary build;
+- `wos version` smoke test;
+- `wos config validate` smoke test.
+
+The SQLite suite verifies the full Wave 02 scenario after close/reopen, Outcome revision preservation, nested criteria/assessment/conclusion reconstruction, persisted Event ordering, replay after restart, stale `expected_version` rejection, compound rollback, scope foreign keys, backup/restore, writer contention, transaction cancellation and lease-principal integrity.
+
+### Scope boundary
+
+Wave 04 does **not** add the HTTP transport, transport-level authentication/local principal resolution, ETags/preconditions, OpenAPI or the first durable state query. Those remain Wave 05.
+
+**Completion gate:** satisfied — the Wave 02 scenario survives process restart and versioned writes reject stale `expected_version`.
 
 **Target commit:**  
 `feat(storage): add SQLite persistence migrations and outcome coordination guards`
@@ -447,11 +502,11 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 01 and Wave 02 are merged into `master`. Wave 03 is technically complete on PR #3 and remains unmerged pending review.
+Waves 01–03 are merged into `master`. Wave 04 is technically complete on PR #4 and remains unmerged pending review.
 
-1. Review PR #3 and its final CI result.
-2. Merge Wave 03 only when approved by the repository owner.
-3. Keep Wave 04 — SQLite Persistence and Migrations as **Planned** until that merge/authorization.
-4. Do not move SQLite persistence concerns into Wave 03 follow-up work.
+1. Review PR #4 and its final CI result.
+2. Merge Wave 04 only when approved by the repository owner.
+3. Keep Wave 05 — HTTP Vertical Slice as **Planned** until that merge/authorization.
+4. Do not move HTTP transport concerns into Wave 04 follow-up work.
 
-Wave 04 implementation has not started.
+Wave 05 implementation has not started.
