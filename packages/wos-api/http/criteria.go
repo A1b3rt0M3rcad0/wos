@@ -280,13 +280,24 @@ func (h *Handler) assessCriterion(w http.ResponseWriter, r *http.Request, owner 
 		writeError(w, r, err)
 		return
 	}
-	result, err := h.service.AttestCriterion(r.Context(), cc, application.AttestCriterionCommand{
+	evidenceIDs := make([]domain.ID, 0, len(request.EvidenceIDs))
+	for _, rawID := range request.EvidenceIDs {
+		id, err := domain.ParseID(rawID)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		evidenceIDs = append(evidenceIDs, id)
+	}
+	result, err := h.service.RecordCriterionAssessment(r.Context(), cc, application.RecordCriterionAssessmentCommand{
 		Owner:             owner,
 		CriterionID:       criterionID,
 		CriterionRevision: request.CriterionRevision,
 		ExpectedVersion:   expected,
 		Result:            request.Result,
 		Rationale:         request.Rationale,
+		EvidenceIDs:       evidenceIDs,
+		EvaluatorRef:      request.EvaluatorRef,
 	})
 	if err != nil {
 		writeError(w, r, err)

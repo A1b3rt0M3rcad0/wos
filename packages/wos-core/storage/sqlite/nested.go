@@ -179,9 +179,19 @@ ON CONFLICT(id) DO UPDATE SET
 			return mapSQLError("upsert success criterion", err)
 		}
 
+		if _, err := tx.ExecContext(ctx, `
+DELETE FROM criterion_current_assessments
+WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
+			owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String(),
+		); err != nil {
+			return mapSQLError("clear current criterion assessment", err)
+		}
+	}
+
+	for _, revision := range set.DefinitionRevisions {
 		definition, err := marshalJSON(criterionDefinition{
-			Title:       criterion.Title,
-			Description: criterion.Description,
+			Title:       revision.Title,
+			Description: revision.Description,
 		})
 		if err != nil {
 			return err
@@ -189,31 +199,22 @@ ON CONFLICT(id) DO UPDATE SET
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO criterion_revisions (
     namespace_id, outcome_id, criterion_id, criterion_revision,
-    definition_json, required, verification_mode, created_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    definition_json, required, verification_mode, status, created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
-			criterion.ID.String(),
-			int64(criterion.Revision),
+			revision.CriterionID.String(),
+			int64(revision.Revision),
 			definition,
-			boolInt(criterion.Required),
-			string(criterion.VerificationMode),
+			boolInt(revision.Required),
+			string(revision.VerificationMode),
+			string(revision.Status),
 			encodeTime(changedAt),
 		); err != nil {
 			return mapSQLError("insert criterion revision", err)
 		}
-		if err := verifyCriterionRevision(
-			ctx, tx, owner.Scope, criterion, definition,
-		); err != nil {
+		if err := verifyCriterionRevision(ctx, tx, owner.Scope, revision, definition); err != nil {
 			return err
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-DELETE FROM criterion_current_assessments
-WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
-			owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String(),
-		); err != nil {
-			return mapSQLError("clear current criterion assessment", err)
 		}
 	}
 
@@ -225,12 +226,20 @@ WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
 		if err != nil {
 			return err
 		}
+		var evaluatorJSON any
+		if assessment.EvaluatorRef != nil {
+			encoded, err := marshalJSON(assessment.EvaluatorRef)
+			if err != nil {
+				return err
+			}
+			evaluatorJSON = encoded
+		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO criterion_assessments (
     id, namespace_id, outcome_id, criterion_id, criterion_revision,
     result, rationale, principal_id, actor_json, assessed_at,
-    supersedes_assessment_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    evaluator_ref_json, supersedes_assessment_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			assessment.ID.String(),
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -241,9 +250,26 @@ INSERT OR IGNORE INTO criterion_assessments (
 			assessment.PrincipalID,
 			actorJSON,
 			encodeTime(assessment.AssessedAt),
+			evaluatorJSON,
 			nullableID(assessment.SupersedesAssessmentID),
 		); err != nil {
 			return mapSQLError("insert criterion assessment", err)
+		}
+		for _, evidenceID := range assessment.EvidenceIDs {
+			if _, err := tx.ExecContext(ctx, `
+INSERT OR IGNORE INTO criterion_assessment_evidence (
+    namespace_id, outcome_id, assessment_id, evidence_id
+) VALUES (?, ?, ?, ?)`,
+				owner.NamespaceID.String(),
+				owner.OutcomeID.String(),
+				assessment.ID.String(),
+				evidenceID.String(),
+			); err != nil {
+				return mapSQLError("insert criterion assessment evidence", err)
+			}
+		}
+		if err := verifyCriterionAssessment(ctx, tx, owner.Scope, assessment); err != nil {
+			return err
 		}
 	}
 
@@ -267,30 +293,123 @@ func verifyCriterionRevision(
 	ctx context.Context,
 	tx *sql.Tx,
 	scope domain.Scope,
-	criterion domain.SuccessCriterion,
+	revision domain.CriterionDefinitionRevision,
 	definition string,
 ) error {
-	var existingDefinition, mode string
+	var existingDefinition, mode, status string
 	var required int
 	err := tx.QueryRowContext(ctx, `
-SELECT definition_json, required, verification_mode
+SELECT definition_json, required, verification_mode, status
 FROM criterion_revisions
 WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ? AND criterion_revision = ?`,
 		scope.NamespaceID.String(),
 		scope.OutcomeID.String(),
-		criterion.ID.String(),
-		int64(criterion.Revision),
-	).Scan(&existingDefinition, &required, &mode)
+		revision.CriterionID.String(),
+		int64(revision.Revision),
+	).Scan(&existingDefinition, &required, &mode, &status)
 	if err != nil {
 		return mapSQLError("verify criterion revision", err)
 	}
 	if existingDefinition != definition ||
-		required != boolInt(criterion.Required) ||
-		mode != string(criterion.VerificationMode) {
+		required != boolInt(revision.Required) ||
+		mode != string(revision.VerificationMode) ||
+		status != string(revision.Status) {
 		return domain.NewError(
 			domain.ErrorCodeCriterion,
 			"criterion revision is immutable and differs from persisted definition",
 		)
+	}
+	return nil
+}
+
+func verifyCriterionAssessment(
+	ctx context.Context,
+	tx *sql.Tx,
+	scope domain.Scope,
+	assessment domain.CriterionAssessment,
+) error {
+	var (
+		rawCriterionID, result, rationale, principalID, actorJSON string
+		revision, assessedAt                                      int64
+		evaluatorJSON, supersedes                                 sql.NullString
+	)
+	err := tx.QueryRowContext(ctx, `
+SELECT criterion_id, criterion_revision, result, rationale, principal_id,
+       actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id
+FROM criterion_assessments
+WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
+		scope.NamespaceID.String(),
+		scope.OutcomeID.String(),
+		assessment.ID.String(),
+	).Scan(
+		&rawCriterionID,
+		&revision,
+		&result,
+		&rationale,
+		&principalID,
+		&actorJSON,
+		&assessedAt,
+		&evaluatorJSON,
+		&supersedes,
+	)
+	if err != nil {
+		return mapSQLError("verify criterion assessment", err)
+	}
+
+	expectedActorJSON, err := marshalJSON(assessment.Actor)
+	if err != nil {
+		return err
+	}
+	var expectedEvaluatorJSON string
+	if assessment.EvaluatorRef != nil {
+		expectedEvaluatorJSON, err = marshalJSON(assessment.EvaluatorRef)
+		if err != nil {
+			return err
+		}
+	}
+	expectedSupersedes := ""
+	if assessment.SupersedesAssessmentID != nil {
+		expectedSupersedes = assessment.SupersedesAssessmentID.String()
+	}
+
+	if rawCriterionID != assessment.CriterionID.String() ||
+		revision != int64(assessment.CriterionRevision) ||
+		result != string(assessment.Result) ||
+		rationale != assessment.Rationale ||
+		principalID != assessment.PrincipalID ||
+		actorJSON != expectedActorJSON ||
+		assessedAt != encodeTime(assessment.AssessedAt) ||
+		evaluatorJSON.Valid != (assessment.EvaluatorRef != nil) ||
+		(evaluatorJSON.Valid && evaluatorJSON.String != expectedEvaluatorJSON) ||
+		supersedes.Valid != (assessment.SupersedesAssessmentID != nil) ||
+		(supersedes.Valid && supersedes.String != expectedSupersedes) {
+		return domain.NewError(
+			domain.ErrorCodeAssessment,
+			"criterion assessment is immutable and differs from persisted history",
+		)
+	}
+
+	persistedEvidence, err := loadAssessmentEvidence(ctx, tx, scope, assessment.ID)
+	if err != nil {
+		return err
+	}
+	expectedEvidence := append([]domain.ID(nil), assessment.EvidenceIDs...)
+	sort.Slice(expectedEvidence, func(i, j int) bool {
+		return expectedEvidence[i].String() < expectedEvidence[j].String()
+	})
+	if len(persistedEvidence) != len(expectedEvidence) {
+		return domain.NewError(
+			domain.ErrorCodeAssessment,
+			"criterion assessment Evidence references are immutable",
+		)
+	}
+	for i := range expectedEvidence {
+		if persistedEvidence[i] != expectedEvidence[i] {
+			return domain.NewError(
+				domain.ErrorCodeAssessment,
+				"criterion assessment Evidence references are immutable",
+			)
+		}
 	}
 	return nil
 }
@@ -354,9 +473,64 @@ ORDER BY c.created_at, c.id`,
 	}
 	rows.Close()
 
+	revisionRows, err := tx.QueryContext(ctx, `
+SELECT r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode, r.status
+FROM criterion_revisions r
+JOIN success_criteria c
+  ON c.namespace_id = r.namespace_id
+ AND c.outcome_id = r.outcome_id
+ AND c.id = r.criterion_id
+WHERE c.namespace_id = ? AND c.outcome_id = ? AND c.owner_id = ? AND c.owner_kind = ?
+ORDER BY r.criterion_id, r.criterion_revision`,
+		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+	)
+	if err != nil {
+		return domain.CriterionSet{}, mapSQLError("load criterion revision history", err)
+	}
+	for revisionRows.Next() {
+		var rawCriterionID, definition, mode, status string
+		var revision int64
+		var required int
+		if err := revisionRows.Scan(&rawCriterionID, &revision, &definition, &required, &mode, &status); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		criterionID, err := domain.ParseID(rawCriterionID)
+		if err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		var def criterionDefinition
+		if err := unmarshalJSON(definition, &def); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		value := domain.CriterionDefinitionRevision{
+			CriterionID:      criterionID,
+			OwnerRef:         owner,
+			Revision:         domain.CriterionRevision(revision),
+			Title:            def.Title,
+			Description:      def.Description,
+			Required:         required == 1,
+			VerificationMode: domain.VerificationMode(mode),
+			Status:           domain.CriterionStatus(status),
+		}
+		if err := value.Validate(); err != nil {
+			revisionRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		set.DefinitionRevisions = append(set.DefinitionRevisions, value)
+	}
+	if err := revisionRows.Err(); err != nil {
+		revisionRows.Close()
+		return domain.CriterionSet{}, err
+	}
+	revisionRows.Close()
+
 	assessmentRows, err := tx.QueryContext(ctx, `
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,
-       a.principal_id, a.actor_json, a.assessed_at, a.supersedes_assessment_id
+       a.principal_id, a.actor_json, a.assessed_at, a.evaluator_ref_json,
+       a.supersedes_assessment_id
 FROM criterion_assessments a
 JOIN success_criteria c
   ON c.namespace_id = a.namespace_id
@@ -373,6 +547,16 @@ ORDER BY a.assessed_at, a.id`,
 	for assessmentRows.Next() {
 		assessment, err := scanAssessment(assessmentRows)
 		if err != nil {
+			assessmentRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		evidenceIDs, err := loadAssessmentEvidence(ctx, tx, owner.Scope, assessment.ID)
+		if err != nil {
+			assessmentRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		assessment.EvidenceIDs = evidenceIDs
+		if err := assessment.Validate(); err != nil {
 			assessmentRows.Close()
 			return domain.CriterionSet{}, err
 		}
@@ -437,11 +621,11 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 	var (
 		rawID, rawCriterion, result, rationale, principal, actorJSON string
 		revision, assessedAt                                         int64
-		supersedes                                                   sql.NullString
+		evaluatorJSON, supersedes                                    sql.NullString
 	)
 	if err := scanner.Scan(
 		&rawID, &rawCriterion, &revision, &result, &rationale,
-		&principal, &actorJSON, &assessedAt, &supersedes,
+		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes,
 	); err != nil {
 		return domain.CriterionAssessment{}, err
 	}
@@ -467,6 +651,13 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		Actor:             actor,
 		AssessedAt:        decodeTime(assessedAt),
 	}
+	if evaluatorJSON.Valid {
+		var evaluator domain.EvaluatorRef
+		if err := unmarshalJSON(evaluatorJSON.String, &evaluator); err != nil {
+			return domain.CriterionAssessment{}, err
+		}
+		value.EvaluatorRef = &evaluator
+	}
 	if supersedes.Valid {
 		parsed, err := domain.ParseID(supersedes.String)
 		if err != nil {
@@ -475,6 +666,46 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		value.SupersedesAssessmentID = &parsed
 	}
 	return value, value.Validate()
+}
+
+func loadAssessmentEvidence(
+	ctx context.Context,
+	tx *sql.Tx,
+	scope domain.Scope,
+	assessmentID domain.ID,
+) ([]domain.ID, error) {
+	rows, err := tx.QueryContext(ctx, `
+SELECT evidence_id
+FROM criterion_assessment_evidence
+WHERE namespace_id = ? AND outcome_id = ? AND assessment_id = ?
+ORDER BY evidence_id`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), assessmentID.String(),
+	)
+	if err != nil {
+		return nil, mapSQLError("load criterion assessment evidence", err)
+	}
+	defer rows.Close()
+
+	result := make([]domain.ID, 0)
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		id, err := domain.ParseID(raw)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, id)
+	}
+	return result, rows.Err()
+}
+
+func nullableConclusionID(id domain.ID) any {
+	if id.IsZero() {
+		return nil
+	}
+	return id.String()
 }
 
 func syncConclusions(
@@ -514,17 +745,29 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 		if err != nil {
 			return err
 		}
-		result := "historical"
+		obligationsJSON, err := marshalJSON(conclusion.Obligations)
+		if err != nil {
+			return err
+		}
+		result := conclusion.LifecycleResult
+		if result == "" {
+			result = "historical"
+		}
 		var persistedOwnerVersion any
-		if current != nil && ordinal == len(history) {
-			result = lifecycleResult
+		if conclusion.OwnerVersion != nil {
+			persistedOwnerVersion = int64(*conclusion.OwnerVersion)
+		} else if current != nil && ordinal == len(history) {
 			persistedOwnerVersion = int64(ownerVersion)
+		}
+		if current != nil && ordinal == len(history) && conclusion.LifecycleResult == "" {
+			result = lifecycleResult
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO conclusions (
     id, namespace_id, outcome_id, owner_id, ordinal, owner_version,
-    lifecycle_result, principal_id, actor_json, recorded_at, rationale
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    lifecycle_result, principal_id, actor_json, recorded_at, rationale,
+    obligations_snapshot_json, public_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			storageID,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -536,6 +779,8 @@ INSERT OR IGNORE INTO conclusions (
 			actorJSON,
 			encodeTime(conclusion.ConcludedAt),
 			conclusion.Reason,
+			obligationsJSON,
+			nullableConclusionID(conclusion.ID),
 		); err != nil {
 			return mapSQLError("insert conclusion", err)
 		}
@@ -552,6 +797,31 @@ INSERT OR IGNORE INTO conclusion_assessments (
 				return mapSQLError("insert conclusion assessment", err)
 			}
 		}
+		if !conclusion.ID.IsZero() {
+			if _, err := tx.ExecContext(ctx, `
+UPDATE conclusions
+SET public_id = ?
+WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND public_id IS NULL`,
+				conclusion.ID.String(),
+				owner.NamespaceID.String(),
+				owner.OutcomeID.String(),
+				storageID,
+			); err != nil {
+				return mapSQLError("backfill conclusion public id", err)
+			}
+		}
+		if err := verifyConclusionRow(
+			ctx,
+			tx,
+			owner,
+			storageID,
+			conclusion,
+			persistedOwnerVersion,
+			result,
+			obligationsJSON,
+		); err != nil {
+			return err
+		}
 		if current != nil && ordinal == len(history) {
 			if _, err := tx.ExecContext(ctx, `
 INSERT INTO aggregate_current_conclusions (
@@ -565,6 +835,79 @@ INSERT INTO aggregate_current_conclusions (
 				return mapSQLError("set current conclusion", err)
 			}
 		}
+	}
+	return nil
+}
+
+func verifyConclusionRow(
+	ctx context.Context,
+	tx *sql.Tx,
+	owner domain.EntityRef,
+	storageID string,
+	conclusion domain.Conclusion,
+	expectedOwnerVersion any,
+	expectedLifecycleResult string,
+	expectedObligationsJSON string,
+) error {
+	var (
+		rawOwnerID, lifecycleResult, principalID, actorJSON, rationale, obligationsJSON string
+		recordedAt                                                                      int64
+		ownerVersion                                                                    sql.NullInt64
+		publicID                                                                        sql.NullString
+	)
+	err := tx.QueryRowContext(ctx, `
+SELECT owner_id, owner_version, lifecycle_result, principal_id, actor_json,
+       recorded_at, rationale, obligations_snapshot_json, public_id
+FROM conclusions
+WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
+		owner.NamespaceID.String(),
+		owner.OutcomeID.String(),
+		storageID,
+	).Scan(
+		&rawOwnerID,
+		&ownerVersion,
+		&lifecycleResult,
+		&principalID,
+		&actorJSON,
+		&recordedAt,
+		&rationale,
+		&obligationsJSON,
+		&publicID,
+	)
+	if err != nil {
+		return mapSQLError("verify conclusion history", err)
+	}
+	expectedActorJSON, err := marshalJSON(conclusion.Actor)
+	if err != nil {
+		return err
+	}
+
+	var expectedVersion *int64
+	switch value := expectedOwnerVersion.(type) {
+	case int64:
+		copyValue := value
+		expectedVersion = &copyValue
+	}
+	expectedPublicID := ""
+	if !conclusion.ID.IsZero() {
+		expectedPublicID = conclusion.ID.String()
+	}
+
+	if rawOwnerID != owner.ID.String() ||
+		lifecycleResult != expectedLifecycleResult ||
+		principalID != conclusion.PrincipalID ||
+		actorJSON != expectedActorJSON ||
+		recordedAt != encodeTime(conclusion.ConcludedAt) ||
+		rationale != conclusion.Reason ||
+		obligationsJSON != expectedObligationsJSON ||
+		ownerVersion.Valid != (expectedVersion != nil) ||
+		(ownerVersion.Valid && ownerVersion.Int64 != *expectedVersion) ||
+		publicID.Valid != !conclusion.ID.IsZero() ||
+		(publicID.Valid && publicID.String != expectedPublicID) {
+		return domain.NewError(
+			domain.ErrorCodeInvalidArgument,
+			"conclusion history is immutable and differs from persisted record",
+		)
 	}
 	return nil
 }
@@ -586,7 +929,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 	}
 
 	rows, err := tx.QueryContext(ctx, `
-SELECT id, principal_id, actor_json, recorded_at, rationale
+SELECT id, public_id, owner_version, lifecycle_result, principal_id, actor_json,
+       recorded_at, rationale, obligations_snapshot_json
 FROM conclusions
 WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?
 ORDER BY ordinal`,
@@ -600,9 +944,14 @@ ORDER BY ordinal`,
 	history := make([]domain.Conclusion, 0)
 	var current *domain.Conclusion
 	for rows.Next() {
-		var storageID, principal, actorJSON, rationale string
+		var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
+		var publicID sql.NullString
 		var recordedAt int64
-		if err := rows.Scan(&storageID, &principal, &actorJSON, &recordedAt, &rationale); err != nil {
+		var ownerVersion sql.NullInt64
+		if err := rows.Scan(
+			&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
+			&recordedAt, &rationale, &obligationsJSON,
+		); err != nil {
 			return nil, nil, err
 		}
 		var actor domain.ActorRef
@@ -613,12 +962,37 @@ ORDER BY ordinal`,
 		if err != nil {
 			return nil, nil, err
 		}
+		var obligations domain.ConclusionObligations
+		if err := unmarshalJSON(obligationsJSON, &obligations); err != nil {
+			return nil, nil, err
+		}
 		value := domain.Conclusion{
 			PrincipalID: principal,
 			Actor:       actor,
 			Reason:      rationale,
 			ConcludedAt: decodeTime(recordedAt),
 			Assessments: refs,
+			Obligations: obligations,
+		}
+		if publicID.Valid {
+			parsed, err := domain.ParseID(publicID.String)
+			if err != nil {
+				return nil, nil, err
+			}
+			value.ID = parsed
+		} else {
+			derived, err := legacyConclusionPublicID(storageID, decodeTime(recordedAt))
+			if err != nil {
+				return nil, nil, err
+			}
+			value.ID = derived
+		}
+		if ownerVersion.Valid {
+			ownerCopy := owner
+			versionCopy := domain.Version(ownerVersion.Int64)
+			value.OwnerRef = &ownerCopy
+			value.OwnerVersion = &versionCopy
+			value.LifecycleResult = lifecycleResult
 		}
 		if err := value.Validate(); err != nil {
 			return nil, nil, err

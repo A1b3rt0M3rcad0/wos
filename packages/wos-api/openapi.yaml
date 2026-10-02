@@ -828,6 +828,223 @@ paths:
               schema:
                 $ref: "#/components/schemas/CriterionMutationResult"
 
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria/{criterion_id}/assessments:
+    post:
+      tags: [Criteria]
+      operationId: recordOutcomeCriterionAssessment
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: criterion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RecordCriterionAssessmentRequest"}
+      responses:
+        "201":
+          description: Immutable assessment recorded and set as the current binding for the criterion revision.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AssessmentMutationResult"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/assessments:
+    post:
+      tags: [Criteria]
+      operationId: recordNestedCriterionAssessment
+      description: Records an Objective or WorkItem assessment using the same validation contract as Outcome criteria.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: owner_collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [objectives, work-items]
+        - name: owner_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - name: criterion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RecordCriterionAssessmentRequest"}
+      responses:
+        "201":
+          description: Immutable assessment recorded and current binding advanced.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AssessmentMutationResult"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria/{criterion_id}/history:
+    get:
+      tags: [Criteria]
+      operationId: getOutcomeCriterionHistory
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: criterion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Immutable definition and assessment history for one Outcome criterion.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CriterionValidationHistoryReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/history:
+    get:
+      tags: [Criteria]
+      operationId: getNestedCriterionHistory
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: owner_collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [objectives, work-items]
+        - name: owner_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - name: criterion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Immutable validation history for the selected owner criterion.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CriterionValidationHistoryReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/conclusions:
+    get:
+      tags: [Criteria]
+      operationId: listOutcomeConclusions
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Current and historical Outcome Conclusions.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ConclusionHistoryReadResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/conclusions/{conclusion_id}:
+    get:
+      tags: [Criteria]
+      operationId: getOutcomeConclusion
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: conclusion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: One immutable Conclusion.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ConclusionReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions:
+    get:
+      tags: [Criteria]
+      operationId: listNestedConclusions
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: owner_collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [objectives, work-items]
+        - name: owner_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Current and historical Conclusions for the selected owner.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ConclusionHistoryReadResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions/{conclusion_id}:
+    get:
+      tags: [Criteria]
+      operationId: getNestedConclusion
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - name: owner_collection
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [objectives, work-items]
+        - name: owner_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - name: conclusion_id
+          in: path
+          required: true
+          schema: {$ref: "#/components/schemas/ID"}
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: One immutable owner Conclusion.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ConclusionReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues:
     get:
       tags: [Issues]
@@ -2356,6 +2573,153 @@ components:
         expected_version: {$ref: "#/components/schemas/Version"}
         reason: {type: string}
 
+    EvaluatorRef:
+      type: object
+      additionalProperties: false
+      required: [provider, id, version]
+      properties:
+        provider: {type: string}
+        id: {type: string}
+        version: {type: string}
+
+    RecordCriterionAssessmentRequest:
+      type: object
+      additionalProperties: false
+      required: [criterion_revision, result, rationale]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        criterion_revision: {type: integer, minimum: 1}
+        result:
+          type: string
+          enum: [met, not_met, inconclusive, waived]
+        rationale: {type: string}
+        evidence_ids:
+          type: array
+          uniqueItems: true
+          items: {$ref: "#/components/schemas/ID"}
+        evaluator_ref: {$ref: "#/components/schemas/EvaluatorRef"}
+
+    CriterionAssessmentRef:
+      type: object
+      required: [assessment_id, criterion_id, criterion_revision, result]
+      properties:
+        assessment_id: {$ref: "#/components/schemas/ID"}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        criterion_revision: {type: integer, minimum: 1}
+        result:
+          type: string
+          enum: [met, not_met, inconclusive, waived]
+
+    CriterionAssessment:
+      type: object
+      required: [id, criterion_id, criterion_revision, result, rationale, principal_id, actor_ref, assessed_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        criterion_revision: {type: integer, minimum: 1}
+        result:
+          type: string
+          enum: [met, not_met, inconclusive, waived]
+        rationale: {type: string}
+        evidence_ids:
+          type: array
+          uniqueItems: true
+          items: {$ref: "#/components/schemas/ID"}
+        evaluator_ref: {$ref: "#/components/schemas/EvaluatorRef"}
+        principal_id: {type: string}
+        actor_ref: {$ref: "#/components/schemas/ActorRef"}
+        assessed_at: {type: string, format: date-time}
+        supersedes_assessment_id: {$ref: "#/components/schemas/ID"}
+
+    CriterionObligationSnapshot:
+      type: object
+      required: [criterion_id, criterion_revision, verification_mode]
+      properties:
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        criterion_revision: {type: integer, minimum: 1}
+        verification_mode:
+          type: string
+          enum: [attestation, evidence_review, external_evaluation]
+
+    ConclusionObligations:
+      type: object
+      properties:
+        required_criteria:
+          type: array
+          items: {$ref: "#/components/schemas/CriterionObligationSnapshot"}
+        required_objective_ids:
+          type: array
+          items: {$ref: "#/components/schemas/ID"}
+        result_summary_required: {type: boolean}
+
+    Conclusion:
+      type: object
+      required: [principal_id, actor_ref, reason, concluded_at, obligations]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        principal_id: {type: string}
+        actor_ref: {$ref: "#/components/schemas/ActorRef"}
+        reason: {type: string}
+        concluded_at: {type: string, format: date-time}
+        assessments:
+          type: array
+          items: {$ref: "#/components/schemas/CriterionAssessmentRef"}
+        owner_ref: {type: object}
+        owner_version: {$ref: "#/components/schemas/Version"}
+        lifecycle_result: {type: string}
+        obligations: {$ref: "#/components/schemas/ConclusionObligations"}
+
+    ConclusionContestation:
+      type: object
+      required: [owner_ref, kind, criterion_id, assessment_id]
+      properties:
+        owner_ref: {type: object}
+        kind:
+          type: string
+          enum: [assessment_contradiction, evidence_retracted]
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        assessment_id: {$ref: "#/components/schemas/ID"}
+        evidence_id: {$ref: "#/components/schemas/ID"}
+
+    CriterionDefinitionRevision:
+      type: object
+      required: [criterion_id, owner_ref, criterion_revision, title, required, verification_mode, status]
+      properties:
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        owner_ref: {type: object}
+        criterion_revision: {type: integer, minimum: 1}
+        title: {type: string}
+        description: {type: string}
+        required: {type: boolean}
+        verification_mode:
+          type: string
+          enum: [attestation, evidence_review, external_evaluation]
+        status:
+          type: string
+          enum: [active, retired]
+
+    CriterionValidationHistory:
+      type: object
+      required: [criterion, definition_revisions, assessments]
+      properties:
+        criterion: {$ref: "#/components/schemas/SuccessCriterion"}
+        definition_revisions:
+          type: array
+          items: {$ref: "#/components/schemas/CriterionDefinitionRevision"}
+        assessments:
+          type: array
+          items: {$ref: "#/components/schemas/CriterionAssessment"}
+        current_assessment: {$ref: "#/components/schemas/CriterionAssessment"}
+
+    ConclusionHistory:
+      type: object
+      required: [history]
+      properties:
+        current: {$ref: "#/components/schemas/Conclusion"}
+        history:
+          type: array
+          items: {$ref: "#/components/schemas/Conclusion"}
+
     CriterionRequest:
       type: object
       additionalProperties: false
@@ -2681,6 +3045,13 @@ components:
           required: [value]
           properties:
             value: {$ref: "#/components/schemas/SuccessCriterion"}
+    AssessmentMutationResult:
+      allOf:
+        - $ref: "#/components/schemas/MutationMetadata"
+        - type: object
+          required: [value]
+          properties:
+            value: {$ref: "#/components/schemas/CriterionAssessment"}
     RelationMutationResult:
       allOf:
         - $ref: "#/components/schemas/MutationMetadata"
@@ -2728,6 +3099,25 @@ components:
                 blockers:
                   type: array
                   items: {$ref: "#/components/schemas/Blocker"}
+
+    CriterionValidationHistoryReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/CriterionValidationHistory"}
+        outcome_revision: {type: integer, minimum: 1}
+    ConclusionHistoryReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/ConclusionHistory"}
+        outcome_revision: {type: integer, minimum: 1}
+    ConclusionReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Conclusion"}
+        outcome_revision: {type: integer, minimum: 1}
 
     OutcomeReadResult:
       type: object
@@ -2808,7 +3198,7 @@ components:
         outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, artifacts, evidence, evidence_links, decisions, blocking_states, evaluated_at, outcome_revision]
+      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, artifacts, evidence, evidence_links, decisions, conclusion_contested, conclusion_contestations, blocking_states, evaluated_at, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -2841,6 +3231,10 @@ components:
         decisions:
           type: array
           items: {$ref: "#/components/schemas/Decision"}
+        conclusion_contested: {type: boolean}
+        conclusion_contestations:
+          type: array
+          items: {$ref: "#/components/schemas/ConclusionContestation"}
         blocking_states:
           type: array
           items: {$ref: "#/components/schemas/BlockingState"}

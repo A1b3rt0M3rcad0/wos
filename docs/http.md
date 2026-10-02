@@ -487,6 +487,60 @@ it includes `artifacts`, `evidence`, `evidence_links` and `decisions`.
 Consumers can therefore reconstruct the current documentary context and Decision
 history from one WOS state read without depending on prior chat/session history.
 
+## Verifiable assessments and Conclusions
+
+Wave 10 separates immutable validation history from mutable current bindings.
+
+Record a criterion assessment with the owner's strong ETag:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/criteria/$CRITERION_ID/assessments" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-wave10-assessment-0001' \
+  -H "If-Match: $OUTCOME_ETAG" \
+  -d '{
+    "criterion_revision": 2,
+    "result": "met",
+    "rationale": "External benchmark satisfied the criterion",
+    "evidence_ids": ["<evidence-id>"]
+  }'
+```
+
+`evidence_review` requires at least one active Evidence from the same Outcome.
+`external_evaluation` requires an `evaluator_ref` containing provider, ID and
+version. `waived` stays visibly waived and requires the privileged
+`assessment:waive` authorization; it is never rewritten as `met`.
+
+The current assessment is only a binding. Every assessment and every semantic
+criterion revision remains in immutable history. Read one criterion's complete
+validation history with:
+
+```text
+GET /outcomes/{outcome_id}/criteria/{criterion_id}/history
+GET /outcomes/{outcome_id}/objectives/{objective_id}/criteria/{criterion_id}/history
+GET /outcomes/{outcome_id}/work-items/{work_item_id}/criteria/{criterion_id}/history
+```
+
+A positive terminal transition records a Conclusion with its own public UUIDv7,
+the owner/version and lifecycle result, the exact assessment IDs used, criterion
+revision obligations and structural obligations such as required Objectives.
+Reopening removes only the current binding and preserves that Conclusion in
+history.
+
+Conclusions are directly addressable:
+
+```text
+GET /outcomes/{outcome_id}/conclusions
+GET /outcomes/{outcome_id}/conclusions/{conclusion_id}
+GET /outcomes/{outcome_id}/objectives/{objective_id}/conclusions
+GET /outcomes/{outcome_id}/work-items/{work_item_id}/conclusions
+```
+
+Later contradictory assessments or retracted Evidence do not mutate terminal
+lifecycle. `GET /outcomes/{outcome_id}/state` exposes
+`conclusion_contested` plus concrete `conclusion_contestations`, preserving
+the historical claim separately from the current contradictory facts.
+
 ## Errors
 
 Errors use a stable envelope:

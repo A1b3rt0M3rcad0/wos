@@ -467,7 +467,7 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 09 — Documentary Records and Decisions
 
-**Status:** ✅ Implementation complete; pending integration
+**Status:** ✅ Done and merged into `master`
 
 **Goal:** preserve durable facts, deliverables and explicit choices with enough provenance that another consumer can understand the current state without relying on previous chat/session history.
 
@@ -540,11 +540,73 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 10 — Assessments and Verifiable Conclusions
 
-**Status:** ⬜ Planned
+**Status:** 🚧 In progress
 
-Complete revisioned SuccessCriteria, immutable CriterionAssessments, current assessment bindings, waiver authorization, Conclusions, obligation snapshots and contested-conclusion projection.
+**Goal:** make every positive conclusion reproducible from immutable criterion definitions, immutable assessments and an explicit obligation snapshot, while preserving later contradictory evidence/assessments as contestations rather than silently rewriting lifecycle.
 
-**Completion gate:** achievement records exactly which criterion revisions and assessments justified the conclusion.
+### Domain contract
+
+- [ ] Preserve an immutable definition snapshot for every SuccessCriterion revision.
+- [ ] Keep the current SuccessCriterion definition separate from its immutable revision history.
+- [x] Extend CriterionAssessment with explicit `evidence_ids` and optional `evaluator_ref`.
+- [x] Support `met|not_met|inconclusive|waived` without conflating EvidenceLink with assessment.
+- [x] Require `evidence_review` assessments to reference at least one active, same-Outcome Evidence.
+- [ ] Require `external_evaluation` assessments to include evaluator identity/version metadata and evidence required by the caller contract.
+- [x] Require explicit authorization and reason for `waived`.
+- [x] Keep CriterionAssessment immutable and retain supersession history.
+- [x] Clear the current-assessment binding when a criterion is revised or retired; retain assessment history.
+- [ ] Introduce first-class Conclusion identity/history for Outcome, Objective and WorkItem.
+- [x] Store the exact owner version, lifecycle result, criterion revisions, assessment IDs and structural obligations used by a Conclusion.
+- [x] Reopening clears only the current Conclusion binding; historical Conclusions remain immutable.
+- [x] Project `conclusion_contested` and concrete causes when current Evidence/assessments contradict the recorded Conclusion.
+- [x] Never auto-reopen or auto-change lifecycle because a Conclusion becomes contested.
+
+### Application and authorization contract
+
+- [x] Replace the Wave 02 attestation-only command path with a generic RecordCriterionAssessment path.
+- [x] Preserve attestation as a compatibility/application specialization where useful, but not as the domain's only assessment mode.
+- [x] Add `assessment:waive` permission to the Authorizer contract.
+- [x] Validate assessment Evidence against Namespace/Outcome, lifecycle and criterion revision inside the Outcome transaction guard.
+- [x] Require expected owner version when updating the current assessment binding.
+- [ ] Detect concurrent assessments/current-binding replacements with optimistic version conflict.
+- [ ] Make AchieveOutcome/AchieveObjective/CompleteWorkItem build explicit immutable Conclusion records.
+- [x] Enforce required Objective obligations for Outcome achievement.
+- [x] Capture structural obligation snapshots before the terminal transition commits.
+- [ ] Emit canonical assessment/conclusion Domain Events through the existing transaction/idempotency pipeline.
+
+### Storage contract
+
+- [ ] Treat `criterion_revisions`, `criterion_assessments`, `conclusions` and conclusion-assessment links as append-only historical records.
+- [x] Persist assessment Evidence references and evaluator metadata.
+- [x] Persist current-assessment/current-conclusion bindings separately from historical rows.
+- [x] Add a Wave 10 SQLite migration for fields/relations missing from the predeclared foundation schema.
+- [x] Reject assessment references to nonexistent criterion revisions.
+- [x] Preserve criterion revision history, assessment history, current bindings and Conclusions across restart.
+- [ ] Keep memory and SQLite behavior equivalent.
+
+### HTTP and contract surface
+
+- [x] Expose generic assessment recording for all verification modes.
+- [x] Require Idempotency-Key for assessment/conclusion mutations and ETag/If-Match for owner-bound current state.
+- [ ] Expose immutable assessment history and current bindings.
+- [x] Expose current/historical Conclusions and contestation state.
+- [ ] Extend OpenAPI 3.1 and `docs/http.md` with Wave 10 contracts.
+
+### Verification
+
+- [x] Prove an assessment for criterion revision N never satisfies revision N+1.
+- [x] Prove revising a criterion clears only the current binding and preserves old assessments.
+- [x] Prove `evidence_review` without Evidence is rejected.
+- [x] Prove retracted Evidence cannot support a new positive assessment/conclusion.
+- [x] Prove a waiver without `assessment:waive` authorization is rejected.
+- [ ] Prove two concurrent assessments cannot silently replace the same current binding.
+- [x] Prove required Objectives block Outcome achievement when not achieved.
+- [x] Prove a Conclusion stores exactly the criterion revisions and assessment IDs used at commit time.
+- [ ] Prove later `not_met` assessment or Evidence retraction contests but does not erase/reopen a terminal entity.
+- [ ] Prove memory/SQLite restart preserves immutable validation history.
+- [x] Pass module hygiene, gofmt, vet, unit/contract tests, race detector, standalone build and HTTP runtime smoke.
+
+**Completion gate:** achievement records exactly which criterion revisions, assessments and structural obligations justified the conclusion, and later contradictory facts are visible as contestations without historical rewriting.
 
 **Target commit:**  
 `feat(validation): enforce versioned criterion assessments and explicit achievement`
@@ -673,7 +735,9 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Wave 09 implementation is complete on `feat/wave-09-documentary-records` and awaits integration through PR #11.
+Waves 01–09 are merged into `master`. Wave 10 — Assessments and Verifiable Conclusions is active on `feat/wave-10-verifiable-conclusions`.
 
-1. Review and merge PR #11 after the final CI check.
-2. Start Wave 10 — Roadmap and Projection after Wave 09 lands on `master`.
+1. Establish immutable criterion-revision and generic assessment domain contracts.
+2. Add waiver authorization and Evidence-aware assessment validation.
+3. Introduce first-class Conclusion snapshots and contestation projection.
+4. Complete storage/HTTP parity only after domain/application invariants are stable.

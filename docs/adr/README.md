@@ -13,3 +13,5 @@ Initial Wave 01 records:
 - [ADR-011 — Product package topology](./0011-product-package-topology.md)
 
 - [ADR-012 — Documentary records and explicit decision history](./0012-documentary-records-and-decision-history.md)
+
+- [ADR-013 — Verifiable conclusions and immutable assessment history](./0013-verifiable-conclusions-and-assessment-history.md)

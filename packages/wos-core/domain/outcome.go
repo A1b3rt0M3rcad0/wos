@@ -136,6 +136,16 @@ func (o *Outcome) RetireCriterion(id ID, now time.Time) error {
 	return o.touch(now)
 }
 
+func (o *Outcome) RecordCriterionAssessment(a CriterionAssessment, waiverAuthorized bool, now time.Time) error {
+	if o.IsArchived() {
+		return NewError(ErrorCodeInvalidTransition, "cannot assess archived outcome")
+	}
+	if err := o.Criteria.RecordAssessment(a, waiverAuthorized); err != nil {
+		return err
+	}
+	return o.touch(now)
+}
+
 func (o *Outcome) AssessCriterionAttestation(a CriterionAssessment, now time.Time) error {
 	if o.IsArchived() {
 		return NewError(ErrorCodeInvalidTransition, "cannot assess archived outcome")
@@ -161,6 +171,10 @@ func (o *Outcome) Activate(now time.Time) error {
 }
 
 func (o *Outcome) Achieve(conclusion Conclusion, now time.Time) error {
+	return o.AchieveWithObligations(conclusion, nil, now)
+}
+
+func (o *Outcome) AchieveWithObligations(conclusion Conclusion, requiredObjectiveIDs []ID, now time.Time) error {
 	if o.IsArchived() || o.Lifecycle != OutcomeLifecycleActive {
 		return NewError(ErrorCodeInvalidTransition, "only active non-archived outcome can be achieved")
 	}
@@ -169,12 +183,18 @@ func (o *Outcome) Achieve(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	conclusion.Assessments = refs
-	if err := conclusion.Validate(); err != nil {
+	o.Lifecycle = OutcomeLifecycleAchieved
+	if err := o.touch(now); err != nil {
 		return err
 	}
-	o.Lifecycle = OutcomeLifecycleAchieved
+	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
+		RequiredCriteria:     o.Criteria.RequiredObligations(),
+		RequiredObjectiveIDs: append([]ID(nil), requiredObjectiveIDs...),
+	}); err != nil {
+		return err
+	}
 	o.CurrentConclusion = &conclusion
-	return o.touch(now)
+	return nil
 }
 
 func (o *Outcome) Fail(conclusion Conclusion, now time.Time) error {
@@ -185,8 +205,14 @@ func (o *Outcome) Fail(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	o.Lifecycle = OutcomeLifecycleFailed
+	if err := o.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{}); err != nil {
+		return err
+	}
 	o.CurrentConclusion = &conclusion
-	return o.touch(now)
+	return nil
 }
 
 func (o *Outcome) Abandon(conclusion Conclusion, now time.Time) error {
@@ -197,8 +223,14 @@ func (o *Outcome) Abandon(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	o.Lifecycle = OutcomeLifecycleAbandoned
+	if err := o.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{}); err != nil {
+		return err
+	}
 	o.CurrentConclusion = &conclusion
-	return o.touch(now)
+	return nil
 }
 
 func (o *Outcome) Reopen(reason string, now time.Time) error {

@@ -306,8 +306,8 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(events) != 15 {
-		t.Fatalf("event count = %d, want 15", len(events))
+	if len(events) != 18 {
+		t.Fatalf("event count = %d, want 18", len(events))
 	}
 	if events[len(events)-1].OutcomeRevision != 14 {
 		t.Fatalf("last event revision = %d, want 14", events[len(events)-1].OutcomeRevision)
