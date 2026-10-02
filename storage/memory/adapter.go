@@ -89,7 +89,7 @@ type transaction struct {
 func (tx *transaction) Outcomes() ports.OutcomeRepository     { return tx.outcomeRepo }
 func (tx *transaction) Objectives() ports.ObjectiveRepository { return tx.objectiveRepo }
 func (tx *transaction) WorkItems() ports.WorkItemRepository   { return tx.workItemRepo }
-func (tx *transaction) Relations() ports.RelationRepository     { return tx.relationRepo }
+func (tx *transaction) Relations() ports.RelationRepository   { return tx.relationRepo }
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
