@@ -11,17 +11,22 @@ import (
 func TestWave10LaterContradictionContestsConclusionWithoutReopening(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
-	outcome := setupActiveOutcome(t, service)
-	scope := outcome.Scope()
 	cc := commandContext()
-
-	current, err := service.GetOutcome(ctx, scope)
+	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  domain.MustParseID("0199ef60-0000-7000-8000-000000000001"),
+		Title:        "Contested conclusion",
+		DesiredState: "preserve achieved state while surfacing contradiction",
+		Priority:     domain.PriorityNormal,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	outcome := created.Value
+	scope := outcome.Scope()
+
 	added, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{
 		Owner:            outcome.Ref(),
-		ExpectedVersion:  current.Value.Version,
+		ExpectedVersion:  outcome.Version,
 		Title:            "Verified condition",
 		Required:         true,
 		VerificationMode: domain.VerificationModeAttestation,
@@ -31,7 +36,14 @@ func TestWave10LaterContradictionContestsConclusionWithoutReopening(t *testing.T
 	}
 	criterion := added.Value
 
-	current, err = service.GetOutcome(ctx, scope)
+	current, err := service.GetOutcome(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	activated, err := service.ActivateOutcome(ctx, cc, application.ActivateOutcomeCommand{
+		Scope:           scope,
+		ExpectedVersion: current.Value.Version,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +51,7 @@ func TestWave10LaterContradictionContestsConclusionWithoutReopening(t *testing.T
 		Owner:             outcome.Ref(),
 		CriterionID:       criterion.ID,
 		CriterionRevision: criterion.Revision,
-		ExpectedVersion:   current.Value.Version,
+		ExpectedVersion:   activated.Value.Version,
 		Result:            domain.AssessmentResultMet,
 		Rationale:         "initial verification",
 	})
