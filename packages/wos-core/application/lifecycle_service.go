@@ -13,7 +13,11 @@ func (s *Service) FailOutcome(ctx context.Context, commandContext domain.Command
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
@@ -38,7 +42,11 @@ func (s *Service) AbandonOutcome(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
@@ -135,7 +143,11 @@ func (s *Service) CancelObjective(ctx context.Context, commandContext domain.Com
 		return MutationResult[domain.Objective]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.Objective]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
@@ -232,7 +244,11 @@ func (s *Service) CancelWorkItem(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.WorkItem]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err

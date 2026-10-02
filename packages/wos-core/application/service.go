@@ -216,7 +216,11 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
@@ -325,7 +329,11 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		return MutationResult[domain.Objective]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.Objective]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
@@ -455,7 +463,11 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.WorkItem]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -717,9 +729,9 @@ func assessCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.Ent
 	}
 }
 
-func conclusionFromContext(ctx domain.CommandContext, reason string, now time.Time) domain.Conclusion {
+func conclusionFromContext(id domain.ID, ctx domain.CommandContext, reason string, now time.Time) domain.Conclusion {
 	return domain.Conclusion{
-		ID:          ctx.CommandID,
+		ID:          id,
 		PrincipalID: ctx.PrincipalID,
 		Actor:       ctx.Actor,
 		Reason:      strings.TrimSpace(reason),

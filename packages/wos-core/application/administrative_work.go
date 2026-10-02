@@ -43,7 +43,11 @@ func (s *Service) AdministrativeCancelWorkItem(
 	}
 
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.WorkItem]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -83,7 +87,11 @@ func (s *Service) AdministrativeCompleteWorkItem(
 	}
 
 	now := s.clock.Now().UTC()
-	conclusion := conclusionFromContext(commandContext, cmd.Reason, now)
+	conclusionID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[domain.WorkItem]{}, err
+	}
+	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err

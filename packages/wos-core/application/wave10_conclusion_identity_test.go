@@ -69,7 +69,13 @@ func TestWave10ServiceConclusionUsesCommandIdentity(t *testing.T) {
 	if achieved.Value.CurrentConclusion == nil {
 		t.Fatal("current conclusion missing")
 	}
-	if achieved.Value.CurrentConclusion.ID != achieveContext.CommandID {
-		t.Fatalf("conclusion id = %s, command id = %s", achieved.Value.CurrentConclusion.ID, achieveContext.CommandID)
+	if achieved.Value.CurrentConclusion.ID.IsZero() {
+		t.Fatal("conclusion id is zero")
+	}
+	if err := achieved.Value.CurrentConclusion.ID.Validate(); err != nil {
+		t.Fatalf("conclusion id is invalid: %v", err)
+	}
+	if achieved.Value.CurrentConclusion.ID == achieveContext.CommandID {
+		t.Fatal("conclusion identity must be independent from command identity")
 	}
 }

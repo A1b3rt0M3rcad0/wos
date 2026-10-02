@@ -114,7 +114,7 @@ func TestWave10ValidationHistoryReadSurface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fetched.Value.ID != achieveContext.CommandID {
-		t.Fatalf("fetched conclusion id = %s, want %s", fetched.Value.ID, achieveContext.CommandID)
+	if fetched.Value.ID != achieved.Value.CurrentConclusion.ID {
+		t.Fatalf("fetched conclusion id = %s, want %s", fetched.Value.ID, achieved.Value.CurrentConclusion.ID)
 	}
 }
