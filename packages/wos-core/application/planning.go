@@ -245,7 +245,7 @@ func (s *Service) ActivateRoadmapRevision(
 			replacement := domain.RoadmapRevisionPointer{RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber}
 			history = append(history, domain.RoadmapActivationRecord{
 				ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
-				Action: domain.RoadmapActivationSuperseded,
+				Action:    domain.RoadmapActivationSuperseded,
 				RoadmapID: current.RoadmapID, RevisionNumber: current.RevisionNumber,
 				Replacement: &replacement, Actor: cc.Actor, RecordedAt: now,
 			})
@@ -256,7 +256,7 @@ func (s *Service) ActivateRoadmapRevision(
 		}
 		history = append(history, domain.RoadmapActivationRecord{
 			ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
-			Action: domain.RoadmapActivationActivated,
+			Action:    domain.RoadmapActivationActivated,
 			RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber,
 			Actor: cc.Actor, RecordedAt: now,
 		})
@@ -309,7 +309,7 @@ func (s *Service) DeactivateRoadmapRevision(
 		}
 		record := domain.RoadmapActivationRecord{
 			ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
-			Action: domain.RoadmapActivationDeactivated,
+			Action:    domain.RoadmapActivationDeactivated,
 			RoadmapID: roadmap.ID, RevisionNumber: cmd.RevisionNumber,
 			Actor: cc.Actor, RecordedAt: s.clock.Now().UTC(),
 		}
@@ -355,7 +355,7 @@ func (s *Service) ArchiveRoadmap(
 			}
 			record := domain.RoadmapActivationRecord{
 				ID: id, Scope: cmd.Scope, PlanScope: roadmap.PlanScope,
-				Action: domain.RoadmapActivationDeactivated,
+				Action:    domain.RoadmapActivationDeactivated,
 				RoadmapID: current.RoadmapID, RevisionNumber: current.RevisionNumber,
 				Actor: cc.Actor, RecordedAt: s.clock.Now().UTC(),
 			}

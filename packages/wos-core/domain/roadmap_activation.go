@@ -18,12 +18,12 @@ func (p RoadmapRevisionPointer) Validate() error {
 }
 
 type RoadmapActiveSlot struct {
-	Scope          Scope                  `json:"scope"`
-	PlanScope      RoadmapPlanScope       `json:"plan_scope"`
-	RoadmapID      ID                     `json:"roadmap_id"`
-	RevisionNumber uint64                 `json:"revision_number"`
-	ActivatedBy    ActorRef               `json:"activated_by"`
-	ActivatedAt    time.Time              `json:"activated_at"`
+	Scope          Scope            `json:"scope"`
+	PlanScope      RoadmapPlanScope `json:"plan_scope"`
+	RoadmapID      ID               `json:"roadmap_id"`
+	RevisionNumber uint64           `json:"revision_number"`
+	ActivatedBy    ActorRef         `json:"activated_by"`
+	ActivatedAt    time.Time        `json:"activated_at"`
 }
 
 func (s RoadmapActiveSlot) Validate() error {

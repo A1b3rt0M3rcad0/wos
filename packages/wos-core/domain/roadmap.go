@@ -144,17 +144,17 @@ func (s RoadmapReferenceSnapshot) Validate(scope Scope) error {
 }
 
 type RoadmapNode struct {
-	NodeKey           string                    `json:"node_key"`
-	NodeType          RoadmapNodeType           `json:"node_type"`
-	ParentNodeKey     string                    `json:"parent_node_key,omitempty"`
-	TargetRef         *EntityRef                `json:"target_ref,omitempty"`
-	Title             string                    `json:"title"`
-	Position          int                       `json:"position"`
+	NodeKey            string                     `json:"node_key"`
+	NodeType           RoadmapNodeType            `json:"node_type"`
+	ParentNodeKey      string                     `json:"parent_node_key,omitempty"`
+	TargetRef          *EntityRef                 `json:"target_ref,omitempty"`
+	Title              string                     `json:"title"`
+	Position           int                        `json:"position"`
 	CriterionRefs      []RoadmapCriterionRef      `json:"criterion_refs,omitempty"`
 	CriterionSnapshots []RoadmapCriterionSnapshot `json:"criterion_snapshots,omitempty"`
 	PlannedStart       *time.Time                 `json:"planned_start,omitempty"`
-	PlannedEnd        *time.Time                `json:"planned_end,omitempty"`
-	ReferenceSnapshot *RoadmapReferenceSnapshot `json:"published_reference_snapshot,omitempty"`
+	PlannedEnd         *time.Time                 `json:"planned_end,omitempty"`
+	ReferenceSnapshot  *RoadmapReferenceSnapshot  `json:"published_reference_snapshot,omitempty"`
 }
 
 func (n RoadmapNode) Validate(scope Scope, published bool) error {

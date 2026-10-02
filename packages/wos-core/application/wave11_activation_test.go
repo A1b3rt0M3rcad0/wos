@@ -40,7 +40,7 @@ func TestWave11ActiveRoadmapSlotIsUniqueAndArchiveClearsIt(t *testing.T) {
 		}
 		published, err := service.PublishRoadmapDraft(ctx, cc, application.PublishRoadmapDraftCommand{
 			Scope: outcome.Scope(), RoadmapID: roadmap.ID,
-			ExpectedVersion: opened.Value.Version,
+			ExpectedVersion:      opened.Value.Version,
 			ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
 		})
 		if err != nil {

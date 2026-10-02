@@ -188,7 +188,6 @@ func TestWave11OutcomeRoadmapAcceptsOutcomeCriterionMilestone(t *testing.T) {
 	}
 }
 
-
 func TestWave11PublicationSnapshotsLiveReferencesAndCriteria(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
@@ -223,9 +222,9 @@ func TestWave11PublicationSnapshotsLiveReferencesAndCriteria(t *testing.T) {
 	criterion := criterionResult.Value
 
 	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
-		Scope: outcome.Scope(),
+		Scope:     outcome.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
-		Title: "Main plan",
+		Title:     "Main plan",
 	})
 	if err != nil {
 		t.Fatal(err)

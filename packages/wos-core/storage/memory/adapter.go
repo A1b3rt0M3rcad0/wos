@@ -12,23 +12,23 @@ import (
 )
 
 type Store struct {
-	mu            sync.Mutex
-	outcomes      map[string]domain.Outcome
-	objectives    map[string]domain.Objective
-	workItems     map[string]domain.WorkItem
-	relations     map[string]domain.Relation
-	issues        map[string]domain.Issue
-	blockers      map[string]domain.Blocker
-	artifacts     map[string]domain.Artifact
-	evidence      map[string]domain.Evidence
-	evidenceLinks map[string]domain.EvidenceLink
-	decisions     map[string]domain.Decision
+	mu                       sync.Mutex
+	outcomes                 map[string]domain.Outcome
+	objectives               map[string]domain.Objective
+	workItems                map[string]domain.WorkItem
+	relations                map[string]domain.Relation
+	issues                   map[string]domain.Issue
+	blockers                 map[string]domain.Blocker
+	artifacts                map[string]domain.Artifact
+	evidence                 map[string]domain.Evidence
+	evidenceLinks            map[string]domain.EvidenceLink
+	decisions                map[string]domain.Decision
 	roadmaps                 map[string]domain.Roadmap
 	roadmapSlots             map[string]domain.RoadmapActiveSlot
 	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
 	revisions                map[string]domain.OutcomeRevision
-	events        []domain.DomainEvent
-	idempotency   map[string]idempotencyRecord
+	events                   []domain.DomainEvent
+	idempotency              map[string]idempotencyRecord
 }
 
 type idempotencyRecord struct {
@@ -40,22 +40,22 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
-		outcomes:      make(map[string]domain.Outcome),
-		objectives:    make(map[string]domain.Objective),
-		workItems:     make(map[string]domain.WorkItem),
-		relations:     make(map[string]domain.Relation),
-		issues:        make(map[string]domain.Issue),
-		blockers:      make(map[string]domain.Blocker),
-		artifacts:     make(map[string]domain.Artifact),
-		evidence:      make(map[string]domain.Evidence),
-		evidenceLinks: make(map[string]domain.EvidenceLink),
-		decisions:     make(map[string]domain.Decision),
+		outcomes:                 make(map[string]domain.Outcome),
+		objectives:               make(map[string]domain.Objective),
+		workItems:                make(map[string]domain.WorkItem),
+		relations:                make(map[string]domain.Relation),
+		issues:                   make(map[string]domain.Issue),
+		blockers:                 make(map[string]domain.Blocker),
+		artifacts:                make(map[string]domain.Artifact),
+		evidence:                 make(map[string]domain.Evidence),
+		evidenceLinks:            make(map[string]domain.EvidenceLink),
+		decisions:                make(map[string]domain.Decision),
 		roadmaps:                 make(map[string]domain.Roadmap),
 		roadmapSlots:             make(map[string]domain.RoadmapActiveSlot),
 		roadmapActivationHistory: make(map[string][]domain.RoadmapActivationRecord),
 		revisions:                make(map[string]domain.OutcomeRevision),
-		events:        make([]domain.DomainEvent, 0),
-		idempotency:   make(map[string]idempotencyRecord),
+		events:                   make([]domain.DomainEvent, 0),
+		idempotency:              make(map[string]idempotencyRecord),
 	}
 }
 
@@ -67,23 +67,23 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	}
 
 	tx := &transaction{
-		store:         s,
-		outcomes:      cloneOutcomes(s.outcomes),
-		objectives:    cloneObjectives(s.objectives),
-		workItems:     cloneWorkItems(s.workItems),
-		relations:     cloneRelations(s.relations),
-		issues:        cloneIssues(s.issues),
-		blockers:      cloneBlockers(s.blockers),
-		artifacts:     cloneArtifacts(s.artifacts),
-		evidence:      cloneEvidence(s.evidence),
-		evidenceLinks: cloneEvidenceLinks(s.evidenceLinks),
-		decisions:     cloneDecisions(s.decisions),
+		store:                    s,
+		outcomes:                 cloneOutcomes(s.outcomes),
+		objectives:               cloneObjectives(s.objectives),
+		workItems:                cloneWorkItems(s.workItems),
+		relations:                cloneRelations(s.relations),
+		issues:                   cloneIssues(s.issues),
+		blockers:                 cloneBlockers(s.blockers),
+		artifacts:                cloneArtifacts(s.artifacts),
+		evidence:                 cloneEvidence(s.evidence),
+		evidenceLinks:            cloneEvidenceLinks(s.evidenceLinks),
+		decisions:                cloneDecisions(s.decisions),
 		roadmaps:                 cloneRoadmaps(s.roadmaps),
 		roadmapSlots:             cloneRoadmapSlots(s.roadmapSlots),
 		roadmapActivationHistory: cloneRoadmapActivationHistory(s.roadmapActivationHistory),
 		revisions:                cloneRevisions(s.revisions),
-		events:        cloneEvents(s.events),
-		idempotency:   cloneIdempotency(s.idempotency),
+		events:                   cloneEvents(s.events),
+		idempotency:              cloneIdempotency(s.idempotency),
 	}
 	tx.outcomeRepo = outcomeRepository{tx: tx}
 	tx.objectiveRepo = objectiveRepository{tx: tx}
@@ -104,40 +104,40 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
-	store         *Store
-	closed        bool
-	outcomes      map[string]domain.Outcome
-	objectives    map[string]domain.Objective
-	workItems     map[string]domain.WorkItem
-	relations     map[string]domain.Relation
-	issues        map[string]domain.Issue
-	blockers      map[string]domain.Blocker
-	artifacts     map[string]domain.Artifact
-	evidence      map[string]domain.Evidence
-	evidenceLinks map[string]domain.EvidenceLink
-	decisions     map[string]domain.Decision
+	store                    *Store
+	closed                   bool
+	outcomes                 map[string]domain.Outcome
+	objectives               map[string]domain.Objective
+	workItems                map[string]domain.WorkItem
+	relations                map[string]domain.Relation
+	issues                   map[string]domain.Issue
+	blockers                 map[string]domain.Blocker
+	artifacts                map[string]domain.Artifact
+	evidence                 map[string]domain.Evidence
+	evidenceLinks            map[string]domain.EvidenceLink
+	decisions                map[string]domain.Decision
 	roadmaps                 map[string]domain.Roadmap
 	roadmapSlots             map[string]domain.RoadmapActiveSlot
 	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
 	revisions                map[string]domain.OutcomeRevision
-	events        []domain.DomainEvent
-	idempotency   map[string]idempotencyRecord
+	events                   []domain.DomainEvent
+	idempotency              map[string]idempotencyRecord
 
-	outcomeRepo      outcomeRepository
-	objectiveRepo    objectiveRepository
-	workItemRepo     workItemRepository
-	relationRepo     relationRepository
-	issueRepo        issueRepository
-	blockerRepo      blockerRepository
-	artifactRepo     artifactRepository
-	evidenceRepo     evidenceRepository
-	evidenceLinkRepo evidenceLinkRepository
-	decisionRepo     decisionRepository
+	outcomeRepo        outcomeRepository
+	objectiveRepo      objectiveRepository
+	workItemRepo       workItemRepository
+	relationRepo       relationRepository
+	issueRepo          issueRepository
+	blockerRepo        blockerRepository
+	artifactRepo       artifactRepository
+	evidenceRepo       evidenceRepository
+	evidenceLinkRepo   evidenceLinkRepository
+	decisionRepo       decisionRepository
 	roadmapRepo        roadmapRepository
 	roadmapActivations roadmapActivationStore
 	coordination       coordinationStore
-	eventLog         eventLog
-	idempotencyStore idempotencyStore
+	eventLog           eventLog
+	idempotencyStore   idempotencyStore
 }
 
 func (tx *transaction) Outcomes() ports.OutcomeRepository           { return tx.outcomeRepo }
@@ -154,9 +154,9 @@ func (tx *transaction) Roadmaps() ports.RoadmapRepository           { return tx.
 func (tx *transaction) RoadmapActivations() ports.RoadmapActivationStore {
 	return tx.roadmapActivations
 }
-func (tx *transaction) Coordination() ports.CoordinationStore       { return tx.coordination }
-func (tx *transaction) Events() ports.DomainEventLog                { return tx.eventLog }
-func (tx *transaction) Idempotency() ports.IdempotencyStore         { return tx.idempotencyStore }
+func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
+func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
+func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
 
 func (tx *transaction) Commit() error {
 	if tx.closed {
