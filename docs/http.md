@@ -1,6 +1,6 @@
-# WOS HTTP — Waves 05–08
+# WOS HTTP — Waves 05–09
 
-Waves 05–08 expose the M1 domain plus dependency/readiness, Issue/Blocker coordination and hardened WorkItem lease/fencing coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, blocking, readiness, lease, idempotency or concurrency rules.
+Waves 05–09 expose the M1 domain plus dependency/readiness, Issue/Blocker coordination, hardened WorkItem lease/fencing coordination and documentary Artifact/Evidence/Decision history through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, blocking, readiness, lease, idempotency or concurrency rules.
 
 ## Start the local server
 
@@ -261,8 +261,9 @@ curl -i "$BASE/outcomes/$OUTCOME_ID/state"
 
 The state response is `Cache-Control: no-store` and contains the persisted
 Outcome, Objectives, WorkItems, Relations, Issues and Blockers plus derived
-`blocking_states`, `work_item_operational_states`, one `evaluated_at` instant
-and the current `outcome_revision`. Lease expiration can therefore change the
+`blocking_states`, `work_item_operational_states`, Wave 09 `documentary`
+history/current projections, one `evaluated_at` instant and the current
+`outcome_revision`. Lease expiration can therefore change the
 projection without changing persisted lifecycle or `outcome_revision`.
 
 
@@ -400,14 +401,142 @@ an explicit external cause:
 }
 ```
 
-The domain already reserves `decision` as a valid Blocker cause kind, but the
-Application layer rejects Decision causes until persisted Decision records are
-implemented. This keeps memory and SQLite semantics identical.
+A Blocker may use a persisted Decision as its `cause_ref`. Accepting, rejecting
+or superseding that Decision does not resolve the Blocker by inference; release
+still requires an explicit Blocker resolution command.
 
 `blocking_states` explains whether each Outcome, Objective and WorkItem is
 blocked, which active Blockers apply and whether each one is direct or inherited.
 The ready-work query applies the same projection, so blocked WorkItems are not
 returned as ready.
+
+
+## Documentary records and decisions
+
+Wave 09 adds Outcome-local documentary state without turning WOS into a blob
+store or an external verifier. Artifact and Evidence content is immutable after
+registration. Lifecycle commands can withdraw an Artifact or retract Evidence
+without rewriting the original material reference or observation.
+
+Core routes:
+
+```text
+GET|POST  /outcomes/{outcome_id}/artifacts
+GET       /outcomes/{outcome_id}/artifacts/{artifact_id}
+POST      /outcomes/{outcome_id}/artifacts/{artifact_id}/actions/withdraw
+
+GET|POST  /outcomes/{outcome_id}/evidence
+GET       /outcomes/{outcome_id}/evidence/{evidence_id}
+POST      /outcomes/{outcome_id}/evidence/{evidence_id}/actions/retract
+
+GET|POST  /outcomes/{outcome_id}/evidence-links
+GET       /outcomes/{outcome_id}/evidence-links/{evidence_link_id}
+POST      /outcomes/{outcome_id}/evidence-links/{evidence_link_id}/actions/retract
+
+GET|POST  /outcomes/{outcome_id}/decisions
+GET|PATCH /outcomes/{outcome_id}/decisions/{decision_id}
+POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/accept
+POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/reject
+POST      /outcomes/{outcome_id}/decisions/{decision_id}/actions/supersede
+```
+
+Register an Artifact reference:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/artifacts" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-artifact-register-0001' \
+  -d '{
+    "artifact_type":"report",
+    "name":"benchmark report",
+    "uri":"https://example.test/report",
+    "checksum":"sha256:...",
+    "source_version":"commit-9f0d2a",
+    "producer_ref":{"kind":"service","provider":"ci","id":"benchmark"}
+  }'
+```
+
+Evidence records the observed fact and provenance. An optional `artifact_id`
+connects the observation to a registered material deliverable. WOS validates
+the reference and shape but does not fetch the URI or independently certify
+that the external assertion is true.
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/evidence" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-evidence-register-0001' \
+  -d '{
+    "evidence_type":"measurement",
+    "description":"p95 latency was 180 ms",
+    "source_ref":{"provider":"benchmark-ci","id":"run-42"},
+    "producer_ref":{"kind":"service","provider":"ci","id":"benchmark"},
+    "captured_at":"2026-10-02T16:00:00Z",
+    "artifact_id":"<artifact-id>",
+    "measurement":{"value":180,"unit":"ms","method":"p95"},
+    "source_version":"scenario-c1"
+  }'
+```
+
+Evidence does not carry a global support/contradiction flag. Create an
+EvidenceLink to state how that Evidence relates to a specific target:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/evidence-links" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-evidence-link-0001' \
+  -d '{
+    "evidence_id":"<evidence-id>",
+    "target_ref":{"kind":"objective","id":"<objective-id>"},
+    "criterion_id":"<criterion-id>",
+    "stance":"supports",
+    "rationale":"The benchmark supports this criterion"
+  }'
+```
+
+The service verifies that the Evidence is currently registered, the target
+exists in the same Outcome, and an optional criterion belongs exactly to that
+target. Stances are `supports`, `contradicts` and `context`.
+
+Decision starts as `proposed`. Proposal content may be revised while proposed;
+acceptance or rejection freezes the decisional content. Replacing an accepted
+Decision uses one atomic supersession command:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/decisions/$DECISION_ID/actions/supersede" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-decision-supersede-0001' \
+  -H "If-Match: $DECISION_ETAG" \
+  -d '{
+    "title":"Storage after scale-out",
+    "proposal":"Choose the shared durable store",
+    "alternatives":["SQLite","PostgreSQL"],
+    "chosen_alternative":"PostgreSQL",
+    "rationale":"Multi-node deployment requires shared durability"
+  }'
+```
+
+The command creates an accepted successor with
+`supersedes_decision_id=<previous-id>` and marks the prior accepted Decision
+`superseded` under one `outcome_revision`. A Decision can have at most one
+direct successor and supersession cycles are rejected.
+
+`GET .../state` exposes both complete documentary history and current
+projections:
+
+```text
+documentary.artifacts
+documentary.registered_artifacts
+documentary.evidence
+documentary.registered_evidence
+documentary.evidence_links
+documentary.active_evidence_links
+documentary.decisions
+documentary.current_decisions
+```
+
+This lets another consumer reconstruct current facts and choices without the
+previous chat or Session while retaining withdrawn, retracted and superseded
+history.
 
 ## Errors
 
