@@ -1,10 +1,6 @@
 package httptransport
 
-import (
-	"net/http"
-
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
-)
+import "net/http"
 
 func (h *Handler) listReadyWork(w http.ResponseWriter, r *http.Request) {
 	scope, err := parseScope(r)
@@ -20,5 +16,3 @@ func (h *Handler) listReadyWork(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, result)
 }
-
-var _ = domain.Readiness{}
