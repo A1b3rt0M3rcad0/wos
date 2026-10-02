@@ -57,6 +57,8 @@ type assessmentRequest struct {
 	CriterionRevision domain.CriterionRevision `json:"criterion_revision"`
 	Result            domain.AssessmentResult  `json:"result"`
 	Rationale         string                   `json:"rationale"`
+	EvidenceIDs       []string                 `json:"evidence_ids,omitempty"`
+	EvaluatorRef      *domain.EvaluatorRef     `json:"evaluator_ref,omitempty"`
 }
 
 type updateOutcomeRequest struct {
