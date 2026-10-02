@@ -132,11 +132,11 @@ func runReadinessScenario(t *testing.T, tx ports.TransactionManager, clock *read
 
 	createWork := func(title string, notBefore *time.Time) domain.WorkItem {
 		result, err := service.CreateWorkItem(ctx, commands.Context(), application.CreateWorkItemCommand{
-			Scope:      outcome.Scope(),
-			Title:      title,
-			Priority:   domain.PriorityNormal,
-			Lifecycle:  domain.WorkItemLifecycleTodo,
-			NotBefore:  notBefore,
+			Scope:     outcome.Scope(),
+			Title:     title,
+			Priority:  domain.PriorityNormal,
+			Lifecycle: domain.WorkItemLifecycleTodo,
+			NotBefore: notBefore,
 		})
 		if err != nil {
 			t.Fatal(err)
