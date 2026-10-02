@@ -509,12 +509,12 @@ func (h *Handler) issueRequestScope(w http.ResponseWriter, r *http.Request) (dom
 	scope, err := parseScope(r)
 	if err != nil {
 		writeError(w, r, err)
-		return domain.Scope{}, domain.ID{}, false
+		return domain.Scope{}, "", false
 	}
 	id, err := parsePathID(r, "issue_id")
 	if err != nil {
 		writeError(w, r, err)
-		return domain.Scope{}, domain.ID{}, false
+		return domain.Scope{}, "", false
 	}
 	return scope, id, true
 }
@@ -523,12 +523,12 @@ func (h *Handler) blockerRequestScope(w http.ResponseWriter, r *http.Request) (d
 	scope, err := parseScope(r)
 	if err != nil {
 		writeError(w, r, err)
-		return domain.Scope{}, domain.ID{}, false
+		return domain.Scope{}, "", false
 	}
 	id, err := parsePathID(r, "blocker_id")
 	if err != nil {
 		writeError(w, r, err)
-		return domain.Scope{}, domain.ID{}, false
+		return domain.Scope{}, "", false
 	}
 	return scope, id, true
 }

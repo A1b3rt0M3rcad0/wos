@@ -18,10 +18,10 @@ type updateIssueRequest struct {
 }
 
 type createBlockerRequest struct {
-	BlockedRef    relationEndpointRequest  `json:"blocked_ref"`
-	CauseRef      *relationEndpointRequest `json:"cause_ref,omitempty"`
-	ExternalCause *domain.ExternalCause    `json:"external_cause,omitempty"`
-	Description   string                   `json:"description,omitempty"`
+	BlockedRef    relationEndpointRequest   `json:"blocked_ref"`
+	CauseRef      *relationEndpointRequest  `json:"cause_ref,omitempty"`
+	ExternalCause *domain.ExternalCause     `json:"external_cause,omitempty"`
+	Description   string                    `json:"description,omitempty"`
 	Propagation   domain.BlockerPropagation `json:"propagation,omitempty"`
 }
 
