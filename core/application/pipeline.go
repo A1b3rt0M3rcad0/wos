@@ -436,6 +436,10 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"decision.accepted"}, nil
 	case "RejectDecision":
 		return []string{"decision.rejected"}, nil
+	case "CreateEvidenceLink":
+		return []string{"evidence.link_created"}, nil
+	case "RetractEvidenceLink":
+		return []string{"evidence.link_retracted"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":
