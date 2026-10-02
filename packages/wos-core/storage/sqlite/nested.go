@@ -587,17 +587,29 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 		if err != nil {
 			return err
 		}
-		result := "historical"
+		obligationsJSON, err := marshalJSON(conclusion.Obligations)
+		if err != nil {
+			return err
+		}
+		result := conclusion.LifecycleResult
+		if result == "" {
+			result = "historical"
+		}
 		var persistedOwnerVersion any
-		if current != nil && ordinal == len(history) {
-			result = lifecycleResult
+		if conclusion.OwnerVersion != nil {
+			persistedOwnerVersion = int64(*conclusion.OwnerVersion)
+		} else if current != nil && ordinal == len(history) {
 			persistedOwnerVersion = int64(ownerVersion)
+		}
+		if current != nil && ordinal == len(history) && conclusion.LifecycleResult == "" {
+			result = lifecycleResult
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO conclusions (
     id, namespace_id, outcome_id, owner_id, ordinal, owner_version,
-    lifecycle_result, principal_id, actor_json, recorded_at, rationale
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    lifecycle_result, principal_id, actor_json, recorded_at, rationale,
+    obligations_snapshot_json
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			storageID,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -609,6 +621,7 @@ INSERT OR IGNORE INTO conclusions (
 			actorJSON,
 			encodeTime(conclusion.ConcludedAt),
 			conclusion.Reason,
+			obligationsJSON,
 		); err != nil {
 			return mapSQLError("insert conclusion", err)
 		}
@@ -659,7 +672,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 	}
 
 	rows, err := tx.QueryContext(ctx, `
-SELECT id, principal_id, actor_json, recorded_at, rationale
+SELECT id, owner_version, lifecycle_result, principal_id, actor_json,
+       recorded_at, rationale, obligations_snapshot_json
 FROM conclusions
 WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?
 ORDER BY ordinal`,
@@ -673,9 +687,13 @@ ORDER BY ordinal`,
 	history := make([]domain.Conclusion, 0)
 	var current *domain.Conclusion
 	for rows.Next() {
-		var storageID, principal, actorJSON, rationale string
+		var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
 		var recordedAt int64
-		if err := rows.Scan(&storageID, &principal, &actorJSON, &recordedAt, &rationale); err != nil {
+		var ownerVersion sql.NullInt64
+		if err := rows.Scan(
+			&storageID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
+			&recordedAt, &rationale, &obligationsJSON,
+		); err != nil {
 			return nil, nil, err
 		}
 		var actor domain.ActorRef
@@ -686,12 +704,24 @@ ORDER BY ordinal`,
 		if err != nil {
 			return nil, nil, err
 		}
+		var obligations domain.ConclusionObligations
+		if err := unmarshalJSON(obligationsJSON, &obligations); err != nil {
+			return nil, nil, err
+		}
 		value := domain.Conclusion{
 			PrincipalID: principal,
 			Actor:       actor,
 			Reason:      rationale,
 			ConcludedAt: decodeTime(recordedAt),
 			Assessments: refs,
+			Obligations: obligations,
+		}
+		if ownerVersion.Valid {
+			ownerCopy := owner
+			versionCopy := domain.Version(ownerVersion.Int64)
+			value.OwnerRef = &ownerCopy
+			value.OwnerVersion = &versionCopy
+			value.LifecycleResult = lifecycleResult
 		}
 		if err := value.Validate(); err != nil {
 			return nil, nil, err

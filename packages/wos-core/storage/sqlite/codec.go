@@ -49,8 +49,12 @@ func conclusionStorageID(owner domain.EntityRef, ordinal int, conclusion domain.
 	if err != nil {
 		return "", err
 	}
+	obligationsJSON, err := marshalJSON(conclusion.Obligations)
+	if err != nil {
+		return "", err
+	}
 	sum := sha256.Sum256([]byte(fmt.Sprintf(
-		"%s\x00%s\x00%s\x00%d\x00%s\x00%s\x00%s\x00%d\x00%s",
+		"%s\x00%s\x00%s\x00%d\x00%s\x00%s\x00%s\x00%d\x00%s\x00%s",
 		owner.NamespaceID,
 		owner.OutcomeID,
 		owner.ID,
@@ -60,6 +64,7 @@ func conclusionStorageID(owner domain.EntityRef, ordinal int, conclusion domain.
 		conclusion.Reason,
 		conclusion.ConcludedAt.UTC().UnixMicro(),
 		assessmentsJSON,
+		obligationsJSON,
 	)))
 	return hex.EncodeToString(sum[:]), nil
 }

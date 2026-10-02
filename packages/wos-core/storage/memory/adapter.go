@@ -1452,14 +1452,24 @@ func cloneConclusion(v *domain.Conclusion) *domain.Conclusion {
 	}
 	c := *v
 	c.Assessments = append([]domain.CriterionAssessmentRef(nil), v.Assessments...)
+	c.Obligations.RequiredCriteria = append([]domain.CriterionObligationSnapshot(nil), v.Obligations.RequiredCriteria...)
+	c.Obligations.RequiredObjectiveIDs = append([]domain.ID(nil), v.Obligations.RequiredObjectiveIDs...)
+	if v.OwnerRef != nil {
+		owner := *v.OwnerRef
+		c.OwnerRef = &owner
+	}
+	if v.OwnerVersion != nil {
+		version := *v.OwnerVersion
+		c.OwnerVersion = &version
+	}
 	return &c
 }
 
 func cloneConclusions(src []domain.Conclusion) []domain.Conclusion {
 	dst := make([]domain.Conclusion, len(src))
 	for i := range src {
-		dst[i] = src[i]
-		dst[i].Assessments = append([]domain.CriterionAssessmentRef(nil), src[i].Assessments...)
+		cloned := cloneConclusion(&src[i])
+		dst[i] = *cloned
 	}
 	return dst
 }
