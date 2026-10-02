@@ -73,6 +73,7 @@ func (o ConclusionObligations) Validate() error {
 }
 
 type Conclusion struct {
+	ID              ID                       `json:"id,omitempty"`
 	PrincipalID     string                   `json:"principal_id"`
 	Actor           ActorRef                 `json:"actor_ref"`
 	Reason          string                   `json:"reason"`
@@ -85,6 +86,11 @@ type Conclusion struct {
 }
 
 func (c Conclusion) Validate() error {
+	if !c.ID.IsZero() {
+		if err := c.ID.Validate(); err != nil {
+			return WrapError(ErrorCodeInvalidArgument, "conclusion id is invalid", err)
+		}
+	}
 	if strings.TrimSpace(c.PrincipalID) == "" {
 		return NewError(ErrorCodeInvalidArgument, "conclusion principal_id is required")
 	}

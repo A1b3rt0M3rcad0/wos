@@ -603,6 +603,13 @@ ORDER BY evidence_id`,
 	return result, rows.Err()
 }
 
+func nullableConclusionID(id domain.ID) any {
+	if id.IsZero() {
+		return nil
+	}
+	return id.String()
+}
+
 func syncConclusions(
 	ctx context.Context,
 	tx *sql.Tx,
@@ -661,8 +668,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 INSERT OR IGNORE INTO conclusions (
     id, namespace_id, outcome_id, owner_id, ordinal, owner_version,
     lifecycle_result, principal_id, actor_json, recorded_at, rationale,
-    obligations_snapshot_json
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    obligations_snapshot_json, public_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			storageID,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -675,6 +682,7 @@ INSERT OR IGNORE INTO conclusions (
 			encodeTime(conclusion.ConcludedAt),
 			conclusion.Reason,
 			obligationsJSON,
+			nullableConclusionID(conclusion.ID),
 		); err != nil {
 			return mapSQLError("insert conclusion", err)
 		}
@@ -725,7 +733,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 	}
 
 	rows, err := tx.QueryContext(ctx, `
-SELECT id, owner_version, lifecycle_result, principal_id, actor_json,
+SELECT id, public_id, owner_version, lifecycle_result, principal_id, actor_json,
        recorded_at, rationale, obligations_snapshot_json
 FROM conclusions
 WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?
@@ -741,10 +749,11 @@ ORDER BY ordinal`,
 	var current *domain.Conclusion
 	for rows.Next() {
 		var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
+		var publicID sql.NullString
 		var recordedAt int64
 		var ownerVersion sql.NullInt64
 		if err := rows.Scan(
-			&storageID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
+			&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
 			&recordedAt, &rationale, &obligationsJSON,
 		); err != nil {
 			return nil, nil, err
@@ -768,6 +777,13 @@ ORDER BY ordinal`,
 			ConcludedAt: decodeTime(recordedAt),
 			Assessments: refs,
 			Obligations: obligations,
+		}
+		if publicID.Valid {
+			parsed, err := domain.ParseID(publicID.String)
+			if err != nil {
+				return nil, nil, err
+			}
+			value.ID = parsed
 		}
 		if ownerVersion.Valid {
 			ownerCopy := owner

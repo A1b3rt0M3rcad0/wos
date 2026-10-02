@@ -719,6 +719,7 @@ func assessCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.Ent
 
 func conclusionFromContext(ctx domain.CommandContext, reason string, now time.Time) domain.Conclusion {
 	return domain.Conclusion{
+		ID:          ctx.CommandID,
 		PrincipalID: ctx.PrincipalID,
 		Actor:       ctx.Actor,
 		Reason:      strings.TrimSpace(reason),
