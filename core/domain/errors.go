@@ -36,6 +36,8 @@ const (
 	ErrorCodeInvalidRelation       ErrorCode = "invalid_relation"
 	ErrorCodeDependencyCycle       ErrorCode = "dependency_cycle"
 	ErrorCodeGraphLimitExceeded    ErrorCode = "graph_limit_exceeded"
+	ErrorCodeIssue                 ErrorCode = "issue_error"
+	ErrorCodeBlocker               ErrorCode = "blocker_error"
 )
 
 // Error is the foundational typed error used by public Core contracts.
