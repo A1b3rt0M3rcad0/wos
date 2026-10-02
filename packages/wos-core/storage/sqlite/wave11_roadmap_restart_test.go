@@ -50,9 +50,9 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 	roadmapResult, err := service.CreateRoadmap(ctx, sqliteCommandContext(
 		"0199f401-0000-7000-8000-000000000003", "",
 	), application.CreateRoadmapCommand{
-		Scope: outcome.Scope(),
+		Scope:     outcome.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
-		Title: "Persisted roadmap",
+		Title:     "Persisted roadmap",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +70,7 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 		"0199f401-0000-7000-8000-000000000005", "",
 	), application.ReplaceRoadmapDraftCommand{
 		Scope: outcome.Scope(), RoadmapID: roadmap.ID,
-		ExpectedVersion: opened.Value.Version,
+		ExpectedVersion:      opened.Value.Version,
 		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
 		Nodes: []domain.RoadmapNode{
 			{
@@ -90,7 +90,7 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 		"0199f401-0000-7000-8000-000000000006", "",
 	), application.PublishRoadmapDraftCommand{
 		Scope: outcome.Scope(), RoadmapID: roadmap.ID,
-		ExpectedVersion: edited.Value.Version,
+		ExpectedVersion:      edited.Value.Version,
 		ExpectedDraftVersion: edited.Value.Draft.DraftVersion,
 	})
 	if err != nil {

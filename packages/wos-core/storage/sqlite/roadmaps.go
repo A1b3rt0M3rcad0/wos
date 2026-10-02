@@ -21,10 +21,10 @@ func (r roadmapRepository) Get(
 		return domain.Roadmap{}, err
 	}
 	var (
-		version                              int64
-		scopeKind, rawScopeID, title, life   string
-		createdAt, updatedAt                 int64
-		archivedAt                           sql.NullInt64
+		version                            int64
+		scopeKind, rawScopeID, title, life string
+		createdAt, updatedAt               int64
+		archivedAt                         sql.NullInt64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, plan_scope_kind, plan_scope_id, title, lifecycle,
@@ -407,11 +407,11 @@ func loadRoadmapDraft(
 	roadmapID domain.ID,
 ) (*domain.RoadmapDraft, error) {
 	var (
-		draftVersion                      int64
-		baseRevision                      sql.NullInt64
-		lifecycle, nodesJSON, linksJSON   string
-		createdAt, updatedAt               int64
-		discardedAt                        sql.NullInt64
+		draftVersion                    int64
+		baseRevision                    sql.NullInt64
+		lifecycle, nodesJSON, linksJSON string
+		createdAt, updatedAt            int64
+		discardedAt                     sql.NullInt64
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT draft_version, base_revision_number, lifecycle, nodes_json, after_links_json,
@@ -545,8 +545,8 @@ ORDER BY node_key`,
 	for nodeRows.Next() {
 		var (
 			nodeKey, nodeType, title, criterionRefsJSON, criterionSnapshotsJSON string
-			parent, targetJSON, referenceJSON                                  sql.NullString
-			position                                                           int
+			parent, targetJSON, referenceJSON                                   sql.NullString
+			position                                                            int
 			plannedStart, plannedEnd                                            sql.NullInt64
 		)
 		if err := nodeRows.Scan(
@@ -657,7 +657,7 @@ ORDER BY dependent_ref_json, prerequisite_ref_json`,
 		}
 		value.DependencySnapshots = append(value.DependencySnapshots, domain.RoadmapDependencySnapshot{
 			DependentRef: dependent, PrerequisiteRef: prerequisite,
-			Strength: domain.DependencyStrength(strength),
+			Strength:     domain.DependencyStrength(strength),
 			Satisfaction: domain.DependencySatisfaction(satisfaction),
 		})
 	}
@@ -837,7 +837,7 @@ ORDER BY recorded_at, id`,
 		}
 		record := domain.RoadmapActivationRecord{
 			ID: id, Scope: scope, PlanScope: planScope,
-			Action: domain.RoadmapActivationAction(action),
+			Action:    domain.RoadmapActivationAction(action),
 			RoadmapID: roadmapID, RevisionNumber: uint64(revisionNumber),
 			Actor: actor, RecordedAt: decodeTime(recordedAt),
 		}
@@ -847,7 +847,7 @@ ORDER BY recorded_at, id`,
 				return nil, err
 			}
 			record.Replacement = &domain.RoadmapRevisionPointer{
-				RoadmapID: replacementID,
+				RoadmapID:      replacementID,
 				RevisionNumber: uint64(replacementRevision.Int64),
 			}
 		}
