@@ -442,10 +442,10 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ### Remaining work
 
-- [ ] Integrate the operational projection into the broader Outcome continuity/state queries.
+- [x] Integrate the operational projection into the broader Outcome continuity/state queries.
 - [ ] Add audited administrative override semantics and the required authorization boundary.
-- [ ] Expose Renew/Reclaim and operational lease state through HTTP, OpenAPI and HTTP documentation.
-- [ ] Add SQLite restart/parity and concentrated concurrent-claim/reclaim contract coverage for the hardened semantics.
+- [x] Expose Renew/Reclaim and operational lease state through HTTP, OpenAPI and HTTP documentation.
+- [x] Add SQLite restart/parity and concentrated concurrent-claim/reclaim contract coverage for the hardened semantics.
 - [ ] Complete the Wave 08 end-to-end transport and concurrency verification before marking the wave done.
 
 **Completion gate:** at most one current lease exists and a stale claimant cannot complete after reclaim. The stale-claimant invariant is covered by the initial implementation; the full gate remains open until adapter/transport/concurrency verification is complete.
@@ -605,7 +605,7 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 Waves 01–07 are merged into `master`. Wave 08 — Leases and Fencing is active on `feat/wave-08-leases-fencing`.
 
-1. Continue Wave 08 from the first three implementation commits without treating the wave as complete.
-2. Integrate lease/attention projections into continuity queries and add adapter parity/concurrency coverage.
-3. Add the audited administrative override boundary.
-4. Expose the completed lease coordination contract through HTTP/OpenAPI and verify the Wave 08 completion gate.
+1. Add the audited administrative override boundary without bypassing principal/lease ownership semantics.
+2. Complete final Wave 08 transport/concurrency verification and document its CI evidence.
+3. Keep Wave 08 open until the administrative override contract is implemented and verified.
+4. Begin Wave 09 only after the Wave 08 completion gate is explicitly closed.

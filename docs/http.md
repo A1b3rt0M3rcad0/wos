@@ -1,6 +1,6 @@
-# WOS HTTP — Waves 05–07
+# WOS HTTP — Waves 05–08
 
-Waves 05–07 expose the M1 domain plus dependency/readiness and Issue/Blocker coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, blocking, readiness, lease, idempotency or concurrency rules.
+Waves 05–08 expose the M1 domain plus dependency/readiness, Issue/Blocker coordination and hardened WorkItem lease/fencing coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, blocking, readiness, lease, idempotency or concurrency rules.
 
 ## Start the local server
 
@@ -153,6 +153,38 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/claim" \
   -d '{"lease_ttl_seconds":300}'
 ```
 
+Renew the live lease before it expires. Renewal preserves both the claim ID and fencing token while extending `expires_at` from the evaluation time:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/renew-lease" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-renew-work-lease-0001' \
+  -H "If-Match: $WORK_ETAG" \
+  -d '{
+    "claim_id": "<claim-id>",
+    "fencing_token": 1,
+    "lease_ttl_seconds": 300
+  }'
+```
+
+Operational state is time-derived and therefore returned with `Cache-Control: no-store`:
+
+```bash
+curl -i "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/operational-state"
+```
+
+An expired lease keeps the persisted WorkItem in `in_progress`, but the projection reports `lease_status=expired` and `display_state=attention_needed`. It can then be reclaimed explicitly:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/reclaim" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-reclaim-work-0001' \
+  -H "If-Match: $WORK_ETAG" \
+  -d '{"lease_ttl_seconds":300}'
+```
+
+A successful reclaim returns a new claim ID and a strictly higher fencing token. The previous claimant cannot renew, release or complete using the old claim/fencing pair.
+
 Complete it using the returned claim ID, fencing token and newest WorkItem
 ETag:
 
@@ -226,8 +258,10 @@ curl -i "$BASE/outcomes/$OUTCOME_ID/state"
 ```
 
 The state response is `Cache-Control: no-store` and contains the persisted
-Outcome, Objectives, WorkItems, Relations, Issues, Blockers, derived
-`blocking_states` and the current `outcome_revision`.
+Outcome, Objectives, WorkItems, Relations, Issues and Blockers plus derived
+`blocking_states`, `work_item_operational_states`, one `evaluated_at` instant
+and the current `outcome_revision`. Lease expiration can therefore change the
+projection without changing persisted lifecycle or `outcome_revision`.
 
 ## Issues and Blockers
 

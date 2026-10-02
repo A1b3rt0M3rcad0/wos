@@ -523,6 +523,29 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
 
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/operational-state:
+    get:
+      tags: [WorkItems]
+      operationId: getWorkItemOperationalState
+      description: Returns time-evaluated lease and display-state projection without mutating the WorkItem.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Current operational projection.
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemOperationalReadResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/claim:
     post:
       tags: [WorkItems]
@@ -553,6 +576,73 @@ paths:
           $ref: "#/components/responses/Conflict"
         "412":
           $ref: "#/components/responses/PreconditionFailed"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/renew-lease:
+    post:
+      tags: [WorkItems]
+      operationId: renewWorkItemLease
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenewWorkItemLeaseRequest"
+      responses:
+        "200":
+          description: Live lease renewed without rotating claim ID or fencing token.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/reclaim:
+    post:
+      tags: [WorkItems]
+      operationId: reclaimWorkItem
+      description: Reclaims an in-progress WorkItem only after its current lease expires.
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/WorkItemID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimWorkItemRequest"
+      responses:
+        "200":
+          description: Expired lease reclaimed with a new claim ID and a higher fencing token.
+          headers:
+            ETag:
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkItemMutationResult"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
 
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/complete:
     post:
@@ -1449,6 +1539,21 @@ components:
           minimum: 30
           maximum: 3600
 
+    RenewWorkItemLeaseRequest:
+      type: object
+      additionalProperties: false
+      required: [claim_id, fencing_token]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        claim_id: {$ref: "#/components/schemas/ID"}
+        fencing_token:
+          type: integer
+          minimum: 1
+        lease_ttl_seconds:
+          type: integer
+          minimum: 30
+          maximum: 3600
+
     CompleteWorkItemRequest:
       type: object
       additionalProperties: false
@@ -1638,6 +1743,42 @@ components:
               - active_lease
         evaluated_at: {type: string, format: date-time}
 
+    WorkItemOperationalState:
+      type: object
+      required: [ref, lifecycle, display_state, lease_status, is_blocked, evaluated_at]
+      properties:
+        ref: {type: object}
+        lifecycle: {$ref: "#/components/schemas/WorkItemLifecycle"}
+        display_state:
+          type: string
+          enum: [backlog, waiting_scope, blocked, waiting_dependencies, scheduled, ready, in_progress, attention_needed, done, cancelled]
+        lease_status:
+          type: string
+          enum: [none, active, expired]
+        is_blocked: {type: boolean}
+        readiness_reasons:
+          type: array
+          items:
+            type: string
+            enum:
+              - lifecycle_not_ready
+              - outcome_not_active
+              - outcome_archived
+              - objective_terminal
+              - blocked
+              - hard_dependency_unsatisfied
+              - not_before
+              - active_lease
+              - lease_expired
+        evaluated_at: {type: string, format: date-time}
+
+    WorkItemOperationalReadResult:
+      type: object
+      required: [state, outcome_revision]
+      properties:
+        state: {$ref: "#/components/schemas/WorkItemOperationalState"}
+        outcome_revision: {type: integer, minimum: 1}
+
     ReadyWorkItem:
       type: object
       required: [work_item, readiness]
@@ -1818,7 +1959,7 @@ components:
         outcome_revision: {type: integer, minimum: 1}
     OutcomeState:
       type: object
-      required: [outcome, objectives, work_items, relations, issues, blockers, blocking_states, outcome_revision]
+      required: [outcome, objectives, work_items, work_item_operational_states, relations, issues, blockers, blocking_states, evaluated_at, outcome_revision]
       properties:
         outcome: {$ref: "#/components/schemas/Outcome"}
         objectives:
@@ -1827,6 +1968,9 @@ components:
         work_items:
           type: array
           items: {$ref: "#/components/schemas/WorkItem"}
+        work_item_operational_states:
+          type: array
+          items: {$ref: "#/components/schemas/WorkItemOperationalState"}
         relations:
           type: array
           items: {$ref: "#/components/schemas/Relation"}
@@ -1839,6 +1983,7 @@ components:
         blocking_states:
           type: array
           items: {$ref: "#/components/schemas/BlockingState"}
+        evaluated_at: {type: string, format: date-time}
         outcome_revision: {type: integer, minimum: 1}
 
     ErrorEnvelope:
