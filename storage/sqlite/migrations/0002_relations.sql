@@ -5,14 +5,14 @@ CREATE TABLE relations (
     kind TEXT NOT NULL DEFAULT 'relation' CHECK (kind = 'relation'),
     version BIGINT NOT NULL CHECK (version >= 1),
     source_id TEXT NOT NULL,
-    source_kind TEXT NOT NULL CHECK (source_kind IN ('objective','work_item')),
+    source_kind TEXT NOT NULL,
     relation_type TEXT NOT NULL CHECK (relation_type IN ('depends_on','relates_to','produces','derived_from')),
     target_id TEXT NOT NULL,
     target_kind TEXT NOT NULL,
     strength TEXT CHECK (strength IS NULL OR strength IN ('hard','advisory')),
     satisfaction TEXT CHECK (satisfaction IS NULL OR satisfaction = 'target_completed'),
     lifecycle TEXT NOT NULL CHECK (lifecycle IN ('active','removed')),
-    removal_reason TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL DEFAULT '',
     created_at BIGINT NOT NULL,
     updated_at BIGINT NOT NULL,
     UNIQUE (namespace_id, outcome_id, id),
@@ -22,6 +22,7 @@ CREATE TABLE relations (
         REFERENCES entity_refs(namespace_id, outcome_id, id, kind),
     FOREIGN KEY (namespace_id, outcome_id, target_id, target_kind)
         REFERENCES entity_refs(namespace_id, outcome_id, id, kind),
+    FOREIGN KEY (namespace_id, outcome_id) REFERENCES outcomes(namespace_id, id),
     CHECK (source_id <> target_id OR source_kind <> target_kind),
     CHECK (
         relation_type <> 'depends_on'
