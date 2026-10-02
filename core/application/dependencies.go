@@ -50,9 +50,6 @@ func (s *Service) AddDependency(
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Relation{}, 0, err
 		}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
-			return domain.Relation{}, 0, err
-		}
 		sourceState, err := dependencyEndpointState(ctx, uow, cmd.SourceRef)
 		if err != nil {
 			return domain.Relation{}, 0, err
@@ -92,9 +89,6 @@ func (s *Service) RemoveDependency(
 	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Relation, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
-			return domain.Relation{}, 0, err
-		}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Relation{}, 0, err
 		}
 		relation, err := uow.Relations().Get(ctx, cmd.Scope, cmd.RelationID)
