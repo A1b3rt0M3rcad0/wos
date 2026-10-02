@@ -11,3 +11,5 @@ Initial Wave 01 records:
 - [ADR-010 — Public Core and internal Server boundary](./0010-public-core-server-boundary.md)
 
 - [ADR-011 — Product package topology](./0011-product-package-topology.md)
+
+- [ADR-012 — Documentary records and explicit decision history](./0012-documentary-records-and-decision-history.md)
