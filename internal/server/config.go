@@ -32,8 +32,9 @@ type ServerConfig struct {
 }
 
 type HTTPConfig struct {
-	Enabled bool
-	Prefix  string
+	Enabled        bool
+	Prefix         string
+	RequestTimeout time.Duration
 }
 
 type MCPConfig struct {
@@ -43,9 +44,10 @@ type MCPConfig struct {
 }
 
 type StorageConfig struct {
-	Driver      string
-	SQLitePath  string
-	PostgresDSN string
+	Driver         string
+	SQLitePath     string
+	PostgresDSN    string
+	MigrateOnStart bool
 }
 
 type AuthConfig struct {
@@ -60,8 +62,9 @@ func DefaultConfig() Config {
 			ShutdownTimeout: 15 * time.Second,
 		},
 		HTTP: HTTPConfig{
-			Enabled: true,
-			Prefix:  "/api/v1",
+			Enabled:        true,
+			Prefix:         "/api/v1",
+			RequestTimeout: 15 * time.Second,
 		},
 		MCP: MCPConfig{
 			Enabled:   true,
@@ -69,8 +72,9 @@ func DefaultConfig() Config {
 			Stateless: true,
 		},
 		Storage: StorageConfig{
-			Driver:     StorageDriverSQLite,
-			SQLitePath: "./data/wos.db",
+			Driver:         StorageDriverSQLite,
+			SQLitePath:     "./data/wos.db",
+			MigrateOnStart: true,
 		},
 		Auth: AuthConfig{
 			Mode:             AuthModeLocal,
@@ -91,6 +95,9 @@ func (cfg Config) Validate() error {
 	}
 	if cfg.HTTP.Enabled && !validAbsolutePath(cfg.HTTP.Prefix) {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "http.prefix must be an absolute path")
+	}
+	if cfg.HTTP.Enabled && cfg.HTTP.RequestTimeout <= 0 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "http.request_timeout must be positive")
 	}
 	if cfg.MCP.Enabled && !validAbsolutePath(cfg.MCP.Path) {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "mcp.path must be an absolute path")
