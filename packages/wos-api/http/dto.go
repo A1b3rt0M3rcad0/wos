@@ -178,6 +178,22 @@ type roadmapDraftVersionRequest struct {
 	ExpectedDraftVersion uint64  `json:"expected_draft_version"`
 }
 
+type roadmapDependencyChangeRequest struct {
+	Action          string                  `json:"action"`
+	RelationID      string                  `json:"relation_id,omitempty"`
+	ExpectedVersion *uint64                 `json:"expected_version,omitempty"`
+	SourceRef       relationEndpointRequest `json:"source_ref,omitempty"`
+	TargetRef       relationEndpointRequest `json:"target_ref,omitempty"`
+	Strength        domain.DependencyStrength `json:"strength,omitempty"`
+	Reason          string                  `json:"reason,omitempty"`
+}
+
+type publishRoadmapDraftRequest struct {
+	ExpectedVersion      *uint64                          `json:"expected_version,omitempty"`
+	ExpectedDraftVersion uint64                           `json:"expected_draft_version"`
+	DependencyChanges    []roadmapDependencyChangeRequest `json:"dependency_changes,omitempty"`
+}
+
 type roadmapSlotReadResponse struct {
 	Value           *domain.RoadmapActiveSlot `json:"value"`
 	OutcomeRevision domain.OutcomeRevision    `json:"outcome_revision"`

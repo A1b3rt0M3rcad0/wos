@@ -1983,10 +1983,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: {$ref: "#/components/schemas/RoadmapDraftVersionRequest"}
+            schema: {$ref: "#/components/schemas/PublishRoadmapDraftRequest"}
       responses:
         "200":
-          description: Immutable Roadmap revision published with canonical content hash and live-reference snapshots.
+          description: Immutable Roadmap revision published with canonical content hash, live-reference snapshots and any explicit dependency changes committed atomically.
           content:
             application/json:
               schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
@@ -2885,6 +2885,38 @@ components:
       properties:
         expected_version: {$ref: "#/components/schemas/Version"}
         expected_draft_version: {type: integer, minimum: 1}
+
+    RoadmapDependencyChange:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [action, source_ref, target_ref, strength]
+          properties:
+            action: {type: string, const: add}
+            source_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+            target_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+            strength: {$ref: "#/components/schemas/DependencyStrength"}
+            reason: {type: string}
+        - type: object
+          additionalProperties: false
+          required: [action, relation_id, expected_version, reason]
+          properties:
+            action: {type: string, const: remove}
+            relation_id: {$ref: "#/components/schemas/ID"}
+            expected_version: {$ref: "#/components/schemas/Version"}
+            reason: {type: string, minLength: 1}
+
+    PublishRoadmapDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_draft_version]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        expected_draft_version: {type: integer, minimum: 1}
+        dependency_changes:
+          type: array
+          maxItems: 128
+          items: {$ref: "#/components/schemas/RoadmapDependencyChange"}
 
     CreateOutcomeRequest:
       type: object

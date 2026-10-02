@@ -144,13 +144,47 @@ func (h *Handler) discardRoadmapDraft(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) publishRoadmapDraft(w http.ResponseWriter, r *http.Request) {
-	h.roadmapDraftVersionAction(w, r, func(
-		scope domain.Scope, id domain.ID, expected domain.Version, draftVersion uint64, cc domain.CommandContext,
-	) (application.MutationResult[domain.Roadmap], error) {
-		return h.service.PublishRoadmapDraft(r.Context(), cc, application.PublishRoadmapDraftCommand{
-			Scope: scope, RoadmapID: id, ExpectedVersion: expected, ExpectedDraftVersion: draftVersion,
-		})
+	scope, id, err := parseRoadmapTarget(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request publishRoadmapDraftRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	if request.ExpectedDraftVersion == 0 {
+		writeError(w, r, domain.NewError(domain.ErrorCodeInvalidArgument, "expected_draft_version must be at least 1"))
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindRoadmap, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	changes, err := roadmapDependencyChanges(scope, request.DependencyChanges)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.PublishRoadmapDraft(r.Context(), cc, application.PublishRoadmapDraftCommand{
+		Scope:                scope,
+		RoadmapID:            id,
+		ExpectedVersion:      expected,
+		ExpectedDraftVersion: request.ExpectedDraftVersion,
+		DependencyChanges:    changes,
 	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	writeRoadmapMutation(w, result)
 }
 
 func (h *Handler) getRoadmapRevision(w http.ResponseWriter, r *http.Request) {
@@ -308,6 +342,56 @@ func (h *Handler) listRoadmapActivationHistory(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, collectionResponse[domain.RoadmapActivationRecord]{
 		Items: values, OutcomeRevision: revision,
 	})
+}
+
+func roadmapDependencyChanges(
+	scope domain.Scope,
+	requests []roadmapDependencyChangeRequest,
+) ([]application.RoadmapDependencyChange, error) {
+	result := make([]application.RoadmapDependencyChange, 0, len(requests))
+	for _, request := range requests {
+		switch request.Action {
+		case string(application.RoadmapDependencyChangeAdd):
+			source, err := relationEndpoint(scope, request.SourceRef)
+			if err != nil {
+				return nil, err
+			}
+			target, err := relationEndpoint(scope, request.TargetRef)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, application.RoadmapDependencyChange{
+				Action:    application.RoadmapDependencyChangeAdd,
+				SourceRef: source,
+				TargetRef: target,
+				Strength:  request.Strength,
+				Reason:    request.Reason,
+			})
+		case string(application.RoadmapDependencyChangeRemove):
+			relationID, err := domain.ParseID(request.RelationID)
+			if err != nil {
+				return nil, err
+			}
+			if request.ExpectedVersion == nil || *request.ExpectedVersion == 0 {
+				return nil, domain.NewError(
+					domain.ErrorCodeInvalidArgument,
+					"remove dependency change requires expected_version",
+				)
+			}
+			result = append(result, application.RoadmapDependencyChange{
+				Action:          application.RoadmapDependencyChangeRemove,
+				RelationID:      relationID,
+				ExpectedVersion: domain.Version(*request.ExpectedVersion),
+				Reason:          request.Reason,
+			})
+		default:
+			return nil, domain.NewError(
+				domain.ErrorCodeInvalidArgument,
+				"dependency change action must be add or remove",
+			)
+		}
+	}
+	return result, nil
 }
 
 func (h *Handler) roadmapDraftVersionAction(

@@ -6,6 +6,7 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
 func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
@@ -110,11 +111,11 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	persistedRoadmap, err := tx.(interface {
-		Roadmaps() interface {
-			Get(context.Context, domain.Scope, domain.ID) (domain.Roadmap, error)
-		}
-	}).Roadmaps().Get(ctx, outcome.Scope(), roadmap.ID)
+	planningStore, ok := tx.(ports.PlanningUnitOfWork)
+	if !ok {
+		t.Fatal("memory transaction does not expose planning repositories")
+	}
+	persistedRoadmap, err := planningStore.Roadmaps().Get(ctx, outcome.Scope(), roadmap.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
