@@ -226,11 +226,11 @@ func (s *Service) StartObjective(ctx context.Context, commandContext domain.Comm
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.Objective]{}, err
 	}
-	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
+		now := s.clock.Now().UTC()
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
 			return domain.Objective{}, 0, err
