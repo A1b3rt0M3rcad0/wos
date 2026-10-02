@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"sort"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
 )
@@ -75,6 +76,9 @@ func (r artifactRepository) Save(ctx context.Context, value domain.Artifact, exp
 	}
 	if current.Version != expected || value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "artifact expected_version does not match")
+	}
+	if !sameArtifactContent(current, value) {
+		return domain.NewError(domain.ErrorCodeArtifact, "artifact content is immutable")
 	}
 	r.tx.artifacts[key] = cloneArtifact(value)
 	return nil
@@ -149,6 +153,9 @@ func (r evidenceRepository) Save(ctx context.Context, value domain.Evidence, exp
 	if current.Version != expected || value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "evidence expected_version does not match")
 	}
+	if !sameEvidenceContent(current, value) {
+		return domain.NewError(domain.ErrorCodeEvidence, "evidence observation is immutable")
+	}
 	r.tx.evidence[key] = cloneEvidenceValue(value)
 	return nil
 }
@@ -221,6 +228,9 @@ func (r decisionRepository) Save(ctx context.Context, value domain.Decision, exp
 	}
 	if current.Version != expected || value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "decision expected_version does not match")
+	}
+	if current.Lifecycle != domain.DecisionLifecycleProposed && !sameDecisionContent(current, value) {
+		return domain.NewError(domain.ErrorCodeDecision, "final decision content is immutable")
 	}
 	r.tx.decisions[key] = cloneDecision(value)
 	return nil
@@ -295,6 +305,98 @@ func (r evidenceLinkRepository) Save(ctx context.Context, value domain.EvidenceL
 	if current.Version != expected || value.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "evidence link expected_version does not match")
 	}
+	if !sameEvidenceLinkContent(current, value) {
+		return domain.NewError(domain.ErrorCodeEvidenceLink, "evidence link content is immutable")
+	}
 	r.tx.evidenceLinks[key] = cloneEvidenceLink(value)
 	return nil
+}
+
+func sameArtifactContent(left, right domain.Artifact) bool {
+	return left.ArtifactType == right.ArtifactType &&
+		left.Name == right.Name &&
+		left.URI == right.URI &&
+		left.MediaType == right.MediaType &&
+		left.Checksum == right.Checksum &&
+		left.SourceVersion == right.SourceVersion &&
+		left.ProducerRef == right.ProducerRef &&
+		sameOptionalTime(left.ProducedAt, right.ProducedAt) &&
+		left.RegisteredAt.Equal(right.RegisteredAt)
+}
+
+func sameEvidenceContent(left, right domain.Evidence) bool {
+	return left.EvidenceType == right.EvidenceType &&
+		left.Description == right.Description &&
+		left.SourceRef == right.SourceRef &&
+		left.ProducerRef == right.ProducerRef &&
+		left.CapturedAt.Equal(right.CapturedAt) &&
+		left.RegisteredAt.Equal(right.RegisteredAt) &&
+		sameOptionalID(left.ArtifactID, right.ArtifactID) &&
+		sameMeasurement(left.Measurement, right.Measurement) &&
+		left.SourceVersion == right.SourceVersion &&
+		left.Checksum == right.Checksum
+}
+
+func sameDecisionContent(left, right domain.Decision) bool {
+	return left.Title == right.Title &&
+		left.Proposal == right.Proposal &&
+		left.ChosenAlternative == right.ChosenAlternative &&
+		left.Rationale == right.Rationale &&
+		sameStrings(left.Alternatives, right.Alternatives) &&
+		sameOptionalActor(left.DecidedBy, right.DecidedBy) &&
+		sameOptionalTime(left.DecidedAt, right.DecidedAt) &&
+		sameOptionalID(left.SupersedesDecisionID, right.SupersedesDecisionID) &&
+		left.CreatedAt.Equal(right.CreatedAt)
+}
+
+func sameEvidenceLinkContent(left, right domain.EvidenceLink) bool {
+	return left.EvidenceID == right.EvidenceID &&
+		left.TargetRef == right.TargetRef &&
+		sameOptionalID(left.CriterionID, right.CriterionID) &&
+		left.Stance == right.Stance &&
+		left.Rationale == right.Rationale &&
+		left.CreatedAt.Equal(right.CreatedAt)
+}
+
+func sameOptionalID(left, right *domain.ID) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return *left == *right
+}
+
+func sameOptionalTime(left, right *time.Time) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return left.Equal(*right)
+}
+
+func sameOptionalActor(left, right *domain.ActorRef) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return *left == *right
+}
+
+func sameStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func sameMeasurement(left, right *domain.Measurement) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return string(left.Value) == string(right.Value) &&
+		left.Unit == right.Unit &&
+		left.Method == right.Method &&
+		string(left.Conditions) == string(right.Conditions)
 }
