@@ -255,6 +255,12 @@ func eventsForCommand[T any](
 		if meta.Name == "CompleteWorkItem" && eventType == "work_item.released" {
 			payload = json.RawMessage(`{"reason":"completion"}`)
 		}
+		if strings.HasSuffix(eventType, ".conclusion_recorded") {
+			payload, err = conclusionRecordedPayload(value)
+			if err != nil {
+				return nil, err
+			}
+		}
 		event := domain.DomainEvent{
 			EventID:                eventID,
 			EventType:              eventType,
@@ -348,11 +354,11 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 	case "ActivateOutcome":
 		return []string{"outcome.activated"}, nil
 	case "AchieveOutcome":
-		return []string{"outcome.achieved"}, nil
+		return []string{"outcome.achieved", "outcome.conclusion_recorded"}, nil
 	case "FailOutcome":
-		return []string{"outcome.failed"}, nil
+		return []string{"outcome.failed", "outcome.conclusion_recorded"}, nil
 	case "AbandonOutcome":
-		return []string{"outcome.abandoned"}, nil
+		return []string{"outcome.abandoned", "outcome.conclusion_recorded"}, nil
 	case "ReopenOutcome":
 		return []string{"outcome.reopened"}, nil
 	case "ArchiveOutcome":
@@ -366,9 +372,9 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 	case "StartObjective":
 		return []string{"objective.started"}, nil
 	case "AchieveObjective":
-		return []string{"objective.achieved"}, nil
+		return []string{"objective.achieved", "objective.conclusion_recorded"}, nil
 	case "CancelObjective":
-		return []string{"objective.cancelled"}, nil
+		return []string{"objective.cancelled", "objective.conclusion_recorded"}, nil
 	case "ReopenObjective":
 		return []string{"objective.reopened"}, nil
 	case "SetObjectiveOwners", "UpdateObjective":
@@ -388,13 +394,13 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 	case "ReleaseWorkItem":
 		return []string{"work_item.released"}, nil
 	case "CompleteWorkItem":
-		return []string{"work_item.released", "work_item.completed"}, nil
+		return []string{"work_item.released", "work_item.completed", "work_item.conclusion_recorded"}, nil
 	case "AdministrativeCompleteWorkItem":
-		return []string{"work_item.admin_completed"}, nil
+		return []string{"work_item.admin_completed", "work_item.conclusion_recorded"}, nil
 	case "AdministrativeCancelWorkItem":
-		return []string{"work_item.admin_cancelled"}, nil
+		return []string{"work_item.admin_cancelled", "work_item.conclusion_recorded"}, nil
 	case "CancelWorkItem":
-		return []string{"work_item.cancelled"}, nil
+		return []string{"work_item.cancelled", "work_item.conclusion_recorded"}, nil
 	case "ReopenWorkItem":
 		return []string{"work_item.reopened"}, nil
 	case "AddDependency":
@@ -454,6 +460,32 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 	default:
 		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "no event mapping exists for command "+meta.Name)
 	}
+}
+
+func conclusionRecordedPayload[T any](value T) (json.RawMessage, error) {
+	var conclusion *domain.Conclusion
+	switch aggregate := any(value).(type) {
+	case domain.Outcome:
+		conclusion = aggregate.CurrentConclusion
+	case domain.Objective:
+		conclusion = aggregate.CurrentConclusion
+	case domain.WorkItem:
+		conclusion = aggregate.CurrentConclusion
+	default:
+		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "conclusion event requires outcome, objective or work item result")
+	}
+	if conclusion == nil || conclusion.ID.IsZero() {
+		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "conclusion event requires a public conclusion identity")
+	}
+	payload, err := json.Marshal(struct {
+		Conclusion domain.Conclusion `json:"conclusion"`
+	}{
+		Conclusion: *conclusion,
+	})
+	if err != nil {
+		return nil, domain.WrapError(domain.ErrorCodeInvalidEvent, "conclusion event payload cannot be encoded", err)
+	}
+	return payload, nil
 }
 
 func cloneIDPointer(value *domain.ID) *domain.ID {
