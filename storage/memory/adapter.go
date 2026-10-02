@@ -679,6 +679,10 @@ func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
 		id := *v.ObjectiveID
 		v.ObjectiveID = &id
 	}
+	if v.NotBefore != nil {
+		value := *v.NotBefore
+		v.NotBefore = &value
+	}
 	if v.CurrentLease != nil {
 		lease := *v.CurrentLease
 		v.CurrentLease = &lease
