@@ -1,7 +1,7 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-01  
-**Active implementation wave:** Wave 01 — Public Core Foundation
+**Last reviewed:** 2026-10-02  
+**Active implementation wave:** Wave 04 — SQLite Persistence and Migrations (complete in PR #4; not yet merged)
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
 
@@ -9,17 +9,30 @@ This document records dependencies that are actually present in the repository. 
 
 - Module: `github.com/A1b3rt0M3rcad0/wos`
 - Declared Go language/toolchain baseline: `go 1.27`
-- CI verification observed on 2026-10-01: Go `1.27.1`
+- CI verification observed on 2026-10-02: Go `1.27.1`
 
 The `go.mod` directive is the source used by CI.
 
 ## Go module dependencies
 
-Wave 01 has **no third-party Go module dependencies**.
+### Direct
 
-The public Core and server bootstrap currently use the Go standard library only.
+- `github.com/ncruces/go-sqlite3 v0.35.6`
+  - Scope: `storage/sqlite`
+  - Purpose: CGO-free SQLite integration through `database/sql`, including the immediate transaction profile required by the SQLite writer-coordination contract.
+  - Decision record: `docs/adr/0006-sqlite-driver-and-writer-acquisition.md`
 
-This is intentional. A dependency is added only when a concrete implementation requirement justifies it.
+### Indirect module graph
+
+The current tidy `go.mod` includes:
+
+- `github.com/ncruces/go-sqlite3-wasm/v6 v6.3.35304`
+- `github.com/ncruces/julianday v1.0.0`
+- `golang.org/x/sys v0.48.0`
+
+`go.sum` is committed and CI runs `go mod tidy` followed by a zero-diff check.
+
+The public Domain/Application/Ports layers do not import the SQLite dependency. It remains confined to the storage adapter.
 
 ## CI dependencies
 
@@ -30,15 +43,23 @@ GitHub Actions currently uses:
 
 These are CI dependencies, not runtime dependencies of WOS.
 
+## Implemented without a third-party package
+
+Wave 04 uses repository-owned code for:
+
+- numbered embedded SQL migrations;
+- migration checksum validation;
+- UTC microsecond timestamp codec;
+- SQLite backup/restore orchestration.
+
+No external migration framework was added.
+
 ## Planned but not yet selected
 
-The architecture expects later implementation choices for areas such as:
+The architecture still expects later implementation choices for areas such as:
 
-- UUIDv7 generation implementation;
-- SQLite driver;
 - PostgreSQL driver;
-- official Go MCP SDK;
-- migration runner;
+- official Go MCP SDK/profile;
 - optional OpenTelemetry integration.
 
 No package/version for those areas is considered selected by this document. Their versions must be chosen, pinned and tested in the wave that introduces them.

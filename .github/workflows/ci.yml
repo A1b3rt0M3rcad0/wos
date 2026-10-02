@@ -32,6 +32,15 @@ jobs:
       - name: Toolchain
         run: go version
 
+      - name: Module hygiene
+        shell: bash
+        run: |
+          go mod tidy
+          if ! git diff --exit-code -- go.mod go.sum; then
+            echo "go.mod/go.sum are not tidy"
+            exit 1
+          fi
+
       - name: Formatting
         shell: bash
         run: |
@@ -39,6 +48,8 @@ jobs:
           if [ -n "$files" ]; then
             echo "The following files are not gofmt-formatted:"
             echo "$files"
+            echo
+            gofmt -d $files
             exit 1
           fi
 
