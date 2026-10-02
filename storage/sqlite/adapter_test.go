@@ -414,20 +414,34 @@ func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	activated, err := service.ActivateOutcome(ctx, sqliteCommandContext(
+	outcome := created.Value
+	if _, err := service.AddCriterion(ctx, sqliteCommandContext(
 		"0199e946-0000-7000-8000-000000000102", "",
+	), application.AddCriterionCommand{
+		Owner:            outcome.Ref(),
+		ExpectedVersion:  outcome.Version,
+		Title:            "Required before activation",
+		Required:         true,
+		VerificationMode: domain.VerificationModeAttestation,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	outcome.Version++
+
+	activated, err := service.ActivateOutcome(ctx, sqliteCommandContext(
+		"0199e946-0000-7000-8000-000000000103", "",
 	), application.ActivateOutcomeCommand{
-		Scope:           created.Value.Scope(),
-		ExpectedVersion: created.Value.Version,
+		Scope:           outcome.Scope(),
+		ExpectedVersion: outcome.Version,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	work, err := service.CreateWorkItem(ctx, sqliteCommandContext(
-		"0199e946-0000-7000-8000-000000000103", "",
+		"0199e946-0000-7000-8000-000000000105", "",
 	), application.CreateWorkItemCommand{
-		Scope:     created.Value.Scope(),
+		Scope:     activated.Value.Scope(),
 		Title:     "Claim me",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
