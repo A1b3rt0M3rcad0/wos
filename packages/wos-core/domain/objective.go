@@ -160,12 +160,17 @@ func (o *Objective) Achieve(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	conclusion.Assessments = refs
-	if err := conclusion.Validate(); err != nil {
+	o.Lifecycle = ObjectiveLifecycleAchieved
+	if err := o.touch(now); err != nil {
 		return err
 	}
-	o.Lifecycle = ObjectiveLifecycleAchieved
+	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
+		RequiredCriteria: o.Criteria.RequiredObligations(),
+	}); err != nil {
+		return err
+	}
 	o.CurrentConclusion = &conclusion
-	return o.touch(now)
+	return nil
 }
 
 func (o *Objective) Cancel(conclusion Conclusion, now time.Time) error {
@@ -176,8 +181,14 @@ func (o *Objective) Cancel(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	o.Lifecycle = ObjectiveLifecycleCancelled
+	if err := o.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{}); err != nil {
+		return err
+	}
 	o.CurrentConclusion = &conclusion
-	return o.touch(now)
+	return nil
 }
 
 func (o *Objective) Reopen(reason string, now time.Time) error {

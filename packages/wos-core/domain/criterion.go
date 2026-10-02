@@ -373,6 +373,21 @@ func (s CriterionSet) HasRequiredActive() bool {
 	return false
 }
 
+func (s CriterionSet) RequiredObligations() []CriterionObligationSnapshot {
+	result := make([]CriterionObligationSnapshot, 0)
+	for _, c := range s.Items {
+		if c.Status != CriterionStatusActive || !c.Required {
+			continue
+		}
+		result = append(result, CriterionObligationSnapshot{
+			CriterionID:       c.ID,
+			CriterionRevision: c.Revision,
+			VerificationMode:  c.VerificationMode,
+		})
+	}
+	return result
+}
+
 func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 	refs := make([]CriterionAssessmentRef, 0)
 	for _, c := range s.Items {
@@ -386,8 +401,8 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		if a.CriterionRevision != c.Revision {
 			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s has stale assessment", c.ID))
 		}
-		if a.Result != AssessmentResultMet {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s is not met", c.ID))
+		if a.Result != AssessmentResultMet && a.Result != AssessmentResultWaived {
+			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s is not satisfied", c.ID))
 		}
 		refs = append(refs, CriterionAssessmentRef{
 			AssessmentID:      a.ID,

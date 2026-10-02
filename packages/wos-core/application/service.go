@@ -233,12 +233,17 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		requiredObjectiveIDs := make([]domain.ID, 0)
 		for _, objective := range objectives {
-			if objective.RequiredForOutcome && objective.Lifecycle != domain.ObjectiveLifecycleAchieved {
+			if !objective.RequiredForOutcome {
+				continue
+			}
+			if objective.Lifecycle != domain.ObjectiveLifecycleAchieved {
 				return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "required objective is not achieved")
 			}
+			requiredObjectiveIDs = append(requiredObjectiveIDs, objective.ID)
 		}
-		if err := outcome.Achieve(conclusion, now); err != nil {
+		if err := outcome.AchieveWithObligations(conclusion, requiredObjectiveIDs, now); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		if err := uow.Outcomes().Save(ctx, outcome, cmd.ExpectedVersion); err != nil {

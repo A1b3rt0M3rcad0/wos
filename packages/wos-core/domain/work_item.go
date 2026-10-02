@@ -267,14 +267,20 @@ func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64,
 	}
 
 	conclusion.Assessments = refs
-	if err := conclusion.Validate(); err != nil {
-		return err
-	}
 	w.ResultSummary = strings.TrimSpace(resultSummary)
-	w.CurrentConclusion = &conclusion
 	w.CurrentLease = nil
 	w.Lifecycle = WorkItemLifecycleDone
-	return w.touch(now)
+	if err := w.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(w.Ref(), w.Version, string(w.Lifecycle), ConclusionObligations{
+		RequiredCriteria:      w.Criteria.RequiredObligations(),
+		ResultSummaryRequired: !w.Criteria.HasRequiredActive(),
+	}); err != nil {
+		return err
+	}
+	w.CurrentConclusion = &conclusion
+	return nil
 }
 
 func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
@@ -287,10 +293,16 @@ func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
 	if err := conclusion.Validate(); err != nil {
 		return err
 	}
-	w.CurrentConclusion = &conclusion
 	w.CurrentLease = nil
 	w.Lifecycle = WorkItemLifecycleCancelled
-	return w.touch(now)
+	if err := w.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(w.Ref(), w.Version, string(w.Lifecycle), ConclusionObligations{}); err != nil {
+		return err
+	}
+	w.CurrentConclusion = &conclusion
+	return nil
 }
 
 // CancelAdministratively terminates leased work without requiring lease
@@ -302,10 +314,16 @@ func (w *WorkItem) CancelAdministratively(conclusion Conclusion, now time.Time) 
 	if err := conclusion.Validate(); err != nil {
 		return err
 	}
-	w.CurrentConclusion = &conclusion
 	w.CurrentLease = nil
 	w.Lifecycle = WorkItemLifecycleCancelled
-	return w.touch(now)
+	if err := w.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(w.Ref(), w.Version, string(w.Lifecycle), ConclusionObligations{}); err != nil {
+		return err
+	}
+	w.CurrentConclusion = &conclusion
+	return nil
 }
 
 // CompleteAdministratively records completion of leased work while overriding
@@ -327,14 +345,20 @@ func (w *WorkItem) CompleteAdministratively(resultSummary string, conclusion Con
 	}
 
 	conclusion.Assessments = refs
-	if err := conclusion.Validate(); err != nil {
-		return err
-	}
 	w.ResultSummary = strings.TrimSpace(resultSummary)
-	w.CurrentConclusion = &conclusion
 	w.CurrentLease = nil
 	w.Lifecycle = WorkItemLifecycleDone
-	return w.touch(now)
+	if err := w.touch(now); err != nil {
+		return err
+	}
+	if err := conclusion.Bind(w.Ref(), w.Version, string(w.Lifecycle), ConclusionObligations{
+		RequiredCriteria:      w.Criteria.RequiredObligations(),
+		ResultSummaryRequired: !w.Criteria.HasRequiredActive(),
+	}); err != nil {
+		return err
+	}
+	w.CurrentConclusion = &conclusion
+	return nil
 }
 
 func (w *WorkItem) Reopen(reason string, now time.Time) error {
