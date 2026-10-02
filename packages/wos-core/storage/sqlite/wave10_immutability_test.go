@@ -1,0 +1,107 @@
+package sqlite
+
+import (
+	"context"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+)
+
+func TestWave10SQLiteRejectsHistoricalAssessmentRewrite(t *testing.T) {
+	ctx := context.Background()
+	store, err := Open(
+		filepath.Join(t.TempDir(), "wos.db"),
+		Options{BusyTimeout: time.Second, MigrateOnOpen: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+
+	now := time.Date(2026, 10, 2, 21, 0, 0, 0, time.UTC)
+	namespaceID := domain.MustParseID("0199eff0-0000-7000-8000-000000000001")
+	outcomeID := domain.MustParseID("0199eff0-0000-7000-8000-000000000010")
+	outcome, err := domain.NewOutcome(
+		outcomeID,
+		namespaceID,
+		"Immutable assessment",
+		"",
+		"history cannot be rewritten",
+		domain.PriorityNormal,
+		now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion, err := domain.NewSuccessCriterion(
+		domain.MustParseID("0199eff0-0000-7000-8000-000000000020"),
+		outcome.Ref(),
+		"Verified",
+		"",
+		true,
+		domain.VerificationModeAttestation,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := outcome.AddCriterion(criterion, now); err != nil {
+		t.Fatal(err)
+	}
+	assessment := domain.CriterionAssessment{
+		ID:                domain.MustParseID("0199eff0-0000-7000-8000-000000000030"),
+		CriterionID:       criterion.ID,
+		CriterionRevision: criterion.Revision,
+		Result:            domain.AssessmentResultMet,
+		Rationale:         "original rationale",
+		PrincipalID:       "tester",
+		Actor:             domain.ActorRef{Kind: domain.ActorKindService, Provider: "test", ID: "tester"},
+		AssessedAt:        now,
+	}
+	if err := outcome.RecordCriterionAssessment(assessment, false, now); err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Outcomes().Insert(ctx, outcome); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Coordination().AdvanceOutcome(ctx, outcome.Scope()); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err = store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := tx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := loaded.Version
+	if err := loaded.RecordCriterionAssessment(domain.CriterionAssessment{
+		ID:                domain.MustParseID("0199eff0-0000-7000-8000-000000000031"),
+		CriterionID:       criterion.ID,
+		CriterionRevision: criterion.Revision,
+		Result:            domain.AssessmentResultMet,
+		Rationale:         "second assessment",
+		PrincipalID:       "tester",
+		Actor:             domain.ActorRef{Kind: domain.ActorKindService, Provider: "test", ID: "tester"},
+		AssessedAt:        now.Add(time.Minute),
+	}, false, now.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	loaded.Criteria.Assessments[0].Rationale = "rewritten rationale"
+	if err := tx.Outcomes().Save(ctx, loaded, expected); err == nil {
+		_ = tx.Rollback()
+		t.Fatal("historical assessment rewrite unexpectedly committed")
+	}
+	_ = tx.Rollback()
+}
