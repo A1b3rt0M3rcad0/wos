@@ -119,6 +119,9 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("PATCH "+outcome+"/criteria/{criterion_id}", h.reviseOutcomeCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/criteria/{criterion_id}/actions/retire", h.retireOutcomeCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/criteria/{criterion_id}/assessments", h.assessOutcomeCriterion)
+	h.mux.HandleFunc("GET "+outcome+"/criteria/{criterion_id}/history", h.getOutcomeCriterionHistory)
+	h.mux.HandleFunc("GET "+outcome+"/conclusions", h.listOutcomeConclusions)
+	h.mux.HandleFunc("GET "+outcome+"/conclusions/{conclusion_id}", h.getOutcomeConclusion)
 
 	h.mux.HandleFunc("POST "+outcome+"/objectives", h.createObjective)
 	h.mux.HandleFunc("GET "+outcome+"/objectives", h.listObjectives)
@@ -132,6 +135,9 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("PATCH "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}", h.reviseObjectiveCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}/actions/retire", h.retireObjectiveCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}/assessments", h.assessObjectiveCriterion)
+	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}/history", h.getObjectiveCriterionHistory)
+	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}/conclusions", h.listObjectiveConclusions)
+	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}/conclusions/{conclusion_id}", h.getObjectiveConclusion)
 
 	h.mux.HandleFunc("POST "+outcome+"/work-items", h.createWorkItem)
 	h.mux.HandleFunc("GET "+outcome+"/work-items", h.listWorkItems)
@@ -153,6 +159,9 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("PATCH "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}", h.reviseWorkItemCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}/actions/retire", h.retireWorkItemCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}/assessments", h.assessWorkItemCriterion)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}/history", h.getWorkItemCriterionHistory)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/conclusions", h.listWorkItemConclusions)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/conclusions/{conclusion_id}", h.getWorkItemConclusion)
 
 	h.mux.HandleFunc("POST "+outcome+"/issues", h.createIssue)
 	h.mux.HandleFunc("GET "+outcome+"/issues", h.listIssues)
