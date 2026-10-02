@@ -249,7 +249,7 @@ func expectedVersion(r *http.Request, body *uint64, kind domain.EntityKind, id d
 }
 
 func setETag(w http.ResponseWriter, kind domain.EntityKind, id domain.ID, version domain.Version) {
-	w.Header().Set("ETag", fmt.Sprintf(""%s:%s:v%d"", kind, id, version))
+	w.Header().Set("ETag", fmt.Sprintf("%q", fmt.Sprintf("%s:%s:v%d", kind, id, version)))
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
