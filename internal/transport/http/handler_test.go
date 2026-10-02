@@ -82,7 +82,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		base,
 		createOutcomeBody,
 		map[string]string{
-			"Idempotency-Key": "http-outcome-create-0001",
+			"Idempotency-Key":  "http-outcome-create-0001",
 			"X-Correlation-ID": "http-test-correlation",
 		},
 		http.StatusCreated,

@@ -38,7 +38,7 @@ type criterionRequest struct {
 }
 
 type assessmentRequest struct {
-	ExpectedVersion   *uint64                 `json:"expected_version,omitempty"`
+	ExpectedVersion   *uint64                  `json:"expected_version,omitempty"`
 	CriterionRevision domain.CriterionRevision `json:"criterion_revision"`
 	Result            domain.AssessmentResult  `json:"result"`
 	Rationale         string                   `json:"rationale"`
