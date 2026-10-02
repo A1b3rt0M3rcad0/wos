@@ -382,12 +382,15 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	}
 	semanticInvalid.Body.Close()
 
+	largeDescription := bytes.Repeat([]byte("x"), maxJSONBodyBytes+1)
+	largePayload := append([]byte(`{"title":"large","priority":"normal","description":"`), largeDescription...)
+	largePayload = append(largePayload, []byte(`"}`)...)
 	tooLarge := doRequest(
 		t,
 		client,
 		http.MethodPost,
 		outcomeURL+"/objectives",
-		bytes.Repeat([]byte("x"), maxJSONBodyBytes+1),
+		largePayload,
 		map[string]string{"Idempotency-Key": "http-payload-too-large-0001"},
 	)
 	if tooLarge.StatusCode != http.StatusRequestEntityTooLarge {
