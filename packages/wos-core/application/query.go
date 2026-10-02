@@ -45,25 +45,6 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
-	evidenceByID := make(map[domain.ID]domain.Evidence, len(evidence))
-	for _, item := range evidence {
-		evidenceByID[item.ID] = item
-	}
-	contestations := make([]domain.ConclusionContestation, 0)
-	contestations = append(contestations, conclusionContestations(
-		outcome.Ref(), outcome.CurrentConclusion, outcome.Criteria, evidenceByID,
-	)...)
-	for _, objective := range objectives {
-		contestations = append(contestations, conclusionContestations(
-			objective.Ref(), objective.CurrentConclusion, objective.Criteria, evidenceByID,
-		)...)
-	}
-	for _, item := range workItems {
-		contestations = append(contestations, conclusionContestations(
-			item.Ref(), item.CurrentConclusion, item.Criteria, evidenceByID,
-		)...)
-	}
-
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
@@ -285,6 +266,25 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		))
 	}
 
+	evidenceByID := make(map[domain.ID]domain.Evidence, len(evidence))
+	for _, item := range evidence {
+		evidenceByID[item.ID] = item
+	}
+	contestations := make([]domain.ConclusionContestation, 0)
+	contestations = append(contestations, conclusionContestations(
+		outcome.Ref(), outcome.CurrentConclusion, outcome.Criteria, evidenceByID,
+	)...)
+	for _, objective := range objectives {
+		contestations = append(contestations, conclusionContestations(
+			objective.Ref(), objective.CurrentConclusion, objective.Criteria, evidenceByID,
+		)...)
+	}
+	for _, item := range workItems {
+		contestations = append(contestations, conclusionContestations(
+			item.Ref(), item.CurrentConclusion, item.Criteria, evidenceByID,
+		)...)
+	}
+
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return OutcomeState{}, err
@@ -308,7 +308,6 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		OutcomeRevision:           coordination.Revision,
 	}, nil
 }
-
 
 func conclusionContestations(
 	owner domain.EntityRef,
