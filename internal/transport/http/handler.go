@@ -148,6 +148,25 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("PATCH "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}", h.reviseWorkItemCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}/actions/retire", h.retireWorkItemCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/criteria/{criterion_id}/assessments", h.assessWorkItemCriterion)
+
+	h.mux.HandleFunc("POST "+outcome+"/issues", h.createIssue)
+	h.mux.HandleFunc("GET "+outcome+"/issues", h.listIssues)
+	h.mux.HandleFunc("POST "+outcome+"/issues/actions/report-with-blocker", h.reportIssueWithBlocker)
+	h.mux.HandleFunc("GET "+outcome+"/issues/{issue_id}", h.getIssue)
+	h.mux.HandleFunc("PATCH "+outcome+"/issues/{issue_id}", h.updateIssue)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/investigate", h.investigateIssue)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/resolve", h.resolveIssue)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/reopen", h.reopenIssue)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/wont-fix", h.markIssueWontFix)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/mark-duplicate", h.markIssueDuplicate)
+	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/resolve-with-blockers", h.resolveIssueAndBlockers)
+
+	h.mux.HandleFunc("POST "+outcome+"/blockers", h.createBlocker)
+	h.mux.HandleFunc("GET "+outcome+"/blockers", h.listBlockers)
+	h.mux.HandleFunc("GET "+outcome+"/blockers/{blocker_id}", h.getBlocker)
+	h.mux.HandleFunc("PATCH "+outcome+"/blockers/{blocker_id}", h.updateBlocker)
+	h.mux.HandleFunc("POST "+outcome+"/blockers/{blocker_id}/actions/resolve", h.resolveBlocker)
+	h.mux.HandleFunc("POST "+outcome+"/blockers/{blocker_id}/actions/cancel", h.cancelBlocker)
 }
 
 func (h *Handler) commandContext(r *http.Request) (domain.CommandContext, error) {
@@ -321,7 +340,9 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		case domain.ErrorCodeInvalidArgument,
 			domain.ErrorCodeInvalidRelation,
 			domain.ErrorCodeCriterion,
-			domain.ErrorCodeAssessment:
+			domain.ErrorCodeAssessment,
+			domain.ErrorCodeIssue,
+			domain.ErrorCodeBlocker:
 			status = http.StatusUnprocessableEntity
 		case domain.ErrorCodeNotFound:
 			status = http.StatusNotFound
