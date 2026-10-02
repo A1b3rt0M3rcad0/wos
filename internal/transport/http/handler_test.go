@@ -95,8 +95,9 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		t.Fatal("correlation id was not preserved")
 	}
 	outcomeURL := base + "/" + outcome.ID.String()
-	if createOutcomeResponse.Header.Get("Location") != outcomeURL {
-		t.Fatalf("Location = %q, want %q", createOutcomeResponse.Header.Get("Location"), outcomeURL)
+	expectedLocation := "/api/v1/namespaces/" + namespaceID + "/outcomes/" + outcome.ID.String()
+	if createOutcomeResponse.Header.Get("Location") != expectedLocation {
+		t.Fatalf("Location = %q, want %q", createOutcomeResponse.Header.Get("Location"), expectedLocation)
 	}
 	outcomeETagV1 := createOutcomeResponse.Header.Get("ETag")
 	if outcomeETagV1 == "" {
