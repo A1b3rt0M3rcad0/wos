@@ -121,3 +121,70 @@ func refPtr(ref domain.EntityRef) *domain.EntityRef {
 	value := ref
 	return &value
 }
+
+
+func TestWave11OutcomeRoadmapAcceptsOutcomeCriterionMilestone(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	cc := commandContext()
+
+	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  domain.MustParseID("0199f301-0000-7000-8000-000000000001"),
+		Title:        "Outcome milestone",
+		DesiredState: "milestone can reference Outcome criterion",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome := created.Value
+
+	criterionResult, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{
+		Owner:            outcome.Ref(),
+		ExpectedVersion:  outcome.Version,
+		Title:            "Outcome verified",
+		Required:         true,
+		VerificationMode: domain.VerificationModeAttestation,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion := criterionResult.Value
+
+	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
+		Scope:     outcome.Scope(),
+		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
+		Title:     "Outcome plan",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	roadmap := roadmapResult.Value
+	opened, err := service.OpenRoadmapDraft(ctx, cc, application.OpenRoadmapDraftCommand{
+		Scope: outcome.Scope(), RoadmapID: roadmap.ID, ExpectedVersion: roadmap.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = service.ReplaceRoadmapDraft(ctx, cc, application.ReplaceRoadmapDraftCommand{
+		Scope:                outcome.Scope(),
+		RoadmapID:            roadmap.ID,
+		ExpectedVersion:      opened.Value.Version,
+		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
+		Nodes: []domain.RoadmapNode{
+			{
+				NodeKey:  "milestone",
+				NodeType: domain.RoadmapNodeMilestone,
+				Title:    "Outcome verified",
+				Position: 0,
+				CriterionRefs: []domain.RoadmapCriterionRef{
+					{OwnerRef: outcome.Ref(), CriterionID: criterion.ID},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}

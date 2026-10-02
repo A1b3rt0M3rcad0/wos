@@ -239,6 +239,10 @@ func validateRoadmapDraftReferences(
 	roadmap domain.Roadmap,
 	nodes []domain.RoadmapNode,
 ) error {
+	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.NamespaceID, roadmap.Scope.OutcomeID)
+	if err != nil {
+		return err
+	}
 	objectives, err := uow.Objectives().ListByOutcome(ctx, roadmap.Scope)
 	if err != nil {
 		return err
@@ -291,6 +295,7 @@ func validateRoadmapDraftReferences(
 			if err := validateRoadmapCriterionRef(
 				criterionRef,
 				roadmap,
+				outcome,
 				objectiveByID,
 				workByID,
 				allowedObjectives,
@@ -342,6 +347,7 @@ func validateRoadmapTargetRef(
 func validateRoadmapCriterionRef(
 	ref domain.RoadmapCriterionRef,
 	roadmap domain.Roadmap,
+	outcome domain.Outcome,
 	objectiveByID map[domain.ID]domain.Objective,
 	workByID map[domain.ID]domain.WorkItem,
 	allowedObjectives map[domain.ID]struct{},
@@ -351,7 +357,9 @@ func validateRoadmapCriterionRef(
 		if roadmap.PlanScope.Kind != domain.RoadmapScopeOutcome || ref.OwnerRef.ID != roadmap.Scope.OutcomeID {
 			return domain.NewError(domain.ErrorCodeRoadmap, "Outcome criterion is outside the Roadmap scope")
 		}
-		return domain.NewError(domain.ErrorCodeRoadmap, "Outcome criterion validation requires the Outcome aggregate")
+		if !criterionExists(outcome.Criteria, ref.CriterionID) {
+			return domain.NewError(domain.ErrorCodeRoadmap, "milestone criterion does not exist on Outcome")
+		}
 	case domain.EntityKindObjective:
 		objective, exists := objectiveByID[ref.OwnerRef.ID]
 		if !exists {
