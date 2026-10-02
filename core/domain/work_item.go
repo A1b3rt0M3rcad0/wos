@@ -43,7 +43,7 @@ type WorkItem struct {
 	ObjectiveID       *ID               `json:"objective_id,omitempty"`
 	Lifecycle         WorkItemLifecycle `json:"lifecycle"`
 	Priority          Priority          `json:"priority"`
-	AssigneeRefs      []ActorRef        `json:"assignee_refs,omitempty"`
+	NotBefore         *time.Time        `json:"not_before,omitempty"`\n	AssigneeRefs      []ActorRef        `json:"assignee_refs,omitempty"`
 	ResultSummary     string            `json:"result_summary,omitempty"`
 	CurrentLease      *WorkLease        `json:"current_lease,omitempty"`
 	LastFencingToken  uint64            `json:"last_fencing_token"`
@@ -102,7 +102,7 @@ func (w WorkItem) Validate() error {
 	if !w.Lifecycle.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "work item lifecycle is invalid")
 	}
-	if err := validateActorRefs(w.AssigneeRefs, "work item assignee"); err != nil {
+	if w.NotBefore != nil && w.NotBefore.IsZero() {\n\t\treturn NewError(ErrorCodeInvalidArgument, "work item not_before cannot be zero")\n\t}\n	if err := validateActorRefs(w.AssigneeRefs, "work item assignee"); err != nil {
 		return err
 	}
 	if err := w.Criteria.ValidateForOwner(w.Ref()); err != nil {
