@@ -548,63 +548,63 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 - [ ] Preserve an immutable definition snapshot for every SuccessCriterion revision.
 - [ ] Keep the current SuccessCriterion definition separate from its immutable revision history.
-- [ ] Extend CriterionAssessment with explicit `evidence_ids` and optional `evaluator_ref`.
-- [ ] Support `met|not_met|inconclusive|waived` without conflating EvidenceLink with assessment.
-- [ ] Require `evidence_review` assessments to reference at least one active, same-Outcome Evidence.
+- [x] Extend CriterionAssessment with explicit `evidence_ids` and optional `evaluator_ref`.
+- [x] Support `met|not_met|inconclusive|waived` without conflating EvidenceLink with assessment.
+- [x] Require `evidence_review` assessments to reference at least one active, same-Outcome Evidence.
 - [ ] Require `external_evaluation` assessments to include evaluator identity/version metadata and evidence required by the caller contract.
-- [ ] Require explicit authorization and reason for `waived`.
-- [ ] Keep CriterionAssessment immutable and retain supersession history.
-- [ ] Clear the current-assessment binding when a criterion is revised or retired; retain assessment history.
+- [x] Require explicit authorization and reason for `waived`.
+- [x] Keep CriterionAssessment immutable and retain supersession history.
+- [x] Clear the current-assessment binding when a criterion is revised or retired; retain assessment history.
 - [ ] Introduce first-class Conclusion identity/history for Outcome, Objective and WorkItem.
-- [ ] Store the exact owner version, lifecycle result, criterion revisions, assessment IDs and structural obligations used by a Conclusion.
-- [ ] Reopening clears only the current Conclusion binding; historical Conclusions remain immutable.
-- [ ] Project `conclusion_contested` and concrete causes when current Evidence/assessments contradict the recorded Conclusion.
-- [ ] Never auto-reopen or auto-change lifecycle because a Conclusion becomes contested.
+- [x] Store the exact owner version, lifecycle result, criterion revisions, assessment IDs and structural obligations used by a Conclusion.
+- [x] Reopening clears only the current Conclusion binding; historical Conclusions remain immutable.
+- [x] Project `conclusion_contested` and concrete causes when current Evidence/assessments contradict the recorded Conclusion.
+- [x] Never auto-reopen or auto-change lifecycle because a Conclusion becomes contested.
 
 ### Application and authorization contract
 
-- [ ] Replace the Wave 02 attestation-only command path with a generic RecordCriterionAssessment path.
-- [ ] Preserve attestation as a compatibility/application specialization where useful, but not as the domain's only assessment mode.
-- [ ] Add `assessment:waive` permission to the Authorizer contract.
-- [ ] Validate assessment Evidence against Namespace/Outcome, lifecycle and criterion revision inside the Outcome transaction guard.
-- [ ] Require expected owner version when updating the current assessment binding.
+- [x] Replace the Wave 02 attestation-only command path with a generic RecordCriterionAssessment path.
+- [x] Preserve attestation as a compatibility/application specialization where useful, but not as the domain's only assessment mode.
+- [x] Add `assessment:waive` permission to the Authorizer contract.
+- [x] Validate assessment Evidence against Namespace/Outcome, lifecycle and criterion revision inside the Outcome transaction guard.
+- [x] Require expected owner version when updating the current assessment binding.
 - [ ] Detect concurrent assessments/current-binding replacements with optimistic version conflict.
 - [ ] Make AchieveOutcome/AchieveObjective/CompleteWorkItem build explicit immutable Conclusion records.
-- [ ] Enforce required Objective obligations for Outcome achievement.
-- [ ] Capture structural obligation snapshots before the terminal transition commits.
+- [x] Enforce required Objective obligations for Outcome achievement.
+- [x] Capture structural obligation snapshots before the terminal transition commits.
 - [ ] Emit canonical assessment/conclusion Domain Events through the existing transaction/idempotency pipeline.
 
 ### Storage contract
 
 - [ ] Treat `criterion_revisions`, `criterion_assessments`, `conclusions` and conclusion-assessment links as append-only historical records.
-- [ ] Persist assessment Evidence references and evaluator metadata.
-- [ ] Persist current-assessment/current-conclusion bindings separately from historical rows.
-- [ ] Add a Wave 10 SQLite migration for fields/relations missing from the predeclared foundation schema.
-- [ ] Reject assessment references to nonexistent criterion revisions.
-- [ ] Preserve criterion revision history, assessment history, current bindings and Conclusions across restart.
+- [x] Persist assessment Evidence references and evaluator metadata.
+- [x] Persist current-assessment/current-conclusion bindings separately from historical rows.
+- [x] Add a Wave 10 SQLite migration for fields/relations missing from the predeclared foundation schema.
+- [x] Reject assessment references to nonexistent criterion revisions.
+- [x] Preserve criterion revision history, assessment history, current bindings and Conclusions across restart.
 - [ ] Keep memory and SQLite behavior equivalent.
 
 ### HTTP and contract surface
 
-- [ ] Expose generic assessment recording for all verification modes.
-- [ ] Require Idempotency-Key for assessment/conclusion mutations and ETag/If-Match for owner-bound current state.
+- [x] Expose generic assessment recording for all verification modes.
+- [x] Require Idempotency-Key for assessment/conclusion mutations and ETag/If-Match for owner-bound current state.
 - [ ] Expose immutable assessment history and current bindings.
-- [ ] Expose current/historical Conclusions and contestation state.
+- [x] Expose current/historical Conclusions and contestation state.
 - [ ] Extend OpenAPI 3.1 and `docs/http.md` with Wave 10 contracts.
 
 ### Verification
 
-- [ ] Prove an assessment for criterion revision N never satisfies revision N+1.
-- [ ] Prove revising a criterion clears only the current binding and preserves old assessments.
-- [ ] Prove `evidence_review` without Evidence is rejected.
-- [ ] Prove retracted Evidence cannot support a new positive assessment/conclusion.
-- [ ] Prove a waiver without `assessment:waive` authorization is rejected.
+- [x] Prove an assessment for criterion revision N never satisfies revision N+1.
+- [x] Prove revising a criterion clears only the current binding and preserves old assessments.
+- [x] Prove `evidence_review` without Evidence is rejected.
+- [x] Prove retracted Evidence cannot support a new positive assessment/conclusion.
+- [x] Prove a waiver without `assessment:waive` authorization is rejected.
 - [ ] Prove two concurrent assessments cannot silently replace the same current binding.
-- [ ] Prove required Objectives block Outcome achievement when not achieved.
-- [ ] Prove a Conclusion stores exactly the criterion revisions and assessment IDs used at commit time.
+- [x] Prove required Objectives block Outcome achievement when not achieved.
+- [x] Prove a Conclusion stores exactly the criterion revisions and assessment IDs used at commit time.
 - [ ] Prove later `not_met` assessment or Evidence retraction contests but does not erase/reopen a terminal entity.
 - [ ] Prove memory/SQLite restart preserves immutable validation history.
-- [ ] Pass module hygiene, gofmt, vet, unit/contract tests, race detector, standalone build and HTTP runtime smoke.
+- [x] Pass module hygiene, gofmt, vet, unit/contract tests, race detector, standalone build and HTTP runtime smoke.
 
 **Completion gate:** achievement records exactly which criterion revisions, assessments and structural obligations justified the conclusion, and later contradictory facts are visible as contestations without historical rewriting.
 
