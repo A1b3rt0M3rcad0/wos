@@ -1,8 +1,6 @@
-# WOS HTTP — Wave 05
+# WOS HTTP — Waves 05–06
 
-Wave 05 exposes the M1 domain through the standalone WOS process. The HTTP
-transport is an adapter over the existing Application services; it does not
-duplicate lifecycle, criteria, lease, idempotency or concurrency rules.
+Waves 05–06 expose the M1 domain plus dependency/readiness coordination through the standalone WOS process. The HTTP transport is an adapter over the existing Application services; it does not duplicate lifecycle, criteria, dependency, readiness, lease, idempotency or concurrency rules.
 
 ## Start the local server
 
@@ -24,7 +22,7 @@ request deadline:   15s
 migrate on start:   true
 ```
 
-Supported environment overrides in Wave 05:
+Supported environment overrides:
 
 ```bash
 export WOS_LISTEN=127.0.0.1:8080
@@ -171,14 +169,64 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/complete
   }'
 ```
 
-Read the M1 state projection:
+Create two `todo` WorkItems and register a hard dependency from the dependent
+item to its prerequisite:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/relations" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-add-dependency-0001' \
+  -d '{
+    "source_ref": {"kind": "work_item", "id": "<dependent-work-id>"},
+    "relation_type": "depends_on",
+    "target_ref": {"kind": "work_item", "id": "<prerequisite-work-id>"},
+    "strength": "hard",
+    "satisfaction": "target_completed",
+    "reason": "O trabalho dependente exige o pré-requisito"
+  }'
+```
+
+The dependency is Outcome-local, versioned and audited. `hard` dependencies
+participate in readiness and completion gates; `advisory` dependencies remain
+visible but do not block execution. Adding an edge that would create a direct
+or indirect cycle returns `dependency_cycle`.
+
+Query the deterministic ready-work projection:
+
+```bash
+curl -i "$BASE/outcomes/$OUTCOME_ID/ready-work"
+```
+
+The response uses `Cache-Control: no-store`, includes one `evaluated_at`
+instant and the current `outcome_revision`. A `todo` WorkItem is omitted
+while a hard dependency is unsatisfied or while `not_before` is in the
+future.
+
+Relations can be listed or read directly:
+
+```bash
+curl -i "$BASE/outcomes/$OUTCOME_ID/relations"
+curl -i "$BASE/outcomes/$OUTCOME_ID/relations/$RELATION_ID"
+```
+
+Remove a dependency with its strong ETag and an audit reason:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/relations/$RELATION_ID/actions/remove" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-remove-dependency-0001' \
+  -H "If-Match: $RELATION_ETAG" \
+  -d '{"reason":"O pré-requisito não é mais necessário"}'
+```
+
+Read the current state projection:
 
 ```bash
 curl -i "$BASE/outcomes/$OUTCOME_ID/state"
 ```
 
 The state response is `Cache-Control: no-store` and contains the persisted
-Outcome, its Objectives, its WorkItems and the current `outcome_revision`.
+Outcome, Objectives, WorkItems, Relations and the current `outcome_revision`.
 
 ## Errors
 
@@ -195,13 +243,13 @@ Errors use a stable envelope:
 }
 ```
 
-Wave 05 mappings are:
+Current mappings are:
 
 | HTTP | Meaning |
 | --- | --- |
 | 400 | malformed JSON, invalid identifiers/format or invalid idempotency key |
 | 404 | entity absent from the explicit Namespace/Outcome scope |
-| 409 | lifecycle, precondition, lease or idempotency conflict |
+| 409 | lifecycle, dependency cycle/graph limit, precondition, lease or idempotency conflict |
 | 412 | stale or mismatched `If-Match` / `expected_version` |
 | 413 | request body exceeds the supported limit |
 | 422 | syntactically valid request violates a domain field constraint |

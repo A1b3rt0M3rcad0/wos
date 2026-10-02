@@ -20,6 +20,7 @@ type UnitOfWork interface {
 	Outcomes() OutcomeRepository
 	Objectives() ObjectiveRepository
 	WorkItems() WorkItemRepository
+	Relations() RelationRepository
 	Coordination() CoordinationStore
 	Events() DomainEventLog
 	Idempotency() IdempotencyStore

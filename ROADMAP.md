@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-02  
 **Current target:** Release 0.1  
-**Current wave:** Wave 05 — HTTP Vertical Slice (complete in PR #5; pending merge)
+**Current wave:** Wave 06 — Dependencies, Graph and Readiness (complete in PR #6; pending merge)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -337,11 +337,34 @@ GitHub Actions run `36967299973` validated head `9a6cc4af2526420b6a8a6b6bbff209b
 
 ## Wave 06 — Dependencies, Graph and Readiness
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done
 
 Implement canonical `depends_on` relations, hard/advisory semantics, DAG validation, Objective hierarchy constraints, deterministic readiness, `not_before`, readiness reasons and ready-work queries.
 
-**Completion gate:** memory and SQLite readiness are equivalent and concurrent edge insertion cannot create dependency cycles.
+### Completed
+
+- [x] Add typed Outcome-local `Relation/depends_on` domain model with hard/advisory strength and `target_completed` satisfaction semantics.
+- [x] Reject self-dependencies, invalid endpoint kinds, cross-Outcome references, duplicate active semantic edges and direct/indirect dependency cycles.
+- [x] Validate DAG mutations while holding the Outcome coordination guard so opposite concurrent edge insertion cannot commit a cycle.
+- [x] Preserve explicit audit reasons for dependency changes and require a reason when adding a dependency to an in-progress source.
+- [x] Prevent dependency changes on terminal sources until they are reopened.
+- [x] Enforce hard dependencies on Objective achievement and WorkItem completion without allowing advisory dependencies to block transitions.
+- [x] Add deterministic Objective/WorkItem readiness policies and explicit readiness reasons.
+- [x] Persist and restore WorkItem `not_before` in memory/SQLite and honor the exact `not_before <= evaluated_at` boundary.
+- [x] Add deterministic `ListReadyWork` ordering by priority, creation time and ID.
+- [x] Persist Relations through memory and SQLite UnitOfWork repositories with migration `0002_relations.sql`.
+- [x] Include Relations in Outcome state and expose relation read/list operations.
+- [x] Expose HTTP `/relations`, relation removal and `/ready-work` through the same Application services.
+- [x] Extend OpenAPI and HTTP documentation for dependency/readiness contracts.
+- [x] Prove hard/advisory behavior, cancelled-target semantics, dependency removal, in-progress mutation rules and indirect cycle rejection.
+- [x] Prove memory/SQLite readiness parity, SQLite restart durability and concurrent opposite-edge rejection.
+- [x] Pass formatting, vet, unit/contract tests, race detector, standalone build and runtime smoke verification.
+
+### Verification
+
+CI run `37008538950` (#97) validated implementation head `8549346c96e6e2c7f940b3c681158ac0064e011c` with module hygiene, formatting, vet, the full unit/contract suite, race detector, standalone build, version/configuration smoke checks and standalone HTTP runtime smoke verification.
+
+**Completion gate:** satisfied — memory and SQLite produce equivalent readiness results for the tested state/time boundaries, and concurrent opposite dependency insertion cannot commit a dependency cycle.
 
 **Target commit:**  
 `feat(core): add dependency validation and deterministic work readiness`
@@ -522,11 +545,10 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Current next actions
 
-Waves 01–03 are merged into `master`. Wave 04 is technically complete on PR #4 and remains unmerged pending review.
+Waves 01–05 are merged into `master`. Wave 06 is complete and verified on PR #6, pending merge.
 
-1. Review PR #4 and its final CI result.
-2. Merge Wave 04 only when approved by the repository owner.
-3. Keep Wave 05 — HTTP Vertical Slice as **Planned** until that merge/authorization.
-4. Do not move HTTP transport concerns into Wave 04 follow-up work.
-
-Wave 05 implementation has not started.
+1. Merge PR #6 after the final documentation-only CI gate remains green.
+2. Start Wave 07 — Issues and Blockers from the updated `master`.
+3. Implement independent Issue and Blocker aggregates with explicit lifecycle and typed targets/causes.
+4. Add direct/subtree blocking propagation and deterministic inherited blocking projections.
+5. Prove that resolving one impediment never silently resolves another.

@@ -102,6 +102,11 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+outcome, h.getOutcome)
 	h.mux.HandleFunc("PATCH "+outcome, h.updateOutcome)
 	h.mux.HandleFunc("GET "+outcome+"/state", h.getOutcomeState)
+	h.mux.HandleFunc("GET "+outcome+"/ready-work", h.listReadyWork)
+	h.mux.HandleFunc("GET "+outcome+"/relations", h.listRelations)
+	h.mux.HandleFunc("POST "+outcome+"/relations", h.createRelation)
+	h.mux.HandleFunc("GET "+outcome+"/relations/{relation_id}", h.getRelation)
+	h.mux.HandleFunc("POST "+outcome+"/relations/{relation_id}/actions/remove", h.removeRelation)
 	h.mux.HandleFunc("POST "+outcome+"/actions/activate", h.activateOutcome)
 	h.mux.HandleFunc("POST "+outcome+"/actions/achieve", h.achieveOutcome)
 	h.mux.HandleFunc("POST "+outcome+"/actions/fail", h.failOutcome)
@@ -314,6 +319,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			domain.ErrorCodeInvalidIdempotencyKey:
 			status = http.StatusBadRequest
 		case domain.ErrorCodeInvalidArgument,
+			domain.ErrorCodeInvalidRelation,
 			domain.ErrorCodeCriterion,
 			domain.ErrorCodeAssessment:
 			status = http.StatusUnprocessableEntity
@@ -325,6 +331,8 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			domain.ErrorCodeInvalidTransition,
 			domain.ErrorCodePreconditionFailed,
 			domain.ErrorCodeLease,
+			domain.ErrorCodeDependencyCycle,
+			domain.ErrorCodeGraphLimitExceeded,
 			domain.ErrorCodeIdempotencyConflict,
 			domain.ErrorCodeIdempotencyState:
 			status = http.StatusConflict

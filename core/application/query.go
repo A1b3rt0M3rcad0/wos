@@ -10,6 +10,7 @@ type OutcomeState struct {
 	Outcome         domain.Outcome         `json:"outcome"`
 	Objectives      []domain.Objective     `json:"objectives"`
 	WorkItems       []domain.WorkItem      `json:"work_items"`
+	Relations       []domain.Relation      `json:"relations"`
 	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
 }
 
@@ -96,6 +97,54 @@ func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain
 	}, nil
 }
 
+func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Relation], error) {
+	if err := scope.Validate(); err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+	if err := id.Validate(); err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+	defer uow.Rollback()
+
+	value, err := uow.Relations().Get(ctx, scope, id)
+	if err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+	return ReadResult[domain.Relation]{
+		Value:           value,
+		OutcomeRevision: coordination.Revision,
+	}, nil
+}
+
+func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]domain.Relation, domain.OutcomeRevision, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, 0, err
+	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer uow.Rollback()
+
+	values, err := uow.Relations().ListByOutcome(ctx, scope)
+	if err != nil {
+		return nil, 0, err
+	}
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return nil, 0, err
+	}
+	return values, coordination.Revision, nil
+}
+
 func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (OutcomeState, error) {
 	if err := scope.Validate(); err != nil {
 		return OutcomeState{}, err
@@ -118,6 +167,10 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	if err != nil {
 		return OutcomeState{}, err
 	}
+	relations, err := uow.Relations().ListByOutcome(ctx, scope)
+	if err != nil {
+		return OutcomeState{}, err
+	}
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return OutcomeState{}, err
@@ -126,6 +179,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		Outcome:         outcome,
 		Objectives:      objectives,
 		WorkItems:       workItems,
+		Relations:       relations,
 		OutcomeRevision: coordination.Revision,
 	}, nil
 }

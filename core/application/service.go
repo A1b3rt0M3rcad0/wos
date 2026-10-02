@@ -226,13 +226,16 @@ func (s *Service) StartObjective(ctx context.Context, commandContext domain.Comm
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.Objective]{}, err
 	}
-	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
+		now := s.clock.Now().UTC()
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
+			return domain.Objective{}, 0, err
+		}
+		if err := requireObjectiveReady(ctx, uow, objective, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		if err := objective.Start(now); err != nil {
@@ -260,6 +263,9 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
+		if err := requireHardDependenciesSatisfied(ctx, uow, objective.Ref()); err != nil {
+			return domain.Objective{}, 0, err
+		}
 		if err := objective.Achieve(conclusion, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -285,6 +291,7 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	item.ObjectiveID = cloneIDPtr(cmd.ObjectiveID)
+	item.NotBefore = cloneTimePtrUTC(cmd.NotBefore)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
@@ -346,7 +353,6 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -355,14 +361,9 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if item.ObjectiveID != nil {
-			objective, err := uow.Objectives().Get(ctx, cmd.Scope, *item.ObjectiveID)
-			if err != nil {
-				return domain.WorkItem{}, 0, err
-			}
-			if objective.Lifecycle == domain.ObjectiveLifecycleAchieved || objective.Lifecycle == domain.ObjectiveLifecycleCancelled {
-				return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "associated objective is terminal")
-			}
+		now := s.clock.Now().UTC()
+		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
+			return domain.WorkItem{}, 0, err
 		}
 		if err := item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -387,6 +388,9 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		}
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := requireHardDependenciesSatisfied(ctx, uow, item.Ref()); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now); err != nil {
@@ -576,4 +580,12 @@ func cloneIDPtr(id *domain.ID) *domain.ID {
 	}
 	value := *id
 	return &value
+}
+
+func cloneTimePtrUTC(value *time.Time) *time.Time {
+	if value == nil {
+		return nil
+	}
+	cloned := value.UTC()
+	return &cloned
 }
