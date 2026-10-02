@@ -14,11 +14,11 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		return domain.Relation{}, err
 	}
 	var (
-		version                                int64
-		sourceID, sourceKind, relationType     string
-		targetID, targetKind, lifecycle        string
+		version                               int64
+		sourceID, sourceKind, relationType    string
+		targetID, targetKind, lifecycle       string
 		strength, satisfaction, removalReason sql.NullString
-		createdAt, updatedAt                   int64
+		createdAt, updatedAt                  int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, source_id, source_kind, relation_type, target_id, target_kind,
