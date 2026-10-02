@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,14 +19,14 @@ import (
 )
 
 const (
-	DefaultBusyTimeout         = 5 * time.Second
+	DefaultBusyTimeout          = 5 * time.Second
 	DefaultIdempotencyRetention = 7 * 24 * time.Hour
 )
 
 type Options struct {
-	BusyTimeout         time.Duration
+	BusyTimeout          time.Duration
 	IdempotencyRetention time.Duration
-	MigrateOnOpen       bool
+	MigrateOnOpen        bool
 }
 
 type Store struct {
@@ -311,23 +311,8 @@ func RestoreFile(source, destination string) error {
 		}
 	}()
 
-	buf := make([]byte, 128*1024)
-	for {
-		n, readErr := src.Read(buf)
-		if n > 0 {
-			if _, err := dst.Write(buf[:n]); err != nil {
-				return err
-			}
-		}
-		if errors.Is(readErr, os.ErrClosed) {
-			return readErr
-		}
-		if readErr != nil {
-			if readErr.Error() == "EOF" {
-				break
-			}
-			return readErr
-		}
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
 	}
 	if err := dst.Sync(); err != nil {
 		return err
@@ -373,9 +358,3 @@ func nullableVersion(value *domain.Version) any {
 	return int64(*value)
 }
 
-func nullableUint64(value uint64) any {
-	if value > uint64(^uint64(0)>>1) {
-		return strconv.FormatUint(value, 10)
-	}
-	return int64(value)
-}

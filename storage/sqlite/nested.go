@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
@@ -702,4 +701,3 @@ func actorRefsEqualForStorage(left, right []domain.ActorRef) bool {
 	return true
 }
 
-var _ = strings.TrimSpace

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sort"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/core/ports"
@@ -757,4 +757,3 @@ func nowUTC() time.Time {
 	return time.Now().UTC()
 }
 
-var _ = sort.Slice
