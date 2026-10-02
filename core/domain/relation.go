@@ -55,18 +55,18 @@ func (l RelationLifecycle) Valid() bool {
 }
 
 type Relation struct {
-	ID             ID                     `json:"id"`
-	Scope          Scope                  `json:"scope"`
-	Version        Version                `json:"version"`
-	SourceRef      EntityRef              `json:"source_ref"`
-	RelationType   RelationType           `json:"relation_type"`
-	TargetRef      EntityRef              `json:"target_ref"`
-	Strength       DependencyStrength     `json:"strength,omitempty"`
-	Satisfaction   DependencySatisfaction `json:"satisfaction,omitempty"`
-	Lifecycle      RelationLifecycle      `json:"lifecycle"`
-	RemovalReason  string                 `json:"removal_reason,omitempty"`
-	CreatedAt      time.Time              `json:"created_at"`
-	UpdatedAt      time.Time              `json:"updated_at"`
+	ID            ID                     `json:"id"`
+	Scope         Scope                  `json:"scope"`
+	Version       Version                `json:"version"`
+	SourceRef     EntityRef              `json:"source_ref"`
+	RelationType  RelationType           `json:"relation_type"`
+	TargetRef     EntityRef              `json:"target_ref"`
+	Strength      DependencyStrength     `json:"strength,omitempty"`
+	Satisfaction  DependencySatisfaction `json:"satisfaction,omitempty"`
+	Lifecycle     RelationLifecycle      `json:"lifecycle"`
+	RemovalReason string                 `json:"removal_reason,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
 }
 
 func NewDependencyRelation(id ID, source, target EntityRef, strength DependencyStrength, now time.Time) (Relation, error) {
