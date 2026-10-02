@@ -30,6 +30,20 @@ type createWorkItemRequest struct {
 	NotBefore   *time.Time               `json:"not_before,omitempty"`
 }
 
+type relationEndpointRequest struct {
+	Kind domain.EntityKind `json:"kind"`
+	ID   string            `json:"id"`
+}
+
+type createRelationRequest struct {
+	SourceRef    relationEndpointRequest       `json:"source_ref"`
+	RelationType domain.RelationType            `json:"relation_type"`
+	TargetRef    relationEndpointRequest       `json:"target_ref"`
+	Strength     domain.DependencyStrength      `json:"strength,omitempty"`
+	Satisfaction domain.DependencySatisfaction  `json:"satisfaction,omitempty"`
+	Reason       string                         `json:"reason,omitempty"`
+}
+
 type criterionRequest struct {
 	ExpectedVersion  *uint64                 `json:"expected_version,omitempty"`
 	Title            string                  `json:"title"`
