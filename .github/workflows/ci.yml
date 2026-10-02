@@ -32,6 +32,17 @@ jobs:
       - name: Toolchain
         run: go version
 
+      - name: Resolve module graph
+        shell: bash
+        run: |
+          go mod tidy
+          echo "=== WOS_GO_MOD_BEGIN ==="
+          cat go.mod
+          echo "=== WOS_GO_MOD_END ==="
+          echo "=== WOS_GO_SUM_BEGIN ==="
+          cat go.sum
+          echo "=== WOS_GO_SUM_END ==="
+
       - name: Formatting
         shell: bash
         run: |
