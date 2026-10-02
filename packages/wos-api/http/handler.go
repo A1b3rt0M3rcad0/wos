@@ -172,6 +172,29 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("PATCH "+outcome+"/blockers/{blocker_id}", h.updateBlocker)
 	h.mux.HandleFunc("POST "+outcome+"/blockers/{blocker_id}/actions/resolve", h.resolveBlocker)
 	h.mux.HandleFunc("POST "+outcome+"/blockers/{blocker_id}/actions/cancel", h.cancelBlocker)
+
+	h.mux.HandleFunc("POST "+outcome+"/artifacts", h.registerArtifact)
+	h.mux.HandleFunc("GET "+outcome+"/artifacts", h.listArtifacts)
+	h.mux.HandleFunc("GET "+outcome+"/artifacts/{artifact_id}", h.getArtifact)
+	h.mux.HandleFunc("POST "+outcome+"/artifacts/{artifact_id}/actions/withdraw", h.withdrawArtifact)
+
+	h.mux.HandleFunc("POST "+outcome+"/evidence", h.registerEvidence)
+	h.mux.HandleFunc("GET "+outcome+"/evidence", h.listEvidence)
+	h.mux.HandleFunc("GET "+outcome+"/evidence/{evidence_id}", h.getEvidence)
+	h.mux.HandleFunc("POST "+outcome+"/evidence/{evidence_id}/actions/retract", h.retractEvidence)
+
+	h.mux.HandleFunc("POST "+outcome+"/evidence-links", h.createEvidenceLink)
+	h.mux.HandleFunc("GET "+outcome+"/evidence-links", h.listEvidenceLinks)
+	h.mux.HandleFunc("GET "+outcome+"/evidence-links/{evidence_link_id}", h.getEvidenceLink)
+	h.mux.HandleFunc("POST "+outcome+"/evidence-links/{evidence_link_id}/actions/retract", h.retractEvidenceLink)
+
+	h.mux.HandleFunc("POST "+outcome+"/decisions", h.proposeDecision)
+	h.mux.HandleFunc("GET "+outcome+"/decisions", h.listDecisions)
+	h.mux.HandleFunc("GET "+outcome+"/decisions/{decision_id}", h.getDecision)
+	h.mux.HandleFunc("PATCH "+outcome+"/decisions/{decision_id}", h.updateDecision)
+	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/accept", h.acceptDecision)
+	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/reject", h.rejectDecision)
+	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/supersede", h.supersedeDecision)
 }
 
 func (h *Handler) commandContext(r *http.Request) (domain.CommandContext, error) {
