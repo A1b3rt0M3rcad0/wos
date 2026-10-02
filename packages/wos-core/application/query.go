@@ -19,6 +19,8 @@ type OutcomeState struct {
 	Evidence                  []domain.Evidence                 `json:"evidence"`
 	EvidenceLinks             []domain.EvidenceLink             `json:"evidence_links"`
 	Decisions                 []domain.Decision                 `json:"decisions"`
+	ConclusionContested       bool                              `json:"conclusion_contested"`
+	ConclusionContestations   []domain.ConclusionContestation   `json:"conclusion_contestations"`
 	BlockingStates            []BlockingState                   `json:"blocking_states"`
 	EvaluatedAt               time.Time                         `json:"evaluated_at"`
 	OutcomeRevision           domain.OutcomeRevision            `json:"outcome_revision"`
@@ -43,6 +45,25 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
+	evidenceByID := make(map[domain.ID]domain.Evidence, len(evidence))
+	for _, item := range evidence {
+		evidenceByID[item.ID] = item
+	}
+	contestations := make([]domain.ConclusionContestation, 0)
+	contestations = append(contestations, conclusionContestations(
+		outcome.Ref(), outcome.CurrentConclusion, outcome.Criteria, evidenceByID,
+	)...)
+	for _, objective := range objectives {
+		contestations = append(contestations, conclusionContestations(
+			objective.Ref(), objective.CurrentConclusion, objective.Criteria, evidenceByID,
+		)...)
+	}
+	for _, item := range workItems {
+		contestations = append(contestations, conclusionContestations(
+			item.Ref(), item.CurrentConclusion, item.Criteria, evidenceByID,
+		)...)
+	}
+
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
@@ -280,8 +301,59 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		Evidence:                  evidence,
 		EvidenceLinks:             evidenceLinks,
 		Decisions:                 decisions,
+		ConclusionContested:       len(contestations) > 0,
+		ConclusionContestations:   contestations,
 		BlockingStates:            blockingStates,
 		EvaluatedAt:               evaluatedAt,
 		OutcomeRevision:           coordination.Revision,
 	}, nil
+}
+
+
+func conclusionContestations(
+	owner domain.EntityRef,
+	conclusion *domain.Conclusion,
+	criteria domain.CriterionSet,
+	evidenceByID map[domain.ID]domain.Evidence,
+) []domain.ConclusionContestation {
+	if conclusion == nil {
+		return nil
+	}
+	assessmentByID := make(map[domain.ID]domain.CriterionAssessment, len(criteria.Assessments))
+	for _, assessment := range criteria.Assessments {
+		assessmentByID[assessment.ID] = assessment
+	}
+	result := make([]domain.ConclusionContestation, 0)
+	for _, ref := range conclusion.Assessments {
+		if current, ok := criteria.CurrentAssessments[ref.CriterionID]; ok &&
+			current.ID != ref.AssessmentID &&
+			(current.Result == domain.AssessmentResultNotMet || current.Result == domain.AssessmentResultInconclusive) {
+			result = append(result, domain.ConclusionContestation{
+				OwnerRef:     owner,
+				Kind:         domain.ConclusionContestationAssessmentContradiction,
+				CriterionID:  ref.CriterionID,
+				AssessmentID: current.ID,
+			})
+		}
+
+		assessment, ok := assessmentByID[ref.AssessmentID]
+		if !ok {
+			continue
+		}
+		for _, evidenceID := range assessment.EvidenceIDs {
+			evidence, ok := evidenceByID[evidenceID]
+			if !ok || evidence.Lifecycle != domain.EvidenceLifecycleRetracted {
+				continue
+			}
+			id := evidenceID
+			result = append(result, domain.ConclusionContestation{
+				OwnerRef:     owner,
+				Kind:         domain.ConclusionContestationEvidenceRetracted,
+				CriterionID:  ref.CriterionID,
+				AssessmentID: ref.AssessmentID,
+				EvidenceID:   &id,
+			})
+		}
+	}
+	return result
 }
