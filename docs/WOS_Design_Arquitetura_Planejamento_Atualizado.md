@@ -164,7 +164,7 @@ flowchart TD
 
 As setas representam dependências de código. Application depende dos contratos em Ports; o adapter implementa esses contratos. Domain não importa Application, Server, HTTP, MCP ou storage.
 
-`wos-core`, `wos-api`, `wos-mcp` e `wos-server` são componentes lógicos. Não serão quatro serviços distribuídos nem quatro repositórios obrigatórios.
+`wos-core` e `wos-api` são os dois pacotes de produto. HTTP, MCP e Server/composição permanecem componentes lógicos internos de `wos-api`, não serviços ou release units separados.
 
 ### 3.3 Integração com Woobe e produtos
 

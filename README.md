@@ -439,68 +439,43 @@ WOS owns persistent state around Outcomes, Objectives, WorkItems, plans, problem
 
 The product backend remains the source of truth for its own business domain.
 
-## Planned repository structure
+## Repository package structure
+
+WOS follows the same product-package convention used by Woobe: distributable product boundaries live under `packages/`.
 
 ```text
-cmd/
-  wos/
-    main.go
-
-core/
-  domain/
-  application/
-  ports/
-
-storage/
-  memory/
-  sqlite/
-  postgres/
-
-internal/
-  server/
-  transport/
-    http/
-    mcp/
-    contracts/
-  authentication/
-  integration/
-    outbox/
-    webhook/
-  observability/
-
-client/
-  go/
-
-api/
-  openapi.yaml
-  jsonschema/
+packages/
+├── wos-core/
+│   ├── domain/
+│   ├── application/
+│   ├── ports/
+│   └── storage/
+│       ├── memory/
+│       ├── sqlite/
+│       └── postgres/
+└── wos-api/
+    ├── authentication/
+    ├── http/
+    ├── mcp/
+    ├── contracts/
+    ├── openapi.yaml
+    ├── cmd/
+    │   └── wos/
+    │       └── main.go
+    └── internal/
+        ├── server/
+        ├── integration/
+        └── observability/
 
 docs/
-  architecture.md
-  domain.md
-  deployment.md
-  mcp.md
-  adr/
-
-examples/
-  embedded/
-  standalone/
-  woobe-integration/
-  product-mcp/
-
 tests/
-  contract/
-  integration/
-  concurrency/
-  fixtures/
-
+examples/
 deploy/
-  Dockerfile
-  compose.sqlite.yaml
-  compose.postgres.yaml
 ```
 
-The public Core must stay importable by external Go applications, so it cannot live entirely under `internal/`.
+`wos-core` is the public embeddable Go library and owns the domain, application layer, ports, persistence adapters and migrations. `wos-api` is the executable/API distribution: it exposes HTTP/MCP, owns protocol contracts and composes the standalone runtime and `wos` binary.
+
+Package dependency direction is simply `wos-api -> wos-core`. Core must never depend on API.
 
 ## Initial implementation stack
 

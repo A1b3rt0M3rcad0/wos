@@ -18,7 +18,7 @@ The `go.mod` directive is the source used by CI.
 ### Direct
 
 - `github.com/ncruces/go-sqlite3 v0.35.6`
-  - Scope: `storage/sqlite`
+  - Scope: `packages/wos-core/storage/sqlite`
   - Purpose: CGO-free SQLite integration through `database/sql`, including the immediate transaction profile required by the SQLite writer-coordination contract.
   - Decision record: `docs/adr/0006-sqlite-driver-and-writer-acquisition.md`
 
@@ -72,7 +72,7 @@ Before adding a dependency:
 2. prefer the standard library when it provides a clear, maintainable implementation;
 3. pin an explicit version in the repository;
 4. verify license compatibility with the WOS license once the project license is selected;
-5. keep the dependency out of `core/domain` unless it is genuinely part of a public domain contract and an ADR justifies it;
+5. keep the dependency out of `packages/wos-core/domain` unless it is genuinely part of a public domain contract and an ADR justifies it;
 6. add tests covering the behavior for which the dependency was introduced;
 7. update this file and `ROADMAP.md` in the same work.
 

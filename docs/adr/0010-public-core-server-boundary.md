@@ -1,6 +1,6 @@
 # ADR-010 — Public Core and internal Server boundary
 
-- Status: Accepted
+- Status: Superseded by ADR-011
 - Date: 2026-10-01
 
 ## Context

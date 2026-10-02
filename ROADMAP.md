@@ -29,6 +29,7 @@ The architecture document describes what should exist. This ROADMAP records what
 | Repository ignore rules | ✅ | Go, local DB/data, environment/secrets, IDE files |
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
 | Live implementation roadmap | ✅ | Root `ROADMAP.md` |
+| Product package topology | ✅ | `packages/wos-core` + `packages/wos-api`; ADR-011 |
 | Concrete Open Source license | 🧭 | Must be chosen before first public release; do not inherit Woobe license implicitly |
 
 ## Milestones
@@ -63,8 +64,8 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ### Implementation checklist
 
-- [x] Establish `core/domain`.
-- [x] Establish `core/ports`.
+- [x] Establish `packages/wos-core/domain`.
+- [x] Establish `packages/wos-core/ports`.
 - [x] Add foundational ID / UUIDv7 value object.
 - [x] Add `Scope`.
 - [x] Add `EntityRef`.
@@ -74,8 +75,8 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Add `IDGenerator` port.
 - [x] Add stable domain/application error model.
 - [x] Add transport-neutral `CommandContext` separating authenticated Principal, declared `ActorRef`, and optional external execution correlation.
-- [x] Add `cmd/wos/main.go`.
-- [x] Add `internal/server` bootstrap/configuration skeleton.
+- [x] Add `packages/wos-api/cmd/wos/main.go`.
+- [x] Add `packages/wos-api/internal/server` bootstrap/configuration skeleton.
 - [x] Add version command/output.
 - [x] Add configuration validation skeleton.
 - [x] Create `docs/adr/`.
@@ -141,7 +142,7 @@ Implement Outcome, Objective, WorkItem and criteria with pure rules; application
 - [x] Add aggregate optimistic versions.
 - [x] Add repository ports for Outcome, Objective and WorkItem.
 - [x] Add TransactionManager / UnitOfWork / CoordinationStore ports.
-- [x] Add public transactional `storage/memory` adapter.
+- [x] Add public transactional `packages/wos-core/storage/memory` adapter.
 - [x] Add rollback behavior to memory transactions.
 - [x] Add in-memory Outcome coordination guard/revision marker.
 - [x] Add application services over ports instead of direct adapter access.
@@ -317,7 +318,7 @@ Expose the M1 domain through HTTP with DTOs, auth-local mode, version preconditi
 - [x] Translate aggregate versions through strong ETags and `If-Match` / `expected_version`.
 - [x] Preserve/request correlation IDs and return a stable JSON error envelope.
 - [x] Add the first coherent Outcome state query.
-- [x] Add OpenAPI 3.1 contract under `api/openapi.yaml`.
+- [x] Add OpenAPI 3.1 contract under `packages/wos-api/openapi.yaml`.
 - [x] Add reproducible HTTP documentation under `docs/http.md`.
 - [x] Add transport contract coverage for replay, stale versions, no-op writes, invalid payloads, scope isolation and payload bounds.
 - [x] Add durable SQLite HTTP restart coverage.

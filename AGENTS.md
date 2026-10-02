@@ -159,24 +159,30 @@ Preserve these semantics unless an explicit ADR changes them.
 
 ## 6. Architecture boundaries
 
-Dependency direction:
+Product package dependency direction:
 
 ```text
-transport -> application -> domain
-                    |
-                    v
-                  ports <- adapters
+wos-api ──> wos-core
+```
+
+Inside Core:
+
+```text
+application -> domain
+      |
+      v
+    ports <- storage adapters
 ```
 
 Rules:
 
-- `core/domain` must not import HTTP, MCP, SQL adapters, server bootstrap, Woobe, or agent-runtime packages.
-- `core/application` orchestrates commands/queries and uses ports.
-- `core/ports` defines infrastructure contracts.
-- `storage/*` implements ports.
-- `internal/transport/http` and `internal/transport/mcp` map protocol DTOs to the same Application services.
+- `packages/wos-core/domain` must not import HTTP, MCP, SQL adapters, server bootstrap, Woobe, or agent-runtime packages.
+- `packages/wos-core/application` orchestrates commands/queries and uses ports.
+- `packages/wos-core/ports` defines infrastructure contracts.
+- `packages/wos-core/storage/*` implements ports.
+- `packages/wos-api/http` and `packages/wos-api/mcp` map protocol DTOs to the same Application services.
 - Transports never write storage directly.
-- Server/bootstrap composition remains outside Domain.
+- `packages/wos-api` owns transports and the standalone composition root; both remain outside Domain.
 - Public embedded functionality cannot live only in Go `internal/`.
 - Do not create microservices for components that are only logical boundaries in the current design.
 
