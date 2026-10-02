@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
 )
 
 const maxJSONBodyBytes = 256 << 10

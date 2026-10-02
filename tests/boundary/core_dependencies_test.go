@@ -72,7 +72,6 @@ func assertAllowedCoreImport(t *testing.T, file, coreRoot, importPath string) {
 	}
 }
 
-
 func TestAPIDoesNotImportServer(t *testing.T) {
 	root := repositoryRoot(t)
 	apiRoot := filepath.Join(root, "packages", "wos-api")
