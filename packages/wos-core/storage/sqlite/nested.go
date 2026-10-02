@@ -225,12 +225,20 @@ WHERE namespace_id = ? AND outcome_id = ? AND criterion_id = ?`,
 		if err != nil {
 			return err
 		}
+		var evaluatorJSON any
+		if assessment.EvaluatorRef != nil {
+			encoded, err := marshalJSON(assessment.EvaluatorRef)
+			if err != nil {
+				return err
+			}
+			evaluatorJSON = encoded
+		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO criterion_assessments (
     id, namespace_id, outcome_id, criterion_id, criterion_revision,
     result, rationale, principal_id, actor_json, assessed_at,
-    supersedes_assessment_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    evaluator_ref_json, supersedes_assessment_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			assessment.ID.String(),
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -241,9 +249,23 @@ INSERT OR IGNORE INTO criterion_assessments (
 			assessment.PrincipalID,
 			actorJSON,
 			encodeTime(assessment.AssessedAt),
+			evaluatorJSON,
 			nullableID(assessment.SupersedesAssessmentID),
 		); err != nil {
 			return mapSQLError("insert criterion assessment", err)
+		}
+		for _, evidenceID := range assessment.EvidenceIDs {
+			if _, err := tx.ExecContext(ctx, `
+INSERT OR IGNORE INTO criterion_assessment_evidence (
+    namespace_id, outcome_id, assessment_id, evidence_id
+) VALUES (?, ?, ?, ?)`,
+				owner.NamespaceID.String(),
+				owner.OutcomeID.String(),
+				assessment.ID.String(),
+				evidenceID.String(),
+			); err != nil {
+				return mapSQLError("insert criterion assessment evidence", err)
+			}
 		}
 	}
 
@@ -356,7 +378,8 @@ ORDER BY c.created_at, c.id`,
 
 	assessmentRows, err := tx.QueryContext(ctx, `
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,
-       a.principal_id, a.actor_json, a.assessed_at, a.supersedes_assessment_id
+       a.principal_id, a.actor_json, a.assessed_at, a.evaluator_ref_json,
+       a.supersedes_assessment_id
 FROM criterion_assessments a
 JOIN success_criteria c
   ON c.namespace_id = a.namespace_id
@@ -373,6 +396,16 @@ ORDER BY a.assessed_at, a.id`,
 	for assessmentRows.Next() {
 		assessment, err := scanAssessment(assessmentRows)
 		if err != nil {
+			assessmentRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		evidenceIDs, err := loadAssessmentEvidence(ctx, tx, owner.Scope, assessment.ID)
+		if err != nil {
+			assessmentRows.Close()
+			return domain.CriterionSet{}, err
+		}
+		assessment.EvidenceIDs = evidenceIDs
+		if err := assessment.Validate(); err != nil {
 			assessmentRows.Close()
 			return domain.CriterionSet{}, err
 		}
@@ -437,11 +470,11 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 	var (
 		rawID, rawCriterion, result, rationale, principal, actorJSON string
 		revision, assessedAt                                         int64
-		supersedes                                                   sql.NullString
+		evaluatorJSON, supersedes                                    sql.NullString
 	)
 	if err := scanner.Scan(
 		&rawID, &rawCriterion, &revision, &result, &rationale,
-		&principal, &actorJSON, &assessedAt, &supersedes,
+		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes,
 	); err != nil {
 		return domain.CriterionAssessment{}, err
 	}
@@ -467,6 +500,13 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		Actor:             actor,
 		AssessedAt:        decodeTime(assessedAt),
 	}
+	if evaluatorJSON.Valid {
+		var evaluator domain.EvaluatorRef
+		if err := unmarshalJSON(evaluatorJSON.String, &evaluator); err != nil {
+			return domain.CriterionAssessment{}, err
+		}
+		value.EvaluatorRef = &evaluator
+	}
 	if supersedes.Valid {
 		parsed, err := domain.ParseID(supersedes.String)
 		if err != nil {
@@ -475,6 +515,39 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		value.SupersedesAssessmentID = &parsed
 	}
 	return value, value.Validate()
+}
+
+func loadAssessmentEvidence(
+	ctx context.Context,
+	tx *sql.Tx,
+	scope domain.Scope,
+	assessmentID domain.ID,
+) ([]domain.ID, error) {
+	rows, err := tx.QueryContext(ctx, `
+SELECT evidence_id
+FROM criterion_assessment_evidence
+WHERE namespace_id = ? AND outcome_id = ? AND assessment_id = ?
+ORDER BY evidence_id`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), assessmentID.String(),
+	)
+	if err != nil {
+		return nil, mapSQLError("load criterion assessment evidence", err)
+	}
+	defer rows.Close()
+
+	result := make([]domain.ID, 0)
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		id, err := domain.ParseID(raw)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, id)
+	}
+	return result, rows.Err()
 }
 
 func syncConclusions(
