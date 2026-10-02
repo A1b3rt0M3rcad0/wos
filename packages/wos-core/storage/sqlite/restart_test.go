@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/A1b3rt0M3rcad0/wos/core/application"
-	"github.com/A1b3rt0M3rcad0/wos/core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
 type sqliteFixedClock struct{ now time.Time }
