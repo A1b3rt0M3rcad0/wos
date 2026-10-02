@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"reflect"
 	"sort"
 	"sync"
 	"time"
@@ -230,6 +231,16 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if outcome.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "outcome version must advance exactly once per save")
 	}
+	if err := validateOwnedValidationHistoryAppendOnly(
+		current.Criteria,
+		outcome.Criteria,
+		current.CurrentConclusion,
+		current.ConclusionHistory,
+		outcome.CurrentConclusion,
+		outcome.ConclusionHistory,
+	); err != nil {
+		return err
+	}
 	r.tx.outcomes[key] = cloneOutcome(outcome)
 	return nil
 }
@@ -306,6 +317,16 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	if objective.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "objective version must advance exactly once per save")
 	}
+	if err := validateOwnedValidationHistoryAppendOnly(
+		current.Criteria,
+		objective.Criteria,
+		current.CurrentConclusion,
+		current.ConclusionHistory,
+		objective.CurrentConclusion,
+		objective.ConclusionHistory,
+	); err != nil {
+		return err
+	}
 	r.tx.objectives[key] = cloneObjective(objective)
 	return nil
 }
@@ -381,6 +402,16 @@ func (r workItemRepository) Save(ctx context.Context, item domain.WorkItem, expe
 	}
 	if item.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "work item version must advance exactly once per save")
+	}
+	if err := validateOwnedValidationHistoryAppendOnly(
+		current.Criteria,
+		item.Criteria,
+		current.CurrentConclusion,
+		current.ConclusionHistory,
+		item.CurrentConclusion,
+		item.ConclusionHistory,
+	); err != nil {
+		return err
 	}
 	r.tx.workItems[key] = cloneWorkItem(item)
 	return nil
@@ -1258,6 +1289,63 @@ func optionalMeasurementEqual(a, b *domain.Measurement) bool {
 		return a == nil && b == nil
 	}
 	return *a == *b
+}
+
+func validateOwnedValidationHistoryAppendOnly(
+	currentCriteria domain.CriterionSet,
+	nextCriteria domain.CriterionSet,
+	currentConclusion *domain.Conclusion,
+	currentHistory []domain.Conclusion,
+	nextConclusion *domain.Conclusion,
+	nextHistory []domain.Conclusion,
+) error {
+	if len(nextCriteria.DefinitionRevisions) < len(currentCriteria.DefinitionRevisions) {
+		return domain.NewError(domain.ErrorCodeCriterion, "criterion revision history is append-only")
+	}
+	for i := range currentCriteria.DefinitionRevisions {
+		if currentCriteria.DefinitionRevisions[i] != nextCriteria.DefinitionRevisions[i] {
+			return domain.NewError(domain.ErrorCodeCriterion, "criterion definition revision is immutable")
+		}
+	}
+	if len(nextCriteria.Assessments) < len(currentCriteria.Assessments) {
+		return domain.NewError(domain.ErrorCodeAssessment, "criterion assessment history is append-only")
+	}
+	for i := range currentCriteria.Assessments {
+		if !reflect.DeepEqual(currentCriteria.Assessments[i], nextCriteria.Assessments[i]) {
+			return domain.NewError(domain.ErrorCodeAssessment, "criterion assessment is immutable")
+		}
+	}
+	if len(nextHistory) < len(currentHistory) {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "conclusion history is append-only")
+	}
+	for i := range currentHistory {
+		if !reflect.DeepEqual(currentHistory[i], nextHistory[i]) {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "historical conclusion is immutable")
+		}
+	}
+
+	if currentConclusion == nil {
+		if len(nextHistory) != len(currentHistory) {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "conclusion history cannot grow without reopening a current conclusion")
+		}
+		return nil
+	}
+
+	if nextConclusion != nil {
+		if !reflect.DeepEqual(*currentConclusion, *nextConclusion) {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "current conclusion cannot be replaced directly")
+		}
+		if len(nextHistory) != len(currentHistory) {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "conclusion history changed while current conclusion remained bound")
+		}
+		return nil
+	}
+
+	if len(nextHistory) != len(currentHistory)+1 ||
+		!reflect.DeepEqual(*currentConclusion, nextHistory[len(currentHistory)]) {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "reopening must append the current conclusion unchanged to history")
+	}
+	return nil
 }
 
 func cloneArtifacts(src map[string]domain.Artifact) map[string]domain.Artifact {
