@@ -177,7 +177,7 @@ func (s *Service) RedeliverDelivery(ctx context.Context, cc domain.CommandContex
 		if err = o.RecordExternalReferenceChange(s.clock.Now()); err != nil {
 			return o, 0, err
 		}
-		if err = r.Deliveries().Redeliver(ctx, cmd.Scope, cmd.DeliveryID); err != nil {
+		if err = r.Deliveries().Redeliver(ctx, cmd.Scope, cmd.DeliveryID, s.clock.Now()); err != nil {
 			return o, 0, err
 		}
 		if err = u.Outcomes().Save(ctx, o, cmd.ExpectedVersion); err != nil {

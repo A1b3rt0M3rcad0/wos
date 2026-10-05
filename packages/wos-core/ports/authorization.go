@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
@@ -65,4 +66,19 @@ func (DenyPrivilegedAuthorizer) Authorize(_ context.Context, request Authorizati
 		return err
 	}
 	return domain.NewError(domain.ErrorCodeForbidden, "principal is not authorized for "+string(request.Permission))
+}
+
+// TransactionalAuthorizer revalidates dynamic grants before idempotent disclosure
+// and mutation, using the UnitOfWork's coherent security snapshot.
+type TransactionalAuthorizer interface {
+	AuthorizeInUnitOfWork(context.Context, UnitOfWork, AuthorizationRequest) error
+}
+type AccessSnapshotRequest struct {
+	Authorization    AuthorizationRequest
+	CredentialDigest string
+	Actor            domain.ActorRef
+	Now              time.Time
+}
+type AccessSnapshotUnitOfWork interface {
+	AuthorizeAccessSnapshot(context.Context, AccessSnapshotRequest) error
 }

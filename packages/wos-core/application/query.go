@@ -517,7 +517,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 				if slot.RevisionNumber == 0 || slot.RevisionNumber > uint64(len(plan.Revisions)) {
 					return OutcomeState{}, domain.NewError(domain.ErrorCodeRoadmap, "active roadmap revision is missing")
 				}
-				activePlans = append(activePlans, ActivePlan{Slot: *slot, Revision: plan.Revisions[slot.RevisionNumber-1]})
+				activePlans = append(activePlans, ActivePlan{Slot: *slot, Revision: plan.Revisions[slot.RevisionNumber-1], LiveReferences: projectPlanReferences(*slot, plan.Revisions[slot.RevisionNumber-1], objectives, workItems, workOperationalStates)})
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"sort"
+	"strings"
 )
 
 type externalContextRepository struct{ tx *transaction }
@@ -33,6 +34,16 @@ func (r externalContextRepository) Add(ctx context.Context, scope domain.Scope, 
 		return err
 	}
 	k := contextKey(scope)
+	for key, refs := range r.tx.externalContexts {
+		if !strings.HasPrefix(key, scope.NamespaceID.String()+"/") {
+			continue
+		}
+		for _, ref := range refs {
+			if ref.Provider == v.Provider && ref.Kind == v.Kind && ref.ExternalID == v.ExternalID {
+				return domain.NewError(domain.ErrorCodeAlreadyExists, "external address already linked")
+			}
+		}
+	}
 	r.tx.externalContexts[k] = append(r.tx.externalContexts[k], v)
 	return nil
 }

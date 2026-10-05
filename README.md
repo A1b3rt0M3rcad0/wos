@@ -6,7 +6,9 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. The completion branch adds authorized continuity queries, MCP and a PostgreSQL adapter; release acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md). PostgreSQL acceptance requires the real database CI job. The web client, durable deliveries and full release matrix remain under implementation.
+> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. Draft PR #14 adds authorized continuity, HTTP/MCP, the web client, Go SDK, PostgreSQL and durable integration signals. Acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md); local SQLite/MCP tests do not certify PostgreSQL or the complete visual/product journey.
+
+Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
 
 ## Why WOS
 

@@ -85,7 +85,7 @@ type Delivery struct {
 }
 type DeliveryRepository interface {
 	List(context.Context, domain.Scope, int, string) ([]Delivery, error)
-	Redeliver(context.Context, domain.Scope, string) error
+	Redeliver(context.Context, domain.Scope, string, time.Time) error
 }
 type DeliveryStore interface {
 	ClaimDelivery(context.Context, time.Time, domain.ID, time.Duration) (*Delivery, error)

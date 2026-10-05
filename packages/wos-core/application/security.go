@@ -240,3 +240,18 @@ func (s SecurityService) Bootstrap(ctx context.Context, namespace ports.Namespac
 	}
 	return atomic.BootstrapSecurity(ctx, namespace, ports.NamespaceGrant{NamespaceID: namespace.ID, PrincipalID: principal, Permissions: permissions}, ports.Credential{NamespaceID: namespace.ID, ID: id, PrincipalID: principal, Actor: domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "wos", ID: principal}, Digest: TokenDigest(token), ExpiresAt: s.Clock.Now().Add(366 * 24 * time.Hour)})
 }
+
+func (s SecurityService) AuthorizeInUnitOfWork(ctx context.Context, uow ports.UnitOfWork, request ports.AuthorizationRequest) error {
+	if err := request.Validate(); err != nil {
+		return err
+	}
+	identity, ok := IdentityFromContext(ctx)
+	if !ok || identity.PrincipalID != request.PrincipalID || identity.NamespaceID != request.NamespaceID {
+		return domain.NewError(domain.ErrorCodeForbidden, "credential scope mismatch")
+	}
+	access, ok := uow.(ports.AccessSnapshotUnitOfWork)
+	if !ok {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "transactional access snapshot unavailable")
+	}
+	return access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: request, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: s.Clock.Now().UTC()})
+}

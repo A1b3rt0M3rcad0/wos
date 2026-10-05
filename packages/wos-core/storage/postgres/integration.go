@@ -99,9 +99,12 @@ func (s *Store) InstallEndpoints(ctx context.Context, endpoints []ports.WebhookE
 		if err = ensureNamespace(ctx, tx, v.NamespaceID); err != nil {
 			return err
 		}
-		_, err = tx.ExecContext(ctx, `INSERT INTO webhook_endpoints(id,namespace_id,url,secret_ref,key_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET url=excluded.url,secret_ref=excluded.secret_ref,key_id=excluded.key_id WHERE webhook_endpoints.namespace_id=excluded.namespace_id`, v.ID.String(), v.NamespaceID.String(), v.URL, v.SecretRef, v.KeyID)
+		updated, err := tx.ExecContext(ctx, `INSERT INTO webhook_endpoints(id,namespace_id,url,secret_ref,key_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET url=excluded.url,secret_ref=excluded.secret_ref,key_id=excluded.key_id WHERE webhook_endpoints.namespace_id=excluded.namespace_id`, v.ID.String(), v.NamespaceID.String(), v.URL, v.SecretRef, v.KeyID)
 		if err != nil {
 			return mapSQLError("install endpoint", err)
+		}
+		if count, _ := updated.RowsAffected(); count != 1 {
+			return domain.NewError(domain.ErrorCodeForbidden, "endpoint belongs to a different namespace")
 		}
 	}
 	return mapSQLError("commit endpoints", tx.Commit())
@@ -187,8 +190,8 @@ func (r deliveryRepository) List(ctx context.Context, scope domain.Scope, limit 
 	}
 	return result, rows.Err()
 }
-func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, id string) error {
-	result, err := r.uow.tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='pending',attempts=0,next_attempt=$1,lease_id=NULL,lease_until=NULL,last_result='manual_redelivery' WHERE namespace_id=$2 AND outcome_id=$3 AND id=$4 AND status IN('succeeded','exhausted')`, encodeTime(time.Now().UTC()), scope.NamespaceID.String(), scope.OutcomeID.String(), id)
+func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, id string, now time.Time) error {
+	result, err := r.uow.tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='pending',attempts=0,next_attempt=$1,lease_id=NULL,lease_until=NULL,last_result='manual_redelivery' WHERE namespace_id=$2 AND outcome_id=$3 AND id=$4 AND status IN('succeeded','exhausted')`, encodeTime(now), scope.NamespaceID.String(), scope.OutcomeID.String(), id)
 	if err != nil {
 		return mapSQLError("redeliver signal", err)
 	}
@@ -210,9 +213,15 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 		return nil, mapSQLError("begin delivery claim", err)
 	}
 	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=$1,result='lease_expired' WHERE finished_at IS NULL AND delivery_id IN(SELECT id FROM integration_deliveries WHERE status='leased' AND lease_until<=$2)`, encodeTime(now), encodeTime(now)); err != nil {
+		return nil, mapSQLError("expire delivery attempts", err)
+	}
+	if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE status='leased' AND lease_until<=$1 AND attempts>=6`, encodeTime(now)); err != nil {
+		return nil, mapSQLError("exhaust crashed delivery", err)
+	}
 	v, err := scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=$1) OR (status='leased' AND lease_until<=$2) ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`, encodeTime(now), encodeTime(now)))
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+		return nil, mapSQLError("commit delivery recovery", tx.Commit())
 	}
 	if err != nil {
 		return nil, mapSQLError("claim delivery", err)

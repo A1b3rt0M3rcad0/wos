@@ -114,3 +114,35 @@ func (s *Service) ListExternalReferences(ctx context.Context, scope domain.Scope
 	coord, err := u.Coordination().LockOutcome(ctx, scope)
 	return values, coord.Revision, err
 }
+
+type ReplaceExternalContextCommand struct {
+	Scope           domain.Scope
+	ExpectedVersion domain.Version
+	ExternalContext domain.ExternalContext `json:"external_context"`
+}
+
+func (s *Service) ReplaceExternalContext(ctx context.Context, cc domain.CommandContext, cmd ReplaceExternalContextCommand) (MutationResult[domain.Outcome], error) {
+	if err := cc.Validate(); err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
+	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
+		if err := lockExistingOutcome(ctx, u, cmd.Scope); err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		o, err := u.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		if err != nil {
+			return o, 0, err
+		}
+		if o.Version != cmd.ExpectedVersion {
+			return o, 0, domain.NewError(domain.ErrorCodeVersionConflict, "outcome version changed")
+		}
+		if err = o.ReplaceExternalContext(cmd.ExternalContext, s.clock.Now().UTC()); err != nil {
+			return o, 0, err
+		}
+		if err = u.Outcomes().Save(ctx, o, cmd.ExpectedVersion); err != nil {
+			return o, 0, err
+		}
+		revision, err := u.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		return o, revision, err
+	})
+}

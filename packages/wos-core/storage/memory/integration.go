@@ -133,7 +133,7 @@ func (r deliveryRepository) List(ctx context.Context, scope domain.Scope, limit 
 	}
 	return values, nil
 }
-func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, id string) error {
+func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, id string, now time.Time) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, i
 	}
 	v.Status = "pending"
 	v.Attempts = 0
-	v.NextAttempt = time.Now().UTC()
+	v.NextAttempt = now
 	v.LeaseID = ""
 	v.LeaseUntil = time.Time{}
 	v.LastResult = "manual_redelivery"

@@ -21,3 +21,8 @@ coverage.out
 .idea/
 .DS_Store
 Thumbs.db
+
+# Browser contract tooling
+node_modules/
+test-results/
+playwright-report/

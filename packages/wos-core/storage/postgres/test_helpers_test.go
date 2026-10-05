@@ -30,3 +30,10 @@ func openTestStore(t *testing.T, path string) *Store {
 	t.Cleanup(func() { s.Close() })
 	return s
 }
+
+// PostgreSQL contract proves restart; clean pg_dump/restore acceptance is separate.
+func reopenIntegrationFixture(t *testing.T, store *Store, path string) *Store {
+	t.Helper()
+	store.Close()
+	return openTestStore(t, path)
+}

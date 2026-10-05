@@ -7,17 +7,19 @@ import (
 )
 
 type OutcomeFilter struct {
-	ExternalProvider string           `json:"external_provider,omitempty"`
-	ExternalKind     string           `json:"external_kind,omitempty"`
-	ExternalID       string           `json:"external_id,omitempty"`
-	Text             string           `json:"text,omitempty"`
-	Lifecycle        string           `json:"lifecycle,omitempty"`
-	Archived         *bool            `json:"archived,omitempty"`
-	Priority         domain.Priority  `json:"priority,omitempty"`
-	Owner            *domain.ActorRef `json:"owner,omitempty"`
-	AfterCreated     time.Time        `json:"-"`
-	AfterID          domain.ID        `json:"-"`
-	Limit            int              `json:"-"`
+	ExternalContext    domain.ExternalContext `json:"external_context,omitempty"`
+	CreatorPrincipalID string                 `json:"creator_principal_id,omitempty"`
+	ExternalProvider   string                 `json:"external_provider,omitempty"`
+	ExternalKind       string                 `json:"external_kind,omitempty"`
+	ExternalID         string                 `json:"external_id,omitempty"`
+	Text               string                 `json:"text,omitempty"`
+	Lifecycle          string                 `json:"lifecycle,omitempty"`
+	Archived           *bool                  `json:"archived,omitempty"`
+	Priority           domain.Priority        `json:"priority,omitempty"`
+	Owner              *domain.ActorRef       `json:"owner,omitempty"`
+	AfterCreated       time.Time              `json:"-"`
+	AfterID            domain.ID              `json:"-"`
+	Limit              int                    `json:"-"`
 }
 type OutcomeDiscoveryRepository interface {
 	ListOutcomes(context.Context, domain.ID, OutcomeFilter) ([]OutcomeIndexEntry, error)

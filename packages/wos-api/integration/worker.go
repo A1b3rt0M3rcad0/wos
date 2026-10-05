@@ -7,8 +7,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -148,6 +150,10 @@ func (w *Worker) Run(ctx context.Context) error {
 		case <-timer.C:
 			for i := 0; i < 25; i++ {
 				worked, err := w.Tick(ctx)
+				if err != nil && ctx.Err() == nil {
+					code, _ := domain.ErrorCodeOf(err)
+					slog.Warn("delivery_worker", "error_code", code)
+				}
 				if err != nil || !worked {
 					break
 				}

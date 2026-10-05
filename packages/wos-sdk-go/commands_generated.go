@@ -166,6 +166,9 @@ func (c *Client) ReopenRoadmap(ctx context.Context, key string, cmd application.
 func (c *Client) ReopenWorkItem(ctx context.Context, key string, cmd application.ReopenWorkItemCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "reopen_work_item", key, cmd)
 }
+func (c *Client) ReplaceExternalContext(ctx context.Context, key string, cmd application.ReplaceExternalContextCommand) (CommandResult[domain.Outcome], error) {
+	return command[domain.Outcome](ctx, c, "replace_external_context", key, cmd)
+}
 func (c *Client) ReplaceRoadmapDraft(ctx context.Context, key string, cmd application.ReplaceRoadmapDraftCommand) (CommandResult[domain.Roadmap], error) {
 	return command[domain.Roadmap](ctx, c, "replace_roadmap_draft", key, cmd)
 }

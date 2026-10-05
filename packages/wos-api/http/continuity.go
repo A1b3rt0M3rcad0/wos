@@ -1,11 +1,13 @@
 package httptransport
 
 import (
+	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func queryLimit(r *http.Request) (int, error) {
@@ -31,7 +33,16 @@ func (h *Handler) searchOutcomes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	f := ports.OutcomeFilter{ExternalProvider: q.Get("external_provider"), ExternalKind: q.Get("external_kind"), ExternalID: q.Get("external_id"), Text: q.Get("text"), Lifecycle: q.Get("lifecycle"), Priority: domain.Priority(q.Get("priority"))}
+	f := ports.OutcomeFilter{CreatorPrincipalID: q.Get("creator_principal_id"), ExternalProvider: q.Get("external_provider"), ExternalKind: q.Get("external_kind"), ExternalID: q.Get("external_id"), Text: q.Get("text"), Lifecycle: q.Get("lifecycle"), Priority: domain.Priority(q.Get("priority"))}
+	if raw := q.Get("external_context"); raw != "" {
+		if err = json.Unmarshal([]byte(raw), &f.ExternalContext); err != nil {
+			writeError(w, r, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid external context filter"))
+			return
+		}
+	}
+	if q.Get("owner_id") != "" || q.Get("owner_kind") != "" || q.Get("owner_provider") != "" {
+		f.Owner = &domain.ActorRef{Kind: domain.ActorKind(q.Get("owner_kind")), Provider: q.Get("owner_provider"), ID: q.Get("owner_id")}
+	}
 	if raw := q.Get("archived"); raw != "" {
 		v, err := strconv.ParseBool(raw)
 		if err != nil {
@@ -125,7 +136,15 @@ func (h *Handler) getGraph(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	v, err := h.service.GetOutcomeGraph(r.Context(), scope, application.GraphQuery{Limit: limit, Depth: depth, Cursor: r.URL.Query().Get("cursor"), Direction: r.URL.Query().Get("direction")})
+	q := r.URL.Query()
+	graph := application.GraphQuery{Limit: limit, Depth: depth, Cursor: q.Get("cursor"), Direction: q.Get("direction")}
+	if raw := q.Get("kinds"); raw != "" {
+		graph.Kinds = strings.Split(raw, ",")
+	}
+	if q.Get("root_id") != "" || q.Get("root_kind") != "" {
+		graph.Root = &domain.EntityRef{Scope: scope, Kind: domain.EntityKind(q.Get("root_kind")), ID: domain.ID(q.Get("root_id"))}
+	}
+	v, err := h.service.GetOutcomeGraph(r.Context(), scope, graph)
 	if err != nil {
 		writeError(w, r, err)
 		return

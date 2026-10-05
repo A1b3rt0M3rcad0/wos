@@ -1,7 +1,7 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-02  
-**Active implementation wave:** Wave 04 — SQLite Persistence and Migrations (complete in PR #4; not yet merged)
+**Last reviewed:** 2026-10-05  
+**Active implementation wave:** Completion audit E00–E11, branch based on PR #13
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
 
@@ -17,6 +17,9 @@ The `go.mod` directive is the source used by CI.
 
 ### Direct
 
+- `github.com/modelcontextprotocol/go-sdk v1.8.0`: API-only official MCP implementation; real stdio/Streamable HTTP client tests.
+- `github.com/jackc/pgx/v5 v5.9.2`: PostgreSQL storage adapter; real database execution is required for acceptance.
+
 - `github.com/ncruces/go-sqlite3 v0.35.6`
   - Scope: `packages/wos-core/storage/sqlite`
   - Purpose: CGO-free SQLite integration through `database/sql`, including the immediate transaction profile required by the SQLite writer-coordination contract.
@@ -24,15 +27,7 @@ The `go.mod` directive is the source used by CI.
 
 ### Indirect module graph
 
-The current tidy `go.mod` includes:
-
-- `github.com/ncruces/go-sqlite3-wasm/v6 v6.3.35304`
-- `github.com/ncruces/julianday v1.0.0`
-- `golang.org/x/sys v0.48.0`
-
-`go.sum` is committed and CI runs `go mod tidy` followed by a zero-diff check.
-
-The public Domain/Application/Ports layers do not import the SQLite dependency. It remains confined to the storage adapter.
+`go.mod` and `go.sum` contain the exact tidy graph. CI verifies both with a zero-diff `go mod tidy`. All external storage/transport dependencies remain outside Domain/Application/Ports. Apache 2.0 is the WOS license; the added Go SDK/driver retain their upstream notices/licenses.
 
 ## CI dependencies
 
@@ -54,15 +49,11 @@ Wave 04 uses repository-owned code for:
 
 No external migration framework was added.
 
-## Planned but not yet selected
+## Browser verification
 
-The architecture still expects later implementation choices for areas such as:
+Playwright is a test-only dependency, pinned in `tests/web/package.json`. Browser binaries are not shipped with WOS; production UI uses no CDN or Node runtime. Browser test execution remains distinct from API session tests.
 
-- PostgreSQL driver;
-- official Go MCP SDK/profile;
-- optional OpenTelemetry integration.
-
-No package/version for those areas is considered selected by this document. Their versions must be chosen, pinned and tested in the wave that introduces them.
+Optional OpenTelemetry has not been selected; metadata instrumentation uses standard `slog` and a Core port.
 
 ## Dependency admission rules
 

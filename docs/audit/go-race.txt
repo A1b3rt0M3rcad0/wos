@@ -1,0 +1,20 @@
+?   	github.com/A1b3rt0M3rcad0/wos/examples/remote-client	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	1.010s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http	1.760s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	1.432s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	3.747s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application	1.086s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports	1.011s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory	1.015s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	1.017s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	16.882s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	2.340s
+?   	github.com/A1b3rt0M3rcad0/wos/tools/mcpgen	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/tools/openapigen	[no test files]

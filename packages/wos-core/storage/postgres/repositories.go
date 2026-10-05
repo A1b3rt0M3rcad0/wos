@@ -23,19 +23,20 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 	var (
 		version                          int64
 		title, description, desiredState string
+		externalContext                  string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
 		createdAt, updatedAt             int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, desired_state, lifecycle, priority,
-       archived_at, created_at, updated_at
+       archived_at, created_at, updated_at,external_context_json
 FROM outcomes
 WHERE namespace_id = $1 AND id = $2 AND outcome_id = $3`,
 		namespaceID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
-		&archivedAt, &createdAt, &updatedAt,
+		&archivedAt, &createdAt, &updatedAt, &externalContext,
 	)
 	if err != nil {
 		return domain.Outcome{}, mapSQLError("get outcome", err)
@@ -53,6 +54,9 @@ WHERE namespace_id = $1 AND id = $2 AND outcome_id = $3`,
 		CreatedAt:    decodeTime(createdAt),
 		UpdatedAt:    decodeTime(updatedAt),
 		Criteria:     domain.NewCriterionSet(),
+	}
+	if err := unmarshalJSON(externalContext, &value.ExternalContext); err != nil {
+		return domain.Outcome{}, err
 	}
 	if archivedAt.Valid {
 		t := decodeTime(archivedAt.Int64)
@@ -89,11 +93,15 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	if err := insertEntityRef(ctx, r.uow.tx, outcome.Ref()); err != nil {
 		return err
 	}
-	_, err := r.uow.tx.ExecContext(ctx, `
+	contextJSON, err := marshalJSON(outcome.ExternalContext)
+	if err != nil {
+		return err
+	}
+	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, desired_state, lifecycle, archived_at
-) VALUES ($1, $2, $3, 'outcome', $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    title, description, priority, desired_state, lifecycle, archived_at,external_context_json
+) VALUES ($1, $2, $3, 'outcome', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
 		outcome.ID.String(),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
@@ -106,9 +114,13 @@ INSERT INTO outcomes (
 		outcome.DesiredState,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
+		contextJSON,
 	)
 	if err != nil {
 		return mapSQLError("insert outcome", err)
+	}
+	if err := syncExternalContextIndex(ctx, r.uow.tx, outcome); err != nil {
+		return err
 	}
 	return syncOwnedState(
 		ctx, r.uow.tx, outcome.Ref(), "owner", outcome.OwnerRefs, outcome.Criteria,
@@ -127,11 +139,15 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if outcome.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "outcome version must advance exactly once per save")
 	}
+	contextJSON, err := marshalJSON(outcome.ExternalContext)
+	if err != nil {
+		return err
+	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE outcomes
 SET version = $1, updated_at = $2, title = $3, description = $4, priority = $5,
-    desired_state = $6, lifecycle = $7, archived_at = $8
-WHERE namespace_id = $9 AND id = $10 AND outcome_id = $11 AND version = $12`,
+    desired_state = $6, lifecycle = $7, archived_at = $8,external_context_json=$9
+WHERE namespace_id = $10 AND id = $11 AND outcome_id = $12 AND version = $13`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
 		outcome.Title,
@@ -140,6 +156,7 @@ WHERE namespace_id = $9 AND id = $10 AND outcome_id = $11 AND version = $12`,
 		outcome.DesiredState,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
+		contextJSON,
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),
@@ -150,6 +167,9 @@ WHERE namespace_id = $9 AND id = $10 AND outcome_id = $11 AND version = $12`,
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "outcomes",
 		outcome.NamespaceID, outcome.ID, outcome.ID, expected); err != nil {
+		return err
+	}
+	if err := syncExternalContextIndex(ctx, r.uow.tx, outcome); err != nil {
 		return err
 	}
 	return syncOwnedState(

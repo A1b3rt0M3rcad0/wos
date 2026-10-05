@@ -49,6 +49,16 @@ func fieldName(f reflect.StructField) string {
 	return snake(f.Name)
 }
 func typeSchema(t reflect.Type) map[string]any {
+	if t == reflect.TypeFor[domain.RoadmapScopeKind]() {
+		return map[string]any{"type": "string", "enum": []string{"outcome", "objective"}}
+	}
+	if t == reflect.TypeFor[domain.ActorKind]() {
+		return map[string]any{"type": "string", "enum": []string{"human", "agent", "service", "automation", "external_system"}}
+	}
+
+	if t == reflect.TypeFor[domain.ExternalContext]() {
+		return map[string]any{"type": "object", "maxProperties": 64, "additionalProperties": map[string]any{"type": []string{"string", "number", "boolean", "null"}}}
+	}
 	if t == reflect.TypeFor[domain.EventPredicate]() {
 		return predicateSchema(3)
 	}
@@ -75,7 +85,9 @@ func typeSchema(t reflect.Type) map[string]any {
 		return map[string]any{"type": "number"}
 	case reflect.Slice, reflect.Array:
 		return map[string]any{"type": "array", "items": typeSchema(t.Elem())}
-	case reflect.Map, reflect.Interface:
+	case reflect.Map:
+		return map[string]any{"type": "object", "additionalProperties": typeSchema(t.Elem())}
+	case reflect.Interface:
 		return map[string]any{}
 	case reflect.Struct:
 		p := map[string]any{}
@@ -87,7 +99,7 @@ func typeSchema(t reflect.Type) map[string]any {
 			}
 			name := fieldName(f)
 			p[name] = typeSchema(f.Type)
-			if f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "Reason" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
+			if f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
 				required = append(required, name)
 			}
 		}

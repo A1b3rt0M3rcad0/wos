@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -114,6 +117,8 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		_ = store.Close()
 		return nil, err
 	}
+	observer := observability.New(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	service.SetObserver(observer)
 	service.SetIndependentReviewer(config.Auth.IndependentReviewer)
 	if len(config.Integration.Endpoints) > 0 {
 		installer, ok := store.(interface {
@@ -172,14 +177,32 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	if security != nil {
 		root.Handle("/session", sessionHandler(security))
 	}
+	root.Handle("GET /metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if security != nil {
+			id, err := resolve(r)
+			if err != nil {
+				http.Error(w, "unauthorized", 401)
+				return
+			}
+			ctx := application.WithIdentity(r.Context(), id)
+			if err = security.Require(ctx, id.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+				http.Error(w, "forbidden", 403)
+				return
+			}
+		}
+		observer.ServeHTTP(w, r)
+	}))
 	root.HandleFunc("GET /livez", runtime.handleLive)
 	root.HandleFunc("GET /readyz", runtime.handleReady)
 	if config.MCP.Enabled {
-		options := mcptransport.Options{RequestTimeout: config.HTTP.RequestTimeout}
+		options := mcptransport.Options{Security: security, RequestTimeout: config.HTTP.RequestTimeout}
 		if resolve != nil {
 			options.ResolveIdentity = func(ctx context.Context, headers http.Header) (application.Identity, error) {
 				request, _ := http.NewRequestWithContext(ctx, "POST", "http://wos.local/mcp", nil)
 				request.Header = headers
+				if id, ok := application.IdentityFromContext(ctx); ok {
+					return id, nil
+				}
 				return resolve(request)
 			}
 		} else {
@@ -195,10 +218,12 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		stream := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server { return protocol }, &mcp.StreamableHTTPOptions{Stateless: config.MCP.Stateless, JSONResponse: true})
 		root.Handle(config.MCP.Path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if resolve != nil {
-				if _, err := resolve(r); err != nil {
+				if id, err := resolve(r); err != nil {
 					w.Header().Set("WWW-Authenticate", "Bearer")
 					http.Error(w, "unauthorized", http.StatusUnauthorized)
 					return
+				} else {
+					r = r.WithContext(application.WithIdentity(r.Context(), id))
 				}
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, mcptransport.MaxPayloadBytes)
@@ -215,7 +240,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			http.Error(w, "origin rejected", http.StatusForbidden)
 			return
 		}
-		root.ServeHTTP(w, r)
+		observer.HTTP(root).ServeHTTP(w, r)
 	})
 	runtime.http = &http.Server{
 		Addr:              config.Server.Listen,

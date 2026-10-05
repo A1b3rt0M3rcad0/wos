@@ -10,6 +10,18 @@ import (
 func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]ports.OutcomeIndexEntry, error) {
 	q := `SELECT id,version,title,description,lifecycle,priority,archived_at,created_at,updated_at FROM outcomes WHERE namespace_id=?`
 	args := []any{ns.String()}
+	for key, value := range f.ExternalContext {
+		canonical, err := domain.CanonicalContextValue(value)
+		if err != nil {
+			return nil, err
+		}
+		q += ` AND EXISTS(SELECT 1 FROM outcome_context_entries c WHERE c.namespace_id=outcomes.namespace_id AND c.outcome_id=outcomes.id AND c.context_key=? AND c.canonical_value=?)`
+		args = append(args, key, canonical)
+	}
+	if f.CreatorPrincipalID != "" {
+		q += ` AND EXISTS(SELECT 1 FROM domain_events e WHERE e.namespace_id=outcomes.namespace_id AND e.outcome_id=outcomes.id AND e.event_type='outcome.created' AND e.principal_id=?)`
+		args = append(args, f.CreatorPrincipalID)
+	}
 	if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
 		q += ` AND EXISTS(SELECT 1 FROM outcome_external_references e WHERE e.namespace_id=outcomes.namespace_id AND e.outcome_id=outcomes.id AND e.provider=? AND e.context_kind=? AND e.external_id=?)`
 		args = append(args, f.ExternalProvider, f.ExternalKind, f.ExternalID)

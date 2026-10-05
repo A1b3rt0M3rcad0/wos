@@ -16,6 +16,7 @@ const (
 )
 
 type Outcome struct {
+	ExternalContext   ExternalContext  `json:"external_context,omitempty"`
 	ID                ID               `json:"id"`
 	NamespaceID       ID               `json:"namespace_id"`
 	Version           Version          `json:"version"`
@@ -64,6 +65,9 @@ func (o Outcome) Ref() EntityRef {
 func (o Outcome) IsArchived() bool { return o.ArchivedAt != nil }
 
 func (o Outcome) Validate() error {
+	if err := o.ExternalContext.Validate(); err != nil {
+		return err
+	}
 	if err := o.ID.Validate(); err != nil {
 		return err
 	}

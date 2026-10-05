@@ -17,6 +17,7 @@ import (
 const MaxPayloadBytes = 256 << 10
 
 type Options struct {
+	Security        *application.SecurityService
 	ResolveIdentity func(context.Context, http.Header) (application.Identity, error)
 	LocalIdentity   *application.Identity
 	RequestTimeout  time.Duration
@@ -33,6 +34,7 @@ func New(service *application.Service, ids ports.IDGenerator, options Options) (
 	registerCommands(server, service, ids, options)
 	registerQueries(server, service, options)
 	registerResources(server, service, options)
+	registerSecurity(server, options)
 	return server, nil
 }
 func identityContext(ctx context.Context, headers http.Header, options Options) (context.Context, error) {

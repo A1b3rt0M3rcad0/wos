@@ -1,0 +1,41 @@
+# Contratos públicos da branch de conclusão
+
+HTTP e MCP chamam o mesmo Application Service. O cliente Go em `packages/wos-sdk-go` é fino: transporta autenticação, deadlines, versões, fencing, paginação e erros tipados, sem implementar outra máquina de estados e sem retries automáticos.
+
+## Comandos e recuperação
+
+O catálogo é `GET /api/v1/commands`. Cada entrada possui nome público snake_case e JSON Schema. `POST /api/v1/commands/{name}` recebe `{"command": ...}`, com `Idempotency-Key` obrigatório. `commands.openapi.json` é gerado das mesmas 78 inscrições tipadas utilizadas por HTTP/MCP e pelo cliente Go. `openapi.yaml` inclui os endpoints REST e referencia esses schemas. Regeneração: `go run ./tools/mcpgen`, `go run ./tools/openapigen`; variantes SQL: `python3 tools/postgresgen/generate.py`.
+
+MCP usa `wos_{name}` com `{idempotency_key,command,correlation_id?}`. TTL é em segundos no contrato remoto e `time.Duration` no Go embedded. Os argumentos não escolhem Principal nem sobrescrevem Actor autenticado. Administração usa `wos_administer_namespace` / `POST /api/v1/security/commands` sobre `SecurityService`, com Namespace CAS.
+
+Não se usa uma nova chave para recuperar uma resposta incerta. Timeout/desconexão pode ocorrer após commit. Repita a mesma intenção e chave para obter replay; uma chave com outra intenção retorna `idempotency_conflict`. A versão obsoleta exige leitura e reconciliação do usuário; não há incremento automático. `claim_id` e `fencing_token` devem ser mantidos durante renovação/conclusão. Administração de segredos tem recibo sem reexposição do token, conforme [operations.md](operations.md).
+
+Comandos têm máximo de 256 KiB no transport. Um resultado de mutação maior que o limite retorna um recibo com `command_id`, `outcome_revision`, `idempotent_replay` e `result_omitted=true`: é commit realizado, não falha de domínio. Consulte continuidade para expandir o resultado. `transaction_conflict` é transitório; versões/intenções não são alteradas em retries.
+
+## Continuidade e endereço
+
+Descoberta: `GET /namespaces/{namespace_id}/outcomes`, filtros `text`, `lifecycle`, `archived`, `priority`, `creator_principal_id`, `owner_kind/provider/id`, `external_provider/kind/id` e `external_context` (objeto JSON plano). A listagem contém metadados com `detail_omitted=true`, ordenados por `(created_at,id)`; cursor de keyset é live e vinculado ao Namespace/filtros. Mudanças de filtros exigem nova busca. O contexto é endereço de consumidor; `tenant_id`/`user_id` não concedem acesso.
+
+ExternalContext: até 64 chaves e 8 KiB; valores string, boolean, número interoperável ou null, sem objetos/listas. Prefixo `wos.` é reservado. Busca combina pares com AND, preserva tipo e normaliza números JSON equivalentes; números fora do intervalo interoperável de ±(2^53−1) são rejeitados. Índices e agregado são alterados na mesma transação. Referências externas `(provider,kind,external_id)` são únicas dentro do Namespace e podem apontar para URL HTTP(S) reference-only.
+
+`GET .../continuity` retorna `snapshot_schema_version: 1`, `outcome_revision`, `evaluated_at`, `consistency=transactional`, resumo do Outcome, seções, `counts`, `omitted`, `section_cursors`, `truncated`, `section_limit` e `progress`. Limite por seção: 1–100, default 25; resposta máxima 256 KiB. Detalhes documentais e planos completos são omitidos explicitamente. `GET .../continuity/{section}` expande uma seção. Cursores de seção/grafo fixam a revisão e o instante de avaliação; mudança de revisão causa erro explícito e exige novo snapshot. IDs/cursores não são concessões de acesso.
+
+Métricas separam trabalho done, Objectives achieved, Objectives obrigatórios achieved, critérios obrigatórios met com evidências utilizáveis e critérios waived. Denominador zero retorna valor null e motivo. Waiver não é contado como prova met; nenhuma métrica conclui automaticamente um resultado.
+
+`GET .../timeline` é histórico público de metadados imutáveis (`schema_version: 1`), com filtros de Principal, comando, entidade e tipo; paginação append-only por `(outcome_revision,event_index)`. Não retorna payload interno de Domain Event. `GET .../graph` aceita raiz, tipos, direção, profundidade 0–8, limite e cursor; `source_of_truth` distingue hierarquia, dependência e vínculo documental. `GET .../work-items/{id}/context` agrega trabalho/critério, Objective proprietário, dependências, bloqueios, vínculos de evidência e decisões aceitas. Decisions são do Outcome; o domínio atual não contém associação focal exclusiva por WorkItem, portanto essa coleção tem escopo declarado de Outcome e truncamento explícito.
+
+Consultas compactas ainda usam a leitura coerente de coleções completas para algumas projeções. Descoberta SQL já evita hidratação por entidade. Limite de resposta não representa limite de custo de leitura; benchmarks e otimização estão registrados na auditoria.
+
+## Prova e planejamento
+
+Publicação de Roadmap fixa critérios, referências, rótulos e hash. `active_plan_references` é uma seção paginada com rótulo do plano e da referência publicada separados da versão, lifecycle e disponibilidade atuais; essa projeção usa a mesma leitura transacional e nunca reescreve a revisão publicada. Draft/aggregate version, revision_number e outcome_revision são conceitos separados. Slots ativos são substituídos explicitamente e serializados, sem CAS do slot anterior; o contrato preserva a política existente e o histórico de ambas as ativações. Ver ADR 0014.
+
+Conclusões são imutáveis. Critério revisado não herda avaliação anterior; retrair Evidence pode contestar conclusão sem apagar ou reabrir o resultado. Alterações estruturais que o domínio já proíbe em Outcome terminal exigem reopen explícito. Projeção de obrigações alteradas também cobre estado legado/restaurado incompatível. Revisor independente é política configurável por deployment, baseada em Principal e histórico do Outcome.
+
+## MCP e integrações
+
+SDK oficial Go v1.8.0; stdio local e Streamable HTTP remoto stateless/JSON. Cliente oficial SDK executado em testes reais nos dois transports. Perfil Woobe inspecionado usa `2025-06-18`; compatibilidade de deployment Woobe completo ainda precisa de demonstração. WOS não implementa OAuth nem depende de Woobe. Recursos: `wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity`; leituras incluem descoberta, snapshot/seções, grafo, contexto, readiness, timeline, histórico de critérios/conclusões, revisões/slots/ativações de Roadmap e sinais/deliveries.
+
+IntegrationFact `schema_version: 1` contém ID, tipo de fato público, Namespace/Outcome/revisão/índice, entidade, autoria, comando, tempo e correlação. TriggerFiring `schema_version: 1` contém identidade estável, Trigger/versão, signal_type e fato fonte. Não contém nome de struct/comando Go ou payload interno. Predicados usam whitelist de metadados públicos, `eq|neq|in|exists|all|any`, até três níveis e vinte nós; não executam scripts, LLM, Tools ou trabalho. Sinais são entregues pelo menos uma vez; consumidores deduplicam pelo ID. Consulte operações para assinatura e limites.
+
+A revisão semântica e os testes existentes continuam obrigatórios. Um schema gerado comprova a correspondência dos campos, não substitui testes de comportamento nem aceite de PostgreSQL/browser.

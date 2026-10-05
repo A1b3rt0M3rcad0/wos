@@ -142,7 +142,17 @@ func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = u.Outcomes().Insert(ctx, legacy); err != nil {
+	tx := u.(*unitOfWork).tx
+	if err = ensureNamespace(ctx, tx, legacy.NamespaceID); err == nil {
+		err = ensureCoordinationRow(ctx, tx, legacy.Scope())
+	}
+	if err == nil {
+		err = insertEntityRef(ctx, tx, legacy.Ref())
+	}
+	if err == nil {
+		_, err = tx.ExecContext(ctx, `INSERT INTO outcomes(id,namespace_id,outcome_id,kind,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES(?,?,?,'outcome',1,?,?,'Before upgrade','','normal','retained','draft')`, legacy.ID.String(), legacy.NamespaceID.String(), legacy.ID.String(), encodeTime(legacy.CreatedAt), encodeTime(legacy.UpdatedAt))
+	}
+	if err != nil {
 		u.Rollback()
 		t.Fatal(err)
 	}

@@ -1794,6 +1794,7 @@ func cloneBlocker(v domain.Blocker) domain.Blocker {
 }
 
 func cloneOutcome(v domain.Outcome) domain.Outcome {
+	v.ExternalContext = v.ExternalContext.Clone()
 	v.OwnerRefs = append([]domain.ActorRef(nil), v.OwnerRefs...)
 	v.Criteria = cloneCriteria(v.Criteria)
 	v.CurrentConclusion = cloneConclusion(v.CurrentConclusion)

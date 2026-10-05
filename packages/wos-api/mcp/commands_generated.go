@@ -169,6 +169,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.ReopenWorkItemCommand](server, ids, options, "wos_reopen_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReopenWorkItemCommand) (any, error) {
 		return service.ReopenWorkItem(ctx, cc, cmd)
 	})
+	registerCommand[application.ReplaceExternalContextCommand](server, ids, options, "wos_replace_external_context", func(ctx context.Context, cc domain.CommandContext, cmd application.ReplaceExternalContextCommand) (any, error) {
+		return service.ReplaceExternalContext(ctx, cc, cmd)
+	})
 	registerCommand[application.ReplaceRoadmapDraftCommand](server, ids, options, "wos_replace_roadmap_draft", func(ctx context.Context, cc domain.CommandContext, cmd application.ReplaceRoadmapDraftCommand) (any, error) {
 		return service.ReplaceRoadmapDraft(ctx, cc, cmd)
 	})

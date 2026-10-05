@@ -73,6 +73,12 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	if err := s.authorizeRead(ctx, ns); err != nil {
 		return OutcomePage{}, err
 	}
+	if err := f.ExternalContext.Validate(); err != nil {
+		return OutcomePage{}, err
+	}
+	if len(f.CreatorPrincipalID) > 256 {
+		return OutcomePage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "creator filter too long")
+	}
 	n, err := queryLimit(limit)
 	if err != nil {
 		return OutcomePage{}, err
@@ -245,8 +251,9 @@ func summary(ref domain.EntityRef, v domain.Version, title, lifecycle string, pr
 }
 
 type ActivePlan struct {
-	Slot     domain.RoadmapActiveSlot `json:"slot"`
-	Revision domain.RoadmapRevision   `json:"published_revision"`
+	Slot           domain.RoadmapActiveSlot `json:"slot"`
+	Revision       domain.RoadmapRevision   `json:"published_revision"`
+	LiveReferences []PlanLiveReference      `json:"live_references"`
 }
 type ProgressMetric struct {
 	Numerator   int      `json:"numerator"`
@@ -324,6 +331,7 @@ func (s *Service) continuitySections(state OutcomeState) map[string][]json.RawMe
 		sections[key+"_work"] = rawItems(groups[key])
 	}
 	sections["external_references"] = rawItems(state.ExternalReferences)
+	sections["external_context"] = rawItems([]domain.ExternalContext{state.Outcome.ExternalContext})
 	sections["relations"] = rawItems(state.Relations)
 	sections["blocking_states"] = rawItems(state.BlockingStates)
 	sections["conclusion_contestations"] = rawItems(state.ConclusionContestations)
@@ -363,6 +371,11 @@ func (s *Service) continuitySections(state OutcomeState) map[string][]json.RawMe
 		}{plan.Slot, plan.Revision.ContentHash, len(plan.Revision.Nodes), true})
 	}
 	sections["active_roadmaps"] = rawItems(plans)
+	livePlans := []PlanLiveReference{}
+	for _, plan := range state.ActiveRoadmaps {
+		livePlans = append(livePlans, plan.LiveReferences...)
+	}
+	sections["active_plan_references"] = rawItems(livePlans)
 	for _, values := range sections {
 		sort.Slice(values, func(i, j int) bool { return string(values[i]) < string(values[j]) })
 	}
@@ -447,6 +460,9 @@ func (s *Service) GetContinuity(ctx context.Context, scope domain.Scope, limit i
 				}
 			}
 		}
+		for name, value := range proofProgress(state) {
+			snapshot.Progress[name] = value
+		}
 		snapshot.Progress["work_completion"] = metric(wn, wd)
 		snapshot.Progress["objective_completion"] = metric(on, od)
 		snapshot.Progress["required_objectives_completion"] = metric(rn, rd)
@@ -518,4 +534,54 @@ func truncateText(s string, limit int) string {
 		s = s[:len(s)-1]
 	}
 	return s
+}
+
+// Proof metrics remain distinct from work completion and lifecycle certification.
+func proofProgress(state OutcomeState) map[string]ProgressMetric {
+	evidence := map[domain.ID]bool{}
+	for _, v := range state.Evidence {
+		evidence[v.ID] = v.Lifecycle == domain.EvidenceLifecycleRegistered
+	}
+	required, met, waived := 0, 0, 0
+	sets := []domain.CriterionSet{state.Outcome.Criteria}
+	for _, v := range state.Objectives {
+		if v.Lifecycle != domain.ObjectiveLifecycleCancelled {
+			sets = append(sets, v.Criteria)
+		}
+	}
+	for _, v := range state.WorkItems {
+		if v.Lifecycle != domain.WorkItemLifecycleCancelled {
+			sets = append(sets, v.Criteria)
+		}
+	}
+	for _, set := range sets {
+		for _, criterion := range set.Items {
+			if !criterion.Required || criterion.Status != domain.CriterionStatusActive {
+				continue
+			}
+			required++
+			assessment, ok := set.CurrentAssessments[criterion.ID]
+			if !ok || assessment.CriterionRevision != criterion.Revision {
+				continue
+			}
+			if assessment.Result == domain.AssessmentResultWaived {
+				waived++
+				continue
+			}
+			if assessment.Result != domain.AssessmentResultMet {
+				continue
+			}
+			usable := true
+			for _, id := range assessment.EvidenceIDs {
+				if !evidence[id] {
+					usable = false
+					break
+				}
+			}
+			if usable {
+				met++
+			}
+		}
+	}
+	return map[string]ProgressMetric{"required_criteria_met": metric(met, required), "required_criteria_waived": metric(waived, required)}
 }

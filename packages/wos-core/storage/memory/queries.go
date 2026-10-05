@@ -17,6 +17,31 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 		if v.NamespaceID != ns {
 			continue
 		}
+		matches := true
+		for key, value := range f.ExternalContext {
+			actual, exists := v.ExternalContext[key]
+			expected, _ := domain.CanonicalContextValue(value)
+			canonical, _ := domain.CanonicalContextValue(actual)
+			if !exists || expected != canonical {
+				matches = false
+				break
+			}
+		}
+		if !matches {
+			continue
+		}
+		if f.CreatorPrincipalID != "" {
+			found := false
+			for _, event := range r.tx.events {
+				if event.Scope() == v.Scope() && event.EventType == "outcome.created" && event.PrincipalID == f.CreatorPrincipalID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
 		if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
 			found := false
 			for _, ref := range r.tx.externalContexts[contextKey(v.Scope())] {

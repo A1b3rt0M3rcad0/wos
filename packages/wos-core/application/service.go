@@ -10,6 +10,7 @@ import (
 )
 
 type Service struct {
+	observer            ports.CommandObserver
 	tx                  ports.TransactionManager
 	clock               ports.Clock
 	ids                 ports.IDGenerator
@@ -48,6 +49,10 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 
+	outcome.ExternalContext = cmd.ExternalContext.Clone()
+	if err := outcome.ExternalContext.Validate(); err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, outcome.Scope()); err != nil {
 			return domain.Outcome{}, 0, err
@@ -768,3 +773,6 @@ func cloneTimePtrUTC(value *time.Time) *time.Time {
 	cloned := value.UTC()
 	return &cloned
 }
+
+// SetObserver configures metadata instrumentation before accepting concurrent calls.
+func (s *Service) SetObserver(observer ports.CommandObserver) { s.observer = observer }

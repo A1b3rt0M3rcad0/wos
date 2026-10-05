@@ -169,6 +169,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ReopenWorkItemCommand](c, "reopen_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReopenWorkItemCommand) (any, error) {
 		return service.ReopenWorkItem(ctx, cc, cmd)
 	})
+	register[application.ReplaceExternalContextCommand](c, "replace_external_context", func(ctx context.Context, cc domain.CommandContext, cmd application.ReplaceExternalContextCommand) (any, error) {
+		return service.ReplaceExternalContext(ctx, cc, cmd)
+	})
 	register[application.ReplaceRoadmapDraftCommand](c, "replace_roadmap_draft", func(ctx context.Context, cc domain.CommandContext, cmd application.ReplaceRoadmapDraftCommand) (any, error) {
 		return service.ReplaceRoadmapDraft(ctx, cc, cmd)
 	})

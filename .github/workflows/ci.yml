@@ -75,8 +75,9 @@ jobs:
         run: |
           python3 tools/postgresgen/generate.py
           go run ./tools/mcpgen
+          go run ./tools/openapigen
           gofmt -w packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go
-          git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go
+          git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
 
       - name: Unit and contract tests
         run: go test ./...

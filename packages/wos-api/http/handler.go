@@ -124,8 +124,10 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+base, h.createOutcome)
 	h.mux.HandleFunc("GET "+base, h.searchOutcomes)
 	if h.security != nil {
+		h.mux.HandleFunc("POST "+h.prefix+"/security/commands", h.administer)
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
 		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
 	} else {
