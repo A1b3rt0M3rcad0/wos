@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-05  
+**Last reviewed:** 2026-10-05
 **Current target:** Release 0.1  
 **Current wave:** Wave 11 integration and completion audit E00–E11 (in progress)
 
@@ -729,7 +729,7 @@ Expose the Application layer through the pinned official Go MCP SDK with tools/r
 
 ## Wave 14 — PostgreSQL Parity
 
-**Status:** ⛔ Adapter implemented in draft PR #14; real PostgreSQL acceptance blocked
+**Status:** 🚧 Adapter implemented in draft PR #14; PostgreSQL regression correction under verification
 
 Implement PostgreSQL migrations, repositories, query store, row guard, isolation rules, pool/timeouts and the full shared storage/concurrency contract.
 
@@ -812,7 +812,7 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 Waves 01–10 are merged into `master` at `2f9967689fa954b7c371781bc7a00c1ae760825d`. Wave 11 is implemented on unmerged PR #13. PR #14 builds on #13 and contains continuity, auth, MCP, PostgreSQL adapter, signals, official web, Go SDK and operations work. This is implementation status, not Release 0.1 acceptance.
 
-1. Execute real PostgreSQL contracts and the HTTP/MCP storage matrix; earlier CI jobs were cancelled before any step ran.
+1. Execute real PostgreSQL contracts and the HTTP/MCP storage matrix; earlier jobs were cancelled; CI #231 exposed nested-result reconstruction failures now corrected and awaiting a new run.
 2. Extend the passing official web journey (including replanning and restart) to evidence review, Objectives, Issues/Blockers, conflicts and full accessibility.
 3. Expand active-plan live-projection tests and optimize aggregate continuity reads; publish SQL-query/guard/throughput measurements.
 4. Prove full clean-install restore, in-flight shutdown, outbox crash exhaustion/redelivery, build reproducibility and container deployment.

@@ -551,24 +551,27 @@ ORDER BY a.assessed_at, a.id`,
 			assessmentRows.Close()
 			return domain.CriterionSet{}, err
 		}
-		evidenceIDs, err := loadAssessmentEvidence(ctx, tx, owner.Scope, assessment.ID)
-		if err != nil {
-			assessmentRows.Close()
-			return domain.CriterionSet{}, err
-		}
-		assessment.EvidenceIDs = evidenceIDs
-		if err := assessment.Validate(); err != nil {
-			assessmentRows.Close()
-			return domain.CriterionSet{}, err
-		}
 		set.Assessments = append(set.Assessments, assessment)
-		byID[assessment.ID] = assessment
 	}
 	if err := assessmentRows.Err(); err != nil {
 		assessmentRows.Close()
 		return domain.CriterionSet{}, err
 	}
 	assessmentRows.Close()
+	// A SQL transaction has one connection. Drain and close the parent result
+	// before issuing child queries; pgx cannot interleave active row results.
+	for i := range set.Assessments {
+		assessment := &set.Assessments[i]
+		evidenceIDs, err := loadAssessmentEvidence(ctx, tx, owner.Scope, assessment.ID)
+		if err != nil {
+			return domain.CriterionSet{}, err
+		}
+		assessment.EvidenceIDs = evidenceIDs
+		if err := assessment.Validate(); err != nil {
+			return domain.CriterionSet{}, err
+		}
+		byID[assessment.ID] = *assessment
+	}
 
 	currentRows, err := tx.QueryContext(ctx, `
 SELECT criterion_id, assessment_id
@@ -944,6 +947,11 @@ ORDER BY ordinal`,
 
 	history := make([]domain.Conclusion, 0)
 	var current *domain.Conclusion
+	type pendingConclusion struct {
+		storageID string
+		value     domain.Conclusion
+	}
+	pending := []pendingConclusion{}
 	for rows.Next() {
 		var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
 		var publicID sql.NullString
@@ -959,10 +967,6 @@ ORDER BY ordinal`,
 		if err := unmarshalJSON(actorJSON, &actor); err != nil {
 			return nil, nil, err
 		}
-		refs, err := loadConclusionAssessments(ctx, tx, owner.Scope, storageID)
-		if err != nil {
-			return nil, nil, err
-		}
 		var obligations domain.ConclusionObligations
 		if err := unmarshalJSON(obligationsJSON, &obligations); err != nil {
 			return nil, nil, err
@@ -972,7 +976,6 @@ ORDER BY ordinal`,
 			Actor:       actor,
 			Reason:      rationale,
 			ConcludedAt: decodeTime(recordedAt),
-			Assessments: refs,
 			Obligations: obligations,
 		}
 		if publicID.Valid {
@@ -995,18 +998,30 @@ ORDER BY ordinal`,
 			value.OwnerVersion = &versionCopy
 			value.LifecycleResult = lifecycleResult
 		}
+		pending = append(pending, pendingConclusion{storageID: storageID, value: value})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, nil, err
+	}
+	for _, record := range pending {
+		value := record.value
+		refs, err := loadConclusionAssessments(ctx, tx, owner.Scope, record.storageID)
+		if err != nil {
+			return nil, nil, err
+		}
+		value.Assessments = refs
 		if err := value.Validate(); err != nil {
 			return nil, nil, err
 		}
-		if currentID.Valid && storageID == currentID.String {
+		if currentID.Valid && record.storageID == currentID.String {
 			copy := value
 			current = &copy
 		} else {
 			history = append(history, value)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
 	}
 	return current, history, nil
 }

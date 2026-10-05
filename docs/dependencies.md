@@ -1,6 +1,6 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-05  
+**Last reviewed:** 2026-10-05
 **Active implementation wave:** Completion audit E00–E11, branch based on PR #13
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.

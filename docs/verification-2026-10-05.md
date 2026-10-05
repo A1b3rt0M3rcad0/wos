@@ -58,3 +58,9 @@ npm test
 No ambiente local, o download padrão do Chromium falhou; o mesmo teste foi executado com um binário real alternativo por `WOS_TEST_CHROMIUM_PATH`. Apenas flags necessárias ao processo isolado foram usadas (`--no-sandbox`, `--no-zygote`, `--single-process`, `--disable-dev-shm-usage`). O CI usa o Chromium padrão do Playwright. Os dois modos não são presumidos idênticos sem execução remota.
 
 Saídas finais preservadas em `docs/audit/`: testes Go, race, vet, navegador e benchmark. Arquivos de saída `ok` do pacote PostgreSQL representam compilação e skips no ambiente sem DSN; essa ressalva é parte da evidência.
+
+## Execução remota após sincronização
+
+Commit `ffc6e7fbe1acde41c3c9b27f87e03cc12a406146`: workflow Browser acceptance #1, run `37380121824`, job `111999646696`, **sucesso**, inclusive instalação do Chromium padrão e jornada completa do teste. Assim, essa fatia foi verificada também no navegador padrão do CI.
+
+CI #231, run `37380121402`, job `111999644305`: containers PostgreSQL 18.6, higiene, formatação, vet e geração passaram; sete testes de reconstrução de avaliações/conclusões falharam em PostgreSQL com `driver: bad connection`. A causa foi consulta filha com resultado pai ainda aberto na mesma conexão transacional. A correção compartilha o fechamento/materialização do resultado entre SQLite e PostgreSQL antes de hidratar Evidence e assessment refs. Não se representa esse primeiro run como aprovação do adapter; uma nova execução é necessária.
