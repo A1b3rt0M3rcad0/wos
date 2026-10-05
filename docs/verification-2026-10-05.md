@@ -1,6 +1,6 @@
 # Verificação da implementação — 2026-10-05
 
-Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados de execução local são separados dos gates de integração e release. PostgreSQL não estava disponível localmente: testes que exigem `WOS_TEST_POSTGRES_DSN` são ignorados explicitamente, não aprovados. O CI configura PostgreSQL 18 com essa variável obrigatória; os runs anteriores foram cancelados sem etapas.
+Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados de execução local são separados dos gates de integração e release. PostgreSQL não estava disponível localmente: testes que exigem `WOS_TEST_POSTGRES_DSN` são ignorados explicitamente, não aprovados. O CI configura PostgreSQL com essa variável obrigatória. O CI #232 executou PostgreSQL 18.6 real e passou integralmente; os skips locais não são usados como evidência desse resultado.
 
 ## Evidência executada
 
@@ -34,7 +34,7 @@ Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados 
 
 ## Gates ainda abertos
 
-PostgreSQL real e matriz de bancos/transports; jornada visual completa e acessibilidade; restore com todas as coleções; desligamento com requisições/entregas em voo; otimização e contagem de queries; todos os exemplos de produto/Woobe; matriz de plataformas/containers; comportamento de todas as rotas OpenAPI; demonstração integral da auditoria. Jobs configurados, testes existentes e código compilado não substituem execuções ausentes.
+Matriz exaustiva de bancos/transports; jornada visual completa e acessibilidade; restore com todas as coleções; desligamento com requisições/entregas em voo; otimização e contagem de queries; todos os exemplos de produto/Woobe; matriz de plataformas/containers; comportamento de todas as rotas OpenAPI; demonstração integral da auditoria. Jobs configurados, testes existentes e código compilado não substituem execuções ausentes.
 
 ## Reprodução final
 
@@ -55,7 +55,7 @@ npx playwright install --with-deps chromium
 npm test
 ```
 
-No ambiente local, o download padrão do Chromium falhou; o mesmo teste foi executado com um binário real alternativo por `WOS_TEST_CHROMIUM_PATH`. Apenas flags necessárias ao processo isolado foram usadas (`--no-sandbox`, `--no-zygote`, `--single-process`, `--disable-dev-shm-usage`). O CI usa o Chromium padrão do Playwright. Os dois modos não são presumidos idênticos sem execução remota.
+No ambiente local, o download padrão do Chromium falhou; o mesmo teste foi executado com um binário real alternativo por `WOS_TEST_CHROMIUM_PATH`. Apenas flags necessárias ao processo isolado foram usadas (`--no-sandbox`, `--no-zygote`, `--single-process`, `--disable-dev-shm-usage`). O CI usa o Chromium padrão do Playwright. O mesmo cenário passou remotamente com Chrome for Testing 151.0.7922.34 em Browser acceptance #1 e #2.
 
 Saídas finais preservadas em `docs/audit/`: testes Go, race, vet, navegador e benchmark. Arquivos de saída `ok` do pacote PostgreSQL representam compilação e skips no ambiente sem DSN; essa ressalva é parte da evidência.
 
@@ -63,4 +63,13 @@ Saídas finais preservadas em `docs/audit/`: testes Go, race, vet, navegador e b
 
 Commit `ffc6e7fbe1acde41c3c9b27f87e03cc12a406146`: workflow Browser acceptance #1, run `37380121824`, job `111999646696`, **sucesso**, inclusive instalação do Chromium padrão e jornada completa do teste. Assim, essa fatia foi verificada também no navegador padrão do CI.
 
-CI #231, run `37380121402`, job `111999644305`: containers PostgreSQL 18.6, higiene, formatação, vet e geração passaram; sete testes de reconstrução de avaliações/conclusões falharam em PostgreSQL com `driver: bad connection`. A causa foi consulta filha com resultado pai ainda aberto na mesma conexão transacional. A correção compartilha o fechamento/materialização do resultado entre SQLite e PostgreSQL antes de hidratar Evidence e assessment refs. Não se representa esse primeiro run como aprovação do adapter; uma nova execução é necessária.
+CI #231, run `37380121402`, job `111999644305`: containers PostgreSQL 18.6, higiene, formatação, vet e geração passaram; sete testes de reconstrução de avaliações/conclusões falharam em PostgreSQL com `driver: bad connection`. A causa foi consulta filha com resultado pai ainda aberto na mesma conexão transacional. A correção compartilha o fechamento/materialização do resultado entre SQLite e PostgreSQL antes de hidratar Evidence e assessment refs. Esse primeiro run falhou; a correção foi aprovada pelo CI #232 descrito abaixo.
+
+
+## Checkpoint remoto aprovado e ampliação de recuperação
+
+Commit `62658054adb6c556aab940e1bada4a5416cbf423`: [CI #232](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37380724897), job `112001706861`, **sucesso em todas as etapas**. PostgreSQL 18.6 real: testes de contrato 7,209 s; detector de corridas 12,798 s. SQLite: 2,481 s e 22,217 s. Higiene, formatação, vet, drift, build, versão, configuração e smokes HTTP também passaram. Excerto original: `audit/postgres-ci-passed.txt`.
+
+[Browser acceptance #2](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37380724938), job `112001707479`, **sucesso**, jornada 4,7 s, total 6,2 s, Chromium padrão 151.0.7922.34. Excerto: `audit/browser-ci-second-passed.txt`.
+
+A revisão seguinte amplia quatro cenários de runtime (MCP/HTTP compartilhados, revogação/autoria, SDK após restart e sessão web) com schemas PostgreSQL isolados; reutiliza exatamente os mesmos asserts em SQLite/PostgreSQL. O contrato durável de integração passa a restaurar pg_dump em banco vazio antes de continuar, com clientes da própria imagem PostgreSQL, transação única e limpeza do banco de teste. Essa ampliação ainda aguarda CI: compilação e skips locais não a aprovam. O restore cobre grants, sessão/credencial parent, auditoria, receipts, histórico e outbox do cenário; não se generaliza para planning, conclusões ou todos os leases.

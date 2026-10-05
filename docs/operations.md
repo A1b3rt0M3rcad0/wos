@@ -1,6 +1,6 @@
 # Operação do WOS
 
-Esta documentação descreve a branch de conclusão, ainda em revisão no PR #14. Não constitui aceite de Release 0.1. Linux amd64 com Go 1.27.1 foi o ambiente de execução local; PostgreSQL e jornada visual exigem os jobs específicos da matriz de aceite.
+Esta documentação descreve a branch de conclusão, ainda em revisão no PR #14. Não constitui aceite de Release 0.1. Linux amd64 com Go 1.27.1 foi o ambiente de execução local; PostgreSQL 18.6 real passou nos contratos compartilhados e race do CI #232; a jornada visual de referência passou em Chromium padrão no CI. A matriz completa e o aceite de release permanecem abertos.
 
 ## Instalação local
 

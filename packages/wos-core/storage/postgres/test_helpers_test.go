@@ -31,9 +31,16 @@ func openTestStore(t *testing.T, path string) *Store {
 	return s
 }
 
-// PostgreSQL contract proves restart; clean pg_dump/restore acceptance is separate.
+// CI additionally restores the integration fixture into an empty database using
+// pg_dump/pg_restore from the exact PostgreSQL server image.
 func reopenIntegrationFixture(t *testing.T, store *Store, path string) *Store {
 	t.Helper()
+	if os.Getenv("WOS_TEST_POSTGRES_CONTAINER") != "" {
+		return restoreIntegrationFixture(t, store)
+	}
+	if os.Getenv("CI") == "true" {
+		t.Fatal("PostgreSQL CI must supply WOS_TEST_POSTGRES_CONTAINER for clean restore")
+	}
 	store.Close()
 	return openTestStore(t, path)
 }

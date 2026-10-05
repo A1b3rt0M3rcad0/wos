@@ -256,11 +256,11 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 **Situação:** há adapters de memória e SQLite. Não foi encontrada implementação PostgreSQL, e `OpenRuntime` rejeita outro driver.
 
 - [x] E07.01 Implementar migrations PostgreSQL para entidades operacionais, documentais, planejamento, histórico, grants e integração.
-- [ ] E07.02 Implementar repositories e UnitOfWork com o mesmo contrato funcional.
+- [x] E07.02 Implementar repositories e UnitOfWork com o mesmo contrato funcional.
 - [x] E07.03 Implementar coordenação por Outcome e regras explícitas de isolamento transacional.
-- [ ] E07.04 Garantir que snapshots e `outcome_revision` correspondam a uma leitura coerente.
+- [x] E07.04 Garantir que snapshots e `outcome_revision` correspondam a uma leitura coerente.
 - [ ] E07.05 Implementar QueryStore/read models e índices para filtros, busca, grafo e timeline.
-- [ ] E07.06 Executar a suíte compartilhada de contratos em SQLite e PostgreSQL reais.
+- [x] E07.06 Executar a suíte compartilhada de contratos em SQLite e PostgreSQL reais.
 - [ ] E07.07 Testar corrida de dependências opostas, ciclos indiretos e alterações concorrentes de hierarquia.
 - [ ] E07.08 Testar claims, renovações, reclaim e fencing com conexões e processos distintos.
 - [ ] E07.09 Testar unicidade de slots, supersessão de Decision e conclusão/avaliação concorrentes.
@@ -338,10 +338,10 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [x] E11.01 Manter os testes existentes e ampliar CI para as capacidades novas.
 - [ ] E11.02 Executar matriz funcional HTTP/MCP sobre SQLite/PostgreSQL.
 - [ ] E11.03 Executar testes de interface humana para criação, execução, revisão, replanejamento e retomada.
-- [ ] E11.04 Acrescentar smoke de processo que percorra uma jornada de domínio, além de health checks.
+- [x] E11.04 Acrescentar smoke de processo que percorra uma jornada de domínio, além de health checks.
 - [ ] E11.05 Testar resposta perdida após commit, timeout antes de commit e retries equivalentes.
 - [ ] E11.06 Injetar falhas entre mutação, eventos, outbox, idempotência e commit para provar atomicidade.
-- [ ] E11.07 Testar concorrência com banco real, não apenas goroutines usando adapter em memória.
+- [x] E11.07 Testar concorrência com banco real, não apenas goroutines usando adapter em memória.
 - [ ] E11.08 Aplicar fuzz/property tests a grafo, referências, cursores e serialização de contratos.
 - [x] E11.09 Executar migrations partindo de snapshots de versões anteriores.
 - [ ] E11.10 Provar restauração e continuação por consumidor novo.
@@ -435,6 +435,7 @@ As referências abaixo identificam o material efetivamente consultado. Caminhos 
 - Planejamento: PR [#13](https://github.com/A1b3rt0M3rcad0/wos/pull/13), head `0bd7c538dfdc4eb4a0732f60c3ec57bd341da345`, aberto e não integrado; CI anterior `37340922999` passou. A descrição foi reconciliada com a implementação.
 - Conclusão da auditoria: PR [#14](https://github.com/A1b3rt0M3rcad0/wos/pull/14), **draft**, branch `feat/completion-audit-2026-10-05`, baseado em #13. O próprio head do PR identifica a revisão dos arquivos e evidências desta entrega.
 - Checkpoints remotos anteriores: `dcbdc11c601de0d439494c9563e244e795b59091` e `9260e5d6150ec29582bdee76ac7a0775222b9bf7`. A execução CI `37373336621`, job `111975662361`, foi cancelada sem executar etapas. Não constitui teste PostgreSQL nem falha de código reproduzida.
+- Checkpoint de código aprovado: `62658054adb6c556aab940e1bada4a5416cbf423`. [CI #232](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37380724897) e [Browser acceptance #2](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37380724938) concluídos com sucesso; excertos preservados em `docs/audit/postgres-ci-passed.txt` e `browser-ci-second-passed.txt`.
 - PR [#9](https://github.com/A1b3rt0M3rcad0/wos/pull/9): encerrado como supersedido depois de preservar integralmente o diff de `f694137fc07485baa18d19a2096ff09555a4966f` em `docs/audit/legacy-pr9.patch`. Não se presume que todas as variantes antigas devam integrar o novo código.
 - Licença escolhida pelo mantenedor: **Apache 2.0**, arquivo `LICENSE`. Caminho humano oficial: cliente web em `/app/`, com sessão de navegador e comandos Application compartilhados com HTTP/MCP.
 
@@ -451,17 +452,17 @@ Os comandos executados, seus resultados e limites ficam em `docs/verification-20
 | E02.07–08, .11–18 | `application/focal_graph.go`, `plan_projection.go`, `continuity.go`, consultas de readiness/blocking; `docs/contracts.md`; métricas de critérios separados de trabalho e waiver | Referências do plano ativo projetam versão/lifecycle/disponibilidade vivos sem alterar rótulos ou hash históricos. Grafo/contexto focal precisam de maior cobertura dirigida e otimização. |
 | E03.01–18 | `application/security*.go`, `authorization.go`, `reviewer_policy.go`; `sqlite/security_contract_test.go`, `security_admin_test.go`, `context_contract_test.go`; `TestPermissionRevokedWhileAwaitingTransactionCannotMutate`; `TestNamespaceCreationCopiesOnlyGrantedPermissions`; `TestBrowserSessionCatalogAndRevocation`; `TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship` | Administração lista até 100 registros e declara truncamento; expansão do histórico administrativo ainda precisa evoluir. Leituras em voo não são canceladas pela revogação posterior. |
 | E04.02–16, .18 | SDK oficial MCP Go 1.8.0; `api/mcp`; catálogo gerado de 78 comandos; `TestRealMCPClientSharesDurableStateWithHTTP`, `TestRealStdioMCPSubprocess`, teste de grants MCP remoto | Paridade de toda a suíte (.17), matriz completa (.01) e demonstração Woobe (.19) abertas. |
-| E05.01–03, .07, .10, .21 | `tests/web/journey.spec.mjs`, Playwright 1.62.1 e Chromium real: sessão, criação, critério, trabalho, plano inicial, revisão 2 com revisão 1 imutável, agente MCP, avaliação humana, certificação e novo navegador após restart | Passou localmente (4,6 s). Viewport de 390 px sem overflow. Browser acceptance remoto #1 também passou (`37380121824`). Fluxos adicionais e acessibilidade completa ainda abertos. |
+| E05.01–03, .07, .10, .21 | `tests/web/journey.spec.mjs`, Playwright 1.62.1 e Chromium real: sessão, criação, critério, trabalho, plano inicial, revisão 2 com revisão 1 imutável, agente MCP, avaliação humana, certificação e novo navegador após restart | Passou localmente (4,6 s). Viewport de 390 px sem overflow. Browser acceptance remoto #1 e #2 passaram (`37380121824`, `37380724938`). Fluxos adicionais e acessibilidade completa ainda abertos. |
 | E06.02–14 | Testes Wave 10 de assessment, contestação e concorrência; `sqlite/wave10_*test.go`, `leases_test.go`; `TestTerminalOutcomeRequiresExplicitReopenBeforeChangingObligations`; `reviewer_policy_test.go`; contratos de autoria/lease | Equivalência de todos os transports/bancos (.01) depende da matriz real. |
-| E07.01, .03, .11–12 | `storage/postgres`, pgx 5.9.2, migrations até 0015, isolamento SERIALIZABLE, guard `FOR UPDATE`, pool/deadlines, seleção do runtime; gerador explícito de diferenças SQL | Somente compilação local; testes locais PostgreSQL são ignorados explicitamente sem DSN. Toda afirmação de paridade operacional permanece pendente. |
+| E07.01–04, .06, .11–12 | `storage/postgres`, pgx 5.9.2, migrations até 0015, isolamento SERIALIZABLE, guard `FOR UPDATE`, pool/deadlines, seleção do runtime; gerador explícito de diferenças SQL | CI #232 (`37380724897`) passou com PostgreSQL 18.6 real: testes compartilhados e detector de corridas. Matriz exaustiva HTTP/MCP, restore completo e benchmark PostgreSQL permanecem abertos. Os testes locais sem DSN continuam explicitamente ignorados. |
 | E08.02–13, .15 | `application/integration.go`, `domain/trigger.go`, `sqlite/integration.go`, migração 0013; `TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing`; `TestRealWebhookRetryKeepsEventIdentityAndSignature`; `TestWebhookSignatureAndDestinationPolicy`; `TestDeliveryCrashBudgetRequiresExplicitRedelivery`; `docs/contracts.md`/`operations.md` | Catálogo exaustivo estável de eventos (.01) e matriz completa de falhas (.14) abertos. |
 | E09.02–07, .11 | Catálogo único para HTTP/MCP/SDK; `commands.openapi.json`; `packages/wos-sdk-go`, teste de consumidor após restart; contratos públicos e documentação de correlação | OpenAPI completo verificado por comportamento (.01/.08), todos os exemplos e integração de produto real permanecem abertos. |
 | E10.02–04, .08–09, .13–14 | Dockerfile/Compose, CLI/runtime/health, `docs/operations.md`; logs sem payload/segredo; política de recuperação, leases, limites e retenção | Contêineres não executados; desligamento com entregas em voo, restore completo, plataforma/reprodutibilidade e métricas completas pendentes. |
-| E11.01, .09, .12 | CI atualizado com PostgreSQL real obrigatório, drift de geração e workflow de navegador; upgrade de schema 0007; `docs/benchmarks.md` e saída original | Workflow configurado não é workflow aprovado. Aceitação E11 permanece aberta. |
+| E11.01, .04, .07, .09, .12 | CI atualizado com PostgreSQL real obrigatório, drift de geração e workflow de navegador; upgrade de schema 0007; `docs/benchmarks.md` e saída original | CI #232 passou com banco real, race, geração, vet, build e smokes; Browser acceptance #2 (`37380724938`) passou com processo servidor e jornada de domínio. O aceite integral E11 permanece aberto. |
 
 ### 9.3 Trabalho restante obrigatório
 
-1. **PostgreSQL real:** executar contratos, concorrência, migrations, backup/restore e matriz HTTP/MCP; corrigir o que falhar. Os primeiros jobs foram cancelados sem etapas. O CI #231 finalmente executou PostgreSQL 18.6 e encontrou sete falhas de leitura por resultados simultâneos na conexão; a correção fecha/materializa o resultado pai antes das queries filhas. A nova execução ainda é necessária; compilação ou SQLite não substituem essa evidência.
+1. **PostgreSQL e transports:** os contratos compartilhados, concorrência e detector de corridas passaram em PostgreSQL 18.6 no CI #232, commit `62658054adb6c556aab940e1bada4a5416cbf423`. A falha real de reconstrução do CI #231 foi corrigida. Nesta revisão, cenários de HTTP/MCP/SDK/sessão passaram a executar nos dois bancos e o contrato de integração passou a usar pg_dump/pg_restore em banco vazio no CI; essa ampliação ainda aguarda execução remota. A matriz exaustiva de comandos/consultas, restore de planning/prova/leases e benchmark PostgreSQL continuam obrigatórios.
 2. **Produto humano:** a jornada real de criação/plano/replanejamento/MCP/revisão/restart passou. Ampliar para revisão de evidência, Objective, Issue/Blocker, conflitos, teclado e acessibilidade; validar todas as ações e seletores. Essa fatia não encerra E05.
 3. **Continuidade e desempenho:** ampliar os testes da projeção de planos ativos sobre referências vivas, eliminar scans/N+1 desnecessários, medir queries/espera de guard/throughput e ampliar testes de grafo/contexto focal. Medição SQLite atual: descoberta 0,195 ms; snapshot 65,330 ms no dataset publicado.
 4. **Integração e recuperação:** publicar catálogo exaustivo dos fatos públicos, ampliar shutdown/falhas de destinos e restore incluindo planning/prova/leases; restore SQLite de credenciais/sessão/auditoria/grants/recibos/outbox e esgotamento após seis crashes com redelivery explícito já passaram; adicionar métricas de guard/leases/outbox.

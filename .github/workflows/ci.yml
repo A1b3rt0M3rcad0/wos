@@ -80,9 +80,13 @@ jobs:
           git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
 
       - name: Unit and contract tests
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: go test ./...
 
       - name: Race detector
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: go test -race ./...
 
       - name: Build standalone binary

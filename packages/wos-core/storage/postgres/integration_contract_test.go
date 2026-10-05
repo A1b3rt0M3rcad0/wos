@@ -80,7 +80,8 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 		t.Fatal("incorrect stable integration envelope")
 	}
 	// The SQLite helper restores a consistent backup into an empty installation.
-	// PostgreSQL uses restart; both preserve credentials, receipts and pending deliveries.
+	// PostgreSQL CI uses pg_dump/pg_restore into an empty database; a local run
+	// without the CI container proves restart only.
 	store = reopenIntegrationFixture(t, store, path)
 	security.Store = store
 	if _, err = security.Authenticate(ctx, session); err != nil {
