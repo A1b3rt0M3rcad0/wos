@@ -234,13 +234,14 @@ WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO roadmap_drafts (
     namespace_id, outcome_id, roadmap_id, draft_version, base_revision_number,
-    lifecycle, nodes_json, after_links_json, created_at, updated_at, discarded_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    lifecycle, reason, nodes_json, after_links_json, created_at, updated_at, discarded_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(namespace_id, outcome_id, roadmap_id)
 DO UPDATE SET
     draft_version = excluded.draft_version,
     base_revision_number = excluded.base_revision_number,
     lifecycle = excluded.lifecycle,
+    reason = excluded.reason,
     nodes_json = excluded.nodes_json,
     after_links_json = excluded.after_links_json,
     created_at = excluded.created_at,
@@ -252,6 +253,7 @@ DO UPDATE SET
 			int64(roadmap.Draft.DraftVersion),
 			base,
 			string(roadmap.Draft.Lifecycle),
+			roadmap.Draft.Reason,
 			nodesJSON,
 			linksJSON,
 			encodeTime(roadmap.Draft.CreatedAt),
@@ -284,13 +286,14 @@ func insertRoadmapRevision(
 	result, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO roadmap_revisions (
     namespace_id, outcome_id, roadmap_id, revision_number,
-    content_hash, published_by_json, published_at
-) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    content_hash, reason, published_by_json, published_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		scope.NamespaceID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revision.RevisionNumber),
 		revision.ContentHash,
+		revision.Reason,
 		actorJSON,
 		encodeTime(revision.PublishedAt),
 	)
@@ -409,12 +412,12 @@ func loadRoadmapDraft(
 	var (
 		draftVersion                    int64
 		baseRevision                    sql.NullInt64
-		lifecycle, nodesJSON, linksJSON string
+		lifecycle, reason, nodesJSON, linksJSON string
 		createdAt, updatedAt            int64
 		discardedAt                     sql.NullInt64
 	)
 	err := tx.QueryRowContext(ctx, `
-SELECT draft_version, base_revision_number, lifecycle, nodes_json, after_links_json,
+SELECT draft_version, base_revision_number, lifecycle, reason, nodes_json, after_links_json,
        created_at, updated_at, discarded_at
 FROM roadmap_drafts
 WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
@@ -422,7 +425,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 	).Scan(
-		&draftVersion, &baseRevision, &lifecycle, &nodesJSON, &linksJSON,
+		&draftVersion, &baseRevision, &lifecycle, &reason, &nodesJSON, &linksJSON,
 		&createdAt, &updatedAt, &discardedAt,
 	)
 	if err == sql.ErrNoRows {
@@ -434,6 +437,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
 	value := &domain.RoadmapDraft{
 		DraftVersion: uint64(draftVersion),
 		Lifecycle:    domain.RoadmapDraftLifecycle(lifecycle),
+		Reason:       reason,
 		CreatedAt:    decodeTime(createdAt),
 		UpdatedAt:    decodeTime(updatedAt),
 	}
@@ -502,17 +506,17 @@ func loadOneRoadmapRevision(
 	roadmapID domain.ID,
 	revisionNumber uint64,
 ) (domain.RoadmapRevision, error) {
-	var contentHash, actorJSON string
+	var contentHash, reason, actorJSON string
 	var publishedAt int64
 	err := tx.QueryRowContext(ctx, `
-SELECT content_hash, published_by_json, published_at
+SELECT content_hash, reason, published_by_json, published_at
 FROM roadmap_revisions
 WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?`,
 		scope.NamespaceID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revisionNumber),
-	).Scan(&contentHash, &actorJSON, &publishedAt)
+	).Scan(&contentHash, &reason, &actorJSON, &publishedAt)
 	if err != nil {
 		return domain.RoadmapRevision{}, mapSQLError("get roadmap revision", err)
 	}
@@ -523,6 +527,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number
 	value := domain.RoadmapRevision{
 		RevisionNumber: revisionNumber,
 		ContentHash:    contentHash,
+		Reason:         reason,
 		PublishedBy:    actor,
 		PublishedAt:    decodeTime(publishedAt),
 	}

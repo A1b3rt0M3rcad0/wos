@@ -2766,6 +2766,7 @@ components:
         lifecycle:
           type: string
           enum: [open, discarded]
+        reason: {type: string}
         nodes:
           type: array
           items: {$ref: "#/components/schemas/RoadmapNode"}
@@ -2783,6 +2784,7 @@ components:
       properties:
         revision_number: {type: integer, minimum: 1}
         content_hash: {type: string}
+        reason: {type: string}
         nodes:
           type: array
           items: {$ref: "#/components/schemas/RoadmapNode"}
@@ -2871,6 +2873,7 @@ components:
       properties:
         expected_version: {$ref: "#/components/schemas/Version"}
         expected_draft_version: {type: integer, minimum: 1}
+        reason: {type: string}
         nodes:
           type: array
           items: {$ref: "#/components/schemas/RoadmapNode"}

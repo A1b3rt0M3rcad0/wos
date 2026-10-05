@@ -285,6 +285,7 @@ type RoadmapDraft struct {
 	DraftVersion       uint64                `json:"draft_version"`
 	BaseRevisionNumber *uint64               `json:"base_revision_number,omitempty"`
 	Lifecycle          RoadmapDraftLifecycle `json:"lifecycle"`
+	Reason             string                `json:"reason,omitempty"`
 	Nodes              []RoadmapNode         `json:"nodes,omitempty"`
 	AfterLinks         []RoadmapAfterLink    `json:"after_links,omitempty"`
 	CreatedAt          time.Time             `json:"created_at"`
@@ -350,6 +351,7 @@ func (s RoadmapDependencySnapshot) Validate(scope Scope) error {
 type RoadmapRevision struct {
 	RevisionNumber      uint64                      `json:"revision_number"`
 	ContentHash         string                      `json:"content_hash"`
+	Reason              string                      `json:"reason,omitempty"`
 	Nodes               []RoadmapNode               `json:"nodes,omitempty"`
 	AfterLinks          []RoadmapAfterLink          `json:"after_links,omitempty"`
 	DependencySnapshots []RoadmapDependencySnapshot `json:"dependency_snapshots,omitempty"`
@@ -492,6 +494,7 @@ func (r *Roadmap) OpenDraft(baseRevisionNumber *uint64, now time.Time) error {
 		base := r.Revisions[*baseRevisionNumber-1]
 		baseNumber := *baseRevisionNumber
 		draft.BaseRevisionNumber = &baseNumber
+		draft.Reason = base.Reason
 		draft.Nodes = cloneRoadmapNodesForDraft(base.Nodes)
 		draft.AfterLinks = append([]RoadmapAfterLink(nil), base.AfterLinks...)
 	}
@@ -508,6 +511,16 @@ func (r *Roadmap) ReplaceDraft(
 	afterLinks []RoadmapAfterLink,
 	now time.Time,
 ) error {
+	return r.ReplaceDraftWithMetadata(expectedDraftVersion, nil, nodes, afterLinks, now)
+}
+
+func (r *Roadmap) ReplaceDraftWithMetadata(
+	expectedDraftVersion uint64,
+	reason *string,
+	nodes []RoadmapNode,
+	afterLinks []RoadmapAfterLink,
+	now time.Time,
+) error {
 	if r.Lifecycle != RoadmapLifecycleOpen {
 		return NewError(ErrorCodeInvalidTransition, "archived roadmap cannot edit draft")
 	}
@@ -519,6 +532,9 @@ func (r *Roadmap) ReplaceDraft(
 	}
 	next := *r.Draft
 	next.DraftVersion++
+	if reason != nil {
+		next.Reason = strings.TrimSpace(*reason)
+	}
 	next.Nodes = cloneRoadmapNodes(nodes)
 	next.AfterLinks = append([]RoadmapAfterLink(nil), afterLinks...)
 	next.UpdatedAt = now.UTC()
@@ -581,6 +597,7 @@ func (r *Roadmap) PublishDraft(
 	revision := RoadmapRevision{
 		RevisionNumber:      uint64(len(r.Revisions)) + 1,
 		ContentHash:         strings.TrimSpace(contentHash),
+		Reason:              strings.TrimSpace(r.Draft.Reason),
 		Nodes:               cloneRoadmapNodes(publishedNodes),
 		AfterLinks:          append([]RoadmapAfterLink(nil), r.Draft.AfterLinks...),
 		DependencySnapshots: append([]RoadmapDependencySnapshot(nil), dependencySnapshots...),

@@ -124,6 +124,7 @@ func (h *Handler) replaceRoadmapDraft(w http.ResponseWriter, r *http.Request) {
 	result, err := h.service.ReplaceRoadmapDraft(r.Context(), cc, application.ReplaceRoadmapDraftCommand{
 		Scope: scope, RoadmapID: id, ExpectedVersion: expected,
 		ExpectedDraftVersion: request.ExpectedDraftVersion,
+		Reason:               request.Reason,
 		Nodes:                request.Nodes, AfterLinks: request.AfterLinks,
 	})
 	if err != nil {

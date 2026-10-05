@@ -169,6 +169,7 @@ type openRoadmapDraftRequest struct {
 type replaceRoadmapDraftRequest struct {
 	ExpectedVersion      *uint64                   `json:"expected_version,omitempty"`
 	ExpectedDraftVersion uint64                    `json:"expected_draft_version"`
+	Reason               *string                   `json:"reason,omitempty"`
 	Nodes                []domain.RoadmapNode      `json:"nodes,omitempty"`
 	AfterLinks           []domain.RoadmapAfterLink `json:"after_links,omitempty"`
 }

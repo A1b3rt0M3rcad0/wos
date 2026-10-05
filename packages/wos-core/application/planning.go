@@ -31,6 +31,7 @@ type ReplaceRoadmapDraftCommand struct {
 	RoadmapID            domain.ID
 	ExpectedVersion      domain.Version
 	ExpectedDraftVersion uint64
+	Reason               *string
 	Nodes                []domain.RoadmapNode
 	AfterLinks           []domain.RoadmapAfterLink
 }
@@ -155,8 +156,9 @@ func (s *Service) ReplaceRoadmapDraft(
 		if err := validateRoadmapDraftReferences(ctx, uow, *value, cmd.Nodes); err != nil {
 			return err
 		}
-		return value.ReplaceDraft(
+		return value.ReplaceDraftWithMetadata(
 			cmd.ExpectedDraftVersion,
+			cmd.Reason,
 			cmd.Nodes,
 			cmd.AfterLinks,
 			s.clock.Now().UTC(),
