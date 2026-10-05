@@ -18,6 +18,21 @@ jobs:
   verification:
     name: WOS verification
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: wos_ci
+          POSTGRES_DB: wos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d wos_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      WOS_TEST_POSTGRES_DSN: postgres://postgres:wos_ci@localhost:5432/wos_test?sslmode=disable
 
     steps:
       - name: Checkout
@@ -55,6 +70,13 @@ jobs:
 
       - name: Vet
         run: go vet ./...
+
+      - name: Generated adapters and MCP commands are current
+        run: |
+          python3 tools/postgresgen/generate.py
+          go run ./tools/mcpgen
+          gofmt -w packages/wos-core/storage/postgres packages/wos-api/mcp
+          git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp
 
       - name: Unit and contract tests
         run: go test ./...

@@ -9,6 +9,7 @@ import (
 )
 
 type OutcomeState struct {
+	ActiveRoadmaps            []ActivePlan                      `json:"active_roadmaps"`
 	Outcome                   domain.Outcome                    `json:"outcome"`
 	Objectives                []domain.Objective                `json:"objectives"`
 	WorkItems                 []domain.WorkItem                 `json:"work_items"`
@@ -45,6 +46,10 @@ type ConclusionHistory struct {
 }
 
 func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResult[domain.Outcome], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Outcome]{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
@@ -69,6 +74,10 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 }
 
 func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Objective], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Objective]{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return ReadResult[domain.Objective]{}, err
 	}
@@ -96,6 +105,10 @@ func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domai
 }
 
 func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.WorkItem], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.WorkItem]{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return ReadResult[domain.WorkItem]{}, err
 	}
@@ -127,6 +140,10 @@ func (s *Service) GetCriterionHistory(
 	owner domain.EntityRef,
 	criterionID domain.ID,
 ) (ReadResult[CriterionValidationHistory], error) {
+	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
+
 	if err := owner.Validate(); err != nil {
 		return ReadResult[CriterionValidationHistory]{}, err
 	}
@@ -180,6 +197,10 @@ func (s *Service) ListConclusions(
 	ctx context.Context,
 	owner domain.EntityRef,
 ) (ReadResult[ConclusionHistory], error) {
+	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
+
 	if err := owner.Validate(); err != nil {
 		return ReadResult[ConclusionHistory]{}, err
 	}
@@ -212,6 +233,10 @@ func (s *Service) GetConclusion(
 	owner domain.EntityRef,
 	conclusionID domain.ID,
 ) (ReadResult[domain.Conclusion], error) {
+	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+		return ReadResult[domain.Conclusion]{}, err
+	}
+
 	if err := owner.Validate(); err != nil {
 		return ReadResult[domain.Conclusion]{}, err
 	}
@@ -272,6 +297,10 @@ func validationStateForOwner(
 }
 
 func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Relation], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return ReadResult[domain.Relation]{}, err
 	}
@@ -299,6 +328,10 @@ func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]domain.Relation, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return nil, 0, err
 	}
@@ -320,6 +353,10 @@ func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]doma
 }
 
 func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (OutcomeState, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return OutcomeState{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return OutcomeState{}, err
 	}
@@ -378,7 +415,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		return OutcomeState{}, err
 	}
 
-	evaluatedAt := s.clock.Now().UTC()
+	evaluatedAt := evaluationTime(ctx, s.clock.Now())
 	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
 	blockingByRef := make(map[domain.EntityRef]BlockingState, 1+len(objectives)+len(workItems))
 	refs := make([]domain.EntityRef, 0, 1+len(objectives)+len(workItems))
@@ -436,6 +473,23 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	contestations = append(contestations, conclusionContestations(
 		outcome.Ref(), outcome.CurrentConclusion, outcome.Criteria, evidenceByID,
 	)...)
+	if outcome.CurrentConclusion != nil {
+		recorded := map[domain.ID]bool{}
+		for _, id := range outcome.CurrentConclusion.Obligations.RequiredObjectiveIDs {
+			recorded[id] = true
+			objective, ok := objectiveByID[id]
+			if !ok || objective.Lifecycle != domain.ObjectiveLifecycleAchieved {
+				copyID := id
+				contestations = append(contestations, domain.ConclusionContestation{OwnerRef: outcome.Ref(), Kind: domain.ConclusionContestationRequiredObjective, ObjectiveID: &copyID})
+			}
+		}
+		for _, objective := range objectives {
+			if objective.RequiredForOutcome && !recorded[objective.ID] {
+				id := objective.ID
+				contestations = append(contestations, domain.ConclusionContestation{OwnerRef: outcome.Ref(), Kind: domain.ConclusionContestationObligationsChanged, ObjectiveID: &id})
+			}
+		}
+	}
 	for _, objective := range objectives {
 		contestations = append(contestations, conclusionContestations(
 			objective.Ref(), objective.CurrentConclusion, objective.Criteria, evidenceByID,
@@ -447,11 +501,31 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		)...)
 	}
 
+	activePlans := []ActivePlan{}
+	if planning, ok := uow.(ports.PlanningUnitOfWork); ok {
+		plans, err := planning.Roadmaps().ListByOutcome(ctx, scope)
+		if err != nil {
+			return OutcomeState{}, err
+		}
+		for _, plan := range plans {
+			slot, err := planning.RoadmapActivations().GetActive(ctx, scope, plan.PlanScope)
+			if err != nil {
+				return OutcomeState{}, err
+			}
+			if slot != nil && slot.RoadmapID == plan.ID {
+				if slot.RevisionNumber == 0 || slot.RevisionNumber > uint64(len(plan.Revisions)) {
+					return OutcomeState{}, domain.NewError(domain.ErrorCodeRoadmap, "active roadmap revision is missing")
+				}
+				activePlans = append(activePlans, ActivePlan{Slot: *slot, Revision: plan.Revisions[slot.RevisionNumber-1]})
+			}
+		}
+	}
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return OutcomeState{}, err
 	}
 	return OutcomeState{
+		ActiveRoadmaps:            activePlans,
 		Outcome:                   outcome,
 		Objectives:                objectives,
 		WorkItems:                 workItems,
@@ -485,6 +559,21 @@ func conclusionContestations(
 		assessmentByID[assessment.ID] = assessment
 	}
 	result := make([]domain.ConclusionContestation, 0)
+	recorded := map[domain.ID]domain.CriterionRevision{}
+	for _, obligation := range conclusion.Obligations.RequiredCriteria {
+		recorded[obligation.CriterionID] = obligation.CriterionRevision
+		criterion, err := criteria.Find(obligation.CriterionID)
+		if err != nil || criterion.Revision != obligation.CriterionRevision || criterion.Status != domain.CriterionStatusActive || !criterion.Required {
+			result = append(result, domain.ConclusionContestation{OwnerRef: owner, Kind: domain.ConclusionContestationObligationsChanged, CriterionID: obligation.CriterionID})
+		}
+	}
+	for _, criterion := range criteria.Items {
+		if criterion.Required && criterion.Status == domain.CriterionStatusActive {
+			if _, ok := recorded[criterion.ID]; !ok {
+				result = append(result, domain.ConclusionContestation{OwnerRef: owner, Kind: domain.ConclusionContestationObligationsChanged, CriterionID: criterion.ID})
+			}
+		}
+	}
 	for _, ref := range conclusion.Assessments {
 		if current, ok := criteria.CurrentAssessments[ref.CriterionID]; ok &&
 			current.ID != ref.AssessmentID &&

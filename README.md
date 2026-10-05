@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–06 are merged and verified. Wave 07 — Issues and Blockers is implementation-complete on PR #7 and pending integration. The branch adds independent Issue/Blocker lifecycles, inherited blocking projections, atomic compound commands, durable SQLite state and HTTP/OpenAPI contracts.
+> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. The completion branch adds authorized continuity queries, MCP and a PostgreSQL adapter; release acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md). PostgreSQL acceptance requires the real database CI job. The web client, durable deliveries and full release matrix remain under implementation.
 
 ## Why WOS
 

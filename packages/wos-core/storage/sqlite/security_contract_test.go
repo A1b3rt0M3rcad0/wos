@@ -1,0 +1,107 @@
+package sqlite
+
+import (
+	"context"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "identity.db"))
+	clock := sqliteFixedClock{now: time.Now().UTC()}
+	ids := &sqliteSequenceIDs{prefix: "0199d011", next: 1}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: ids}
+	nsA := testID("0199d010-0000-7000-8000-000000000001")
+	nsB := testID("0199d010-0000-7000-8000-000000000002")
+	tokenA := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	tokenB := "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	for _, v := range []struct {
+		ns               domain.ID
+		principal, token string
+	}{{nsA, "alice", tokenA}, {nsB, "bob", tokenB}} {
+		if err := security.Bootstrap(ctx, ports.Namespace{ID: v.ns, Name: v.principal}, v.principal, v.token); err != nil {
+			t.Fatal(err)
+		}
+	}
+	alice, err := security.Authenticate(ctx, tokenA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aliceCtx := application.WithIdentity(ctx, alice)
+	service, err := application.NewAuthorizedService(store, clock, ids, security)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := domain.CommandContext{PrincipalID: alice.PrincipalID, Actor: alice.Actor, CommandID: testID("0199d012-0000-7000-8000-000000000001"), IdempotencyKey: "create-a-00000001"}
+	cmd := application.CreateOutcomeCommand{NamespaceID: nsA, Title: "Shared outcome", DesiredState: "verified", Priority: domain.PriorityNormal}
+	created, err := service.CreateOutcome(aliceCtx, cc, cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	replay, err := service.CreateOutcome(aliceCtx, cc, cmd)
+	if err != nil || !replay.IdempotentReplay || replay.Value.ID != created.Value.ID {
+		t.Fatalf("replay=%+v error=%v", replay, err)
+	}
+	if _, err = service.GetOutcome(ctx, created.Value.Scope()); err == nil {
+		t.Fatal("embedded secure query accepted missing identity")
+	}
+	forged := cmd
+	forged.NamespaceID = nsB
+	if _, err = service.CreateOutcome(aliceCtx, cc, forged); err == nil {
+		t.Fatal("cross namespace mutation accepted")
+	}
+	bob, _ := security.Authenticate(ctx, tokenB)
+	if _, err = service.GetOutcome(application.WithIdentity(ctx, bob), created.Value.Scope()); err == nil {
+		t.Fatal("cross namespace read accepted")
+	}
+	// Scoped admins cannot mint credentials for principals belonging only to another namespace.
+	if _, _, err = security.IssueCredential(aliceCtx, nsA, "bob", bob.Actor, clock.Now().Add(time.Hour)); err == nil {
+		t.Fatal("privilege escalation accepted")
+	}
+	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		t.Fatal(err)
+	}
+	agentCredential, agentToken, err := security.IssueCredential(aliceCtx, nsA, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "agent-1"}, clock.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	agent, err := security.Authenticate(ctx, agentToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	agentCtx := application.WithIdentity(ctx, agent)
+	if _, err = service.GetOutcome(agentCtx, created.Value.Scope()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.CreateOutcome(agentCtx, domain.CommandContext{PrincipalID: agent.PrincipalID, Actor: agent.Actor, CommandID: cc.CommandID}, cmd); err == nil {
+		t.Fatal("viewer mutation accepted")
+	}
+	if err = security.RevokeCredential(aliceCtx, nsA, agentCredential.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.GetOutcome(agentCtx, created.Value.Scope()); err == nil {
+		t.Fatal("cached identity survived credential revocation")
+	}
+	if _, err = security.Authenticate(ctx, agentToken); err == nil {
+		t.Fatal("revoked token authenticated")
+	}
+	// Permission revocation must precede stored idempotent response disclosure.
+	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "alice", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.CreateOutcome(aliceCtx, cc, cmd); err == nil {
+		t.Fatal("revoked write grant leaked idempotent response")
+	}
+	// Restart/bootstrap cannot resurrect a revoked token or restore removed permissions.
+	if err = security.Bootstrap(ctx, ports.Namespace{ID: nsA, Name: "alice"}, "alice", tokenA); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.CreateOutcome(aliceCtx, cc, cmd); err == nil {
+		t.Fatal("bootstrap restored revoked permissions")
+	}
+}

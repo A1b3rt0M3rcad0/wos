@@ -27,6 +27,27 @@ func run(args []string) int {
 		fmt.Println("configuration valid")
 		return 0
 	}
+	if len(args) == 2 && args[0] == "mcp" && args[1] == "stdio" {
+		cfg := server.ConfigFromEnv()
+		cfg.MCP.Enabled = true
+		if cfg.Auth.Mode != server.AuthModeLocal {
+			fmt.Fprintln(os.Stderr, "stdio requires local authentication; use Streamable HTTP for remote tokens")
+			return 1
+		}
+		runtime, err := server.OpenRuntime(cfg)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		defer runtime.Close()
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err = runtime.RunStdio(ctx); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) == 1 && args[0] == "server" {
 		cfg := server.ConfigFromEnv()
 		runtime, err := server.OpenRuntime(cfg)
@@ -45,6 +66,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate>")
+	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio>")
 	return 2
 }

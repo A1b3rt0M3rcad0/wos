@@ -16,6 +16,10 @@ func (s *Service) GetWorkItemOperationalState(
 	scope domain.Scope,
 	workItemID domain.ID,
 ) (WorkItemOperationalReadResult, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return WorkItemOperationalReadResult{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return WorkItemOperationalReadResult{}, err
 	}

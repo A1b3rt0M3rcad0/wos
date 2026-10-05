@@ -38,6 +38,10 @@ func transactCommand[T any, C any](
 		return MutationResult[T]{}, err
 	}
 
+	if err := service.authorizeMutation(ctx, commandContext, meta); err != nil {
+		return MutationResult[T]{}, err
+	}
+
 	uow, err := service.tx.Begin(ctx)
 	if err != nil {
 		return MutationResult[T]{}, err

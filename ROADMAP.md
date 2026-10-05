@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-02  
+**Last reviewed:** 2026-10-05  
 **Current target:** Release 0.1  
-**Current wave:** Wave 09 — Documentary Records and Decisions (implementation complete; pending integration)
+**Current wave:** Wave 11 integration and completion audit E00–E11 (in progress)
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -30,16 +30,16 @@ The architecture document describes what should exist. This ROADMAP records what
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
 | Live implementation roadmap | ✅ | Root `ROADMAP.md` |
 | Product package topology | ✅ | `packages/wos-core` + `packages/wos-api`; ADR-011 |
-| Concrete Open Source license | 🧭 | Must be chosen before first public release; do not inherit Woobe license implicitly |
+| Concrete Open Source license | ✅ | Apache 2.0 chosen by maintainer; LICENSE present |
 
 ## Milestones
 
 | Milestone | Status | Definition |
 | --- | --- | --- |
 | M1 — Local vertical slice | ✅ | Core + SQLite + HTTP with Outcome, Objective, WorkItem and criteria |
-| M2 — Full coordination | ⬜ | Dependencies, Blockers, Issues, leases and documentary records |
-| M3 — Planning and continuity | ⬜ | Roadmaps, snapshot/graph/timeline and MCP |
-| M4 — Complete standalone | ⬜ | PostgreSQL parity, triggers/outbox, auth and packaging |
+| M2 — Full coordination | ✅ | Dependencies, Blockers, Issues, leases and documentary records |
+| M3 — Planning and continuity | 🚧 | Roadmaps, snapshot/graph/timeline and MCP |
+| M4 — Complete standalone | 🚧 | PostgreSQL parity, triggers/outbox, auth and packaging |
 | Release 0.1 | ⬜ | Contracts, CI, examples, recovery and release criteria validated |
 
 ---
@@ -816,3 +816,7 @@ Waves 01–10 are merged into `master`. Wave 11 — Roadmaps and Planning Histor
 2. Add draft versioning and immutable publication semantics.
 3. Add scoped active slots and append-only activation history.
 4. Add persistence/API only after the planning invariants are stable.
+
+## Completion audit checkpoint — 2026-10-05
+
+Waves 01–10 are integrated on master. Planning on PR #13 has executable memory/SQLite/HTTP coverage. The implementation and evidence matrix for further work is `docs/auditoria-conclusao-2026-10-05.md`; unchecked release requirements remain obligations. Standalone runtime now composes either SQLite or PostgreSQL, authorization and optional MCP. PostgreSQL verification requires the real CI database.

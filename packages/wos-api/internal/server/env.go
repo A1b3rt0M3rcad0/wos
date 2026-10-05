@@ -7,6 +7,22 @@ import (
 
 func ConfigFromEnv() Config {
 	cfg := DefaultConfig()
+	if v := os.Getenv("WOS_STORAGE_DRIVER"); v != "" {
+		cfg.Storage.Driver = v
+	}
+	cfg.Storage.PostgresDSN = os.Getenv("WOS_POSTGRES_DSN")
+	if v := os.Getenv("WOS_MCP_ENABLED"); v != "" {
+		cfg.MCP.Enabled = v == "1" || strings.EqualFold(v, "true")
+	}
+	if v := os.Getenv("WOS_MCP_PATH"); v != "" {
+		cfg.MCP.Path = v
+	}
+	if v := os.Getenv("WOS_AUTH_MODE"); v != "" {
+		cfg.Auth.Mode = v
+	}
+	cfg.Auth.BootstrapToken = os.Getenv("WOS_BOOTSTRAP_TOKEN")
+	cfg.Auth.BootstrapNamespaceID = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_ID")
+	cfg.Auth.BootstrapNamespaceName = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_NAME")
 	if value := strings.TrimSpace(os.Getenv("WOS_LISTEN")); value != "" {
 		cfg.Server.Listen = value
 	}

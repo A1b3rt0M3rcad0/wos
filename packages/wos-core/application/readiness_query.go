@@ -20,6 +20,10 @@ type ReadyWork struct {
 }
 
 func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyWork, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadyWork{}, err
+	}
+
 	if err := scope.Validate(); err != nil {
 		return ReadyWork{}, err
 	}

@@ -10,10 +10,11 @@ import (
 )
 
 type Service struct {
-	tx         ports.TransactionManager
-	clock      ports.Clock
-	ids        ports.IDGenerator
-	authorizer ports.Authorizer
+	tx              ports.TransactionManager
+	clock           ports.Clock
+	ids             ports.IDGenerator
+	authorizer      ports.Authorizer
+	requireIdentity bool
 }
 
 func NewService(tx ports.TransactionManager, clock ports.Clock, ids ports.IDGenerator) (*Service, error) {

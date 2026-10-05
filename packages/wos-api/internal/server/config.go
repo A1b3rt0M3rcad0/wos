@@ -51,6 +51,9 @@ type StorageConfig struct {
 }
 
 type AuthConfig struct {
+	BootstrapToken                    string
+	BootstrapNamespaceID              string
+	BootstrapNamespaceName            string
 	Mode                              string
 	LocalPrincipalID                  string
 	LocalAllowAdministrativeOverrides bool
@@ -120,11 +123,21 @@ func (cfg Config) Validate() error {
 
 	switch cfg.Auth.Mode {
 	case AuthModeLocal:
+		host, _, _ := net.SplitHostPort(cfg.Server.Listen)
+		ip := net.ParseIP(host)
+		if host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "local authentication requires a loopback listener")
+		}
 		if strings.TrimSpace(cfg.Auth.LocalPrincipalID) == "" {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "auth.local principal is required")
 		}
 	case AuthModeAPIToken:
-		// Token material is loaded by an authentication adapter in a later wave.
+		if len(cfg.Auth.BootstrapToken) < 32 || cfg.Auth.BootstrapNamespaceName == "" {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "api_token auth requires a bootstrap token and namespace")
+		}
+		if _, err := domain.ParseID(cfg.Auth.BootstrapNamespaceID); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidConfig, "bootstrap namespace ID is invalid", err)
+		}
 	default:
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "unsupported auth mode")
 	}

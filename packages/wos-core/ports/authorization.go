@@ -9,6 +9,16 @@ import (
 type Permission string
 
 const (
+	PermissionStateRead         Permission = "state:read"
+	PermissionOutcomeWrite      Permission = "outcome:write"
+	PermissionPlanningWrite     Permission = "planning:write"
+	PermissionWorkWrite         Permission = "work:write"
+	PermissionRecordsWrite      Permission = "records:write"
+	PermissionAssessmentWrite   Permission = "assessment:write"
+	PermissionConclusionWrite   Permission = "conclusion:write"
+	PermissionNamespaceAdmin    Permission = "namespace:admin"
+	PermissionIntegrationWrite  Permission = "integration:write"
+	PermissionActorDelegate     Permission = "actor:delegate"
 	PermissionWorkAdminCancel   Permission = "work:admin_cancel"
 	PermissionWorkAdminComplete Permission = "work:admin_complete"
 	PermissionAssessmentWaive   Permission = "assessment:waive"
@@ -16,7 +26,7 @@ const (
 
 func (p Permission) Valid() bool {
 	switch p {
-	case PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
+	case PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
 		return true
 	default:
 		return false
