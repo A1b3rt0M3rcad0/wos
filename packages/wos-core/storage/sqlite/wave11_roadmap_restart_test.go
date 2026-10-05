@@ -160,3 +160,172 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 		t.Fatalf("activation history = %#v", history)
 	}
 }
+
+
+func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "snapshots.db")
+	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 2, 23, 20, 0, 0, time.UTC)}
+	service, err := application.NewService(
+		store,
+		clock,
+		&sqliteSequenceIDs{prefix: "0199f410", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	namespaceID := domain.MustParseID("0199f411-0000-7000-8000-000000000001")
+	outcomeResult, err := service.CreateOutcome(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000101", "",
+	), application.CreateOutcomeCommand{
+		NamespaceID: namespaceID, Title: "Snapshot history",
+		DesiredState: "published labels survive live mutations", Priority: domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome := outcomeResult.Value
+	objectiveResult, err := service.CreateObjective(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000102", "",
+	), application.CreateObjectiveCommand{
+		Scope: outcome.Scope(), Title: "Original objective", Priority: domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	objective := objectiveResult.Value
+	criterionResult, err := service.AddCriterion(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000103", "",
+	), application.AddCriterionCommand{
+		Owner: objective.Ref(), ExpectedVersion: objective.Version,
+		Title: "Original criterion", Required: true,
+		VerificationMode: domain.VerificationModeAttestation,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion := criterionResult.Value
+
+	roadmapResult, err := service.CreateRoadmap(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000104", "",
+	), application.CreateRoadmapCommand{
+		Scope: outcome.Scope(),
+		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
+		Title: "Snapshot plan",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := service.OpenRoadmapDraft(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000105", "",
+	), application.OpenRoadmapDraftCommand{
+		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
+		ExpectedVersion: roadmapResult.Value.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reason := "baseline publication"
+	objectiveRef := objective.Ref()
+	edited, err := service.ReplaceRoadmapDraft(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000106", "",
+	), application.ReplaceRoadmapDraftCommand{
+		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
+		ExpectedVersion: opened.Value.Version,
+		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
+		Reason: &reason,
+		Nodes: []domain.RoadmapNode{
+			{
+				NodeKey: "objective", NodeType: domain.RoadmapNodeReference,
+				TargetRef: &objectiveRef, Title: "Plan reference", Position: 0,
+			},
+			{
+				NodeKey: "milestone", NodeType: domain.RoadmapNodeMilestone,
+				Title: "Criterion milestone", Position: 1,
+				CriterionRefs: []domain.RoadmapCriterionRef{
+					{OwnerRef: objective.Ref(), CriterionID: criterion.ID},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	published, err := service.PublishRoadmapDraft(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000107", "",
+	), application.PublishRoadmapDraftCommand{
+		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
+		ExpectedVersion: edited.Value.Version,
+		ExpectedDraftVersion: edited.Value.Draft.DraftVersion,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	currentObjective, err := service.GetObjective(ctx, outcome.Scope(), objective.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutatedTitle := "Mutated objective"
+	updatedObjective, err := service.UpdateObjective(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000108", "",
+	), application.UpdateObjectiveCommand{
+		Scope: outcome.Scope(), ObjectiveID: objective.ID,
+		ExpectedVersion: currentObjective.Value.Version, Title: &mutatedTitle,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutatedCriterionTitle := "Mutated criterion"
+	_, err = service.ReviseCriterion(ctx, sqliteCommandContext(
+		"0199f411-0000-7000-8000-000000000109", "",
+	), application.ReviseCriterionCommand{
+		Owner: objective.Ref(), CriterionID: criterion.ID,
+		ExpectedVersion: updatedObjective.Value.Version,
+		Title: mutatedCriterionTitle, Required: true,
+		VerificationMode: domain.VerificationModeAttestation,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reopened.Close()
+	restarted, err := application.NewService(
+		reopened, clock, &sqliteSequenceIDs{prefix: "0199f412", next: 1},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revision, err := restarted.GetRoadmapRevision(
+		ctx, outcome.Scope(), roadmapResult.Value.ID, 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if revision.Value.Reason != reason {
+		t.Fatalf("revision reason = %q, want %q", revision.Value.Reason, reason)
+	}
+	if revision.Value.Nodes[0].ReferenceSnapshot == nil ||
+		revision.Value.Nodes[0].ReferenceSnapshot.Title != "Original objective" {
+		t.Fatalf("reference snapshot = %#v", revision.Value.Nodes[0].ReferenceSnapshot)
+	}
+	if len(revision.Value.Nodes[1].CriterionSnapshots) != 1 ||
+		revision.Value.Nodes[1].CriterionSnapshots[0].Title != "Original criterion" ||
+		revision.Value.Nodes[1].CriterionSnapshots[0].CriterionRevision != criterion.Revision {
+		t.Fatalf("criterion snapshot = %#v", revision.Value.Nodes[1].CriterionSnapshots)
+	}
+	if published.Value.Revisions[0].ContentHash != revision.Value.ContentHash {
+		t.Fatalf("content hash changed across restart: %q != %q", published.Value.Revisions[0].ContentHash, revision.Value.ContentHash)
+	}
+}

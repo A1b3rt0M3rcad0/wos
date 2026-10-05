@@ -281,3 +281,129 @@ func TestWave11PublicationSnapshotsLiveReferencesAndCriteria(t *testing.T) {
 		t.Fatalf("criterion snapshots = %#v", revision.Nodes[1].CriterionSnapshots)
 	}
 }
+
+
+func TestWave11RejectsCrossOutcomeRoadmapReference(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	cc := commandContext()
+
+	first, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  domain.MustParseID("0199f303-0000-7000-8000-000000000001"),
+		Title:        "First outcome",
+		DesiredState: "plan remains local",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  first.Value.NamespaceID,
+		Title:        "Second outcome",
+		DesiredState: "foreign work",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreignObjective, err := service.CreateObjective(ctx, cc, application.CreateObjectiveCommand{
+		Scope: second.Value.Scope(), Title: "Foreign objective", Priority: domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
+		Scope: first.Value.Scope(),
+		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: first.Value.ID},
+		Title: "Local plan",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := service.OpenRoadmapDraft(ctx, cc, application.OpenRoadmapDraftCommand{
+		Scope: first.Value.Scope(), RoadmapID: roadmapResult.Value.ID,
+		ExpectedVersion: roadmapResult.Value.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = service.ReplaceRoadmapDraft(ctx, cc, application.ReplaceRoadmapDraftCommand{
+		Scope:                first.Value.Scope(),
+		RoadmapID:            roadmapResult.Value.ID,
+		ExpectedVersion:      opened.Value.Version,
+		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
+		Nodes: []domain.RoadmapNode{
+			{
+				NodeKey:   "foreign",
+				NodeType:  domain.RoadmapNodeReference,
+				TargetRef: refPtr(foreignObjective.Value.Ref()),
+				Title:     "Foreign",
+				Position:  0,
+			},
+		},
+	})
+	if err == nil {
+		t.Fatal("cross-Outcome Roadmap reference unexpectedly accepted")
+	}
+	code, ok := domain.ErrorCodeOf(err)
+	if !ok || code != domain.ErrorCodeRoadmap {
+		t.Fatalf("cross-Outcome error = %v, code=%q", err, code)
+	}
+}
+
+func TestWave11DraftMetadataPublishesWithRevision(t *testing.T) {
+	ctx := context.Background()
+	service, _ := newWave09Service(t)
+	cc := commandContext()
+	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  domain.MustParseID("0199f304-0000-7000-8000-000000000001"),
+		Title:        "Draft metadata",
+		DesiredState: "publication reason is historical",
+		Priority:     domain.PriorityNormal,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcome := created.Value
+	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
+		Scope: outcome.Scope(),
+		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
+		Title: "Metadata plan",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := service.OpenRoadmapDraft(ctx, cc, application.OpenRoadmapDraftCommand{
+		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
+		ExpectedVersion: roadmapResult.Value.Version,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reason := "Prioritize the first delivery wave"
+	edited, err := service.ReplaceRoadmapDraft(ctx, cc, application.ReplaceRoadmapDraftCommand{
+		Scope:                outcome.Scope(),
+		RoadmapID:            roadmapResult.Value.ID,
+		ExpectedVersion:      opened.Value.Version,
+		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
+		Reason:               &reason,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if edited.Value.Draft == nil || edited.Value.Draft.Reason != reason {
+		t.Fatalf("draft reason = %#v", edited.Value.Draft)
+	}
+	published, err := service.PublishRoadmapDraft(ctx, cc, application.PublishRoadmapDraftCommand{
+		Scope:                outcome.Scope(),
+		RoadmapID:            roadmapResult.Value.ID,
+		ExpectedVersion:      edited.Value.Version,
+		ExpectedDraftVersion: edited.Value.Draft.DraftVersion,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(published.Value.Revisions) != 1 || published.Value.Revisions[0].Reason != reason {
+		t.Fatalf("published revision metadata = %#v", published.Value.Revisions)
+	}
+}

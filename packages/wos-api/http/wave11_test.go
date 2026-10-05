@@ -46,7 +46,7 @@ func TestWave11HTTPPublishesAndActivatesRoadmapRevision(t *testing.T) {
 	)
 	edited := doJSON[application.MutationResult[domain.Roadmap]](
 		t, client, http.MethodPut, roadmapURL+"/draft",
-		[]byte(`{"expected_draft_version":1,"nodes":[{"node_key":"phase-1","node_type":"phase","title":"Phase 1","position":0}]}`),
+		[]byte(`{"expected_draft_version":1,"reason":"initial HTTP plan","nodes":[{"node_key":"phase-1","node_type":"phase","title":"Phase 1","position":0}]}`),
 		map[string]string{
 			"Idempotency-Key": "wave11-roadmap-edit-draft-0001",
 			"If-Match":        opened.Header.Get("ETag"),
@@ -63,7 +63,8 @@ func TestWave11HTTPPublishesAndActivatesRoadmapRevision(t *testing.T) {
 		http.StatusOK,
 	)
 	if len(published.Value.Value.Revisions) != 1 ||
-		published.Value.Value.Revisions[0].ContentHash == "" {
+		published.Value.Value.Revisions[0].ContentHash == "" ||
+		published.Value.Value.Revisions[0].Reason != "initial HTTP plan" {
 		t.Fatalf("published roadmap = %#v", published.Value.Value)
 	}
 
