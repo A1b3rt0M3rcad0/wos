@@ -315,14 +315,26 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 	if revision.Value.Reason != reason {
 		t.Fatalf("revision reason = %q, want %q", revision.Value.Reason, reason)
 	}
-	if revision.Value.Nodes[0].ReferenceSnapshot == nil ||
-		revision.Value.Nodes[0].ReferenceSnapshot.Title != "Original objective" {
-		t.Fatalf("reference snapshot = %#v", revision.Value.Nodes[0].ReferenceSnapshot)
+	nodesByKey := make(map[string]domain.RoadmapNode, len(revision.Value.Nodes))
+	for _, node := range revision.Value.Nodes {
+		nodesByKey[node.NodeKey] = node
 	}
-	if len(revision.Value.Nodes[1].CriterionSnapshots) != 1 ||
-		revision.Value.Nodes[1].CriterionSnapshots[0].Title != "Original criterion" ||
-		revision.Value.Nodes[1].CriterionSnapshots[0].CriterionRevision != criterion.Revision {
-		t.Fatalf("criterion snapshot = %#v", revision.Value.Nodes[1].CriterionSnapshots)
+	referenceNode, ok := nodesByKey["objective"]
+	if !ok {
+		t.Fatalf("objective node missing after restart: %#v", revision.Value.Nodes)
+	}
+	if referenceNode.ReferenceSnapshot == nil ||
+		referenceNode.ReferenceSnapshot.Title != "Original objective" {
+		t.Fatalf("reference snapshot = %#v", referenceNode.ReferenceSnapshot)
+	}
+	milestoneNode, ok := nodesByKey["milestone"]
+	if !ok {
+		t.Fatalf("milestone node missing after restart: %#v", revision.Value.Nodes)
+	}
+	if len(milestoneNode.CriterionSnapshots) != 1 ||
+		milestoneNode.CriterionSnapshots[0].Title != "Original criterion" ||
+		milestoneNode.CriterionSnapshots[0].CriterionRevision != criterion.Revision {
+		t.Fatalf("criterion snapshot = %#v", milestoneNode.CriterionSnapshots)
 	}
 	if published.Value.Revisions[0].ContentHash != revision.Value.ContentHash {
 		t.Fatalf("content hash changed across restart: %q != %q", published.Value.Revisions[0].ContentHash, revision.Value.ContentHash)
