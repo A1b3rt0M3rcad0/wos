@@ -1,6 +1,6 @@
 # Operação do WOS
 
-Esta documentação descreve a branch de conclusão, ainda em revisão no PR #14. Não constitui aceite de Release 0.1. Linux amd64 com Go 1.27.1 foi o ambiente de execução local; PostgreSQL 18.6 real passou nos contratos compartilhados e race do CI #232; a jornada visual de referência passou em Chromium padrão no CI. A matriz completa e o aceite de release permanecem abertos.
+Esta documentação descreve a branch de conclusão, ainda em revisão no PR #14. Não constitui aceite de Release 0.1. Linux amd64 com Go 1.27.1 foi o ambiente de execução local; PostgreSQL 18.6 real passou nos contratos compartilhados e race até o CI #235; a jornada visual de referência passou em Chromium padrão no CI. A matriz completa e o aceite de release permanecem abertos.
 
 ## Instalação local
 
@@ -37,7 +37,7 @@ WOS_STORAGE_DRIVER=postgres WOS_POSTGRES_DSN='postgres://USER:PASSWORD@HOST:5432
 
 O DSN é configuração secreta. São usados pgx, transações Serializable, guard por Outcome, pool de até 16 conexões, lock timeout de 5 s e statement timeout de 30 s. Conflitos transitórios retornam `transaction_conflict`; nunca se altera a versão esperada silenciosamente. O CI usa PostgreSQL 18 real. SQLite aprovado não equivale a PostgreSQL aprovado.
 
-`Dockerfile` produz binário CGO-free e imagem com usuário 10001, certificados CA e volume `/data`. `compose.yaml` expõe apenas loopback no host e exige configuração de bootstrap. Por padrão usa SQLite. Para PostgreSQL, configure senha não vazia, `WOS_STORAGE_DRIVER=postgres`, DSN com host `postgres` e inicie `docker compose --profile postgres up --build`. Aguarde a saúde do banco antes do servidor; o smoke do contêiner sem root e com filesystem raiz read-only foi acrescentado ao CI desta revisão e aguarda execução. Segredos são fornecidos pelo operador, fora do repositório.
+`Dockerfile` produz binário CGO-free e imagem com usuário 10001, certificados CA e volume `/data`. `compose.yaml` expõe apenas loopback no host e exige configuração de bootstrap. Por padrão usa SQLite. Para PostgreSQL, configure senha não vazia, `WOS_STORAGE_DRIVER=postgres`, DSN com host `postgres` e inicie `docker compose --profile postgres up --build`. Aguarde a saúde do banco antes do servidor; o smoke do contêiner com UID/GID 10001:10001, filesystem raiz read-only e /data tmpfs passou no CI #235, incluindo build, configuração e ready/live. O Compose completo e a matriz de plataformas continuam sem aceite. Segredos são fornecidos pelo operador, fora do repositório.
 
 ## MCP
 

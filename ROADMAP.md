@@ -794,19 +794,19 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Release 0.1 acceptance checklist
 
-- [ ] Standalone WOS starts without Woobe.
-- [ ] External embedded Go application compiles and executes.
+- [x] Standalone WOS starts without Woobe.
+- [x] External embedded Go application compiles and executes.
 - [ ] Every remote mutation is protected by idempotency.
-- [ ] Stale aggregate versions are rejected.
+- [x] Stale aggregate versions are rejected.
 - [ ] Concurrent claim and dependency-cycle races preserve invariants.
-- [ ] SQLite and PostgreSQL pass the same storage contract suite.
-- [ ] HTTP and MCP use the same Application services.
-- [ ] Snapshots are coherent, bounded and explicit about omissions.
-- [ ] Published Roadmap revisions are immutable and recoverable.
-- [ ] Assessments preserve criteria, revisions and Evidence used.
-- [ ] Triggers produce durable signals without autonomous execution.
-- [ ] Documentation covers license, auth, backup, limits and supported MCP profile.
-- [ ] Restart/restore preserves state required to resume work.
+- [x] SQLite and PostgreSQL pass the same storage contract suite.
+- [x] HTTP and MCP use the same Application services.
+- [x] Snapshots are coherent, bounded and explicit about omissions.
+- [x] Published Roadmap revisions are immutable and recoverable.
+- [x] Assessments preserve criteria, revisions and Evidence used.
+- [x] Triggers produce durable signals without autonomous execution.
+- [x] Documentation covers license, auth, backup, limits and supported MCP profile.
+- [x] Restart/restore preserves state required to resume work.
 
 # Current next actions
 
@@ -815,8 +815,8 @@ Waves 01–10 are merged into `master` at `2f9967689fa954b7c371781bc7a00c1ae7608
 1. Extend the exhaustive HTTP/MCP storage matrix and clean restore coverage. CI #232 passed real PostgreSQL 18.6 shared contracts and race detection after the nested-result reconstruction fix; four runtime transport/session scenarios and clean integration restore passed in CI #233. The proof/planning/lease restore extension passed in CI #234; full 18-step independent/Woobe client references passed locally, with the unmerged Woobe compatibility fix explicitly required.
 2. Extend the passing official web journey (including replanning and restart) to evidence review, Objectives, Issues/Blockers, conflicts and full accessibility.
 3. Expand active-plan live-projection tests and optimize aggregate continuity reads; publish SQL-query/guard/throughput measurements.
-4. Prove full clean-install restore, in-flight shutdown, outbox crash exhaustion/redelivery, build reproducibility and container deployment.
-5. Validate complete OpenAPI behavior and real Woobe/product consumers; associate all release obligations with passing evidence before integration or release.
+4. Extend in-flight shutdown/failure and platform/distribution validation. Clean-file/database restore of proof/planning/leases passed; the full SQLite journey and crash exhaustion/redelivery passed. CI #235 passed cross-path Linux amd64 reproducibility, non-root/read-only container runtime and the complete independent 18-step journey. Five standard browser runs passed.
+5. Validate complete OpenAPI behavior and deployed Woobe/product acceptance. The real Woobe MCP reference passed with draft compatibility PR #178; its backend/security/package checks passed, while the container dependency scan remains failing. Associate the remaining release obligations with evidence before integration or release.
 
 ## Reconciliation evidence — 2026-10-05
 

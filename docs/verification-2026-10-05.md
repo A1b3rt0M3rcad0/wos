@@ -14,7 +14,7 @@ Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados 
 | Benchmark SQLite, 500 ms por caso | Passou | Saída original em `audit/benchmark-sqlite.txt`, método/limites em `benchmarks.md`. |
 | Jornada em navegador real | Passou, 1 teste em 4,6 s | Playwright 1.62.1; Chromium 153.0.8010.0 obtido via pacote temporário `@sparticuz/chromium` 153.0.0, sem desabilitar segurança web. Sessão, criação, plano inicial/revisão 2, agente MCP, avaliação humana e novo processo de navegador após restart. Viewport 390 px sem overflow; não equivale a auditoria de acessibilidade. |
 | Drift de geração | Passou, 63 arquivos sem mudança após regenerar | PostgreSQL, catálogo HTTP, MCP, SDK e OpenAPI de comandos. |
-| Build Linux standalone com `-trimpath` | Passou | Sem runtime Woobe; matriz/reprodutibilidade ainda pendentes. |
+| Build Linux standalone com `-trimpath` | Passou | Sem runtime Woobe; reprodução entre caminhos distintos passou no CI #235. A matriz de plataformas permanece aberta. |
 
 ## Testes com significado de produto
 
@@ -26,7 +26,7 @@ Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados 
 - `TestIndexedExternalContextPreservesTypeAndRestart`: filtro AND indexado, número/string/bool/null distintos, autoria, substituição e restart.
 - `TestContinuationFromDiscoverySnapshotAndCursors`: descoberta, omissões, cursor por revisão e escopo, timeline completa por páginas.
 - `TestTerminalOutcomeRequiresExplicitReopenBeforeChangingObligations`: alterações estruturais rejeitadas preservam Conclusion e lifecycle.
-- `TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing`: em SQLite inclui backup consistente e restore em arquivo vazio, credencial/sessão com parent, grants, audit e recibos. PostgreSQL compartilha a recuperação por restart, sem alegar pg_dump/restore. Também prova source/event/outbox/idempotência atômicos, rollback injetado, pending após restart e worker antigo impedido de confirmar.
+- `TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing`: em SQLite inclui backup consistente e restore em arquivo vazio, credencial/sessão com parent, grants, audit e recibos. No CI, PostgreSQL restaura por pg_dump/pg_restore em banco vazio antes de continuar o mesmo contrato. Sem contêiner de teste, a execução local se limita a restart. Também prova source/event/outbox/idempotência atômicos, rollback injetado, pending após restart e worker antigo impedido de confirmar.
 - `TestDeliveryCrashBudgetRequiresExplicitRedelivery`: seis leases expiram, a entrega fica esgotada após restart, o worker antigo é rejeitado; redelivery idempotente preserva identidade e incrementa fencing.
 - `TestProofProgressDoesNotTreatWaiverOrRetractedEvidenceAsProof`: waiver e revisão antiga não contam como prova; retração retira comprovação e denominador zero não inventa percentual.
 - `TestRealWebhookRetryKeepsEventIdentityAndSignature`: HTTP real 503 → 204, identidade estável e assinatura.
@@ -34,7 +34,7 @@ Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados 
 
 ## Gates ainda abertos
 
-Matriz exaustiva de bancos/transports; jornada visual completa e acessibilidade; restore com todas as coleções; desligamento com requisições/entregas em voo; otimização e contagem de queries; todos os exemplos de produto/Woobe; matriz de plataformas/containers; comportamento de todas as rotas OpenAPI; demonstração integral da auditoria. Jobs configurados, testes existentes e código compilado não substituem execuções ausentes.
+Matriz exaustiva de bancos/transports; jornada visual completa e acessibilidade; upgrade/restore das versões e perfis ainda não cobertos; desligamento com requisições/entregas em voo; otimização e contagem de queries; deploy completo de produto/Woobe e integração da correção proposta; matriz completa de plataformas/distribuição; comportamento de todas as rotas OpenAPI; integração e release. A demonstração integral de referência passou nos dois perfis documentados abaixo. Jobs configurados, testes existentes e código compilado não substituem execuções ausentes.
 
 ## Reprodução final
 
@@ -90,4 +90,13 @@ Os perfis independente e Woobe do `tests/acceptance/journey.py` passaram nas 18 
 
 O cliente Woobe é composto pelos módulos de produção verificáveis por Git blob hash, com a correção explícita de redaction do PR Woobe #178, não integrado. A reprodução na revisão original falhou ao devolver `'[REDACTED]'` em vez de `fencing_token` inteiro (`audit/woobe-baseline-fencing-failure.txt`). Os três testes específicos da correção passaram. Ver `examples/woobe-reference` para reproduzir e para o alcance do perfil de referência; não equivale a deploy integral da Woobe.
 
-O cenário identificou e corrigiu campos de arrays de IDs gerados incorretamente: `evidence_ids` e `target_endpoint_ids` agora seguem os nomes REST, usados em HTTP/MCP/SDK/OpenAPI. `TestPluralIdentifierArraysUsePublicRESTNames` passou; a suíte Go e vet passaram após a correção. Os jobs de jornada, contêiner e reprodução binária desta revisão ainda aguardam CI.
+O cenário identificou e corrigiu campos de arrays de IDs gerados incorretamente: `evidence_ids` e `target_endpoint_ids` agora seguem os nomes REST, usados em HTTP/MCP/SDK/OpenAPI. `TestPluralIdentifierArraysUsePublicRESTNames` passou; a suíte Go e vet passaram após a correção. Essas alterações passaram no checkpoint remoto abaixo.
+
+
+## Checkpoint final de código e distribuição
+
+Commit `d46826f3a0b2a11284b4000edb45b2595ee22bfa`: [CI #235](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37385319311), job `112017043754`, **sucesso em todas as etapas**. Inclui contratos e race em SQLite/PostgreSQL 18.6, os quatro cenários de runtime, restore em banco limpo, higiene, vet e drift. O mesmo run passou a jornada integral independente de 18 etapas, o build Linux amd64 em dois caminhos de código distintos (mesmo SHA-256 `0b64d4d61019991576c6e2439246a56bd2b0f3b23b7b4dedaecdfda7f0efec0b`) e build/runtime da imagem como `10001:10001`, raiz read-only, `/data` tmpfs, configuração, `/readyz` e `/livez`. Essa reprodução binária se restringe à configuração Linux amd64 do workflow; não prova a matriz completa de distribuição. Excerto e conclusões de cada etapa: `audit/standalone-distribution-ci-passed.txt`.
+
+[Browser acceptance #5](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37385319283), job `112017045538`, também passou, usando o Chromium padrão. O fechamento documental posterior não altera o código deste checkpoint.
+
+No [PR Woobe #178](https://github.com/A1b3rt0M3rcad0/woobe/pull/178), a suíte backend canônica Docker Compose (`37384602606`), Security audit (`37384602541`), Quality Gate (`37384602560`), Package Build (`37384602537`) e Acceptance (`37384602674`) passaram. Container quality (`37384602602`) falhou no scan de dependências da imagem API, com 10 vulnerabilidades HIGH e nenhuma CRITICAL reportadas (pypdf/urllib3). O PR altera somente a redaction do contador público, testes focados e sua documentação; não modifica dependências ou locks. Essa falha e a integração/deploy completo da Woobe continuam abertos.

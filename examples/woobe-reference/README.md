@@ -4,7 +4,7 @@ This reference executes the audit's same-Outcome 18-step journey against the sta
 
 The baseline Woobe source is commit `42e6667008db4e1306c05714af7a0df5b3ce7dd2`. `source-manifest.json` pins the Git blob hash of every imported Woobe module. Use `packages/woobe-core/src` from that checkout and install its Python dependencies (the local check used Python 3.12, httpx 0.28.1, uuid6 2025.0.1 and Pydantic 2).
 
-The baseline redaction policy removes the public integer `fencing_token` from MCP results, preventing valid work completion. The focused fix is proposed in [Woobe PR #178](https://github.com/A1b3rt0M3rcad0/woobe/pull/178), commit `9161eecc0afac5a4e2736bf71ddedba28d781b45`. It preserves only a non-negative integer under that exact name; credentials, strings, booleans, containers and sensitive parents retain redaction. Three focused security regressions passed. The fix is a draft and is not integrated in Woobe master.
+The baseline redaction policy removes the public integer `fencing_token` from MCP results, preventing valid work completion. The focused fix is proposed in [Woobe PR #178](https://github.com/A1b3rt0M3rcad0/woobe/pull/178), commit `9161eecc0afac5a4e2736bf71ddedba28d781b45`. It preserves only a non-negative integer under that exact name; credentials, strings, booleans, containers and sensitive parents retain redaction. Three focused security regressions and the remote canonical Compose backend suite passed. Security audit, Quality Gate, Package Build and Acceptance also passed. Container quality failed its API dependency scan (pypdf/urllib3); the fix remains a draft and is not integrated in Woobe master.
 
 For the proposed compatibility profile, use the source directory at that fix commit:
 
