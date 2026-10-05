@@ -34,6 +34,8 @@ Conclusões são imutáveis. Critério revisado não herda avaliação anterior;
 
 ## MCP e integrações
 
+O catálogo público exaustivo de tipos de fatos v1 está em [integration-events-v1.json](integration-events-v1.json); [integration-events.md](integration-events.md) define semântica, evolução e deduplicação. O CI verifica sua correspondência com o mapeamento Application.
+
 SDK oficial Go v1.8.0; stdio local e Streamable HTTP remoto stateless/JSON. Cliente oficial SDK executado em testes reais nos dois transports. Perfil Woobe inspecionado usa `2025-06-18`; compatibilidade de deployment Woobe completo ainda precisa de demonstração. WOS não implementa OAuth nem depende de Woobe. Recursos: `wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity`; leituras incluem descoberta, snapshot/seções, grafo, contexto, readiness, timeline, histórico de critérios/conclusões, revisões/slots/ativações de Roadmap e sinais/deliveries.
 
 IntegrationFact `schema_version: 1` contém ID, tipo de fato público, Namespace/Outcome/revisão/índice, entidade, autoria, comando, tempo e correlação. TriggerFiring `schema_version: 1` contém identidade estável, Trigger/versão, signal_type e fato fonte. Não contém nome de struct/comando Go ou payload interno. Predicados usam whitelist de metadados públicos, `eq|neq|in|exists|all|any`, até três níveis e vinte nós; não executam scripts, LLM, Tools ou trabalho. Sinais são entregues pelo menos uma vez; consumidores deduplicam pelo ID. Consulte operações para assinatura e limites.

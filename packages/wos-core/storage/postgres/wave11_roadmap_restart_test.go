@@ -111,13 +111,7 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 		t.Fatalf("active roadmap id = %s", activated.Value.RoadmapID)
 	}
 
-	if err := store.Close(); err != nil {
-		t.Fatal(err)
-	}
-	reopenedStore, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	reopenedStore := reopenIntegrationFixture(t, store, path)
 	defer reopenedStore.Close()
 	restarted, err := application.NewService(
 		reopenedStore,
@@ -295,13 +289,7 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := store.Close(); err != nil {
-		t.Fatal(err)
-	}
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	reopened := reopenIntegrationFixture(t, store, path)
 	defer reopened.Close()
 	restarted, err := application.NewService(
 		reopened, clock, &sqliteSequenceIDs{prefix: "0199f412", next: 1},

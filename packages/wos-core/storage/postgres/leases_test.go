@@ -136,13 +136,7 @@ func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 	work = renewed.Value
 	renewedExpiry := work.CurrentLease.ExpiresAt
 
-	if err := store.Close(); err != nil {
-		t.Fatal(err)
-	}
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	reopened := reopenIntegrationFixture(t, store, path)
 
 	readService, err := application.NewService(
 		reopened,
@@ -218,13 +212,7 @@ func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 		t.Fatal("stale claimant completed work after reclaim")
 	}
 
-	if err := reopened.Close(); err != nil {
-		t.Fatal(err)
-	}
-	restarted, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	restarted := reopenIntegrationFixture(t, reopened, path)
 	defer restarted.Close()
 
 	finalService, err := application.NewService(

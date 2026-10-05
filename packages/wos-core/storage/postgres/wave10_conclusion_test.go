@@ -95,13 +95,7 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 		t.Fatalf("conclusion assessment snapshot = %#v", expectedConclusion.Assessments)
 	}
 
-	if err := store.Close(); err != nil {
-		t.Fatal(err)
-	}
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	reopened := reopenIntegrationFixture(t, store, path)
 	defer reopened.Close()
 	restarted, err := application.NewService(reopened, clock, &sqliteSequenceIDs{prefix: "0199ef52", next: 1})
 	if err != nil {
@@ -244,13 +238,7 @@ func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
 		t.Fatalf("reopened conclusion state = %#v", reopenedOutcome.Value)
 	}
 
-	if err := store.Close(); err != nil {
-		t.Fatal(err)
-	}
-	reopenedStore, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
-	if err != nil {
-		t.Fatal(err)
-	}
+	reopenedStore := reopenIntegrationFixture(t, store, path)
 	defer reopenedStore.Close()
 	restarted, err := application.NewService(
 		reopenedStore,

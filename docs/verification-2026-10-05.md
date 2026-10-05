@@ -72,4 +72,13 @@ Commit `62658054adb6c556aab940e1bada4a5416cbf423`: [CI #232](https://github.com/
 
 [Browser acceptance #2](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37380724938), job `112001707479`, **sucesso**, jornada 4,7 s, total 6,2 s, Chromium padrão 151.0.7922.34. Excerto: `audit/browser-ci-second-passed.txt`.
 
-A revisão seguinte amplia quatro cenários de runtime (MCP/HTTP compartilhados, revogação/autoria, SDK após restart e sessão web) com schemas PostgreSQL isolados; reutiliza exatamente os mesmos asserts em SQLite/PostgreSQL. O contrato durável de integração passa a restaurar pg_dump em banco vazio antes de continuar, com clientes da própria imagem PostgreSQL, transação única e limpeza do banco de teste. Essa ampliação ainda aguarda CI: compilação e skips locais não a aprovam. O restore cobre grants, sessão/credencial parent, auditoria, receipts, histórico e outbox do cenário; não se generaliza para planning, conclusões ou todos os leases.
+A revisão seguinte amplia quatro cenários de runtime (MCP/HTTP compartilhados, revogação/autoria, SDK após restart e sessão web) com schemas PostgreSQL isolados; reutiliza exatamente os mesmos asserts em SQLite/PostgreSQL. O contrato durável de integração passa a restaurar pg_dump em banco vazio antes de continuar, com clientes da própria imagem PostgreSQL, transação única e limpeza do banco de teste. Essa ampliação passou no [CI #233](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37382265559), commit `5d0829799dad9edbd9a9ca26bd1439a5313909fe`, job `112006923940`, com suíte completa, detector de corridas e todos os smokes. Excerto: `audit/postgres-runtime-restore-ci-passed.txt`. Browser acceptance #3 (`37382265550`) também passou. O restore cobre grants, sessão/credencial parent, auditoria, receipts, histórico e outbox do cenário; não se generaliza para planning, conclusões ou todos os leases.
+
+
+## Catálogo e consumidor embedded
+
+`python3 tools/eventcatalog/check.py`: passou, 81 tipos públicos v1. O catálogo explicita a projeção sem payload Go interno, estabilidade do envelope, múltiplos fatos por revisão e deduplicação at-least-once.
+
+`go run ./examples/embedded`: passou, `lifecycle=achieved revision=5 certified=true`. `go test ./tests/boundary`: passou; o teste copia esse consumidor para outro módulo Go e executa criação, critério, ativação, avaliação e certificação pelo Core público.
+
+As fronteiras de recuperação dos testes Wave 10 de conclusões/histórico, Wave 11 de revisões imutáveis e leases agora usam backup em arquivo vazio SQLite e, no CI, pg_dump/pg_restore em banco PostgreSQL vazio. Os asserts existentes incluem continuação com um novo Service, preservação dos snapshots de avaliação e conclusão, revisão histórica legível e renovação/reclaim/fencing após restore. A fatia SQLite passou; PostgreSQL desta ampliação aguarda CI.

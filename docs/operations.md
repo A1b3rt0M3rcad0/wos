@@ -51,7 +51,7 @@ SQLite: `WOS_SQLITE_PATH=./data/wos.db ./bin/wos db backup ./backup/wos.db`. O a
 
 Restore SQLite: pare o servidor e workers; `./bin/wos db restore ./backup/wos.db ./data/restored.db`. O destino deve ser novo; não se sobrescreve uma instalação existente. A restauração é offline e copia todo o banco. Configure o caminho restaurado, execute `db migrate`, consulte `/readyz` e valide a continuidade antes de aceitar tráfego.
 
-PostgreSQL: use `pg_dump --format=custom` e `pg_restore --single-transaction` para banco novo, com a versão de cliente correspondente ao servidor. Inclua schema completo, histórico, grants, credenciais, idempotência e outbox. Nunca restaure só as entidades atuais. Restore PostgreSQL completo permanece sem execução de aceite nesta sessão.
+PostgreSQL: use `pg_dump --format=custom` e `pg_restore --single-transaction` para banco novo, com a versão de cliente correspondente ao servidor. Inclua schema completo, histórico, grants, credenciais, idempotência e outbox. Nunca restaure só as entidades atuais. O CI executa restore de um schema de teste por pg_dump/pg_restore em banco vazio e continua o contrato de identidade/idempotência/outbox. A extensão com proof/planning/leases aguarda sua execução remota; nenhuma dessas fatias certifica sozinha o restore da demonstração integral de produto.
 
 Migrações numeradas têm checksum e são ascendentes. `db migrate` aplica as pendentes; o servidor migra ao abrir. Bancos com schema desconhecido não ficam ready. Não há downgrade SQL destrutivo suportado: rollback operacional usa o binário antigo e seu backup pré-upgrade, em banco separado, considerando explicitamente os fatos posteriores que precisam de reconciliação.
 

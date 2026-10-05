@@ -78,6 +78,7 @@ jobs:
           go run ./tools/openapigen
           gofmt -w packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go
           git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
+          python3 tools/eventcatalog/check.py
 
       - name: Unit and contract tests
         env:

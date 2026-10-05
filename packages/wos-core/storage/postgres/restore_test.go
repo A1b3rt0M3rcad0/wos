@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 	"time"
 )
@@ -24,10 +23,13 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 		t.Fatal("clean restore test requires PostgreSQL URL DSN")
 	}
 	user := dsn.User.Username()
-	sourceDatabase := filepath.Base(dsn.Path)
 	targetDatabase := fmt.Sprintf("wos_restore_%x", sha256.Sum256([]byte(t.TempDir())))[:44]
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 	defer cancel()
+	var sourceDatabase string
+	if err := source.db.QueryRowContext(ctx, "SELECT current_database()").Scan(&sourceDatabase); err != nil {
+		t.Fatal(err)
+	}
 	dump := exec.CommandContext(ctx, "docker", "exec", container, "pg_dump", "-U", user, "-d", sourceDatabase, "--schema="+source.Path(), "--format=custom", "--no-owner", "--no-acl")
 	var dumpErrors bytes.Buffer
 	dump.Stderr = &dumpErrors
