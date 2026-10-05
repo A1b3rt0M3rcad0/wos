@@ -410,11 +410,11 @@ func loadRoadmapDraft(
 	roadmapID domain.ID,
 ) (*domain.RoadmapDraft, error) {
 	var (
-		draftVersion                    int64
-		baseRevision                    sql.NullInt64
+		draftVersion                            int64
+		baseRevision                            sql.NullInt64
 		lifecycle, reason, nodesJSON, linksJSON string
-		createdAt, updatedAt            int64
-		discardedAt                     sql.NullInt64
+		createdAt, updatedAt                    int64
+		discardedAt                             sql.NullInt64
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT draft_version, base_revision_number, lifecycle, reason, nodes_json, after_links_json,

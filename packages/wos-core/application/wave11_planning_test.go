@@ -282,7 +282,6 @@ func TestWave11PublicationSnapshotsLiveReferencesAndCriteria(t *testing.T) {
 	}
 }
 
-
 func TestWave11RejectsCrossOutcomeRoadmapReference(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
@@ -313,9 +312,9 @@ func TestWave11RejectsCrossOutcomeRoadmapReference(t *testing.T) {
 		t.Fatal(err)
 	}
 	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
-		Scope: first.Value.Scope(),
+		Scope:     first.Value.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: first.Value.ID},
-		Title: "Local plan",
+		Title:     "Local plan",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -366,9 +365,9 @@ func TestWave11DraftMetadataPublishesWithRevision(t *testing.T) {
 	}
 	outcome := created.Value
 	roadmapResult, err := service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{
-		Scope: outcome.Scope(),
+		Scope:     outcome.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
-		Title: "Metadata plan",
+		Title:     "Metadata plan",
 	})
 	if err != nil {
 		t.Fatal(err)

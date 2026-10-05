@@ -161,7 +161,6 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 	}
 }
 
-
 func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "snapshots.db")
@@ -213,9 +212,9 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 	roadmapResult, err := service.CreateRoadmap(ctx, sqliteCommandContext(
 		"0199f411-0000-7000-8000-000000000104", "",
 	), application.CreateRoadmapCommand{
-		Scope: outcome.Scope(),
+		Scope:     outcome.Scope(),
 		PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: outcome.ID},
-		Title: "Snapshot plan",
+		Title:     "Snapshot plan",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -235,9 +234,9 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 		"0199f411-0000-7000-8000-000000000106", "",
 	), application.ReplaceRoadmapDraftCommand{
 		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
-		ExpectedVersion: opened.Value.Version,
+		ExpectedVersion:      opened.Value.Version,
 		ExpectedDraftVersion: opened.Value.Draft.DraftVersion,
-		Reason: &reason,
+		Reason:               &reason,
 		Nodes: []domain.RoadmapNode{
 			{
 				NodeKey: "objective", NodeType: domain.RoadmapNodeReference,
@@ -259,7 +258,7 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 		"0199f411-0000-7000-8000-000000000107", "",
 	), application.PublishRoadmapDraftCommand{
 		Scope: outcome.Scope(), RoadmapID: roadmapResult.Value.ID,
-		ExpectedVersion: edited.Value.Version,
+		ExpectedVersion:      edited.Value.Version,
 		ExpectedDraftVersion: edited.Value.Draft.DraftVersion,
 	})
 	if err != nil {
@@ -286,7 +285,7 @@ func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 	), application.ReviseCriterionCommand{
 		Owner: objective.Ref(), CriterionID: criterion.ID,
 		ExpectedVersion: updatedObjective.Value.Version,
-		Title: mutatedCriterionTitle, Required: true,
+		Title:           mutatedCriterionTitle, Required: true,
 		VerificationMode: domain.VerificationModeAttestation,
 	})
 	if err != nil {
