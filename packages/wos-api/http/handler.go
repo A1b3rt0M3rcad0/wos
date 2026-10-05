@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -29,6 +30,7 @@ type Options struct {
 	LocalAuth       local.Resolver
 	ResolveIdentity func(*http.Request) (application.Identity, error)
 	Security        *application.SecurityService
+	LocalNamespaces []ports.Namespace
 }
 
 type Handler struct {
@@ -40,6 +42,8 @@ type Handler struct {
 	requestTimeout  time.Duration
 	prefix          string
 	mux             *http.ServeMux
+	commands        *commands.Catalog
+	localNamespaces []ports.Namespace
 }
 
 type contractError struct {
@@ -72,6 +76,8 @@ func New(options Options) (*Handler, error) {
 	}
 
 	h := &Handler{
+		localNamespaces: options.LocalNamespaces,
+		commands:        commands.NewCatalog(options.Service, options.IDs),
 		service:         options.Service,
 		ids:             options.IDs,
 		auth:            options.LocalAuth,
@@ -111,6 +117,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) routes() {
+	h.mux.HandleFunc("GET "+h.prefix+"/commands", h.commandCatalog)
+	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
 	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
 
 	h.mux.HandleFunc("POST "+base, h.createOutcome)
@@ -120,9 +128,16 @@ func (h *Handler) routes() {
 		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
+	} else {
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", func(w http.ResponseWriter, r *http.Request) {
+			writeJSON(w, 200, map[string]any{"items": h.localNamespaces})
+		})
 	}
 
 	outcome := base + "/{outcome_id}"
+	h.mux.HandleFunc("GET "+outcome+"/triggers", h.listTriggers)
+	h.mux.HandleFunc("GET "+outcome+"/deliveries", h.listDeliveries)
+	h.mux.HandleFunc("GET "+outcome+"/trigger-firings", h.listFirings)
 	h.mux.HandleFunc("GET "+outcome, h.getOutcome)
 	h.mux.HandleFunc("PATCH "+outcome, h.updateOutcome)
 	h.mux.HandleFunc("GET "+outcome+"/state", h.getOutcomeState)

@@ -60,10 +60,10 @@ func decodeCursor(raw string, ns, outcome domain.ID, section, filter string) (qu
 }
 
 type OutcomePage struct {
-	Items       []domain.Outcome `json:"items"`
-	NextCursor  string           `json:"next_cursor,omitempty"`
-	Consistency string           `json:"consistency"`
-	Limit       int              `json:"limit"`
+	Items       []ports.OutcomeIndexEntry `json:"items"`
+	NextCursor  string                    `json:"next_cursor,omitempty"`
+	Consistency string                    `json:"consistency"`
+	Limit       int                       `json:"limit"`
 }
 
 func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter, limit int, cursor string) (OutcomePage, error) {
@@ -76,6 +76,14 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	n, err := queryLimit(limit)
 	if err != nil {
 		return OutcomePage{}, err
+	}
+	if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
+		if err := (domain.ExternalReference{Provider: f.ExternalProvider, Kind: f.ExternalKind, ExternalID: f.ExternalID}).Validate(); err != nil {
+			return OutcomePage{}, err
+		}
+	}
+	if f.Lifecycle != "" && !domain.OutcomeLifecycle(f.Lifecycle).Valid() {
+		return OutcomePage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid lifecycle filter")
 	}
 	if len(f.Text) > 512 {
 		return OutcomePage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "search text exceeds 512 bytes")
@@ -120,6 +128,10 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	items, err := repo.ListOutcomes(ctx, ns, f)
 	if err != nil {
 		return OutcomePage{}, err
+	}
+	for i := range items {
+		items[i].Title = truncateText(items[i].Title, 512)
+		items[i].Description = truncateText(items[i].Description, 512)
 	}
 	page := OutcomePage{Items: items, Limit: n, Consistency: "live_keyset"}
 	if len(items) > n {
@@ -311,6 +323,7 @@ func (s *Service) continuitySections(state OutcomeState) map[string][]json.RawMe
 	for _, key := range []string{"ready", "in_progress", "blocked", "scheduled", "attention_needed", "waiting_dependencies", "waiting_scope", "backlog", "done", "cancelled"} {
 		sections[key+"_work"] = rawItems(groups[key])
 	}
+	sections["external_references"] = rawItems(state.ExternalReferences)
 	sections["relations"] = rawItems(state.Relations)
 	sections["blocking_states"] = rawItems(state.BlockingStates)
 	sections["conclusion_contestations"] = rawItems(state.ConclusionContestations)
@@ -494,4 +507,15 @@ func evaluationTime(ctx context.Context, now time.Time) time.Time {
 		return at.UTC()
 	}
 	return now.UTC()
+}
+
+func truncateText(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	s = s[:limit]
+	for !utf8.ValidString(s) {
+		s = s[:len(s)-1]
+	}
+	return s
 }

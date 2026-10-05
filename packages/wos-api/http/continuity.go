@@ -31,7 +31,7 @@ func (h *Handler) searchOutcomes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	f := ports.OutcomeFilter{Text: q.Get("text"), Lifecycle: q.Get("lifecycle"), Priority: domain.Priority(q.Get("priority"))}
+	f := ports.OutcomeFilter{ExternalProvider: q.Get("external_provider"), ExternalKind: q.Get("external_kind"), ExternalID: q.Get("external_id"), Text: q.Get("text"), Lifecycle: q.Get("lifecycle"), Priority: domain.Priority(q.Get("priority"))}
 	if raw := q.Get("archived"); raw != "" {
 		v, err := strconv.ParseBool(raw)
 		if err != nil {

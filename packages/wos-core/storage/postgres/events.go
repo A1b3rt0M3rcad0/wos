@@ -76,6 +76,9 @@ INSERT INTO domain_events (
 		if err != nil {
 			return mapSQLError("append domain event", err)
 		}
+		if err = l.appendIntegration(ctx, event); err != nil {
+			return err
+		}
 	}
 	return nil
 }

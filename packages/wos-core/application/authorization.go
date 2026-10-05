@@ -68,6 +68,9 @@ func commandPermission(name string) ports.Permission {
 	case "AchieveOutcome", "AchieveObjective", "ReopenOutcome", "ReopenObjective":
 		return ports.PermissionConclusionWrite
 	}
+	if strings.Contains(name, "Trigger") || name == "RedeliverDelivery" {
+		return ports.PermissionIntegrationWrite
+	}
 	if strings.Contains(name, "Roadmap") {
 		return ports.PermissionPlanningWrite
 	}

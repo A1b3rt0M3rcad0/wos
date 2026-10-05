@@ -9,6 +9,7 @@ import (
 )
 
 type OutcomeState struct {
+	ExternalReferences        []domain.ExternalReference        `json:"external_references"`
 	ActiveRoadmaps            []ActivePlan                      `json:"active_roadmaps"`
 	Outcome                   domain.Outcome                    `json:"outcome"`
 	Objectives                []domain.Objective                `json:"objectives"`
@@ -524,7 +525,15 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 	if err != nil {
 		return OutcomeState{}, err
 	}
+	var externalReferences []domain.ExternalReference
+	if ext, ok := uow.(ports.ExternalContextUnitOfWork); ok {
+		externalReferences, err = ext.ExternalContexts().List(ctx, scope)
+		if err != nil {
+			return OutcomeState{}, err
+		}
+	}
 	return OutcomeState{
+		ExternalReferences:        externalReferences,
 		ActiveRoadmaps:            activePlans,
 		Outcome:                   outcome,
 		Objectives:                objectives,

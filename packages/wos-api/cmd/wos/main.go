@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 )
 
 func main() {
@@ -15,6 +16,35 @@ func main() {
 }
 
 func run(args []string) int {
+	if len(args) == 4 && args[0] == "db" && args[1] == "restore" {
+		if err := sqlite.RestoreFile(args[2], args[3]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Println("restore completed into a new SQLite file")
+		return 0
+	}
+	if len(args) >= 2 && args[0] == "db" && (args[1] == "migrate" || (args[1] == "backup" && len(args) == 3)) {
+		cfg := server.ConfigFromEnv()
+		cfg.Storage.MigrateOnStart = args[1] == "migrate"
+		runtime, err := server.OpenRuntime(cfg)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		defer runtime.Close()
+		if args[1] == "migrate" {
+			err = runtime.Migrate(context.Background())
+		} else {
+			err = runtime.Backup(context.Background(), args[2])
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Println("database operation completed")
+		return 0
+	}
 	if len(args) == 1 && args[0] == "version" {
 		fmt.Println(server.CurrentVersion().String())
 		return 0
@@ -66,6 +96,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio>")
+	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION>")
 	return 2
 }

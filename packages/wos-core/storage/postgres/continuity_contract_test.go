@@ -137,10 +137,22 @@ func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199d025-0000-7000-8000-000000000001", "")
-	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: testID("0199d025-0000-7000-8000-000000000002"), Title: "Before upgrade", DesiredState: "retained", Priority: domain.PriorityNormal})
+	legacy, err := domain.NewOutcome(testID("0199d025-0000-7000-8000-000000000003"), testID("0199d025-0000-7000-8000-000000000002"), "Before upgrade", "", "retained", domain.PriorityNormal, time.Now().UTC())
 	if err != nil {
 		t.Fatal(err)
 	}
+	u, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = u.Outcomes().Insert(ctx, legacy); err != nil {
+		u.Rollback()
+		t.Fatal(err)
+	}
+	if err = u.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	created := application.MutationResult[domain.Outcome]{Value: legacy}
 	if err = store.Migrate(ctx); err != nil {
 		t.Fatal(err)
 	}

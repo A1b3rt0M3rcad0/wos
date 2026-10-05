@@ -23,6 +23,11 @@ type Store struct {
 	evidence                 map[string]domain.Evidence
 	evidenceLinks            map[string]domain.EvidenceLink
 	decisions                map[string]domain.Decision
+	triggers                 map[string]domain.Trigger
+	endpoints                map[string]ports.WebhookEndpoint
+	firings                  map[string]ports.TriggerFiring
+	deliveries               map[string]ports.Delivery
+	externalContexts         map[string][]domain.ExternalReference
 	roadmaps                 map[string]domain.Roadmap
 	roadmapSlots             map[string]domain.RoadmapActiveSlot
 	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
@@ -50,6 +55,11 @@ func New() *Store {
 		evidence:                 make(map[string]domain.Evidence),
 		evidenceLinks:            make(map[string]domain.EvidenceLink),
 		decisions:                make(map[string]domain.Decision),
+		triggers:                 make(map[string]domain.Trigger),
+		endpoints:                make(map[string]ports.WebhookEndpoint),
+		firings:                  make(map[string]ports.TriggerFiring),
+		deliveries:               make(map[string]ports.Delivery),
+		externalContexts:         make(map[string][]domain.ExternalReference),
 		roadmaps:                 make(map[string]domain.Roadmap),
 		roadmapSlots:             make(map[string]domain.RoadmapActiveSlot),
 		roadmapActivationHistory: make(map[string][]domain.RoadmapActivationRecord),
@@ -78,6 +88,11 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		evidence:                 cloneEvidence(s.evidence),
 		evidenceLinks:            cloneEvidenceLinks(s.evidenceLinks),
 		decisions:                cloneDecisions(s.decisions),
+		triggers:                 cloneTriggers(s.triggers),
+		endpoints:                cloneEndpoints(s.endpoints),
+		firings:                  cloneFirings(s.firings),
+		deliveries:               cloneDeliveries(s.deliveries),
+		externalContexts:         cloneContexts(s.externalContexts),
 		roadmaps:                 cloneRoadmaps(s.roadmaps),
 		roadmapSlots:             cloneRoadmapSlots(s.roadmapSlots),
 		roadmapActivationHistory: cloneRoadmapActivationHistory(s.roadmapActivationHistory),
@@ -116,6 +131,11 @@ type transaction struct {
 	evidence                 map[string]domain.Evidence
 	evidenceLinks            map[string]domain.EvidenceLink
 	decisions                map[string]domain.Decision
+	triggers                 map[string]domain.Trigger
+	endpoints                map[string]ports.WebhookEndpoint
+	firings                  map[string]ports.TriggerFiring
+	deliveries               map[string]ports.Delivery
+	externalContexts         map[string][]domain.ExternalReference
 	roadmaps                 map[string]domain.Roadmap
 	roadmapSlots             map[string]domain.RoadmapActiveSlot
 	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
@@ -172,6 +192,11 @@ func (tx *transaction) Commit() error {
 	tx.store.evidence = cloneEvidence(tx.evidence)
 	tx.store.evidenceLinks = cloneEvidenceLinks(tx.evidenceLinks)
 	tx.store.decisions = cloneDecisions(tx.decisions)
+	tx.store.triggers = cloneTriggers(tx.triggers)
+	tx.store.endpoints = cloneEndpoints(tx.endpoints)
+	tx.store.firings = cloneFirings(tx.firings)
+	tx.store.deliveries = cloneDeliveries(tx.deliveries)
+	tx.store.externalContexts = cloneContexts(tx.externalContexts)
 	tx.store.roadmaps = cloneRoadmaps(tx.roadmaps)
 	tx.store.roadmapSlots = cloneRoadmapSlots(tx.roadmapSlots)
 	tx.store.roadmapActivationHistory = cloneRoadmapActivationHistory(tx.roadmapActivationHistory)
@@ -1250,6 +1275,9 @@ func (l eventLog) Append(ctx context.Context, events []domain.DomainEvent) error
 			}
 		}
 		l.tx.events = append(l.tx.events, cloneEvent(event))
+		if err := l.appendIntegration(event); err != nil {
+			return err
+		}
 	}
 	return nil
 }

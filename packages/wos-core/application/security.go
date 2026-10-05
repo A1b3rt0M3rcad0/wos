@@ -27,7 +27,7 @@ func (s SecurityService) Authenticate(ctx context.Context, token string) (Identi
 		return Identity{}, domain.NewError(domain.ErrorCodeForbidden, "invalid credential")
 	}
 	c, err := s.Store.GetCredential(ctx, TokenDigest(token))
-	if err != nil || c.Revoked || !s.Clock.Now().Before(c.ExpiresAt) {
+	if err != nil || s.validateCredential(ctx, c) != nil {
 		return Identity{}, domain.NewError(domain.ErrorCodeForbidden, "invalid or expired credential")
 	}
 	return Identity{PrincipalID: c.PrincipalID, Actor: c.Actor, NamespaceID: c.NamespaceID, CredentialDigest: c.Digest}, nil
@@ -42,7 +42,7 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 		}
 		if id.CredentialDigest != "" {
 			c, err := s.Store.GetCredential(ctx, id.CredentialDigest)
-			if err != nil || c.Revoked || !s.Clock.Now().Before(c.ExpiresAt) {
+			if err != nil || s.validateCredential(ctx, c) != nil {
 				return domain.NewError(domain.ErrorCodeForbidden, "credential is no longer active")
 			}
 		}
@@ -58,6 +58,70 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 	}
 	return domain.NewError(domain.ErrorCodeForbidden, "namespace permission is not granted")
 }
+
+func (s SecurityService) validateCredential(ctx context.Context, c ports.Credential) error {
+	if c.Revoked || !s.Clock.Now().Before(c.ExpiresAt) {
+		return domain.NewError(domain.ErrorCodeForbidden, "credential inactive")
+	}
+	if c.ParentDigest != "" {
+		parent, err := s.Store.GetCredential(ctx, c.ParentDigest)
+		if err != nil || parent.ParentDigest != "" || parent.Revoked || !s.Clock.Now().Before(parent.ExpiresAt) || parent.PrincipalID != c.PrincipalID || parent.NamespaceID != c.NamespaceID || parent.Actor != c.Actor {
+			return domain.NewError(domain.ErrorCodeForbidden, "session parent inactive")
+		}
+	}
+	return nil
+}
+
+// CreateSession narrows an existing credential to a twelve-hour, independently revocable browser session.
+func (s SecurityService) CreateSession(ctx context.Context, token string) (ports.Credential, string, error) {
+	identity, err := s.Authenticate(ctx, token)
+	if err != nil {
+		return ports.Credential{}, "", err
+	}
+	source, err := s.Store.GetCredential(ctx, identity.CredentialDigest)
+	if err != nil {
+		return ports.Credential{}, "", err
+	}
+	if source.ParentDigest != "" {
+		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeForbidden, "a browser session cannot create another session")
+	}
+	ctx = WithIdentity(ctx, identity)
+	if err = s.Require(ctx, identity.NamespaceID, ports.PermissionStateRead); err != nil {
+		return ports.Credential{}, "", err
+	}
+	id, err := s.IDs.NewID()
+	if err != nil {
+		return ports.Credential{}, "", err
+	}
+	raw := make([]byte, 32)
+	if _, err = rand.Read(raw); err != nil {
+		return ports.Credential{}, "", err
+	}
+	session := base64.RawURLEncoding.EncodeToString(raw)
+	expires := s.Clock.Now().Add(12 * time.Hour)
+	if source.ExpiresAt.Before(expires) {
+		expires = source.ExpiresAt
+	}
+	c := ports.Credential{ID: id, NamespaceID: identity.NamespaceID, PrincipalID: identity.PrincipalID, Actor: identity.Actor, Digest: TokenDigest(session), ParentDigest: source.Digest, ExpiresAt: expires}
+	if err = s.Store.PutCredential(ctx, c); err != nil {
+		return ports.Credential{}, "", err
+	}
+	return c, session, nil
+}
+func (s SecurityService) EndSession(ctx context.Context, token string) error {
+	identity, err := s.Authenticate(ctx, token)
+	if err != nil {
+		return err
+	}
+	c, err := s.Store.GetCredential(ctx, identity.CredentialDigest)
+	if err != nil {
+		return err
+	}
+	if c.ParentDigest == "" {
+		return domain.NewError(domain.ErrorCodeForbidden, "credential is not a browser session")
+	}
+	return s.Store.RevokeCredential(ctx, c.ID)
+}
 func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission ports.Permission) error {
 	id, ok := IdentityFromContext(ctx)
 	if !ok {
@@ -68,6 +132,11 @@ func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission p
 func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.ID, principal string, actor domain.ActorRef, expires time.Time) (ports.Credential, string, error) {
 	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
 		return ports.Credential{}, "", err
+	}
+	if identity, ok := IdentityFromContext(ctx); ok && identity.Actor != actor {
+		if err := s.Require(ctx, namespace, ports.PermissionActorDelegate); err != nil {
+			return ports.Credential{}, "", err
+		}
 	}
 	if strings.TrimSpace(principal) == "" || !expires.After(s.Clock.Now()) || expires.After(s.Clock.Now().Add(366*24*time.Hour)) {
 		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeInvalidArgument, "principal and expiration within one year are required")

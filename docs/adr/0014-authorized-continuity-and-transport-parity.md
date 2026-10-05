@@ -33,3 +33,10 @@ Roadmap active slots retain their existing serialized replacement semantics. Two
 authorized concurrent activations may both succeed and the later activation replaces
 the earlier slot. Both facts remain in history. Slot compare-and-swap is not required
 for this contract; aggregate/draft optimistic versions remain mandatory.
+
+Terminal Outcomes retain the existing structural policy: reopen the Outcome explicitly
+before reopening an Objective or changing required structural/criterion obligations.
+Rejected commands leave the conclusion intact. Later assessments and evidence
+retractions remain admissible and may contest a terminal conclusion. Structural
+contestation projections also inspect obligation snapshots defensively, including
+legacy/restored states; they do not implicitly relax the terminal mutation policy.

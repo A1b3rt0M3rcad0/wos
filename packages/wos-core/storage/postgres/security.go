@@ -12,7 +12,7 @@ func (s *Store) GetCredential(ctx context.Context, digest string) (ports.Credent
 	var c ports.Credential
 	var rawID, rawNS, actor string
 	var expires int64
-	err := s.db.QueryRowContext(ctx, `SELECT c.id,c.namespace_id,c.principal_id,c.actor_json,c.expires_at,c.revoked FROM credentials c JOIN principals p ON p.id=c.principal_id WHERE c.digest=$1 AND p.lifecycle='active'`, digest).Scan(&rawID, &rawNS, &c.PrincipalID, &actor, &expires, &c.Revoked)
+	err := s.db.QueryRowContext(ctx, `SELECT c.id,c.namespace_id,c.principal_id,c.actor_json,c.expires_at,c.revoked,COALESCE(c.parent_digest,'') FROM credentials c JOIN principals p ON p.id=c.principal_id WHERE c.digest=$1 AND p.lifecycle='active'`, digest).Scan(&rawID, &rawNS, &c.PrincipalID, &actor, &expires, &c.Revoked, &c.ParentDigest)
 	if err != nil {
 		return c, mapSQLError("resolve credential", err)
 	}
@@ -48,7 +48,7 @@ func (s *Store) PutCredential(ctx context.Context, c ports.Credential) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,$7)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt), boolInt(c.Revoked))
+	_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked,parent_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt), boolInt(c.Revoked), nullableString(c.ParentDigest))
 	if err != nil {
 		return mapSQLError("create credential", err)
 	}

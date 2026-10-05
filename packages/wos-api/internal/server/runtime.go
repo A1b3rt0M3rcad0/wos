@@ -11,21 +11,25 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
 	httptransport "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration"
 	mcptransport "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"net/url"
 )
 
 type Runtime struct {
-	config    Config
-	store     runtimeStore
-	http      *http.Server
-	root      http.Handler
-	mcpServer *mcp.Server
+	config         Config
+	store          runtimeStore
+	http           *http.Server
+	root           http.Handler
+	mcpServer      *mcp.Server
+	deliveryWorker *integration.Worker
 }
 
 type runtimeStore interface {
@@ -33,6 +37,7 @@ type runtimeStore interface {
 	ports.SecurityStore
 	Close() error
 	SchemaVersion(context.Context) (int64, error)
+	Migrate(context.Context) error
 }
 
 func OpenRuntime(config Config) (*Runtime, error) {
@@ -66,8 +71,20 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 	var security *application.SecurityService
+	var localNamespaces []ports.Namespace
 	var resolve func(*http.Request) (application.Identity, error)
 	var appAuthorizer ports.Authorizer = authorizer
+	if config.Auth.Mode == AuthModeLocal {
+		ns, _ := domain.ParseID(config.Auth.LocalNamespaceID)
+		namespace := ports.Namespace{ID: ns, Name: config.Auth.LocalNamespaceName}
+		if err = store.PutNamespace(context.Background(), namespace); err != nil {
+			if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeAlreadyExists {
+				store.Close()
+				return nil, err
+			}
+		}
+		localNamespaces = []ports.Namespace{namespace}
+	}
 	if config.Auth.Mode == AuthModeAPIToken {
 		security = &application.SecurityService{Store: store, Clock: systemClock{}, IDs: ids}
 		ns, _ := domain.ParseID(config.Auth.BootstrapNamespaceID)
@@ -78,6 +95,14 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		appAuthorizer = security
 		resolve = func(r *http.Request) (application.Identity, error) {
 			raw := r.Header.Get("Authorization")
+			if raw == "" {
+				if cookie, err := r.Cookie(sessionCookie); err == nil {
+					if r.Method != "GET" && r.Method != "HEAD" && !sameOrigin(r) {
+						return application.Identity{}, domain.NewError(domain.ErrorCodeForbidden, "origin rejected")
+					}
+					return security.Authenticate(r.Context(), cookie.Value)
+				}
+			}
 			if !strings.HasPrefix(raw, "Bearer ") {
 				return application.Identity{}, domain.NewError(domain.ErrorCodeForbidden, "bearer credential required")
 			}
@@ -89,6 +114,20 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		_ = store.Close()
 		return nil, err
 	}
+	service.SetIndependentReviewer(config.Auth.IndependentReviewer)
+	if len(config.Integration.Endpoints) > 0 {
+		installer, ok := store.(interface {
+			InstallEndpoints(context.Context, []ports.WebhookEndpoint) error
+		})
+		if !ok {
+			store.Close()
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "endpoint installation unavailable")
+		}
+		if err = installer.InstallEndpoints(context.Background(), config.Integration.Endpoints); err != nil {
+			store.Close()
+			return nil, err
+		}
+	}
 	api, err := httptransport.New(httptransport.Options{
 		Prefix:          config.HTTP.Prefix,
 		RequestTimeout:  config.HTTP.RequestTimeout,
@@ -97,6 +136,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		LocalAuth:       auth,
 		ResolveIdentity: resolve,
 		Security:        security,
+		LocalNamespaces: localNamespaces,
 	})
 	if err != nil {
 		_ = store.Close()
@@ -104,7 +144,34 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	}
 
 	runtime := &Runtime{config: config, store: store}
+	if config.Integration.WorkerEnabled {
+		outbox, ok := store.(ports.DeliveryStore)
+		if !ok {
+			store.Close()
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store unavailable")
+		}
+		hosts := []string{}
+		for _, endpoint := range config.Integration.Endpoints {
+			u, _ := url.Parse(endpoint.URL)
+			hosts = append(hosts, u.Hostname())
+		}
+		runtime.deliveryWorker, err = integration.New(outbox, systemClock{}, ids, config.Integration.Secrets, integration.Policy{AllowedHosts: hosts, AllowLoopback: config.Integration.AllowLoopback})
+		if err != nil {
+			store.Close()
+			return nil, err
+		}
+	}
 	root := http.NewServeMux()
+	root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		json.NewEncoder(w).Encode(map[string]any{"api_prefix": config.HTTP.Prefix, "auth_mode": config.Auth.Mode})
+	})
+	root.Handle("GET /app/", web.Handler())
+	root.HandleFunc("GET /app", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/app/", http.StatusSeeOther) })
+	if security != nil {
+		root.Handle("/session", sessionHandler(security))
+	}
 	root.HandleFunc("GET /livez", runtime.handleLive)
 	root.HandleFunc("GET /readyz", runtime.handleReady)
 	if config.MCP.Enabled {
@@ -139,10 +206,20 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		}))
 	}
 	root.Handle("/", api)
-	runtime.root = root
+	runtime.root = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if config.Auth.Mode == AuthModeLocal && !loopbackHost(r.Host) {
+			http.Error(w, "loopback host required", http.StatusForbidden)
+			return
+		}
+		if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" && !sameOrigin(r) {
+			http.Error(w, "origin rejected", http.StatusForbidden)
+			return
+		}
+		root.ServeHTTP(w, r)
+	})
 	runtime.http = &http.Server{
 		Addr:              config.Server.Listen,
-		Handler:           root,
+		Handler:           runtime.root,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	return runtime, nil
@@ -162,6 +239,12 @@ func (r *Runtime) Serve(ctx context.Context) error {
 	listener, err := net.Listen("tcp", r.config.Server.Listen)
 	if err != nil {
 		return err
+	}
+	if r.deliveryWorker != nil {
+		workerCtx, stop := context.WithCancel(ctx)
+		done := make(chan struct{})
+		go func() { defer close(done); _ = r.deliveryWorker.Run(workerCtx) }()
+		defer func() { stop(); <-done }()
 	}
 
 	errCh := make(chan error, 1)
@@ -194,6 +277,16 @@ func (r *Runtime) Close() error {
 		return nil
 	}
 	return r.store.Close()
+}
+
+func (r *Runtime) Migrate(ctx context.Context) error { return r.store.Migrate(ctx) }
+func (r *Runtime) Backup(ctx context.Context, path string) error {
+	if store, ok := r.store.(interface {
+		Backup(context.Context, string) error
+	}); ok {
+		return store.Backup(ctx, path)
+	}
+	return domain.NewError(domain.ErrorCodeInvalidConfig, "PostgreSQL backups use pg_dump --format=custom; see docs/operations.md")
 }
 
 func (r *Runtime) handleLive(w http.ResponseWriter, _ *http.Request) {

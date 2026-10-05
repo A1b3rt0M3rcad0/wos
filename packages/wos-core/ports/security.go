@@ -7,13 +7,14 @@ import (
 )
 
 type Credential struct {
-	NamespaceID domain.ID       `json:"namespace_id"`
-	ID          domain.ID       `json:"id"`
-	PrincipalID string          `json:"principal_id"`
-	Actor       domain.ActorRef `json:"actor_ref"`
-	Digest      string          `json:"-"`
-	ExpiresAt   time.Time       `json:"expires_at"`
-	Revoked     bool            `json:"revoked"`
+	NamespaceID  domain.ID       `json:"namespace_id"`
+	ID           domain.ID       `json:"id"`
+	PrincipalID  string          `json:"principal_id"`
+	Actor        domain.ActorRef `json:"actor_ref"`
+	Digest       string          `json:"-"`
+	ParentDigest string          `json:"-"`
+	ExpiresAt    time.Time       `json:"expires_at"`
+	Revoked      bool            `json:"revoked"`
 }
 type NamespaceGrant struct {
 	NamespaceID domain.ID    `json:"namespace_id"`

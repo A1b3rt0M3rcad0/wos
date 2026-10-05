@@ -10,11 +10,12 @@ import (
 )
 
 type Service struct {
-	tx              ports.TransactionManager
-	clock           ports.Clock
-	ids             ports.IDGenerator
-	authorizer      ports.Authorizer
-	requireIdentity bool
+	tx                  ports.TransactionManager
+	clock               ports.Clock
+	ids                 ports.IDGenerator
+	authorizer          ports.Authorizer
+	requireIdentity     bool
+	independentReviewer bool
 }
 
 func NewService(tx ports.TransactionManager, clock ports.Clock, ids ports.IDGenerator) (*Service, error) {
@@ -142,6 +143,9 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
 		if err := validateAssessmentEvidence(ctx, uow, cmd.Owner.Scope, assessment.EvidenceIDs); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
@@ -175,6 +179,9 @@ func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.Com
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := assessCriterion(ctx, uow, cmd.Owner, cmd.ExpectedVersion, assessment, now); err != nil {
@@ -225,6 +232,9 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
@@ -337,6 +347,9 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.Objective{}, 0, err
+		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)

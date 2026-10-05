@@ -67,6 +67,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.CompleteWorkItemCommand](server, ids, options, "wos_complete_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.CompleteWorkItemCommand) (any, error) {
 		return service.CompleteWorkItem(ctx, cc, cmd)
 	})
+	registerCommand[application.ConfigureTriggerCommand](server, ids, options, "wos_configure_trigger", func(ctx context.Context, cc domain.CommandContext, cmd application.ConfigureTriggerCommand) (any, error) {
+		return service.ConfigureTrigger(ctx, cc, cmd)
+	})
 	registerCommand[application.CreateBlockerCommand](server, ids, options, "wos_create_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.CreateBlockerCommand) (any, error) {
 		return service.CreateBlocker(ctx, cc, cmd)
 	})
@@ -103,6 +106,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.InvestigateIssueCommand](server, ids, options, "wos_investigate_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.InvestigateIssueCommand) (any, error) {
 		return service.InvestigateIssue(ctx, cc, cmd)
 	})
+	registerCommand[application.LinkExternalReferenceCommand](server, ids, options, "wos_link_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.LinkExternalReferenceCommand) (any, error) {
+		return service.LinkExternalReference(ctx, cc, cmd)
+	})
 	registerCommand[application.MarkIssueDuplicateCommand](server, ids, options, "wos_mark_issue_duplicate", func(ctx context.Context, cc domain.CommandContext, cmd application.MarkIssueDuplicateCommand) (any, error) {
 		return service.MarkIssueDuplicate(ctx, cc, cmd)
 	})
@@ -124,6 +130,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.RecordCriterionAssessmentCommand](server, ids, options, "wos_record_criterion_assessment", func(ctx context.Context, cc domain.CommandContext, cmd application.RecordCriterionAssessmentCommand) (any, error) {
 		return service.RecordCriterionAssessment(ctx, cc, cmd)
 	})
+	registerCommand[application.RedeliverDeliveryCommand](server, ids, options, "wos_redeliver_delivery", func(ctx context.Context, cc domain.CommandContext, cmd application.RedeliverDeliveryCommand) (any, error) {
+		return service.RedeliverDelivery(ctx, cc, cmd)
+	})
 	registerCommand[application.RegisterArtifactCommand](server, ids, options, "wos_register_artifact", func(ctx context.Context, cc domain.CommandContext, cmd application.RegisterArtifactCommand) (any, error) {
 		return service.RegisterArtifact(ctx, cc, cmd)
 	})
@@ -138,6 +147,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.RemoveDependencyCommand](server, ids, options, "wos_remove_dependency", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveDependencyCommand) (any, error) {
 		return service.RemoveDependency(ctx, cc, cmd)
+	})
+	registerCommand[application.RemoveExternalReferenceCommand](server, ids, options, "wos_remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
+		return service.RemoveExternalReference(ctx, cc, cmd)
 	})
 	registerCommand[application.RenewWorkItemLeaseCommand](server, ids, options, "wos_renew_work_item_lease", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewWorkItemLeaseCommand) (any, error) {
 		return service.RenewWorkItemLease(ctx, cc, cmd)
@@ -190,6 +202,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.SetOutcomeOwnersCommand](server, ids, options, "wos_set_outcome_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetOutcomeOwnersCommand) (any, error) {
 		return service.SetOutcomeOwners(ctx, cc, cmd)
 	})
+	registerCommand[application.SetTriggerEnabledCommand](server, ids, options, "wos_set_trigger_enabled", func(ctx context.Context, cc domain.CommandContext, cmd application.SetTriggerEnabledCommand) (any, error) {
+		return service.SetTriggerEnabled(ctx, cc, cmd)
+	})
 	registerCommand[application.SetWorkItemAssigneesCommand](server, ids, options, "wos_set_work_item_assignees", func(ctx context.Context, cc domain.CommandContext, cmd application.SetWorkItemAssigneesCommand) (any, error) {
 		return service.SetWorkItemAssignees(ctx, cc, cmd)
 	})
@@ -216,6 +231,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.UpdateOutcomeCommand](server, ids, options, "wos_update_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.UpdateOutcomeCommand) (any, error) {
 		return service.UpdateOutcome(ctx, cc, cmd)
+	})
+	registerCommand[application.UpdateTriggerCommand](server, ids, options, "wos_update_trigger", func(ctx context.Context, cc domain.CommandContext, cmd application.UpdateTriggerCommand) (any, error) {
+		return service.UpdateTrigger(ctx, cc, cmd)
 	})
 	registerCommand[application.UpdateWorkItemCommand](server, ids, options, "wos_update_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.UpdateWorkItemCommand) (any, error) {
 		return service.UpdateWorkItem(ctx, cc, cmd)

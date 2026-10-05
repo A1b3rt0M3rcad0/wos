@@ -8,11 +8,11 @@ from pathlib import Path
 import re
 source=Path('packages/wos-core/storage/sqlite')
 target=Path('packages/wos-core/storage/postgres')
-for name in ['repositories.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','queries.go','codec.go','migrations.go']:
+for name in ['repositories.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','queries.go','external_context.go','integration.go','codec.go','migrations.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqlite migration','postgres migration')
  def transform_sql(m):
   q=m[1]
-  if 'SELECT ' not in q and 'INSERT ' not in q and 'UPDATE ' not in q and 'DELETE ' not in q and 'CREATE ' not in q:return m[0]
+  if 'SELECT ' not in q and 'INSERT ' not in q and 'UPDATE ' not in q and 'DELETE ' not in q and 'CREATE ' not in q and 'FROM ' not in q:return m[0]
   if 'INSERT OR IGNORE' in q:q=q.replace('INSERT OR IGNORE','INSERT')+' ON CONFLICT DO NOTHING'
   q=q.replace('instr(lower(title),lower(?))>0','strpos(lower(title),lower(?))>0').replace('instr(lower(description),lower(?))>0','strpos(lower(description),lower(?))>0')
   if re.search(r'SELECT state_revision\s+FROM outcome_coordination',q):q+=' FOR UPDATE'
@@ -23,6 +23,8 @@ for name in ['repositories.go','nested.go','relations.go','issues_blockers.go','
   q=re.sub(r'\?',placeholder,q)
   return '`'+q+'`'
  s=re.sub(r'`([^`]*)`',transform_sql,s,flags=re.S)
+ if name=='integration.go':
+  s=s.replace('ORDER BY next_attempt,id LIMIT 1`','ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`')
  # Query fragments with placeholders need runtime rebinding after composition.
  if name=='queries.go':
   original=(source/name).read_text().replace('package sqlite','package postgres',1)
@@ -42,7 +44,7 @@ for p in (source/'migrations').glob('*.sql'):
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','continuity_contract_test.go','administrative_override_test.go']:
+for name in ['restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1)
  s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)

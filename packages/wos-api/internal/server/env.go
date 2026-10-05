@@ -1,12 +1,28 @@
 package server
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 )
 
 func ConfigFromEnv() Config {
 	cfg := DefaultConfig()
+	if v := os.Getenv("WOS_LOCAL_NAMESPACE_ID"); v != "" {
+		cfg.Auth.LocalNamespaceID = v
+	}
+	if v := os.Getenv("WOS_LOCAL_NAMESPACE_NAME"); v != "" {
+		cfg.Auth.LocalNamespaceName = v
+	}
+	cfg.Auth.IndependentReviewer = strings.EqualFold(os.Getenv("WOS_INDEPENDENT_REVIEWER"), "true")
+	cfg.Integration.WorkerEnabled = strings.EqualFold(os.Getenv("WOS_DELIVERY_WORKER_ENABLED"), "true")
+	cfg.Integration.AllowLoopback = strings.EqualFold(os.Getenv("WOS_WEBHOOK_ALLOW_LOOPBACK"), "true")
+	if raw := os.Getenv("WOS_WEBHOOK_ENDPOINTS"); raw != "" {
+		cfg.Integration.ParseError = json.Unmarshal([]byte(raw), &cfg.Integration.Endpoints) != nil
+	}
+	if raw := os.Getenv("WOS_WEBHOOK_SECRETS"); raw != "" {
+		cfg.Integration.ParseError = cfg.Integration.ParseError || json.Unmarshal([]byte(raw), &cfg.Integration.Secrets) != nil
+	}
 	if v := os.Getenv("WOS_STORAGE_DRIVER"); v != "" {
 		cfg.Storage.Driver = v
 	}

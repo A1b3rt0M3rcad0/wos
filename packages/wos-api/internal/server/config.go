@@ -1,7 +1,9 @@
 package server
 
 import (
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -19,11 +21,20 @@ const (
 // files is intentionally separate from validation so embedded hosts can build
 // Config values directly.
 type Config struct {
-	Server  ServerConfig
-	HTTP    HTTPConfig
-	MCP     MCPConfig
-	Storage StorageConfig
-	Auth    AuthConfig
+	Server      ServerConfig
+	HTTP        HTTPConfig
+	MCP         MCPConfig
+	Storage     StorageConfig
+	Auth        AuthConfig
+	Integration IntegrationConfig
+}
+
+type IntegrationConfig struct {
+	WorkerEnabled bool
+	AllowLoopback bool
+	Endpoints     []ports.WebhookEndpoint
+	Secrets       map[string]string
+	ParseError    bool
 }
 
 type ServerConfig struct {
@@ -51,6 +62,9 @@ type StorageConfig struct {
 }
 
 type AuthConfig struct {
+	LocalNamespaceID                  string
+	LocalNamespaceName                string
+	IndependentReviewer               bool
 	BootstrapToken                    string
 	BootstrapNamespaceID              string
 	BootstrapNamespaceName            string
@@ -81,6 +95,8 @@ func DefaultConfig() Config {
 			MigrateOnStart: true,
 		},
 		Auth: AuthConfig{
+			LocalNamespaceID:                  "0199d000-0000-7000-8000-000000000001",
+			LocalNamespaceName:                "Local",
 			Mode:                              AuthModeLocal,
 			LocalPrincipalID:                  "local-user",
 			LocalAllowAdministrativeOverrides: false,
@@ -89,6 +105,27 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	if cfg.Integration.ParseError {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid integration JSON configuration")
+	}
+	seen := map[domain.ID]bool{}
+	for _, endpoint := range cfg.Integration.Endpoints {
+		if err := endpoint.ID.Validate(); err != nil {
+			return err
+		}
+		if err := endpoint.NamespaceID.Validate(); err != nil {
+			return err
+		}
+		u, err := url.Parse(endpoint.URL)
+		local := err == nil && loopbackHost(u.Host)
+		if err != nil || u.Host == "" || u.User != nil || u.Fragment != "" || len(endpoint.URL) > 2048 || (u.Scheme != "https" && !(cfg.Integration.AllowLoopback && local && u.Scheme == "http")) || endpoint.SecretRef == "" || endpoint.KeyID == "" || seen[endpoint.ID] {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid or duplicate webhook endpoint")
+		}
+		seen[endpoint.ID] = true
+		if cfg.Integration.WorkerEnabled && len(cfg.Integration.Secrets[endpoint.SecretRef]) < 32 {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "enabled webhook worker requires signing secrets of at least 32 bytes")
+		}
+	}
 	if strings.TrimSpace(cfg.Server.Listen) == "" {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "server.listen is required")
 	}
@@ -123,6 +160,9 @@ func (cfg Config) Validate() error {
 
 	switch cfg.Auth.Mode {
 	case AuthModeLocal:
+		if _, err := domain.ParseID(cfg.Auth.LocalNamespaceID); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidConfig, "invalid local namespace", err)
+		}
 		host, _, _ := net.SplitHostPort(cfg.Server.Listen)
 		ip := net.ParseIP(host)
 		if host != "localhost" && (ip == nil || !ip.IsLoopback()) {

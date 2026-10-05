@@ -315,6 +315,8 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Decision:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Trigger:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Roadmap:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.RoadmapActiveSlot:
@@ -371,6 +373,18 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		ownerPrefix = meta.Owner.Kind.String()
 	}
 	switch meta.Name {
+	case "LinkExternalReference":
+		return []string{"outcome.external_reference_linked"}, nil
+	case "RemoveExternalReference":
+		return []string{"outcome.external_reference_removed"}, nil
+	case "ConfigureTrigger":
+		return []string{"trigger.configured"}, nil
+	case "UpdateTrigger":
+		return []string{"trigger.updated"}, nil
+	case "SetTriggerEnabled":
+		return []string{"trigger.enabled_changed"}, nil
+	case "RedeliverDelivery":
+		return []string{"integration_delivery.redelivered"}, nil
 	case "CreateOutcome":
 		return []string{"outcome.created"}, nil
 	case "ActivateOutcome":

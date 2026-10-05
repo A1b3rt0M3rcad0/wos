@@ -8,14 +8,25 @@ import (
 	"strings"
 )
 
-func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]domain.Outcome, error) {
+func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]ports.OutcomeIndexEntry, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	values := []domain.Outcome{}
+	values := []ports.OutcomeIndexEntry{}
 	for _, v := range r.tx.outcomes {
 		if v.NamespaceID != ns {
 			continue
+		}
+		if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
+			found := false
+			for _, ref := range r.tx.externalContexts[contextKey(v.Scope())] {
+				if ref.Provider == f.ExternalProvider && ref.Kind == f.ExternalKind && ref.ExternalID == f.ExternalID {
+					found = true
+				}
+			}
+			if !found {
+				continue
+			}
 		}
 		if f.Text != "" && !strings.Contains(strings.ToLower(v.Title+"\n"+v.Description), strings.ToLower(f.Text)) {
 			continue
@@ -43,7 +54,7 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 				continue
 			}
 		}
-		values = append(values, cloneOutcome(v))
+		values = append(values, ports.OutcomeIndexEntry{ID: v.ID, NamespaceID: ns, Version: v.Version, Title: v.Title, Description: v.Description, Lifecycle: v.Lifecycle, Priority: v.Priority, ArchivedAt: cloneOutcome(v).ArchivedAt, CreatedAt: v.CreatedAt, UpdatedAt: v.UpdatedAt, DetailOmitted: true})
 	}
 	sort.Slice(values, func(i, j int) bool {
 		if values[i].CreatedAt.Equal(values[j].CreatedAt) {

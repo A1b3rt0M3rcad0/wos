@@ -2,7 +2,6 @@ package mcptransport
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -10,26 +9,30 @@ import (
 )
 
 type queryArgs struct {
-	Kind        domain.EntityKind `json:"kind,omitempty"`
-	Depth       int               `json:"depth,omitempty"`
-	Direction   string            `json:"direction,omitempty"`
-	NamespaceID domain.ID         `json:"namespace_id"`
-	OutcomeID   domain.ID         `json:"outcome_id,omitempty"`
-	Limit       int               `json:"limit,omitempty"`
-	Cursor      string            `json:"cursor,omitempty"`
-	Section     string            `json:"section,omitempty"`
-	Text        string            `json:"text,omitempty"`
-	Lifecycle   string            `json:"lifecycle,omitempty"`
-	Archived    *bool             `json:"archived,omitempty"`
-	Priority    domain.Priority   `json:"priority,omitempty"`
-	EntityID    domain.ID         `json:"entity_id,omitempty"`
-	PrincipalID string            `json:"principal_id,omitempty"`
-	CommandID   domain.ID         `json:"command_id,omitempty"`
-	EventType   string            `json:"event_type,omitempty"`
+	ExternalProvider string            `json:"external_provider,omitempty"`
+	ExternalKind     string            `json:"external_kind,omitempty"`
+	ExternalID       string            `json:"external_id,omitempty"`
+	Owner            *domain.ActorRef  `json:"owner,omitempty"`
+	Kind             domain.EntityKind `json:"kind,omitempty"`
+	Depth            int               `json:"depth,omitempty"`
+	Direction        string            `json:"direction,omitempty"`
+	NamespaceID      domain.ID         `json:"namespace_id"`
+	OutcomeID        domain.ID         `json:"outcome_id,omitempty"`
+	Limit            int               `json:"limit,omitempty"`
+	Cursor           string            `json:"cursor,omitempty"`
+	Section          string            `json:"section,omitempty"`
+	Text             string            `json:"text,omitempty"`
+	Lifecycle        string            `json:"lifecycle,omitempty"`
+	Archived         *bool             `json:"archived,omitempty"`
+	Priority         domain.Priority   `json:"priority,omitempty"`
+	EntityID         domain.ID         `json:"entity_id,omitempty"`
+	PrincipalID      string            `json:"principal_id,omitempty"`
+	CommandID        domain.ID         `json:"command_id,omitempty"`
+	EventType        string            `json:"event_type,omitempty"`
 }
 
 func registerQueries(server *mcp.Server, s *application.Service, options Options) {
-	for _, name := range []string{"wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
+	for _, name := range []string{"wos_list_triggers", "wos_list_deliveries", "wos_list_trigger_firings", "wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
 		name := name
 		mcp.AddTool(server, &mcp.Tool{Name: name, Description: "Read authorized WOS state; limit 1–100, default 25. Expand omissions with section cursors; candidates never authorize execution."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
 			ctx, cancel, err := requestContext(ctx, req, options)
@@ -41,6 +44,15 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 			scope := domain.Scope{NamespaceID: q.NamespaceID, OutcomeID: q.OutcomeID}
 			var value any
 			switch name {
+			case "wos_list_triggers":
+				var items []domain.Trigger
+				var revision domain.OutcomeRevision
+				items, revision, err = s.ListTriggers(ctx, scope)
+				value = map[string]any{"items": items, "outcome_revision": revision}
+			case "wos_list_deliveries":
+				value, err = s.ListDeliveries(ctx, scope, q.Limit, q.Cursor)
+			case "wos_list_trigger_firings":
+				value, err = s.ListTriggerFirings(ctx, scope, q.Limit, q.Cursor)
 			case "wos_get_work_context":
 				value, err = s.GetWorkContext(ctx, scope, q.EntityID)
 			case "wos_get_outcome_graph":
@@ -73,7 +85,7 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 					err = domain.NewError(domain.ErrorCodeInvalidEntityKind, "unsupported entity kind")
 				}
 			case "wos_search_outcomes":
-				value, err = s.SearchOutcomes(ctx, q.NamespaceID, ports.OutcomeFilter{Text: q.Text, Lifecycle: q.Lifecycle, Archived: q.Archived, Priority: q.Priority}, q.Limit, q.Cursor)
+				value, err = s.SearchOutcomes(ctx, q.NamespaceID, ports.OutcomeFilter{ExternalProvider: q.ExternalProvider, ExternalKind: q.ExternalKind, ExternalID: q.ExternalID, Owner: q.Owner, Text: q.Text, Lifecycle: q.Lifecycle, Archived: q.Archived, Priority: q.Priority}, q.Limit, q.Cursor)
 			case "wos_get_continuity":
 				value, err = s.GetContinuity(ctx, scope, q.Limit)
 			case "wos_get_continuity_section":
@@ -91,5 +103,4 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 			return r, nil, e
 		})
 	}
-	_ = json.Valid
 }

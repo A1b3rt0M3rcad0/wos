@@ -3,14 +3,18 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-	"strings"
 )
 
-func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]domain.Outcome, error) {
-	q := `SELECT id FROM outcomes WHERE namespace_id=?`
+func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]ports.OutcomeIndexEntry, error) {
+	q := `SELECT id,version,title,description,lifecycle,priority,archived_at,created_at,updated_at FROM outcomes WHERE namespace_id=?`
 	args := []any{ns.String()}
+	if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
+		q += ` AND EXISTS(SELECT 1 FROM outcome_external_references e WHERE e.namespace_id=outcomes.namespace_id AND e.outcome_id=outcomes.id AND e.provider=? AND e.context_kind=? AND e.external_id=?)`
+		args = append(args, f.ExternalProvider, f.ExternalKind, f.ExternalID)
+	}
 	if f.Text != "" {
 		q += ` AND (strpos(lower(title),lower(?))>0 OR strpos(lower(description),lower(?))>0)`
 		args = append(args, f.Text, f.Text)
@@ -44,35 +48,36 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 	if err != nil {
 		return nil, err
 	}
-	var ids []domain.ID
+	defer rows.Close()
+	values := []ports.OutcomeIndexEntry{}
 	for rows.Next() {
-		var raw string
-		if err = rows.Scan(&raw); err != nil {
-			rows.Close()
-			return nil, err
-		}
-		id, err := domain.ParseID(raw)
-		if err != nil {
-			rows.Close()
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return nil, err
-	}
-	values := make([]domain.Outcome, 0, len(ids))
-	for _, id := range ids {
-		v, err := r.Get(ctx, ns, id)
+		var v ports.OutcomeIndexEntry
+		var rawID, lifecycle, priority string
+		var archived sql.NullInt64
+		var created, updated int64
+		err = rows.Scan(&rawID, &v.Version, &v.Title, &v.Description, &lifecycle, &priority, &archived, &created, &updated)
 		if err != nil {
 			return nil, err
 		}
+		v.ID, err = domain.ParseID(rawID)
+		if err != nil {
+			return nil, err
+		}
+		v.NamespaceID = ns
+		v.Lifecycle = domain.OutcomeLifecycle(lifecycle)
+		v.Priority = domain.Priority(priority)
+		if archived.Valid {
+			at := decodeTime(archived.Int64)
+			v.ArchivedAt = &at
+		}
+		v.CreatedAt = decodeTime(created)
+		v.UpdatedAt = decodeTime(updated)
+		v.DetailOmitted = true
 		values = append(values, v)
 	}
-	return values, nil
+	return values, rows.Err()
 }
+
 func (l eventLog) ListEvents(ctx context.Context, scope domain.Scope, f ports.EventFilter) ([]domain.DomainEvent, error) {
 	q := `SELECT id,event_type,schema_version,outcome_revision,event_index,aggregate_id,aggregate_kind,aggregate_version_before,aggregate_version_after,command_id,principal_id,actor_json,recorded_at,correlation_id,causation_id,execution_context_json,payload_json FROM domain_events WHERE namespace_id=? AND outcome_id=? AND (outcome_revision>? OR (outcome_revision=? AND event_index>?))`
 	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String(), int64(f.AfterRevision), int64(f.AfterRevision), int64(f.AfterIndex)}
@@ -102,4 +107,3 @@ func (l eventLog) ListEvents(ctx context.Context, scope domain.Scope, f ports.Ev
 
 var _ ports.OutcomeDiscoveryRepository = outcomeRepository{}
 var _ ports.TimelineRepository = eventLog{}
-var _ = strings.Contains

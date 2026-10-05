@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"os"
 	"sort"
@@ -28,7 +30,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	type entry struct{ name, cmd string }
+	type entry struct{ name, cmd, result string }
 	var entries []entry
 	for _, p := range pkgs {
 		for _, f := range p.Files {
@@ -53,7 +55,14 @@ func main() {
 				if !ok || !strings.HasSuffix(cmd.Name, "Command") {
 					continue
 				}
-				entries = append(entries, entry{fn.Name.Name, cmd.Name})
+				var result bytes.Buffer
+				rt := fn.Type.Results.List[0].Type.(*ast.IndexExpr)
+				printer.Fprint(&result, fset, rt.Index)
+				resultType := result.String()
+				if !strings.Contains(resultType, ".") {
+					resultType = "application." + resultType
+				}
+				entries = append(entries, entry{fn.Name.Name, cmd.Name, resultType})
 			}
 		}
 	}
@@ -68,5 +77,26 @@ func main() {
 		fmt.Fprintf(out, "registerCommand[application.%s](server,ids,options,\"wos_%s\",func(ctx context.Context,cc domain.CommandContext,cmd application.%s)(any,error){return service.%s(ctx,cc,cmd)})\n", e.cmd, snake(e.name), e.cmd, e.name)
 	}
 	fmt.Fprintln(out, "}")
+	web, err := os.Create("packages/wos-api/commands/catalog_generated.go")
+	if err != nil {
+		panic(err)
+	}
+	defer web.Close()
+	fmt.Fprintln(web, "// Code generated from public Application commands; DO NOT EDIT.\npackage commands\nimport(\"context\";\"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application\";\"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain\";\"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports\")\nfunc NewCatalog(service *application.Service,ids ports.IDGenerator)*Catalog {c:=newCatalog(ids)")
+	for _, e := range entries {
+		fmt.Fprintf(web, "register[application.%s](c,\"%s\",func(ctx context.Context,cc domain.CommandContext,cmd application.%s)(any,error){return service.%s(ctx,cc,cmd)})\n", e.cmd, snake(e.name), e.cmd, e.name)
+	}
+	fmt.Fprintln(web, "return c}")
+
+	sdk, err := os.Create("packages/wos-sdk-go/commands_generated.go")
+	if err != nil {
+		panic(err)
+	}
+	defer sdk.Close()
+	fmt.Fprintln(sdk, "// Code generated from public Application commands; DO NOT EDIT.\npackage wossdk\nimport(\"context\";\"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application\";\"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain\")")
+	for _, e := range entries {
+		fmt.Fprintf(sdk, "func(c *Client)%s(ctx context.Context,key string,cmd application.%s)(CommandResult[%s],error){return command[%s](ctx,c,\"%s\",key,cmd)}\n", e.name, e.cmd, e.result, e.result, snake(e.name))
+	}
+
 	fmt.Println("registered", len(entries), "commands")
 }
