@@ -1,0 +1,20 @@
+Woobe production source hashes verified; discovery and review policy passed
+J01 passed: authenticated human creates and activates Outcome with required criterion
+J02 passed: required Objective, WorkItem and immutable initial plan published
+J03 passed: agent discovers context through authorized MCP without chat history
+Traceback (most recent call last):
+  File "/workspace/scratch/971b714909a0/wos/tests/acceptance/journey.py", line 361, in <module>
+    asyncio.run(journey(arguments))
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/971b714909a0/wos/tests/acceptance/journey.py", line 234, in journey
+    assert type(claimed["current_lease"]["fencing_token"]) is int, "consumer redacted the public fencing_token: " + repr(claimed["current_lease"]["fencing_token"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: consumer redacted the public fencing_token: '[REDACTED]'

@@ -194,7 +194,7 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [x] E04.16 Aplicar autenticação e escopo confiáveis também ao modo remoto MCP.
 - [ ] E04.17 Executar a mesma suíte de comandos por HTTP e MCP, comparando resultado e invariantes.
 - [x] E04.18 Demonstrar um cliente MCP real independente da Woobe.
-- [ ] E04.19 Demonstrar uma integração Woobe → WOS por MCP sem tornar a Woobe requisito do servidor.
+- [x] E04.19 Demonstrar uma integração Woobe → WOS por MCP sem tornar a Woobe requisito do servidor.
 
 **Aceite:** um cliente MCP real descobre, interpreta, assume, atualiza e retoma trabalho por chamadas ao mesmo Application Service utilizado pela API.
 
@@ -304,10 +304,10 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [x] E09.06 Oferecer reconciliação de resultado incerto sem criar uma segunda operação.
 - [x] E09.07 Entregar cliente TypeScript/contrato gerado se necessário ao frontend; não bloquear o MVP por SDKs em todas as linguagens.
 - [ ] E09.08 Validar paridade entre OpenAPI e comportamento HTTP, não apenas sintaxe YAML.
-- [ ] E09.09 Manter exemplos executáveis de embedded Go, standalone HTTP, MCP independente e Woobe.
+- [x] E09.09 Manter exemplos executáveis de embedded Go, standalone HTTP, MCP independente e Woobe.
 - [ ] E09.10 Demonstrar produto consumindo WOS diretamente e agentes consumindo por MCP.
 - [x] E09.11 Documentar que IDs de Run/Session servem para correlação, não para possuir o estado do Outcome.
-- [ ] E09.12 Documentar integração de referência com produto real sem mover regras específicas desse produto para o Core.
+- [x] E09.12 Documentar integração de referência com produto real sem mover regras específicas desse produto para o Core.
 
 **Aceite:** um terceiro integra e continua um Outcome a partir de documentação e exemplos publicados, sem depender de decisões implícitas das conversas de desenvolvimento.
 
@@ -321,7 +321,7 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [x] E10.04 Ampliar readiness para schema compatível, storage escolhido e componentes necessários do runtime.
 - [ ] E10.05 Testar desligamento gracioso com requisições e entregas em andamento.
 - [ ] E10.06 Implementar e documentar backup consistente dos bancos e os requisitos do ambiente.
-- [ ] E10.07 Restaurar em instalação limpa e verificar referências, histórico, grants, idempotência e entregas pendentes.
+- [x] E10.07 Restaurar em instalação limpa e verificar referências, histórico, grants, idempotência e entregas pendentes.
 - [x] E10.08 Definir retomada de leases e timestamps depois da restauração.
 - [x] E10.09 Documentar upgrade, compatibilidade, recuperação e rollback operacional suportado.
 - [ ] E10.10 Acrescentar logs estruturados de comando/query, ator/principal, correlação, revisão, duração e resultado.
@@ -329,7 +329,7 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [ ] E10.12 Instrumentar transport, application, storage e integração sem importar observabilidade no Domain.
 - [x] E10.13 Evitar conteúdo documental e credenciais integrais nos logs por padrão.
 - [x] E10.14 Documentar limites de tamanho, retenção e manutenção compatíveis com a continuidade prometida.
-- [ ] E10.15 Entregar instalação inicial e exemplo independente da Woobe testados em ambiente limpo.
+- [x] E10.15 Entregar instalação inicial e exemplo independente da Woobe testados em ambiente limpo.
 
 **Aceite:** alguém consegue instalar, operar, atualizar, reiniciar e restaurar o WOS sem perder o estado necessário à continuação.
 
@@ -344,11 +344,11 @@ Na leitura inicial, estes itens eram trabalho recomendado. “Reconciliar” sig
 - [x] E11.07 Testar concorrência com banco real, não apenas goroutines usando adapter em memória.
 - [ ] E11.08 Aplicar fuzz/property tests a grafo, referências, cursores e serialização de contratos.
 - [x] E11.09 Executar migrations partindo de snapshots de versões anteriores.
-- [ ] E11.10 Provar restauração e continuação por consumidor novo.
+- [x] E11.10 Provar restauração e continuação por consumidor novo.
 - [ ] E11.11 Medir latência, tamanho de resposta, queries e throughput em ambiente documentado.
 - [x] E11.12 Publicar benchmarks como medições, distinguindo-os das metas propostas no design.
 - [ ] E11.13 Revisar licença, changelog, contratos, documentação e artefatos de distribuição.
-- [ ] E11.14 Executar a demonstração integrada descrita na seção seguinte.
+- [x] E11.14 Executar a demonstração integrada descrita na seção seguinte.
 - [ ] E11.15 Associar cada critério final ao teste, evidência ou demonstração que o satisfaz.
 
 **Aceite:** nenhuma capacidade exigida depende apenas de uma promessa do README; o conjunto de evidências demonstra o produto realmente operando.
@@ -451,22 +451,31 @@ Os comandos executados, seus resultados e limites ficam em `docs/verification-20
 | E02.01–06, .09–10, .19, .22 | `application/continuity.go`, `sqlite/queries.go`, `TestContinuationFromDiscoverySnapshotAndCursors`, `TestIndexedExternalContextPreservesTypeAndRestart`, `TestIndependentSDKConsumerContinuesAfterRestart`, fuzz de cursor | Snapshot JSON limitado a 256 KiB; coleções ainda são reconstruídas integralmente. |
 | E02.07–08, .11–18 | `application/focal_graph.go`, `plan_projection.go`, `continuity.go`, consultas de readiness/blocking; `docs/contracts.md`; métricas de critérios separados de trabalho e waiver | Referências do plano ativo projetam versão/lifecycle/disponibilidade vivos sem alterar rótulos ou hash históricos. Grafo/contexto focal precisam de maior cobertura dirigida e otimização. |
 | E03.01–18 | `application/security*.go`, `authorization.go`, `reviewer_policy.go`; `sqlite/security_contract_test.go`, `security_admin_test.go`, `context_contract_test.go`; `TestPermissionRevokedWhileAwaitingTransactionCannotMutate`; `TestNamespaceCreationCopiesOnlyGrantedPermissions`; `TestBrowserSessionCatalogAndRevocation`; `TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship` | Administração lista até 100 registros e declara truncamento; expansão do histórico administrativo ainda precisa evoluir. Leituras em voo não são canceladas pela revogação posterior. |
-| E04.02–16, .18 | SDK oficial MCP Go 1.8.0; `api/mcp`; catálogo gerado de 78 comandos; `TestRealMCPClientSharesDurableStateWithHTTP`, `TestRealStdioMCPSubprocess`, teste de grants MCP remoto | Paridade de toda a suíte (.17), matriz completa (.01) e demonstração Woobe (.19) abertas. |
+| E04.02–16, .18–19 | SDK oficial MCP Go 1.8.0; `api/mcp`; catálogo gerado de 78 comandos; `TestRealMCPClientSharesDurableStateWithHTTP`, `TestRealStdioMCPSubprocess`, teste de grants MCP remoto | Paridade de toda a suíte (.17), matriz completa (.01) e integração da correção de compatibilidade Woobe ainda aberta; a referência .19 passou com os módulos reais no perfil proposto do PR Woobe #178. |
 | E05.01–03, .07, .10, .21 | `tests/web/journey.spec.mjs`, Playwright 1.62.1 e Chromium real: sessão, criação, critério, trabalho, plano inicial, revisão 2 com revisão 1 imutável, agente MCP, avaliação humana, certificação e novo navegador após restart | Passou localmente (4,6 s). Viewport de 390 px sem overflow. Browser acceptance remoto #1 e #2 passaram (`37380121824`, `37380724938`). Fluxos adicionais e acessibilidade completa ainda abertos. |
 | E06.02–14 | Testes Wave 10 de assessment, contestação e concorrência; `sqlite/wave10_*test.go`, `leases_test.go`; `TestTerminalOutcomeRequiresExplicitReopenBeforeChangingObligations`; `reviewer_policy_test.go`; contratos de autoria/lease | Equivalência de todos os transports/bancos (.01) depende da matriz real. |
-| E07.01–04, .06, .11–12 | `storage/postgres`, pgx 5.9.2, migrations até 0015, isolamento SERIALIZABLE, guard `FOR UPDATE`, pool/deadlines, seleção do runtime; gerador explícito de diferenças SQL | CI #232 (`37380724897`) passou com PostgreSQL 18.6 real: testes compartilhados e detector de corridas. Os quatro cenários de runtime HTTP/MCP/SDK/sessão e restore de integração passaram no CI #233, inclusive race. Matriz exaustiva, extensão de restore de prova/planos/leases e benchmark PostgreSQL permanecem abertos. Os testes locais sem DSN continuam explicitamente ignorados. |
+| E07.01–04, .06, .11–12 | `storage/postgres`, pgx 5.9.2, migrations até 0015, isolamento SERIALIZABLE, guard `FOR UPDATE`, pool/deadlines, seleção do runtime; gerador explícito de diferenças SQL | CI #232 (`37380724897`) passou com PostgreSQL 18.6 real: testes compartilhados e detector de corridas. Os quatro cenários de runtime HTTP/MCP/SDK/sessão e restore de integração passaram no CI #233, inclusive race. Matriz exaustiva, Restore de prova/planos/leases passou também no CI #234 (`37382919540`). Matriz exaustiva e benchmark PostgreSQL permanecem abertos. Os testes locais sem DSN continuam explicitamente ignorados. |
 | E08.01–13, .15 | `application/integration.go`, `domain/trigger.go`, `sqlite/integration.go`, migração 0013; `TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing`; `TestRealWebhookRetryKeepsEventIdentityAndSignature`; `TestWebhookSignatureAndDestinationPolicy`; `TestDeliveryCrashBudgetRequiresExplicitRedelivery`; `docs/contracts.md`/`operations.md` | Catálogo v1 de 81 tipos publicado em `docs/integration-events-v1.json`, sem payload interno; semântica/evolução em `integration-events.md`, check contra o mapeamento no CI. Matriz completa de falhas (.14) aberta. |
-| E09.02–07, .11 | Catálogo único para HTTP/MCP/SDK; `commands.openapi.json`; `packages/wos-sdk-go`, teste de consumidor após restart; contratos públicos e documentação de correlação | OpenAPI completo verificado por comportamento (.01/.08), Exemplo embedded Go executado inclusive por outro módulo, `examples/embedded` e teste de boundary. O conjunto de exemplos (.09) ainda depende de Woobe e a integração de produto real permanece aberta. |
-| E10.02–04, .08–09, .13–14 | Dockerfile/Compose, CLI/runtime/health, `docs/operations.md`; logs sem payload/segredo; política de recuperação, leases, limites e retenção | Contêineres não executados; desligamento com entregas em voo, restore completo, plataforma/reprodutibilidade e métricas completas pendentes. |
-| E11.01, .04, .07, .09, .12 | CI atualizado com PostgreSQL real obrigatório, drift de geração e workflow de navegador; upgrade de schema 0007; `docs/benchmarks.md` e saída original | CI #232 passou com banco real, race, geração, vet, build e smokes; Browser acceptance #2 (`37380724938`) passou com processo servidor e jornada de domínio. O aceite integral E11 permanece aberto. |
+| E09.02–07, .09, .11–12 | Catálogo único para HTTP/MCP/SDK; `commands.openapi.json`; `packages/wos-sdk-go`, teste de consumidor após restart; contratos públicos e documentação de correlação | OpenAPI completo verificado por comportamento (.01/.08), Exemplo embedded Go executado inclusive por outro módulo, `examples/embedded` e teste de boundary. Os exemplos embedded, HTTP/MCP independente e Woobe passaram; `examples/woobe-reference` fixa hashes e explicita o perfil proposto de compatibilidade. Deploy completo do produto Woobe (.10) permanece aberto. |
+| E10.02–04, .07–09, .13–15 | Dockerfile/Compose, CLI/runtime/health, `docs/operations.md`; logs sem payload/segredo; política de recuperação, leases, limites e retenção | Restore de credenciais/receipts/outbox, provas/conclusões, planos e leases passou em ambos os bancos; jornada integral restaurada em SQLite passou com consumidor em processo novo. Contêineres e build reproduzível aguardam o job desta revisão. Shutdown em voo, matriz de plataformas e métricas completas pendentes. |
+| E11.01, .04, .07, .09–10, .12, .14 | CI atualizado com PostgreSQL real obrigatório, drift de geração e workflow de navegador; upgrade de schema 0007; `docs/benchmarks.md` e saída original | CI #232 passou com banco real, race, geração, vet, build e smokes; Browser acceptance #2 (`37380724938`) passou com processo servidor e jornada de domínio. O aceite integral E11 permanece aberto. |
 
 ### 9.3 Trabalho restante obrigatório
 
-1. **PostgreSQL e transports:** os contratos compartilhados, concorrência e detector de corridas passaram em PostgreSQL 18.6 no CI #232, commit `62658054adb6c556aab940e1bada4a5416cbf423`. A falha real de reconstrução do CI #231 foi corrigida. Nesta revisão, cenários de HTTP/MCP/SDK/sessão passaram a executar nos dois bancos e o contrato de integração passou a usar pg_dump/pg_restore em banco vazio no CI; essa ampliação passou no [CI #233](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37382265559), commit `5d0829799dad9edbd9a9ca26bd1439a5313909fe`, inclusive race. A matriz exaustiva de comandos/consultas, A extensão de restore de planning/prova/leases aguarda a próxima execução; benchmark PostgreSQL continua obrigatório.
+1. **PostgreSQL e transports:** os contratos compartilhados, concorrência e detector de corridas passaram em PostgreSQL 18.6 no CI #232, commit `62658054adb6c556aab940e1bada4a5416cbf423`. A falha real de reconstrução do CI #231 foi corrigida. Nesta revisão, cenários de HTTP/MCP/SDK/sessão passaram a executar nos dois bancos e o contrato de integração passou a usar pg_dump/pg_restore em banco vazio no CI; essa ampliação passou no [CI #233](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37382265559), commit `5d0829799dad9edbd9a9ca26bd1439a5313909fe`, inclusive race. A matriz exaustiva de comandos/consultas, A extensão de restore de planning/prova/leases passou no CI #234. Benchmark PostgreSQL continua obrigatório.
 2. **Produto humano:** a jornada real de criação/plano/replanejamento/MCP/revisão/restart passou. Ampliar para revisão de evidência, Objective, Issue/Blocker, conflitos, teclado e acessibilidade; validar todas as ações e seletores. Essa fatia não encerra E05.
 3. **Continuidade e desempenho:** ampliar os testes da projeção de planos ativos sobre referências vivas, eliminar scans/N+1 desnecessários, medir queries/espera de guard/throughput e ampliar testes de grafo/contexto focal. Medição SQLite atual: descoberta 0,195 ms; snapshot 65,330 ms no dataset publicado.
-4. **Integração e recuperação:** ampliar shutdown/falhas de destinos e cobertura de recuperação. O catálogo v1 foi publicado; restore SQLite de credenciais/sessão/auditoria/grants/recibos/outbox, conclusões/prova, revisão de planos e leases passou. As mesmas fronteiras de prova/planos/leases foram estendidas a pg_dump/pg_restore em PostgreSQL no CI, ainda aguardando execução desta revisão; adicionar métricas de guard/leases/outbox.
-5. **Contratos e consumidores:** verificar comportamento de todas as rotas OpenAPI, executar paridade completa HTTP/MCP e demonstração Woobe/produto real, validar builds reproduzíveis e artefatos de distribuição.
-6. **Gate final:** executar a demonstração completa da seção 5 e associar todos os critérios Release 0.1 à evidência. Só então integrar os PRs e publicar a release.
+4. **Integração e recuperação:** ampliar shutdown/falhas de destinos e cobertura de recuperação. O catálogo v1 foi publicado; restore SQLite de credenciais/sessão/auditoria/grants/recibos/outbox, conclusões/prova, revisão de planos e leases passou. As mesmas fronteiras de prova/planos/leases passaram com pg_dump/pg_restore em banco PostgreSQL vazio no CI #234; adicionar métricas de guard/leases/outbox.
+5. **Contratos e consumidores:** verificar comportamento de todas as rotas OpenAPI, executar paridade completa HTTP/MCP e deploy completo do produto Woobe, integrar sua correção de redaction e validar a matriz de builds/artefatos de distribuição. A demonstração de referência MCP da Woobe passou no perfil proposto do PR #178; a Woobe master ainda mascara o contador de fencing.
+6. **Gate final:** a demonstração completa da seção 5 passou localmente nas duas execuções descritas em 9.4. Associar os critérios de release ainda abertos à evidência, concluir a validação de distribuição/transport/UX/observabilidade e revisar a integração dos PRs antes de publicar Release 0.1.
 
 **Veredito atualizado:** o plano teve implementação substancial e verificável; a Release 0.1 e a missão completa do produto continuam **não concluídas**. Todos os itens abertos preservam suas obrigações originais. Este relatório registra uma entrega revisável, não uma certificação de produto por inspeção.
+
+
+### 9.4 Demonstração integrada efetivamente executada
+
+`tests/acceptance/journey.py` passou nas **18 etapas sobre o mesmo Outcome**, com humano e dois agentes autenticados, servidor standalone e consumidor webhook reais. Foram executados os perfis independente (`--client http`) e Woobe (`--client woobe --woobe-fencing-fix`). `read_state.py` é outro processo e descobre o Outcome usando apenas endpoint, Namespace e credencial após restart e restore. O lease expira pelo relógio real (mínimo de 30 s). Artifact/Evidence registram um arquivo com os resultados realmente observados, checksum e referência; os atores determinísticos não simulam respostas de LLM.
+
+Evidências: `docs/audit/full-http-journey.txt`, `full-woobe-journey.txt` e `woobe-baseline-fencing-failure.txt`. A redaction da Woobe master remove o inteiro público `fencing_token`, bloqueando a execução válida. A correção proposta está no [PR Woobe #178](https://github.com/A1b3rt0M3rcad0/woobe/pull/178), commit `9161eecc0afac5a4e2736bf71ddedba28d781b45`, draft não integrado. O harness verifica os hashes dos módulos reais e o hash alternativo explícito da correção; não modifica módulos ao executar. Os três testes específicos mantêm strings, booleanos, negativos, valores fracionários, containers e credenciais mascarados.
+
+A jornada demonstra referência de cliente MCP da Woobe; não certifica um deploy completo de Agent/Network, Redis, OAuth ou frontend Woobe. O CI WOS desta revisão repetirá a jornada independente, teste de build reproduzível Linux amd64 e smoke do contêiner sem root. O aceite de Release 0.1 permanece aberto nos itens ainda desmarcados.

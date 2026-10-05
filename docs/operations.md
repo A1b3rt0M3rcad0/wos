@@ -37,7 +37,7 @@ WOS_STORAGE_DRIVER=postgres WOS_POSTGRES_DSN='postgres://USER:PASSWORD@HOST:5432
 
 O DSN é configuração secreta. São usados pgx, transações Serializable, guard por Outcome, pool de até 16 conexões, lock timeout de 5 s e statement timeout de 30 s. Conflitos transitórios retornam `transaction_conflict`; nunca se altera a versão esperada silenciosamente. O CI usa PostgreSQL 18 real. SQLite aprovado não equivale a PostgreSQL aprovado.
 
-`Dockerfile` produz binário CGO-free e imagem com usuário 10001, certificados CA e volume `/data`. `compose.yaml` expõe apenas loopback no host e exige configuração de bootstrap. Por padrão usa SQLite. Para PostgreSQL, configure senha não vazia, `WOS_STORAGE_DRIVER=postgres`, DSN com host `postgres` e inicie `docker compose --profile postgres up --build`. Aguarde a saúde do banco antes do servidor; containers não foram executados no ambiente desta auditoria. Segredos são fornecidos pelo operador, fora do repositório.
+`Dockerfile` produz binário CGO-free e imagem com usuário 10001, certificados CA e volume `/data`. `compose.yaml` expõe apenas loopback no host e exige configuração de bootstrap. Por padrão usa SQLite. Para PostgreSQL, configure senha não vazia, `WOS_STORAGE_DRIVER=postgres`, DSN com host `postgres` e inicie `docker compose --profile postgres up --build`. Aguarde a saúde do banco antes do servidor; o smoke do contêiner sem root e com filesystem raiz read-only foi acrescentado ao CI desta revisão e aguarda execução. Segredos são fornecidos pelo operador, fora do repositório.
 
 ## MCP
 
@@ -51,7 +51,7 @@ SQLite: `WOS_SQLITE_PATH=./data/wos.db ./bin/wos db backup ./backup/wos.db`. O a
 
 Restore SQLite: pare o servidor e workers; `./bin/wos db restore ./backup/wos.db ./data/restored.db`. O destino deve ser novo; não se sobrescreve uma instalação existente. A restauração é offline e copia todo o banco. Configure o caminho restaurado, execute `db migrate`, consulte `/readyz` e valide a continuidade antes de aceitar tráfego.
 
-PostgreSQL: use `pg_dump --format=custom` e `pg_restore --single-transaction` para banco novo, com a versão de cliente correspondente ao servidor. Inclua schema completo, histórico, grants, credenciais, idempotência e outbox. Nunca restaure só as entidades atuais. O CI executa restore de um schema de teste por pg_dump/pg_restore em banco vazio e continua o contrato de identidade/idempotência/outbox. A extensão com proof/planning/leases aguarda sua execução remota; nenhuma dessas fatias certifica sozinha o restore da demonstração integral de produto.
+PostgreSQL: use `pg_dump --format=custom` e `pg_restore --single-transaction` para banco novo, com a versão de cliente correspondente ao servidor. Inclua schema completo, histórico, grants, credenciais, idempotência e outbox. Nunca restaure só as entidades atuais. O CI executa restore de um schema de teste por pg_dump/pg_restore em banco vazio e continua o contrato de identidade/idempotência/outbox. A extensão com proof/planning/leases passou no CI #234; nenhuma dessas fatias certifica sozinha o restore da demonstração integral de produto.
 
 Migrações numeradas têm checksum e são ascendentes. `db migrate` aplica as pendentes; o servidor migra ao abrir. Bancos com schema desconhecido não ficam ready. Não há downgrade SQL destrutivo suportado: rollback operacional usa o binário antigo e seu backup pré-upgrade, em banco separado, considerando explicitamente os fatos posteriores que precisam de reconciliação.
 

@@ -81,4 +81,13 @@ A revisão seguinte amplia quatro cenários de runtime (MCP/HTTP compartilhados,
 
 `go run ./examples/embedded`: passou, `lifecycle=achieved revision=5 certified=true`. `go test ./tests/boundary`: passou; o teste copia esse consumidor para outro módulo Go e executa criação, critério, ativação, avaliação e certificação pelo Core público.
 
-As fronteiras de recuperação dos testes Wave 10 de conclusões/histórico, Wave 11 de revisões imutáveis e leases agora usam backup em arquivo vazio SQLite e, no CI, pg_dump/pg_restore em banco PostgreSQL vazio. Os asserts existentes incluem continuação com um novo Service, preservação dos snapshots de avaliação e conclusão, revisão histórica legível e renovação/reclaim/fencing após restore. A fatia SQLite passou; PostgreSQL desta ampliação aguarda CI.
+As fronteiras de recuperação dos testes Wave 10 de conclusões/histórico, Wave 11 de revisões imutáveis e leases agora usam backup em arquivo vazio SQLite e, no CI, pg_dump/pg_restore em banco PostgreSQL vazio. Os asserts existentes incluem continuação com um novo Service, preservação dos snapshots de avaliação e conclusão, revisão histórica legível e renovação/reclaim/fencing após restore. A fatia SQLite passou; PostgreSQL desta ampliação passou no CI #234 (`37382919540`), commit `bdbe6e6c0a764fe42a65c661b839f331c33a1eb7`, job `112009101477`, incluindo race. Excerto: `audit/proof-planning-lease-restore-ci-passed.txt`. Browser acceptance #4 (`37382919412`) também passou.
+
+
+## Jornada integral e interoperabilidade Woobe
+
+Os perfis independente e Woobe do `tests/acceptance/journey.py` passaram nas 18 etapas, incluindo o lease real de 30 s, consumidores HTTP em processo novo após restart/restore, revisão imutável, contestação sem reopen, assinatura HMAC e efeito deduplicado em SQLite próprio do consumidor. As saídas são `audit/full-http-journey.txt` e `audit/full-woobe-journey.txt`.
+
+O cliente Woobe é composto pelos módulos de produção verificáveis por Git blob hash, com a correção explícita de redaction do PR Woobe #178, não integrado. A reprodução na revisão original falhou ao devolver `'[REDACTED]'` em vez de `fencing_token` inteiro (`audit/woobe-baseline-fencing-failure.txt`). Os três testes específicos da correção passaram. Ver `examples/woobe-reference` para reproduzir e para o alcance do perfil de referência; não equivale a deploy integral da Woobe.
+
+O cenário identificou e corrigiu campos de arrays de IDs gerados incorretamente: `evidence_ids` e `target_endpoint_ids` agora seguem os nomes REST, usados em HTTP/MCP/SDK/OpenAPI. `TestPluralIdentifierArraysUsePublicRESTNames` passou; a suíte Go e vet passaram após a correção. Os jobs de jornada, contêiner e reprodução binária desta revisão ainda aguardam CI.

@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. Draft PR #14 adds authorized continuity, HTTP/MCP, the web client, Go SDK, PostgreSQL and durable integration signals. Acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md); CI #232 passed shared SQLite/PostgreSQL 18.6 contracts and race detection; the real browser journey passed twice. Exhaustive transport parity, recovery and full product acceptance remain open.
+> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. Draft PR #14 adds authorized continuity, HTTP/MCP, the web client, Go SDK, PostgreSQL and durable integration signals. Acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md); CI #234 passed shared SQLite/PostgreSQL 18.6 contracts, race detection and clean proof/planning/lease restore; four browser runs passed. The 18-step standalone/reference-Woobe journeys passed locally, with the proposed Woobe compatibility fix explicitly required. Exhaustive transport parity, recovery and full product acceptance remain open.
 
 Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
 

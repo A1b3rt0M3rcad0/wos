@@ -17,3 +17,5 @@ Completion branch, based on planning PR #13; not a released 0.1.
 - Expand HTTP/MCP/SDK/session scenarios to isolated PostgreSQL schemas and test clean-file/database restore of proof, planning and leases.
 
 Open release obligations and actual evidence remain in `docs/auditoria-conclusao-2026-10-05.md`; partial browser/storage acceptance does not certify the full product release.
+
+- Correct generated plural ID fields to match REST names; verify both full 18-step independent/Woobe client journeys, with the proposed Woobe fencing redaction fix explicitly tracked.

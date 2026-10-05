@@ -99,6 +99,52 @@ jobs:
       - name: Smoke configuration validation
         run: ./bin/wos config validate
 
+      - name: Same-Outcome eighteen-step standalone acceptance
+        run: python3 tests/acceptance/journey.py --binary bin/wos --client http
+
+      - name: Reproducible Linux amd64 build across source paths
+        shell: bash
+        run: |
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          mkdir "$tmpdir/source"
+          git archive HEAD | tar -x -C "$tmpdir/source"
+          CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags='-s -w' -o "$tmpdir/first" ./packages/wos-api/cmd/wos
+          (cd "$tmpdir/source" && CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags='-s -w' -o "$tmpdir/second" ./packages/wos-api/cmd/wos)
+          cmp "$tmpdir/first" "$tmpdir/second"
+          sha256sum "$tmpdir/first" "$tmpdir/second"
+
+      - name: Non-root container build and runtime smoke
+        shell: bash
+        run: |
+          docker build --tag wos:ci .
+          test "$(docker inspect --format '{{.Config.User}}' wos:ci)" = '10001:10001'
+          docker run --rm wos:ci version
+          docker run --rm wos:ci config validate
+          bootstrap="$(openssl rand -base64 32)"
+          echo "::add-mask::$bootstrap"
+          docker run -d --name wos-ci --read-only --tmpfs /data:uid=10001,gid=10001,mode=0700 \
+            -p 127.0.0.1:18081:8080 \
+            --env WOS_LISTEN=0.0.0.0:8080 --env WOS_AUTH_MODE=api_token \
+            --env WOS_BOOTSTRAP_TOKEN="$bootstrap" \
+            --env WOS_BOOTSTRAP_NAMESPACE_ID=0199d220-0000-7000-8000-000000000001 \
+            --env WOS_BOOTSTRAP_NAMESPACE_NAME=Container-ci --env WOS_LOCAL_PRINCIPAL_ID=container-ci \
+            wos:ci
+          trap 'docker rm -f wos-ci >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for _ in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:18081/readyz >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 0.2
+          done
+          if [ "$ready" -ne 1 ]; then
+            docker logs wos-ci
+            exit 1
+          fi
+          curl --fail --silent --show-error http://127.0.0.1:18081/livez >/dev/null
+
       - name: Smoke standalone HTTP runtime
         shell: bash
         run: |

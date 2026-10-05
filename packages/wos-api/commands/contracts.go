@@ -28,6 +28,9 @@ func decodeStrict(raw []byte, target any) error {
 	return nil
 }
 func snake(s string) string {
+	// Keep plural initialisms together, matching the existing REST JSON contract.
+	s = strings.ReplaceAll(s, "IDs", "Ids")
+	s = strings.ReplaceAll(s, "URLs", "Urls")
 	r := []rune(s)
 	var b strings.Builder
 	for i, c := range r {

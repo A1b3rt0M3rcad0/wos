@@ -26,3 +26,7 @@ Thumbs.db
 node_modules/
 test-results/
 playwright-report/
+
+# Python acceptance consumers
+__pycache__/
+*.pyc
