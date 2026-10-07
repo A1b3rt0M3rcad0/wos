@@ -1,0 +1,35 @@
+services:
+  wos:
+    build: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      WOS_LISTEN: 0.0.0.0:8080
+      WOS_AUTH_MODE: api_token
+      WOS_LOCAL_PRINCIPAL_ID: operator
+      WOS_BOOTSTRAP_TOKEN: ${WOS_BOOTSTRAP_TOKEN:?set a random bootstrap token of at least 32 characters}
+      WOS_BOOTSTRAP_NAMESPACE_ID: ${WOS_BOOTSTRAP_NAMESPACE_ID:?set a UUIDv7 namespace}
+      WOS_BOOTSTRAP_NAMESPACE_NAME: ${WOS_BOOTSTRAP_NAMESPACE_NAME:-Main}
+      WOS_STORAGE_DRIVER: ${WOS_STORAGE_DRIVER:-sqlite}
+      WOS_POSTGRES_DSN: ${WOS_POSTGRES_DSN:-}
+      WOS_MCP_ENABLED: "true"
+    volumes:
+      - wos_data:/data
+    restart: unless-stopped
+  postgres:
+    image: postgres:18
+    profiles: [postgres]
+    environment:
+      POSTGRES_DB: wos
+      POSTGRES_USER: wos
+      POSTGRES_PASSWORD: ${WOS_POSTGRES_PASSWORD:-}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U wos -d wos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  wos_data:
+  postgres_data:

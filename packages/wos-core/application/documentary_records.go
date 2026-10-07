@@ -34,8 +34,8 @@ type RegisterEvidenceCommand struct {
 	CapturedAt    time.Time
 	ArtifactID    *domain.ID
 	Measurement   *domain.Measurement
-	SourceVersion string
-	Checksum      string
+	SourceVersion string `wos:"optional"`
+	Checksum      string `wos:"optional"`
 }
 
 type RetractEvidenceCommand struct {
@@ -466,6 +466,10 @@ func (s *Service) SupersedeDecision(ctx context.Context, cc domain.CommandContex
 }
 
 func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Artifact], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Artifact]{}, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadResult[domain.Artifact]{}, err
@@ -487,6 +491,10 @@ func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]domain.Artifact, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -508,6 +516,10 @@ func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]doma
 }
 
 func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Evidence], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Evidence]{}, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadResult[domain.Evidence]{}, err
@@ -529,6 +541,10 @@ func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domain.Evidence, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -550,6 +566,10 @@ func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domai
 }
 
 func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.EvidenceLink], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.EvidenceLink]{}, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadResult[domain.EvidenceLink]{}, err
@@ -571,6 +591,10 @@ func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id do
 }
 
 func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]domain.EvidenceLink, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -592,6 +616,10 @@ func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]
 }
 
 func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Decision], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Decision]{}, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadResult[domain.Decision]{}, err
@@ -613,6 +641,10 @@ func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListDecisions(ctx context.Context, scope domain.Scope) ([]domain.Decision, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err

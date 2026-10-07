@@ -1,0 +1,5 @@
+=== RUN   TestDeliveryCrashBudgetRequiresExplicitRedelivery
+    integration_contract_test.go:174: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it
+--- SKIP: TestDeliveryCrashBudgetRequiresExplicitRedelivery (0.00s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	0.004s

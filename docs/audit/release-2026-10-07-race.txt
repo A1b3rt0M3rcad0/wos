@@ -1,0 +1,21 @@
+?   	github.com/A1b3rt0M3rcad0/wos/examples/embedded	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/examples/remote-client	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	19.231s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability	1.087s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	(cached)
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	(cached)
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	(cached)
+?   	github.com/A1b3rt0M3rcad0/wos/tools/mcpgen	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/tools/openapigen	[no test files]

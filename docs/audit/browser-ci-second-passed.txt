@@ -1,0 +1,4 @@
+2026-10-05T22:11:59.1406282Z Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234) from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip
+2026-10-05T22:12:06.8425011Z Chrome for Testing 151.0.7922.34 (playwright chromium v1234) downloaded to /home/runner/.cache/ms-playwright/chromium-1234
+2026-10-05T22:12:19.4567327Z   ✓  1 journey.spec.mjs:11:1 › human plans, agent executes by MCP, human certifies, new browser resumes after restart (4.7s)
+2026-10-05T22:12:19.5012489Z   1 passed (6.2s)

@@ -145,3 +145,11 @@ func loadMigrations() ([]migration, error) {
 	}
 	return result, nil
 }
+
+func LatestSchemaVersion() (int64, error) {
+	m, err := loadMigrations()
+	if err != nil {
+		return 0, err
+	}
+	return m[len(m)-1].version, nil
+}

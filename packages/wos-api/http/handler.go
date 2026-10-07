@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -22,20 +23,27 @@ import (
 const maxJSONBodyBytes = 256 << 10
 
 type Options struct {
-	Prefix         string
-	RequestTimeout time.Duration
-	Service        *application.Service
-	IDs            ports.IDGenerator
-	LocalAuth      local.Resolver
+	Prefix          string
+	RequestTimeout  time.Duration
+	Service         *application.Service
+	IDs             ports.IDGenerator
+	LocalAuth       local.Resolver
+	ResolveIdentity func(*http.Request) (application.Identity, error)
+	Security        *application.SecurityService
+	LocalNamespaces []ports.Namespace
 }
 
 type Handler struct {
-	service        *application.Service
-	ids            ports.IDGenerator
-	auth           local.Resolver
-	requestTimeout time.Duration
-	prefix         string
-	mux            *http.ServeMux
+	service         *application.Service
+	ids             ports.IDGenerator
+	auth            local.Resolver
+	resolveIdentity func(*http.Request) (application.Identity, error)
+	security        *application.SecurityService
+	requestTimeout  time.Duration
+	prefix          string
+	mux             *http.ServeMux
+	commands        *commands.Catalog
+	localNamespaces []ports.Namespace
 }
 
 type contractError struct {
@@ -56,7 +64,7 @@ func New(options Options) (*Handler, error) {
 	if options.Service == nil || options.IDs == nil {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "http service and id generator are required")
 	}
-	if strings.TrimSpace(options.LocalAuth.Principal()) == "" {
+	if options.ResolveIdentity == nil && strings.TrimSpace(options.LocalAuth.Principal()) == "" {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "local auth resolver is required")
 	}
 	prefix := strings.TrimRight(strings.TrimSpace(options.Prefix), "/")
@@ -68,12 +76,16 @@ func New(options Options) (*Handler, error) {
 	}
 
 	h := &Handler{
-		service:        options.Service,
-		ids:            options.IDs,
-		auth:           options.LocalAuth,
-		requestTimeout: options.RequestTimeout,
-		prefix:         prefix,
-		mux:            http.NewServeMux(),
+		localNamespaces: options.LocalNamespaces,
+		commands:        commands.NewCatalog(options.Service, options.IDs),
+		service:         options.Service,
+		ids:             options.IDs,
+		auth:            options.LocalAuth,
+		resolveIdentity: options.ResolveIdentity,
+		security:        options.Security,
+		requestTimeout:  options.RequestTimeout,
+		prefix:          prefix,
+		mux:             http.NewServeMux(),
 	}
 	h.routes()
 	return h, nil
@@ -90,18 +102,52 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	ctx = context.WithValue(ctx, correlationKey, correlationID)
 
+	request := r.WithContext(ctx)
+	identity := application.Identity{PrincipalID: h.auth.Principal(), Actor: h.auth.Actor()}
+	if h.resolveIdentity != nil {
+		var err error
+		identity, err = h.resolveIdentity(request)
+		if err != nil {
+			writeError(w, request, &contractError{status: http.StatusUnauthorized, code: "unauthorized", message: "valid authentication is required"})
+			return
+		}
+	}
+	ctx = application.WithIdentity(ctx, identity)
 	h.mux.ServeHTTP(w, r.WithContext(ctx))
 }
 
 func (h *Handler) routes() {
+	h.mux.HandleFunc("GET "+h.prefix+"/commands", h.commandCatalog)
+	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
 	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
 
 	h.mux.HandleFunc("POST "+base, h.createOutcome)
+	h.mux.HandleFunc("GET "+base, h.searchOutcomes)
+	if h.security != nil {
+		h.mux.HandleFunc("POST "+h.prefix+"/security/commands", h.administer)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
+		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
+		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
+		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
+	} else {
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", func(w http.ResponseWriter, r *http.Request) {
+			writeJSON(w, 200, map[string]any{"items": h.localNamespaces})
+		})
+	}
 
 	outcome := base + "/{outcome_id}"
+	h.mux.HandleFunc("GET "+outcome+"/triggers", h.listTriggers)
+	h.mux.HandleFunc("GET "+outcome+"/deliveries", h.listDeliveries)
+	h.mux.HandleFunc("GET "+outcome+"/trigger-firings", h.listFirings)
 	h.mux.HandleFunc("GET "+outcome, h.getOutcome)
 	h.mux.HandleFunc("PATCH "+outcome, h.updateOutcome)
 	h.mux.HandleFunc("GET "+outcome+"/state", h.getOutcomeState)
+	h.mux.HandleFunc("GET "+outcome+"/continuity", h.getContinuity)
+	h.mux.HandleFunc("GET "+outcome+"/continuity/{section}", h.getContinuitySection)
+	h.mux.HandleFunc("GET "+outcome+"/timeline", h.getTimeline)
+	h.mux.HandleFunc("GET "+outcome+"/graph", h.getGraph)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/context", h.getWorkContext)
 	h.mux.HandleFunc("GET "+outcome+"/ready-work", h.listReadyWork)
 	h.mux.HandleFunc("GET "+outcome+"/relations", h.listRelations)
 	h.mux.HandleFunc("POST "+outcome+"/relations", h.createRelation)
@@ -231,8 +277,8 @@ func (h *Handler) commandContext(r *http.Request) (domain.CommandContext, error)
 		return domain.CommandContext{}, err
 	}
 	return domain.CommandContext{
-		PrincipalID:    h.auth.Principal(),
-		Actor:          h.auth.Actor(),
+		PrincipalID:    mustIdentity(r.Context()).PrincipalID,
+		Actor:          mustIdentity(r.Context()).Actor,
 		CorrelationID:  correlationID(r.Context()),
 		CommandID:      commandID,
 		IdempotencyKey: key,
@@ -403,6 +449,9 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			status = http.StatusForbidden
 		case domain.ErrorCodeVersionConflict:
 			status = http.StatusPreconditionFailed
+		case domain.ErrorCodeTransactionConflict:
+			status = http.StatusConflict
+			retryable = true
 		case domain.ErrorCodeAlreadyExists,
 			domain.ErrorCodeInvalidTransition,
 			domain.ErrorCodePreconditionFailed,
@@ -424,4 +473,9 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		Retryable:     retryable,
 		CorrelationID: correlationID(r.Context()),
 	}})
+}
+
+func mustIdentity(ctx context.Context) application.Identity {
+	id, _ := application.IdentityFromContext(ctx)
+	return id
 }

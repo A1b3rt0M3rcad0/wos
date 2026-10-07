@@ -55,6 +55,10 @@ func (a Authorizer) Authorize(_ context.Context, request ports.AuthorizationRequ
 	if request.PrincipalID != a.PrincipalID {
 		return domain.NewError(domain.ErrorCodeForbidden, "local principal does not match authorization principal")
 	}
+	switch request.Permission {
+	case ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite:
+		return nil
+	}
 	if !a.AllowAdministrativeOverrides {
 		return domain.NewError(domain.ErrorCodeForbidden, "local administrative overrides are disabled")
 	}

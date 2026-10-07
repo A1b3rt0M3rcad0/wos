@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-02  
+**Last reviewed:** 2026-10-07
 **Current target:** Release 0.1  
-**Current wave:** Wave 09 — Documentary Records and Decisions (implementation complete; pending integration)
+**Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -24,23 +24,23 @@ The architecture document describes what should exist. This ROADMAP records what
 | --- | --- | --- |
 | GitHub repository | ✅ | `A1b3rt0M3rcad0/wos`, default branch `master` |
 | Canonical architecture specification | ✅ | Stored under `docs/`; revision 2 |
-| Public README | ✅ | Architecture/product overview, explicitly marked as planned state |
+| Public README | ✅ | Executable features, draft PR status and remaining acceptance explicitly separated |
 | Go module | ✅ | `github.com/A1b3rt0M3rcad0/wos` |
 | Repository ignore rules | ✅ | Go, local DB/data, environment/secrets, IDE files |
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
 | Live implementation roadmap | ✅ | Root `ROADMAP.md` |
 | Product package topology | ✅ | `packages/wos-core` + `packages/wos-api`; ADR-011 |
-| Concrete Open Source license | 🧭 | Must be chosen before first public release; do not inherit Woobe license implicitly |
+| Concrete Open Source license | ✅ | Apache 2.0 chosen by maintainer; LICENSE present |
 
 ## Milestones
 
 | Milestone | Status | Definition |
 | --- | --- | --- |
 | M1 — Local vertical slice | ✅ | Core + SQLite + HTTP with Outcome, Objective, WorkItem and criteria |
-| M2 — Full coordination | ⬜ | Dependencies, Blockers, Issues, leases and documentary records |
-| M3 — Planning and continuity | ⬜ | Roadmaps, snapshot/graph/timeline and MCP |
-| M4 — Complete standalone | ⬜ | PostgreSQL parity, triggers/outbox, auth and packaging |
-| Release 0.1 | ⬜ | Contracts, CI, examples, recovery and release criteria validated |
+| M2 — Full coordination | ✅ | Dependencies, Blockers, Issues, leases and documentary records |
+| M3 — Planning and continuity | ✅ | Roadmaps, snapshot/graph/timeline and MCP |
+| M4 — Complete standalone | ✅ | PostgreSQL parity, triggers/outbox, auth and packaging |
+| Release 0.1 validation candidate | ✅ | Thirteen canonical release gates have executable evidence; release tag publication is separate |
 
 ---
 
@@ -546,16 +546,16 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ### Domain contract
 
-- [ ] Preserve an immutable definition snapshot for every SuccessCriterion revision.
-- [ ] Keep the current SuccessCriterion definition separate from its immutable revision history.
+- [x] Preserve an immutable definition snapshot for every SuccessCriterion revision.
+- [x] Keep the current SuccessCriterion definition separate from its immutable revision history.
 - [x] Extend CriterionAssessment with explicit `evidence_ids` and optional `evaluator_ref`.
 - [x] Support `met|not_met|inconclusive|waived` without conflating EvidenceLink with assessment.
 - [x] Require `evidence_review` assessments to reference at least one active, same-Outcome Evidence.
-- [ ] Require `external_evaluation` assessments to include evaluator identity/version metadata and evidence required by the caller contract.
+- [x] Require `external_evaluation` assessments to include evaluator identity/version metadata and evidence required by the caller contract.
 - [x] Require explicit authorization and reason for `waived`.
 - [x] Keep CriterionAssessment immutable and retain supersession history.
 - [x] Clear the current-assessment binding when a criterion is revised or retired; retain assessment history.
-- [ ] Introduce first-class Conclusion identity/history for Outcome, Objective and WorkItem.
+- [x] Introduce first-class Conclusion identity/history for Outcome, Objective and WorkItem.
 - [x] Store the exact owner version, lifecycle result, criterion revisions, assessment IDs and structural obligations used by a Conclusion.
 - [x] Reopening clears only the current Conclusion binding; historical Conclusions remain immutable.
 - [x] Project `conclusion_contested` and concrete causes when current Evidence/assessments contradict the recorded Conclusion.
@@ -568,29 +568,29 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 - [x] Add `assessment:waive` permission to the Authorizer contract.
 - [x] Validate assessment Evidence against Namespace/Outcome, lifecycle and criterion revision inside the Outcome transaction guard.
 - [x] Require expected owner version when updating the current assessment binding.
-- [ ] Detect concurrent assessments/current-binding replacements with optimistic version conflict.
-- [ ] Make AchieveOutcome/AchieveObjective/CompleteWorkItem build explicit immutable Conclusion records.
+- [x] Detect concurrent assessments/current-binding replacements with optimistic version conflict.
+- [x] Make AchieveOutcome/AchieveObjective/CompleteWorkItem build explicit immutable Conclusion records.
 - [x] Enforce required Objective obligations for Outcome achievement.
 - [x] Capture structural obligation snapshots before the terminal transition commits.
-- [ ] Emit canonical assessment/conclusion Domain Events through the existing transaction/idempotency pipeline.
+- [x] Emit canonical assessment/conclusion Domain Events through the existing transaction/idempotency pipeline.
 
 ### Storage contract
 
-- [ ] Treat `criterion_revisions`, `criterion_assessments`, `conclusions` and conclusion-assessment links as append-only historical records.
+- [x] Treat `criterion_revisions`, `criterion_assessments`, `conclusions` and conclusion-assessment links as append-only historical records.
 - [x] Persist assessment Evidence references and evaluator metadata.
 - [x] Persist current-assessment/current-conclusion bindings separately from historical rows.
 - [x] Add a Wave 10 SQLite migration for fields/relations missing from the predeclared foundation schema.
 - [x] Reject assessment references to nonexistent criterion revisions.
 - [x] Preserve criterion revision history, assessment history, current bindings and Conclusions across restart.
-- [ ] Keep memory and SQLite behavior equivalent.
+- [x] Keep memory and SQLite behavior equivalent.
 
 ### HTTP and contract surface
 
 - [x] Expose generic assessment recording for all verification modes.
 - [x] Require Idempotency-Key for assessment/conclusion mutations and ETag/If-Match for owner-bound current state.
-- [ ] Expose immutable assessment history and current bindings.
+- [x] Expose immutable assessment history and current bindings.
 - [x] Expose current/historical Conclusions and contestation state.
-- [ ] Extend OpenAPI 3.1 and `docs/http.md` with Wave 10 contracts.
+- [x] Extend OpenAPI 3.1 and `docs/http.md` with Wave 10 contracts.
 
 ### Verification
 
@@ -599,11 +599,11 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 - [x] Prove `evidence_review` without Evidence is rejected.
 - [x] Prove retracted Evidence cannot support a new positive assessment/conclusion.
 - [x] Prove a waiver without `assessment:waive` authorization is rejected.
-- [ ] Prove two concurrent assessments cannot silently replace the same current binding.
+- [x] Prove two concurrent assessments cannot silently replace the same current binding.
 - [x] Prove required Objectives block Outcome achievement when not achieved.
 - [x] Prove a Conclusion stores exactly the criterion revisions and assessment IDs used at commit time.
-- [ ] Prove later `not_met` assessment or Evidence retraction contests but does not erase/reopen a terminal entity.
-- [ ] Prove memory/SQLite restart preserves immutable validation history.
+- [x] Prove later `not_met` assessment or Evidence retraction contests but does not erase/reopen a terminal entity.
+- [x] Prove memory/SQLite restart preserves immutable validation history.
 - [x] Pass module hygiene, gofmt, vet, unit/contract tests, race detector, standalone build and HTTP runtime smoke.
 
 **Completion gate:** achievement records exactly which criterion revisions, assessments and structural obligations justified the conclusion, and later contradictory facts are visible as contestations without historical rewriting.
@@ -615,7 +615,7 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 11 — Roadmaps and Planning History
 
-**Status:** 🚧 In progress
+**Status:** ✅ Done; integrated through PR #13
 
 **Goal:** preserve planning and re-planning as durable history without creating a second operational graph or changing live execution state implicitly.
 
@@ -662,7 +662,7 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 - [x] Create Roadmap in Outcome or Objective scope.
 - [x] Open a draft from empty content or an existing published revision.
-- [ ] Edit draft metadata/nodes/ordering with optimistic concurrency.
+- [x] Edit draft metadata/nodes/ordering with optimistic concurrency.
 - [x] Discard draft explicitly; discarded draft cannot later be published.
 - [x] Publish a draft atomically into an immutable RoadmapRevision.
 - [x] Activate/deactivate a published revision for its scope.
@@ -684,15 +684,15 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 - [x] Prove historical revisions remain byte/semantically stable after later draft edits.
 - [x] Prove concurrent publication of the same draft has one winner.
 - [x] Prove stale draft/roadmap versions fail explicitly.
-- [ ] Prove invalid cross-Outcome and invalid Objective-subtree references are rejected.
+- [x] Prove invalid cross-Outcome and invalid Objective-subtree references are rejected.
 - [x] Prove parent and `after` cycles are rejected.
 - [x] Prove one entity cannot appear twice as a reference in one revision.
 - [x] Prove active slot uniqueness under concurrent activation.
 - [x] Prove archived Roadmap clears the active slot and reopen does not reactivate it.
 - [x] Prove node removal does not cancel live WorkItems/Objectives.
 - [x] Prove cancelling live work does not rewrite prior revisions.
-- [ ] Prove title/criterion/reference snapshots survive live-entity mutation and SQLite restart.
-- [ ] Pass module hygiene, gofmt, vet, tests, race detector, standalone build and HTTP runtime smoke.
+- [x] Prove title/criterion/reference snapshots survive live-entity mutation and SQLite restart.
+- [x] Pass module hygiene, gofmt, vet, tests, race detector, standalone build and HTTP runtime smoke.
 
 **Completion gate:** historical published revisions remain recoverable and immutable; each scope has at most one active published revision; Roadmap state never duplicates or silently mutates operational work.
 
@@ -703,7 +703,7 @@ Harden WorkItem execution coordination with Claim/Renew/Release/Reclaim, princip
 
 ## Wave 12 — Continuity Queries
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Implement coherent Outcome state snapshots, graph queries, timeline, search/filter, pagination, readiness explanations, plan projection, current decisions, contestations, progress metrics and bounded output.
 
@@ -716,7 +716,7 @@ Implement coherent Outcome state snapshots, graph queries, timeline, search/filt
 
 ## Wave 13 — First-Class MCP
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Expose the Application layer through the pinned official Go MCP SDK with tools/resources, schemas, stdio and Streamable HTTP, explicit scope/version/claim arguments and parity with HTTP semantics.
 
@@ -729,7 +729,7 @@ Expose the Application layer through the pinned official Go MCP SDK with tools/r
 
 ## Wave 14 — PostgreSQL Parity
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Implement PostgreSQL migrations, repositories, query store, row guard, isolation rules, pool/timeouts and the full shared storage/concurrency contract.
 
@@ -742,7 +742,7 @@ Implement PostgreSQL migrations, repositories, query store, row guard, isolation
 
 ## Wave 15 — Authentication, Grants and External Context
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Implement token authentication, Namespace grants, Authorizer, Principal/ActorRef delegation, ExternalContext indexing, ExecutionContext separation, external refs and administrative audit.
 
@@ -755,7 +755,7 @@ Implement token authentication, Namespace grants, Authorizer, Principal/ActorRef
 
 ## Wave 16 — Triggers, Integration Events and Delivery
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Implement declarative event Triggers, public Integration Event mapping, TriggerFiring deduplication, outbox delivery, webhook signing, endpoint policy, worker leases, retries/exhaustion and redelivery.
 
@@ -768,7 +768,7 @@ Implement declarative event Triggers, public Integration Event mapping, TriggerF
 
 ## Wave 17 — Packaging, SDK and Examples
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Add complete binary commands, Docker/Compose, health/readiness, graceful shutdown, Go client, embedded/standalone/Woobe/product-MCP examples, backup/restore and operator documentation.
 
@@ -781,7 +781,7 @@ Add complete binary commands, Docker/Compose, health/readiness, graceful shutdow
 
 ## Wave 18 — Release, Validation and Demonstration
 
-**Status:** ⬜ Planned
+**Status:** ✅ Done on the validation candidate; final integration through PR #14
 
 Complete CI, contract suites, race detector, benchmark fixtures, failure injection, migration upgrade validation, schema review, transport/storage compatibility matrix, changelog and real multi-actor continuation demonstration.
 
@@ -794,25 +794,39 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 
 # Release 0.1 acceptance checklist
 
-- [ ] Standalone WOS starts without Woobe.
-- [ ] External embedded Go application compiles and executes.
-- [ ] Every remote mutation is protected by idempotency.
-- [ ] Stale aggregate versions are rejected.
-- [ ] Concurrent claim and dependency-cycle races preserve invariants.
-- [ ] SQLite and PostgreSQL pass the same storage contract suite.
-- [ ] HTTP and MCP use the same Application services.
-- [ ] Snapshots are coherent, bounded and explicit about omissions.
-- [ ] Published Roadmap revisions are immutable and recoverable.
-- [ ] Assessments preserve criteria, revisions and Evidence used.
-- [ ] Triggers produce durable signals without autonomous execution.
-- [ ] Documentation covers license, auth, backup, limits and supported MCP profile.
-- [ ] Restart/restore preserves state required to resume work.
+- [x] Standalone WOS starts without Woobe.
+- [x] External embedded Go application compiles and executes.
+- [x] Every remote mutation is protected by idempotency.
+- [x] Stale aggregate versions are rejected.
+- [x] Concurrent claim and dependency-cycle races preserve invariants.
+- [x] SQLite and PostgreSQL pass the same storage contract suite.
+- [x] HTTP and MCP use the same Application services.
+- [x] Snapshots are coherent, bounded and explicit about omissions.
+- [x] Published Roadmap revisions are immutable and recoverable.
+- [x] Assessments preserve criteria, revisions and Evidence used.
+- [x] Triggers produce durable signals without autonomous execution.
+- [x] Documentation covers license, auth, backup, limits and supported MCP profile.
+- [x] Restart/restore preserves state required to resume work.
 
-# Current next actions
+# Current integration and validation
 
-Waves 01–10 are merged into `master`. Wave 11 — Roadmaps and Planning History is active on `feat/wave-11-roadmap-planning-history`.
+Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/13) at `f009b76dd4924490f0162839391218202abaeb79`. [PR #14](https://github.com/A1b3rt0M3rcad0/wos/pull/14), rebased in scope onto `master`, carries Waves 12–18 and the final hardening. Completion status above refers to the tested candidate; integration is confirmed by the PR's merged state, not by an unchecked draft or an earlier CI head.
 
-1. Establish the Roadmap/RoadmapRevision/RoadmapNode domain model and scope invariants.
-2. Add draft versioning and immutable publication semantics.
-3. Add scoped active slots and append-only activation history.
-4. Add persistence/API only after the planning invariants are stable.
+[Verification dated 2026-10-07](docs/verification-2026-10-07.md) maps all thirteen canonical Release 0.1 gates to code and executed tests. The supported runtime matrix is Linux amd64, SQLite and PostgreSQL 18.6, HTTP and MCP; embedded and independent client examples are executable. The [agent guide](docs/agents.md) explains continuation, credentials, version conflicts, uncertain commits, leases and fencing.
+
+1. Integration requires all final-head verification gates. Hosted Actions did not start on 2026-10-07 because GitHub reported failed account payments/spending limit. Equivalent gates were executed locally, including both Compose profiles, reproducible build and non-root/read-only container; this infrastructure failure is documented in the current verification and is not reported as a green hosted CI.
+2. Validate the candidate in the consumer deployment using the documented commands, namespaces and credentials.
+3. Publish a versioned release only when the maintainer elects to distribute it. No version tag or release asset is inferred from a merged PR.
+
+## Acceptance evidence — 2026-10-07
+
+- `internal/server/release_matrix_test.go`: 78 command schemas/idempotency guards, three proof modes and lost-response reconciliation across HTTP/MCP and both databases; real SDK clients.
+- `storage/{sqlite,postgres}/release_concurrency_test.go` and `tests/boundary/dependency_concurrency_test.go`: separate connections/pools for claims, assessments, active slots, idempotency and opposite dependency edges.
+- `storage/{sqlite,postgres}/bulk_history_test.go`: bulk/single read equivalence for owners, criteria, Evidence, current/historical Conclusions and reopen; immutable publication with live plan readiness and bounded graph references.
+- `storage/postgres/clock_test.go`: authorized lease arbitration uses database time despite a replica clock skew of one year.
+- Shared migration/restart/backup/restore contracts execute on real PostgreSQL with the test container; the independent 18-step standalone journey resumes the same Outcome after clean restore.
+- Browser acceptance covers planning/replanning, human/agent continuation, proof review, Objectives, Issues/Blockers, conflicts, contestations, archive/resume, keyboard/focus and mobile rendering.
+- In-flight HTTP shutdown and interrupted webhook retry preserve committed state and delivery identity. Query/guard/delivery metadata metrics exclude documentary payloads and credentials.
+- Graph reachability, cursor scope and public command serialization fuzzing passed; measured query counts, pool wait and concurrent read throughput are in [benchmarks](docs/benchmarks.md).
+
+The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification](docs/verification-2026-10-05.md) remain dated historical evidence. Its broader product checklist includes complete deployed Woobe acceptance and consumer distribution work. These remain explicit consumer obligations; they are not claims that WOS runs a deployed Woobe product. Current WOS release-gate acceptance is the October 7 matrix.

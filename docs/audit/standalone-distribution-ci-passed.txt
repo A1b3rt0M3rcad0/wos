@@ -1,0 +1,81 @@
+WOS CI #235
+Code commit: d46826f3a0b2a11284b4000edb45b2595ee22bfa
+Run: https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37385319311
+Job: 112017043754
+Conclusion: success
+
+GitHub job step conclusions:
+Set up job: success
+Initialize containers: success
+Checkout: success
+Set up Go: success
+Toolchain: success
+Module hygiene: success
+Formatting: success
+Vet: success
+Generated adapters and MCP commands are current: success
+Unit and contract tests: success
+Race detector: success
+Build standalone binary: success
+Smoke version command: success
+Smoke configuration validation: success
+Same-Outcome eighteen-step standalone acceptance: success
+Reproducible Linux amd64 build across source paths: success
+Non-root container build and runtime smoke: success
+Smoke standalone HTTP runtime: success
+Post Set up Go: success
+Post Checkout: success
+Stop containers: success
+Complete job: success
+
+Selected original log lines (no environment values or request payloads):
+2026-10-05T22:56:02.4213403Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	0.003s
+2026-10-05T22:56:03.3496578Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http	0.573s
+2026-10-05T22:56:03.3623728Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	0.195s
+2026-10-05T22:56:09.6403207Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	4.549s
+2026-10-05T22:56:09.6430689Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application	0.031s
+2026-10-05T22:56:09.6431795Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	0.011s
+2026-10-05T22:56:09.6432823Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports	0.003s
+2026-10-05T22:56:09.6433893Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory	0.004s
+2026-10-05T22:56:25.3068580Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	17.422s
+2026-10-05T22:56:25.3070987Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	3.313s
+2026-10-05T22:56:25.3072284Z ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	0.799s
+2026-10-05T22:57:41.2197607Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	1.014s
+2026-10-05T22:57:42.0271673Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http	1.722s
+2026-10-05T22:57:43.6821217Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	1.707s
+2026-10-05T22:57:51.9290996Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	8.142s
+2026-10-05T22:57:51.9321336Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application	1.125s
+2026-10-05T22:57:51.9330221Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	1.017s
+2026-10-05T22:57:51.9350186Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports	1.013s
+2026-10-05T22:57:53.0341562Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory	1.012s
+2026-10-05T22:58:24.3528059Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	29.657s
+2026-10-05T22:58:30.7450748Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	34.725s
+2026-10-05T22:58:30.7453843Z ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	3.754s
+2026-10-05T22:58:32.4554221Z wos dev (commit unknown, built unknown)
+2026-10-05T22:58:32.4836214Z configuration valid
+2026-10-05T22:58:32.7191290Z J01 passed: authenticated human creates and activates Outcome with required criterion
+2026-10-05T22:58:32.7542084Z J02 passed: required Objective, WorkItem and immutable initial plan published
+2026-10-05T22:58:32.7653811Z J03 passed: agent discovers context through authorized MCP without chat history
+2026-10-05T22:58:32.7795773Z J04 passed: agent queries ready candidates and explicitly claims work
+2026-10-05T22:58:32.7984488Z J05 passed: accepted Decision and active Issue/Blocker appear in agent context
+2026-10-05T22:58:32.8093329Z J06 passed: Issue resolution keeps Blocker; completion rejected until explicit release
+2026-10-05T22:59:03.0149760Z J07 passed: real lease expiry and reclaim by a second authenticated agent
+2026-10-05T22:59:03.0192450Z J08 passed: old executor rejected with stale claim/fencing
+2026-10-05T22:59:03.0470765Z J09 passed: second agent registers real Artifact/Evidence and completes work without certifying Outcome
+2026-10-05T22:59:03.0552514Z J10 passed: authorized human separately reviews required criteria with Evidence
+2026-10-05T22:59:03.0714186Z J11 passed: Objective and Outcome explicitly certified with proof snapshots
+2026-10-05T22:59:03.1309866Z J12 passed: revision 2 published; revision 1 remains readable and immutable
+2026-10-05T22:59:03.1408906Z J13 passed: Evidence retraction contests the conclusion without implicit reopen or history rewrite
+2026-10-05T22:59:03.2931220Z J14 passed: new HTTP consumer reads same state/history after standalone restart
+2026-10-05T22:59:03.5331924Z J15 passed: consistent backup restored to a clean file; new consumer continues history and plan
+2026-10-05T22:59:04.4597638Z J16 passed: signed external signal delivered twice; durable consumer commits one effect
+2026-10-05T22:59:04.4697783Z J17 passed: archive remains queryable; explicit unarchive preserves achieved lifecycle
+2026-10-05T22:59:04.4801349Z J18 passed: foreign Namespace denied by ID, discovery, bound cursor and MCP resource
+2026-10-05T22:59:04.4803373Z PASS: all 18 steps, client=http, same Outcome, real standalone process, signed delivery and clean restore
+2026-10-05T22:59:59.0071088Z 0b64d4d61019991576c6e2439246a56bd2b0f3b23b7b4dedaecdfda7f0efec0b  /tmp/tmp.yD0xQZ7OgJ/first
+2026-10-05T22:59:59.0262974Z 0b64d4d61019991576c6e2439246a56bd2b0f3b23b7b4dedaecdfda7f0efec0b  /tmp/tmp.yD0xQZ7OgJ/second
+2026-10-05T23:01:11.1913898Z wos dev (commit unknown, built unknown)
+2026-10-05T23:01:11.4427928Z configuration valid
+2026-10-05T23:01:12.7296011Z  2026-10-05 22:54:16.392 UTC [1] LOG:  starting PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+2026-10-05T23:01:12.7392703Z  waiting for server to start....2026-10-05 22:54:15.830 UTC [52] LOG:  starting PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+

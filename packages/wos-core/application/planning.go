@@ -426,6 +426,10 @@ func (s *Service) GetActiveRoadmapSlot(
 	scope domain.Scope,
 	planScope domain.RoadmapPlanScope,
 ) (*domain.RoadmapActiveSlot, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -451,6 +455,10 @@ func (s *Service) ListRoadmapActivationHistory(
 	scope domain.Scope,
 	planScope domain.RoadmapPlanScope,
 ) ([]domain.RoadmapActivationRecord, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -512,6 +520,10 @@ func (s *Service) GetRoadmapRevision(
 	id domain.ID,
 	revisionNumber uint64,
 ) (ReadResult[domain.RoadmapRevision], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
+
 	if revisionNumber == 0 {
 		return ReadResult[domain.RoadmapRevision]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "roadmap revision number must be at least 1")
 	}
@@ -549,6 +561,10 @@ func (s *Service) GetRoadmap(
 	scope domain.Scope,
 	id domain.ID,
 ) (ReadResult[domain.Roadmap], error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[domain.Roadmap]{}, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadResult[domain.Roadmap]{}, err
@@ -579,6 +595,10 @@ func (s *Service) ListRoadmaps(
 	ctx context.Context,
 	scope domain.Scope,
 ) ([]domain.Roadmap, domain.OutcomeRevision, error) {
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return nil, 0, err
+	}
+
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return nil, 0, err

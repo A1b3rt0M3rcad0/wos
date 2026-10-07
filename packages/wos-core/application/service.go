@@ -10,10 +10,13 @@ import (
 )
 
 type Service struct {
-	tx         ports.TransactionManager
-	clock      ports.Clock
-	ids        ports.IDGenerator
-	authorizer ports.Authorizer
+	observer            ports.CommandObserver
+	tx                  ports.TransactionManager
+	clock               ports.Clock
+	ids                 ports.IDGenerator
+	authorizer          ports.Authorizer
+	requireIdentity     bool
+	independentReviewer bool
 }
 
 func NewService(tx ports.TransactionManager, clock ports.Clock, ids ports.IDGenerator) (*Service, error) {
@@ -46,6 +49,10 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 
+	outcome.ExternalContext = cmd.ExternalContext.Clone()
+	if err := outcome.ExternalContext.Validate(); err != nil {
+		return MutationResult[domain.Outcome]{}, err
+	}
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, outcome.Scope()); err != nil {
 			return domain.Outcome{}, 0, err
@@ -141,6 +148,9 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
 		if err := validateAssessmentEvidence(ctx, uow, cmd.Owner.Scope, assessment.EvidenceIDs); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
@@ -174,6 +184,9 @@ func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.Com
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := assessCriterion(ctx, uow, cmd.Owner, cmd.ExpectedVersion, assessment, now); err != nil {
@@ -224,6 +237,9 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
@@ -338,6 +354,9 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
+		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
+			return domain.Objective{}, 0, err
+		}
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
 			return domain.Objective{}, 0, err
@@ -443,7 +462,10 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		now := s.clock.Now().UTC()
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -462,12 +484,10 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	conclusionID, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -482,6 +502,11 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		if err := requireHardDependenciesSatisfied(ctx, uow, item.Ref()); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 		if err := item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -754,3 +779,6 @@ func cloneTimePtrUTC(value *time.Time) *time.Time {
 	cloned := value.UTC()
 	return &cloned
 }
+
+// SetObserver configures metadata instrumentation before accepting concurrent calls.
+func (s *Service) SetObserver(observer ports.CommandObserver) { s.observer = observer }

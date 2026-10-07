@@ -1,0 +1,4 @@
+go vet ./...: passed (no diagnostics)
+all modules verified
+go mod tidy: no changes to go.mod/go.sum
+Standalone build/version/config validate: passed

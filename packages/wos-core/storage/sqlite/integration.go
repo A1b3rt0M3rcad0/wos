@@ -1,0 +1,293 @@
+package sqlite
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"time"
+)
+
+type triggerRepository struct{ uow *unitOfWork }
+type endpointRepository struct{ uow *unitOfWork }
+type deliveryRepository struct{ uow *unitOfWork }
+
+func (u *unitOfWork) Triggers() ports.TriggerRepository    { return triggerRepository{u} }
+func (u *unitOfWork) Endpoints() ports.EndpointRepository  { return endpointRepository{u} }
+func (u *unitOfWork) Deliveries() ports.DeliveryRepository { return deliveryRepository{u} }
+func (r triggerRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Trigger, error) {
+	var v domain.Trigger
+	var raw string
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT record_json FROM triggers WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
+	if err != nil {
+		return v, mapSQLError("get trigger", err)
+	}
+	err = json.Unmarshal([]byte(raw), &v)
+	return v, err
+}
+func (r triggerRepository) List(ctx context.Context, scope domain.Scope) ([]domain.Trigger, error) {
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT record_json FROM triggers WHERE namespace_id=? AND outcome_id=? ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	if err != nil {
+		return nil, mapSQLError("list triggers", err)
+	}
+	defer rows.Close()
+	result := []domain.Trigger{}
+	for rows.Next() {
+		var raw string
+		var v domain.Trigger
+		if err = rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal([]byte(raw), &v); err != nil {
+			return nil, err
+		}
+		result = append(result, v)
+	}
+	return result, rows.Err()
+}
+func (r triggerRepository) Save(ctx context.Context, v domain.Trigger, expected domain.Version) error {
+	if err := v.Validate(); err != nil {
+		return err
+	}
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	if expected == 0 {
+		if err = insertEntityRef(ctx, r.uow.tx, v.Ref()); err != nil {
+			return err
+		}
+		_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO triggers(id,namespace_id,outcome_id,version,enabled,record_json) VALUES(?,?,?,?,?,?)`, v.ID.String(), v.Scope.NamespaceID.String(), v.Scope.OutcomeID.String(), int64(v.Version), boolInt(v.Enabled), string(raw))
+		return mapSQLError("configure trigger", err)
+	}
+	result, err := r.uow.tx.ExecContext(ctx, `UPDATE triggers SET version=?,enabled=?,record_json=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=?`, int64(v.Version), boolInt(v.Enabled), string(raw), v.Scope.NamespaceID.String(), v.Scope.OutcomeID.String(), v.ID.String(), int64(expected))
+	if err != nil {
+		return mapSQLError("update trigger", err)
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n != 1 {
+		return domain.NewError(domain.ErrorCodeVersionConflict, "trigger version changed")
+	}
+	return nil
+}
+func (r endpointRepository) Get(ctx context.Context, ns, id domain.ID) (ports.WebhookEndpoint, error) {
+	v := ports.WebhookEndpoint{ID: id, NamespaceID: ns}
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT url,secret_ref,key_id FROM webhook_endpoints WHERE namespace_id=? AND id=?`, ns.String(), id.String()).Scan(&v.URL, &v.SecretRef, &v.KeyID)
+	return v, mapSQLError("get configured endpoint", err)
+}
+
+// InstallEndpoints is operator-only composition; secrets stay in the Server's secret resolver.
+func (s *Store) InstallEndpoints(ctx context.Context, endpoints []ports.WebhookEndpoint) error {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return mapSQLError("install endpoints", err)
+	}
+	defer tx.Rollback()
+	for _, v := range endpoints {
+		if err = v.ID.Validate(); err != nil {
+			return err
+		}
+		if err = v.NamespaceID.Validate(); err != nil {
+			return err
+		}
+		if err = ensureNamespace(ctx, tx, v.NamespaceID); err != nil {
+			return err
+		}
+		updated, err := tx.ExecContext(ctx, `INSERT INTO webhook_endpoints(id,namespace_id,url,secret_ref,key_id) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET url=excluded.url,secret_ref=excluded.secret_ref,key_id=excluded.key_id WHERE webhook_endpoints.namespace_id=excluded.namespace_id`, v.ID.String(), v.NamespaceID.String(), v.URL, v.SecretRef, v.KeyID)
+		if err != nil {
+			return mapSQLError("install endpoint", err)
+		}
+		if count, _ := updated.RowsAffected(); count != 1 {
+			return domain.NewError(domain.ErrorCodeForbidden, "endpoint belongs to a different namespace")
+		}
+	}
+	return mapSQLError("commit endpoints", tx.Commit())
+}
+
+func (l eventLog) appendIntegration(ctx context.Context, e domain.DomainEvent) error {
+	fact, err := json.Marshal(ports.PublicFact(e))
+	if err != nil {
+		return err
+	}
+	_, err = l.uow.tx.ExecContext(ctx, `INSERT INTO integration_events(id,namespace_id,outcome_id,record_json) VALUES(?,?,?,?)`, e.EventID.String(), e.NamespaceID.String(), e.OutcomeID.String(), string(fact))
+	if err != nil {
+		return mapSQLError("append public integration fact", err)
+	}
+	triggers, err := l.uow.Triggers().List(ctx, e.Scope())
+	if err != nil {
+		return err
+	}
+	for _, trigger := range triggers {
+		if !trigger.Matches(e) {
+			continue
+		}
+		firing := ports.NewFiring(trigger, e)
+		raw, err := json.Marshal(firing)
+		if err != nil {
+			return err
+		}
+		_, err = l.uow.tx.ExecContext(ctx, `INSERT INTO trigger_firings(id,trigger_id,trigger_version,source_event_id,record_json) VALUES(?,?,?,?,?)`, firing.ID.String(), trigger.ID.String(), int64(trigger.Version), e.EventID.String(), string(raw))
+		if err != nil {
+			return mapSQLError("persist trigger firing", err)
+		}
+		for _, endpointID := range trigger.TargetEndpointIDs {
+			endpoint, err := l.uow.Endpoints().Get(ctx, e.NamespaceID, endpointID)
+			if err != nil {
+				return err
+			}
+			id := firing.ID.String() + "/" + endpointID.String()
+			_, err = l.uow.tx.ExecContext(ctx, `INSERT INTO integration_deliveries(id,namespace_id,outcome_id,integration_event_id,endpoint_id,body_json,url,secret_ref,key_id,status,next_attempt) VALUES(?,?,?,?,?,?,?,?,?,'pending',?)`, id, e.NamespaceID.String(), e.OutcomeID.String(), firing.ID.String(), endpointID.String(), string(raw), endpoint.URL, endpoint.SecretRef, endpoint.KeyID, encodeTime(e.RecordedAt))
+			if err != nil {
+				return mapSQLError("persist outbox delivery", err)
+			}
+		}
+	}
+	return nil
+}
+
+const deliveryColumns = `id,namespace_id,outcome_id,integration_event_id,endpoint_id,status,attempts,next_attempt,COALESCE(lease_id,''),COALESCE(lease_until,0),fencing_token,last_result,url,secret_ref,key_id,body_json`
+
+func scanDelivery(row interface{ Scan(...any) error }) (ports.Delivery, error) {
+	var v ports.Delivery
+	var ns, outcome, event, endpoint, lease, body string
+	var next, until int64
+	err := row.Scan(&v.ID, &ns, &outcome, &event, &endpoint, &v.Status, &v.Attempts, &next, &lease, &until, &v.FencingToken, &v.LastResult, &v.URL, &v.SecretRef, &v.KeyID, &body)
+	if err != nil {
+		return v, err
+	}
+	v.Scope = domain.Scope{NamespaceID: domain.MustParseID(ns), OutcomeID: domain.MustParseID(outcome)}
+	v.IntegrationEventID = domain.MustParseID(event)
+	v.EndpointID = domain.MustParseID(endpoint)
+	if lease != "" {
+		v.LeaseID = domain.MustParseID(lease)
+	}
+	v.NextAttempt = decodeTime(next)
+	if until > 0 {
+		v.LeaseUntil = decodeTime(until)
+	}
+	v.Body = json.RawMessage(body)
+	return v, nil
+}
+func (r deliveryRepository) List(ctx context.Context, scope domain.Scope, limit int, after string) ([]ports.Delivery, error) {
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE namespace_id=? AND outcome_id=? AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	if err != nil {
+		return nil, mapSQLError("list deliveries", err)
+	}
+	defer rows.Close()
+	result := []ports.Delivery{}
+	for rows.Next() {
+		v, err := scanDelivery(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, v)
+	}
+	return result, rows.Err()
+}
+func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, id string, now time.Time) error {
+	result, err := r.uow.tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='pending',attempts=0,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result='manual_redelivery' WHERE namespace_id=? AND outcome_id=? AND id=? AND status IN('succeeded','exhausted')`, encodeTime(now), scope.NamespaceID.String(), scope.OutcomeID.String(), id)
+	if err != nil {
+		return mapSQLError("redeliver signal", err)
+	}
+	n, _ := result.RowsAffected()
+	if n != 1 {
+		return domain.NewError(domain.ErrorCodePreconditionFailed, "only succeeded or exhausted deliveries can be redelivered")
+	}
+	return nil
+}
+func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain.ID, ttl time.Duration) (*ports.Delivery, error) {
+	if err := leaseID.Validate(); err != nil {
+		return nil, err
+	}
+	if ttl <= 0 {
+		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "delivery lease TTL must be positive")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, mapSQLError("begin delivery claim", err)
+	}
+	defer tx.Rollback()
+	if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result='lease_expired' WHERE finished_at IS NULL AND delivery_id IN(SELECT id FROM integration_deliveries WHERE status='leased' AND lease_until<=?)`, encodeTime(now), encodeTime(now)); err != nil {
+		return nil, mapSQLError("expire delivery attempts", err)
+	}
+	if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE status='leased' AND lease_until<=? AND attempts>=6`, encodeTime(now)); err != nil {
+		return nil, mapSQLError("exhaust crashed delivery", err)
+	}
+	v, err := scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=?) OR (status='leased' AND lease_until<=?) ORDER BY next_attempt,id LIMIT 1`, encodeTime(now), encodeTime(now)))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, mapSQLError("commit delivery recovery", tx.Commit())
+	}
+	if err != nil {
+		return nil, mapSQLError("claim delivery", err)
+	}
+	v.LeaseID = leaseID
+	v.LeaseUntil = now.Add(ttl)
+	v.FencingToken++
+	v.Attempts++
+	v.Status = "leased"
+	_, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='leased',attempts=?,lease_id=?,lease_until=?,fencing_token=? WHERE id=?`, v.Attempts, leaseID.String(), encodeTime(v.LeaseUntil), v.FencingToken, v.ID)
+	if err != nil {
+		return nil, mapSQLError("lease delivery", err)
+	}
+	_, err = tx.ExecContext(ctx, `INSERT INTO delivery_attempts(delivery_id,fencing_token,lease_id,started_at,result) VALUES(?,?,?,?,'started')`, v.ID, v.FencingToken, leaseID.String(), encodeTime(now))
+	if err != nil {
+		return nil, mapSQLError("record delivery attempt", err)
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, mapSQLError("commit delivery claim", err)
+	}
+	return &v, nil
+}
+func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.Time, result string, success bool, next time.Time) error {
+	status := "pending"
+	if success {
+		status = "succeeded"
+	} else if v.Attempts >= 6 {
+		status = "exhausted"
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return mapSQLError("finish delivery", err)
+	}
+	defer tx.Rollback()
+	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=? WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
+	if err != nil {
+		return mapSQLError("acknowledge delivery", err)
+	}
+	n, _ := res.RowsAffected()
+	if n != 1 {
+		return domain.NewError(domain.ErrorCodeLease, "stale delivery lease or fence")
+	}
+	_, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result=? WHERE delivery_id=? AND fencing_token=? AND lease_id=?`, encodeTime(now), result, v.ID, v.FencingToken, v.LeaseID.String())
+	if err != nil {
+		return err
+	}
+	return mapSQLError("commit delivery result", tx.Commit())
+}
+func (r deliveryRepository) ListFirings(ctx context.Context, scope domain.Scope, limit int, after string) ([]ports.TriggerFiring, error) {
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT f.record_json FROM trigger_firings f JOIN integration_events e ON e.id=f.source_event_id WHERE e.namespace_id=? AND e.outcome_id=? AND f.id>? ORDER BY f.id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	if err != nil {
+		return nil, mapSQLError("list firings", err)
+	}
+	defer rows.Close()
+	values := []ports.TriggerFiring{}
+	for rows.Next() {
+		var raw string
+		var v ports.TriggerFiring
+		if err = rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal([]byte(raw), &v); err != nil {
+			return nil, err
+		}
+		values = append(values, v)
+	}
+	return values, rows.Err()
+}
+
+var _ ports.DeliveryStore = (*Store)(nil)

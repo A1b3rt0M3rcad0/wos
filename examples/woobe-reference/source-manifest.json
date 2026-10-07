@@ -1,0 +1,74 @@
+[
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/mcp_discovery.py",
+    "sha": "beaf2afd222585811b02b8e1fa9c9dbf4f9ca5b6"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/infra/adapters/tool_runtime.py",
+    "sha": "1d48c858eba3f00f1c4ceb339f77448ec84c4433"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/infra/adapters/tool_executor.py",
+    "sha": "5ce5e44f1250d3e496977bccb51ebecac2fa9eca"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/dtos/mcp_discovery_dtos.py",
+    "sha": "6c00658fba507d75d5f72cc999da4e7ae79f7d6f"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/ports.py",
+    "sha": "0044bf4cf17be326c308f26932994e11fbaaee14"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/mcp_permissions.py",
+    "sha": "0fabfbd94f2beb3afabcea2d1a6c7499662f2fd6"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/http_tool_contract.py",
+    "sha": "c0f7034536c398c6bd05835d4552e69b43fa0e45"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/tool_runtime.py",
+    "sha": "414dcb421b284d596849efe011e4d37f7075633b"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/tool_types.py",
+    "sha": "7c06b68de23861eafe7522c53604d0552cdd49a6"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/domain/mcp_permissions.py",
+    "sha": "5f49aabec77c2014b20faa0043ebf1eeded14cfb"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/infra/adapters/http_tool_renderer.py",
+    "sha": "083b4a17ac174955811287919ce5ea55de7921e9"
+  },
+  {
+    "path": "packages/woobe-core/src/shared/security/redaction.py",
+    "sha": "cbc991c230fe093bae6111bf3557640e2cc2ab7f"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/dtos/mcp_permission_dtos.py",
+    "sha": "3e0a8db6d954c0ef850ddd45173aee645ab407a7"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/mcp_readiness.py",
+    "sha": "4d429eeef2e6df17f09a3c8985b7220431dfb0be"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/application/interfaces/repositories.py",
+    "sha": "614cfa4fa0182b5241fa8355c1973058a58192ac"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/domain/enums.py",
+    "sha": "70f2b166083fd102fabfb3f01ea3be91b5691ecd"
+  },
+  {
+    "path": "packages/woobe-core/src/modules/agent/domain/entities.py",
+    "sha": "686f302739c47416d8f4ef46f8669708a454f5bd"
+  },
+  {
+    "path": "packages/woobe-core/src/shared/contracts/pagination.py",
+    "sha": "2ba3b6e46fc9f7928474bb1622ef15f2c63ff216"
+  }
+]

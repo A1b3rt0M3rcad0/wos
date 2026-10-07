@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "catalogue_revision": "2026-10-05",
+  "envelope": "IntegrationFact",
+  "delivery": "at_least_once",
+  "events": [
+    {
+      "event_type": "artifact.registered"
+    },
+    {
+      "event_type": "artifact.withdrawn"
+    },
+    {
+      "event_type": "blocker.cancelled"
+    },
+    {
+      "event_type": "blocker.created"
+    },
+    {
+      "event_type": "blocker.resolved"
+    },
+    {
+      "event_type": "blocker.updated"
+    },
+    {
+      "event_type": "decision.accepted"
+    },
+    {
+      "event_type": "decision.proposed"
+    },
+    {
+      "event_type": "decision.rejected"
+    },
+    {
+      "event_type": "decision.updated"
+    },
+    {
+      "event_type": "evidence.link_created"
+    },
+    {
+      "event_type": "evidence.link_retracted"
+    },
+    {
+      "event_type": "evidence.registered"
+    },
+    {
+      "event_type": "evidence.retracted"
+    },
+    {
+      "event_type": "integration_delivery.redelivered"
+    },
+    {
+      "event_type": "issue.created"
+    },
+    {
+      "event_type": "issue.duplicate"
+    },
+    {
+      "event_type": "issue.investigating"
+    },
+    {
+      "event_type": "issue.reopened"
+    },
+    {
+      "event_type": "issue.resolved"
+    },
+    {
+      "event_type": "issue.updated"
+    },
+    {
+      "event_type": "issue.wont_fix"
+    },
+    {
+      "event_type": "objective.achieved"
+    },
+    {
+      "event_type": "objective.assessment_recorded"
+    },
+    {
+      "event_type": "objective.cancelled"
+    },
+    {
+      "event_type": "objective.conclusion_recorded"
+    },
+    {
+      "event_type": "objective.created"
+    },
+    {
+      "event_type": "objective.criterion_added"
+    },
+    {
+      "event_type": "objective.criterion_retired"
+    },
+    {
+      "event_type": "objective.criterion_revised"
+    },
+    {
+      "event_type": "objective.reopened"
+    },
+    {
+      "event_type": "objective.started"
+    },
+    {
+      "event_type": "objective.updated"
+    },
+    {
+      "event_type": "outcome.abandoned"
+    },
+    {
+      "event_type": "outcome.achieved"
+    },
+    {
+      "event_type": "outcome.activated"
+    },
+    {
+      "event_type": "outcome.archived"
+    },
+    {
+      "event_type": "outcome.assessment_recorded"
+    },
+    {
+      "event_type": "outcome.conclusion_recorded"
+    },
+    {
+      "event_type": "outcome.created"
+    },
+    {
+      "event_type": "outcome.criterion_added"
+    },
+    {
+      "event_type": "outcome.criterion_retired"
+    },
+    {
+      "event_type": "outcome.criterion_revised"
+    },
+    {
+      "event_type": "outcome.external_context_replaced"
+    },
+    {
+      "event_type": "outcome.external_reference_linked"
+    },
+    {
+      "event_type": "outcome.external_reference_removed"
+    },
+    {
+      "event_type": "outcome.failed"
+    },
+    {
+      "event_type": "outcome.reopened"
+    },
+    {
+      "event_type": "outcome.unarchived"
+    },
+    {
+      "event_type": "outcome.updated"
+    },
+    {
+      "event_type": "relation.created"
+    },
+    {
+      "event_type": "relation.removed"
+    },
+    {
+      "event_type": "roadmap.archived"
+    },
+    {
+      "event_type": "roadmap.created"
+    },
+    {
+      "event_type": "roadmap.draft_discarded"
+    },
+    {
+      "event_type": "roadmap.draft_opened"
+    },
+    {
+      "event_type": "roadmap.draft_updated"
+    },
+    {
+      "event_type": "roadmap.reopened"
+    },
+    {
+      "event_type": "roadmap.revision_activated"
+    },
+    {
+      "event_type": "roadmap.revision_deactivated"
+    },
+    {
+      "event_type": "roadmap.revision_published"
+    },
+    {
+      "event_type": "trigger.configured"
+    },
+    {
+      "event_type": "trigger.enabled_changed"
+    },
+    {
+      "event_type": "trigger.updated"
+    },
+    {
+      "event_type": "work_item.activated"
+    },
+    {
+      "event_type": "work_item.admin_cancelled"
+    },
+    {
+      "event_type": "work_item.admin_completed"
+    },
+    {
+      "event_type": "work_item.assessment_recorded"
+    },
+    {
+      "event_type": "work_item.cancelled"
+    },
+    {
+      "event_type": "work_item.claimed"
+    },
+    {
+      "event_type": "work_item.completed"
+    },
+    {
+      "event_type": "work_item.conclusion_recorded"
+    },
+    {
+      "event_type": "work_item.created"
+    },
+    {
+      "event_type": "work_item.criterion_added"
+    },
+    {
+      "event_type": "work_item.criterion_retired"
+    },
+    {
+      "event_type": "work_item.criterion_revised"
+    },
+    {
+      "event_type": "work_item.lease_renewed"
+    },
+    {
+      "event_type": "work_item.reclaimed"
+    },
+    {
+      "event_type": "work_item.released"
+    },
+    {
+      "event_type": "work_item.reopened"
+    },
+    {
+      "event_type": "work_item.updated"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+ALTER TABLE roadmap_drafts
+ADD COLUMN reason TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE roadmap_revisions
+ADD COLUMN reason TEXT NOT NULL DEFAULT '';

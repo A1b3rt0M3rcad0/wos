@@ -1,0 +1,20 @@
+fuzz: elapsed: 0s, gathering baseline coverage: 0/24 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 24/24 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 38774 (12924/sec), new interesting: 0 (total: 24)
+fuzz: elapsed: 3s, execs: 38774 (0/sec), new interesting: 0 (total: 24)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	3.056s
+
+fuzz: elapsed: 0s, gathering baseline coverage: 0/2 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 2/2 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 26319 (8770/sec), new interesting: 67 (total: 69)
+fuzz: elapsed: 4s, execs: 26319 (0/sec), new interesting: 67 (total: 69)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application	4.033s
+
+fuzz: elapsed: 0s, gathering baseline coverage: 0/1 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 1/1 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 17972 (5982/sec), new interesting: 9 (total: 10)
+fuzz: elapsed: 3s, execs: 17972 (0/sec), new interesting: 9 (total: 10)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	3.105s

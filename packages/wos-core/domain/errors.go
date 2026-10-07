@@ -11,6 +11,7 @@ import (
 type ErrorCode string
 
 const (
+	ErrorCodeTransactionConflict   ErrorCode = "transaction_conflict"
 	ErrorCodeInvalidID             ErrorCode = "invalid_id"
 	ErrorCodeInvalidScope          ErrorCode = "invalid_scope"
 	ErrorCodeInvalidEntityKind     ErrorCode = "invalid_entity_kind"

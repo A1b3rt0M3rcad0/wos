@@ -14,11 +14,12 @@ type MutationResult[T any] struct {
 }
 
 type CreateOutcomeCommand struct {
-	NamespaceID  domain.ID
-	Title        string
-	Description  string
-	DesiredState string
-	Priority     domain.Priority
+	ExternalContext domain.ExternalContext `json:"external_context,omitempty"`
+	NamespaceID     domain.ID
+	Title           string
+	Description     string
+	DesiredState    string
+	Priority        domain.Priority
 }
 
 type AddCriterionCommand struct {

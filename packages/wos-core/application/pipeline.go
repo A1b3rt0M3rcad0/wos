@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -30,7 +31,19 @@ func transactCommand[T any, C any](
 	commandContext domain.CommandContext,
 	command C,
 	fn func(ports.UnitOfWork) (T, domain.OutcomeRevision, error),
-) (MutationResult[T], error) {
+) (observedResult MutationResult[T], observedError error) {
+	var observation ports.CommandObservation
+	started := time.Now()
+	defer func() {
+		if service.observer != nil {
+			code, _ := domain.ErrorCodeOf(observedError)
+			observation.ErrorCode = code
+			observation.Revision = observedResult.OutcomeRevision
+			observation.Replay = observedResult.IdempotentReplay
+			observation.Duration = time.Since(started)
+			service.observer.ObserveCommand(observation)
+		}
+	}()
 	var zero T
 
 	meta, err := buildCommandMetadata(commandContext, command)
@@ -38,10 +51,28 @@ func transactCommand[T any, C any](
 		return MutationResult[T]{}, err
 	}
 
+	observation.Name = meta.Name
+	observation.NamespaceID = meta.NamespaceID
+	observation.OutcomeID = meta.Scope.OutcomeID
+	observation.PrincipalID = commandContext.PrincipalID
+	observation.Actor = commandContext.Actor
+	observation.CommandID = commandContext.CommandID
+	observation.CorrelationID = commandContext.CorrelationID
+	if err := service.authorizeMutation(ctx, commandContext, meta); err != nil {
+		return MutationResult[T]{}, err
+	}
+
+	beginStarted := time.Now()
 	uow, err := service.tx.Begin(ctx)
+	observation.TransactionWait = time.Since(beginStarted)
 	if err != nil {
 		return MutationResult[T]{}, err
 	}
+	defer func() {
+		if timing, ok := uow.(ports.CoordinationTiming); ok {
+			observation.GuardDuration = timing.GuardDuration()
+		}
+	}()
 	committed := false
 	defer func() {
 		if !committed {
@@ -49,6 +80,18 @@ func transactCommand[T any, C any](
 		}
 	}()
 
+	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
+		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
+		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
+			return MutationResult[T]{Value: zero}, err
+		}
+		if assessment, ok := any(command).(RecordCriterionAssessmentCommand); ok && assessment.Result == domain.AssessmentResultWaived {
+			request.Permission = ports.PermissionAssessmentWaive
+			if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
+				return MutationResult[T]{Value: zero}, err
+			}
+		}
+	}
 	var reservation domain.IdempotencyReservation
 	if commandContext.IdempotencyKey != "" {
 		identity := domain.IdempotencyIdentity{
@@ -107,7 +150,10 @@ func transactCommand[T any, C any](
 		}
 	}
 
-	if err := uow.Commit(); err != nil {
+	commitStarted := time.Now()
+	err = uow.Commit()
+	observation.CommitDuration = time.Since(commitStarted)
+	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
 	committed = true
@@ -311,6 +357,8 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Decision:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Trigger:
+		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Roadmap:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.RoadmapActiveSlot:
@@ -367,6 +415,20 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		ownerPrefix = meta.Owner.Kind.String()
 	}
 	switch meta.Name {
+	case "ReplaceExternalContext":
+		return []string{"outcome.external_context_replaced"}, nil
+	case "LinkExternalReference":
+		return []string{"outcome.external_reference_linked"}, nil
+	case "RemoveExternalReference":
+		return []string{"outcome.external_reference_removed"}, nil
+	case "ConfigureTrigger":
+		return []string{"trigger.configured"}, nil
+	case "UpdateTrigger":
+		return []string{"trigger.updated"}, nil
+	case "SetTriggerEnabled":
+		return []string{"trigger.enabled_changed"}, nil
+	case "RedeliverDelivery":
+		return []string{"integration_delivery.redelivered"}, nil
 	case "CreateOutcome":
 		return []string{"outcome.created"}, nil
 	case "ActivateOutcome":

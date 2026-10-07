@@ -1,0 +1,17 @@
+2026-10-05T22:32:19.8879110Z gofmt -w packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go
+2026-10-05T22:32:19.8881084Z git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
+2026-10-05T22:32:20.8296570Z integration catalogue v1: 81 public event types, mapping checked
+2026-10-05T22:32:20.8382639Z ##[group]Run go test ./...
+2026-10-05T22:32:20.8383254Z go test ./...
+2026-10-05T22:32:20.8447331Z   WOS_TEST_POSTGRES_CONTAINER: 1dbaf818be7de02f6561fac6bbce1b2071987da465e75c04c61df37cd99d64f0
+2026-10-05T22:32:51.5564017Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	14.569s
+2026-10-05T22:32:51.5565450Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	2.473s
+2026-10-05T22:32:51.5569105Z ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	0.568s
+2026-10-05T22:32:51.6306337Z ##[group]Run go test -race ./...
+2026-10-05T22:32:51.6306726Z go test -race ./...
+2026-10-05T22:32:51.6372079Z   WOS_TEST_POSTGRES_CONTAINER: 1dbaf818be7de02f6561fac6bbce1b2071987da465e75c04c61df37cd99d64f0
+2026-10-05T22:34:47.0931139Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	21.376s
+2026-10-05T22:34:58.4028830Z ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	30.409s
+2026-10-05T22:34:58.4031101Z ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	3.725s
+2026-10-05T22:35:00.0070817Z wos dev (commit unknown, built unknown)
+2026-10-05T22:35:00.0351514Z configuration valid

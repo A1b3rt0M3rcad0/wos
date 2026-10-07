@@ -1,0 +1,27 @@
+name: Browser acceptance
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: go build -o bin/wos ./packages/wos-api/cmd/wos
+      - run: npm ci
+        working-directory: tests/web
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/web
+      - run: npm test
+        working-directory: tests/web

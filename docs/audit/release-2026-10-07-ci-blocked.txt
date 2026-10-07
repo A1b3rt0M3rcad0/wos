@@ -1,0 +1,5 @@
+Hosted CI and Browser acceptance did not execute any job steps.
+Head: 97a3964496d1b96d5fb249327c8158335bcbefae
+CI run: 37658108975; Browser run: 37658108983
+Both GitHub check annotations: The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the Billing & plans section in your settings.
+Local equivalent verification is recorded separately; no hosted success is claimed.

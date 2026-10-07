@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test
+> playwright test
+
+
+Running 1 test using 1 worker
+
+(node:31) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 journey.spec.mjs:11:1 › human plans, agent executes by MCP, human certifies, new browser resumes after restart (4.1s)
+
+  1 passed (4.6s)
