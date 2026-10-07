@@ -462,7 +462,10 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		now := s.clock.Now().UTC()
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -481,12 +484,10 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	conclusionID, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -501,6 +502,11 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		if err := requireHardDependenciesSatisfied(ctx, uow, item.Ref()); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 		if err := item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

@@ -219,12 +219,15 @@ func (s *Service) ReleaseWorkItem(ctx context.Context, commandContext domain.Com
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		now, err := s.transactionTime(ctx, uow)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -243,12 +246,10 @@ func (s *Service) CancelWorkItem(ctx context.Context, commandContext domain.Comm
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	now := s.clock.Now().UTC()
 	conclusionID, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
@@ -257,6 +258,11 @@ func (s *Service) CancelWorkItem(ctx context.Context, commandContext domain.Comm
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 		if err := item.Cancel(conclusion, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

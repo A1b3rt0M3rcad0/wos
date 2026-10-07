@@ -27,7 +27,6 @@ func (s *Service) GetWorkItemOperationalState(
 		return WorkItemOperationalReadResult{}, err
 	}
 
-	evaluatedAt := s.clock.Now().UTC()
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return WorkItemOperationalReadResult{}, err
@@ -65,6 +64,11 @@ func (s *Service) GetWorkItemOperationalState(
 		return WorkItemOperationalReadResult{}, err
 	}
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return WorkItemOperationalReadResult{}, err
+	}
+
+	evaluatedAt, err := s.transactionTime(ctx, uow)
 	if err != nil {
 		return WorkItemOperationalReadResult{}, err
 	}

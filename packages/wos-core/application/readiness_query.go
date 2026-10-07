@@ -27,7 +27,6 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 	if err := scope.Validate(); err != nil {
 		return ReadyWork{}, err
 	}
-	snapshotTime := s.clock.Now().UTC()
 	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return ReadyWork{}, err
@@ -51,6 +50,11 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 		return ReadyWork{}, err
 	}
 	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return ReadyWork{}, err
+	}
+
+	snapshotTime, err := s.transactionTime(ctx, uow)
 	if err != nil {
 		return ReadyWork{}, err
 	}

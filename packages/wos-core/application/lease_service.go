@@ -23,7 +23,10 @@ func (s *Service) RenewWorkItemLease(
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		now := s.clock.Now().UTC()
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := item.RenewLease(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.TTL, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -55,7 +58,10 @@ func (s *Service) ReclaimWorkItem(
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		now := s.clock.Now().UTC()
+		now, err := s.transactionTime(ctx, uow)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := item.Reclaim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
