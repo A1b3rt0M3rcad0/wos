@@ -13,6 +13,8 @@ The human workspace includes contextual navigation, an Outcome summary, a pagina
 
 Portable [agent skills](packages/wos-skill/README.md) guide minimal-context coordination, native delegation, continuity and review. The npm installer supports Claude Code, Codex, Hermes, OpenClaw and explicit generic discovery paths; file installation is verified, all-runtime execution is not. See the [distribution/release implementation plan](docs/distribution-plan.md) for package identity, publication status and limits. npm registry publication is separate from the implementation.
 
+The [npm service distribution](packages/wos-npm/README.md) embeds the existing Linux amd64 Go executable without install-time downloads or process startup. `node tools/distribution/build.mjs` builds both tarballs, a native archive and SHA-256 manifest; `node tools/distribution/verify.mjs` installs the actual packages offline and exercises the server. Use the pinned Go toolchain and Node >=22. Artifacts under `dist/` are local builds, not evidence of registry publication.
+
 
 ## Why WOS
 

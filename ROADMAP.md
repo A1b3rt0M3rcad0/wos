@@ -818,8 +818,8 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 | --- | --- | --- |
 | D1 — Design and release policy | ✅ | [Complete plan](docs/distribution-plan.md) and ADR-017 define boundaries, tradeoffs, PR sequence, compatibility and external requirements |
 | D2 — Portable skills installer | ✅ | Four portable skills, npm tarball, four project/user destinations and generic path; safe install/update/remove; four tests and offline installed-tarball consumer pass. Native runtime execution is not claimed |
-| D3 — Service distribution | 🚧 | Native metadata/integrity; offline npm install; real server smoke; versioned assets |
-| D4 — Automated release | ⬜ | Changes/version PR; full gates; npm/GHCR/GitHub publication and replay tests |
+| D3 — Service distribution | ✅ | Native metadata/integrity, versioned tarballs and Linux archive; real offline-installed service passes HTTP/MCP/UI, SIGTERM, exit status and corruption checks; Docker release metadata supported |
+| D4 — Automated release | 🚧 | Changes/version PR; full gates; npm/GHCR/GitHub publication and replay tests |
 | External publication | ⛔ | npm publishing identity not available; Actions billing prevents jobs; package ownership/trusted publisher requires titular configuration |
 
 Do not conflate a portable skill with executed integration in every agent, nor implemented CI/CD with a successful hosted release. Original Waves 01–18 remain accepted; this is distribution work outside the original completion claim.

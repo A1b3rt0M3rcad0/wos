@@ -2,6 +2,8 @@
 
 ### Distribution extension
 
+- Package the existing Linux amd64 service for npm with an embedded binary, integrity/version checks and signal/exit propagation; build checksummed native/npm assets and versioned OCI metadata.
+
 - Add portable coordination, native delegation, continuity and proof-review skills and an explicit npm installer with project/user/generic paths, managed hashes, dry-run and preservation of user modifications.
 - Record release/distribution policy and tradeoffs in ADR-017 and docs/distribution-plan.md. Publication and native agent certification remain separate from local verification.
 

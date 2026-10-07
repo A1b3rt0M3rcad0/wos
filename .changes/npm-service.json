@@ -1,0 +1,4 @@
+{
+  "bump": "minor",
+  "summary": "Distribute the existing WOS Go service through npm and native Linux amd64 archives with reproducible metadata, embedded binary integrity and offline installation."
+}
