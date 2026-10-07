@@ -34,8 +34,8 @@ type RegisterEvidenceCommand struct {
 	CapturedAt    time.Time
 	ArtifactID    *domain.ID
 	Measurement   *domain.Measurement
-	SourceVersion string
-	Checksum      string
+	SourceVersion string `wos:"optional"`
+	Checksum      string `wos:"optional"`
 }
 
 type RetractEvidenceCommand struct {

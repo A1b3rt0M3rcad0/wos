@@ -52,6 +52,16 @@ func fieldName(f reflect.StructField) string {
 	return snake(f.Name)
 }
 func typeSchema(t reflect.Type) map[string]any {
+	enumValues := map[reflect.Type][]string{
+		reflect.TypeFor[domain.IssueSeverity]():      {string(domain.IssueSeverityCritical), string(domain.IssueSeverityMajor), string(domain.IssueSeverityMinor), string(domain.IssueSeverityInformational)},
+		reflect.TypeFor[domain.BlockerPropagation](): {string(domain.BlockerPropagationDirect), string(domain.BlockerPropagationSubtree)},
+		reflect.TypeFor[domain.VerificationMode]():   {string(domain.VerificationModeAttestation), string(domain.VerificationModeEvidenceReview), string(domain.VerificationModeExternalEvaluation)},
+		reflect.TypeFor[domain.AssessmentResult]():   {string(domain.AssessmentResultMet), string(domain.AssessmentResultNotMet), string(domain.AssessmentResultInconclusive), string(domain.AssessmentResultWaived)},
+		reflect.TypeFor[domain.EvidenceType]():       {string(domain.EvidenceTypeMeasurement), string(domain.EvidenceTypeTestResult), string(domain.EvidenceTypeInspection), string(domain.EvidenceTypeAttestation), string(domain.EvidenceTypeSource), string(domain.EvidenceTypeExternalEvaluation)},
+	}
+	if values, ok := enumValues[t]; ok {
+		return map[string]any{"type": "string", "enum": values}
+	}
 	if t == reflect.TypeFor[domain.RoadmapScopeKind]() {
 		return map[string]any{"type": "string", "enum": []string{"outcome", "objective"}}
 	}
@@ -102,7 +112,7 @@ func typeSchema(t reflect.Type) map[string]any {
 			}
 			name := fieldName(f)
 			p[name] = typeSchema(f.Type)
-			if f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
+			if f.Tag.Get("wos") != "optional" && f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
 				required = append(required, name)
 			}
 		}

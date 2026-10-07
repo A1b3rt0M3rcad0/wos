@@ -297,6 +297,11 @@
             "type": "string"
           },
           "verification_mode": {
+            "enum": [
+              "attestation",
+              "evidence_review",
+              "external_evaluation"
+            ],
             "type": "string"
           }
         },
@@ -594,6 +599,12 @@
             "type": "string"
           },
           "result": {
+            "enum": [
+              "met",
+              "not_met",
+              "inconclusive",
+              "waived"
+            ],
             "type": "string"
           }
         },
@@ -1065,6 +1076,10 @@
             "type": "object"
           },
           "propagation": {
+            "enum": [
+              "direct",
+              "subtree"
+            ],
             "type": "string"
           },
           "scope": {
@@ -1220,6 +1235,12 @@
             "type": "object"
           },
           "severity": {
+            "enum": [
+              "critical",
+              "major",
+              "minor",
+              "informational"
+            ],
             "type": "string"
           },
           "title": {
@@ -2068,6 +2089,12 @@
             "type": "string"
           },
           "result": {
+            "enum": [
+              "met",
+              "not_met",
+              "inconclusive",
+              "waived"
+            ],
             "type": "string"
           }
         },
@@ -2193,6 +2220,14 @@
             "type": "string"
           },
           "evidence_type": {
+            "enum": [
+              "measurement",
+              "test_result",
+              "inspection",
+              "attestation",
+              "source",
+              "external_evaluation"
+            ],
             "type": "string"
           },
           "measurement": {
@@ -2263,9 +2298,7 @@
           "scope",
           "evidence_type",
           "source_ref",
-          "captured_at",
-          "source_version",
-          "checksum"
+          "captured_at"
         ],
         "type": "object"
       },
@@ -2850,6 +2883,11 @@
                         "type": "string"
                       },
                       "verification_mode": {
+                        "enum": [
+                          "attestation",
+                          "evidence_review",
+                          "external_evaluation"
+                        ],
                         "type": "string"
                       }
                     },
@@ -3067,6 +3105,10 @@
             "type": "string"
           },
           "propagation": {
+            "enum": [
+              "direct",
+              "subtree"
+            ],
             "type": "string"
           },
           "scope": {
@@ -3088,6 +3130,12 @@
             "type": "object"
           },
           "severity": {
+            "enum": [
+              "critical",
+              "major",
+              "minor",
+              "informational"
+            ],
             "type": "string"
           },
           "title": {
@@ -3424,6 +3472,11 @@
             "type": "string"
           },
           "verification_mode": {
+            "enum": [
+              "attestation",
+              "evidence_review",
+              "external_evaluation"
+            ],
             "type": "string"
           }
         },
@@ -3963,6 +4016,12 @@
             "type": "object"
           },
           "severity": {
+            "enum": [
+              "critical",
+              "major",
+              "minor",
+              "informational"
+            ],
             "type": "string"
           },
           "title": {

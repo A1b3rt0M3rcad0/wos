@@ -35,3 +35,25 @@ func FuzzPublicCommandRoundTrip(f *testing.F) {
 		}
 	})
 }
+
+func TestEvidenceOptionalMetadataPreservesCoreSerialization(t *testing.T) {
+	schema := Schema(reflect.TypeFor[application.RegisterEvidenceCommand]())
+	for _, name := range schema["required"].([]string) {
+		if name == "checksum" || name == "source_version" {
+			t.Fatalf("optional metadata became required: %s", name)
+		}
+	}
+	// Existing Core receipts fingerprint this representation. Schema metadata must
+	// not rename/omit Go JSON fields and invalidate an old idempotency receipt.
+	raw, err := json.Marshal(application.RegisterEvidenceCommand{Scope: domain.Scope{NamespaceID: domain.MustParseID("01a11790-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("01a11790-0000-7000-8000-000000000002")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err = json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if fields["Checksum"] != "" || fields["SourceVersion"] != "" {
+		t.Fatal("legacy Core fingerprint shape changed")
+	}
+}
