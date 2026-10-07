@@ -35,6 +35,7 @@ export async function verifyContainer(image='wos:release-tested') {
     const mcp=await fetch(base+'/mcp',{method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'versioned-container-smoke',version:'1'}}})});
     assert.equal(mcp.status,200);assert.equal((await mcp.json()).result.protocolVersion,'2025-06-18');
     run('docker',['exec',container,'test','-s','/etc/ssl/certs/ca-certificates.crt']);
+    run('docker',['exec',container,'test','-s','/usr/share/doc/wos/third-party-notices/Go-LICENSE.txt']);
     return {version:manifest.version,commit:manifest.commit,checks:['OCI/source identity','non-root/read-only','version/config','health','HTTP authentication/catalog','MCP negotiation','runtime CA bundle']};
   }finally{run('docker',['rm','-f',container]);}
 }

@@ -18,3 +18,5 @@ Native GitHub archives and GHCR images do not need Node. Service support is Linu
 Each package includes `release.json` with source commit, SemVer, source commit timestamp and binary SHA-256; launcher checks version/integrity before execution. Checksums detect corruption, not publisher authenticity; npm provenance and registry identity remain important. Reinstall rather than modifying embedded executables. The publisher supplies release-built content under `dist/npm/wos`; this source directory is not itself a ready-to-publish native package.
 
 Docs: https://github.com/A1b3rt0M3rcad0/wos/blob/master/docs/operations.md
+
+The npm/native/container distributions preserve WOS LICENSE plus Go and runtime-module license/notice files. `third-party-notices/index.md` identifies bundled dependency versions; test/build-only tools are not runtime package dependencies.

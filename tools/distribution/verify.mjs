@@ -22,6 +22,9 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.equal(packs.length,2);
     run('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--package-lock=false','--prefix',consumer,...packs.map(a=>path.join(output,a.filename))]);
     const cli=path.join(consumer,'node_modules/.bin/wos');
+    const notices=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/third-party-notices');
+    assert.ok((await fs.readFile(path.join(notices,'Go-LICENSE.txt'),'utf8')).includes('Copyright'));
+    assert.match(await fs.readFile(path.join(notices,'index.md'),'utf8'),/github.com\/modelcontextprotocol\/go-sdk@v1.8.0/);
     const version=run(cli,['version']);
     assert.ok(version.includes(`wos ${manifest.version} (commit ${manifest.commit}, built ${manifest.built_at})`));
     run(cli,['config','validate']);

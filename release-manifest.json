@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "previous_prepared_version": null,
+  "bump": "minor",
+  "changes": [
+    {
+      "file": "npm-service.json",
+      "bump": "minor",
+      "summary": "Distribute the existing WOS Go service through npm and native Linux amd64 archives with reproducible metadata, embedded binary integrity and offline installation."
+    },
+    {
+      "file": "portable-skills.json",
+      "bump": "minor",
+      "summary": "Add npm-installed WOS coordination, delegation, continuity and review skills with native and generic discovery destinations."
+    },
+    {
+      "file": "release-automation.json",
+      "bump": "minor",
+      "summary": "Automate coordinated SemVer release PRs, full verification gates and replayable npm, GHCR and GitHub publication."
+    }
+  ]
+}
