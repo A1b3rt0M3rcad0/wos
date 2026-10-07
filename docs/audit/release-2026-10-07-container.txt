@@ -1,0 +1,3 @@
+wos dev (commit unknown, built unknown)
+configuration valid
+PASS: Linux amd64 container build, UID/GID 10001, read-only root, SQLite tmpfs, version/config, live/ready, authenticated 78-command catalog and MCP negotiation; standard CA bundle present.

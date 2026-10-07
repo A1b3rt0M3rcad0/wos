@@ -2,32 +2,19 @@ goos: linux
 goarch: amd64
 pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
 cpu: INTEL(R) XEON(R) PLATINUM 8573C
-BenchmarkContinuity/discovery_100_outcomes-4         	    1776	    345040 ns/op	         0 pool_wait_ns/op	      7505 response_bytes	         1.000 sql_statements/op	   35610 B/op	     381 allocs/op
-BenchmarkContinuity/snapshot_100_work_items-4        	     160	   3662733 ns/op	         0 pool_wait_ns/op	     32238 response_bytes	        23.00 sql_statements/op	  935386 B/op	    5953 allocs/op
-BenchmarkContinuity/snapshot_100_work_items_with_proof-4         	      97	   7535182 ns/op	         0 pool_wait_ns/op	     32627 response_bytes	        32.00 sql_statements/op	 1320093 B/op	   12514 allocs/op
+BenchmarkContinuity/discovery_100_outcomes-4         	    1869	    410464 ns/op	         0 pool_wait_ns/op	      7402 response_bytes	         1.000 sql_statements/op	   35549 B/op	     381 allocs/op
+BenchmarkContinuity/snapshot_100_work_items-4        	     163	   5458992 ns/op	         0 pool_wait_ns/op	     32238 response_bytes	        23.00 sql_statements/op	  934443 B/op	    5953 allocs/op
+BenchmarkContinuity/snapshot_100_work_items_with_proof-4         	      82	   7376253 ns/op	         0 pool_wait_ns/op	     32627 response_bytes	        32.00 sql_statements/op	 1320365 B/op	   12515 allocs/op
+BenchmarkContinuity/parallel_snapshot_100_work_items_with_proof-4         	     100	   5795273 ns/op	  22875766 mean_latency_ns/op	  15301201 pool_wait_ns/op	       172.6 snapshots/s	 1321315 B/op	   12526 allocs/op
 PASS
-ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	3.009s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	3.838s
 goos: linux
 goarch: amd64
 pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
 cpu: INTEL(R) XEON(R) PLATINUM 8573C
-BenchmarkContinuity/discovery_100_outcomes-4         	     351	   1961705 ns/op	         0 pool_wait_ns/op	      7505 response_bytes	         3.000 sql_statements/op	   41865 B/op	     565 allocs/op
-BenchmarkContinuity/snapshot_100_work_items-4        	      37	  15134819 ns/op	         0 pool_wait_ns/op	     32238 response_bytes	        25.00 sql_statements/op	  972341 B/op	    7070 allocs/op
-BenchmarkContinuity/snapshot_100_work_items_with_proof-4         	      28	  19681516 ns/op	         0 pool_wait_ns/op	     32627 response_bytes	        34.00 sql_statements/op	 1405476 B/op	   15817 allocs/op
+BenchmarkContinuity/discovery_100_outcomes-4         	     439	   1422937 ns/op	         0 pool_wait_ns/op	      7505 response_bytes	         3.000 sql_statements/op	   43449 B/op	     565 allocs/op
+BenchmarkContinuity/snapshot_100_work_items-4        	      14	  46098647 ns/op	         0 pool_wait_ns/op	     32238 response_bytes	        25.00 sql_statements/op	  974290 B/op	    7092 allocs/op
+BenchmarkContinuity/snapshot_100_work_items_with_proof-4         	       8	  92223804 ns/op	         0 pool_wait_ns/op	     32627 response_bytes	        34.00 sql_statements/op	 1403446 B/op	   15812 allocs/op
+BenchmarkContinuity/parallel_snapshot_100_work_items_with_proof-4         	      24	  29113957 ns/op	 109612464 mean_latency_ns/op	         0 pool_wait_ns/op	        34.35 snapshots/s	 1404948 B/op	   15817 allocs/op
 PASS
-ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	8.802s
-
-goos: linux
-goarch: amd64
-pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
-cpu: INTEL(R) XEON(R) PLATINUM 8573C
-BenchmarkContinuity/parallel_snapshot_100_work_items_with_proof-4         	     100	  10473684 ns/op	  41479113 mean_latency_ns/op	  28295990 pool_wait_ns/op	        95.48 snapshots/s	 1325084 B/op	   12527 allocs/op
-PASS
-ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	1.938s
-goos: linux
-goarch: amd64
-pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
-cpu: INTEL(R) XEON(R) PLATINUM 8573C
-BenchmarkContinuity/parallel_snapshot_100_work_items_with_proof-4         	      30	  23162052 ns/op	  90453507 mean_latency_ns/op	         0 pool_wait_ns/op	        43.17 snapshots/s	 1408114 B/op	   15812 allocs/op
-PASS
-ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	11.697s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	10.195s

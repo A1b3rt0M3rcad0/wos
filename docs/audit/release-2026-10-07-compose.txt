@@ -1,0 +1,2 @@
+PASS: Compose sqlite, non-root image, persistent volume, authenticated durable create and readiness
+PASS: Compose postgres, non-root image, persistent volume, authenticated durable create and readiness

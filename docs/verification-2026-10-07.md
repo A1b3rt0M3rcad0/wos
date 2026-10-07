@@ -35,7 +35,13 @@ Go 1.27.1; Node 24.19.0/npm 11.9.0; Playwright 1.62.1; Chromium 151.0.7922.173; 
 - Fuzz de reachability do grafo, escopo de cursor e serialização pública; resultados medidos em `audit/release-2026-10-07-fuzz.txt`.
 - Benchmarks SQLite/PostgreSQL, contagens SQL e throughput com quatro leitores: [método e limites](benchmarks.md).
 
-Saídas de execução estão em `docs/audit/release-2026-10-07-*`. O build local do Dockerfile encontrou DNS indisponível dentro do builder ao baixar Alpine; o gate de contêiner/build reproduzível deve passar no CI do head final antes do merge. Esse problema do ambiente não é registrado como aprovação local.
+Saídas de execução estão em `docs/audit/release-2026-10-07-*`. O Dockerfile foi validado localmente: imagem com UID/GID 10001, raiz read-only e /data em tmpfs, config/version, live/ready, catálogo autenticado e MCP. Compose SQLite e PostgreSQL passaram criação durável autenticada em volumes isolados. Dois builds Linux amd64, de caminhos de fonte distintos, produziram o mesmo SHA-256 (`dc62ae0d8362f638a858536040cf61c238955d62bc35abfa9676a687d8489b80`).
+
+### Infraestrutura de CI
+
+[CI 37658108975](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37658108975) e [Browser acceptance 37658108983](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/37658108983), head `97a3964496d1b96d5fb249327c8158335bcbefae`, falharam antes de executar qualquer etapa. As duas anotações dizem: “The job was not started because recent account payments have failed or your spending limit needs to be increased.” Não houve falha de teste remoto reproduzida. Os gates equivalentes foram executados localmente; hosted CI permanece bloqueado pela conta e deve ser reexecutado quando a cobrança/limite for regularizado. A integração não representa aprovação remota e não alterou workflows para esconder o erro.
+
+O builder local também exige proxy/CA da plataforma. O build permite um bundle de confiança HTTPS opcional montado como secret temporário `go-ca-bundle`, usado somente para download de módulos. O bundle padrão da imagem oficial Go é copiado para o runtime; o certificado privado do proxy não é incorporado. TLS permanece verificado. O download redundante de CA por apk foi removido, mantendo o bundle público.
 
 ## Reprodução
 

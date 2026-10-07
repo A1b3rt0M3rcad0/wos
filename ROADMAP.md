@@ -814,7 +814,7 @@ Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/1
 
 [Verification dated 2026-10-07](docs/verification-2026-10-07.md) maps all thirteen canonical Release 0.1 gates to code and executed tests. The supported runtime matrix is Linux amd64, SQLite and PostgreSQL 18.6, HTTP and MCP; embedded and independent client examples are executable. The [agent guide](docs/agents.md) explains continuation, credentials, version conflicts, uncertain commits, leases and fencing.
 
-1. Integrate PR #14 only after CI and Browser acceptance pass its exact head.
+1. Integration requires all final-head verification gates. Hosted Actions did not start on 2026-10-07 because GitHub reported failed account payments/spending limit. Equivalent gates were executed locally, including both Compose profiles, reproducible build and non-root/read-only container; this infrastructure failure is documented in the current verification and is not reported as a green hosted CI.
 2. Validate the candidate in the consumer deployment using the documented commands, namespaces and credentials.
 3. Publish a versioned release only when the maintainer elects to distribute it. No version tag or release asset is inferred from a merged PR.
 

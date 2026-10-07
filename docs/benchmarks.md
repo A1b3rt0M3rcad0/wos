@@ -4,19 +4,19 @@ Go 1.27.1, Linux amd64, Intel Xeon Platinum 8573C, GOMAXPROCS=4. SQLite pelo dri
 
 | Banco / consulta | Média (ms) | JSON (bytes) | SQL/op | Bytes alocados/op | Alocações/op |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| SQLite / descoberta | 0,345 | 7.505 | 1 | 35.610 | 381 |
-| SQLite / snapshot simples | 3,663 | 32.238 | 23 | 935.386 | 5.953 |
-| SQLite / snapshot com avaliações | 7,535 | 32.627 | 32 | 1.320.093 | 12.514 |
-| PostgreSQL / descoberta | 1,962 | 7.505 | 3 | 41.865 | 565 |
-| PostgreSQL / snapshot simples | 15,135 | 32.238 | 25 | 972.341 | 7.070 |
-| PostgreSQL / snapshot com avaliações | 19,682 | 32.627 | 34 | 1.405.476 | 15.817 |
+| SQLite / descoberta | 0,410 | 7.402 | 1 | 35.549 | 381 |
+| SQLite / snapshot simples | 5,459 | 32.238 | 23 | 934.443 | 5.953 |
+| SQLite / snapshot com avaliações | 7,376 | 32.627 | 32 | 1.320.365 | 12.515 |
+| PostgreSQL / descoberta | 1,423 | 7.505 | 3 | 43.449 | 565 |
+| PostgreSQL / snapshot simples | 46,099 | 32.238 | 25 | 974.290 | 7.092 |
+| PostgreSQL / snapshot com avaliações | 92,224 | 32.627 | 34 | 1.403.446 | 15.812 |
 
 Leituras em lote preservam base, autoria, critérios, revisões, Evidence, avaliações e conclusões. Nove queries de histórico substituem consultas por proprietário/assessment/conclusão nas listagens de Objectives/WorkItems. A fixture simples medida nesta mesma máquina antes da otimização usava 822 instruções SQL em SQLite. A diferença de SQL é verificável; tempos variam com hardware/carga e não são comparados à máquina de 5 de outubro.
 
 | Quatro leitores, mesmo Outcome com avaliações | Throughput | Latência média por chamada | Espera média do pool/op |
 | --- | ---: | ---: | ---: |
-| SQLite, pool de uma conexão | 95,48 snapshots/s | 41,479 ms | 28,296 ms |
-| PostgreSQL, pool de até 16 conexões | 43,17 snapshots/s | 90,454 ms | 0 ms |
+| SQLite, pool de uma conexão | 172,6 snapshots/s | 22,876 ms | 15,301 ms |
+| PostgreSQL, pool de até 16 conexões | 34,35 snapshots/s | 109,612 ms | 0 ms |
 
 O benchmark paralelo mede leitura no mesmo Outcome. PostgreSQL serializa o guard desse Outcome; portanto mais conexões não garantem ganho neste cenário. Zero espera de pool não significa zero contenção do guard. Não foram medidos percentis, throughput de escrita, múltiplos Outcomes ou capacidade de produção.
 

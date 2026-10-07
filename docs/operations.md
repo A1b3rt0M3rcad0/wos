@@ -72,3 +72,7 @@ Logs JSON registram comando, Principal/ActorRef, correlação, revisão, duraç�
 Retenção de idempotência de Outcome: sete dias por padrão. Registros históricos e recibos administrativos não são purgados automaticamente. Planeje espaço e backups; arquivar não exclui histórico. Consulte [contracts.md](contracts.md) para os limites das consultas.
 
 No perfil remoto PostgreSQL, o relógio do banco arbitra leases após o guard; relógios de réplicas medem apenas duração. Um host embedded confiável que escolhe `NewService` deve fornecer a autoridade de tempo da implantação; `NewAuthorizedService` usa a autoridade transacional PostgreSQL. Ver ADR-016.
+
+## Build em rede com proxy HTTPS
+
+O Dockerfile usa a imagem oficial Go pinada e copia seu bundle padrão de autoridades para o runtime Alpine. Um proxy com CA privada pode fornecer `docker build --secret id=go-ca-bundle,src=/caminho/para/bundle.pem .`; esse mount é temporário e serve somente ao download Go, com TLS verificado. Ele não é copiado para o runtime nem torna o secret uma exigência da instalação normal. Proxy/DNS do ambiente de build são configuração operacional do host.
