@@ -391,6 +391,14 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       "Validar com clientes",
     );
     await expect(page.locator("#detail-content pre")).not.toBeVisible();
+    await expect(
+      page
+        .locator("#detail-actions")
+        .getByRole("button", {
+          name: "Publicar rascunho do plano",
+          exact: true,
+        }),
+    ).toHaveCount(0);
     await shot("06-plano");
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Objetivos", exact: true }).click();

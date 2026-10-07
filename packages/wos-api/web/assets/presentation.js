@@ -46,6 +46,10 @@ export function icon(name) {
 }
 export const names = {
   draft: "Rascunho",
+  planned: "Planejado",
+  archived: "Arquivado",
+  wont_fix: "Sem correção",
+  duplicate: "Duplicado",
   active: "Ativo",
   achieved: "Alcançado",
   failed: "Falhou",

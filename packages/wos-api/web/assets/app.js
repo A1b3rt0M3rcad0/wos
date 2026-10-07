@@ -1352,13 +1352,17 @@ function planNodes(nodes) {
   for (const [i, n] of [...(nodes || [])]
     .sort((a, b) => a.position - b.position)
     .entries()) {
-    const row = el("div", undefined, "plan-node");
+    const row = el(
+      "div",
+      undefined,
+      `plan-node${n.parent_node_key ? " plan-node-child" : ""}`,
+    );
     const body = el("div");
     body.append(
       el("strong", n.title),
       el(
         "small",
-        `${display(n.node_type)}${n.parent_node_key ? ` · Grupo ${n.parent_node_key}` : ""}`,
+        `${display(n.node_type)}${n.parent_node_key ? ` · ${(nodes || []).find((parent) => parent.node_key === n.parent_node_key)?.title || n.parent_node_key}` : ""}`,
       ),
     );
     if (n.target_ref) body.append(referenceButton(n.target_ref));
@@ -1387,12 +1391,46 @@ function quickActions(kind, entity) {
     outcome: ["activate_outcome", "achieve_outcome"],
     issue: ["investigate_issue", "resolve_issue"],
     blocker: ["resolve_blocker"],
-    roadmap: ["open_roadmap_draft", "publish_roadmap_draft"],
+    roadmap: [
+      "open_roadmap_draft",
+      "replace_roadmap_draft",
+      "publish_roadmap_draft",
+    ],
     evidence: ["retract_evidence"],
   };
   const container = el("div", undefined, "quick-actions");
   for (const name of options[kind] || []) {
     if (!state.catalog.some((c) => c.name === name)) continue;
+    if (
+      kind === "roadmap" &&
+      (entity.lifecycle === "archived" ||
+        (name === "open_roadmap_draft" ? Boolean(entity.draft) : !entity.draft))
+    )
+      continue;
+    if (
+      kind === "objective" &&
+      (name === "start_objective"
+        ? entity.lifecycle !== "planned"
+        : entity.lifecycle !== "in_progress")
+    )
+      continue;
+    if (
+      kind === "outcome" &&
+      (name === "activate_outcome"
+        ? entity.lifecycle !== "draft"
+        : entity.lifecycle !== "active")
+    )
+      continue;
+    if (kind === "evidence" && entity.lifecycle !== "registered") continue;
+    if (kind === "blocker" && entity.lifecycle !== "active") continue;
+    if (
+      kind === "issue" &&
+      (name === "investigate_issue"
+        ? entity.lifecycle !== "open"
+        : !["open", "investigating"].includes(entity.lifecycle))
+    )
+      continue;
+
     if (
       kind === "work_item" &&
       (["done", "cancelled"].includes(entity.lifecycle) ||

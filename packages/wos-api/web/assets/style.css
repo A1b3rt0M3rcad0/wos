@@ -1807,3 +1807,25 @@ svg {
     grid-template-columns: 1fr;
   }
 }
+
+#command-form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(90dvh - 52px);
+}
+#command-form > .dialog-heading,
+#command-form > label,
+#command-form > #command-help,
+#command-form > footer {
+  flex-shrink: 0;
+}
+#fields {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  padding: 2px;
+}
+.plan-node-child {
+  margin-left: 16px;
+  background: #fcfbf8;
+}
