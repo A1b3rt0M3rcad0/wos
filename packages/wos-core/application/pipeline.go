@@ -68,6 +68,11 @@ func transactCommand[T any, C any](
 	if err != nil {
 		return MutationResult[T]{}, err
 	}
+	defer func() {
+		if timing, ok := uow.(ports.CoordinationTiming); ok {
+			observation.GuardDuration = timing.GuardDuration()
+		}
+	}()
 	committed := false
 	defer func() {
 		if !committed {

@@ -26,6 +26,12 @@ type Worker struct {
 	Secrets       map[string]string
 	Client        *http.Client
 	allowLoopback bool
+	Observer      DeliveryObserver
+}
+
+// DeliveryObserver receives bounded operational metadata, without payloads or secrets.
+type DeliveryObserver interface {
+	ObserveDelivery(result string, duration time.Duration, acknowledged bool)
 }
 type Policy struct {
 	AllowedHosts  []string
@@ -99,7 +105,14 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	if err != nil || delivery == nil {
 		return false, err
 	}
+	started := time.Now()
 	result := "destination_configuration_error"
+	acknowledged := false
+	defer func() {
+		if w.Observer != nil {
+			w.Observer.ObserveDelivery(result, time.Since(started), acknowledged)
+		}
+	}()
 	success := false
 	secret, configured := w.Secrets[delivery.SecretRef]
 	target, parseErr := url.Parse(delivery.URL)
@@ -138,6 +151,7 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	ackCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	err = w.Store.FinishDelivery(ackCtx, *delivery, w.Clock.Now().UTC(), result, success, next)
+	acknowledged = err == nil
 	return true, err
 }
 func (w *Worker) Run(ctx context.Context) error {

@@ -37,14 +37,22 @@ func TestRealWebhookRetryKeepsEventIdentityAndSignature(t *testing.T) {
 	var mu sync.Mutex
 	received := []string{}
 	invalid := false
+	hold := false
+	started := make(chan struct{}, 1)
 	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		err := integration.VerifySignature(secret, r.Header.Get("X-WOS-Timestamp"), r.Header.Get("X-WOS-Event-ID"), r.Header.Get("X-WOS-Signature"), body, clock.Now())
 		mu.Lock()
-		defer mu.Unlock()
 		invalid = invalid || err != nil
 		received = append(received, r.Header.Get("X-WOS-Event-ID"))
-		if len(received) == 1 {
+		count, waiting := len(received), hold
+		mu.Unlock()
+		if waiting {
+			started <- struct{}{}
+			<-r.Context().Done()
+			return
+		}
+		if count == 1 {
 			w.WriteHeader(503)
 		} else {
 			w.WriteHeader(204)
@@ -102,8 +110,55 @@ func TestRealWebhookRetryKeepsEventIdentityAndSignature(t *testing.T) {
 		t.Fatal("retry did not succeed", err)
 	}
 	mu.Lock()
-	defer mu.Unlock()
 	if invalid || len(received) != 2 || received[0] != received[1] {
 		t.Fatal("retry changed identity or had invalid signature", received)
+	}
+	hold = true
+	mu.Unlock()
+	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "Shutdown preserves delivery", Lifecycle: domain.WorkItemLifecycleTodo, Priority: domain.PriorityNormal}); err != nil {
+		t.Fatal(err)
+	}
+	interrupted, cancel := context.WithCancel(ctx)
+	done := make(chan error, 1)
+	go func() { _, err := worker.Tick(interrupted); done <- err }()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		cancel()
+		t.Fatal("delivery did not start")
+	}
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("interrupted delivery did not finish")
+	}
+	pending, err = service.ListDeliveries(ctx, outcome.Value.Scope(), 25, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var retryID domain.ID
+	for _, delivery := range pending.Items {
+		if delivery.Status == "pending" && delivery.Attempts == 1 {
+			retryID = delivery.IntegrationEventID
+		}
+	}
+	if retryID == "" {
+		t.Fatal("shutdown lost pending delivery")
+	}
+	mu.Lock()
+	hold = false
+	mu.Unlock()
+	clock.now = clock.now.Add(3 * time.Second)
+	if worked, err = worker.Tick(ctx); err != nil || !worked {
+		t.Fatal("resume interrupted worker", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if invalid || len(received) != 4 || received[2] != received[3] || received[3] != retryID.String() {
+		t.Fatal("shutdown/resume changed delivery identity", received)
 	}
 }

@@ -18,7 +18,11 @@ type CommandObservation struct {
 	Duration        time.Duration
 	TransactionWait time.Duration
 	CommitDuration  time.Duration
+	GuardDuration   time.Duration
 	ErrorCode       domain.ErrorCode
 	Replay          bool
 }
 type CommandObserver interface{ ObserveCommand(CommandObservation) }
+
+// CoordinationTiming reports cumulative guard acquisition duration in one transaction.
+type CoordinationTiming interface{ GuardDuration() time.Duration }

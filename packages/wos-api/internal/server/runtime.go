@@ -165,6 +165,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			store.Close()
 			return nil, err
 		}
+		runtime.deliveryWorker.Observer = observer
 	}
 	root := http.NewServeMux()
 	root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
