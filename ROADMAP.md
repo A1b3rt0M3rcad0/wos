@@ -817,8 +817,8 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 | Stage | Status | Acceptance |
 | --- | --- | --- |
 | D1 — Design and release policy | ✅ | [Complete plan](docs/distribution-plan.md) and ADR-017 define boundaries, tradeoffs, PR sequence, compatibility and external requirements |
-| D2 — Portable skills installer | 🚧 | npm package; native/generic destinations; minimal-context coordination/delegation/review; safe install/update/remove and tests |
-| D3 — Service distribution | ⬜ | Native metadata/integrity; offline npm install; real server smoke; versioned assets |
+| D2 — Portable skills installer | ✅ | Four portable skills, npm tarball, four project/user destinations and generic path; safe install/update/remove; four tests and offline installed-tarball consumer pass. Native runtime execution is not claimed |
+| D3 — Service distribution | 🚧 | Native metadata/integrity; offline npm install; real server smoke; versioned assets |
 | D4 — Automated release | ⬜ | Changes/version PR; full gates; npm/GHCR/GitHub publication and replay tests |
 | External publication | ⛔ | npm publishing identity not available; Actions billing prevents jobs; package ownership/trusted publisher requires titular configuration |
 

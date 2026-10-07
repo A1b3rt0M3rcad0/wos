@@ -11,6 +11,8 @@ Humans, agents, agent networks, and conventional applications decide and execute
 Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
 The human workspace includes contextual navigation, an Outcome summary, a paginated item list and an operational board. Item details, criteria, proofs and plan revisions are readable without opening technical payloads. See the [workspace guide](docs/workspace-ux.md) and [real screenshots](docs/ui-workspace/README.md).
 
+Portable [agent skills](packages/wos-skill/README.md) guide minimal-context coordination, native delegation, continuity and review. The npm installer supports Claude Code, Codex, Hermes, OpenClaw and explicit generic discovery paths; file installation is verified, all-runtime execution is not. See the [distribution/release implementation plan](docs/distribution-plan.md) for package identity, publication status and limits. npm registry publication is separate from the implementation.
+
 
 ## Why WOS
 

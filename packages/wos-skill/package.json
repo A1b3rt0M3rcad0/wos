@@ -1,0 +1,14 @@
+{
+  "name": "@a1b3rt0m3rcad0/wos-skill",
+  "version": "0.1.0",
+  "description": "Portable WOS coordination, delegation, continuity and review skills",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=22" },
+  "bin": { "wos-skill": "bin/wos-skill.mjs" },
+  "files": ["bin", "lib", "skills", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test test/*.test.mjs" },
+  "repository": { "type": "git", "url": "git+https://github.com/A1b3rt0M3rcad0/wos.git", "directory": "packages/wos-skill" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
+  "keywords": ["wos", "agent-skills", "mcp", "codex", "claude", "hermes", "openclaw"]
+}

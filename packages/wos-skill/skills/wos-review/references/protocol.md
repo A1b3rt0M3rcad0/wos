@@ -1,0 +1,11 @@
+# Protocol and recovery reference
+
+Connect to the instance configured by the user. Remote MCP uses Streamable HTTP `/mcp` with bearer credentials through the runtime credential facility; local MCP uses `WOS_MCP_ENABLED=true wos mcp stdio`. Local stdio composes a local database; it is not an implicit remote bridge. HTTP commands use `/api/v1`, Idempotency-Key and If-Match as documented. Never print bearer values or use them as author identity.
+
+Inspect live tools/list and input/output schemas. WOS supports multiple pinned MCP profiles; use the client's negotiated SDK profile, not a guessed envelope. namespace_id/outcome_id scope is explicit. Queries have limit/cursor; default is 25, range 1–100. Tool results may be truncated with omissions; absence from the first page is not proof of absence. snapshot_changed requires a refreshed snapshot. Focal context includes a task, Outcome summary, linked Objective, operational/blocking state, dependencies, current accepted decisions and evidence links; some collections are bounded and require additional reads.
+
+Mutation calls use {idempotency_key, command}. Identity is resolved by the server; ActorRef/external context is not authorization. Learn exact DTO fields from current schemas. A claim uses expected_version and explicit TTL; save returned claim/fencing/version/expiry. Reclaim increments fencing. Use current versions after every successful mutation and renewal. Lease protects WOS operations; GitHub, filesystem and deployment side effects need their own coordination/idempotency.
+
+If a response is lost, repeat exactly the same intention and key to reconcile a possible committed command. version_conflict means refresh and reconsider; never silently change expected_version in the same intent. transaction_conflict may be retried explicitly with the same key/version/intent. After idempotency receipt retention expires, inspect persisted state before generating a new mutation. An expired/lost lease requires explicit authorized recovery; do not continue stale execution.
+
+Authoritative public references: https://github.com/A1b3rt0M3rcad0/wos/blob/master/docs/agents.md and docs/contracts.md, docs/http.md, docs/operations.md in the same repository. A private repository requires account access; live server schemas remain available to authorized consumers.

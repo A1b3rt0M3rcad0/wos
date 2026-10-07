@@ -57,6 +57,8 @@ Optional OpenTelemetry has not been selected; metadata instrumentation uses stan
 
 ## Dependency admission rules
 
+The portable skills installer uses Node >=22 standard libraries only, with no runtime dependencies and no npm lifecycle scripts. Distribution tooling uses existing Go and Node tools. Node is needed for npm wrappers, not for the standalone Go service, container or Core library.
+
 Before adding a dependency:
 
 1. identify the roadmap wave and concrete requirement it satisfies;
