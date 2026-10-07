@@ -40,7 +40,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.rm(stage,{recursive:true,force:true}); await fs.mkdir(stage,{recursive:true});
     const pkg = JSON.parse(await fs.readFile(path.join(source,'packages',src,'package.json'),'utf8'));
     if (pkg.version !== version || pkg.scripts?.preinstall || pkg.scripts?.install || pkg.scripts?.postinstall || pkg.scripts?.prepare) throw new Error('Version mismatch or unexpected lifecycle script');
-    for (const entry of pkg.files.filter(f=>!['native','release.json','LICENSE'].includes(f))) {
+    for (const entry of pkg.files.filter(f=>!['native','release.json','LICENSE','third-party-notices'].includes(f))) {
       await fs.cp(path.join(source,'packages',src,entry),path.join(stage,entry),{recursive:true});
     }
     // Do not advertise test scripts when test sources are intentionally excluded.
@@ -55,6 +55,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${ldflags}`,'-o',path.join(native,'wos'),'./packages/wos-api/cmd/wos'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
   const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos')))};
   await fs.writeFile(path.join(stages.wos.stage,'release.json'),JSON.stringify(release,null,2)+'\n');
+  run('sh',['tools/distribution/notices.sh',path.join(stages.wos.stage,'third-party-notices')],{cwd:source});
   const artifacts=[];
   for(const [kind,{stage,pkg}] of Object.entries(stages)) {
     await normalize(stage);
@@ -65,6 +66,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   }
   const archiveStage=path.join(output,'archive'); await fs.rm(archiveStage,{recursive:true,force:true}); await fs.mkdir(archiveStage);
   for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(stages.wos.stage,'release.json'),'release.json'],[path.join(source,'packages/wos-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
+  await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
   await normalize(archiveStage);
   const archive=`wos_${version}_linux_amd64.tar.gz`;
   run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,archive),'-C',archiveStage,'.']);

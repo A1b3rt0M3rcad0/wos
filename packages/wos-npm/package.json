@@ -20,6 +20,7 @@
     "bin",
     "native",
     "release.json",
+    "third-party-notices",
     "README.md",
     "LICENSE"
   ],
