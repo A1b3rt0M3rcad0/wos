@@ -1,0 +1,10 @@
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local	[no test files]
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands	0.013s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http	0.729s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	0.186s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	7.811s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability	0.014s
+?   	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web	[no test files]
+ok  	github.com/A1b3rt0M3rcad0/wos/tests/boundary	1.479s

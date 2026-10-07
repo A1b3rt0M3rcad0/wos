@@ -9,6 +9,8 @@ Humans, agents, agent networks, and conventional applications decide and execute
 > **Project status:** implementation and acceptance of Waves 01–18 are complete for the Release 0.1 validation candidate. Wave 11 was integrated through PR #13; PR #14 carries the remaining waves and the final verification. See [current verification](docs/verification-2026-10-07.md) and [the live roadmap](ROADMAP.md) for execution evidence and integration gates. The supported runtime target is Linux amd64 with SQLite or PostgreSQL 18.6. A release tag has not been published.
 
 Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
+The human workspace includes contextual navigation, an Outcome summary, a paginated item list and an operational board. Item details, criteria, proofs and plan revisions are readable without opening technical payloads. See the [workspace guide](docs/workspace-ux.md) and [real screenshots](docs/ui-workspace/README.md).
+
 
 ## Why WOS
 

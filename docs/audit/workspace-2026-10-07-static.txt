@@ -1,0 +1,5 @@
+Go 1.27.1: standalone build passed.
+go vet ./packages/wos-api/...: passed (no diagnostics).
+node --check app.js and presentation.js: passed.
+git diff --check: passed.
+No dependency declaration/lockfile, Domain/HTTP/MCP contract or migration changed.
