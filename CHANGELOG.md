@@ -28,3 +28,10 @@ Current release-gate evidence is in `docs/verification-2026-10-07.md`; the Octob
 - Add query/guard/delivery metadata metrics, graph property fuzzing and measured SQL/pool/throughput benchmarks.
 
 - Validate reproducible Linux amd64 builds, non-root/read-only runtime and SQLite/PostgreSQL Compose profiles locally when hosted Actions cannot start because of account billing. Support an optional build-only proxy CA secret and reuse the official Go image CA bundle in the runtime.
+
+### Human workspace redesign — 2026-10-07
+
+- Replace technical payload lists with contextual sidebar navigation, Outcome summary, paginated list and operational board, following the owner's Jira UX/Guild.ai visual references.
+- Add readable drawers, proof/plan/conclusion presentation, Portuguese action/state labels, contextual commands, persistent form confirmation controls and mobile navigation.
+- Preserve complete snapshot counts, explicit loaded-item filters, cancellation semantics, cursor/idempotency contracts and scoped async response handling.
+- Validate three real browser journeys, API/server/boundary tests with PostgreSQL and static/build checks; publish actual screenshots and UX limitations.

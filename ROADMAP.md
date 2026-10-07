@@ -833,6 +833,8 @@ The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification]
 
 ## Human workspace redesign — Jira UX / Guild.ai visual reference
 
-**Status:** 🚧 In progress (2026-10-07), following the owner's explicit UI/UX request.
+**Status:** ✅ Implemented and locally verified (2026-10-07); integration through [PR #15](https://github.com/A1b3rt0M3rcad0/wos/pull/15).
 
 Acceptance: persistent contextual navigation; Outcome summary, item list and operational board; readable entity/history/plan details; scoped human actions without exposing internal payloads by default; search/filter and pagination preserving snapshot semantics; keyboard/mobile behavior; existing human/agent journeys plus board/list regressions; real screenshots and PR integration. This is a presentation extension to Waves 12/17/18 and keeps WOS domain transitions, authorization and transport contracts intact.
+
+Verified against the resulting repository: three Playwright journeys pass, including the real 32-item workspace, paginated board/list, proof selectors, cancellation, delayed Outcome responses, keyboard and mobile. API/server/boundary tests pass with real PostgreSQL enabled, plus vet/build/module syntax. The frontend is embedded with no new dependency or Domain/HTTP/MCP change. [UX guide and limits](docs/workspace-ux.md), [actual screenshots](docs/ui-workspace/README.md) and audit logs make the result reviewable. Hosted CI remains blocked before steps by GitHub account billing; it is not claimed green. PR integration is established by its merged state.

@@ -40,3 +40,7 @@ python3 tests/acceptance/journey.py --binary bin/wos --client http
 ```
 
 Para o aceite PostgreSQL configure `WOS_TEST_POSTGRES_DSN` e, para clean restore, `WOS_TEST_POSTGRES_CONTAINER` com PostgreSQL 18.6 descartável. Os testes isolam schemas e restauram em banco vazio; nunca aponte essas variáveis para uma base de produção. Sem DSN os casos PostgreSQL são explicitamente ignorados. O navegador usa `npm ci`, `npx playwright install --with-deps chromium` e `npm test` em `tests/web`; `WOS_TEST_CHROMIUM_PATH` permite usar Chromium já instalado. Veja [verification-2026-10-07.md](verification-2026-10-07.md) para a evidência do candidato atual.
+
+## Participação pela interface humana
+
+O cliente oficial oferece Resumo, Lista e Quadro, navegação contextual, detalhes laterais e ações humanas sobre o mesmo estado dos agentes. Veja [o guia do workspace](workspace-ux.md) e [as telas reais](ui-workspace/README.md). Reserve/conclua trabalho por comandos; depois avalie os critérios e certifique explicitamente o resultado. Filtros de itens se aplicam aos registros carregados; use paginação e atualização de snapshot quando necessário.

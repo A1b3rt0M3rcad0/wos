@@ -1,0 +1,19 @@
+
+> test
+> playwright test
+
+
+Running 3 tests using 1 worker
+
+(node:57400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 journey.spec.mjs:11:1 › human plans, agent executes by MCP, human certifies, new browser resumes after restart (7.6s)
+  ✓  2 journey.spec.mjs:57:1 › human reviews evidence, resolves blockers, reconciles conflict and preserves contested history (8.9s)
+  ✓  3 workspace.spec.mjs:11:1 › workspace summary, scoped list, operational board, pagination and real human action (5.2s)
+
+  3 passed (23.1s)
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
