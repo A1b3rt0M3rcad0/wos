@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** implementation and acceptance of Waves 01–18 are complete for the Release 0.1 validation candidate. Wave 11 was integrated through PR #13; PR #14 carries the remaining waves and the final verification. See [current verification](docs/verification-2026-10-07.md) and [the live roadmap](ROADMAP.md) for execution evidence and integration gates. The supported runtime target is Linux amd64 with SQLite or PostgreSQL 18.6. A release tag has not been published.
+> **Project status:** implementation and acceptance of Waves 01–18 are complete for the Release 0.1 validation candidate. Wave 11 was integrated through PR #13; PR #14 carries the remaining waves and the final verification. See [current verification](docs/verification-2026-10-07.md) and [the live roadmap](ROADMAP.md) for execution evidence and integration gates. The supported runtime target is Linux amd64 with SQLite or PostgreSQL 18.6. Release preparation and registry publication are tracked separately in the [release guide](docs/releases.md).
 
 Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
 The human workspace includes contextual navigation, an Outcome summary, a paginated item list and an operational board. Item details, criteria, proofs and plan revisions are readable without opening technical payloads. See the [workspace guide](docs/workspace-ux.md) and [real screenshots](docs/ui-workspace/README.md).
@@ -14,6 +14,8 @@ The human workspace includes contextual navigation, an Outcome summary, a pagina
 Portable [agent skills](packages/wos-skill/README.md) guide minimal-context coordination, native delegation, continuity and review. The npm installer supports Claude Code, Codex, Hermes, OpenClaw and explicit generic discovery paths; file installation is verified, all-runtime execution is not. See the [distribution/release implementation plan](docs/distribution-plan.md) for package identity, publication status and limits. npm registry publication is separate from the implementation.
 
 The [npm service distribution](packages/wos-npm/README.md) embeds the existing Linux amd64 Go executable without install-time downloads or process startup. `node tools/distribution/build.mjs` builds both tarballs, a native archive and SHA-256 manifest; `node tools/distribution/verify.mjs` installs the actual packages offline and exercises the server. Use the pinned Go toolchain and Node >=22. Artifacts under `dist/` are local builds, not evidence of registry publication.
+
+[Release automation](docs/releases.md) prepares a coordinated version PR from `.changes/`, runs full gates on its integrated commit, and publishes npm/GHCR/GitHub assets with immutable identity checks and recovery from partial publication. Hosted publication requires working Actions and registry owner configuration; the repository stays private.
 
 
 ## Why WOS

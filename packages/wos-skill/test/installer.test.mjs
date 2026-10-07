@@ -60,3 +60,13 @@ test('portable skill frontmatter, bounded metadata and progressive references ar
     for(const match of text.matchAll(/\]\((references\/[^)]+)\)/g)) await fs.access(path.join(packageRoot,'skills',name,match[1]));
   }
 });
+
+test('skill tool names exist in the real MCP catalog', async () => {
+  const repository=path.resolve(packageRoot,'../..');
+  const catalog=(await fs.readFile(path.join(repository,'packages/wos-api/mcp/commands_generated.go'),'utf8'))+(await fs.readFile(path.join(repository,'packages/wos-api/mcp/queries.go'),'utf8'));
+  const known=new Set([...catalog.matchAll(/"(wos_[a-z_]+)"/g)].map(m=>m[1]));
+  for(const name of names) {
+    const text=await fs.readFile(path.join(packageRoot,'skills',name,'SKILL.md'),'utf8');
+    for(const m of text.matchAll(/\b(wos_[a-z_]+)\b/g))assert.ok(known.has(m[1]),`Unknown skill tool ${m[1]}`);
+  }
+});

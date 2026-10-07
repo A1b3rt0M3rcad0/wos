@@ -35,6 +35,9 @@ GitHub Actions currently uses:
 
 - `actions/checkout@v7.0.1`
 - `actions/setup-go@v7.0.0`
+- `actions/setup-node@v7.0.0` and `actions/upload-artifact@v7.0.2` for package/release verification; Node 24.19.0 and npm 11.9.0 pin artifact generation.
+
+Release/version/installer code uses Node standard libraries only. npm/OIDC, GitHub API/gh and Docker/GHCR are distribution services/tools, not Core or agent-runtime dependencies. Local workflow lint uses actionlint 1.7.7 as verification tooling; it is not shipped.
 
 These are CI dependencies, not runtime dependencies of WOS.
 

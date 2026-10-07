@@ -1,0 +1,53 @@
+name: Packages and release contracts
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      source_ref:
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: packages-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.source_ref || github.sha }}
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Pin packaging npm
+        run: npm install --global npm@11.9.0 --ignore-scripts
+      - name: Skills, distribution and release contract tests
+        run: |
+          node --test packages/wos-skill/test/*.test.mjs tools/distribution/test.mjs tools/releases/test.mjs
+          node tools/releases/version.mjs plan
+      - name: Build and verify actual offline npm packages
+        run: |
+          node tools/distribution/build.mjs
+          node tools/distribution/verify.mjs
+      - name: Reproducible npm and native assets across source paths
+        run: node tools/distribution/reproducible.mjs
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: wos-packages-${{ github.sha }}
+          path: |
+            dist/*.tgz
+            dist/*.tar.gz
+            dist/distribution.json
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
