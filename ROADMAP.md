@@ -6,6 +6,8 @@
 **Current target:** Release 0.1  
 **Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
 
+**Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
+
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
@@ -809,6 +811,18 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 - [x] Restart/restore preserves state required to resume work.
 
 # Current integration and validation
+
+## Distribution extension — npm service, portable skills, automated releases
+
+| Stage | Status | Acceptance |
+| --- | --- | --- |
+| D1 — Design and release policy | ✅ | [Complete plan](docs/distribution-plan.md) and ADR-017 define boundaries, tradeoffs, PR sequence, compatibility and external requirements |
+| D2 — Portable skills installer | 🚧 | npm package; native/generic destinations; minimal-context coordination/delegation/review; safe install/update/remove and tests |
+| D3 — Service distribution | ⬜ | Native metadata/integrity; offline npm install; real server smoke; versioned assets |
+| D4 — Automated release | ⬜ | Changes/version PR; full gates; npm/GHCR/GitHub publication and replay tests |
+| External publication | ⛔ | npm publishing identity not available; Actions billing prevents jobs; package ownership/trusted publisher requires titular configuration |
+
+Do not conflate a portable skill with executed integration in every agent, nor implemented CI/CD with a successful hosted release. Original Waves 01–18 remain accepted; this is distribution work outside the original completion claim.
 
 Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/13) at `f009b76dd4924490f0162839391218202abaeb79`. [PR #14](https://github.com/A1b3rt0M3rcad0/wos/pull/14), rebased in scope onto `master`, carries Waves 12–18 and the final hardening. Completion status above refers to the tested candidate; integration is confirmed by the PR's merged state, not by an unchecked draft or an earlier CI head.
 
