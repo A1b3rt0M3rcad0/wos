@@ -1,5 +1,10 @@
 # Changelog
 
+### Distribution extension
+
+- Add portable coordination, native delegation, continuity and proof-review skills and an explicit npm installer with project/user/generic paths, managed hashes, dry-run and preservation of user modifications.
+- Record release/distribution policy and tradeoffs in ADR-017 and docs/distribution-plan.md. Publication and native agent certification remain separate from local verification.
+
 ## Unreleased — Release 0.1 validation candidate, 2026-10-07
 
 Waves 01–18 have executable acceptance evidence. Wave 11 integrated through PR #13; final waves and validation are carried by PR #14. No release tag is published.
