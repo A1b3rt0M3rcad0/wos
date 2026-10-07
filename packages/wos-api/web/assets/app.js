@@ -318,6 +318,7 @@ $("logout").onclick = async () => {
 $("namespace").onchange = () => {
   state.outcome = null;
   state.snapshot = null;
+  $("workspace-loading").hidden = true;
   state.entities.clear();
   state.selected = null;
   $("outcome").hidden = true;
@@ -362,6 +363,8 @@ async function discover(append = false) {
 $("more-outcomes").onclick = () => discover(true).catch(report);
 async function openOutcome(outcome) {
   state.generation++;
+  document.querySelector(".sidebar").classList.add("navigation-collapsed");
+  $("navigation-toggle").setAttribute("aria-expanded", "false");
   state.entities.clear();
   state.loaded.clear();
   state.boardLoaded.clear();
@@ -369,6 +372,7 @@ async function openOutcome(outcome) {
   state.selected = outcome;
   state.criterion = null;
   state.view = "summary";
+  state.snapshot = null;
   $("item-search").value = "";
   $("item-priority").value = "";
   $("detail-dialog").close();
@@ -384,8 +388,17 @@ async function openOutcome(outcome) {
     );
   }
   $("empty").hidden = true;
-  $("outcome").hidden = false;
-  await refresh();
+  $("outcome").hidden = true;
+  $("workspace-loading").hidden = false;
+  const generation = state.generation;
+  try {
+    await refresh();
+  } catch (error) {
+    if (generation === state.generation) $("empty").hidden = false;
+    throw error;
+  } finally {
+    if (generation === state.generation) $("workspace-loading").hidden = true;
+  }
 }
 async function refresh() {
   if (!state.outcome) return discover();
@@ -396,6 +409,16 @@ async function refresh() {
     request(path),
   ]);
   if (generation !== state.generation) return;
+  if (
+    live.outcome_revision !== undefined &&
+    live.outcome_revision !== snapshot.outcome_revision
+  ) {
+    const changed = new Error(
+      "O estado mudou durante a leitura. Atualize para obter uma visualização coerente.",
+    );
+    changed.code = "precondition_failed";
+    throw changed;
+  }
   state.snapshot = snapshot;
   state.outcome = live.value || live;
   state.loaded.clear();
@@ -403,7 +426,7 @@ async function refresh() {
   state.entities.clear();
   for (const section of Object.values(snapshot.sections))
     for (const item of section) {
-      const e = item.ref ? item : item.work_item || item.current;
+      const e = item?.ref ? item : item?.work_item || item?.current;
       if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
     }
   $("empty").hidden = true;
@@ -427,6 +450,14 @@ async function refresh() {
   );
 }
 $("refresh").onclick = () => refresh().catch(report);
+$("navigation-toggle").onclick = () => {
+  const sidebar = document.querySelector(".sidebar");
+  sidebar.classList.toggle("navigation-collapsed");
+  $("navigation-toggle").setAttribute(
+    "aria-expanded",
+    String(!sidebar.classList.contains("navigation-collapsed")),
+  );
+};
 const operationalSections = [
   "backlog_work",
   "waiting_scope_work",
@@ -852,7 +883,9 @@ function itemView(item, mode = "card") {
   if (mode === "list") {
     const priority = el(
       "span",
-      entity.priority ? `↑ ${display(entity.priority)}` : "—",
+      entity.priority
+        ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
+        : "—",
       `item-priority ${entity.priority || ""}`,
     );
     button.append(stateCell, priority);
@@ -862,7 +895,9 @@ function itemView(item, mode = "card") {
       stateCell,
       el(
         "span",
-        entity.priority ? `↑ ${display(entity.priority)}` : "",
+        entity.priority
+          ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
+          : "",
         `item-priority ${entity.priority || ""}`,
       ),
     );
@@ -899,7 +934,9 @@ function timelineView(item) {
   marker.append(icon(item.actor_ref?.kind === "agent" ? "work_item" : "user"));
   const body = el("div");
   body.append(
-    el("h3", eventName(item.event_type)),
+    Object.assign(el("h3", eventName(item.event_type)), {
+      title: item.event_type,
+    }),
     el(
       "p",
       `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revisão ${item.outcome_revision}`,
@@ -912,38 +949,50 @@ function timelineView(item) {
 }
 function eventName(type) {
   const subjects = {
-    WorkItem: "Trabalho",
-    Objective: "Objetivo",
-    Outcome: "Resultado",
-    Roadmap: "Plano",
-    Evidence: "Evidência",
-    Issue: "Problema",
-    Blocker: "Impedimento",
-    Decision: "Decisão",
-    Artifact: "Artefato",
-    Criterion: "Critério",
+    work_item: "Trabalho",
+    objective: "Objetivo",
+    outcome: "Resultado",
+    roadmap: "Plano",
+    evidence: "Evidência",
+    issue: "Problema",
+    blocker: "Impedimento",
+    decision: "Decisão",
+    artifact: "Artefato",
+    criterion: "Critério",
+    relation: "Relação",
   };
   const actions = {
-    Created: "criado",
-    Updated: "atualizado",
-    Completed: "concluído",
-    Claimed: "reservado",
-    Achieved: "alcançado",
-    Activated: "ativado",
-    Registered: "registrada",
-    Retracted: "retirada",
-    Resolved: "resolvido",
-    Recorded: "registrada",
-    Published: "publicado",
-    Reopened: "reaberto",
-    Archived: "arquivado",
+    created: "criado",
+    updated: "atualizado",
+    completed: "concluído",
+    claimed: "reservado",
+    achieved: "alcançado",
+    activated: "ativado",
+    registered: "registrada",
+    retracted: "retirada",
+    resolved: "resolvido",
+    recorded: "registrada",
+    published: "publicado",
+    reopened: "reaberto",
+    archived: "arquivado",
+    assessment_recorded: "avaliação registrada",
+    draft_opened: "rascunho aberto",
+    draft_replaced: "rascunho editado",
+    draft_published: "revisão publicada",
   };
-  let text = type;
-  for (const [a, b] of Object.entries(subjects))
-    text = text.replaceAll(a, b + " ");
-  for (const [a, b] of Object.entries(actions))
-    text = text.replaceAll(a, b + " ");
-  return text.replaceAll("_", " ").trim();
+  const normalized = type
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+    .replace(/(^wos[._]|[._]v\d+$)/g, "")
+    .replaceAll(".", "_");
+  const subject = Object.keys(subjects).find((s) =>
+    normalized.startsWith(s + "_"),
+  );
+  if (subject) {
+    const action = normalized.slice(subject.length + 1);
+    return `${subjects[subject]} · ${actions[action] || display(action)}`;
+  }
+  return display(normalized);
 }
 function emptySection(title, command) {
   const box = el("div", undefined, "empty-section");
@@ -1105,7 +1154,7 @@ const boardGroups = [
   {
     title: "Concluído",
     tone: "green",
-    sections: ["done_work", "cancelled_work"],
+    sections: ["done_work"],
   },
 ];
 function renderBoard() {
@@ -1118,7 +1167,15 @@ function renderBoard() {
     ),
   );
   const board = el("div", undefined, "board");
-  for (const group of boardGroups) {
+  const groups = [...boardGroups];
+  if (state.snapshot.counts.cancelled_work)
+    groups.push({
+      title: "Cancelado",
+      tone: "violet",
+      sections: ["cancelled_work"],
+    });
+  board.classList.toggle("board-six", groups.length === 6);
+  for (const group of groups) {
     const column = el("section", undefined, "board-column");
     column.setAttribute("aria-label", group.title);
     const heading = el("div", undefined, "column-heading");
@@ -1400,6 +1457,10 @@ async function showEntity(ref) {
     "required_for_outcome",
     "not_before",
     "severity",
+    "blocked_ref",
+    "cause_ref",
+    "resolution_summary",
+    "parent_objective_id",
     "verification_mode",
     "uri",
     "source_ref",
@@ -1410,7 +1471,7 @@ async function showEntity(ref) {
     if (entity[key] === undefined || entity[key] === null || entity[key] === "")
       continue;
     const dd = el("dd");
-    if (key === "objective_id")
+    if (["objective_id", "parent_objective_id"].includes(key))
       dd.append(
         referenceButton({ ...ref, kind: "objective", id: entity[key] }),
       );
@@ -1638,6 +1699,13 @@ function field(name, schema, value, required = false) {
     decision_id: "decision",
     roadmap_id: "roadmap",
   }[name];
+  if (
+    entityKind &&
+    value === state.selected?.id &&
+    entityKind === state.selected?._kind &&
+    name !== "parent_objective_id"
+  )
+    return { node: wrap, get: () => value };
   if (entityKind) {
     const label = el("label", human(name)),
       select = el("select");
@@ -1645,7 +1713,7 @@ function field(name, schema, value, required = false) {
     const items = new Map(state.entities);
     for (const section of Object.values(state.snapshot?.sections || {})) {
       for (const entry of section) {
-        const item = entry.ref ? entry : entry.work_item;
+        const item = entry?.ref ? entry : entry?.work_item;
         if (item?.ref) items.set(`${item.ref.kind}/${item.ref.id}`, item);
       }
     }
@@ -1684,7 +1752,7 @@ function field(name, schema, value, required = false) {
       items.set(`${root.ref.kind}/${root.ref.id}`, root);
       for (const values of Object.values(state.snapshot.sections)) {
         for (const item of values) {
-          const entity = item.ref ? item : item.work_item;
+          const entity = item?.ref ? item : item?.work_item;
           if (entity?.ref)
             items.set(`${entity.ref.kind}/${entity.ref.id}`, entity);
         }

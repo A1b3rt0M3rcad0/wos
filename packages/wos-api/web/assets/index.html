@@ -81,13 +81,23 @@
         </div>
       </section>
       <section id="workspace" hidden>
-        <aside class="sidebar" aria-label="Navegação do espaço de trabalho">
+        <aside
+          class="sidebar navigation-collapsed"
+          aria-label="Navegação do espaço de trabalho"
+        >
           <div class="workspace-switch">
             <span class="workspace-symbol">W</span
             ><label>Contexto de trabalho<select id="namespace"></select></label>
           </div>
           <div class="sidebar-heading">
-            <span>RESULTADOS</span
+            <button
+              id="navigation-toggle"
+              class="quiet mobile-only"
+              aria-controls="outcomes"
+              aria-expanded="false"
+            >
+              Trocar resultado</button
+            ><span class="desktop-only">RESULTADOS</span
             ><button
               id="create-outcome"
               class="icon-button"
@@ -136,6 +146,9 @@
         </aside>
         <article id="main-content" tabindex="-1" class="workspace-main">
           <div id="notice" role="status" aria-live="polite"></div>
+          <div id="workspace-loading" class="empty" role="status" hidden>
+            Carregando resultado…
+          </div>
           <div id="empty" class="empty">
             <span class="empty-symbol">↗</span>
             <p class="eyebrow">SEU PRÓXIMO RESULTADO</p>
@@ -188,7 +201,11 @@
                       type="search"
                       placeholder="Pesquisar nesta visualização" /></label
                   ><label
-                    >Prioridade<select id="item-priority">
+                    ><span id="priority-filter-label">Prioridade</span
+                    ><select
+                      id="item-priority"
+                      aria-labelledby="priority-filter-label"
+                    >
                       <option value="">Todas</option>
                       <option value="critical">Crítica</option>
                       <option value="high">Alta</option>
