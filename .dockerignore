@@ -1,5 +1,8 @@
 .git
 bin
+dist
+test-results
+playwright-report
 data
 *.db
 *.db-wal
