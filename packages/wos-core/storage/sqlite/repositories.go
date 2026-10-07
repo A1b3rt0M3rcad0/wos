@@ -182,46 +182,14 @@ func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id dom
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Objective{}, err
 	}
-	var (
-		version              int64
-		title, description   string
-		parent               sql.NullString
-		lifecycle, priority  string
-		required             int
-		createdAt, updatedAt int64
-	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, title, description, parent_objective_id, lifecycle, priority,
+	row := r.uow.tx.QueryRowContext(ctx, `
+SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
        required_for_outcome, created_at, updated_at
 FROM objectives
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(
-		&version, &title, &description, &parent, &lifecycle, &priority,
-		&required, &createdAt, &updatedAt,
-	)
+WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	value, err := scanObjective(row, scope)
 	if err != nil {
-		return domain.Objective{}, mapSQLError("get objective", err)
-	}
-	value := domain.Objective{
-		ID:                 id,
-		Scope:              scope,
-		Version:            domain.Version(version),
-		Title:              title,
-		Description:        description,
-		Lifecycle:          domain.ObjectiveLifecycle(lifecycle),
-		Priority:           domain.Priority(priority),
-		RequiredForOutcome: required == 1,
-		CreatedAt:          decodeTime(createdAt),
-		UpdatedAt:          decodeTime(updatedAt),
-		Criteria:           domain.NewCriterionSet(),
-	}
-	if parent.Valid {
-		parsed, err := domain.ParseID(parent.String)
-		if err != nil {
-			return domain.Objective{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted parent objective id is invalid", err)
-		}
-		value.ParentObjectiveID = &parsed
+		return domain.Objective{}, err
 	}
 	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "owner")
 	if err != nil {
@@ -237,43 +205,109 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 	return value, nil
 }
 
+func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, error) {
+	var rawID string
+	var (
+		version              int64
+		title, description   string
+		parent               sql.NullString
+		lifecycle, priority  string
+		required             int
+		createdAt, updatedAt int64
+	)
+	err := scanner.Scan(
+		&rawID,
+		&version, &title, &description, &parent, &lifecycle, &priority,
+		&required, &createdAt, &updatedAt,
+	)
+	if err != nil {
+		return domain.Objective{}, mapSQLError("get objective", err)
+	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.Objective{}, err
+	}
+	value := domain.Objective{
+		ID:                 id,
+		Scope:              scope,
+		Version:            domain.Version(version),
+		Title:              title,
+		Description:        description,
+		Lifecycle:          domain.ObjectiveLifecycle(lifecycle),
+		Priority:           domain.Priority(priority),
+		RequiredForOutcome: required == 1,
+		CreatedAt:          decodeTime(createdAt),
+		UpdatedAt:          decodeTime(updatedAt),
+		Criteria:           domain.NewCriterionSet(),
+		OwnerRefs:          []domain.ActorRef{}, ConclusionHistory: []domain.Conclusion{},
+	}
+	if parent.Valid {
+		parsed, err := domain.ParseID(parent.String)
+		if err != nil {
+			return domain.Objective{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted parent objective id is invalid", err)
+		}
+		value.ParentObjectiveID = &parsed
+	}
+	return value, nil
+}
+
 func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Objective, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return nil, err
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
-SELECT id FROM objectives
+SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
+       required_for_outcome, created_at, updated_at
+FROM objectives
 WHERE namespace_id = ? AND outcome_id = ?
 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
-		return nil, mapSQLError("list objectives", err)
+		return nil, mapSQLError("list objective aggregates", err)
 	}
 	defer rows.Close()
-
-	ids := make([]domain.ID, 0)
+	values := []domain.Objective{}
 	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			return nil, err
-		}
-		id, err := domain.ParseID(raw)
+		value, err := scanObjective(rows, scope)
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		values = append(values, value)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	result := make([]domain.Objective, 0, len(ids))
-	for _, id := range ids {
-		value, err := r.Get(ctx, scope, id)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, value)
+	if err := rows.Close(); err != nil {
+		return nil, err
 	}
-	return result, nil
+	if len(values) == 0 {
+		return values, nil
+	}
+	owned, err := ownedAggregateIDs(ctx, r.uow.tx, scope)
+	if err != nil {
+		return nil, err
+	}
+	var states map[domain.ID]*aggregateOwnedState
+	for _, value := range values {
+		if owned[value.ID] {
+			states, err = loadOwnedStates(ctx, r.uow.tx, scope)
+			if err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+	for i := range values {
+		if state := states[values[i].ID]; state != nil {
+			values[i].OwnerRefs = state.actors
+			values[i].Criteria = state.criteria
+			values[i].CurrentConclusion = state.current
+			values[i].ConclusionHistory = state.history
+		}
+		if err := values[i].Validate(); err != nil {
+			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective is invalid", err)
+		}
+	}
+	return values, nil
 }
 
 func (r objectiveRepository) Insert(ctx context.Context, objective domain.Objective) error {
@@ -360,6 +394,32 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.WorkItem{}, err
 	}
+	row := r.uow.tx.QueryRowContext(ctx, `
+SELECT id, version, title, description, objective_id, lifecycle, priority,
+       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
+FROM work_items
+WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	value, err := scanWorkItem(row, scope)
+	if err != nil {
+		return domain.WorkItem{}, err
+	}
+	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "assignee")
+	if err != nil {
+		return domain.WorkItem{}, err
+	}
+	value.AssigneeRefs = actors
+	value.Criteria = criteria
+	value.CurrentConclusion = current
+	value.ConclusionHistory = history
+	if err := value.Validate(); err != nil {
+		return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
+	}
+	return value, nil
+}
+
+func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, error) {
+	var rawID string
 	var (
 		version                             int64
 		title, description                  string
@@ -370,20 +430,18 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		notBefore, acquiredAt, expiresAt    sql.NullInt64
 		createdAt, updatedAt                int64
 	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, title, description, objective_id, lifecycle, priority,
-       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
-FROM work_items
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(
+	err := scanner.Scan(
+		&rawID,
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
 		&acquiredAt, &expiresAt, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
+	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.WorkItem{}, err
 	}
 	value := domain.WorkItem{
 		ID:               id,
@@ -398,6 +456,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		CreatedAt:        decodeTime(createdAt),
 		UpdatedAt:        decodeTime(updatedAt),
 		Criteria:         domain.NewCriterionSet(),
+		AssigneeRefs:     []domain.ActorRef{}, ConclusionHistory: []domain.Conclusion{},
 	}
 	if notBefore.Valid {
 		t := decodeTime(notBefore.Int64)
@@ -431,17 +490,6 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 			ExpiresAt:    decodeTime(expiresAt.Int64),
 		}
 	}
-	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "assignee")
-	if err != nil {
-		return domain.WorkItem{}, err
-	}
-	value.AssigneeRefs = actors
-	value.Criteria = criteria
-	value.CurrentConclusion = current
-	value.ConclusionHistory = history
-	if err := value.Validate(); err != nil {
-		return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
-	}
 	return value, nil
 }
 
@@ -450,37 +498,59 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 		return nil, err
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
-SELECT id FROM work_items
+SELECT id, version, title, description, objective_id, lifecycle, priority,
+       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
+FROM work_items
 WHERE namespace_id = ? AND outcome_id = ?
 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
-		return nil, mapSQLError("list work items", err)
+		return nil, mapSQLError("list work item aggregates", err)
 	}
 	defer rows.Close()
-	ids := make([]domain.ID, 0)
+	values := []domain.WorkItem{}
 	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			return nil, err
-		}
-		id, err := domain.ParseID(raw)
+		value, err := scanWorkItem(rows, scope)
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		values = append(values, value)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	result := make([]domain.WorkItem, 0, len(ids))
-	for _, id := range ids {
-		value, err := r.Get(ctx, scope, id)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, value)
+	if err := rows.Close(); err != nil {
+		return nil, err
 	}
-	return result, nil
+	if len(values) == 0 {
+		return values, nil
+	}
+	owned, err := ownedAggregateIDs(ctx, r.uow.tx, scope)
+	if err != nil {
+		return nil, err
+	}
+	var states map[domain.ID]*aggregateOwnedState
+	for _, value := range values {
+		if owned[value.ID] {
+			states, err = loadOwnedStates(ctx, r.uow.tx, scope)
+			if err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+	for i := range values {
+		if state := states[values[i].ID]; state != nil {
+			values[i].AssigneeRefs = state.actors
+			values[i].Criteria = state.criteria
+			values[i].CurrentConclusion = state.current
+			values[i].ConclusionHistory = state.history
+		}
+		if err := values[i].Validate(); err != nil {
+			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
+		}
+	}
+	return values, nil
 }
 
 func (r workItemRepository) Insert(ctx context.Context, item domain.WorkItem) error {
@@ -600,6 +670,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 }
 
 func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) (ports.OutcomeCoordination, error) {
+	started := time.Now()
+	defer func() { s.uow.guardDuration += time.Since(started) }()
 	if err := s.uow.ensureOpen(); err != nil {
 		return ports.OutcomeCoordination{}, err
 	}
@@ -791,4 +863,29 @@ func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 
 func nowUTC() time.Time {
 	return time.Now().UTC()
+}
+
+// A bounded set read avoids seven empty owned-state queries per aggregate.
+// Owners with criteria, assignments or conclusions keep the full history codec.
+func ownedAggregateIDs(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[domain.ID]bool, error) {
+	rows, err := tx.QueryContext(ctx, `SELECT entity_id FROM entity_actor_links WHERE namespace_id=? AND outcome_id=?
+ UNION SELECT owner_id FROM success_criteria WHERE namespace_id=? AND outcome_id=?
+ UNION SELECT owner_id FROM conclusions WHERE namespace_id=? AND outcome_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	if err != nil {
+		return nil, mapSQLError("list aggregate owned state", err)
+	}
+	defer rows.Close()
+	owners := map[domain.ID]bool{}
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			return nil, err
+		}
+		id, err := domain.ParseID(raw)
+		if err != nil {
+			return nil, err
+		}
+		owners[id] = true
+	}
+	return owners, rows.Err()
 }

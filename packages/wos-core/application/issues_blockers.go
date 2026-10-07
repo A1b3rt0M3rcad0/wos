@@ -569,6 +569,13 @@ func blockingStateForRef(ctx context.Context, uow ports.UnitOfWork, ref domain.E
 	for _, o := range objectives {
 		byID[o.ID] = o
 	}
+	return projectBlockingState(ref, objectiveID, values, byID), nil
+}
+
+// Projection over an already coherent read avoids reloading every aggregate
+// and the complete blocker collection for every snapshot entity.
+func projectBlockingState(ref domain.EntityRef, objectiveID *domain.ID, values []domain.Blocker, byID map[domain.ID]domain.Objective) BlockingState {
+	state := BlockingState{Ref: ref, ActiveBlockers: []AppliedBlocker{}}
 	for _, b := range values {
 		if b.Lifecycle != domain.BlockerLifecycleActive {
 			continue
@@ -595,7 +602,7 @@ func blockingStateForRef(ctx context.Context, uow ports.UnitOfWork, ref domain.E
 		return state.ActiveBlockers[i].Blocker.ID.String() < state.ActiveBlockers[j].Blocker.ID.String()
 	})
 	state.IsBlocked = len(state.ActiveBlockers) > 0
-	return state, nil
+	return state
 }
 func objectiveDescendsFrom(id, ancestor domain.ID, values map[domain.ID]domain.Objective) bool {
 	current := id

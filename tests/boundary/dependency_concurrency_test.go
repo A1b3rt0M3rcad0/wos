@@ -2,6 +2,9 @@ package boundary_test
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -11,6 +14,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres"
 	sqlitestore "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 )
 
@@ -36,6 +40,25 @@ func TestConcurrentOppositeDependencyEdgesCannotCreateCycle(t *testing.T) {
 			BusyTimeout:   2 * time.Second,
 			MigrateOnOpen: true,
 		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer second.Close()
+		assertConcurrentOppositeEdges(t, first, second, now)
+	})
+	t.Run("postgres", func(t *testing.T) {
+		dsn := os.Getenv("WOS_TEST_POSTGRES_DSN")
+		if dsn == "" {
+			t.Skip("real PostgreSQL required")
+		}
+		schema := fmt.Sprintf("wos_graph_%x", sha256.Sum256([]byte(t.TempDir())))[:42]
+		opts := postgres.Options{Schema: schema, MigrateOnOpen: true, BusyTimeout: 2 * time.Second}
+		first, err := postgres.Open(dsn, opts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer first.Close()
+		second, err := postgres.Open(dsn, opts)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -156,14 +179,14 @@ func assertConcurrentOppositeEdges(
 			continue
 		}
 		code, ok := domain.ErrorCodeOf(value.err)
-		if ok && code == domain.ErrorCodeDependencyCycle {
+		if ok && (code == domain.ErrorCodeDependencyCycle || code == domain.ErrorCodeTransactionConflict) {
 			cycleErrors++
 			continue
 		}
 		t.Fatalf("%s returned unexpected error: %v", value.direction, value.err)
 	}
 	if successes != 1 || cycleErrors != 1 {
-		t.Fatalf("concurrent opposite edges successes=%d cycle_errors=%d, want 1/1", successes, cycleErrors)
+		t.Fatalf("concurrent opposite edges successes=%d rejected_edges=%d, want 1/1", successes, cycleErrors)
 	}
 
 	relations, _, err := serviceA.ListRelations(ctx, outcome.Scope())

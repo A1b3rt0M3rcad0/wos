@@ -178,7 +178,8 @@ type TimelinePage struct {
 	Consistency     string                 `json:"consistency"`
 }
 
-func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q TimelineQuery) (TimelinePage, error) {
+func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q TimelineQuery) (result TimelinePage, queryErr error) {
+	defer s.observeQuery(ctx, "timeline", scope, &result.OutcomeRevision, &queryErr, time.Now())
 	if err := scope.Validate(); err != nil {
 		return TimelinePage{}, err
 	}
@@ -415,7 +416,8 @@ func sectionPage(scope domain.Scope, revision domain.OutcomeRevision, at time.Ti
 	}
 	return page, nil
 }
-func (s *Service) GetContinuity(ctx context.Context, scope domain.Scope, limit int) (ContinuitySnapshot, error) {
+func (s *Service) GetContinuity(ctx context.Context, scope domain.Scope, limit int) (result ContinuitySnapshot, queryErr error) {
+	defer s.observeQuery(ctx, "continuity", scope, &result.OutcomeRevision, &queryErr, time.Now())
 	n, err := queryLimit(limit)
 	if err != nil {
 		return ContinuitySnapshot{}, err
@@ -479,7 +481,8 @@ func (s *Service) GetContinuity(ctx context.Context, scope domain.Scope, limit i
 		n = max(1, n/2)
 	}
 }
-func (s *Service) GetContinuitySection(ctx context.Context, scope domain.Scope, section string, limit int, cursor string) (SectionPage, error) {
+func (s *Service) GetContinuitySection(ctx context.Context, scope domain.Scope, section string, limit int, cursor string) (result SectionPage, queryErr error) {
+	defer s.observeQuery(ctx, "continuity_section", scope, &result.OutcomeRevision, &queryErr, time.Now())
 	n, err := queryLimit(limit)
 	if err != nil {
 		return SectionPage{}, err

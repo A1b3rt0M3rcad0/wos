@@ -353,7 +353,8 @@ func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]doma
 	return values, coordination.Revision, nil
 }
 
-func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (OutcomeState, error) {
+func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (result OutcomeState, queryErr error) {
+	defer s.observeQuery(ctx, "outcome_state", scope, &result.OutcomeRevision, &queryErr, time.Now())
 	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
 		return OutcomeState{}, err
 	}
@@ -416,7 +417,33 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		return OutcomeState{}, err
 	}
 
-	evaluatedAt := evaluationTime(ctx, s.clock.Now())
+	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
+	workByID := make(map[domain.ID]domain.WorkItem, len(workItems))
+	completed := make(map[domain.EntityRef]bool, len(objectives)+len(workItems))
+	for _, objective := range objectives {
+		objectiveByID[objective.ID] = objective
+		completed[objective.Ref()] = objective.Lifecycle == domain.ObjectiveLifecycleAchieved
+	}
+	for _, item := range workItems {
+		workByID[item.ID] = item
+		completed[item.Ref()] = item.Lifecycle == domain.WorkItemLifecycleDone
+	}
+	dependenciesBySource := make(map[domain.EntityRef][]domain.DependencyEvaluation)
+	for _, relation := range relations {
+		if relation.Lifecycle != domain.RelationLifecycleActive || relation.RelationType != domain.RelationTypeDependsOn {
+			continue
+		}
+		satisfied, exists := completed[relation.TargetRef]
+		if !exists {
+			return OutcomeState{}, domain.NewError(domain.ErrorCodeNotFound, "dependency target is missing from outcome snapshot")
+		}
+		dependenciesBySource[relation.SourceRef] = append(dependenciesBySource[relation.SourceRef], domain.DependencyEvaluation{Relation: relation, Satisfied: satisfied})
+	}
+	now, err := s.transactionTime(ctx, uow)
+	if err != nil {
+		return OutcomeState{}, err
+	}
+	evaluatedAt := evaluationTime(ctx, now)
 	blockingStates := make([]BlockingState, 0, 1+len(objectives)+len(workItems))
 	blockingByRef := make(map[domain.EntityRef]BlockingState, 1+len(objectives)+len(workItems))
 	refs := make([]domain.EntityRef, 0, 1+len(objectives)+len(workItems))
@@ -428,18 +455,19 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 		refs = append(refs, workItem.Ref())
 	}
 	for _, ref := range refs {
-		state, err := blockingStateForRef(ctx, uow, ref)
-		if err != nil {
-			return OutcomeState{}, err
+		var parent *domain.ID
+		if ref.Kind == domain.EntityKindObjective {
+			id := ref.ID
+			parent = &id
 		}
+		if ref.Kind == domain.EntityKindWorkItem {
+			parent = workByID[ref.ID].ObjectiveID
+		}
+		state := projectBlockingState(ref, parent, blockers, objectiveByID)
 		blockingStates = append(blockingStates, state)
 		blockingByRef[ref] = state
 	}
 
-	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
-	for _, objective := range objectives {
-		objectiveByID[objective.ID] = objective
-	}
 	workOperationalStates := make([]domain.WorkItemOperationalState, 0, len(workItems))
 	for _, item := range workItems {
 		var objective *domain.Objective
@@ -451,10 +479,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (Outc
 			copyValue := value
 			objective = &copyValue
 		}
-		dependencies, err := dependencyEvaluationsForSource(ctx, uow, item.Ref(), relations)
-		if err != nil {
-			return OutcomeState{}, err
-		}
+		dependencies := dependenciesBySource[item.Ref()]
 		blocking := blockingByRef[item.Ref()]
 		workOperationalStates = append(workOperationalStates, domain.ProjectWorkItemOperationalState(
 			item,

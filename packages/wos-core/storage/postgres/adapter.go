@@ -167,6 +167,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type unitOfWork struct {
+	guardDuration        time.Duration
 	tx                   *sql.Tx
 	ctx                  context.Context
 	closed               bool
@@ -258,3 +259,5 @@ func nullableVersion(value *domain.Version) any {
 	}
 	return int64(*value)
 }
+
+func (u *unitOfWork) GuardDuration() time.Duration { return u.guardDuration }

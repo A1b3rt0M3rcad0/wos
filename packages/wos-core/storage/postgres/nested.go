@@ -953,50 +953,9 @@ ORDER BY ordinal`,
 	}
 	pending := []pendingConclusion{}
 	for rows.Next() {
-		var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
-		var publicID sql.NullString
-		var recordedAt int64
-		var ownerVersion sql.NullInt64
-		if err := rows.Scan(
-			&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
-			&recordedAt, &rationale, &obligationsJSON,
-		); err != nil {
+		storageID, value, err := scanConclusion(rows, owner)
+		if err != nil {
 			return nil, nil, err
-		}
-		var actor domain.ActorRef
-		if err := unmarshalJSON(actorJSON, &actor); err != nil {
-			return nil, nil, err
-		}
-		var obligations domain.ConclusionObligations
-		if err := unmarshalJSON(obligationsJSON, &obligations); err != nil {
-			return nil, nil, err
-		}
-		value := domain.Conclusion{
-			PrincipalID: principal,
-			Actor:       actor,
-			Reason:      rationale,
-			ConcludedAt: decodeTime(recordedAt),
-			Obligations: obligations,
-		}
-		if publicID.Valid {
-			parsed, err := domain.ParseID(publicID.String)
-			if err != nil {
-				return nil, nil, err
-			}
-			value.ID = parsed
-		} else {
-			derived, err := legacyConclusionPublicID(storageID, decodeTime(recordedAt))
-			if err != nil {
-				return nil, nil, err
-			}
-			value.ID = derived
-		}
-		if ownerVersion.Valid {
-			ownerCopy := owner
-			versionCopy := domain.Version(ownerVersion.Int64)
-			value.OwnerRef = &ownerCopy
-			value.OwnerVersion = &versionCopy
-			value.LifecycleResult = lifecycleResult
 		}
 		pending = append(pending, pendingConclusion{storageID: storageID, value: value})
 	}
@@ -1089,4 +1048,53 @@ func actorRefsEqualForStorage(left, right []domain.ActorRef) bool {
 		}
 	}
 	return true
+}
+
+func scanConclusion(scanner rowScanner, owner domain.EntityRef) (string, domain.Conclusion, error) {
+	var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
+	var publicID sql.NullString
+	var recordedAt int64
+	var ownerVersion sql.NullInt64
+	if err := scanner.Scan(
+		&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
+		&recordedAt, &rationale, &obligationsJSON,
+	); err != nil {
+		return "", domain.Conclusion{}, err
+	}
+	var actor domain.ActorRef
+	if err := unmarshalJSON(actorJSON, &actor); err != nil {
+		return "", domain.Conclusion{}, err
+	}
+	var obligations domain.ConclusionObligations
+	if err := unmarshalJSON(obligationsJSON, &obligations); err != nil {
+		return "", domain.Conclusion{}, err
+	}
+	value := domain.Conclusion{
+		PrincipalID: principal,
+		Actor:       actor,
+		Reason:      rationale,
+		ConcludedAt: decodeTime(recordedAt),
+		Obligations: obligations,
+	}
+	if publicID.Valid {
+		parsed, err := domain.ParseID(publicID.String)
+		if err != nil {
+			return "", domain.Conclusion{}, err
+		}
+		value.ID = parsed
+	} else {
+		derived, err := legacyConclusionPublicID(storageID, decodeTime(recordedAt))
+		if err != nil {
+			return "", domain.Conclusion{}, err
+		}
+		value.ID = derived
+	}
+	if ownerVersion.Valid {
+		ownerCopy := owner
+		versionCopy := domain.Version(ownerVersion.Int64)
+		value.OwnerRef = &ownerCopy
+		value.OwnerVersion = &versionCopy
+		value.LifecycleResult = lifecycleResult
+	}
+	return storageID, value, nil
 }
