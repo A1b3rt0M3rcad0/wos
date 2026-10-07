@@ -1,0 +1,14 @@
+
+> test
+> playwright test
+
+
+Running 3 tests using 1 worker
+
+(node:65395) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 journey.spec.mjs:11:1 › human plans, agent executes by MCP, human certifies, new browser resumes after restart (7.7s)
+  ✓  2 journey.spec.mjs:57:1 › human reviews evidence, resolves blockers, reconciles conflict and preserves contested history (7.2s)
+  ✓  3 workspace.spec.mjs:11:1 › workspace summary, scoped list, operational board, pagination and real human action (3.2s)
+
+  3 passed (20.9s)

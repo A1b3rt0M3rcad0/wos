@@ -819,10 +819,12 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 | D1 — Design and release policy | ✅ | [Complete plan](docs/distribution-plan.md) and ADR-017 define boundaries, tradeoffs, PR sequence, compatibility and external requirements |
 | D2 — Portable skills installer | ✅ | Four portable skills, npm tarball, four project/user destinations and generic path; safe install/update/remove; four tests and offline installed-tarball consumer pass. Native runtime execution is not claimed |
 | D3 — Service distribution | ✅ | Native metadata/integrity, versioned tarballs and Linux archive; real offline-installed service passes HTTP/MCP/UI, SIGTERM, exit status and corruption checks; Docker release metadata supported |
-| D4 — Automated release | 🚧 | Changes/version PR; full gates; npm/GHCR/GitHub publication and replay tests |
+| D4 — Automated release | ✅ | Changes/version PR and reusable exact-source gates; verified immutable npm/GHCR/GitHub publication adapters and partial-failure replay; workflow lint, 15 Node contracts, reproducible assets and full local WOS gates pass. Hosted publication remains separately blocked |
 | External publication | ⛔ | npm publishing identity not available; Actions billing prevents jobs; package ownership/trusted publisher requires titular configuration |
 
 Do not conflate a portable skill with executed integration in every agent, nor implemented CI/CD with a successful hosted release. Original Waves 01–18 remain accepted; this is distribution work outside the original completion claim.
+
+[Distribution verification](docs/verification-distribution-2026-10-07.md) records 437 Go cases with zero skipped tests, race, three browser journeys, the 18-step independent journey, installed npm service/skills, cross-path reproducibility and versioned read-only/authenticated container smoke. Nine Go packages without test files are not executed test cases. Publication requires working hosted infrastructure and titular credentials; a prepared 0.1.0 manifest is not a published npm version.
 
 Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/13) at `f009b76dd4924490f0162839391218202abaeb79`. [PR #14](https://github.com/A1b3rt0M3rcad0/wos/pull/14), rebased in scope onto `master`, carries Waves 12–18 and the final hardening. Completion status above refers to the tested candidate; integration is confirmed by the PR's merged state, not by an unchecked draft or an earlier CI head.
 

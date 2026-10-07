@@ -2,6 +2,8 @@
 
 ### Distribution extension
 
+- Automate changes-driven coordinated version PRs, exact-source reusable verification and immutable npm/GHCR/GitHub publication with draft/replay handling. Record credential, billing, private-source provenance and native-agent limits.
+
 - Package the existing Linux amd64 service for npm with an embedded binary, integrity/version checks and signal/exit propagation; build checksummed native/npm assets and versioned OCI metadata.
 
 - Add portable coordination, native delegation, continuity and proof-review skills and an explicit npm installer with project/user/generic paths, managed hashes, dry-run and preservation of user modifications.

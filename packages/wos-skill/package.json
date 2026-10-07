@@ -5,6 +5,7 @@
   "type": "module",
   "license": "Apache-2.0",
   "engines": { "node": ">=22" },
+  "wosCompatibility": { "service": "0.1.0", "httpApi": "v1", "snapshotSchema": 1 },
   "bin": { "wos-skill": "bin/wos-skill.mjs" },
   "files": ["bin", "lib", "skills", "README.md", "LICENSE"],
   "scripts": { "test": "node --test test/*.test.mjs" },

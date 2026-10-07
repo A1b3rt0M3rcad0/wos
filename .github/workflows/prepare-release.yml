@@ -1,0 +1,49 @@
+name: Prepare release PR
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Prepare version, notes and manifest
+        id: plan
+        run: |
+          node --test tools/releases/test.mjs
+          node tools/releases/version.mjs prepare > /tmp/wos-release-plan.json
+          node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync("/tmp/wos-release-plan.json")); fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${p!==null}\n`);'
+      - name: Create or update reviewable release PR
+        if: steps.plan.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C release/next
+          git add VERSION packages/wos-npm/package.json packages/wos-skill/package.json release-manifest.json docs/releases CHANGELOG.md .changes
+          git commit -m "chore(release): prepare v$(cat VERSION)"
+          # Only the automation-owned branch is updated, never master or a feature branch.
+          git fetch origin release/next || true
+          git push --force-with-lease origin release/next
+          version=$(cat VERSION)
+          cp "docs/releases/$version.md" /tmp/wos-release-pr.md
+          existing=$(gh pr list --base master --head release/next --state open --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            gh pr create --base master --head release/next --title "chore(release): v$version" --body-file /tmp/wos-release-pr.md
+          else
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$existing" -f "title=chore(release): v$version" -F body=@/tmp/wos-release-pr.md
+          fi

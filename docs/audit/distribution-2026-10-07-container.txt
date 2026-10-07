@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "commit": "7b1111cb94922575e377a001fdbef439c74de73c",
+  "checks": [
+    "OCI/source identity",
+    "non-root/read-only",
+    "version/config",
+    "health",
+    "HTTP authentication/catalog",
+    "MCP negotiation",
+    "runtime CA bundle"
+  ]
+}
