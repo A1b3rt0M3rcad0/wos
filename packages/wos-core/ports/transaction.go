@@ -44,3 +44,8 @@ type DocumentaryUnitOfWork interface {
 	EvidenceLinks() EvidenceLinkRepository
 	Decisions() DecisionRepository
 }
+
+type PlanningUnitOfWork interface {
+	Roadmaps() RoadmapRepository
+	RoadmapActivations() RoadmapActivationStore
+}

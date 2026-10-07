@@ -53,8 +53,8 @@ func TestSQLiteConnectionProfileAndMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if version != 7 {
-		t.Fatalf("schema version = %d, want 7", version)
+	if version != 9 {
+		t.Fatalf("schema version = %d, want 9", version)
 	}
 
 	if err := store.Migrate(ctx); err != nil {

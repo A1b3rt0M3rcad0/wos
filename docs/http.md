@@ -541,6 +541,100 @@ lifecycle. `GET /outcomes/{outcome_id}/state` exposes
 `conclusion_contested` plus concrete `conclusion_contestations`, preserving
 the historical claim separately from the current contradictory facts.
 
+## Roadmaps and planning history
+
+Wave 11 exposes planning as durable state without turning the plan into a second
+copy of operational work. A Roadmap belongs to one Outcome and has either an
+Outcome scope or an Objective scope. Reference nodes point at existing
+Objectives/WorkItems; removing a node does not delete or cancel the referenced
+entity.
+
+The main resources are:
+
+```text
+GET|POST /outcomes/{outcome_id}/roadmaps
+GET      /outcomes/{outcome_id}/roadmaps/{roadmap_id}
+
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/open
+PUT  /outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/discard
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/publish
+
+GET  /outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/activate
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/deactivate
+
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/archive
+POST /outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/reopen
+
+GET /outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}
+GET /outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}/history
+```
+
+Draft editing has two concurrency markers. `If-Match` (or
+`expected_version`) protects the Roadmap aggregate while
+`expected_draft_version` protects the mutable plan content. A stale value for
+either marker fails rather than silently replacing another planner's work.
+
+Publishing freezes a new monotonically numbered `RoadmapRevision`. The server
+derives publication snapshots from current WOS state rather than accepting
+historical snapshots from the caller. A reference node captures the current
+target title; milestone criterion references capture criterion ID, revision,
+title, required flag and verification mode. Active `depends_on` Relations
+between entities represented in the plan are captured as informational
+dependency snapshots.
+
+Publication may also carry an explicit `dependency_changes` batch. Each
+`add` names source/target references and dependency strength; each `remove`
+names the persisted Relation plus its expected version and removal reason.
+Only entities represented by reference nodes in the draft may be changed
+through this path. The dependency batch and immutable RoadmapRevision are
+committed in the same WOS transaction: if any dependency mutation, graph
+validation, snapshot construction or publication step fails, none of them are
+committed. Omitting `dependency_changes` performs no operational dependency
+mutation; `after` links never imply one.
+
+The revision `content_hash` is a deterministic SHA-256 over canonicalized
+published nodes, plan ordering links and dependency snapshots. Published
+revision content is append-only. Opening a later draft from an old revision
+copies its editable plan structure but strips publication-only snapshots so
+they can be derived again when the new revision is published.
+
+`phase` and `milestone` nodes are planning-only. They do not gain operational
+lifecycle, leases or Blockers. `after` expresses plan reading/order and is not
+the canonical execution dependency graph. Operational dependencies continue to
+live in `Relation(type=depends_on)`.
+
+Exactly one published revision may occupy the active slot for a plan scope.
+Activating another revision supersedes the previous binding and appends
+activation history; the published revisions themselves are unchanged.
+Archiving a Roadmap clears its active slot in the same transaction. Reopening
+the Roadmap never reactivates a historical revision automatically.
+
+Example draft publication:
+
+```bash
+curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/roadmaps/$ROADMAP_ID/draft/actions/publish" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: docs-wave11-publish-0001' \
+  -H "If-Match: $ROADMAP_ETAG" \
+  -d '{
+    "expected_draft_version": 2,
+    "dependency_changes": [
+      {
+        "action": "add",
+        "source_ref": {"kind": "work_item", "id": "<dependent-work-id>"},
+        "target_ref": {"kind": "work_item", "id": "<prerequisite-work-id>"},
+        "strength": "hard",
+        "reason": "Explicit dependency introduced with this published plan"
+      }
+    ]
+  }'
+```
+
+Planning commands never start, complete, cancel or claim referenced WorkItems.
+Those remain separate explicit operational commands.
+
 ## Errors
 
 Errors use a stable envelope:

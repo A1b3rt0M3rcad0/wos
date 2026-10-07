@@ -311,6 +311,12 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Decision:
 		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.Roadmap:
+		return aggregateVersions(meta, result.Ref(), result.Version)
+	case domain.RoadmapActiveSlot:
+		return resultRoadmapCoordinationAggregate(meta, result.Scope, result.RoadmapID)
+	case domain.RoadmapActivationRecord:
+		return resultRoadmapCoordinationAggregate(meta, result.Scope, result.RoadmapID)
 	case domain.SuccessCriterion:
 		if meta.Owner == nil || meta.ExpectedVersion == nil {
 			return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "criterion command is missing owner/version metadata")
@@ -328,6 +334,18 @@ func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *
 	default:
 		return domain.EntityRef{}, nil, nil, false, domain.NewError(domain.ErrorCodeInvalidEvent, "command result does not expose an auditable aggregate")
 	}
+}
+
+func resultRoadmapCoordinationAggregate(
+	meta commandMetadata,
+	scope domain.Scope,
+	roadmapID domain.ID,
+) (domain.EntityRef, *domain.Version, *domain.Version, bool, error) {
+	ref := domain.EntityRef{Scope: scope, Kind: domain.EntityKindRoadmap, ID: roadmapID}
+	if err := ref.Validate(); err != nil {
+		return domain.EntityRef{}, nil, nil, false, err
+	}
+	return ref, nil, nil, false, nil
 }
 
 func aggregateVersions(meta commandMetadata, ref domain.EntityRef, current domain.Version) (domain.EntityRef, *domain.Version, *domain.Version, bool, error) {
@@ -449,6 +467,24 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"decision.accepted"}, nil
 	case "RejectDecision":
 		return []string{"decision.rejected"}, nil
+	case "CreateRoadmap":
+		return []string{"roadmap.created"}, nil
+	case "OpenRoadmapDraft":
+		return []string{"roadmap.draft_opened"}, nil
+	case "ReplaceRoadmapDraft":
+		return []string{"roadmap.draft_updated"}, nil
+	case "DiscardRoadmapDraft":
+		return []string{"roadmap.draft_discarded"}, nil
+	case "PublishRoadmapDraft":
+		return []string{"roadmap.revision_published"}, nil
+	case "ActivateRoadmapRevision":
+		return []string{"roadmap.revision_activated"}, nil
+	case "DeactivateRoadmapRevision":
+		return []string{"roadmap.revision_deactivated"}, nil
+	case "ArchiveRoadmap":
+		return []string{"roadmap.archived"}, nil
+	case "ReopenRoadmap":
+		return []string{"roadmap.reopened"}, nil
 	case "AddCriterion":
 		return []string{ownerPrefix + ".criterion_added"}, nil
 	case "ReviseCriterion":

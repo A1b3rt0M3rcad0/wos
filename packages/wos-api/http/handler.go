@@ -204,6 +204,21 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/accept", h.acceptDecision)
 	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/reject", h.rejectDecision)
 	h.mux.HandleFunc("POST "+outcome+"/decisions/{decision_id}/actions/supersede", h.supersedeDecision)
+
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps", h.createRoadmap)
+	h.mux.HandleFunc("GET "+outcome+"/roadmaps", h.listRoadmaps)
+	h.mux.HandleFunc("GET "+outcome+"/roadmaps/{roadmap_id}", h.getRoadmap)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/draft/actions/open", h.openRoadmapDraft)
+	h.mux.HandleFunc("PUT "+outcome+"/roadmaps/{roadmap_id}/draft", h.replaceRoadmapDraft)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/draft/actions/discard", h.discardRoadmapDraft)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/draft/actions/publish", h.publishRoadmapDraft)
+	h.mux.HandleFunc("GET "+outcome+"/roadmaps/{roadmap_id}/revisions/{revision_number}", h.getRoadmapRevision)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/activate", h.activateRoadmapRevision)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/deactivate", h.deactivateRoadmapRevision)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/actions/archive", h.archiveRoadmap)
+	h.mux.HandleFunc("POST "+outcome+"/roadmaps/{roadmap_id}/actions/reopen", h.reopenRoadmap)
+	h.mux.HandleFunc("GET "+outcome+"/roadmap-slots/{scope_kind}/{scope_id}", h.getActiveRoadmapSlot)
+	h.mux.HandleFunc("GET "+outcome+"/roadmap-slots/{scope_kind}/{scope_id}/history", h.listRoadmapActivationHistory)
 }
 
 func (h *Handler) commandContext(r *http.Request) (domain.CommandContext, error) {
@@ -379,7 +394,8 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			domain.ErrorCodeCriterion,
 			domain.ErrorCodeAssessment,
 			domain.ErrorCodeIssue,
-			domain.ErrorCodeBlocker:
+			domain.ErrorCodeBlocker,
+			domain.ErrorCodeRoadmap:
 			status = http.StatusUnprocessableEntity
 		case domain.ErrorCodeNotFound:
 			status = http.StatusNotFound

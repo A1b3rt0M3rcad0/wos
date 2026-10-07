@@ -3,10 +3,11 @@ info:
   title: Woobe Outcome Server HTTP API
   version: 0.1.0-dev
   description: |
-    HTTP contract implemented through Wave 09. The API exposes the same
+    HTTP contract implemented through Wave 11. The API exposes the same
     Application services used by embedded consumers. Namespace and Outcome
     scope are explicit in every domain path. Documentary records preserve
-    provenance and history; accepted Decision supersession is explicit and atomic.
+    provenance and history; Roadmap planning preserves immutable published
+    revisions without duplicating operational work.
 servers:
   - url: http://127.0.0.1:8080
 tags:
@@ -22,6 +23,7 @@ tags:
   - name: Decisions
   - name: Queries
   - name: Criteria
+  - name: Roadmaps
 
 paths:
   /livez:
@@ -1836,6 +1838,286 @@ paths:
         "412": {$ref: "#/components/responses/PreconditionFailed"}
         "428": {$ref: "#/components/responses/PreconditionRequired"}
 
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps:
+    post:
+      tags: [Roadmaps]
+      operationId: createRoadmap
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/CorrelationID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateRoadmapRequest"}
+      responses:
+        "201":
+          description: Roadmap created.
+          headers:
+            ETag: {schema: {type: string}}
+            Location: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+    get:
+      tags: [Roadmaps]
+      operationId: listRoadmaps
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Roadmaps in the Outcome.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapCollection"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}:
+    get:
+      tags: [Roadmaps]
+      operationId: getRoadmap
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/CorrelationID"
+      responses:
+        "200":
+          description: Roadmap including current draft and published revision history.
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/open:
+    post:
+      tags: [Roadmaps]
+      operationId: openRoadmapDraft
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OpenRoadmapDraftRequest"}
+      responses:
+        "200":
+          description: Editable Roadmap draft opened.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft:
+    put:
+      tags: [Roadmaps]
+      operationId: replaceRoadmapDraft
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ReplaceRoadmapDraftRequest"}
+      responses:
+        "200":
+          description: Draft replaced with optimistic Roadmap and draft version checks.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+        "428": {$ref: "#/components/responses/PreconditionRequired"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/discard:
+    post:
+      tags: [Roadmaps]
+      operationId: discardRoadmapDraft
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RoadmapDraftVersionRequest"}
+      responses:
+        "200":
+          description: Draft explicitly discarded.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/publish:
+    post:
+      tags: [Roadmaps]
+      operationId: publishRoadmapDraft
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PublishRoadmapDraftRequest"}
+      responses:
+        "200":
+          description: Immutable Roadmap revision published with canonical content hash, live-reference snapshots and any explicit dependency changes committed atomically.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "412": {$ref: "#/components/responses/PreconditionFailed"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}:
+    get:
+      tags: [Roadmaps]
+      operationId: getRoadmapRevision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/RoadmapRevisionNumber"
+      responses:
+        "200":
+          description: Immutable published Roadmap revision.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapRevisionReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/activate:
+    post:
+      tags: [Roadmaps]
+      operationId: activateRoadmapRevision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/RoadmapRevisionNumber"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody: {$ref: "#/components/requestBodies/VersionBody"}
+      responses:
+        "200":
+          description: Revision activated in the unique slot for its scope.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapActiveSlotMutationResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/deactivate:
+    post:
+      tags: [Roadmaps]
+      operationId: deactivateRoadmapRevision
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/RoadmapRevisionNumber"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody: {$ref: "#/components/requestBodies/VersionBody"}
+      responses:
+        "200":
+          description: Active revision explicitly deactivated.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapActivationRecordMutationResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/archive:
+    post:
+      tags: [Roadmaps]
+      operationId: archiveRoadmap
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody: {$ref: "#/components/requestBodies/VersionBody"}
+      responses:
+        "200":
+          description: Roadmap archived; its active slot is cleared atomically when present.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/reopen:
+    post:
+      tags: [Roadmaps]
+      operationId: reopenRoadmap
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody: {$ref: "#/components/requestBodies/VersionBody"}
+      responses:
+        "200":
+          description: Roadmap reopened without reactivating any historical revision.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapMutationResult"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}:
+    get:
+      tags: [Roadmaps]
+      operationId: getActiveRoadmapSlot
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapScopeKind"
+        - $ref: "#/components/parameters/RoadmapScopeID"
+      responses:
+        "200":
+          description: Current active Roadmap revision for the requested plan scope.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapActiveSlotReadResult"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}/history:
+    get:
+      tags: [Roadmaps]
+      operationId: listRoadmapActivationHistory
+      parameters:
+        - $ref: "#/components/parameters/NamespaceID"
+        - $ref: "#/components/parameters/OutcomeID"
+        - $ref: "#/components/parameters/RoadmapScopeKind"
+        - $ref: "#/components/parameters/RoadmapScopeID"
+      responses:
+        "200":
+          description: Append-only activation, supersession and deactivation history for the plan scope.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RoadmapActivationHistoryCollection"}
+
 components:
   parameters:
     NamespaceID:
@@ -1890,6 +2172,28 @@ components:
       schema: {$ref: "#/components/schemas/ID"}
     DecisionID:
       name: decision_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    RoadmapID:
+      name: roadmap_id
+      in: path
+      required: true
+      schema: {$ref: "#/components/schemas/ID"}
+    RoadmapRevisionNumber:
+      name: revision_number
+      in: path
+      required: true
+      schema: {type: integer, minimum: 1}
+    RoadmapScopeKind:
+      name: scope_kind
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [outcome, objective]
+    RoadmapScopeID:
+      name: scope_id
       in: path
       required: true
       schema: {$ref: "#/components/schemas/ID"}
@@ -2358,6 +2662,264 @@ components:
           type: string
           enum: [outcome, objective, work_item, issue, blocker, relation]
         id: {$ref: "#/components/schemas/ID"}
+
+    RoadmapPlanScope:
+      type: object
+      additionalProperties: false
+      required: [kind, id]
+      properties:
+        kind:
+          type: string
+          enum: [outcome, objective]
+        id: {$ref: "#/components/schemas/ID"}
+
+    RoadmapEntityRef:
+      type: object
+      additionalProperties: false
+      required: [namespace_id, outcome_id, kind, id]
+      properties:
+        namespace_id: {$ref: "#/components/schemas/ID"}
+        outcome_id: {$ref: "#/components/schemas/ID"}
+        kind:
+          type: string
+          enum: [outcome, objective, work_item]
+        id: {$ref: "#/components/schemas/ID"}
+
+    RoadmapCriterionRef:
+      type: object
+      required: [owner_ref, criterion_id]
+      properties:
+        owner_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+
+    RoadmapCriterionSnapshot:
+      type: object
+      required: [owner_ref, criterion_id, criterion_revision, title, required, verification_mode]
+      properties:
+        owner_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        criterion_id: {$ref: "#/components/schemas/ID"}
+        criterion_revision: {type: integer, minimum: 1}
+        title: {type: string}
+        required: {type: boolean}
+        verification_mode:
+          type: string
+          enum: [attestation, evidence_review, external_evaluation]
+
+    RoadmapReferenceSnapshot:
+      type: object
+      required: [target_ref, title]
+      properties:
+        target_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        title: {type: string}
+
+    RoadmapNode:
+      type: object
+      required: [node_key, node_type, title, position]
+      properties:
+        node_key: {type: string}
+        node_type:
+          type: string
+          enum: [reference, phase, milestone]
+        parent_node_key: {type: string}
+        target_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        title: {type: string}
+        position: {type: integer, minimum: 0}
+        criterion_refs:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapCriterionRef"}
+        criterion_snapshots:
+          type: array
+          readOnly: true
+          items: {$ref: "#/components/schemas/RoadmapCriterionSnapshot"}
+        planned_start: {type: string, format: date-time}
+        planned_end: {type: string, format: date-time}
+        published_reference_snapshot:
+          allOf:
+            - $ref: "#/components/schemas/RoadmapReferenceSnapshot"
+          readOnly: true
+
+    RoadmapAfterLink:
+      type: object
+      required: [node_key, after_node_key]
+      properties:
+        node_key: {type: string}
+        after_node_key: {type: string}
+
+    RoadmapDependencySnapshot:
+      type: object
+      readOnly: true
+      required: [dependent_ref, prerequisite_ref, strength, satisfaction]
+      properties:
+        dependent_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        prerequisite_ref: {$ref: "#/components/schemas/RoadmapEntityRef"}
+        strength: {$ref: "#/components/schemas/DependencyStrength"}
+        satisfaction:
+          type: string
+          enum: [target_completed]
+
+    RoadmapDraft:
+      type: object
+      required: [draft_version, lifecycle, nodes, after_links, created_at, updated_at]
+      properties:
+        draft_version: {type: integer, minimum: 1}
+        base_revision_number: {type: integer, minimum: 1}
+        lifecycle:
+          type: string
+          enum: [open, discarded]
+        reason: {type: string}
+        nodes:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapNode"}
+        after_links:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapAfterLink"}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        discarded_at: {type: string, format: date-time}
+
+    RoadmapRevision:
+      type: object
+      readOnly: true
+      required: [revision_number, content_hash, nodes, after_links, dependency_snapshots, published_by, published_at]
+      properties:
+        revision_number: {type: integer, minimum: 1}
+        content_hash: {type: string}
+        reason: {type: string}
+        nodes:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapNode"}
+        after_links:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapAfterLink"}
+        dependency_snapshots:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapDependencySnapshot"}
+        published_by: {$ref: "#/components/schemas/ActorRef"}
+        published_at: {type: string, format: date-time}
+
+    Roadmap:
+      type: object
+      required: [id, scope, version, plan_scope, title, lifecycle, created_at, updated_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        version: {$ref: "#/components/schemas/Version"}
+        plan_scope: {$ref: "#/components/schemas/RoadmapPlanScope"}
+        title: {type: string}
+        lifecycle:
+          type: string
+          enum: [open, archived]
+        draft: {$ref: "#/components/schemas/RoadmapDraft"}
+        revisions:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapRevision"}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        archived_at: {type: string, format: date-time}
+
+    RoadmapRevisionPointer:
+      type: object
+      required: [roadmap_id, revision_number]
+      properties:
+        roadmap_id: {$ref: "#/components/schemas/ID"}
+        revision_number: {type: integer, minimum: 1}
+
+    RoadmapActiveSlot:
+      type: object
+      required: [scope, plan_scope, roadmap_id, revision_number, activated_by, activated_at]
+      properties:
+        scope: {type: object}
+        plan_scope: {$ref: "#/components/schemas/RoadmapPlanScope"}
+        roadmap_id: {$ref: "#/components/schemas/ID"}
+        revision_number: {type: integer, minimum: 1}
+        activated_by: {$ref: "#/components/schemas/ActorRef"}
+        activated_at: {type: string, format: date-time}
+
+    RoadmapActivationRecord:
+      type: object
+      required: [id, scope, plan_scope, action, roadmap_id, revision_number, actor_ref, recorded_at]
+      properties:
+        id: {$ref: "#/components/schemas/ID"}
+        scope: {type: object}
+        plan_scope: {$ref: "#/components/schemas/RoadmapPlanScope"}
+        action:
+          type: string
+          enum: [activated, superseded, deactivated]
+        roadmap_id: {$ref: "#/components/schemas/ID"}
+        revision_number: {type: integer, minimum: 1}
+        replacement: {$ref: "#/components/schemas/RoadmapRevisionPointer"}
+        actor_ref: {$ref: "#/components/schemas/ActorRef"}
+        recorded_at: {type: string, format: date-time}
+
+    CreateRoadmapRequest:
+      type: object
+      additionalProperties: false
+      required: [plan_scope, title]
+      properties:
+        plan_scope: {$ref: "#/components/schemas/RoadmapPlanScope"}
+        title: {type: string}
+
+    OpenRoadmapDraftRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        base_revision_number: {type: integer, minimum: 1}
+
+    ReplaceRoadmapDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_draft_version]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        expected_draft_version: {type: integer, minimum: 1}
+        reason: {type: string}
+        nodes:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapNode"}
+        after_links:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapAfterLink"}
+
+    RoadmapDraftVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_draft_version]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        expected_draft_version: {type: integer, minimum: 1}
+
+    RoadmapDependencyChange:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [action, source_ref, target_ref, strength]
+          properties:
+            action: {type: string, const: add}
+            source_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+            target_ref: {$ref: "#/components/schemas/RelationEndpointRequest"}
+            strength: {$ref: "#/components/schemas/DependencyStrength"}
+            reason: {type: string}
+        - type: object
+          additionalProperties: false
+          required: [action, relation_id, expected_version, reason]
+          properties:
+            action: {type: string, const: remove}
+            relation_id: {$ref: "#/components/schemas/ID"}
+            expected_version: {$ref: "#/components/schemas/Version"}
+            reason: {type: string, minLength: 1}
+
+    PublishRoadmapDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [expected_draft_version]
+      properties:
+        expected_version: {$ref: "#/components/schemas/Version"}
+        expected_draft_version: {type: integer, minimum: 1}
+        dependency_changes:
+          type: array
+          maxItems: 128
+          items: {$ref: "#/components/schemas/RoadmapDependencyChange"}
 
     CreateOutcomeRequest:
       type: object
@@ -3117,6 +3679,65 @@ components:
       required: [value, outcome_revision]
       properties:
         value: {$ref: "#/components/schemas/Conclusion"}
+        outcome_revision: {type: integer, minimum: 1}
+
+    RoadmapReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/Roadmap"}
+        outcome_revision: {type: integer, minimum: 1}
+    RoadmapRevisionReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/RoadmapRevision"}
+        outcome_revision: {type: integer, minimum: 1}
+    RoadmapMutationResult:
+      type: object
+      required: [value, outcome_revision, command_id]
+      properties:
+        value: {$ref: "#/components/schemas/Roadmap"}
+        outcome_revision: {type: integer, minimum: 1}
+        command_id: {$ref: "#/components/schemas/ID"}
+        idempotent_replay: {type: boolean}
+    RoadmapActiveSlotMutationResult:
+      type: object
+      required: [value, outcome_revision, command_id]
+      properties:
+        value: {$ref: "#/components/schemas/RoadmapActiveSlot"}
+        outcome_revision: {type: integer, minimum: 1}
+        command_id: {$ref: "#/components/schemas/ID"}
+        idempotent_replay: {type: boolean}
+    RoadmapActivationRecordMutationResult:
+      type: object
+      required: [value, outcome_revision, command_id]
+      properties:
+        value: {$ref: "#/components/schemas/RoadmapActivationRecord"}
+        outcome_revision: {type: integer, minimum: 1}
+        command_id: {$ref: "#/components/schemas/ID"}
+        idempotent_replay: {type: boolean}
+    RoadmapActiveSlotReadResult:
+      type: object
+      required: [value, outcome_revision]
+      properties:
+        value: {$ref: "#/components/schemas/RoadmapActiveSlot"}
+        outcome_revision: {type: integer, minimum: 1}
+    RoadmapCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Roadmap"}
+        outcome_revision: {type: integer, minimum: 1}
+    RoadmapActivationHistoryCollection:
+      type: object
+      required: [items, outcome_revision]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/RoadmapActivationRecord"}
         outcome_revision: {type: integer, minimum: 1}
 
     OutcomeReadResult:
