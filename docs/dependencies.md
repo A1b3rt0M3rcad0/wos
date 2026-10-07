@@ -1,7 +1,7 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-05
-**Active implementation wave:** Completion audit E00–E11, branch based on PR #13
+**Last reviewed:** 2026-10-07
+**Active implementation wave:** Waves 01–18 validation candidate
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
 
@@ -9,7 +9,7 @@ This document records dependencies that are actually present in the repository. 
 
 - Module: `github.com/A1b3rt0M3rcad0/wos`
 - Declared Go language/toolchain baseline: `go 1.27`
-- CI verification observed on 2026-10-02: Go `1.27.1`
+- Local and CI verification baseline: Go `1.27.1`
 
 The `go.mod` directive is the source used by CI.
 
@@ -68,3 +68,5 @@ Before adding a dependency:
 7. update this file and `ROADMAP.md` in the same work.
 
 Dependencies must not be added merely because they may be useful in a later wave.
+
+Supported validation target: Linux amd64, PostgreSQL 18.6 and the SQLite version supplied by the pinned driver. Local browser acceptance on 2026-10-07 used Node 24.19.0, npm 11.9.0, Playwright 1.62.1 and system Chromium 151.0.7922.173. These are test tools, not production runtime dependencies.

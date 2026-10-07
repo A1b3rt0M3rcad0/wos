@@ -1,5 +1,7 @@
 # WOS — Auditoria de situação e plano de conclusão
 
+> Registro histórico de 2026-10-05. O aceite atual das Waves e os limites da entrega estão em [verification-2026-10-07.md](verification-2026-10-07.md); o estado de integração é o ROADMAP e os PRs. As recomendações de produto consumidor continuam explícitas, sem transformar um teste WOS em certificação de deploy Woobe.
+
 **Data de corte:** 5 de outubro de 2026.  
 **Objetivo:** entregar um sistema de Outcomes independente, operável por humanos, agentes e aplicações, com continuidade durável, comprovação e coordenação compartilhada.  
 **Repositório:** `A1b3rt0M3rcad0/wos`.

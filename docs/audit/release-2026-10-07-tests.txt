@@ -1,0 +1,14 @@
+Go 1.27.1 / Linux amd64 / real PostgreSQL 18.6 and clean restore container
+437 tests and subtests passed; 0 failed; 0 skipped.
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+PASS github.com/A1b3rt0M3rcad0/wos/tests/boundary
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+PASS github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server

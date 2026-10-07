@@ -6,7 +6,7 @@
 
 Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
 
-> **Project status:** Waves 01–10 are merged. Wave 11 planning is implemented in PR #13, pending integration. Draft PR #14 adds authorized continuity, HTTP/MCP, the web client, Go SDK, PostgreSQL and durable integration signals. Acceptance is tracked in [the audit](docs/auditoria-conclusao-2026-10-05.md); CI #235 passed shared SQLite/PostgreSQL 18.6 contracts, race detection, clean proof/planning/lease restore, the full 18-step standalone journey, cross-path Linux amd64 reproducibility and non-root/read-only container runtime; five standard browser runs passed. The reference-Woobe journey also passed locally, with the proposed Woobe compatibility fix explicitly required. Exhaustive transport parity, recovery and full product acceptance remain open.
+> **Project status:** implementation and acceptance of Waves 01–18 are complete for the Release 0.1 validation candidate. Wave 11 was integrated through PR #13; PR #14 carries the remaining waves and the final verification. See [current verification](docs/verification-2026-10-07.md) and [the live roadmap](ROADMAP.md) for execution evidence and integration gates. The supported runtime target is Linux amd64 with SQLite or PostgreSQL 18.6. A release tag has not been published.
 
 Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
 
@@ -398,7 +398,7 @@ The transport handles DTOs, authentication context, preconditions, and error tra
 
 MCP is a first-class transport over the same Application services as HTTP.
 
-The intended catalog includes tools for:
+The generated catalog includes tools for:
 
 - finding Outcomes;
 - getting Outcome state;
@@ -491,7 +491,7 @@ Package dependency direction is simply `wos-api -> wos-core`. Core must never de
 - versioned SQL migrations;
 - optional OpenTelemetry instrumentation at the Server boundary.
 
-The current foundation dependency inventory is documented in [`docs/dependencies.md`](./docs/dependencies.md). Wave 01 intentionally has no third-party Go module dependency; future dependencies are introduced and pinned only in the wave that needs them.
+The current foundation dependency inventory is documented in [`docs/dependencies.md`](./docs/dependencies.md). Dependencies and protocol profiles are pinned; Domain/Application remain independent of SQL and MCP implementations.
 
 ## Development milestones
 
@@ -547,24 +547,12 @@ The architecture document defines the target design. The ROADMAP records real im
 
 ## License
 
-The WOS design specifies that the project is intended to be Open Source and licensed independently from Woobe.
-
-**No concrete license is being assumed by this bootstrap.** A specific license must be selected and recorded before the first public release.
+WOS is licensed under [Apache 2.0](LICENSE), independently of Woobe.
 
 ## Current state
 
-Wave 01 — Public Core Foundation is merged and verified.
+All 18 implementation waves have acceptance evidence for the standalone WOS validation candidate. HTTP, MCP, the official web client and the Go SDK share durable state and Application services. SQLite and PostgreSQL run the shared contracts, concurrent connection tests and clean restore scenarios. [Verification](docs/verification-2026-10-07.md) maps each release gate to executable evidence; [operations](docs/operations.md) explains authentication, deployment, backup and limits.
 
-Wave 02 — Transactions, Memory and Initial Domain is merged and verified. It provides pure Outcome/Objective/WorkItem lifecycle rules, revisioned criteria, immutable assessment history plus current projections, attestation-based assessments, explicit conclusions, declarative owners/assignees, basic WorkItem claims, repository/UnitOfWork ports, aggregate validation, a transactional in-memory adapter with rollback and Outcome revision markers, complete Wave 02 application commands, and a human-only end-to-end scenario.
+For agents, start with [the continuation guide](docs/agents.md). The independent 18-step journey demonstrates two authenticated agents, human verification, plan revision, lease fencing, restart, restore and signed duplicate signals over one Outcome. WOS does not select or execute agents.
 
-Wave 03 — Event Log and Idempotency is merged and verified. It provides immutable Domain Events, ordered event indices under one Outcome revision, normalized command fingerprints, transactional idempotency reservations/results, replay of original command results, conflict detection and explicit no-op audit semantics.
-
-Wave 04 — SQLite Persistence and Migrations is merged and verified. It adds durable normalized SQLite state, versioned/checksummed migrations, immediate writer acquisition, Outcome coordination rows, optimistic `expected_version` writes, persisted Domain Events/idempotency, restart-safe reconstruction, backup/restore and SQLite concurrency/cancellation tests.
-
-Wave 05 — HTTP Vertical Slice is merged and verified. It adds the standalone SQLite-backed HTTP runtime, local principal resolution, health endpoints, Outcome/Objective/WorkItem/criteria routes, idempotency-key enforcement, ETags and version preconditions, stable errors, the first durable Outcome state query, OpenAPI and restart-safe HTTP integration coverage.
-
-Wave 06 — Dependencies, Graph and Readiness is merged and verified. It adds typed `depends_on` Relations, hard/advisory semantics, Outcome-guarded DAG validation, deterministic readiness reasons, durable `not_before`, ready-work queries, relation HTTP/OpenAPI contracts, memory/SQLite parity coverage and concurrent cycle-rejection tests.
-
-Wave 07 — Issues and Blockers is implementation-complete on PR #7 and pending integration. It adds independent Issue and Blocker aggregates, typed causes and propagation, direct/inherited blocking state, readiness integration, explicit multi-aggregate commands, SQLite durability, idempotent HTTP contracts and Wave 07 OpenAPI/documentation. Resolving an Issue never releases its Blockers implicitly, and resolving one Blocker never releases another.
-
-Implementation follows the ordered waves and ADR decisions in the canonical design document, with each milestone remaining testable and independently reviewable.
+The older [completion audit](docs/auditoria-conclusao-2026-10-05.md) remains a historical record and a broader product backlog. Complete deployment of the separate Woobe product is a consumer integration gate, with its compatibility dependency documented in [the reference](examples/woobe-reference/README.md); it is not required to run WOS with independent agents.

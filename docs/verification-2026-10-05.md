@@ -1,5 +1,7 @@
 # Verificação da implementação — 2026-10-05
 
+> Registro histórico de 2026-10-05. O aceite atual das Waves e os limites da entrega estão em [verification-2026-10-07.md](verification-2026-10-07.md); o estado de integração é o ROADMAP e os PRs. As recomendações de produto consumidor continuam explícitas, sem transformar um teste WOS em certificação de deploy Woobe.
+
 Escopo: branch do PR #14, baseada no PR #13; Go 1.27.1, Linux amd64. Resultados de execução local são separados dos gates de integração e release. PostgreSQL não estava disponível localmente: testes que exigem `WOS_TEST_POSTGRES_DSN` são ignorados explicitamente, não aprovados. O CI configura PostgreSQL com essa variável obrigatória. O CI #232 executou PostgreSQL 18.6 real e passou integralmente; os skips locais não são usados como evidência desse resultado.
 
 ## Evidência executada

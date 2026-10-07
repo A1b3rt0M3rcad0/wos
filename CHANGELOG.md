@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased — completion audit 2026-10-05
+## Unreleased — Release 0.1 validation candidate, 2026-10-07
 
-Completion branch, based on planning PR #13; not a released 0.1.
+Waves 01–18 have executable acceptance evidence. Wave 11 integrated through PR #13; final waves and validation are carried by PR #14. No release tag is published.
 
 - Authorized per-request HTTP/MCP identity, Namespace grants, delegated authorship, browser sessions and revocation; transactional access revalidation and idempotent Namespace administration/audit.
 - Bounded discovery, continuity, cursors, timeline, graph and focal work context; typed indexed ExternalContext and unique external references.
@@ -16,6 +16,13 @@ Completion branch, based on planning PR #13; not a released 0.1.
 - Execute a public embedded Core host from an independent Go module.
 - Expand HTTP/MCP/SDK/session scenarios to isolated PostgreSQL schemas and test clean-file/database restore of proof, planning and leases.
 
-Open release obligations and actual evidence remain in `docs/auditoria-conclusao-2026-10-05.md`; partial browser/storage acceptance does not certify the full product release.
+Current release-gate evidence is in `docs/verification-2026-10-07.md`; the October 5 audit is preserved as a historical, broader product backlog.
 
 - Correct generated plural ID fields to match REST names; verify both full 18-step independent/Woobe client journeys, with the proposed Woobe fencing redaction fix explicitly tracked.
+
+- Use PostgreSQL database time for authorized lease operations despite replica clock skew.
+- Batch aggregate history reads and reuse snapshot collections for dependency/blocking projections.
+- Verify concurrent separate connections, all command schemas/idempotency guards and three proof modes across HTTP/MCP and SQLite/PostgreSQL.
+- Recover a committed command after lost HTTP response through MCP; drain in-flight shutdown and retain interrupted webhook delivery for retry.
+- Extend browser acceptance to Objectives, evidence, Issues/Blockers, conflicts, contestations, archive/resume, keyboard and mobile rendering.
+- Add query/guard/delivery metadata metrics, graph property fuzzing and measured SQL/pool/throughput benchmarks.

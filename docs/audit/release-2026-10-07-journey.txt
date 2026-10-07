@@ -1,0 +1,19 @@
+J01 passed: authenticated human creates and activates Outcome with required criterion
+J02 passed: required Objective, WorkItem and immutable initial plan published
+J03 passed: agent discovers context through authorized MCP without chat history
+J04 passed: agent queries ready candidates and explicitly claims work
+J05 passed: accepted Decision and active Issue/Blocker appear in agent context
+J06 passed: Issue resolution keeps Blocker; completion rejected until explicit release
+J07 passed: real lease expiry and reclaim by a second authenticated agent
+J08 passed: old executor rejected with stale claim/fencing
+J09 passed: second agent registers real Artifact/Evidence and completes work without certifying Outcome
+J10 passed: authorized human separately reviews required criteria with Evidence
+J11 passed: Objective and Outcome explicitly certified with proof snapshots
+J12 passed: revision 2 published; revision 1 remains readable and immutable
+J13 passed: Evidence retraction contests the conclusion without implicit reopen or history rewrite
+J14 passed: new HTTP consumer reads same state/history after standalone restart
+J15 passed: consistent backup restored to a clean file; new consumer continues history and plan
+J16 passed: signed external signal delivered twice; durable consumer commits one effect
+J17 passed: archive remains queryable; explicit unarchive preserves achieved lifecycle
+J18 passed: foreign Namespace denied by ID, discovery, bound cursor and MCP resource
+PASS: all 18 steps, client=http, same Outcome, real standalone process, signed delivery and clean restore

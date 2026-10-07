@@ -1,4 +1,4 @@
-# Contratos públicos da branch de conclusão
+# Contratos públicos do WOS 0.1
 
 HTTP e MCP chamam o mesmo Application Service. O cliente Go em `packages/wos-sdk-go` é fino: transporta autenticação, deadlines, versões, fencing, paginação e erros tipados, sem implementar outra máquina de estados e sem retries automáticos.
 
@@ -24,7 +24,7 @@ Métricas separam trabalho done, Objectives achieved, Objectives obrigatórios a
 
 `GET .../timeline` é histórico público de metadados imutáveis (`schema_version: 1`), com filtros de Principal, comando, entidade e tipo; paginação append-only por `(outcome_revision,event_index)`. Não retorna payload interno de Domain Event. `GET .../graph` aceita raiz, tipos, direção, profundidade 0–8, limite e cursor; `source_of_truth` distingue hierarquia, dependência e vínculo documental. `GET .../work-items/{id}/context` agrega trabalho/critério, Objective proprietário, dependências, bloqueios, vínculos de evidência e decisões aceitas. Decisions são do Outcome; o domínio atual não contém associação focal exclusiva por WorkItem, portanto essa coleção tem escopo declarado de Outcome e truncamento explícito.
 
-Consultas compactas ainda usam a leitura coerente de coleções completas para algumas projeções. Descoberta SQL já evita hidratação por entidade. Limite de resposta não representa limite de custo de leitura; benchmarks e otimização estão registrados na auditoria.
+Consultas compactas usam uma leitura coerente de coleções completas para algumas projeções. Objectives/WorkItems carregam base e históricos em conjuntos, sem uma consulta por entidade/assessment/conclusão nessas listagens. Bloqueios e dependências reutilizam as coleções lidas. Descoberta SQL evita hidratação. Limite de resposta não representa limite de custo de leitura ou de histórico; benchmarks e limites estão em `benchmarks.md`.
 
 ## Prova e planejamento
 
@@ -36,8 +36,10 @@ Conclusões são imutáveis. Critério revisado não herda avaliação anterior;
 
 O catálogo público exaustivo de tipos de fatos v1 está em [integration-events-v1.json](integration-events-v1.json); [integration-events.md](integration-events.md) define semântica, evolução e deduplicação. O CI verifica sua correspondência com o mapeamento Application.
 
-SDK oficial Go v1.8.0; stdio local e Streamable HTTP remoto stateless/JSON. Cliente oficial SDK executado em testes reais nos dois transports. Perfil Woobe inspecionado usa `2025-06-18`; compatibilidade de deployment Woobe completo ainda precisa de demonstração. WOS não implementa OAuth nem depende de Woobe. Recursos: `wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity`; leituras incluem descoberta, snapshot/seções, grafo, contexto, readiness, timeline, histórico de critérios/conclusões, revisões/slots/ativações de Roadmap e sinais/deliveries.
+SDK oficial Go v1.8.0; stdio local e Streamable HTTP remoto stateless/JSON. O perfil atual é 2026-07-28; o SDK também negocia 2025-11-25, 2025-06-18 e 2025-03-26. O cliente oficial exercita o perfil atual e a jornada independente/browser exercita 2025-06-18. O teste de catálogo exercita os quatro perfis em ambos os bancos. O perfil atual usa `server/discover` e `_meta` por request, com `MCP-Protocol-Version` e `Mcp-Method`; clientes legados usam `initialize`. Prefira o SDK oficial para construir esses envelopes. Cliente oficial SDK executado em testes reais nos dois transports. Perfil Woobe inspecionado usa `2025-06-18`; compatibilidade de deployment Woobe completo ainda precisa de demonstração. WOS não implementa OAuth nem depende de Woobe. Recursos: `wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity`; leituras incluem descoberta, snapshot/seções, grafo, contexto, readiness, timeline, histórico de critérios/conclusões, revisões/slots/ativações de Roadmap e sinais/deliveries.
 
 IntegrationFact `schema_version: 1` contém ID, tipo de fato público, Namespace/Outcome/revisão/índice, entidade, autoria, comando, tempo e correlação. TriggerFiring `schema_version: 1` contém identidade estável, Trigger/versão, signal_type e fato fonte. Não contém nome de struct/comando Go ou payload interno. Predicados usam whitelist de metadados públicos, `eq|neq|in|exists|all|any`, até três níveis e vinte nós; não executam scripts, LLM, Tools ou trabalho. Sinais são entregues pelo menos uma vez; consumidores deduplicam pelo ID. Consulte operações para assinatura e limites.
 
 A revisão semântica e os testes existentes continuam obrigatórios. Um schema gerado comprova a correspondência dos campos, não substitui testes de comportamento nem aceite de PostgreSQL/browser.
+
+O schema distingue metadados opcionais de Evidence (`checksum`, `source_version`) sem alterar a serialização Core usada em fingerprints idempotentes existentes. Severity, propagação de Blocker, modo/resultado de avaliação e tipo de Evidence anunciam os enums efetivos do Domain.
