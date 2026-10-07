@@ -81,6 +81,7 @@ jobs:
           test "$(docker inspect --format '{{.Config.User}}' wos:release-tested)" = '10001:10001'
           docker run --rm wos:release-tested version
           docker run --rm wos:release-tested config validate
+          node tools/distribution/container.mjs
       - name: Authenticate GHCR
         env:
           GHCR_TOKEN: ${{ github.token }}
