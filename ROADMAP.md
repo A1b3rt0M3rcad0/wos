@@ -830,3 +830,9 @@ Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/1
 - Graph reachability, cursor scope and public command serialization fuzzing passed; measured query counts, pool wait and concurrent read throughput are in [benchmarks](docs/benchmarks.md).
 
 The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification](docs/verification-2026-10-05.md) remain dated historical evidence. Its broader product checklist includes complete deployed Woobe acceptance and consumer distribution work. These remain explicit consumer obligations; they are not claims that WOS runs a deployed Woobe product. Current WOS release-gate acceptance is the October 7 matrix.
+
+## Human workspace redesign — Jira UX / Guild.ai visual reference
+
+**Status:** 🚧 In progress (2026-10-07), following the owner's explicit UI/UX request.
+
+Acceptance: persistent contextual navigation; Outcome summary, item list and operational board; readable entity/history/plan details; scoped human actions without exposing internal payloads by default; search/filter and pagination preserving snapshot semantics; keyboard/mobile behavior; existing human/agent journeys plus board/list regressions; real screenshots and PR integration. This is a presentation extension to Waves 12/17/18 and keeps WOS domain transitions, authorization and transport contracts intact.

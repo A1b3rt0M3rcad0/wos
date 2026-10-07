@@ -1,16 +1,301 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WOS · Resultados compartilhados</title><link rel="stylesheet" href="style.css"></head>
-<body>
-<header><a href="/app/" class="brand">WOS <span>Resultados compartilhados</span></a><button id="logout" class="quiet">Encerrar sessão</button></header>
-<main>
-<section id="connect" class="panel"><p class="eyebrow">CONTINUIDADE PARA HUMANOS E AGENTES</p><h1>O trabalho continua aqui.</h1><p>Consulte o estado persistido, organize um plano e registre o que foi verificado.</p><form id="login"><label>Credencial de acesso<input id="token" type="password" autocomplete="off" required minlength="32"></label><button>Entrar</button></form><details><summary>Servidor local</summary><form id="local"><label>Namespace<input id="local-ns" required placeholder="UUIDv7 do contexto de trabalho"></label><button>Abrir contexto local</button></form></details></section>
-<section id="workspace" hidden>
-<div class="toolbar"><label>Contexto de trabalho<select id="namespace"></select></label><button id="refresh" class="quiet">Atualizar</button><button id="create-outcome">Criar resultado</button><button id="administration" class="quiet">Administrar contexto</button></div>
-<div id="notice" role="status" aria-live="polite"></div>
-<div class="layout"><aside class="panel"><h2>Resultados</h2><form id="search"><label class="sr">Buscar resultados<input id="text" type="search" placeholder="Buscar resultados"></label><label>Estado<select id="lifecycle"><option value="">Todos</option><option value="draft">Rascunho</option><option value="active">Ativo</option><option value="achieved">Alcançado</option><option value="failed">Falhou</option><option value="abandoned">Abandonado</option></select></label><label><input id="archived" type="checkbox"> Incluir arquivados</label><button class="quiet">Buscar</button></form><div id="outcomes"></div><button id="more-outcomes" class="quiet" hidden>Mais resultados</button></aside>
-<article><div id="empty" class="empty"><h2>Escolha um resultado</h2><p>Seu objetivo, plano, trabalho e histórico ficam juntos.</p></div><div id="outcome" hidden><div class="heading"><div><p class="eyebrow" id="revision"></p><h1 id="title"></h1><p id="state"></p></div><div><button id="view-outcome" class="quiet">Rever critérios</button><button id="actions">Registrar alteração</button></div></div><div id="metrics" class="metrics"></div><nav id="tabs" aria-label="Estado do resultado"></nav><section id="content" class="panel"></section></div></article></div>
-</section></main>
-<dialog id="command-dialog" aria-labelledby="command-title"><form id="command-form"><div class="heading"><h2 id="command-title">Registrar alteração</h2><button id="close-command" type="button" class="quiet" aria-label="Fechar">×</button></div><label>Ação<select id="command-select"></select></label><p id="command-help">Revise as informações antes de registrar. Mudanças de versão exigem uma nova leitura.</p><div id="fields"></div><div id="command-error" role="alert"></div><footer><button id="submit-command">Registrar</button><button id="retry-command" type="button" class="quiet" hidden>Repetir a mesma tentativa</button></footer></form></dialog>
-<dialog id="detail-dialog" aria-labelledby="detail-title"><div class="heading"><h2 id="detail-title"></h2><button id="close-detail" class="quiet" aria-label="Fechar">×</button></div><div id="detail-content"></div><button id="entity-actions">Alterar este item</button></dialog>
-<dialog id="admin-dialog" aria-labelledby="admin-title"><form id="admin-form"><div class="heading"><h2 id="admin-title">Administrar contexto</h2><button id="close-admin" type="button" class="quiet" aria-label="Fechar">×</button></div><p id="admin-version"></p><label>Ação<select id="admin-operation"><option value="set_grant">Definir permissões</option><option value="issue_credential">Emitir credencial</option><option value="revoke_credential">Revogar credencial</option><option value="create_namespace">Criar contexto</option></select></label><div id="admin-fields"></div><p id="admin-error" role="alert"></p><div id="admin-secret" hidden><p>Guarde a credencial agora. O servidor não poderá mostrá-la novamente.</p><textarea id="admin-token" readonly aria-label="Credencial emitida"></textarea></div><button id="submit-admin">Registrar</button><button id="retry-admin" type="button" class="quiet" hidden>Repetir a mesma tentativa</button><details><summary>Permissões e histórico</summary><pre id="admin-snapshot"></pre></details></form></dialog>
-<script type="module" src="app.js"></script></body></html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WOS · Espaço de trabalho</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+    <header class="topbar">
+      <a href="/app/" class="brand" aria-label="WOS · início"
+        ><span class="brand-mark">w</span>WOS<span class="brand-caption"
+          >Workspace</span
+        ></a
+      ><span class="topbar-note"
+        >Humanos e agentes. Um estado compartilhado.</span
+      >
+      <div class="topbar-right">
+        <span class="connection"><i></i>Estado persistido</span
+        ><button id="logout" class="quiet">Encerrar sessão</button>
+      </div>
+    </header>
+    <main>
+      <section id="connect" class="login-layout">
+        <div class="login-story">
+          <p class="eyebrow">WORK OUTCOME SYSTEM</p>
+          <h1>Grandes resultados.<br />Trabalho em conjunto.</h1>
+          <p>
+            Planeje com clareza. Colabore com agentes.<br />Conclua com
+            evidências.
+          </p>
+          <div class="login-cards">
+            <div>
+              <span class="badge orange">01 · Planejar</span
+              ><strong>Um resultado que importa</strong
+              ><small>Objetivos, critérios e um plano claro.</small>
+            </div>
+            <div>
+              <span class="badge green">02 · Colaborar</span
+              ><strong>Cada entrega tem contexto</strong
+              ><small>Trabalho, reservas e decisões compartilhadas.</small>
+            </div>
+            <div>
+              <span class="badge violet">03 · Verificar</span
+              ><strong>Provas antes de conclusões</strong
+              ><small>Um histórico que continua com você.</small>
+            </div>
+          </div>
+        </div>
+        <div class="login-panel panel">
+          <p class="eyebrow">SEU ESPAÇO DE TRABALHO</p>
+          <h2>Vamos continuar?</h2>
+          <p>Acesse os resultados do seu contexto.</p>
+          <form id="login">
+            <label
+              >Credencial de acesso<input
+                id="token"
+                type="password"
+                autocomplete="off"
+                required
+                minlength="32"
+                placeholder="Sua credencial de acesso" /></label
+            ><button>Entrar</button>
+          </form>
+          <details>
+            <summary>Servidor local</summary>
+            <form id="local">
+              <label
+                >Namespace<input
+                  id="local-ns"
+                  required
+                  placeholder="UUIDv7 do contexto de trabalho" /></label
+              ><button>Abrir contexto local</button>
+            </form>
+          </details>
+          <p class="login-footnote">
+            Sua credencial é trocada por uma sessão segura.<br />Ela não fica
+            armazenada no navegador.
+          </p>
+        </div>
+      </section>
+      <section id="workspace" hidden>
+        <aside class="sidebar" aria-label="Navegação do espaço de trabalho">
+          <div class="workspace-switch">
+            <span class="workspace-symbol">W</span
+            ><label>Contexto de trabalho<select id="namespace"></select></label>
+          </div>
+          <div class="sidebar-heading">
+            <span>RESULTADOS</span
+            ><button
+              id="create-outcome"
+              class="icon-button"
+              aria-label="Criar resultado"
+              title="Criar resultado"
+            >
+              +
+            </button>
+          </div>
+          <form id="search">
+            <label class="sr"
+              >Buscar resultados<input
+                id="text"
+                type="search"
+                placeholder="Buscar resultados"
+            /></label>
+            <details class="search-filters">
+              <summary>Filtrar resultados</summary>
+              <label
+                >Estado<select id="lifecycle">
+                  <option value="">Todos</option>
+                  <option value="draft">Rascunho</option>
+                  <option value="active">Ativo</option>
+                  <option value="achieved">Alcançado</option>
+                  <option value="failed">Falhou</option>
+                  <option value="abandoned">Abandonado</option>
+                </select></label
+              ><label class="check-label"
+                ><input id="archived" type="checkbox" /> Incluir
+                arquivados</label
+              >
+            </details>
+            <button class="quiet search-submit">Buscar</button>
+          </form>
+          <div id="outcomes" class="outcome-navigation"></div>
+          <button id="more-outcomes" class="quiet" hidden>
+            Mais resultados
+          </button>
+          <div class="sidebar-bottom">
+            <button id="administration" class="quiet">
+              Administrar contexto</button
+            ><span class="sidebar-caption"
+              >Planejar · executar · comprovar</span
+            >
+          </div>
+        </aside>
+        <article id="main-content" tabindex="-1" class="workspace-main">
+          <div id="notice" role="status" aria-live="polite"></div>
+          <div id="empty" class="empty">
+            <span class="empty-symbol">↗</span>
+            <p class="eyebrow">SEU PRÓXIMO RESULTADO</p>
+            <h2>Escolha um resultado</h2>
+            <p>
+              Um lugar para conectar objetivos, trabalho e evidências.<br />Abra
+              um resultado na lateral ou crie o primeiro.
+            </p>
+            <button id="empty-create">Criar seu primeiro resultado</button>
+          </div>
+          <div id="outcome" hidden>
+            <div class="breadcrumbs">
+              <span id="context-name">Espaço de trabalho</span><span>/</span
+              ><span>Resultados</span><span>/</span
+              ><span id="outcome-key"></span>
+            </div>
+            <div class="outcome-heading">
+              <div class="outcome-heading-text">
+                <p class="eyebrow">RESULTADO COMPARTILHADO</p>
+                <h1 id="title"></h1>
+                <div class="outcome-meta">
+                  <span id="state" class="badge"></span
+                  ><span id="revision"></span>
+                </div>
+              </div>
+              <div class="heading-actions">
+                <button id="refresh" class="quiet" title="Atualizar estado">
+                  Atualizar</button
+                ><button id="view-outcome" class="quiet">Rever critérios</button
+                ><button id="actions">Registrar alteração</button>
+              </div>
+            </div>
+            <nav id="view-tabs" class="view-tabs" aria-label="Visualização">
+              <button data-view="summary" class="selected" aria-pressed="true">
+                Resumo</button
+              ><button data-view="list" aria-pressed="false">Lista</button
+              ><button data-view="board" aria-pressed="false">Quadro</button>
+            </nav>
+            <section id="summary-view">
+              <div id="metrics" class="metrics"></div>
+              <div id="summary-content" class="summary-grid"></div>
+            </section>
+            <section id="items-view">
+              <div class="items-toolbar">
+                <nav id="tabs" aria-label="Itens do resultado"></nav>
+                <div class="item-filters">
+                  <label class="search-label"
+                    >Pesquisar itens<input
+                      id="item-search"
+                      type="search"
+                      placeholder="Pesquisar nesta visualização" /></label
+                  ><label
+                    >Prioridade<select id="item-priority">
+                      <option value="">Todas</option>
+                      <option value="critical">Crítica</option>
+                      <option value="high">Alta</option>
+                      <option value="normal">Normal</option>
+                      <option value="low">Baixa</option>
+                    </select></label
+                  ><button id="add-item" class="quiet">+ Criar trabalho</button>
+                </div>
+              </div>
+              <section id="content" class="content-surface"></section>
+            </section>
+          </div>
+        </article>
+      </section>
+    </main>
+    <dialog id="command-dialog" aria-labelledby="command-title">
+      <form id="command-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">REGISTRAR NO ESTADO COMPARTILHADO</p>
+            <h2 id="command-title">Registrar alteração</h2>
+          </div>
+          <button
+            id="close-command"
+            type="button"
+            class="icon-button"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+        </div>
+        <label>Ação<select id="command-select"></select></label>
+        <p id="command-help">Revise as informações antes de registrar.</p>
+        <div id="fields"></div>
+        <div id="command-error" role="alert"></div>
+        <footer>
+          <button id="submit-command">Registrar</button
+          ><button id="retry-command" type="button" class="quiet" hidden>
+            Repetir a mesma tentativa
+          </button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog
+      id="detail-dialog"
+      class="detail-drawer"
+      aria-labelledby="detail-title"
+    >
+      <div class="dialog-heading">
+        <div>
+          <p id="detail-kind" class="eyebrow"></p>
+          <h2 id="detail-title"></h2>
+        </div>
+        <button id="close-detail" class="icon-button" aria-label="Fechar">
+          ×
+        </button>
+      </div>
+      <div id="detail-content"></div>
+      <footer id="detail-actions">
+        <button id="entity-actions">Alterar este item</button>
+      </footer>
+    </dialog>
+    <dialog id="admin-dialog" aria-labelledby="admin-title">
+      <form id="admin-form">
+        <div class="dialog-heading">
+          <h2 id="admin-title">Administrar contexto</h2>
+          <button
+            id="close-admin"
+            type="button"
+            class="icon-button"
+            aria-label="Fechar"
+          >
+            ×
+          </button>
+        </div>
+        <p id="admin-version"></p>
+        <label
+          >Ação<select id="admin-operation">
+            <option value="set_grant">Definir permissões</option>
+            <option value="issue_credential">Emitir credencial</option>
+            <option value="revoke_credential">Revogar credencial</option>
+            <option value="create_namespace">Criar contexto</option>
+          </select></label
+        >
+        <div id="admin-fields"></div>
+        <p id="admin-error" role="alert"></p>
+        <div id="admin-secret" hidden>
+          <p>
+            Guarde a credencial agora. O servidor não poderá mostrá-la
+            novamente.
+          </p>
+          <textarea
+            id="admin-token"
+            readonly
+            aria-label="Credencial emitida"
+          ></textarea>
+        </div>
+        <button id="submit-admin">Registrar</button
+        ><button id="retry-admin" type="button" class="quiet" hidden>
+          Repetir a mesma tentativa
+        </button>
+        <details>
+          <summary>Permissões e histórico</summary>
+          <div id="admin-snapshot"></div>
+        </details>
+      </form>
+    </dialog>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
