@@ -4,12 +4,38 @@
   "description": "WOS standalone Go service with HTTP, MCP and human workspace",
   "type": "module",
   "license": "Apache-2.0",
-  "engines": { "node": ">=22" },
-  "os": ["linux"],
-  "cpu": ["x64"],
-  "bin": { "wos": "bin/wos.mjs" },
-  "files": ["bin", "native", "release.json", "README.md", "LICENSE"],
-  "repository": { "type": "git", "url": "git+https://github.com/A1b3rt0M3rcad0/wos.git", "directory": "packages/wos-npm" },
-  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
-  "keywords": ["wos", "mcp", "coordination", "outcomes"]
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "bin": {
+    "wos": "bin/wos.mjs"
+  },
+  "files": [
+    "bin",
+    "native",
+    "release.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A1b3rt0M3rcad0/wos.git",
+    "directory": "packages/wos-npm"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "wos",
+    "mcp",
+    "coordination",
+    "outcomes"
+  ]
 }

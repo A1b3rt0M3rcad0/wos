@@ -1,4 +1,0 @@
-{
-  "bump": "minor",
-  "summary": "Automate coordinated SemVer release PRs, full verification gates and replayable npm, GHCR and GitHub publication."
-}

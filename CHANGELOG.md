@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0 — prepared for release
+
+- Distribute the existing WOS Go service through npm and native Linux amd64 archives with reproducible metadata, embedded binary integrity and offline installation.
+- Add npm-installed WOS coordination, delegation, continuity and review skills with native and generic discovery destinations.
+- Automate coordinated SemVer release PRs, full verification gates and replayable npm, GHCR and GitHub publication.
+
 ### Distribution extension
 
 - Automate changes-driven coordinated version PRs, exact-source reusable verification and immutable npm/GHCR/GitHub publication with draft/replay handling. Record credential, billing, private-source provenance and native-agent limits.
@@ -11,7 +17,7 @@
 
 ## Unreleased — Release 0.1 validation candidate, 2026-10-07
 
-Waves 01–18 have executable acceptance evidence. Wave 11 integrated through PR #13; final waves and validation are carried by PR #14. No release tag is published.
+Waves 01–18 have executable acceptance evidence. Wave 11 integrated through PR #13; final waves and validation are carried by PR #14. Final release/registry publication is tracked separately in `docs/releases.md`.
 
 - Authorized per-request HTTP/MCP identity, Namespace grants, delegated authorship, browser sessions and revocation; transactional access revalidation and idempotent Namespace administration/audit.
 - Bounded discovery, continuity, cursors, timeline, graph and focal work context; typed indexed ExternalContext and unique external references.
