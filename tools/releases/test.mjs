@@ -4,7 +4,8 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {releasePlan,prepareRelease,nextVersion} from './version.mjs';
-import {publishRelease} from './publish.mjs';
+import {publishRelease,realAdapters} from './publish.mjs';
+import {sha256} from '../distribution/build.mjs';
 
 async function fixture(t) {
   const dir=await fs.mkdtemp(path.join(os.tmpdir(),'wos-version-test-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));
@@ -101,4 +102,32 @@ test('tag, asset and image failures never finalize a release', async () => {
     await assert.rejects(publishRelease(release,adapters),/failure/);
     assert.equal(state.final,false);
   }
+});
+
+test('real GitHub adapter resumes drafts by release list and verifies exact asset bytes by ID', async () => {
+  const commit='b'.repeat(40);const bytes=Buffer.from('published asset bytes');const calls=[];
+  const draft={id:9,tag_name:'v0.1.0',target_commitish:commit,draft:true};
+  const execute=(program,args)=>{
+    calls.push(args);
+    const endpoint=args[1];
+    if(endpoint.endsWith('/releases?per_page=100&page=1'))return {status:0,stdout:JSON.stringify([draft]),stderr:''};
+    if(endpoint.endsWith('/releases/9/assets'))return {status:0,stdout:JSON.stringify([{id:10,name:'asset.tgz'}]),stderr:''};
+    if(endpoint.endsWith('/releases/assets/10'))return {status:0,stdout:bytes,stderr:''};
+    throw new Error(`Unexpected mutation/lookup: ${args.join(' ')}`);
+  };
+  const {store}=realAdapters({execute});
+  assert.equal((await store.ensureDraft('v0.1.0',commit,'notes')).id,9);
+  await store.ensureAsset(draft,{filename:'asset.tgz',sha256:sha256(bytes)},'/assets');
+  assert.ok(!calls.some(a=>a.includes('POST')));
+  await assert.rejects(store.ensureAsset(draft,{filename:'asset.tgz',sha256:sha256('different')},'/assets'),/mismatch/);
+});
+
+test('npm adapter treats only explicit E404 as absent and propagates permission/network failures', async () => {
+  let response={status:1,stdout:'{"error":{"code":"E404"}}',stderr:''};
+  const {npm}=realAdapters({execute:()=>response});
+  assert.equal(await npm.integrity('@scope/package','0.1.0'),null);
+  response={status:1,stdout:'{"error":{"code":"E403"}}',stderr:''};
+  await assert.rejects(npm.integrity('@scope/package','0.1.0'),/only explicit E404/);
+  response={status:0,stdout:'"sha512-integrity"',stderr:''};
+  assert.equal(await npm.integrity('@scope/package','0.1.0'),'sha512-integrity');
 });

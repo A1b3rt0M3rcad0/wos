@@ -1,6 +1,5 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
-import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -65,20 +64,20 @@ function command(program,args,options={}) {
   if(r.error)throw r.error;
   return r;
 }
-function checked(program,args,options={}) {
-  const r=command(program,args,options);
-  if(r.status!==0)throw new Error(`${program} operation failed (exit ${r.status}); check authentication, permissions and service availability`);
-  return r.stdout.trim();
-}
-function ghJson(args) {return JSON.parse(checked('gh',args));}
 function notFound(r) {return r.status!==0 && /HTTP 404/.test(r.stderr);}
 
-export function realAdapters({provenance=false}={}) {
+export function realAdapters({provenance=false,execute=command}={}) {
+  function checked(program,args,options={}) {
+    const r=execute(program,args,options);
+    if(r.status!==0)throw new Error(`${program} operation failed (exit ${r.status}); check authentication, permissions and service availability`);
+    return r.stdout.trim();
+  }
+  function ghJson(args) {return JSON.parse(checked('gh',args));}
   const api=`repos/${repository}`;
   const store={
     async ensureTag(tag,commit) {
       const args=['api',`${api}/git/ref/tags/${tag}`];
-      const r=command('gh',args);
+      const r=execute('gh',args);
       if(notFound(r))checked('gh',['api','--method','POST',`${api}/git/refs`,'-f',`ref=refs/tags/${tag}`,'-f',`sha=${commit}`]);
       else {
         if(r.status!==0)throw new Error('Cannot read release tag; authentication/network error');
@@ -87,23 +86,34 @@ export function realAdapters({provenance=false}={}) {
       }
     },
     async ensureDraft(tag,commit,notes) {
-      const r=command('gh',['api',`${api}/releases/tags/${tag}`]);
-      if(notFound(r))return ghJson(['api','--method','POST',`${api}/releases`,'-f',`tag_name=${tag}`,'-f',`target_commitish=${commit}`,'-f',`name=WOS ${tag}`,'-f',`body=${notes}`,'-F','draft=true']);
-      if(r.status!==0)throw new Error('Cannot read GitHub release');
-      const release=JSON.parse(r.stdout);
-      if(release.target_commitish!==commit || release.tag_name!==tag)throw new Error('Release identity differs from source commit');
-      return release;
+      // The by-tag endpoint only guarantees published releases; list drafts too.
+      for(let page=1;;page++) {
+        const releases=ghJson(['api',`${api}/releases?per_page=100&page=${page}`]);
+        const matches=releases.filter(r=>r.tag_name===tag);
+        if(matches.length>1)throw new Error('Multiple releases use this version tag');
+        if(matches.length) {
+          const release=matches[0];
+          if(release.target_commitish!==commit)throw new Error('Release identity differs from source commit');
+          return release;
+        }
+        if(releases.length<100)break;
+      }
+      return ghJson(['api','--method','POST',`${api}/releases`,'-f',`tag_name=${tag}`,'-f',`target_commitish=${commit}`,'-f',`name=WOS ${tag}`,'-f',`body=${notes}`,'-F','draft=true']);
     },
     async ensureAsset(release,asset,output) {
-      const matches=ghJson(['api',`${api}/releases/${release.id}/assets`]).filter(a=>a.name===asset.filename);
+      let matches=ghJson(['api',`${api}/releases/${release.id}/assets`]).filter(a=>a.name===asset.filename);
       if(matches.length>1)throw new Error('Duplicate release assets');
-      if(!matches.length)checked('gh',['release','upload',release.tag_name,path.join(output,asset.filename),'--repo',repository]);
-      // Download and compare even when already present. Never clobber an asset.
-      const temp=await fs.mkdtemp(path.join(os.tmpdir(),'wos-release-asset-'));
-      try {
-        checked('gh',['release','download',release.tag_name,'--repo',repository,'--pattern',asset.filename,'--dir',temp]);
-        if(sha256(await fs.readFile(path.join(temp,asset.filename)))!==asset.sha256)throw new Error(`Release asset mismatch: ${asset.filename}`);
-      }finally{await fs.rm(temp,{recursive:true,force:true});}
+      if(!matches.length) {
+        const upload=new URL(release.upload_url.replace(/\{.*$/,''));
+        if(upload.protocol!=='https:' || upload.hostname!=='uploads.github.com' || upload.pathname!==`/repos/${repository}/releases/${release.id}/assets`)throw new Error('Unexpected release upload endpoint');
+        upload.searchParams.set('name',asset.filename);
+        const created=ghJson(['api','--method','POST',upload.href,'-H','Content-Type: application/octet-stream','--input',path.join(output,asset.filename)]);
+        matches=[created];
+      }
+      // Read exact bytes by ID, including drafts, without tag lookup or clobber.
+      const downloaded=execute('gh',['api',`${api}/releases/assets/${matches[0].id}`,'-H','Accept: application/octet-stream'],{encoding:null,maxBuffer:64<<20});
+      if(downloaded.status!==0)throw new Error(`Cannot verify uploaded asset: ${asset.filename}`);
+      if(sha256(downloaded.stdout)!==asset.sha256)throw new Error(`Release asset mismatch: ${asset.filename}`);
     },
     async finalize(release) {
       if(release.draft)checked('gh',['api','--method','PATCH',`${api}/releases/${release.id}`,'-F','draft=false','-f','make_latest=true']);
@@ -111,7 +121,7 @@ export function realAdapters({provenance=false}={}) {
   };
   const npm={
     async integrity(name,version) {
-      const r=command('npm',['view',`${name}@${version}`,'dist.integrity','--json','--registry=https://registry.npmjs.org/']);
+      const r=execute('npm',['view',`${name}@${version}`,'dist.integrity','--json','--registry=https://registry.npmjs.org/']);
       if(r.status===0) {
         const value=JSON.parse(r.stdout||'null');if(typeof value!=='string')throw new Error('npm version exists without integrity metadata');return value;
       }
@@ -129,7 +139,7 @@ export function realAdapters({provenance=false}={}) {
   const image={
     async check(manifest,required=false) {
       const tag=`${imageName}:${manifest.version}`;
-      const r=command('docker',['manifest','inspect',tag]);
+      const r=execute('docker',['manifest','inspect',tag]);
       if(r.status!==0) {
         if(!required && /manifest unknown|no such manifest|not found/i.test(r.stderr)){remoteExists=false;return;}
         throw new Error('Cannot inspect GHCR image (missing image, access or network failure)');

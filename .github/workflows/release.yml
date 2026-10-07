@@ -102,4 +102,7 @@ jobs:
             echo 'Historical-source retry must use token publication without provenance; the current workflow identity describes another commit.'
             exit 1
           fi
+          if [ "$NPM_AUTH_MODE" = oidc ]; then
+            unset NODE_AUTH_TOKEN
+          fi
           node tools/releases/publish.mjs
