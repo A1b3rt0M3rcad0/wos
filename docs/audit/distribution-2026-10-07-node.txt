@@ -1,0 +1,23 @@
+✔ project/global destinations match four documented discovery roots and generic explicit path (2.217487ms)
+✔ all-agent installation is repeatable, dry-run makes no files, updates managed content and removes it (328.30012ms)
+✔ user edits, unmanaged bundles, extra files and symlinks are preserved before any write (72.875866ms)
+✔ portable skill frontmatter, bounded metadata and progressive references are bundled (2.533227ms)
+✔ skill tool names exist in the real MCP catalog (2.541781ms)
+✔ distribution rejects prerelease/untrusted metadata and failed commands (35.633242ms)
+✔ both package identities/versions are synchronized without install hooks or dependencies (7.131939ms)
+✔ explicit stable SemVer chooses highest bump and first release keeps baseline (1.741937ms)
+✔ preparation is repeatable, consumes changes and synchronizes both packages and notes (51.198777ms)
+✔ bad changes and unsynchronized packages fail before writing any release state (7.962865ms)
+✔ partial registry failure keeps release unfinished and retry reconciles the first immutable package (1.022448ms)
+✔ registry collisions and inspection failures stop before publication mutations (1.007262ms)
+✔ tag, asset and image failures never finalize a release (0.432592ms)
+✔ real GitHub adapter resumes drafts by release list and verifies exact asset bytes by ID (1.34508ms)
+✔ npm adapter treats only explicit E404 as absent and propagates permission/network failures (0.355782ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 500.575927

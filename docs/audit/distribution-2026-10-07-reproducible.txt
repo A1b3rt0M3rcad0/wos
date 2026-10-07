@@ -1,0 +1,1 @@
+PASS: native/npm assets are byte-identical across separate source paths

@@ -1,0 +1,4 @@
+Go 1.27.1; PostgreSQL 18.6 DSN/container configured; module verification and go vet ./... passed.
+go test -json ./...: {"test_cases": {"pass": 437}, "packages": {"skip": 9, "pass": 12}}
+go test -race -json ./...: {"test_cases": {"pass": 437}, "packages": {"skip": 9, "pass": 12}}
+Nine packages report no test files; no test-case skips. Full JSON runner output retained locally under /tmp/wos-packages-go-{tests,race}.json.
