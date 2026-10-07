@@ -251,3 +251,90 @@ func TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema(t *testin
 		}
 	})
 }
+
+func TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog(t *testing.T) {
+	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
+		cfg.MCP.Enabled = true
+		r, err := OpenRuntime(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		server := httptest.NewServer(r.Handler())
+		defer server.Close()
+		for _, version := range []string{"2026-07-28", "2025-11-25", "2025-06-18", "2025-03-26"} {
+			t.Run(version, func(t *testing.T) {
+				call := func(method string, params any, id int) json.RawMessage {
+					t.Helper()
+					if version == "2026-07-28" {
+						params.(map[string]any)["_meta"] = map[string]any{"io.modelcontextprotocol/protocolVersion": version, "io.modelcontextprotocol/clientCapabilities": map[string]any{}, "io.modelcontextprotocol/clientInfo": map[string]string{"name": "release-profile", "version": "1"}}
+					}
+					body, _ := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": id, "method": method, "params": params})
+					req, _ := http.NewRequest("POST", server.URL+"/mcp", bytes.NewReader(body))
+					req.Header.Set("Content-Type", "application/json")
+					req.Header.Set("Accept", "application/json, text/event-stream")
+					req.Header.Set("MCP-Protocol-Version", version)
+					if version == "2026-07-28" {
+						req.Header.Set("Mcp-Method", method)
+					}
+					response, err := server.Client().Do(req)
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer response.Body.Close()
+					var message struct {
+						Result json.RawMessage `json:"result"`
+						Error  json.RawMessage `json:"error"`
+					}
+					if err = json.NewDecoder(response.Body).Decode(&message); err != nil {
+						t.Fatal(err)
+					}
+					if response.StatusCode != 200 || len(message.Error) > 0 {
+						t.Fatalf("profile %s method %s: %d %s", version, method, response.StatusCode, message.Error)
+					}
+					return message.Result
+				}
+				if version == "2026-07-28" {
+					discovered := call("server/discover", map[string]any{}, 1)
+					var result struct {
+						SupportedVersions []string `json:"supportedVersions"`
+					}
+					if err := json.Unmarshal(discovered, &result); err != nil {
+						t.Fatal(err)
+					}
+					found := false
+					for _, v := range result.SupportedVersions {
+						found = found || v == version
+					}
+					if !found {
+						t.Fatalf("current profile not advertised: %s", discovered)
+					}
+				} else {
+					initialized := call("initialize", map[string]any{"protocolVersion": version, "capabilities": map[string]any{}, "clientInfo": map[string]string{"name": "release-profile", "version": "1"}}, 1)
+					var negotiated struct {
+						ProtocolVersion string `json:"protocolVersion"`
+					}
+					if err := json.Unmarshal(initialized, &negotiated); err != nil || negotiated.ProtocolVersion != version {
+						t.Fatalf("incorrect negotiation: %s", initialized)
+					}
+				}
+				listed := call("tools/list", map[string]any{}, 2)
+				var catalog struct {
+					Tools []struct {
+						Name string `json:"name"`
+					} `json:"tools"`
+				}
+				if err := json.Unmarshal(listed, &catalog); err != nil {
+					t.Fatal(err)
+				}
+				found := map[string]bool{}
+				for _, tool := range catalog.Tools {
+					found[tool.Name] = true
+				}
+				if len(found) < 96 || !found["wos_claim_work_item"] || !found["wos_get_continuity"] {
+					t.Fatalf("profile catalog missing coordination tools: %d", len(found))
+				}
+			})
+		}
+	})
+}

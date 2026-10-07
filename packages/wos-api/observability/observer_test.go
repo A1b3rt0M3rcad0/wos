@@ -25,7 +25,7 @@ func TestConcurrentMetricsAndLogsExcludeRequestContent(t *testing.T) {
 			req := httptest.NewRequest("POST", "http://localhost/api/v1/commands/create_outcome?secret=unlogged", strings.NewReader("private document"))
 			req.Header.Set("Authorization", "Bearer unlogged-token")
 			handler.ServeHTTP(httptest.NewRecorder(), req)
-			o.ObserveCommand(ports.CommandObservation{Name: "CreateOutcome", Duration: time.Millisecond, TransactionWait: time.Microsecond})
+			o.ObserveCommand(ports.CommandObservation{Name: "CreateOutcome", Duration: time.Millisecond, TransactionWait: time.Microsecond, GuardDuration: 2 * time.Microsecond})
 			o.ObserveQuery(ports.QueryObservation{Name: "continuity", Duration: 2 * time.Millisecond})
 			o.ObserveDelivery("interrupted", time.Millisecond, true)
 		}()
@@ -42,7 +42,7 @@ func TestConcurrentMetricsAndLogsExcludeRequestContent(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &v); err != nil {
 		t.Fatal(err)
 	}
-	if v.Requests != 20 || v.Commands["CreateOutcome"].Count != 20 || v.Queries["continuity"].Count != 20 || v.Deliveries["interrupted"].Count != 20 {
+	if v.Requests != 20 || v.Commands["CreateOutcome"].Count != 20 || v.Commands["CreateOutcome"].GuardNS != 40000 || v.Queries["continuity"].Count != 20 || v.Deliveries["interrupted"].Count != 20 {
 		t.Fatalf("lost concurrent observations: %+v", v)
 	}
 	for _, private := range []string{"private document", "unlogged-token", "secret=unlogged"} {
