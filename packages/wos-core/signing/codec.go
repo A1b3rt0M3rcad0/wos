@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"reflect"
 	"strconv"
 	"unicode/utf8"
 
@@ -228,6 +229,9 @@ func DecodeStrict(raw []byte, destination any, maxBytes int) error {
 }
 func decodeStrict(raw []byte, destination any, maxBytes, maxScalar int) error {
 	if err := validateJSONBounds(raw, maxBytes, maxScalar); err != nil {
+		return err
+	}
+	if err := exactJSONFields(raw, reflect.TypeOf(destination)); err != nil {
 		return err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))

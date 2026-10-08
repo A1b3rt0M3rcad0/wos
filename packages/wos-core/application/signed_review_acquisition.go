@@ -13,7 +13,7 @@ import (
 type AcquireSignedReviewContractCommand struct {
 	Scope                     d.Scope
 	ReviewCaseID              d.ID
-	ExpectedReviewCaseVersion d.Version
+	ExpectedReviewCaseVersion d.Version `json:"expected_review_case_version,string"`
 	SignerKeyID               d.ID
 	TTLSeconds                int `wos:"optional"`
 }

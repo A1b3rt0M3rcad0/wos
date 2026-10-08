@@ -15,8 +15,8 @@ type RenewSignedWorkContractCommand struct {
 	SignerKeyID          d.ID
 	Authority            ContractAuthority
 	AuthorityDigest      string
-	ExpectedLeaseVersion d.Version
-	TTLSeconds           int `wos:"optional"`
+	ExpectedLeaseVersion d.Version `json:"expected_lease_version,string"`
+	TTLSeconds           int       `wos:"optional"`
 }
 type ResumeSignedWorkContractCommand struct {
 	Scope                d.Scope
@@ -24,7 +24,7 @@ type ResumeSignedWorkContractCommand struct {
 	SignerKeyID          d.ID
 	Authority            ContractAuthority
 	AuthorityDigest      string
-	ExpectedLeaseVersion d.Version
+	ExpectedLeaseVersion d.Version `json:"expected_lease_version,string"`
 }
 
 func factDocument(f d.SignedFact) (signing.Document, error) {

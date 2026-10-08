@@ -14,8 +14,8 @@ type RenewSignedReviewContractCommand struct {
 	SignerKeyID          d.ID
 	Authority            ContractAuthority
 	AuthorityDigest      string
-	ExpectedLeaseVersion d.Version
-	TTLSeconds           int `wos:"optional"`
+	ExpectedLeaseVersion d.Version `json:"expected_lease_version,string"`
+	TTLSeconds           int       `wos:"optional"`
 }
 type ResumeSignedReviewContractCommand struct {
 	Scope                d.Scope
@@ -23,7 +23,7 @@ type ResumeSignedReviewContractCommand struct {
 	SignerKeyID          d.ID
 	Authority            ContractAuthority
 	AuthorityDigest      string
-	ExpectedLeaseVersion d.Version
+	ExpectedLeaseVersion d.Version `json:"expected_lease_version,string"`
 }
 
 func requireIssuedReviewAuthority(ctx context.Context, u ports.UnitOfWork, c d.ReviewContract, authority ContractAuthority, digest string) (signing.AuthorityPayload, error) {

@@ -53,6 +53,9 @@ func encodeValue(v reflect.Value) (any, error) {
 			if err != nil {
 				return nil, err
 			}
+			if strings.Contains(f.Tag.Get("json"), ",string") {
+				encoded = fmt.Sprint(encoded)
+			}
 			result[fieldName(f)] = encoded
 		}
 		return result, nil

@@ -53,3 +53,12 @@ Review specifications bind the exact delivered submission, original issued spec 
 `changes_requested` persists addressable findings against existing issued obligations. Correction acquisition explicitly acknowledges that case, receives a new execution/fence and freezes the prior submission/findings; return must address every finding. Inconclusive or revoked review releases the case to pending. `RevokeSignedContract` and `InterveneSignedReviewCase` are separate authorized, reasoned administrative interventions: cancellation/supersession closes review authority and leaves the Task in progress. Fresh acquisition after intervention must explicitly acknowledge the historical case. These interventions never fabricate a normal review signature or approval.
 
 Migration 0024 adds Task navigation pointers and an index for historical execution participants, preserving prior migrations. Review mutation commands are generated into the same HTTP/MCP/SDK catalog. Exact transport counters, focal queries, complete bypass inventory and cross-transport acceptance remain P06/P12. Quoted signed payload counters and durable issuer acceptances are already enforced.
+
+
+### Exact signed transport representation (P06 first part)
+
+New signed acquisition/lease/intervention commands expose expected versions as canonical decimal strings. New signed mutation results quote content/lease/criterion/policy/Outcome counters; the SDK decodes them without floating-point conversion. Domain counter marshaling and v1 result/command encoders remain numeric, preserving historical fingerprints. Opaque issued payloads/proofs and external consumer context are never rewritten by metadata formatting.
+
+The pure strict decoder rejects case-insensitive aliases at every typed nested field, array and embedded binding. Verification still executes only the exact canonical authenticated bytes. The generated OpenAPI components include all six signed purposes plus DSSE envelope and review specification. Signed schemas describe actual JSON DTO names, including the existing Core documentary record fields; the unsigned command normalizer is never applied inside a signed payload. A human-facing local document can be mapped to these DTOs before signing in the CLI wave.
+
+Focal trust/key/contract/case/submission/receipt reads, complete scope filtering and a cross-transport acceptance journey remain the second P06 part. No Namespace activation or local profile/finish command is claimed from this transport representation change.

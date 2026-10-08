@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"io"
 	"reflect"
 	"strconv"
@@ -52,6 +53,9 @@ func fieldName(f reflect.StructField) string {
 	return snake(f.Name)
 }
 func typeSchema(t reflect.Type) map[string]any {
+	if t == reflect.TypeFor[signing.Decimal]() {
+		return map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
+	}
 	if t == reflect.TypeFor[domain.FencingToken]() {
 		return map[string]any{"type": "string", "pattern": "^[1-9][0-9]{0,19}$"}
 	}
@@ -115,6 +119,9 @@ func typeSchema(t reflect.Type) map[string]any {
 			}
 			name := fieldName(f)
 			p[name] = typeSchema(f.Type)
+			if strings.Contains(f.Tag.Get("json"), ",string") {
+				p[name] = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
+			}
 			if f.Tag.Get("wos") != "optional" && f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
 				required = append(required, name)
 			}
@@ -183,6 +190,11 @@ func normalizeValue(value any, t reflect.Type) (any, error) {
 			name := fieldName(f)
 			known[name] = true
 			if v, ok := m[name]; ok {
+				if strings.Contains(f.Tag.Get("json"), ",string") {
+					if _, quoted := v.(string); !quoted {
+						return nil, fmt.Errorf("%s must be a quoted decimal string", name)
+					}
+				}
 				transformed, err := normalizeValue(v, f.Type)
 				if err != nil {
 					return nil, err

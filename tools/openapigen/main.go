@@ -4,7 +4,11 @@ package main
 import (
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -14,6 +18,18 @@ func main() {
 		panic(err)
 	}
 	schemas := map[string]any{}
+	for name, typed := range map[string]reflect.Type{
+		"SignedEnvelopeV2":            reflect.TypeFor[signing.Envelope](),
+		"SignedWorkSpecificationV2":   reflect.TypeFor[signing.SpecPayload[domain.SignedWorkSpec]](),
+		"SignedReviewSpecificationV2": reflect.TypeFor[signing.SpecPayload[application.SignedReviewSpec]](),
+		"SignedAuthorityV2":           reflect.TypeFor[signing.AuthorityPayload](),
+		"SignedWorkReturnV2":          reflect.TypeFor[signing.WorkReturnPayload[application.SignedReturnMaterial]](),
+		"SignedReviewReturnV2":        reflect.TypeFor[signing.ReviewReturnPayload[application.SignedReviewMaterial]](),
+		"SignedAcceptanceReceiptV2":   reflect.TypeFor[signing.ReceiptPayload](),
+		"SignedKeyEnrollmentV2":       reflect.TypeFor[signing.EnrollmentPayload](),
+	} {
+		schemas[name] = commands.SignedSchema(typed)
+	}
 	paths := map[string]any{}
 	header := map[string]any{"name": "Idempotency-Key", "in": "header", "required": true, "schema": map[string]any{"type": "string", "minLength": 16, "maxLength": 128}}
 	for _, d := range commands.NewCatalog(nil, nil).Descriptors() {
