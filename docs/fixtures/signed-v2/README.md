@@ -1,0 +1,1 @@
+Design fixtures only. Placeholder proof/digests are deliberately invalid. Do not send these documents or count them as executable protocol/crypto tests. Executable typed vectors are introduced in P01. The correction links prior findings and never reactivates terminal authority.
