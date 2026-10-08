@@ -22,7 +22,7 @@ test('project/global destinations match four documented discovery roots and gene
 
 test('all-agent installation is repeatable, dry-run makes no files, updates managed content and removes it', async t => {
   const root = await fixture(t); const opts={agent:'all',project:root};
-  assert.equal((await operate('install',{...opts,dryRun:true})).length,16);
+  assert.equal((await operate('install',{...opts,dryRun:true})).length,names.length*4);
   assert.deepEqual(await fs.readdir(root),[]);
   assert.ok((await operate('install',opts)).every(x=>x.action==='install'));
   assert.ok((await operate('doctor',opts)).every(x=>x.action==='installed'));

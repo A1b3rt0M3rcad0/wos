@@ -10,4 +10,4 @@ OpenClaw: use the configured sessions/subagents tools only if the installed vers
 
 Other agents: choose --agent generic --dir for the Agent Skills discovery root, or supply a reader adapter for SKILL.md. Delegate sequentially if no native spawn mechanism exists. Never claim all-runtime certification based on successful file installation.
 
-Every worker receives only scope/task IDs plus necessary intent/constraints, fetches current WOS context, obtains its own authorized claim, persists evidence/result, and returns a compact receipt. Separate model contexts can reduce supervisor context but may increase total tokens. Measure both.
+Every worker receives only scope/task IDs plus necessary intent/constraints, fetches current WOS context, acquires its own authorized WorkContract, persists evidence/result, and returns a compact receipt. Separate model contexts can reduce supervisor context but may increase total tokens. Measure both.

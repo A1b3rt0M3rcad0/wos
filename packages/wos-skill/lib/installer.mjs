@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 export const packageRoot = fileURLToPath(new URL('../', import.meta.url));
-export const names = ['wos-coordination', 'wos-delegation', 'wos-continuity', 'wos-review'];
+export const names = ['wos-coordination', 'wos-delegation', 'wos-continuity', 'wos-review', 'wos-workspace'];
 export const agents = ['claude', 'codex', 'hermes', 'openclaw', 'generic', 'all'];
 const marker = '.wos-skill.json';
 const sha = value => createHash('sha256').update(value).digest('hex');
