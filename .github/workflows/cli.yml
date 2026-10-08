@@ -1,0 +1,32 @@
+name: CLI platform contracts
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      source_ref:
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Execute real workspace and protocol tests on the host OS
+        run: go test -race -count=1 ./packages/wos-cli/... ./packages/wos-sdk-go/... ./tests/acceptance
+      - name: Build native client
+        run: go build -trimpath -o wosctl${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./packages/wos-cli/cmd/wosctl

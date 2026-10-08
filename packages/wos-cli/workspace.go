@@ -71,17 +71,17 @@ func (w *Workspace) Read(path string) ([]byte, error) {
 	if !info.Mode().IsRegular() {
 		return nil, fmt.Errorf("workspace file must be regular")
 	}
-	raw, err := io.ReadAll(io.LimitReader(f, MaxDocumentBytes+1))
+	raw, err := io.ReadAll(io.LimitReader(f, (512<<10)+1))
 	if err != nil {
 		return nil, err
 	}
-	if len(raw) > MaxDocumentBytes {
+	if len(raw) > 512<<10 {
 		return nil, fmt.Errorf("workspace file exceeds limit")
 	}
 	return raw, nil
 }
 func (w *Workspace) AtomicWrite(path string, raw []byte) error {
-	if len(raw) > MaxDocumentBytes {
+	if len(raw) > 512<<10 {
 		return fmt.Errorf("workspace file exceeds limit")
 	}
 	if err := w.check(path); err != nil {

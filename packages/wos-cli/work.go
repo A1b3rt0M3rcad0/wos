@@ -18,6 +18,7 @@ type State struct {
 	Scope                  domain.Scope         `json:"scope"`
 	Contract               domain.WorkContract  `json:"contract"`
 	WorkItemVersion        domain.Version       `json:"work_item_version"`
+	LocalKeyDigests        map[string]string    `json:"local_key_digests"`
 	LocalKeys              map[string]domain.ID `json:"local_keys"`
 	LastConfirmedCommandID domain.ID            `json:"last_confirmed_command_id,omitempty"`
 }
@@ -73,6 +74,7 @@ func (w *Workspace) materialize(config Config, result application.WorkContractRe
 		if err = json.Unmarshal(oldRaw, &old); err != nil {
 			return dir, err
 		}
+		state.LocalKeyDigests = old.LocalKeyDigests
 		if state.LocalKeys == nil {
 			state.LocalKeys = old.LocalKeys
 		}
@@ -181,6 +183,17 @@ func workCommand(ctx context.Context, w *Workspace, client *sdk.Client, config C
 			if err = json.Unmarshal(raw, &next); err != nil {
 				return result, &LocalError{Err: err, Committed: true, ReceiptPath: receipt}
 			}
+			if next.ResultOmitted {
+				acquiredResult, commandID, err := recoveryResult(ctx, client, config, raw)
+				if err != nil {
+					return result, &LocalError{Err: err, Committed: true, ReceiptPath: receipt}
+				}
+				acquired.Value = acquiredResult
+				acquired.CommandID = commandID
+				next.Value.Acquired = true
+				next.Value.Result = &acquiredResult
+				next.ResultOmitted = false
+			}
 			if !next.Value.Acquired {
 				result.RequiresAction = "no_eligible_work"
 				return result, &exitError{8, fmt.Errorf("no eligible work in scanned page; inspect search_complete and next_cursor")}
@@ -205,6 +218,9 @@ func workCommand(ctx context.Context, w *Workspace, client *sdk.Client, config C
 		result.Data = map[string]any{"workspace": path, "contract": acquired.Value.Contract, "recovery": acquired.Value.Recovery}
 		return result, nil
 	}
+	if operation == "recover" && o.values["next"] == "true" {
+		return recoverAcquisition(ctx, w, client, config, scope, "", true, o, result)
+	}
 	if len(o.args) != 3 {
 		return result, usage("work operation requires work ID")
 	}
@@ -215,6 +231,9 @@ func workCommand(ctx context.Context, w *Workspace, client *sdk.Client, config C
 	result.WorkItemID = id
 	state, dir, err := w.loadState(config, scope, id, o.values["contract"])
 	if err != nil {
+		if operation == "recover" || operation == "resume" && o.values["takeover"] != "true" {
+			return recoverAcquisition(ctx, w, client, config, scope, id, false, o, result)
+		}
 		return result, err
 	}
 	result.ContractID = state.Contract.ID
@@ -259,10 +278,4 @@ func (w *Workspace) ensureNoPending(dir string) error {
 		}
 	}
 	return nil
-}
-func workWorkspaceCommand(ctx context.Context, w *Workspace, client *sdk.Client, config Config, scope domain.Scope, state State, dir string, o options, result Output) (Output, error) {
-	return result, usage("workspace mutation is not yet available")
-}
-func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, config Config, scope domain.Scope, o options) (Output, error) {
-	return Output{Operation: "planning", OutcomeID: scope.OutcomeID}, usage("planning wrappers are not yet available")
 }

@@ -296,7 +296,6 @@
             },
             "required": [
               "scope",
-              "evidence_id",
               "target_ref",
               "stance",
               "rationale"

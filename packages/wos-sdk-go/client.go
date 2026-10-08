@@ -33,7 +33,9 @@ func New(base, token string, client *http.Client) (*Client, error) {
 	if client == nil {
 		client = &http.Client{Timeout: 15 * time.Second}
 	}
-	return &Client{BaseURL: strings.TrimRight(base, "/"), Prefix: "/api/v1", Token: token, HTTP: client}, nil
+	safeClient := *client
+	safeClient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
+	return &Client{BaseURL: strings.TrimRight(base, "/"), Prefix: "/api/v1", Token: token, HTTP: &safeClient}, nil
 }
 
 type Error struct {
@@ -92,6 +94,9 @@ func (c *Client) do(ctx context.Context, method, path, key string, input, out an
 	}
 	if len(raw) > 256<<10 {
 		return fmt.Errorf("WOS response exceeds 256 KiB")
+	}
+	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		return &Error{Status: resp.StatusCode, Code: "transport_redirect", Message: "redirect refused; restore the exact trusted destination"}
 	}
 	if resp.StatusCode >= 400 {
 		var e struct {

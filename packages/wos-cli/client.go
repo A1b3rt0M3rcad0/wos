@@ -50,15 +50,17 @@ func exitCode(err error) int {
 	var remote *sdk.Error
 	if errors.As(err, &remote) {
 		switch remote.Code {
+		case "transport_redirect":
+			return 6
 		case "forbidden", "unauthorized", "invalid_credential":
 			return 3
 		case "version_conflict", "idempotency_conflict", "contract_spec_mismatch", "work_already_claimed":
 			return 4
 		case "contract_expired", "contract_revoked", "stale_execution", "invalid_fencing_token", "lease_expired":
 			return 5
-		case "submission_not_accepted", "criterion_not_satisfied", "criterion", "assessment":
+		case "submission_not_accepted", "criterion_not_satisfied", "criterion", "assessment", "criterion_error", "assessment_error":
 			return 7
-		case "invalid_argument", "invalid_id", "invalid_config", "contract_protocol_required":
+		case "invalid_argument", "invalid_id", "invalid_scope", "invalid_configuration", "invalid_config", "contract_protocol_required":
 			return 2
 		}
 		if remote.Status == 401 || remote.Status == 403 {
@@ -119,11 +121,16 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	o, err := parseOptions(args)
 	result := Output{}
 	if err == nil {
+		if o.values["break-lock"] == "true" && (len(o.args) < 2 || o.args[0] != "work" || o.args[1] != "recover") {
+			err = usage("--break-lock is only allowed with explicit work recover")
+		}
 		if len(o.args) == 0 {
 			err = usage("usage: wosctl init|auth status|capabilities|work|contract|outcome|objective|roadmap|review")
 		} else {
 			result.Operation = strings.Join(o.args, " ")
-			result, err = run(ctx, o)
+			if err == nil {
+				result, err = run(ctx, o)
+			}
 		}
 	}
 	code := exitCode(err)

@@ -100,14 +100,9 @@ func mutationSuccess(value any) (*mcp.CallToolResult, error) {
 	if len(b) <= MaxPayloadBytes {
 		return success(value)
 	}
-	var v map[string]json.RawMessage
-	if err = json.Unmarshal(b, &v); err != nil {
+	receipt, err := commands.CommitReceipt(value)
+	if err != nil {
 		return failure(err)
-	}
-	receipt := map[string]any{"command_id": v["command_id"], "outcome_revision": v["outcome_revision"], "idempotent_replay": v["idempotent_replay"], "result_omitted": true, "recovery": "mutation committed; consult bounded continuity for current state"}
-	var entity map[string]json.RawMessage
-	if json.Unmarshal(v["value"], &entity) == nil {
-		receipt["entity_id"] = entity["id"]
 	}
 	return success(receipt)
 }
