@@ -1,0 +1,1333 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v2/contract-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Restricted YAML mapping; max 1 MiB, depth 16, 10000 nodes. Semantic scalars max 64 KiB; explicitly identified technical base64 fields have separate byte bounds. Issued documents must be cryptographically verified. Profiles do not grant authority.",
+  "oneOf": [
+    {
+      "not": {
+        "required": [
+          "review"
+        ]
+      },
+      "required": [
+        "execution"
+      ]
+    },
+    {
+      "not": {
+        "required": [
+          "execution"
+        ]
+      },
+      "required": [
+        "review"
+      ]
+    }
+  ],
+  "properties": {
+    "_local": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_receipt": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "payload": {
+                  "type": "object"
+                },
+                "proof": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "key_id": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "payload_type": {
+                      "enum": [
+                        "application/vnd.wos.contract-spec.v2+json",
+                        "application/vnd.wos.contract-authority.v2+json",
+                        "application/vnd.wos.work-return.v2+json",
+                        "application/vnd.wos.review-return.v2+json",
+                        "application/vnd.wos.acceptance-receipt.v2+json",
+                        "application/vnd.wos.key-enrollment.v2+json"
+                      ],
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "signature": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "payload_type",
+                    "key_id",
+                    "signature"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "payload",
+                "proof"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pending": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "draft_digest": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "envelope": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "payload": {
+                      "maxLength": 245760,
+                      "type": "string"
+                    },
+                    "payloadType": {
+                      "enum": [
+                        "application/vnd.wos.contract-spec.v2+json",
+                        "application/vnd.wos.contract-authority.v2+json",
+                        "application/vnd.wos.work-return.v2+json",
+                        "application/vnd.wos.review-return.v2+json",
+                        "application/vnd.wos.acceptance-receipt.v2+json",
+                        "application/vnd.wos.key-enrollment.v2+json"
+                      ],
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "signatures": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "keyid": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "sig": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "keyid",
+                          "sig"
+                        ],
+                        "type": "object"
+                      },
+                      "maxItems": 1,
+                      "minItems": 1,
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "payloadType",
+                    "payload",
+                    "signatures"
+                  ],
+                  "type": "object"
+                },
+                "request_digest": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "response": {
+                  "contentEncoding": "base64",
+                  "maxLength": 349528,
+                  "type": "string"
+                },
+                "state": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "state",
+                "envelope",
+                "draft_digest",
+                "request_digest"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "profile": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "integer"
+        },
+        "work_item_version": {
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile",
+        "work_item_version"
+      ],
+      "type": "object"
+    },
+    "execution": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "completion_intent": {
+              "type": "string"
+            },
+            "material": {
+              "additionalProperties": false,
+              "properties": {
+                "artifact_local_keys": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "artifacts": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "artifact_type": {
+                            "type": "string"
+                          },
+                          "checksum": {
+                            "type": "string"
+                          },
+                          "media_type": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "produced_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "source_version": {
+                            "type": "string"
+                          },
+                          "uri": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "artifact_type",
+                          "name",
+                          "uri",
+                          "media_type",
+                          "checksum",
+                          "source_version"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "artifact"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "correction_responses": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidence_ids": {
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "evidence_local_keys": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "finding_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "finding_id",
+                      "summary"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "criterion_assessments": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "evaluator_ref": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "id",
+                          "version"
+                        ],
+                        "type": "object"
+                      },
+                      "evidence_ids": {
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "evidence_local_keys": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "rationale": {
+                        "type": "string"
+                      },
+                      "result": {
+                        "enum": [
+                          "met",
+                          "not_met",
+                          "inconclusive",
+                          "waived"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision",
+                      "result",
+                      "rationale"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "criterion_local_evidence": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "evidence_local_keys": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "evidence": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact_local_key": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "artifact_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "captured_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "checksum": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "evidence_type": {
+                            "enum": [
+                              "measurement",
+                              "test_result",
+                              "inspection",
+                              "attestation",
+                              "source",
+                              "external_evaluation"
+                            ],
+                            "type": "string"
+                          },
+                          "measurement": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "conditions": {
+                                "type": "string"
+                              },
+                              "method": {
+                                "type": "string"
+                              },
+                              "unit": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "source_ref": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "display_name": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "provider": {
+                                "type": "string"
+                              },
+                              "uri": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "provider"
+                            ],
+                            "type": "object"
+                          },
+                          "source_version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "evidence_type",
+                          "source_ref",
+                          "captured_at"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "evidence"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "evidence_links": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidence_local_key": {
+                        "type": "string"
+                      },
+                      "link": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "criterion_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "evidence_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "rationale": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "stance": {
+                            "type": "string"
+                          },
+                          "target_ref": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string"
+                              },
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id",
+                              "kind",
+                              "id"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "target_ref",
+                          "stance",
+                          "rationale"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "link"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "evidence_local_keys": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "result": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "artifacts": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "artifact_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "checksum": {
+                            "type": "string"
+                          },
+                          "source_version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "artifact_id",
+                          "source_version",
+                          "checksum"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "contract_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "criterion_evidence": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "criterion_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "criterion_revision": {
+                            "pattern": "^(0|[1-9][0-9]{0,19})$",
+                            "type": "string"
+                          },
+                          "evidence_ids": {
+                            "items": {
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "criterion_id",
+                          "criterion_revision"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "spec_digest": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "work_item_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "contract_id",
+                    "work_item_id",
+                    "spec_digest",
+                    "summary"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "result"
+              ],
+              "type": "object"
+            },
+            "progress": {
+              "additionalProperties": false,
+              "properties": {
+                "completed": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "next_action": {
+                  "type": "string"
+                },
+                "pending": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "summary": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "summary",
+                "next_action"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "progress",
+            "completion_intent",
+            "material"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "issued": {
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "additionalProperties": false,
+          "properties": {
+            "payload": {
+              "type": "object"
+            },
+            "proof": {
+              "additionalProperties": false,
+              "properties": {
+                "key_id": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "payload_type": {
+                  "enum": [
+                    "application/vnd.wos.contract-spec.v2+json",
+                    "application/vnd.wos.contract-authority.v2+json",
+                    "application/vnd.wos.work-return.v2+json",
+                    "application/vnd.wos.review-return.v2+json",
+                    "application/vnd.wos.acceptance-receipt.v2+json",
+                    "application/vnd.wos.key-enrollment.v2+json"
+                  ],
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "signature": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "payload_type",
+                "key_id",
+                "signature"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "payload",
+            "proof"
+          ],
+          "type": "object"
+        },
+        "specification": {
+          "additionalProperties": false,
+          "properties": {
+            "payload": {
+              "type": "object"
+            },
+            "proof": {
+              "additionalProperties": false,
+              "properties": {
+                "key_id": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "payload_type": {
+                  "enum": [
+                    "application/vnd.wos.contract-spec.v2+json",
+                    "application/vnd.wos.contract-authority.v2+json",
+                    "application/vnd.wos.work-return.v2+json",
+                    "application/vnd.wos.review-return.v2+json",
+                    "application/vnd.wos.acceptance-receipt.v2+json",
+                    "application/vnd.wos.key-enrollment.v2+json"
+                  ],
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "signature": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "payload_type",
+                "key_id",
+                "signature"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "payload",
+            "proof"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "specification",
+        "authority"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "review": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "decision": {
+              "type": "string"
+            },
+            "material": {
+              "additionalProperties": false,
+              "properties": {
+                "artifacts": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "artifact_type": {
+                            "type": "string"
+                          },
+                          "checksum": {
+                            "type": "string"
+                          },
+                          "media_type": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "produced_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "source_version": {
+                            "type": "string"
+                          },
+                          "uri": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "artifact_type",
+                          "name",
+                          "uri",
+                          "media_type",
+                          "checksum",
+                          "source_version"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "artifact"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "criterion_assessments": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "evaluator_ref": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "id",
+                          "version"
+                        ],
+                        "type": "object"
+                      },
+                      "evidence_ids": {
+                        "items": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "evidence_local_keys": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "rationale": {
+                        "type": "string"
+                      },
+                      "result": {
+                        "enum": [
+                          "met",
+                          "not_met",
+                          "inconclusive",
+                          "waived"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision",
+                      "result",
+                      "rationale"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "criterion_local_evidence": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "evidence_local_keys": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "evidence": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact_local_key": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "artifact_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "captured_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "checksum": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "evidence_type": {
+                            "enum": [
+                              "measurement",
+                              "test_result",
+                              "inspection",
+                              "attestation",
+                              "source",
+                              "external_evaluation"
+                            ],
+                            "type": "string"
+                          },
+                          "measurement": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "conditions": {
+                                "type": "string"
+                              },
+                              "method": {
+                                "type": "string"
+                              },
+                              "unit": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "source_ref": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "display_name": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "provider": {
+                                "type": "string"
+                              },
+                              "uri": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "provider"
+                            ],
+                            "type": "object"
+                          },
+                          "source_version": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "evidence_type",
+                          "source_ref",
+                          "captured_at"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "evidence"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "evidence_links": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidence_local_key": {
+                        "type": "string"
+                      },
+                      "link": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "criterion_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "evidence_id": {
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "rationale": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id"
+                            ],
+                            "type": "object"
+                          },
+                          "stance": {
+                            "type": "string"
+                          },
+                          "target_ref": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string"
+                              },
+                              "namespace_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              "outcome_id": {
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "namespace_id",
+                              "outcome_id",
+                              "kind",
+                              "id"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "scope",
+                          "target_ref",
+                          "stance",
+                          "rationale"
+                        ],
+                        "type": "object"
+                      },
+                      "local_key": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "local_key",
+                      "link"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "findings": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "requirement_ref": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "reviewed_source_version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reason"
+              ],
+              "type": "object"
+            },
+            "progress": {
+              "additionalProperties": false,
+              "properties": {
+                "completed": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "next_action": {
+                  "type": "string"
+                },
+                "pending": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "summary": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "summary",
+                "next_action"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "progress",
+            "decision",
+            "material"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "const": 2,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "issued",
+    "_local"
+  ],
+  "type": "object"
+}

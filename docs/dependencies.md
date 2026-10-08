@@ -1,7 +1,7 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-07
-**Active implementation wave:** Waves 01–18 validation candidate
+**Last reviewed:** 2026-10-08
+**Active implementation wave:** Signed contracts P07 workspace foundation
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
 
@@ -79,3 +79,6 @@ Supported validation target: Linux amd64, PostgreSQL 18.6 and the SQLite version
 Execution-contract digests use `github.com/cyberphone/json-canonicalization` pinned at `19d51d7fe467` (2024-12-13), Apache-2.0, RFC8785 implementation. Domain uses its pure canonicalizer, with UTF-16/property-order and numeric/string interoperability vectors. This is a direct dependency; no transport or storage imports in Domain.
 
 The API-only wosctl client uses `go.yaml.in/yaml/v3 v3.0.5` (MIT/Apache-2.0) to parse syntax into bounded nodes. The WOS YAML 1.2 profile validates mappings, duplicate keys, depth/node/scalar/byte limits, decimal JSON numbers, strict booleans and unsupported syntax before typed decoding. YAML is not parsed in Domain; JCS remains the semantic digest format.
+
+
+P07 OS keyring integration uses `github.com/zalando/go-keyring v0.2.6` (MIT), restricted to `packages/wos-cli`. The standard library does not expose a portable OS credential store. Linux uses Secret Service over D-Bus; Windows uses Credential Manager; macOS uses its system keychain. Errors fail closed and never select an unencrypted file fallback. Transitive platform modules are `github.com/godbus/dbus/v5 v5.1.0` (BSD-2-Clause), `github.com/danieljoos/wincred v1.2.2` (MIT), and `al.essio.dev/pkg/shellescape v1.5.1` (MIT). Existing `golang.org/x/sys v0.48.0` is now a direct CLI dependency for Windows file identity and mounted-secret DACL validation. Distribution notices enumerate both Linux and Windows build graphs. Native credential-store availability and Windows ACL behavior require platform execution; cross-compilation does not satisfy those gates.
