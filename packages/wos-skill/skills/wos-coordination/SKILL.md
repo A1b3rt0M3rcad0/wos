@@ -1,20 +1,20 @@
 ---
 name: wos-coordination
-description: Coordinate a bounded task through WOS with focal context, explicit claims, evidence and safe retries. Use when an authorized WOS Outcome or WorkItem is part of the assignment.
+description: Coordinate bounded WOS contract work with focal snapshots, explicit authority, checkpoints and material-bound delivery. Use for authorized WOS tasks.
 ---
 
 # WOS coordination
 
-WOS stores state; you choose and execute work using your runtime tools. An installed skill neither connects MCP nor grants permission. Obtain the authorized Namespace and Outcome from the assignment or bounded discovery. Never invent existing IDs or derive authority from metadata.
+WOS persists state and coordinates authority. Your host executes work and controls tools. Installing this skill grants no access and launches no agents. Obtain the authorized Namespace/Outcome from the assignment; do not infer authorization from IDs, metadata or ActorRef.
 
-1. If a WorkItem is assigned, read `wos_get_work_context` directly. Otherwise use `wos_list_ready_work` with a small limit such as 5 and choose only within the assignment. Use `wos_get_continuity` with a small section limit when broader orientation is necessary, not on every iteration.
-2. Read the task, linked Objective/criteria, operational state, dependencies, decisions and proof references. Expand only what execution requires. Check `truncated`, `omitted`, cursors, `evaluated_at` and `outcome_revision`; omitted data is not absence. Focal context currently may include accepted decisions across the Outcome.
-3. Acquire `wos_claim_work_item` with the current expected version, explicit TTL and stable idempotency key. Save the returned claim ID, fencing token, version and expiry. A readiness listing is not an execution grant; the claim command revalidates it.
-4. Execute only the claimed task outside WOS. Use relevant source excerpts and bounded test output. Renew through `wos_renew_work_item_lease` before expiry, using current returned version/claim/fencing. Stop if authority or lease is lost; do not continue external side effects on a stale claim.
-5. Register the material deliverable with `wos_register_artifact` and observations/test proof with `wos_register_evidence`; link evidence using `wos_create_evidence_link` where applicable. References must be accessible to intended reviewers. Keep credentials and full logs outside documentary text.
-6. Complete explicitly through `wos_complete_work_item` with current expected version, claim ID, fencing token, concise result summary and reason. Required criteria must have valid current assessments before completion. Work completion does not achieve Objective/Outcome automatically.
-7. If essential input is missing or an impediment exists, register an Issue and an explicit Blocker on the relevant target when appropriate, then stop/release according to the live command contract. Do not invent a free-form lifecycle `blocked` or silently certify success.
+1. Check live capabilities and Namespace protocol. For an assigned task, fetch focal work context; otherwise use bounded available-work pages within one explicit Outcome. Omitted data is not absence. Do not read a whole Outcome on every iteration.
+2. Acquire with `wos_acquire_work_contract` or bounded `wos_acquire_next_work_contract`, exact expected version and a durable idempotency key. Save the returned immutable spec/digest, contract/execution IDs, string fencing token, content/lease versions and server expiry. A candidate listing does not grant execution.
+3. Execute only the contracted obligation outside WOS. Open referenced artifacts only when necessary. Consult live authority and impediments before dependent effects. Renew with `wos_renew_work_contract` before expiry; renewal advances lease_version, not contract.version.
+4. Persist material progress with `wos_sync_work_contract`. Checkpoints do not complete work or release authority. Include durable repository/commit/artifact references and mark dirty/unknown workspace facts truthfully; another agent does not inherit uncommitted files from a checkpoint.
+5. Submit immutable material with `wos_submit_work_result`. Resolve local keys to canonical documentary IDs, identify exact artifact revisions/checksums, and explicitly supersede the latest submission when changing delivery. Evidence or passing tests are observations, not assessments.
+6. Required assessments must bind the exact submission ID/digest and criterion revision. Respect independent reviewer policy. Finalize through `wos_finalize_work_contract`; completion remains separate from Objective/Outcome achievement. Pending review retains authority until completion, expiry or explicit administrative revocation.
+7. Missing input or blockers require an explicit Issue/Blocker and stopping dependent effects. You may explicitly maintain renewal while waiting or stop renewal and allow expiry. There is no holder release/unlock command. Revocation uses authorized `wos_revoke_work_contract` with contract ID and reason.
 
-Discover live argument schemas through MCP tools/list or HTTP `/api/v1/commands`. Tool names may carry a client-side prefix. Mutation envelopes contain `idempotency_key` and `command`; do not guess TTL units, DTO names or a new version. Read [protocol and recovery](references/protocol.md) only when connecting, mutating or recovering from errors.
+Stop on expiry, revocation, stale execution or binding conflict. Same-holder takeover requires explicit `wos_resume_work_contract`, CAS and new execution/fencing; never treat refresh as takeover. After timeout replay the identical stored payload/key or recover its receipt. Do not change expected versions to force a retry.
 
-End with a short receipt: task/Outcome IDs, persisted result, artifact/proof IDs, current version/lease disposition, remaining issue and next relevant reference. Use WOS persisted state, not a previous chat, as continuity authority.
+Read [protocol and recovery](references/protocol.md) for envelopes, bounded expansion and uncertain commits. Use wos-workspace for the API-only wosctl/YAML workflow. End with compact persisted IDs, result/proof, authority disposition, remaining obligation and next relevant reference.

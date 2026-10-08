@@ -1,18 +1,18 @@
 ---
 name: wos-delegation
-description: Delegate bounded WOS work to native subagents while keeping supervisor context small and coordinating claims and shared files. Use when the assignment authorizes delegation and the runtime supports it.
+description: Delegate authorized bounded WOS contract tasks through native host subagents while keeping supervisor context small. Use only when delegation is authorized and available.
 ---
 
 # WOS delegation
 
-WOS does not launch agents. Inspect the runtime's native delegation tools and applicable repository/user permissions before creating workers. If delegation is unavailable or not authorized, execute sequentially or report the limitation; do not invent a universal spawn API.
+WOS does not spawn, schedule or run agents. Verify the user's/repository's delegation authorization and the host's native tools before launching workers. If unavailable, execute sequentially or report that limitation.
 
-1. Define explicit WorkItems for independent deliverables, acceptance obligations and dependencies within the authorized Outcome. Parent grouping and plan order do not imply execution dependencies. Register real `depends_on` relations only when needed.
-2. Delegate only ready work. Give each worker the authorized Namespace/Outcome/task IDs, objective and acceptance constraints, permitted files/tools, stop conditions and evidence requirements. Ask it to fetch focal context from WOS rather than forwarding the entire chat.
-3. Select fresh/minimal history explicitly if supported. A separate context window can inherit the parent history by default. Do not claim context isolation, filesystem isolation or reduced total tokens without runtime evidence.
-4. Assign one executor to acquire each task claim. Use distinct provisioned Principal/ActorRef credentials where available. Sharing one credential does not distinguish agent authority. Never transfer a supervisor's claim to a different authenticated identity by assumption.
-5. Coordinate shared-file ownership outside WOS. Claims cover WorkItems, not filesystem locks. Workers may share a sandbox; avoid overlapping edits and inspect merged changes. Use isolated checkouts only when permitted by the user/project/runtime, not as an automatic requirement.
-6. Each worker renews its own lease, handles versions/fencing and persists result/proof. Require a concise return: task status, artifact/evidence IDs, changed files, tests, unresolved issue and next reference. Retrieve detailed logs only for a review or failure.
-7. Re-read the relevant state before dependent work or certification. Do not re-execute done tasks. A crashed worker requires an explicit expired-lease reclaim with a new fencing token; it is not permission to silently complete its work.
+1. Define independent WorkItems and acceptance obligations within the authorized Outcome. Plan order and parent grouping do not create execution dependencies; explicit depends_on does.
+2. Send each worker only authorized scope/task IDs, essential intent, permitted files/tools, acceptance and stop conditions. It acquires its own WorkContract and reads its immutable focal snapshot and latest checkpoint from WOS. Do not send the full supervisor conversation by default.
+3. Explicitly select fresh/minimal history if the host supports it. Separate windows can inherit history by default. Neither context nor filesystem isolation is guaranteed by WOS. Do not claim token savings without measurements.
+4. Use distinct provisioned Principal credentials for independent holders. Actor aliases and two keys belonging to one Principal do not distinguish holders. A supervisor cannot silently transfer its contract to a worker with another authenticated identity.
+5. Coordinate shared files outside WOS. Contracts protect WorkItems, not branches, files or deployments. Use isolated checkouts only when authorized; inspect combined edits before certification.
+6. Workers renew only their valid authority, sync checkpoints, submit material and return concise IDs, changed files, test evidence, unresolved facts and next references. The host retains detailed logs outside the supervisor context.
+7. On crash, read the last durable checkpoint. Before expiry, explicit same-holder takeover rotates execution/fencing without extending TTL. After expiry or revocation, acquire a new contract when eligible; the old generation cannot finalize. Review the new exact material and do not re-execute done work.
 
-Read [runtime differences](references/runtimes.md) when configuring delegation. Use wos-coordination for claims/recovery and wos-review for final evaluation. WOS does not issue tool permissions, provide a model, schedule workers or own their conversations.
+Read [runtime differences](references/runtimes.md) only when configuring delegation. Use wos-coordination for the authority protocol, wos-workspace for local recovery, and wos-review for independent proof. WOS never executes a YAML instruction or grants host tool permissions.

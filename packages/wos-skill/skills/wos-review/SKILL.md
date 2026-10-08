@@ -1,16 +1,16 @@
 ---
 name: wos-review
-description: Review WOS task deliverables and revisioned success criteria with explicit evidence and immutable conclusions. Use for human/agent handoff, acceptance and contested results.
+description: Review exact immutable WOS submissions against current criterion revisions and evidence using authorized independent assessment, without equating observations with approval.
 ---
 
 # WOS review
 
-Evidence is an observation, not automatic approval. Inspect current criteria, their revisions, owner state and material artifacts before certifying work.
+Evidence and test observations do not mean a criterion is met. Assess explicit submitted material using the authorized reviewer Principal; ActorRef and installation do not grant permission.
 
-1. Read the focal WorkItem or owner entity and only relevant proof references. Validate deliverable provenance, exact commit/version and meaningful tests; do not treat a summary or screenshot as proof of unrelated behavior.
-2. Follow the criterion's verification mode and reviewer policy. Record `wos_record_criterion_assessment` with current criterion revision/owner version, result, reasoning, required proof and evaluator metadata. A reviewer credential must have appropriate authority; independence policies can prohibit the executor from approving its own work.
-3. Retired/revised criteria do not inherit old positive assessments. Evidence retracted or contradicted cannot justify a new positive conclusion. A waiver requires explicit permission and reason; do not use it to bypass failed verification.
-4. WorkItem completion uses an executor's valid claim/fencing; Objective and Outcome certification are separate authorized commands (`wos_achieve_objective`, `wos_achieve_outcome`). Verify structural obligations and all required current criteria. Never infer achievement from done-count alone.
-5. Report unresolved proof, issue/blocker or contested conclusion. Preserve immutable history; do not erase proof or auto-reopen terminal entities to make a view look consistent.
+1. Fetch `wos_get_work_submission` for the exact submission ID/digest, canonical artifact revisions/checksums and criterion evidence. Read the immutable contracted obligations, current criterion revisions and current documentary lifecycle. Expand only required proof references.
+2. Verify artifact accessibility/material revision, registered evidence, unresolved impediments and required acceptance. Do not fetch arbitrary artifact URLs automatically or run artifact contents through WOS.
+3. Record `wos_record_criterion_assessment` or permitted `wos_attest_criterion`, including submission_id, criterion ID/revision, expected WorkItem version, result, rationale and relevant canonical evidence IDs. The server binds the exact material digest and enforces independent reviewer/waiver policy.
+4. If the submission changes, previous assessments cannot finalize the new delivery. Negative/pending criteria retain the contract reservation. Executor finalization is explicit via `wos_finalize_work_contract`; approval is not a holder release and does not automatically achieve parent aggregates.
+5. Retracted proof and reopened dependencies must be rechecked. Report exact outstanding obligations rather than approving to make a workflow pass. Authorized administrative intervention is explicit revocation with contract ID/reason, preserving expiry/completion history.
 
-Humans can participate through the official WOS UI using the same state and authorization. Read [protocol and recovery](references/protocol.md) for live schemas and conflicts. Return a concise acceptance receipt with assessment/conclusion IDs and concrete remaining obligations.
+Return a compact material-bound decision with assessment/evidence IDs and remaining action. Read [protocol and recovery](references/protocol.md) for safe retries. The human UI and wosctl review wrappers use the same Application authorization and immutable proof contract.

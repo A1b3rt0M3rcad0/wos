@@ -1,19 +1,17 @@
 ---
 name: wos-continuity
-description: Resume WOS work and maintain a small active context using persisted checkpoints and on-demand expansion. Use on session restart, handoff, compaction or task boundary.
+description: Recover a bounded WOS task using immutable contract specs, latest durable checkpoints and exact receipts instead of previous chat history.
 ---
 
 # WOS continuity
 
-Keep coordination state outside the chat and reconstruct only the current task. WOS cannot erase existing messages or control the runtime's compaction.
+Persisted WOS state, not a previous conversation or a local YAML file, determines work and authority. Start a new session with authorized scope/task/contract IDs and the minimum task intention.
 
-1. Locate the assigned Outcome/WorkItem using IDs or bounded authorized discovery. Start with focal task context; read a small continuity snapshot only if you need overall orientation.
-2. Preserve revision/evaluation markers and check omission/cursor fields. Expand only necessary sections. On `snapshot_changed`, refresh and reconsider the affected intention. WOS has no universal "changes since checkpoint" token: use current focal reads or bounded timeline filters when needed.
-3. Read the actual task lease and persisted state before deciding whether work can continue. A remembered claim, stale version, lost response or old checkout does not prove current authority or completed external effects.
-4. At a task boundary, persist artifacts, evidence, explicit decisions and task result using supported commands. For unfinished work, a checkpoint document may be registered as an Artifact reference; do not complete the task merely to store a checkpoint. Use stable, reviewer-accessible references instead of temporary sandbox paths for durable handoff.
-5. Keep an active summary containing Outcome/task IDs, intent, constraints still in force, changed files, proof references, next action, unresolved issue, and claim/expiry if relevant. Never include tokens. Fetch entity versions fresh before a mutation.
-6. Use the runtime's native summarization/compaction or a fresh authorized worker where supported. Check that essential restrictions and pending work remain represented. Raw traces can leave active context while remaining available in external artifacts.
+1. Read `wos_get_work_contract` and its immutable spec through `wos_get_work_contract_spec` only when not already verified locally. Read the latest checkpoint/submission and live execution_allowed/reasons. Expand history with bounded pages only for a specific unresolved question.
+2. Check evaluated_at, effective status, exact string fencing, execution ID, content/lease versions, truncated/omitted and next_cursor. An omitted record is not absent. Never execute using an expired local timestamp cache.
+3. Locate durable repository/commit/artifact references. A dirty working tree, missing upload or unknown test result must remain explicit; a checkpoint does not transfer files or certify delivery.
+4. Recover uncertain commits by `wos_get_command_receipt` or exact replay of the original key/payload/destination. A missing retained receipt does not prove failure. Reconcile entities/history before creating another intent; never automatically reacquire another task.
+5. Same-holder takeover is explicit and rotates execution/fencing; it does not revive expiry. A new valid contract after expiry preserves the WorkItem ID and in_progress lifecycle but has a new spec/authority. Stop old execution effects.
+6. Return a small resume packet: current obligation, durable progress/proof IDs, authority, blocker, next action and links. Avoid transcript dumps and full Outcome snapshots when a contract suffices.
 
-Do not scan the whole repository, expand every section, replay all conversation or fetch a complete timeline by default. Restrict searches and report concise test results. Reducing supervisor context does not prove lower total tokens or higher correctness; measure context size, repeated reads, retries and acceptance quality in the consumer.
-
-Read [protocol and recovery](references/protocol.md) when an interrupted command, stale snapshot or lost lease needs reconciliation.
+For local files use wos-workspace and `wosctl work recover/status/diff`; refresh preserves edited result/checkpoint drafts. Read [protocol and recovery](references/protocol.md) when resolving transport ambiguity. Do not invent a release or a fourth terminal contract cause.

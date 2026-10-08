@@ -22,11 +22,15 @@ const state = {
   selected: null,
   entities: new Map(),
   criterion: null,
+ contractView: null,
+ submission: null,
+ detailGeneration: 0,
   catalog: [],
   next: "",
   pending: null,
 };
 const labels = {
+ contract_id:"Contrato", execution_id:"Execução", spec_digest:"Integridade da especificação", expected_contract_version:"Versão do contrato", expected_work_item_version:"Versão do trabalho", expected_lease_version:"Versão da reserva", submission_id:"Entrega avaliada", supersedes_submission_id:"Entrega anterior", authority:"Autoridade da execução", checkpoint:"Progresso material", material:"Material entregue",
   blocked_ref: "Item impedido",
   cause_ref: "Causa do impedimento",
   resolution_summary: "Como foi resolvido",
@@ -164,6 +168,7 @@ const human = (s) =>
   }[s] ||
   display(s);
 const verbs = {
+ acquire:"Adquirir", resume:"Retomar", sync:"Salvar progresso de", submit:"Submeter", finalize:"Finalizar", revoke:"Revogar",
   create: "Criar",
   register: "Registrar",
   add: "Adicionar",
@@ -196,6 +201,7 @@ const verbs = {
   redeliver: "Reenviar",
 };
 const actionSubjects = {
+ work_contract:"contrato", next_work_contract:"próximo contrato", work_result:"entrega",
   criterion_assessment: "avaliação do critério",
   criterion: "critério",
   criterion_definition: "definição do critério",
@@ -1399,7 +1405,8 @@ function quickActions(kind, entity) {
     evidence: ["retract_evidence"],
   };
   const container = el("div", undefined, "quick-actions");
-  for (const name of options[kind] || []) {
+  const choices=kind==="work_item"&&entity.contracts_enabled ? (entity.current_contract_id ? ["renew_work_contract","sync_work_contract","submit_work_result","finalize_work_contract","revoke_work_contract"]:["acquire_work_contract","cancel_work_item"]) : options[kind]||[];
+ for (const name of choices) {
     if (!state.catalog.some((c) => c.name === name)) continue;
     if (
       kind === "roadmap" &&
@@ -1446,6 +1453,7 @@ function quickActions(kind, entity) {
   return container;
 }
 async function showEntity(ref) {
+ const detailGeneration=++state.detailGeneration;
   const generation = state.generation;
   if (
     ref.namespace_id !== state.namespace ||
@@ -1460,7 +1468,9 @@ async function showEntity(ref) {
       : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
   const result = await request(path);
   if (generation !== state.generation) return;
-  const entity = result.value || result;
+  if (detailGeneration!==state.detailGeneration) return;
+ const entity = result.value || result;
+ state.contractView=null;state.submission=null;
   state.selected = { ...entity, _kind: ref.kind };
   state.criterion = null;
   state.entities.set(`${ref.kind}/${ref.id}`, {
@@ -1541,6 +1551,7 @@ async function showEntity(ref) {
     );
     detail.append(lease);
   }
+if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(detail,entity,detailGeneration);if(detailGeneration!==state.detailGeneration)return;}
   const criteria = entity.criteria?.items || [];
   if (criteria.length) {
     const group = el("section", undefined, "detail-section");
@@ -1665,6 +1676,12 @@ function defaults() {
         ["blocker", "blocker_id"],
       ].map(([k, f]) => [f, kind === k ? e.id : undefined]),
     ),
+contract_id:state.contractView?.contract.id,
+ expected_contract_version:state.contractView?.contract.version,
+ expected_work_item_version:e.version,
+ expected_lease_version:state.contractView?.contract.lease_version,
+ authority: state.contractView ? {execution_id:state.contractView.contract.execution_id,fencing_token:state.contractView.contract.fencing_token,spec_digest:state.contractView.contract.spec_digest}:undefined,
+ submission_id:state.submission?.id||state.contractView?.contract.latest_submission_id,
     claim_id: e.current_lease?.claim_id,
     fencing_token: e.current_lease?.fencing_token,
     criterion_id: state.criterion?.id,
@@ -1686,6 +1703,7 @@ function openCommands(name) {
   other.label = "Outras ações";
   const kind = state.selected?._kind || "outcome";
   for (const d of state.catalog) {
+ if(state.selected?.contracts_enabled&&["claim_work_item","release_work_item","renew_work_item_lease","reclaim_work_item","complete_work_item","administrative_complete_work_item"].includes(d.name))continue;
     const option = el("option", actionName(d.name));
     option.value = d.name;
     (d.name.endsWith(`_${kind}`) ||
@@ -2228,3 +2246,25 @@ $("retry-admin").onclick = () => submitAdmin(true).catch(report);
 
 $("view-outcome").onclick = () =>
   showEntity(state.snapshot.outcome.ref).catch(report);
+
+
+async function contractSection(detail,entity,generation) {
+ const section=el("section",undefined,"detail-section contract-section");section.append(el("h3","Contrato de trabalho"));detail.append(section);
+ const load=async(id)=>{
+  const response=await request(`${outcomeBase()}/work-contracts/${id}`);if(generation!==state.detailGeneration)return;
+  const view=response.value||response,c=view.contract;state.contractView=view;state.submission=view.latest_submission||null;
+  const status={active:"Reserva ativa",expired:"Reserva expirada",revoked:"Contrato revogado",completed:"Entrega concluída"};
+  section.replaceChildren(el("h3","Contrato de trabalho"),el("strong",status[view.effective_status]||view.effective_status));
+  const info=el("dl",undefined,"detail-properties");for(const [label,value] of [["Titular",c.holder_principal_id],["Prazo da reserva",date(c.expires_at)],["Versão do progresso",String(c.version)],["Versão da reserva",String(c.lease_version)],["Execução permitida",view.execution_allowed?"Sim":"Não"]]) info.append(el("dt",label),el("dd",value));section.append(info);
+  if(view.reasons?.length) section.append(el("p",view.reasons.map(reason=>reason.message||display(reason.code)).join(" · "),"contract-notice"));
+  if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4","Último progresso"),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",`Próxima ação: ${checkpoint.next_action}`));if(checkpoint.pending?.length)progress.append(el("p",`Pendente: ${checkpoint.pending.join(" · ")}`));if(checkpoint.dirty)progress.append(el("small","Há alterações locais ainda não transferidas ao WOS."));if(checkpoint.working_commit)progress.append(el("small",`Referência de código: ${checkpoint.working_commit}`));section.append(progress);}
+  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4","Entrega para avaliação"),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artefatos · ${submission.material.evidence_ids?.length||0} evidências · submetida em ${date(submission.submitted_at)}`));const review=el("button","Revisar entrega","quiet");review.disabled=view.effective_status!=="active";review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice("Esta tarefa não exige avaliação de critérios. A finalização continua explícita.");return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
+  if(view.effective_status==="active"){const revoke=el("button","Revogar contrato","quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
+  const audit=el("details",undefined,"technical");audit.append(el("summary","Identidade e especificação contratada"),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
+ };
+ try {
+  if(entity.current_contract_id)await load(entity.current_contract_id);else section.append(el("p",entity.lifecycle==="in_progress"?"Trabalho recuperável: uma nova aquisição é necessária para executar.":"Sem reserva ativa. A aquisição é explícita."));
+  const history=el("details");history.append(el("summary","Histórico de contratos"));const body=el("div");history.append(body);let cursor="",loaded=false;
+  const more=el("button","Carregar contratos","quiet");const loadHistory=async()=>{const page=await request(`${outcomeBase()}/work-contracts?work_item_id=${encodeURIComponent(entity.id)}&limit=10&cursor=${encodeURIComponent(cursor)}`);if(generation!==state.detailGeneration)return;loaded=true;for(const contract of page.items||[]){const button=el("button",`${shortId(contract.id)} · ${contract.status} · ${date(contract.acquired_at)}`,"quiet");button.onclick=()=>load(contract.id).catch(error=>notice(error.message,true));body.append(button)}cursor=page.next_cursor||"";more.hidden=!cursor;if(!page.items?.length)body.append(el("p","Nenhum contrato registrado."));};more.onclick=()=>loadHistory().catch(error=>notice(error.message,true));history.ontoggle=()=>{if(history.open&&!loaded)loadHistory().catch(error=>notice(error.message,true))};history.append(more);detail.append(history);
+ } catch(error){section.append(el("p",`Não foi possível consultar o contrato: ${error.message}`,"contract-notice"));}
+}
