@@ -1,6 +1,9 @@
 package application
 
-import d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+import (
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"time"
+)
 
 type AcquireWorkContractCommand struct {
 	Scope                   d.Scope
@@ -33,6 +36,7 @@ type RevokeWorkContractCommand struct {
 	Reason                  string
 }
 type WorkContractResult struct {
+	EvaluatedAt      time.Time       `json:"evaluated_at"`
 	Contract         d.WorkContract  `json:"contract"`
 	WorkItem         d.WorkItem      `json:"work_item"`
 	PreviousContract *d.WorkContract `json:"previous_contract,omitempty"`
