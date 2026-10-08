@@ -174,3 +174,23 @@ func (h *Handler) getNamespaceWorkProtocol(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, 200, v)
 }
+
+func (h *Handler) getWorkCheckpoint(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "checkpoint_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	v, err := h.service.GetWorkCheckpoint(r.Context(), scope, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, 200, v)
+}

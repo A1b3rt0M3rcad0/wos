@@ -152,6 +152,18 @@ jobs:
           fi
           curl --fail --silent --show-error http://127.0.0.1:18081/livez >/dev/null
 
+      - name: Measure bounded work-contract contention and context
+        env:
+          WOS_CONTRACT_LOAD: '1'
+        shell: bash
+        run: |
+          go test -count=1 -v ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres -run '^TestWorkContractLoadMatrix$' | tee work-contract-load.log
+          python3 tools/acceptance/load-report.py work-contract-load.log "$(git rev-parse HEAD)" work-contract-load.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: work-contract-load
+          path: work-contract-load.json
+
       - name: Smoke standalone HTTP runtime
         shell: bash
         run: |

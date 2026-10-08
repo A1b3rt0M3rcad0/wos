@@ -1,12 +1,15 @@
 package woscli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -188,5 +191,58 @@ func TestSDKRefusesRedirectedMutationAndTrustRebinding(t *testing.T) {
 	}
 	if leaked {
 		t.Fatal("redirected mutation reached another destination")
+	}
+	raw, err := w.Read(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var intent Intent
+	if err = json.Unmarshal(raw, &intent); err != nil {
+		t.Fatal(err)
+	}
+	if intent.State != "sent_unknown" {
+		t.Fatal("redirect must preserve an uncertain intent", intent.State)
+	}
+}
+
+func TestTransientTransactionConflictRetainsExactIntentForRetry(t *testing.T) {
+	w, config, result := journalFixture(t)
+	calls := 0
+	keys := []string{}
+	payloads := [][]byte{}
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		calls++
+		keys = append(keys, r.Header.Get("Idempotency-Key"))
+		body, _ := io.ReadAll(r.Body)
+		payloads = append(payloads, body)
+		rw.Header().Set("Content-Type", "application/json")
+		if calls == 1 {
+			rw.WriteHeader(409)
+			fmt.Fprint(rw, `{"error":{"code":"transaction_conflict","message":"retry same intent","retryable":true}}`)
+			return
+		}
+		json.NewEncoder(rw).Encode(map[string]any{"command_id": result.Contract.ID, "outcome_revision": 1, "value": result})
+	}))
+	defer server.Close()
+	config.Connection.ServerURL = server.URL
+	client, _ := sdk.New(server.URL, "", server.Client())
+	path, _, err := w.Prepare(config, result.Contract.Scope, ".wos/checkout/contention", "acquire_work_contract", a.AcquireWorkContractCommand{Scope: result.Contract.Scope, WorkItemID: result.WorkItem.ID, ExpectedWorkItemVersion: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = w.Replay(context.Background(), client, config, path); exitCode(err) != 6 {
+		t.Fatal("contention must remain retryable", err)
+	}
+	raw, _ := w.Read(path)
+	var intent Intent
+	json.Unmarshal(raw, &intent)
+	if intent.State != "sent_unknown" {
+		t.Fatal("contention rejected the durable intent", intent.State)
+	}
+	if _, _, err = w.Replay(context.Background(), client, config, path); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 || keys[0] != keys[1] || !bytes.Equal(payloads[0], payloads[1]) {
+		t.Fatal("retry changed its payload or idempotency key")
 	}
 }

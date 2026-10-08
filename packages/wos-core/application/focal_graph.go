@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"sort"
 	"time"
 )
@@ -225,70 +226,101 @@ type WorkContext struct {
 }
 
 func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id domain.ID) (WorkContext, error) {
-	state, err := s.GetOutcomeState(ctx, scope)
+	if err := scope.Validate(); err != nil {
+		return WorkContext{}, err
+	}
+	if err := id.Validate(); err != nil {
+		return WorkContext{}, err
+	}
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return WorkContext{}, err
+	}
+	uow, err := s.tx.Begin(ctx)
 	if err != nil {
 		return WorkContext{}, err
 	}
-	var work *domain.WorkItem
-	for _, v := range state.WorkItems {
-		if v.ID == id {
-			copy := v
-			work = &copy
-			break
-		}
+	defer uow.Rollback()
+	coord, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return WorkContext{}, err
 	}
-	if work == nil {
-		return WorkContext{}, domain.NewError(domain.ErrorCodeNotFound, "work item not found")
+	work, err := uow.WorkItems().Get(ctx, scope, id)
+	if err != nil {
+		return WorkContext{}, err
 	}
-	value := WorkContext{Work: *work, Outcome: summary(state.Outcome.Ref(), state.Outcome.Version, state.Outcome.Title, string(state.Outcome.Lifecycle), state.Outcome.Priority), OutcomeRevision: state.OutcomeRevision, EvaluatedAt: state.EvaluatedAt, Dependencies: []domain.Relation{}, Decisions: []domain.Decision{}, EvidenceLinks: []domain.EvidenceLink{}, Omitted: map[string]int{}}
-	if work.CurrentContractID != nil {
-		contract, err := s.GetWorkContract(ctx, scope, *work.CurrentContractID)
-		if err != nil {
-			return WorkContext{}, err
-		}
-		if contract.OutcomeRevision != state.OutcomeRevision {
-			return WorkContext{}, domain.NewError(domain.ErrorCodeVersionConflict, "context changed while expanding contract; refresh query")
-		}
-		value.Contract = &contract.Value
+	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return WorkContext{}, err
 	}
-
-	relevant := map[domain.EntityRef]bool{state.Outcome.Ref(): true, work.Ref(): true}
+	now, err := s.transactionTime(ctx, uow)
+	if err != nil {
+		return WorkContext{}, err
+	}
+	value := WorkContext{Work: work, Outcome: summary(outcome.Ref(), outcome.Version, outcome.Title, string(outcome.Lifecycle), outcome.Priority), OutcomeRevision: coord.Revision, EvaluatedAt: now, Dependencies: []domain.Relation{}, Decisions: []domain.Decision{}, EvidenceLinks: []domain.EvidenceLink{}, Omitted: map[string]int{}}
+	relevant := map[domain.EntityRef]bool{outcome.Ref(): true, work.Ref(): true}
 	if work.ObjectiveID != nil {
-		for _, v := range state.Objectives {
-			if v.ID == *work.ObjectiveID {
-				copy := v
-				value.Objective = &copy
-				relevant[v.Ref()] = true
+		objective, e := uow.Objectives().Get(ctx, scope, *work.ObjectiveID)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		value.Objective = &objective
+		relevant[objective.Ref()] = true
+	}
+	relations, err := uow.Relations().ListByOutcome(ctx, scope)
+	if err != nil {
+		return WorkContext{}, err
+	}
+	evaluations, err := dependencyEvaluationsForSource(ctx, uow, work.Ref(), relations)
+	if err != nil {
+		return WorkContext{}, err
+	}
+	blocking, err := blockingStateForRef(ctx, uow, work.Ref())
+	if err != nil {
+		return WorkContext{}, err
+	}
+	value.Blocking = &blocking
+	value.Operational = domain.ProjectWorkItemOperationalState(work, outcome, value.Objective, evaluations, blocking.IsBlocked, now)
+	for _, rel := range relations {
+		if rel.SourceRef == work.Ref() && rel.Lifecycle == domain.RelationLifecycleActive {
+			value.Dependencies = append(value.Dependencies, rel)
+		}
+	}
+	if work.CurrentContractID != nil {
+		repo, e := contractRepository(uow)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		c, e := repo.Get(ctx, scope, *work.CurrentContractID)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		view, e := workContractView(ctx, uow, scope, c, work, coord.Revision, now)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		value.Contract = &view.Value
+	}
+	if records, ok := uow.(ports.DocumentaryUnitOfWork); ok {
+		decisions, e := records.Decisions().ListByOutcome(ctx, scope)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		for _, v := range decisions {
+			if v.Lifecycle == domain.DecisionLifecycleAccepted {
+				value.Decisions = append(value.Decisions, v)
+			}
+		}
+		links, e := records.EvidenceLinks().ListByOutcome(ctx, scope)
+		if e != nil {
+			return WorkContext{}, e
+		}
+		for _, v := range links {
+			if relevant[v.TargetRef] && v.Lifecycle == domain.EvidenceLinkLifecycleActive {
+				value.EvidenceLinks = append(value.EvidenceLinks, v)
 			}
 		}
 	}
-	for _, v := range state.WorkItemOperationalStates {
-		if v.Ref.ID == id {
-			value.Operational = v
-		}
-	}
-	for _, v := range state.BlockingStates {
-		if v.Ref == work.Ref() {
-			copy := v
-			value.Blocking = &copy
-		}
-	}
-	for _, v := range state.Relations {
-		if v.SourceRef == work.Ref() && v.Lifecycle == domain.RelationLifecycleActive {
-			value.Dependencies = append(value.Dependencies, v)
-		}
-	}
-	for _, v := range state.Decisions {
-		if v.Lifecycle != domain.DecisionLifecycleAccepted {
-			continue
-		}
-		value.Decisions = append(value.Decisions, v)
-	}
-	for _, v := range state.EvidenceLinks {
-		if relevant[v.TargetRef] && v.Lifecycle == domain.EvidenceLinkLifecycleActive {
-			value.EvidenceLinks = append(value.EvidenceLinks, v)
-		}
-	}
+
 	if len(value.Decisions) > 25 {
 		value.Omitted["decisions"] = len(value.Decisions) - 25
 		value.Decisions = value.Decisions[:25]
@@ -303,6 +335,27 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 		value.Omitted["dependencies"] = len(value.Dependencies) - 100
 		value.Dependencies = value.Dependencies[:100]
 		value.Truncated = true
+	}
+	// Current proof remains; historical proof expands through criterion/conclusion resources.
+	for key, count := range map[string]int{"assessment_history": len(value.Work.Criteria.Assessments), "criterion_definition_history": len(value.Work.Criteria.DefinitionRevisions), "conclusion_history": len(value.Work.ConclusionHistory)} {
+		if count > 0 {
+			value.Omitted[key] = count
+			value.Truncated = true
+		}
+	}
+	value.Work.Criteria.Assessments = nil
+	value.Work.Criteria.DefinitionRevisions = nil
+	value.Work.ConclusionHistory = nil
+	if value.Objective != nil {
+		value.Omitted["objective_assessment_history"] = len(value.Objective.Criteria.Assessments)
+		value.Omitted["objective_definition_history"] = len(value.Objective.Criteria.DefinitionRevisions)
+		value.Omitted["objective_conclusion_history"] = len(value.Objective.ConclusionHistory)
+		if len(value.Objective.Criteria.Assessments)+len(value.Objective.Criteria.DefinitionRevisions)+len(value.Objective.ConclusionHistory) > 0 {
+			value.Truncated = true
+		}
+		value.Objective.Criteria.Assessments = nil
+		value.Objective.Criteria.DefinitionRevisions = nil
+		value.Objective.ConclusionHistory = nil
 	}
 	raw, _ := json.Marshal(value)
 	if len(raw) > MaxSnapshotBytes {

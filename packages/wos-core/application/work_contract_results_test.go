@@ -2,8 +2,11 @@ package application_test
 
 import (
 	"context"
+	"encoding/json"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strings"
 	"testing"
 )
 
@@ -142,5 +145,60 @@ func TestContractSyncRollbackOwnershipAndMaterialGuards(t *testing.T) {
 	cc.IdempotencyKey = "guard-contract-archive"
 	if _, err = s.ArchiveOutcome(ctx, cc, a.ArchiveOutcomeCommand{Scope: w.Scope, ExpectedVersion: 1}); err == nil {
 		t.Fatal("outcome archive bypassed contract")
+	}
+}
+
+func TestContractViewOmitsOversizedProgressWithExplicitExpansion(t *testing.T) {
+	s, store, _, w := contractServiceFixture(t)
+	ctx := context.Background()
+	tx, _ := store.Begin(ctx)
+	item, _ := tx.WorkItems().Get(ctx, w.Scope, w.ID)
+	item.ExecutionSpec = &d.ExecutionSpec{Instructions: []string{strings.Repeat("x", 16000), strings.Repeat("y", 16000), strings.Repeat("z", 16000), strings.Repeat("a", 16000)}}
+	item.Version++
+	if err := tx.WorkItems().Save(ctx, item, w.Version); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	cc := commandContext()
+	cc.IdempotencyKey = "large-contract-acquire"
+	got, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: item.Version})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := got.Value.Contract
+	pending := []string{}
+	for i := 0; i < 14; i++ {
+		pending = append(pending, strings.Repeat("p", 16000))
+	}
+	cc.IdempotencyKey = "large-checkpoint-material"
+	synced, err := s.SyncWorkContract(ctx, cc, a.SyncWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedContractVersion: c.Version, Checkpoint: a.ContractCheckpointInput{Summary: "Large but bounded documentary progress", Pending: pending}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	view, err := s.GetWorkContract(ctx, w.Scope, c.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(view)
+	if len(raw) > a.MaxSnapshotBytes || view.Value.LatestCheckpoint != nil || view.Value.Omitted["latest_checkpoint"] == "" || view.Value.Contract.SpecDigest != c.SpecDigest {
+		t.Fatal("view did not preserve authority and declare omission", len(raw), view.Value.Omitted)
+	}
+	expanded, err := s.GetWorkCheckpoint(ctx, w.Scope, synced.Value.Checkpoint.ID)
+	if err != nil || len(expanded.Value.Pending) != 14 {
+		t.Fatal("explicit immutable checkpoint expansion", err)
+	}
+	history, err := s.WorkContractHistory(ctx, w.Scope, ports.ContractFilter{Limit: 1}, "")
+	if err != nil || history.Items[0].Spec.Title != "" || history.Items[0].SpecDigest != c.SpecDigest {
+		t.Fatal("history loaded a full immutable specification", err)
+	}
+	context, err := s.GetWorkContext(ctx, w.Scope, w.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ = json.Marshal(context)
+	if len(raw) > a.MaxSnapshotBytes {
+		t.Fatal("focal context exceeded bound")
 	}
 }

@@ -9,6 +9,7 @@ import (
 )
 
 type WorkContractView struct {
+	Omitted          map[string]string   `json:"omitted,omitempty"`
 	LatestCheckpoint *d.WorkCheckpoint   `json:"latest_checkpoint,omitempty"`
 	LatestSubmission *d.WorkSubmission   `json:"latest_submission,omitempty"`
 	Contract         d.WorkContract      `json:"contract"`
@@ -54,6 +55,13 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 	if err != nil {
 		return ReadResult[WorkContractView]{}, err
 	}
+	return workContractView(ctx, uow, scope, c, w, coord.Revision, now)
+}
+func workContractView(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, c d.WorkContract, w d.WorkItem, revision d.OutcomeRevision, now time.Time) (ReadResult[WorkContractView], error) {
+	repo, err := contractRepository(uow)
+	if err != nil {
+		return ReadResult[WorkContractView]{}, err
+	}
 	candidate := w
 	candidate.CurrentLease = nil
 	candidate.Lifecycle = d.WorkItemLifecycleTodo
@@ -77,7 +85,23 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 		}
 		v.LatestSubmission = &p
 	}
-	return ReadResult[WorkContractView]{Value: v, OutcomeRevision: coord.Revision}, nil
+	// Preserve frozen spec and authority; large documentary sections expand independently.
+	v.Omitted = map[string]string{}
+	raw, _ := json.Marshal(v)
+	if len(raw) > MaxSnapshotBytes-8192 && v.LatestCheckpoint != nil {
+		v.Omitted["latest_checkpoint"] = "work-checkpoints/" + v.LatestCheckpoint.ID.String()
+		v.LatestCheckpoint = nil
+		raw, _ = json.Marshal(v)
+	}
+	if len(raw) > MaxSnapshotBytes-8192 && v.LatestSubmission != nil {
+		v.Omitted["latest_submission"] = "work-submissions/" + v.LatestSubmission.ID.String()
+		v.LatestSubmission = nil
+		raw, _ = json.Marshal(v)
+	}
+	if len(raw) > MaxSnapshotBytes-8192 {
+		return ReadResult[WorkContractView]{}, d.NewError(d.ErrorCodeGraphLimitExceeded, "contract view exceeds byte limit; read immutable spec separately")
+	}
+	return ReadResult[WorkContractView]{Value: v, OutcomeRevision: revision}, nil
 }
 func (s *Service) ListWorkContracts(ctx context.Context, scope d.Scope, f ports.ContractFilter) (ReadResult[[]d.WorkContract], error) {
 	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
@@ -145,6 +169,16 @@ func (s *Service) WorkContractHistory(ctx context.Context, scope d.Scope, f port
 	for i := range page.Items {
 		page.Items[i].Spec = d.WorkContractSpec{}
 		page.Omitted["specs"]++
+	}
+	raw, _ := json.Marshal(page)
+	for len(raw) > MaxSnapshotBytes && len(page.Items) > 1 {
+		page.Items = page.Items[:len(page.Items)-1]
+		page.Truncated = true
+		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "work_contracts", Filter: fingerprint, Key: string(page.Items[len(page.Items)-1].ID)})
+		raw, _ = json.Marshal(page)
+	}
+	if len(raw) > MaxSnapshotBytes {
+		return ContractPage{}, d.NewError(d.ErrorCodeGraphLimitExceeded, "single contract header exceeds byte limit")
 	}
 	return page, nil
 }
@@ -295,4 +329,31 @@ type ExecutionCapabilities struct {
 
 func ContractCapabilities() ExecutionCapabilities {
 	return ExecutionCapabilities{Protocols: []string{"legacy", "contracts_v1"}, YAMLVersions: []int{1}, MaxCommandBytes: MaxSnapshotBytes, MaxQueryLimit: MaxQueryLimit, LeasePolicy: d.DefaultContractLeasePolicy(), TerminalCauses: []d.ContractStatus{d.ContractExpired, d.ContractRevoked, d.ContractCompleted}, AgentExecution: false}
+}
+
+func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (ReadResult[d.WorkCheckpoint], error) {
+	if err := scope.Validate(); err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	if err := id.Validate(); err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	u, err := s.tx.Begin(ctx)
+	if err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	defer u.Rollback()
+	coord, err := u.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	repo, err := contractRepository(u)
+	if err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
+	p, err := repo.GetCheckpoint(ctx, scope, id)
+	return ReadResult[d.WorkCheckpoint]{Value: p, OutcomeRevision: coord.Revision}, err
 }

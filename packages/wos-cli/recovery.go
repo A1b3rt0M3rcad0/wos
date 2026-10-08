@@ -110,6 +110,27 @@ func recoverAcquisition(ctx context.Context, w *Workspace, client *sdk.Client, c
 	if len(paths) == 0 {
 		return result, usage("no acquisition journal exists; recovery never acquires new work")
 	}
+	type acquisitionIntent struct {
+		path   string
+		intent Intent
+	}
+	ordered := []acquisitionIntent{}
+	for _, path := range paths {
+		raw, e := w.Read(path)
+		if e != nil {
+			return result, &LocalError{Err: e}
+		}
+		var intent Intent
+		if e = json.Unmarshal(raw, &intent); e != nil {
+			return result, &LocalError{Err: e}
+		}
+		ordered = append(ordered, acquisitionIntent{path, intent})
+	}
+	sort.SliceStable(ordered, func(i, j int) bool { return ordered[i].intent.PreparedAt.Before(ordered[j].intent.PreparedAt) })
+	paths = paths[:0]
+	for _, item := range ordered {
+		paths = append(paths, item.path)
+	}
 	recovered := []any{}
 	for _, path := range paths {
 		data, err := w.Read(path)

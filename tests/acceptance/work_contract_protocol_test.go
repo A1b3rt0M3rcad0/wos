@@ -14,10 +14,13 @@ import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"sync/atomic"
 	"testing"
@@ -34,8 +37,36 @@ type clock struct{}
 
 func (clock) Now() time.Time { return time.Now().UTC() }
 func TestHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T) {
+	for _, backend := range []string{"memory", "sqlite", "postgres"} {
+		t.Run(backend, func(t *testing.T) {
+			var store ports.TransactionManager
+			switch backend {
+			case "memory":
+				store = memory.New()
+			case "sqlite":
+				s, err := sqlite.Open(filepath.Join(t.TempDir(), "protocol.db"), sqlite.Options{MigrateOnOpen: true})
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() { s.Close() })
+				store = s
+			case "postgres":
+				if os.Getenv("WOS_TEST_POSTGRES_DSN") == "" {
+					t.Skip("real PostgreSQL required")
+				}
+				s, err := postgres.Open(os.Getenv("WOS_TEST_POSTGRES_DSN"), postgres.Options{MigrateOnOpen: true, Schema: fmt.Sprintf("protocol_acceptance_%d", time.Now().UnixNano())})
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() { s.Close() })
+				store = s
+			}
+			testHTTPAcquisitionMCPResumeAndSDKReceipts(t, store)
+		})
+	}
+}
+func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.TransactionManager) {
 	ctx := context.Background()
-	store := memory.New()
 	generator := &ids{}
 	service, err := a.NewService(store, clock{}, generator)
 	if err != nil {

@@ -50,7 +50,7 @@ func exitCode(err error) int {
 	var remote *sdk.Error
 	if errors.As(err, &remote) {
 		switch remote.Code {
-		case "transport_redirect":
+		case "transport_redirect", "transaction_conflict":
 			return 6
 		case "forbidden", "unauthorized", "invalid_credential":
 			return 3

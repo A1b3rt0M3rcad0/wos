@@ -82,6 +82,21 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	spec := d.WorkContractSpec{Title: w.Title, Description: w.Description, ObjectiveID: cloneIDPtr(w.ObjectiveID), Criteria: append([]d.SuccessCriterion{}, w.Criteria.Items...)}
+	outcome, e := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+	if e != nil {
+		return zero, 0, e
+	}
+	spec.OutcomeIntent = outcome.DesiredState
+	if w.ObjectiveID != nil {
+		objective, e := uow.Objectives().Get(ctx, cmd.Scope, *w.ObjectiveID)
+		if e != nil {
+			return zero, 0, e
+		}
+		spec.ObjectiveIntent = objective.Title
+		if objective.Description != "" {
+			spec.ObjectiveIntent += "\n" + objective.Description
+		}
+	}
 	if w.ExecutionSpec != nil {
 		spec.ExecutionSpec = *w.ExecutionSpec
 	}
@@ -325,6 +340,12 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 		payload, err := json.Marshal(map[string]any{"contract_id": result.Contract.ID, "work_item_id": result.WorkItem.ID, "status": result.Contract.Status, "contract_version": result.Contract.Version, "lease_version": result.Contract.LeaseVersion, "fencing_token": result.Contract.FencingToken, "spec_digest": result.Contract.SpecDigest, "expires_at": result.Contract.ExpiresAt, "previous_contract": result.PreviousContract, "checkpoint": result.Checkpoint, "submission_id": result.Contract.LatestSubmissionID})
 		if err != nil {
 			return nil, true, err
+		}
+		if events[i].EventType == "work_item.conclusion_recorded" {
+			payload, err = conclusionRecordedPayload(result.WorkItem)
+			if err != nil {
+				return nil, true, err
+			}
 		}
 		events[i].Payload = payload
 		events[i].RecordedAt = result.EvaluatedAt

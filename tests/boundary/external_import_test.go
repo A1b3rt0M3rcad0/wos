@@ -31,7 +31,7 @@ replace github.com/A1b3rt0M3rcad0/wos => %s
 		t.Fatalf("write external main.go: %v", err)
 	}
 
-	cmd := exec.Command("go", "run", ".")
+	cmd := exec.Command("go", "run", "-mod=mod", ".")
 	cmd.Dir = dir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
