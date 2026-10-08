@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-07
+**Last reviewed:** 2026-10-08
 **Current target:** Release 0.1  
 **Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
 
@@ -895,3 +895,26 @@ C10: ADR-020 documents anchor-Outcome auditing, no historical contract fabricati
 C11: context query reads selected work under one guard and preserves current proof, with historical proof expansion declared. Contract history reads metadata only; large latest checkpoint/submission has explicit expansion paths. Redirected mutations stay sent_unknown; acquisition recovery orders prepared intents. Frozen spec includes Outcome/Objective intent for clean sessions. Load fixture counts transaction conflicts and bounded identical-intent retries instead of hiding them; same-Outcome PostgreSQL contention is material. The 54-case report identifies tested implementation commit 6179387 and preserves the full measured matrix in docs/work-contract-load-evidence.json. Four Chromium journeys and all five skill installation tests passed. A full race run exposed the new transitive-module dependency in the external consumer test; the corrected real external consumer test passed. Final all-package integrated verification remains a C12 gate.
 
 C12: WOS npm now contains wos + wosctl; separate client archives include schemas/notices/source metadata. Publisher requires native Linux/Windows receipts matching source and binary hashes, and hosted release depends on the CLI matrix. Version 0.2.0 prepared coherently; five skills install 20 managed copies across four discovery roots. Local authorizer grants ordinary acquisition to its single Principal, and revocation only with existing admin opt-in; Namespace administration still requires an authenticated Namespace administrator. Offline packaging uses an isolated API-token bootstrap instance and does not relax runtime authorization. Exact implementation commit 2ebe93fa18cbc2ec3d9570fd2725cec5ff9d3ddf passed all-package race/vet, four Chromium journeys, 16 Node tests, offline packaging, cross-path reproducibility, native Linux acceptance and non-root/read-only container verification. See docs/verification-work-contracts-2026-10-08.md; native Windows, Woobe and external publication are still pending.
+
+## Signed contracts and independent minimal profiles — P00–P13
+
+Owner authorized execution of [the new plan](docs/signed-contracts-implementation-plan.md), baseline b75aa3e confirmed against origin/master. C01–C12 above remain historical. ADRs 021–026 explicitly change behavior only for signed_contracts_v2. Product remains state/coordination, not agent execution.
+
+| Wave | Actual state | Gate |
+| --- | --- | --- |
+| P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
+| P01 | Planned | Pure DSSE/JCS Ed25519 codec and positive/negative cross-consumer vectors. |
+| P02 | Planned | Authorized enrollment/rotation, credential floors and all adapters. |
+| P03 | Planned | Signed spec/grant, delivered/review authority and guards. |
+| P04 | Planned | Atomic signed execution return, exact material and durable receipt. |
+| P05 | Planned | Independent review, correction rounds and current completion guards. |
+| P06 | Planned | HTTP/MCP/SDK parity, bounded queries and embedded bypass rejection. |
+| P07 | Planned | Profile/secret references, project schema 2 and single contract YAML. |
+| P08 | Planned | Embedded pending recovery, batch/quotas and stable interprocess locks. |
+| P09 | Planned | sign/send/finish and receipt-bound cleanup preserving unconfirmed edits. |
+| P10 | Planned | Explicit signed cutover and verified, recoverable local migration. |
+| P11 | Planned | UI read models/guarded actions, five skills and operating guides. |
+| P12 | Planned; external platform/pilot gates unresolved | Real SQL/restore, independent processes, failures/load/context benchmarks; native Windows and actual consumer separately proven. |
+| P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
+
+R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.

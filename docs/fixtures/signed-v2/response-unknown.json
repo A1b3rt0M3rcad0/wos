@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "kind": "WOSContractFile",
+  "design_fixture": true,
+  "issued": {
+    "specification": {
+      "payload": {
+        "protocol_version": 2,
+        "contract_kind": "execution",
+        "server_id": "fixture-server",
+        "spec_digest": "sha256:<digest>",
+        "spec": {
+          "title": "Bounded fixture",
+          "outcome_intent": "Verified fixture outcome"
+        }
+      },
+      "proof": {
+        "payload_type": "application/vnd.wos.contract-spec.v2+json",
+        "key_id": "fixture-issuer",
+        "signature": "<not-a-signature>"
+      }
+    },
+    "authority": {
+      "payload": {
+        "acceptance_mode": "independent_review",
+        "fencing_token": "9007199254740993"
+      },
+      "proof": {
+        "signature": "<not-a-signature>"
+      }
+    }
+  },
+  "execution": {
+    "completion_intent": "auto",
+    "result": {
+      "summary": "Exact versioned evidence",
+      "addressed_findings": []
+    }
+  },
+  "_local": {
+    "state": "sent_unknown",
+    "prepared_return": {
+      "request_id": "fixture-request",
+      "idempotency_key": "fixture-key",
+      "envelope": "<frozen-intent>"
+    }
+  }
+}

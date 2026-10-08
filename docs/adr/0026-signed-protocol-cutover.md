@@ -1,0 +1,7 @@
+# ADR-0026 — Explicit signed protocol and schema-2 migration
+
+Status: accepted for implementation, 2026-10-08. Not an implementation claim.
+
+Complement ADR-020 with contracts_v1 -> draining_to_signed_v2 -> signed_contracts_v2, writer epoch 2. Block new v1 acquisitions during draining; require no incompatible valid execution authority before activation, ready persistent server identity/signer/trust set and explicitly provisioned credential policies. Retire old writers and revoke their DB access; acknowledgement does not technically fence arbitrary old DB clients. Older binaries must reject a database with migrations/epoch beyond their supported version; mixed writers are unsupported. No downgrade or fabricated historical signatures. Legacy replay must preserve original fingerprints and require current access. Workspace migration dry-run inventories drafts/journals/receipts; reconcile unknown results first, preserve legacy_unsigned documents, materialize/verify destination before explicit authorized discard of originals. Upgrade/restore preserves public keys and all signed records; private signer backup is separate. Restoring without old private key permits historical verification, not impersonated issuance.
+
+The owner authorized [P00–P13](../signed-contracts-implementation-plan.md). V1 behavior remains until explicit cutover. Native Windows, hosted CI, registry publication and deployed consumer pilots are separate evidence gates.

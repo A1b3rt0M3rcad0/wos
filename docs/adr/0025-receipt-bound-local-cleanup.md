@@ -1,0 +1,7 @@
+# ADR-0025 — Embedded pending intentions and receipt-bound cleanup
+
+Status: accepted for implementation, 2026-10-08. Not an implementation claim.
+
+Persist exact destination/identity/payload/request/idempotency before network mutation. Acquisition acceptance is first recorded in profile then materialized; only then remove pending metadata. Signed return freezes draft digest, grant/CAS and exact envelope inside the contract. Uncertain results prohibit a replacement intent. Renew/sync cannot mutate a grant under a prepared final return. Confirmed server-signed receipt must bind server/scope/Principal/contract/request/digest and explicitly close the local obligation. Cleanup compares current editable content and regular-file identity, never removes directories, evidence/code/worktrees or an unconfirmed edit. Local failure reports remote_committed plus cleanup_pending and preserves the receipt. Durable contract acceptance survives cache receipt retention; absent cache is not proof of no commit. Filesystem and remote commits are not jointly atomic, so recovery is a required protocol. Full disk destruction loses unsynced drafts; deletion is not forensic erasure.
+
+The owner authorized [P00–P13](../signed-contracts-implementation-plan.md). V1 behavior remains until explicit cutover. Native Windows, hosted CI, registry publication and deployed consumer pilots are separate evidence gates.

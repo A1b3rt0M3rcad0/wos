@@ -1,0 +1,7 @@
+# ADR-0023 — Credential signing identities and restrictive acceptance policy
+
+Status: accepted for implementation, 2026-10-08. Not an implementation claim.
+
+Principal, authentication credential, signing key, profile, execution ID and ActorRef remain distinct. Allowed operations intersect live Principal grants, authenticated credential restrictions, scope, contract authority and domain gates. Missing legacy credential policy grants no signed-v2 rights. Review floor is the strongest deployment/Namespace/Outcome/Task/credential restriction; acquisition freezes a minimum that later relaxation cannot lower. Revocation/credential/grant/key/policy are revalidated inside the coherent UoW. Initial key enrollment requires an administrator-authorized one-use short-lived challenge and possession proof; API token alone cannot replace keys. Rotation uses a valid previous key or explicit audited administrative recovery. Historical public keys/envelopes are preserved. Review independence checks all execution/correction participation by Principal; existing whole-Outcome independence remains stronger. Organizational separation needs an explicit group binding; no claim of resistance to administrator-controlled identities.
+
+The owner authorized [P00–P13](../signed-contracts-implementation-plan.md). V1 behavior remains until explicit cutover. Native Windows, hosted CI, registry publication and deployed consumer pilots are separate evidence gates.
