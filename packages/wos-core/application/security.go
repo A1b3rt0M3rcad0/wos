@@ -13,9 +13,10 @@ import (
 )
 
 type SecurityService struct {
-	Store ports.SecurityStore
-	Clock ports.Clock
-	IDs   ports.IDGenerator
+	Store    ports.SecurityStore
+	Clock    ports.Clock
+	IDs      ports.IDGenerator
+	ServerID string
 }
 
 func TokenDigest(token string) string {
@@ -30,7 +31,14 @@ func (s SecurityService) Authenticate(ctx context.Context, token string) (Identi
 	if err != nil || s.validateCredential(ctx, c) != nil {
 		return Identity{}, domain.NewError(domain.ErrorCodeForbidden, "invalid or expired credential")
 	}
-	return Identity{PrincipalID: c.PrincipalID, Actor: c.Actor, NamespaceID: c.NamespaceID, CredentialDigest: c.Digest}, nil
+	identity := Identity{CredentialID: c.ID, PrincipalID: c.PrincipalID, Actor: c.Actor, NamespaceID: c.NamespaceID, CredentialDigest: c.Digest}
+	if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
+		policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
+		if err == nil {
+			identity.CredentialPolicyRevision = policy.Version
+		}
+	}
+	return identity, nil
 }
 func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationRequest) error {
 	if err := r.Validate(); err != nil {
@@ -44,6 +52,24 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 			c, err := s.Store.GetCredential(ctx, id.CredentialDigest)
 			if err != nil || s.validateCredential(ctx, c) != nil {
 				return domain.NewError(domain.ErrorCodeForbidden, "credential is no longer active")
+			}
+			if c.ParentDigest != "" {
+				c, err = s.Store.GetCredential(ctx, c.ParentDigest)
+				if err != nil {
+					return domain.NewError(domain.ErrorCodeForbidden, "parent credential inactive")
+				}
+			}
+			if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
+				policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
+				if err == nil && !policy.Permits(string(r.Permission), r.OutcomeID) {
+					return domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts operation/scope")
+				}
+				if err != nil {
+					code, _ := domain.ErrorCodeOf(err)
+					if code != domain.ErrorCodeNotFound {
+						return err
+					}
+				}
 			}
 		}
 	}
