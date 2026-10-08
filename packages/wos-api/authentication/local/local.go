@@ -56,14 +56,14 @@ func (a Authorizer) Authorize(_ context.Context, request ports.AuthorizationRequ
 		return domain.NewError(domain.ErrorCodeForbidden, "local principal does not match authorization principal")
 	}
 	switch request.Permission {
-	case ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite:
+	case ports.PermissionWorkContractAcquire, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite:
 		return nil
 	}
 	if !a.AllowAdministrativeOverrides {
 		return domain.NewError(domain.ErrorCodeForbidden, "local administrative overrides are disabled")
 	}
 	switch request.Permission {
-	case ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete:
+	case ports.PermissionWorkContractRevoke, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete:
 		return nil
 	default:
 		return domain.NewError(domain.ErrorCodeForbidden, "permission is not granted by local authorizer")

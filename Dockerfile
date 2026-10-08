@@ -13,6 +13,9 @@ ARG WOS_BUILT_AT=unknown
 RUN CGO_ENABLED=0 go build -trimpath -buildvcs=false \
     -ldflags="-s -w -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Version=${WOS_VERSION} -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=${WOS_COMMIT} -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.BuiltAt=${WOS_BUILT_AT}" \
     -o /wos ./packages/wos-api/cmd/wos \
+    && CGO_ENABLED=0 go build -trimpath -buildvcs=false \
+    -ldflags="-s -w -X github.com/A1b3rt0M3rcad0/wos/packages/wos-cli.Version=${WOS_VERSION} -X github.com/A1b3rt0M3rcad0/wos/packages/wos-cli.Commit=${WOS_COMMIT} -X github.com/A1b3rt0M3rcad0/wos/packages/wos-cli.BuiltAt=${WOS_BUILT_AT}" \
+    -o /wosctl ./packages/wos-cli/cmd/wosctl \
     && sh tools/distribution/notices.sh /licenses
 
 FROM alpine:3.23
@@ -29,6 +32,7 @@ LABEL org.opencontainers.image.title="WOS" \
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 RUN addgroup -g 10001 wos && adduser -D -u 10001 -G wos wos && mkdir /data && chown wos:wos /data
 COPY --from=build /wos /usr/local/bin/wos
+COPY --from=build /wosctl /usr/local/bin/wosctl
 COPY --from=build /licenses /usr/share/doc/wos/third-party-notices
 COPY LICENSE /usr/share/doc/wos/LICENSE
 USER 10001:10001

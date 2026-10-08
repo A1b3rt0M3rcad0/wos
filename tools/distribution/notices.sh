@@ -11,7 +11,7 @@ cp "$(go env GOROOT)/LICENSE" "$notice_output/Go-LICENSE.txt"
 printf '%s\n' '# WOS bundled runtime notices' '' 'Go standard library: Go-LICENSE.txt' > "$notice_output/index.md"
 notice_rows=$(mktemp)
 trap 'rm -f "$notice_rows" "$notice_rows.sorted"' EXIT
-go list -deps -f '{{if .Module}}{{.Module.Path}}|{{.Module.Version}}|{{.Module.Dir}}{{end}}' ./packages/wos-api/cmd/wos > "$notice_rows"
+go list -deps -f '{{if .Module}}{{.Module.Path}}|{{.Module.Version}}|{{.Module.Dir}}{{end}}' ./packages/wos-api/cmd/wos ./packages/wos-cli/cmd/wosctl > "$notice_rows"
 sort -u "$notice_rows" > "$notice_rows.sorted"
 while IFS='|' read -r notice_module notice_version notice_dir; do
   [ -n "$notice_version" ] || continue

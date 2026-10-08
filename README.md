@@ -15,12 +15,12 @@ The contract/client extension is tracked in waves C01–C12 of [ROADMAP.md](ROAD
 An API-only [wosctl client](packages/wos-cli/README.md) materializes focal YAML workspaces,
 checkpoints and immutable submissions with receipt recovery. New-protocol contracts end
 only through expiry, explicit administrative revocation or validated completion. The
-legacy claim/release model below describes 0.1 compatibility; Namespace cutover and actual
-Windows platform acceptance remain separate gates. See [contract operations](docs/work-contract-operations.md).
+legacy claim/release model below describes 0.1 compatibility. Namespace cutover is explicit
+and implemented; actual Windows acceptance remains an external gate. See [contract operations](docs/work-contract-operations.md).
 
 Portable [agent skills](packages/wos-skill/README.md) guide minimal-context coordination, native delegation, continuity and review. The npm installer supports Claude Code, Codex, Hermes, OpenClaw and explicit generic discovery paths; file installation is verified, all-runtime execution is not. See the [distribution/release implementation plan](docs/distribution-plan.md) for package identity, publication status and limits. npm registry publication is separate from the implementation.
 
-The [npm service distribution](packages/wos-npm/README.md) embeds the existing Linux amd64 Go executable without install-time downloads or process startup. `node tools/distribution/build.mjs` builds both tarballs, a native archive and SHA-256 manifest; `node tools/distribution/verify.mjs` installs the actual packages offline and exercises the server. Use the pinned Go toolchain and Node >=22. Artifacts under `dist/` are local builds, not evidence of registry publication.
+The [npm service distribution](packages/wos-npm/README.md) embeds the Linux amd64 Go service and API-only wosctl client without install-time downloads or process startup. `node tools/distribution/build.mjs` builds both tarballs, the Linux service archive, Linux/Windows client archives and SHA-256 manifest; `node tools/distribution/verify.mjs` installs the actual packages offline and exercises the server. Use the pinned Go toolchain and Node >=22. Artifacts under `dist/` are local builds, not evidence of registry publication.
 
 [Release automation](docs/releases.md) prepares a coordinated version PR from `.changes/`, runs full gates on its integrated commit, and publishes npm/GHCR/GitHub assets with immutable identity checks and recovery from partial publication. Hosted publication requires working Actions and registry owner configuration; the repository stays private.
 
@@ -571,3 +571,5 @@ All 18 implementation waves have acceptance evidence for the standalone WOS vali
 For agents, start with [the continuation guide](docs/agents.md). The independent 18-step journey demonstrates two authenticated agents, human verification, plan revision, lease fencing, restart, restore and signed duplicate signals over one Outcome. WOS does not select or execute agents.
 
 The older [completion audit](docs/auditoria-conclusao-2026-10-05.md) remains a historical record and a broader product backlog. Complete deployment of the separate Woobe product is a consumer integration gate, with its compatibility dependency documented in [the reference](examples/woobe-reference/README.md); it is not required to run WOS with independent agents.
+
+The prepared **0.2.0** release adds persistent execution contracts and five skills. Code and local acceptance are integrated independently from publication. Native Linux/Windows proof must match each client binary and source commit before release; Windows and registry gates are not satisfied by the local cross-build. See [0.2.0 notes](docs/releases/0.2.0.md).

@@ -20,3 +20,11 @@ Each package includes `release.json` with source commit, SemVer, source commit t
 Docs: https://github.com/A1b3rt0M3rcad0/wos/blob/master/docs/operations.md
 
 The npm/native/container distributions preserve WOS LICENSE plus Go and runtime-module license/notice files. `third-party-notices/index.md` identifies bundled dependency versions; test/build-only tools are not runtime package dependencies.
+
+This package also provides `wosctl`, the API-only client, on Linux amd64. Both
+executables identify the same version, commit and source timestamp and verify
+embedded SHA-256 integrity before running. For example, `wosctl version --output json`
+requires no workspace or running service. See [the client guide](https://github.com/A1b3rt0M3rcad0/wos/blob/master/packages/wos-cli/README.md)
+for init, explicit acquisition, checkpoints, review and recovery. Native client
+archives are separate for Linux amd64 and Windows amd64; cross-build alone is not
+Windows acceptance. Installing this package does not start the service or an agent.

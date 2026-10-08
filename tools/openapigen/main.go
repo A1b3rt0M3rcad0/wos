@@ -9,6 +9,10 @@ import (
 )
 
 func main() {
+	version, err := os.ReadFile("VERSION")
+	if err != nil {
+		panic(err)
+	}
 	schemas := map[string]any{}
 	paths := map[string]any{}
 	header := map[string]any{"name": "Idempotency-Key", "in": "header", "required": true, "schema": map[string]any{"type": "string", "minLength": 16, "maxLength": 128}}
@@ -26,7 +30,7 @@ func main() {
 		}
 		paths[path] = map[string]any{"get": map[string]any{"description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.", "parameters": parameters, "responses": map[string]any{"200": map[string]any{"description": "Typed result, page or retained receipt; omission metadata remains explicit."}, "403": map[string]any{"description": "Authorization denied."}, "404": map[string]any{"description": "Not found in scope or receipt not retained."}}}}
 	}
-	document := map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "WOS generated command catalog", "version": "0.1.0-dev"}, "paths": paths, "security": []any{map[string]any{"bearerAuth": []string{}}, map[string]any{"browserSession": []string{}}}, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"bearerAuth": map[string]any{"type": "http", "scheme": "bearer"}, "browserSession": map[string]any{"type": "apiKey", "in": "cookie", "name": "wos_session"}}}}
+	document := map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "WOS generated command catalog", "version": strings.TrimSpace(string(version))}, "paths": paths, "security": []any{map[string]any{"bearerAuth": []string{}}, map[string]any{"browserSession": []string{}}}, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"bearerAuth": map[string]any{"type": "http", "scheme": "bearer"}, "browserSession": map[string]any{"type": "apiKey", "in": "cookie", "name": "wos_session"}}}}
 	b, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
 		panic(err)

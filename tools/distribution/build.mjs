@@ -23,7 +23,7 @@ async function normalize(dir) {
     const p = path.join(dir, e.name);
     if (e.isSymbolicLink()) throw new Error(`Symlink in distribution: ${p}`);
     if (e.isDirectory()) await normalize(p);
-    else await fs.chmod(p, e.name === 'wos' || e.name.endsWith('.mjs') && path.basename(dir) === 'bin' ? 0o755 : 0o644);
+    else await fs.chmod(p, ['wos','wosctl'].includes(e.name) || e.name.endsWith('.mjs') && path.basename(dir) === 'bin' ? 0o755 : 0o644);
   }
 }
 
@@ -53,7 +53,10 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const metadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server';
   const ldflags=`-s -w -X ${metadata}.Version=${version} -X ${metadata}.Commit=${commit} -X ${metadata}.BuiltAt=${builtAt}`;
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${ldflags}`,'-o',path.join(native,'wos'),'./packages/wos-api/cmd/wos'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
-  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos')))};
+  const clientMetadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-cli';
+  const clientFlags=`-s -w -X ${clientMetadata}.Version=${version} -X ${clientMetadata}.Commit=${commit} -X ${clientMetadata}.BuiltAt=${builtAt}`;
+  run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(native,'wosctl'),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
+  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'contracts_v1',workspace_schema:1}}};
   await fs.writeFile(path.join(stages.wos.stage,'release.json'),JSON.stringify(release,null,2)+'\n');
   run('sh',['tools/distribution/notices.sh',path.join(stages.wos.stage,'third-party-notices')],{cwd:source});
   const artifacts=[];
@@ -65,12 +68,24 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     artifacts.push({kind,name:pkg.name,version,filename,integrity:pack.integrity,sha256:sha256(await fs.readFile(path.join(output,filename)))});
   }
   const archiveStage=path.join(output,'archive'); await fs.rm(archiveStage,{recursive:true,force:true}); await fs.mkdir(archiveStage);
-  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(stages.wos.stage,'release.json'),'release.json'],[path.join(source,'packages/wos-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
+  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(stages.wos.stage,'release.json'),'release.json'],[path.join(source,'packages/wos-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
   await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
   await normalize(archiveStage);
   const archive=`wos_${version}_linux_amd64.tar.gz`;
   run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,archive),'-C',archiveStage,'.']);
   artifacts.push({kind:'archive',filename:archive,sha256:sha256(await fs.readFile(path.join(output,archive)))});
+  for(const platform of ['linux','windows']) {
+    const stage=path.join(output,`client-${platform}`);await fs.rm(stage,{recursive:true,force:true});await fs.mkdir(stage,{recursive:true});
+    const executable=platform==='windows'?'wosctl.exe':'wosctl';
+    run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(stage,executable),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
+    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),work_protocol:'contracts_v1',workspace_schema:1};
+    await fs.writeFile(path.join(stage,'release.json'),JSON.stringify(clientRelease,null,2)+'\n');
+    await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
+    const filename=`wosctl_${version}_${platform}_amd64.${platform==='windows'?'zip':'tar.gz'}`;
+    if(platform==='windows')run('python3',['tools/distribution/zip.py',stage,path.join(output,filename),epoch],{cwd:source});
+    else run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,filename),'-C',stage,'.']);
+    artifacts.push({kind:`client-${platform}`,filename,sha256:sha256(await fs.readFile(path.join(output,filename))),binary_sha256:clientRelease.sha256,platform,arch:'amd64'});
+  }
   const manifest={schema:1,version,commit,built_at:builtAt,artifacts};
   await fs.writeFile(path.join(output,'distribution.json'),JSON.stringify(manifest,null,2)+'\n');
   await fs.writeFile(path.join(output,'SHA256SUMS'),[...artifacts.map(a=>`${a.sha256}  ${a.filename}`),`${sha256(await fs.readFile(path.join(output,'distribution.json')))}  distribution.json`].join('\n')+'\n');

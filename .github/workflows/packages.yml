@@ -47,6 +47,7 @@ jobs:
           path: |
             dist/*.tgz
             dist/*.tar.gz
+            dist/*.zip
             dist/distribution.json
             dist/SHA256SUMS
           if-no-files-found: error

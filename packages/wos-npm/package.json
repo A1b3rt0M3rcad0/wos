@@ -1,7 +1,7 @@
 {
   "name": "@a1b3rt0m3rcad0/wos",
-  "version": "0.1.0",
-  "description": "WOS standalone Go service with HTTP, MCP and human workspace",
+  "version": "0.2.0",
+  "description": "WOS Go service and API-only wosctl client with HTTP, MCP and human workspace",
   "type": "module",
   "license": "Apache-2.0",
   "engines": {
@@ -14,7 +14,8 @@
     "x64"
   ],
   "bin": {
-    "wos": "bin/wos.mjs"
+    "wos": "bin/wos.mjs",
+    "wosctl": "bin/wosctl.mjs"
   },
   "files": [
     "bin",

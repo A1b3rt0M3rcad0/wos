@@ -71,3 +71,20 @@ It never fabricates assessments; exit 7 means review is pending. Local JSON jour
 files allow a bounded 512 KiB envelope; YAML and remote payloads retain the 256 KiB limit.
 SDK mutations never follow redirects, preventing destination-bound credentials/intents
 from being sent to a different endpoint.
+
+## Distribution and versions
+
+The coordinated WOS npm service package includes `wos` and `wosctl` on Linux amd64.
+The skill package installs five skills separately. Native client assets contain the
+executable, schema files, licenses, README and `release.json` identifying version,
+commit, platform and SHA-256. `wosctl version --output json` works without credentials,
+a workspace or a service. Windows ZIP preparation requires actual matching Windows
+workspace/protocol/installer tests before publication; cross-compilation is not a
+supported-platform claim. Standalone clients do not require Node.
+
+Namespace administration is `protocol get`, `protocol set --file protocol.yaml`,
+and `protocol reconcile --file reconcile.yaml`. Files are typed command mappings;
+these writes have the same durable journal as planning writes. A serialization
+conflict keeps the intent pending (exit 6); recover with the same destination/key,
+without changing CAS versions. See `docs/work-contract-operations.md` for deployment
+and `docs/work-contract-load-evidence.md` for the scoped local load measurements.
