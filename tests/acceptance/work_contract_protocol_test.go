@@ -18,6 +18,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -230,6 +231,38 @@ func TestHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T) {
 	diagnostics.Reset()
 	if code := cli.Run(ctx, []string{"work", "status", third.ID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
 		t.Fatalf("CLI status %d %s", code, diagnostics.String())
+	}
+
+	localWorkspace, err := cli.OpenWorkspace(workspace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	localDir := filepath.Join(".wos", "work", third.ID.String(), checkout.ContractID.String())
+	var draft cli.ResultDraft
+	if err = localWorkspace.ReadDocument(filepath.Join(localDir, "result.yaml"), &draft); err != nil {
+		t.Fatal(err)
+	}
+	draft.Material.Summary = "Delivered through the independent CLI"
+	if err = localWorkspace.WriteDocument(filepath.Join(localDir, "result.yaml"), draft); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := localWorkspace.Read(filepath.Join(localDir, "result.yaml"))
+	localWorkspace.Close()
+	for _, operation := range []string{"validate", "renew", "refresh", "checkpoint", "submit", "finalize", "recover"} {
+		out.Reset()
+		diagnostics.Reset()
+		if code := cli.Run(ctx, []string{"work", operation, third.ID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
+			t.Fatalf("CLI %s %d %s %s", operation, code, out.String(), diagnostics.String())
+		}
+	}
+	localWorkspace, err = cli.OpenWorkspace(workspace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer localWorkspace.Close()
+	after, _ := localWorkspace.Read(filepath.Join(localDir, "result.yaml"))
+	if !bytes.Equal(before, after) {
+		t.Fatal("CLI refresh/recovery overwrote local result")
 	}
 
 }

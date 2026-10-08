@@ -57,6 +57,10 @@ func yamlValue(n *yaml.Node, path string, depth int, count *int) (any, error) {
 		out := map[string]any{}
 		for i := 0; i < len(n.Content); i += 2 {
 			key := n.Content[i]
+			*count++
+			if *count > 10000 || len(key.Value) > 65536 {
+				return fail("mapping key/node limit")
+			}
 			if key.Kind != yaml.ScalarNode || key.Tag != "!!str" || key.Value == "<<" {
 				return fail("mapping keys must be strings; merge keys are forbidden")
 			}

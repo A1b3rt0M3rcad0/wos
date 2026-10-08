@@ -23,16 +23,35 @@ func (c Config) Destination() Destination {
 	return Destination{strings.TrimRight(c.Connection.ServerURL, "/"), c.Connection.CredentialRef, c.Scope.NamespaceID}
 }
 
+type FrozenPayload string
+
+func (p FrozenPayload) MarshalJSON() ([]byte, error) { return json.Marshal(string(p)) }
+func (p *FrozenPayload) UnmarshalJSON(raw []byte) error {
+	var value string
+	if len(raw) > 0 && raw[0] == '"' {
+		if err := json.Unmarshal(raw, &value); err != nil {
+			return err
+		}
+		*p = FrozenPayload(value)
+		return nil
+	}
+	if !json.Valid(raw) {
+		return fmt.Errorf("invalid frozen payload")
+	}
+	*p = FrozenPayload(raw)
+	return nil
+}
+
 type Intent struct {
-	SchemaVersion  int             `json:"schema_version"`
-	Destination    Destination     `json:"destination"`
-	Scope          domain.Scope    `json:"scope"`
-	Command        string          `json:"command"`
-	IdempotencyKey string          `json:"idempotency_key"`
-	Payload        json.RawMessage `json:"payload"`
-	PayloadDigest  string          `json:"payload_digest"`
-	State          string          `json:"state"`
-	PreparedAt     time.Time       `json:"prepared_at"`
+	SchemaVersion  int           `json:"schema_version"`
+	Destination    Destination   `json:"destination"`
+	Scope          domain.Scope  `json:"scope"`
+	Command        string        `json:"command"`
+	IdempotencyKey string        `json:"idempotency_key"`
+	Payload        FrozenPayload `json:"payload"`
+	PayloadDigest  string        `json:"payload_digest"`
+	State          string        `json:"state"`
+	PreparedAt     time.Time     `json:"prepared_at"`
 }
 type Receipt struct {
 	SchemaVersion  int             `json:"schema_version"`
@@ -58,6 +77,13 @@ func (w *Workspace) saveJSON(path string, value any) error {
 }
 func (w *Workspace) Prepare(config Config, scope domain.Scope, dir, name string, command any) (string, Intent, error) {
 	payload, err := commands.Encode(command)
+	if raw, ok := command.(json.RawMessage); ok {
+		payload = append([]byte(nil), raw...)
+		err = nil
+		if !json.Valid(payload) {
+			err = fmt.Errorf("invalid frozen command")
+		}
+	}
 	if err != nil {
 		return "", Intent{}, err
 	}
@@ -69,7 +95,7 @@ func (w *Workspace) Prepare(config Config, scope domain.Scope, dir, name string,
 	if err != nil {
 		return "", Intent{}, err
 	}
-	intent := Intent{SchemaVersion: 1, Destination: config.Destination(), Scope: scope, Command: name, IdempotencyKey: key, Payload: payload, PayloadDigest: digest, State: "prepared", PreparedAt: time.Now().UTC()}
+	intent := Intent{SchemaVersion: 1, Destination: config.Destination(), Scope: scope, Command: name, IdempotencyKey: key, Payload: FrozenPayload(payload), PayloadDigest: digest, State: "prepared", PreparedAt: time.Now().UTC()}
 	path := filepath.Join(dir, "outbox", key+".json")
 	if err = w.saveJSON(path, intent); err != nil {
 		return "", Intent{}, &LocalError{Err: err}
@@ -88,7 +114,7 @@ func (w *Workspace) Replay(ctx context.Context, client *sdk.Client, config Confi
 	if intent.SchemaVersion != 1 || intent.Destination != config.Destination() || intent.Scope.NamespaceID != config.Scope.NamespaceID {
 		return nil, "", fmt.Errorf("journal destination differs from trusted workspace")
 	}
-	digest, err := domain.SemanticDigest(intent.Payload)
+	digest, err := domain.SemanticDigest(json.RawMessage(intent.Payload))
 	if err != nil || digest != intent.PayloadDigest {
 		return nil, "", fmt.Errorf("journal payload digest differs")
 	}
@@ -117,7 +143,7 @@ func (w *Workspace) Replay(ctx context.Context, client *sdk.Client, config Confi
 	if err = w.saveJSON(path, intent); err != nil {
 		return nil, receiptPath, &LocalError{Err: err}
 	}
-	response, err := client.ExecuteCommand(ctx, intent.Command, intent.IdempotencyKey, intent.Payload)
+	response, err := client.ExecuteCommand(ctx, intent.Command, intent.IdempotencyKey, json.RawMessage(intent.Payload))
 	if err != nil {
 		var remote *sdk.Error
 		if errors.As(err, &remote) && remote.Status < 500 && remote.Status != 408 && remote.Status != 429 {

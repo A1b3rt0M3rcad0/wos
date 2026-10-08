@@ -2,6 +2,7 @@ package httptransport
 
 import (
 	"encoding/json"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -128,7 +129,12 @@ func (h *Handler) getCommandReceipt(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	raw, _ := json.Marshal(v)
 	if len(raw) > maxJSONBodyBytes {
-		writeJSON(w, 200, map[string]any{"command_id": v.CommandID, "outcome_revision": v.OutcomeRevision, "result_omitted": true})
+		receipt, err := commands.CommitReceipt(json.RawMessage(v.ResponseJSON))
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		writeJSON(w, 200, receipt)
 		return
 	}
 	writeJSON(w, 200, v)

@@ -28,9 +28,12 @@ func (h *Handler) executeCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(raw) > commands.MaxPayloadBytes {
-		var receipt map[string]json.RawMessage
-		json.Unmarshal(raw, &receipt)
-		writeJSON(w, http.StatusOK, map[string]any{"command_id": receipt["command_id"], "outcome_revision": receipt["outcome_revision"], "idempotent_replay": receipt["idempotent_replay"], "result_omitted": true})
+		receipt, err := commands.CommitReceipt(result)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, receipt)
 		return
 	}
 	writeJSON(w, http.StatusOK, result)

@@ -17,15 +17,27 @@ type Descriptor struct {
 	Schema map[string]any `json:"schema"`
 }
 type Catalog struct {
+	validators  map[string]func(json.RawMessage) (json.RawMessage, error)
 	ids         ports.IDGenerator
 	descriptors map[string]Descriptor
 	handlers    map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error)
 }
 
 func newCatalog(ids ports.IDGenerator) *Catalog {
-	return &Catalog{ids: ids, descriptors: map[string]Descriptor{}, handlers: map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error){}}
+	return &Catalog{ids: ids, validators: map[string]func(json.RawMessage) (json.RawMessage, error){}, descriptors: map[string]Descriptor{}, handlers: map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error){}}
 }
 func register[C any](c *Catalog, name string, run func(context.Context, domain.CommandContext, C) (any, error)) {
+	c.validators[name] = func(raw json.RawMessage) (json.RawMessage, error) {
+		normalized, err := Normalize(raw, reflect.TypeFor[C]())
+		if err != nil {
+			return nil, err
+		}
+		var cmd C
+		if err = Decode(normalized, &cmd); err != nil {
+			return nil, err
+		}
+		return Encode(cmd)
+	}
 	c.descriptors[name] = Descriptor{Name: name, Schema: Schema(reflect.TypeFor[C]())}
 	c.handlers[name] = func(ctx context.Context, cc domain.CommandContext, raw json.RawMessage) (any, error) {
 		normalized, err := Normalize(raw, reflect.TypeFor[C]())
@@ -67,4 +79,15 @@ func (c *Catalog) Execute(ctx context.Context, name, key, correlation string, ra
 		return nil, err
 	}
 	return fn(ctx, domain.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: id, IdempotencyKey: key, CorrelationID: correlation}, raw)
+}
+
+func (c *Catalog) Validate(name string, raw json.RawMessage) (json.RawMessage, error) {
+	if len(raw) > MaxPayloadBytes {
+		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "payload exceeds limit")
+	}
+	validator, ok := c.validators[name]
+	if !ok {
+		return nil, domain.NewError(domain.ErrorCodeNotFound, "unknown public command")
+	}
+	return validator(raw)
 }

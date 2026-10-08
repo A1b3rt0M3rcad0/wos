@@ -869,8 +869,8 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 | C04 | SQL parity and restore tested | SQLite/PostgreSQL parity, indexes, exact fencing, restore |
 | C05 | Implemented and transport-tested | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
 | C06 | Implementado e testado | Sync documental atômico com local keys, checkpoints, submissões imutáveis, avaliação vinculada ao material, finalize e proteções de bypass; testes de aplicação, HTTP/MCP e restauração SQL. |
-| C07 | Parcial, base testada | wosctl API-only, config vinculada ao destino, parser YAML restrito, schemas, checkout com journal/recibo e status; wrappers de planejamento seguem C08/C09. |
-| C08 | Pending | Journal/recovery/locks/keepalive; actual Linux/Windows |
+| C07 | Implementado e testado em Linux | Cliente API-only, YAML restrito/schemas, checkout/dry-run, planejamento/revisão via DTOs tipados; percurso real HTTP/CLI. |
+| C08 | Implementado, gate Windows pendente | Journal/recibos, recover de aquisição e mutações, locks, refresh preservando rascunhos, renew/takeover/keepalive foreground, sync/submit/finalize/finish; falhas de transporte/disco testadas em Linux. Windows precisa execução real em CI. |
 | C09 | Pending | Human contract UI, skills and client planning |
 | C10 | Pending | Explicit drain/cutover, legacy dataset and writer controls |
 | C11 | Pending | Independent programmatic/local journeys and concurrency evidence |

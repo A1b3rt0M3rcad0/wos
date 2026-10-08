@@ -38,5 +38,36 @@ JSON stdout is a single structured result; diagnostics go to stderr. Exit codes:
 2 invalid input, 3 auth, 4 conflict, 5 authority lost, 6 transport uncertainty, 7 review pending,
 8 no acquisition in the scanned page, 9 local persistence/materialization failure.
 
-C07 foundation currently exposes init, capabilities, auth status, checkout, status, and
-contract queries/revoke. Remaining workspace/planning operations are implemented in C08/C09.
+Available operations include status/refresh/resume (explicit `--takeover`), renew,
+keepalive (`--foreground`), diff/validate/checkpoint/sync/submit/finalize/finish/recover,
+contract queries/revoke and planning/review wrappers. `work recover --next` reconciles
+an uncertain next acquisition without selecting another task. An abandoned local lock
+can be removed only with explicit `work recover --break-lock`; this does not revoke
+remote authority and requires the caller to stop the old local process first.
+
+```sh
+wosctl work validate UUIDv7 --output json
+wosctl work checkpoint UUIDv7 --output json
+wosctl work sync UUIDv7 --output json
+wosctl work submit UUIDv7 --output json
+wosctl work finalize UUIDv7 --submission UUIDv7 --output json
+wosctl work recover UUIDv7 --output json
+wosctl work keepalive UUIDv7 --foreground --output json
+wosctl objective create --file objective.yaml --output json
+wosctl roadmap publish --file publish-command.yaml --output json
+wosctl review attest --file assessment-command.yaml --output json
+```
+
+Planning/review YAML uses the exact public command DTO, validated against the generated
+catalog before sending. For example, objective creation supplies scope, title, priority,
+and required_for_outcome. Assessment supplies submission_id, owner, criterion_id,
+criterion_revision, expected_version, result and rationale. The server enforces reviewer
+independence; the CLI does not grant approval from observed test results.
+
+Documentary result records use unique local keys. Sync resolves and durably records their
+server IDs; changing already registered material requires a new key. `finish` checkpoints,
+syncs documentary items, submits and tries finalization using separate keys/receipts.
+It never fabricates assessments; exit 7 means review is pending. Local JSON journal/receipt
+files allow a bounded 512 KiB envelope; YAML and remote payloads retain the 256 KiB limit.
+SDK mutations never follow redirects, preventing destination-bound credentials/intents
+from being sent to a different endpoint.

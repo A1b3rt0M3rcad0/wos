@@ -30,10 +30,18 @@ type SyncEvidenceInput struct {
 	ArtifactLocalKey string `wos:"optional"`
 	Evidence         RegisterEvidenceCommand
 }
+type SyncEvidenceLinkRecord struct {
+	Scope       domain.Scope
+	EvidenceID  *domain.ID `wos:"optional"`
+	TargetRef   domain.EntityRef
+	CriterionID *domain.ID `wos:"optional"`
+	Stance      domain.EvidenceStance
+	Rationale   string
+}
 type SyncEvidenceLinkInput struct {
 	LocalKey         string
 	EvidenceLocalKey string `wos:"optional"`
-	Link             CreateEvidenceLinkCommand
+	Link             SyncEvidenceLinkRecord
 }
 type SyncWorkContractCommand struct {
 	Artifacts               []SyncArtifactInput     `wos:"optional"`
@@ -212,9 +220,12 @@ func (s *Service) SyncWorkContract(ctx context.Context, cc domain.CommandContext
 				if !ok {
 					return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown evidence local_key")
 				}
-				x.EvidenceID = eid
+				x.EvidenceID = &eid
 			}
-			ev, err := evidence.Get(ctx, cmd.Scope, x.EvidenceID)
+			if x.EvidenceID == nil {
+				return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "evidence ID or local key required")
+			}
+			ev, err := evidence.Get(ctx, cmd.Scope, *x.EvidenceID)
 			if err != nil {
 				return zero, 0, err
 			}
@@ -224,7 +235,7 @@ func (s *Service) SyncWorkContract(ctx context.Context, cc domain.CommandContext
 			if err = validateEvidenceLinkTarget(ctx, u, decisions, x.TargetRef, x.CriterionID); err != nil {
 				return zero, 0, err
 			}
-			value, err := domain.NewEvidenceLink(id, cmd.Scope, x.EvidenceID, x.TargetRef, x.CriterionID, x.Stance, x.Rationale, now)
+			value, err := domain.NewEvidenceLink(id, cmd.Scope, *x.EvidenceID, x.TargetRef, x.CriterionID, x.Stance, x.Rationale, now)
 			if err != nil {
 				return zero, 0, err
 			}
