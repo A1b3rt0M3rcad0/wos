@@ -856,3 +856,24 @@ The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification]
 Acceptance: persistent contextual navigation; Outcome summary, item list and operational board; readable entity/history/plan details; scoped human actions without exposing internal payloads by default; search/filter and pagination preserving snapshot semantics; keyboard/mobile behavior; existing human/agent journeys plus board/list regressions; real screenshots and PR integration. This is a presentation extension to Waves 12/17/18 and keeps WOS domain transitions, authorization and transport contracts intact.
 
 Verified against the resulting repository: three Playwright journeys pass, including the real 32-item workspace, paginated board/list, proof selectors, cancellation, delayed Outcome responses, keyboard and mobile. API/server/boundary tests pass with real PostgreSQL enabled, plus vet/build/module syntax. The frontend is embedded with no new dependency or Domain/HTTP/MCP change. [UX guide and limits](docs/workspace-ux.md), [actual screenshots](docs/ui-workspace/README.md) and audit logs make the result reviewable. Hosted CI remains blocked before steps by GitHub account billing; it is not claimed green. PR integration is established by its merged state.
+
+## Execution contracts and API-only client — C01–C12
+
+Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contract-implementation-plan.md), baseline bcd1714ad7cded666890d0b5c9f711772c4f8d7a (confirmed unchanged). ADR-018 explicitly supersedes legacy release/override semantics in migrated Namespaces; ADR-019 defines client/workspace boundaries. Original Waves 01–18 and distribution evidence remain historical.
+
+| Wave | State | Required gate |
+| --- | --- | --- |
+| C01 | Accepted design | Plan, ADRs, bypass inventory and typed preliminary fixtures |
+| C02 | Pending | Pure domain validity/terminal/overflow tests |
+| C03 | Pending | Transactional Memory acquire/renew/revoke/takeover, replay and exclusivity |
+| C04 | Pending | SQLite/PostgreSQL parity, indexes, exact fencing, restore |
+| C05 | Pending | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
+| C06 | Pending | Atomic sync/submission/proof/finalization and bypass protection |
+| C07 | Pending | API-only wosctl, restricted YAML and checkout |
+| C08 | Pending | Journal/recovery/locks/keepalive; actual Linux/Windows |
+| C09 | Pending | Human contract UI, skills and client planning |
+| C10 | Pending | Explicit drain/cutover, legacy dataset and writer controls |
+| C11 | Pending | Independent programmatic/local journeys and concurrency evidence |
+| C12 | Pending | Integrated platform/packaging gates and documented release |
+
+T01–T88 in the plan are acceptance traceability, not passed tests. Actual Windows execution and deployed Woobe are not currently available; neither may be inferred from cross-compilation or HTTP parity. Existing Actions billing/npm identity blockers remain separate operational limitations; useful implementation continues independently.
