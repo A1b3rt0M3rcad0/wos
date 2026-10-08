@@ -3,6 +3,7 @@ module github.com/A1b3rt0M3rcad0/wos
 go 1.27
 
 require (
+	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/ncruces/go-sqlite3 v0.35.6

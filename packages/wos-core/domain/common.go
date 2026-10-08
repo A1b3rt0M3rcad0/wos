@@ -73,19 +73,32 @@ func (o ConclusionObligations) Validate() error {
 }
 
 type Conclusion struct {
-	ID              ID                       `json:"id,omitempty"`
-	PrincipalID     string                   `json:"principal_id"`
-	Actor           ActorRef                 `json:"actor_ref"`
-	Reason          string                   `json:"reason"`
-	ConcludedAt     time.Time                `json:"concluded_at"`
-	Assessments     []CriterionAssessmentRef `json:"assessments,omitempty"`
-	OwnerRef        *EntityRef               `json:"owner_ref,omitempty"`
-	OwnerVersion    *Version                 `json:"owner_version,omitempty"`
-	LifecycleResult string                   `json:"lifecycle_result,omitempty"`
-	Obligations     ConclusionObligations    `json:"obligations"`
+	SubmissionID     *ID                      `json:"submission_id,omitempty"`
+	SubmissionDigest string                   `json:"submission_digest,omitempty"`
+	ID               ID                       `json:"id,omitempty"`
+	PrincipalID      string                   `json:"principal_id"`
+	Actor            ActorRef                 `json:"actor_ref"`
+	Reason           string                   `json:"reason"`
+	ConcludedAt      time.Time                `json:"concluded_at"`
+	Assessments      []CriterionAssessmentRef `json:"assessments,omitempty"`
+	OwnerRef         *EntityRef               `json:"owner_ref,omitempty"`
+	OwnerVersion     *Version                 `json:"owner_version,omitempty"`
+	LifecycleResult  string                   `json:"lifecycle_result,omitempty"`
+	Obligations      ConclusionObligations    `json:"obligations"`
 }
 
 func (c Conclusion) Validate() error {
+	if c.SubmissionID != nil {
+		if err := c.SubmissionID.Validate(); err != nil {
+			return err
+		}
+		if len(c.SubmissionDigest) != 71 || !strings.HasPrefix(c.SubmissionDigest, "sha256:") {
+			return NewError(ErrorCodeInvalidArgument, "submission binding requires SHA256 digest")
+		}
+	} else if c.SubmissionDigest != "" {
+		return NewError(ErrorCodeInvalidArgument, "submission digest requires identity")
+	}
+
 	if !c.ID.IsZero() {
 		if err := c.ID.Validate(); err != nil {
 			return WrapError(ErrorCodeInvalidArgument, "conclusion id is invalid", err)

@@ -168,6 +168,8 @@ func (r EvaluatorRef) Validate() error {
 }
 
 type CriterionAssessment struct {
+	SubmissionID           *ID               `json:"submission_id,omitempty"`
+	SubmissionDigest       string            `json:"submission_digest,omitempty"`
 	ID                     ID                `json:"id"`
 	CriterionID            ID                `json:"criterion_id"`
 	CriterionRevision      CriterionRevision `json:"criterion_revision"`
@@ -182,6 +184,17 @@ type CriterionAssessment struct {
 }
 
 func (a CriterionAssessment) Validate() error {
+	if a.SubmissionID != nil {
+		if err := a.SubmissionID.Validate(); err != nil {
+			return err
+		}
+		if len(a.SubmissionDigest) != 71 || !strings.HasPrefix(a.SubmissionDigest, "sha256:") {
+			return NewError(ErrorCodeInvalidArgument, "submission binding requires SHA256 digest")
+		}
+	} else if a.SubmissionDigest != "" {
+		return NewError(ErrorCodeInvalidArgument, "submission digest requires identity")
+	}
+
 	if err := a.ID.Validate(); err != nil {
 		return WrapError(ErrorCodeAssessment, "assessment id is invalid", err)
 	}

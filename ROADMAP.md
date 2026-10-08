@@ -864,7 +864,7 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 | Wave | State | Required gate |
 | --- | --- | --- |
 | C01 | Accepted design | Plan, ADRs, bypass inventory and typed preliminary fixtures |
-| C02 | Pending | Pure domain validity/terminal/overflow tests |
+| C02 | Domain implemented and tested | Pure domain validity/terminal/overflow tests |
 | C03 | Pending | Transactional Memory acquire/renew/revoke/takeover, replay and exclusivity |
 | C04 | Pending | SQLite/PostgreSQL parity, indexes, exact fencing, restore |
 | C05 | Pending | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
@@ -877,3 +877,5 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 | C12 | Pending | Integrated platform/packaging gates and documented release |
 
 T01–T88 in the plan are acceptance traceability, not passed tests. Actual Windows execution and deployed Woobe are not currently available; neither may be inferred from cross-compilation or HTTP parity. Existing Actions billing/npm identity blockers remain separate operational limitations; useful implementation continues independently.
+
+C02: `domain/work_contract.go`, `work_submission.go` and `work_contract_test.go` cover exact expiry, all terminal causes, takeover, separate CAS, legacy direct release/override rejection, unsigned fencing including initial-claim overflow, JCS vectors and immutable-result digests. Existing domain/application/memory suites pass. Persistence and Namespace activation are not yet implemented.

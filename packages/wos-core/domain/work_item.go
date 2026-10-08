@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"math"
 	"strings"
 	"time"
 )
@@ -35,6 +36,9 @@ func (l WorkLease) ValidAt(now time.Time) bool {
 }
 
 type WorkItem struct {
+	ContractsEnabled  bool              `json:"contracts_enabled,omitempty"`
+	CurrentContractID *ID               `json:"current_contract_id,omitempty"`
+	ExecutionSpec     *ExecutionSpec    `json:"execution_spec,omitempty"`
 	ID                ID                `json:"id"`
 	Scope             Scope             `json:"scope"`
 	Version           Version           `json:"version"`
@@ -85,6 +89,20 @@ func (w WorkItem) Ref() EntityRef {
 }
 
 func (w WorkItem) Validate() error {
+	if w.ExecutionSpec != nil {
+		if err := w.ExecutionSpec.Validate(); err != nil {
+			return err
+		}
+	}
+	if w.CurrentContractID != nil {
+		if !w.ContractsEnabled || w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease != nil {
+			return NewError(ErrorCodeInvalidArgument, "contract and legacy lease cannot both be authoritative")
+		}
+		if err := w.CurrentContractID.Validate(); err != nil {
+			return err
+		}
+	}
+
 	if err := w.ID.Validate(); err != nil {
 		return err
 	}
@@ -116,14 +134,16 @@ func (w WorkItem) Validate() error {
 		return err
 	}
 	if w.Lifecycle == WorkItemLifecycleInProgress {
-		if w.CurrentLease == nil {
+		if w.CurrentLease == nil && !w.ContractsEnabled {
 			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires a lease")
 		}
-		if err := w.CurrentLease.Validate(); err != nil {
-			return err
-		}
-		if w.LastFencingToken < w.CurrentLease.FencingToken {
-			return NewError(ErrorCodeInvalidArgument, "work item fencing token is inconsistent with current lease")
+		if w.CurrentLease != nil {
+			if err := w.CurrentLease.Validate(); err != nil {
+				return err
+			}
+			if w.LastFencingToken < w.CurrentLease.FencingToken {
+				return NewError(ErrorCodeInvalidArgument, "work item fencing token is inconsistent with current lease")
+			}
 		}
 	} else if w.CurrentLease != nil {
 		return NewError(ErrorCodeInvalidArgument, "only in-progress work item may have a lease")
@@ -138,6 +158,9 @@ func (w WorkItem) Validate() error {
 }
 
 func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
+	if err := w.requireUncontracted(); err != nil {
+		return err
+	}
 	if w.isTerminal() {
 		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on terminal work item")
 	}
@@ -151,6 +174,9 @@ func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
+	if err := w.requireUncontracted(); err != nil {
+		return err
+	}
 	if w.isTerminal() {
 		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal work item")
 	}
@@ -161,6 +187,9 @@ func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bo
 }
 
 func (w *WorkItem) RetireCriterion(id ID, now time.Time) error {
+	if err := w.requireUncontracted(); err != nil {
+		return err
+	}
 	if w.isTerminal() {
 		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal work item")
 	}
@@ -201,6 +230,9 @@ func (w *WorkItem) Defer(now time.Time) error {
 }
 
 func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleTodo {
 		return NewError(ErrorCodeInvalidTransition, "only todo work item can be claimed")
 	}
@@ -219,6 +251,9 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 	if ttl < MinLeaseTTL || ttl > MaxLeaseTTL {
 		return NewError(ErrorCodeLease, "lease ttl is outside supported range")
 	}
+	if w.LastFencingToken == math.MaxUint64 {
+		return NewError(ErrorCodeLease, "fencing token is exhausted")
+	}
 	w.LastFencingToken++
 	w.CurrentLease = &WorkLease{
 		ClaimID:      claimID,
@@ -233,6 +268,9 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 }
 
 func (w *WorkItem) Release(principalID string, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "work item is not currently claimed")
 	}
@@ -245,6 +283,9 @@ func (w *WorkItem) Release(principalID string, claimID ID, fencingToken uint64, 
 }
 
 func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
 	}
@@ -308,6 +349,9 @@ func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
 // CancelAdministratively terminates leased work without requiring lease
 // ownership. Authorization is intentionally enforced by the Application layer.
 func (w *WorkItem) CancelAdministratively(conclusion Conclusion, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "administrative cancellation requires in-progress leased work")
 	}
@@ -329,6 +373,9 @@ func (w *WorkItem) CancelAdministratively(conclusion Conclusion, now time.Time) 
 // CompleteAdministratively records completion of leased work while overriding
 // lease ownership/expiry. It does not bypass criteria or result requirements.
 func (w *WorkItem) CompleteAdministratively(resultSummary string, conclusion Conclusion, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "administrative completion requires in-progress leased work")
 	}

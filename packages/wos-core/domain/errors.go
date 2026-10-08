@@ -11,6 +11,14 @@ import (
 type ErrorCode string
 
 const (
+	ErrorCodeContractProtocolRequired ErrorCode = "contract_protocol_required"
+	ErrorCodeContractExpired          ErrorCode = "contract_expired"
+	ErrorCodeContractRevoked          ErrorCode = "contract_revoked"
+	ErrorCodeStaleExecution           ErrorCode = "stale_execution"
+	ErrorCodeContractSpecMismatch     ErrorCode = "contract_spec_mismatch"
+	ErrorCodeWorkAlreadyClaimed       ErrorCode = "work_already_claimed"
+	ErrorCodeSubmissionNotAccepted    ErrorCode = "submission_not_accepted"
+
 	ErrorCodeTransactionConflict   ErrorCode = "transaction_conflict"
 	ErrorCodeInvalidID             ErrorCode = "invalid_id"
 	ErrorCodeInvalidScope          ErrorCode = "invalid_scope"
