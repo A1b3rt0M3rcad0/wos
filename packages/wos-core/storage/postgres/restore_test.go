@@ -30,7 +30,10 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 	if err := source.db.QueryRowContext(ctx, "SELECT current_database()").Scan(&sourceDatabase); err != nil {
 		t.Fatal(err)
 	}
-	dump := exec.CommandContext(ctx, "docker", "exec", container, "pg_dump", "-U", user, "-d", sourceDatabase, "--schema="+source.Path(), "--format=custom", "--no-owner", "--no-acl")
+	// Catalog scans in a long-lived test database may choose parallel workers
+	// exceeding Docker's small /dev/shm. Bound only this test client session;
+	// do not change production or server settings.
+	dump := exec.CommandContext(ctx, "docker", "exec", "-e", "PGOPTIONS=-c max_parallel_workers_per_gather=0", container, "pg_dump", "-U", user, "-d", sourceDatabase, "--schema="+source.Path(), "--format=custom", "--no-owner", "--no-acl")
 	var dumpErrors bytes.Buffer
 	dump.Stderr = &dumpErrors
 	backup, err := dump.Output()

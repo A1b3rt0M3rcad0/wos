@@ -11,6 +11,7 @@ import (
 type ErrorCode string
 
 const (
+	ErrorCodeSignedProtocolRequired   ErrorCode = "signed_protocol_required"
 	ErrorCodeContractProtocolRequired ErrorCode = "contract_protocol_required"
 	ErrorCodeContractExpired          ErrorCode = "contract_expired"
 	ErrorCodeContractRevoked          ErrorCode = "contract_revoked"

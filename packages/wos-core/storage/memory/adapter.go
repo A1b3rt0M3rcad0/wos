@@ -12,6 +12,10 @@ import (
 )
 
 type Store struct {
+	signedContracts          map[string]domain.WorkContract
+	signedCheckpoints        map[string]domain.WorkCheckpoint
+	signedSubmissions        map[string]domain.WorkSubmission
+	signedReview             memorySignedReviewState
 	security                 memorySecurityState
 	mu                       sync.Mutex
 	outcomes                 map[string]domain.Outcome
@@ -50,6 +54,7 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
+		signedContracts: make(map[string]domain.WorkContract), signedCheckpoints: make(map[string]domain.WorkCheckpoint), signedSubmissions: make(map[string]domain.WorkSubmission), signedReview: newMemorySignedReviewState(),
 		security:                 newMemorySecurityState(),
 		outcomes:                 make(map[string]domain.Outcome),
 		objectives:               make(map[string]domain.Objective),
@@ -87,7 +92,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	}
 
 	tx := &transaction{
-		store:                    s,
+		store:           s,
+		signedContracts: cloneContractMap(s.signedContracts), signedCheckpoints: cloneCheckpointMap(s.signedCheckpoints), signedSubmissions: cloneSubmissionMap(s.signedSubmissions), signedReview: cloneSignedReview(s.signedReview),
 		security:                 cloneMemorySecurityState(s.security),
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
@@ -134,6 +140,10 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
+	signedContracts          map[string]domain.WorkContract
+	signedCheckpoints        map[string]domain.WorkCheckpoint
+	signedSubmissions        map[string]domain.WorkSubmission
+	signedReview             memorySignedReviewState
 	security                 memorySecurityState
 	store                    *Store
 	closed                   bool
@@ -202,6 +212,10 @@ func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.signedContracts = cloneContractMap(tx.signedContracts)
+	tx.store.signedCheckpoints = cloneCheckpointMap(tx.signedCheckpoints)
+	tx.store.signedSubmissions = cloneSubmissionMap(tx.signedSubmissions)
+	tx.store.signedReview = cloneSignedReview(tx.signedReview)
 	tx.store.security = cloneMemorySecurityState(tx.security)
 	tx.store.protocols = cloneProtocols(tx.protocols)
 	tx.store.contracts = cloneContractMap(tx.contracts)
