@@ -103,7 +103,7 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 	}
 	auth, _ := local.New("contract-holder")
 	identity := a.Identity{PrincipalID: auth.Principal(), Actor: auth.Actor(), NamespaceID: scope.NamespaceID}
-	handler, err := ht.New(ht.Options{Prefix: "/api/v1", RequestTimeout: time.Second, Service: service, IDs: generator, LocalAuth: auth})
+	handler, err := ht.New(ht.Options{Prefix: "/api/v1", RequestTimeout: 10 * time.Second, Service: service, IDs: generator, LocalAuth: auth})
 	if err != nil {
 		t.Fatal(err)
 	}

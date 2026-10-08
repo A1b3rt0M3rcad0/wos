@@ -122,7 +122,7 @@ func (s *Service) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (d
 	if err := ns.Validate(); err != nil {
 		return domain.NamespaceWorkProtocol{}, err
 	}
-	if err := s.authorizeRead(ctx, ns); err != nil {
+	if err := s.authorizeNamespaceMetadataRead(ctx, ns); err != nil {
 		return domain.NamespaceWorkProtocol{}, err
 	}
 	u, err := s.tx.Begin(ctx)
@@ -130,6 +130,9 @@ func (s *Service) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (d
 		return domain.NamespaceWorkProtocol{}, err
 	}
 	defer u.Rollback()
+	if err = s.authorizeScopedReadInUnitOfWork(ctx, u, domain.Scope{NamespaceID: ns}); err != nil {
+		return domain.NamespaceWorkProtocol{}, err
+	}
 	repo, err := protocolRepository(u)
 	if err != nil {
 		return domain.NamespaceWorkProtocol{}, err

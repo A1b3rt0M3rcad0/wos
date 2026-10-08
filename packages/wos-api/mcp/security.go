@@ -10,6 +10,7 @@ func registerSecurity(server *mcp.Server, options Options) {
 	if options.Security == nil {
 		return
 	}
+	registerSigningIdentity(server, options)
 	mcp.AddTool(server, &mcp.Tool{Name: "wos_list_namespaces", Description: "List authorized namespaces; credential scope is enforced."}, func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()

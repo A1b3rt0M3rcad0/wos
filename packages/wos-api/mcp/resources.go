@@ -12,6 +12,7 @@ import (
 )
 
 func registerResources(server *mcp.Server, s *application.Service, options Options) {
+	registerSignedResources(server, s, options)
 	server.AddResourceTemplate(&mcp.ResourceTemplate{Name: "outcome_continuity", Description: "Authorized compact continuity, schema 1. Use tool section cursors to expand omissions.", URITemplate: "wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity", MIMEType: "application/json"}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		headers := http.Header{}
 		if req.Extra != nil {

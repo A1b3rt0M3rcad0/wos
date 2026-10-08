@@ -188,7 +188,7 @@ func (s *Service) RedeliverDelivery(ctx context.Context, cc domain.CommandContex
 	})
 }
 func (s *Service) ListTriggers(ctx context.Context, scope domain.Scope) ([]domain.Trigger, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 	u, err := s.tx.Begin(ctx)
@@ -196,6 +196,9 @@ func (s *Service) ListTriggers(ctx context.Context, scope domain.Scope) ([]domai
 		return nil, 0, err
 	}
 	defer u.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, scope); err != nil {
+		return nil, 0, err
+	}
 	if err = lockExistingOutcome(ctx, u, scope); err != nil {
 		return nil, 0, err
 	}
@@ -260,7 +263,7 @@ func (s *Service) ListDeliveries(ctx context.Context, scope domain.Scope, limit 
 }
 func (s *Service) ListTriggerFirings(ctx context.Context, scope domain.Scope, limit int, cursor string) (IntegrationPage[ports.TriggerFiring], error) {
 	var page IntegrationPage[ports.TriggerFiring]
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return page, err
 	}
 	n, err := queryLimit(limit)
@@ -280,6 +283,9 @@ func (s *Service) ListTriggerFirings(ctx context.Context, scope domain.Scope, li
 		return page, err
 	}
 	defer u.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, scope); err != nil {
+		return page, err
+	}
 	if err = lockExistingOutcome(ctx, u, scope); err != nil {
 		return page, err
 	}

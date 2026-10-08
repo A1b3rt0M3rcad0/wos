@@ -16,7 +16,7 @@ func (s *Service) GetWorkItemOperationalState(
 	scope domain.Scope,
 	workItemID domain.ID,
 ) (WorkItemOperationalReadResult, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return WorkItemOperationalReadResult{}, err
 	}
 
@@ -32,6 +32,9 @@ func (s *Service) GetWorkItemOperationalState(
 		return WorkItemOperationalReadResult{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return WorkItemOperationalReadResult{}, err
+	}
 
 	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
 	if err != nil {

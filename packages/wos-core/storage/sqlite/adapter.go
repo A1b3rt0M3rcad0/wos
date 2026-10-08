@@ -19,10 +19,13 @@ import (
 
 const (
 	DefaultBusyTimeout          = 5 * time.Second
+	DefaultStartupTimeout       = 30 * time.Second
 	DefaultIdempotencyRetention = 7 * 24 * time.Hour
 )
 
 type Options struct {
+	// StartupTimeout bounds connection setup and migrations independently of writer contention.
+	StartupTimeout       time.Duration
 	BusyTimeout          time.Duration
 	IdempotencyRetention time.Duration
 	MigrateOnOpen        bool
@@ -45,6 +48,16 @@ func Open(path string, opts Options) (*Store, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "sqlite path is required")
+	}
+	if opts.StartupTimeout < 0 {
+		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "sqlite startup timeout must be positive")
+	}
+	if opts.StartupTimeout == 0 {
+		opts.StartupTimeout = DefaultStartupTimeout
+		// Preserve the older bootstrap allowance of an explicitly longer busy timeout.
+		if opts.BusyTimeout > opts.StartupTimeout {
+			opts.StartupTimeout = opts.BusyTimeout
+		}
 	}
 	if opts.BusyTimeout <= 0 {
 		opts.BusyTimeout = DefaultBusyTimeout
@@ -80,11 +93,7 @@ func Open(path string, opts Options) (*Store, error) {
 		busyTimeout:          opts.BusyTimeout,
 		idempotencyRetention: opts.IdempotencyRetention,
 	}
-	bootstrapTimeout := opts.BusyTimeout
-	if bootstrapTimeout < 5*time.Second {
-		bootstrapTimeout = 5 * time.Second
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), bootstrapTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), opts.StartupTimeout)
 	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
 		_ = db.Close()

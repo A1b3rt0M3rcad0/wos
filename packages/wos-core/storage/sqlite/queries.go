@@ -10,6 +10,24 @@ import (
 func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]ports.OutcomeIndexEntry, error) {
 	q := `SELECT id,version,title,description,lifecycle,priority,archived_at,created_at,updated_at FROM outcomes WHERE namespace_id=?`
 	args := []any{ns.String()}
+	if len(f.AllowedOutcomeIDs) > 0 {
+		if len(f.AllowedOutcomeIDs) > 100 {
+			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "too many permitted Outcomes")
+		}
+		q += " AND id IN ("
+		for index, id := range f.AllowedOutcomeIDs {
+			if id.Validate() != nil {
+				return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid permitted Outcome")
+			}
+			if index > 0 {
+				q += ","
+			}
+			q += "?"
+			args = append(args, id.String())
+		}
+		q += ")"
+	}
+
 	for key, value := range f.ExternalContext {
 		canonical, err := domain.CanonicalContextValue(value)
 		if err != nil {

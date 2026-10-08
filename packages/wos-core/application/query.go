@@ -47,7 +47,7 @@ type ConclusionHistory struct {
 }
 
 func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResult[domain.Outcome], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
 
@@ -59,6 +59,9 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 		return ReadResult[domain.Outcome]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Outcome]{}, err
+	}
 
 	value, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
 	if err != nil {
@@ -75,7 +78,7 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 }
 
 func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Objective], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Objective]{}, err
 	}
 
@@ -90,6 +93,9 @@ func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domai
 		return ReadResult[domain.Objective]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Objective]{}, err
+	}
 
 	value, err := uow.Objectives().Get(ctx, scope, id)
 	if err != nil {
@@ -106,7 +112,7 @@ func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domai
 }
 
 func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.WorkItem], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.WorkItem]{}, err
 	}
 
@@ -121,6 +127,9 @@ func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.WorkItem]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.WorkItem]{}, err
+	}
 
 	value, err := uow.WorkItems().Get(ctx, scope, id)
 	if err != nil {
@@ -141,7 +150,7 @@ func (s *Service) GetCriterionHistory(
 	owner domain.EntityRef,
 	criterionID domain.ID,
 ) (ReadResult[CriterionValidationHistory], error) {
-	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, owner.Scope); err != nil {
 		return ReadResult[CriterionValidationHistory]{}, err
 	}
 
@@ -156,6 +165,9 @@ func (s *Service) GetCriterionHistory(
 		return ReadResult[CriterionValidationHistory]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, owner.Scope); err != nil {
+		return ReadResult[CriterionValidationHistory]{}, err
+	}
 
 	criteria, _, _, err := validationStateForOwner(ctx, uow, owner)
 	if err != nil {
@@ -198,7 +210,7 @@ func (s *Service) ListConclusions(
 	ctx context.Context,
 	owner domain.EntityRef,
 ) (ReadResult[ConclusionHistory], error) {
-	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, owner.Scope); err != nil {
 		return ReadResult[ConclusionHistory]{}, err
 	}
 
@@ -210,6 +222,9 @@ func (s *Service) ListConclusions(
 		return ReadResult[ConclusionHistory]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, owner.Scope); err != nil {
+		return ReadResult[ConclusionHistory]{}, err
+	}
 
 	_, current, history, err := validationStateForOwner(ctx, uow, owner)
 	if err != nil {
@@ -234,7 +249,7 @@ func (s *Service) GetConclusion(
 	owner domain.EntityRef,
 	conclusionID domain.ID,
 ) (ReadResult[domain.Conclusion], error) {
-	if err := s.authorizeRead(ctx, owner.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, owner.Scope); err != nil {
 		return ReadResult[domain.Conclusion]{}, err
 	}
 
@@ -298,7 +313,7 @@ func validationStateForOwner(
 }
 
 func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Relation], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Relation]{}, err
 	}
 
@@ -313,6 +328,9 @@ func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Relation]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Relation]{}, err
+	}
 
 	value, err := uow.Relations().Get(ctx, scope, id)
 	if err != nil {
@@ -329,7 +347,7 @@ func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]domain.Relation, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -341,6 +359,9 @@ func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]doma
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 
 	values, err := uow.Relations().ListByOutcome(ctx, scope)
 	if err != nil {
@@ -355,7 +376,7 @@ func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]doma
 
 func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (result OutcomeState, queryErr error) {
 	defer s.observeQuery(ctx, "outcome_state", scope, &result.OutcomeRevision, &queryErr, time.Now())
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return OutcomeState{}, err
 	}
 
@@ -367,6 +388,9 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (resu
 		return OutcomeState{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return OutcomeState{}, err
+	}
 
 	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 )
 
 type ReviewFilter struct {
+	OpenOnly          bool
 	WorkItemID        domain.ID
 	HolderPrincipalID string
 	Status            string

@@ -466,7 +466,7 @@ func (s *Service) SupersedeDecision(ctx context.Context, cc domain.CommandContex
 }
 
 func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Artifact], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Artifact]{}, err
 	}
 
@@ -475,6 +475,9 @@ func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Artifact]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Artifact]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Artifact]{}, err
 	}
@@ -491,7 +494,7 @@ func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]domain.Artifact, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -500,6 +503,9 @@ func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]doma
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -516,7 +522,7 @@ func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]doma
 }
 
 func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Evidence], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Evidence]{}, err
 	}
 
@@ -525,6 +531,9 @@ func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Evidence]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Evidence]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Evidence]{}, err
 	}
@@ -541,7 +550,7 @@ func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domain.Evidence, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -550,6 +559,9 @@ func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domai
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -566,7 +578,7 @@ func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domai
 }
 
 func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.EvidenceLink], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.EvidenceLink]{}, err
 	}
 
@@ -575,6 +587,9 @@ func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id do
 		return ReadResult[domain.EvidenceLink]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.EvidenceLink]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.EvidenceLink]{}, err
 	}
@@ -591,7 +606,7 @@ func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id do
 }
 
 func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]domain.EvidenceLink, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -600,6 +615,9 @@ func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -616,7 +634,7 @@ func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]
 }
 
 func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Decision], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Decision]{}, err
 	}
 
@@ -625,6 +643,9 @@ func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Decision]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Decision]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Decision]{}, err
 	}
@@ -641,7 +662,7 @@ func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain
 }
 
 func (s *Service) ListDecisions(ctx context.Context, scope domain.Scope) ([]domain.Decision, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -650,6 +671,9 @@ func (s *Service) ListDecisions(ctx context.Context, scope domain.Scope) ([]doma
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}

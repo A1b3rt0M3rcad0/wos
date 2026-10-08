@@ -17,6 +17,15 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 		if v.NamespaceID != ns {
 			continue
 		}
+		if len(f.AllowedOutcomeIDs) > 0 {
+			allowed := false
+			for _, id := range f.AllowedOutcomeIDs {
+				allowed = allowed || id == v.ID
+			}
+			if !allowed {
+				continue
+			}
+		}
 		matches := true
 		for key, value := range f.ExternalContext {
 			actual, exists := v.ExternalContext[key]

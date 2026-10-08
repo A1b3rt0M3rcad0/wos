@@ -20,7 +20,7 @@ type ReadyWork struct {
 }
 
 func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyWork, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadyWork{}, err
 	}
 
@@ -32,6 +32,9 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 		return ReadyWork{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadyWork{}, err
+	}
 
 	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
 	if err != nil {

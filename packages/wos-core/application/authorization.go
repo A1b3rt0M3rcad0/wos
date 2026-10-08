@@ -44,11 +44,27 @@ func (s *Service) Authorize(ctx context.Context, namespace domain.ID, permission
 	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: namespace, PrincipalID: id.PrincipalID, Permission: permission})
 }
 func (s *Service) authorizeRead(ctx context.Context, namespace domain.ID) error {
+	if err := s.authorizeNamespaceMetadataRead(ctx, namespace); err != nil {
+		return err
+	}
 	if !s.requireIdentity {
 		return nil
 	}
-	return s.Authorize(ctx, namespace, ports.PermissionStateRead)
+	u, err := s.tx.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer u.Rollback()
+	allowed, err := s.readOutcomeRestrictions(ctx, u, namespace)
+	if err != nil {
+		return err
+	}
+	if len(allowed) != 0 {
+		return domain.NewError(domain.ErrorCodeForbidden, "Outcome-restricted credential requires a scoped read")
+	}
+	return nil
 }
+
 func (s *Service) authorizeMutation(ctx context.Context, cc domain.CommandContext, meta commandMetadata) error {
 	if !s.requireIdentity {
 		return nil
