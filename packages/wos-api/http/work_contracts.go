@@ -159,3 +159,18 @@ func (h *Handler) listAvailableWork(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, 200, v)
 }
+
+func (h *Handler) getNamespaceWorkProtocol(w http.ResponseWriter, r *http.Request) {
+	ns, err := parsePathID(r, "namespace_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	v, err := h.service.GetNamespaceWorkProtocol(r.Context(), ns)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, 200, v)
+}

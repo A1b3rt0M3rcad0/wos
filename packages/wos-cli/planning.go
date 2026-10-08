@@ -18,6 +18,11 @@ func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, conf
 	}
 	entity, verb := o.args[0], o.args[1]
 	base := outcomePath(scope)
+	if entity == "protocol" && verb == "get" {
+		v, e := client.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+		result.Data = v
+		return result, e
+	}
 	if verb == "list" {
 		switch entity {
 		case "outcome":
@@ -89,6 +94,13 @@ func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, conf
 	}
 	name := ""
 	switch entity {
+	case "protocol":
+		if verb == "set" {
+			name = "set_namespace_work_protocol"
+		}
+		if verb == "reconcile" {
+			name = "reconcile_expired_work_contracts"
+		}
 	case "outcome":
 		if verb == "create" {
 			name = "create_outcome"

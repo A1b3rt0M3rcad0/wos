@@ -231,7 +231,7 @@ func (s SecurityService) Bootstrap(ctx context.Context, namespace ports.Namespac
 	if err != nil {
 		return err
 	}
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
+	permissions := []ports.Permission{ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
 	atomic, ok := s.Store.(interface {
 		BootstrapSecurity(context.Context, ports.Namespace, ports.NamespaceGrant, ports.Credential) error
 	})

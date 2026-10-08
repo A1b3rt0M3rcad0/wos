@@ -102,7 +102,15 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 	if err != nil {
 		return zero, 0, err
 	}
-	c, err := d.NewWorkContract(id, execution, w, cc.PrincipalID, cc.Actor, d.DefaultContractLeasePolicy(), cmd.TTLSeconds, spec, coord.Revision, now)
+	policy := d.DefaultContractLeasePolicy()
+	if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
+		p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+		if e != nil {
+			return zero, 0, e
+		}
+		policy = p.LeasePolicy
+	}
+	c, err := d.NewWorkContract(id, execution, w, cc.PrincipalID, cc.Actor, policy, cmd.TTLSeconds, spec, coord.Revision, now)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -147,6 +155,13 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 		now, err := s.transactionTime(ctx, uow)
 		if err != nil {
 			return zero, 0, err
+		}
+		if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
+			p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+			if e != nil {
+				return zero, 0, e
+			}
+			c.LeasePolicy = p.LeasePolicy
 		}
 		v, l := c.Version, c.LeaseVersion
 		if err := c.Renew(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now); err != nil {
@@ -299,7 +314,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 		specs = append(specs, compoundEventSpec{eventType: "evidence.registered", ref: e.Ref(), after: versionPtr(e.Version)})
 	}
 	for _, l := range result.EvidenceLinks {
-		specs = append(specs, compoundEventSpec{eventType: "evidence_link.created", ref: l.Ref(), after: versionPtr(l.Version)})
+		specs = append(specs, compoundEventSpec{eventType: "evidence.link_created", ref: l.Ref(), after: versionPtr(l.Version)})
 	}
 	if meta.Name == "FinalizeWorkContract" {
 		specs = append(specs, compoundEventSpec{eventType: "work_item.completed", ref: result.WorkItem.Ref(), after: versionPtr(result.WorkItem.Version)}, compoundEventSpec{eventType: "work_item.conclusion_recorded", ref: result.WorkItem.Ref(), after: versionPtr(result.WorkItem.Version)})

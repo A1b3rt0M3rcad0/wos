@@ -51,3 +51,9 @@ func (c *Client) ListAvailableWork(ctx context.Context, scope domain.Scope, limi
 	err := c.do(ctx, "GET", scopePath(scope)+"/available-work?"+q.Encode(), "", nil, &v)
 	return v, err
 }
+
+func (c *Client) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (domain.NamespaceWorkProtocol, error) {
+	var v domain.NamespaceWorkProtocol
+	err := c.do(ctx, "GET", "/namespaces/"+ns.String()+"/work-protocol", "", nil, &v)
+	return v, err
+}

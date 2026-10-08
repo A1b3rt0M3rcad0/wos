@@ -136,6 +136,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ReclaimWorkItemCommand](c, "reclaim_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReclaimWorkItemCommand) (any, error) {
 		return service.ReclaimWorkItem(ctx, cc, cmd)
 	})
+	register[application.ReconcileExpiredWorkContractsCommand](c, "reconcile_expired_work_contracts", func(ctx context.Context, cc domain.CommandContext, cmd application.ReconcileExpiredWorkContractsCommand) (any, error) {
+		return service.ReconcileExpiredWorkContracts(ctx, cc, cmd)
+	})
 	register[application.RecordCriterionAssessmentCommand](c, "record_criterion_assessment", func(ctx context.Context, cc domain.CommandContext, cmd application.RecordCriterionAssessmentCommand) (any, error) {
 		return service.RecordCriterionAssessment(ctx, cc, cmd)
 	})
@@ -216,6 +219,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.RevokeWorkContractCommand](c, "revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
 		return service.RevokeWorkContract(ctx, cc, cmd)
+	})
+	register[application.SetNamespaceWorkProtocolCommand](c, "set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
+		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
 	})
 	register[application.SetObjectiveOwnersCommand](c, "set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)

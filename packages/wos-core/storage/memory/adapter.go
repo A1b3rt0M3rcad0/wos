@@ -16,6 +16,7 @@ type Store struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
+	protocols                map[domain.ID]domain.NamespaceWorkProtocol
 	contracts                map[string]domain.WorkContract
 	checkpoints              map[string]domain.WorkCheckpoint
 	submissions              map[string]domain.WorkSubmission
@@ -51,6 +52,7 @@ func New() *Store {
 		outcomes:                 make(map[string]domain.Outcome),
 		objectives:               make(map[string]domain.Objective),
 		workItems:                make(map[string]domain.WorkItem),
+		protocols:                make(map[domain.ID]domain.NamespaceWorkProtocol),
 		contracts:                make(map[string]domain.WorkContract),
 		checkpoints:              make(map[string]domain.WorkCheckpoint),
 		submissions:              make(map[string]domain.WorkSubmission),
@@ -87,6 +89,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
 		workItems:                cloneWorkItems(s.workItems),
+		protocols:                cloneProtocols(s.protocols),
 		contracts:                cloneContractMap(s.contracts),
 		checkpoints:              cloneCheckpointMap(s.checkpoints),
 		submissions:              cloneSubmissionMap(s.submissions),
@@ -133,6 +136,7 @@ type transaction struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
+	protocols                map[domain.ID]domain.NamespaceWorkProtocol
 	contracts                map[string]domain.WorkContract
 	checkpoints              map[string]domain.WorkCheckpoint
 	submissions              map[string]domain.WorkSubmission
@@ -194,6 +198,7 @@ func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.protocols = cloneProtocols(tx.protocols)
 	tx.store.contracts = cloneContractMap(tx.contracts)
 	tx.store.checkpoints = cloneCheckpointMap(tx.checkpoints)
 	tx.store.submissions = cloneSubmissionMap(tx.submissions)

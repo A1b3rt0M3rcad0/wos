@@ -136,6 +136,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.ReclaimWorkItemCommand](server, ids, options, "wos_reclaim_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReclaimWorkItemCommand) (any, error) {
 		return service.ReclaimWorkItem(ctx, cc, cmd)
 	})
+	registerCommand[application.ReconcileExpiredWorkContractsCommand](server, ids, options, "wos_reconcile_expired_work_contracts", func(ctx context.Context, cc domain.CommandContext, cmd application.ReconcileExpiredWorkContractsCommand) (any, error) {
+		return service.ReconcileExpiredWorkContracts(ctx, cc, cmd)
+	})
 	registerCommand[application.RecordCriterionAssessmentCommand](server, ids, options, "wos_record_criterion_assessment", func(ctx context.Context, cc domain.CommandContext, cmd application.RecordCriterionAssessmentCommand) (any, error) {
 		return service.RecordCriterionAssessment(ctx, cc, cmd)
 	})
@@ -216,6 +219,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.RevokeWorkContractCommand](server, ids, options, "wos_revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
 		return service.RevokeWorkContract(ctx, cc, cmd)
+	})
+	registerCommand[application.SetNamespaceWorkProtocolCommand](server, ids, options, "wos_set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
+		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
 	})
 	registerCommand[application.SetObjectiveOwnersCommand](server, ids, options, "wos_set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)

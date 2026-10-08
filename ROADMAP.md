@@ -872,7 +872,7 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 | C07 | Implementado e testado em Linux | Cliente API-only, YAML restrito/schemas, checkout/dry-run, planejamento/revisão via DTOs tipados; percurso real HTTP/CLI. |
 | C08 | Implementado, gate Windows pendente | Journal/recibos, recover de aquisição e mutações, locks, refresh preservando rascunhos, renew/takeover/keepalive foreground, sync/submit/finalize/finish; falhas de transporte/disco testadas em Linux. Windows precisa execução real em CI. |
 | C09 | Interface/skills implementadas, aceite integrado pendente | Human contract UI, skills and client planning |
-| C10 | Pending | Explicit drain/cutover, legacy dataset and writer controls |
+| C10 | Implemented and locally verified | Explicit Namespace phases, current lease policy, old receipt replay, shared/exclusive writer guards and bounded expiry reconciliation. Actual SQLite/PostgreSQL transition/restart tests pass; operators must stop old binaries before activation. |
 | C11 | Pending | Independent programmatic/local journeys and concurrency evidence |
 | C12 | Pending | Integrated platform/packaging gates and documented release |
 
@@ -888,4 +888,6 @@ C05: generated HTTP/MCP/SDK catalogue now includes 83 commands; contract state/s
 
 C06: testes com race detector em aplicação, SQLite/PostgreSQL reais e cliente HTTP/MCP independente; restauração preserva submissões, avaliações, conclusões e recibos. O modo novo ainda depende do cutover explícito C10; CLI e validação Windows seguem pendentes.
 
-C09: painel de contrato/último checkpoint/submissão/revisão/revogação, histórico sob demanda e exclusão dos comandos legados para WorkItems migradas. Cinco skills e quatro destinos npm testados; três jornadas Chromium existentes passaram. A jornada específica de cutover + revisão/revogação pela UI será validada em C10/C11, após ativação pública do protocolo. Instalação de skill não certifica execução em cada runtime.
+C09: painel de contrato/último checkpoint/submissão/revisão/revogação, histórico sob demanda e exclusão dos comandos legados para WorkItems migradas. Cinco skills e quatro destinos npm testados; três jornadas Chromium existentes passaram. A jornada Chromium específica de cutover + checkpoint + revisão de submissão vinculada + revogação privilegiada passou em C10. Instalação de skill não certifica execução em cada runtime.
+
+C10: ADR-020 documents anchor-Outcome auditing, no historical contract fabrication, operational old-writer retirement and no silent downgrade. Migrated work preserves IDs/versions/fencing; new work supports typed ExecutionSpec. Domain permits administrative cancellation only after authority detachment. CLI protocol get/set/reconcile uses authenticated public API and durable command journal. New optional command fields omit nil values to preserve legacy command fingerprints.
