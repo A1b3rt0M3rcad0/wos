@@ -14,13 +14,13 @@ type RevokeSignedContractCommand struct {
 	Scope                   d.Scope
 	ContractKind            string
 	ContractID              d.ID
-	ExpectedContractVersion d.Version
+	ExpectedContractVersion d.Version `json:"expected_contract_version,string"`
 	Reason                  string
 }
 type InterveneSignedReviewCaseCommand struct {
 	Scope                     d.Scope
 	ReviewCaseID              d.ID
-	ExpectedReviewCaseVersion d.Version
+	ExpectedReviewCaseVersion d.Version `json:"expected_review_case_version,string"`
 	Status                    d.ReviewCaseStatus
 	Reason                    string
 }

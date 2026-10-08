@@ -12,7 +12,7 @@ type AcquireSignedWorkContractCommand struct {
 	PreviousReviewCaseID    *d.ID `wos:"optional"`
 	Scope                   d.Scope
 	WorkItemID              d.ID
-	ExpectedWorkItemVersion d.Version
+	ExpectedWorkItemVersion d.Version `json:"expected_work_item_version,string"`
 	SignerKeyID             d.ID
 	TTLSeconds              int `wos:"optional"`
 }

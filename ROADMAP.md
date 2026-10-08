@@ -908,7 +908,7 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P03 | In progress | Signed issuance, runtime trust and domain/storage foundations verified; atomic delivery, reviews and full cutover/guards remain following waves. |
 | P04 | Core implemented and locally verified; exhaustive acceptance remains P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
 | P05 | Core implemented and locally verified; exhaustive acceptance remains P06/P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
-| P06 | Planned | HTTP/MCP/SDK parity, bounded queries and embedded bypass rejection. |
+| P06 | In progress: exact DTO/schema foundation verified | Decimal-string new commands/results and strict signed field names implemented; focal queries, full scope/bypass closure and cross-transport journey remain. |
 | P07 | Planned | Profile/secret references, project schema 2 and single contract YAML. |
 | P08 | Planned | Embedded pending recovery, batch/quotas and stable interprocess locks. |
 | P09 | Planned | sign/send/finish and receipt-bound cleanup preserving unconfirmed edits. |
@@ -935,3 +935,6 @@ P04 return verification: shared transaction composition reuses documentary valid
 
 
 P05 verification: independent signed review/renewal/takeover, inconclusive release, accepted changes and a new correction executor, live blocker rollback, supplemental same-source evidence, administrative review revocation and case cancellation/supersession passed shared race fixtures in Memory/SQLite/actual PostgreSQL. The original executor credential is revoked before correction/review completion; original delivered contracts and signed submissions remain immutable. Replanning after intervention requires explicit case acknowledgement and a new fenced authority. Full repository race tests passed, including PostgreSQL clean restore and architectural boundaries; generated HTTP/MCP/SDK and 102-event catalog have no drift. Metadata counter transport and complete focal/bypass acceptance remain P06; exhaustive T01–T96, native Windows and real consumer telemetry remain P12 gates.
+
+
+P06 first-part verification: exact new signed command and mutation counters (including Task/lease fences) round-trip above 2^53 and at uint64 maximum without changing v1 numeric encoding or immutable issued proof. Strict signed DTOs reject nested/case aliases even under an otherwise valid signature. Generated OpenAPI includes purpose-specific exact-field schemas. Shared signed acquisition/return/review/correction and legacy lease/idempotency race fixtures passed in Memory/SQLite/actual PostgreSQL; Core, command/HTTP/runtime, boundaries and vet passed. Focal queries, permitted-Outcome filtering, full remaining guards and cross-transport acceptance are still in progress; this is not P06 completion.
