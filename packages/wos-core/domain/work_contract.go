@@ -123,6 +123,7 @@ const (
 	ContractExpired   ContractStatus = "expired"
 	ContractRevoked   ContractStatus = "revoked"
 	ContractCompleted ContractStatus = "completed"
+	ContractDelivered ContractStatus = "delivered"
 )
 
 type LeasePolicy struct {
@@ -147,29 +148,30 @@ func (p LeasePolicy) TTL(seconds int) (time.Duration, error) {
 }
 
 type WorkContract struct {
-	ID                       ID               `json:"id"`
-	Scope                    Scope            `json:"scope"`
-	WorkItemID               ID               `json:"work_item_id"`
-	HolderPrincipalID        string           `json:"holder_principal_id"`
-	Actor                    ActorRef         `json:"actor_ref"`
-	Status                   ContractStatus   `json:"status"`
-	Version                  Version          `json:"version"`
-	LeaseVersion             Version          `json:"lease_version"`
-	ExecutionID              ID               `json:"execution_id"`
-	FencingToken             FencingToken     `json:"fencing_token"`
-	AcquiredAt               time.Time        `json:"acquired_at"`
-	ExpiresAt                time.Time        `json:"expires_at"`
-	LastRenewedAt            time.Time        `json:"last_renewed_at"`
-	LeasePolicy              LeasePolicy      `json:"lease_policy"`
-	WorkItemVersionAtAcquire Version          `json:"work_item_version_at_acquire"`
-	OutcomeRevisionAtAcquire OutcomeRevision  `json:"outcome_revision_at_acquire"`
-	Spec                     WorkContractSpec `json:"spec"`
-	SpecDigest               string           `json:"spec_digest"`
-	LatestCheckpointID       *ID              `json:"latest_checkpoint_id,omitempty"`
-	LatestSubmissionID       *ID              `json:"latest_submission_id,omitempty"`
-	ClosedAt                 *time.Time       `json:"closed_at,omitempty"`
-	CloseReason              string           `json:"close_reason,omitempty"`
-	ClosedBy                 string           `json:"closed_by,omitempty"`
+	SignedBinding            *SignedContractBinding `json:"signed_binding,omitempty"`
+	ID                       ID                     `json:"id"`
+	Scope                    Scope                  `json:"scope"`
+	WorkItemID               ID                     `json:"work_item_id"`
+	HolderPrincipalID        string                 `json:"holder_principal_id"`
+	Actor                    ActorRef               `json:"actor_ref"`
+	Status                   ContractStatus         `json:"status"`
+	Version                  Version                `json:"version"`
+	LeaseVersion             Version                `json:"lease_version"`
+	ExecutionID              ID                     `json:"execution_id"`
+	FencingToken             FencingToken           `json:"fencing_token"`
+	AcquiredAt               time.Time              `json:"acquired_at"`
+	ExpiresAt                time.Time              `json:"expires_at"`
+	LastRenewedAt            time.Time              `json:"last_renewed_at"`
+	LeasePolicy              LeasePolicy            `json:"lease_policy"`
+	WorkItemVersionAtAcquire Version                `json:"work_item_version_at_acquire"`
+	OutcomeRevisionAtAcquire OutcomeRevision        `json:"outcome_revision_at_acquire"`
+	Spec                     WorkContractSpec       `json:"spec"`
+	SpecDigest               string                 `json:"spec_digest"`
+	LatestCheckpointID       *ID                    `json:"latest_checkpoint_id,omitempty"`
+	LatestSubmissionID       *ID                    `json:"latest_submission_id,omitempty"`
+	ClosedAt                 *time.Time             `json:"closed_at,omitempty"`
+	CloseReason              string                 `json:"close_reason,omitempty"`
+	ClosedBy                 string                 `json:"closed_by,omitempty"`
 }
 
 func NewWorkContract(id, execution ID, w WorkItem, principal string, actor ActorRef, policy LeasePolicy, ttl int, spec WorkContractSpec, revision OutcomeRevision, now time.Time) (WorkContract, error) {
@@ -201,6 +203,14 @@ func NewWorkContract(id, execution ID, w WorkItem, principal string, actor Actor
 	return c, nil
 }
 func (c WorkContract) ValidateHeader() error {
+	if c.SignedBinding != nil {
+		if err := c.SignedBinding.Validate(); err != nil {
+			return err
+		}
+	}
+	if c.Status == ContractDelivered && c.SignedBinding == nil {
+		return NewError(ErrorCodeSignedProtocolRequired, "delivered is signed-v2 only")
+	}
 	if len(c.SpecDigest) != 71 || !strings.HasPrefix(c.SpecDigest, "sha256:") {
 		return NewError(ErrorCodeContractSpecMismatch, "contract header requires semantic digest")
 	}
@@ -235,7 +245,7 @@ func (c WorkContract) ValidateHeader() error {
 		if c.ClosedAt != nil || c.CloseReason != "" || c.ClosedBy != "" {
 			return NewError(ErrorCodeInvalidArgument, "active contract cannot have closure")
 		}
-	case ContractExpired, ContractRevoked, ContractCompleted:
+	case ContractExpired, ContractRevoked, ContractCompleted, ContractDelivered:
 		if c.ClosedAt == nil || c.ClosedAt.IsZero() || strings.TrimSpace(c.CloseReason) == "" || strings.TrimSpace(c.ClosedBy) == "" {
 			return NewError(ErrorCodeInvalidArgument, "terminal contract requires closure provenance")
 		}
@@ -443,7 +453,7 @@ func ValidateContractUpdate(old, next WorkContract) error {
 	if old.Status != ContractActive {
 		return NewError(ErrorCodeInvalidTransition, "terminal contract is immutable")
 	}
-	if old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
+	if !reflect.DeepEqual(old.SignedBinding, next.SignedBinding) || old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
 		return NewError(ErrorCodeContractSpecMismatch, "contract acquisition is immutable")
 	}
 	contentChanged := next.Version != old.Version

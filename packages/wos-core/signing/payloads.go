@@ -41,7 +41,6 @@ type SpecPayload[T any] struct {
 	ContractKind string `json:"contract_kind"`
 	WorkItemID   string `json:"work_item_id"`
 	ContractID   string `json:"contract_id"`
-	SpecDigest   string `json:"spec_digest"`
 	Spec         T      `json:"spec"`
 }
 type AuthorityPayload struct {

@@ -80,11 +80,13 @@ jobs:
 
       - name: Generated adapters and MCP commands are current
         run: |
+          python3 tools/signedgen/generate.py
+          gofmt -w packages/wos-core/storage/memory/signed_work_contracts.go packages/wos-core/storage/sqlite/signed_work_contracts.go
           python3 tools/postgresgen/generate.py
           go run ./tools/mcpgen
           go run ./tools/openapigen
           gofmt -w packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go
-          git diff --exit-code -- packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
+          git diff --exit-code -- packages/wos-core/storage/memory/signed_work_contracts.go packages/wos-core/storage/sqlite/signed_work_contracts.go packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
           python3 tools/eventcatalog/check.py
 
       - name: Unit and contract tests

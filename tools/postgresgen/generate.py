@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 source=Path('packages/wos-core/storage/sqlite')
 target=Path('packages/wos-core/storage/postgres')
-for name in ['signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','external_context.go','integration.go','codec.go','migrations.go']:
+for name in ['signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','external_context.go','integration.go','codec.go','migrations.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqlite migration','postgres migration')
  def transform_sql(m):
   q=m[1]
@@ -43,12 +43,14 @@ for name in ['signing_identity.go','work_protocol.go','work_contracts.go','repos
 for p in (source/'migrations').glob('*.sql'):
  sql=p.read_text()
  if p.name=='0016_work_contracts.sql':sql=sql.replace('fencing_token TEXT NOT NULL','fencing_token NUMERIC(20,0) NOT NULL CHECK (fencing_token>0 AND fencing_token<=18446744073709551615)')
+ if p.name=='0021_signed_contracts_reviews.sql':
+  sql=sql.replace("version TEXT NOT NULL CHECK (version!='0')","version NUMERIC(20,0) NOT NULL CHECK (version>0 AND version<=18446744073709551615)").replace("lease_version TEXT NOT NULL CHECK (lease_version!='0')","lease_version NUMERIC(20,0) NOT NULL CHECK (lease_version>0 AND lease_version<=18446744073709551615)").replace(" version TEXT NOT NULL CHECK(version!='0')"," version NUMERIC(20,0) NOT NULL CHECK(version>0 AND version<=18446744073709551615)").replace("lease_version TEXT NOT NULL CHECK(lease_version!='0')","lease_version NUMERIC(20,0) NOT NULL CHECK(lease_version>0 AND lease_version<=18446744073709551615)").replace('fencing_token TEXT NOT NULL','fencing_token NUMERIC(20,0) NOT NULL CHECK (fencing_token>0 AND fencing_token<=18446744073709551615)')
  # PostgreSQL stores booleans as integer in this shared schema, matching existing
  # relational DTO codecs and preserving all checks. Credential code adapts its bool.
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
+for name in ['signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1)
  s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)
