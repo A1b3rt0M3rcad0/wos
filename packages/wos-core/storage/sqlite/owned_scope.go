@@ -136,7 +136,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	assessments := map[domain.ID]domain.CriterionAssessment{}
-	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id FROM criterion_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id,submission_id,submission_digest FROM criterion_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
 		v, err := scanAssessment(rows)
 		if err != nil {
 			return err
@@ -217,14 +217,15 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	}); err != nil {
 		return nil, err
 	}
-	if err := read(`SELECT e.id,e.kind,c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json FROM conclusions c JOIN entity_refs e ON e.namespace_id=c.namespace_id AND e.outcome_id=c.outcome_id AND e.id=c.owner_id WHERE c.namespace_id=? AND c.outcome_id=? ORDER BY c.owner_id,c.ordinal`, func(rows *sql.Rows) error {
+	if err := read(`SELECT e.id,e.kind,c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json,c.submission_id,c.submission_digest FROM conclusions c JOIN entity_refs e ON e.namespace_id=c.namespace_id AND e.outcome_id=c.outcome_id AND e.id=c.owner_id WHERE c.namespace_id=? AND c.outcome_id=? ORDER BY c.owner_id,c.ordinal`, func(rows *sql.Rows) error {
 		var oid, kind string
 		// Owner identity is needed by the shared codec, so buffer the fixed row first.
 		var sid, lifecycle, principal, actor, rationale, obligations string
-		var publicID sql.NullString
+		var publicID, submissionID sql.NullString
+		var submissionDigest string
 		var version sql.NullInt64
 		var at int64
-		if err := rows.Scan(&oid, &kind, &sid, &publicID, &version, &lifecycle, &principal, &actor, &at, &rationale, &obligations); err != nil {
+		if err := rows.Scan(&oid, &kind, &sid, &publicID, &version, &lifecycle, &principal, &actor, &at, &rationale, &obligations, &submissionID, &submissionDigest); err != nil {
 			return err
 		}
 		o, err := domain.ParseID(oid)
@@ -232,7 +233,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 			return err
 		}
 		owner := domain.EntityRef{Scope: scope, Kind: domain.EntityKind(kind), ID: o}
-		storageID, v, err := scanConclusion(conclusionRow{sid, publicID, version, lifecycle, principal, actor, at, rationale, obligations}, owner)
+		storageID, v, err := scanConclusion(conclusionRow{sid, publicID, version, lifecycle, principal, actor, at, rationale, obligations, submissionID, submissionDigest}, owner)
 		if err != nil {
 			return err
 		}
@@ -264,6 +265,8 @@ type conclusionRow struct {
 	lifecycle, principal, actor string
 	at                          int64
 	rationale, obligations      string
+	submissionID                sql.NullString
+	submissionDigest            string
 }
 
 func (r conclusionRow) Scan(dest ...any) error {
@@ -276,5 +279,7 @@ func (r conclusionRow) Scan(dest ...any) error {
 	*dest[6].(*int64) = r.at
 	*dest[7].(*string) = r.rationale
 	*dest[8].(*string) = r.obligations
+	*dest[9].(*sql.NullString) = r.submissionID
+	*dest[10].(*string) = r.submissionDigest
 	return nil
 }

@@ -164,4 +164,38 @@ func TestHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T) {
 		t.Fatalf("next candidate %v %v", acquiredNext, err)
 	}
 
+	// Use independently connected transports for the full result journey.
+	liveContract := resumed.Value.Contract
+	authority := a.ContractAuthority{ExecutionID: liveContract.ExecutionID, FencingToken: liveContract.FencingToken, SpecDigest: liveContract.SpecDigest}
+	checkpoint, err := client.SyncWorkContract(ctx, "protocol-checkpoint-0001", a.SyncWorkContractCommand{Scope: scope, ContractID: c.ID, Authority: authority, ExpectedContractVersion: liveContract.Version, Checkpoint: a.ContractCheckpointInput{Summary: "Material progress", Pending: []string{"Deliver result"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	submissionInput, err := commands.Encode(a.SubmitWorkResultCommand{Scope: scope, ContractID: c.ID, Authority: authority, ExpectedContractVersion: checkpoint.Value.Contract.Version, Material: d.WorkResultMaterial{ContractID: c.ID, WorkItemID: w.ID, SpecDigest: c.SpecDigest, Summary: "Completed exact task"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_submit_work_result", Arguments: map[string]any{"idempotency_key": "protocol-submit-0001", "command": json.RawMessage(submissionInput)}})
+	if err != nil || result.IsError {
+		t.Fatalf("MCP submit %v %v", result, err)
+	}
+	raw, _ = json.Marshal(result.StructuredContent)
+	var submitted a.MutationResult[a.WorkContractResult]
+	if err = json.Unmarshal(raw, &submitted); err != nil {
+		t.Fatal(err)
+	}
+	finalCommand := a.FinalizeWorkContractCommand{Scope: scope, ContractID: c.ID, Authority: authority, ExpectedContractVersion: submitted.Value.Contract.Version, ExpectedWorkItemVersion: resumed.Value.WorkItem.Version, SubmissionID: submitted.Value.Submission.ID, Reason: "Delivered and verified"}
+	completed, err := client.FinalizeWorkContract(ctx, "protocol-finalize-0001", finalCommand)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if completed.Value.Contract.Status != d.ContractCompleted || completed.Value.WorkItem.CurrentConclusion.SubmissionDigest != submitted.Value.Submission.Digest {
+		t.Fatal("finalization not material bound")
+	}
+	finalInput, _ := commands.Encode(finalCommand)
+	result, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_finalize_work_contract", Arguments: map[string]any{"idempotency_key": "protocol-finalize-0001", "command": json.RawMessage(finalInput)}})
+	if err != nil || result.IsError {
+		t.Fatalf("cross transport finalization replay %v %v", result, err)
+	}
+
 }

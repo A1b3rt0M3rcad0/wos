@@ -281,7 +281,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 	if !ok {
 		return nil, false, nil
 	}
-	facts := map[string]string{"AcquireWorkContract": "work_contract.acquired", "RenewWorkContract": "work_contract.renewed", "ResumeWorkContract": "work_contract.execution_resumed", "RevokeWorkContract": "work_contract.revoked"}
+	facts := map[string]string{"AcquireWorkContract": "work_contract.acquired", "RenewWorkContract": "work_contract.renewed", "ResumeWorkContract": "work_contract.execution_resumed", "RevokeWorkContract": "work_contract.revoked", "SyncWorkContract": "work_contract.checkpoint_recorded", "SubmitWorkResult": "work_contract.result_submitted", "FinalizeWorkContract": "work_contract.completed"}
 	fact, ok := facts[meta.Name]
 	if !ok {
 		return nil, false, nil
@@ -292,10 +292,22 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 		specs = append(specs, compoundEventSpec{eventType: "work_contract.expired", ref: old.Ref(), after: versionPtr(result.WorkItem.Version)})
 	}
 	specs = append(specs, compoundEventSpec{eventType: fact, ref: result.Contract.Ref(), after: versionPtr(result.WorkItem.Version)})
+	for _, a := range result.Artifacts {
+		specs = append(specs, compoundEventSpec{eventType: "artifact.registered", ref: a.Ref(), after: versionPtr(a.Version)})
+	}
+	for _, e := range result.Evidence {
+		specs = append(specs, compoundEventSpec{eventType: "evidence.registered", ref: e.Ref(), after: versionPtr(e.Version)})
+	}
+	for _, l := range result.EvidenceLinks {
+		specs = append(specs, compoundEventSpec{eventType: "evidence_link.created", ref: l.Ref(), after: versionPtr(l.Version)})
+	}
+	if meta.Name == "FinalizeWorkContract" {
+		specs = append(specs, compoundEventSpec{eventType: "work_item.completed", ref: result.WorkItem.Ref(), after: versionPtr(result.WorkItem.Version)}, compoundEventSpec{eventType: "work_item.conclusion_recorded", ref: result.WorkItem.Ref(), after: versionPtr(result.WorkItem.Version)})
+	}
 	events, err := buildCompoundEvents(s, cc, meta, rev, specs)
 	// Bind emitted facts to server-assigned identities, not only the input command.
 	for i := range events {
-		payload, err := json.Marshal(map[string]any{"contract_id": result.Contract.ID, "work_item_id": result.WorkItem.ID, "status": result.Contract.Status, "contract_version": result.Contract.Version, "lease_version": result.Contract.LeaseVersion, "fencing_token": result.Contract.FencingToken, "spec_digest": result.Contract.SpecDigest, "expires_at": result.Contract.ExpiresAt, "previous_contract": result.PreviousContract})
+		payload, err := json.Marshal(map[string]any{"contract_id": result.Contract.ID, "work_item_id": result.WorkItem.ID, "status": result.Contract.Status, "contract_version": result.Contract.Version, "lease_version": result.Contract.LeaseVersion, "fencing_token": result.Contract.FencingToken, "spec_digest": result.Contract.SpecDigest, "expires_at": result.Contract.ExpiresAt, "previous_contract": result.PreviousContract, "checkpoint": result.Checkpoint, "submission_id": result.Contract.LatestSubmissionID})
 		if err != nil {
 			return nil, true, err
 		}

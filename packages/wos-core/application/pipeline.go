@@ -116,6 +116,9 @@ func transactCommand[T any, C any](
 		}
 	}
 
+	if err := protectContractMutation(ctx, service, uow, meta.Name, command); err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
 	value, revision, err := fn(uow)
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err

@@ -20,6 +20,7 @@ type WorkContractRepository interface {
 	Insert(context.Context, domain.WorkContract) error
 	Save(context.Context, domain.WorkContract, domain.Version, domain.Version) error
 	InsertCheckpoint(context.Context, domain.WorkCheckpoint) error
+	GetCheckpoint(context.Context, domain.Scope, domain.ID) (domain.WorkCheckpoint, error)
 	ListCheckpoints(context.Context, domain.Scope, domain.ID, domain.ID, int) ([]domain.WorkCheckpoint, error)
 	InsertSubmission(context.Context, domain.WorkSubmission) error
 	GetSubmission(context.Context, domain.Scope, domain.ID) (domain.WorkSubmission, error)

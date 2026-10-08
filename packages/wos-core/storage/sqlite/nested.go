@@ -238,8 +238,8 @@ INSERT OR IGNORE INTO criterion_revisions (
 INSERT OR IGNORE INTO criterion_assessments (
     id, namespace_id, outcome_id, criterion_id, criterion_revision,
     result, rationale, principal_id, actor_json, assessed_at,
-    evaluator_ref_json, supersedes_assessment_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			assessment.ID.String(),
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -251,7 +251,7 @@ INSERT OR IGNORE INTO criterion_assessments (
 			actorJSON,
 			encodeTime(assessment.AssessedAt),
 			evaluatorJSON,
-			nullableID(assessment.SupersedesAssessmentID),
+			nullableID(assessment.SupersedesAssessmentID), nullableID(assessment.SubmissionID), assessment.SubmissionDigest,
 		); err != nil {
 			return mapSQLError("insert criterion assessment", err)
 		}
@@ -331,11 +331,12 @@ func verifyCriterionAssessment(
 	var (
 		rawCriterionID, result, rationale, principalID, actorJSON string
 		revision, assessedAt                                      int64
-		evaluatorJSON, supersedes                                 sql.NullString
+		evaluatorJSON, supersedes, submissionID                   sql.NullString
+		submissionDigest                                          string
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT criterion_id, criterion_revision, result, rationale, principal_id,
-       actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id
+       actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
 FROM criterion_assessments
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		scope.NamespaceID.String(),
@@ -350,7 +351,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		&actorJSON,
 		&assessedAt,
 		&evaluatorJSON,
-		&supersedes,
+		&supersedes, &submissionID, &submissionDigest,
 	)
 	if err != nil {
 		return mapSQLError("verify criterion assessment", err)
@@ -372,7 +373,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		expectedSupersedes = assessment.SupersedesAssessmentID.String()
 	}
 
-	if rawCriterionID != assessment.CriterionID.String() ||
+	if submissionID.String != idString(assessment.SubmissionID) || submissionDigest != assessment.SubmissionDigest || rawCriterionID != assessment.CriterionID.String() ||
 		revision != int64(assessment.CriterionRevision) ||
 		result != string(assessment.Result) ||
 		rationale != assessment.Rationale ||
@@ -530,7 +531,7 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 	assessmentRows, err := tx.QueryContext(ctx, `
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,
        a.principal_id, a.actor_json, a.assessed_at, a.evaluator_ref_json,
-       a.supersedes_assessment_id
+       a.supersedes_assessment_id, a.submission_id, a.submission_digest
 FROM criterion_assessments a
 JOIN success_criteria c
   ON c.namespace_id = a.namespace_id
@@ -624,11 +625,12 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 	var (
 		rawID, rawCriterion, result, rationale, principal, actorJSON string
 		revision, assessedAt                                         int64
-		evaluatorJSON, supersedes                                    sql.NullString
+		evaluatorJSON, supersedes, submissionID                      sql.NullString
+		submissionDigest                                             string
 	)
 	if err := scanner.Scan(
 		&rawID, &rawCriterion, &revision, &result, &rationale,
-		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes,
+		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes, &submissionID, &submissionDigest,
 	); err != nil {
 		return domain.CriterionAssessment{}, err
 	}
@@ -653,6 +655,14 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		PrincipalID:       principal,
 		Actor:             actor,
 		AssessedAt:        decodeTime(assessedAt),
+	}
+	value.SubmissionDigest = submissionDigest
+	if submissionID.Valid {
+		parsed, err := domain.ParseID(submissionID.String)
+		if err != nil {
+			return domain.CriterionAssessment{}, err
+		}
+		value.SubmissionID = &parsed
 	}
 	if evaluatorJSON.Valid {
 		var evaluator domain.EvaluatorRef
@@ -769,8 +779,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 INSERT OR IGNORE INTO conclusions (
     id, namespace_id, outcome_id, owner_id, ordinal, owner_version,
     lifecycle_result, principal_id, actor_json, recorded_at, rationale,
-    obligations_snapshot_json, public_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    obligations_snapshot_json, public_id, submission_id, submission_digest
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			storageID,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -783,7 +793,7 @@ INSERT OR IGNORE INTO conclusions (
 			encodeTime(conclusion.ConcludedAt),
 			conclusion.Reason,
 			obligationsJSON,
-			nullableConclusionID(conclusion.ID),
+			nullableConclusionID(conclusion.ID), nullableID(conclusion.SubmissionID), conclusion.SubmissionDigest,
 		); err != nil {
 			return mapSQLError("insert conclusion", err)
 		}
@@ -856,11 +866,12 @@ func verifyConclusionRow(
 		rawOwnerID, lifecycleResult, principalID, actorJSON, rationale, obligationsJSON string
 		recordedAt                                                                      int64
 		ownerVersion                                                                    sql.NullInt64
-		publicID                                                                        sql.NullString
+		publicID, submissionID                                                          sql.NullString
+		submissionDigest                                                                string
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT owner_id, owner_version, lifecycle_result, principal_id, actor_json,
-       recorded_at, rationale, obligations_snapshot_json, public_id
+       recorded_at, rationale, obligations_snapshot_json, public_id, submission_id, submission_digest
 FROM conclusions
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		owner.NamespaceID.String(),
@@ -875,7 +886,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		&recordedAt,
 		&rationale,
 		&obligationsJSON,
-		&publicID,
+		&publicID, &submissionID, &submissionDigest,
 	)
 	if err != nil {
 		return mapSQLError("verify conclusion history", err)
@@ -896,7 +907,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		expectedPublicID = conclusion.ID.String()
 	}
 
-	if rawOwnerID != owner.ID.String() ||
+	if submissionID.String != idString(conclusion.SubmissionID) || submissionDigest != conclusion.SubmissionDigest || rawOwnerID != owner.ID.String() ||
 		lifecycleResult != expectedLifecycleResult ||
 		principalID != conclusion.PrincipalID ||
 		actorJSON != expectedActorJSON ||
@@ -933,7 +944,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 
 	rows, err := tx.QueryContext(ctx, `
 SELECT id, public_id, owner_version, lifecycle_result, principal_id, actor_json,
-       recorded_at, rationale, obligations_snapshot_json
+       recorded_at, rationale, obligations_snapshot_json, submission_id, submission_digest
 FROM conclusions
 WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?
 ORDER BY ordinal`,
@@ -1051,12 +1062,13 @@ func actorRefsEqualForStorage(left, right []domain.ActorRef) bool {
 
 func scanConclusion(scanner rowScanner, owner domain.EntityRef) (string, domain.Conclusion, error) {
 	var storageID, lifecycleResult, principal, actorJSON, rationale, obligationsJSON string
-	var publicID sql.NullString
+	var publicID, submissionID sql.NullString
+	var submissionDigest string
 	var recordedAt int64
 	var ownerVersion sql.NullInt64
 	if err := scanner.Scan(
 		&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
-		&recordedAt, &rationale, &obligationsJSON,
+		&recordedAt, &rationale, &obligationsJSON, &submissionID, &submissionDigest,
 	); err != nil {
 		return "", domain.Conclusion{}, err
 	}
@@ -1074,6 +1086,14 @@ func scanConclusion(scanner rowScanner, owner domain.EntityRef) (string, domain.
 		Reason:      rationale,
 		ConcludedAt: decodeTime(recordedAt),
 		Obligations: obligations,
+	}
+	value.SubmissionDigest = submissionDigest
+	if submissionID.Valid {
+		parsed, err := domain.ParseID(submissionID.String)
+		if err != nil {
+			return "", domain.Conclusion{}, err
+		}
+		value.SubmissionID = &parsed
 	}
 	if publicID.Valid {
 		parsed, err := domain.ParseID(publicID.String)
@@ -1096,4 +1116,11 @@ func scanConclusion(scanner rowScanner, owner domain.EntityRef) (string, domain.
 		value.LifecycleResult = lifecycleResult
 	}
 	return storageID, value, nil
+}
+
+func idString(id *domain.ID) string {
+	if id == nil {
+		return ""
+	}
+	return id.String()
 }

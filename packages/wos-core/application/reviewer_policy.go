@@ -18,7 +18,7 @@ func (s *Service) requireIndependentReview(ctx context.Context, u ports.UnitOfWo
 	if !ok {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "independent review requires execution history")
 	}
-	for _, typ := range []string{"work_item.claimed", "work_item.reclaimed", "work_item.completed", "work_item.admin_completed"} {
+	for _, typ := range []string{"work_item.claimed", "work_item.reclaimed", "work_item.completed", "work_item.admin_completed", "work_contract.acquired", "work_contract.execution_resumed", "work_contract.result_submitted"} {
 		facts, err := timeline.ListEvents(ctx, scope, ports.EventFilter{PrincipalID: principal, EventType: typ, Limit: 1})
 		if err != nil {
 			return err

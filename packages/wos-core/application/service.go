@@ -148,6 +148,9 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
@@ -184,6 +187,9 @@ func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.Com
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
+			return domain.CriterionAssessment{}, 0, err
+		}
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {

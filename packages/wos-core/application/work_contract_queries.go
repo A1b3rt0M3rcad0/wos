@@ -9,6 +9,8 @@ import (
 )
 
 type WorkContractView struct {
+	LatestCheckpoint *d.WorkCheckpoint   `json:"latest_checkpoint,omitempty"`
+	LatestSubmission *d.WorkSubmission   `json:"latest_submission,omitempty"`
 	Contract         d.WorkContract      `json:"contract"`
 	EffectiveStatus  d.ContractStatus    `json:"effective_status"`
 	EvaluatedAt      time.Time           `json:"evaluated_at"`
@@ -60,7 +62,21 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 		return ReadResult[WorkContractView]{}, err
 	}
 	live := w.CurrentContractID != nil && *w.CurrentContractID == c.ID
-	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: live && c.ValidAt(now) && ready.Ready, Recoverable: w.Lifecycle == d.WorkItemLifecycleInProgress && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
+	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: live && c.ValidAt(now) && ready.Ready, Recoverable: (live || w.CurrentContractID == nil) && w.Lifecycle == d.WorkItemLifecycleInProgress && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
+	if c.LatestCheckpointID != nil {
+		p, err := repo.GetCheckpoint(ctx, scope, *c.LatestCheckpointID)
+		if err != nil {
+			return ReadResult[WorkContractView]{}, err
+		}
+		v.LatestCheckpoint = &p
+	}
+	if c.LatestSubmissionID != nil {
+		p, err := repo.GetSubmission(ctx, scope, *c.LatestSubmissionID)
+		if err != nil {
+			return ReadResult[WorkContractView]{}, err
+		}
+		v.LatestSubmission = &p
+	}
 	return ReadResult[WorkContractView]{Value: v, OutcomeRevision: coord.Revision}, nil
 }
 func (s *Service) ListWorkContracts(ctx context.Context, scope d.Scope, f ports.ContractFilter) (ReadResult[[]d.WorkContract], error) {
