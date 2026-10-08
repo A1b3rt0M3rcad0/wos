@@ -109,6 +109,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.FailOutcomeCommand](server, ids, options, "wos_fail_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.FailOutcomeCommand) (any, error) {
 		return service.FailOutcome(ctx, cc, cmd)
 	})
+	registerCommand[application.FinalizeWorkContractCommand](server, ids, options, "wos_finalize_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.FinalizeWorkContractCommand) (any, error) {
+		return service.FinalizeWorkContract(ctx, cc, cmd)
+	})
 	registerCommand[application.InvestigateIssueCommand](server, ids, options, "wos_investigate_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.InvestigateIssueCommand) (any, error) {
 		return service.InvestigateIssue(ctx, cc, cmd)
 	})
@@ -229,8 +232,14 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.StartObjectiveCommand](server, ids, options, "wos_start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
 	})
+	registerCommand[application.SubmitWorkResultCommand](server, ids, options, "wos_submit_work_result", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitWorkResultCommand) (any, error) {
+		return service.SubmitWorkResult(ctx, cc, cmd)
+	})
 	registerCommand[application.SupersedeDecisionCommand](server, ids, options, "wos_supersede_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.SupersedeDecisionCommand) (any, error) {
 		return service.SupersedeDecision(ctx, cc, cmd)
+	})
+	registerCommand[application.SyncWorkContractCommand](server, ids, options, "wos_sync_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.SyncWorkContractCommand) (any, error) {
+		return service.SyncWorkContract(ctx, cc, cmd)
 	})
 	registerCommand[application.UnarchiveOutcomeCommand](server, ids, options, "wos_unarchive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.UnarchiveOutcomeCommand) (any, error) {
 		return service.UnarchiveOutcome(ctx, cc, cmd)

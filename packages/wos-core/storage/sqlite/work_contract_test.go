@@ -177,3 +177,65 @@ func TestWorkContractStorageUnsignedMaximum(t *testing.T) {
 		t.Fatalf("max unsigned roundtrip %d %v", roundtrip.LastFencingToken, err)
 	}
 }
+
+func TestWorkContractFinalizationProofSurvivesRestore(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "contract-results.db")
+	store := openTestStore(t, path)
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	w := contractStorageFixture(t, store, now)
+	s, err := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199ff21", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := sqliteCommandContext("0199ff10-0000-7000-8000-000000000020", "contract-result-criterion")
+	if _, err = s.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: w.Ref(), ExpectedVersion: w.Version, Title: "Checked delivery", Required: true, VerificationMode: d.VerificationModeAttestation}); err != nil {
+		t.Fatal(err)
+	}
+	cc.IdempotencyKey = "contract-result-acquire"
+	acquired, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version + 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := acquired.Value.Contract
+	authority := a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}
+	cc.IdempotencyKey = "contract-result-submit"
+	submitted, err := s.SubmitWorkResult(ctx, cc, a.SubmitWorkResultCommand{Scope: w.Scope, ContractID: c.ID, Authority: authority, ExpectedContractVersion: c.Version, Material: d.WorkResultMaterial{ContractID: c.ID, WorkItemID: w.ID, SpecDigest: c.SpecDigest, Summary: "Exact delivery"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion := acquired.Value.WorkItem.Criteria.Items[0]
+	cc.IdempotencyKey = "contract-result-review"
+	if _, err = s.AttestCriterion(ctx, cc, a.AttestCriterionCommand{Owner: w.Ref(), CriterionID: criterion.ID, CriterionRevision: criterion.Revision, ExpectedVersion: acquired.Value.WorkItem.Version, Result: d.AssessmentResultMet, Rationale: "Verified material", SubmissionID: &submitted.Value.Submission.ID}); err != nil {
+		t.Fatal(err)
+	}
+	cc.IdempotencyKey = "contract-result-finalize"
+	cmd := a.FinalizeWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: authority, ExpectedContractVersion: submitted.Value.Contract.Version, ExpectedWorkItemVersion: acquired.Value.WorkItem.Version + 1, SubmissionID: submitted.Value.Submission.ID, Reason: "Proof accepted"}
+	finished, err := s.FinalizeWorkContract(ctx, cc, cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store = reopenIntegrationFixture(t, store, path)
+	s, err = a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199ff22", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	replay, err := s.FinalizeWorkContract(ctx, cc, cmd)
+	if err != nil || !replay.IdempotentReplay || replay.Value.Contract.ID != finished.Value.Contract.ID {
+		t.Fatalf("finalize receipt after restore: %v", err)
+	}
+	got, err := s.GetWorkItem(ctx, w.Scope, w.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Value.CurrentConclusion.SubmissionDigest != submitted.Value.Submission.Digest || got.Value.Criteria.CurrentAssessments[criterion.ID].SubmissionDigest != submitted.Value.Submission.Digest {
+		t.Fatal("submission proof lost on restore")
+	}
+	snapshot, err := s.GetOutcomeState(ctx, w.Scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.WorkItems[0].CurrentConclusion.SubmissionDigest != submitted.Value.Submission.Digest {
+		t.Fatal("bulk snapshot lost binding")
+	}
+}

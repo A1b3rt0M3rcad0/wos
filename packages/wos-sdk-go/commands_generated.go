@@ -106,6 +106,9 @@ func (c *Client) DiscardRoadmapDraft(ctx context.Context, key string, cmd applic
 func (c *Client) FailOutcome(ctx context.Context, key string, cmd application.FailOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "fail_outcome", key, cmd)
 }
+func (c *Client) FinalizeWorkContract(ctx context.Context, key string, cmd application.FinalizeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "finalize_work_contract", key, cmd)
+}
 func (c *Client) InvestigateIssue(ctx context.Context, key string, cmd application.InvestigateIssueCommand) (CommandResult[domain.Issue], error) {
 	return command[domain.Issue](ctx, c, "investigate_issue", key, cmd)
 }
@@ -226,8 +229,14 @@ func (c *Client) SetWorkItemAssignees(ctx context.Context, key string, cmd appli
 func (c *Client) StartObjective(ctx context.Context, key string, cmd application.StartObjectiveCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "start_objective", key, cmd)
 }
+func (c *Client) SubmitWorkResult(ctx context.Context, key string, cmd application.SubmitWorkResultCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "submit_work_result", key, cmd)
+}
 func (c *Client) SupersedeDecision(ctx context.Context, key string, cmd application.SupersedeDecisionCommand) (CommandResult[application.DecisionSupersessionResult], error) {
 	return command[application.DecisionSupersessionResult](ctx, c, "supersede_decision", key, cmd)
+}
+func (c *Client) SyncWorkContract(ctx context.Context, key string, cmd application.SyncWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "sync_work_contract", key, cmd)
 }
 func (c *Client) UnarchiveOutcome(ctx context.Context, key string, cmd application.UnarchiveOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "unarchive_outcome", key, cmd)

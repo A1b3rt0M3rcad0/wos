@@ -42,6 +42,7 @@ type ReviseCriterionCommand struct {
 }
 
 type RecordCriterionAssessmentCommand struct {
+	SubmissionID      *domain.ID `wos:"optional"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -53,6 +54,7 @@ type RecordCriterionAssessmentCommand struct {
 }
 
 type AttestCriterionCommand struct {
+	SubmissionID      *domain.ID `wos:"optional"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision

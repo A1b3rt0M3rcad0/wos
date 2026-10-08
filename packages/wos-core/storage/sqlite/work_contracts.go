@@ -283,3 +283,19 @@ func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal 
 	}
 	return d.StoredCommandResult{CommandID: command, OutcomeRevision: d.OutcomeRevision(revision), ResponseJSON: json.RawMessage(response)}, nil
 }
+
+func (r workContractRepository) GetCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (d.WorkCheckpoint, error) {
+	var raw string
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT payload_json FROM work_contract_checkpoints WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
+	if err != nil {
+		return d.WorkCheckpoint{}, mapSQLError("get checkpoint", err)
+	}
+	var v d.WorkCheckpoint
+	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		return v, err
+	}
+	if v.ID != id || v.Scope != scope {
+		return v, d.NewError(d.ErrorCodeInvalidScope, "checkpoint binding mismatch")
+	}
+	return v, v.Validate()
+}

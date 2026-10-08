@@ -57,3 +57,22 @@ Acquire-next orders priority (critical/high/normal/low), creation time, ID; scan
 Receipt lookup at `/namespaces/{namespace_id}/commands/{command_id}` is restricted to the authenticated Principal and current authorization. Absent/expired retention does not establish that a mutation failed. A large HTTP receipt exposes command/revision with result_omitted; reconcile canonical entities or replay the original intent. Contract effective_status invalidates exact expiry immediately without a sweeper; GET never records expiration.
 
 Specifications are bounded at 128 KiB and operational commands at 256 KiB. Use documentary references rather than embedding an entire Outcome. A digest verifies semantic integrity under RFC8785 and does not authenticate the file holder. Progress/result/review/finalization are delivered in C06, and client/cutover in subsequent waves; this section does not announce their completion.
+
+
+Contract result mutations use the same transactional command pipeline on HTTP and MCP:
+`sync_work_contract`, `submit_work_result`, and `finalize_work_contract`. Sync accepts
+at most 100 documentary records and a checkpoint within 256 KiB, returns immutable
+server IDs mapped to unique `local_key` values, and commits all records, events and
+receipt together. Nested documentary scopes must match the outer scope. Existing
+artifact/evidence references are scoped and checked; no external URI is fetched.
+
+Submission requires exact registered artifact source versions/checksums and explicit
+supersession of the latest result. Criterion assessments on contract work require
+`submission_id`; the server binds the canonical digest and verifies criterion evidence.
+Finalization rechecks current eligibility, dependencies, blockers and registered evidence,
+then atomically closes the contract and WorkItem with material-bound conclusion. A new
+submission invalidates the usefulness of earlier assessments for finalization. Reads
+include only the latest checkpoint/submission plus bounded historical pages. Administrative
+revocation remains explicit; specification/dependency edits and parent closure cannot
+silently bypass a valid contract. Independent reviewer policy includes contract acquisition,
+takeover and submission as execution facts.

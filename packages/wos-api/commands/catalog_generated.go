@@ -109,6 +109,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.FailOutcomeCommand](c, "fail_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.FailOutcomeCommand) (any, error) {
 		return service.FailOutcome(ctx, cc, cmd)
 	})
+	register[application.FinalizeWorkContractCommand](c, "finalize_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.FinalizeWorkContractCommand) (any, error) {
+		return service.FinalizeWorkContract(ctx, cc, cmd)
+	})
 	register[application.InvestigateIssueCommand](c, "investigate_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.InvestigateIssueCommand) (any, error) {
 		return service.InvestigateIssue(ctx, cc, cmd)
 	})
@@ -229,8 +232,14 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.StartObjectiveCommand](c, "start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
 	})
+	register[application.SubmitWorkResultCommand](c, "submit_work_result", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitWorkResultCommand) (any, error) {
+		return service.SubmitWorkResult(ctx, cc, cmd)
+	})
 	register[application.SupersedeDecisionCommand](c, "supersede_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.SupersedeDecisionCommand) (any, error) {
 		return service.SupersedeDecision(ctx, cc, cmd)
+	})
+	register[application.SyncWorkContractCommand](c, "sync_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.SyncWorkContractCommand) (any, error) {
+		return service.SyncWorkContract(ctx, cc, cmd)
 	})
 	register[application.UnarchiveOutcomeCommand](c, "unarchive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.UnarchiveOutcomeCommand) (any, error) {
 		return service.UnarchiveOutcome(ctx, cc, cmd)

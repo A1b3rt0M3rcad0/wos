@@ -288,3 +288,17 @@ func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal 
 	}
 	return d.StoredCommandResult{}, d.NewError(d.ErrorCodeNotFound, "command receipt not retained")
 }
+
+func (r workContractRepository) GetCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (d.WorkCheckpoint, error) {
+	if err := ctx.Err(); err != nil {
+		return d.WorkCheckpoint{}, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return d.WorkCheckpoint{}, err
+	}
+	v, ok := r.tx.checkpoints[entityKey(scope, id)]
+	if !ok {
+		return d.WorkCheckpoint{}, d.NewError(d.ErrorCodeNotFound, "checkpoint not found")
+	}
+	return contractCopy(v), nil
+}

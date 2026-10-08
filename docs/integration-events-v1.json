@@ -200,6 +200,12 @@
       "event_type": "work_contract.acquired"
     },
     {
+      "event_type": "work_contract.checkpoint_recorded"
+    },
+    {
+      "event_type": "work_contract.completed"
+    },
+    {
       "event_type": "work_contract.execution_resumed"
     },
     {
@@ -207,6 +213,9 @@
     },
     {
       "event_type": "work_contract.renewed"
+    },
+    {
+      "event_type": "work_contract.result_submitted"
     },
     {
       "event_type": "work_contract.revoked"

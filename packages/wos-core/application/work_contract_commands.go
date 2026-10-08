@@ -36,9 +36,15 @@ type RevokeWorkContractCommand struct {
 	Reason                  string
 }
 type WorkContractResult struct {
-	EvaluatedAt      time.Time       `json:"evaluated_at"`
-	Contract         d.WorkContract  `json:"contract"`
-	WorkItem         d.WorkItem      `json:"work_item"`
-	PreviousContract *d.WorkContract `json:"previous_contract,omitempty"`
-	Recovery         bool            `json:"recovery"`
+	LocalKeys        map[string]d.ID   `json:"local_keys,omitempty"`
+	Artifacts        []d.Artifact      `json:"artifacts,omitempty"`
+	Evidence         []d.Evidence      `json:"evidence,omitempty"`
+	EvidenceLinks    []d.EvidenceLink  `json:"evidence_links,omitempty"`
+	EvaluatedAt      time.Time         `json:"evaluated_at"`
+	Contract         d.WorkContract    `json:"contract"`
+	WorkItem         d.WorkItem        `json:"work_item"`
+	PreviousContract *d.WorkContract   `json:"previous_contract,omitempty"`
+	Checkpoint       *d.WorkCheckpoint `json:"checkpoint,omitempty"`
+	Submission       *d.WorkSubmission `json:"submission,omitempty"`
+	Recovery         bool              `json:"recovery"`
 }
