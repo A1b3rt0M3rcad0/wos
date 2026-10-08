@@ -1,0 +1,369 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v1/contract",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "WOS restricted YAML 1.2 mapping, schema 1; max 256 KiB, depth 16. Server remains authoritative.",
+  "properties": {
+    "contract": {
+      "additionalProperties": false,
+      "properties": {
+        "acquired_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "actor_ref": {
+          "additionalProperties": false,
+          "properties": {
+            "display_name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "human",
+                "agent",
+                "service",
+                "automation",
+                "external_system"
+              ],
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "provider",
+            "id"
+          ],
+          "type": "object"
+        },
+        "close_reason": {
+          "type": "string"
+        },
+        "closed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "closed_by": {
+          "type": "string"
+        },
+        "execution_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "fencing_token": {
+          "pattern": "^[1-9][0-9]{0,19}$",
+          "type": "string"
+        },
+        "holder_principal_id": {
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "last_renewed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "latest_checkpoint_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "latest_submission_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "lease_policy": {
+          "additionalProperties": false,
+          "properties": {
+            "default_ttl_seconds": {
+              "type": "integer"
+            },
+            "max_ttl_seconds": {
+              "type": "integer"
+            },
+            "min_ttl_seconds": {
+              "type": "integer"
+            },
+            "revision": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "revision",
+            "default_ttl_seconds",
+            "min_ttl_seconds",
+            "max_ttl_seconds"
+          ],
+          "type": "object"
+        },
+        "lease_version": {
+          "type": "integer"
+        },
+        "outcome_revision_at_acquire": {
+          "type": "integer"
+        },
+        "scope": {
+          "additionalProperties": false,
+          "properties": {
+            "namespace_id": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "outcome_id": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "namespace_id",
+            "outcome_id"
+          ],
+          "type": "object"
+        },
+        "spec": {
+          "additionalProperties": false,
+          "properties": {
+            "criteria": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "criterion_revision": {
+                    "type": "integer"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "owner_ref": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string"
+                      },
+                      "namespace_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "outcome_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "namespace_id",
+                      "outcome_id",
+                      "kind",
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "verification_mode": {
+                    "enum": [
+                      "attestation",
+                      "evidence_review",
+                      "external_evaluation"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "owner_ref",
+                  "title",
+                  "required",
+                  "criterion_revision",
+                  "verification_mode",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "dependencies": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "namespace_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "outcome_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "namespace_id",
+                  "outcome_id",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "description": {
+              "type": "string"
+            },
+            "execution_spec": {
+              "additionalProperties": false,
+              "properties": {
+                "constraints": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "context_refs": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string"
+                      },
+                      "namespace_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "outcome_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "namespace_id",
+                      "outcome_id",
+                      "kind",
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "deliverables": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "instructions": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "scope_hints": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [],
+              "type": "object"
+            },
+            "objective_id": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "execution_spec"
+          ],
+          "type": "object"
+        },
+        "spec_digest": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "work_item_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "work_item_version_at_acquire": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "scope",
+        "work_item_id",
+        "holder_principal_id",
+        "actor_ref",
+        "status",
+        "version",
+        "lease_version",
+        "execution_id",
+        "fencing_token",
+        "acquired_at",
+        "expires_at",
+        "last_renewed_at",
+        "lease_policy",
+        "work_item_version_at_acquire",
+        "outcome_revision_at_acquire",
+        "spec",
+        "spec_digest"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "contract"
+  ],
+  "type": "object"
+}

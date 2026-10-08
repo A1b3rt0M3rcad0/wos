@@ -1,0 +1,103 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v1/config",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "WOS restricted YAML 1.2 mapping, schema 1; max 256 KiB, depth 16. Server remains authoritative.",
+  "properties": {
+    "connection": {
+      "additionalProperties": false,
+      "properties": {
+        "credential_ref": {
+          "type": "string"
+        },
+        "server_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "server_url",
+        "credential_ref"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "lease": {
+      "additionalProperties": false,
+      "properties": {
+        "requested_ttl_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "requested_ttl_seconds"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "additionalProperties": false,
+      "properties": {
+        "default_format": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "default_format"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "scope": {
+      "additionalProperties": false,
+      "properties": {
+        "default_outcome_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "namespace_id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace_id",
+        "default_outcome_id"
+      ],
+      "type": "object"
+    },
+    "workspace": {
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "root": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "root",
+        "format"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "profile",
+    "connection",
+    "scope",
+    "workspace",
+    "lease",
+    "output"
+  ],
+  "type": "object"
+}

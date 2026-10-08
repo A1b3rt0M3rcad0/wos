@@ -1,6 +1,7 @@
 package acceptance_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	ht "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http"
 	mt "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp"
+	cli "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
@@ -196,6 +198,38 @@ func TestHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T) {
 	result, err = session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_finalize_work_contract", Arguments: map[string]any{"idempotency_key": "protocol-finalize-0001", "command": json.RawMessage(finalInput)}})
 	if err != nil || result.IsError {
 		t.Fatalf("cross transport finalization replay %v %v", result, err)
+	}
+
+	third := w
+	third.ID = d.MustParseID("0199ff21-0000-7000-8000-000000000005")
+	tx, _ = store.Begin(ctx)
+	if err = tx.WorkItems().Insert(ctx, third); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Coordination().AdvanceOutcome(ctx, scope); err != nil {
+		t.Fatal(err)
+	}
+	if err = tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	workspace := t.TempDir()
+	var out, diagnostics bytes.Buffer
+	if code := cli.Run(ctx, []string{"init", "--server", server.URL, "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
+		t.Fatalf("CLI init %d %s %s", code, out.String(), diagnostics.String())
+	}
+	out.Reset()
+	diagnostics.Reset()
+	if code := cli.Run(ctx, []string{"work", "checkout", third.ID.String(), "--version", "1", "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
+		t.Fatalf("CLI checkout %d %s %s", code, out.String(), diagnostics.String())
+	}
+	var checkout cli.Output
+	if err = json.Unmarshal(out.Bytes(), &checkout); err != nil || !checkout.Committed || checkout.ContractID.IsZero() || checkout.ReceiptPath == "" {
+		t.Fatalf("CLI acquisition receipt %s %v", out.String(), err)
+	}
+	out.Reset()
+	diagnostics.Reset()
+	if code := cli.Run(ctx, []string{"work", "status", third.ID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
+		t.Fatalf("CLI status %d %s", code, diagnostics.String())
 	}
 
 }
