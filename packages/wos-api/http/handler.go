@@ -138,6 +138,15 @@ func (h *Handler) routes() {
 		})
 	}
 
+	h.mux.HandleFunc("GET "+h.prefix+"/identity", func(w http.ResponseWriter, r *http.Request) {
+		identity, ok := application.IdentityFromContext(r.Context())
+		if !ok {
+			writeError(w, r, domain.NewError(domain.ErrorCodeForbidden, "authenticated identity required"))
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, http.StatusOK, map[string]any{"principal_id": identity.PrincipalID, "actor_ref": identity.Actor})
+	})
 	outcome := base + "/{outcome_id}"
 	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
 	h.mux.HandleFunc("GET "+outcome+"/work-contracts", h.listWorkContracts)

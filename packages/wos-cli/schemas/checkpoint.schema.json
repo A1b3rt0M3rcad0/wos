@@ -1,0 +1,93 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v1/checkpoint",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "WOS restricted YAML 1.2 mapping, schema 1; max 256 KiB, depth 16. Server remains authoritative.",
+  "properties": {
+    "checkpoint": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_refs": {
+          "items": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "completed": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dirty": {
+          "type": "boolean"
+        },
+        "evidence_refs": {
+          "items": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "issue_refs": {
+          "items": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "next_action": {
+          "type": "string"
+        },
+        "pending": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repository_ref": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "unknown": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "working_commit": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "type": "object"
+    },
+    "contract_id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "spec_digest": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "contract_id",
+    "spec_digest",
+    "checkpoint"
+  ],
+  "type": "object"
+}
