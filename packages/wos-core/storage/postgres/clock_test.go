@@ -72,3 +72,33 @@ func TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestRemoteContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T) {
+	requirePostgres(t)
+	store := openTestStore(t, filepath.Join(t.TempDir(), "contract-authority.db"))
+	w := contractStorageFixture(t, store, time.Now().UTC())
+	remote, err := application.NewAuthorizedService(store, sqliteFixedClock{now: time.Now().Add(365 * 24 * time.Hour)}, &sqliteSequenceIDs{prefix: "01a11762", next: 1}, clockTestAuthorizer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := sqliteCommandContext("01a11743-0000-7000-8000-00000000003d", "contract-database-time-1")
+	ctx := application.WithIdentity(context.Background(), application.Identity{PrincipalID: cc.PrincipalID, Actor: cc.Actor})
+	before := time.Now().UTC()
+	got, err := remote.AcquireWorkContract(ctx, cc, application.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, TTLSeconds: 30})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := got.Value.Contract
+	if c.AcquiredAt.Before(before.Add(-time.Second)) || c.AcquiredAt.After(time.Now().Add(time.Second)) {
+		t.Fatal("contract acquisition used replica clock")
+	}
+	cc.IdempotencyKey = "contract-database-time-2"
+	_, err = remote.RenewWorkContract(ctx, cc, application.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, ContractAuthority: application.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion, TTLSeconds: 30})
+	if err != nil {
+		t.Fatal(err)
+	}
+	view, err := remote.GetWorkContract(ctx, w.Scope, c.ID)
+	if err != nil || view.Value.EvaluatedAt.After(time.Now().Add(time.Second)) || view.Value.EffectiveStatus != domain.ContractActive {
+		t.Fatalf("contract query clock %v %v", view, err)
+	}
+}

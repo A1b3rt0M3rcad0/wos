@@ -116,7 +116,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-	return WorkContractResult{Contract: c, WorkItem: w, PreviousContract: previous, Recovery: w.Lifecycle == d.WorkItemLifecycleInProgress && previous != nil}, rev, err
+	return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w, PreviousContract: previous, Recovery: w.Lifecycle == d.WorkItemLifecycleInProgress && previous != nil}, rev, err
 }
 func validateContractSpec(c d.WorkContract, a ContractAuthority) error {
 	if c.SpecDigest != a.SpecDigest {
@@ -160,7 +160,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 			return zero, 0, err
 		}
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-		return WorkContractResult{Contract: c, WorkItem: w}, rev, err
+		return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w}, rev, err
 	})
 }
 func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, cmd ResumeWorkContractCommand) (MutationResult[WorkContractResult], error) {
@@ -217,7 +217,7 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 			return zero, 0, err
 		}
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-		return WorkContractResult{Contract: c, WorkItem: w}, rev, err
+		return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w}, rev, err
 	})
 }
 func (s *Service) RevokeWorkContract(ctx context.Context, cc d.CommandContext, cmd RevokeWorkContractCommand) (MutationResult[WorkContractResult], error) {
@@ -266,7 +266,7 @@ func (s *Service) RevokeWorkContract(ctx context.Context, cc d.CommandContext, c
 			return zero, 0, err
 		}
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-		return WorkContractResult{Contract: c, WorkItem: w}, rev, err
+		return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w}, rev, err
 	})
 }
 func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandMetadata, value T, rev d.OutcomeRevision) ([]d.DomainEvent, bool, error) {
@@ -293,7 +293,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 			return nil, true, err
 		}
 		events[i].Payload = payload
-		events[i].RecordedAt = result.Contract.LastRenewedAt
+		events[i].RecordedAt = result.EvaluatedAt
 		if meta.Name == "RevokeWorkContract" {
 			events[i].RecordedAt = *result.Contract.ClosedAt
 		}

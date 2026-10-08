@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -396,8 +397,8 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	}
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
-       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
+       not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json
 FROM work_items
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
@@ -425,7 +426,9 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		title, description                  string
 		objectiveID                         sql.NullString
 		lifecycle, priority, resultSummary  string
-		lastFencing                         int64
+		lastFencing                         string
+		contractsEnabled                    int
+		contractID, executionSpec           sql.NullString
 		claimID, leasePrincipal, leaseActor sql.NullString
 		notBefore, acquiredAt, expiresAt    sql.NullInt64
 		createdAt, updatedAt                int64
@@ -434,7 +437,7 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		&rawID,
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
-		&acquiredAt, &expiresAt, &createdAt, &updatedAt,
+		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
@@ -452,11 +455,31 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		Lifecycle:        domain.WorkItemLifecycle(lifecycle),
 		Priority:         domain.Priority(priority),
 		ResultSummary:    resultSummary,
-		LastFencingToken: uint64(lastFencing),
+		LastFencingToken: 0,
+		ContractsEnabled: contractsEnabled == 1,
 		CreatedAt:        decodeTime(createdAt),
 		UpdatedAt:        decodeTime(updatedAt),
 		Criteria:         domain.NewCriterionSet(),
 		AssigneeRefs:     []domain.ActorRef{}, ConclusionHistory: []domain.Conclusion{},
+	}
+	token, err := strconv.ParseUint(lastFencing, 10, 64)
+	if err != nil || lastFencing != strconv.FormatUint(token, 10) {
+		return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted unsigned fencing is invalid")
+	}
+	value.LastFencingToken = token
+	if contractID.Valid {
+		parsed, err := domain.ParseID(contractID.String)
+		if err != nil {
+			return domain.WorkItem{}, err
+		}
+		value.CurrentContractID = &parsed
+	}
+	if executionSpec.Valid {
+		var spec domain.ExecutionSpec
+		if err := unmarshalJSON(executionSpec.String, &spec); err != nil {
+			return domain.WorkItem{}, err
+		}
+		value.ExecutionSpec = &spec
 	}
 	if notBefore.Valid {
 		t := decodeTime(notBefore.Int64)
@@ -485,7 +508,7 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 			ClaimID:      parsed,
 			PrincipalID:  leasePrincipal.String,
 			Actor:        actor,
-			FencingToken: uint64(lastFencing),
+			FencingToken: token,
 			AcquiredAt:   decodeTime(acquiredAt.Int64),
 			ExpiresAt:    decodeTime(expiresAt.Int64),
 		}
@@ -499,8 +522,8 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
-       not_before, result_summary, last_fencing_token, lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at
+       not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json
 FROM work_items
 WHERE namespace_id = ? AND outcome_id = ?
 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
@@ -577,8 +600,8 @@ INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
-    lease_acquired_at, lease_expires_at
-) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal
+) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ID.String(),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
@@ -592,12 +615,13 @@ INSERT INTO work_items (
 		string(item.Lifecycle),
 		encodeOptionalTime(item.NotBefore),
 		item.ResultSummary,
-		int64(item.LastFencingToken),
+		legacyFencing(item.LastFencingToken),
 		lease.claimID,
 		lease.principalID,
 		lease.actorJSON,
 		lease.acquiredAt,
 		lease.expiresAt,
+		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10),
 	)
 	if err != nil {
 		return mapSQLError("insert work item", err)
@@ -633,7 +657,7 @@ UPDATE work_items
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     objective_id = ?, lifecycle = ?, not_before = ?, result_summary = ?, last_fencing_token = ?,
     lease_claim_id = ?, lease_principal_id = ?, lease_actor_json = ?,
-    lease_acquired_at = ?, lease_expires_at = ?
+    lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(item.Version),
 		encodeTime(item.UpdatedAt),
@@ -644,12 +668,13 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		string(item.Lifecycle),
 		encodeOptionalTime(item.NotBefore),
 		item.ResultSummary,
-		int64(item.LastFencingToken),
+		legacyFencing(item.LastFencingToken),
 		lease.claimID,
 		lease.principalID,
 		lease.actorJSON,
 		lease.acquiredAt,
 		lease.expiresAt,
+		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
 		item.ID.String(),
@@ -888,4 +913,19 @@ func ownedAggregateIDs(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map
 		owners[id] = true
 	}
 	return owners, rows.Err()
+}
+
+// Legacy signed column remains a compatibility hint; the exact decimal column is authoritative for new writers.
+func legacyFencing(v uint64) int64 {
+	if v > uint64(1<<63-1) {
+		return 0
+	}
+	return int64(v)
+}
+func executionSpecJSON(spec *domain.ExecutionSpec) any {
+	if spec == nil {
+		return nil
+	}
+	encoded, _ := marshalJSON(spec)
+	return encoded
 }
