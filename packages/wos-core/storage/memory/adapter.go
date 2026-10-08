@@ -16,6 +16,9 @@ type Store struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
+	contracts                map[string]domain.WorkContract
+	checkpoints              map[string]domain.WorkCheckpoint
+	submissions              map[string]domain.WorkSubmission
 	relations                map[string]domain.Relation
 	issues                   map[string]domain.Issue
 	blockers                 map[string]domain.Blocker
@@ -48,6 +51,9 @@ func New() *Store {
 		outcomes:                 make(map[string]domain.Outcome),
 		objectives:               make(map[string]domain.Objective),
 		workItems:                make(map[string]domain.WorkItem),
+		contracts:                make(map[string]domain.WorkContract),
+		checkpoints:              make(map[string]domain.WorkCheckpoint),
+		submissions:              make(map[string]domain.WorkSubmission),
 		relations:                make(map[string]domain.Relation),
 		issues:                   make(map[string]domain.Issue),
 		blockers:                 make(map[string]domain.Blocker),
@@ -81,6 +87,9 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
 		workItems:                cloneWorkItems(s.workItems),
+		contracts:                cloneContractMap(s.contracts),
+		checkpoints:              cloneCheckpointMap(s.checkpoints),
+		submissions:              cloneSubmissionMap(s.submissions),
 		relations:                cloneRelations(s.relations),
 		issues:                   cloneIssues(s.issues),
 		blockers:                 cloneBlockers(s.blockers),
@@ -124,6 +133,9 @@ type transaction struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
+	contracts                map[string]domain.WorkContract
+	checkpoints              map[string]domain.WorkCheckpoint
+	submissions              map[string]domain.WorkSubmission
 	relations                map[string]domain.Relation
 	issues                   map[string]domain.Issue
 	blockers                 map[string]domain.Blocker
@@ -182,6 +194,9 @@ func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.contracts = cloneContractMap(tx.contracts)
+	tx.store.checkpoints = cloneCheckpointMap(tx.checkpoints)
+	tx.store.submissions = cloneSubmissionMap(tx.submissions)
 	tx.store.outcomes = cloneOutcomes(tx.outcomes)
 	tx.store.objectives = cloneObjectives(tx.objectives)
 	tx.store.workItems = cloneWorkItems(tx.workItems)
@@ -1819,6 +1834,14 @@ func cloneObjective(v domain.Objective) domain.Objective {
 }
 
 func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
+	if v.CurrentContractID != nil {
+		id := *v.CurrentContractID
+		v.CurrentContractID = &id
+	}
+	if v.ExecutionSpec != nil {
+		copy := contractCopy(*v.ExecutionSpec)
+		v.ExecutionSpec = &copy
+	}
 	v.AssigneeRefs = append([]domain.ActorRef(nil), v.AssigneeRefs...)
 	v.Criteria = cloneCriteria(v.Criteria)
 	v.CurrentConclusion = cloneConclusion(v.CurrentConclusion)
@@ -1855,6 +1878,10 @@ func cloneCriteria(v domain.CriterionSet) domain.CriterionSet {
 }
 
 func cloneAssessment(v domain.CriterionAssessment) domain.CriterionAssessment {
+	if v.SubmissionID != nil {
+		id := *v.SubmissionID
+		v.SubmissionID = &id
+	}
 	v.EvidenceIDs = append([]domain.ID(nil), v.EvidenceIDs...)
 	if v.EvaluatorRef != nil {
 		evaluator := *v.EvaluatorRef
@@ -1871,19 +1898,8 @@ func cloneConclusion(v *domain.Conclusion) *domain.Conclusion {
 	if v == nil {
 		return nil
 	}
-	c := *v
-	c.Assessments = append([]domain.CriterionAssessmentRef(nil), v.Assessments...)
-	c.Obligations.RequiredCriteria = append([]domain.CriterionObligationSnapshot(nil), v.Obligations.RequiredCriteria...)
-	c.Obligations.RequiredObjectiveIDs = append([]domain.ID(nil), v.Obligations.RequiredObjectiveIDs...)
-	if v.OwnerRef != nil {
-		owner := *v.OwnerRef
-		c.OwnerRef = &owner
-	}
-	if v.OwnerVersion != nil {
-		version := *v.OwnerVersion
-		c.OwnerVersion = &version
-	}
-	return &c
+	copy := contractCopy(*v)
+	return &copy
 }
 
 func cloneConclusions(src []domain.Conclusion) []domain.Conclusion {
