@@ -22,6 +22,12 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.AchieveOutcomeCommand](c, "achieve_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveOutcomeCommand) (any, error) {
 		return service.AchieveOutcome(ctx, cc, cmd)
 	})
+	register[application.AcquireNextWorkContractCommand](c, "acquire_next_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextWorkContractCommand) (any, error) {
+		return service.AcquireNextWorkContract(ctx, cc, cmd)
+	})
+	register[application.AcquireWorkContractCommand](c, "acquire_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireWorkContractCommand) (any, error) {
+		return service.AcquireWorkContract(ctx, cc, cmd)
+	})
 	register[application.ActivateOutcomeCommand](c, "activate_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.ActivateOutcomeCommand) (any, error) {
 		return service.ActivateOutcome(ctx, cc, cmd)
 	})
@@ -151,6 +157,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.RemoveExternalReferenceCommand](c, "remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
 		return service.RemoveExternalReference(ctx, cc, cmd)
 	})
+	register[application.RenewWorkContractCommand](c, "renew_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewWorkContractCommand) (any, error) {
+		return service.RenewWorkContract(ctx, cc, cmd)
+	})
 	register[application.RenewWorkItemLeaseCommand](c, "renew_work_item_lease", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewWorkItemLeaseCommand) (any, error) {
 		return service.RenewWorkItemLease(ctx, cc, cmd)
 	})
@@ -187,6 +196,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ResolveIssueAndBlockersCommand](c, "resolve_issue_and_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveIssueAndBlockersCommand) (any, error) {
 		return service.ResolveIssueAndBlockers(ctx, cc, cmd)
 	})
+	register[application.ResumeWorkContractCommand](c, "resume_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeWorkContractCommand) (any, error) {
+		return service.ResumeWorkContract(ctx, cc, cmd)
+	})
 	register[application.RetireCriterionCommand](c, "retire_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.RetireCriterionCommand) (any, error) {
 		return service.RetireCriterion(ctx, cc, cmd)
 	})
@@ -198,6 +210,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.ReviseCriterionCommand](c, "revise_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.ReviseCriterionCommand) (any, error) {
 		return service.ReviseCriterion(ctx, cc, cmd)
+	})
+	register[application.RevokeWorkContractCommand](c, "revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
+		return service.RevokeWorkContract(ctx, cc, cmd)
 	})
 	register[application.SetObjectiveOwnersCommand](c, "set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)

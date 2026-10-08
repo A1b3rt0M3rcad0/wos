@@ -52,6 +52,9 @@ func fieldName(f reflect.StructField) string {
 	return snake(f.Name)
 }
 func typeSchema(t reflect.Type) map[string]any {
+	if t == reflect.TypeFor[domain.FencingToken]() {
+		return map[string]any{"type": "string", "pattern": "^[1-9][0-9]{0,19}$"}
+	}
 	enumValues := map[reflect.Type][]string{
 		reflect.TypeFor[domain.IssueSeverity]():      {string(domain.IssueSeverityCritical), string(domain.IssueSeverityMajor), string(domain.IssueSeverityMinor), string(domain.IssueSeverityInformational)},
 		reflect.TypeFor[domain.BlockerPropagation](): {string(domain.BlockerPropagationDirect), string(domain.BlockerPropagationSubtree)},

@@ -209,6 +209,7 @@ func (s *Service) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q Gra
 }
 
 type WorkContext struct {
+	Contract        *WorkContractView               `json:"contract,omitempty"`
 	Work            domain.WorkItem                 `json:"work_item"`
 	Outcome         EntitySummary                   `json:"outcome"`
 	Objective       *domain.Objective               `json:"objective,omitempty"`
@@ -240,6 +241,17 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 		return WorkContext{}, domain.NewError(domain.ErrorCodeNotFound, "work item not found")
 	}
 	value := WorkContext{Work: *work, Outcome: summary(state.Outcome.Ref(), state.Outcome.Version, state.Outcome.Title, string(state.Outcome.Lifecycle), state.Outcome.Priority), OutcomeRevision: state.OutcomeRevision, EvaluatedAt: state.EvaluatedAt, Dependencies: []domain.Relation{}, Decisions: []domain.Decision{}, EvidenceLinks: []domain.EvidenceLink{}, Omitted: map[string]int{}}
+	if work.CurrentContractID != nil {
+		contract, err := s.GetWorkContract(ctx, scope, *work.CurrentContractID)
+		if err != nil {
+			return WorkContext{}, err
+		}
+		if contract.OutcomeRevision != state.OutcomeRevision {
+			return WorkContext{}, domain.NewError(domain.ErrorCodeVersionConflict, "context changed while expanding contract; refresh query")
+		}
+		value.Contract = &contract.Value
+	}
+
 	relevant := map[domain.EntityRef]bool{state.Outcome.Ref(): true, work.Ref(): true}
 	if work.ObjectiveID != nil {
 		for _, v := range state.Objectives {

@@ -1,3 +1,5 @@
+# Generated execution-contract command and REST-read extension: commands.openapi.json
+# ADR-018: contracts_v1 is activated explicitly per Namespace; legacy paths remain scoped to legacy protocol.
 openapi: 3.1.0
 info:
   title: Woobe Outcome Server HTTP API

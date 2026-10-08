@@ -3,6 +3,7 @@ package ports
 import (
 	"context"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"time"
 )
 
 type ContractFilter struct {
@@ -26,4 +27,33 @@ type WorkContractRepository interface {
 }
 type WorkContractUnitOfWork interface {
 	WorkContracts() WorkContractRepository
+}
+
+type ContractCandidate struct {
+	ID        domain.ID       `json:"id"`
+	Version   domain.Version  `json:"version"`
+	Priority  domain.Priority `json:"priority"`
+	CreatedAt time.Time       `json:"created_at"`
+}
+type ContractCandidateQuery struct {
+	AfterPriority int
+	AfterCreated  time.Time
+	AfterID       domain.ID
+	Limit         int
+}
+type ContractCandidateRepository interface {
+	ContractCandidates(context.Context, domain.Scope, ContractCandidateQuery) ([]ContractCandidate, error)
+}
+
+func ContractPriorityRank(p domain.Priority) int {
+	switch p {
+	case domain.PriorityCritical:
+		return 0
+	case domain.PriorityHigh:
+		return 1
+	case domain.PriorityNormal:
+		return 2
+	default:
+		return 3
+	}
 }

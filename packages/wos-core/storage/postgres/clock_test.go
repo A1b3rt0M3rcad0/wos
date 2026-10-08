@@ -93,7 +93,7 @@ func TestRemoteContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T
 		t.Fatal("contract acquisition used replica clock")
 	}
 	cc.IdempotencyKey = "contract-database-time-2"
-	_, err = remote.RenewWorkContract(ctx, cc, application.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, ContractAuthority: application.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion, TTLSeconds: 30})
+	_, err = remote.RenewWorkContract(ctx, cc, application.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: application.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion, TTLSeconds: 30})
 	if err != nil {
 		t.Fatal(err)
 	}

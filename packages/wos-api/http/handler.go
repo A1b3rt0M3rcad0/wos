@@ -117,6 +117,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) routes() {
+	h.mux.HandleFunc("GET "+h.prefix+"/capabilities", h.executionCapabilities)
+	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/commands/{command_id}", h.getCommandReceipt)
 	h.mux.HandleFunc("GET "+h.prefix+"/commands", h.commandCatalog)
 	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
 	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
@@ -137,6 +139,11 @@ func (h *Handler) routes() {
 	}
 
 	outcome := base + "/{outcome_id}"
+	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
+	h.mux.HandleFunc("GET "+outcome+"/work-contracts", h.listWorkContracts)
+	h.mux.HandleFunc("GET "+outcome+"/work-contracts/{contract_id}", h.getWorkContract)
+	h.mux.HandleFunc("GET "+outcome+"/work-contracts/{contract_id}/{section}", h.contractRecords)
+	h.mux.HandleFunc("GET "+outcome+"/work-submissions/{submission_id}", h.getWorkSubmission)
 	h.mux.HandleFunc("GET "+outcome+"/triggers", h.listTriggers)
 	h.mux.HandleFunc("GET "+outcome+"/deliveries", h.listDeliveries)
 	h.mux.HandleFunc("GET "+outcome+"/trigger-firings", h.listFirings)
@@ -452,7 +459,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		case domain.ErrorCodeTransactionConflict:
 			status = http.StatusConflict
 			retryable = true
-		case domain.ErrorCodeAlreadyExists,
+		case domain.ErrorCodeContractProtocolRequired, domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution, domain.ErrorCodeContractSpecMismatch, domain.ErrorCodeWorkAlreadyClaimed, domain.ErrorCodeSubmissionNotAccepted, domain.ErrorCodeAlreadyExists,
 			domain.ErrorCodeInvalidTransition,
 			domain.ErrorCodePreconditionFailed,
 			domain.ErrorCodeLease,

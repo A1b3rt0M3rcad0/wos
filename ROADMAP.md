@@ -863,11 +863,11 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 
 | Wave | State | Required gate |
 | --- | --- | --- |
-| C01 | Accepted design | Plan, ADRs, bypass inventory and typed preliminary fixtures |
+| C01 | Accepted design and typed fixtures | Plan, ADRs, bypass inventory and typed preliminary fixtures |
 | C02 | Domain implemented and tested | Pure domain validity/terminal/overflow tests |
 | C03 | Implemented in Memory; tested | Transactional Memory acquire/renew/revoke/takeover, replay and exclusivity |
 | C04 | SQL parity and restore tested | SQLite/PostgreSQL parity, indexes, exact fencing, restore |
-| C05 | Pending | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
+| C05 | Implemented and transport-tested | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
 | C06 | Pending | Atomic sync/submission/proof/finalization and bypass protection |
 | C07 | Pending | API-only wosctl, restricted YAML and checkout |
 | C08 | Pending | Journal/recovery/locks/keepalive; actual Linux/Windows |
@@ -883,3 +883,5 @@ C02: `domain/work_contract.go`, `work_submission.go` and `work_contract_test.go`
 C03: optional `WorkContractUnitOfWork` plus bounded repositories, transactional acquisition/snapshot, expiry+reacquisition, renewal, explicit takeover and privileged revocation. Memory deep-copies immutable material and CAS guards content/lease independently. Application race tests prove one concurrent winner, original replay, renew replay without extension, exact-deadline rejection and stale takeover fencing. WorkContract events are facts about their owning WorkItem; payload records contract identity and acquisition/result, avoiding a second entity_refs graph identity. Namespace cutover remains C10; no automatic migration occurs on acquire.
 
 C04: additive migration 0016, one-open-contract uniqueness, holder/history/expiry/page indexes and scope FKs. Immutable spec is stored separately and never updated by renewal. New writers persist full unsigned task fencing as canonical decimal; original signed field is a legacy hint (zero above signed range), never the authority when decimal exists. PostgreSQL contract token uses NUMERIC(20,0); SQLite uses exact text. Both complete storage suites pass with race on real PostgreSQL 18.6 and clean SQLite/PostgreSQL restore. New cases cover independent connections, replay after restore, expired authority, >2^53 and uint64 maximum. PostgreSQL authorized contract acquire/renew/query also pass with replica clock skew of a year. Expiration is recorded during reacquisition, effective at expires_at, independently of maintenance workers.
+
+C05: generated HTTP/MCP/SDK catalogue now includes 83 commands; contract state/spec/history, submissions, checkpoint pages, capabilities, own-principal receipt lookup and available/recoverable candidates are exposed. Authority DTO is a named `authority` object with decimal-string fencing; new wire contract was not released previously. Acquire-next scans bounded indexed headers in deterministic priority/creation/ID order, declares incomplete search and preserves empty-intent replay. Work context expands current contract only when revision matches, refusing a mixed snapshot. Contract spec cap is 128 KiB; command/query caps remain 256 KiB. Independent Go SDK + real Streamable HTTP MCP client proves HTTP acquisition → MCP takeover → stale HTTP renewal rejection, exact >2^53 fencing, own receipt, bounded history and search continuation; race passes. SQL contract suites remain verified; broader multi-storage transport proof follows C11.

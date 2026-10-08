@@ -141,7 +141,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 		if err != nil {
 			return zero, 0, err
 		}
-		if err := validateContractSpec(c, cmd.ContractAuthority); err != nil {
+		if err := validateContractSpec(c, cmd.Authority); err != nil {
 			return zero, 0, err
 		}
 		now, err := s.transactionTime(ctx, uow)
@@ -149,7 +149,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 			return zero, 0, err
 		}
 		v, l := c.Version, c.LeaseVersion
-		if err := c.Renew(cc.PrincipalID, cmd.ExecutionID, cmd.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now); err != nil {
+		if err := c.Renew(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now); err != nil {
 			return zero, 0, err
 		}
 		if err := repo.Save(ctx, c, v, l); err != nil {
@@ -180,7 +180,7 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 		if err != nil {
 			return zero, 0, err
 		}
-		if err := validateContractSpec(c, cmd.ContractAuthority); err != nil {
+		if err := validateContractSpec(c, cmd.Authority); err != nil {
 			return zero, 0, err
 		}
 		w, err := uow.WorkItems().Get(ctx, cmd.Scope, c.WorkItemID)
@@ -196,7 +196,7 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 			return zero, 0, err
 		}
 		v, l := c.Version, c.LeaseVersion
-		if err := c.Resume(cc.PrincipalID, cmd.ExecutionID, cmd.FencingToken, cmd.ExpectedLeaseVersion, execution, w.LastFencingToken, now); err != nil {
+		if err := c.Resume(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, execution, w.LastFencingToken, now); err != nil {
 			return zero, 0, err
 		}
 		if w.CurrentContractID == nil || *w.CurrentContractID != c.ID {
@@ -270,6 +270,13 @@ func (s *Service) RevokeWorkContract(ctx context.Context, cc d.CommandContext, c
 	})
 }
 func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandMetadata, value T, rev d.OutcomeRevision) ([]d.DomainEvent, bool, error) {
+	if next, ok := any(value).(WorkContractAcquisition); ok {
+		if !next.Acquired {
+			return nil, true, nil
+		}
+		meta.Name = "AcquireWorkContract"
+		return contractCommandEvents(s, cc, meta, *next.Result, rev)
+	}
 	result, ok := any(value).(WorkContractResult)
 	if !ok {
 		return nil, false, nil
@@ -288,7 +295,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 	events, err := buildCompoundEvents(s, cc, meta, rev, specs)
 	// Bind emitted facts to server-assigned identities, not only the input command.
 	for i := range events {
-		payload, err := json.Marshal(result)
+		payload, err := json.Marshal(map[string]any{"contract_id": result.Contract.ID, "work_item_id": result.WorkItem.ID, "status": result.Contract.Status, "contract_version": result.Contract.Version, "lease_version": result.Contract.LeaseVersion, "fencing_token": result.Contract.FencingToken, "spec_digest": result.Contract.SpecDigest, "expires_at": result.Contract.ExpiresAt, "previous_contract": result.PreviousContract})
 		if err != nil {
 			return nil, true, err
 		}
