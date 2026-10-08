@@ -1,0 +1,11 @@
+# WOS signed payload codec
+
+Pure Go public codec, DSSE 1.0.2 and RFC8785/JCS, Ed25519 through the Go standard library. No HTTP/SQL/secret lookup or authorization. `Sign` canonicalizes typed payload; `SignCanonical` requires exact canonical bytes. `Verify` returns exactly the verified bytes; `Decode[T]` verifies and strictly decodes only those bytes. Application must independently bind identity/registered-key purpose, scope, current permissions, time, authority and domain criteria.
+
+Payload types and structures are version 2. Every message authenticates `protocol_version` and `signer_key_id`; outer keyid is lookup only. Exactly one signature is accepted. Versions/fencing use canonical decimal strings; unsafe JSON integers, malformed UTF-8/surrogates, duplicate/unknown DTO fields and extra unsigned companion commands are rejected. JCS does not normalize Unicode. Validity does not establish truth/quality of an observation.
+
+`Document` represents a legible mapping plus proof; it is not the literal DSSE base64 JSON envelope. Presentation may reorder properties/add whitespace before `Document.Envelope`; changing semantic content changes signed bytes. CLI schema-2 YAML handles this mapping separately. Max return payload 180 KiB, envelope 256 KiB, semantic depth 16/nodes 10,000/scalar 64 KiB. Technical envelope base64 has its own derived cap.
+
+`testdata/dsse-vector.json` was independently produced with Python cryptography 50.0.0 using the public RFC8032 example seed `9d61...7f60`. Its straightforward ASCII property names, safe protocol number and string counters make Python sorted compact UTF-8 JSON identical to JCS for this vector. It publishes public key, exact canonical payload, DSSE PAE, signature and request digest. This seed is public test data and MUST NOT be used operationally. Consumers verify without importing the implementation. No private runtime key is serialized by this package.
+
+V1 Domain.SemanticDigest is unchanged. Signing authenticates DSSE message bytes, not a pre-hashed variant. Spec digest excludes proof/grant/header as defined by the spec version; authority/request digests cover their canonical payloads with no circular fields. Replay policy, key revocation, trusted issuers and transaction semantics belong to Application, not this codec.

@@ -903,7 +903,7 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | Wave | Actual state | Gate |
 | --- | --- | --- |
 | P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
-| P01 | Planned | Pure DSSE/JCS Ed25519 codec and positive/negative cross-consumer vectors. |
+| P01 | Codec implemented and locally verified | Public pure signing package, six payload purposes, typed bindings/counters, exact verified DTO, local mapping/proof and independent Python vector. Race signing/domain, vet and two 15-second fuzz campaigns passed; no runtime authorization claim. |
 | P02 | Planned | Authorized enrollment/rotation, credential floors and all adapters. |
 | P03 | Planned | Signed spec/grant, delivered/review authority and guards. |
 | P04 | Planned | Atomic signed execution return, exact material and durable receipt. |
@@ -918,3 +918,5 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
 
 R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.
+
+P01: crypto/ed25519 + existing pinned JCS, no new product dependency. Independent Python cryptography 50.0.0 generated the published RFC8032-seed DSSE vector; Go matches exact bytes/signature. Tests reject duplicate keys, lone surrogates, noncanonical bytes/base64, unsafe numeric integers, malformed key sizes, multiple signatures, wrong purpose/inner signer, unknown verified DTO fields and unsigned companion commands. Exact uint64 counters remain strings through maximum. Semantic scalar cap is distinct from technical envelope base64. Linux race/domain and vet passed; fuzz canonical/envelope ran 15 seconds each (50,477 and 552,465 executions). Actual Windows remains unexecuted. No mutable-domain/transport behavior changes in this phase.
