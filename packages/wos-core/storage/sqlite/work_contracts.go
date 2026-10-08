@@ -52,25 +52,22 @@ func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "contract limit outside 1..101")
 	}
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json,spec_json FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
 	if err != nil {
 		return nil, mapSQLError("list contracts", err)
 	}
 	defer rows.Close()
 	out := []d.WorkContract{}
 	for rows.Next() {
-		var state, spec string
-		if err := rows.Scan(&state, &spec); err != nil {
+		var state string
+		if err := rows.Scan(&state); err != nil {
 			return nil, err
 		}
 		var c d.WorkContract
 		if err := json.Unmarshal([]byte(state), &c); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(spec), &c.Spec); err != nil {
-			return nil, err
-		}
-		if err := c.Validate(); err != nil {
+		if err := c.ValidateHeader(); err != nil {
 			return nil, err
 		}
 		out = append(out, c)

@@ -16,6 +16,7 @@ type ContractFilter struct {
 type WorkContractRepository interface {
 	Get(context.Context, domain.Scope, domain.ID) (domain.WorkContract, error)
 	Current(context.Context, domain.Scope, domain.ID) (*domain.WorkContract, error)
+	// List returns validated metadata headers without immutable Spec; expand through Get.
 	List(context.Context, domain.Scope, ContractFilter) ([]domain.WorkContract, error)
 	Insert(context.Context, domain.WorkContract) error
 	Save(context.Context, domain.WorkContract, domain.Version, domain.Version) error

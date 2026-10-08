@@ -68,8 +68,8 @@ func (r workContractRepository) Current(ctx context.Context, scope d.Scope, work
 	if len(list) == 0 {
 		return nil, nil
 	}
-	c := list[0]
-	return &c, nil
+	c, err := r.Get(ctx, scope, list[0].ID)
+	return &c, err
 }
 func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports.ContractFilter) ([]d.WorkContract, error) {
 	if err := ctx.Err(); err != nil {
@@ -84,7 +84,9 @@ func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports
 	out := []d.WorkContract{}
 	for _, v := range r.tx.contracts {
 		if v.Scope == scope && (f.WorkItemID == "" || f.WorkItemID == v.WorkItemID) && (f.HolderPrincipalID == "" || f.HolderPrincipalID == v.HolderPrincipalID) && (f.Status == "" || f.Status == v.Status) && v.ID > f.After {
-			out = append(out, contractCopy(v))
+			header := v
+			header.Spec = d.WorkContractSpec{}
+			out = append(out, contractCopy(header))
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })

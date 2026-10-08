@@ -57,3 +57,9 @@ func (c *Client) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (do
 	err := c.do(ctx, "GET", "/namespaces/"+ns.String()+"/work-protocol", "", nil, &v)
 	return v, err
 }
+
+func (c *Client) GetWorkCheckpoint(ctx context.Context, scope domain.Scope, id domain.ID) (application.ReadResult[domain.WorkCheckpoint], error) {
+	var v application.ReadResult[domain.WorkCheckpoint]
+	err := c.do(ctx, "GET", scopePath(scope)+"/work-checkpoints/"+id.String(), "", nil, &v)
+	return v, err
+}

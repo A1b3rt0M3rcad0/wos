@@ -81,12 +81,14 @@ func (s ExecutionSpec) Validate() error {
 }
 
 type WorkContractSpec struct {
-	Title         string             `json:"title"`
-	Description   string             `json:"description"`
-	ObjectiveID   *ID                `json:"objective_id"`
-	ExecutionSpec ExecutionSpec      `json:"execution_spec"`
-	Criteria      []SuccessCriterion `json:"criteria"`
-	Dependencies  []EntityRef        `json:"dependencies"`
+	OutcomeIntent   string             `json:"outcome_intent,omitempty"`
+	ObjectiveIntent string             `json:"objective_intent,omitempty"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	ObjectiveID     *ID                `json:"objective_id"`
+	ExecutionSpec   ExecutionSpec      `json:"execution_spec"`
+	Criteria        []SuccessCriterion `json:"criteria"`
+	Dependencies    []EntityRef        `json:"dependencies"`
 }
 
 func NormalizeContractSpec(s WorkContractSpec) WorkContractSpec {
@@ -198,7 +200,10 @@ func NewWorkContract(id, execution ID, w WorkItem, principal string, actor Actor
 	}
 	return c, nil
 }
-func (c WorkContract) Validate() error {
+func (c WorkContract) ValidateHeader() error {
+	if len(c.SpecDigest) != 71 || !strings.HasPrefix(c.SpecDigest, "sha256:") {
+		return NewError(ErrorCodeContractSpecMismatch, "contract header requires semantic digest")
+	}
 	for _, id := range []ID{c.ID, c.ExecutionID, c.WorkItemID} {
 		if err := id.Validate(); err != nil {
 			return err
@@ -224,6 +229,24 @@ func (c WorkContract) Validate() error {
 	}
 	if strings.TrimSpace(c.HolderPrincipalID) == "" || c.FencingToken == 0 || c.AcquiredAt.IsZero() || !c.ExpiresAt.After(c.AcquiredAt) || c.LastRenewedAt.Before(c.AcquiredAt) {
 		return NewError(ErrorCodeInvalidArgument, "invalid contract authority")
+	}
+	switch c.Status {
+	case ContractActive:
+		if c.ClosedAt != nil || c.CloseReason != "" || c.ClosedBy != "" {
+			return NewError(ErrorCodeInvalidArgument, "active contract cannot have closure")
+		}
+	case ContractExpired, ContractRevoked, ContractCompleted:
+		if c.ClosedAt == nil || c.ClosedAt.IsZero() || strings.TrimSpace(c.CloseReason) == "" || strings.TrimSpace(c.ClosedBy) == "" {
+			return NewError(ErrorCodeInvalidArgument, "terminal contract requires closure provenance")
+		}
+	default:
+		return NewError(ErrorCodeInvalidArgument, "unknown contract status")
+	}
+	return nil
+}
+func (c WorkContract) Validate() error {
+	if err := c.ValidateHeader(); err != nil {
+		return err
 	}
 	if strings.TrimSpace(c.Spec.Title) == "" {
 		return NewError(ErrorCodeInvalidArgument, "contract spec title is required")
@@ -259,20 +282,9 @@ func (c WorkContract) Validate() error {
 	if digest != c.SpecDigest {
 		return NewError(ErrorCodeContractSpecMismatch, "contract digest mismatch")
 	}
-	switch c.Status {
-	case ContractActive:
-		if c.ClosedAt != nil || c.CloseReason != "" || c.ClosedBy != "" {
-			return NewError(ErrorCodeInvalidArgument, "active contract cannot have closure")
-		}
-	case ContractExpired, ContractRevoked, ContractCompleted:
-		if c.ClosedAt == nil || c.ClosedAt.IsZero() || strings.TrimSpace(c.CloseReason) == "" || strings.TrimSpace(c.ClosedBy) == "" {
-			return NewError(ErrorCodeInvalidArgument, "terminal contract requires closure provenance")
-		}
-	default:
-		return NewError(ErrorCodeInvalidArgument, "unknown contract status")
-	}
 	return nil
 }
+
 func (c WorkContract) EffectiveStatus(now time.Time) ContractStatus {
 	if c.Status == ContractActive && !now.Before(c.ExpiresAt) {
 		return ContractExpired

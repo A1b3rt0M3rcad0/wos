@@ -1,0 +1,22 @@
+{
+  "source_commit": "bcd1714ad7cded666890d0b5c9f711772c4f8d7a",
+  "namespace_id": "0199d000-0000-7000-8000-000000000001",
+  "outcome_id": "01a11cf2-2f23-71ea-93c6-85726cf7d59d",
+  "work_item_id": "01a11cf2-2f32-70af-8c28-ba63aef8a6f5",
+  "work_version": 3,
+  "conclusion_id": "01a11cf2-2f3f-7d77-85da-8540b27321b0",
+  "claim_command": {
+    "scope": {
+      "namespace_id": "0199d000-0000-7000-8000-000000000001",
+      "outcome_id": "01a11cf2-2f23-71ea-93c6-85726cf7d59d"
+    },
+    "work_item_id": "01a11cf2-2f32-70af-8c28-ba63aef8a6f5",
+    "expected_version": 1,
+    "ttl_seconds": 300
+  },
+  "claim_key": "legacy-fixture-claim_work_item",
+  "criterion_id": "01a11cf2-2f27-70e7-9253-595fc7f52cad",
+  "assessment_id": "01a11cf3-abb4-7ef8-9d96-cc4f59c156c9",
+  "attest_key": "legacy-fixture-attest_criterion",
+  "sha256_uncompressed": "079e0f2ab5950819b1b35b01c45f6a20e2cdd300341fc3b4fedb395dc1d11021"
+}

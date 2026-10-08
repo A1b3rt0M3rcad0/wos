@@ -2250,16 +2250,21 @@ $("view-outcome").onclick = () =>
 
 async function contractSection(detail,entity,generation) {
  const section=el("section",undefined,"detail-section contract-section");section.append(el("h3","Contrato de trabalho"));detail.append(section);
- const load=async(id)=>{
-  const response=await request(`${outcomeBase()}/work-contracts/${id}`);if(generation!==state.detailGeneration)return;
-  const view=response.value||response,c=view.contract;state.contractView=view;state.submission=view.latest_submission||null;
+ let loadGeneration=0;
+ const load=async(id,expand)=>{
+  const requested=++loadGeneration;
+  const response=await request(`${outcomeBase()}/work-contracts/${id}`);if(generation!==state.detailGeneration||requested!==loadGeneration)return;
+  const view=response.value||response,c=view.contract;
+  if(expand&&view.omitted?.[expand]){const expanded=await request(`${outcomeBase()}/${view.omitted[expand]}`);if(generation!==state.detailGeneration||requested!==loadGeneration)return;view[expand]=expanded.value||expanded;delete view.omitted[expand]}
+  state.contractView=view;state.submission=view.latest_submission||null;
   const status={active:"Reserva ativa",expired:"Reserva expirada",revoked:"Contrato revogado",completed:"Entrega concluída"};
   section.replaceChildren(el("h3","Contrato de trabalho"),el("strong",status[view.effective_status]||view.effective_status));
   const info=el("dl",undefined,"detail-properties");for(const [label,value] of [["Titular",c.holder_principal_id],["Prazo da reserva",date(c.expires_at)],["Versão do progresso",String(c.version)],["Versão da reserva",String(c.lease_version)],["Execução permitida",view.execution_allowed?"Sim":"Não"]]) info.append(el("dt",label),el("dd",value));section.append(info);
   if(view.reasons?.length) section.append(el("p",view.reasons.map(reason=>reason.message||display(reason.code)).join(" · "),"contract-notice"));
+  for(const [key,label] of [["latest_checkpoint","Carregar último progresso"],["latest_submission","Carregar última entrega"]])if(view.omitted?.[key]){const button=el("button",label,"quiet");button.onclick=()=>load(c.id,key).catch(error=>notice(error.message,true));section.append(button)}
   if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4","Último progresso"),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",`Próxima ação: ${checkpoint.next_action}`));if(checkpoint.pending?.length)progress.append(el("p",`Pendente: ${checkpoint.pending.join(" · ")}`));if(checkpoint.dirty)progress.append(el("small","Há alterações locais ainda não transferidas ao WOS."));if(checkpoint.working_commit)progress.append(el("small",`Referência de código: ${checkpoint.working_commit}`));section.append(progress);}
-  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4","Entrega para avaliação"),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artefatos · ${submission.material.evidence_ids?.length||0} evidências · submetida em ${date(submission.submitted_at)}`));const review=el("button","Revisar entrega","quiet");review.disabled=view.effective_status!=="active";review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice("Esta tarefa não exige avaliação de critérios. A finalização continua explícita.");return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
-  if(view.effective_status==="active"){const revoke=el("button","Revogar contrato","quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
+  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4","Entrega para avaliação"),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artefatos · ${submission.material.evidence_ids?.length||0} evidências · submetida em ${date(submission.submitted_at)}`));const review=el("button","Revisar entrega","quiet");review.disabled=view.effective_status!=="active"||c.id!==entity.current_contract_id;review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice("Esta tarefa não exige avaliação de critérios. A finalização continua explícita.");return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
+  if(view.effective_status==="active"&&c.id===entity.current_contract_id){const revoke=el("button","Revogar contrato","quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
   const audit=el("details",undefined,"technical");audit.append(el("summary","Identidade e especificação contratada"),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
  };
  try {

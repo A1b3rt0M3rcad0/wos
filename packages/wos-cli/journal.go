@@ -146,7 +146,7 @@ func (w *Workspace) Replay(ctx context.Context, client *sdk.Client, config Confi
 	response, err := client.ExecuteCommand(ctx, intent.Command, intent.IdempotencyKey, json.RawMessage(intent.Payload))
 	if err != nil {
 		var remote *sdk.Error
-		if errors.As(err, &remote) && remote.Status < 500 && remote.Status != 408 && remote.Status != 429 {
+		if errors.As(err, &remote) && remote.Status >= 400 && remote.Status < 500 && remote.Status != 408 && remote.Status != 429 && remote.Code != "transaction_conflict" {
 			intent.State = "rejected"
 			if writeErr := w.saveJSON(path, intent); writeErr != nil {
 				return nil, receiptPath, &LocalError{Err: writeErr}
