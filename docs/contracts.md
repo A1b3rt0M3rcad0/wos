@@ -56,7 +56,7 @@ Acquire-next orders priority (critical/high/normal/low), creation time, ID; scan
 
 Receipt lookup at `/namespaces/{namespace_id}/commands/{command_id}` is restricted to the authenticated Principal and current authorization. Absent/expired retention does not establish that a mutation failed. A large HTTP receipt exposes command/revision with result_omitted; reconcile canonical entities or replay the original intent. Contract effective_status invalidates exact expiry immediately without a sweeper; GET never records expiration.
 
-Specifications are bounded at 128 KiB and operational commands at 256 KiB. Use documentary references rather than embedding an entire Outcome. A digest verifies semantic integrity under RFC8785 and does not authenticate the file holder. Progress/result/review/finalization are delivered in C06, and client/cutover in subsequent waves; this section does not announce their completion.
+Specifications are bounded at 128 KiB and operational commands at 256 KiB. Use documentary references rather than embedding an entire Outcome. A digest verifies semantic integrity under RFC8785 and does not authenticate the file holder. Progress, immutable submission, exact review binding, finalization, API-only client and explicit Namespace cutover are implemented. Actual Windows and registry publication remain separate gates.
 
 
 Contract result mutations use the same transactional command pipeline on HTTP and MCP:
@@ -76,3 +76,5 @@ include only the latest checkpoint/submission plus bounded historical pages. Adm
 revocation remains explicit; specification/dependency edits and parent closure cannot
 silently bypass a valid contract. Independent reviewer policy includes contract acquisition,
 takeover and submission as execution facts.
+
+Namespace phase/policy is readable through `GET /namespaces/{namespace_id}/work-protocol` and `wos_get_namespace_work_protocol`. `set_namespace_work_protocol` and `reconcile_expired_work_contracts` require Namespace administration. ADR-020 defines guard ordering, auditing, old-writer drain acknowledgement and no downgrade. `get_work_context` retains current proof and declares omitted histories. Oversized latest progress/material expands through work-checkpoints/{id} or work-submissions/{id}; MCP has matching individual tools.

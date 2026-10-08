@@ -20,3 +20,15 @@ test('both package identities/versions are synchronized without install hooks or
     for(const hook of ['preinstall','install','postinstall','prepare']) assert.equal(pkg.scripts?.[hook],undefined);
   }
 });
+
+test('publication needs actual matching native hosts and binary checksums', async t => {
+  const {verifyNativePlatforms}=await import('./platform.mjs');
+  const fs=await import('node:fs/promises');const os=await import('node:os');
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'wos-platform-proof-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));
+  const manifest={version:'0.2.0',commit:'a'.repeat(40),built_at:'2026-10-08T19:00:00Z',artifacts:['linux','windows'].map(platform=>({kind:`client-${platform}`,binary_sha256:'b'.repeat(64)}))};
+  await assert.rejects(verifyNativePlatforms(manifest,directory),/ENOENT/);
+  for(const platform of ['linux','windows'])await fs.writeFile(path.join(directory,`platform-${platform}-amd64.json`),JSON.stringify({schema:1,platform,arch:'amd64',native_host:platform==='windows'?'win32':'linux',version:manifest.version,commit:manifest.commit,built_at:manifest.built_at,binary_sha256:'b'.repeat(64),passed:true,checks:['race','installer','version']}));
+  assert.equal(await verifyNativePlatforms(manifest,directory),true);
+  const windows=path.join(directory,'platform-windows-amd64.json');const proof=JSON.parse(await fs.readFile(windows,'utf8'));proof.native_host='linux';await fs.writeFile(windows,JSON.stringify(proof));await assert.rejects(verifyNativePlatforms(manifest,directory),/cross-build/);
+  proof.native_host='win32';proof.commit='c'.repeat(40);await fs.writeFile(windows,JSON.stringify(proof));await assert.rejects(verifyNativePlatforms(manifest,directory),/mismatched/);
+});

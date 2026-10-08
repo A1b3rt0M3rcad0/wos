@@ -118,6 +118,9 @@ func parseOptions(args []string) (options, error) {
 	return o, nil
 }
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if len(args) == 1 && args[0] == "--version" {
+		args = []string{"version"}
+	}
 	o, err := parseOptions(args)
 	result := Output{}
 	if err == nil {
@@ -199,6 +202,10 @@ func outcomePath(scope domain.Scope) string {
 }
 func run(ctx context.Context, o options) (Output, error) {
 	result := Output{Operation: strings.Join(o.args, " ")}
+	if len(o.args) == 1 && o.args[0] == "version" {
+		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "contracts_v1", "workspace_schema": 1}
+		return result, nil
+	}
 	root := o.values["workspace"]
 	if root == "" {
 		root = "."
@@ -214,6 +221,9 @@ func run(ctx context.Context, o options) (Output, error) {
 	config, client, err := loadClient(w)
 	if err != nil {
 		return result, err
+	}
+	if o.values["output"] == "" {
+		o.values["output"] = config.Output.DefaultFormat
 	}
 	scope, err := scopeFor(config, o)
 	if err != nil {

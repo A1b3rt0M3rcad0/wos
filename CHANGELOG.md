@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 — prepared for release
+
+- Add persistent execution contracts, immutable checkpoints/submissions and exact review binding; explicit Namespace cutover, bounded HTTP/MCP/SDK context, API-only YAML wosctl with durable recovery, five npm skills and matching native-platform release gates.
+
 ## 0.1.0 — prepared for release
 
 - Distribute the existing WOS Go service through npm and native Linux amd64 archives with reproducible metadata, embedded binary integrity and offline installation.

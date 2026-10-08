@@ -56,3 +56,25 @@ Use o compilador correto em PATH e caches graváveis no sandbox. `build` produz 
 Instalação/atualização/remoção das quatro skills e destinos nativos/genéricos são testadas. O serviço instalado realmente inicia HTTP/MCP/UI, trata SIGTERM e rejeita corrupção. Replays e falhas de publicação são exercitados com adapters determinísticos; uma publicação real exige os serviços externos. Nenhum teste de arquivo prova execução em todas as versões de Claude/Codex/Hermes/OpenClaw.
 
 Próximas melhorias: integração nativa executada em cada runtime; contexto focal mais seletivo por tarefa; medição de custo/token e retomada; arm64/macOS/Windows com smoke nativo; assinatura de assets e attestations da imagem; métricas/backup/deploy gerenciado por cliente. Versões independentes de serviço e skills só quando o acoplamento atual causar releases desnecessárias. Esses itens são backlog, não promessas implementadas.
+
+## Contracts/client release 0.2.0
+
+WOS npm includes Linux `wos` + `wosctl`; wos-skill contains five skills and installs
+20 skill copies across four discovery roots when `--agent all` is selected.
+Additional immutable assets are `wosctl_VERSION_linux_amd64.tar.gz` and
+`wosctl_VERSION_windows_amd64.zip`, with schema/README/licenses and source metadata.
+Docker includes the API-only client: `--entrypoint wosctl ... version --output json`.
+
+`release.yml` requires the reusable native CLI matrix, in addition to core/browser/
+packages. Native jobs run race/protocol/workspace and skill installer tests on their
+host OS, build/execute the exact-source client and upload checksum receipts. The
+publisher checks both host receipts against the generated binary SHA-256 identities;
+missing, cross-built or wrong-source receipts block publication. Dry-run may inspect
+prepared assets without pretending native Windows validation occurred. Gate receipts
+are CI evidence, not secret material or agent authority. Matching source_ref is used
+throughout historical retries.
+
+Current local state: source/artifacts can be prepared and tested on Linux. Actual
+Windows job is blocked by GitHub Actions billing/spending restrictions. Account-side
+npm authorization remains separate. No released 0.2.0/npm/GHCR claim is made until
+publication and immutable identities have actually been verified.

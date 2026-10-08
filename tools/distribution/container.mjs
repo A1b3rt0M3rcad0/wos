@@ -14,6 +14,7 @@ export async function verifyContainer(image='wos:release-tested') {
   assert.equal(info.Config.Labels['org.opencontainers.image.revision'],manifest.commit);
   assert.ok(run('docker',['run','--rm',image,'version']).includes(`wos ${manifest.version} (commit ${manifest.commit}, built ${manifest.built_at})`));
   run('docker',['run','--rm',image,'config','validate']);
+  const client=JSON.parse(run('docker',['run','--rm','--entrypoint','wosctl',image,'version','--output','json'])).data;assert.equal(client.version,manifest.version);assert.equal(client.commit,manifest.commit);
   const secret=randomBytes(32).toString('base64url');
   const namespace='0199d330-0000-7000-8000-000000000001';
   const container=run('docker',['run','-d','--read-only','--tmpfs','/data:uid=10001,gid=10001,mode=0700','-p','127.0.0.1::8080','--env','WOS_LISTEN=0.0.0.0:8080','--env','WOS_AUTH_MODE=api_token','--env','WOS_BOOTSTRAP_TOKEN','--env',`WOS_BOOTSTRAP_NAMESPACE_ID=${namespace}`,'--env','WOS_BOOTSTRAP_NAMESPACE_NAME=Release-smoke','--env','WOS_LOCAL_PRINCIPAL_ID=release-smoke','--env','WOS_MCP_ENABLED=true',image],{env:{...process.env,WOS_BOOTSTRAP_TOKEN:secret}});

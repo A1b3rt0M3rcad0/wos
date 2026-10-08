@@ -44,7 +44,7 @@ export async function prepareRelease(source=root) {
     if(folder==='wos-skill' && pkg.wosCompatibility)updated.wosCompatibility={...pkg.wosCompatibility,service:plan.version};
     packages.push({filename,pkg:updated});
   }
-  const notes=`# WOS ${plan.version}\n\n${plan.changes.map(x=>`- ${x.summary}`).join('\n')}\n\nPackages: WOS service and portable WOS skills. Service support: Linux amd64; skills require Node >=22 and a compatible runtime. Publication is verified separately from preparation.\n`;
+  const notes=`# WOS ${plan.version}\n\n${plan.changes.map(x=>`- ${x.summary}`).join('\n')}\n\nPackages: WOS service with wosctl and five portable skills. Service target: Linux amd64. Client assets: Linux amd64 and Windows amd64; actual matching native test receipts are required before publication. Skills require Node >=22 and a compatible runtime. Cross-building and release preparation do not certify Windows or registry publication.\n`;
   const changelogFile=path.join(source,'CHANGELOG.md');
   const changelog=await fs.readFile(changelogFile,'utf8');
   if(!changelog.startsWith('# Changelog\n'))throw new Error('Unexpected changelog format');

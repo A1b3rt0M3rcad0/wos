@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {verifyNativePlatforms} from '../distribution/platform.mjs';
 import { root, run, sha256, validVersion } from '../distribution/build.mjs';
 
 export const repository='A1b3rt0M3rcad0/wos';
@@ -11,14 +12,15 @@ export const imageName='ghcr.io/a1b3rt0m3rcad0/wos';
 export async function loadRelease(output=path.join(root,'dist')) {
   const manifest=JSON.parse(await fs.readFile(path.join(output,'distribution.json'),'utf8'));
   validVersion(manifest.version);
-  if(manifest.schema!==1 || !/^[a-f0-9]{40}$/.test(manifest.commit) || manifest.artifacts.length!==3)throw new Error('Invalid distribution manifest');
-  const expected={wos:`wos-${manifest.version}.tgz`,'wos-skill':`wos-skill-${manifest.version}.tgz`,archive:`wos_${manifest.version}_linux_amd64.tar.gz`};
+  if(manifest.schema!==1 || !/^[a-f0-9]{40}$/.test(manifest.commit) || manifest.artifacts.length!==5)throw new Error('Invalid distribution manifest');
+  const expected={wos:`wos-${manifest.version}.tgz`,'wos-skill':`wos-skill-${manifest.version}.tgz`,archive:`wos_${manifest.version}_linux_amd64.tar.gz`,"client-linux":`wosctl_${manifest.version}_linux_amd64.tar.gz`,"client-windows":`wosctl_${manifest.version}_windows_amd64.zip`};
   const seen=new Set();
   for(const a of manifest.artifacts) {
     if(seen.has(a.kind) || a.filename!==expected[a.kind])throw new Error('Invalid/duplicate distribution artifact');seen.add(a.kind);
     const bytes=await fs.readFile(path.join(output,a.filename));
     if(sha256(bytes)!==a.sha256)throw new Error(`Corrupt artifact: ${a.filename}`);
-    if(a.kind!=='archive' && (a.name!==`@a1b3rt0m3rcad0/${a.kind}` || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
+    if(a.kind.startsWith('client-')&&(!/^[a-f0-9]{64}$/.test(a.binary_sha256)||a.platform!==a.kind.slice(7)||a.arch!=='amd64'))throw new Error('Invalid client binary identity');
+    if(['wos','wos-skill'].includes(a.kind) && (a.name!==`@a1b3rt0m3rcad0/${a.kind}` || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
   }
   const version=(await fs.readFile(path.join(root,'VERSION'),'utf8')).trim();
   const prepared=JSON.parse(await fs.readFile(path.join(root,'release-manifest.json'),'utf8'));
@@ -40,7 +42,7 @@ export async function publishRelease(release,{store,npm,image}) {
   const tag=`v${manifest.version}`;
   // Check all identities before writing; registry versions are immutable.
   const published=new Set();
-  for(const a of manifest.artifacts.filter(a=>a.kind!=='archive')) {
+  for(const a of manifest.artifacts.filter(a=>['wos','wos-skill'].includes(a.kind))) {
     const integrity=await npm.integrity(a.name,a.version);
     if(integrity && integrity!==a.integrity)throw new Error(`Registry content differs for ${a.name}@${a.version}; never overwrite/reuse this version`);
     if(integrity)published.add(a.name);
@@ -49,14 +51,14 @@ export async function publishRelease(release,{store,npm,image}) {
   await store.ensureTag(tag,manifest.commit);
   const draft=await store.ensureDraft(tag,manifest.commit,notes);
   for(const asset of assets)await store.ensureAsset(draft,asset,release.output);
-  for(const a of manifest.artifacts.filter(a=>a.kind!=='archive')) {
+  for(const a of manifest.artifacts.filter(a=>['wos','wos-skill'].includes(a.kind))) {
     if(!published.has(a.name))await npm.publish(a,release.output);
     if(await npm.integrity(a.name,a.version)!==a.integrity)throw new Error(`Published npm integrity could not be verified: ${a.name}`);
   }
   await image.publish(manifest);
   await image.check(manifest,true);
   await store.finalize(draft);
-  return {version:manifest.version,commit:manifest.commit,tag,npm:manifest.artifacts.filter(a=>a.kind!=='archive').map(a=>a.name),image:`${imageName}:${manifest.version}`};
+  return {version:manifest.version,commit:manifest.commit,tag,npm:manifest.artifacts.filter(a=>['wos','wos-skill'].includes(a.kind)).map(a=>a.name),image:`${imageName}:${manifest.version}`};
 }
 
 function command(program,args,options={}) {
@@ -168,10 +170,11 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const dry=process.argv.length===3 && process.argv[2]==='--dry-run';
     if(process.argv.length>2&&!dry)throw new Error('Usage: node tools/releases/publish.mjs [--dry-run]');
     const release=await loadRelease();
-    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile both npm tarballs','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
+    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['require matching native Linux and Windows acceptance receipts','verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile both npm tarballs','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
     else {
       if(process.env.WOS_RELEASE_PUBLISH!=='1'||process.env.GITHUB_REPOSITORY?.toLowerCase()!==repository.toLowerCase()||!process.env.GH_TOKEN)throw new Error('Publication requires the authorized repository workflow and WOS_RELEASE_PUBLISH=1');
       if(process.env.NPM_AUTH_MODE!=='oidc'&&!process.env.NODE_AUTH_TOKEN)throw new Error('Configure npm trusted publishing or NPM_TOKEN in GitHub Actions; never put credentials in source');
+      await verifyNativePlatforms(release.manifest);
       console.log(JSON.stringify(await publishRelease(release,realAdapters({provenance:process.env.NPM_PROVENANCE==='true'})),null,2));
     }
   }catch(e){console.error(e.message);process.exitCode=1;}
