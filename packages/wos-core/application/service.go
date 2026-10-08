@@ -10,6 +10,7 @@ import (
 )
 
 type Service struct {
+	signed              *signedRuntime
 	observer            ports.CommandObserver
 	tx                  ports.TransactionManager
 	clock               ports.Clock

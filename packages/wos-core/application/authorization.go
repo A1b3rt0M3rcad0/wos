@@ -63,11 +63,11 @@ func commandPermission(name string) ports.Permission {
 	switch name {
 	case "SetNamespaceWorkProtocol", "ReconcileExpiredWorkContracts":
 		return ports.PermissionNamespaceAdmin
-	case "AcquireWorkContract", "AcquireNextWorkContract":
+	case "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "AcquireWorkContract", "AcquireNextWorkContract":
 		return ports.PermissionWorkContractAcquire
 	case "RevokeWorkContract":
 		return ports.PermissionWorkContractRevoke
-	case "RenewWorkContract", "ResumeWorkContract", "SyncWorkContract", "SubmitWorkResult":
+	case "RenewSignedWorkContract", "ResumeSignedWorkContract", "RenewWorkContract", "ResumeWorkContract", "SyncWorkContract", "SubmitWorkResult":
 		return ports.PermissionWorkWrite
 	case "FinalizeWorkContract":
 		return ports.PermissionConclusionWrite

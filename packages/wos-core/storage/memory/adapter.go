@@ -12,6 +12,7 @@ import (
 )
 
 type Store struct {
+	serverIdentity           *domain.ServerIdentity
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
 	signedSubmissions        map[string]domain.WorkSubmission
@@ -94,6 +95,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx := &transaction{
 		store:           s,
 		signedContracts: cloneContractMap(s.signedContracts), signedCheckpoints: cloneCheckpointMap(s.signedCheckpoints), signedSubmissions: cloneSubmissionMap(s.signedSubmissions), signedReview: cloneSignedReview(s.signedReview),
+		serverIdentity:           cloneServerIdentity(s.serverIdentity),
 		security:                 cloneMemorySecurityState(s.security),
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
@@ -140,6 +142,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
+	serverIdentity           *domain.ServerIdentity
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
 	signedSubmissions        map[string]domain.WorkSubmission
@@ -216,6 +219,7 @@ func (tx *transaction) Commit() error {
 	tx.store.signedCheckpoints = cloneCheckpointMap(tx.signedCheckpoints)
 	tx.store.signedSubmissions = cloneSubmissionMap(tx.signedSubmissions)
 	tx.store.signedReview = cloneSignedReview(tx.signedReview)
+	tx.store.serverIdentity = cloneServerIdentity(tx.serverIdentity)
 	tx.store.security = cloneMemorySecurityState(tx.security)
 	tx.store.protocols = cloneProtocols(tx.protocols)
 	tx.store.contracts = cloneContractMap(tx.contracts)

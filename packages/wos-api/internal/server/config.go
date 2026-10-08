@@ -21,12 +21,18 @@ const (
 // files is intentionally separate from validation so embedded hosts can build
 // Config values directly.
 type Config struct {
+	Signing     SigningConfig
 	Server      ServerConfig
 	HTTP        HTTPConfig
 	MCP         MCPConfig
 	Storage     StorageConfig
 	Auth        AuthConfig
 	Integration IntegrationConfig
+}
+
+type SigningConfig struct {
+	SeedEnv         string
+	AcceptanceFloor domain.AcceptanceMode
 }
 
 type IntegrationConfig struct {
@@ -105,6 +111,12 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	if cfg.Signing.AcceptanceFloor != "" && !cfg.Signing.AcceptanceFloor.Valid() {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid signed acceptance floor")
+	}
+	if cfg.Signing.SeedEnv != "" && cfg.Auth.Mode != AuthModeAPIToken {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "signed issuer requires scoped API credentials")
+	}
 	if cfg.Integration.ParseError {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid integration JSON configuration")
 	}

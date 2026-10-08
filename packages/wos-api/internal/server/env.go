@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"os"
 	"strings"
 )
@@ -36,6 +37,8 @@ func ConfigFromEnv() Config {
 	if v := os.Getenv("WOS_AUTH_MODE"); v != "" {
 		cfg.Auth.Mode = v
 	}
+	cfg.Signing.SeedEnv = os.Getenv("WOS_SERVER_SIGNING_SEED_ENV")
+	cfg.Signing.AcceptanceFloor = domain.AcceptanceMode(os.Getenv("WOS_SIGNED_ACCEPTANCE_FLOOR"))
 	cfg.Auth.BootstrapToken = os.Getenv("WOS_BOOTSTRAP_TOKEN")
 	cfg.Auth.BootstrapNamespaceID = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_ID")
 	cfg.Auth.BootstrapNamespaceName = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_NAME")

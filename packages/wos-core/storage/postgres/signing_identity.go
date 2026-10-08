@@ -123,6 +123,11 @@ func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, 
 		return err
 	}
 	if expected == 0 {
+		if k.Purpose == "issuer" {
+			if err = ensurePrincipal(ctx, r.u.tx, k.PrincipalID); err != nil {
+				return err
+			}
+		}
 		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signing_keys(namespace_id,id,principal_id,purpose,fingerprint,status,version,state_json) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, k.NamespaceID.String(), k.ID.String(), k.PrincipalID, k.Purpose, k.Fingerprint, k.Status, k.Version, raw)
 		return mapSQLError("create signing key", err)
 	}

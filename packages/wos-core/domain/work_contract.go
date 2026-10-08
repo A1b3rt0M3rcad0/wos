@@ -148,6 +148,8 @@ func (p LeasePolicy) TTL(seconds int) (time.Duration, error) {
 }
 
 type WorkContract struct {
+	IssuedSpecificationID    *ID                    `json:"issued_specification_id,omitempty"`
+	LatestAuthorityID        *ID                    `json:"latest_authority_id,omitempty"`
 	SignedBinding            *SignedContractBinding `json:"signed_binding,omitempty"`
 	ID                       ID                     `json:"id"`
 	Scope                    Scope                  `json:"scope"`
@@ -203,6 +205,11 @@ func NewWorkContract(id, execution ID, w WorkItem, principal string, actor Actor
 	return c, nil
 }
 func (c WorkContract) ValidateHeader() error {
+	for _, id := range []*ID{c.IssuedSpecificationID, c.LatestAuthorityID} {
+		if id != nil && (id.Validate() != nil || c.SignedBinding == nil) {
+			return NewError(ErrorCodeInvalidArgument, "invalid signed issuance pointer")
+		}
+	}
 	if c.SignedBinding != nil {
 		if err := c.SignedBinding.Validate(); err != nil {
 			return err
@@ -453,7 +460,7 @@ func ValidateContractUpdate(old, next WorkContract) error {
 	if old.Status != ContractActive {
 		return NewError(ErrorCodeInvalidTransition, "terminal contract is immutable")
 	}
-	if !reflect.DeepEqual(old.SignedBinding, next.SignedBinding) || old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
+	if !reflect.DeepEqual(old.IssuedSpecificationID, next.IssuedSpecificationID) || !reflect.DeepEqual(old.SignedBinding, next.SignedBinding) || old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
 		return NewError(ErrorCodeContractSpecMismatch, "contract acquisition is immutable")
 	}
 	contentChanged := next.Version != old.Version
@@ -462,6 +469,9 @@ func ValidateContractUpdate(old, next WorkContract) error {
 		return NewError(ErrorCodeVersionConflict, "save must advance either content or lease once")
 	}
 	if contentChanged {
+		if !reflect.DeepEqual(old.LatestAuthorityID, next.LatestAuthorityID) {
+			return NewError(ErrorCodeInvalidTransition, "content mutation cannot rewrite issued authority")
+		}
 		v, err := old.Version.Next()
 		if err != nil {
 			return err

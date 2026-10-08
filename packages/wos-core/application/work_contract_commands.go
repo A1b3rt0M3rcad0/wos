@@ -2,6 +2,7 @@ package application
 
 import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"time"
 )
 
@@ -36,15 +37,17 @@ type RevokeWorkContractCommand struct {
 	Reason                  string
 }
 type WorkContractResult struct {
-	LocalKeys        map[string]d.ID   `json:"local_keys,omitempty"`
-	Artifacts        []d.Artifact      `json:"artifacts,omitempty"`
-	Evidence         []d.Evidence      `json:"evidence,omitempty"`
-	EvidenceLinks    []d.EvidenceLink  `json:"evidence_links,omitempty"`
-	EvaluatedAt      time.Time         `json:"evaluated_at"`
-	Contract         d.WorkContract    `json:"contract"`
-	WorkItem         d.WorkItem        `json:"work_item"`
-	PreviousContract *d.WorkContract   `json:"previous_contract,omitempty"`
-	Checkpoint       *d.WorkCheckpoint `json:"checkpoint,omitempty"`
-	Submission       *d.WorkSubmission `json:"submission,omitempty"`
-	Recovery         bool              `json:"recovery"`
+	IssuedSpecification *signing.Document `json:"issued_specification,omitempty"`
+	IssuedAuthority     *signing.Document `json:"issued_authority,omitempty"`
+	LocalKeys           map[string]d.ID   `json:"local_keys,omitempty"`
+	Artifacts           []d.Artifact      `json:"artifacts,omitempty"`
+	Evidence            []d.Evidence      `json:"evidence,omitempty"`
+	EvidenceLinks       []d.EvidenceLink  `json:"evidence_links,omitempty"`
+	EvaluatedAt         time.Time         `json:"evaluated_at"`
+	Contract            d.WorkContract    `json:"contract"`
+	WorkItem            d.WorkItem        `json:"work_item"`
+	PreviousContract    *d.WorkContract   `json:"previous_contract,omitempty"`
+	Checkpoint          *d.WorkCheckpoint `json:"checkpoint,omitempty"`
+	Submission          *d.WorkSubmission `json:"submission,omitempty"`
+	Recovery            bool              `json:"recovery"`
 }

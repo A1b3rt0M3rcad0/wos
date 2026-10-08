@@ -1,0 +1,217 @@
+package sqlite
+
+import (
+	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+type acquisitionIssuer struct {
+	identity d.ServerIdentity
+	private  ed25519.PrivateKey
+}
+
+func (s acquisitionIssuer) Identity() d.ServerIdentity { return s.identity }
+func (s acquisitionIssuer) SignCanonical(purpose string, payload []byte) (json.RawMessage, error) {
+	envelope, err := signing.SignCanonical(signing.PayloadType(purpose), payload, s.identity.IssuerKeyID.String(), s.private)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := signing.ToDocument(envelope)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(doc.Proof)
+}
+func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			var store interface {
+				ports.SecurityStore
+				ports.TransactionManager
+			}
+			if backend == "memory" {
+				store = memory.New()
+			} else {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "signed-acquisition.db"))
+			}
+			ctx := context.Background()
+			now := time.Now().UTC()
+			clock := sqliteFixedClock{now}
+			ids := &sqliteSequenceIDs{prefix: "0199a556", next: 1}
+			sec := a.SecurityService{Store: store, Clock: clock, IDs: ids}
+			must := func(err error) {
+				t.Helper()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			ns := testID("0199a555-0000-7000-8000-000000000001")
+			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
+			must(err)
+			adminCtx := a.WithIdentity(ctx, admin)
+			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
+			must(err)
+			identity, err := sec.Authenticate(ctx, token)
+			must(err)
+			agentCtx := a.WithIdentity(ctx, identity)
+			pub, private, err := ed25519.GenerateKey(rand.Reader)
+			must(err)
+			fp, err := signing.Fingerprint(pub)
+			must(err)
+			server := d.ServerIdentity{ID: testID("0199a555-0000-7000-8000-000000000003"), IssuerKeyID: testID("0199a555-0000-7000-8000-000000000004"), PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, CreatedAt: now}
+			service, err := a.NewService(store, clock, ids)
+			must(err)
+			must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+			agentPub, _, err := ed25519.GenerateKey(rand.Reader)
+			must(err)
+			agentFP, err := signing.Fingerprint(agentPub)
+			must(err)
+			agentKey := testID("0199a555-0000-7000-8000-000000000005")
+			uow, err := store.Begin(ctx)
+			must(err)
+			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveCredentialPolicy(ctx, policy, 0))
+			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
+			must(err)
+			outcome.Lifecycle = d.OutcomeLifecycleActive
+			must(uow.Outcomes().Insert(ctx, outcome))
+			works := []d.WorkItem{}
+			for i := 0; i < 4; i++ {
+				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				must(e)
+				w.ContractsEnabled = true
+				must(uow.WorkItems().Insert(ctx, w))
+				works = append(works, w)
+			}
+			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()
+			state, err := protocol.Lock(ctx, ns, true)
+			must(err)
+			state.Phase = d.WorkProtocolSigned
+			state.WriterEpoch = 2
+			state.WritersDrained = true
+			state.Version++
+			state.UpdatedAt = now
+			state.UpdatedBy = "operator"
+			state.Reason = "test-only operator activation; public cutover remains separately gated"
+			must(protocol.Save(ctx, state, 1))
+			must(uow.Commit())
+			var first a.MutationResult[a.WorkContractResult]
+			var firstCC d.CommandContext
+			var firstCmd a.AcquireSignedWorkContractCommand
+			for i, w := range works {
+				commandID, err := ids.NewID()
+				must(err)
+				cc := d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: commandID, IdempotencyKey: fmt.Sprintf("signed-acquisition-intent-%d", i)}
+				cmd := a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 30}
+				if i == 0 {
+					if _, err = service.AcquireSignedWorkContract(ctx, cc, cmd); err == nil {
+						t.Fatal("trusted embedded service bypassed authenticated signed identity")
+					}
+				}
+				result, e := service.AcquireSignedWorkContract(agentCtx, cc, cmd)
+				if i == 3 {
+					if e == nil {
+						t.Fatal("another intent bypassed stable Principal quota")
+					}
+					break
+				}
+				must(e)
+				if result.Value.Contract.SignedBinding.AcceptanceFloor != d.AcceptanceIndependentReview || result.Value.IssuedSpecification == nil || result.Value.IssuedAuthority == nil {
+					t.Fatal("unsigned issuance or weakened credential floor")
+				}
+				env, e := result.Value.IssuedSpecification.Envelope()
+				must(e)
+				payload, raw, e := signing.Decode[signing.SpecPayload[d.SignedWorkSpec]](env, signing.ContractSpec, server.IssuerKeyID.String(), pub)
+				must(e)
+				if payload.ContractID != result.Value.Contract.ID.String() || payload.PrincipalID != identity.PrincipalID || signing.Digest(raw) != result.Value.Contract.SignedBinding.SpecificationDigest {
+					t.Fatal("signed specification not exact acquisition snapshot")
+				}
+				grant, e := result.Value.IssuedAuthority.Envelope()
+				must(e)
+				authority, _, e := signing.Decode[signing.AuthorityPayload](grant, signing.ContractAuthority, server.IssuerKeyID.String(), pub)
+				must(e)
+				if authority.SpecDigest != signing.Digest(raw) || authority.ExecutionID != result.Value.Contract.ExecutionID.String() || authority.AcceptanceMode != "independent_review" {
+					t.Fatal("authority detached from spec/execution/floor")
+				}
+				if i == 0 {
+					first = result
+					firstCC = cc
+					firstCmd = cmd
+				}
+			}
+
+			original := first.Value.Contract
+			renewID, err := ids.NewID()
+			must(err)
+			renewCC := firstCC
+			renewCC.CommandID = renewID
+			renewCC.IdempotencyKey = "renew-signed-first-authority"
+			renewal := a.RenewSignedWorkContractCommand{Scope: scope, ContractID: original.ID, SignerKeyID: agentKey, Authority: a.ContractAuthority{ExecutionID: original.ExecutionID, FencingToken: original.FencingToken, SpecDigest: original.SignedBinding.SpecificationDigest}, AuthorityDigest: signing.Digest(first.Value.IssuedAuthority.Payload), ExpectedLeaseVersion: original.LeaseVersion, TTLSeconds: 60}
+			renewed, err := service.RenewSignedWorkContract(agentCtx, renewCC, renewal)
+			must(err)
+			if renewed.Value.Contract.SpecDigest != original.SpecDigest || renewed.Value.Contract.SignedBinding.SpecificationDigest != original.SignedBinding.SpecificationDigest || renewed.Value.IssuedSpecification != nil || renewed.Value.Contract.LeaseVersion != original.LeaseVersion+1 {
+				t.Fatal("renewal rewrote immutable spec or failed lease CAS")
+			}
+			staleID, err := ids.NewID()
+			must(err)
+			staleCC := renewCC
+			staleCC.CommandID = staleID
+			staleCC.IdempotencyKey = "stale-signed-renewal-reference"
+			if _, err = service.RenewSignedWorkContract(agentCtx, staleCC, renewal); err == nil {
+				t.Fatal("old issued authority renewed new lease")
+			}
+			resumeID, err := ids.NewID()
+			must(err)
+			resumeCC := firstCC
+			resumeCC.CommandID = resumeID
+			resumeCC.IdempotencyKey = "resume-signed-first-authority"
+			active := renewed.Value.Contract
+			resumed, err := service.ResumeSignedWorkContract(agentCtx, resumeCC, a.ResumeSignedWorkContractCommand{Scope: scope, ContractID: active.ID, SignerKeyID: agentKey, Authority: a.ContractAuthority{ExecutionID: active.ExecutionID, FencingToken: active.FencingToken, SpecDigest: active.SignedBinding.SpecificationDigest}, AuthorityDigest: signing.Digest(renewed.Value.IssuedAuthority.Payload), ExpectedLeaseVersion: active.LeaseVersion})
+			must(err)
+			if resumed.Value.Contract.ExecutionID == active.ExecutionID || resumed.Value.Contract.FencingToken <= active.FencingToken || !resumed.Value.Contract.ExpiresAt.Equal(active.ExpiresAt) {
+				t.Fatal("takeover failed fencing or extended TTL")
+			}
+			grant, err := resumed.Value.IssuedAuthority.Envelope()
+			must(err)
+			resumedAuthority, _, err := signing.Decode[signing.AuthorityPayload](grant, signing.ContractAuthority, server.IssuerKeyID.String(), pub)
+			must(err)
+			if resumedAuthority.ExecutionID != resumed.Value.Contract.ExecutionID.String() || resumedAuthority.SpecDigest != original.SignedBinding.SpecificationDigest {
+				t.Fatal("takeover grant not bound to current execution and frozen spec")
+			}
+			replay, err := service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd)
+			must(err)
+			if !replay.IdempotentReplay || replay.Value.Contract.ID != first.Value.Contract.ID {
+				t.Fatal("acquisition replay recreated authority")
+			}
+			unsignedID, err := ids.NewID()
+			must(err)
+			unsignedCC := firstCC
+			unsignedCC.CommandID = unsignedID
+			unsignedCC.IdempotencyKey = "unsigned-epoch-two-acquisition"
+			if _, err = service.AcquireWorkContract(agentCtx, unsignedCC, a.AcquireWorkContractCommand{Scope: scope, WorkItemID: works[3].ID, ExpectedWorkItemVersion: works[3].Version}); err == nil {
+				t.Fatal("v1 acquired through signed epoch")
+			}
+			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			if _, err = service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd); err == nil {
+				t.Fatal("stale authenticated bearer disclosed signed replay")
+			}
+		})
+	}
+}

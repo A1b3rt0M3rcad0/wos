@@ -51,6 +51,12 @@ func transactCommand[T any, C any](
 		return MutationResult[T]{}, err
 	}
 
+	if signedCommand(meta.Name) {
+		identity, ok := IdentityFromContext(ctx)
+		if !ok || identity.PrincipalID != commandContext.PrincipalID || identity.Actor != commandContext.Actor || identity.NamespaceID != meta.NamespaceID || identity.CredentialDigest == "" {
+			return MutationResult[T]{}, domain.NewError(domain.ErrorCodeForbidden, "signed commands always require authenticated scoped credentials")
+		}
+	}
 	observation.Name = meta.Name
 	observation.NamespaceID = meta.NamespaceID
 	observation.OutcomeID = meta.Scope.OutcomeID
@@ -82,7 +88,7 @@ func transactCommand[T any, C any](
 
 	protocol := domain.DefaultWorkProtocol(meta.NamespaceID)
 	if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, meta.Name == "SetNamespaceWorkProtocol")
+		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, meta.Name == "SetNamespaceWorkProtocol" || signedCommand(meta.Name))
 		if err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
@@ -98,6 +104,11 @@ func transactCommand[T any, C any](
 			if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 				return MutationResult[T]{Value: zero}, err
 			}
+		}
+	}
+	if signedCommand(meta.Name) {
+		if _, _, err := service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), domain.ID("")); err != nil {
+			return MutationResult[T]{Value: zero}, err
 		}
 	}
 	var reservation domain.IdempotencyReservation

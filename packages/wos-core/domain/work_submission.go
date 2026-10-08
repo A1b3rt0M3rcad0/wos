@@ -87,6 +87,7 @@ func NormalizeResultMaterial(m WorkResultMaterial) WorkResultMaterial {
 }
 
 type WorkSubmission struct {
+	ProtocolVersion        int                `json:"protocol_version,omitempty"`
 	ID                     ID                 `json:"id"`
 	Scope                  Scope              `json:"scope"`
 	Material               WorkResultMaterial `json:"material"`
@@ -138,7 +139,13 @@ func (p WorkSubmission) Validate() error {
 			}
 		}
 	}
+	if p.ProtocolVersion != 0 && p.ProtocolVersion != 2 {
+		return NewError(ErrorCodeInvalidArgument, "unsupported submission protocol")
+	}
 	digest, err := SemanticDigest(NormalizeResultMaterial(p.Material))
+	if p.ProtocolVersion == 2 {
+		digest, err = SignedResultDigest(p.Material)
+	}
 	if err != nil {
 		return err
 	}
