@@ -22,6 +22,9 @@ func (c *Client) AchieveOutcome(ctx context.Context, key string, cmd application
 func (c *Client) AcquireNextWorkContract(ctx context.Context, key string, cmd application.AcquireNextWorkContractCommand) (CommandResult[application.WorkContractAcquisition], error) {
 	return command[application.WorkContractAcquisition](ctx, c, "acquire_next_work_contract", key, cmd)
 }
+func (c *Client) AcquireSignedReviewContract(ctx context.Context, key string, cmd application.AcquireSignedReviewContractCommand) (CommandResult[application.SignedReviewContractResult], error) {
+	return command[application.SignedReviewContractResult](ctx, c, "acquire_signed_review_contract", key, cmd)
+}
 func (c *Client) AcquireSignedWorkContract(ctx context.Context, key string, cmd application.AcquireSignedWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "acquire_signed_work_contract", key, cmd)
 }
@@ -112,6 +115,9 @@ func (c *Client) FailOutcome(ctx context.Context, key string, cmd application.Fa
 func (c *Client) FinalizeWorkContract(ctx context.Context, key string, cmd application.FinalizeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "finalize_work_contract", key, cmd)
 }
+func (c *Client) InterveneSignedReviewCase(ctx context.Context, key string, cmd application.InterveneSignedReviewCaseCommand) (CommandResult[application.SignedInterventionResult], error) {
+	return command[application.SignedInterventionResult](ctx, c, "intervene_signed_review_case", key, cmd)
+}
 func (c *Client) InvestigateIssue(ctx context.Context, key string, cmd application.InvestigateIssueCommand) (CommandResult[domain.Issue], error) {
 	return command[domain.Issue](ctx, c, "investigate_issue", key, cmd)
 }
@@ -163,6 +169,9 @@ func (c *Client) RemoveDependency(ctx context.Context, key string, cmd applicati
 func (c *Client) RemoveExternalReference(ctx context.Context, key string, cmd application.RemoveExternalReferenceCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "remove_external_reference", key, cmd)
 }
+func (c *Client) RenewSignedReviewContract(ctx context.Context, key string, cmd application.RenewSignedReviewContractCommand) (CommandResult[application.SignedReviewContractResult], error) {
+	return command[application.SignedReviewContractResult](ctx, c, "renew_signed_review_contract", key, cmd)
+}
 func (c *Client) RenewSignedWorkContract(ctx context.Context, key string, cmd application.RenewSignedWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "renew_signed_work_contract", key, cmd)
 }
@@ -205,6 +214,9 @@ func (c *Client) ResolveIssue(ctx context.Context, key string, cmd application.R
 func (c *Client) ResolveIssueAndBlockers(ctx context.Context, key string, cmd application.ResolveIssueAndBlockersCommand) (CommandResult[application.ResolveIssueAndBlockersResult], error) {
 	return command[application.ResolveIssueAndBlockersResult](ctx, c, "resolve_issue_and_blockers", key, cmd)
 }
+func (c *Client) ResumeSignedReviewContract(ctx context.Context, key string, cmd application.ResumeSignedReviewContractCommand) (CommandResult[application.SignedReviewContractResult], error) {
+	return command[application.SignedReviewContractResult](ctx, c, "resume_signed_review_contract", key, cmd)
+}
 func (c *Client) ResumeSignedWorkContract(ctx context.Context, key string, cmd application.ResumeSignedWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "resume_signed_work_contract", key, cmd)
 }
@@ -220,11 +232,17 @@ func (c *Client) RetractEvidence(ctx context.Context, key string, cmd applicatio
 func (c *Client) RetractEvidenceLink(ctx context.Context, key string, cmd application.RetractEvidenceLinkCommand) (CommandResult[domain.EvidenceLink], error) {
 	return command[domain.EvidenceLink](ctx, c, "retract_evidence_link", key, cmd)
 }
+func (c *Client) ReturnSignedReview(ctx context.Context, key string, cmd application.ReturnSignedReviewCommand) (CommandResult[application.SignedReturnResult], error) {
+	return command[application.SignedReturnResult](ctx, c, "return_signed_review", key, cmd)
+}
 func (c *Client) ReturnSignedWork(ctx context.Context, key string, cmd application.ReturnSignedWorkCommand) (CommandResult[application.SignedReturnResult], error) {
 	return command[application.SignedReturnResult](ctx, c, "return_signed_work", key, cmd)
 }
 func (c *Client) ReviseCriterion(ctx context.Context, key string, cmd application.ReviseCriterionCommand) (CommandResult[domain.SuccessCriterion], error) {
 	return command[domain.SuccessCriterion](ctx, c, "revise_criterion", key, cmd)
+}
+func (c *Client) RevokeSignedContract(ctx context.Context, key string, cmd application.RevokeSignedContractCommand) (CommandResult[application.SignedInterventionResult], error) {
+	return command[application.SignedInterventionResult](ctx, c, "revoke_signed_contract", key, cmd)
 }
 func (c *Client) RevokeWorkContract(ctx context.Context, key string, cmd application.RevokeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "revoke_work_contract", key, cmd)

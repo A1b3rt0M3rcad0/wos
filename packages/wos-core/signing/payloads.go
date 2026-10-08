@@ -83,6 +83,7 @@ type WorkReturnPayload[T any] struct {
 	SupersedesSubmissionID string `json:"supersedes_submission_id,omitempty"`
 }
 type ReviewReturnPayload[T any] struct {
+	ExpectedReviewCaseVersion Decimal `json:"expected_review_case_version"`
 	RequestBinding
 	ReviewCaseID     string `json:"review_case_id"`
 	SubmissionID     string `json:"submission_id"`

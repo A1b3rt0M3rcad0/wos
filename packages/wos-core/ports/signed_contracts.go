@@ -22,6 +22,7 @@ type SignedActiveCounts struct {
 	NamespaceReview  int `json:"namespace_review"`
 }
 type SignedContractRepository interface {
+	ExecutionParticipants(context.Context, domain.Scope, domain.ID, int) ([]domain.ExecutionParticipant, error)
 	Case(context.Context, domain.Scope, domain.ID) (domain.ReviewCase, error)
 	Cases(context.Context, domain.Scope, ReviewFilter) ([]domain.ReviewCase, error)
 	OpenCase(context.Context, domain.Scope, domain.ID) (*domain.ReviewCase, error)

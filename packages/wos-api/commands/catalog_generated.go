@@ -25,6 +25,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.AcquireNextWorkContractCommand](c, "acquire_next_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextWorkContractCommand) (any, error) {
 		return service.AcquireNextWorkContract(ctx, cc, cmd)
 	})
+	register[application.AcquireSignedReviewContractCommand](c, "acquire_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireSignedReviewContractCommand) (any, error) {
+		return service.AcquireSignedReviewContract(ctx, cc, cmd)
+	})
 	register[application.AcquireSignedWorkContractCommand](c, "acquire_signed_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireSignedWorkContractCommand) (any, error) {
 		return service.AcquireSignedWorkContract(ctx, cc, cmd)
 	})
@@ -115,6 +118,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.FinalizeWorkContractCommand](c, "finalize_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.FinalizeWorkContractCommand) (any, error) {
 		return service.FinalizeWorkContract(ctx, cc, cmd)
 	})
+	register[application.InterveneSignedReviewCaseCommand](c, "intervene_signed_review_case", func(ctx context.Context, cc domain.CommandContext, cmd application.InterveneSignedReviewCaseCommand) (any, error) {
+		return service.InterveneSignedReviewCase(ctx, cc, cmd)
+	})
 	register[application.InvestigateIssueCommand](c, "investigate_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.InvestigateIssueCommand) (any, error) {
 		return service.InvestigateIssue(ctx, cc, cmd)
 	})
@@ -166,6 +172,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.RemoveExternalReferenceCommand](c, "remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
 		return service.RemoveExternalReference(ctx, cc, cmd)
 	})
+	register[application.RenewSignedReviewContractCommand](c, "renew_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewSignedReviewContractCommand) (any, error) {
+		return service.RenewSignedReviewContract(ctx, cc, cmd)
+	})
 	register[application.RenewSignedWorkContractCommand](c, "renew_signed_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewSignedWorkContractCommand) (any, error) {
 		return service.RenewSignedWorkContract(ctx, cc, cmd)
 	})
@@ -208,6 +217,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ResolveIssueAndBlockersCommand](c, "resolve_issue_and_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveIssueAndBlockersCommand) (any, error) {
 		return service.ResolveIssueAndBlockers(ctx, cc, cmd)
 	})
+	register[application.ResumeSignedReviewContractCommand](c, "resume_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeSignedReviewContractCommand) (any, error) {
+		return service.ResumeSignedReviewContract(ctx, cc, cmd)
+	})
 	register[application.ResumeSignedWorkContractCommand](c, "resume_signed_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeSignedWorkContractCommand) (any, error) {
 		return service.ResumeSignedWorkContract(ctx, cc, cmd)
 	})
@@ -223,11 +235,17 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.RetractEvidenceLinkCommand](c, "retract_evidence_link", func(ctx context.Context, cc domain.CommandContext, cmd application.RetractEvidenceLinkCommand) (any, error) {
 		return service.RetractEvidenceLink(ctx, cc, cmd)
 	})
+	register[application.ReturnSignedReviewCommand](c, "return_signed_review", func(ctx context.Context, cc domain.CommandContext, cmd application.ReturnSignedReviewCommand) (any, error) {
+		return service.ReturnSignedReview(ctx, cc, cmd)
+	})
 	register[application.ReturnSignedWorkCommand](c, "return_signed_work", func(ctx context.Context, cc domain.CommandContext, cmd application.ReturnSignedWorkCommand) (any, error) {
 		return service.ReturnSignedWork(ctx, cc, cmd)
 	})
 	register[application.ReviseCriterionCommand](c, "revise_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.ReviseCriterionCommand) (any, error) {
 		return service.ReviseCriterion(ctx, cc, cmd)
+	})
+	register[application.RevokeSignedContractCommand](c, "revoke_signed_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeSignedContractCommand) (any, error) {
+		return service.RevokeSignedContract(ctx, cc, cmd)
 	})
 	register[application.RevokeWorkContractCommand](c, "revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
 		return service.RevokeWorkContract(ctx, cc, cmd)

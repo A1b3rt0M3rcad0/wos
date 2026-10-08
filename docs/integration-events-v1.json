@@ -279,7 +279,37 @@
       "event_type": "work_item.updated"
     },
     {
+      "event_type": "work_review.acquired"
+    },
+    {
+      "event_type": "work_review.approved"
+    },
+    {
+      "event_type": "work_review.cancelled"
+    },
+    {
+      "event_type": "work_review.changes_requested"
+    },
+    {
+      "event_type": "work_review.execution_resumed"
+    },
+    {
+      "event_type": "work_review.expired"
+    },
+    {
+      "event_type": "work_review.inconclusive"
+    },
+    {
       "event_type": "work_review.opened"
+    },
+    {
+      "event_type": "work_review.renewed"
+    },
+    {
+      "event_type": "work_review.revoked"
+    },
+    {
+      "event_type": "work_review.superseded"
     }
   ]
 }

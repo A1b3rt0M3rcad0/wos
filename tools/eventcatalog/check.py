@@ -16,6 +16,9 @@ for suffix in re.findall(r'ownerPrefix \+ "(\.[a-z_]+)"', mapping):
 current.update(re.findall(r'"(work_contract\.[a-z_]+)"', (root / "packages/wos-core/application/work_contract_service.go").read_text()))
 current.update(re.findall(r'"(outcome\.work_protocol_changed)"', (root / "packages/wos-core/application/work_protocol.go").read_text()))
 current.update(re.findall(r'"([a-z_]+\.[a-z_]+)"', (root / "packages/wos-core/application/signed_return.go").read_text()))
+current.update(re.findall(r'"(work_review\.[a-z_]+)"', (root / "packages/wos-core/application/signed_review_acquisition.go").read_text()))
+current.update(re.findall(r'"(work_review\.[a-z_]+)"', (root / "packages/wos-core/application/signed_review_return.go").read_text()))
+current.update(re.findall(r'"((?:work_review|work_contract)\.[a-z_]+)"', (root / "packages/wos-core/application/signed_intervention.go").read_text()))
 catalog = json.loads((root / "docs/integration-events-v1.json").read_text())
 published = [entry["event_type"] for entry in catalog["events"]]
 if catalog["schema_version"] != 1 or len(published) != len(set(published)):

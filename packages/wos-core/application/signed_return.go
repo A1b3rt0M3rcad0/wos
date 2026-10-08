@@ -29,6 +29,7 @@ type SignedLocalCriterionEvidence struct {
 	EvidenceLocalKeys []string        `json:"evidence_local_keys"`
 }
 type SignedReturnMaterial struct {
+	CorrectionResponses    []SignedFindingResponse        `json:"correction_responses,omitempty"`
 	Result                 d.SignedResultMaterial         `json:"result"`
 	Artifacts              []SyncArtifactInput            `json:"artifacts,omitempty"`
 	Evidence               []SyncEvidenceInput            `json:"evidence,omitempty"`
@@ -40,7 +41,9 @@ type SignedReturnMaterial struct {
 	Reason                 string                         `json:"reason,omitempty"`
 }
 type SignedReturnResult struct {
-	Receipt signing.Document `json:"acceptance_receipt"`
+	reviewAuthority *d.ReviewContract
+	reviewDecision  string
+	Receipt         signing.Document `json:"acceptance_receipt"`
 	// Runtime-only event composition; never expose unsigned copies as proof.
 	work          *WorkContractResult
 	review        *d.ReviewCase
@@ -203,6 +206,9 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if fact.PayloadDigest != request.SpecDigest || spec.ContractID != contract.ID.String() || spec.WorkItemID != work.ID.String() || spec.ContractKind != "execution" || !reflect.DeepEqual(spec.Spec.WorkSpec(), d.NormalizeContractSpec(contract.Spec)) {
 			return zero, 0, d.NewError(d.ErrorCodeContractSpecMismatch, "authenticated specification differs")
 		}
+		if spec.Spec.AcceptanceFloor != contract.SignedBinding.AcceptanceFloor || spec.Spec.PolicyRevision != contract.SignedBinding.PolicyRevision || !reflect.DeepEqual(spec.Spec.PreviousSubmissionID, contract.SignedBinding.PreviousSubmissionID) || !reflect.DeepEqual(spec.Spec.PreviousReviewCaseID, contract.SignedBinding.PreviousReviewCaseID) || !reflect.DeepEqual(spec.Spec.CorrectionFindings, contract.SignedBinding.CorrectionFindings) {
+			return zero, 0, d.NewError(d.ErrorCodeContractSpecMismatch, "signed frozen policy/correction bindings differ")
+		}
 		contract.Spec = spec.Spec.WorkSpec()
 		if !reflect.DeepEqual(contract.Spec.Criteria, d.NormalizeContractSpec(d.WorkContractSpec{Criteria: work.Criteria.Items}).Criteria) {
 			return zero, 0, d.NewError(d.ErrorCodeContractSpecMismatch, "live criterion definitions differ from signed obligations")
@@ -262,6 +268,9 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 			return zero, 0, err
 		}
 		if err = resolveSignedMaterial(&material, request.Material, registered); err != nil {
+			return zero, 0, err
+		}
+		if err = validateCorrectionResponses(contract.SignedBinding.CorrectionFindings, request.Material.CorrectionResponses, material, registered.LocalKeys); err != nil {
 			return zero, 0, err
 		}
 		if err = validateSubmittedMaterial(ctx, u, work, material); err != nil {
@@ -343,10 +352,33 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 				review.ExecutionPrincipals = uniqueSignedStrings(append(prior.ExecutionPrincipals, review.ExecutionPrincipals...))
 				review.ExecutionGroups = uniqueSignedStrings(append(prior.ExecutionGroups, groups...))
 			}
+			participants, e := repo.ExecutionParticipants(ctx, scope, work.ID, 101)
+			if e != nil {
+				return zero, 0, e
+			}
+			if len(participants) > 100 {
+				return zero, 0, d.NewError(d.ErrorCodeGraphLimitExceeded, "execution independence history exceeds bounded participant limit")
+			}
+			for _, p := range participants {
+				review.ExecutionPrincipals = uniqueSignedStrings(append(review.ExecutionPrincipals, p.PrincipalID))
+				if p.SeparationGroup != "" {
+					review.ExecutionGroups = uniqueSignedStrings(append(review.ExecutionGroups, p.SeparationGroup))
+				}
+			}
 			if err = review.Validate(); err != nil {
 				return zero, 0, err
 			}
 			disposition = "delivered_for_review"
+			work.PendingReviewCaseID = &review.ID
+			work.LatestReviewCaseID = &review.ID
+			work.CorrectionReviewCaseID = nil
+			work.CurrentLease = nil
+			next, e := work.Version.Next()
+			if e != nil {
+				return zero, 0, e
+			}
+			work.Version = next
+			work.UpdatedAt = now
 		}
 		if err = workRepo.InsertSubmission(ctx, submission); err != nil {
 			return zero, 0, err
@@ -354,10 +386,8 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if err = workRepo.Save(ctx, contract, cv, lv); err != nil {
 			return zero, 0, err
 		}
-		if direct {
-			if err = u.WorkItems().Save(ctx, work, wv); err != nil {
-				return zero, 0, err
-			}
+		if err = u.WorkItems().Save(ctx, work, wv); err != nil {
+			return zero, 0, err
 		}
 		if review != nil {
 			if err = repo.InsertCase(ctx, *review); err != nil {
@@ -458,7 +488,7 @@ func resolveSignedMaterial(m *d.WorkResultMaterial, input SignedReturnMaterial, 
 	}
 	return nil
 }
-func (s *Service) recordSignedAssessments(ctx context.Context, u ports.UnitOfWork, cc d.CommandContext, w *d.WorkItem, submission d.WorkSubmission, inputs []SignedAssessmentInput, localKeys map[string]d.ID, now time.Time) error {
+func (s *Service) recordSignedAssessments(ctx context.Context, u ports.UnitOfWork, cc d.CommandContext, w *d.WorkItem, submission d.WorkSubmission, inputs []SignedAssessmentInput, localKeys map[string]d.ID, now time.Time, complementary ...[]d.SubmissionCriterionEvidence) error {
 	if len(inputs) > 100 {
 		return d.NewError(d.ErrorCodeInvalidArgument, "assessment limit is 100")
 	}
@@ -466,6 +496,22 @@ func (s *Service) recordSignedAssessments(ctx context.Context, u ports.UnitOfWor
 	allowed := map[d.ID]bool{}
 	for _, id := range submission.Material.EvidenceIDs {
 		allowed[id] = true
+	}
+	criterionEvidence := append([]d.SubmissionCriterionEvidence(nil), submission.Material.CriterionEvidence...)
+	for _, list := range complementary {
+		for _, ref := range list {
+			found := false
+			for _, c := range w.Criteria.Items {
+				found = found || (c.ID == ref.CriterionID && c.Revision == ref.CriterionRevision && c.Status == d.CriterionStatusActive)
+			}
+			if !found {
+				return d.NewError(d.ErrorCodeSubmissionNotAccepted, "complementary review evidence targets an unplanned/stale criterion")
+			}
+			for _, id := range ref.EvidenceIDs {
+				allowed[id] = true
+			}
+			criterionEvidence = append(criterionEvidence, ref)
+		}
 	}
 	// An older assessment never proves new returned material.
 	w.Criteria.CurrentAssessments = map[d.ID]d.CriterionAssessment{}
@@ -484,7 +530,7 @@ func (s *Service) recordSignedAssessments(ctx context.Context, u ports.UnitOfWor
 		}
 		for _, id := range ids {
 			criterionBound := false
-			for _, ref := range submission.Material.CriterionEvidence {
+			for _, ref := range criterionEvidence {
 				if ref.CriterionID == input.CriterionID && ref.CriterionRevision == d.CriterionRevision(input.CriterionRevision) {
 					for _, eid := range ref.EvidenceIDs {
 						criterionBound = criterionBound || eid == id
@@ -526,6 +572,9 @@ func signedReturnEvents(s *Service, cc d.CommandContext, meta commandMetadata, r
 	}
 	if result.work == nil {
 		return nil, d.NewError(d.ErrorCodeInvalidEvent, "signed return event material missing")
+	}
+	if result.reviewAuthority != nil {
+		return signedReviewReturnEvents(s, cc, meta, result, revision)
 	}
 	work := result.work
 	specs := []compoundEventSpec{{eventType: "work_contract.result_submitted", ref: work.Contract.Ref(), after: versionPtr(work.Contract.Version)}}

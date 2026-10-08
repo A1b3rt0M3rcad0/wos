@@ -239,6 +239,18 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 		meta.Scope = scope
 		meta.NamespaceID = scope.NamespaceID
 	}
+	if c, ok := any(command).(ReturnSignedReviewCommand); ok {
+		var hint signing.ReviewReturnPayload[SignedReviewMaterial]
+		if err := signedRequestHint(c.Envelope, &hint); err != nil {
+			return commandMetadata{}, err
+		}
+		scope, err := signedRequestScope(hint.RequestBinding)
+		if err != nil {
+			return commandMetadata{}, err
+		}
+		meta.Scope = scope
+		meta.NamespaceID = scope.NamespaceID
+	}
 	if err := meta.NamespaceID.Validate(); err != nil {
 		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command namespace cannot be resolved", err)
 	}
@@ -311,6 +323,12 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if r, ok := any(value).(SignedInterventionResult); ok {
+		return signedInterventionEvents(s, commandContext, meta, r, revision)
+	}
+	if r, ok := any(value).(SignedReviewContractResult); ok {
+		return signedReviewEvents(s, commandContext, meta, r, revision)
+	}
 	if r, ok := any(value).(SignedReturnResult); ok {
 		return signedReturnEvents(s, commandContext, meta, r, revision)
 	}
