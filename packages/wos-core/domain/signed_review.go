@@ -11,6 +11,8 @@ import (
 // It is public metadata, not proof that an envelope has been verified.
 type SignedContractBinding struct {
 	ProtocolVersion      int            `json:"protocol_version"`
+	SpecificationDigest  string         `json:"specification_digest,omitempty"`
+	SeparationGroup      string         `json:"separation_group,omitempty"`
 	ServerID             string         `json:"server_id"`
 	CredentialID         ID             `json:"credential_id"`
 	SignerKeyID          ID             `json:"signer_key_id"`
@@ -22,6 +24,9 @@ type SignedContractBinding struct {
 }
 
 func (b SignedContractBinding) Validate() error {
+	if len(b.SeparationGroup) > 256 || (b.SpecificationDigest != "" && !ValidSignedDigest(b.SpecificationDigest)) {
+		return NewError(ErrorCodeInvalidArgument, "invalid frozen specification/group binding")
+	}
 	if b.ProtocolVersion != 2 || strings.TrimSpace(b.ServerID) == "" || len(b.ServerID) > 256 || b.CredentialID.Validate() != nil || b.SignerKeyID.Validate() != nil || b.PolicyRevision.Validate() != nil || !b.AcceptanceFloor.Valid() || len(b.AllowedSigningKeyIDs) < 1 || len(b.AllowedSigningKeyIDs) > 100 {
 		return NewError(ErrorCodeInvalidArgument, "invalid signed contract binding")
 	}
@@ -68,7 +73,7 @@ func (c *WorkContract) Deliver(submission WorkSubmission, principal string, exec
 	if err := submission.Validate(); err != nil {
 		return err
 	}
-	if submission.Material.ContractID != c.ID || submission.Scope != c.Scope || submission.Material.WorkItemID != c.WorkItemID || submission.Material.SpecDigest != c.SpecDigest || submission.PrincipalID != principal || submission.Actor != c.Actor || submission.SubmittedAt.Before(c.AcquiredAt) || submission.SubmittedAt.After(now) {
+	if submission.Material.ContractID != c.ID || submission.Scope != c.Scope || submission.Material.WorkItemID != c.WorkItemID || submission.Material.SpecDigest != c.SubmissionSpecDigest() || submission.PrincipalID != principal || submission.Actor != c.Actor || submission.SubmittedAt.Before(c.AcquiredAt) || submission.SubmittedAt.After(now) {
 		return NewError(ErrorCodeInvalidScope, "submission does not bind this authority")
 	}
 	if err := c.close(ContractDelivered, "accepted for independent review", principal, now); err != nil {
@@ -512,4 +517,13 @@ func ValidateReviewContractUpdate(old, next ReviewContract) error {
 		return NewError(ErrorCodeInvalidTransition, "review acquisition/target/policy immutable")
 	}
 	return next.Validate()
+}
+
+// A v2 issuance binds its exact signed specification digest. Historical design
+// fixtures without issuance metadata still use the unchanged v1 semantic digest.
+func (c WorkContract) SubmissionSpecDigest() string {
+	if c.SignedBinding != nil && c.SignedBinding.SpecificationDigest != "" {
+		return c.SignedBinding.SpecificationDigest
+	}
+	return c.SpecDigest
 }

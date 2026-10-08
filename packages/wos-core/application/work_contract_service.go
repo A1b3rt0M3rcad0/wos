@@ -311,7 +311,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 	if !ok {
 		return nil, false, nil
 	}
-	facts := map[string]string{"AcquireWorkContract": "work_contract.acquired", "RenewWorkContract": "work_contract.renewed", "ResumeWorkContract": "work_contract.execution_resumed", "RevokeWorkContract": "work_contract.revoked", "SyncWorkContract": "work_contract.checkpoint_recorded", "SubmitWorkResult": "work_contract.result_submitted", "FinalizeWorkContract": "work_contract.completed"}
+	facts := map[string]string{"AcquireSignedWorkContract": "work_contract.acquired", "RenewSignedWorkContract": "work_contract.renewed", "ResumeSignedWorkContract": "work_contract.execution_resumed", "AcquireWorkContract": "work_contract.acquired", "RenewWorkContract": "work_contract.renewed", "ResumeWorkContract": "work_contract.execution_resumed", "RevokeWorkContract": "work_contract.revoked", "SyncWorkContract": "work_contract.checkpoint_recorded", "SubmitWorkResult": "work_contract.result_submitted", "FinalizeWorkContract": "work_contract.completed"}
 	fact, ok := facts[meta.Name]
 	if !ok {
 		return nil, false, nil

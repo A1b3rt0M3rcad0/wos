@@ -120,6 +120,10 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	observer := observability.New(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
 	service.SetObserver(observer)
 	service.SetIndependentReviewer(config.Auth.IndependentReviewer)
+	if err = configureSignedRuntime(context.Background(), config, store, service, security, ids); err != nil {
+		_ = store.Close()
+		return nil, err
+	}
 	if len(config.Integration.Endpoints) > 0 {
 		installer, ok := store.(interface {
 			InstallEndpoints(context.Context, []ports.WebhookEndpoint) error

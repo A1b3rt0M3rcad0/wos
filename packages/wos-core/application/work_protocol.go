@@ -137,6 +137,19 @@ func (s *Service) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (d
 	return repo.Lock(ctx, ns, false)
 }
 func protectWorkProtocol(p domain.NamespaceWorkProtocol, name string) error {
+	if p.Phase == domain.WorkProtocolSigned || p.Phase == domain.WorkProtocolSignedDraining {
+		switch name {
+		case "AcquireWorkContract", "AcquireNextWorkContract":
+			return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "unsigned acquisition disabled by signed protocol or drain")
+		}
+	}
+	if p.Phase == domain.WorkProtocolSigned {
+		switch name {
+		case "ClaimWorkItem", "ReclaimWorkItem", "RenewWorkItemLease", "ReleaseWorkItem", "CompleteWorkItem", "AdministrativeCompleteWorkItem", "RenewWorkContract", "ResumeWorkContract", "RevokeWorkContract", "SyncWorkContract", "SubmitWorkResult", "FinalizeWorkContract", "ReconcileExpiredWorkContracts":
+			return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "signed Namespace requires signed contract operations")
+		}
+	}
+
 	blocked := false
 	switch name {
 	case "ClaimWorkItem", "ReclaimWorkItem":
