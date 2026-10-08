@@ -110,6 +110,9 @@ func (w *WorkItem) UpdateDetails(
 	priority *Priority,
 	now time.Time,
 ) (bool, error) {
+	if err := w.requireUncontracted(); err != nil {
+		return false, err
+	}
 	if w.isTerminal() {
 		return false, NewError(ErrorCodeInvalidTransition, "cannot edit terminal work item")
 	}

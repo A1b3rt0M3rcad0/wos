@@ -10,6 +10,9 @@ import (
 // fencing token. Once a lease expires it cannot be renewed; the WorkItem must
 // be reclaimed so stale claimants are fenced out by a new token.
 func (w *WorkItem) RenewLease(principalID string, claimID ID, fencingToken uint64, ttl time.Duration, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "work item is not currently claimed")
 	}
@@ -32,6 +35,9 @@ func (w *WorkItem) RenewLease(principalID string, claimID ID, fencingToken uint6
 // newer fencing token. The WorkItem remains in_progress: expiration makes it
 // recoverable, but never rewrites lifecycle state by the passage of time alone.
 func (w *WorkItem) Reclaim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
 		return NewError(ErrorCodeInvalidTransition, "work item is not currently claimed")
 	}

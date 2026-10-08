@@ -75,3 +75,5 @@ Before adding a dependency:
 Dependencies must not be added merely because they may be useful in a later wave.
 
 Supported validation target: Linux amd64, PostgreSQL 18.6 and the SQLite version supplied by the pinned driver. Local browser acceptance on 2026-10-07 used Node 24.19.0, npm 11.9.0, Playwright 1.62.1 and system Chromium 151.0.7922.173. These are test tools, not production runtime dependencies.
+
+Execution-contract digests use `github.com/cyberphone/json-canonicalization` pinned at `19d51d7fe467` (2024-12-13), Apache-2.0, RFC8785 implementation. Domain uses its pure canonicalizer, with UTF-16/property-order and numeric/string interoperability vectors. This is a direct dependency; no transport or storage imports in Domain.
