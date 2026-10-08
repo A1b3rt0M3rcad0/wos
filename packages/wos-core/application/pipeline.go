@@ -89,7 +89,7 @@ func transactCommand[T any, C any](
 	}
 
 	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
-		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
+		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}

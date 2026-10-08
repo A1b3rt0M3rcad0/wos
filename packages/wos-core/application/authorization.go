@@ -9,10 +9,12 @@ import (
 
 // Identity is resolved by a trusted adapter, never decoded from a domain payload.
 type Identity struct {
-	PrincipalID      string
-	NamespaceID      domain.ID
-	CredentialDigest string
-	Actor            domain.ActorRef
+	CredentialID             domain.ID
+	CredentialPolicyRevision domain.Version
+	PrincipalID              string
+	NamespaceID              domain.ID
+	CredentialDigest         string
+	Actor                    domain.ActorRef
 }
 type identityKey struct{}
 

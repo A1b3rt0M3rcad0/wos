@@ -10,6 +10,13 @@ import (
 type Permission string
 
 const (
+	PermissionWorkContractReturn  Permission = "work.contract.return"
+	PermissionWorkCompleteDirect  Permission = "work.contract.complete_direct"
+	PermissionWorkReviewAcquire   Permission = "work.review.acquire"
+	PermissionWorkReviewDecide    Permission = "work.review.decide"
+	PermissionSigningKeyEnroll    Permission = "identity.signing_key.enroll"
+	PermissionSigningKeyRotate    Permission = "identity.signing_key.rotate"
+	PermissionSigningKeyRevoke    Permission = "identity.signing_key.revoke"
 	PermissionWorkContractAcquire Permission = "work.contract.acquire"
 	PermissionWorkContractRevoke  Permission = "work.contract.revoke"
 	PermissionStateRead           Permission = "state:read"
@@ -29,7 +36,7 @@ const (
 
 func (p Permission) Valid() bool {
 	switch p {
-	case PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
+	case PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
 		return true
 	default:
 		return false
@@ -38,6 +45,7 @@ func (p Permission) Valid() bool {
 
 type AuthorizationRequest struct {
 	NamespaceID domain.ID
+	OutcomeID   domain.ID
 	PrincipalID string
 	Permission  Permission
 }

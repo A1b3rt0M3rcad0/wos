@@ -12,6 +12,7 @@ import (
 )
 
 type Store struct {
+	security                 memorySecurityState
 	mu                       sync.Mutex
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
@@ -49,6 +50,7 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
+		security:                 newMemorySecurityState(),
 		outcomes:                 make(map[string]domain.Outcome),
 		objectives:               make(map[string]domain.Objective),
 		workItems:                make(map[string]domain.WorkItem),
@@ -86,6 +88,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 
 	tx := &transaction{
 		store:                    s,
+		security:                 cloneMemorySecurityState(s.security),
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
 		workItems:                cloneWorkItems(s.workItems),
@@ -131,6 +134,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
+	security                 memorySecurityState
 	store                    *Store
 	closed                   bool
 	outcomes                 map[string]domain.Outcome
@@ -198,6 +202,7 @@ func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.security = cloneMemorySecurityState(tx.security)
 	tx.store.protocols = cloneProtocols(tx.protocols)
 	tx.store.contracts = cloneContractMap(tx.contracts)
 	tx.store.checkpoints = cloneCheckpointMap(tx.checkpoints)

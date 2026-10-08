@@ -380,3 +380,11 @@ func validSurrogates(raw []byte) bool {
 	}
 	return true
 }
+
+// SignaturesKeyID is a bounded lookup hint, never proof of authorization.
+func (e Envelope) SignaturesKeyID() string {
+	if len(e.Signatures) != 1 {
+		return ""
+	}
+	return e.Signatures[0].KeyID
+}

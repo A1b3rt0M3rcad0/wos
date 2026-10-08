@@ -45,6 +45,28 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 			return denied
 		}
 	}
+
+	signing := signingIdentityRepository{u}
+	credential, err := signing.CredentialByDigest(ctx, r.CredentialDigest)
+	if err != nil {
+		return denied
+	}
+	if credential.ParentDigest != "" {
+		credential, err = signing.CredentialByDigest(ctx, credential.ParentDigest)
+		if err != nil {
+			return denied
+		}
+	}
+	policy, err := signing.CredentialPolicy(ctx, credential.NamespaceID, credential.ID)
+	if err == nil && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
+		return denied
+	}
+	if err != nil {
+		code, _ := domain.ErrorCodeOf(err)
+		if code != domain.ErrorCodeNotFound {
+			return err
+		}
+	}
 	return nil
 }
 

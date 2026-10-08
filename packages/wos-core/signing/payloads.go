@@ -117,4 +117,5 @@ type EnrollmentPayload struct {
 	PublicKey     string `json:"public_key"`
 	ExpiresAt     string `json:"expires_at"`
 	PreviousKeyID string `json:"previous_key_id,omitempty"`
+	NewKeyID      string `json:"new_key_id,omitempty"`
 }
