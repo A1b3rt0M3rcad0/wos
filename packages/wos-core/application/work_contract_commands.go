@@ -37,6 +37,7 @@ type RevokeWorkContractCommand struct {
 	Reason                  string
 }
 type WorkContractResult struct {
+	previousExpiredNow  bool
 	IssuedSpecification *signing.Document `json:"issued_specification,omitempty"`
 	IssuedAuthority     *signing.Document `json:"issued_authority,omitempty"`
 	LocalKeys           map[string]d.ID   `json:"local_keys,omitempty"`

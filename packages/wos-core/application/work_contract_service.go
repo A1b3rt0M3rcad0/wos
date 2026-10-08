@@ -47,6 +47,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	var previous *d.WorkContract
+	previousExpiredNow := false
 	if w.CurrentContractID != nil {
 		old, err := repo.Get(ctx, cmd.Scope, *w.CurrentContractID)
 		if err != nil {
@@ -63,6 +64,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 			if err := repo.Save(ctx, old, v, l); err != nil {
 				return zero, 0, err
 			}
+			previousExpiredNow = true
 		}
 		previous = &old
 		w.CurrentContractID = nil
@@ -139,7 +141,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-	return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w, PreviousContract: previous, Recovery: w.Lifecycle == d.WorkItemLifecycleInProgress && previous != nil}, rev, err
+	return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w, PreviousContract: previous, previousExpiredNow: previousExpiredNow, Recovery: w.Lifecycle == d.WorkItemLifecycleInProgress && previous != nil}, rev, err
 }
 func validateContractSpec(c d.WorkContract, a ContractAuthority) error {
 	if c.SpecDigest != a.SpecDigest {
@@ -317,7 +319,7 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 		return nil, false, nil
 	}
 	specs := []compoundEventSpec{}
-	if result.PreviousContract != nil {
+	if result.previousExpiredNow && result.PreviousContract != nil {
 		old := result.PreviousContract
 		specs = append(specs, compoundEventSpec{eventType: "work_contract.expired", ref: old.Ref(), after: versionPtr(result.WorkItem.Version)})
 	}
@@ -337,7 +339,11 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 	events, err := buildCompoundEvents(s, cc, meta, rev, specs)
 	// Bind emitted facts to server-assigned identities, not only the input command.
 	for i := range events {
-		payload, err := json.Marshal(map[string]any{"contract_id": result.Contract.ID, "work_item_id": result.WorkItem.ID, "status": result.Contract.Status, "contract_version": result.Contract.Version, "lease_version": result.Contract.LeaseVersion, "fencing_token": result.Contract.FencingToken, "spec_digest": result.Contract.SpecDigest, "expires_at": result.Contract.ExpiresAt, "previous_contract": result.PreviousContract, "checkpoint": result.Checkpoint, "submission_id": result.Contract.LatestSubmissionID})
+		c := result.Contract
+		if events[i].EventType == "work_contract.expired" {
+			c = *result.PreviousContract
+		}
+		payload, err := json.Marshal(map[string]any{"contract_id": c.ID, "work_item_id": result.WorkItem.ID, "status": c.Status, "contract_version": c.Version, "lease_version": c.LeaseVersion, "fencing_token": c.FencingToken, "spec_digest": c.SpecDigest, "expires_at": c.ExpiresAt, "previous_contract": result.PreviousContract, "checkpoint": result.Checkpoint, "submission_id": c.LatestSubmissionID})
 		if err != nil {
 			return nil, true, err
 		}

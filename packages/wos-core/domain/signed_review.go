@@ -10,20 +10,24 @@ import (
 // SignedContractBinding freezes acquisition policy and operational identity.
 // It is public metadata, not proof that an envelope has been verified.
 type SignedContractBinding struct {
-	ProtocolVersion      int            `json:"protocol_version"`
-	SpecificationDigest  string         `json:"specification_digest,omitempty"`
-	SeparationGroup      string         `json:"separation_group,omitempty"`
-	ServerID             string         `json:"server_id"`
-	CredentialID         ID             `json:"credential_id"`
-	SignerKeyID          ID             `json:"signer_key_id"`
-	AcceptanceFloor      AcceptanceMode `json:"acceptance_floor"`
-	PolicyRevision       Version        `json:"policy_revision,string"`
-	AllowedSigningKeyIDs []ID           `json:"allowed_signing_key_ids"`
-	PreviousSubmissionID *ID            `json:"previous_submission_id,omitempty"`
-	PreviousReviewCaseID *ID            `json:"previous_review_case_id,omitempty"`
+	ProtocolVersion      int             `json:"protocol_version"`
+	SpecificationDigest  string          `json:"specification_digest,omitempty"`
+	SeparationGroup      string          `json:"separation_group,omitempty"`
+	ServerID             string          `json:"server_id"`
+	CredentialID         ID              `json:"credential_id"`
+	SignerKeyID          ID              `json:"signer_key_id"`
+	AcceptanceFloor      AcceptanceMode  `json:"acceptance_floor"`
+	CorrectionFindings   []SignedFinding `json:"correction_findings,omitempty"`
+	PolicyRevision       Version         `json:"policy_revision,string"`
+	AllowedSigningKeyIDs []ID            `json:"allowed_signing_key_ids"`
+	PreviousSubmissionID *ID             `json:"previous_submission_id,omitempty"`
+	PreviousReviewCaseID *ID             `json:"previous_review_case_id,omitempty"`
 }
 
 func (b SignedContractBinding) Validate() error {
+	if len(b.CorrectionFindings) > 100 {
+		return NewError(ErrorCodeInvalidArgument, "correction finding limit is 100")
+	}
 	if len(b.SeparationGroup) > 256 || (b.SpecificationDigest != "" && !ValidSignedDigest(b.SpecificationDigest)) {
 		return NewError(ErrorCodeInvalidArgument, "invalid frozen specification/group binding")
 	}
@@ -100,7 +104,13 @@ func (s ReviewCaseStatus) Valid() bool {
 	return s.Open() || s == ReviewApproved || s == ReviewChangesRequested || s == ReviewCancelled || s == ReviewSuperseded
 }
 
+type ExecutionParticipant struct {
+	PrincipalID     string `json:"principal_id"`
+	SeparationGroup string `json:"separation_group,omitempty"`
+}
+
 type ReviewCase struct {
+	LatestDecisionID    *ID              `json:"latest_decision_id,omitempty"`
 	ID                  ID               `json:"id"`
 	Scope               Scope            `json:"scope"`
 	WorkItemID          ID               `json:"work_item_id"`
@@ -125,6 +135,9 @@ type ReviewCase struct {
 }
 
 func (r ReviewCase) Validate() error {
+	if r.LatestDecisionID != nil && r.LatestDecisionID.Validate() != nil {
+		return NewError(ErrorCodeInvalidArgument, "invalid review decision pointer")
+	}
 	for _, id := range []ID{r.ID, r.WorkItemID, r.WorkContractID, r.SubmissionID} {
 		if err := id.Validate(); err != nil {
 			return err
@@ -296,6 +309,10 @@ func ValidateReviewCaseUpdate(old, next ReviewCase) error {
 	o.ClosedAt = next.ClosedAt
 	o.CloseReason = next.CloseReason
 	o.ClosedBy = next.ClosedBy
+	if !reflect.DeepEqual(old.LatestDecisionID, next.LatestDecisionID) && (old.Status != ReviewInReview || next.LatestDecisionID == nil) {
+		return NewError(ErrorCodeInvalidTransition, "review decision pointer changes only on an accepted active review decision")
+	}
+	o.LatestDecisionID = next.LatestDecisionID
 	if !reflect.DeepEqual(o, next) {
 		return NewError(ErrorCodeInvalidTransition, "review submission/spec/policy/round/participants are immutable")
 	}
@@ -315,33 +332,40 @@ func ValidateReviewCaseUpdate(old, next ReviewCase) error {
 // ReviewContract has its own holder, execution, lease and fencing state. It
 // never contains executor credentials or requires its process to remain alive.
 type ReviewContract struct {
-	ID                   ID                    `json:"id"`
-	Scope                Scope                 `json:"scope"`
-	CaseID               ID                    `json:"review_case_id"`
-	WorkItemID           ID                    `json:"work_item_id"`
-	SubmissionID         ID                    `json:"submission_id"`
-	SubmissionDigest     string                `json:"submission_digest"`
-	IssuedSpecDigest     string                `json:"issued_spec_digest"`
-	HolderPrincipalID    string                `json:"holder_principal_id"`
-	Actor                ActorRef              `json:"actor_ref"`
-	SeparationGroup      string                `json:"separation_group,omitempty"`
-	Binding              SignedContractBinding `json:"binding"`
-	Version              Version               `json:"version,string"`
-	LeaseVersion         Version               `json:"lease_version,string"`
-	CaseVersionAtAcquire Version               `json:"case_version_at_acquire,string"`
-	ExecutionID          ID                    `json:"execution_id"`
-	FencingToken         FencingToken          `json:"fencing_token"`
-	Status               ContractStatus        `json:"status"`
-	AcquiredAt           time.Time             `json:"acquired_at"`
-	ExpiresAt            time.Time             `json:"expires_at"`
-	LastRenewedAt        time.Time             `json:"last_renewed_at"`
-	LeasePolicy          LeasePolicy           `json:"lease_policy"`
-	ClosedAt             *time.Time            `json:"closed_at,omitempty"`
-	CloseReason          string                `json:"close_reason,omitempty"`
-	ClosedBy             string                `json:"closed_by,omitempty"`
+	IssuedSpecificationID *ID                   `json:"issued_specification_id,omitempty"`
+	LatestAuthorityID     *ID                   `json:"latest_authority_id,omitempty"`
+	ID                    ID                    `json:"id"`
+	Scope                 Scope                 `json:"scope"`
+	CaseID                ID                    `json:"review_case_id"`
+	WorkItemID            ID                    `json:"work_item_id"`
+	SubmissionID          ID                    `json:"submission_id"`
+	SubmissionDigest      string                `json:"submission_digest"`
+	IssuedSpecDigest      string                `json:"issued_spec_digest"`
+	HolderPrincipalID     string                `json:"holder_principal_id"`
+	Actor                 ActorRef              `json:"actor_ref"`
+	SeparationGroup       string                `json:"separation_group,omitempty"`
+	Binding               SignedContractBinding `json:"binding"`
+	Version               Version               `json:"version,string"`
+	LeaseVersion          Version               `json:"lease_version,string"`
+	CaseVersionAtAcquire  Version               `json:"case_version_at_acquire,string"`
+	ExecutionID           ID                    `json:"execution_id"`
+	FencingToken          FencingToken          `json:"fencing_token"`
+	Status                ContractStatus        `json:"status"`
+	AcquiredAt            time.Time             `json:"acquired_at"`
+	ExpiresAt             time.Time             `json:"expires_at"`
+	LastRenewedAt         time.Time             `json:"last_renewed_at"`
+	LeasePolicy           LeasePolicy           `json:"lease_policy"`
+	ClosedAt              *time.Time            `json:"closed_at,omitempty"`
+	CloseReason           string                `json:"close_reason,omitempty"`
+	ClosedBy              string                `json:"closed_by,omitempty"`
 }
 
 func (c ReviewContract) Validate() error {
+	for _, id := range []*ID{c.IssuedSpecificationID, c.LatestAuthorityID} {
+		if id != nil && id.Validate() != nil {
+			return NewError(ErrorCodeInvalidArgument, "invalid review issuance pointer")
+		}
+	}
 	for _, id := range []ID{c.ID, c.CaseID, c.WorkItemID, c.SubmissionID, c.ExecutionID} {
 		if err := id.Validate(); err != nil {
 			return err
@@ -500,6 +524,7 @@ func ValidateReviewContractUpdate(old, next ReviewContract) error {
 		if next.LeaseVersion != v {
 			return NewError(ErrorCodeVersionConflict, "review lease version differs")
 		}
+		o.LatestAuthorityID = next.LatestAuthorityID
 		o.LeaseVersion = next.LeaseVersion
 		o.ExecutionID = next.ExecutionID
 		o.FencingToken = next.FencingToken

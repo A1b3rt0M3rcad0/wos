@@ -9,6 +9,7 @@ import (
 )
 
 type AcquireSignedWorkContractCommand struct {
+	PreviousReviewCaseID    *d.ID `wos:"optional"`
 	Scope                   d.Scope
 	WorkItemID              d.ID
 	ExpectedWorkItemVersion d.Version
@@ -86,6 +87,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		return zero, 0, e
 	}
 	var previous *d.WorkContract
+	previousExpiredNow := false
 	if work.CurrentContractID != nil {
 		old, e := workRepo.Get(ctx, cmd.Scope, *work.CurrentContractID)
 		if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
@@ -112,6 +114,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 			if e = workRepo.Save(ctx, old, v, l); e != nil {
 				return zero, 0, e
 			}
+			previousExpiredNow = true
 		}
 		previous = &old
 		work.CurrentContractID = nil
@@ -133,6 +136,54 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
+	var correction *d.ReviewCase
+	var findings []d.SignedFinding
+	if work.CorrectionReviewCaseID != nil {
+		if cmd.PreviousReviewCaseID == nil || *cmd.PreviousReviewCaseID != *work.CorrectionReviewCaseID {
+			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "correction must explicitly target the pending prior review")
+		}
+		prior, e := repo.Case(ctx, cmd.Scope, *cmd.PreviousReviewCaseID)
+		if e != nil {
+			return zero, 0, e
+		}
+		if prior.Status != d.ReviewChangesRequested || prior.WorkItemID != work.ID || prior.LatestDecisionID == nil || previous == nil || previous.Status != d.ContractDelivered || previous.ID != prior.WorkContractID {
+			return zero, 0, d.NewError(d.ErrorCodeSubmissionNotAccepted, "pending correction target differs")
+		}
+		decisionFact, e := repo.Fact(ctx, cmd.Scope, *prior.LatestDecisionID)
+		if e != nil {
+			return zero, 0, e
+		}
+		decision, e := verifiedReviewDecision(ctx, uow, decisionFact, server.ID.String())
+		if e != nil {
+			return zero, 0, e
+		}
+		if decision.Decision != "changes_requested" || decision.ReviewCaseID != prior.ID.String() || decision.SubmissionID != prior.SubmissionID.String() || decision.SubmissionDigest != prior.SubmissionDigest {
+			return zero, 0, d.NewError(d.ErrorCodeSubmissionNotAccepted, "signed correction findings differ")
+		}
+		correction = &prior
+		findings = decision.Material.Findings
+		for _, finding := range findings {
+			if e = finding.ValidateAgainst(spec); e != nil {
+				return zero, 0, e
+			}
+		}
+		floor = d.StrongerAcceptance(floor, prior.AcceptanceFloor)
+	} else if work.LatestReviewCaseID != nil && previous != nil && previous.Status == d.ContractDelivered {
+		if cmd.PreviousReviewCaseID == nil || *cmd.PreviousReviewCaseID != *work.LatestReviewCaseID {
+			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "replanned execution must acknowledge the prior closed review")
+		}
+		prior, e := repo.Case(ctx, cmd.Scope, *cmd.PreviousReviewCaseID)
+		if e != nil {
+			return zero, 0, e
+		}
+		if (prior.Status != d.ReviewCancelled && prior.Status != d.ReviewSuperseded) || prior.WorkContractID != previous.ID {
+			return zero, 0, d.NewError(d.ErrorCodeSubmissionNotAccepted, "prior review was not explicitly cancelled/superseded")
+		}
+		correction = &prior
+	} else if cmd.PreviousReviewCaseID != nil {
+		return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "Task has no acknowledged prior review/correction")
+	}
+
 	group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
 	if err != nil {
 		return zero, 0, err
@@ -151,6 +202,11 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		}
 	}
 	binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: floor, PolicyRevision: credential.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
+	if correction != nil {
+		binding.PreviousReviewCaseID = &correction.ID
+		binding.PreviousSubmissionID = &correction.SubmissionID
+		binding.CorrectionFindings = findings
+	}
 	contractID, err := s.ids.NewID()
 	if err != nil {
 		return zero, 0, err
@@ -184,6 +240,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		return zero, 0, err
 	}
 	contract.LatestAuthorityID = &authorityFact.ID
+	work.CorrectionReviewCaseID = nil
 	if err = work.BindContract(contract, now); err != nil {
 		return zero, 0, err
 	}
@@ -200,7 +257,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		return zero, 0, err
 	}
 	revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-	return WorkContractResult{Contract: contract, WorkItem: work, PreviousContract: previous, Recovery: previous != nil, EvaluatedAt: now, IssuedSpecification: &specDocument, IssuedAuthority: &authorityDocument}, revision, err
+	return WorkContractResult{Contract: contract, WorkItem: work, PreviousContract: previous, previousExpiredNow: previousExpiredNow, Recovery: previous != nil, EvaluatedAt: now, IssuedSpecification: &specDocument, IssuedAuthority: &authorityDocument}, revision, err
 }
 func snapshotContractSpec(ctx context.Context, uow ports.UnitOfWork, work d.WorkItem) (d.WorkContractSpec, error) {
 	spec := d.WorkContractSpec{Title: work.Title, Description: work.Description, ObjectiveID: cloneIDPtr(work.ObjectiveID), Criteria: append([]d.SuccessCriterion{}, work.Criteria.Items...)}

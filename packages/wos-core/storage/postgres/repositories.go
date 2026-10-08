@@ -399,7 +399,7 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
 FROM work_items
 WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
@@ -423,22 +423,23 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.Stri
 func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, error) {
 	var rawID string
 	var (
-		version                             int64
-		title, description                  string
-		objectiveID                         sql.NullString
-		lifecycle, priority, resultSummary  string
-		lastFencing                         string
-		contractsEnabled                    int
-		contractID, executionSpec           sql.NullString
-		claimID, leasePrincipal, leaseActor sql.NullString
-		notBefore, acquiredAt, expiresAt    sql.NullInt64
-		createdAt, updatedAt                int64
+		version                                       int64
+		title, description                            string
+		objectiveID                                   sql.NullString
+		lifecycle, priority, resultSummary            string
+		lastFencing                                   string
+		contractsEnabled                              int
+		contractID, executionSpec                     sql.NullString
+		pendingReview, latestReview, correctionReview sql.NullString
+		claimID, leasePrincipal, leaseActor           sql.NullString
+		notBefore, acquiredAt, expiresAt              sql.NullInt64
+		createdAt, updatedAt                          int64
 	)
 	err := scanner.Scan(
 		&rawID,
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
-		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec,
+		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec, &pendingReview, &latestReview, &correctionReview,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
@@ -468,6 +469,18 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted unsigned fencing is invalid")
 	}
 	value.LastFencingToken = token
+	for _, field := range []struct {
+		raw    sql.NullString
+		target **domain.ID
+	}{{pendingReview, &value.PendingReviewCaseID}, {latestReview, &value.LatestReviewCaseID}, {correctionReview, &value.CorrectionReviewCaseID}} {
+		if field.raw.Valid {
+			id, e := domain.ParseID(field.raw.String)
+			if e != nil {
+				return domain.WorkItem{}, e
+			}
+			*field.target = &id
+		}
+	}
 	if contractID.Valid {
 		parsed, err := domain.ParseID(contractID.String)
 		if err != nil {
@@ -524,7 +537,7 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
 FROM work_items
 WHERE namespace_id = $1 AND outcome_id = $2
 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
@@ -601,8 +614,8 @@ INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
-    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal
-) VALUES ($1, $2, $3, 'work_item', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`,
+    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id
+) VALUES ($1, $2, $3, 'work_item', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)`,
 		item.ID.String(),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
@@ -622,7 +635,7 @@ INSERT INTO work_items (
 		lease.actorJSON,
 		lease.acquiredAt,
 		lease.expiresAt,
-		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10),
+		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
 	)
 	if err != nil {
 		return mapSQLError("insert work item", err)
@@ -658,8 +671,8 @@ UPDATE work_items
 SET version = $1, updated_at = $2, title = $3, description = $4, priority = $5,
     objective_id = $6, lifecycle = $7, not_before = $8, result_summary = $9, last_fencing_token = $10,
     lease_claim_id = $11, lease_principal_id = $12, lease_actor_json = $13,
-    lease_acquired_at = $14, lease_expires_at = $15, contracts_enabled = $16, current_contract_id = $17, execution_spec_json = $18, fencing_token_decimal = $19
-WHERE namespace_id = $20 AND outcome_id = $21 AND id = $22 AND version = $23`,
+    lease_acquired_at = $14, lease_expires_at = $15, contracts_enabled = $16, current_contract_id = $17, execution_spec_json = $18, fencing_token_decimal = $19, pending_review_case_id = $20, latest_review_case_id = $21, correction_review_case_id = $22
+WHERE namespace_id = $23 AND outcome_id = $24 AND id = $25 AND version = $26`,
 		int64(item.Version),
 		encodeTime(item.UpdatedAt),
 		item.Title,
@@ -675,7 +688,7 @@ WHERE namespace_id = $20 AND outcome_id = $21 AND id = $22 AND version = $23`,
 		lease.actorJSON,
 		lease.acquiredAt,
 		lease.expiresAt,
-		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10),
+		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
 		item.ID.String(),

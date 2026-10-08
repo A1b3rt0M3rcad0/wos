@@ -36,27 +36,30 @@ func (l WorkLease) ValidAt(now time.Time) bool {
 }
 
 type WorkItem struct {
-	ContractsEnabled  bool              `json:"contracts_enabled,omitempty"`
-	CurrentContractID *ID               `json:"current_contract_id,omitempty"`
-	ExecutionSpec     *ExecutionSpec    `json:"execution_spec,omitempty"`
-	ID                ID                `json:"id"`
-	Scope             Scope             `json:"scope"`
-	Version           Version           `json:"version"`
-	Title             string            `json:"title"`
-	Description       string            `json:"description,omitempty"`
-	ObjectiveID       *ID               `json:"objective_id,omitempty"`
-	Lifecycle         WorkItemLifecycle `json:"lifecycle"`
-	Priority          Priority          `json:"priority"`
-	NotBefore         *time.Time        `json:"not_before,omitempty"`
-	AssigneeRefs      []ActorRef        `json:"assignee_refs,omitempty"`
-	ResultSummary     string            `json:"result_summary,omitempty"`
-	CurrentLease      *WorkLease        `json:"current_lease,omitempty"`
-	LastFencingToken  uint64            `json:"last_fencing_token"`
-	Criteria          CriterionSet      `json:"criteria"`
-	CurrentConclusion *Conclusion       `json:"conclusion,omitempty"`
-	ConclusionHistory []Conclusion      `json:"conclusion_history,omitempty"`
-	CreatedAt         time.Time         `json:"created_at"`
-	UpdatedAt         time.Time         `json:"updated_at"`
+	PendingReviewCaseID    *ID               `json:"pending_review_case_id,omitempty"`
+	LatestReviewCaseID     *ID               `json:"latest_review_case_id,omitempty"`
+	CorrectionReviewCaseID *ID               `json:"correction_review_case_id,omitempty"`
+	ContractsEnabled       bool              `json:"contracts_enabled,omitempty"`
+	CurrentContractID      *ID               `json:"current_contract_id,omitempty"`
+	ExecutionSpec          *ExecutionSpec    `json:"execution_spec,omitempty"`
+	ID                     ID                `json:"id"`
+	Scope                  Scope             `json:"scope"`
+	Version                Version           `json:"version"`
+	Title                  string            `json:"title"`
+	Description            string            `json:"description,omitempty"`
+	ObjectiveID            *ID               `json:"objective_id,omitempty"`
+	Lifecycle              WorkItemLifecycle `json:"lifecycle"`
+	Priority               Priority          `json:"priority"`
+	NotBefore              *time.Time        `json:"not_before,omitempty"`
+	AssigneeRefs           []ActorRef        `json:"assignee_refs,omitempty"`
+	ResultSummary          string            `json:"result_summary,omitempty"`
+	CurrentLease           *WorkLease        `json:"current_lease,omitempty"`
+	LastFencingToken       uint64            `json:"last_fencing_token"`
+	Criteria               CriterionSet      `json:"criteria"`
+	CurrentConclusion      *Conclusion       `json:"conclusion,omitempty"`
+	ConclusionHistory      []Conclusion      `json:"conclusion_history,omitempty"`
+	CreatedAt              time.Time         `json:"created_at"`
+	UpdatedAt              time.Time         `json:"updated_at"`
 }
 
 func NewWorkItem(id ID, scope Scope, title, description string, priority Priority, lifecycle WorkItemLifecycle, createdAt time.Time) (WorkItem, error) {
@@ -89,6 +92,17 @@ func (w WorkItem) Ref() EntityRef {
 }
 
 func (w WorkItem) Validate() error {
+	for _, id := range []*ID{w.PendingReviewCaseID, w.LatestReviewCaseID, w.CorrectionReviewCaseID} {
+		if id != nil && (id.Validate() != nil || !w.ContractsEnabled) {
+			return NewError(ErrorCodeInvalidArgument, "invalid signed review navigation")
+		}
+	}
+	if w.PendingReviewCaseID != nil && (w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease != nil) {
+		return NewError(ErrorCodeInvalidTransition, "pending review requires in-progress Task without legacy authority")
+	}
+	if w.PendingReviewCaseID != nil && w.CorrectionReviewCaseID != nil {
+		return NewError(ErrorCodeInvalidTransition, "review and correction cannot both be pending")
+	}
 	if w.ExecutionSpec != nil {
 		if err := w.ExecutionSpec.Validate(); err != nil {
 			return err

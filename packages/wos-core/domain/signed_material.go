@@ -18,6 +18,7 @@ func (c SignedCriterion) Criterion() SuccessCriterion {
 }
 
 type SignedWorkSpec struct {
+	CorrectionFindings   []SignedFinding   `json:"correction_findings,omitempty"`
 	OutcomeIntent        string            `json:"outcome_intent,omitempty"`
 	ObjectiveIntent      string            `json:"objective_intent,omitempty"`
 	Title                string            `json:"title"`
@@ -34,7 +35,7 @@ type SignedWorkSpec struct {
 
 func NewSignedWorkSpec(spec WorkContractSpec, binding SignedContractBinding) SignedWorkSpec {
 	spec = NormalizeContractSpec(spec)
-	out := SignedWorkSpec{OutcomeIntent: spec.OutcomeIntent, ObjectiveIntent: spec.ObjectiveIntent, Title: spec.Title, Description: spec.Description, ObjectiveID: spec.ObjectiveID, ExecutionSpec: spec.ExecutionSpec, Criteria: []SignedCriterion{}, Dependencies: spec.Dependencies, AcceptanceFloor: binding.AcceptanceFloor, PolicyRevision: binding.PolicyRevision, PreviousSubmissionID: binding.PreviousSubmissionID, PreviousReviewCaseID: binding.PreviousReviewCaseID}
+	out := SignedWorkSpec{CorrectionFindings: binding.CorrectionFindings, OutcomeIntent: spec.OutcomeIntent, ObjectiveIntent: spec.ObjectiveIntent, Title: spec.Title, Description: spec.Description, ObjectiveID: spec.ObjectiveID, ExecutionSpec: spec.ExecutionSpec, Criteria: []SignedCriterion{}, Dependencies: spec.Dependencies, AcceptanceFloor: binding.AcceptanceFloor, PolicyRevision: binding.PolicyRevision, PreviousSubmissionID: binding.PreviousSubmissionID, PreviousReviewCaseID: binding.PreviousReviewCaseID}
 	for _, c := range spec.Criteria {
 		out.Criteria = append(out.Criteria, SignedCriterion{ID: c.ID, OwnerRef: c.OwnerRef, Title: c.Title, Description: c.Description, Required: c.Required, Revision: c.Revision, VerificationMode: c.VerificationMode, Status: c.Status})
 	}
