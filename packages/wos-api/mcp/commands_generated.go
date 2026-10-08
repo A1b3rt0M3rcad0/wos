@@ -22,6 +22,12 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.AchieveOutcomeCommand](server, ids, options, "wos_achieve_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveOutcomeCommand) (any, error) {
 		return service.AchieveOutcome(ctx, cc, cmd)
 	})
+	registerCommand[application.AcquireNextWorkContractCommand](server, ids, options, "wos_acquire_next_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextWorkContractCommand) (any, error) {
+		return service.AcquireNextWorkContract(ctx, cc, cmd)
+	})
+	registerCommand[application.AcquireWorkContractCommand](server, ids, options, "wos_acquire_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireWorkContractCommand) (any, error) {
+		return service.AcquireWorkContract(ctx, cc, cmd)
+	})
 	registerCommand[application.ActivateOutcomeCommand](server, ids, options, "wos_activate_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.ActivateOutcomeCommand) (any, error) {
 		return service.ActivateOutcome(ctx, cc, cmd)
 	})
@@ -151,6 +157,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.RemoveExternalReferenceCommand](server, ids, options, "wos_remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
 		return service.RemoveExternalReference(ctx, cc, cmd)
 	})
+	registerCommand[application.RenewWorkContractCommand](server, ids, options, "wos_renew_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewWorkContractCommand) (any, error) {
+		return service.RenewWorkContract(ctx, cc, cmd)
+	})
 	registerCommand[application.RenewWorkItemLeaseCommand](server, ids, options, "wos_renew_work_item_lease", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewWorkItemLeaseCommand) (any, error) {
 		return service.RenewWorkItemLease(ctx, cc, cmd)
 	})
@@ -187,6 +196,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.ResolveIssueAndBlockersCommand](server, ids, options, "wos_resolve_issue_and_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveIssueAndBlockersCommand) (any, error) {
 		return service.ResolveIssueAndBlockers(ctx, cc, cmd)
 	})
+	registerCommand[application.ResumeWorkContractCommand](server, ids, options, "wos_resume_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeWorkContractCommand) (any, error) {
+		return service.ResumeWorkContract(ctx, cc, cmd)
+	})
 	registerCommand[application.RetireCriterionCommand](server, ids, options, "wos_retire_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.RetireCriterionCommand) (any, error) {
 		return service.RetireCriterion(ctx, cc, cmd)
 	})
@@ -198,6 +210,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.ReviseCriterionCommand](server, ids, options, "wos_revise_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.ReviseCriterionCommand) (any, error) {
 		return service.ReviseCriterion(ctx, cc, cmd)
+	})
+	registerCommand[application.RevokeWorkContractCommand](server, ids, options, "wos_revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
+		return service.RevokeWorkContract(ctx, cc, cmd)
 	})
 	registerCommand[application.SetObjectiveOwnersCommand](server, ids, options, "wos_set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)

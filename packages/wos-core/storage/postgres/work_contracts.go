@@ -9,6 +9,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type workContractRepository struct{ uow *unitOfWork }
@@ -244,4 +245,42 @@ func (r workContractRepository) ListSubmissions(ctx context.Context, scope d.Sco
 		out = append(out, v)
 	}
 	return out, rows.Err()
+}
+
+func (r workItemRepository) ContractCandidates(ctx context.Context, scope d.Scope, q ports.ContractCandidateQuery) ([]ports.ContractCandidate, error) {
+	if q.Limit < 1 || q.Limit > 101 {
+		return nil, d.NewError(d.ErrorCodeInvalidArgument, "candidate limit outside 1..101")
+	}
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT id,version,priority,created_at FROM work_items WHERE namespace_id=$1 AND outcome_id=$2 AND contracts_enabled=1 AND lifecycle IN ('todo','in_progress') AND ($3='' OR (CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END)>$4 OR ((CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END)=$5 AND (created_at>$6 OR (created_at=$7 AND id>$8)))) ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,created_at,id LIMIT $9`, scope.NamespaceID.String(), scope.OutcomeID.String(), q.AfterID.String(), q.AfterPriority, q.AfterPriority, encodeTime(q.AfterCreated), encodeTime(q.AfterCreated), q.AfterID.String(), q.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []ports.ContractCandidate{}
+	for rows.Next() {
+		var raw string
+		var v ports.ContractCandidate
+		var created int64
+		if err := rows.Scan(&raw, &v.Version, &v.Priority, &created); err != nil {
+			return nil, err
+		}
+		id, err := d.ParseID(raw)
+		if err != nil {
+			return nil, err
+		}
+		v.ID = id
+		v.CreatedAt = decodeTime(created)
+		out = append(out, v)
+	}
+	return out, rows.Err()
+}
+
+func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal string, command d.ID) (d.StoredCommandResult, error) {
+	var response string
+	var revision int64
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT response_json,outcome_revision FROM idempotency_records WHERE namespace_id=$1 AND principal_id=$2 AND command_id=$3 AND status='completed' AND expires_at>$4`, ns.String(), principal, command.String(), encodeTime(time.Now().UTC())).Scan(&response, &revision)
+	if err != nil {
+		return d.StoredCommandResult{}, mapSQLError("get receipt", err)
+	}
+	return d.StoredCommandResult{CommandID: command, OutcomeRevision: d.OutcomeRevision(revision), ResponseJSON: json.RawMessage(response)}, nil
 }

@@ -235,3 +235,56 @@ func (r workContractRepository) ListSubmissions(ctx context.Context, scope d.Sco
 	}
 	return out, nil
 }
+
+func (r workItemRepository) ContractCandidates(ctx context.Context, scope d.Scope, q ports.ContractCandidateQuery) ([]ports.ContractCandidate, error) {
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if q.Limit < 1 || q.Limit > 101 {
+		return nil, d.NewError(d.ErrorCodeInvalidArgument, "candidate limit outside 1..101")
+	}
+	out := []ports.ContractCandidate{}
+	for _, w := range r.tx.workItems {
+		if w.Scope != scope || !w.ContractsEnabled || (w.Lifecycle != d.WorkItemLifecycleTodo && w.Lifecycle != d.WorkItemLifecycleInProgress) {
+			continue
+		}
+		rank := ports.ContractPriorityRank(w.Priority)
+		if q.AfterID != "" && !(rank > q.AfterPriority || rank == q.AfterPriority && (w.CreatedAt.After(q.AfterCreated) || w.CreatedAt.Equal(q.AfterCreated) && w.ID > q.AfterID)) {
+			continue
+		}
+		out = append(out, ports.ContractCandidate{ID: w.ID, Version: w.Version, Priority: w.Priority, CreatedAt: w.CreatedAt})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		a, b := out[i], out[j]
+		ar, br := ports.ContractPriorityRank(a.Priority), ports.ContractPriorityRank(b.Priority)
+		if ar != br {
+			return ar < br
+		}
+		if !a.CreatedAt.Equal(b.CreatedAt) {
+			return a.CreatedAt.Before(b.CreatedAt)
+		}
+		return a.ID < b.ID
+	})
+	if len(out) > q.Limit {
+		out = out[:q.Limit]
+	}
+	return out, nil
+}
+
+func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal string, command d.ID) (d.StoredCommandResult, error) {
+	if err := ctx.Err(); err != nil {
+		return d.StoredCommandResult{}, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return d.StoredCommandResult{}, err
+	}
+	for _, v := range r.tx.idempotency {
+		if v.Identity.NamespaceID == ns && v.Identity.PrincipalID == principal && v.Completed && v.Result.CommandID == command {
+			return contractCopy(v.Result), nil
+		}
+	}
+	return d.StoredCommandResult{}, d.NewError(d.ErrorCodeNotFound, "command receipt not retained")
+}

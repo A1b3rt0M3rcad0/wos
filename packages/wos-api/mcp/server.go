@@ -68,6 +68,12 @@ func failure(err error) (*mcp.CallToolResult, error) {
 	switch code {
 	case domain.ErrorCodeVersionConflict:
 		recovery = "read current state and reconcile intent before using a new expected_version"
+	case domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution:
+		recovery = "stop using this execution authority; reconcile current contract before explicit recovery"
+	case domain.ErrorCodeContractSpecMismatch:
+		recovery = "reload immutable canonical spec, preserving local drafts"
+	case domain.ErrorCodeSubmissionNotAccepted:
+		recovery = "review exact submission and criterion obligations before finalizing"
 	case domain.ErrorCodeLease:
 		recovery = "read operational state; preserve claim_id and fencing_token or reclaim explicitly"
 	case domain.ErrorCodeIdempotencyConflict:

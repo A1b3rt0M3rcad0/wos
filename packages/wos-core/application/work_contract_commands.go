@@ -9,7 +9,7 @@ type AcquireWorkContractCommand struct {
 	Scope                   d.Scope
 	WorkItemID              d.ID
 	ExpectedWorkItemVersion d.Version
-	TTLSeconds              int
+	TTLSeconds              int `wos:"optional"`
 }
 type ContractAuthority struct {
 	ExecutionID  d.ID
@@ -17,16 +17,16 @@ type ContractAuthority struct {
 	SpecDigest   string
 }
 type RenewWorkContractCommand struct {
-	Scope      d.Scope
-	ContractID d.ID
-	ContractAuthority
+	Scope                d.Scope
+	ContractID           d.ID
+	Authority            ContractAuthority
 	ExpectedLeaseVersion d.Version
-	TTLSeconds           int
+	TTLSeconds           int `wos:"optional"`
 }
 type ResumeWorkContractCommand struct {
-	Scope      d.Scope
-	ContractID d.ID
-	ContractAuthority
+	Scope                d.Scope
+	ContractID           d.ID
+	Authority            ContractAuthority
 	ExpectedLeaseVersion d.Version
 }
 type RevokeWorkContractCommand struct {

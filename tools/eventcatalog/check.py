@@ -13,6 +13,7 @@ mapping = pipeline.split("func eventTypesForCommand(", 1)[1].split("func conclus
 current = set(re.findall(r'"([a-z_]+\.[a-z_]+)"', mapping))
 for suffix in re.findall(r'ownerPrefix \+ "(\.[a-z_]+)"', mapping):
     current.update(owner + suffix for owner in ("outcome", "objective", "work_item"))
+current.update(re.findall(r'"(work_contract\.[a-z_]+)"', (root / "packages/wos-core/application/work_contract_service.go").read_text()))
 catalog = json.loads((root / "docs/integration-events-v1.json").read_text())
 published = [entry["event_type"] for entry in catalog["events"]]
 if catalog["schema_version"] != 1 or len(published) != len(set(published)):

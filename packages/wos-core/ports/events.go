@@ -18,3 +18,7 @@ type IdempotencyStore interface {
 type AdministrativeAuditLog interface {
 	AppendAdministrative(ctx context.Context, record domain.AdministrativeAuditRecord) error
 }
+
+type CommandReceiptStore interface {
+	LookupReceipt(context.Context, domain.ID, string, domain.ID) (domain.StoredCommandResult, error)
+}

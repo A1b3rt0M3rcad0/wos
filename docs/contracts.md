@@ -43,3 +43,17 @@ IntegrationFact `schema_version: 1` contém ID, tipo de fato público, Namespace
 A revisão semântica e os testes existentes continuam obrigatórios. Um schema gerado comprova a correspondência dos campos, não substitui testes de comportamento nem aceite de PostgreSQL/browser.
 
 O schema distingue metadados opcionais de Evidence (`checksum`, `source_version`) sem alterar a serialização Core usada em fingerprints idempotentes existentes. Severity, propagação de Blocker, modo/resultado de avaliação e tipo de Evidence anunciam os enums efetivos do Domain.
+
+## Execution contracts v1 (2026-10-08)
+
+ADRs 018/019 and the supplied implementation plan govern the additive evolution. Namespace activation is explicit; `contracts_v1` support in capabilities does not mean every existing task is migrated. WorkItem identity and lifecycle remain separate from contract state.
+
+New generated commands: acquire_work_contract, acquire_next_work_contract, renew_work_contract, resume_work_contract, revoke_work_contract. New authority arguments use `authority: {execution_id, fencing_token, spec_digest}` with fencing_token a canonical positive uint64 **string**. TTL is integer seconds, omitted uses policy default. expected_work_item_version, expected_contract_version and expected_lease_version protect separate intent. No release_work_contract exists.
+
+HTTP and MCP use the generated catalogue and same Application service. MCP read tools use namespace_id/outcome_id, entity_id for contract/submission, principal_id for holder filtering. REST contract routes and capabilities/receipt/available-work routes are generated in commands.openapi.json. SDK exposes matching typed methods without automatic mutation retries. Contract history omits specs explicitly; expand immutable spec or current contract separately. Contract records use limit and scope/section-bound cursors; reducing limit resolves an oversized page.
+
+Acquire-next orders priority (critical/high/normal/low), creation time, ID; scans at most limit candidates in one explicit Outcome. A false result has search_complete and next_cursor: incomplete scan is not proof of no eligible task. Repeating a successful empty intent returns the original result, even after new work appears. Use a new key for a new search intention. Available-work is read-only and grants no authority.
+
+Receipt lookup at `/namespaces/{namespace_id}/commands/{command_id}` is restricted to the authenticated Principal and current authorization. Absent/expired retention does not establish that a mutation failed. A large HTTP receipt exposes command/revision with result_omitted; reconcile canonical entities or replay the original intent. Contract effective_status invalidates exact expiry immediately without a sweeper; GET never records expiration.
+
+Specifications are bounded at 128 KiB and operational commands at 256 KiB. Use documentary references rather than embedding an entire Outcome. A digest verifies semantic integrity under RFC8785 and does not authenticate the file holder. Progress/result/review/finalization are delivered in C06, and client/cutover in subsequent waves; this section does not announce their completion.

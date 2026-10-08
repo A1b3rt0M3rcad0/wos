@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalogue_revision": "2026-10-05",
+  "catalogue_revision": "2026-10-08",
   "envelope": "IntegrationFact",
   "delivery": "at_least_once",
   "events": [
@@ -195,6 +195,21 @@
     },
     {
       "event_type": "trigger.updated"
+    },
+    {
+      "event_type": "work_contract.acquired"
+    },
+    {
+      "event_type": "work_contract.execution_resumed"
+    },
+    {
+      "event_type": "work_contract.expired"
+    },
+    {
+      "event_type": "work_contract.renewed"
+    },
+    {
+      "event_type": "work_contract.revoked"
     },
     {
       "event_type": "work_item.activated"

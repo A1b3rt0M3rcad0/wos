@@ -147,6 +147,98 @@
         ],
         "type": "object"
       },
+      "Catalog_acquire_next_work_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "objective_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "priorities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "ttl_seconds": {
+            "type": "integer"
+          },
+          "work_item_ids": {
+            "items": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "type": "object"
+      },
+      "Catalog_acquire_work_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_work_item_version": {
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "ttl_seconds": {
+            "type": "integer"
+          },
+          "work_item_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "work_item_id",
+          "expected_work_item_version"
+        ],
+        "type": "object"
+      },
       "Catalog_activate_outcome": {
         "additionalProperties": false,
         "properties": {
@@ -2482,6 +2574,68 @@
         ],
         "type": "object"
       },
+      "Catalog_renew_work_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "additionalProperties": false,
+            "properties": {
+              "execution_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "fencing_token": {
+                "pattern": "^[1-9][0-9]{0,19}$",
+                "type": "string"
+              },
+              "spec_digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "execution_id",
+              "fencing_token",
+              "spec_digest"
+            ],
+            "type": "object"
+          },
+          "contract_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "expected_lease_version": {
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "ttl_seconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "contract_id",
+          "authority",
+          "expected_lease_version"
+        ],
+        "type": "object"
+      },
       "Catalog_renew_work_item_lease": {
         "additionalProperties": false,
         "properties": {
@@ -3300,6 +3454,65 @@
         ],
         "type": "object"
       },
+      "Catalog_resume_work_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "additionalProperties": false,
+            "properties": {
+              "execution_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "fencing_token": {
+                "pattern": "^[1-9][0-9]{0,19}$",
+                "type": "string"
+              },
+              "spec_digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "execution_id",
+              "fencing_token",
+              "spec_digest"
+            ],
+            "type": "object"
+          },
+          "contract_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "expected_lease_version": {
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "scope",
+          "contract_id",
+          "authority",
+          "expected_lease_version"
+        ],
+        "type": "object"
+      },
       "Catalog_retire_criterion": {
         "additionalProperties": false,
         "properties": {
@@ -3487,6 +3700,46 @@
           "title",
           "required",
           "verification_mode"
+        ],
+        "type": "object"
+      },
+      "Catalog_revoke_work_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "expected_contract_version": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "scope",
+          "contract_id",
+          "expected_contract_version",
+          "reason"
         ],
         "type": "object"
       },
@@ -4403,6 +4656,23 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/capabilities": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
     "/api/v1/commands/abandon_outcome": {
       "post": {
         "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
@@ -4598,6 +4868,120 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_achieve_outcome"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/acquire_next_work_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_acquire_next_work_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_acquire_next_work_contract"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/acquire_work_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_acquire_work_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_acquire_work_contract"
                   }
                 },
                 "required": [
@@ -7082,6 +7466,63 @@
         }
       }
     },
+    "/api/v1/commands/renew_work_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_renew_work_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_renew_work_contract"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
     "/api/v1/commands/renew_work_item_lease": {
       "post": {
         "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
@@ -7766,6 +8207,63 @@
         }
       }
     },
+    "/api/v1/commands/resume_work_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_resume_work_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_resume_work_contract"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
     "/api/v1/commands/retire_criterion": {
       "post": {
         "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
@@ -7961,6 +8459,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_revise_criterion"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/revoke_work_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_revoke_work_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_revoke_work_contract"
                   }
                 },
                 "required": [
@@ -8845,6 +9400,318 @@
           },
           "413": {
             "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/commands/{command_id}": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "command_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/available-work": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/checkpoints": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/spec": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/submissions": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-submissions/{submission_id}": {
+      "get": {
+        "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+          },
+          "403": {
+            "description": "Authorization denied."
+          },
+          "404": {
+            "description": "Not found in scope or receipt not retained."
           }
         }
       }

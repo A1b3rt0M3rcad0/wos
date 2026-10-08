@@ -180,6 +180,14 @@ func NewWorkContract(id, execution ID, w WorkItem, principal string, actor Actor
 		return WorkContract{}, err
 	}
 	spec = NormalizeContractSpec(spec)
+	raw, err := json.Marshal(spec)
+	if err != nil {
+		return WorkContract{}, err
+	}
+	if len(raw) > 128*1024 {
+		return WorkContract{}, NewError(ErrorCodeGraphLimitExceeded, "contract spec exceeds 128 KiB; reduce material and use references")
+	}
+
 	digest, err := SemanticDigest(spec)
 	if err != nil {
 		return WorkContract{}, err

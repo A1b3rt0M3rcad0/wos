@@ -92,7 +92,7 @@ func TestContractAcquireReplayRenewAndRecovery(t *testing.T) {
 	if _, err := s.AcquireWorkContract(ctx, cc, cmd); err == nil {
 		t.Fatal("second active acquisition accepted")
 	}
-	renewal := a.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, ContractAuthority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion, TTLSeconds: 60}
+	renewal := a.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion, TTLSeconds: 60}
 	cc.IdempotencyKey = "contract-renewal-0001"
 	renewed, err := s.RenewWorkContract(ctx, cc, renewal)
 	if err != nil {
@@ -152,7 +152,7 @@ func TestContractConcurrentAcquireAndTakeover(t *testing.T) {
 	c := got.Contract
 	cc := commandContext()
 	cc.IdempotencyKey = "contract-takeover-0001"
-	resumed, err := s.ResumeWorkContract(context.Background(), cc, a.ResumeWorkContractCommand{Scope: w.Scope, ContractID: c.ID, ContractAuthority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion})
+	resumed, err := s.ResumeWorkContract(context.Background(), cc, a.ResumeWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: c.LeaseVersion})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestContractConcurrentAcquireAndTakeover(t *testing.T) {
 		t.Fatal("takeover authority")
 	}
 	cc.IdempotencyKey = "stale-renewal-intent-1"
-	if _, err := s.RenewWorkContract(context.Background(), cc, a.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, ContractAuthority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: resumed.Value.Contract.LeaseVersion}); err == nil {
+	if _, err := s.RenewWorkContract(context.Background(), cc, a.RenewWorkContractCommand{Scope: w.Scope, ContractID: c.ID, Authority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: resumed.Value.Contract.LeaseVersion}); err == nil {
 		t.Fatal("old execution accepted")
 	}
 	clock.set(c.ExpiresAt)

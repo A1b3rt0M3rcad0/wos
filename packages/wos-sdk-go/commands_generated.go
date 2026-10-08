@@ -19,6 +19,12 @@ func (c *Client) AchieveObjective(ctx context.Context, key string, cmd applicati
 func (c *Client) AchieveOutcome(ctx context.Context, key string, cmd application.AchieveOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "achieve_outcome", key, cmd)
 }
+func (c *Client) AcquireNextWorkContract(ctx context.Context, key string, cmd application.AcquireNextWorkContractCommand) (CommandResult[application.WorkContractAcquisition], error) {
+	return command[application.WorkContractAcquisition](ctx, c, "acquire_next_work_contract", key, cmd)
+}
+func (c *Client) AcquireWorkContract(ctx context.Context, key string, cmd application.AcquireWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "acquire_work_contract", key, cmd)
+}
 func (c *Client) ActivateOutcome(ctx context.Context, key string, cmd application.ActivateOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "activate_outcome", key, cmd)
 }
@@ -148,6 +154,9 @@ func (c *Client) RemoveDependency(ctx context.Context, key string, cmd applicati
 func (c *Client) RemoveExternalReference(ctx context.Context, key string, cmd application.RemoveExternalReferenceCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "remove_external_reference", key, cmd)
 }
+func (c *Client) RenewWorkContract(ctx context.Context, key string, cmd application.RenewWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "renew_work_contract", key, cmd)
+}
 func (c *Client) RenewWorkItemLease(ctx context.Context, key string, cmd application.RenewWorkItemLeaseCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "renew_work_item_lease", key, cmd)
 }
@@ -184,6 +193,9 @@ func (c *Client) ResolveIssue(ctx context.Context, key string, cmd application.R
 func (c *Client) ResolveIssueAndBlockers(ctx context.Context, key string, cmd application.ResolveIssueAndBlockersCommand) (CommandResult[application.ResolveIssueAndBlockersResult], error) {
 	return command[application.ResolveIssueAndBlockersResult](ctx, c, "resolve_issue_and_blockers", key, cmd)
 }
+func (c *Client) ResumeWorkContract(ctx context.Context, key string, cmd application.ResumeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "resume_work_contract", key, cmd)
+}
 func (c *Client) RetireCriterion(ctx context.Context, key string, cmd application.RetireCriterionCommand) (CommandResult[domain.SuccessCriterion], error) {
 	return command[domain.SuccessCriterion](ctx, c, "retire_criterion", key, cmd)
 }
@@ -195,6 +207,9 @@ func (c *Client) RetractEvidenceLink(ctx context.Context, key string, cmd applic
 }
 func (c *Client) ReviseCriterion(ctx context.Context, key string, cmd application.ReviseCriterionCommand) (CommandResult[domain.SuccessCriterion], error) {
 	return command[domain.SuccessCriterion](ctx, c, "revise_criterion", key, cmd)
+}
+func (c *Client) RevokeWorkContract(ctx context.Context, key string, cmd application.RevokeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
+	return command[application.WorkContractResult](ctx, c, "revoke_work_contract", key, cmd)
 }
 func (c *Client) SetObjectiveOwners(ctx context.Context, key string, cmd application.SetObjectiveOwnersCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "set_objective_owners", key, cmd)
