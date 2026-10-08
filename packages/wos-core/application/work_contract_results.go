@@ -128,121 +128,20 @@ func (s *Service) SyncWorkContract(ctx context.Context, cc domain.CommandContext
 		if err != nil {
 			return zero, 0, err
 		}
-		artifacts, evidence, links, decisions, err := documentaryRepositories(u)
+		registered, err := s.registerContractRecords(ctx, u, cc, cmd, now)
 		if err != nil {
 			return zero, 0, err
 		}
-		if len(cmd.Artifacts)+len(cmd.Evidence)+len(cmd.EvidenceLinks) > 100 {
-			return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "sync record limit is 100")
+		mappings, createdArtifacts, createdEvidence, createdLinks := registered.LocalKeys, registered.Artifacts, registered.Evidence, registered.EvidenceLinks
+		for _, a := range createdArtifacts {
+			cmd.Checkpoint.ArtifactRefs = append(cmd.Checkpoint.ArtifactRefs, a.ID)
 		}
-		mappings := map[string]domain.ID{}
-		nextID := func(key string) (domain.ID, error) {
-			if len(key) == 0 || len(key) > 128 {
-				return "", domain.NewError(domain.ErrorCodeInvalidArgument, "local_key is required and limited to 128 bytes")
-			}
-			if _, ok := mappings[key]; ok {
-				return "", domain.NewError(domain.ErrorCodeInvalidArgument, "duplicate local_key")
-			}
-			id, err := s.ids.NewID()
-			if err == nil {
-				mappings[key] = id
-			}
-			return id, err
+		for _, e := range createdEvidence {
+			cmd.Checkpoint.EvidenceRefs = append(cmd.Checkpoint.EvidenceRefs, e.ID)
 		}
-		createdArtifacts := []domain.Artifact{}
-		createdEvidence := []domain.Evidence{}
-		createdLinks := []domain.EvidenceLink{}
-		for _, entry := range cmd.Artifacts {
-			id, err := nextID(entry.LocalKey)
-			if err != nil {
-				return zero, 0, err
-			}
-			x := entry.Artifact
-			if x.Scope != cmd.Scope {
-				return zero, 0, domain.NewError(domain.ErrorCodeInvalidScope, "artifact scope must match sync")
-			}
-			value, err := domain.NewArtifact(id, cmd.Scope, x.ArtifactType, x.Name, x.URI, x.MediaType, x.Checksum, x.SourceVersion, cc.Actor, x.ProducedAt, now)
-			if err != nil {
-				return zero, 0, err
-			}
-			if err = artifacts.Insert(ctx, value); err != nil {
-				return zero, 0, err
-			}
-			createdArtifacts = append(createdArtifacts, value)
-			cmd.Checkpoint.ArtifactRefs = append(cmd.Checkpoint.ArtifactRefs, id)
-		}
-		for _, entry := range cmd.Evidence {
-			id, err := nextID(entry.LocalKey)
-			if err != nil {
-				return zero, 0, err
-			}
-			x := entry.Evidence
-			if x.Scope != cmd.Scope {
-				return zero, 0, domain.NewError(domain.ErrorCodeInvalidScope, "evidence scope must match sync")
-			}
-			if entry.ArtifactLocalKey != "" {
-				aid, ok := mappings[entry.ArtifactLocalKey]
-				if !ok {
-					return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown artifact local_key")
-				}
-				x.ArtifactID = &aid
-			}
-			if x.ArtifactID != nil {
-				a, err := artifacts.Get(ctx, cmd.Scope, *x.ArtifactID)
-				if err != nil {
-					return zero, 0, err
-				}
-				if a.Lifecycle != domain.ArtifactLifecycleRegistered {
-					return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "artifact withdrawn")
-				}
-			}
-			value, err := domain.NewEvidence(id, cmd.Scope, x.EvidenceType, x.Description, x.SourceRef, cc.Actor, x.CapturedAt, x.ArtifactID, x.Measurement, x.SourceVersion, x.Checksum, now)
-			if err != nil {
-				return zero, 0, err
-			}
-			if err = evidence.Insert(ctx, value); err != nil {
-				return zero, 0, err
-			}
-			createdEvidence = append(createdEvidence, value)
-			cmd.Checkpoint.EvidenceRefs = append(cmd.Checkpoint.EvidenceRefs, id)
-		}
-		for _, entry := range cmd.EvidenceLinks {
-			id, err := nextID(entry.LocalKey)
-			if err != nil {
-				return zero, 0, err
-			}
-			x := entry.Link
-			if x.Scope != cmd.Scope || x.TargetRef.Scope != cmd.Scope {
-				return zero, 0, domain.NewError(domain.ErrorCodeInvalidScope, "link scope must match sync")
-			}
-			if entry.EvidenceLocalKey != "" {
-				eid, ok := mappings[entry.EvidenceLocalKey]
-				if !ok {
-					return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown evidence local_key")
-				}
-				x.EvidenceID = &eid
-			}
-			if x.EvidenceID == nil {
-				return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "evidence ID or local key required")
-			}
-			ev, err := evidence.Get(ctx, cmd.Scope, *x.EvidenceID)
-			if err != nil {
-				return zero, 0, err
-			}
-			if ev.Lifecycle != domain.EvidenceLifecycleRegistered {
-				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "evidence retracted")
-			}
-			if err = validateEvidenceLinkTarget(ctx, u, decisions, x.TargetRef, x.CriterionID); err != nil {
-				return zero, 0, err
-			}
-			value, err := domain.NewEvidenceLink(id, cmd.Scope, *x.EvidenceID, x.TargetRef, x.CriterionID, x.Stance, x.Rationale, now)
-			if err != nil {
-				return zero, 0, err
-			}
-			if err = links.Insert(ctx, value); err != nil {
-				return zero, 0, err
-			}
-			createdLinks = append(createdLinks, value)
+		artifacts, evidence, _, _, err := documentaryRepositories(u)
+		if err != nil {
+			return zero, 0, err
 		}
 		for _, id := range cmd.Checkpoint.ArtifactRefs {
 			if _, err = artifacts.Get(ctx, cmd.Scope, id); err != nil {
@@ -481,4 +380,125 @@ func bindSubmissionAssessment(ctx context.Context, u ports.UnitOfWork, owner dom
 	a.SubmissionID = cloneIDPtr(id)
 	a.SubmissionDigest = p.Digest
 	return nil
+}
+
+// registerContractRecords composes documentary writes inside the caller's UnitOfWork.
+func (s *Service) registerContractRecords(ctx context.Context, u ports.UnitOfWork, cc domain.CommandContext, cmd SyncWorkContractCommand, now time.Time) (WorkContractResult, error) {
+	zero := WorkContractResult{}
+	artifacts, evidence, links, decisions, err := documentaryRepositories(u)
+	if err != nil {
+		return zero, err
+	}
+	if len(cmd.Artifacts)+len(cmd.Evidence)+len(cmd.EvidenceLinks) > 100 {
+		return zero, domain.NewError(domain.ErrorCodeInvalidArgument, "sync record limit is 100")
+	}
+	mappings := map[string]domain.ID{}
+	nextID := func(key string) (domain.ID, error) {
+		if len(key) == 0 || len(key) > 128 {
+			return "", domain.NewError(domain.ErrorCodeInvalidArgument, "local_key is required and limited to 128 bytes")
+		}
+		if _, ok := mappings[key]; ok {
+			return "", domain.NewError(domain.ErrorCodeInvalidArgument, "duplicate local_key")
+		}
+		id, err := s.ids.NewID()
+		if err == nil {
+			mappings[key] = id
+		}
+		return id, err
+	}
+	createdArtifacts := []domain.Artifact{}
+	createdEvidence := []domain.Evidence{}
+	createdLinks := []domain.EvidenceLink{}
+	for _, entry := range cmd.Artifacts {
+		id, err := nextID(entry.LocalKey)
+		if err != nil {
+			return zero, err
+		}
+		x := entry.Artifact
+		if x.Scope != cmd.Scope {
+			return zero, domain.NewError(domain.ErrorCodeInvalidScope, "artifact scope must match sync")
+		}
+		value, err := domain.NewArtifact(id, cmd.Scope, x.ArtifactType, x.Name, x.URI, x.MediaType, x.Checksum, x.SourceVersion, cc.Actor, x.ProducedAt, now)
+		if err != nil {
+			return zero, err
+		}
+		if err = artifacts.Insert(ctx, value); err != nil {
+			return zero, err
+		}
+		createdArtifacts = append(createdArtifacts, value)
+	}
+	for _, entry := range cmd.Evidence {
+		id, err := nextID(entry.LocalKey)
+		if err != nil {
+			return zero, err
+		}
+		x := entry.Evidence
+		if x.Scope != cmd.Scope {
+			return zero, domain.NewError(domain.ErrorCodeInvalidScope, "evidence scope must match sync")
+		}
+		if entry.ArtifactLocalKey != "" {
+			aid, ok := mappings[entry.ArtifactLocalKey]
+			if !ok {
+				return zero, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown artifact local_key")
+			}
+			x.ArtifactID = &aid
+		}
+		if x.ArtifactID != nil {
+			a, err := artifacts.Get(ctx, cmd.Scope, *x.ArtifactID)
+			if err != nil {
+				return zero, err
+			}
+			if a.Lifecycle != domain.ArtifactLifecycleRegistered {
+				return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "artifact withdrawn")
+			}
+		}
+		value, err := domain.NewEvidence(id, cmd.Scope, x.EvidenceType, x.Description, x.SourceRef, cc.Actor, x.CapturedAt, x.ArtifactID, x.Measurement, x.SourceVersion, x.Checksum, now)
+		if err != nil {
+			return zero, err
+		}
+		if err = evidence.Insert(ctx, value); err != nil {
+			return zero, err
+		}
+		createdEvidence = append(createdEvidence, value)
+	}
+	for _, entry := range cmd.EvidenceLinks {
+		id, err := nextID(entry.LocalKey)
+		if err != nil {
+			return zero, err
+		}
+		x := entry.Link
+		if x.Scope != cmd.Scope || x.TargetRef.Scope != cmd.Scope {
+			return zero, domain.NewError(domain.ErrorCodeInvalidScope, "link scope must match sync")
+		}
+		if entry.EvidenceLocalKey != "" {
+			eid, ok := mappings[entry.EvidenceLocalKey]
+			if !ok {
+				return zero, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown evidence local_key")
+			}
+			x.EvidenceID = &eid
+		}
+		if x.EvidenceID == nil {
+			return zero, domain.NewError(domain.ErrorCodeInvalidArgument, "evidence ID or local key required")
+		}
+		ev, err := evidence.Get(ctx, cmd.Scope, *x.EvidenceID)
+		if err != nil {
+			return zero, err
+		}
+		if ev.Lifecycle != domain.EvidenceLifecycleRegistered {
+			return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "evidence retracted")
+		}
+		if err = validateEvidenceLinkTarget(ctx, u, decisions, x.TargetRef, x.CriterionID); err != nil {
+			return zero, err
+		}
+		value, err := domain.NewEvidenceLink(id, cmd.Scope, *x.EvidenceID, x.TargetRef, x.CriterionID, x.Stance, x.Rationale, now)
+		if err != nil {
+			return zero, err
+		}
+		if err = links.Insert(ctx, value); err != nil {
+			return zero, err
+		}
+		createdLinks = append(createdLinks, value)
+	}
+
+	return WorkContractResult{LocalKeys: mappings, Artifacts: createdArtifacts, Evidence: createdEvidence, EvidenceLinks: createdLinks}, nil
 }

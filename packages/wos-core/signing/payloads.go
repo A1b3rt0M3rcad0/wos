@@ -91,6 +91,8 @@ type ReviewReturnPayload[T any] struct {
 	Material         T      `json:"material"`
 }
 type ReceiptPayload struct {
+	SubmissionDigest string            `json:"submission_digest,omitempty"`
+	LocalKeys        map[string]string `json:"local_keys,omitempty"`
 	Binding
 	RequestID             string  `json:"request_id"`
 	IdempotencyKey        string  `json:"idempotency_key"`

@@ -13,6 +13,7 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 type commandMetadata struct {
@@ -156,10 +157,15 @@ func transactCommand[T any, C any](
 		}
 	}
 
+	durableReplay := false
+	if r, ok := any(value).(interface{ IsDurableReplay() bool }); ok {
+		durableReplay = r.IsDurableReplay()
+	}
 	result := MutationResult[T]{
-		Value:           value,
-		OutcomeRevision: revision,
-		CommandID:       commandContext.CommandID,
+		IdempotentReplay: durableReplay,
+		Value:            value,
+		OutcomeRevision:  revision,
+		CommandID:        commandContext.CommandID,
 	}
 	if commandContext.IdempotencyKey != "" {
 		response, err := json.Marshal(result)
@@ -220,6 +226,18 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 	if field := value.FieldByName("ExpectedVersion"); field.IsValid() {
 		expected := field.Interface().(domain.Version)
 		meta.ExpectedVersion = &expected
+	}
+	if c, ok := any(command).(ReturnSignedWorkCommand); ok {
+		var hint signing.WorkReturnPayload[SignedReturnMaterial]
+		if err := signedRequestHint(c.Envelope, &hint); err != nil {
+			return commandMetadata{}, err
+		}
+		scope, err := signedRequestScope(hint.RequestBinding)
+		if err != nil {
+			return commandMetadata{}, err
+		}
+		meta.Scope = scope
+		meta.NamespaceID = scope.NamespaceID
 	}
 	if err := meta.NamespaceID.Validate(); err != nil {
 		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command namespace cannot be resolved", err)
@@ -293,6 +311,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if r, ok := any(value).(SignedReturnResult); ok {
+		return signedReturnEvents(s, commandContext, meta, r, revision)
+	}
 	if events, handled, err := protocolCommandEvents(s, commandContext, meta, value); handled || err != nil {
 		return events, err
 	}

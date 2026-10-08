@@ -139,6 +139,9 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 	if _, err = uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 		return zero, 0, err
 	}
+	if err = requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
+		return zero, 0, err
+	}
 	repo, workRepo, err := signedRepository(uow)
 	if err != nil {
 		return zero, 0, err

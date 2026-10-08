@@ -3996,6 +3996,50 @@
         ],
         "type": "object"
       },
+      "Catalog_return_signed_work": {
+        "additionalProperties": false,
+        "properties": {
+          "envelope": {
+            "additionalProperties": false,
+            "properties": {
+              "payload": {
+                "type": "string"
+              },
+              "payloadType": {
+                "type": "string"
+              },
+              "signatures": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyid": {
+                      "type": "string"
+                    },
+                    "sig": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "keyid",
+                    "sig"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "payloadType",
+              "payload"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "envelope"
+        ],
+        "type": "object"
+      },
       "Catalog_revise_criterion": {
         "additionalProperties": false,
         "properties": {
@@ -9662,6 +9706,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_retract_evidence_link"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/return_signed_work": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_return_signed_work",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_return_signed_work"
                   }
                 },
                 "required": [
