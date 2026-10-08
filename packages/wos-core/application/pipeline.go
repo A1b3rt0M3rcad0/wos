@@ -268,6 +268,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if events, handled, err := contractCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}

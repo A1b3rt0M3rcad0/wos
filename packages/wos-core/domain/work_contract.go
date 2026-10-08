@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"math"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -411,4 +412,42 @@ func (w *WorkItem) DetachContract(c WorkContract, now time.Time) error {
 	w.Version = next
 	w.UpdatedAt = now.UTC()
 	return nil
+}
+
+func (c WorkContract) Ref() EntityRef {
+	return EntityRef{Scope: c.Scope, Kind: EntityKindWorkItem, ID: c.WorkItemID}
+}
+
+// ValidateContractUpdate is shared by all adapters. Snapshot/acquisition are immutable.
+func ValidateContractUpdate(old, next WorkContract) error {
+	if old.Status != ContractActive {
+		return NewError(ErrorCodeInvalidTransition, "terminal contract is immutable")
+	}
+	if old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
+		return NewError(ErrorCodeContractSpecMismatch, "contract acquisition is immutable")
+	}
+	contentChanged := next.Version != old.Version
+	leaseChanged := next.LeaseVersion != old.LeaseVersion
+	if contentChanged == leaseChanged {
+		return NewError(ErrorCodeVersionConflict, "save must advance either content or lease once")
+	}
+	if contentChanged {
+		v, err := old.Version.Next()
+		if err != nil {
+			return err
+		}
+		if next.Version != v || next.ExecutionID != old.ExecutionID || next.FencingToken != old.FencingToken || !next.ExpiresAt.Equal(old.ExpiresAt) || !next.LastRenewedAt.Equal(old.LastRenewedAt) || next.LeasePolicy != old.LeasePolicy {
+			return NewError(ErrorCodeVersionConflict, "content save changed lease")
+		}
+	}
+	if leaseChanged {
+		v, err := old.LeaseVersion.Next()
+		if err != nil {
+			return err
+		}
+		if next.LeaseVersion != v || next.Status != old.Status || !reflect.DeepEqual(next.LatestCheckpointID, old.LatestCheckpointID) || !reflect.DeepEqual(next.LatestSubmissionID, old.LatestSubmissionID) || next.ClosedAt != nil {
+			return NewError(ErrorCodeVersionConflict, "lease save changed content")
+		}
+	}
+	return next.Validate()
 }
