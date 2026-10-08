@@ -1,0 +1,16 @@
+{
+  "public_key_hex": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
+  "canonical_payload": "{\"fencing_token\":\"18446744073709551615\",\"protocol_version\":2,\"signer_key_id\":\"vector-key\",\"summary\":\"ação ☃\"}",
+  "pae_base64": "RFNTRXYxIDM5IGFwcGxpY2F0aW9uL3ZuZC53b3Mud29yay1yZXR1cm4udjIranNvbiAxMTMgeyJmZW5jaW5nX3Rva2VuIjoiMTg0NDY3NDQwNzM3MDk1NTE2MTUiLCJwcm90b2NvbF92ZXJzaW9uIjoyLCJzaWduZXJfa2V5X2lkIjoidmVjdG9yLWtleSIsInN1bW1hcnkiOiJhw6fDo28g4piDIn0=",
+  "request_digest": "sha256:bf2fe91f371f5d231815a7fb8d10da410c7c97194725aa9d179cb11dcb4adc88",
+  "envelope": {
+    "payloadType": "application/vnd.wos.work-return.v2+json",
+    "payload": "eyJmZW5jaW5nX3Rva2VuIjoiMTg0NDY3NDQwNzM3MDk1NTE2MTUiLCJwcm90b2NvbF92ZXJzaW9uIjoyLCJzaWduZXJfa2V5X2lkIjoidmVjdG9yLWtleSIsInN1bW1hcnkiOiJhw6fDo28g4piDIn0=",
+    "signatures": [
+      {
+        "keyid": "vector-key",
+        "sig": "NQ7d+F/LjikXpLeF8ob6eNixgxCXOi4QdTdyqWfvI65lCB0+rk79WmyZ8WA9C8bt7xpl5PO6N4U5EE7O12wyCQ=="
+      }
+    ]
+  }
+}
