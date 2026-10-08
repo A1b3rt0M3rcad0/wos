@@ -1,0 +1,263 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v2/profile-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Restricted YAML mapping; max 1 MiB, depth 16, 10000 nodes. Semantic scalars max 64 KiB; explicitly identified technical base64 fields have separate byte bounds. Issued documents must be cryptographically verified. Profiles do not grant authority.",
+  "properties": {
+    "_local": {
+      "additionalProperties": false,
+      "properties": {
+        "binding_mac": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "pending_mac": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "pending_operations": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "contract_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "id": {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "idempotency_key": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "operation": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "payload": {
+                "contentEncoding": "base64",
+                "maxLength": 349528,
+                "type": "string"
+              },
+              "payload_digest": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "response": {
+                "contentEncoding": "base64",
+                "maxLength": 349528,
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "namespace_id": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "outcome_id": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "namespace_id"
+                ],
+                "type": "object"
+              },
+              "state": {
+                "maxLength": 65536,
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "operation",
+              "state",
+              "scope",
+              "idempotency_key",
+              "payload",
+              "payload_digest"
+            ],
+            "type": "object"
+          },
+          "maxItems": 10,
+          "type": "array"
+        },
+        "schema_version": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "pending_mac",
+        "binding_mac",
+        "pending_operations"
+      ],
+      "type": "object"
+    },
+    "authentication": {
+      "additionalProperties": false,
+      "properties": {
+        "credential_ref": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "credential_ref"
+      ],
+      "type": "object"
+    },
+    "binding": {
+      "additionalProperties": false,
+      "properties": {
+        "credential_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "issuer_keys": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "fingerprint": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "key_id": {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "public_key": {
+                "maxLength": 65536,
+                "type": "string"
+              }
+            },
+            "required": [
+              "key_id",
+              "public_key",
+              "fingerprint"
+            ],
+            "type": "object"
+          },
+          "maxItems": 10000,
+          "type": "array"
+        },
+        "namespace_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "principal_id": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "server_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "server_origin": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "server_id",
+        "server_origin",
+        "namespace_id",
+        "principal_id",
+        "credential_id",
+        "issuer_keys"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "lease": {
+      "additionalProperties": false,
+      "properties": {
+        "requested_ttl_seconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "requested_ttl_seconds"
+      ],
+      "type": "object"
+    },
+    "name": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "output": {
+      "additionalProperties": false,
+      "properties": {
+        "default_format": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "default_format"
+      ],
+      "type": "object"
+    },
+    "schema_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "signing": {
+      "additionalProperties": false,
+      "properties": {
+        "key_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "private_key_ref": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "public_key_fingerprint": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "key_id",
+        "private_key_ref",
+        "public_key_fingerprint"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "name",
+    "binding",
+    "authentication",
+    "signing",
+    "lease",
+    "output",
+    "_local"
+  ],
+  "type": "object"
+}

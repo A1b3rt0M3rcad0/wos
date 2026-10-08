@@ -1,0 +1,81 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v2/project-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Restricted YAML mapping; max 1 MiB, depth 16, 10000 nodes. Semantic scalars max 64 KiB; explicitly identified technical base64 fields have separate byte bounds. Issued documents must be cryptographically verified. Profiles do not grant authority.",
+  "properties": {
+    "connection": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_server_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "server_url": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "server_url",
+        "expected_server_id"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "scope": {
+      "additionalProperties": false,
+      "properties": {
+        "default_outcome_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        },
+        "namespace_id": {
+          "maxLength": 65536,
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "namespace_id",
+        "default_outcome_id"
+      ],
+      "type": "object"
+    },
+    "workspace": {
+      "additionalProperties": false,
+      "properties": {
+        "profiles_directory": {
+          "maxLength": 65536,
+          "type": "string"
+        }
+      },
+      "required": [
+        "profiles_directory"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "name",
+    "connection",
+    "scope",
+    "workspace"
+  ],
+  "type": "object"
+}

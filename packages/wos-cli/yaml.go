@@ -42,6 +42,9 @@ func YAMLJSON(raw []byte) ([]byte, error) {
 	return json.Marshal(v)
 }
 func yamlValue(n *yaml.Node, path string, depth int, count *int) (any, error) {
+	return yamlValueLimited(n, path, depth, count, false)
+}
+func yamlValueLimited(n *yaml.Node, path string, depth int, count *int, localV2 bool) (any, error) {
 	*count++
 	if depth > 16 || *count > 10000 {
 		return nil, fmt.Errorf("%s:%d:%d: document depth/node limit", path, n.Line, n.Column)
@@ -70,7 +73,7 @@ func yamlValue(n *yaml.Node, path string, depth int, count *int) (any, error) {
 			if key.Anchor != "" || key.Style&yaml.TaggedStyle != 0 {
 				return fail("tagged/anchored key forbidden")
 			}
-			v, err := yamlValue(n.Content[i+1], path+"."+key.Value, depth+1, count)
+			v, err := yamlValueLimited(n.Content[i+1], path+"."+key.Value, depth+1, count, localV2)
 			if err != nil {
 				return nil, err
 			}
@@ -80,7 +83,7 @@ func yamlValue(n *yaml.Node, path string, depth int, count *int) (any, error) {
 	case yaml.SequenceNode:
 		out := []any{}
 		for i, child := range n.Content {
-			v, err := yamlValue(child, fmt.Sprintf("%s[%d]", path, i), depth+1, count)
+			v, err := yamlValueLimited(child, fmt.Sprintf("%s[%d]", path, i), depth+1, count, localV2)
 			if err != nil {
 				return nil, err
 			}
@@ -89,7 +92,9 @@ func yamlValue(n *yaml.Node, path string, depth int, count *int) (any, error) {
 		return out, nil
 	case yaml.ScalarNode:
 		if len(n.Value) > 65536 {
-			return fail("scalar exceeds 64 KiB")
+			if !localV2 || !technicalV2Path(path) || !validTechnicalV2Blob(n.Value) {
+				return fail("scalar exceeds 64 KiB or technical base64 limit")
+			}
 		}
 		switch n.Tag {
 		case "!!str", "!!timestamp":

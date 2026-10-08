@@ -12,7 +12,10 @@ import (
 	"time"
 )
 
-type Workspace struct{ root *os.Root }
+type Workspace struct {
+	root          *os.Root
+	canonicalPath string
+}
 
 func OpenWorkspace(path string) (*Workspace, error) {
 	info, err := os.Lstat(path)
@@ -26,7 +29,17 @@ func OpenWorkspace(path string) (*Workspace, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Workspace{root: root}, nil
+	canonical, err := filepath.Abs(path)
+	if err != nil {
+		root.Close()
+		return nil, err
+	}
+	canonical, err = filepath.EvalSymlinks(canonical)
+	if err != nil {
+		root.Close()
+		return nil, err
+	}
+	return &Workspace{root: root, canonicalPath: canonical}, nil
 }
 func (w *Workspace) Close() error { return w.root.Close() }
 func (w *Workspace) check(path string) error {
