@@ -92,7 +92,7 @@ func (s *Service) changeExternalReference(ctx context.Context, u ports.UnitOfWor
 	return outcome, revision, err
 }
 func (s *Service) ListExternalReferences(ctx context.Context, scope domain.Scope) ([]domain.ExternalReference, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 	u, err := s.tx.Begin(ctx)
@@ -100,6 +100,9 @@ func (s *Service) ListExternalReferences(ctx context.Context, scope domain.Scope
 		return nil, 0, err
 	}
 	defer u.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, scope); err != nil {
+		return nil, 0, err
+	}
 	if err = lockExistingOutcome(ctx, u, scope); err != nil {
 		return nil, 0, err
 	}

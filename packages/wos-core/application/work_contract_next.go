@@ -167,7 +167,7 @@ type AvailableWorkPage struct {
 }
 
 func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit int, cursor string) (AvailableWorkPage, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return AvailableWorkPage{}, err
 	}
 	if err := scope.Validate(); err != nil {
@@ -196,6 +196,9 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 		return AvailableWorkPage{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return AvailableWorkPage{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return AvailableWorkPage{}, err
@@ -227,13 +230,35 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 		if err != nil {
 			return page, err
 		}
-		if w.CurrentContractID != nil {
-			c, err := repo.Get(ctx, scope, *w.CurrentContractID)
-			if err != nil {
-				return page, err
+		if signed, ok := uow.(ports.SignedContractUnitOfWork); ok {
+			pending, e := signed.SignedContracts().OpenCase(ctx, scope, w.ID)
+			if e != nil {
+				return page, e
 			}
-			if c.ValidAt(now) {
+			if pending != nil || w.CorrectionReviewCaseID != nil {
 				continue
+			}
+		}
+		if w.CurrentContractID != nil {
+			contracts := repo
+			if signed, ok := uow.(ports.SignedContractUnitOfWork); ok {
+				if c, e := signed.SignedWorkContracts().Get(ctx, scope, *w.CurrentContractID); e == nil {
+					if c.ValidAt(now) {
+						continue
+					}
+					contracts = nil
+				} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+					return page, e
+				}
+			}
+			if contracts != nil {
+				c, err := contracts.Get(ctx, scope, *w.CurrentContractID)
+				if err != nil {
+					return page, err
+				}
+				if c.ValidAt(now) {
+					continue
+				}
 			}
 		}
 		view := w

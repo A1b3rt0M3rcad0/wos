@@ -7,6 +7,7 @@ import (
 )
 
 type OutcomeFilter struct {
+	AllowedOutcomeIDs  []domain.ID            `json:"-"`
 	ExternalContext    domain.ExternalContext `json:"external_context,omitempty"`
 	CreatorPrincipalID string                 `json:"creator_principal_id,omitempty"`
 	ExternalProvider   string                 `json:"external_provider,omitempty"`

@@ -14,10 +14,12 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 	var workID, objectiveID domain.ID
 	var wholeOutcome bool
 	var signedOnly bool
+	var immutableAssessment bool
 	switch cmd := command.(type) {
 	case RecordCriterionAssessmentCommand:
 		scope = cmd.Owner.Scope
 		signedOnly = true
+		immutableAssessment = true
 		if cmd.Owner.Kind == domain.EntityKindWorkItem {
 			workID = cmd.Owner.ID
 		} else if cmd.Owner.Kind == domain.EntityKindObjective {
@@ -28,6 +30,7 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 	case AttestCriterionCommand:
 		scope = cmd.Owner.Scope
 		signedOnly = true
+		immutableAssessment = true
 		if cmd.Owner.Kind == domain.EntityKindWorkItem {
 			workID = cmd.Owner.ID
 		} else if cmd.Owner.Kind == domain.EntityKindObjective {
@@ -37,21 +40,55 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 		}
 	case UpdateWorkItemCommand:
 		scope, workID = cmd.Scope, cmd.WorkItemID
+	case UpdateOutcomeCommand:
+		scope, wholeOutcome = cmd.Scope, true
+		signedOnly = true
+	case UpdateObjectiveCommand:
+		scope, objectiveID = cmd.Scope, cmd.ObjectiveID
+		signedOnly = true
 	case AddCriterionCommand:
-		if cmd.Owner.Kind == domain.EntityKindWorkItem {
-			scope, workID = cmd.Owner.Scope, cmd.Owner.ID
+		scope = cmd.Owner.Scope
+		signedOnly = cmd.Owner.Kind != domain.EntityKindWorkItem
+		switch cmd.Owner.Kind {
+		case domain.EntityKindWorkItem:
+			workID = cmd.Owner.ID
+		case domain.EntityKindObjective:
+			objectiveID = cmd.Owner.ID
+		case domain.EntityKindOutcome:
+			wholeOutcome = true
 		}
 	case ReviseCriterionCommand:
-		if cmd.Owner.Kind == domain.EntityKindWorkItem {
-			scope, workID = cmd.Owner.Scope, cmd.Owner.ID
+		scope = cmd.Owner.Scope
+		signedOnly = cmd.Owner.Kind != domain.EntityKindWorkItem
+		switch cmd.Owner.Kind {
+		case domain.EntityKindWorkItem:
+			workID = cmd.Owner.ID
+		case domain.EntityKindObjective:
+			objectiveID = cmd.Owner.ID
+		case domain.EntityKindOutcome:
+			wholeOutcome = true
 		}
 	case RetireCriterionCommand:
-		if cmd.Owner.Kind == domain.EntityKindWorkItem {
-			scope, workID = cmd.Owner.Scope, cmd.Owner.ID
+		scope = cmd.Owner.Scope
+		signedOnly = cmd.Owner.Kind != domain.EntityKindWorkItem
+		switch cmd.Owner.Kind {
+		case domain.EntityKindWorkItem:
+			workID = cmd.Owner.ID
+		case domain.EntityKindObjective:
+			objectiveID = cmd.Owner.ID
+		case domain.EntityKindOutcome:
+			wholeOutcome = true
 		}
 	case AddDependencyCommand:
-		if cmd.SourceRef.Kind == domain.EntityKindWorkItem {
-			scope, workID = cmd.Scope, cmd.SourceRef.ID
+		scope = cmd.Scope
+		signedOnly = cmd.SourceRef.Kind != domain.EntityKindWorkItem
+		switch cmd.SourceRef.Kind {
+		case domain.EntityKindWorkItem:
+			workID = cmd.SourceRef.ID
+		case domain.EntityKindObjective:
+			objectiveID = cmd.SourceRef.ID
+		case domain.EntityKindOutcome:
+			wholeOutcome = true
 		}
 	case RemoveDependencyCommand:
 		if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
@@ -61,8 +98,15 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 		if err != nil {
 			return err
 		}
-		if rel.SourceRef.Kind == domain.EntityKindWorkItem {
-			scope, workID = cmd.Scope, rel.SourceRef.ID
+		scope = cmd.Scope
+		signedOnly = rel.SourceRef.Kind != domain.EntityKindWorkItem
+		switch rel.SourceRef.Kind {
+		case domain.EntityKindWorkItem:
+			workID = rel.SourceRef.ID
+		case domain.EntityKindObjective:
+			objectiveID = rel.SourceRef.ID
+		case domain.EntityKindOutcome:
+			wholeOutcome = true
 		}
 	case AchieveOutcomeCommand:
 		scope, wholeOutcome = cmd.Scope, true
@@ -118,7 +162,7 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 			if w.CurrentContractID != nil {
 				c, err := signed.SignedWorkContracts().Get(ctx, scope, *w.CurrentContractID)
 				if err == nil {
-					if c.ValidAt(now) {
+					if c.ValidAt(now) || immutableAssessment && c.LatestSubmissionID != nil {
 						return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "active signed authority requires a signed operation")
 					}
 					return nil

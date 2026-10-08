@@ -50,7 +50,7 @@ func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f po
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "review case page outside 1..101")
 	}
-	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_cases WHERE namespace_id=$1 AND outcome_id=$2 AND ($3='' OR work_item_id=$4) AND ($5='' OR status=$6) AND id>$7 ORDER BY id LIMIT $8`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.Status, f.Status, f.After.String(), f.Limit)
+	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_cases WHERE namespace_id=$1 AND outcome_id=$2 AND ($3=0 OR status IN ('pending','in_review')) AND ($4='' OR work_item_id=$5) AND ($6='' OR status=$7) AND id>$8 ORDER BY id LIMIT $9`, scope.NamespaceID.String(), scope.OutcomeID.String(), boolInt(f.OpenOnly), f.WorkItemID.String(), f.WorkItemID.String(), f.Status, f.Status, f.After.String(), f.Limit)
 	if err != nil {
 		return nil, err
 	}

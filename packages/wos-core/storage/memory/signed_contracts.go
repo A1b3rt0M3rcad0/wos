@@ -50,7 +50,7 @@ func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f po
 	}
 	out := []d.ReviewCase{}
 	for _, c := range r.tx.signedReview.Cases {
-		if c.Scope == scope && c.ID > f.After && (f.WorkItemID.IsZero() || f.WorkItemID == c.WorkItemID) && (f.Status == "" || f.Status == string(c.Status)) {
+		if (!f.OpenOnly || c.Status == d.ReviewPending || c.Status == d.ReviewInReview) && c.Scope == scope && c.ID > f.After && (f.WorkItemID.IsZero() || f.WorkItemID == c.WorkItemID) && (f.Status == "" || f.Status == string(c.Status)) {
 			out = append(out, deepCopy(c))
 		}
 	}

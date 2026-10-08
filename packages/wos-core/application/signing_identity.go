@@ -435,13 +435,15 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 // SigningIdentityView reveals only the current credential's public identity.
 // Private signing material never enters WOS or this response.
 type SigningIdentityView struct {
-	ServerID     string               `json:"server_id"`
-	NamespaceID  d.ID                 `json:"namespace_id"`
-	PrincipalID  string               `json:"principal_id"`
-	CredentialID d.ID                 `json:"credential_id"`
-	Policy       *d.CredentialPolicy  `json:"credential_policy,omitempty"`
-	Keys         []d.SigningKey       `json:"keys"`
-	Enrollment   *d.SigningEnrollment `json:"enrollment,omitempty"`
+	ServerID         string               `json:"server_id"`
+	NamespaceVersion d.Version            `json:"namespace_version,string"`
+	KeysTruncated    bool                 `json:"keys_truncated"`
+	NamespaceID      d.ID                 `json:"namespace_id"`
+	PrincipalID      string               `json:"principal_id"`
+	CredentialID     d.ID                 `json:"credential_id"`
+	Policy           *d.CredentialPolicy  `json:"credential_policy,omitempty"`
+	Keys             []d.SigningKey       `json:"keys"`
+	Enrollment       *d.SigningEnrollment `json:"enrollment,omitempty"`
 }
 
 func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID) (SigningIdentityView, error) {
@@ -482,7 +484,19 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 			return result, err
 		}
 	}
-	result = SigningIdentityView{ServerID: s.ServerID, NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
+	namespaceVersion, err := repo.LockNamespace(ctx, id.NamespaceID)
+	if err != nil {
+		return result, err
+	}
+	result = SigningIdentityView{ServerID: s.ServerID, NamespaceVersion: namespaceVersion, NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
+	if persistent, ok := uow.(ports.ServerIdentityUnitOfWork); ok {
+		server, e := persistent.ServerIdentity().Server(ctx)
+		if e == nil {
+			result.ServerID = server.ID.String()
+		} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+			return result, e
+		}
+	}
 	policy, err := repo.CredentialPolicy(ctx, id.NamespaceID, credential.ID)
 	if err == nil {
 		result.Policy = &policy
@@ -492,6 +506,10 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	result.Keys, err = repo.Keys(ctx, id.NamespaceID, id.PrincipalID, 101)
 	if err != nil {
 		return result, err
+	}
+	if len(result.Keys) > 100 {
+		result.KeysTruncated = true
+		result.Keys = result.Keys[:100]
 	}
 	if enrollmentID != nil {
 		enrollment, e := repo.Enrollment(ctx, id.NamespaceID, *enrollmentID)

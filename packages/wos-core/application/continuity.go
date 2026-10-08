@@ -70,7 +70,7 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	if err := ns.Validate(); err != nil {
 		return OutcomePage{}, err
 	}
-	if err := s.authorizeRead(ctx, ns); err != nil {
+	if err := s.authorizeNamespaceMetadataRead(ctx, ns); err != nil {
 		return OutcomePage{}, err
 	}
 	if err := f.ExternalContext.Validate(); err != nil {
@@ -102,7 +102,22 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 			return OutcomePage{}, err
 		}
 	}
+	uow, err := s.tx.Begin(ctx)
+	if err != nil {
+		return OutcomePage{}, err
+	}
+	defer uow.Rollback()
+	f.AllowedOutcomeIDs, err = s.readOutcomeRestrictions(ctx, uow, ns)
+	if err != nil {
+		return OutcomePage{}, err
+	}
 	hash := filterHash(f)
+	if len(f.AllowedOutcomeIDs) > 0 {
+		hash = filterHash(struct {
+			Filter  ports.OutcomeFilter
+			Allowed []domain.ID
+		}{f, f.AllowedOutcomeIDs})
+	}
 	if cursor != "" {
 		c, err := decodeCursor(cursor, ns, "", "outcomes", hash)
 		if err != nil {
@@ -121,11 +136,7 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 			return OutcomePage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor")
 		}
 	}
-	uow, err := s.tx.Begin(ctx)
-	if err != nil {
-		return OutcomePage{}, err
-	}
-	defer uow.Rollback()
+
 	repo, ok := uow.Outcomes().(ports.OutcomeDiscoveryRepository)
 	if !ok {
 		return OutcomePage{}, domain.NewError(domain.ErrorCodeInvalidConfig, "outcome discovery is unavailable")
@@ -183,7 +194,7 @@ func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q Timelin
 	if err := scope.Validate(); err != nil {
 		return TimelinePage{}, err
 	}
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return TimelinePage{}, err
 	}
 	n, err := queryLimit(q.Limit)
@@ -205,6 +216,9 @@ func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q Timelin
 		return TimelinePage{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return TimelinePage{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return TimelinePage{}, err
 	}

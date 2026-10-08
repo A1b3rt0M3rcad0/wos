@@ -136,11 +136,83 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			returned, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
 			must(e)
 			delivery := decodeReceipt(t, returned.Value.Receipt, server, pub)
+			read := func(readCtx context.Context, query a.SignedStateQuery) a.SignedStateResult {
+				t.Helper()
+				value, e := service.ReadSignedState(readCtx, query)
+				must(e)
+				return value
+			}
+			trust := read(agentCtx, a.SignedStateQuery{Scope: d.Scope{NamespaceID: ns}, Resource: "trust"})
+			if trust.Server == nil || trust.Server.ID != server.ID || trust.Protocol == nil || trust.Protocol.Phase != d.WorkProtocolSigned {
+				t.Fatal("public trust lost persistent identity/protocol")
+			}
+			metadata := read(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "execution", ID: c.ID})
+			if metadata.Contract == nil || metadata.Contract.Status != d.ContractDelivered || metadata.Contract.LeaseValid || metadata.Contract.SubmissionID == nil || metadata.Envelope != nil || metadata.MaterialPayload != "" {
+				t.Fatal("execution metadata expanded material or projected delivered authority as live")
+			}
+			for _, resource := range []string{"specification", "authority"} {
+				fact := read(agentCtx, a.SignedStateQuery{Scope: scope, Resource: resource, ID: c.ID, ContractKind: "execution"})
+				if fact.Envelope == nil || fact.SignerKey == nil || fact.FactID == nil {
+					t.Fatal("missing issuance proof")
+				}
+				public, e := fact.SignerKey.PublicBytes()
+				must(e)
+				purpose := signing.ContractSpec
+				if resource == "authority" {
+					purpose = signing.ContractAuthority
+				}
+				payload, e := signing.Verify(*fact.Envelope, purpose, fact.SignerKey.ID.String(), public)
+				must(e)
+				if signing.Digest(payload) != fact.PayloadDigest {
+					t.Fatal("expanded proof digest differs")
+				}
+				if _, e := service.ReadSignedState(agentCtx, a.SignedStateQuery{Scope: scope, Resource: resource, ID: c.ID, ContractKind: "execution", Digest: signing.Digest([]byte("wrong exact bytes"))}); e == nil {
+					t.Fatal("expanded issuance ignored expected digest")
+				}
+			}
+			acceptedMaterial := read(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "submission", ID: d.ID(delivery.SubmissionID), Digest: delivery.SubmissionDigest})
+			canonical, e := base64.StdEncoding.DecodeString(acceptedMaterial.MaterialPayload)
+			must(e)
+			if signing.Digest(canonical) != delivery.SubmissionDigest || acceptedMaterial.AcceptanceFactID == nil {
+				t.Fatal("accepted material does not match issuer receipt")
+			}
+			durableReceipt := read(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "receipt", IdempotencyKey: request.IdempotencyKey})
+			if durableReceipt.Envelope == nil || durableReceipt.Envelope.PayloadType != signing.AcceptanceReceipt {
+				t.Fatal("receipt query lost signed acceptance")
+			}
+			queue := read(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "review_queue", Limit: 1})
+			if len(queue.Cases) != 1 || queue.Cases[0].ID.String() != delivery.ReviewCaseID {
+				t.Fatal("pending independent review absent from bounded queue")
+			}
+
 			u, e := store.Begin(ctx)
 			must(e)
 			review, e := u.(ports.SignedContractUnitOfWork).SignedContracts().Case(ctx, scope, d.ID(delivery.ReviewCaseID))
 			must(e)
 			must(u.Rollback())
+			available, e := service.ListAvailableWork(agentCtx, scope, 10, "")
+			must(e)
+			for _, candidate := range available.Items {
+				if candidate.Candidate.ID == work.ID {
+					t.Fatal("delivered pending-review Task advertised for execution")
+				}
+			}
+			// Embedded composition cannot alter frozen parent intent or introduce
+			// an unsigned obligation while the delivery awaits independent review.
+			guardCC := returnCC
+			guardCC.CommandID, e = ids.NewID()
+			must(e)
+			guardCC.IdempotencyKey = "unsigned-frozen-parent-update"
+			changedTitle := "rewrite intent after delivery"
+			if _, e := service.UpdateOutcome(agentCtx, guardCC, a.UpdateOutcomeCommand{Scope: scope, ExpectedVersion: outcome.Version, Title: &changedTitle}); e == nil {
+				t.Fatal("unsigned parent material edit bypassed open signed review")
+			}
+			guardCC.CommandID, e = ids.NewID()
+			must(e)
+			guardCC.IdempotencyKey = "unsigned-frozen-parent-criterion"
+			if _, e := service.AddCriterion(agentCtx, guardCC, a.AddCriterionCommand{Owner: outcome.Ref(), ExpectedVersion: outcome.Version, Title: "unplanned parent obligation", Required: true, VerificationMode: d.VerificationModeAttestation}); e == nil {
+				t.Fatal("unsigned parent criterion bypassed open signed review")
+			}
 			// Grant review acquisition to the original Principal expressly: rejection must
 			// come from independence, not merely a missing permission.
 			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
@@ -243,6 +315,16 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			finding := d.SignedFinding{ID: findingID, CriterionID: &criterion.ID, Description: "rerun the bounded test against the corrected commit"}
 			changes, e := sendReview(secondReview.Value, "changes_requested", "review-changes-requested", a.SignedReviewMaterial{Reason: "test needs correction", Findings: []d.SignedFinding{finding}})
 			must(e)
+			correctionView := read(reviewCtx, a.SignedStateQuery{Scope: scope, Resource: "correction", ID: secondReview.Value.Case.ID})
+			if correctionView.Envelope == nil || correctionView.ReviewCase == nil || correctionView.ReviewCase.Status != d.ReviewChangesRequested {
+				t.Fatal("correction read lost accepted immutable targets")
+			}
+			decision, _, e := signing.Decode[signing.ReviewReturnPayload[a.SignedReviewMaterial]](*correctionView.Envelope, signing.ReviewReturn, reviewKey.String(), reviewPrivate.Public().(ed25519.PublicKey))
+			must(e)
+			if len(decision.Material.Findings) != 1 || decision.Material.Findings[0].ID != finding.ID {
+				t.Fatal("accepted correction findings changed")
+			}
+
 			changesReceipt := decodeReceipt(t, changes.Value.Receipt, server, pub)
 			if changesReceipt.Disposition != "changes_requested" || changesReceipt.WorkItemLifecycle != "in_progress" {
 				t.Fatal("changes requested incorrectly approved Task")
@@ -324,6 +406,14 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			approved, e := sendReview(finalReview.Value, "approved", "final-review-approved", approvalMaterial)
 			must(e)
 			approvedReceipt := decodeReceipt(t, approved.Value.Receipt, server, pub)
+			guardCC.CommandID, e = ids.NewID()
+			must(e)
+			guardCC.PrincipalID, guardCC.Actor = reviewer.PrincipalID, reviewer.Actor
+			guardCC.IdempotencyKey = "unsigned-rewrite-approved-assessment"
+			if _, e := service.RecordCriterionAssessment(reviewCtx, guardCC, a.RecordCriterionAssessmentCommand{Owner: work.Ref(), CriterionID: criterion.ID, CriterionRevision: criterion.Revision, ExpectedVersion: d.Version(finalReview.Value.WorkItemVersion), Result: d.AssessmentResultNotMet, Rationale: "unsigned rewrite after approval"}); e == nil {
+				t.Fatal("unsigned assessment rewrote completed signed obligation")
+			}
+
 			if approvedReceipt.Disposition != "review_approved" || approvedReceipt.WorkItemLifecycle != "done" {
 				t.Fatal("independent approval did not complete the Task")
 			}

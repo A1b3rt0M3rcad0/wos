@@ -552,3 +552,11 @@ func (c WorkContract) SubmissionSpecDigest() string {
 	}
 	return c.SpecDigest
 }
+
+// EffectiveStatus is a read-only expiry projection, never an expiry mutation.
+func (c ReviewContract) EffectiveStatus(now time.Time) ContractStatus {
+	if c.Status == ContractActive && !now.Before(c.ExpiresAt) {
+		return ContractExpired
+	}
+	return c.Status
+}

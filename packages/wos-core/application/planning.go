@@ -426,7 +426,7 @@ func (s *Service) GetActiveRoadmapSlot(
 	scope domain.Scope,
 	planScope domain.RoadmapPlanScope,
 ) (*domain.RoadmapActiveSlot, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -435,6 +435,9 @@ func (s *Service) GetActiveRoadmapSlot(
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -455,7 +458,7 @@ func (s *Service) ListRoadmapActivationHistory(
 	scope domain.Scope,
 	planScope domain.RoadmapPlanScope,
 ) ([]domain.RoadmapActivationRecord, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -464,6 +467,9 @@ func (s *Service) ListRoadmapActivationHistory(
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -520,7 +526,7 @@ func (s *Service) GetRoadmapRevision(
 	id domain.ID,
 	revisionNumber uint64,
 ) (ReadResult[domain.RoadmapRevision], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.RoadmapRevision]{}, err
 	}
 
@@ -532,6 +538,9 @@ func (s *Service) GetRoadmapRevision(
 		return ReadResult[domain.RoadmapRevision]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.RoadmapRevision]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.RoadmapRevision]{}, err
 	}
@@ -561,7 +570,7 @@ func (s *Service) GetRoadmap(
 	scope domain.Scope,
 	id domain.ID,
 ) (ReadResult[domain.Roadmap], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Roadmap]{}, err
 	}
 
@@ -570,6 +579,9 @@ func (s *Service) GetRoadmap(
 		return ReadResult[domain.Roadmap]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Roadmap]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Roadmap]{}, err
 	}
@@ -595,7 +607,7 @@ func (s *Service) ListRoadmaps(
 	ctx context.Context,
 	scope domain.Scope,
 ) ([]domain.Roadmap, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -604,6 +616,9 @@ func (s *Service) ListRoadmaps(
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}

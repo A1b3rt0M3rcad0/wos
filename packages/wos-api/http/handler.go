@@ -128,6 +128,8 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+base, h.searchOutcomes)
 	if h.security != nil {
 		h.mux.HandleFunc("POST "+h.prefix+"/security/commands", h.administer)
+		h.mux.HandleFunc("POST "+h.prefix+"/security/signing-commands", h.signingAdministration)
+		h.mux.HandleFunc("GET "+h.prefix+"/security/signing-identity", h.signingIdentity)
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
 		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
@@ -151,6 +153,9 @@ func (h *Handler) routes() {
 	outcome := base + "/{outcome_id}"
 	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
 	h.mux.HandleFunc("GET "+outcome+"/work-checkpoints/{checkpoint_id}", h.getWorkCheckpoint)
+	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/signed-trust", h.signedTrust)
+	h.mux.HandleFunc("GET "+outcome+"/signed-state/{resource}", h.signedState)
+	h.mux.HandleFunc("GET "+outcome+"/signed-state/{resource}/{entity_id}", h.signedState)
 	h.mux.HandleFunc("GET "+outcome+"/work-contracts", h.listWorkContracts)
 	h.mux.HandleFunc("GET "+outcome+"/work-contracts/{contract_id}", h.getWorkContract)
 	h.mux.HandleFunc("GET "+outcome+"/work-contracts/{contract_id}/{section}", h.contractRecords)

@@ -270,7 +270,7 @@ func (s *Service) CancelBlocker(ctx context.Context, cc domain.CommandContext, c
 }
 
 func (s *Service) GetIssue(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Issue], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Issue]{}, err
 	}
 
@@ -279,6 +279,9 @@ func (s *Service) GetIssue(ctx context.Context, scope domain.Scope, id domain.ID
 		return ReadResult[domain.Issue]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Issue]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Issue]{}, err
 	}
@@ -294,7 +297,7 @@ func (s *Service) GetIssue(ctx context.Context, scope domain.Scope, id domain.ID
 	return ReadResult[domain.Issue]{Value: v, OutcomeRevision: c.Revision}, err
 }
 func (s *Service) ListIssues(ctx context.Context, scope domain.Scope) ([]domain.Issue, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -303,6 +306,9 @@ func (s *Service) ListIssues(ctx context.Context, scope domain.Scope) ([]domain.
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -318,7 +324,7 @@ func (s *Service) ListIssues(ctx context.Context, scope domain.Scope) ([]domain.
 	return v, c.Revision, err
 }
 func (s *Service) GetBlocker(ctx context.Context, scope domain.Scope, id domain.ID) (ReadResult[domain.Blocker], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[domain.Blocker]{}, err
 	}
 
@@ -327,6 +333,9 @@ func (s *Service) GetBlocker(ctx context.Context, scope domain.Scope, id domain.
 		return ReadResult[domain.Blocker]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[domain.Blocker]{}, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return ReadResult[domain.Blocker]{}, err
 	}
@@ -342,7 +351,7 @@ func (s *Service) GetBlocker(ctx context.Context, scope domain.Scope, id domain.
 	return ReadResult[domain.Blocker]{Value: v, OutcomeRevision: c.Revision}, err
 }
 func (s *Service) ListBlockers(ctx context.Context, scope domain.Scope) ([]domain.Blocker, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
 
@@ -351,6 +360,9 @@ func (s *Service) ListBlockers(ctx context.Context, scope domain.Scope) ([]domai
 		return nil, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return nil, 0, err
+	}
 	if err := lockExistingOutcome(ctx, uow, scope); err != nil {
 		return nil, 0, err
 	}
@@ -366,7 +378,7 @@ func (s *Service) ListBlockers(ctx context.Context, scope domain.Scope) ([]domai
 	return v, c.Revision, err
 }
 func (s *Service) GetBlockingState(ctx context.Context, ref domain.EntityRef) (BlockingState, domain.OutcomeRevision, error) {
-	if err := s.authorizeRead(ctx, ref.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, ref.Scope); err != nil {
 		return BlockingState{}, 0, err
 	}
 
@@ -378,6 +390,9 @@ func (s *Service) GetBlockingState(ctx context.Context, ref domain.EntityRef) (B
 		return BlockingState{}, 0, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, ref.Scope); err != nil {
+		return BlockingState{}, 0, err
+	}
 	v, err := blockingStateForRef(ctx, uow, ref)
 	if err != nil {
 		return BlockingState{}, 0, err

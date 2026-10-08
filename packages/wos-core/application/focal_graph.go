@@ -232,7 +232,7 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 	if err := id.Validate(); err != nil {
 		return WorkContext{}, err
 	}
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return WorkContext{}, err
 	}
 	uow, err := s.tx.Begin(ctx)
@@ -240,6 +240,9 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 		return WorkContext{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return WorkContext{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return WorkContext{}, err

@@ -21,7 +21,7 @@ type WorkContractView struct {
 }
 
 func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (ReadResult[WorkContractView], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[WorkContractView]{}, err
 	}
 	if err := scope.Validate(); err != nil {
@@ -35,6 +35,9 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 		return ReadResult[WorkContractView]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[WorkContractView]{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[WorkContractView]{}, err
@@ -104,7 +107,7 @@ func workContractView(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, 
 	return ReadResult[WorkContractView]{Value: v, OutcomeRevision: revision}, nil
 }
 func (s *Service) ListWorkContracts(ctx context.Context, scope d.Scope, f ports.ContractFilter) (ReadResult[[]d.WorkContract], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[[]d.WorkContract]{}, err
 	}
 	if err := scope.Validate(); err != nil {
@@ -115,6 +118,9 @@ func (s *Service) ListWorkContracts(ctx context.Context, scope d.Scope, f ports.
 		return ReadResult[[]d.WorkContract]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[[]d.WorkContract]{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[[]d.WorkContract]{}, err
@@ -183,7 +189,7 @@ func (s *Service) WorkContractHistory(ctx context.Context, scope d.Scope, f port
 	return page, nil
 }
 func (s *Service) GetWorkSubmission(ctx context.Context, scope d.Scope, id d.ID) (ReadResult[d.WorkSubmission], error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[d.WorkSubmission]{}, err
 	}
 	if err := scope.Validate(); err != nil {
@@ -197,6 +203,9 @@ func (s *Service) GetWorkSubmission(ctx context.Context, scope d.Scope, id d.ID)
 		return ReadResult[d.WorkSubmission]{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ReadResult[d.WorkSubmission]{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[d.WorkSubmission]{}, err
@@ -217,7 +226,7 @@ type ContractRecordPage struct {
 }
 
 func (s *Service) ContractRecords(ctx context.Context, scope d.Scope, id d.ID, section string, limit int, cursor string) (ContractRecordPage, error) {
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ContractRecordPage{}, err
 	}
 	if err := scope.Validate(); err != nil {
@@ -250,6 +259,9 @@ func (s *Service) ContractRecords(ctx context.Context, scope d.Scope, id d.ID, s
 		return ContractRecordPage{}, err
 	}
 	defer uow.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
+		return ContractRecordPage{}, err
+	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ContractRecordPage{}, err
@@ -305,10 +317,12 @@ func (s *Service) GetCommandReceipt(ctx context.Context, ns, id d.ID) (d.StoredC
 		return d.StoredCommandResult{}, err
 	}
 	defer uow.Rollback()
-	if dynamic, ok := s.authorizer.(ports.TransactionalAuthorizer); ok && s.requireIdentity {
-		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permission: ports.PermissionStateRead}); err != nil {
-			return d.StoredCommandResult{}, err
-		}
+	allowed, err := s.readOutcomeRestrictions(ctx, uow, ns)
+	if err != nil {
+		return d.StoredCommandResult{}, err
+	}
+	if len(allowed) != 0 {
+		return d.StoredCommandResult{}, d.NewError(d.ErrorCodeForbidden, "Outcome-restricted credential requires a scoped receipt read")
 	}
 	store, ok := uow.Idempotency().(ports.CommandReceiptStore)
 	if !ok {
@@ -338,7 +352,7 @@ func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID)
 	if err := id.Validate(); err != nil {
 		return ReadResult[d.WorkCheckpoint]{}, err
 	}
-	if err := s.authorizeRead(ctx, scope.NamespaceID); err != nil {
+	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[d.WorkCheckpoint]{}, err
 	}
 	u, err := s.tx.Begin(ctx)
@@ -346,6 +360,9 @@ func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID)
 		return ReadResult[d.WorkCheckpoint]{}, err
 	}
 	defer u.Rollback()
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, scope); err != nil {
+		return ReadResult[d.WorkCheckpoint]{}, err
+	}
 	coord, err := u.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadResult[d.WorkCheckpoint]{}, err
