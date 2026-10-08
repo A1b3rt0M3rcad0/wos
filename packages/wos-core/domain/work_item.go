@@ -349,11 +349,11 @@ func (w *WorkItem) Cancel(conclusion Conclusion, now time.Time) error {
 // CancelAdministratively terminates leased work without requiring lease
 // ownership. Authorization is intentionally enforced by the Application layer.
 func (w *WorkItem) CancelAdministratively(conclusion Conclusion, now time.Time) error {
-	if w.ContractsEnabled {
-		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	if w.ContractsEnabled && w.CurrentContractID != nil {
+		return NewError(ErrorCodeWorkAlreadyClaimed, "revoke or reconcile contract before administrative cancellation")
 	}
-	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
-		return NewError(ErrorCodeInvalidTransition, "administrative cancellation requires in-progress leased work")
+	if w.Lifecycle != WorkItemLifecycleInProgress || (!w.ContractsEnabled && w.CurrentLease == nil) {
+		return NewError(ErrorCodeInvalidTransition, "administrative cancellation requires in-progress work")
 	}
 	if err := conclusion.Validate(); err != nil {
 		return err

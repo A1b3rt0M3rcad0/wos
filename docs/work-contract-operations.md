@@ -48,3 +48,11 @@ Linux race/protocol/recovery tests are available. Actual Windows crash/lock/repa
 consumer execution gates must pass on their target environments; compilation and npm
 skill installation are not substitutes. Registry publication is reported only after
 published artifact identities/checksums are verified.
+
+## Namespace activation
+
+Read `GET /api/v1/namespaces/{namespace_id}/work-protocol` (or `wos_get_namespace_work_protocol`, `wosctl protocol get`). An absent metadata row means legacy, protocol version 1. Submit `set_namespace_work_protocol` with an existing Outcome `scope`, `expected_protocol_version: 1`, `phase: draining`, and a reason. Stop old server processes and drain their requests; withdraw their database credentials. Wait for existing leases to expire or finish under draining. Submit the next version with `phase: contracts_v1`, `writers_drained: true`. A valid legacy lease prevents activation. Retrying the original idempotency key returns the original receipt rather than executing a second migration.
+
+`wosctl protocol set --file protocol.yaml` journals this operation like other commands. Its YAML file is the typed command mapping. `wosctl protocol reconcile --file reconcile.yaml` performs an explicitly requested bounded expiry scan; pass `after` from `next_after` until `search_complete` is true. Reconciliation preserves work identity and lifecycle. There is no automatic release, new acquisition, agent launch or background keepalive.
+
+Protocol policy updates require an increasing `lease_policy.revision`; renewal evaluates the current policy. Cutover and policy changes require Namespace administration permission. Existing grants are not silently expanded; grant `work.contract.acquire`/`work.contract.revoke` explicitly where needed. New bootstrap administrator grants include both. See ADR-020 for deployment constraints.

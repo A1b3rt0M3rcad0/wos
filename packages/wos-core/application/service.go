@@ -420,6 +420,20 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 				return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "cannot attach new work to terminal objective")
 			}
 		}
+		if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
+			p, e := repo.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+			if e != nil {
+				return domain.WorkItem{}, 0, e
+			}
+			item.ContractsEnabled = p.Phase == domain.WorkProtocolContracts
+		}
+		if cmd.ExecutionSpec != nil {
+			if err := cmd.ExecutionSpec.Validate(); err != nil {
+				return domain.WorkItem{}, 0, err
+			}
+			spec := *cmd.ExecutionSpec
+			item.ExecutionSpec = &spec
+		}
 		if err := uow.WorkItems().Insert(ctx, item); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

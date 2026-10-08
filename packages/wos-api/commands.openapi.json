@@ -1495,6 +1495,67 @@
           "description": {
             "type": "string"
           },
+          "execution_spec": {
+            "additionalProperties": false,
+            "properties": {
+              "constraints": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "context_refs": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "namespace_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "outcome_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "namespace_id",
+                    "outcome_id",
+                    "kind",
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "deliverables": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "instructions": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "scope_hints": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
           "lifecycle": {
             "type": "string"
           },
@@ -2183,6 +2244,40 @@
           "work_item_id",
           "expected_version",
           "ttl_seconds"
+        ],
+        "type": "object"
+      },
+      "Catalog_reconcile_expired_work_contracts": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "scope"
         ],
         "type": "object"
       },
@@ -3819,6 +3914,72 @@
           "scope",
           "contract_id",
           "expected_contract_version",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "Catalog_set_namespace_work_protocol": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_protocol_version": {
+            "type": "integer"
+          },
+          "lease_policy": {
+            "additionalProperties": false,
+            "properties": {
+              "default_ttl_seconds": {
+                "type": "integer"
+              },
+              "max_ttl_seconds": {
+                "type": "integer"
+              },
+              "min_ttl_seconds": {
+                "type": "integer"
+              },
+              "revision": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "revision",
+              "default_ttl_seconds",
+              "min_ttl_seconds",
+              "max_ttl_seconds"
+            ],
+            "type": "object"
+          },
+          "phase": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "writers_drained": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scope",
+          "expected_protocol_version",
+          "phase",
           "reason"
         ],
         "type": "object"
@@ -7698,6 +7859,63 @@
         }
       }
     },
+    "/api/v1/commands/reconcile_expired_work_contracts": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_reconcile_expired_work_contracts",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_reconcile_expired_work_contracts"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
     "/api/v1/commands/record_criterion_assessment": {
       "post": {
         "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
@@ -9204,6 +9422,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_revoke_work_contract"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/set_namespace_work_protocol": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_set_namespace_work_protocol",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_set_namespace_work_protocol"
                   }
                 },
                 "required": [

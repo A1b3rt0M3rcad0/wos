@@ -287,7 +287,7 @@ func run(ctx context.Context, o options) (Output, error) {
 			result.Committed = err == nil
 			return result, err
 		}
-	case "outcome", "objective", "roadmap", "review":
+	case "outcome", "objective", "roadmap", "review", "protocol":
 		return planningCommand(ctx, w, client, config, scope, o)
 	}
 	return result, usage("unknown command")

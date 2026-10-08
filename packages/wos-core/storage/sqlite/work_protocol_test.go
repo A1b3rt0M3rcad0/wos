@@ -1,0 +1,69 @@
+package sqlite
+
+import (
+	"context"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "protocol.db")
+	store := openTestStore(t, path)
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	w := contractStorageFixture(t, store, now)
+	tx, _ := store.Begin(ctx)
+	legacy, _ := tx.WorkItems().Get(ctx, w.Scope, w.ID)
+	legacy.ContractsEnabled = false
+	legacy.Version++
+	if err := tx.WorkItems().Save(ctx, legacy, w.Version); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	service, err := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199ff70", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := sqliteCommandContext("0199ff10-0000-7000-8000-000000000070", "protocol-drain-sql")
+	cmd := a.SetNamespaceWorkProtocolCommand{Scope: w.Scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "stop old writers"}
+	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, cmd); err != nil {
+		t.Fatal(err)
+	}
+	cc.IdempotencyKey = "protocol-enable-sql"
+	cmd.ExpectedProtocolVersion = 2
+	cmd.Phase = d.WorkProtocolContracts
+	cmd.WritersDrained = true
+	got, err := service.SetNamespaceWorkProtocol(ctx, cc, cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store = reopenIntegrationFixture(t, store, path)
+	service, err = a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199ff71", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := service.GetNamespaceWorkProtocol(ctx, w.Scope.NamespaceID)
+	if err != nil || p.Version != 3 || p.WriterEpoch != 1 {
+		t.Fatal("protocol restart", p, err)
+	}
+	replay, err := service.SetNamespaceWorkProtocol(ctx, cc, cmd)
+	if err != nil || !replay.IdempotentReplay || replay.OutcomeRevision != got.OutcomeRevision {
+		t.Fatal("cutover receipt", err)
+	}
+	tx, _ = store.Begin(ctx)
+	migrated, err := tx.WorkItems().Get(ctx, w.Scope, w.ID)
+	tx.Rollback()
+	if err != nil || !migrated.ContractsEnabled || migrated.Version != legacy.Version || migrated.LastFencingToken != legacy.LastFencingToken {
+		t.Fatal("migration changed identity/version/fence", err, migrated)
+	}
+	cc.IdempotencyKey = "protocol-create-new-work"
+	created, err := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: w.Scope, Title: "New contract work", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo, ExecutionSpec: &d.ExecutionSpec{Instructions: []string{"bounded task"}}})
+	if err != nil || !created.Value.ContractsEnabled || created.Value.ExecutionSpec == nil {
+		t.Fatal("new work protocol", err, created)
+	}
+}

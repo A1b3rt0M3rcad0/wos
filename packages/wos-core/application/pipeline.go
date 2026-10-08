@@ -80,6 +80,14 @@ func transactCommand[T any, C any](
 		}
 	}()
 
+	protocol := domain.DefaultWorkProtocol(meta.NamespaceID)
+	if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
+		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, meta.Name == "SetNamespaceWorkProtocol")
+		if err != nil {
+			return MutationResult[T]{Value: zero}, err
+		}
+	}
+
 	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
 		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
@@ -116,6 +124,9 @@ func transactCommand[T any, C any](
 		}
 	}
 
+	if err := protectWorkProtocol(protocol, meta.Name); err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
 	if err := protectContractMutation(ctx, service, uow, meta.Name, command); err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
@@ -271,6 +282,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if events, handled, err := protocolCommandEvents(s, commandContext, meta, value); handled || err != nil {
+		return events, err
+	}
 	if events, handled, err := contractCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}

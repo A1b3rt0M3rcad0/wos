@@ -133,6 +133,9 @@ func (c *Client) PublishRoadmapDraft(ctx context.Context, key string, cmd applic
 func (c *Client) ReclaimWorkItem(ctx context.Context, key string, cmd application.ReclaimWorkItemCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "reclaim_work_item", key, cmd)
 }
+func (c *Client) ReconcileExpiredWorkContracts(ctx context.Context, key string, cmd application.ReconcileExpiredWorkContractsCommand) (CommandResult[application.ReconciledWorkContracts], error) {
+	return command[application.ReconciledWorkContracts](ctx, c, "reconcile_expired_work_contracts", key, cmd)
+}
 func (c *Client) RecordCriterionAssessment(ctx context.Context, key string, cmd application.RecordCriterionAssessmentCommand) (CommandResult[domain.CriterionAssessment], error) {
 	return command[domain.CriterionAssessment](ctx, c, "record_criterion_assessment", key, cmd)
 }
@@ -213,6 +216,9 @@ func (c *Client) ReviseCriterion(ctx context.Context, key string, cmd applicatio
 }
 func (c *Client) RevokeWorkContract(ctx context.Context, key string, cmd application.RevokeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "revoke_work_contract", key, cmd)
+}
+func (c *Client) SetNamespaceWorkProtocol(ctx context.Context, key string, cmd application.SetNamespaceWorkProtocolCommand) (CommandResult[application.NamespaceWorkProtocolResult], error) {
+	return command[application.NamespaceWorkProtocolResult](ctx, c, "set_namespace_work_protocol", key, cmd)
 }
 func (c *Client) SetObjectiveOwners(ctx context.Context, key string, cmd application.SetObjectiveOwnersCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "set_objective_owners", key, cmd)

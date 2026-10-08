@@ -42,7 +42,7 @@ type ReviseCriterionCommand struct {
 }
 
 type RecordCriterionAssessmentCommand struct {
-	SubmissionID      *domain.ID `wos:"optional"`
+	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -54,7 +54,7 @@ type RecordCriterionAssessmentCommand struct {
 }
 
 type AttestCriterionCommand struct {
-	SubmissionID      *domain.ID `wos:"optional"`
+	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -97,13 +97,14 @@ type AchieveObjectiveCommand struct {
 }
 
 type CreateWorkItemCommand struct {
-	Scope       domain.Scope
-	Title       string
-	Description string
-	Priority    domain.Priority
-	Lifecycle   domain.WorkItemLifecycle
-	ObjectiveID *domain.ID
-	NotBefore   *time.Time
+	ExecutionSpec *domain.ExecutionSpec `wos:"optional" json:",omitempty"`
+	Scope         domain.Scope
+	Title         string
+	Description   string
+	Priority      domain.Priority
+	Lifecycle     domain.WorkItemLifecycle
+	ObjectiveID   *domain.ID
+	NotBefore     *time.Time
 }
 
 type ActivateWorkItemCommand struct {
