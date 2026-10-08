@@ -50,7 +50,7 @@ for p in (source/'migrations').glob('*.sql'):
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
+for name in ['signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1)
  s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)

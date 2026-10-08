@@ -216,6 +216,25 @@ func (c *WorkContract) Submit(p WorkSubmission, principal string, execution ID, 
 // Finalize requires Application to validate live blockers, dependencies and evidence.
 // The Domain binds every required assessment to the exact submitted material.
 func (c *WorkContract) Finalize(w *WorkItem, p WorkSubmission, principal string, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
+	if c.SignedBinding != nil {
+		return NewError(ErrorCodeSignedProtocolRequired, "signed contracts require atomic verified return")
+	}
+	return c.finalize(w, p, principal, execution, token, expected, expectedWork, conclusion, now)
+}
+
+// CompleteSignedDirect is domain composition; Application must verify exact signed request/spec and live policy first.
+func (c *WorkContract) CompleteSignedDirect(w *WorkItem, p WorkSubmission, principal string, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
+	if c.SignedBinding == nil || c.SignedBinding.AcceptanceFloor != AcceptanceDirect || p.ProtocolVersion != 2 {
+		return NewError(ErrorCodeSignedProtocolRequired, "direct signed completion is not permitted")
+	}
+	if c.LatestSubmissionID != nil {
+		return NewError(ErrorCodeVersionConflict, "atomic return already has a submission")
+	}
+	id := p.ID
+	c.LatestSubmissionID = &id
+	return c.finalize(w, p, principal, execution, token, expected, expectedWork, conclusion, now)
+}
+func (c *WorkContract) finalize(w *WorkItem, p WorkSubmission, principal string, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
 	if err := c.Authorize(principal, execution, token, now); err != nil {
 		return err
 	}
@@ -225,7 +244,7 @@ func (c *WorkContract) Finalize(w *WorkItem, p WorkSubmission, principal string,
 	if err := p.Validate(); err != nil {
 		return err
 	}
-	if c.LatestSubmissionID == nil || *c.LatestSubmissionID != p.ID || p.Scope != c.Scope || p.Material.ContractID != c.ID || p.Material.WorkItemID != w.ID || w.Scope != c.Scope || p.Material.SpecDigest != c.SpecDigest || w.CurrentContractID == nil || *w.CurrentContractID != c.ID || w.Lifecycle != WorkItemLifecycleInProgress {
+	if c.LatestSubmissionID == nil || *c.LatestSubmissionID != p.ID || p.Scope != c.Scope || p.Material.ContractID != c.ID || p.Material.WorkItemID != w.ID || w.Scope != c.Scope || p.Material.SpecDigest != c.SubmissionSpecDigest() || w.CurrentContractID == nil || *w.CurrentContractID != c.ID || w.Lifecycle != WorkItemLifecycleInProgress {
 		return NewError(ErrorCodeSubmissionNotAccepted, "submission is not the current contract result")
 	}
 	refs, err := w.Criteria.RequiredSatisfied()

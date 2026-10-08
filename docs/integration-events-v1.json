@@ -210,6 +210,9 @@
       "event_type": "work_contract.completed"
     },
     {
+      "event_type": "work_contract.delivered"
+    },
+    {
       "event_type": "work_contract.execution_resumed"
     },
     {
@@ -274,6 +277,9 @@
     },
     {
       "event_type": "work_item.updated"
+    },
+    {
+      "event_type": "work_review.opened"
     }
   ]
 }

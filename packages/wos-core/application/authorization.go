@@ -69,6 +69,12 @@ func commandPermission(name string) ports.Permission {
 		return ports.PermissionWorkContractRevoke
 	case "RenewSignedWorkContract", "ResumeSignedWorkContract", "RenewWorkContract", "ResumeWorkContract", "SyncWorkContract", "SubmitWorkResult":
 		return ports.PermissionWorkWrite
+	case "ReturnSignedWork":
+		return ports.PermissionWorkContractReturn
+	case "ReturnSignedReview":
+		return ports.PermissionWorkReviewDecide
+	case "AcquireSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract":
+		return ports.PermissionWorkReviewAcquire
 	case "FinalizeWorkContract":
 		return ports.PermissionConclusionWrite
 	case "AdministrativeCancelWorkItem":

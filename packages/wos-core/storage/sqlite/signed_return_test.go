@@ -1,0 +1,258 @@
+package sqlite
+
+import (
+	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		for _, floor := range []d.AcceptanceMode{d.AcceptanceDirect, d.AcceptanceIndependentReview} {
+			for _, hasCriteria := range []bool{true, false} {
+				t.Run(fmt.Sprintf("%s/%s/criteria=%t", backend, floor, hasCriteria), func(t *testing.T) {
+					var store interface {
+						ports.SecurityStore
+						ports.TransactionManager
+					}
+					if backend == "memory" {
+						store = memory.New()
+					} else {
+						store = openTestStore(t, filepath.Join(t.TempDir(), "signed-acquisition.db"))
+					}
+					ctx := context.Background()
+					now := time.Now().UTC()
+					clock := sqliteFixedClock{now}
+					ids := &sqliteSequenceIDs{prefix: "0199a556", next: 1}
+					sec := a.SecurityService{Store: store, Clock: clock, IDs: ids}
+					must := func(err error) {
+						t.Helper()
+						if err != nil {
+							t.Fatal(err)
+						}
+					}
+					ns := testID("0199a555-0000-7000-8000-000000000001")
+					scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+					must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+					admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
+					must(err)
+					adminCtx := a.WithIdentity(ctx, admin)
+					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+					credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
+					must(err)
+					identity, err := sec.Authenticate(ctx, token)
+					must(err)
+					agentCtx := a.WithIdentity(ctx, identity)
+					pub, private, err := ed25519.GenerateKey(rand.Reader)
+					must(err)
+					fp, err := signing.Fingerprint(pub)
+					must(err)
+					server := d.ServerIdentity{ID: testID("0199a555-0000-7000-8000-000000000003"), IssuerKeyID: testID("0199a555-0000-7000-8000-000000000004"), PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, CreatedAt: now}
+					service, err := a.NewService(store, clock, ids)
+					must(err)
+					must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+					agentPub, agentPrivate, err := ed25519.GenerateKey(rand.Reader)
+					must(err)
+					agentFP, err := signing.Fingerprint(agentPub)
+					must(err)
+					agentKey := testID("0199a555-0000-7000-8000-000000000005")
+					uow, err := store.Begin(ctx)
+					must(err)
+					registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+					must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+					must(registry.SaveCredentialPolicy(ctx, policy, 0))
+					outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
+					must(err)
+					outcome.Lifecycle = d.OutcomeLifecycleActive
+					must(uow.Outcomes().Insert(ctx, outcome))
+					works := []d.WorkItem{}
+					for i := 0; i < 4; i++ {
+						w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+						must(e)
+						w.ContractsEnabled = true
+						criterion, e := d.NewSuccessCriterion(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 100+i)), w.Ref(), "verified result", "", true, d.VerificationModeEvidenceReview)
+						must(e)
+						if hasCriteria {
+							must(w.Criteria.Add(criterion))
+						}
+						must(uow.WorkItems().Insert(ctx, w))
+						works = append(works, w)
+					}
+					protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()
+					state, err := protocol.Lock(ctx, ns, true)
+					must(err)
+					state.Phase = d.WorkProtocolSigned
+					state.WriterEpoch = 2
+					state.WritersDrained = true
+					state.Version++
+					state.UpdatedAt = now
+					state.UpdatedBy = "operator"
+					state.Reason = "test-only operator activation; public cutover remains separately gated"
+					must(protocol.Save(ctx, state, 1))
+					must(uow.Commit())
+
+					w := works[0]
+					cid, e := ids.NewID()
+					must(e)
+					cc := d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: cid, IdempotencyKey: "atomic-return-acquisition"}
+					acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 300})
+					must(e)
+					c := acquired.Value.Contract
+					work := acquired.Value.WorkItem
+					rid, e := ids.NewID()
+					must(e)
+					request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
+					criterion := d.SuccessCriterion{}
+					if hasCriteria {
+						criterion = work.Criteria.Items[0]
+					}
+					request.Material.Artifacts = []a.SyncArtifactInput{{LocalKey: "build", Artifact: a.RegisterArtifactCommand{Scope: scope, ArtifactType: "source", Name: "tested commit", URI: "git:commit-tested", SourceVersion: "commit-tested"}}}
+					request.Material.Evidence = []a.SyncEvidenceInput{{LocalKey: "test", ArtifactLocalKey: "build", Evidence: a.RegisterEvidenceCommand{Scope: scope, EvidenceType: d.EvidenceTypeTestResult, Description: "assertion log", SourceRef: d.SourceReference{Provider: "test", ID: "test-run"}, CapturedAt: now, SourceVersion: "commit-tested"}}}
+					request.Material.ArtifactLocalKeys = []string{"build"}
+					request.Material.EvidenceLocalKeys = []string{"test"}
+					if hasCriteria {
+						request.Material.CriterionLocalEvidence = []a.SignedLocalCriterionEvidence{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), EvidenceLocalKeys: []string{"test"}}}
+					}
+					if floor == d.AcceptanceDirect && hasCriteria {
+						request.Material.Assessments = []a.SignedAssessmentInput{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), Result: d.AssessmentResultMet, Rationale: "the exact submitted test passed", EvidenceLocalKeys: []string{"test"}}}
+					}
+					envelope, e := signing.Sign(signing.WorkReturn, request, agentKey.String(), agentPrivate)
+					must(e)
+					returnCC := cc
+					returnCC.CommandID = rid
+					returnCC.IdempotencyKey = request.IdempotencyKey
+					if _, e = service.ReturnSignedWork(ctx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
+						t.Fatal("trusted embedded caller bypassed actual authenticated identity")
+					}
+					tampered := envelope
+					tampered.Payload = envelope.Payload[:len(envelope.Payload)-1] + "A"
+					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: tampered}); e == nil {
+						t.Fatal("tampered return accepted")
+					}
+					// Explicit self-completion cannot bypass a review floor, and direct
+					// completion cannot reuse or omit required explicit assessments.
+					denied := request
+					denied.RequestID = testID("0199a555-0000-7000-8000-000000000091").String()
+					denied.IdempotencyKey = "denied-signed-completion"
+					if floor == d.AcceptanceIndependentReview {
+						denied.CompletionIntent = "direct"
+					} else {
+						denied.Material.Assessments = nil
+					}
+					deniedEnvelope, e := signing.Sign(signing.WorkReturn, denied, agentKey.String(), agentPrivate)
+					must(e)
+					deniedCC := returnCC
+					deniedCC.IdempotencyKey = denied.IdempotencyKey
+					if hasCriteria || floor == d.AcceptanceIndependentReview {
+						if _, e = service.ReturnSignedWork(agentCtx, deniedCC, a.ReturnSignedWorkCommand{Envelope: deniedEnvelope}); e == nil {
+							t.Fatal("completion floor/required assessment bypassed")
+						}
+					}
+					// A documentary failure must roll back all writes and preserve authority.
+					bad := request
+					bad.IdempotencyKey = "invalid-atomic-return"
+					bad.RequestID = testID("0199a555-0000-7000-8000-000000000090").String()
+					bad.Material = request.Material
+					bad.Material.EvidenceLocalKeys = []string{"missing"}
+					badEnvelope, e := signing.Sign(signing.WorkReturn, bad, agentKey.String(), agentPrivate)
+					must(e)
+					badCC := returnCC
+					badCC.IdempotencyKey = bad.IdempotencyKey
+					if _, e = service.ReturnSignedWork(agentCtx, badCC, a.ReturnSignedWorkCommand{Envelope: badEnvelope}); e == nil {
+						t.Fatal("invalid local binding accepted")
+					}
+					check, e := store.Begin(ctx)
+					must(e)
+					actual, e := check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
+					must(e)
+					if actual.Status != d.ContractActive || actual.Version != c.Version || actual.LatestSubmissionID != nil {
+						t.Fatal("failed atomic return changed authority")
+					}
+					must(check.Rollback())
+					returned, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+					must(e)
+					wire, e := returned.Value.Receipt.Envelope()
+					must(e)
+					receipt, _, e := signing.Decode[signing.ReceiptPayload](wire, signing.AcceptanceReceipt, server.IssuerKeyID.String(), pub)
+					must(e)
+					if len(receipt.LocalKeys) != 2 || !receipt.Accepted || !receipt.LocalObligationClosed || receipt.RequestDigest != signing.Digest(mustCanonical(t, request)) || receipt.ContractID != c.ID.String() {
+						t.Fatal("acceptance does not bind exact returned request")
+					}
+					check, e = store.Begin(ctx)
+					must(e)
+					actual, e = check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
+					must(e)
+					actualWork, e := check.WorkItems().Get(ctx, scope, work.ID)
+					must(e)
+					if floor == d.AcceptanceDirect {
+						if actual.Status != d.ContractCompleted || actualWork.Lifecycle != d.WorkItemLifecycleDone || actualWork.CurrentConclusion == nil || receipt.Disposition != "completed" {
+							t.Fatal("direct return failed atomic completion")
+						}
+					} else {
+						if actual.Status != d.ContractDelivered || actualWork.Lifecycle != d.WorkItemLifecycleInProgress || receipt.ReviewCaseID == "" {
+							t.Fatal("delivery incorrectly completed Task")
+						}
+						review, e := check.(ports.SignedContractUnitOfWork).SignedContracts().Case(ctx, scope, d.ID(receipt.ReviewCaseID))
+						must(e)
+						if review.Status != d.ReviewPending || review.ExecutionPrincipals[0] != "executor" {
+							t.Fatal("review target/history missing")
+						}
+					}
+					submission, e := check.(ports.SignedContractUnitOfWork).SignedWorkContracts().GetSubmission(ctx, scope, d.ID(receipt.SubmissionID))
+					must(e)
+					if submission.ProtocolVersion != 2 || submission.Material.SpecDigest != c.SignedBinding.SpecificationDigest {
+						t.Fatal("submission lost signed protocol identity")
+					}
+					// Historical accepted receipts survive key retirement. Bearer authorization is still live.
+					reg := check.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+					k, e := reg.Key(ctx, ns, agentKey)
+					must(e)
+					kv := k.Version
+					k.Version++
+					k.Status = "retired"
+					k.UpdatedAt = now
+					must(reg.SaveKey(ctx, k, kv))
+					must(check.Commit())
+					replay, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+					must(e)
+					if !replay.IdempotentReplay || string(replay.Value.Receipt.Payload) != string(returned.Value.Receipt.Payload) {
+						t.Fatal("known return did not replay immutable acceptance")
+					}
+					if backend == "sql" {
+						sqlStore := store.(*Store)
+						_, e = sqlStore.db.ExecContext(ctx, "UPDATE idempotency_records SET expires_at=0 WHERE command_name='ReturnSignedWork'")
+						must(e)
+						durable, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+						must(e)
+						if !durable.IdempotentReplay || string(durable.Value.Receipt.Payload) != string(returned.Value.Receipt.Payload) {
+							t.Fatal("durable acceptance lost after cache expiry")
+						}
+					}
+					must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
+						t.Fatal("revoked bearer disclosed receipt")
+					}
+				})
+			}
+		}
+	}
+}
+func mustCanonical(t *testing.T, value any) []byte {
+	t.Helper()
+	raw, err := signing.Canonical(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return raw
+}
