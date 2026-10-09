@@ -122,4 +122,5 @@ executor submission. Each added record must carry that same version/checksum.
 A commit mentioned only in a summary/evidence description is insufficient.
 If the accepted delivery has no such artifact, omit complementary records and
 assess the original criteria using the accepted material, actual checks and
-explicit rationales. The CLI checks this binding before freezing a return.
+explicit rationales. The CLI checks embedded submission source bindings before
+freezing a return; for explicitly omitted material the server remains authoritative.

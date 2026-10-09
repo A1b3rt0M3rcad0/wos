@@ -197,10 +197,9 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 	}
 	if kind == "review" {
 		material := file.Review.Material
-		if len(material.Artifacts)+len(material.Evidence)+len(material.EvidenceLinks) > 0 {
-			if view.ReviewSpecification.Spec.Submission == nil {
-				return intent, fmt.Errorf("accepted submission omitted; inspect its immutable source before adding reviewer records")
-			}
+		// Large issued specs retain an authenticated reference instead of embedded
+		// material. Preserve that supported path; the server remains authoritative.
+		if len(material.Artifacts)+len(material.Evidence)+len(material.EvidenceLinks) > 0 && view.ReviewSpecification.Spec.Submission != nil {
 			if e = a.ValidateComplementaryReviewSource(view.ReviewSpecification.Spec.Submission.Material(), material); e != nil {
 				return intent, e
 			}
