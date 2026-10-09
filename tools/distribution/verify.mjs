@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { setTimeout as pause } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { root, run, sha256, validVersion } from './build.mjs';
+import {verifySignedPackage} from './signed-smoke.mjs';
 
 export async function verifyDistribution(output = path.join(root,'dist')) {
   const manifest=JSON.parse(await fs.readFile(path.join(output,'distribution.json'),'utf8'));
@@ -82,11 +83,13 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const checked=JSON.parse(run(client,['work','checkout',work.id,'--version','1','--workspace',consumer,'--output','json'],{env:clientEnv}));assert.equal(checked.committed,true);assert.equal(checked.work_item_id,work.id);
     run(client,['work','status',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});run(client,['work','recover',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});
     await stop(server); assert.equal(server.exitCode,0,'SIGTERM reaches Go graceful shutdown');server=null;
+    const signed=await verifySignedPackage(cli,client);
+    assert.equal(signed.protocol,'signed_contracts_v2');
     const binary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wos');
     await fs.appendFile(binary,'corruption');
     assert.throws(()=>run(cli,['version']),/integrity\/version check failed/);
     const clientBinary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wosctl');await fs.appendFile(clientBinary,'corruption');assert.throws(()=>run(client,['version']),/integrity\/version check failed/);
-    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','four skill destinations','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection']};
+    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection']};
   } finally {if(server)await stop(server);await fs.rm(consumer,{recursive:true,force:true});}
 }
 
