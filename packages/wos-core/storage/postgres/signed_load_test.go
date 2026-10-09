@@ -44,7 +44,8 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					now := time.Now().UTC()
 					clock := sqliteFixedClock{now}
 					ids := &loadIDs{}
-					store := openTestStore(t, filepath.Join(t.TempDir(), "signed-load.db"))
+					path := filepath.Join(t.TempDir(), "signed-load.db")
+					store := openTestStore(t, path)
 					must := func(err error) {
 						t.Helper()
 						if err != nil {
@@ -318,12 +319,50 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					if deliveryCount != outcomes*history+consumers*2 {
 						t.Fatalf("signed outbox count %d", deliveryCount)
 					}
+
+					poolWait := store.db.Stats().WaitDuration - pool.WaitDuration
+					recoveryExperiment := outcomes == 1 && history == 0 && consumers == 2
+					if recoveryExperiment {
+						claimAt := time.Now().UTC()
+						first, e := store.ClaimDelivery(ctx, claimAt, newID(), 30*time.Second)
+						must(e)
+						if first == nil {
+							t.Fatal("signed DONE signal missing before worker crash")
+						}
+						// Other deliveries are acknowledged; this one models a worker
+						// dying after its durable claim and before acknowledgement.
+						for {
+							next, e := store.ClaimDelivery(ctx, claimAt, newID(), 30*time.Second)
+							must(e)
+							if next == nil {
+								break
+							}
+							must(store.FinishDelivery(ctx, *next, claimAt, "http_200", true, claimAt))
+						}
+						must(store.Close())
+						store = openTestStore(t, path)
+						afterExpiry := claimAt.Add(31 * time.Second)
+						replacement, e := store.ClaimDelivery(ctx, afterExpiry, newID(), 30*time.Second)
+						must(e)
+						if replacement == nil || replacement.ID != first.ID || string(replacement.Body) != string(first.Body) || replacement.FencingToken <= first.FencingToken {
+							t.Fatal("restart lost exact signed completion signal or worker fencing")
+						}
+						if e := store.FinishDelivery(ctx, *first, afterExpiry, "http_200", true, afterExpiry); e == nil {
+							t.Fatal("crashed worker acknowledged with stale fence")
+						}
+						must(store.FinishDelivery(ctx, *replacement, afterExpiry, "http_200", true, afterExpiry))
+						pending, e := store.ClaimDelivery(ctx, afterExpiry, newID(), 30*time.Second)
+						must(e)
+						if pending != nil {
+							t.Fatal("completion replay/recovery duplicated signal")
+						}
+					}
 					waits, guards := []float64{}, []float64{}
 					for _, v := range observer.items {
 						waits = append(waits, float64(v.TransactionWait.Microseconds())/1000)
 						guards = append(guards, float64(v.GuardDuration.Microseconds())/1000)
 					}
-					report := map[string]any{"outcomes": outcomes, "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64((store.db.Stats().WaitDuration - pool.WaitDuration).Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true}
+					report := map[string]any{"outcomes": outcomes, "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment}
 					raw, e := json.Marshal(report)
 					must(e)
 					t.Log("SIGNED_LOAD " + string(raw))

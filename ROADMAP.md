@@ -1259,3 +1259,13 @@ into final assertions; both fixture errors are corrected without relaxing strict
 schema/cleanup checks. Five progressive guides and the human UI now show the
 required correction acknowledgement. This automated correction scenario is
 distinct from the managed Codex pilot, which accepted its initial delivery.
+
+Signed SQL boundary regression rerun passed with Go1.27.2 and a new owned clean
+PostgreSQL database (SQLite 17.945s, PostgreSQL 12.789s), resolving catalog-only
+pg_dump timeout diagnosis without changing restore deadlines or existing data.
+P12 T90/T91 signed-load acceptance also checks one completion worker recovery
+row per backend: leave the committed signal leased without acknowledgement,
+reopen storage connections, reclaim the exact body/ID after expiry with increased
+fencing, reject the old acknowledgement and finish without a duplicate signal.
+Both real SQL race cases pass (SQLite 5.441s, PostgreSQL 4.380s). This models
+worker absence and storage restart; it does not claim an OS kill experiment.

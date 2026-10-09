@@ -47,6 +47,9 @@ for row in rows:
         if not isinstance(row[field], (int, float)) or not math.isfinite(row[field]) or row[field] <= 0:
             raise SystemExit('invalid actual measurement')
     row['backend'] = backend
+for backend in ('sqlite', 'postgres'):
+    if not any(row['backend'] == backend and row.get('worker_recovery_experiment') is True for row in rows):
+        raise SystemExit('missing signed completion worker restart/fencing experiment')
 if observed != expected or len(rows) != 16:
     raise SystemExit('incomplete signed SQLite/PostgreSQL matrix')
 report = dict(schema=1, source_commit=source, measured_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -56,6 +59,7 @@ report = dict(schema=1, source_commit=source, measured_at=datetime.datetime.now(
               limitations=['16 accepted historical tasks per Outcome, not an arbitrary dense production dataset',
                            'No production SLA, distributed hosts, model tokens or billing savings',
                            'SQL statement counts are unavailable; reported honestly',
-                           'Latency includes history/event verification reads and deduplication replay'], rows=rows)
+                           'Latency includes history/event verification reads and deduplication replay',
+                           'Worker absence/expiry and storage connection restart are exercised; no OS kill or network partition is claimed'], rows=rows)
 Path(output).write_text(json.dumps(report, indent=2) + '\n')
 print('16 actually passing signed workload measurements saved')
