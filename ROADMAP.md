@@ -993,3 +993,10 @@ P10 activation foundation: Namespace CAS supports contracts_v1 -> draining_to_si
 PR #51 integrated Windows portability: the full native Linux/Windows workflow run 37874587697 passed Go CLI/SDK/protocol, five-skill installer and executable identity checks. Receipts identify synthetic PR merge source 4080b609ae2583645fabb538395e8d0b0f28f4ad; this is executed native evidence for that source, not final-release proof. Earlier hosted billing refusals are historical; current runs execute.
 
 Local Compose onboarding: the owner requested a copy-only .env.example setup. A committed development template provides a localhost bootstrap credential, valid Namespace ID and persistent SQLite defaults; Compose accepts a configurable localhost port and optional protected runtime signing references. PostgreSQL remains opt-in. Config interpolation and actionlint pass. Actual non-root image build/start, readiness, frontend, browser-session login, Namespace discovery and authenticated create passed; restart retained the original Outcome and idempotent receipt. The sandbox required a temporary build-only host-network/proxy/CA override, outside the repository; normal Compose settings remain portable. The immediate post-restart probe ran before readiness and was retried successfully; it is not counted as a product failure. Signing activation remains explicit and no shared issuer key is shipped.
+
+P10 issuer recovery design started: ADR 028 records the missing host-managed
+replacement path required by T14/T87, separate from tenant administration and
+without rewriting old signed facts. Implementation must retain persistent
+ServerID/public history, freeze CAS and provenance, order global issuance against
+replacement, and explicitly update client trust without breaking pending returns.
+No recovery command is implemented by this design note; acceptance remains open.
