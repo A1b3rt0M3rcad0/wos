@@ -90,17 +90,33 @@ jobs:
           python3 tools/eventcatalog/check.py
 
       - name: Controlled context/cost report validation
-        run: python3 tools/acceptance/context-cost-report-test.py
+        run: |
+          python3 tools/acceptance/context-cost-report-test.py
+          python3 tools/acceptance/scenario-execution-report-test.py
 
       - name: Unit and contract tests
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: go test ./...
+        run: |
+          if go test -json ./... > unit-contract-tests.jsonl; then
+            echo 'Unit/contract execution recorded'
+          else
+            status=$?
+            cat unit-contract-tests.jsonl
+            exit "$status"
+          fi
 
       - name: Race detector
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: go test -race ./...
+        run: |
+          if go test -json -race ./... > race-tests.jsonl; then
+            echo 'Race execution recorded'
+          else
+            status=$?
+            cat race-tests.jsonl
+            exit "$status"
+          fi
 
       - name: Active signed codec and restricted YAML fuzz campaigns
         shell: bash
@@ -123,11 +139,14 @@ jobs:
           set -o pipefail
           bash tools/acceptance/full-disk-cleanup.sh | tee full-disk-cleanup.log
           test "$(grep -c '^--- PASS: TestReceiptCleanupRecoversRealFullDisk' full-disk-cleanup.log)" = 1
+          go tool test2json -t -p github.com/A1b3rt0M3rcad0/wos/packages/wos-cli < full-disk-cleanup.log > full-disk-cleanup.jsonl
 
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: signed-full-disk-cleanup
-          path: full-disk-cleanup.log
+          path: |
+            full-disk-cleanup.log
+            full-disk-cleanup.jsonl
           if-no-files-found: error
 
       - name: Build standalone binary
@@ -275,3 +294,15 @@ jobs:
           fi
 
           curl --fail --silent --show-error http://127.0.0.1:18080/livez >/dev/null
+
+      - name: Bind T01-T96 mappings to actual execution
+        run: python3 tools/acceptance/scenario-execution-report.py "$(git rev-parse HEAD)" scenario-execution.json unit-contract-tests.jsonl race-tests.jsonl signed-work-review-load.jsonl full-disk-cleanup.jsonl
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: signed-scenario-execution
+          path: |
+            scenario-execution.json
+            unit-contract-tests.jsonl
+            race-tests.jsonl
+          if-no-files-found: warn

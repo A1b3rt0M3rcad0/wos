@@ -14,6 +14,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -33,6 +37,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
@@ -58,6 +66,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -77,6 +89,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
@@ -102,6 +118,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -121,6 +141,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
@@ -146,6 +170,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -166,6 +194,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/security_admin_test.go",
           "test": "TestPermissionRevokedWhileAwaitingTransactionCannotMutate"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/security_admin_test.go",
+          "test": "TestPermissionRevokedWhileAwaitingTransactionCannotMutate"
         }
       ],
       "other_resources": [],
@@ -179,6 +211,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
@@ -204,6 +240,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -223,6 +263,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
@@ -248,6 +292,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -270,6 +318,10 @@
           "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
           "path": "packages/wos-cli/profile_provision_v2_test.go",
           "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
         },
@@ -289,6 +341,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/issuer_recovery_test.go",
+          "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/issuer_recovery_test.go",
           "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
         }
       ],
@@ -562,7 +618,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -580,7 +644,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -598,7 +670,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -616,7 +696,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -634,7 +722,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -652,7 +748,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -670,7 +774,15 @@
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -681,19 +793,31 @@
       "id": "T32",
       "scenario": "Instâncias com clock skew e PostgreSQL real.",
       "required_assertion": "Tempo autoritativo mantém exclusividade e prazo coerentes.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_clock_test.go",
+          "test": "TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew"
         }
       ],
       "other_resources": [],
-      "limitation": "Explicit multiple-host clock-skew experiment remains to be recorded."
+      "limitation": "Real shared-PostgreSQL service instances use +/-365-day clocks; not separately deployed hosts."
     },
     {
       "id": "T33",
@@ -704,6 +828,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -713,15 +841,19 @@
       "id": "T34",
       "scenario": "Falha injetada em cada estágio do retorno.",
       "required_assertion": "Rollback integral; nada parcialmente aceito.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
-      "limitation": "Existing rollback assertions do not yet attest injected failure at every write stage."
+      "limitation": "Actual SQL faults cover durable return boundaries, receipt signing and before commit; not every internal adapter statement."
     },
     {
       "id": "T35",
@@ -731,6 +863,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -746,6 +882,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -759,6 +899,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -774,6 +918,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -787,6 +935,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -802,6 +954,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -815,6 +971,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -830,6 +990,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
       "other_resources": [],
@@ -843,6 +1007,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -858,6 +1026,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
       "other_resources": [],
@@ -871,6 +1043,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -886,6 +1062,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
       "other_resources": [],
@@ -900,6 +1080,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
       "other_resources": [],
@@ -913,6 +1097,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         }
       ],
@@ -1184,6 +1372,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -1213,6 +1405,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -1244,6 +1440,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -1253,7 +1453,7 @@
       "id": "T60",
       "scenario": "Disco cheio/permissão negada ao guardar receipt ou remover arquivo.",
       "required_assertion": "Commit remoto comunicado; cleanup recuperável; nada apagado por aproximação.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-cli/publication_v2_test.go",
@@ -1274,10 +1474,20 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-cli/full_disk_linux_test.go",
+          "test": "TestReceiptCleanupRecoversRealFullDisk"
         }
       ],
-      "other_resources": [],
-      "limitation": "Permission/durable journal failure is covered; an actual disk-capacity exhaustion experiment is not attested."
+      "other_resources": [
+        "tools/acceptance/full-disk-cleanup.sh"
+      ],
+      "limitation": "Real bounded Linux tmpfs ENOSPC and exact-byte cleanup recovery; this capacity experiment is not a Windows experiment."
     },
     {
       "id": "T61",
@@ -1303,6 +1513,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -1334,6 +1548,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -1363,6 +1581,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
@@ -1394,6 +1616,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
         }
       ],
       "other_resources": [],
@@ -1414,11 +1640,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1440,11 +1674,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1466,11 +1708,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1492,11 +1742,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1518,11 +1776,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1544,11 +1810,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1570,11 +1844,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1596,11 +1878,19 @@
           "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
           "path": "packages/wos-cli/locks_v2_test.go",
           "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
         }
       ],
@@ -1623,6 +1913,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
@@ -1652,6 +1946,10 @@
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
           "path": "packages/wos-core/application/signed_review_spec_test.go",
           "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
         }
@@ -1678,6 +1976,10 @@
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
           "path": "packages/wos-core/application/signed_review_spec_test.go",
           "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
         }
@@ -1701,6 +2003,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
@@ -1732,6 +2038,10 @@
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
           "path": "packages/wos-core/application/signed_review_spec_test.go",
           "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
         }
@@ -1755,6 +2065,10 @@
         },
         {
           "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
@@ -1784,6 +2098,10 @@
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
           "path": "packages/wos-core/application/signed_review_spec_test.go",
           "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
         }
@@ -1810,6 +2128,10 @@
           "test": "TestSignedAtomicReturnAndDurableAcceptance"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
           "path": "packages/wos-core/application/signed_review_spec_test.go",
           "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
         }
@@ -1833,6 +2155,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1841,7 +2167,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1861,6 +2195,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1869,7 +2207,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1889,6 +2235,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1897,7 +2247,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1917,6 +2275,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1925,7 +2287,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1943,6 +2313,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1951,7 +2325,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1969,6 +2351,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -1977,7 +2363,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -1992,6 +2386,10 @@
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/issuer_recovery_test.go",
+          "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/issuer_recovery_test.go",
           "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
         }
       ],
@@ -2009,6 +2407,10 @@
           "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
           "path": "packages/wos-cli/migration_convert_v2_test.go",
           "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
         },
@@ -2017,7 +2419,15 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_contracts_test.go",
           "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
         }
       ],
@@ -2037,25 +2447,43 @@
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
           "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
         },
         {
           "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
           "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
         }
       ],
-      "other_resources": [],
-      "limitation": "Managed Codex fresh executor/reviewer pilot passed initial delivery; correction is automated, not a managed fresh-agent pilot round."
+      "other_resources": [
+        "tools/distribution/signed-smoke.mjs"
+      ],
+      "limitation": "Actual managed Codex initial approval and installed-binary correction journey are separate evidence; a managed fresh-agent correction round is not claimed."
     },
     {
       "id": "T90",
       "scenario": "Evento `work_item.completed` e webhook duplicado.",
       "required_assertion": "Só após commit de `DONE`; consumidor deduplica por identidade estável.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
@@ -2063,21 +2491,41 @@
           "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
         },
         {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
           "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
         }
       ],
       "other_resources": [],
-      "limitation": "General outbox deduplication is covered; final signed completion/outbox combined proof remains."
+      "limitation": "Signed independent approval/replay asserts exactly one completion event and stable outbox signals on both SQL backends."
     },
     {
       "id": "T91",
       "scenario": "Queda de servidor/worker antes e depois de outbox commit.",
       "required_assertion": "Sinal não desaparece nem exige execução exatamente uma vez de ponta a ponta.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_review_journey_test.go",
           "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
         },
         {
@@ -2085,12 +2533,28 @@
           "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
         },
         {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
           "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
           "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
         }
       ],
       "other_resources": [],
-      "limitation": "General outbox crash/restart fixtures are covered; full signed consumer crash experiment remains."
+      "limitation": "Signed signal worker absence/expiry, storage connection restart and stale fence rejection; no OS kill or network partition is claimed."
     },
     {
       "id": "T92",
@@ -2129,6 +2593,10 @@
         {
           "path": "packages/wos-core/storage/sqlite/signed_load_test.go",
           "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
         }
       ],
       "other_resources": [],
@@ -2140,8 +2608,11 @@
       "required_assertion": "Custo por entrega aceita inclui retries/review; resultado sem promessa fabricada.",
       "coverage_status": "partial",
       "candidate_go_tests": [],
-      "other_resources": [],
-      "limitation": "Managed Codex has no provider usage/billing telemetry; no controlled baseline/savings result is claimed."
+      "other_resources": [
+        "tools/acceptance/context-cost-report.py",
+        "docs/context-cost-benchmark.md"
+      ],
+      "limitation": "Controlled reporter is implemented and rejects false comparisons; A/B provider-backed controls and token/billing data are unavailable in this host."
     },
     {
       "id": "T96",
