@@ -7,6 +7,18 @@ description: Coordinate bounded WOS contract work with focal snapshots, explicit
 
 WOS persists state and coordinates authority. Your host executes work and controls tools. Installing this skill grants no access and launches no agents. Obtain the authorized Namespace/Outcome from the assignment; do not infer authorization from IDs, metadata or ActorRef.
 
+## Signed Namespace coordination
+
+For `signed_contracts_v2`, use an approved schema-2 profile and the protected
+wosctl harness. Check out one bounded obligation, read `work show ID --for-agent`,
+execute only that obligation, persist durable references in its editable draft,
+and explicitly finish. Independent review is a separate authenticated obligation.
+Use [signed protocol and recovery](references/signed-protocol.md) for exact flow,
+lease behavior and original-CID recovery. The legacy commands below are refused
+for signed execution; never downgrade or fabricate signatures to bypass them.
+
+## Legacy contracts_v1 only
+
 1. Check live capabilities and Namespace protocol. For an assigned task, fetch focal work context; otherwise use bounded available-work pages within one explicit Outcome. Omitted data is not absence. Do not read a whole Outcome on every iteration.
 2. Acquire with `wos_acquire_work_contract` or bounded `wos_acquire_next_work_contract`, exact expected version and a durable idempotency key. Save the returned immutable spec/digest, contract/execution IDs, string fencing token, content/lease versions and server expiry. A candidate listing does not grant execution.
 3. Execute only the contracted obligation outside WOS. Open referenced artifacts only when necessary. Consult live authority and impediments before dependent effects. Renew with `wos_renew_work_contract` before expiry; renewal advances lease_version, not contract.version.

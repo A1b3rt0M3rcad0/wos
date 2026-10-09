@@ -7,6 +7,19 @@ description: Operate an authorized local WOS task through API-only wosctl, restr
 
 The npm skill installer only copies instructions. It does not connect MCP, install credentials, start a daemon or launch subagents. Obtain wosctl from the verified coordinated release and check live capabilities/Namespace protocol. Server wos and client wosctl are separate executables.
 
+## Signed Namespace workspace (schema 2)
+
+Use the approved named profile on each call. `work checkout --next --count 1`
+materializes one contract document; `work show ID --for-agent --output json`
+provides bounded instructions. Edit only its execution draft, then `work finish ID`.
+Use `review checkout/show/finish` with the independent reviewer profile. Preserve
+issued documents and local recovery markers; never manually delete an uncertain
+contract. `work recover`/`review recover` reconcile exact original intentions.
+Read [signed files and recovery](references/signed-protocol.md) for onboarding,
+protected secret references, migration, lease maintenance and issuer rotation.
+
+## Legacy contracts_v1 workspace (schema 1) only
+
 1. Initialize using explicit --server, --namespace, --outcome and --credential-env. The config stores an environment reference, never a token. Preserve the destination trust binding; changing configuration cannot redirect an existing intent or its credential.
 2. Use `wosctl work checkout ID --version N --output json`, or bounded `--next --outcome ID`. `--dry-run` shows candidates only. Save the receipt/workspace location. Read contract.yaml once: immutable focal obligation, spec digest and original grant. state.json is only observed cache; verify current authority with status before effects.
 3. Edit checkpoint.yaml for material progress/next action and result.yaml for typed material/documentary records. Use durable repository commits/artifact references. Preserve explicit dirty/unknown facts. YAML executes nothing; unsupported/unknown fields, anchors, aliases, tags and duplicate keys are rejected.

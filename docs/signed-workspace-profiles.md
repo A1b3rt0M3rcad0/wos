@@ -16,7 +16,7 @@ Provide the token through the host's protected standard input. No token or priva
 
 A preprovisioned seed can be imported with `--signing-key-stdin --credential-ref env:WOS_TOKEN` instead of `--generate-signing-key`. The dedicated stdin accepts only a canonical base64 Ed25519 seed. Token and signing seed cannot share stdin in one invocation. Existing keyring entries survive interrupted provisioning; a different entry is rejected rather than overwritten.
 
-For env/mounted secrets, supply a schema-2 profile proposal with `profile create NAME --file proposal.yaml` and the same explicit server approval flags. The generated [profile schema](../packages/wos-cli/schemas/profile-v2.schema.json) describes its fields. Provide an authorized `--enrollment` to register a new key, or an already registered active key whose fingerprint matches the selected private reference. Proposal references never transmit private key bytes to WOS. Env is provided by the host; mounted files must be outside the workspace, canonical regular files without links, and deny other accounts access. Windows uses a restricted DACL check whose native verification remains pending.
+For env/mounted secrets, supply a schema-2 profile proposal with `profile create NAME --file proposal.yaml` and the same explicit server approval flags. The generated [profile schema](../packages/wos-cli/schemas/profile-v2.schema.json) describes its fields. Provide an authorized `--enrollment` to register a new key, or an already registered active key whose fingerprint matches the selected private reference. Proposal references never transmit private key bytes to WOS. Env is provided by the host; mounted files must be outside the workspace, canonical regular files without links, and deny other accounts access. Windows uses a restricted DACL check. Native filesystem/secret fixtures passed on the integrated PR #51 source; actual native keyring execution and final release-source certification remain separate gates.
 
 Selection is `--profile`, then process `WOS_PROFILE`, then the single profile. Multiple profiles without a selector fail with `profile_required`. `--workspace` takes precedence over `WOS_WORKSPACE`. No shared active-profile file is written. Profile names require exact case; case collisions and Windows reserved names are rejected.
 
@@ -40,9 +40,9 @@ for host access, bounded trust history and interruption handling.
 
 `profile remove` refuses pending intentions and nonempty contract directories. It removes only known local profile files and empty directories, preserves shared secrets, and does not revoke a remote credential or contract. A changed API credential or profile destination needs explicit new onboarding; local integrity tags do not silently rebind existing work.
 
-Stable locks live outside the operational workspace. Unix lock files are private, are never unlinked and release on process death. Windows uses global named mutexes across interactive/service sessions and fails closed if unavailable; cross-compilation is not native certification. The file writer preserves editor changes observed before replacement. A noncooperating OS writer can race the final comparison/rename; profiles do not isolate hostile processes under the same OS account.
+Stable locks live outside the operational workspace. Unix lock files are private, are never unlinked and release on process death. Windows uses global named mutexes across interactive/service sessions and fails closed if unavailable. Hosted native Linux/Windows workspace tests have executed; cross-compilation alone is not native certification. The file writer preserves editor changes observed before replacement. A noncooperating OS writer can race the final comparison/rename; profiles do not isolate hostile processes under the same OS account.
 
-P08 review checkout, operational lease maintenance and comprehensive file/process failure recovery remain in progress. P09 sign/send/finish is not implemented yet. A schema-2 project rejects legacy substitutions. The project does not yet claim a complete schema-2 operational workflow or native keyring certification.
+Schema-2 execution/review checkout, lease maintenance and protected sign/send/finish are implemented with targeted interruption and real SQL acceptance. A schema-2 project rejects legacy substitutions. Comprehensive final failure/platform acceptance and actual native keyring certification remain release gates.
 
 ## Work acquisition and recovery
 
@@ -64,7 +64,7 @@ For an unknown response, recovery first reads the original credential-bound dura
 
 `show --for-agent` returns the selected frozen instructions, constraints, criteria, current focal metadata and local progress. It omits issuer proofs, private references and other Outcome history. Read-only show/list/recover with no pending intentions do not acquire or renew work. A stored grant may have expired or lost authorization; final mutations must use their own live protocol checks.
 
-Real HTTP fixtures on Memory, SQLite and PostgreSQL cover the second response lost after commit in a five-item batch, two eligible Tasks, preservation of an edited first draft, recovery without duplicate contracts and accepted-state reconciliation after key revocation. Shared storage tests cover durable empty search, pagination, cache-unavailable replay, exact original public response and Principal quota. The remaining P08/P09 and native gates above are not inferred from those fixtures.
+Real HTTP fixtures on Memory, SQLite and PostgreSQL cover the second response lost after commit in a five-item batch, two eligible Tasks, preservation of an edited first draft, recovery without duplicate contracts and accepted-state reconciliation after key revocation. Shared storage tests cover durable empty search, pagination, cache-unavailable replay, exact original public response and Principal quota. Final acceptance gates are not inferred from those individual fixtures.
 
 ### Independent review checkout
 
@@ -82,8 +82,8 @@ Review YAML starts with `decision: inconclusive` and stores the acquired case CA
 acquire, renew or approve work. Agent projection includes frozen instructions,
 exact submitted material, omission references and public receipt fields, while
 signature proofs stay in the local document for host verification. No returned
-receipt is an evaluation of quality. Review sign/send/finish and lease maintenance
-are separate subsequent implementation steps.
+receipt is an evaluation of quality. Review sign/send/finish and lease maintenance use the same original-intention
+recovery rules; their execution does not certify material quality.
 
 ### Lease maintenance
 
@@ -132,3 +132,23 @@ stages that never reached publication and unrelated replacement temporaries are
 preserved for diagnosis; they are not automatically attributed to accepted work.
 Cooperative stable locks plus observed content CAS protect replacement writes;
 profiles do not provide isolation against a hostile writer with the same OS user.
+
+
+### Signed returns and receipt-bound cleanup
+
+```sh
+wosctl --profile executor_a work sign CONTRACT_UUID --output json
+wosctl --profile executor_a work send CONTRACT_UUID --output json
+wosctl --profile executor_a work recover --output json
+# Alternatively: work finish CONTRACT_UUID performs explicit sign/send/reconcile.
+wosctl --profile reviewer_a review finish REVIEW_CONTRACT_UUID --output json
+```
+
+Signing freezes the exact draft, payload, signature, original CID, request ID and
+idempotency key locally before mutation. Sending first reconciles any accepted
+original receipt. Recovery never sends a prepared-only return automatically and
+never re-signs an uncertain one. A remote commit can be confirmed while local
+cleanup requires action: edited drafts remain intact. Only a verified closed
+signed acceptance permits deletion of its matching unchanged contract document.
+The profile survives, with no operational history directory. Executor delivery
+may close its obligation while review remains pending; it is not Task approval.

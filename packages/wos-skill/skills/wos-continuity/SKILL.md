@@ -7,6 +7,18 @@ description: Recover a bounded WOS task using immutable contract specs, latest d
 
 Persisted WOS state, not a previous conversation or a local YAML file, determines work and authority. Start a new session with authorized scope/task/contract IDs and the minimum task intention.
 
+## Signed Namespace continuity
+
+Select the original schema-2 profile on every call. Reconcile `work recover`
+or `review recover`, then read focal `show ID --for-agent --output json` and the
+minimum necessary durable references. A prepared signature is not sent by
+recovery. Preserve original CID, signature, request ID and edited draft after
+uncertain responses; do not reacquire to repair a missing local file. Read
+[signed protocol and recovery](references/signed-protocol.md) for interruption,
+trust rotation and verified receipt cleanup.
+
+## Legacy contracts_v1 only
+
 1. Read `wos_get_work_contract` and its immutable spec through `wos_get_work_contract_spec` only when not already verified locally. Read the latest checkpoint/submission and live execution_allowed/reasons. Expand history with bounded pages only for a specific unresolved question.
 2. Check evaluated_at, effective status, exact string fencing, execution ID, content/lease versions, truncated/omitted and next_cursor. An omitted record is not absent. Never execute using an expired local timestamp cache.
 3. Locate durable repository/commit/artifact references. A dirty working tree, missing upload or unknown test result must remain explicit; a checkpoint does not transfer files or certify delivery.
