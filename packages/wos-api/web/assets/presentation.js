@@ -1,4 +1,4 @@
-import {copy} from "./en-US.js";
+import { copy } from "./en-US.js";
 // Presentation only. Lifecycle, readiness, proofs and permissions come from the API.
 const ns = "http://www.w3.org/2000/svg";
 export const node = (tag, text, className) => {
@@ -180,8 +180,8 @@ export function date(value) {
     : new Intl.DateTimeFormat("en-US", {
         dateStyle: "medium",
         timeStyle: "short",
- timeZone: "UTC",
-      }).format(d)+" UTC";
+        timeZone: "UTC",
+      }).format(d) + " UTC";
 }
 
 // Free text and identifiers retain the caller's content, even if they happen to
@@ -189,9 +189,22 @@ export function date(value) {
 export function formatValue(value, key = "") {
   if (key.endsWith("_at") || key.startsWith("planned_")) return date(value);
   if (typeof value === "boolean") return value ? copy.text.yes : copy.text.no;
-  return ["lifecycle", "status", "priority", "readiness", "verification_mode",
-    "evidence_type", "result", "stance", "severity", "propagation", "node_type", "kind"]
-    .includes(key) ? display(value) : String(value);
+  return [
+    "lifecycle",
+    "status",
+    "priority",
+    "readiness",
+    "verification_mode",
+    "evidence_type",
+    "result",
+    "stance",
+    "severity",
+    "propagation",
+    "node_type",
+    "kind",
+  ].includes(key)
+    ? display(value)
+    : String(value);
 }
 export function donut(parts, total) {
   const svg = document.createElementNS(ns, "svg");

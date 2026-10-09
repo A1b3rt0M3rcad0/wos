@@ -1412,14 +1412,14 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | --- | --- | --- |
 | UX-FND-01 | 🚧 | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
 | UX-LOC-01 | ✅ | Official en-US catalog, shell, typed labels/UTC dates and user-content preservation; four presentation checks and six real browser journeys passed |
-| UX-ACT-01 | 🚧 | Explicit contextual registry and scoped permission hints; browser acceptance in progress |
+| UX-ACT-01 | ✅ | Explicit permission/state/protocol action registry; common action and revoked-authority browser checks passed |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
 | UX-CMP-01 | ✅ | Typed server-searched reference pickers; 1,001-item, duplicate-title, keyboard and stale-cursor browser checks passed |
 | UX-FRM-01–03 | ✅ | Dedicated forms and persisted Draft preparation checklist; explicit activation retained |
 | UX-NAV-01 | ✅ | Six purpose areas, Work status filters, scoped deep links with reload/back/forward; browser checks passed |
 | UX-PLN-01 | ✅ | Visual phases/milestones/references, draft diff, reason, publication and separate activation; immutable history browser check passed |
 | UX-EVD-01 / UX-ISS-01 | ✅ | Exact-definition assessments and independent Issue/Blocker resolution passed real-browser journeys |
-| UX-OPS-01 / UX-ADM-01 | ⬜ | Protocol-specific guidance and typed administration |
+| UX-OPS-01 / UX-ADM-01 | ✅ | Permission-bound typed settings/advanced editors and copied host-profile handoff; legacy/unsigned/signed regressions passed |
 | UX-CAS-01 | ✅ | Retained edits, explicit comparison/reconfirmation and identical-byte/key uncertain replay passed real-browser checks |
 | UX-QA-01 / UX-REL-01 | ⬜ | Real browser/accessibility/storage tests, embedded assets and distribution checks |
 
@@ -1438,3 +1438,5 @@ UX-ACT-01 API/registry slice: effective scoped permission hints exposed through 
 UX human-flow slice acceptance: sixteen embedded-server browser tests passed on 2026-10-09 (ten common journeys plus six protocol/domain regressions). Dedicated Outcome/Objective/Task inputs, reference search, visual Roadmap, exact-revision verification, compound/independent impediment handling and immutable intent retries are implemented. Six-area navigation, Draft checklist, final accessibility/distribution gates and representative-user/manual screen-reader checks remain outstanding. See `docs/ux/dedicated-human-journeys.md`.
 
 UX navigation/search slice acceptance: new six-area, Draft checklist, reload/back/forward/item and 1,001-Task global title/priority browser checks passed; compatibility journeys passed after purpose-navigation migration. Switching to Board invalidates outstanding List renders. Additive Task priority query passed Memory, SQLite and real PostgreSQL tests; HTTP/MCP permission-hint shape parity also passed. API access, CAS and domain state semantics remain unchanged. Hosted PR #83 browser/package/Ubuntu/Windows checks passed, while core CI was interrupted at a Docker Hub anonymous-pull rate limit; a failed-job rerun was requested. No CI application failure is inferred from that infrastructure response.
+
+UX operation/accessibility slice: 31 real-server browser tests and 14 unit checks passed locally. Official copy now covers common modules and additional static shell controls; authored content is preserved. Typed participants/external context grant no authority. Objective parent relationships, linked progress, entity-specific empty states and Task post-create detail are implemented. Host-profile clipboard handoff, revoked read/write/replay prevention and late-context failures passed. Axe reported no serious/critical violations in tested login/Overview/Task/picker states after contrast correction; keyboard, 390px and 200%/400% equivalent viewport reflow passed. Native browser zoom, representative-user usability and manual screen-reader checks are not claimed measured. Full backend/distribution and final documentation gates remain outstanding.

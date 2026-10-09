@@ -393,7 +393,7 @@
     "exposure": "A",
     "journey": "External references",
     "permission": "outcome:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "replace_roadmap_draft": {
     "exposure": "H",
@@ -519,7 +519,7 @@
     "exposure": "A",
     "journey": "Task creation and editing",
     "permission": "work:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "start_objective": {
     "exposure": "H",
