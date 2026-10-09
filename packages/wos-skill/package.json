@@ -1,6 +1,6 @@
 {
   "name": "@a1b3rt0m3rcad0/wos-skill",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Portable WOS contract coordination, delegation, continuity, review and local workspace skills",
   "type": "module",
   "license": "Apache-2.0",
@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "wosCompatibility": {
-    "service": "0.2.0",
+    "service": "0.3.0",
     "httpApi": "v1",
     "snapshotSchema": 1,
     "workProtocol": "signed_contracts_v2",

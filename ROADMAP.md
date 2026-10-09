@@ -1307,3 +1307,17 @@ reopen storage connections, reclaim the exact body/ID after expiry with increase
 fencing, reject the old acknowledgement and finish without a duplicate signal.
 Both real SQL race cases pass (SQLite 5.441s, PostgreSQL 4.380s). This models
 worker absence and storage restart; it does not claim an OS kill experiment.
+P13 coordinated 0.3.0 preparation updates VERSION, both npm packages and service
+compatibility, release manifest, changelog and upgrade notes together. Existing
+Namespace phases/unsigned history remain explicit compatibility paths, so this
+opt-in protocol addition uses a minor bump. This release is prepared, not
+registry-published or certified from parent-commit receipts. Remaining P12 PRs
+and all same-source final gates must integrate before operational acceptance.
+
+The first 0.3 hosted source gate rejected stale OpenAPI release metadata (0.2).
+Preparation now validates and updates that generated metadata before writing
+coordinated version state; unchanged public paths remain exact and stale inputs
+fail before consuming the queue. Release automation includes the OpenAPI file
+in its commit and explicitly dispatches four verification workflows for its
+bot-created PR, which GITHUB_TOKEN events otherwise do not start. Publication
+remains separately explicit. The failing gate is rerun rather than disabled.
