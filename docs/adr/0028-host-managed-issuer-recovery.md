@@ -1,10 +1,10 @@
 # ADR 028: host-managed issuer recovery with immutable public history
 
-Status: proposed implementation; not a capability claim.
+Status: accepted; implementation undergoing complete regression and integration.
 
 The accepted signed-contract plan requires issuance after a restore that no
-longer has the previous private seed (T14/T87). The current runtime refuses a
-replacement seed and exposes no explicit recovery path. Namespace administration
+longer has the previous private seed (T14/T87). Normal runtime startup refuses a replacement seed; recovery requires a separate
+host operation. Namespace administration
 must not gain control of the instance issuer shared by other tenants.
 
 Implement recovery as a host/deployment operation with database access and a
@@ -24,9 +24,8 @@ historical agent/issuer key records remain intact.
 Public trust queries expose bounded history without private material. Clients
 require explicit out-of-band trust approval to append the replacement pin and
 retain historical pins. Pending original-CID returns must remain recoverable
-without re-signing or changing the frozen request. Profile trust updates therefore
-need their own interruption-safe local treatment; changing pins alone is not yet
-supported and must not be described as recovery.
+without re-signing or changing the frozen request. Profile trust updates use one atomic append with authenticated bounded prior
+binding lineage; existing contracts and frozen intentions are never rewritten.
 
 Acceptance requires Memory/SQLite/PostgreSQL CAS/replay, restore without the old
 seed, verification of old specs, issuance using the approved replacement,

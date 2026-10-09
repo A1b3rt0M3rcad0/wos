@@ -188,7 +188,33 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(u.WorkItems().Insert(ctx, work))
 	must(u.Commit())
 	signedCLICutoverJourney(t, handler, sec, adminCtx, operator, scope, server, adminToken)
-	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions)
+	oldServer := server
+	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions, func() d.ServerIdentity {
+		newPublic, newPrivate, e := ed25519.GenerateKey(rand.Reader)
+		must(e)
+		newFP, e := signing.Fingerprint(newPublic)
+		must(e)
+		newID, e := generator.NewID()
+		must(e)
+		replacement := server
+		replacement.IssuerKeyID, replacement.PublicKey, replacement.Fingerprint = newID, base64.StdEncoding.EncodeToString(newPublic), newFP
+		intent := a.IssuerRecoveryIntent{ServerID: server.ID, PreviousIssuerID: server.IssuerKeyID, PreviousFingerprint: server.Fingerprint, NewIssuerID: newID, NewFingerprint: newFP, Reason: "recover while the CLI retains an original prepared return"}
+		_, replay, e := a.RecoverServerIssuer(ctx, store, clock{}, intent, transportIssuer{replacement, newPrivate})
+		must(e)
+		if replay {
+			t.Fatal("first issuer recovery unexpectedly replayed")
+		}
+		// The old serving configuration must refuse issuance after persistent CAS.
+		_, e = worker.AcquireSignedWorkContract(ctx, "stale-issuer-acquisition", a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: work.Version, SignerKeyID: registered.Key.ID, TTLSeconds: 300})
+		var rejected *sdk.Error
+		if !errors.As(e, &rejected) || rejected.Code != string(d.ErrorCodeInvalidConfig) {
+			t.Fatalf("stale issuer acquisition did not fail closed: %v", e)
+		}
+		clear(private)
+		must(service.ConfigureSignedIssuer(ctx, transportIssuer{replacement, newPrivate}, d.AcceptanceDirect))
+		server, pub = replacement, newPublic
+		return replacement
+	})
 	acquired, e := worker.AcquireSignedWorkContract(ctx, "transport-signed-acquisition", a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: work.Version, SignerKeyID: registered.Key.ID, TTLSeconds: 300})
 	must(e)
 	operation, e := worker.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: "transport-signed-acquisition"})
@@ -263,7 +289,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	if caseView.ReviewCase == nil {
 		t.Fatal("delivery lost independent review case")
 	}
-	_, decisionEnvelope, decision := signedCLIReviewCheckout(t, mux, scope, server, reviewCredential, reviewToken, *reviewRegistered.Key, reviewPrivate, reviewer)
+	_, decisionEnvelope, decision := signedCLIReviewCheckout(t, mux, scope, server, reviewCredential, reviewToken, *reviewRegistered.Key, reviewPrivate, reviewer, oldServer)
 	// The original CLI has removed its closed file; SDK replay uses the exact
 	// frozen request and confirms immutable acceptance, not a new decision.
 	approved, e := reviewer.ReturnSignedReview(ctx, decision.IdempotencyKey, a.ReturnSignedReviewCommand{Envelope: decisionEnvelope})

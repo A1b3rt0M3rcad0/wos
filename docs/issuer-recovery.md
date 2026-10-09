@@ -36,10 +36,31 @@ replacement serialize current issuance; stale signer configuration fails closed.
 Historical public keys remain available through authenticated bounded `trust`
 queries, with `limit` and `cursor` and explicit search completion.
 
-Client trust still requires explicit approval of the replacement fingerprint
-while retaining old pins. **The automatic or interrupted-safe CLI pin-update
-workflow is not implemented yet.** Existing profiles refuse an untrusted new
-issuer; do not bypass their binding MAC, re-sign an uncertain return, edit issued
-payloads or discard pending original-CID intentions. Client trust update and its
-pending-return recovery acceptance remain required before claiming complete
-operator recovery/P10 readiness.
+Client trust requires explicit approval of the replacement fingerprint while
+retaining old pins. In an approved schema-2 workspace:
+
+```sh
+wosctl --profile executor profile trust --issuer-fingerprint sha256:<approved-new-fingerprint>
+```
+
+Use the actual profile name and complete independently approved fingerprint.
+The command verifies the same origin, persistent ServerID, Namespace, Principal
+and original CredentialID before one atomic profile update. It appends only the
+new public pin and authenticated bounded binding lineage. Contract files,
+original signatures, request IDs, idempotency keys and pending intentions remain
+unchanged. Repeating approval reconciles the durable profile after interruption
+without rewriting it. No network call runs under the profile publication lock.
+
+At most ten issuer pins and nine prior binding records are retained per profile.
+Reaching the bound requires explicit operator planning; the command does not
+prune historical trust or discard uncertain work. Historical signatures remain
+verifiable using retained public pins, including after losing the old issuer seed.
+Proceed with `work send` for a prepared return, or `work recover` for a previously
+sent uncertain return. Recovery never sends a prepared-only return automatically.
+Do not re-sign uncertain work, edit issued payloads or delete pending intentions.
+
+The actual HTTP/CLI journey covers rotation after local signing, refusal of
+untrusted issuance, explicit approval without contract rewriting, new signed
+acceptance, lost-response recovery, and independent review on Memory, SQLite
+and PostgreSQL. Native child-process exit after profile publication also has a
+regression fixture. These incremental checks do not replace final P12/P13 gates.

@@ -1042,3 +1042,23 @@ acceptance (48.186s), migration/precision race checks (1.959s), and runtime
 schema/MCP subprocess checks (7.695s). All hosted browser, package, full
 verification and native Linux/Windows checks passed on its synthetic PR merge;
 these receipts do not certify a later final-release source.
+
+
+P10 issuer recovery/client trust continuation: schema-2 `profile trust` verifies
+explicit independently approved current fingerprint and the unchanged origin,
+ServerID, Namespace, Principal and original CID. One atomic profile append retains
+old pins and authenticated bounded prior binding MACs; contract bytes, signatures,
+request IDs and pending intentions are unchanged. No trust RPC holds the profile
+publication guard. Native Linux child-process exit after publication, `.yml`
+mutation, repeated approval without rewrites, tampered lineage and moved-origin
+rejection passed targeted race tests. The actual HTTP/CLI journey now rotates
+after preparing a return, rejects stale issuance and unapproved trust, clears the
+old private issuer, approves both local profiles, sends the original return under
+the new issuer and recovers a lost response before independent review. This
+passed Memory/SQLite/real PostgreSQL (42.384s). Shared recovery/restore tests also
+verify reused-fingerprint parity and that replaying an old host receipt after a
+second rotation never reinstalls its retired key. The host command checks schema
+compatibility even with migrations disabled, before mutation; future-history
+sentinels remain untouched. Combined targeted race passed SQLite 3.023s,
+PostgreSQL 20.374s, runtime 5.592s and CLI 2.207s. Full regression, hosted native
+checks and integration remain pending; this does not complete P10 or P12.

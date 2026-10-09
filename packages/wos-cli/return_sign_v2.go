@@ -19,6 +19,9 @@ import (
 // This MAC authenticates local recovery provenance, not server authorization.
 // It prevents a copied pending file from becoming an intention of another CID.
 func frozenMACV2(profile ProfileV2, token []byte, frozen FrozenReturnV2) (string, error) {
+	return frozenBindingMACV2(profile.Local.BindingMAC, token, frozen)
+}
+func frozenBindingMACV2(bindingMAC string, token []byte, frozen FrozenReturnV2) (string, error) {
 	if len(token) < 32 {
 		return "", fmt.Errorf("credential unavailable")
 	}
@@ -26,7 +29,7 @@ func frozenMACV2(profile ProfileV2, token []byte, frozen FrozenReturnV2) (string
 	raw, e := json.Marshal(struct {
 		Binding string         `json:"binding"`
 		Frozen  FrozenReturnV2 `json:"frozen"`
-	}{profile.Local.BindingMAC, frozen})
+	}{bindingMAC, frozen})
 	if e != nil {
 		return "", e
 	}
@@ -47,10 +50,28 @@ func verifyFrozenV2(profile ProfileV2, token []byte, frozen FrozenReturnV2) (sig
 	if frozen.CredentialID != profile.Binding.CredentialID || !d.ValidSignedDigest(frozen.DraftDigest) || !d.ValidSignedDigest(frozen.RequestDigest) {
 		return binding, fmt.Errorf("frozen return provenance differs")
 	}
+	if e := profile.VerifyBinding(token); e != nil {
+		return binding, e
+	}
 	mac, e := frozenMACV2(profile, token, frozen)
 	expected, decode := hex.DecodeString(frozen.PendingMAC)
 	actual, _ := hex.DecodeString(mac)
-	if e != nil || decode != nil || !hmac.Equal(expected, actual) {
+	matched := e == nil && decode == nil && hmac.Equal(expected, actual)
+	identityDigest, identityError := profile.issuerIndependentIdentityDigest()
+	if !matched && identityError == nil {
+		for _, prior := range profile.Local.PriorIssuerBindings {
+			if prior.IdentityDigest != identityDigest {
+				continue
+			}
+			candidate, err := frozenBindingMACV2(prior.BindingMAC, token, frozen)
+			candidateBytes, _ := hex.DecodeString(candidate)
+			if err == nil && decode == nil && hmac.Equal(expected, candidateBytes) {
+				matched = true
+				break
+			}
+		}
+	}
+	if !matched {
 		return binding, fmt.Errorf("frozen return local authentication differs")
 	}
 	public, e := base64.StdEncoding.Strict().DecodeString(frozen.SignerPublicKey)

@@ -111,6 +111,36 @@ func TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore(t *te
 				t.Fatal("old configured replica accepted replacement trust")
 			}
 			must(restarted.ConfigureSignedIssuer(ctx, replacement, d.AcceptanceIndependentReview))
+			// Public fingerprints cannot be reused under a new ID. Check storage
+			// parity, not merely the predecessor comparison.
+			reused := issuer(testID("0199a555-0000-7000-8000-000000000006"), 1)
+			reusedIntent := a.IssuerRecoveryIntent{ServerID: replacement.identity.ID, PreviousIssuerID: replacement.identity.IssuerKeyID, PreviousFingerprint: replacement.identity.Fingerprint, NewIssuerID: reused.identity.IssuerKeyID, NewFingerprint: reused.identity.Fingerprint, Reason: "historical fingerprint must not be reused"}
+			_, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, reusedIntent, reused)
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeAlreadyExists {
+				t.Fatalf("historical fingerprint reuse parity: %v", e)
+			}
+			second := issuer(testID("0199a555-0000-7000-8000-000000000007"), 7)
+			secondIntent := a.IssuerRecoveryIntent{ServerID: replacement.identity.ID, PreviousIssuerID: replacement.identity.IssuerKeyID, PreviousFingerprint: replacement.identity.Fingerprint, NewIssuerID: second.identity.IssuerKeyID, NewFingerprint: second.identity.Fingerprint, Reason: "second independently approved replacement"}
+			_, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, secondIntent, second)
+			must(e)
+			clear(replacement.private)
+			// Restore possession of the first replacement only to reconcile its
+			// original host receipt. The current key must remain the second one.
+			firstSigner := issuer(replacement.identity.IssuerKeyID, 2)
+			again, replayed, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, intent, firstSigner)
+			must(e)
+			if !replayed || again != record {
+				t.Fatal("old recovery receipt changed after another replacement")
+			}
+			u, e = store.Begin(ctx)
+			must(e)
+			current, e = u.(ports.ServerIdentityUnitOfWork).ServerIdentity().Server(ctx)
+			must(e)
+			must(u.Rollback())
+			if current != second.identity {
+				t.Fatal("replaying an old host receipt reinstalled its retired key")
+			}
+
 		})
 	}
 }

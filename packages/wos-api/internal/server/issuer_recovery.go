@@ -66,6 +66,14 @@ func RecoverIssuer(ctx context.Context, config Config, intent a.IssuerRecoveryIn
 		return zero, false, e
 	}
 	defer store.Close()
+	version, schemaErr := store.SchemaVersion(ctx)
+	supported, latestErr := sqlite.LatestSchemaVersion()
+	if config.Storage.Driver == StorageDriverPostgres {
+		supported, latestErr = postgres.LatestSchemaVersion()
+	}
+	if schemaErr != nil || latestErr != nil || version != supported {
+		return zero, false, d.NewError(d.ErrorCodeInvalidConfig, "database schema is incompatible with host issuer recovery")
+	}
 	u, e := store.Begin(ctx)
 	if e != nil {
 		return zero, false, e

@@ -71,6 +71,9 @@ func (r serverIdentityRepository) ReplaceServerIssuer(ctx context.Context, recor
 		}
 		saved, e := signingRead[d.ServerIdentity](ctx, r.u, `SELECT state_json FROM server_issuer_public_keys WHERE key_id=?`, identity.IssuerKeyID)
 		if e != nil {
+			if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
+				return d.NewError(d.ErrorCodeAlreadyExists, "issuer fingerprint already used")
+			}
 			return e
 		}
 		if saved != identity {
