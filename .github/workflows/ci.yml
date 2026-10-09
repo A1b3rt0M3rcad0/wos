@@ -89,6 +89,9 @@ jobs:
           git diff --exit-code -- packages/wos-core/storage/memory/signed_work_contracts.go packages/wos-core/storage/sqlite/signed_work_contracts.go packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
           python3 tools/eventcatalog/check.py
 
+      - name: Controlled context/cost report validation
+        run: python3 tools/acceptance/context-cost-report-test.py
+
       - name: Unit and contract tests
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}

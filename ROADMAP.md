@@ -1206,3 +1206,10 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+
+P12 T95 measurement tooling validates controlled A/B/C task and quality scopes,
+identical B/C models/harnesses, decimal costs/provenance and retained failed,
+review/correction/integration attempts. Unknown usage remains null; no bytes-to-
+tokens conversion or fabricated savings. Five negative/aggregation test cases
+pass. Managed Codex C succeeded, but A/B controls and provider usage/billing are
+not exposed here; comparative savings remain unmeasured and explicitly pending.
