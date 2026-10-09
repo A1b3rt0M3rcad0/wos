@@ -64,3 +64,10 @@ Acquisition, renewal and takeover replay return the originally committed grant/C
 The Go SDK bounds `operation` expansion separately: the registry result is at most 1 MiB decoded, with base64 expansion and 64 KiB reserved for focal metadata. Ordinary SDK responses retain their 256 KiB bound. This technical expansion belongs to recovery tooling, not initial model context.
 
 `operation` also returns `operation_fingerprint`, using the exact existing command normalization and actor-bound SHA-256 hash. `SignedCommandFingerprint(actor, typedCommand)` exposes that pure Core comparison to harnesses; it does not authorize a command. Own signing-identity metadata includes the credential actor. These additions let unknown-response recovery reject a mismatched intention before materialization, including after the original agent key was revoked. The server gives the technical operation expansion the same explicit base64/metadata budget as the SDK; ordinary focal snapshot limits are unchanged.
+
+`AcquireNextSignedReviewContract` is available through the common command catalog
+(HTTP/MCP/Go SDK). Its bounded open-case scan returns `acquired`, optional original
+review result, `search_complete`, `next_cursor` and reasons. It skips active review
+authority and reviewers excluded by execution history/groups. Empty intentions
+remain empty on replay; accepted replay preserves the original fenced authority
+after takeover. It does not decide a review or schedule an agent.

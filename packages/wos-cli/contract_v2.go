@@ -69,6 +69,7 @@ type FrozenReturnV2 struct {
 type ContractLocalV2 struct {
 	SchemaVersion     int               `json:"schema_version"`
 	Profile           string            `json:"profile"`
+	ReviewCaseVersion signing.Decimal   `json:"review_case_version,omitempty"`
 	WorkItemVersion   signing.Decimal   `json:"work_item_version"`
 	Pending           *FrozenReturnV2   `json:"pending,omitempty"`
 	AcceptanceReceipt *signing.Document `json:"acceptance_receipt,omitempty"`

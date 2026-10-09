@@ -12,7 +12,7 @@ type signedOperationRepository struct{ u *unitOfWork }
 
 func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.ID, principal, key string) (d.LegacySignedOperationResult, error) {
 	var result d.LegacySignedOperationResult
-	rows, e := r.u.tx.QueryContext(ctx, `SELECT command_name,request_hash,command_id,outcome_revision,response_json,created_at FROM idempotency_records WHERE namespace_id=? AND principal_id=? AND idempotency_key=? AND status='completed' AND command_name IN ('AcquireSignedWorkContract','AcquireNextSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract','ReturnSignedWork','AcquireSignedReviewContract','RenewSignedReviewContract','ResumeSignedReviewContract','ReturnSignedReview','InterveneSignedReviewCase','RevokeSignedContract','ReconcileSignedContracts') ORDER BY command_name LIMIT 2`, namespace.String(), principal, key)
+	rows, e := r.u.tx.QueryContext(ctx, `SELECT command_name,request_hash,command_id,outcome_revision,response_json,created_at FROM idempotency_records WHERE namespace_id=? AND principal_id=? AND idempotency_key=? AND status='completed' AND command_name IN ('AcquireSignedWorkContract','AcquireNextSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract','ReturnSignedWork','AcquireSignedReviewContract','AcquireNextSignedReviewContract','RenewSignedReviewContract','ResumeSignedReviewContract','ReturnSignedReview','InterveneSignedReviewCase','RevokeSignedContract','ReconcileSignedContracts') ORDER BY command_name LIMIT 2`, namespace.String(), principal, key)
 	if e != nil {
 		return result, e
 	}

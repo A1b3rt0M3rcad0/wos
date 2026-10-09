@@ -147,6 +147,47 @@
         ],
         "type": "object"
       },
+      "Catalog_acquire_next_signed_review_contract": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "signer_key_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "ttl_seconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "scope",
+          "signer_key_id"
+        ],
+        "type": "object"
+      },
       "Catalog_acquire_next_signed_work_contract": {
         "additionalProperties": false,
         "properties": {
@@ -9886,6 +9927,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_achieve_outcome"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/acquire_next_signed_review_contract": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_acquire_next_signed_review_contract",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_acquire_next_signed_review_contract"
                   }
                 },
                 "required": [

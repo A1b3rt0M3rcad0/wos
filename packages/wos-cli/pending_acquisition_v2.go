@@ -157,6 +157,34 @@ func executionAcquisitionV2(profile ProfileV2, scope d.Scope, commandID d.ID, re
 	}
 	return acquisitionAcceptedV2{Acquired: true, Contract: &file, CommandID: commandID, SearchComplete: true, Reasons: []string{}}, nil
 }
+func reviewAcquisitionV2(profile ProfileV2, scope d.Scope, commandID d.ID, result a.SignedReviewContractResult) (acquisitionAcceptedV2, error) {
+	c := result.Contract
+	if c.Scope != scope || c.HolderPrincipalID != profile.Binding.PrincipalID || c.Binding.CredentialID != profile.Binding.CredentialID || result.IssuedSpecification == nil || result.Case.ID != c.CaseID {
+		return acquisitionAcceptedV2{}, fmt.Errorf("review acquisition response binding differs")
+	}
+	file := ContractFileV2{SchemaVersion: 2, Kind: "WOSContractFile", Issued: IssuedDocumentsV2{Specification: *result.IssuedSpecification, Authority: result.IssuedAuthority}, Local: ContractLocalV2{SchemaVersion: 1, Profile: profile.Name, WorkItemVersion: result.WorkItemVersion, ReviewCaseVersion: signing.Decimal(result.Case.Version)}, Review: &ReviewDraftV2{Decision: "inconclusive", Material: a.SignedReviewMaterial{}}}
+	view, e := file.VerifyIssued(profile)
+	if e != nil {
+		return acquisitionAcceptedV2{}, e
+	}
+	if view.Authority.ContractID != c.ID.String() || view.Authority.ContractKind != "review" || view.ReviewSpecification.Spec.ReviewCaseID != c.CaseID || view.ReviewSpecification.Spec.SubmissionID != c.SubmissionID {
+		return acquisitionAcceptedV2{}, fmt.Errorf("issued review target differs")
+	}
+	return acquisitionAcceptedV2{Acquired: true, Contract: &file, CommandID: commandID, SearchComplete: true, Reasons: []string{}}, nil
+}
+func reviewSearchAcquisitionV2(profile ProfileV2, scope d.Scope, id d.ID, result a.SignedReviewAcquisition) (acquisitionAcceptedV2, error) {
+	if !result.Acquired {
+		return acquisitionAcceptedV2{CommandID: id, SearchComplete: result.SearchComplete, NextCursor: result.NextCursor, Reasons: result.Reasons}, nil
+	}
+	if result.Result == nil {
+		return acquisitionAcceptedV2{}, fmt.Errorf("acquired review result absent")
+	}
+	value, e := reviewAcquisitionV2(profile, scope, id, *result.Result)
+	value.SearchComplete = result.SearchComplete
+	value.NextCursor = result.NextCursor
+	value.Reasons = result.Reasons
+	return value, e
+}
 func callAcquisitionV2(ctx context.Context, client *sdk.Client, profile ProfileV2, pending PendingOperationV2) (acquisitionAcceptedV2, error) {
 	var zero acquisitionAcceptedV2
 	raw, e := base64.StdEncoding.Strict().DecodeString(pending.Payload)
@@ -207,6 +235,38 @@ func callAcquisitionV2(ctx context.Context, client *sdk.Client, profile ProfileV
 		accepted.NextCursor = result.Value.NextCursor
 		accepted.Reasons = result.Value.Reasons
 		return accepted, e
+	case "AcquireSignedReviewContract":
+		var cmd a.AcquireSignedReviewContractCommand
+		if e = signing.DecodeStrict(raw, &cmd, signing.MaxPayloadBytes); e != nil {
+			return zero, e
+		}
+		if cmd.Scope != scope || cmd.SignerKeyID != profile.Signing.KeyID {
+			return zero, fmt.Errorf("pending review binding differs")
+		}
+		result, e := client.AcquireSignedReviewContract(ctx, pending.IdempotencyKey, cmd)
+		if e != nil {
+			return zero, e
+		}
+		if result.ResultOmitted {
+			return zero, fmt.Errorf("review result omitted; preserve intention")
+		}
+		return reviewAcquisitionV2(profile, scope, result.CommandID, result.Value)
+	case "AcquireNextSignedReviewContract":
+		var cmd a.AcquireNextSignedReviewContractCommand
+		if e = signing.DecodeStrict(raw, &cmd, signing.MaxPayloadBytes); e != nil {
+			return zero, e
+		}
+		if cmd.Scope != scope || cmd.SignerKeyID != profile.Signing.KeyID {
+			return zero, fmt.Errorf("pending review search binding differs")
+		}
+		result, e := client.AcquireNextSignedReviewContract(ctx, pending.IdempotencyKey, cmd)
+		if e != nil {
+			return zero, e
+		}
+		if result.ResultOmitted {
+			return zero, fmt.Errorf("review search result omitted; preserve intention")
+		}
+		return reviewSearchAcquisitionV2(profile, scope, result.CommandID, result.Value)
 	default:
 		return zero, fmt.Errorf("unsupported frozen operation preserved")
 	}
@@ -397,6 +457,24 @@ func reconcileAcquisitionV2(ctx context.Context, client *sdk.Client, profile Pro
 		value.NextCursor = accepted.Value.NextCursor
 		value.Reasons = accepted.Value.Reasons
 		return value, e
+	case "AcquireSignedReviewContract":
+		var accepted sdk.CommandResult[a.SignedReviewContractResult]
+		if e = json.Unmarshal(raw, &accepted); e != nil {
+			return zero, e
+		}
+		if accepted.CommandID != *result.OperationCommandID {
+			return zero, fmt.Errorf("durable review identity differs")
+		}
+		return reviewAcquisitionV2(profile, scope, accepted.CommandID, accepted.Value)
+	case "AcquireNextSignedReviewContract":
+		var accepted sdk.CommandResult[a.SignedReviewAcquisition]
+		if e = json.Unmarshal(raw, &accepted); e != nil {
+			return zero, e
+		}
+		if accepted.CommandID != *result.OperationCommandID {
+			return zero, fmt.Errorf("durable review search identity differs")
+		}
+		return reviewSearchAcquisitionV2(profile, scope, accepted.CommandID, accepted.Value)
 	default:
 		return zero, fmt.Errorf("unsupported frozen recovery operation")
 	}

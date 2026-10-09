@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -232,6 +233,13 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			if _, e = service.AcquireSignedReviewContract(agentCtx, nextCC(identity, "executor-self-review"), a.AcquireSignedReviewContractCommand{Scope: scope, ReviewCaseID: review.ID, ExpectedReviewCaseVersion: review.Version, SignerKeyID: agentKey}); e == nil {
 				t.Fatal("execution Principal acquired its own review")
 			}
+			selfSearchCC := nextCC(identity, "executor-independent-review-search")
+			selfSearchCmd := a.AcquireNextSignedReviewContractCommand{Scope: scope, SignerKeyID: agentKey, Limit: 1}
+			emptySearch, e := service.AcquireNextSignedReviewContract(agentCtx, selfSearchCC, selfSearchCmd)
+			must(e)
+			if emptySearch.Value.Acquired || !emptySearch.Value.SearchComplete {
+				t.Fatal("self review search acquired its own execution")
+			}
 			participant := func(principal string, permissions []ports.Permission) (a.Identity, context.Context, d.ID, ed25519.PrivateKey, d.CredentialPolicy) {
 				must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal, Permissions: permissions}))
 				cred, token, e := sec.IssueCredential(adminCtx, ns, principal, d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: principal}, now.Add(time.Hour))
@@ -259,7 +267,20 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			}
 			reviewer, reviewCtx, reviewKey, reviewPrivate, reviewPolicy := participant("reviewer", []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite})
 			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractRevoke})
-			acquiredReview, e := service.AcquireSignedReviewContract(reviewCtx, nextCC(reviewer, "review-round-one-acquisition"), a.AcquireSignedReviewContractCommand{Scope: scope, ReviewCaseID: review.ID, ExpectedReviewCaseVersion: review.Version, SignerKeyID: reviewKey, TTLSeconds: 300})
+			searchCC := nextCC(reviewer, "review-round-one-acquisition")
+			searchCmd := a.AcquireNextSignedReviewContractCommand{Scope: scope, SignerKeyID: reviewKey, TTLSeconds: 300, Limit: 1}
+			searched, e := service.AcquireNextSignedReviewContract(reviewCtx, searchCC, searchCmd)
+			must(e)
+			if !searched.Value.Acquired || searched.Value.Result == nil || searched.Value.Result.Case.ID != review.ID {
+				t.Fatal("independent next review search failed")
+			}
+			acquiredReview := a.MutationResult[a.SignedReviewContractResult]{Value: *searched.Value.Result, CommandID: searched.CommandID, OutcomeRevision: searched.OutcomeRevision}
+			blockedCC := nextCC(reviewer, "review-active-search-is-empty")
+			blocked, e := service.AcquireNextSignedReviewContract(reviewCtx, blockedCC, searchCmd)
+			must(e)
+			if blocked.Value.Acquired {
+				t.Fatal("review search replaced active review")
+			}
 			must(e)
 			// Review takeover changes only execution/fence; no lease extension.
 			old := acquiredReview.Value.Contract
@@ -267,6 +288,15 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			must(e)
 			if resumed.Value.Contract.ExecutionID == old.ExecutionID || resumed.Value.Contract.FencingToken <= old.FencingToken || !resumed.Value.Contract.ExpiresAt.Equal(old.ExpiresAt) {
 				t.Fatal("review takeover failed fencing or extended lease")
+			}
+			noCache, e := a.NewService(signedNoCacheManager{base: store}, clock, ids)
+			must(e)
+			replayed, e := noCache.AcquireNextSignedReviewContract(reviewCtx, searchCC, searchCmd)
+			must(e)
+			originalJSON, _ := json.Marshal(searched.Value)
+			replayJSON, _ := json.Marshal(replayed.Value)
+			if !replayed.IdempotentReplay || replayed.CommandID != searched.CommandID || string(originalJSON) != string(replayJSON) {
+				t.Fatal("next review replay changed original authority after takeover")
 			}
 			sendReview := func(result a.SignedReviewContractResult, decision, key string, material a.SignedReviewMaterial) (a.MutationResult[a.SignedReturnResult], error) {
 				c := result.Contract

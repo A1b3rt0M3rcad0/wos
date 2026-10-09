@@ -59,3 +59,22 @@ For an unknown response, recovery first reads the original credential-bound dura
 `show --for-agent` returns the selected frozen instructions, constraints, criteria, current focal metadata and local progress. It omits issuer proofs, private references and other Outcome history. Read-only show/list/recover with no pending intentions do not acquire or renew work. A stored grant may have expired or lost authorization; final mutations must use their own live protocol checks.
 
 Real HTTP fixtures on Memory, SQLite and PostgreSQL cover the second response lost after commit in a five-item batch, two eligible Tasks, preservation of an edited first draft, recovery without duplicate contracts and accepted-state reconciliation after key revocation. Shared storage tests cover durable empty search, pagination, cache-unavailable replay, exact original public response and Principal quota. The remaining P08/P09 and native gates above are not inferred from those fixtures.
+
+### Independent review checkout
+
+Schema-2 `review checkout <case-id> --version <exact-case-version>` and
+`review checkout --next --count N --limit L` use the selected profile's live
+credential and agent key. Each bounded batch item has its own frozen intention;
+review recovery reconciles the original operation before retrying a request.
+The server retains empty search results and enforces historical/current
+Principal and separation-group independence plus one active review per Principal.
+A multi-item request can therefore stop at a quota while retaining its accepted
+file and remaining intentions; it does not evade the quota by switching profiles.
+
+Review YAML starts with `decision: inconclusive` and stores the acquired case CAS.
+`review list`, `review show <contract-id> --for-agent` and `review recover` do not
+acquire, renew or approve work. Agent projection includes frozen instructions,
+exact submitted material, omission references and public receipt fields, while
+signature proofs stay in the local document for host verification. No returned
+receipt is an evaluation of quality. Review sign/send/finish and lease maintenance
+are separate subsequent implementation steps.

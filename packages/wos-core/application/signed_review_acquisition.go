@@ -58,150 +58,154 @@ func (s *Service) AcquireSignedReviewContract(ctx context.Context, cc d.CommandC
 		return MutationResult[SignedReviewContractResult]{}, d.NewError(d.ErrorCodeInvalidArgument, "review acquisition requires idempotency")
 	}
 	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (SignedReviewContractResult, d.OutcomeRevision, error) {
-		var zero SignedReviewContractResult
-		identity, policy, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionWorkReviewAcquire, cmd.SignerKeyID)
-		if err != nil {
-			return zero, 0, err
-		}
-		server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID)
-		if err != nil {
-			return zero, 0, err
-		}
-		if _, err = u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
-			return zero, 0, err
-		}
-		if err = requireActiveOutcome(ctx, u, cmd.Scope); err != nil {
-			return zero, 0, err
-		}
-		repo, _, err := signedRepository(u)
-		if err != nil {
-			return zero, 0, err
-		}
-		review, err := repo.Case(ctx, cmd.Scope, cmd.ReviewCaseID)
-		if err != nil {
-			return zero, 0, err
-		}
-		if review.Version != cmd.ExpectedReviewCaseVersion {
-			return zero, 0, d.NewError(d.ErrorCodeVersionConflict, "review case CAS changed")
-		}
-		registry, err := signingRepository(u)
-		if err != nil {
-			return zero, 0, err
-		}
-		group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
-		if err != nil {
-			return zero, 0, err
-		}
-		if err = s.requireSignedReviewIndependence(ctx, u, review, identity.PrincipalID, group); err != nil {
-			return zero, 0, err
-		}
-		now, err := securityTransactionTime(ctx, u, s.clock)
-		if err != nil {
-			return zero, 0, err
-		}
-		counts, err := repo.Counts(ctx, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now)
-		if err != nil {
-			return zero, 0, err
-		}
-		if counts.PrincipalReview >= 1 || counts.CredentialReview >= policy.MaxActiveReviewContracts {
-			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "review quota reached")
-		}
-		if np, e := registry.AcceptancePolicy(ctx, cmd.Scope.NamespaceID, nil, nil); e == nil {
-			if counts.NamespaceReview >= np.MaxActiveReviewContracts {
-				return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace review quota reached")
-			}
-		} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
-			return zero, 0, e
-		}
-		var expired *d.ReviewContract
-		if review.CurrentContractID != nil {
-			old, e := repo.ReviewContract(ctx, cmd.Scope, *review.CurrentContractID)
-			if e != nil {
-				return zero, 0, e
-			}
-			if old.ValidAt(now) {
-				return zero, 0, d.NewError(d.ErrorCodeWorkAlreadyClaimed, "review authority remains active")
-			}
-			v, l, rv := old.Version, old.LeaseVersion, review.Version
-			if e = old.Close(d.ContractExpired, "system:expiry", "review lease expired", v, now); e != nil {
-				return zero, 0, e
-			}
-			if e = repo.SaveReviewContract(ctx, old, v, l); e != nil {
-				return zero, 0, e
-			}
-			if e = review.Release(old, now); e != nil {
-				return zero, 0, e
-			}
-			if e = repo.SaveCase(ctx, review, rv); e != nil {
-				return zero, 0, e
-			}
-			expired = &old
-		}
-		target, work, err := s.authenticatedReviewTarget(ctx, u, review, server.ID.String())
-		if err != nil {
-			return zero, 0, err
-		}
-		id, err := s.ids.NewID()
-		if err != nil {
-			return zero, 0, err
-		}
-		execution, err := s.ids.NewID()
-		if err != nil {
-			return zero, 0, err
-		}
-		allowed, err := liveSignedKeys(ctx, u, policy)
-		if err != nil {
-			return zero, 0, err
-		}
-		binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: policy.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
-		protocol, err := protocolRepository(u)
-		if err != nil {
-			return zero, 0, err
-		}
-		state, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, true)
-		if err != nil {
-			return zero, 0, err
-		}
-		contract, err := d.NewReviewContract(id, execution, review, identity.PrincipalID, identity.Actor, group, binding, state.LeasePolicy, cmd.TTLSeconds, now)
-		if err != nil {
-			return zero, 0, err
-		}
-		payload := signing.SpecPayload[SignedReviewSpec]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: cmd.Scope.NamespaceID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: id.String(), WorkItemID: work.ID.String(), Spec: target}
-		payload.Spec, err = compactSignedReviewSpec(payload)
-		if err != nil {
-			return zero, 0, err
-		}
-		specFact, specDoc, err := s.issueSignedFact(ctx, u, server, cmd.Scope, id, "review", "specification", identity.PrincipalID, signing.ContractSpec, payload, now)
-		if err != nil {
-			return zero, 0, err
-		}
-		contract.Binding.SpecificationDigest = specFact.PayloadDigest
-		contract.IssuedSpecificationID = &specFact.ID
-		grantFact, grantDoc, err := s.issueReviewAuthority(ctx, u, server, contract, policy, allowed, now)
-		if err != nil {
-			return zero, 0, err
-		}
-		contract.LatestAuthorityID = &grantFact.ID
-		if err = repo.InsertReviewContract(ctx, contract); err != nil {
-			return zero, 0, err
-		}
-		rv := review.Version
-		if err = review.Bind(contract, now); err != nil {
-			return zero, 0, err
-		}
-		if err = repo.SaveCase(ctx, review, rv); err != nil {
-			return zero, 0, err
-		}
-		if err = repo.InsertFact(ctx, specFact); err != nil {
-			return zero, 0, err
-		}
-		if err = repo.InsertFact(ctx, grantFact); err != nil {
-			return zero, 0, err
-		}
-		revision, err := u.Coordination().AdvanceOutcome(ctx, cmd.Scope)
-		return SignedReviewContractResult{Contract: contract, Case: review, WorkItemVersion: signing.Decimal(work.Version), IssuedSpecification: &specDoc, IssuedAuthority: grantDoc, EvaluatedAt: now, expired: expired}, revision, err
+		return s.acquireSignedReview(ctx, u, cc, cmd)
 	})
 }
+func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, cc d.CommandContext, cmd AcquireSignedReviewContractCommand) (SignedReviewContractResult, d.OutcomeRevision, error) {
+	var zero SignedReviewContractResult
+	identity, policy, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionWorkReviewAcquire, cmd.SignerKeyID)
+	if err != nil {
+		return zero, 0, err
+	}
+	server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID)
+	if err != nil {
+		return zero, 0, err
+	}
+	if _, err = u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		return zero, 0, err
+	}
+	if err = requireActiveOutcome(ctx, u, cmd.Scope); err != nil {
+		return zero, 0, err
+	}
+	repo, _, err := signedRepository(u)
+	if err != nil {
+		return zero, 0, err
+	}
+	review, err := repo.Case(ctx, cmd.Scope, cmd.ReviewCaseID)
+	if err != nil {
+		return zero, 0, err
+	}
+	if review.Version != cmd.ExpectedReviewCaseVersion {
+		return zero, 0, d.NewError(d.ErrorCodeVersionConflict, "review case CAS changed")
+	}
+	registry, err := signingRepository(u)
+	if err != nil {
+		return zero, 0, err
+	}
+	group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
+	if err != nil {
+		return zero, 0, err
+	}
+	if err = s.requireSignedReviewIndependence(ctx, u, review, identity.PrincipalID, group); err != nil {
+		return zero, 0, err
+	}
+	now, err := securityTransactionTime(ctx, u, s.clock)
+	if err != nil {
+		return zero, 0, err
+	}
+	counts, err := repo.Counts(ctx, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now)
+	if err != nil {
+		return zero, 0, err
+	}
+	if counts.PrincipalReview >= 1 || counts.CredentialReview >= policy.MaxActiveReviewContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "review quota reached")
+	}
+	if np, e := registry.AcceptancePolicy(ctx, cmd.Scope.NamespaceID, nil, nil); e == nil {
+		if counts.NamespaceReview >= np.MaxActiveReviewContracts {
+			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace review quota reached")
+		}
+	} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+		return zero, 0, e
+	}
+	var expired *d.ReviewContract
+	if review.CurrentContractID != nil {
+		old, e := repo.ReviewContract(ctx, cmd.Scope, *review.CurrentContractID)
+		if e != nil {
+			return zero, 0, e
+		}
+		if old.ValidAt(now) {
+			return zero, 0, d.NewError(d.ErrorCodeWorkAlreadyClaimed, "review authority remains active")
+		}
+		v, l, rv := old.Version, old.LeaseVersion, review.Version
+		if e = old.Close(d.ContractExpired, "system:expiry", "review lease expired", v, now); e != nil {
+			return zero, 0, e
+		}
+		if e = repo.SaveReviewContract(ctx, old, v, l); e != nil {
+			return zero, 0, e
+		}
+		if e = review.Release(old, now); e != nil {
+			return zero, 0, e
+		}
+		if e = repo.SaveCase(ctx, review, rv); e != nil {
+			return zero, 0, e
+		}
+		expired = &old
+	}
+	target, work, err := s.authenticatedReviewTarget(ctx, u, review, server.ID.String())
+	if err != nil {
+		return zero, 0, err
+	}
+	id, err := s.ids.NewID()
+	if err != nil {
+		return zero, 0, err
+	}
+	execution, err := s.ids.NewID()
+	if err != nil {
+		return zero, 0, err
+	}
+	allowed, err := liveSignedKeys(ctx, u, policy)
+	if err != nil {
+		return zero, 0, err
+	}
+	binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: policy.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
+	protocol, err := protocolRepository(u)
+	if err != nil {
+		return zero, 0, err
+	}
+	state, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, true)
+	if err != nil {
+		return zero, 0, err
+	}
+	contract, err := d.NewReviewContract(id, execution, review, identity.PrincipalID, identity.Actor, group, binding, state.LeasePolicy, cmd.TTLSeconds, now)
+	if err != nil {
+		return zero, 0, err
+	}
+	payload := signing.SpecPayload[SignedReviewSpec]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: cmd.Scope.NamespaceID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: id.String(), WorkItemID: work.ID.String(), Spec: target}
+	payload.Spec, err = compactSignedReviewSpec(payload)
+	if err != nil {
+		return zero, 0, err
+	}
+	specFact, specDoc, err := s.issueSignedFact(ctx, u, server, cmd.Scope, id, "review", "specification", identity.PrincipalID, signing.ContractSpec, payload, now)
+	if err != nil {
+		return zero, 0, err
+	}
+	contract.Binding.SpecificationDigest = specFact.PayloadDigest
+	contract.IssuedSpecificationID = &specFact.ID
+	grantFact, grantDoc, err := s.issueReviewAuthority(ctx, u, server, contract, policy, allowed, now)
+	if err != nil {
+		return zero, 0, err
+	}
+	contract.LatestAuthorityID = &grantFact.ID
+	if err = repo.InsertReviewContract(ctx, contract); err != nil {
+		return zero, 0, err
+	}
+	rv := review.Version
+	if err = review.Bind(contract, now); err != nil {
+		return zero, 0, err
+	}
+	if err = repo.SaveCase(ctx, review, rv); err != nil {
+		return zero, 0, err
+	}
+	if err = repo.InsertFact(ctx, specFact); err != nil {
+		return zero, 0, err
+	}
+	if err = repo.InsertFact(ctx, grantFact); err != nil {
+		return zero, 0, err
+	}
+	revision, err := u.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+	return SignedReviewContractResult{Contract: contract, Case: review, WorkItemVersion: signing.Decimal(work.Version), IssuedSpecification: &specDoc, IssuedAuthority: grantDoc, EvaluatedAt: now, expired: expired}, revision, err
+}
+
 func liveSignedKeys(ctx context.Context, u ports.UnitOfWork, p d.CredentialPolicy) ([]d.ID, error) {
 	registry, err := signingRepository(u)
 	if err != nil {

@@ -23,6 +23,11 @@ func legacySignedCacheCredential(ctx context.Context, u ports.UnitOfWork, scope 
 			return "", d.NewError(d.ErrorCodeIdempotencyState, "legacy empty search lacks an original credential binding")
 		}
 		return legacySignedCacheCredential(ctx, u, scope, *result.Result)
+	case SignedReviewAcquisition:
+		if !result.Acquired || result.Result == nil {
+			return "", d.NewError(d.ErrorCodeIdempotencyState, "legacy empty review search lacks original credential binding")
+		}
+		return legacySignedCacheCredential(ctx, u, scope, *result.Result)
 	case SignedReviewContractResult:
 		if result.Contract.Scope != scope {
 			return "", d.NewError(d.ErrorCodeIdempotencyState, "cached signed review scope differs")
@@ -71,6 +76,12 @@ func legacySignedOperationView(ctx context.Context, u ports.UnitOfWork, scope d.
 		value = result.Value
 	case "AcquireSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract":
 		var result MutationResult[WorkContractResult]
+		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+			return d.SignedOperationResult{}, e
+		}
+		value = result.Value
+	case "AcquireNextSignedReviewContract":
+		var result MutationResult[SignedReviewAcquisition]
 		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
 			return d.SignedOperationResult{}, e
 		}
