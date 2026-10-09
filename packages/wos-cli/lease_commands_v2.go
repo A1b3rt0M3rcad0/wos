@@ -95,7 +95,7 @@ func leaseCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client
 				items = append(items, map[string]any{"contract_id": id, "error": "live state unavailable"})
 				continue
 			}
-			if state.Contract == nil || !state.Contract.Current || !state.Contract.LeaseValid {
+			if state.Contract == nil || state.Contract.CredentialID != profile.Binding.CredentialID || !state.Contract.Current || !state.Contract.LeaseValid {
 				items = append(items, map[string]any{"contract_id": id, "skipped": "lease_not_live"})
 				continue
 			}
@@ -160,7 +160,7 @@ func refreshContractV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 	if e != nil {
 		return result, e
 	}
-	if state.Contract == nil || !state.Contract.Current || !state.Contract.LeaseValid || state.Contract.ExecutionID.String() != view.Authority.ExecutionID || state.Contract.FencingToken != view.Authority.FencingToken || state.Contract.WorkItemVersion != file.Local.WorkItemVersion {
+	if state.Contract == nil || state.Contract.CredentialID != profile.Binding.CredentialID || !state.Contract.Current || !state.Contract.LeaseValid || state.Contract.ExecutionID.String() != view.Authority.ExecutionID || state.Contract.FencingToken != view.Authority.FencingToken || state.Contract.WorkItemVersion != file.Local.WorkItemVersion {
 		return result, fmt.Errorf("live authority or material CAS changed; explicit reconciliation required")
 	}
 	authority, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "authority", ContractKind: kind, ID: id})

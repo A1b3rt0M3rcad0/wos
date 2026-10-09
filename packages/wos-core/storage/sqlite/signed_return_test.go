@@ -239,6 +239,30 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 							t.Fatal("durable acceptance lost after cache expiry")
 						}
 					}
+					historical, e := a.NewService(signedHistoricalSource{base: store}, clock, ids)
+					must(e)
+					ownerReplay, e := historical.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+					must(e)
+					if !ownerReplay.IdempotentReplay || string(ownerReplay.Value.Receipt.Payload) != string(returned.Value.Receipt.Payload) {
+						t.Fatal("cacheless original credential lost historical acceptance after key retirement")
+					}
+					otherCredential, otherToken, e := sec.IssueCredential(adminCtx, ns, identity.PrincipalID, identity.Actor, now.Add(time.Hour))
+					must(e)
+					otherIdentity, e := sec.Authenticate(ctx, otherToken)
+					must(e)
+					otherCtx := a.WithIdentity(ctx, otherIdentity)
+					policyUnit, e := store.Begin(ctx)
+					must(e)
+					otherPolicy := policy
+					otherPolicy.CredentialID = otherCredential.ID
+					otherPolicy.Version = 1
+					must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+					must(policyUnit.Commit())
+					if _, e = historical.ReturnSignedWork(otherCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
+						t.Fatal("another CID sharing Principal/Actor/key permission replayed cacheless acceptance")
+					} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
+						t.Fatalf("wrong historical CID error: %v", e)
+					}
 					must(sec.RevokeCredential(adminCtx, ns, credential.ID))
 					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
 						t.Fatal("revoked bearer disclosed receipt")

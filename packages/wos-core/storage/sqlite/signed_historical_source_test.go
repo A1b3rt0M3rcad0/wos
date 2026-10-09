@@ -1,0 +1,54 @@
+package sqlite
+
+import (
+	"context"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+)
+
+// A port fixture models historical signed acceptances from before durable
+// operation recording: both cache layers are empty, authoritative facts persist.
+// It never fabricates a contract, acceptance proof or credential authority.
+type signedHistoricalSource struct{ base ports.TransactionManager }
+
+func (m signedHistoricalSource) Begin(ctx context.Context) (ports.UnitOfWork, error) {
+	u, e := m.base.Begin(ctx)
+	if e != nil {
+		return nil, e
+	}
+	return signedHistoricalUnit{UnitOfWork: u, SignedContractUnitOfWork: u.(ports.SignedContractUnitOfWork), WorkProtocolUnitOfWork: u.(ports.WorkProtocolUnitOfWork), SigningIdentityUnitOfWork: u.(ports.SigningIdentityUnitOfWork), AccessSnapshotUnitOfWork: u.(ports.AccessSnapshotUnitOfWork)}, nil
+}
+
+type signedHistoricalUnit struct {
+	ports.UnitOfWork
+	ports.SignedContractUnitOfWork
+	ports.WorkProtocolUnitOfWork
+	ports.SigningIdentityUnitOfWork
+	ports.AccessSnapshotUnitOfWork
+}
+
+func (signedHistoricalUnit) SignedOperations() ports.SignedOperationRepository {
+	return absentHistoricalOperationCache{}
+}
+func (signedHistoricalUnit) Idempotency() ports.IdempotencyStore { return absentHistoricalShortCache{} }
+
+type absentHistoricalOperationCache struct{}
+
+func (absentHistoricalOperationCache) Get(context.Context, d.ID, string, string) (d.SignedOperationResult, error) {
+	return d.SignedOperationResult{}, d.NewError(d.ErrorCodeNotFound, "historical operation cache absent")
+}
+func (absentHistoricalOperationCache) FindLegacy(context.Context, d.ID, string, string) (d.LegacySignedOperationResult, error) {
+	return d.LegacySignedOperationResult{}, d.NewError(d.ErrorCodeNotFound, "historical short cache absent")
+}
+func (absentHistoricalOperationCache) Insert(_ context.Context, result d.SignedOperationResult) error {
+	return result.Validate()
+}
+
+type absentHistoricalShortCache struct{}
+
+func (absentHistoricalShortCache) Reserve(_ context.Context, id d.IdempotencyIdentity, fp string) (d.IdempotencyReservation, error) {
+	return d.IdempotencyReservation{Identity: id, Fingerprint: fp}, nil
+}
+func (absentHistoricalShortCache) Complete(_ context.Context, _ d.IdempotencyReservation, result d.StoredCommandResult) error {
+	return result.Validate()
+}

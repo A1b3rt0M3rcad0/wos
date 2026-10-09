@@ -291,6 +291,9 @@ func signedTransportJourney(t *testing.T, store interface {
 	}
 	finalState, e := reviewer.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "execution", ID: c.ID})
 	must(e)
+	if finalState.Contract == nil || finalState.Contract.CredentialID != credential.ID {
+		t.Fatal("public signed execution metadata lost original CID")
+	}
 	if finalState.Contract.Status != d.ContractDelivered || finalState.Contract.WorkItemLifecycle != d.WorkItemLifecycleDone || finalState.Contract.LeaseValid {
 		t.Fatal("HTTP projection rewrote original delivery or lost independent completion")
 	}

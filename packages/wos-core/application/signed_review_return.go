@@ -79,6 +79,9 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		}
 		digest := signing.Digest(raw)
 		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
+			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "review", d.ID(request.ContractID)); e != nil {
+				return zero, 0, e
+			}
 			if prior.Scope != scope || prior.ContractKind != "review" || prior.RequestDigest != digest || prior.RequestID == nil || *prior.RequestID != d.ID(request.RequestID) {
 				return zero, 0, d.NewError(d.ErrorCodeIdempotencyConflict, "confirmed review intent differs")
 			}
