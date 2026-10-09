@@ -25,6 +25,25 @@ The [npm service distribution](packages/wos-npm/README.md) embeds the Linux amd6
 [Release automation](docs/releases.md) prepares a coordinated version PR from `.changes/`, runs full gates on its integrated commit, and publishes npm/GHCR/GitHub assets with immutable identity checks and recovery from partial publication. Hosted publication requires working Actions and registry owner configuration; the repository stays private.
 
 
+## Run locally with Docker Compose
+
+```sh
+cp .env.example .env
+docker compose up --build -d
+```
+
+Open **http://localhost:8080/app/** and sign in with `WOS_BOOTSTRAP_TOKEN` from
+`.env`. The example starts the frontend, HTTP API and MCP with SQLite and a
+persistent Docker volume. `WOS_HTTP_PORT` changes the local port. The example
+credentials are public development values; use your own credentials for a shared
+instance. Keep `.env` outside version control.
+
+`docker compose logs -f wos` shows startup diagnostics. `docker compose down`
+stops the service while preserving its data. Optional PostgreSQL settings are
+listed in `.env.example`. Signed work requires explicit issuer provisioning,
+agent enrollment and Namespace activation; see
+[the signed implementation plan](docs/signed-contracts-implementation-plan.md).
+
 ## Why WOS
 
 Agent runtimes are good at executing. Product backends are good at owning product-specific business rules. Neither necessarily provides a durable, neutral model for answering questions such as:
