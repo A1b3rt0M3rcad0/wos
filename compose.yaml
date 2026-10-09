@@ -2,17 +2,20 @@ services:
   wos:
     build: .
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${WOS_HTTP_PORT:-8080}:8080"
     environment:
       WOS_LISTEN: 0.0.0.0:8080
       WOS_AUTH_MODE: api_token
-      WOS_LOCAL_PRINCIPAL_ID: operator
+      WOS_LOCAL_PRINCIPAL_ID: ${WOS_LOCAL_PRINCIPAL_ID:-operator}
       WOS_BOOTSTRAP_TOKEN: ${WOS_BOOTSTRAP_TOKEN:?set a random bootstrap token of at least 32 characters}
       WOS_BOOTSTRAP_NAMESPACE_ID: ${WOS_BOOTSTRAP_NAMESPACE_ID:?set a UUIDv7 namespace}
       WOS_BOOTSTRAP_NAMESPACE_NAME: ${WOS_BOOTSTRAP_NAMESPACE_NAME:-Main}
       WOS_STORAGE_DRIVER: ${WOS_STORAGE_DRIVER:-sqlite}
       WOS_POSTGRES_DSN: ${WOS_POSTGRES_DSN:-}
-      WOS_MCP_ENABLED: "true"
+      WOS_MCP_ENABLED: ${WOS_MCP_ENABLED:-true}
+      WOS_SERVER_SIGNING_SEED_ENV: ${WOS_SERVER_SIGNING_SEED_ENV:-}
+      WOS_SERVER_SIGNING_SEED: ${WOS_SERVER_SIGNING_SEED:-}
+      WOS_SIGNED_ACCEPTANCE_FLOOR: ${WOS_SIGNED_ACCEPTANCE_FLOOR:-direct}
     volumes:
       - wos_data:/data
     restart: unless-stopped
