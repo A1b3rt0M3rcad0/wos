@@ -242,6 +242,28 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	must(cli.DecodeV2Document(firstRaw, &firstFile))
 	firstFile.Execution.Progress.Summary = "local edit remains after another contract recovers"
 	must(workspace.WriteV2(firstPath, firstFile, signing.Digest(firstRaw)))
+	// Simulate a process dying during its second contract's staging write.
+	// The accepted server result and original authenticated intention identify
+	// the only temporary path recovery may repair; no new acquisition is sent.
+	pendingClient, e := sdk.New(endpoint.URL, token, endpoint.Client())
+	must(e)
+	originalPending := unknown.Local.PendingOperations[0]
+	remoteOperation, e := pendingClient.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "operation", IdempotencyKey: originalPending.IdempotencyKey})
+	must(e)
+	remoteRaw, e := base64.StdEncoding.Strict().DecodeString(remoteOperation.OperationPayload)
+	must(e)
+	var originalResult sdk.CommandResult[a.WorkContractAcquisition]
+	must(json.Unmarshal(remoteRaw, &originalResult))
+	if originalResult.Value.Result == nil {
+		t.Fatal("second accepted contract disappeared")
+	}
+	acceptedResult := originalResult.Value.Result
+	acceptedContract := acceptedResult.Contract
+	stagedFile := cli.ContractFileV2{SchemaVersion: 2, Kind: "WOSContractFile", Issued: cli.IssuedDocumentsV2{Specification: *acceptedResult.IssuedSpecification, Authority: *acceptedResult.IssuedAuthority}, Local: cli.ContractLocalV2{SchemaVersion: 1, Profile: "executor_cli", WorkItemVersion: signing.Decimal(acceptedResult.WorkItem.Version)}, Execution: &cli.ExecutionDraftV2{CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: acceptedContract.ID, WorkItemID: acceptedContract.WorkItemID, SpecDigest: acceptedContract.SignedBinding.SpecificationDigest})}}}
+	stagedBytes, e := cli.EncodeV2Document(stagedFile)
+	must(e)
+	stagedPath := filepath.Join(root, ".wos/profiles/executor_cli/contract", acceptedContract.ID.String()+".yaml.materialize-"+originalPending.ID.String())
+	must(os.WriteFile(stagedPath, stagedBytes[:len(stagedBytes)/2], 0600))
 	dropCheckout.Store(false)
 	recoveredBatch := execute(0, "--profile", "executor_cli", "work", "recover", "--all-pending")
 	if !recoveredBatch.Committed {

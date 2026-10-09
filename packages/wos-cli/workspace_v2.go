@@ -20,7 +20,16 @@ func (w *Workspace) ReadV2(path string) ([]byte, error) {
 	}
 	defer file.Close()
 	if e = validateRegularV2(file); e != nil {
-		return nil, e
+		if recovered := w.recoverInitialCreatePairV2(path, file); recovered != nil {
+			// A second confined reader may already have removed the same
+			// technical alias; the still-open destination must now be regular.
+			if validateRegularV2(file) != nil {
+				return nil, e
+			}
+		}
+		if e = validateRegularV2(file); e != nil {
+			return nil, e
+		}
 	}
 	raw, e := io.ReadAll(io.LimitReader(file, MaxLocalDocumentV2+1))
 	if e != nil {
@@ -60,23 +69,13 @@ func (w *Workspace) writeRawV2(path string, raw []byte, expected string, exclusi
 		return e
 	}
 	if exclusive {
-		file, e := w.root.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-		if e != nil {
+		suffix := make([]byte, 12)
+		if _, e := rand.Read(suffix); e != nil {
 			return e
 		}
-		_, e = file.Write(raw)
-		if e == nil {
-			e = file.Sync()
-		}
-		closed := file.Close()
-		if e != nil {
-			return e
-		}
-		if closed != nil {
-			return closed
-		}
-		return w.syncV2Directory(filepath.Dir(path))
+		return w.publishRawV2(path, path+".tmp-create-"+hex.EncodeToString(suffix), raw, nil)
 	}
+
 	suffix := make([]byte, 12)
 	if _, e := rand.Read(suffix); e != nil {
 		return e
