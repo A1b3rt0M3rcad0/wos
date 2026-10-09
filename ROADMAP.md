@@ -1112,6 +1112,20 @@ work proceeds against stable signed interfaces while those independent gates
 continue; no wave-completion claim is inferred from this merge.
 
 
+P11 signed UI projection work started: the workspace observes live Namespace
+protocol, shows a public issuer/credential/key/onboarding panel, and reads focal
+signed execution/review cases instead of routing signed Tasks through legacy
+contract queries. Pending review, acceptance versus quality and protected-profile
+next steps are explicit. Legacy execution/raw Task assessment actions and signed
+proof-bearing commands are excluded from browser forms; a fresh protocol read
+before mutation blocks a stale-form substitution. Parent planning/assessment
+remains separate. Browser fixtures use the actual protected CLI with separate executor/reviewer
+Principals, exact accepted material and both approved/changes_requested decisions.
+Corrections expose accepted findings on existing obligations; no unsigned browser
+mutation replaces review. All six browser journeys passed (30.1s), including
+legacy cutover and planning/assessment regression. Native onboarding remains
+explicit through profiles; runtime pilot and final source acceptance remain open.
+
 PR #58 integrated the five signed-protocol skills and client-guide alignment on
 master c91c694. All hosted browser/package/full/native Linux/Windows checks
 passed on combined source 129797f. Installer acceptance is not certification of
@@ -1120,3 +1134,6 @@ open. T15 readiness source 2941bba passed the complete runtime race suite
 (51.364s), actual Memory/SQLite/PostgreSQL signed acceptance (43.777s), vet,
 actionlint and catalogue. Merging the guide baseline changes documentation only;
 new hosted source checks remain required for the readiness PR.
+
+PR #59 readiness integrated after all five hosted checks passed on 95e3921;
+master merge 5461815. Historical upgrade/restore and final release gates remain open.
