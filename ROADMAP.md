@@ -1023,3 +1023,10 @@ All five installer tests passed: discovery roots, repeatable all-agent install/u
 protection of local edits, progressive references/frontmatter and actual main-skill
 MCP tool names. UI/docs alignment remains required; this is not P11 completion
 or final native/consumer acceptance.
+
+P11 guide alignment removes stale claims that schema-2 review, lease maintenance
+and sign/send/finish are unimplemented. Client/skill READMEs explicitly separate
+legacy recipes from the protected signed flow; signed workspace docs explain
+immutable original-CID returns and receipt-bound cleanup, distinguish executor
+acceptance from review/quality, and retain native-keyring/final-source gates.
+Registry publication is not inferred from source guide changes.
