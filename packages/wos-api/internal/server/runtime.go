@@ -62,6 +62,17 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 
+	// Migration-disabled startup must also refuse unsupported schemas before
+	// bootstrap credentials, namespaces or any serving component can write.
+	version, err := store.SchemaVersion(context.Background())
+	supported, schemaErr := sqlite.LatestSchemaVersion()
+	if config.Storage.Driver == StorageDriverPostgres {
+		supported, schemaErr = postgres.LatestSchemaVersion()
+	}
+	if err != nil || schemaErr != nil || version != supported {
+		_ = store.Close()
+		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "database schema is incompatible with this binary; run a compatible migration before serving")
+	}
 	ids := uuidV7Generator{}
 	auth, err := local.New(config.Auth.LocalPrincipalID)
 	if err != nil {

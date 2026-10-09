@@ -74,6 +74,19 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return err
 	}
 
+	// Check under the same migration transaction (and PostgreSQL advisory
+	// lock) before inspecting or applying any compiled migration.
+	latest, err := LatestSchemaVersion()
+	if err != nil {
+		return err
+	}
+	var current int64
+	if err = tx.QueryRowContext(ctx, "SELECT COALESCE(MAX(version), 0) FROM schema_migrations").Scan(&current); err != nil {
+		return mapSQLError("read schema compatibility", err)
+	}
+	if current > latest {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, fmt.Sprintf("database schema %d is newer than this binary supports (%d); use a compatible binary", current, latest))
+	}
 	var existing string
 	err = tx.QueryRowContext(ctx,
 		"SELECT checksum FROM schema_migrations WHERE version = $1",
