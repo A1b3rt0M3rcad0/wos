@@ -1255,6 +1255,13 @@ The generator now preserves the signed-only mapping; v1 source is unchanged.
 A Go 1.27.2 targeted PostgreSQL clean-restore check hit its 40-second pg_dump
 timeout on the long-lived test database catalog; rerun uses a new owned disposable
 database instead of changing the timeout or deleting existing fixture data.
+P12 active fuzz campaigns execute canonical JSON/DSSE decoding and restricted
+YAML parsing, with two workers and a 10-second budget each. Go 1.27.2 local
+source 0ee312f passed actual mutations: canonical 21,915, envelope 91,292,
+YAML 45,747. These are bounded runs, not exhaustive security proof or a coverage
+percentage. CI now rejects seed-only/zero-execution evidence and uploads raw
+Go JSON plus target counts/source/compiler. Hosted final-source campaign remains
+required; no parser/security behavior was weakened to pass.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
