@@ -43,6 +43,11 @@ Limits: 512 inventory entries, depth 12, 32 MiB source bytes, 100 converted
 contracts, 1 MiB per target document, 180 KiB pending manifest. Conflicts fail
 explicitly; they do not trigger a partial discard or hidden limit expansion.
 
-Implementation acceptance is tracked in ROADMAP.md. Unit inventory/publication
-checks are preliminary evidence; actual transport, process-death, upgrade/restore
-and native Windows gates must be recorded before claiming P10 complete.
+Inventory and conversion fixtures include confirmed acquisitions missing their
+local materialization, counters above JavaScript precision, process death after
+publication and changed source/target drafts. The actual HTTP/CLI journey passes
+on Memory, SQLite and PostgreSQL: repeated conversion recognizes identical
+published files, shows the legacy summary and refuses signed return without
+changing the imported draft. Native Windows and full historical database
+upgrade/restore are tracked separately in ROADMAP.md; these local migration
+checks alone do not complete P10.

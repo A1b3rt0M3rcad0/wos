@@ -58,6 +58,10 @@ func readLegacyUnsignedV2(w *Workspace, profile ProfileV2, id d.ID) (LegacyUnsig
 	if e != nil {
 		return file, false, e
 	}
+	return decodeLegacyUnsignedV2(raw, profile, id)
+}
+func decodeLegacyUnsignedV2(raw []byte, profile ProfileV2, id d.ID) (LegacyUnsignedFileV2, bool, error) {
+	var file LegacyUnsignedFileV2
 	js, e := YAMLJSONV2(raw)
 	if e != nil {
 		return file, false, e

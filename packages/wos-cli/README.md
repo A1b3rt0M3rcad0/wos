@@ -88,3 +88,23 @@ these writes have the same durable journal as planning writes. A serialization
 conflict keeps the intent pending (exit 6); recover with the same destination/key,
 without changing CAS versions. See `docs/work-contract-operations.md` for deployment
 and `docs/work-contract-load-evidence.md` for the scoped local load measurements.
+
+
+## Workspace migration
+
+The schema-1 commands above remain available for legacy recovery. A schema-2
+profile uses signed work/review operations with `--profile NAME` on every call.
+To preserve an old workspace in a separate approved schema-2 destination:
+
+```sh
+wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --dry-run
+wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --destination ./signed-project
+```
+
+Repeat the same command after an interruption. Changed drafts are preserved and
+block automatic completion. Resolve uncertain or accepted-but-unmaterialized
+legacy acquisitions in the original workspace first. Imported records are
+explicitly `legacy_unsigned`, readable as history but refused by signed mutation.
+Source files remain intact. See [the migration guide](../../docs/workspace-migration-v2.md)
+for identity, limits and recovery requirements. Migration does not activate a
+Namespace protocol or manufacture signatures.

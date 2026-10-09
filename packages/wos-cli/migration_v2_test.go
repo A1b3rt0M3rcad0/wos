@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -99,5 +101,41 @@ func TestMigrationDryRunRejectsChangedTrustAndForgedConfirmedReceipt(t *testing.
 	must(w.saveJSON(".wos/trust.json", changed))
 	if _, _, e = migrationInventoryV2(w); e == nil {
 		t.Fatal("changed destination silently accepted for migration")
+	}
+}
+
+func TestMigrationReportsConfirmedAcquisitionWithoutMaterialization(t *testing.T) {
+	w, config, contract := journalFixture(t)
+	must := func(e error) {
+		t.Helper()
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+	must(w.WriteDocument(".wos/config.yaml", config))
+	must(w.saveJSON(".wos/trust.json", config.Destination()))
+	path, intent, e := w.Prepare(config, contract.Contract.Scope, ".wos/checkout/confirmed", "acquire_work_contract", a.AcquireWorkContractCommand{Scope: contract.Contract.Scope, WorkItemID: contract.Contract.WorkItemID, ExpectedWorkItemVersion: contract.WorkItem.Version})
+	must(e)
+	intent.State = "confirmed"
+	must(w.saveJSON(path, intent))
+	response, e := json.Marshal(sdk.CommandResult[a.WorkContractResult]{Value: contract, CommandID: d.MustParseID("0199ffaa-0000-7000-8000-000000000010"), OutcomeRevision: 2})
+	must(e)
+	receipt := Receipt{SchemaVersion: 1, Destination: intent.Destination, IdempotencyKey: intent.IdempotencyKey, PayloadDigest: intent.PayloadDigest, Response: response}
+	must(w.saveJSON(filepath.Join(filepath.Dir(filepath.Dir(path)), "receipts", intent.IdempotencyKey+".json"), receipt))
+	inventory, _, e := migrationInventoryV2(w)
+	must(e)
+	if len(inventory.UnmaterializedAcquisitions) != 1 || len(inventory.UnresolvedIntentions) != 0 {
+		t.Fatal("accepted unmaterialized acquisition was hidden")
+	}
+	_, e = convertWorkspaceV2(context.Background(), w, config, inventory, options{})
+	if e == nil {
+		t.Fatal("migration discarded original accepted acquisition")
+	}
+	_, e = w.materialize(config, contract, contract.Contract.ID)
+	must(e)
+	inventory, _, e = migrationInventoryV2(w)
+	must(e)
+	if len(inventory.UnmaterializedAcquisitions) != 0 {
+		t.Fatal("original accepted materialization not recognized")
 	}
 }

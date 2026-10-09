@@ -43,7 +43,7 @@ func loadContractV2(w *Workspace, profile ProfileV2, id d.ID) (ContractFileV2, C
 	if e != nil {
 		return file, view, path, raw, e
 	}
-	if _, legacy, e := readLegacyUnsignedV2(w, profile, id); e != nil {
+	if _, legacy, e := decodeLegacyUnsignedV2(raw, profile, id); e != nil {
 		return file, view, path, raw, e
 	} else if legacy {
 		return file, view, path, raw, fmt.Errorf("legacy_unsigned record cannot authorize signed mutation; original v1 recovery remains in the preserved source workspace")

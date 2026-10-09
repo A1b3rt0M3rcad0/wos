@@ -84,6 +84,7 @@ func convertedLegacyFilesV2(source *Workspace, config Config, inventory Migratio
 			if signing.Digest(content) != original.Digest {
 				return nil, fmt.Errorf("source changed during conversion")
 			}
+			observed := content
 			encoded := LegacyOriginalV2{Path: original.Path, Digest: original.Digest, Chunks: []string{}}
 			for len(content) > 0 {
 				n := len(content)
@@ -97,11 +98,7 @@ func convertedLegacyFilesV2(source *Workspace, config Config, inventory Migratio
 			switch original.Category {
 			case "checkpoint_draft":
 				var draft CheckpointDraft
-				raw, e := source.ReadV2(path)
-				if e != nil {
-					return nil, e
-				}
-				if e = DecodeDocument(raw, &draft); e != nil {
+				if e = DecodeDocument(observed, &draft); e != nil {
 					return nil, e
 				}
 				if draft.SchemaVersion != 1 || draft.Kind != "WorkCheckpointDraft" || draft.ContractID != c.ID || draft.SpecDigest != c.SpecDigest {
@@ -110,11 +107,7 @@ func convertedLegacyFilesV2(source *Workspace, config Config, inventory Migratio
 				file.Checkpoint = &draft
 			case "result_draft":
 				var draft ResultDraft
-				raw, e := source.ReadV2(path)
-				if e != nil {
-					return nil, e
-				}
-				if e = DecodeDocument(raw, &draft); e != nil {
+				if e = DecodeDocument(observed, &draft); e != nil {
 					return nil, e
 				}
 				if draft.SchemaVersion != 1 || draft.Kind != "WorkResult" || draft.ContractID != c.ID || draft.SpecDigest != c.SpecDigest {
@@ -198,6 +191,7 @@ func convertWorkspaceV2(ctx context.Context, source *Workspace, config Config, i
 		return result, fmt.Errorf("migration manifest exceeds bound")
 	}
 	var intent PendingOperationV2
+	alreadyVerified := false
 	// Short profile locks protect local state; all network preflight is above.
 	e = mutateProfileV2(ctx, destination, profile, token, func(current *ProfileV2) error {
 		for _, pending := range current.Local.PendingOperations {
@@ -216,7 +210,25 @@ func convertWorkspaceV2(ctx context.Context, source *Workspace, config Config, i
 				return e
 			}
 			if len(ids) != 0 {
-				return fmt.Errorf("new migration requires an empty approved contract directory")
+				if len(ids) != len(manifest.Targets) {
+					return fmt.Errorf("new migration requires an empty approved contract directory")
+				}
+				for _, target := range manifest.Targets {
+					release, e := destination.LockV2(ctx, profile.Name, target.ContractID.String())
+					if e != nil {
+						return e
+					}
+					raw, e := destination.ReadV2(contractPathV2(profile.Name, target.ContractID))
+					release()
+					if e != nil {
+						return e
+					}
+					if signing.Digest(raw) != target.Digest {
+						return fmt.Errorf("existing converted draft differs; preserve it")
+					}
+				}
+				alreadyVerified = true
+				return nil
 			}
 			id, e := newLocalIDV2()
 			if e != nil {
@@ -233,6 +245,17 @@ func convertWorkspaceV2(ctx context.Context, source *Workspace, config Config, i
 	})
 	if e != nil {
 		return result, e
+	}
+	if alreadyVerified {
+		current, _, e := migrationInventoryV2(source)
+		if e != nil {
+			return result, e
+		}
+		if current.InventoryDigest != manifest.InventoryDigest {
+			return result, fmt.Errorf("source changed while verifying existing conversion")
+		}
+		result.Data = map[string]any{"inventory": inventory, "converted_contracts": len(files), "originals_preserved": true, "already_verified": true, "protocol": "legacy_unsigned"}
+		return result, nil
 	}
 	e = publishMigrationV2(ctx, source, destination, profile, token, intent, manifest, files, nil)
 	result.Data = map[string]any{"inventory": inventory, "converted_contracts": len(files), "originals_preserved": true, "protocol": "legacy_unsigned"}

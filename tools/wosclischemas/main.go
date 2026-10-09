@@ -25,7 +25,7 @@ func main() {
 			panic(err)
 		}
 	}
-	for name, t := range map[string]reflect.Type{"project-v2": reflect.TypeFor[cli.ProjectV2](), "profile-v2": reflect.TypeFor[cli.ProfileV2](), "contract-v2": reflect.TypeFor[cli.ContractFileV2]()} {
+	for name, t := range map[string]reflect.Type{"project-v2": reflect.TypeFor[cli.ProjectV2](), "profile-v2": reflect.TypeFor[cli.ProfileV2](), "contract-v2": reflect.TypeFor[cli.ContractFileV2](), "legacy-unsigned-v2": reflect.TypeFor[cli.LegacyUnsignedFileV2]()} {
 		schema := commands.SignedSchema(t)
 		schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
 		schema["$id"] = "https://wos.dev/schemas/workspace/v2/" + name
@@ -33,6 +33,10 @@ func main() {
 		properties := schema["properties"].(map[string]any)
 		properties["schema_version"] = map[string]any{"type": "integer", "const": 2}
 		switch name {
+		case "legacy-unsigned-v2":
+			properties["kind"] = map[string]any{"type": "string", "const": "WOSLegacyUnsignedContract"}
+			properties["protocol"] = map[string]any{"type": "string", "const": "legacy_unsigned"}
+			quoteLegacySchemaCounters(schema)
 		case "profile-v2":
 			local := properties["_local"].(map[string]any)["properties"].(map[string]any)
 			pending := local["pending_operations"].(map[string]any)
@@ -59,6 +63,36 @@ func main() {
 		}
 		if err = os.WriteFile("packages/wos-cli/schemas/"+name+".schema.json", append(data, '\n'), 0644); err != nil {
 			panic(err)
+		}
+	}
+}
+
+// This schema describes local legacy snapshots, not signed authority.
+func quoteLegacySchemaCounters(schema map[string]any) {
+	if properties, ok := schema["properties"].(map[string]any); ok {
+		for key, field := range properties {
+			switch key {
+			case "version", "lease_version", "fencing_token", "revision", "criterion_revision", "work_item_version_at_acquire", "outcome_revision_at_acquire", "work_item_version", "outcome_revision":
+				properties[key] = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
+				continue
+			}
+			if key != "external_context" && key != "payload" {
+				if child, ok := field.(map[string]any); ok {
+					quoteLegacySchemaCounters(child)
+				}
+			}
+		}
+	}
+	for _, key := range []string{"items"} {
+		if child, ok := schema[key].(map[string]any); ok {
+			quoteLegacySchemaCounters(child)
+		}
+	}
+	if alternatives, ok := schema["anyOf"].([]any); ok {
+		for _, item := range alternatives {
+			if child, ok := item.(map[string]any); ok {
+				quoteLegacySchemaCounters(child)
+			}
 		}
 	}
 }

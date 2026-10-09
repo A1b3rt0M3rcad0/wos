@@ -35,7 +35,7 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	own, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke}
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
 	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, Permissions: permissions}))
 	own, e = operator.SigningIdentity(ctx, nil)
 	must(e)
@@ -114,6 +114,7 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "operator", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, CredentialID: own.CredentialID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_CUTOVER_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: registered.Key.ID, PrivateKeyRef: "env:WOS_CLI_CUTOVER_KEY", PublicKeyFingerprint: registered.Key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
 	must(profile.SealBinding([]byte(adminToken)))
 	must(w.CreateV2(".wos/profiles/operator/profile.yaml", profile))
+	signedCLILegacyMigrationJourney(t, root, endpoint.URL, scope, adminToken)
 	phase, e := operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
 	must(e)
 	version := func(v d.Version) string { return strconv.FormatUint(uint64(v), 10) }
