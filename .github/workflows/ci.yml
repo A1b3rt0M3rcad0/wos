@@ -126,6 +126,7 @@ jobs:
       - name: Non-root container build and runtime smoke
         shell: bash
         run: |
+          docker compose --env-file .env.example config --quiet
           docker build --tag wos:ci .
           test "$(docker inspect --format '{{.Config.User}}' wos:ci)" = '10001:10001'
           docker run --rm wos:ci version
