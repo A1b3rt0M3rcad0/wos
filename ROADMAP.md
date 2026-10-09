@@ -1338,3 +1338,10 @@ MCP/OpenAPI and packaged draft schemas expose the conditional rule. HTTP maps
 exact original contract/profile bytes and prove no pending intention is created
 on malformed material. The failed experimental fixture is preserved; this
 change does not rewrite any previously frozen payload or manufacture acceptance.
+
+P12 fresh Codex retry also exposed a redundant criterion-local evidence selection
+requirement. Resolving explicit registered `criterion_local_evidence` now includes
+that same evidence in the submission's general evidence set. Original signed
+request bytes remain unchanged; unknown local keys are still rejected, current
+criteria/assessment guards remain authoritative. SQLite/PostgreSQL direct/review
+atomic return race cases pass without duplicated `evidence_local_keys`.

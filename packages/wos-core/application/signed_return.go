@@ -8,6 +8,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"reflect"
+	"slices"
 	"time"
 )
 
@@ -486,6 +487,12 @@ func resolveSignedMaterial(m *d.WorkResultMaterial, input SignedReturnMaterial, 
 				return d.NewError(d.ErrorCodeInvalidArgument, "unknown criterion evidence local key")
 			}
 			ids = append(ids, id)
+			// An explicit criterion-local reference selects this registered
+			// evidence for the same submission; do not require a duplicate
+			// selection in the general evidence_local_keys list.
+			if !slices.Contains(m.EvidenceIDs, id) {
+				m.EvidenceIDs = append(m.EvidenceIDs, id)
+			}
 		}
 		m.CriterionEvidence = append(m.CriterionEvidence, d.SubmissionCriterionEvidence{CriterionID: ref.CriterionID, CriterionRevision: d.CriterionRevision(ref.CriterionRevision), EvidenceIDs: ids})
 	}
