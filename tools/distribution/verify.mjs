@@ -41,6 +41,12 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const client=path.join(consumer,'node_modules/.bin/wosctl');
     const clientVersion=JSON.parse(run(client,['version','--output','json'])).data;
     assert.equal(clientVersion.version,manifest.version);assert.equal(clientVersion.commit,manifest.commit);assert.equal(clientVersion.built_at,manifest.built_at);
+    const installedRelease=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/release.json'),'utf8'));
+    assert.equal(installedRelease.clients.wosctl.work_protocol,clientVersion.work_protocol);
+    assert.equal(installedRelease.clients.wosctl.workspace_schema,clientVersion.workspace_schema);
+    assert.deepEqual(installedRelease.clients.wosctl.supported_work_protocols,clientVersion.supported_work_protocols);
+    const draftSchema=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/schemas/contract-v2.schema.json'),'utf8'));
+    assert.equal(draftSchema.properties.schema_version.const,2);
     assert.match(await fs.readFile(path.join(notices,'index.md'),'utf8'),/go.yaml.in\/yaml\/v3@v3.0.5/);
     assert.throws(()=>run(cli,['not-a-command']),/failed/);
     const skill=path.join(consumer,'node_modules/.bin/wos-skill');

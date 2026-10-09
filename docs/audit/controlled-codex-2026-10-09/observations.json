@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "kind": "actual-managed-codex-controlled-pilot",
+  "order": [
+    "A",
+    "B",
+    "C"
+  ],
+  "sample_tasks_per_strategy": 1,
+  "harness": {
+    "runtime": "managed Codex",
+    "model_override": null,
+    "model_inherited_from_parent": true,
+    "provider_model_id": null,
+    "context_history": "none",
+    "native_toolset": "same managed native tools",
+    "filesystem": "isolated Git fixtures, shared OS account",
+    "delegation": "executor then independent fresh reviewer for B/C"
+  },
+  "model_harness_configuration_digest": "sha256:6fd60ffc81dfee8352750f9e61317bf5b2d4dc9dd15e9d305270ccab8196640a",
+  "requirements": {
+    "task_id": "normalize-title-001",
+    "outcome_id": "normalize-title",
+    "instructions": [
+      "Create normalize-title.mjs exporting normalizeTitle(value): trim leading/trailing whitespace and collapse every run of whitespace to one ASCII space.",
+      "Preserve Unicode letters, accents and emoji. Throw TypeError for non-string inputs.",
+      "Add normalize-title.test.mjs using node:test and execute node --test normalize-title.test.mjs.",
+      "Work only in this small fixture repository. Commit the code and tests."
+    ],
+    "constraints": [
+      "Do not add dependencies, network calls or unrelated files."
+    ],
+    "required_criteria": [
+      "Trim and collapse whitespace while preserving Unicode",
+      "Reject non-string input and pass actual node tests"
+    ]
+  },
+  "quality_contract_digest": "sha256:44b8a04043555866ea7e9ab331eeceeab0dc9ae500fa857fca6a2b14b6ebdb1c",
+  "timing": {
+    "A": {
+      "started_at": "2026-10-09T07:22:10.104296+00:00",
+      "accepted_at": "2026-10-09T07:28:29.275Z",
+      "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+    },
+    "B": {
+      "started_at": "2026-10-09T07:28:39Z",
+      "accepted_at": "2026-10-09T07:30:32.939Z",
+      "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+    },
+    "C": {
+      "started_at": "2026-10-09T07:30:32Z",
+      "accepted_at": "2026-10-09T07:45:38.464Z",
+      "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+    }
+  },
+  "B_executor_commit": "0eb4ff113f9125b64a2150e233853a7482973e51",
+  "B_independent_review": "approved; actual4node tests and25whitespace checks",
+  "C_independent_review": {
+    "tested_commit": "bc70813dd915d4ed38e4d2b71511b28c80c05df4",
+    "node_tests": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    "criteria": [
+      {
+        "id": "01a11f99-ab04-7a7b-a5ae-7141d846b66c",
+        "revision": 1,
+        "result": "met"
+      },
+      {
+        "id": "01a11f99-ab0a-737b-b8af-997277c3e5b0",
+        "revision": 1,
+        "result": "met"
+      }
+    ],
+    "review_cid": "01a11f9e-ce84-70bd-adbc-bbdacb5d6559",
+    "remote_committed": true,
+    "cleanup_pending": false
+  },
+  "limitations": [
+    "One tiny coding task per strategy, fixed order and no statistical significance.",
+    "Times include parent orchestration and waiting. C also includes product bug diagnosis and repair; no steady-state latency comparison.",
+    "C began on9ee55cf, first attempt rejected; retry clientc108005 and broker initiallyc108005, upgraded in place to52d225d with same database/issuer and original signed bytes.",
+    "Provider model identifier, tokens/cache/tool counts and billing are not exposed. No monetary/token savings claim.",
+    "Fresh task histories share an OS account/filesystem; no security sandbox isolation claim.",
+    "WOS Task DONE and exact receipts validated. Outcome achievement was not requested/observed; accepted_outcomes remains empty.",
+    "Managed correction-request rounds and other native agent products were not exercised by this pilot."
+  ]
+}

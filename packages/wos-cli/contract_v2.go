@@ -44,7 +44,10 @@ func (v *ExecutionDraftV2) UnmarshalJSON(raw []byte) error {
 	if e != nil {
 		return e
 	}
-	return commands.Decode(normalized, (*plain)(v))
+	if e = commands.Decode(normalized, (*plain)(v)); e != nil {
+		return e
+	}
+	return validateDraftEvidenceV2(v.Material.Evidence)
 }
 func (v ReviewDraftV2) MarshalJSON() ([]byte, error) {
 	type plain ReviewDraftV2
@@ -56,7 +59,19 @@ func (v *ReviewDraftV2) UnmarshalJSON(raw []byte) error {
 	if e != nil {
 		return e
 	}
-	return commands.Decode(normalized, (*plain)(v))
+	if e = commands.Decode(normalized, (*plain)(v)); e != nil {
+		return e
+	}
+	return validateDraftEvidenceV2(v.Material.Evidence)
+}
+
+func validateDraftEvidenceV2(inputs []a.SyncEvidenceInput) error {
+	for _, input := range inputs {
+		if e := d.ValidateEvidenceMeasurement(input.Evidence.EvidenceType, input.Evidence.Measurement); e != nil {
+			return fmt.Errorf("evidence %q: %w", input.LocalKey, e)
+		}
+	}
+	return nil
 }
 
 type FrozenReturnV2 struct {

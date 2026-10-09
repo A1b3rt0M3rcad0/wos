@@ -267,16 +267,8 @@ func (e Evidence) Validate() error {
 			return WrapError(ErrorCodeEvidence, "artifact_id is invalid", err)
 		}
 	}
-	if e.Measurement != nil {
-		if err := e.Measurement.Validate(); err != nil {
-			return err
-		}
-	}
-	if e.EvidenceType == EvidenceTypeMeasurement && e.Measurement == nil {
-		return NewError(ErrorCodeEvidence, "measurement evidence requires measurement details")
-	}
-	if e.EvidenceType != EvidenceTypeMeasurement && e.Measurement != nil {
-		return NewError(ErrorCodeEvidence, "measurement details require evidence_type measurement")
+	if err := ValidateEvidenceMeasurement(e.EvidenceType, e.Measurement); err != nil {
+		return err
 	}
 	if !e.Lifecycle.Valid() {
 		return NewError(ErrorCodeEvidence, "evidence lifecycle is invalid")
@@ -290,6 +282,23 @@ func (e Evidence) Validate() error {
 		if strings.TrimSpace(e.RetractionReason) == "" || e.RetractedAt == nil || e.RetractedAt.IsZero() {
 			return NewError(ErrorCodeEvidence, "retracted evidence requires reason and retracted_at")
 		}
+	}
+	return nil
+}
+
+// ValidateEvidenceMeasurement is shared by authoritative evidence validation
+// and editable client preflight, before an immutable return is frozen.
+func ValidateEvidenceMeasurement(kind EvidenceType, measurement *Measurement) error {
+	if measurement != nil {
+		if err := measurement.Validate(); err != nil {
+			return err
+		}
+	}
+	if kind == EvidenceTypeMeasurement && measurement == nil {
+		return NewError(ErrorCodeEvidence, "measurement evidence requires measurement details")
+	}
+	if kind != EvidenceTypeMeasurement && measurement != nil {
+		return NewError(ErrorCodeEvidence, "measurement details require evidence_type measurement")
 	}
 	return nil
 }

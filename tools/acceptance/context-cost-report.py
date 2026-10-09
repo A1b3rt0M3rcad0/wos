@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -22,7 +23,7 @@ def report(data):
     strategies = data["strategies"]
     assert set(strategies) <= {"A", "B", "C"} and strategies, "strategies are A, B and C"
     for strategy in strategies.values():
-        assert strategy["model_harness_configuration_digest"].startswith("sha256:"), "configuration identity required"
+        assert re.fullmatch(r"sha256:[0-9a-f]{64}", strategy["model_harness_configuration_digest"]), "configuration identity required"
     if "B" in strategies and "C" in strategies:
         assert strategies["B"]["model_harness_configuration_digest"] == strategies["C"]["model_harness_configuration_digest"], "B/C must use identical models and harness configuration"
     result = {"schema": 1, "source_commit": data["source_commit"], "strategies": {},
@@ -68,6 +69,24 @@ def report(data):
                    "cost_includes_failed_attempts_review_corrections": True}
         for metric in METRICS:
             summary[metric] = sum(a[metric] for a in attempts) if all(a.get(metric) is not None for a in attempts) else None
+        timing = strategy.get("observed_timing")
+        summary["observed_time_to_acceptance_seconds"] = None
+        if timing is not None:
+            assert timing.get("evidence_ref"), "timing evidence required"
+            timestamps = []
+            for field in ("started_at", "accepted_at"):
+                try:
+                    stamp = datetime.fromisoformat(timing[field].replace("Z", "+00:00"))
+                except (ValueError, TypeError, KeyError, AttributeError):
+                    raise AssertionError("invalid observed timestamp")
+                assert stamp.tzinfo is not None, "observed timestamp must include timezone"
+                timestamps.append(stamp)
+            elapsed = (timestamps[1] - timestamps[0]).total_seconds()
+            assert elapsed >= 0, "acceptance precedes start"
+            assert accepted, "acceptance timing requires an accepted task"
+            summary["observed_time_to_acceptance_seconds"] = elapsed
+            summary["timing_evidence_ref"] = timing["evidence_ref"]
+            summary["timing_includes_harness_orchestration"] = True
         result["strategies"][name] = summary
     if set(strategies) == {"A", "B", "C"}:
         result["comparison_available"] = True

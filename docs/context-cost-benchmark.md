@@ -29,8 +29,24 @@ unsuccessful attempts. No accepted task means no cost denominator. Missing A/B/C
 controls prevent comparative claims. Retained external evidence must still be
 audited; this validator cannot authenticate invoices or quality assessments.
 
-The managed Codex pilot executed C with fresh executor/reviewer contexts. It
-proved the signed workflow, independent review and cleanup. A/B controls and
-provider token/billing telemetry were not available in this environment, so
-measured token savings and comparative cost remain pending. The parser's unit
-fixtures are explicitly synthetic and are not benchmark results.
+The retained [controlled Codex pilot](audit/controlled-codex-2026-10-09/observations.json)
+executed A (single agent/self review), B (fresh executor/reviewer with external
+handoff) and C (fresh executor/reviewer with WOS) on one small coding task. All
+three passed the same external validator: actual Node tests plus 43 assertions.
+Input, quality receipts and the generated report are retained in that directory.
+
+Optional `observed_timing` supplies timezone-bearing `started_at`, `accepted_at`
+and `evidence_ref`; elapsed time includes parent/harness orchestration. It is
+reported separately from provider usage and billing. Missing timestamps leave
+elapsed time unknown. Reversed/naive timestamps and timing without acceptance
+are rejected.
+
+This is a functional calibration with fixed A→B→C order, one task per strategy
+and no statistical significance. C includes a rejected malformed-evidence
+attempt, a new owned fixture and a broker fix/recovery of the exact original
+signed return. Its source changed during diagnosis; these wall times are not a
+steady-state performance comparison. All failures and recovery steps remain in
+the measurement input. Provider model identifiers, tokens/cache/tool counts and
+billing are unavailable; cost/token savings remain unknown. No Outcome was
+explicitly achieved, so Outcome cost denominators remain empty. Parser fixtures
+are synthetic unit data and are not benchmark results.

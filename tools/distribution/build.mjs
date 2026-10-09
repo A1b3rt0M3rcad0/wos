@@ -40,7 +40,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.rm(stage,{recursive:true,force:true}); await fs.mkdir(stage,{recursive:true});
     const pkg = JSON.parse(await fs.readFile(path.join(source,'packages',src,'package.json'),'utf8'));
     if (pkg.version !== version || pkg.scripts?.preinstall || pkg.scripts?.install || pkg.scripts?.postinstall || pkg.scripts?.prepare) throw new Error('Version mismatch or unexpected lifecycle script');
-    for (const entry of pkg.files.filter(f=>!['native','release.json','LICENSE','third-party-notices'].includes(f))) {
+    for (const entry of pkg.files.filter(f=>!['native','schemas','release.json','LICENSE','third-party-notices'].includes(f))) {
       await fs.cp(path.join(source,'packages',src,entry),path.join(stage,entry),{recursive:true});
     }
     // Do not advertise test scripts when test sources are intentionally excluded.
@@ -48,6 +48,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.writeFile(path.join(stage,'package.json'),JSON.stringify(pkg,null,2)+'\n');
     await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));
     stages[kind] = {stage,pkg};
+    if (kind === 'wos') await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});
   }
   const native=path.join(stages.wos.stage,'native'); await fs.mkdir(native);
   const metadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server';
@@ -56,7 +57,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const clientMetadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-cli';
   const clientFlags=`-s -w -X ${clientMetadata}.Version=${version} -X ${clientMetadata}.Commit=${commit} -X ${clientMetadata}.BuiltAt=${builtAt}`;
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(native,'wosctl'),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
-  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'contracts_v1',workspace_schema:1}}};
+  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]}}};
   await fs.writeFile(path.join(stages.wos.stage,'release.json'),JSON.stringify(release,null,2)+'\n');
   run('sh',['tools/distribution/notices.sh',path.join(stages.wos.stage,'third-party-notices')],{cwd:source});
   const artifacts=[];
@@ -70,6 +71,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const archiveStage=path.join(output,'archive'); await fs.rm(archiveStage,{recursive:true,force:true}); await fs.mkdir(archiveStage);
   for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(stages.wos.stage,'release.json'),'release.json'],[path.join(source,'packages/wos-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
   await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
+  await fs.cp(path.join(stages.wos.stage,'schemas'),path.join(archiveStage,'schemas'),{recursive:true});
   await normalize(archiveStage);
   const archive=`wos_${version}_linux_amd64.tar.gz`;
   run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,archive),'-C',archiveStage,'.']);
@@ -78,7 +80,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     const stage=path.join(output,`client-${platform}`);await fs.rm(stage,{recursive:true,force:true});await fs.mkdir(stage,{recursive:true});
     const executable=platform==='windows'?'wosctl.exe':'wosctl';
     run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(stage,executable),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
-    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),work_protocol:'contracts_v1',workspace_schema:1};
+    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]};
     await fs.writeFile(path.join(stage,'release.json'),JSON.stringify(clientRelease,null,2)+'\n');
     await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
     const filename=`wosctl_${version}_${platform}_amd64.${platform==='windows'?'zip':'tar.gz'}`;

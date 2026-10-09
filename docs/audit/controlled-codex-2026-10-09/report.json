@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "source_commit": "52d225dcdcf86df05a36b17db7ddf5313a1d0b40",
+  "strategies": {
+    "A": {
+      "attempts": 2,
+      "accepted_tasks": 1,
+      "accepted_outcomes": 0,
+      "acceptance_rate": 1.0,
+      "total_cost": null,
+      "currency": null,
+      "cost_evidence": [],
+      "cost_per_accepted_task": null,
+      "cost_per_accepted_outcome": null,
+      "cost_includes_failed_attempts_review_corrections": true,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_tokens": null,
+      "tool_calls": null,
+      "human_interventions": null,
+      "observed_time_to_acceptance_seconds": 379.170704,
+      "timing_evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json",
+      "timing_includes_harness_orchestration": true
+    },
+    "B": {
+      "attempts": 4,
+      "accepted_tasks": 1,
+      "accepted_outcomes": 0,
+      "acceptance_rate": 1.0,
+      "total_cost": null,
+      "currency": null,
+      "cost_evidence": [],
+      "cost_per_accepted_task": null,
+      "cost_per_accepted_outcome": null,
+      "cost_includes_failed_attempts_review_corrections": true,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_tokens": null,
+      "tool_calls": null,
+      "human_interventions": null,
+      "observed_time_to_acceptance_seconds": 113.939,
+      "timing_evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json",
+      "timing_includes_harness_orchestration": true
+    },
+    "C": {
+      "attempts": 13,
+      "accepted_tasks": 1,
+      "accepted_outcomes": 0,
+      "acceptance_rate": 1.0,
+      "total_cost": null,
+      "currency": null,
+      "cost_evidence": [],
+      "cost_per_accepted_task": null,
+      "cost_per_accepted_outcome": null,
+      "cost_includes_failed_attempts_review_corrections": true,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cached_tokens": null,
+      "tool_calls": null,
+      "human_interventions": null,
+      "observed_time_to_acceptance_seconds": 906.464,
+      "timing_evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json",
+      "timing_includes_harness_orchestration": true
+    }
+  },
+  "comparison_available": true,
+  "savings_percentage": null,
+  "limitations": [
+    "Bytes are not tokens. Self-reported values are not provider billing evidence.",
+    "Accepted tasks and Outcomes require the same external quality contract and final integration checks."
+  ]
+}

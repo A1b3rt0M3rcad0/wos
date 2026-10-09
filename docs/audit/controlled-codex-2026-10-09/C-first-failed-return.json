@@ -1,0 +1,16 @@
+{
+  "source_commit": "9ee55cf95a8e2c2dff402d3eecc66014cf810135",
+  "fixture": "first-0.3.0-signed-C-attempt",
+  "task_id": "normalize-title-001",
+  "code_commit": "09bfd2a98c35fe4d4b38857456d47757b92ede06",
+  "contract_id": "01a11f92-919f-7190-b815-49c51011d48c",
+  "frozen_intention": "01a11f93-c5f3-7a9f-aa3f-0eb5182bbc41",
+  "actual_node_tests": {"passed": 5, "failed": 0, "skipped": 0},
+  "remote_committed": false,
+  "cleanup_pending": false,
+  "attempted_operations": ["finish", "CID-form recovery (usage rejected)", "recover --all-pending (same immutable return rejected)"],
+  "error": "evidence_error: measurement details require evidence_type measurement",
+  "remediation": "Preserved original fixture and frozen bytes; new independently initialized experimental retry uses preflight fix c1080053865eca06bc097e38fbecdf273688e1e1.",
+  "provider_tokens": null,
+  "provider_cost": null
+}

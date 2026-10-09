@@ -125,6 +125,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					request.Material.ArtifactLocalKeys = []string{"build"}
 					request.Material.EvidenceLocalKeys = []string{"test"}
 					if hasCriteria {
+						request.Material.EvidenceLocalKeys = nil // Criterion references attach their selected evidence without duplication.
 						request.Material.CriterionLocalEvidence = []a.SignedLocalCriterionEvidence{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), EvidenceLocalKeys: []string{"test"}}}
 					}
 					if floor == d.AcceptanceDirect && hasCriteria {

@@ -914,7 +914,7 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P09 | Implemented and tested | Protected signing/return/finish, original-CID recovery and verified receipt cleanup. Native death and real Linux ENOSPC fixtures; final combined-source gates pending. |
 | P10 | Implemented and tested | Explicit cutover, bounded preserving workspace migration, actual v0.2 historical upgrade and old-writer readiness refusal, pending SQL restores, host issuer recovery and client pin approval. |
 | P11 | Implemented and tested | Five progressive guides, signed UI projections and guarded actions, exact correction acknowledgement and installed-binary independent correction journey. |
-| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. Controlled A/B provider measurements and exhaustive assertion audit remain explicitly unclaimed. |
+| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. A/B/C Codex functional controls ran with one task each and identical external checks; provider usage/cost and exhaustive assertion audit remain explicitly unclaimed. |
 | P13 | Coordinated 0.3.0 prepared | Version/manifest/OpenAPI/notices/upgrade/skills aligned; same-source verifier precedes explicit registry publication. |
 
 R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.
@@ -1328,3 +1328,47 @@ execution (including generated PostgreSQL counterparts and individual skips);
 passing names never automatically accept all scenario assertions. Hosted final
 source verification remains required. Historical progress entries below their
 phase tables describe earlier states and do not override the current tables.
+
+P12 managed Codex 0.3.0 pilot found a concrete invalid-material trap: a
+`test_result` evidence draft containing measurement passed local parsing and
+failed remotely after immutable freezing. Client execution/review parsing now
+shares Domain measurement/type validation before network/signing; human command,
+MCP/OpenAPI and packaged draft schemas expose the conditional rule. HTTP maps
+`evidence_error` to nonretryable 422 rather than 500. Regression checks retain
+exact original contract/profile bytes and prove no pending intention is created
+on malformed material. The failed experimental fixture is preserved; this
+change does not rewrite any previously frozen payload or manufacture acceptance.
+
+P12 fresh Codex retry also exposed a redundant criterion-local evidence selection
+requirement. Resolving explicit registered `criterion_local_evidence` now includes
+that same evidence in the submission's general evidence set. Original signed
+request bytes remain unchanged; unknown local keys are still rejected, current
+criteria/assessment guards remain authoritative. SQLite/PostgreSQL direct/review
+atomic return race cases pass without duplicated `evidence_local_keys`.
+
+P13 npm/standalone packages now include the same generated workspace schemas as
+the CLI archives, so npm agents need no source checkout to discover typed
+editable material. Package metadata matches the live client signed-v2/schema-2
+capabilities and retains explicit legacy compatibility; installed-package
+verification checks schema inclusion and protocol metadata against the binary.
+
+P12 T95 actual managed Codex A/B/C calibration is retained under
+`docs/audit/controlled-codex-2026-10-09`: one common Unicode normalizer task,
+fresh executor/reviewer histories for B/C, same inherited models/native harness
+and 43 external checks for all strategies. Parent-observed wall times include
+orchestration and C development/remediation; first malformed return and second
+criterion-reference failure remain recorded. C recovered unchanged original
+signed bytes after same-database/issuer upgrade, then received independent
+revision-1 approval; Task DONE and both empty contract directories were checked.
+Provider tokens/cache/tool counts/cost remain null, no Outcome achievement or
+savings is inferred. The reporter now validates observed timezone-bearing timing.
+
+P12 T72 bounded mixed local operation experiment executes actual three-intent
+acquisition, original-CID lease preparation, accepted receipt recovery and
+cleanup concurrently in one workspace. A separately held profile blocks only
+its own acquisition; every independent path finishes before release. Exact
+maintenance contract bytes, batch contents and empty accepted profiles are
+verified. Three native Linux race repetitions passed; platform CI exercises the
+same test on its actual host. Fixtures are explicit local signed receipt unit
+data; SQL/network/load proof remains in the independent real-service gates.
+Signed v2 has maintenance/return operations, not the legacy `sync` command.
