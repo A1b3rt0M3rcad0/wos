@@ -45,3 +45,32 @@ migration transaction, without changing migration history. This protects
 subsequent binaries that contain the guard. It cannot add a guard to already
 released binaries: retire old processes and their database credentials before
 cutover, and verify the actual historical binary separately.
+
+## Actual v0.2 upgrade and old writer acceptance
+
+CI builds the original `b75aa3e0ca6d649cafadf8450d9b5d606367dda4` source,
+creates an unsigned contract, immutable submission, criteria and seven original
+command receipts through its HTTP API, then restores the closed SQLite database
+or an actual PostgreSQL custom dump into a clean target. The current binary
+checks the original rows, versions, digests and exact receipts before and after
+explicit signed cutover. Activation with the old valid contract is refused; the
+operator revokes it explicitly before activating v2. No historical document is
+signed retroactively. The artifact records both source/binary hashes and backup
+hashes. Reproduce with explicitly built binaries:
+
+```sh
+python3 tests/acceptance/historical_upgrade.py --binary bin/wos-upgrade-test \
+  --old-binary /path/to/pinned-wos-v020 --source FULL_CURRENT_COMMIT \
+  --report historical-upgrade.json
+```
+
+This test verifies the exact old binary's readiness rejection and incompatible
+work acquisition refusal. WOS 0.2.0 predates the new startup guard: it can bind
+an HTTP port against the newer database, but `/readyz` returns 503 and unsigned
+acquisition rejects the unknown signed protocol without committing history.
+This is not a claim that every route of an old executable is disabled. Retire
+old writers, remove them from traffic and revoke their database credentials; a
+new migration cannot retrofit an old executable's startup behavior. The current
+binary separately refuses future schemas before bootstrap or serving. Native
+Windows and restore with signed execution/review/correction pending have their
+own gates and are not inferred from this historical fixture.
