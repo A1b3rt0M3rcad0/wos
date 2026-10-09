@@ -912,7 +912,7 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Full operational workflows remain P08/P09. |
 | P08 | In progress — work batches and durable local acquisition | Stable locks, server recovery, independent work searches and embedded profile intentions/materialization implemented. Review checkout, renew/keepalive and comprehensive process/file failure acceptance remain pending. |
 | P09 | In progress — signed CLI return and receipt cleanup | Protected local sign/send/finish, original-CID frozen recovery, issuer receipt verification and single-file cleanup implemented; final-source/full and exhaustive fault acceptance remain required. |
-| P10 | In progress | Explicit server cutover and recoverable schema-2 operator intentions; workspace migration and full legacy upgrade/restore acceptance remain pending. |
+| P10 | In progress | Explicit server cutover, recoverable schema-2 operator intentions and preserving workspace migration implemented; full legacy upgrade/restore and issuer recovery acceptance remain pending. |
 | P11 | Planned | UI read models/guarded actions, five skills and operating guides. |
 | P12 | Planned; external platform/pilot gates unresolved | Real SQL/restore, independent processes, failures/load/context benchmarks; native Windows and actual consumer separately proven. |
 | P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
@@ -994,12 +994,18 @@ PR #51 integrated Windows portability: the full native Linux/Windows workflow ru
 
 Local Compose onboarding: the owner requested a copy-only .env.example setup. A committed development template provides a localhost bootstrap credential, valid Namespace ID and persistent SQLite defaults; Compose accepts a configurable localhost port and optional protected runtime signing references. PostgreSQL remains opt-in. Config interpolation and actionlint pass. Actual non-root image build/start, readiness, frontend, browser-session login, Namespace discovery and authenticated create passed; restart retained the original Outcome and idempotent receipt. The sandbox required a temporary build-only host-network/proxy/CA override, outside the repository; normal Compose settings remain portable. The immediate post-restart probe ran before readiness and was retried successfully; it is not counted as a product failure. Signing activation remains explicit and no shared issuer key is shipped.
 
+P10 workspace migration continuation: read-only bounded inventory preserves exact draft/journal/receipt bytes and reports prepared/uncertain intentions and accepted acquisitions without materialization without network calls. Explicit separate schema-2 destination checks current approved server/Namespace/CID and remote original contracts, freezes a bounded profile migration intention and publishes explicitly legacy_unsigned single documents. Source files remain untouched; neither issuer nor agent signatures are fabricated. Recovery preserves source/target edits and reconciles exact publication before clearing the marker; repeating a verified migration recognizes existing matching files without a new intention. Draft interpretation uses the observed bytes, not a second read. Generated unsigned-local schema is packaged separately from signed contracts. Linux native child-process death after publication, original materialization, changed source/target recovery and decimal counters above JavaScript precision passed race tests (CLI 1.521s); actual HTTP/CLI conversion plus signed activation/execution/review passed Memory/SQLite/real PostgreSQL (35.679s), including refused signed mutation of legacy imports. Full frozen-source race suite passed with real PostgreSQL/clean restore (236.833s), SQLite (161.677s), CLI (17.842s), acceptance (87.457s) and boundaries; vet, actionlint, 102-event catalogue and Compose interpolation passed. Hosted Windows execution is required for this source. Historical database upgrade/restore, issuer recovery and P11–P13 remain pending; no P10 completion claim.
 
 P10 database compatibility continuation: migration checks the highest persisted
 schema under its transaction/ PostgreSQL advisory lock and rejects a database
 newer than the compiled migrations without altering history. Runtime also checks
 schema compatibility before bootstrap/serving when migrations are disabled.
 Targeted SQLite and actual PostgreSQL future-schema/older-upgrade race checks
-passed (6.957s/3.535s). Runtime and full regression acceptance remain pending for
-this source. This adds forward protection, not retroactive protection to released
+passed (6.957s/3.535s). Runtime restart/future-schema race tests passed (4.531s). Full race
+regression passed with real PostgreSQL/restore (303.254s), SQLite (180.163s),
+acceptance (79.802s) and CLI (18.613s); runtime passed (47.088s) on a sequential
+package rerun with unchanged Core/storage/acceptance tests cached. The initial
+parallel run timed out in the existing 30-second go-run MCP subprocess discovery
+and is not counted as a full pass. Vet, actionlint and catalogue passed. PR #55
+hosted browser, packages, full verification and native Linux/Windows passed. This adds forward protection, not retroactive protection to released
 v0.2.0 executables; actual old-binary and historical dataset acceptance remain P10.

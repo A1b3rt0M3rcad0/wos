@@ -1,0 +1,1337 @@
+{
+  "$id": "https://wos.dev/schemas/workspace/v2/legacy-unsigned-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Restricted YAML mapping; max 1 MiB, depth 16, 10000 nodes. Semantic scalars max 64 KiB; explicitly identified technical base64 fields have separate byte bounds. Issued documents must be cryptographically verified. Profiles do not grant authority.",
+  "properties": {
+    "checkpoint": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "checkpoint": {
+              "additionalProperties": false,
+              "properties": {
+                "ArtifactRefs": {
+                  "items": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "Completed": {
+                  "items": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "Dirty": {
+                  "type": "boolean"
+                },
+                "EvidenceRefs": {
+                  "items": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "IssueRefs": {
+                  "items": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "NextAction": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "Pending": {
+                  "items": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "RepositoryRef": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "Summary": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "Unknown": {
+                  "items": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "WorkingCommit": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Summary",
+                "Completed",
+                "Pending",
+                "NextAction",
+                "ArtifactRefs",
+                "EvidenceRefs",
+                "IssueRefs",
+                "RepositoryRef",
+                "WorkingCommit",
+                "Dirty",
+                "Unknown"
+              ],
+              "type": "object"
+            },
+            "contract_id": {
+              "maxLength": 65536,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "kind": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "schema_version": {
+              "type": "integer"
+            },
+            "spec_digest": {
+              "maxLength": 65536,
+              "type": "string"
+            }
+          },
+          "required": [
+            "schema_version",
+            "kind",
+            "contract_id",
+            "spec_digest",
+            "checkpoint"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "contract": {
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "additionalProperties": false,
+          "properties": {
+            "acquired_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "actor_ref": {
+              "additionalProperties": false,
+              "properties": {
+                "display_name": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "id": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "kind": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "provider": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "provider",
+                "id"
+              ],
+              "type": "object"
+            },
+            "close_reason": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "closed_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "closed_by": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "execution_id": {
+              "maxLength": 65536,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "expires_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "fencing_token": {
+              "pattern": "^(0|[1-9][0-9]{0,19})$",
+              "type": "string"
+            },
+            "holder_principal_id": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "id": {
+              "maxLength": 65536,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "issued_specification_id": {
+              "anyOf": [
+                {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "last_renewed_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "latest_authority_id": {
+              "anyOf": [
+                {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "latest_checkpoint_id": {
+              "anyOf": [
+                {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "latest_submission_id": {
+              "anyOf": [
+                {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lease_policy": {
+              "additionalProperties": false,
+              "properties": {
+                "default_ttl_seconds": {
+                  "type": "integer"
+                },
+                "max_ttl_seconds": {
+                  "type": "integer"
+                },
+                "min_ttl_seconds": {
+                  "type": "integer"
+                },
+                "revision": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "revision",
+                "default_ttl_seconds",
+                "min_ttl_seconds",
+                "max_ttl_seconds"
+              ],
+              "type": "object"
+            },
+            "lease_version": {
+              "pattern": "^(0|[1-9][0-9]{0,19})$",
+              "type": "string"
+            },
+            "outcome_revision_at_acquire": {
+              "pattern": "^(0|[1-9][0-9]{0,19})$",
+              "type": "string"
+            },
+            "scope": {
+              "additionalProperties": false,
+              "properties": {
+                "namespace_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "outcome_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "namespace_id",
+                "outcome_id"
+              ],
+              "type": "object"
+            },
+            "signed_binding": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "acceptance_floor": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "allowed_signing_key_ids": {
+                      "items": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "maxItems": 10000,
+                      "type": "array"
+                    },
+                    "correction_findings": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "criterion_id": {
+                            "anyOf": [
+                              {
+                                "maxLength": 65536,
+                                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "description": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "requirement_ref": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "description"
+                        ],
+                        "type": "object"
+                      },
+                      "maxItems": 10000,
+                      "type": "array"
+                    },
+                    "credential_id": {
+                      "maxLength": 65536,
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "policy_revision": {
+                      "pattern": "^(0|[1-9][0-9]{0,19})$",
+                      "type": "string"
+                    },
+                    "previous_review_case_id": {
+                      "anyOf": [
+                        {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "previous_submission_id": {
+                      "anyOf": [
+                        {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "protocol_version": {
+                      "type": "integer"
+                    },
+                    "separation_group": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "server_id": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "signer_key_id": {
+                      "maxLength": 65536,
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "specification_digest": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "protocol_version",
+                    "server_id",
+                    "credential_id",
+                    "signer_key_id",
+                    "acceptance_floor",
+                    "policy_revision",
+                    "allowed_signing_key_ids"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "spec": {
+              "additionalProperties": false,
+              "properties": {
+                "criteria": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "description": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "owner_ref": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "kind": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id",
+                          "kind",
+                          "id"
+                        ],
+                        "type": "object"
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "status": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "title": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "verification_mode": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "owner_ref",
+                      "title",
+                      "required",
+                      "criterion_revision",
+                      "verification_mode",
+                      "status"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "dependencies": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "kind": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "namespace_id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "outcome_id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "namespace_id",
+                      "outcome_id",
+                      "kind",
+                      "id"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "description": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "execution_spec": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "constraints": {
+                      "items": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "maxItems": 100,
+                      "type": "array"
+                    },
+                    "context_refs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "kind": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id",
+                          "kind",
+                          "id"
+                        ],
+                        "type": "object"
+                      },
+                      "maxItems": 100,
+                      "type": "array"
+                    },
+                    "deliverables": {
+                      "items": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "maxItems": 100,
+                      "type": "array"
+                    },
+                    "instructions": {
+                      "items": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "maxItems": 100,
+                      "type": "array"
+                    },
+                    "scope_hints": {
+                      "items": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "maxItems": 100,
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "instructions",
+                    "constraints",
+                    "deliverables",
+                    "scope_hints",
+                    "context_refs"
+                  ],
+                  "type": "object"
+                },
+                "objective_id": {
+                  "anyOf": [
+                    {
+                      "maxLength": 65536,
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "objective_intent": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "outcome_intent": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "title": {
+                  "maxLength": 65536,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "description",
+                "objective_id",
+                "execution_spec",
+                "criteria",
+                "dependencies"
+              ],
+              "type": "object"
+            },
+            "spec_digest": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "status": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "version": {
+              "pattern": "^(0|[1-9][0-9]{0,19})$",
+              "type": "string"
+            },
+            "work_item_id": {
+              "maxLength": 65536,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "work_item_version_at_acquire": {
+              "pattern": "^(0|[1-9][0-9]{0,19})$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "scope",
+            "work_item_id",
+            "holder_principal_id",
+            "actor_ref",
+            "status",
+            "version",
+            "lease_version",
+            "execution_id",
+            "fencing_token",
+            "acquired_at",
+            "expires_at",
+            "last_renewed_at",
+            "lease_policy",
+            "work_item_version_at_acquire",
+            "outcome_revision_at_acquire",
+            "spec",
+            "spec_digest"
+          ],
+          "type": "object"
+        },
+        "kind": {
+          "maxLength": 65536,
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "contract"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "const": "WOSLegacyUnsignedContract",
+      "type": "string"
+    },
+    "originals": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "chunks": {
+            "items": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "type": "array"
+          },
+          "digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 65536,
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "digest",
+          "chunks"
+        ],
+        "type": "object"
+      },
+      "maxItems": 10000,
+      "type": "array"
+    },
+    "protocol": {
+      "const": "legacy_unsigned",
+      "type": "string"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "artifacts": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "Artifact": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ArtifactType": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "Checksum": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "MediaType": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "Name": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "ProducedAt": {
+                        "anyOf": [
+                          {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "Scope": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id"
+                        ],
+                        "type": "object"
+                      },
+                      "SourceVersion": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "URI": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "Scope",
+                      "ArtifactType",
+                      "Name",
+                      "URI",
+                      "MediaType",
+                      "Checksum",
+                      "SourceVersion",
+                      "ProducedAt"
+                    ],
+                    "type": "object"
+                  },
+                  "LocalKey": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "LocalKey",
+                  "Artifact"
+                ],
+                "type": "object"
+              },
+              "maxItems": 100,
+              "type": "array"
+            },
+            "contract_id": {
+              "maxLength": 65536,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "criterion_evidence_keys": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "criterion_id": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "criterion_revision": {
+                    "pattern": "^(0|[1-9][0-9]{0,19})$",
+                    "type": "string"
+                  },
+                  "evidence_keys": {
+                    "items": {
+                      "maxLength": 65536,
+                      "type": "string"
+                    },
+                    "maxItems": 10000,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "criterion_id",
+                  "criterion_revision",
+                  "evidence_keys"
+                ],
+                "type": "object"
+              },
+              "maxItems": 10000,
+              "type": "array"
+            },
+            "evidence": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "ArtifactLocalKey": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  "Evidence": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "ArtifactID": {
+                        "anyOf": [
+                          {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "CapturedAt": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "Checksum": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "Description": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "EvidenceType": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "Measurement": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "conditions": {
+                                "maxLength": 65536,
+                                "type": "string"
+                              },
+                              "method": {
+                                "maxLength": 65536,
+                                "type": "string"
+                              },
+                              "unit": {
+                                "maxLength": 65536,
+                                "type": "string"
+                              },
+                              "value": {
+                                "maxLength": 65536,
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "Scope": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id"
+                        ],
+                        "type": "object"
+                      },
+                      "SourceRef": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "display_name": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "id": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "provider": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "uri": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      },
+                      "SourceVersion": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "Scope",
+                      "EvidenceType",
+                      "Description",
+                      "SourceRef",
+                      "CapturedAt",
+                      "ArtifactID",
+                      "Measurement",
+                      "SourceVersion",
+                      "Checksum"
+                    ],
+                    "type": "object"
+                  },
+                  "LocalKey": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "LocalKey",
+                  "ArtifactLocalKey",
+                  "Evidence"
+                ],
+                "type": "object"
+              },
+              "maxItems": 100,
+              "type": "array"
+            },
+            "evidence_links": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "EvidenceLocalKey": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
+                  "Link": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "CriterionID": {
+                        "anyOf": [
+                          {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "EvidenceID": {
+                        "anyOf": [
+                          {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "Rationale": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "Scope": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id"
+                        ],
+                        "type": "object"
+                      },
+                      "Stance": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "TargetRef": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "kind": {
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "namespace_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          },
+                          "outcome_id": {
+                            "maxLength": 65536,
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "namespace_id",
+                          "outcome_id",
+                          "kind",
+                          "id"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "Scope",
+                      "EvidenceID",
+                      "TargetRef",
+                      "CriterionID",
+                      "Stance",
+                      "Rationale"
+                    ],
+                    "type": "object"
+                  },
+                  "LocalKey": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "LocalKey",
+                  "EvidenceLocalKey",
+                  "Link"
+                ],
+                "type": "object"
+              },
+              "maxItems": 100,
+              "type": "array"
+            },
+            "kind": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "material": {
+              "additionalProperties": false,
+              "properties": {
+                "artifacts": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact_id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "checksum": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "source_version": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "artifact_id",
+                      "source_version",
+                      "checksum"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 100,
+                  "type": "array"
+                },
+                "contract_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "criterion_evidence": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      },
+                      "evidence_ids": {
+                        "items": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "maxItems": 10000,
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision",
+                      "evidence_ids"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "evidence_ids": {
+                  "items": {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "maxItems": 10000,
+                  "type": "array"
+                },
+                "spec_digest": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "summary": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "work_item_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "contract_id",
+                "work_item_id",
+                "spec_digest",
+                "summary",
+                "artifacts",
+                "evidence_ids",
+                "criterion_evidence"
+              ],
+              "type": "object"
+            },
+            "schema_version": {
+              "type": "integer"
+            },
+            "spec_digest": {
+              "maxLength": 65536,
+              "type": "string"
+            }
+          },
+          "required": [
+            "schema_version",
+            "kind",
+            "contract_id",
+            "spec_digest",
+            "material",
+            "artifacts",
+            "evidence",
+            "evidence_links",
+            "criterion_evidence_keys"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "const": 2,
+      "type": "integer"
+    },
+    "source_namespace_id": {
+      "maxLength": 65536,
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "source_origin": {
+      "maxLength": 65536,
+      "type": "string"
+    },
+    "source_workspace": {
+      "maxLength": 65536,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "protocol",
+    "source_workspace",
+    "source_origin",
+    "source_namespace_id",
+    "contract",
+    "originals"
+  ],
+  "type": "object"
+}
