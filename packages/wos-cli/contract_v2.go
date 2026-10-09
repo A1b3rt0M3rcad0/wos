@@ -60,11 +60,14 @@ func (v *ReviewDraftV2) UnmarshalJSON(raw []byte) error {
 }
 
 type FrozenReturnV2 struct {
-	State         string           `json:"state"`
-	Envelope      signing.Envelope `json:"envelope"`
-	DraftDigest   string           `json:"draft_digest"`
-	RequestDigest string           `json:"request_digest"`
-	Response      string           `json:"response,omitempty"`
+	CredentialID    d.ID             `json:"credential_id"`
+	SignerPublicKey string           `json:"signer_public_key"`
+	PendingMAC      string           `json:"pending_mac"`
+	State           string           `json:"state"`
+	Envelope        signing.Envelope `json:"envelope"`
+	DraftDigest     string           `json:"draft_digest"`
+	RequestDigest   string           `json:"request_digest"`
+	Response        string           `json:"response,omitempty"`
 }
 type ContractLocalV2 struct {
 	SchemaVersion     int               `json:"schema_version"`
