@@ -1207,6 +1207,13 @@ databases. The initial correction-stage fixture used the already revoked
 original executor to read metadata; it now uses the current authorized
 correction executor, retaining denial assertions. Hosted checks remain pending.
 
+P13 separates coordinated verification from registry publication. Manifest
+integration runs all four same-source workflows and uploads hash-checked assets,
+actual native receipts and package acceptance. Real registry publication requires
+explicit workflow_dispatch publish=true, so finishing the plan does not silently
+publish a version. Registry credentials and final source acceptance remain separate.
+Existing hosted Linux/Windows execution replaces stale billing-only claims in
+release instructions; no registry publication is claimed.
 Native keyring gate rerun passed all five hosted checks on PR64 head 6a26bcc.
 The downloaded Linux/Windows receipts explicitly record native_keyring_executed,
 actual passing counts and individual skips. PR62 historical upgrade and PR63

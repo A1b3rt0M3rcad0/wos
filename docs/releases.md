@@ -13,14 +13,14 @@ O arquivo nativo e o container dispensam Node. O wrapper npm do serviço não te
 1. Cada mudança distribuível adiciona `.changes/<nome>.json` com bump explícito e resumo. Mudanças incompatíveis usam major, inclusive em 0.x.
 2. Após merge em `master`, `prepare-release.yml` prepara versões/notas/manifesto e abre ou atualiza o PR reservado `release/next`. Esse branch pertence à automação; não use para outras mudanças. A primeira preparação mantém 0.1.0, seguintes escolhem o maior bump.
 3. Revise e integre o PR. Um PR criado por GITHUB_TOKEN pode não disparar workflows adicionais; o workflow de publicação sempre executa os gates completos depois do merge, independentemente desse comportamento.
-4. `release.yml` verifica o commit exato por três workflows reutilizáveis: Go/API/PostgreSQL/race/acceptance/container, navegador, e skills/distribuição/release contracts. Não há publicação em PRs de forks ou branch arbitrário.
-5. Depois dos gates, constrói/testa tarballs e imagem, confere integridade e identidade, cria tag imutável/draft, publica ambos os npm, publica GHCR e finaliza GitHub Release. Tags versionadas não são substituídas. Não há deployment automático em instâncias de clientes, migrations ou reinício de dados.
+4. `release.yml` verifica o commit exato por quatro workflows reutilizáveis: Go/API/PostgreSQL/race/acceptance/container, navegador, e skills/distribuição/release contracts. Não há publicação em PRs de forks ou branch arbitrário.
+5. Depois dos gates, constrói/testa tarballs e verifica os recibos nativos do mesmo source, publicando os artefatos de validação do job `verify`. Publicação em registries ocorre somente por `workflow_dispatch` com `publish=true`: reconcilia tag imutável/draft, ambos os npm, GHCR e GitHub Release. Integrar o plano ou o manifesto não publica por si só. Tags versionadas não são substituídas. Não há deployment automático em instâncias de clientes, migrations ou reinício de dados.
 
-Build/replay exige o mesmo commit e ferramenta: Go 1.27.1, Node 24.19.0 e npm 11.9.0. Source timestamp vem do commit, não do relógio do job. Os tarballs e arquivo nativo devem ser byte-idênticos entre caminhos de source, verificados por `tools/distribution/reproducible.mjs`. Artefatos são `wos-VERSION.tgz`, `wos-skill-VERSION.tgz`, `wos_VERSION_linux_amd64.tar.gz`, `distribution.json`, `SHA256SUMS`; imagem `ghcr.io/a1b3rt0m3rcad0/wos:VERSION`.
+Build/replay exige o mesmo commit e ferramenta: Go 1.27.2, Node 24.19.0 e npm 11.9.0. Source timestamp vem do commit, não do relógio do job. Os tarballs e arquivo nativo devem ser byte-idênticos entre caminhos de source, verificados por `tools/distribution/reproducible.mjs`. Artefatos são `wos-VERSION.tgz`, `wos-skill-VERSION.tgz`, `wos_VERSION_linux_amd64.tar.gz`, `distribution.json`, `SHA256SUMS`; imagem `ghcr.io/a1b3rt0m3rcad0/wos:VERSION`.
 
 ## Configuração pelo titular das contas
 
-- Regularize billing/spending do GitHub Actions. Jobs não iniciaram nesta sessão; testes locais não significam publicação hosted.
+- Os jobs hosted de Linux, Windows e keyring executaram e passaram nesta sessão. Eventuais limitações futuras de billing continuam distintas dos resultados locais.
 - Confirme o escopo npm `@a1b3rt0m3rcad0`. O nome sem escopo `wos` pertence a outro produto. Configure autorização de publicação dos dois pacotes.
 - Bootstrap/token: configure `NPM_TOKEN` em GitHub Actions Secrets com token npm granular adequado para publicar/criar esses pacotes e a política de 2FA da conta. Não coloque o valor em chat, skill ou Git. A sessão não tem npm autenticado e a integração não consegue listar Actions Secrets (403); isso não prova que o Secret já exista ou não.
 - Trusted publishing: quando suportado pela conta/pacotes/repositório, associe cada pacote ao repositório `A1b3rt0M3rcad0/wos`, workflow `release.yml`, e configure Actions variable `NPM_AUTH_MODE=oidc`. O workflow concede id-token somente ao job de publicação. O primeiro cadastro pode requerer bootstrap pelo titular; vínculo OIDC não é configurado por um commit.
@@ -53,7 +53,7 @@ Use o compilador correto em PATH e caches graváveis no sandbox. `build` produz 
 
 ## Matriz de evidência e melhorias
 
-Instalação/atualização/remoção das quatro skills e destinos nativos/genéricos são testadas. O serviço instalado realmente inicia HTTP/MCP/UI, trata SIGTERM e rejeita corrupção. Replays e falhas de publicação são exercitados com adapters determinísticos; uma publicação real exige os serviços externos. Nenhum teste de arquivo prova execução em todas as versões de Claude/Codex/Hermes/OpenClaw.
+Instalação/atualização/remoção das cinco skills e destinos nativos/genéricos são testadas. O serviço instalado realmente inicia HTTP/MCP/UI, trata SIGTERM e rejeita corrupção. Replays e falhas de publicação são exercitados com adapters determinísticos; uma publicação real exige os serviços externos. Nenhum teste de arquivo prova execução em todas as versões de Claude/Codex/Hermes/OpenClaw.
 
 Próximas melhorias: integração nativa executada em cada runtime; contexto focal mais seletivo por tarefa; medição de custo/token e retomada; arm64/macOS/Windows com smoke nativo; assinatura de assets e attestations da imagem; métricas/backup/deploy gerenciado por cliente. Versões independentes de serviço e skills só quando o acoplamento atual causar releases desnecessárias. Esses itens são backlog, não promessas implementadas.
 
@@ -74,7 +74,7 @@ prepared assets without pretending native Windows validation occurred. Gate rece
 are CI evidence, not secret material or agent authority. Matching source_ref is used
 throughout historical retries.
 
-Current local state: source/artifacts can be prepared and tested on Linux. Actual
-Windows job is blocked by GitHub Actions billing/spending restrictions. Account-side
+Current local state: source/artifacts can be prepared and tested on Linux. Native Linux/Windows jobs, including protected keyring references, have passed.
+Final release publication still requires receipts matching its exact source/binaries. Account-side
 npm authorization remains separate. No released 0.2.0/npm/GHCR claim is made until
 publication and immutable identities have actually been verified.
