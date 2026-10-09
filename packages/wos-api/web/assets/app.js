@@ -11,6 +11,7 @@ import {
 const $ = (id) => document.getElementById(id);
 const state = {
   namespace: "",
+  protocol: null,
   outcome: null,
   snapshot: null,
   section: "work_items",
@@ -272,9 +273,12 @@ function el(tag, text, className) {
 async function connect(namespace) {
   state.generation++;
   state.namespace = namespace;
+  state.protocol = null;
+  $("signed-protocol-info").hidden = true;
   $("connect").hidden = true;
   $("workspace").hidden = false;
   state.catalog = (await request(`${api}/commands`)).commands;
+  await refreshNamespaceProtocol();
   await discover();
   $("context-name").textContent =
     $("namespace").selectedOptions[0]?.textContent || "Espaço de trabalho";
@@ -410,9 +414,10 @@ async function refresh() {
   if (!state.outcome) return discover();
   const generation = state.generation;
   const path = outcomeBase();
-  const [snapshot, live] = await Promise.all([
+  const [snapshot, live, protocol] = await Promise.all([
     request(`${path}/continuity?limit=25`),
     request(path),
+    request(`${api}/namespaces/${state.namespace}/work-protocol`),
   ]);
   if (generation !== state.generation) return;
   if (
@@ -425,6 +430,8 @@ async function refresh() {
     changed.code = "precondition_failed";
     throw changed;
   }
+  state.protocol = protocol;
+  renderProtocolBanner();
   state.snapshot = snapshot;
   state.outcome = live.value || live;
   state.loaded.clear();
@@ -1691,6 +1698,10 @@ contract_id:state.contractView?.contract.id,
   };
 }
 function openCommands(name) {
+  if (name && !commandAvailableInUI(name)) {
+    notice("Este fluxo requer o profile e a assinatura protegida. Use wosctl para execução ou revisão.", true);
+    return;
+  }
   $("submit-command").disabled = false;
   $("detail-dialog").close();
   state.pending = null;
@@ -1703,6 +1714,7 @@ function openCommands(name) {
   other.label = "Outras ações";
   const kind = state.selected?._kind || "outcome";
   for (const d of state.catalog) {
+    if (!commandAvailableInUI(d.name)) continue;
  if(state.selected?.contracts_enabled&&["claim_work_item","release_work_item","renew_work_item_lease","reclaim_work_item","complete_work_item","administrative_complete_work_item"].includes(d.name))continue;
     const option = el("option", actionName(d.name));
     option.value = d.name;
@@ -2081,6 +2093,8 @@ async function submit(retry = false) {
   $("submit-command").disabled = true;
   $("retry-command").hidden = true;
   try {
+    await refreshNamespaceProtocol();
+    if (!commandAvailableInUI(pending.name)) throw new Error("O protocolo mudou. Esta ação requer um profile e assinatura protegida; a intenção não foi enviada.");
     const result = await request(`${api}/commands/${pending.name}`, {
       method: "POST",
       headers: { "Idempotency-Key": pending.key },
@@ -2249,6 +2263,10 @@ $("view-outcome").onclick = () =>
 
 
 async function contractSection(detail,entity,generation) {
+ if (state.protocol?.phase === "signed_contracts_v2") {
+  return signedContractSection(detail, entity, generation);
+ }
+
  const section=el("section",undefined,"detail-section contract-section");section.append(el("h3","Contrato de trabalho"));detail.append(section);
  let loadGeneration=0;
  const load=async(id,expand)=>{
@@ -2272,4 +2290,166 @@ async function contractSection(detail,entity,generation) {
   const history=el("details");history.append(el("summary","Histórico de contratos"));const body=el("div");history.append(body);let cursor="",loaded=false;
   const more=el("button","Carregar contratos","quiet");const loadHistory=async()=>{const page=await request(`${outcomeBase()}/work-contracts?work_item_id=${encodeURIComponent(entity.id)}&limit=10&cursor=${encodeURIComponent(cursor)}`);if(generation!==state.detailGeneration)return;loaded=true;for(const contract of page.items||[]){const button=el("button",`${shortId(contract.id)} · ${contract.status} · ${date(contract.acquired_at)}`,"quiet");button.onclick=()=>load(contract.id).catch(error=>notice(error.message,true));body.append(button)}cursor=page.next_cursor||"";more.hidden=!cursor;if(!page.items?.length)body.append(el("p","Nenhum contrato registrado."));};more.onclick=()=>loadHistory().catch(error=>notice(error.message,true));history.ontoggle=()=>{if(history.open&&!loaded)loadHistory().catch(error=>notice(error.message,true))};history.append(more);detail.append(history);
  } catch(error){section.append(el("p",`Não foi possível consultar o contrato: ${error.message}`,"contract-notice"));}
+}
+
+
+const unsignedExecutionActions = new Set([
+  "claim_work_item", "release_work_item", "renew_work_item_lease", "reclaim_work_item",
+  "complete_work_item", "administrative_complete_work_item", "acquire_work_contract",
+  "acquire_next_work_contract", "renew_work_contract", "resume_work_contract",
+  "sync_work_contract", "submit_work_result", "finalize_work_contract", "revoke_work_contract",
+]);
+function commandAvailableInUI(name) {
+  // Browser forms never hold an agent private key or manufacture a proof.
+  if (name.includes("_signed_")) return false;
+  if (state.protocol?.phase === "signed_contracts_v2" && state.selected?._kind === "work_item" && ["attest_criterion", "record_criterion_assessment", "waive_criterion"].includes(name)) return false;
+  return state.protocol?.phase !== "signed_contracts_v2" || !unsignedExecutionActions.has(name);
+}
+async function refreshNamespaceProtocol() {
+  const namespace = state.namespace, generation = state.generation;
+  const protocol = await request(`${api}/namespaces/${namespace}/work-protocol`);
+  if (generation !== state.generation || namespace !== state.namespace) return;
+  state.protocol = protocol;
+  renderProtocolBanner();
+}
+function renderProtocolBanner() {
+  const panel = $("signed-protocol-info");
+  const phase = state.protocol?.phase;
+  panel.hidden = !["signed_contracts_v2", "draining_to_signed_v2"].includes(phase);
+  $("signed-protocol-label").textContent = phase === "signed_contracts_v2"
+    ? "Contratos assinados · execução e revisão independentes"
+    : "Preparando contratos assinados · novas reservas antigas suspensas";
+}
+$("signed-protocol-info").ontoggle = () => {
+  if ($("signed-protocol-info").open) loadSignedIdentity().catch(report);
+};
+async function loadSignedIdentity() {
+  const namespace = state.namespace, generation = state.generation;
+  const target = $("signed-protocol-content");
+  target.replaceChildren(el("p", "Consultando identidade e políticas…"));
+  const [trust, identity] = await Promise.all([
+    request(`${api}/namespaces/${namespace}/signed-trust`),
+    request(`${api}/security/signing-identity`),
+  ]);
+  if (generation !== state.generation || namespace !== state.namespace) return;
+  const identityCard = el("section", undefined, "signed-identity-card");
+  identityCard.append(el("h3", "Identidade deste espaço"));
+  const properties = el("dl", undefined, "detail-properties");
+  for (const [label, value] of [
+    ["Conta", identity.principal_id], ["Credencial", identity.credential_id],
+    ["Servidor persistente", trust.server?.server_id], ["Emissor atual", trust.server?.fingerprint],
+    ["Aceite exigido pela credencial", display(identity.credential_policy?.acceptance_floor || "não configurado")],
+  ]) properties.append(el("dt", label), el("dd", value || "Não disponível"));
+  identityCard.append(properties);
+  const keys = el("section", undefined, "signed-identity-card");
+  keys.append(el("h3", "Chaves desta identidade"));
+  for (const key of identity.keys || []) {
+    const row = el("p", undefined, "signed-key");
+    row.append(badge(key.status), el("code", shortId(key.id)), el("small", key.fingerprint));
+    keys.append(row);
+  }
+  if (!identity.keys?.length) keys.append(el("p", "Nenhuma chave retornada nesta consulta."));
+  if (identity.keys_truncated) keys.append(el("small", "Lista parcial. Consulte as páginas da API para outras chaves."));
+  const onboarding = el("section", undefined, "signed-identity-card signed-onboarding");
+  onboarding.append(el("h3", "Conectar um profile"), el("p", "Peça ao administrador uma credencial e um enrollment para sua função. Confira o emissor por um canal confiável antes de aprovar o profile."));
+  const example = `wosctl init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
+  onboarding.append(el("pre", example), el("p", "Tokens e chaves privadas ficam no host, em referências protegidas. A instalação das skills não cria acesso. Execução e revisão usam profiles próprios."));
+  const history = el("details", undefined, "technical");
+  history.append(el("summary", "Emissores públicos preservados"));
+  for (const issuer of trust.issuer_history || []) history.append(el("p", `${shortId(issuer.issuer_key_id)} · ${issuer.fingerprint}`));
+  if (trust.search_complete === false) history.append(el("small", "Histórico parcial. Continue pelo cursor da API."));
+  target.replaceChildren(identityCard, keys, onboarding, history);
+}
+function decodeSignedProjection(encoded) {
+  const bytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes));
+}
+async function signedContractSection(detail, entity, generation) {
+  state.contractView = null;
+  state.submission = null;
+  const section = el("section", undefined, "detail-section contract-section signed-contract-section");
+  section.append(el("h3", "Execução e revisão assinadas"), el("p", "Assinaturas registram origem e integridade. A qualidade depende da avaliação explícita do material.", "contract-notice"));
+  detail.append(section);
+  const current = () => generation === state.detailGeneration;
+  try {
+    if (entity.current_contract_id) {
+      const result = await request(`${outcomeBase()}/signed-state/execution/${entity.current_contract_id}`);
+      if (!current()) return;
+      const contract = result.contract;
+      const names = {active:"Execução reservada", delivered:"Entrega aceita do executor", completed:"Obrigação concluída", revoked:"Contrato revogado", expired:"Reserva expirada"};
+      section.append(el("strong", names[contract.effective_status] || display(contract.effective_status)));
+      const info = el("dl", undefined, "detail-properties");
+      for (const [label, value] of [["Titular",contract.holder_principal_id],["Prazo",date(contract.expires_at)],["Reserva válida agora",contract.lease_valid?"Sim":"Não"],["Versão do contrato",contract.contract_version],["Versão da reserva",contract.lease_version]]) info.append(el("dt",label),el("dd",String(value)));
+      section.append(info);
+    }
+    let pendingReviewVersion;
+    const caseIDs = [...new Set([entity.pending_review_case_id, entity.correction_review_case_id, entity.latest_review_case_id].filter(Boolean))];
+    for (const id of caseIDs) {
+      const result = await request(`${outcomeBase()}/signed-state/case/${id}`);
+      if (!current()) return;
+      const review = result.review_case;
+      if (review.id === entity.pending_review_case_id) pendingReviewVersion = review.version;
+      const card = el("section", undefined, "signed-review-card");
+      const names = {pending:"Aguardando revisão independente",in_review:"Revisão em andamento",approved:"Revisão aprovada",changes_requested:"Alterações solicitadas",cancelled:"Revisão cancelada",superseded:"Revisão substituída"};
+      card.append(el("h4", names[review.status] || display(review.status)), el("p", `Rodada ${review.round} · caso ${shortId(review.id)}`));
+      card.append(el("p", `Entrega ${shortId(review.submission_id)} · exigência ${display(review.acceptance_floor)}`));
+      const materialButton = el("button", "Carregar material aceito", "quiet");
+      materialButton.onclick = async () => {
+        materialButton.disabled = true;
+        try {
+          const accepted = await request(`${outcomeBase()}/signed-state/submission/${review.submission_id}?digest=${encodeURIComponent(review.submission_digest)}`);
+          if (!current()) return;
+          const material = decodeSignedProjection(accepted.material_payload);
+          const delivery = el("section", undefined, "contract-delivery");
+          delivery.append(el("h4", "Material aceito do executor"), el("p", material.summary), el("small", `${material.artifacts?.length || 0} artefatos · ${material.evidence_ids?.length || 0} evidências`));
+          const canonical = el("details", undefined, "technical");
+          canonical.append(el("summary", "Referências do material"), el("pre", JSON.stringify(material, null, 2)));
+          delivery.append(canonical);
+          card.insertBefore(delivery, materialButton);
+          materialButton.remove();
+        } catch (error) {
+          if (current()) notice(error.message, true);
+          materialButton.disabled = false;
+        }
+      };
+      card.append(materialButton);
+      if (review.close_reason) card.append(el("p", review.close_reason));
+      if (review.status === "changes_requested" && review.latest_decision_id) {
+        const acceptedDecision = await request(`${outcomeBase()}/signed-state/correction/${review.id}`);
+        if (!current()) return;
+        const decision = decodeSignedProjection(acceptedDecision.envelope.payload);
+        card.append(el("h4", "Correções exigidas"), el("p", decision.material.reason));
+        for (const finding of decision.material.findings || []) {
+          const item = el("div", undefined, "signed-finding");
+          item.append(el("p", finding.description), el("small", `Obrigação: ${finding.requirement_ref || shortId(finding.criterion_id)}`));
+          card.append(item);
+        }
+        card.append(el("p", "A próxima execução deve responder a cada apontamento sobre as obrigações existentes. Ampliação de escopo exige replanejamento explícito."));
+      }
+      if (review.current_contract_id) {
+        const reserved = await request(`${outcomeBase()}/signed-state/review/${review.current_contract_id}`);
+        if (!current()) return;
+        card.append(el("small", `Revisor: ${reserved.contract.holder_principal_id} · reserva ${reserved.contract.lease_valid?"válida":"sem autoridade atual"}`));
+      }
+      const audit = el("details", undefined, "technical");
+      audit.append(el("summary", "Identidade do material avaliado"), el("pre", JSON.stringify({review_case_id:review.id,submission_id:review.submission_id,submission_digest:review.submission_digest,acceptance_policy_revision:review.policy_revision,latest_decision_id:review.latest_decision_id},null,2)));
+      card.append(audit);
+      section.append(card);
+    }
+    if (!entity.current_contract_id && !caseIDs.length) section.append(el("p", "Sem execução reservada ou revisão associada a esta tarefa. A aquisição é explícita."));
+    if (entity.pending_review_case_id) section.append(el("p", "A entrega do executor já foi aceita. A tarefa aguarda uma revisão própria; a aprovação não é inferida da assinatura ou de testes passados."));
+    const instructions = el("details", undefined, "signed-next-step");
+    instructions.append(el("summary", "Executar ou revisar com um profile"));
+    instructions.append(el("p", "Use seu profile autorizado no host. O navegador não guarda a chave privada nem assina uma decisão em seu nome."));
+    instructions.append(el("pre", `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}
+wosctl --profile executor work show CONTRACT_UUID --for-agent
+wosctl --profile executor work finish CONTRACT_UUID`));
+    if (entity.pending_review_case_id && pendingReviewVersion !== undefined) instructions.append(el("pre", `wosctl --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
+wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
+wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID`));
+    instructions.append(el("p", "Depois de uma resposta incerta, use work recover ou review recover com o profile original. Preserve a intenção e os rascunhos."));
+    section.append(instructions);
+  } catch (error) {
+    if (current()) section.append(el("p", `Não foi possível consultar o estado assinado: ${error.message}`, "contract-notice"));
+  }
 }
