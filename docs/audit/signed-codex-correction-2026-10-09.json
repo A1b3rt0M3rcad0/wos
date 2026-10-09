@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "kind": "actual-managed-codex-correction-pilot",
+  "broker_source": "52d225dcdcf86df05a36b17db7ddf5313a1d0b40",
+  "client_source": "c1080053865eca06bc097e38fbecdf273688e1e1",
+  "skill_version": "0.3.0",
+  "source_provenance": "Functional calibration uses these exact mixed binaries; final-source coordinated verification is separate.",
+  "task_id": "01a11faf-ac6f-78f4-83f6-25c2ad98b15d",
+  "original_criteria": [
+    {
+      "id": "01a11faf-ac78-7dfe-b963-1e5150ec0da9",
+      "revision": 1
+    },
+    {
+      "id": "01a11faf-ac81-70c1-b86c-5954579da5f9",
+      "revision": 1
+    }
+  ],
+  "contexts": "Fresh managed Codex task histories; shared filesystem and OS account, no OS security isolation claimed.",
+  "provider_tokens": null,
+  "provider_cost": null,
+  "negative_fixture": {
+    "commit": "983d507072782a53cd65de33119bd3c4b85fc9fb",
+    "contract_id": "01a11fb0-79b2-77c8-b0cc-420246801cd8",
+    "intentional_missing_obligation": "Reject non-string values with TypeError",
+    "submitted_tests_passed": 4,
+    "original_quality_accepted": false
+  },
+  "rejected_attempts": [
+    {
+      "contract_id": "01a11fb2-6692-776a-b7ae-268bb3d667bb",
+      "intention_id": "01a11fb3-52dd-7db6-9ff9-c3c3c6591720",
+      "http": 422,
+      "cause": "Finding supplied both criterion_id and requirement_ref",
+      "accepted": false,
+      "original_preserved": true,
+      "preserved_document_sha256": "633598b4d7f781e16facebd3635fab604f27687df00f8854ec222ef954910c2b"
+    },
+    {
+      "contract_id": "01a11fba-0687-7bdf-95ec-e9c3dea6762e",
+      "http": 403,
+      "cause": "Non-approval supplied criterion assessments",
+      "accepted": false,
+      "original_preserved": true,
+      "request_id": "01a11fbb-77c8-7460-ae14-d71de5565e62",
+      "preserved_document_sha256": "daf7573320781c276ecba5225ba5fbfe483d1987713fadfb10d8eeaf643a2f8f"
+    },
+    {
+      "contract_id": "01a11fc3-7109-74f0-bac2-0145946a15ac",
+      "http": 409,
+      "cause": "Complementary reviewer records had no matching immutable artifact version/checksum in accepted submission",
+      "accepted": false,
+      "original_preserved": true,
+      "preserved_document_sha256": "1bf4ac043174d06ad9b99f1af002497fd7c66a3f6a66addf213bc4e010e30318"
+    }
+  ],
+  "accepted_changes_requested": {
+    "review_case_id": "01a11fb1-55db-78ef-8ad6-4c336dacef1c",
+    "contract_id": "01a11fbf-b416-7883-b4d9-9465cd882746",
+    "finding_id": "01a11fc0-3d92-718a-98f9-99f5476c46dd",
+    "criterion_id": "01a11faf-ac81-70c1-b86c-5954579da5f9",
+    "reviewed_commit": "983d507072782a53cd65de33119bd3c4b85fc9fb",
+    "independent_type_errors_failed": 8,
+    "remote_committed": true,
+    "cleanup_pending": false,
+    "acceptance_digest": "sha256:632ea94546c4ce39cbc2551ea763528c5e393a3bd66ed666d2c72b7ab31cd225"
+  },
+  "accepted_outcomes": [],
+  "limitations": [
+    "A controlled negative fixture is not a production regression.",
+    "This separate correction pilot does not add samples to the one-task A/B/C benchmark.",
+    "Other agent runtimes and provider billing remain unverified."
+  ],
+  "server_sha256": "fee05e54401ae61d5cfb445c2df7e3a2a8aad2ac379b4216e47ba7e7b06e5d3e",
+  "client_sha256": "0c3a41a9c42efce5265f0870b7ea8ca8776823f216fddf05f8fff1e22bee1013",
+  "correction_delivery": {
+    "commit": "02ad617cec09f91b21f32ed179caae32340e350c",
+    "contract_id": "01a11fc1-6504-74cb-bbef-15d159734056",
+    "previous_review_case_id": "01a11fb1-55db-78ef-8ad6-4c336dacef1c",
+    "finding_response_id": "01a11fc0-3d92-718a-98f9-99f5476c46dd",
+    "remote_committed": true,
+    "cleanup_pending": false,
+    "acceptance_digest": "sha256:7b0fc1168f7e3c2ea9af5c87cf7212a89fb186efaa6f076572770ca6020da440"
+  },
+  "external_original_quality": {
+    "schema": 1,
+    "kind": "actual-external-controlled-quality",
+    "commit": "02ad617cec09f91b21f32ed179caae32340e350c",
+    "node": "v24.19.0",
+    "tests": "4",
+    "external_assertions": 43,
+    "quality_passed": true,
+    "integration_passed": true,
+    "accepted_at": "2026-10-09T08:24:13.604Z",
+    "validator_sha256": "6f759ae8bfad37837304c863005d5e382d14bdfb814c4ec5d69968ae457566f0"
+  },
+  "final_approval": {
+    "review_case_id": "01a11fc2-9596-7599-94e5-309838d89fcc",
+    "submission_id": "01a11fc2-9595-717b-9f22-a4d3a414f30e",
+    "round": 2,
+    "contract_id": "01a11fc8-bfdf-7ac9-9b37-c6eac247b127",
+    "decision": "approved",
+    "remote_committed": true,
+    "cleanup_pending": false,
+    "acceptance_digest": "sha256:caece622d55f85b3989c455c2326278c29d6ba585c80567112c8ace817de41bc"
+  },
+  "focal_correction_response": {
+    "fact_id": "01a11fc2-9599-7a31-af5f-c5dc84b7316d",
+    "request_id": "01a11fc2-9578-7f76-b7bb-3c12e0a0c919",
+    "contract_id": "01a11fc1-6504-74cb-bbef-15d159734056",
+    "request_digest": "sha256:1884ae36e3ba169467302087bc0ebc2212bf04663da1d2c97a828f9f0e07bb82",
+    "correction_responses": [
+      {
+        "evidence_local_keys": [
+          "correction-node-tests"
+        ],
+        "finding_id": "01a11fc0-3d92-718a-98f9-99f5476c46dd",
+        "summary": "Replaced String(value) coercion with explicit typeof rejection throwing TypeError. Updated negative test to assert TypeError for 42, null, undefined, {}, array, true, Symbol and boxed String. All four node tests pass on commit 02ad617cec09f91b21f32ed179caae32340e350c."
+      }
+    ]
+  },
+  "final_state": {
+    "task_lifecycle": "done",
+    "task_version": 9,
+    "original_criteria_unchanged": true,
+    "accepted_contracts_cleaned": true,
+    "executor_contract_directory_empty": true,
+    "reviewer_remaining_documents": "Exactly the three rejected immutable attempts, intentionally preserved",
+    "rejected_document_hashes_unchanged": true,
+    "git_clean": true
+  }
+}

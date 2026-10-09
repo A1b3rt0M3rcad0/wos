@@ -10,8 +10,8 @@ matched native receipts against the actual client archive hashes and uploaded
 `verified-coordinated-release`. Registry publication was explicitly skipped.
 Downloaded artifacts were independently checked against all five manifest hashes.
 
-This verified precursor exposed two additional defects during real managed Codex
-calibration; they are fixed in the subsequent source commits retained by PR75/76.
+This verified precursor exposed additional defects during real managed Codex
+calibration; they are fixed in the subsequent source commits retained by PR75/76/78.
 Do not substitute precursor receipts for those later binaries. The same-source
 release workflow must be rerun for the source intended for publication.
 
@@ -40,6 +40,30 @@ steady-state performance. No explicit Outcome achievement is inferred.
 T01–T96 have ordered candidate mappings and a reporter binding them to real test
 execution. Passing names do not automatically certify every assertion. Bounded
 mixed local lock and signed load experiments do not certify every network fault,
-million-row history or production SLA. Managed correction rounds and Claude,
-Hermes, OpenClaw and Woobe runtime certification remain consumer-specific tests;
+million-row history or production SLA. Claude, Hermes, OpenClaw and Woobe runtime certification remain consumer-specific tests;
 installer destinations and automated installed correction are separately tested.
+
+Local Compose acceptance copied `.env.example` unchanged into a separate owned
+project and built source `6d098d1c0caf51405c9fc5b73c8de1c09848291d`.
+`/readyz`, `/livez` and `/app/` returned200. The managed cloud build used its CA
+secret and inherited Docker proxy configuration; the image's normal local
+metadata was `dev`, not a fabricated release version. See the retained Compose
+receipt. Existing projects, databases and volumes were preserved.
+
+Final operational acceptance is the coordinated release workflow on its exact
+selected source: all essential core/browser/package/native checks must pass,
+then the artifact verifier must match source and native binary hashes. The
+precursor above is deliberately not relabeled as the final source receipt.
+
+The [separate managed correction pilot](signed-codex-correction-2026-10-09.json)
+actually completed a controlled negative delivery, independent changes_requested,
+fresh executor correction and fresh independent round-2 approval. Parent queried
+Task DONE, checked unchanged original criterion revisions, 43 external checks,
+clean Git and accepted-contract cleanup. Three rejected immutable review attempts
+remain byte-identical: ambiguous finding, non-approval assessments and unbound
+complementary records. These exposed client preflight/guide defects fixed in PR78.
+The accepted correction response was independently retrieved from its persisted
+signed return fact through authorized HTTP, with canonical payload digest checked.
+This calibration used the explicitly listed mixed broker/client source binaries;
+it supplements, rather than replaces, final-source hosted acceptance. It adds no
+samples to the one-task A/B/C comparison and claims no provider usage or savings.

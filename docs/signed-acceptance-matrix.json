@@ -2472,9 +2472,10 @@
         }
       ],
       "other_resources": [
-        "tools/distribution/signed-smoke.mjs"
+        "tools/distribution/signed-smoke.mjs",
+        "docs/audit/signed-codex-correction-2026-10-09.json"
       ],
-      "limitation": "Actual managed Codex initial approval and installed-binary correction journey are separate evidence; a managed fresh-agent correction round is not claimed."
+      "limitation": "Actual managed Codex correction reached Task DONE with fresh executor/reviewer histories, original revision-1 criteria and preserved rejected immutable returns. Distinct server Principals/profiles were used; shared filesystem/OS account is not security isolation or certification of other runtimes."
     },
     {
       "id": "T90",

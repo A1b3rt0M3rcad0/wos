@@ -195,6 +195,17 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 			return intent, fmt.Errorf("--completion must match the editable draft; edit it explicitly before signing")
 		}
 	}
+	if kind == "review" {
+		material := file.Review.Material
+		if len(material.Artifacts)+len(material.Evidence)+len(material.EvidenceLinks) > 0 {
+			if view.ReviewSpecification.Spec.Submission == nil {
+				return intent, fmt.Errorf("accepted submission omitted; inspect its immutable source before adding reviewer records")
+			}
+			if e = a.ValidateComplementaryReviewSource(view.ReviewSpecification.Spec.Submission.Material(), material); e != nil {
+				return intent, e
+			}
+		}
+	}
 	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 	if e != nil {

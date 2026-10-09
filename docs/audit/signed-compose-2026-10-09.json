@@ -1,0 +1,12 @@
+{
+  "source_commit": "6d098d1c0caf51405c9fc5b73c8de1c09848291d",
+  "env_example_copied": true,
+  "cloud_only_build_ca_secret": true,
+  "default_Docker_proxy_configuration_preserved": true,
+  "image_version": "dev (default local Compose build)",
+  "checks": {
+    "/readyz": 200,
+    "/livez": 200,
+    "/app/": 200
+  }
+}
