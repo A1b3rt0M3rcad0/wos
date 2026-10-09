@@ -1009,3 +1009,17 @@ parallel run timed out in the existing 30-second go-run MCP subprocess discovery
 and is not counted as a full pass. Vet, actionlint and catalogue passed. PR #55
 hosted browser, packages, full verification and native Linux/Windows passed. This adds forward protection, not retroactive protection to released
 v0.2.0 executables; actual old-binary and historical dataset acceptance remain P10.
+
+
+P11 agent guides started: all five portable skills now select live Namespace
+protocol explicitly. Signed work uses protected schema-2 named profiles,
+focal agent projections, distinct execution/review obligations and exact-CID
+recovery; contracts_v1 instructions are explicitly retained only for legacy
+Namespaces. Progressive bundled references explain immutable issued documents,
+editable single-file drafts, quotas/partial batches, supervised leases, signed
+acceptance versus quality, explicit trust rotation and unsigned migration.
+No skill installs credentials, starts agents or certifies runtime integration.
+All five installer tests passed: discovery roots, repeatable all-agent install/update,
+protection of local edits, progressive references/frontmatter and actual main-skill
+MCP tool names. UI/docs alignment remains required; this is not P11 completion
+or final native/consumer acceptance.
