@@ -1,3 +1,7 @@
+import {humanActions, availableActions,permissionLabels} from "./actions.js";
+import {humanForm} from "./human-forms.js";
+import {createIntent,sameScope,reconcileDraft} from "./intents.js";
+import {button as actionButton} from "./ui.js";
 import {copy, initializeCopy} from "./en-US.js";
  initializeCopy(document);
 import {
@@ -14,6 +18,14 @@ import {
 const $ = (id) => document.getElementById(id);
 const state = {
   namespace: "",
+  permissions: [],
+  principal: "",
+  actorKey: "",
+  humanForm: null,
+  formScope: null,
+  formGeneration: 0,
+  submitting: false,
+  technical: false,
   protocol: null,
   outcome: null,
   snapshot: null,
@@ -253,6 +265,9 @@ async function request(path, options = {}) {
   return data;
 }
 const { api_prefix: api } = await request("/app/config");
+const inventory = await request("/app/command-exposure.json");
+const currentScope=()=>({namespace_id:state.namespace,outcome_id:state.outcome?.id});
+async function refreshPermissions(){const namespace=state.namespace,generation=state.generation,scope=currentScope();const value=await request(`${api}/namespaces/${namespace}/effective-permissions${scope.outcome_id?`?outcome_id=${scope.outcome_id}`:""}`);if(generation!==state.generation||namespace!==state.namespace)return;state.permissions=value.permissions;$("developer-tools").hidden=!state.permissions.includes("namespace:admin");$("administration").hidden=!state.permissions.includes("namespace:admin");for(const id of ["create-outcome","empty-create"]){$(id).disabled=!state.permissions.includes("outcome:write");}}
 function notice(message, error = false) {
   $("notice").textContent = message;
   $("notice").classList.toggle("error", error);
@@ -276,12 +291,15 @@ function el(tag, text, className) {
 async function connect(namespace) {
   state.generation++;
   state.namespace = namespace;
+  state.permissions=[];state.principal="";state.actorKey="";
   state.protocol = null;
   $("signed-protocol-info").hidden = true;
   $("connect").hidden = true;
   $("workspace").hidden = false;
   state.catalog = (await request(`${api}/commands`)).commands;
   await refreshNamespaceProtocol();
+  await refreshPermissions();
+  const identity=await request(`${api}/identity`).catch(()=>({}));state.principal=identity.principal_id||"";state.actorKey=JSON.stringify([identity.actor_ref?.kind,identity.actor_ref?.provider,identity.actor_ref?.id]);
   await discover();
   $("context-name").textContent =
     $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
@@ -407,7 +425,8 @@ async function openOutcome(outcome) {
   try {
     await refresh();
   } catch (error) {
-    if (generation === state.generation) $("empty").hidden = false;
+    if(generation!==state.generation)return;
+    $("empty").hidden = false;
     throw error;
   } finally {
     if (generation === state.generation) $("workspace-loading").hidden = true;
@@ -454,6 +473,8 @@ async function refresh() {
   $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
   $("revision").textContent =
     `Revision ${snapshot.outcome_revision} · ${date(snapshot.evaluated_at)}`;
+  await refreshPermissions();
+  if(generation!==state.generation)return;
   renderMetrics();
   renderTabs();
   renderSummary();
@@ -558,7 +579,7 @@ function applyView() {
     )
       ? copy.text.newTask
       : `+ ${actionName(sectionCommand())}`;
-  $("add-item").hidden = !board && !sectionCommand();
+  $("add-item").hidden = (!board && !sectionCommand())||!state.permissions.includes(inventory[board?"create_work_item":sectionCommand()]?.permission);
 }
 function navigateSection(section) {
   state.section = section;
@@ -1074,7 +1095,7 @@ async function renderSection(cursor = "", append = false) {
   const section = state.section,
     generation = state.generation,
     run = ++state.renderId;
-  const data = await sectionData(section, cursor, append);
+  let data;try{data=await sectionData(section,cursor,append);}catch(error){if(generation===state.generation&&run===state.renderId)throw error;return;}
   if (generation !== state.generation || run !== state.renderId) return;
   state.loaded.set(section, data);
   const content = $("content");
@@ -1285,9 +1306,10 @@ const plurals = {
   artifact: "artifacts",
   roadmap: "roadmaps",
 };
-function readable(value, key = "", depth = 0) {
+function readable(value, key = "", depth = 0, authored=false) {
+  authored=authored||["external_context","metadata","execution_context"].includes(key);
   if (value === null || value === undefined) return el("span", "—");
-  if (typeof value !== "object") return el("span", formatValue(value,key));
+  if (typeof value !== "object") return el("span", authored?String(value):formatValue(value,key));
   if (depth > 4)
     return el("span", copy.text.openTechnicalDetailsForMoreInformation);
   if (value.kind && value.id && value.namespace_id)
@@ -1297,7 +1319,7 @@ function readable(value, key = "", depth = 0) {
     if (!value.length) list.append(el("span", copy.text.noRecords));
     for (const v of value) {
       const row = el("div", undefined, "readable-row");
-      row.append(readable(v, key, depth + 1));
+      row.append(readable(v, key, depth + 1,authored));
       list.append(row);
     }
     return list;
@@ -1319,9 +1341,9 @@ function readable(value, key = "", depth = 0) {
       ].includes(k)
     )
       continue;
-    list.append(el("dt", human(k)));
+    list.append(el("dt", authored?k:human(k)));
     const dd = el("dd");
-    dd.append(readable(v, k, depth + 1));
+    dd.append(readable(v, k, depth + 1,authored));
     list.append(dd);
   }
   return list;
@@ -1385,72 +1407,13 @@ function planNodes(nodes) {
   if (!nodes?.length) box.append(el("p", copy.text.thisRoadmapHasNoItemsYet));
   return box;
 }
+function effectiveActions(context=state.criterion?"criterion":state.selected?._kind||"outcome",entity=state.selected||state.outcome||{}) {
+ return availableActions({context,entity,criterion:state.criterion,protocol:state.protocol,permissions:state.permissions,principal:state.principal,inventory});
+}
 function quickActions(kind, entity) {
-  const options = {
-    work_item: [
-      "claim_work_item",
-      "complete_work_item",
-      "release_work_item",
-      "cancel_work_item",
-    ],
-    objective: ["start_objective", "achieve_objective"],
-    outcome: ["activate_outcome", "achieve_outcome"],
-    issue: ["investigate_issue", "resolve_issue"],
-    blocker: ["resolve_blocker"],
-    roadmap: [
-      "open_roadmap_draft",
-      "replace_roadmap_draft",
-      "publish_roadmap_draft",
-    ],
-    evidence: ["retract_evidence"],
-  };
-  const container = el("div", undefined, "quick-actions");
-  const choices=kind==="work_item"&&entity.contracts_enabled ? (entity.current_contract_id ? ["renew_work_contract","sync_work_contract","submit_work_result","finalize_work_contract","revoke_work_contract"]:["acquire_work_contract","cancel_work_item"]) : options[kind]||[];
- for (const name of choices) {
-    if (!state.catalog.some((c) => c.name === name)) continue;
-    if (
-      kind === "roadmap" &&
-      (entity.lifecycle === "archived" ||
-        (name === "open_roadmap_draft" ? Boolean(entity.draft) : !entity.draft))
-    )
-      continue;
-    if (
-      kind === "objective" &&
-      (name === "start_objective"
-        ? entity.lifecycle !== "planned"
-        : entity.lifecycle !== "in_progress")
-    )
-      continue;
-    if (
-      kind === "outcome" &&
-      (name === "activate_outcome"
-        ? entity.lifecycle !== "draft"
-        : entity.lifecycle !== "active")
-    )
-      continue;
-    if (kind === "evidence" && entity.lifecycle !== "registered") continue;
-    if (kind === "blocker" && entity.lifecycle !== "active") continue;
-    if (
-      kind === "issue" &&
-      (name === "investigate_issue"
-        ? entity.lifecycle !== "open"
-        : !["open", "investigating"].includes(entity.lifecycle))
-    )
-      continue;
-
-    if (
-      kind === "work_item" &&
-      (["done", "cancelled"].includes(entity.lifecycle) ||
-        (name === "claim_work_item" && entity.lifecycle !== "todo") ||
-        (name === "complete_work_item" && entity.lifecycle !== "in_progress") ||
-        (name === "release_work_item" && entity.lifecycle !== "in_progress"))
-    )
-      continue;
-    const button = el("button", actionName(name), "quiet");
-    button.onclick = () => openCommands(name);
-    container.append(button);
-  }
-  return container;
+ const container=el("div",undefined,"quick-actions");
+ for(const action of effectiveActions(kind,entity))container.append(actionButton(action.label,()=>{state.selected={...entity,_kind:kind};openCommands(action.name)},"quiet"));
+ return container;
 }
 async function showEntity(ref) {
  const detailGeneration=++state.detailGeneration;
@@ -1467,9 +1430,11 @@ async function showEntity(ref) {
       ? outcomeBase()
       : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
   const result = await request(path);
+  let operationalState;
+  if(ref.kind==="work_item"){const projection=await request(`${path}/operational-state`);if(generation!==state.generation||detailGeneration!==state.detailGeneration)return;if(result.outcome_revision!==projection.outcome_revision)throw Error("This task changed while loading. Refresh to review a consistent state.");operationalState=projection.state;}
   if (generation !== state.generation) return;
   if (detailGeneration!==state.detailGeneration) return;
- const entity = result.value || result;
+ const entity = {...(result.value||result),...(operationalState?{_operational_state:operationalState}:{})};
  state.contractView=null;state.submission=null;
   state.selected = { ...entity, _kind: ref.kind };
   state.criterion = null;
@@ -1491,6 +1456,7 @@ async function showEntity(ref) {
     );
   if (entity.archived_at) status.append(el("span", copy.text.archived, "badge"));
   detail.append(status);
+  if(entity._operational_state){const readiness=el("section",undefined,"detail-section");readiness.append(el("h3","Operational readiness"),badge(entity._operational_state.display_state),el("p",`Reservation authority: ${display(entity._operational_state.lease_status)} · evaluated ${date(entity._operational_state.evaluated_at)}`));if(entity._operational_state.readiness_reasons?.length)readiness.append(el("p",entity._operational_state.readiness_reasons.map(display).join(" · ")));detail.append(readiness);}
   const description =
     entity.desired_state ||
     entity.description ||
@@ -1690,7 +1656,11 @@ contract_id:state.contractView?.contract.id,
     result: "met",
   };
 }
-function openCommands(name) {
+function openTechnicalCommands(name) {
+  if(state.pending){openCommands();return;}
+  if(!state.permissions.includes("namespace:admin")){notice("Developer tools require workspace administration permission.",true);return;}
+  state.humanForm?.dispose();state.humanForm=null;state.technical=true;state.formScope=currentScope();state.formGeneration=state.generation;
+  $("command-select").closest("label").hidden=false;$("conflict-review").replaceChildren();
   if (name && !commandAvailableInUI(name)) {
     notice(copy.text.thisFlowRequiresAnAuthorizedProfileAndProtectedSignatureUseW6de2babd, true);
     return;
@@ -1767,6 +1737,7 @@ function field(name, schema, value, required = false) {
     name !== "parent_objective_id"
   )
     return { node: wrap, get: () => value };
+  if(name==="permissions"){const node=el("fieldset");node.append(el("legend","Permissions"));const controls=Object.keys(permissionLabels).map(permission=>{const label=el("label",undefined,"check-label"),input=el("input");input.type="checkbox";input.checked=(value||[]).includes(permission);label.append(input,document.createTextNode(permissionLabels[permission]));node.append(label);return {permission,input}});return {node,get:()=>controls.filter(x=>x.input.checked).map(x=>x.permission)};}
   if (entityKind) {
     const label = el("label", human(name)),
       select = el("select");
@@ -2073,68 +2044,68 @@ function buildForm() {
 
 $("command-select").onchange = buildForm;
 $("close-command").onclick = () => $("command-dialog").close();
-async function submit(retry = false) {
-  if (!retry) {
-    state.pending = {
-      name: $("command-select").value,
-      key: crypto.randomUUID(),
-      command: formGetter(),
-    };
-  }
-  if (!state.pending) return;
-  const pending = state.pending;
-  $("submit-command").disabled = true;
-  $("retry-command").hidden = true;
-  try {
-    await refreshNamespaceProtocol();
-    if (!commandAvailableInUI(pending.name)) throw new Error(copy.text.theProtocolChangedThisActionRequiresAnAuthorizedProfileAndPr0325df8a);
-    const result = await request(`${api}/commands/${pending.name}`, {
-      method: "POST",
-      headers: { "Idempotency-Key": pending.key },
-      body: JSON.stringify({ command: pending.command }),
-    });
-    state.pending = null;
-    if (result.value?.desired_state !== undefined) {
-      state.outcome = result.value;
-      state.selected = result.value;
-      if (pending.name === "create_outcome") {
-        state.generation++;
-        state.view = "summary";
-        $("item-search").value = "";
-        $("item-priority").value = "";
-      }
-    }
-    const newSection = Object.entries(createForSection).find(
-      ([section, command]) => command === pending.name,
-    )?.[0];
-    if (newSection) {
-      state.section = newSection;
-      state.view = "list";
-      $("item-search").value = "";
-      $("item-priority").value = "";
-    }
-    await discover();
-    if (state.outcome) await refresh();
-    $("command-dialog").close();
-    notice(
-      result.result_omitted
-        ? copy.text.changeRecordedCheckTheRefreshedState
-        : copy.text.changeSaved,
-    );
-  } catch (e) {
-    $("command-error").className = "danger";
-    $("command-error").textContent =
-      e.code === "version_conflict"
-        ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
-        : e.message;
-    if (e.status === undefined || e.status >= 500) {
-      $("retry-command").hidden = false;
-      $("command-error").textContent +=
-        copy.text.theResponseMayHaveBeenLostAfterCommitRetryTheSameIntentToRecoverTheResult;
-    }
-  } finally {
-    $("submit-command").disabled = !$("retry-command").hidden;
-  }
+$("command-dialog").addEventListener("close",()=>state.humanForm?.dispose());
+function projectCommand(name,value){
+ // The technical catalog validates transport compatibility; it does not generate human fields.
+ const allowed=state.catalog.find(x=>x.name===name)?.schema.properties||{};
+ return Object.fromEntries(Object.entries(value).filter(([key])=>key in allowed));
+}
+function openCommands(name) {
+ if(state.submitting){notice("Wait for the current change to finish before starting another.",true);return;}
+ if(!state.principal){notice("Wait for the authenticated workspace identity to load.",true);return;}
+ if(state.pending){notice("Resolve the previous uncertain response with Retry the same intent before starting another change.",true);$("command-dialog").showModal();return;}
+ if(!name){
+  const menu=$("action-options");menu.replaceChildren();
+  for(const action of effectiveActions())menu.append(actionButton(action.label,()=>{$("action-dialog").close();openCommands(action.name)},"quiet"));
+  if(!menu.children.length)menu.append(el("p","No changes are available for your current permissions and this item. The API always checks authorization again."));
+  $("action-dialog").showModal();return;
+ }
+ const context=name==='create_outcome'?"workspace":state.criterion?"criterion":state.selected?._kind||"outcome";
+ if(!effectiveActions(context).some(a=>a.name===name)){notice("This action is unavailable in the current state, permission or protocol. Signed execution requires an authorized external profile.",true);return;}
+ if(!commandAvailableInUI(name))return;
+ state.humanForm?.dispose();state.technical=false;state.formScope=currentScope();state.formGeneration=state.generation;
+ $("command-select").replaceChildren(Object.assign(el("option",humanActions[name].label),{value:name}));$("command-select").closest("label").hidden=true;
+ $("command-title").textContent=humanActions[name].label;$("command-help").textContent="Review your intent before saving. The server checks permissions and current state.";$("submit-command").textContent=name==='create_outcome'?"Save draft":name==='replace_roadmap_draft'?"Save draft":name==='publish_roadmap_draft'?"Publish revision":"Save changes";
+ state.humanForm=humanForm(name,{scope:state.formScope,entity:state.selected||{},criterion:state.criterion,request:(path,options)=>request(`${api}${path}`,options),permissions:state.permissions,protocol:state.protocol,submission:state.submission,contractView:state.contractView});
+ formGetter=state.humanForm.get;$("fields").replaceChildren(...(state.selected?.title?[el("p",`${kindName(state.selected._kind||"outcome")}: ${state.selected.title}`,"field-context")]:[]),state.humanForm.node);$("command-error").textContent="";$("conflict-review").replaceChildren();$("retry-command").hidden=true;$("submit-command").disabled=false;$("detail-dialog").close();$("command-dialog").showModal();
+}
+$("close-actions").onclick=()=>$("action-dialog").close();
+$("developer-tools").onclick=()=>{if(state.pending){openCommands();return;}openTechnicalCommands();};
+async function submit(retry = false, reconciled) {
+ if(state.submitting)return;state.submitting=true;$("submit-command").disabled=true;$("retry-command").disabled=true;
+ let committed=false,dispatched=false;const dispatchGeneration=state.generation;
+ try {
+  if(!retry){const scope=state.formScope,generation=state.formGeneration;const command=reconciled||await formGetter();if(generation!==state.generation||!sameScope(scope,currentScope()))throw Error("Workspace context changed. Reopen the form in the intended Outcome.");state.pending=createIntent($("command-select").value,projectCommand($("command-select").value,command),scope,undefined,{principal_id:state.principal,actor_key:state.actorKey});}
+  const pending=state.pending;if(!pending)return;if(retry&&sameScope(pending.scope,currentScope()))state.formGeneration=state.generation;
+  if(!sameScope(pending.scope,currentScope()))throw Error("Return to the original workspace and Outcome before retrying this intent.");
+  if(pending.identity.principal_id!==state.principal||pending.identity.actor_key!==state.actorKey)throw Error("This intent belongs to the original authenticated identity. Reconnect with that identity to reconcile it.");
+  await refreshNamespaceProtocol();await refreshPermissions();
+  if(!sameScope(pending.scope,currentScope())||dispatchGeneration!==state.generation)throw Error("Workspace context changed before dispatch.");
+  if(!commandAvailableInUI(pending.name)||!state.permissions.includes(inventory[pending.name]?.permission))throw Error("The protocol or permission changed. This intent cannot be dispatched.");
+  dispatched=true;const result=await request(`${api}/commands/${pending.name}`,{method:"POST",headers:{"Idempotency-Key":pending.key},body:pending.body});
+  committed=true;state.pending=null;
+  if(!sameScope(pending.scope,currentScope())||state.formGeneration!==state.generation)return;
+  $("command-dialog").close();state.humanForm?.dispose();$("fields").inert=false;
+  if(result.value?.desired_state!==undefined){state.outcome=result.value;state.selected={...result.value,_kind:"outcome"};if(pending.name==='create_outcome'){state.generation++;state.view='summary';}}
+  const newSection=pending.name==="report_issue_with_blocker"?"issues":Object.entries(createForSection).find(([,command])=>command===pending.name)?.[0];if(newSection){state.section=newSection;state.view='list';$("item-search").value='';$("item-priority").value='';}
+  await discover();if(state.outcome)await refresh();
+  notice(pending.name==='create_outcome'?"Draft saved. Continue setup with criteria, objectives and tasks. Activation remains a separate decision.":result.result_omitted?copy.text.changeRecordedCheckTheRefreshedState:copy.text.changeSaved);
+ } catch(e){
+  $("command-error").className='danger';$("command-error").textContent=committed?"Saved, but the refreshed view could not be loaded. Refresh the workspace to see persisted state.":e.code==='version_conflict'?copy.text.aNewerVersionExistsReviewChangesBeforeSaving:e.message;
+  if(committed){report(e);return;}
+  if(state.pending&&(retry||dispatched&&(e.status===undefined||e.status>=500))){$("retry-command").hidden=false;$("fields").inert=true;$("command-error").textContent+=copy.text.theResponseMayHaveBeenLostAfterCommitRetryTheSameIntentToRecoverTheResult;}
+  else {const pending=state.pending;state.pending=null;$("fields").inert=false;if(pending&&(e.code==='version_conflict'||e.code==='precondition_failed'))offerConflict(pending);}
+ } finally {state.submitting=false;$("submit-command").disabled=!$("retry-command").hidden;$("retry-command").disabled=false;}
+}
+const rebaseEdits=new Set(['update_outcome','update_objective','update_work_item','update_issue','update_blocker_description','replace_roadmap_draft']);
+function offerConflict(pending){
+ const root=$("conflict-review");root.replaceChildren(el('h3','This item changed while you were editing'),el('p','Your local draft is retained. Loading the latest state does not save anything.'));
+ if(!rebaseEdits.has(pending.name)){root.append(el('p','This transition or assessment needs a fresh state/definition review. Reopen the item to make a new decision; your entries remain visible here.'));return;}
+ root.append(actionButton('Compare with latest state',async()=>{try{
+  const entity=state.selected,kind=entity?._kind||'outcome',path=kind==='outcome'?outcomeBase():`${outcomeBase()}/${plurals[kind]}/${entity.id}`;
+  const result=await request(path);if(!sameScope(pending.scope,currentScope()))return;const latest=result.value||result,local=JSON.parse(pending.body).command;
+  root.replaceChildren(el('h3','Review latest state and your local draft'));const columns=el('div',undefined,'conflict-columns');for(const [label,data]of [['Latest saved state',latest],['Your local changes',local]]){const box=el('section');box.append(el('h4',label),readable(data));columns.append(box);}root.append(columns,actionButton('Use latest version and save my edits',()=>{const next=reconcileDraft(local,latest);state.formScope=pending.scope;state.formGeneration=state.generation;submit(false,next).catch(report)},'quiet'));
+ }catch(error){report(error);}},'quiet'));
 }
 $("command-form").onsubmit = (event) => {
   event.preventDefault();
@@ -2294,7 +2265,7 @@ const unsignedExecutionActions = new Set([
 ]);
 function commandAvailableInUI(name) {
   // Browser forms never hold an agent private key or manufacture a proof.
-  if (name.includes("_signed_")) return false;
+  if (inventory[name]?.exposure === "S") return false;
   if (state.protocol?.phase === "signed_contracts_v2" && state.selected?._kind === "work_item" && ["attest_criterion", "record_criterion_assessment", "waive_criterion"].includes(name)) return false;
   return state.protocol?.phase !== "signed_contracts_v2" || !unsignedExecutionActions.has(name);
 }

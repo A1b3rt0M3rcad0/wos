@@ -128,7 +128,7 @@
           <button id="more-outcomes" class="quiet" hidden data-copy="moreOutcomes">More outcomes</button>
           <div class="sidebar-bottom">
             <button id="administration" class="quiet">Workspace settings</button
-            ><span class="sidebar-caption"
+            ><button id="developer-tools" class="quiet" hidden>Developer tools</button><span class="sidebar-caption"
                data-copy="planExecuteVerify">Plan · execute · verify</span
             >
           </div>
@@ -226,13 +226,14 @@
         <label data-copy="action">Action<select id="command-select"></select></label>
         <p id="command-help" data-copy="reviewTheInformationBeforeSaving">Review the information before saving.</p>
         <div id="fields"></div>
-        <div id="command-error" role="alert"></div>
+        <div id="command-error" role="alert"></div><section id="conflict-review" aria-live="polite"></section>
         <footer>
           <button id="submit-command">Record</button
           ><button id="retry-command" type="button" class="quiet" hidden data-copy="retryTheSameIntent">Retry the same intent</button>
         </footer>
       </form>
     </dialog>
+    <dialog id="action-dialog" aria-labelledby="action-title"><div class="dialog-heading"><h2 id="action-title">Available actions</h2><button id="close-actions" class="icon-button" aria-label="Close actions">×</button></div><div id="action-options" class="action-options"></div></dialog>
     <dialog
       id="detail-dialog"
       class="detail-drawer"
