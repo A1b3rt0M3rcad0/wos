@@ -81,6 +81,7 @@ jobs:
         run: |
           node tools/distribution/build.mjs
           node tools/distribution/verify.mjs > dist/package-acceptance.json
+          node --input-type=module -e 'import fs from "node:fs/promises"; import {verifyNativePlatforms} from "./tools/distribution/platform.mjs"; const manifest=JSON.parse(await fs.readFile("dist/distribution.json","utf8")); await verifyNativePlatforms(manifest); console.log(JSON.stringify({source:manifest.commit,version:manifest.version,native_receipts_verified:true}));' > dist/native-verification.json
           node tools/releases/publish.mjs --dry-run > dist/release-verification.json
       - uses: actions/upload-artifact@v7.0.2
         with:
@@ -93,6 +94,7 @@ jobs:
             dist/SHA256SUMS
             dist/package-acceptance.json
             dist/release-verification.json
+            dist/native-verification.json
             dist/acceptance/*.json
           if-no-files-found: error
           retention-days: 30
