@@ -1206,3 +1206,13 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+
+P12 T34 exercises real SQLite/PostgreSQL rollback boundaries for artifact,
+evidence, submission, contract, Task, return fact, Outcome revision, acceptance
+fact, Domain/Integration Event, idempotency reservation/completion, durable
+operation recording and review-case insertion. Late receipt-signing and pre-
+commit failures retain every optional SQL capability/clock through concrete
+unit embedding. All affected table rows compare exactly with the baseline; the
+original immutable signed request succeeds after faults are removed. Go1.27.2
+race suites pass on both SQL backends. This is before-commit fault injection,
+not proof of network loss after commit or every statement inside each adapter.
