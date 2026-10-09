@@ -1,44 +1,43 @@
-# Nova interface do WOS
+# WOS human workspace
 
-Capturas reais da interface implementada, feitas em 7 de outubro de 2026. A estrutura de navegação, resumo, lista e quadro segue a referência de UX do Jira. Superfícies neutras quentes, cartões, acabamento e acento laranja seguem as imagens de referência do Guild.ai fornecidas pelo proprietário.
+These are real screenshots captured on October 9, 2026 from an isolated SQLite-backed WOS service with demonstration records created through the public API. Navigation follows the owner's Jira UX reference; warm neutral surfaces, orange accents and restrained cards follow the supplied Guild.ai design reference. They are not mockups and contain no access credentials.
 
-Os dados são descartáveis, criados pela API durante `tests/web/workspace.spec.mjs`. Reservas, impedimentos, cancelamento e publicação de plano usam comandos reais. As imagens não contêm credenciais e não são mockups. A foto do formulário de avaliação mostra uma intenção antes do envio; as jornadas separadas exercitam a avaliação e conclusão completas.
+The current implementation uses six purpose areas, dedicated human forms, typed reference search, independent verification and explicit operational authority. [User guide](../workspace-ux.md) · [Acceptance and remaining manual checks](../ux/final-acceptance.md).
 
-[Guia de navegação, critérios e limites](../workspace-ux.md).
+## Overview
 
-## Resumo do resultado
+![Outcome overview](2026-10-09/02-overview.png)
 
-![Resumo do resultado](02-resumo.png)
+## Work board and list
 
-## Quadro operacional
+![Work board](2026-10-09/03-work-board.png)
 
-![Quadro operacional](03-quadro.png)
+![Work list](2026-10-09/04-work-list.png)
 
-## Lista de itens
+## Task detail
 
-![Lista de itens](04-lista.png)
+![Task detail and blocking impact](2026-10-09/05-task-detail.png)
 
-## Detalhe e ações do trabalho
+## Objective hierarchy and Roadmap
 
-![Detalhe e ações do trabalho](05-detalhe.png)
+![Objective hierarchy](2026-10-09/06-objective-hierarchy.png)
 
-## Plano publicado e referências
+![Published Roadmap](2026-10-09/07-roadmap.png)
 
-![Plano publicado e referências](06-plano.png)
+## Issues and assessment
 
-## Avaliação humana com evidências
+![Issues](2026-10-09/08-issues.png)
 
-![Avaliação humana com evidências](09-avaliacao.png)
+![Criterion assessment form](2026-10-09/09-assessment.png)
 
-## Histórico de participação
+The assessment capture shows an unsubmitted intent. Registering its demonstration Evidence did not mark a criterion met. Separate browser journeys exercise actual assessments and immutable Roadmap publication/replanning.
 
-![Histórico de participação](07-historico.png)
+## Mobile and access
 
-## Quadro no celular
+![Mobile overview at 390px](2026-10-09/10-mobile-overview.png)
 
-![Quadro no celular](08-mobile.png)
+![Sign in](2026-10-09/01-access.png)
 
-## Acesso ao workspace
+## Historical captures
 
-![Acesso ao workspace](01-acesso.png)
-
+The Portuguese files at this directory's root were captured on October 7 and remain historical records. They are not the current official product copy or acceptance evidence. The October 9 capture manifest identifies its real-server demonstration source; representative-user and manual screen-reader validation remain pending by owner decision.

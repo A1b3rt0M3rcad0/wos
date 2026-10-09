@@ -1,0 +1,35 @@
+{
+  "source_commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+  "env_example_copied_unchanged": true,
+  "host_port_override": 18109,
+  "cloud_build_ca_secret": "build-only system trust bundle; verified TLS",
+  "runtime_user": "10001:10001",
+  "checks": [
+    "ready/live",
+    "English embedded shell",
+    "all static assets match source",
+    "self-only script CSP",
+    "unauthenticated API denied",
+    "authorized reference search and permission hints",
+    "MCP initialize",
+    "Draft and Task persisted across Compose restart"
+  ],
+  "embedded_assets": [
+    "actions.js",
+    "advanced-editors.js",
+    "api-client.js",
+    "app.js",
+    "command-exposure.json",
+    "contracts-view.js",
+    "en-US.js",
+    "favicon.svg",
+    "human-forms.js",
+    "intents.js",
+    "navigation.js",
+    "presentation.js",
+    "reference-picker.js",
+    "roadmap-editor.js",
+    "style.css",
+    "ui.js"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "source": "real isolated SQLite server; public API-created demonstration dataset",
+  "screenshots": [
+    "01-access.png",
+    "02-overview.png",
+    "03-work-board.png",
+    "04-work-list.png",
+    "05-task-detail.png",
+    "06-objective-hierarchy.png",
+    "07-roadmap.png",
+    "08-issues.png",
+    "09-assessment.png",
+    "10-mobile-overview.png"
+  ],
+  "credential_included": false,
+  "code_commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+  "capture_command": "node tools/acceptance/workspace-screenshots.mjs \"$PWD\" /tmp/wos-captures"
+}

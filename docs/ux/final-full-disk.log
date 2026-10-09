@@ -1,0 +1,4 @@
+=== RUN   TestReceiptCleanupRecoversRealFullDisk
+    full_disk_linux_test.go:89: real ENOSPC preserved persisted acceptance and exact files; freeing owned capacity recovered cleanup without a new return
+--- PASS: TestReceiptCleanupRecoversRealFullDisk (0.05s)
+PASS
