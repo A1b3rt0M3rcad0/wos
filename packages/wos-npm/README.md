@@ -28,3 +28,5 @@ requires no workspace or running service. See [the client guide](https://github.
 for init, explicit acquisition, checkpoints, review and recovery. Native client
 archives are separate for Linux amd64 and Windows amd64; cross-build alone is not
 Windows acceptance. Installing this package does not start the service or an agent.
+
+Generated editable workspace schemas are included in `schemas/`. Use the relevant section of `contract-v2.schema.json` for signed execution/review drafts; do not load its full technical envelope into agent context. Release metadata records signed v2/schema 2 and retained v1/schema 1 compatibility.

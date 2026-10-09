@@ -1345,3 +1345,9 @@ that same evidence in the submission's general evidence set. Original signed
 request bytes remain unchanged; unknown local keys are still rejected, current
 criteria/assessment guards remain authoritative. SQLite/PostgreSQL direct/review
 atomic return race cases pass without duplicated `evidence_local_keys`.
+
+P13 npm/standalone packages now include the same generated workspace schemas as
+the CLI archives, so npm agents need no source checkout to discover typed
+editable material. Package metadata matches the live client signed-v2/schema-2
+capabilities and retains explicit legacy compatibility; installed-package
+verification checks schema inclusion and protocol metadata against the binary.
