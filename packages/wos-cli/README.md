@@ -3,6 +3,19 @@
 API-only WOS client; `wos` remains the server/admin executable. No database is opened
 by the client, and no instructions, scripts, agents or artifact URLs are executed.
 
+For a Namespace using `signed_contracts_v2`, follow the
+[signed workspace guide](../../docs/signed-workspace-profiles.md). Initialize
+schema 2 with the independently approved ServerID/issuer, provision a named
+profile with protected secret references, and pass `--profile` on every call.
+Execution uses `work checkout/show/sign/send/finish/recover`; independent review
+uses `review checkout/show/sign/send/finish/recover`. Issued documents and frozen
+intentions are immutable. Receipt-bound cleanup preserves unconfirmed edits.
+Neither profile creation nor skill installation activates the Namespace.
+
+The commands and separate-journal layout below describe legacy schema 1 and
+`contracts_v1`; signed projects reject those substitutions. Signed technical
+limits/layout are specified in the schema-2 guide and packaged schemas.
+
 ```sh
 go build -o wosctl ./packages/wos-cli/cmd/wosctl
 wosctl init --server https://wos.example.test --namespace UUIDv7 --outcome UUIDv7 --credential-env WOS_TOKEN --output json

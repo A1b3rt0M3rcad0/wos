@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-08
+**Last reviewed:** 2026-10-09
 **Current target:** Release 0.1  
 **Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
 
@@ -905,15 +905,15 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
 | P01 | Codec implemented and locally verified | Public pure signing package, six payload purposes, typed bindings/counters, exact verified DTO, local mapping/proof and independent Python vector. Race signing/domain, vet and two 15-second fuzz campaigns passed; no runtime authorization claim. |
 | P02 | Identity foundation implemented and locally verified | Authorized one-use enrollment, possession-bound rotation, credential restrictions/floors, stable Principal groups, durable security receipts and all three adapters. Signed work/review operations remain P03–P06. |
-| P03 | In progress | Signed issuance, runtime trust and domain/storage foundations verified; atomic delivery, reviews and full cutover/guards remain following waves. |
+| P03 | Implemented incrementally; exhaustive acceptance remains P12 | Signed issuance/runtime trust and storage foundations integrated with subsequent delivery/review/cutover work; final-source gates remain open. |
 | P04 | Core implemented and locally verified; exhaustive acceptance remains P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
 | P05 | Core implemented and locally verified; exhaustive acceptance remains P06/P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
 | P06 | Implemented and locally verified; exhaustive matrix remains P12 | Exact signed schemas/counters, live Outcome scope filtering, public identity/enrollment, bounded focal proofs/material, unsigned guards and actual HTTP/MCP/SDK independent review journey. Full race/vet/restore and generator gates passed locally. |
-| P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Full operational workflows remain P08/P09. |
-| P08 | In progress — work batches and durable local acquisition | Stable locks, server recovery, independent work searches and embedded profile intentions/materialization implemented. Review checkout, renew/keepalive and comprehensive process/file failure acceptance remain pending. |
+| P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Operational execution/review workflows are implemented in P08/P09; native keyring execution remains unaccepted. |
+| P08 | Implemented incrementally; exhaustive fault acceptance remains P12 | Stable locks, bounded execution/review batches, embedded intentions, verified atomic materialization, renew/resume/refresh and supervised keepalive integrated. Extended final-source process/file failure gates remain open. |
 | P09 | In progress — signed CLI return and receipt cleanup | Protected local sign/send/finish, original-CID frozen recovery, issuer receipt verification and single-file cleanup implemented; final-source/full and exhaustive fault acceptance remain required. |
-| P10 | In progress | Explicit server cutover, recoverable schema-2 operator intentions and preserving workspace migration implemented; full legacy upgrade/restore and issuer recovery acceptance remain pending. |
-| P11 | Planned | UI read models/guarded actions, five skills and operating guides. |
+| P10 | In progress | Explicit cutover, preserving workspace migration, schema compatibility, host issuer recovery and client pin approval integrated; historical v0.2 dataset/old-binary and complete restore acceptance remain pending. |
+| P11 | In progress | Five signed-protocol skills and client guide alignment locally verified; UI read models/guarded actions and final operational guide acceptance remain pending. |
 | P12 | Planned; external platform/pilot gates unresolved | Real SQL/restore, independent processes, failures/load/context benchmarks; native Windows and actual consumer separately proven. |
 | P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
 
@@ -1010,6 +1010,26 @@ and is not counted as a full pass. Vet, actionlint and catalogue passed. PR #55
 hosted browser, packages, full verification and native Linux/Windows passed. This adds forward protection, not retroactive protection to released
 v0.2.0 executables; actual old-binary and historical dataset acceptance remain P10.
 
+
+P11 agent guides started: all five portable skills now select live Namespace
+protocol explicitly. Signed work uses protected schema-2 named profiles,
+focal agent projections, distinct execution/review obligations and exact-CID
+recovery; contracts_v1 instructions are explicitly retained only for legacy
+Namespaces. Progressive bundled references explain immutable issued documents,
+editable single-file drafts, quotas/partial batches, supervised leases, signed
+acceptance versus quality, explicit trust rotation and unsigned migration.
+No skill installs credentials, starts agents or certifies runtime integration.
+All five installer tests passed: discovery roots, repeatable all-agent install/update,
+protection of local edits, progressive references/frontmatter and actual main-skill
+MCP tool names. UI/docs alignment remains required; this is not P11 completion
+or final native/consumer acceptance.
+
+P11 guide alignment removes stale claims that schema-2 review, lease maintenance
+and sign/send/finish are unimplemented. Client/skill READMEs explicitly separate
+legacy recipes from the protected signed flow; signed workspace docs explain
+immutable original-CID returns and receipt-bound cleanup, distinguish executor
+acceptance from review/quality, and retain native-keyring/final-source gates.
+Registry publication is not inferred from source guide changes.
 P10 issuer recovery design started: ADR 028 records the missing host-managed
 replacement path required by T14/T87, separate from tenant administration and
 without rewriting old signed facts. Implementation must retain persistent
@@ -1079,3 +1099,24 @@ rather than protocol_preflight. Those failed fixtures are not counted as passes;
 the product assertions remain intact. Broader runtime regression and hosted
 gates remain required before integration; historical dataset and P11–P13 remain
 open.
+PR #57 integrated host issuer recovery and interruption-safe client trust on
+master f06d63c. Full frozen-source race suite passed with real PostgreSQL/clean
+restore (214.673s), SQLite (126.291s), runtime (47.389s), CLI (8.862s), actual
+signed acceptance (41.944s) and architectural boundaries (6.441s). Vet,
+actionlint and catalogue passed. All hosted browser/package/full/native checks
+passed. Native Linux/Windows receipts from run 37885413406 identify synthetic PR
+merge source 78bf2e2d005ce64d02032e75608c823bd9730450 and version 0.2.0;
+these are incremental source-specific proofs, not final-release certification.
+P10 historical dataset/old binary and P11 UI/P12/P13 remain required. P11 guide
+work proceeds against stable signed interfaces while those independent gates
+continue; no wave-completion claim is inferred from this merge.
+
+
+PR #58 integrated the five signed-protocol skills and client-guide alignment on
+master c91c694. All hosted browser/package/full/native Linux/Windows checks
+passed on combined source 129797f. Installer acceptance is not certification of
+execution in every consumer agent; P11 UI and final operational acceptance remain
+open. T15 readiness source 2941bba passed the complete runtime race suite
+(51.364s), actual Memory/SQLite/PostgreSQL signed acceptance (43.777s), vet,
+actionlint and catalogue. Merging the guide baseline changes documentation only;
+new hosted source checks remain required for the readiness PR.

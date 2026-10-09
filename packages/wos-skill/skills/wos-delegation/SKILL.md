@@ -7,6 +7,15 @@ description: Delegate authorized bounded WOS contract tasks through native host 
 
 WOS does not spawn, schedule or run agents. Verify the user's/repository's delegation authorization and the host's native tools before launching workers. If unavailable, execute sequentially or report that limitation.
 
+For `signed_contracts_v2`, provision a distinct approved schema-2 profile and
+credential for each independent holder. Pass the explicit profile, workspace,
+scope/task IDs, permitted files/tools, acceptance and stop conditions. Workers
+use focal `work show ID --for-agent`, edit only their execution draft, explicitly
+finish and return compact durable IDs. The independent reviewer has its own
+Principal/profile and `review checkout/show/finish` obligation. Private references,
+issued proof blobs and frozen technical intentions stay outside model context.
+Use [signed protocol and recovery](references/signed-protocol.md) for exact flow.
+
 1. Define independent WorkItems and acceptance obligations within the authorized Outcome. Plan order and parent grouping do not create execution dependencies; explicit depends_on does.
 2. Send each worker only authorized scope/task IDs, essential intent, permitted files/tools, acceptance and stop conditions. It acquires its own WorkContract and reads its immutable focal snapshot and latest checkpoint from WOS. Do not send the full supervisor conversation by default.
 3. Explicitly select fresh/minimal history if the host supports it. Separate windows can inherit history by default. Neither context nor filesystem isolation is guaranteed by WOS. Do not claim token savings without measurements.
