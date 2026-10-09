@@ -2,6 +2,7 @@ package commands
 
 import (
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"reflect"
 	"testing"
@@ -37,5 +38,24 @@ func TestSignedFocalTechnicalExpansionsHaveSeparateBase64Bounds(t *testing.T) {
 		if schema["contentEncoding"] != "base64" || schema["maxLength"] != maximum {
 			t.Fatalf("%s inherited semantic scalar bound instead of technical expansion bound", field)
 		}
+	}
+}
+
+func TestSignedStateCounterSchemasMatchExactWireAndLeaveUnsignedSchemasIntact(t *testing.T) {
+	for _, typ := range []reflect.Type{reflect.TypeFor[d.Version](), reflect.TypeFor[d.OutcomeRevision](), reflect.TypeFor[d.CriterionRevision]()} {
+		if SignedSchema(typ)["type"] != "string" {
+			t.Fatal("signed counter advertised as JSON number", typ)
+		}
+		if Schema(typ)["type"] != "integer" {
+			t.Fatal("historical unsigned counter schema changed", typ)
+		}
+	}
+	properties := SignedSchema(reflect.TypeFor[a.SignedStateResult]())["properties"].(map[string]any)
+	if properties["protocol_version"].(map[string]any)["type"] != "integer" {
+		t.Fatal("literal signed protocol marker advertised as string")
+	}
+	protocol := SignedSchema(reflect.TypeFor[d.NamespaceWorkProtocol]())["properties"].(map[string]any)
+	if protocol["protocol_version"].(map[string]any)["type"] != "string" || protocol["writer_epoch"].(map[string]any)["type"] != "integer" {
+		t.Fatal("Namespace CAS and epoch conflated")
 	}
 }
