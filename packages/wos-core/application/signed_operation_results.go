@@ -119,7 +119,7 @@ func SignedCommandFingerprint(actor d.ActorRef, command any) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	if !signedCommand(metadata.Name) {
+	if !signedCommand(metadata.Name) && !signedCutoverCommand(command) {
 		return "", d.NewError(d.ErrorCodeInvalidArgument, "typed signed command required")
 	}
 	return metadata.Fingerprint, nil

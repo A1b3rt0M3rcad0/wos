@@ -107,6 +107,7 @@ func transactCommand[T any, C any](
 			}
 		}
 	}
+	cutoverIntent := service.requireIdentity && signedCutoverCommand(command)
 	var signedIdentity Identity
 	if signedCommand(meta.Name) {
 		selectedKey := domain.ID("")
@@ -123,8 +124,27 @@ func transactCommand[T any, C any](
 			return MutationResult[T]{Value: zero}, accessError
 		}
 	}
+	if cutoverIntent {
+		id, ok := IdentityFromContext(ctx)
+		if !ok || id.CredentialDigest == "" {
+			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeForbidden, "authenticated cutover identity required")
+		}
+		registry, e := signingRepository(uow)
+		if e != nil {
+			return MutationResult[T]{Value: zero}, e
+		}
+		credential, e := registry.CredentialByDigest(ctx, id.CredentialDigest)
+		if e != nil {
+			return MutationResult[T]{Value: zero}, e
+		}
+		if credential.NamespaceID != meta.NamespaceID || credential.PrincipalID != commandContext.PrincipalID {
+			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeForbidden, "cutover credential binding differs")
+		}
+		signedIdentity = id
+		signedIdentity.CredentialID = credential.ID
+	}
 	var signedOperations ports.SignedOperationRepository
-	if signedCommand(meta.Name) && commandContext.IdempotencyKey != "" {
+	if (signedCommand(meta.Name) || cutoverIntent) && commandContext.IdempotencyKey != "" {
 		durable, ok := uow.(ports.SignedOperationUnitOfWork)
 		if !ok {
 			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeInvalidConfig, "durable signed operation repository required")

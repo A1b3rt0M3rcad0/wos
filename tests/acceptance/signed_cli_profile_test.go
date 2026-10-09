@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -31,7 +32,8 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	must := func(e error) {
 		t.Helper()
 		if e != nil {
-			t.Fatal(e)
+			_, file, line, _ := runtime.Caller(1)
+			t.Fatalf("%s:%d: %v", file, line, e)
 		}
 	}
 	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", Permissions: permissions}))
@@ -371,7 +373,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	// continue renewing the other contract and preserve both local drafts.
 	adminIdentity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: adminIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 	must(e)
 	activeState, e := operator.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "execution", ID: d.ID(view.Authority.ContractID)})
 	must(e)

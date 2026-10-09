@@ -23,6 +23,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -59,7 +60,8 @@ func TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead(t *testing.T) {
 			case "sqlite":
 				s, e := sqlite.Open(filepath.Join(t.TempDir(), "signed.db"), sqlite.Options{MigrateOnOpen: true})
 				if e != nil {
-					t.Fatal(e)
+					_, file, line, _ := runtime.Caller(1)
+					t.Fatalf("%s:%d: %v", file, line, e)
 				}
 				t.Cleanup(func() { s.Close() })
 				store = s
@@ -184,19 +186,8 @@ func signedTransportJourney(t *testing.T, store interface {
 	work.ContractsEnabled = true
 	work.LastFencingToken = 9007199254740993
 	must(u.WorkItems().Insert(ctx, work))
-	p := u.(ports.WorkProtocolUnitOfWork).WorkProtocol()
-	phase, e := p.Lock(ctx, ns, true)
-	must(e)
-	previous := phase.Version
-	phase.Phase = d.WorkProtocolSigned
-	phase.WriterEpoch = 2
-	phase.WritersDrained = true
-	phase.Version++
-	phase.UpdatedAt = now
-	phase.UpdatedBy = "test operator"
-	phase.Reason = "fixture activation; public cutover tested separately"
-	must(p.Save(ctx, phase, previous))
 	must(u.Commit())
+	signedCLICutoverJourney(t, handler, sec, adminCtx, operator, scope, server, adminToken)
 	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions)
 	acquired, e := worker.AcquireSignedWorkContract(ctx, "transport-signed-acquisition", a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: work.Version, SignerKeyID: registered.Key.ID, TTLSeconds: 300})
 	must(e)

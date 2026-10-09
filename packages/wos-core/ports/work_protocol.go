@@ -10,6 +10,7 @@ type WorkProtocolRepository interface {
 	Lock(context.Context, domain.ID, bool) (domain.NamespaceWorkProtocol, error)
 	Scopes(context.Context, domain.ID) ([]domain.Scope, error)
 	ValidLegacyLeases(context.Context, domain.ID, time.Time) (int, error)
+	ValidUnsignedContracts(context.Context, domain.ID, time.Time) (int, error)
 	EnableContracts(context.Context, domain.ID, time.Time) error
 	Save(context.Context, domain.NamespaceWorkProtocol, domain.Version) error
 }

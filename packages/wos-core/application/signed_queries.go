@@ -48,6 +48,7 @@ type SignedContractMetadata struct {
 // avoids HTML-escape expansion; its digest is linked by the issuer acceptance.
 // No query supplies execution authority or claims an evaluation of quality.
 type SignedStateResult struct {
+	Readiness            *SignedProtocolReadiness `json:"signed_protocol_readiness,omitempty"`
 	OperationFingerprint string                   `json:"operation_fingerprint,omitempty"`
 	OperationCommandID   *d.ID                    `json:"operation_command_id,omitempty"`
 	OperationName        string                   `json:"operation_name,omitempty"`
@@ -137,11 +138,34 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		return result, nil
 	}
 	result.Scope = &q.Scope
+	if q.Resource == "protocol_preflight" {
+		// Activation takes Namespace before Outcome. Preserve that order for
+		// this advisory query too, rather than introducing an inverted guard.
+		protocol, e := protocolRepository(u)
+		if e != nil {
+			return zero, e
+		}
+		if _, e = protocol.Lock(ctx, q.Scope.NamespaceID, false); e != nil {
+			return zero, e
+		}
+	}
 	coordination, err := u.Coordination().LockOutcome(ctx, q.Scope)
 	if err != nil {
 		return zero, err
 	}
 	result.OutcomeRevision = signing.Decimal(coordination.Revision)
+	if q.Resource == "protocol_preflight" {
+		if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: q.Scope.NamespaceID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionNamespaceAdmin}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+			return zero, err
+		}
+		readiness, e := s.signedProtocolReadiness(ctx, u, q.Scope.NamespaceID, now)
+		if e != nil {
+			return zero, e
+		}
+		result.Readiness = &readiness
+		return result, nil
+	}
+
 	repo, workRepo, err := signedRepository(u)
 	if err != nil {
 		return zero, err
