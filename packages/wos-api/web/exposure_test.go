@@ -2,6 +2,8 @@ package web
 
 import (
 	"encoding/json"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"strings"
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
@@ -15,8 +17,10 @@ func TestEveryCommandHasExplicitExposure(t *testing.T) {
 		t.Fatal(err)
 	}
 	var inventory map[string]struct {
-		Exposure string `json:"exposure"`
-		Journey  string `json:"journey"`
+		Exposure   string `json:"exposure"`
+		Journey    string `json:"journey"`
+		Permission string `json:"permission"`
+		Surface    string `json:"surface"`
 	}
 	if err := json.Unmarshal(raw, &inventory); err != nil {
 		t.Fatal(err)
@@ -26,6 +30,19 @@ func TestEveryCommandHasExplicitExposure(t *testing.T) {
 		v, ok := inventory[d.Name]
 		if !ok || !allowed[v.Exposure] || v.Journey == "" {
 			t.Errorf("missing explicit exposure for %s", d.Name)
+		}
+		parts := strings.Split(d.Name, "_")
+		for i, part := range parts {
+			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+		}
+		if v.Permission != string(application.CommandPermissionForPresentation(strings.Join(parts, ""))) {
+			t.Errorf("permission drift for %s", d.Name)
+		}
+		if v.Surface != "human" && v.Surface != "developer" && v.Surface != "profile" {
+			t.Errorf("missing surface for %s", d.Name)
+		}
+		if v.Exposure == "S" && v.Surface != "profile" {
+			t.Errorf("signed operation exposed in browser: %s", d.Name)
 		}
 		delete(inventory, d.Name)
 	}

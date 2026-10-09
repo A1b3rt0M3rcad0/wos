@@ -116,3 +116,7 @@ func commandPermission(name string) ports.Permission {
 	}
 	return ports.PermissionOutcomeWrite
 }
+
+// CommandPermissionForPresentation exposes existing authorization metadata only.
+// It neither grants authority nor replaces command authorization.
+func CommandPermissionForPresentation(name string) ports.Permission { return commandPermission(name) }

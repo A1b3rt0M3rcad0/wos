@@ -1,402 +1,602 @@
 {
   "abandon_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "accept_decision": {
     "exposure": "C",
-    "journey": "Decisions"
+    "journey": "Decisions",
+    "permission": "records:write",
+    "surface": "human"
   },
   "achieve_objective": {
     "exposure": "H",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "conclusion:write",
+    "surface": "human"
   },
   "achieve_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "conclusion:write",
+    "surface": "human"
   },
   "acquire_next_signed_review_contract": {
     "exposure": "S",
-    "journey": "Signed v2 review"
+    "journey": "Signed v2 review",
+    "permission": "work.review.acquire",
+    "surface": "profile"
   },
   "acquire_next_signed_work_contract": {
     "exposure": "S",
-    "journey": "Signed v2 execution"
+    "journey": "Signed v2 execution",
+    "permission": "work.contract.acquire",
+    "surface": "profile"
   },
   "acquire_next_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work.contract.acquire",
+    "surface": "developer"
   },
   "acquire_signed_review_contract": {
     "exposure": "S",
-    "journey": "Signed v2 review"
+    "journey": "Signed v2 review",
+    "permission": "work.review.acquire",
+    "surface": "profile"
   },
   "acquire_signed_work_contract": {
     "exposure": "S",
-    "journey": "Signed v2 execution"
+    "journey": "Signed v2 execution",
+    "permission": "work.contract.acquire",
+    "surface": "profile"
   },
   "acquire_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work.contract.acquire",
+    "surface": "developer"
   },
   "activate_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "activate_roadmap_revision": {
     "exposure": "C",
-    "journey": "Roadmap publication and lifecycle"
+    "journey": "Roadmap publication and lifecycle",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "activate_work_item": {
     "exposure": "C",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:write",
+    "surface": "human"
   },
   "add_criterion": {
     "exposure": "H",
-    "journey": "Success criteria"
+    "journey": "Success criteria",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "add_dependency": {
     "exposure": "C",
-    "journey": "Dependencies"
+    "journey": "Dependencies",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "administrative_cancel_work_item": {
     "exposure": "A",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:admin_cancel",
+    "surface": "developer"
   },
   "administrative_complete_work_item": {
     "exposure": "A",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:admin_complete",
+    "surface": "developer"
   },
   "archive_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "archive_roadmap": {
     "exposure": "C",
-    "journey": "Roadmap publication and lifecycle"
+    "journey": "Roadmap publication and lifecycle",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "attest_criterion": {
     "exposure": "H",
-    "journey": "Success criteria"
+    "journey": "Success criteria",
+    "permission": "assessment:write",
+    "surface": "developer"
   },
   "cancel_blocker": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "cancel_objective": {
     "exposure": "H",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "cancel_work_item": {
     "exposure": "C",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:write",
+    "surface": "human"
   },
   "claim_work_item": {
     "exposure": "L",
-    "journey": "Legacy v0 leases"
+    "journey": "Legacy v0 leases",
+    "permission": "work:write",
+    "surface": "human"
   },
   "complete_work_item": {
     "exposure": "L",
-    "journey": "Legacy v0 leases"
+    "journey": "Legacy v0 leases",
+    "permission": "work:write",
+    "surface": "human"
   },
   "configure_trigger": {
     "exposure": "I",
-    "journey": "Protocol and integrations"
+    "journey": "Protocol and integrations",
+    "permission": "integration:write",
+    "surface": "developer"
   },
   "create_blocker": {
     "exposure": "H",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "create_evidence_link": {
     "exposure": "C",
-    "journey": "Evidence"
+    "journey": "Evidence",
+    "permission": "records:write",
+    "surface": "human"
   },
   "create_issue": {
     "exposure": "H",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "create_objective": {
     "exposure": "H",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "create_outcome": {
     "exposure": "H",
-    "journey": "Outcome creation and editing"
+    "journey": "Outcome creation and editing",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "create_roadmap": {
     "exposure": "H",
-    "journey": "Roadmap creation and editing"
+    "journey": "Roadmap creation and editing",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "create_work_item": {
     "exposure": "H",
-    "journey": "Task creation and editing"
+    "journey": "Task creation and editing",
+    "permission": "work:write",
+    "surface": "human"
   },
   "deactivate_roadmap_revision": {
     "exposure": "C",
-    "journey": "Roadmap publication and lifecycle"
+    "journey": "Roadmap publication and lifecycle",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "defer_work_item": {
     "exposure": "C",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:write",
+    "surface": "human"
   },
   "discard_roadmap_draft": {
     "exposure": "C",
-    "journey": "Roadmap creation and editing"
+    "journey": "Roadmap creation and editing",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "fail_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "finalize_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "conclusion:write",
+    "surface": "developer"
   },
   "intervene_signed_review_case": {
     "exposure": "S",
-    "journey": "Signed v2 intervention"
+    "journey": "Signed v2 intervention",
+    "permission": "namespace:admin",
+    "surface": "profile"
   },
   "investigate_issue": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "link_external_reference": {
     "exposure": "A",
-    "journey": "External references"
+    "journey": "External references",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "mark_issue_duplicate": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "mark_issue_wont_fix": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "open_roadmap_draft": {
     "exposure": "H",
-    "journey": "Roadmap creation and editing"
+    "journey": "Roadmap creation and editing",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "propose_decision": {
     "exposure": "H",
-    "journey": "Decisions"
+    "journey": "Decisions",
+    "permission": "records:write",
+    "surface": "human"
   },
   "publish_roadmap_draft": {
     "exposure": "C",
-    "journey": "Roadmap publication and lifecycle"
+    "journey": "Roadmap publication and lifecycle",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "reclaim_work_item": {
     "exposure": "L",
-    "journey": "Legacy v0 leases"
+    "journey": "Legacy v0 leases",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "reconcile_expired_work_contracts": {
     "exposure": "A",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "namespace:admin",
+    "surface": "developer"
   },
   "record_criterion_assessment": {
     "exposure": "H",
-    "journey": "Success criteria"
+    "journey": "Success criteria",
+    "permission": "assessment:write",
+    "surface": "human"
   },
   "redeliver_delivery": {
     "exposure": "I",
-    "journey": "Protocol and integrations"
+    "journey": "Protocol and integrations",
+    "permission": "integration:write",
+    "surface": "developer"
   },
   "register_artifact": {
     "exposure": "H",
-    "journey": "Artifacts"
+    "journey": "Artifacts",
+    "permission": "records:write",
+    "surface": "human"
   },
   "register_evidence": {
     "exposure": "H",
-    "journey": "Evidence"
+    "journey": "Evidence",
+    "permission": "records:write",
+    "surface": "human"
   },
   "reject_decision": {
     "exposure": "C",
-    "journey": "Decisions"
+    "journey": "Decisions",
+    "permission": "records:write",
+    "surface": "human"
   },
   "release_work_item": {
     "exposure": "L",
-    "journey": "Legacy v0 leases"
+    "journey": "Legacy v0 leases",
+    "permission": "work:write",
+    "surface": "human"
   },
   "remove_dependency": {
     "exposure": "C",
-    "journey": "Dependencies"
+    "journey": "Dependencies",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "remove_external_reference": {
     "exposure": "A",
-    "journey": "External references"
+    "journey": "External references",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "renew_signed_review_contract": {
     "exposure": "S",
-    "journey": "Signed v2 review"
+    "journey": "Signed v2 review",
+    "permission": "work.review.acquire",
+    "surface": "profile"
   },
   "renew_signed_work_contract": {
     "exposure": "S",
-    "journey": "Signed v2 execution"
+    "journey": "Signed v2 execution",
+    "permission": "work:write",
+    "surface": "profile"
   },
   "renew_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "renew_work_item_lease": {
     "exposure": "L",
-    "journey": "Legacy v0 leases"
+    "journey": "Legacy v0 leases",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "reopen_issue": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "reopen_objective": {
     "exposure": "H",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "conclusion:write",
+    "surface": "human"
   },
   "reopen_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "conclusion:write",
+    "surface": "human"
   },
   "reopen_roadmap": {
     "exposure": "C",
-    "journey": "Roadmap publication and lifecycle"
+    "journey": "Roadmap publication and lifecycle",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "reopen_work_item": {
     "exposure": "C",
-    "journey": "Task lifecycle"
+    "journey": "Task lifecycle",
+    "permission": "work:write",
+    "surface": "human"
   },
   "replace_external_context": {
     "exposure": "A",
-    "journey": "External references"
+    "journey": "External references",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "replace_roadmap_draft": {
     "exposure": "H",
-    "journey": "Roadmap creation and editing"
+    "journey": "Roadmap creation and editing",
+    "permission": "planning:write",
+    "surface": "human"
   },
   "report_issue_with_blocker": {
     "exposure": "H",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "resolve_blocker": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "resolve_issue": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "resolve_issue_and_blockers": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "resume_signed_review_contract": {
     "exposure": "S",
-    "journey": "Signed v2 review"
+    "journey": "Signed v2 review",
+    "permission": "work.review.acquire",
+    "surface": "profile"
   },
   "resume_signed_work_contract": {
     "exposure": "S",
-    "journey": "Signed v2 execution"
+    "journey": "Signed v2 execution",
+    "permission": "work:write",
+    "surface": "profile"
   },
   "resume_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "retire_criterion": {
     "exposure": "C",
-    "journey": "Success criteria"
+    "journey": "Success criteria",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "retract_evidence": {
     "exposure": "C",
-    "journey": "Evidence"
+    "journey": "Evidence",
+    "permission": "records:write",
+    "surface": "human"
   },
   "retract_evidence_link": {
     "exposure": "C",
-    "journey": "Evidence"
+    "journey": "Evidence",
+    "permission": "records:write",
+    "surface": "developer"
   },
   "return_signed_review": {
     "exposure": "S",
-    "journey": "Signed v2 review"
+    "journey": "Signed v2 review",
+    "permission": "work.review.decide",
+    "surface": "profile"
   },
   "return_signed_work": {
     "exposure": "S",
-    "journey": "Signed v2 execution"
+    "journey": "Signed v2 execution",
+    "permission": "work.contract.return",
+    "surface": "profile"
   },
   "revise_criterion": {
     "exposure": "C",
-    "journey": "Success criteria"
+    "journey": "Success criteria",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "revoke_signed_contract": {
     "exposure": "S",
-    "journey": "Signed v2 intervention"
+    "journey": "Signed v2 intervention",
+    "permission": "work.contract.revoke",
+    "surface": "profile"
   },
   "revoke_work_contract": {
     "exposure": "A",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work.contract.revoke",
+    "surface": "human"
   },
   "set_namespace_work_protocol": {
     "exposure": "I",
-    "journey": "Protocol and integrations"
+    "journey": "Protocol and integrations",
+    "permission": "namespace:admin",
+    "surface": "developer"
   },
   "set_objective_owners": {
     "exposure": "A",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "set_outcome_owners": {
     "exposure": "A",
-    "journey": "Outcome participants"
+    "journey": "Outcome participants",
+    "permission": "outcome:write",
+    "surface": "developer"
   },
   "set_trigger_enabled": {
     "exposure": "I",
-    "journey": "Protocol and integrations"
+    "journey": "Protocol and integrations",
+    "permission": "integration:write",
+    "surface": "developer"
   },
   "set_work_item_assignees": {
     "exposure": "A",
-    "journey": "Task creation and editing"
+    "journey": "Task creation and editing",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "start_objective": {
     "exposure": "H",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "submit_work_result": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "supersede_decision": {
     "exposure": "C",
-    "journey": "Decisions"
+    "journey": "Decisions",
+    "permission": "records:write",
+    "surface": "developer"
   },
   "sync_work_contract": {
     "exposure": "L",
-    "journey": "Legacy v1 contracts"
+    "journey": "Legacy v1 contracts",
+    "permission": "work:write",
+    "surface": "developer"
   },
   "unarchive_outcome": {
     "exposure": "C",
-    "journey": "Outcome transitions"
+    "journey": "Outcome transitions",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "update_blocker_description": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "update_decision": {
     "exposure": "C",
-    "journey": "Decisions"
+    "journey": "Decisions",
+    "permission": "records:write",
+    "surface": "developer"
   },
   "update_issue": {
     "exposure": "C",
-    "journey": "Issues and blockers"
+    "journey": "Issues and blockers",
+    "permission": "work:write",
+    "surface": "human"
   },
   "update_objective": {
     "exposure": "C",
-    "journey": "Objectives"
+    "journey": "Objectives",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "update_outcome": {
     "exposure": "C",
-    "journey": "Outcome creation and editing"
+    "journey": "Outcome creation and editing",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "update_trigger": {
     "exposure": "I",
-    "journey": "Protocol and integrations"
+    "journey": "Protocol and integrations",
+    "permission": "integration:write",
+    "surface": "developer"
   },
   "update_work_item": {
     "exposure": "C",
-    "journey": "Task creation and editing"
+    "journey": "Task creation and editing",
+    "permission": "work:write",
+    "surface": "human"
   },
   "withdraw_artifact": {
     "exposure": "C",
-    "journey": "Artifacts"
+    "journey": "Artifacts",
+    "permission": "records:write",
+    "surface": "human"
   }
 }

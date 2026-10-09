@@ -15882,6 +15882,39 @@
         }
       }
     },
+    "/api/v1/namespaces/{namespace_id}/effective-permissions": {
+      "get": {
+        "description": "Current authenticated permission hints for presentation, optionally scoped to outcome_id. Does not grant execution authority. Credentials and grants are rechecked.",
+        "operationId": "effectivePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome_id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bounded permission names; execution_authority=false"
+          },
+          "403": {
+            "description": "Current authorization denied"
+          }
+        }
+      }
+    },
     "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/available-work": {
       "get": {
         "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
