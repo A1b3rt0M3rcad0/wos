@@ -87,3 +87,40 @@ func TestSignedMutationWirePreservesPrecisionAndIssuedProof(t *testing.T) {
 		t.Fatal("v1 outer encoding changed", err)
 	}
 }
+
+func TestSignedTrustQuotesNamespaceCASWithoutChangingProtocolMarkerOrLegacyEncoding(t *testing.T) {
+	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
+	protocol := d.DefaultWorkProtocol(id)
+	protocol.Version = d.Version(math.MaxUint64)
+	protocol.Phase = d.WorkProtocolSigned
+	protocol.WriterEpoch = 2
+	result := SignedStateResult{ProtocolVersion: 2, NamespaceID: id, Protocol: &protocol}
+	raw, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wire struct {
+		Marker    int `json:"protocol_version"`
+		Namespace struct {
+			Version string `json:"protocol_version"`
+			Epoch   int    `json:"writer_epoch"`
+		} `json:"namespace_protocol"`
+	}
+	if err = json.Unmarshal(raw, &wire); err != nil || wire.Marker != 2 || wire.Namespace.Epoch != 2 || wire.Namespace.Version != "18446744073709551615" {
+		t.Fatalf("signed trust changed literal marker or rounded CAS: %s, %v", raw, err)
+	}
+	var typed SignedStateResult
+	if err = json.Unmarshal(raw, &typed); err != nil || typed.Protocol.Version != protocol.Version {
+		t.Fatal("typed client lost exact Namespace CAS", err)
+	}
+	legacy, err := json.Marshal(protocol)
+	var historical struct {
+		Version uint64 `json:"protocol_version"`
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = json.Unmarshal(legacy, &historical); err != nil || historical.Version != math.MaxUint64 {
+		t.Fatal("unsigned Namespace encoding changed", err)
+	}
+}
