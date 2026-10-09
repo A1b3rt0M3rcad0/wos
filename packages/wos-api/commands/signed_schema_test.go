@@ -29,3 +29,13 @@ func TestSignedSchemasUseVerifiedDTOFieldsAndFlattenedBinding(t *testing.T) {
 		t.Fatal("envelope schema permits multiple signatures")
 	}
 }
+
+func TestSignedFocalTechnicalExpansionsHaveSeparateBase64Bounds(t *testing.T) {
+	properties := SignedSchema(reflect.TypeFor[a.SignedStateResult]())["properties"].(map[string]any)
+	for field, maximum := range map[string]int{"operation_result_payload": 1398104, "material_payload": 245760} {
+		schema := properties[field].(map[string]any)
+		if schema["contentEncoding"] != "base64" || schema["maxLength"] != maximum {
+			t.Fatalf("%s inherited semantic scalar bound instead of technical expansion bound", field)
+		}
+	}
+}

@@ -14,6 +14,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -43,10 +44,11 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				ports.SecurityStore
 				ports.TransactionManager
 			}
+			path := filepath.Join(t.TempDir(), "signed-acquisition.db")
 			if backend == "memory" {
 				store = memory.New()
 			} else {
-				store = openTestStore(t, filepath.Join(t.TempDir(), "signed-acquisition.db"))
+				store = openTestStore(t, path)
 			}
 			ctx := context.Background()
 			now := time.Now().UTC()
@@ -202,6 +204,92 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			if !replay.IdempotentReplay || replay.Value.Contract.ID != first.Value.Contract.ID {
 				t.Fatal("acquisition replay recreated authority")
 			}
+			if sqlStore, ok := store.(*Store); ok {
+				// Simulate an accepted pre-migration signed response whose short
+				// cache still exists but whose new durable operation row is absent.
+				_, err = sqlStore.db.ExecContext(ctx, `DELETE FROM signed_operation_results WHERE namespace_id=$1 AND principal_id=$2 AND idempotency_key=$3`, ns.String(), identity.PrincipalID, firstCC.IdempotencyKey)
+				must(err)
+				_, err = sqlStore.db.ExecContext(ctx, `UPDATE idempotency_records SET expires_at=0 WHERE command_name='AcquireSignedWorkContract' AND idempotency_key=$1`, firstCC.IdempotencyKey)
+				must(err)
+				legacyCredential, legacyToken, e := sec.IssueCredential(adminCtx, ns, "executor", identity.Actor, now.Add(time.Hour))
+				must(e)
+				legacyIdentity, e := sec.Authenticate(ctx, legacyToken)
+				must(e)
+				uow, e = store.Begin(ctx)
+				must(e)
+				legacyPolicy := policy
+				legacyPolicy.CredentialID = legacyCredential.ID
+				must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, legacyPolicy, 0))
+				must(uow.Commit())
+				if _, e = service.AcquireSignedWorkContract(a.WithIdentity(ctx, legacyIdentity), firstCC, firstCmd); e == nil {
+					t.Fatal("legacy cache allowed another CID to substitute identity")
+				}
+				legacyView, e := service.ReadSignedState(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: firstCC.IdempotencyKey})
+				must(e)
+				if legacyView.OperationCommandID == nil || *legacyView.OperationCommandID != first.CommandID {
+					t.Fatal("expired legacy cache lost original readonly operation view")
+				}
+				if _, e = service.ReadSignedState(a.WithIdentity(ctx, legacyIdentity), a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: firstCC.IdempotencyKey}); e == nil {
+					t.Fatal("legacy recovery view leaked across CID")
+				}
+				promoted, e := service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd)
+				must(e)
+				if !promoted.IdempotentReplay || !reflect.DeepEqual(promoted.Value.IssuedAuthority, first.Value.IssuedAuthority) {
+					t.Fatal("cache promotion changed original grant")
+				}
+			}
+			// SQL cache expiry must not reacquire work or substitute the latest
+			// renewed/resumed grant for the one accepted by the first intention.
+			if sqlStore, ok := store.(*Store); ok {
+				_, err = sqlStore.db.ExecContext(ctx, `UPDATE idempotency_records SET expires_at=0 WHERE command_name IN ('AcquireSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract')`)
+				must(err)
+			}
+			withoutCache, err := a.NewService(signedNoCacheManager{store}, clock, ids)
+			must(err)
+			durableReplay, err := withoutCache.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd)
+			must(err)
+			if !durableReplay.IdempotentReplay || durableReplay.CommandID != first.CommandID || durableReplay.OutcomeRevision != first.OutcomeRevision || durableReplay.Value.Contract.FencingToken != original.FencingToken || durableReplay.Value.Contract.LeaseVersion != original.LeaseVersion || !durableReplay.Value.Contract.ExpiresAt.Equal(original.ExpiresAt) || !reflect.DeepEqual(durableReplay.Value.IssuedAuthority, first.Value.IssuedAuthority) || !reflect.DeepEqual(durableReplay.Value.IssuedSpecification, first.Value.IssuedSpecification) {
+				t.Fatal("durable acquisition replay changed original authority, versions or result")
+			}
+			renewReplay, err := withoutCache.RenewSignedWorkContract(agentCtx, renewCC, renewal)
+			must(err)
+			if !renewReplay.IdempotentReplay || !reflect.DeepEqual(renewReplay.Value.IssuedAuthority, renewed.Value.IssuedAuthority) || renewReplay.Value.Contract.LeaseVersion != renewed.Value.Contract.LeaseVersion {
+				t.Fatal("renewal replay substituted takeover grant")
+			}
+			changed := firstCmd
+			changed.TTLSeconds = 60
+			if _, err = withoutCache.AcquireSignedWorkContract(agentCtx, firstCC, changed); err == nil {
+				t.Fatal("changed acquisition reused durable intention")
+			}
+			conflictingRenewCC := renewCC
+			conflictingRenewCC.IdempotencyKey = firstCC.IdempotencyKey
+			if _, err = withoutCache.RenewSignedWorkContract(agentCtx, conflictingRenewCC, renewal); err == nil {
+				t.Fatal("another signed command reused acquisition intention")
+			}
+			recovered, err := service.ReadSignedState(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: firstCC.IdempotencyKey})
+			must(err)
+			responseBytes, err := base64.StdEncoding.Strict().DecodeString(recovered.OperationPayload)
+			must(err)
+			if recovered.OperationCommandID == nil || *recovered.OperationCommandID != first.CommandID || recovered.PayloadDigest != signing.Digest(responseBytes) {
+				t.Fatal("durable operation expansion binding differs")
+			}
+			otherCredential, otherToken, err := sec.IssueCredential(adminCtx, ns, "executor", identity.Actor, now.Add(time.Hour))
+			must(err)
+			otherIdentity, err := sec.Authenticate(ctx, otherToken)
+			must(err)
+			uow, err = store.Begin(ctx)
+			must(err)
+			otherPolicy := policy
+			otherPolicy.CredentialID = otherCredential.ID
+			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+			must(uow.Commit())
+			otherCtx := a.WithIdentity(ctx, otherIdentity)
+			if _, err = withoutCache.AcquireSignedWorkContract(otherCtx, firstCC, firstCmd); err == nil {
+				t.Fatal("another CID substituted original acquisition identity")
+			}
+			if _, err = service.ReadSignedState(otherCtx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: firstCC.IdempotencyKey}); err == nil {
+				t.Fatal("another CID read original operation")
+			}
 			unsignedID, err := ids.NewID()
 			must(err)
 			unsignedCC := firstCC
@@ -209,6 +297,20 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			unsignedCC.IdempotencyKey = "unsigned-epoch-two-acquisition"
 			if _, err = service.AcquireWorkContract(agentCtx, unsignedCC, a.AcquireWorkContractCommand{Scope: scope, WorkItemID: works[3].ID, ExpectedWorkItemVersion: works[3].Version}); err == nil {
 				t.Fatal("v1 acquired through signed epoch")
+			}
+			if sqlStore, ok := store.(*Store); ok {
+				store = reopenIntegrationFixture(t, sqlStore, path)
+				sec.Store = store
+				service, err = a.NewService(store, clock, ids)
+				must(err)
+				must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+				withoutCache, err = a.NewService(signedNoCacheManager{store}, clock, ids)
+				must(err)
+				afterRestore, e := withoutCache.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd)
+				must(e)
+				if !afterRestore.IdempotentReplay || afterRestore.CommandID != first.CommandID || !reflect.DeepEqual(afterRestore.Value.IssuedAuthority, first.Value.IssuedAuthority) || afterRestore.Value.Contract.FencingToken != original.FencingToken {
+					t.Fatal("clean restore lost durable original acquisition")
+				}
 			}
 			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
 			if _, err = service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd); err == nil {

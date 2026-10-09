@@ -9,15 +9,23 @@ import (
 )
 
 type memorySignedReviewState struct {
-	Cases     map[string]d.ReviewCase
-	Contracts map[string]d.ReviewContract
-	Facts     map[string]d.SignedFact
+	Operations map[string]d.SignedOperationResult
+	Cases      map[string]d.ReviewCase
+	Contracts  map[string]d.ReviewContract
+	Facts      map[string]d.SignedFact
 }
 
 func newMemorySignedReviewState() memorySignedReviewState {
-	return memorySignedReviewState{Cases: map[string]d.ReviewCase{}, Contracts: map[string]d.ReviewContract{}, Facts: map[string]d.SignedFact{}}
+	return memorySignedReviewState{Operations: map[string]d.SignedOperationResult{}, Cases: map[string]d.ReviewCase{}, Contracts: map[string]d.ReviewContract{}, Facts: map[string]d.SignedFact{}}
 }
-func cloneSignedReview(s memorySignedReviewState) memorySignedReviewState { return deepCopy(s) }
+func cloneSignedReview(s memorySignedReviewState) memorySignedReviewState {
+	out := deepCopy(s)
+	out.Operations = map[string]d.SignedOperationResult{}
+	for key, result := range s.Operations {
+		out.Operations[key] = cloneSignedOperation(result)
+	}
+	return out
+}
 
 type signedContractRepository struct{ tx *transaction }
 
