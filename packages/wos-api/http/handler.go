@@ -124,6 +124,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
 	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
 
+	h.mux.HandleFunc("GET "+base+"/{outcome_id}/references", h.searchReferences)
 	h.mux.HandleFunc("POST "+base, h.createOutcome)
 	h.mux.HandleFunc("GET "+base, h.searchOutcomes)
 	if h.security != nil {

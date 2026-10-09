@@ -6136,6 +6136,134 @@
         ],
         "type": "object"
       },
+      "ReferenceCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "display_context": {
+            "type": "string"
+          },
+          "lifecycle": {
+            "type": "string"
+          },
+          "ref": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id",
+              "kind",
+              "id"
+            ],
+            "type": "object"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "title",
+          "lifecycle",
+          "version"
+        ],
+        "type": "object"
+      },
+      "ReferencePage": {
+        "additionalProperties": false,
+        "properties": {
+          "consistency": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "display_context": {
+                  "type": "string"
+                },
+                "lifecycle": {
+                  "type": "string"
+                },
+                "ref": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "namespace_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "outcome_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "namespace_id",
+                    "outcome_id",
+                    "kind",
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "ref",
+                "title",
+                "lifecycle",
+                "version"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "next_cursor": {
+            "type": "string"
+          },
+          "outcome_revision": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "outcome_revision",
+          "limit",
+          "consistency"
+        ],
+        "type": "object"
+      },
       "SignedAcceptanceReceiptV2": {
         "additionalProperties": false,
         "properties": {
@@ -15784,6 +15912,103 @@
           },
           "404": {
             "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/references": {
+      "get": {
+        "description": "Authorized bounded reference metadata. kind is a comma-separated allowlist. Query uses ASCII case-insensitive substring matching, preserving Unicode otherwise. Deterministic kind/ID keysets bind scope, filters and Outcome revision. id resolves a selected candidate independently of paging; cannot combine with query/cursor. Results never grant mutation authority.",
+        "operationId": "searchReferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lifecycle",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferencePage"
+                }
+              }
+            },
+            "description": "Bounded candidates and revision-bound next cursor"
+          },
+          "403": {
+            "description": "Current authorization denied"
+          },
+          "409": {
+            "description": "Outcome changed; explicitly reload search while preserving selected IDs"
+          },
+          "422": {
+            "description": "Invalid kind, filter, ID, limit or cursor binding"
           }
         }
       }

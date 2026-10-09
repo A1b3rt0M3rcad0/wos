@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 source=Path('packages/wos-core/storage/sqlite')
 target=Path('packages/wos-core/storage/postgres')
-for name in ['signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','external_context.go','integration.go','codec.go','migrations.go']:
+for name in ['signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','references.go','external_context.go','integration.go','codec.go','migrations.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqlite migration','postgres migration')
  def transform_sql(m):
   q=m[1]
@@ -32,9 +32,11 @@ for name in ['signed_operations.go','signed_participants.go','server_identity.go
  if name=='integration.go':
   s=s.replace('ORDER BY next_attempt,id LIMIT 1`','ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`')
  # Query fragments with placeholders need runtime rebinding after composition.
- if name=='queries.go':
+ if name in ['queries.go','references.go']:
   original=(source/name).read_text().replace('package sqlite','package postgres',1)
-  s=original.replace('instr(lower(title),lower(?))>0','strpos(lower(title),lower(?))>0').replace('instr(lower(description),lower(?))>0','strpos(lower(description),lower(?))>0').replace('QueryContext(ctx, q, args...)','QueryContext(ctx, rebind(q), args...)')
+  s=original.replace('instr(lower(t."+title+"),lower(?))>0',"strpos(translate(t.\"+title+\",'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),translate(?,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))>0").replace('instr(lower(title),lower(?))>0','strpos(lower(title),lower(?))>0').replace('instr(lower(description),lower(?))>0','strpos(lower(description),lower(?))>0').replace('QueryContext(ctx, q, args...)','QueryContext(ctx, rebind(q), args...)').replace('QueryContext(ctx,q,args...)','QueryContext(ctx,rebind(q),args...)')
+ if name=='references.go':
+  s=s.replace('instr(lower(t." + title + "),lower(?))>0',"strpos(translate(t.\" + title + \",'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),translate(?,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))>0")
  # SQL queries composed by fmt.Sprintf, and single-line quoted migration statements.
  s=s.replace('"SELECT id FROM " + table + " WHERE namespace_id = ? AND outcome_id = ? ORDER BY id"','"SELECT id FROM " + table + " WHERE namespace_id = $1 AND outcome_id = $2 ORDER BY id"')
  s=s.replace('encodeTime(c.ExpiresAt), c.Revoked)','encodeTime(c.ExpiresAt), boolInt(c.Revoked))')

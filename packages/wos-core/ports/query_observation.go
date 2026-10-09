@@ -7,12 +7,13 @@ import (
 
 // QueryObservation describes a completed application query, never its content.
 type QueryObservation struct {
-	Name        string
-	Scope       domain.Scope
-	PrincipalID string
-	Actor       domain.ActorRef
-	Revision    domain.OutcomeRevision
-	Duration    time.Duration
-	ErrorCode   domain.ErrorCode
+	ReturnedItems *int // Optional bounded page count; never query text or content.
+	Name          string
+	Scope         domain.Scope
+	PrincipalID   string
+	Actor         domain.ActorRef
+	Revision      domain.OutcomeRevision
+	Duration      time.Duration
+	ErrorCode     domain.ErrorCode
 }
 type QueryObserver interface{ ObserveQuery(QueryObservation) }

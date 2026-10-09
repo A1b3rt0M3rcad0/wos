@@ -1,0 +1,47 @@
+{
+  "kind": "automated reference-query acceptance, not human usability",
+  "measurements": [
+    {
+      "store": "memory",
+      "dataset_tasks": 1001,
+      "dataset_evidence": 1001,
+      "queries": 20,
+      "average": "4.035741ms",
+      "maximum": "10.926726ms"
+    },
+    {
+      "store": "sqlite",
+      "dataset_tasks": 1001,
+      "dataset_evidence": 1001,
+      "queries": 20,
+      "average": "1.915016ms",
+      "maximum": "3.49254ms"
+    },
+    {
+      "store": "postgres",
+      "dataset_tasks": 1001,
+      "dataset_evidence": 1001,
+      "queries": 20,
+      "average": "30.403556ms",
+      "maximum": "146.76021ms"
+    }
+  ],
+  "stores_passed": [
+    "memory",
+    "sqlite",
+    "postgres"
+  ],
+  "transport_parity": "HTTP and MCP passed",
+  "race_checks": "HTTP, query telemetry and fast reference cursor regression passed",
+  "response_budget": "100 worst-case escaped candidate/parent labels below MaxSnapshotBytes",
+  "sources_sha256": {
+    "packages/wos-core/application/references.go": "b17f44e79f1e8fcabe7770ba453f6e16cf6181a03289fa1a972037780940b699",
+    "packages/wos-core/ports/references.go": "7d2159b92de565419171f9da2a69ac27a9c581856b648cc6b0b46ede56ebbf9d",
+    "packages/wos-core/storage/memory/references.go": "ecad8978d2d8d07409c1adcec6bb29aa397dcb28b6e05f368f91a2306972085b",
+    "packages/wos-core/storage/sqlite/references.go": "9c2deab484ba993ebc7426626ac6c16026caf45c12b73778daa29ec908671c5d",
+    "packages/wos-core/storage/postgres/references.go": "a534e0e54ef792e3951bc9e237c2abcad56b8b66239df075cbd98b46ed6d78c3",
+    "tests/boundary/reference_search_test.go": "4cfb90729cfc0213740830aebb78d50102b857c5cb34844574d1a02e32c8e6ae"
+  },
+  "human_usability": "not measured",
+  "manual_screen_reader": "pending by owner decision"
+}

@@ -41,7 +41,7 @@ type queryArgs struct {
 
 func registerQueries(server *mcp.Server, s *application.Service, options Options) {
 	registerSignedQueries(server, s, options)
-	for _, name := range []string{"wos_get_work_checkpoint", "wos_get_namespace_work_protocol", "wos_list_available_work", "wos_capabilities", "wos_get_work_contract", "wos_get_work_contract_spec", "wos_list_work_contracts", "wos_list_contract_checkpoints", "wos_list_work_submissions", "wos_get_work_submission", "wos_get_command_receipt", "wos_get_criterion_history", "wos_list_conclusions", "wos_get_conclusion", "wos_get_roadmap_revision", "wos_list_roadmaps", "wos_get_active_roadmap_slot", "wos_list_roadmap_activation_history", "wos_list_triggers", "wos_list_deliveries", "wos_list_trigger_firings", "wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
+	for _, name := range []string{"wos_search_references", "wos_get_work_checkpoint", "wos_get_namespace_work_protocol", "wos_list_available_work", "wos_capabilities", "wos_get_work_contract", "wos_get_work_contract_spec", "wos_list_work_contracts", "wos_list_contract_checkpoints", "wos_list_work_submissions", "wos_get_work_submission", "wos_get_command_receipt", "wos_get_criterion_history", "wos_list_conclusions", "wos_get_conclusion", "wos_get_roadmap_revision", "wos_list_roadmaps", "wos_get_active_roadmap_slot", "wos_list_roadmap_activation_history", "wos_list_triggers", "wos_list_deliveries", "wos_list_trigger_firings", "wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
 		name := name
 		mcp.AddTool(server, &mcp.Tool{Name: name, Description: "Read authorized WOS state; limit 1–100, default 25. Expand omissions with section cursors; candidates never authorize execution."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
 			ctx, cancel, err := requestContext(ctx, req, options)
@@ -53,6 +53,12 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 			scope := domain.Scope{NamespaceID: q.NamespaceID, OutcomeID: q.OutcomeID}
 			var value any
 			switch name {
+			case "wos_search_references":
+				kinds := []domain.EntityKind{}
+				for _, kind := range q.Kinds {
+					kinds = append(kinds, domain.EntityKind(kind))
+				}
+				value, err = s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: kinds, Query: q.Text, Lifecycle: q.Lifecycle, ID: q.EntityID, Limit: q.Limit, Cursor: q.Cursor})
 			case "wos_get_namespace_work_protocol":
 				value, err = s.GetNamespaceWorkProtocol(ctx, q.NamespaceID)
 			case "wos_list_available_work":
