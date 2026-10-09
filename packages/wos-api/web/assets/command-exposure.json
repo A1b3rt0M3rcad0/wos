@@ -1,0 +1,402 @@
+{
+  "abandon_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "accept_decision": {
+    "exposure": "C",
+    "journey": "Decis\u00f5es"
+  },
+  "achieve_objective": {
+    "exposure": "H",
+    "journey": "Objectives"
+  },
+  "achieve_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "acquire_next_signed_review_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 revis\u00e3o"
+  },
+  "acquire_next_signed_work_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 execu\u00e7\u00e3o"
+  },
+  "acquire_next_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "acquire_signed_review_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 revis\u00e3o"
+  },
+  "acquire_signed_work_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 execu\u00e7\u00e3o"
+  },
+  "acquire_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "activate_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "activate_roadmap_revision": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 publica\u00e7\u00e3o/estado"
+  },
+  "activate_work_item": {
+    "exposure": "C",
+    "journey": "Tasks \u2014 estado"
+  },
+  "add_criterion": {
+    "exposure": "H",
+    "journey": "Crit\u00e9rios"
+  },
+  "add_dependency": {
+    "exposure": "C",
+    "journey": "Depend\u00eancias"
+  },
+  "administrative_cancel_work_item": {
+    "exposure": "A",
+    "journey": "Tasks \u2014 estado"
+  },
+  "administrative_complete_work_item": {
+    "exposure": "A",
+    "journey": "Tasks \u2014 estado"
+  },
+  "archive_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "archive_roadmap": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 publica\u00e7\u00e3o/estado"
+  },
+  "attest_criterion": {
+    "exposure": "H",
+    "journey": "Crit\u00e9rios"
+  },
+  "cancel_blocker": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "cancel_objective": {
+    "exposure": "H",
+    "journey": "Objectives"
+  },
+  "cancel_work_item": {
+    "exposure": "C",
+    "journey": "Tasks \u2014 estado"
+  },
+  "claim_work_item": {
+    "exposure": "L",
+    "journey": "Lease legacy v0"
+  },
+  "complete_work_item": {
+    "exposure": "L",
+    "journey": "Lease legacy v0"
+  },
+  "configure_trigger": {
+    "exposure": "I",
+    "journey": "Protocolo/integra\u00e7\u00e3o"
+  },
+  "create_blocker": {
+    "exposure": "H",
+    "journey": "Issues/Blockers"
+  },
+  "create_evidence_link": {
+    "exposure": "C",
+    "journey": "Evid\u00eancias"
+  },
+  "create_issue": {
+    "exposure": "H",
+    "journey": "Issues/Blockers"
+  },
+  "create_objective": {
+    "exposure": "H",
+    "journey": "Objectives"
+  },
+  "create_outcome": {
+    "exposure": "H",
+    "journey": "Outcome \u2014 cria\u00e7\u00e3o/edi\u00e7\u00e3o"
+  },
+  "create_roadmap": {
+    "exposure": "H",
+    "journey": "Roadmaps \u2014 cria\u00e7\u00e3o e edi\u00e7\u00e3o"
+  },
+  "create_work_item": {
+    "exposure": "H",
+    "journey": "Tasks \u2014 cria\u00e7\u00e3o/edi\u00e7\u00e3o"
+  },
+  "deactivate_roadmap_revision": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 publica\u00e7\u00e3o/estado"
+  },
+  "defer_work_item": {
+    "exposure": "C",
+    "journey": "Tasks \u2014 estado"
+  },
+  "discard_roadmap_draft": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 cria\u00e7\u00e3o e edi\u00e7\u00e3o"
+  },
+  "fail_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "finalize_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "intervene_signed_review_case": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 interven\u00e7\u00e3o"
+  },
+  "investigate_issue": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "link_external_reference": {
+    "exposure": "A",
+    "journey": "Refer\u00eancias externas"
+  },
+  "mark_issue_duplicate": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "mark_issue_wont_fix": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "open_roadmap_draft": {
+    "exposure": "H",
+    "journey": "Roadmaps \u2014 cria\u00e7\u00e3o e edi\u00e7\u00e3o"
+  },
+  "propose_decision": {
+    "exposure": "H",
+    "journey": "Decis\u00f5es"
+  },
+  "publish_roadmap_draft": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 publica\u00e7\u00e3o/estado"
+  },
+  "reclaim_work_item": {
+    "exposure": "L",
+    "journey": "Lease legacy v0"
+  },
+  "reconcile_expired_work_contracts": {
+    "exposure": "A",
+    "journey": "Contracts v1"
+  },
+  "record_criterion_assessment": {
+    "exposure": "H",
+    "journey": "Crit\u00e9rios"
+  },
+  "redeliver_delivery": {
+    "exposure": "I",
+    "journey": "Protocolo/integra\u00e7\u00e3o"
+  },
+  "register_artifact": {
+    "exposure": "H",
+    "journey": "Artefatos"
+  },
+  "register_evidence": {
+    "exposure": "H",
+    "journey": "Evid\u00eancias"
+  },
+  "reject_decision": {
+    "exposure": "C",
+    "journey": "Decis\u00f5es"
+  },
+  "release_work_item": {
+    "exposure": "L",
+    "journey": "Lease legacy v0"
+  },
+  "remove_dependency": {
+    "exposure": "C",
+    "journey": "Depend\u00eancias"
+  },
+  "remove_external_reference": {
+    "exposure": "A",
+    "journey": "Refer\u00eancias externas"
+  },
+  "renew_signed_review_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 revis\u00e3o"
+  },
+  "renew_signed_work_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 execu\u00e7\u00e3o"
+  },
+  "renew_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "renew_work_item_lease": {
+    "exposure": "L",
+    "journey": "Lease legacy v0"
+  },
+  "reopen_issue": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "reopen_objective": {
+    "exposure": "H",
+    "journey": "Objectives"
+  },
+  "reopen_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "reopen_roadmap": {
+    "exposure": "C",
+    "journey": "Roadmaps \u2014 publica\u00e7\u00e3o/estado"
+  },
+  "reopen_work_item": {
+    "exposure": "C",
+    "journey": "Tasks \u2014 estado"
+  },
+  "replace_external_context": {
+    "exposure": "A",
+    "journey": "Refer\u00eancias externas"
+  },
+  "replace_roadmap_draft": {
+    "exposure": "H",
+    "journey": "Roadmaps \u2014 cria\u00e7\u00e3o e edi\u00e7\u00e3o"
+  },
+  "report_issue_with_blocker": {
+    "exposure": "H",
+    "journey": "Issues/Blockers"
+  },
+  "resolve_blocker": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "resolve_issue": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "resolve_issue_and_blockers": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "resume_signed_review_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 revis\u00e3o"
+  },
+  "resume_signed_work_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 execu\u00e7\u00e3o"
+  },
+  "resume_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "retire_criterion": {
+    "exposure": "C",
+    "journey": "Crit\u00e9rios"
+  },
+  "retract_evidence": {
+    "exposure": "C",
+    "journey": "Evid\u00eancias"
+  },
+  "retract_evidence_link": {
+    "exposure": "C",
+    "journey": "Evid\u00eancias"
+  },
+  "return_signed_review": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 revis\u00e3o"
+  },
+  "return_signed_work": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 execu\u00e7\u00e3o"
+  },
+  "revise_criterion": {
+    "exposure": "C",
+    "journey": "Crit\u00e9rios"
+  },
+  "revoke_signed_contract": {
+    "exposure": "S",
+    "journey": "Contracts v2 assinados \u2014 interven\u00e7\u00e3o"
+  },
+  "revoke_work_contract": {
+    "exposure": "A",
+    "journey": "Contracts v1"
+  },
+  "set_namespace_work_protocol": {
+    "exposure": "I",
+    "journey": "Protocolo/integra\u00e7\u00e3o"
+  },
+  "set_objective_owners": {
+    "exposure": "A",
+    "journey": "Objectives"
+  },
+  "set_outcome_owners": {
+    "exposure": "A",
+    "journey": "Outcome \u2014 participantes"
+  },
+  "set_trigger_enabled": {
+    "exposure": "I",
+    "journey": "Protocolo/integra\u00e7\u00e3o"
+  },
+  "set_work_item_assignees": {
+    "exposure": "A",
+    "journey": "Tasks \u2014 cria\u00e7\u00e3o/edi\u00e7\u00e3o"
+  },
+  "start_objective": {
+    "exposure": "H",
+    "journey": "Objectives"
+  },
+  "submit_work_result": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "supersede_decision": {
+    "exposure": "C",
+    "journey": "Decis\u00f5es"
+  },
+  "sync_work_contract": {
+    "exposure": "L",
+    "journey": "Contracts v1"
+  },
+  "unarchive_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 transi\u00e7\u00f5es"
+  },
+  "update_blocker_description": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "update_decision": {
+    "exposure": "C",
+    "journey": "Decis\u00f5es"
+  },
+  "update_issue": {
+    "exposure": "C",
+    "journey": "Issues/Blockers"
+  },
+  "update_objective": {
+    "exposure": "C",
+    "journey": "Objectives"
+  },
+  "update_outcome": {
+    "exposure": "C",
+    "journey": "Outcome \u2014 cria\u00e7\u00e3o/edi\u00e7\u00e3o"
+  },
+  "update_trigger": {
+    "exposure": "I",
+    "journey": "Protocolo/integra\u00e7\u00e3o"
+  },
+  "update_work_item": {
+    "exposure": "C",
+    "journey": "Tasks \u2014 cria\u00e7\u00e3o/edi\u00e7\u00e3o"
+  },
+  "withdraw_artifact": {
+    "exposure": "C",
+    "journey": "Artefatos"
+  }
+}

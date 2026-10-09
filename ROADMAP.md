@@ -3,8 +3,8 @@
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-09
-**Current target:** Coordinated 0.3.0 signed-protocol validation candidate  
-**Current wave:** P12 combined-source acceptance and P13 release preparation; original Waves 01–18 accepted
+**Current target:** Human workspace UX/DX acceptance; signed 0.3.0 baseline preserved
+**Current wave:** UX-FND-01 foundation; original Waves 01–18 and signed P00–P13 baseline accepted
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -1403,3 +1403,22 @@ these are not counted as pending cleanup of accepted obligations. See
 Shared OS/filesystem and unknown provider billing remain explicit limits.
 Local Compose copied .env.example unchanged and passed readiness/liveness/UI
 checks on its documented source, preserving existing projects and data.
+
+## Human workspace UX/DX program — 2026-10-09
+
+Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against baseline `5ea787c`. This is a new program; prior backend acceptance is not frontend usability evidence.
+
+| Lot | State | Acceptance |
+| --- | --- | --- |
+| UX-FND-01 | 🚧 | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
+| UX-LOC-01 / UX-ACT-01 | ⬜ | Official en-US copy and contextual action registry |
+| UX-API-01 / UX-CMP-01 | ⬜ | Authorized bounded server search and accessible typed reference pickers |
+| UX-FRM-01–03 | ⬜ | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
+| UX-NAV-01 | ⬜ | Six areas, deep URLs, async generation isolation |
+| UX-PLN-01 | ⬜ | Visual draft editor, immutable revision preview, explicit publish/activate |
+| UX-EVD-01 / UX-ISS-01 | ⬜ | Explicit assessments and independent issue/blocker flows |
+| UX-OPS-01 / UX-ADM-01 | ⬜ | Protocol-specific guidance and typed administration |
+| UX-CAS-01 | ⬜ | Draft-preserving conflict review and frozen-intent uncertain retry |
+| UX-QA-01 / UX-REL-01 | ⬜ | Real browser/accessibility/storage tests, embedded assets and distribution checks |
+
+Owner confirmed that no representative users or manual screen-reader testers are available; that validation remains pending. Human baseline and representative-user/screen-reader measurements remain **not measured**. Automation timings cannot establish human comprehension or WCAG certification. No UX lot is complete solely because this plan or its inventory exists.
