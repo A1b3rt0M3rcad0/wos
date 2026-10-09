@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-09
 **Current target:** Human workspace UX/DX acceptance; signed 0.3.0 baseline preserved
-**Current wave:** UX-FND-01 foundation; original Waves 01–18 and signed P00–P13 baseline accepted
+**Current wave:** UX implementation and automated QA/distribution accepted; human usability/screen-reader/native zoom validation pending
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -1410,7 +1410,7 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 
 | Lot | State | Acceptance |
 | --- | --- | --- |
-| UX-FND-01 | 🚧 | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
+| UX-FND-01 | ✅ | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
 | UX-LOC-01 | ✅ | Official en-US catalog, shell, typed labels/UTC dates and user-content preservation; four presentation checks and six real browser journeys passed |
 | UX-ACT-01 | ✅ | Explicit permission/state/protocol action registry; common action and revoked-authority browser checks passed |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
@@ -1421,9 +1421,13 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | UX-EVD-01 / UX-ISS-01 | ✅ | Exact-definition assessments and independent Issue/Blocker resolution passed real-browser journeys |
 | UX-OPS-01 / UX-ADM-01 | ✅ | Permission-bound typed settings/advanced editors and copied host-profile handoff; legacy/unsigned/signed regressions passed |
 | UX-CAS-01 | ✅ | Retained edits, explicit comparison/reconfirmation and identical-byte/key uncertain replay passed real-browser checks |
-| UX-QA-01 / UX-REL-01 | ⬜ | Real browser/accessibility/storage tests, embedded assets and distribution checks |
+| UX-QA-01 / UX-REL-01 | ✅ automated / pending manual | 31 browsers, 14 web units, 712 Go test/subtest passes in both normal/race, real PostgreSQL, offline/reproducible packages and Docker Compose; representative users, screen reader and native zoom pending |
 
 Owner confirmed that no representative users or manual screen-reader testers are available; that validation remains pending. Human baseline and representative-user/screen-reader measurements remain **not measured**. Automation timings cannot establish human comprehension or WCAG certification. No UX lot is complete solely because this plan or its inventory exists.
+
+### Historical implementation checkpoints
+
+The following paragraphs record intermediate slices. Current acceptance is in the table above and the final record below.
 
 UX-API-01 implementation: additive `SearchReferences` Application query and bounded metadata port; typed HTTP/MCP adapters, all eleven operational reference kinds, revision-bound keyset cursors and authorized exact-ID resolution. Storage/query verification is in progress; completion not claimed. Fresh baseline browser recheck: six tests passed with writable XDG paths, recorded in `docs/ux/baseline-browser.json`.
 
@@ -1440,3 +1444,11 @@ UX human-flow slice acceptance: sixteen embedded-server browser tests passed on 
 UX navigation/search slice acceptance: new six-area, Draft checklist, reload/back/forward/item and 1,001-Task global title/priority browser checks passed; compatibility journeys passed after purpose-navigation migration. Switching to Board invalidates outstanding List renders. Additive Task priority query passed Memory, SQLite and real PostgreSQL tests; HTTP/MCP permission-hint shape parity also passed. API access, CAS and domain state semantics remain unchanged. Hosted PR #83 browser/package/Ubuntu/Windows checks passed, while core CI was interrupted at a Docker Hub anonymous-pull rate limit; a failed-job rerun was requested. No CI application failure is inferred from that infrastructure response.
 
 UX operation/accessibility slice: 31 real-server browser tests and 14 unit checks passed locally. Official copy now covers common modules and additional static shell controls; authored content is preserved. Typed participants/external context grant no authority. Objective parent relationships, linked progress, entity-specific empty states and Task post-create detail are implemented. Host-profile clipboard handoff, revoked read/write/replay prevention and late-context failures passed. Axe reported no serious/critical violations in tested login/Overview/Task/picker states after contrast correction; keyboard, 390px and 200%/400% equivalent viewport reflow passed. Native browser zoom, representative-user usability and manual screen-reader checks are not claimed measured. Full backend/distribution and final documentation gates remain outstanding.
+
+### Final executable acceptance — 2026-10-09
+
+PRs #79–85 are integrated. All executable correction lots are implemented and the final documentation/capture slice records 31 real-server browser passes, 14 web unit passes, 17 package/release contract passes and full Go normal/race acceptance (712 test/subtest passes each, 18 passing packages, explicit opt-in/environment skips). Memory/SQLite/real PostgreSQL, permission/query parity, cursor/revocation/CAS and signed independent review passed. Vet, module hygiene, generated contract drift, event catalog, actionlint and report checks passed. Actual full-disk recovery passed separately. All five distribution archives were byte-identical across separate source paths; offline npm installation exercised service/client/skills and signed host profiles. The real Dockerfile/Compose default SQLite path passed startup, English embedded assets/CSP, authorization/HTTP/MCP and persistence across restart after copying `.env.example` unchanged (port 18109 and build-only cloud CA override). No runtime/schema/release version change or publication is implied.
+
+Accepted executable source: `315fcadbcb4a6acc614cf908e04b5d55d54e9db9`; final documentation adds no application behavior. Source-bound reports and English current screenshots are in `docs/ux/final-acceptance.md` and `docs/ui-workspace/README.md`. Hosted browser/packages/Ubuntu/native-Windows passed for #83–85; core jobs were refused by Docker Hub anonymous-pull rate limiting, not treated as green. Owner permitted continuing despite refused jobs; local required gates passed before integration.
+
+**Pending human validation:** representative-user comprehension/unaided creation and baseline timing, manual screen-reader use and native browser 200%/400% zoom. Owner explicitly confirmed no representative users or screen-reader testers are available and requested this be recorded as pending. Automated axe/keyboard/reflow and screenshots do not certify WCAG or human usability percentages. Implementation is ready for that validation and human/agent operation; the pending validation is not marked complete.

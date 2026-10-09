@@ -1,0 +1,31 @@
+
+> test:unit
+> node --test unit/*.test.mjs
+
+✔ explicit human registry agrees with exposure; no signed or admin operation becomes a common action (0.987527ms)
+✔ viewer, missing protocol and signed-v2 cannot acquire a legacy reservation (2.378172ms)
+✔ lifecycle is insufficient to complete another holders work (0.292469ms)
+✔ draft and revision actions require actual roadmap material (0.285339ms)
+✔ uncertain intent serializes once; edits cannot mutate its payload or scope (0.326317ms)
+✔ explicit conflict reconciliation preserves local content and changes only observed CAS versions (1.164182ms)
+✔ intent binds an immutable identity independently of mutable form state (0.211265ms)
+✔ official human terms distinguish tasks, outcomes and waived verification (35.924169ms)
+✔ typed labels never translate authored content or identifiers (0.262023ms)
+✔ static shell fallbacks agree with the single official copy catalog (9.165461ms)
+✔ official web source contains no Portuguese locale or accented copy (14.870085ms)
+✔ exactly six purpose areas; operational status is a Work filter (1.575594ms)
+✔ route round trip retains scope, filter and item but never credentials (1.008291ms)
+✔ invalid and cross-area links fail rather than silently changing intent (0.554444ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 206.131136
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

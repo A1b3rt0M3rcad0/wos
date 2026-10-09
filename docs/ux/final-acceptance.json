@@ -1,0 +1,550 @@
+{
+  "schema": 1,
+  "date": "2026-10-09",
+  "code_commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+  "toolchains": {
+    "go": "1.27.2",
+    "node": "24.19.0",
+    "npm": "11.9.0",
+    "chromium": "151"
+  },
+  "go": {
+    "unit": {
+      "command": "go test -count=1 -p 2 -json ./...",
+      "log_sha256": "912bcb54d616216f59ec4ebafa02d201ace3a17e8543d258ab4a0264ea1cfba6",
+      "test_pass": 712,
+      "test_skip": 7,
+      "test_fail": 0,
+      "packages_pass": 18,
+      "packages_without_tests": 8,
+      "skipped_tests": [
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestReceiptCleanupRecoversRealFullDisk"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestNativeOSKeyringProtectedProfileV2"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestNativeOSKeyringChildV2"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "test": "TestWorkContractLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "test": "TestWorkContractLoadMatrix"
+        }
+      ],
+      "packages": [
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+          "result": "pass",
+          "elapsed": 0.005
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+          "result": "pass",
+          "elapsed": 0.006
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+          "result": "pass",
+          "elapsed": 0.825
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+          "result": "pass",
+          "elapsed": 0.138
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+          "result": "pass",
+          "elapsed": 0.018
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+          "result": "pass",
+          "elapsed": 0.011
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "result": "pass",
+          "elapsed": 1.332
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+          "result": "pass",
+          "elapsed": 0.146
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+          "result": "pass",
+          "elapsed": 0.019
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+          "result": "pass",
+          "elapsed": 0.004
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+          "result": "pass",
+          "elapsed": 0.033
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+          "result": "pass",
+          "elapsed": 17.586
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+          "result": "pass",
+          "elapsed": 0.007
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "result": "pass",
+          "elapsed": 9.508
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+          "result": "pass",
+          "elapsed": 0.115
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+          "result": "pass",
+          "elapsed": 9.715
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+          "result": "pass",
+          "elapsed": 56.226
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "result": "pass",
+          "elapsed": 87.805
+        }
+      ]
+    },
+    "race": {
+      "command": "go test -count=1 -p 2 -race -json ./...",
+      "log_sha256": "ec846e95bb99cf369aacd16bc0a6cb122207a43703770ace6ba5ce25afaae37d",
+      "test_pass": 712,
+      "test_skip": 7,
+      "test_fail": 0,
+      "packages_pass": 18,
+      "packages_without_tests": 8,
+      "skipped_tests": [
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestReceiptCleanupRecoversRealFullDisk"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestNativeOSKeyringProtectedProfileV2"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "test": "TestNativeOSKeyringChildV2"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "test": "TestWorkContractLoadMatrix"
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "test": "TestWorkContractLoadMatrix"
+        }
+      ],
+      "packages": [
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+          "result": "skip",
+          "elapsed": 0.001
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+          "result": "pass",
+          "elapsed": 1.033
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+          "result": "pass",
+          "elapsed": 1.033
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+          "result": "pass",
+          "elapsed": 2.815
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+          "result": "pass",
+          "elapsed": 3.274
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+          "result": "skip",
+          "elapsed": 0.001
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+          "result": "pass",
+          "elapsed": 1.241
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+          "result": "pass",
+          "elapsed": 1.064
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "result": "pass",
+          "elapsed": 10.785
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+          "result": "skip",
+          "elapsed": 0.001
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+          "result": "pass",
+          "elapsed": 2.36
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+          "result": "pass",
+          "elapsed": 1.082
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+          "result": "pass",
+          "elapsed": 1.036
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+          "result": "pass",
+          "elapsed": 1.3479999999999999
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+          "result": "pass",
+          "elapsed": 1.037
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+          "result": "pass",
+          "elapsed": 65.178
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "result": "pass",
+          "elapsed": 177.241
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+          "result": "pass",
+          "elapsed": 2.15
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "result": "pass",
+          "elapsed": 210.391
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+          "result": "pass",
+          "elapsed": 48.374
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+          "result": "skip",
+          "elapsed": 0.002
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas",
+          "result": "skip",
+          "elapsed": 0
+        },
+        {
+          "package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+          "result": "pass",
+          "elapsed": 219.379
+        }
+      ]
+    },
+    "real_postgres": true
+  },
+  "browser": {
+    "passed": 31,
+    "skipped": 0,
+    "log": "final-browser.log",
+    "sha256": "c40477fdd88df80e96093d52f5d8e43b2f336521030cb33b2ddf8d12f6d58d7b"
+  },
+  "web_unit": {
+    "passed": 14,
+    "log": "final-web-unit.log",
+    "sha256": "62aa030a10d5faffd70790cc418874c98bd6c7dc78970bfebfc1b65f3ff3a006"
+  },
+  "package_contracts": {
+    "passed": 17,
+    "log": "final-package-tests.log",
+    "sha256": "bdf906bbd35c65d07313c22b6fc880032ee88cb887a4527f4eba2f64b65949a0"
+  },
+  "distribution": {
+    "schema": 1,
+    "version": "0.3.0",
+    "commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+    "built_at": "2026-10-09T21:14:16Z",
+    "artifacts": [
+      {
+        "kind": "wos",
+        "name": "@a1b3rt0m3rcad0/wos",
+        "version": "0.3.0",
+        "filename": "wos-0.3.0.tgz",
+        "integrity": "sha512-rvI3j4ph9wEdn8YcUP82GbEGIxfQIc7QCIEWcBdtE4O38WR2nop/wx8THtcXx9SGSRQgpM9/t/NyhyhP/dwtXQ==",
+        "sha256": "77140875ea82edcc79c6136dbb60b60c4ed54cb198d1407ed04cc9ff0c6a6378"
+      },
+      {
+        "kind": "wos-skill",
+        "name": "@a1b3rt0m3rcad0/wos-skill",
+        "version": "0.3.0",
+        "filename": "wos-skill-0.3.0.tgz",
+        "integrity": "sha512-DGbXDXwp4x/nqJkxGG9Qi9K423rEPSpw9wip0eA97Kh1AKIOABnfVytGmWSsB86wyqXtB5rU1bJzsO4NRCndsw==",
+        "sha256": "762f0a38c6ce1558c32007764ee76a8bfecb6ecc9b7163c3de77f658e2276dcd"
+      },
+      {
+        "kind": "archive",
+        "filename": "wos_0.3.0_linux_amd64.tar.gz",
+        "sha256": "52c92fb4b16744c45bd1ecb18166ecf523d52736f6059772f7429d4b63f0ddd9"
+      },
+      {
+        "kind": "client-linux",
+        "filename": "wosctl_0.3.0_linux_amd64.tar.gz",
+        "sha256": "2fe4a82d6a96433960364c34be4b70b806e7f7270b0017b1b266012bbaf2e745",
+        "binary_sha256": "9e89c5cba82dcd8b71650b7c594d586bf82e4c264455f187ade61cd9933088af",
+        "platform": "linux",
+        "arch": "amd64"
+      },
+      {
+        "kind": "client-windows",
+        "filename": "wosctl_0.3.0_windows_amd64.zip",
+        "sha256": "2eaba0e3fdc268c03be77889f34c1fcc54ccaa1ef066e4dba349d7c6f4ea143e",
+        "binary_sha256": "65f5bd886be84199a224f12a18919bb441c029a47939f09b015e8a4fd4a10955",
+        "platform": "windows",
+        "arch": "amd64"
+      }
+    ]
+  },
+  "distribution_checks": {
+    "version": "0.3.0",
+    "commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+    "checks": [
+      "artifact hashes",
+      "offline npm install",
+      "server/client source versions and exit propagation",
+      "packaged CLI init/checkout/status/recover",
+      "signed protected profile checkout/finish/independent review/recover",
+      "four skill destinations",
+      "HTTP/MCP/UI readiness",
+      "SIGTERM graceful shutdown",
+      "corruption rejection"
+    ]
+  },
+  "reproducible_artifacts": true,
+  "compose": {
+    "source_commit": "315fcadbcb4a6acc614cf908e04b5d55d54e9db9",
+    "env_example_copied_unchanged": true,
+    "host_port_override": 18109,
+    "cloud_build_ca_secret": "build-only system trust bundle; verified TLS",
+    "runtime_user": "10001:10001",
+    "checks": [
+      "ready/live",
+      "English embedded shell",
+      "all static assets match source",
+      "self-only script CSP",
+      "unauthenticated API denied",
+      "authorized reference search and permission hints",
+      "MCP initialize",
+      "Draft and Task persisted across Compose restart"
+    ],
+    "embedded_assets": [
+      "actions.js",
+      "advanced-editors.js",
+      "api-client.js",
+      "app.js",
+      "command-exposure.json",
+      "contracts-view.js",
+      "en-US.js",
+      "favicon.svg",
+      "human-forms.js",
+      "intents.js",
+      "navigation.js",
+      "presentation.js",
+      "reference-picker.js",
+      "roadmap-editor.js",
+      "style.css",
+      "ui.js"
+    ]
+  },
+  "checks": [
+    "go vet",
+    "go mod tidy no drift",
+    "signed/PostgreSQL/MCP/OpenAPI regeneration no drift",
+    "event catalog",
+    "actionlint",
+    "real bounded full-disk recovery",
+    "context/cost report 7 tests",
+    "scenario report 4 tests"
+  ],
+  "accepted_source_sha256": {
+    "packages/wos-api/commands.openapi.json": "e49a83b2aadaf828b1aa22f1d4099e5883edb243ad43ddbb44b73bd2987083ed",
+    "packages/wos-api/http/effective_permissions.go": "c8d426ea85f06ba3c6710aa2a46df9a5656c2e070c0ecbcd1803dedeaab8df67",
+    "packages/wos-api/http/effective_permissions_test.go": "821005d33b73f4567ed5419bc46844b5201e706f997afd166e08caece23013f0",
+    "packages/wos-api/http/handler.go": "ebb8d4383ee916086493f933aac0dd1d12ada129ca82ce4d523a6e7019fff437",
+    "packages/wos-api/http/references.go": "de5700648006d265acaae78314faa7115a9610f7f25d9adb597702b7e2e588db",
+    "packages/wos-api/http/references_test.go": "dd820b996c9747ac3a684006d099a35a19387dcdd651a7966d92fda7adadf3eb",
+    "packages/wos-api/mcp/queries.go": "7eceb02af21de0895485fb5f6b7c9792422ee5c0c8941c3350680910ca7d5ea4",
+    "packages/wos-api/observability/observer.go": "dbac3f1e5b96e1df0ab24c1bc9e1e2c26bacbd04ae42244a73422af635fedd21",
+    "packages/wos-api/observability/observer_test.go": "c32857d2e91a124c7e1bc5628c4e3f2e4915ed5b4e4d2b4d00469c3fc153a0a1",
+    "packages/wos-api/web/assets/actions.js": "6502a8025a8d17ac3c653de766e4402074616991ef2b5303a1f43d09899daf5a",
+    "packages/wos-api/web/assets/advanced-editors.js": "845345ba35c7d632bc2062cc8912645788aaad51ef69cb983b80b570f17ecebb",
+    "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+    "packages/wos-api/web/assets/app.js": "a0622cb36d52cc911ecfbed7a364b97f84ce3050a81c82a95545ee27a68b93b6",
+    "packages/wos-api/web/assets/command-exposure.json": "61df462d4242fd0f28a953645019e3d3d34aef1214e8694fd45d6385e16f91c5",
+    "packages/wos-api/web/assets/contracts-view.js": "36d9f49f737e8ff22fb796588ab02146c5b8bb58a94c670d8bde45c13fb9484c",
+    "packages/wos-api/web/assets/en-US.js": "b0448c5e05f190fcaeefe030065b5602fde13181037468a12467680ffdef56bc",
+    "packages/wos-api/web/assets/favicon.svg": "06518485bc52d584e8a068c79ab3d273c133a3ed6832dd2fc65b27490bd2befb",
+    "packages/wos-api/web/assets/human-forms.js": "b631db310cc04ea078ef30abf92815cfa30b0ed2d513120fbe53570b5e4f724b",
+    "packages/wos-api/web/assets/index.html": "948f2c630a82d0f65f8563d357c76dabef89dafe718a6ab3fa6875e13271ee68",
+    "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "packages/wos-api/web/assets/navigation.js": "dd24431bdbe5ec4a5eb5e3b05b6e195584953ba3f57eafb13abd8cce0bcec55c",
+    "packages/wos-api/web/assets/presentation.js": "8b208c529fc649a45311f5460d92f8324aa0100d5eaa9a83b40ccf734deae3f0",
+    "packages/wos-api/web/assets/reference-picker.js": "51a15f4b84789ecfd5b3f3deb0f84ef318709e2d0539dfffe84108ae72708e14",
+    "packages/wos-api/web/assets/roadmap-editor.js": "5d194d7d13c3c64b41b341c2ec4b31b9bb2197cdad9af2097ef686c9ce1970bc",
+    "packages/wos-api/web/assets/style.css": "e0ce7e91dd9000dab259c508d3430a92e5e26c6546a6ed122b71fd4ecb07d761",
+    "packages/wos-api/web/assets/ui.js": "4f8b558d1274f65b405e4602b065de2699907c97aaf1adab9b18338779853532",
+    "packages/wos-api/web/exposure_test.go": "64add7f024e84615d17d6a4feab1ba8faab0648e20abf03b47686a24e855a93c",
+    "packages/wos-core/application/authorization.go": "c0b50cb542030b0950d74be11979b25d6cc0fa128d0454bd53a38159bee2de54",
+    "packages/wos-core/application/effective_permissions.go": "b903caf9794c56e702eb6d923f3a00e756ca21e64b08b16972e6152185d0428e",
+    "packages/wos-core/application/effective_permissions_test.go": "ce8ed0ce0d01877c0bcdc74d9d38964577c89e4abaa55f86c387d3dc8ec203af",
+    "packages/wos-core/application/query_observation.go": "403c11fd3439e526f63037285ee1d295dffe1d161647222cc83e122b75193bc1",
+    "packages/wos-core/application/references.go": "7ef98dea41f02bae47d7a1160476841ffc682976565999bbd12b42607d4c3f51",
+    "packages/wos-core/ports/authorization.go": "863b0fd13392027faa5204ead1d32515410000eec0cd469b8139f617367bd0e6",
+    "packages/wos-core/ports/query_observation.go": "8c40cd22df19567472b7ec73ddb03b98e5ec195ae4b5658c4c8b46dd061be7ae",
+    "packages/wos-core/ports/references.go": "eb8b34884c14cf554322fbb0479a8d108c039d75e687604a02af682b73484095",
+    "packages/wos-core/storage/memory/references.go": "d9ae048f7f15fac2b4d120488f5e7788c24a050ba2e1643105c6a50a877a617a",
+    "packages/wos-core/storage/postgres/references.go": "6363f0cb33fc93bc79585bfb72e36131585f37c7727c0239317cdf76327ad651",
+    "packages/wos-core/storage/sqlite/references.go": "5fb75470e50414a2996eb06e3a789ab9ee32bceffd1e596f8d42f747236d7e46",
+    "tests/web/accessibility.spec.mjs": "8aab05f058105e0cf0ec511d67df680e69f343a286f283664fcf63afe00b8fe2",
+    "tests/web/authority.spec.mjs": "6d1a1c1042415a08e013d7b27a84289b795faedbfc338fb70b35a5bff8091cfd",
+    "tests/web/contracts.spec.mjs": "6219948da1ac4bc401ccfabbe52f8367a04eb7f0c730abc80df101ce55292ee9",
+    "tests/web/human.spec.mjs": "22285a95c92232f5440abb4bf764a9c519ba00001b1723fbe8db03b44fa74e07",
+    "tests/web/journey.spec.mjs": "0681a995d2bba67ff12034872833d3d7e428f9ff9ce86d52380f3d038c61d953",
+    "tests/web/navigation.spec.mjs": "889ce3143676687ea342a65a18496a2986c86eaddbd4ea30ca5c2f447390d287",
+    "tests/web/package-lock.json": "504cf337e62d2ed749db2a915788110a0c70ecece56d88ffc1176f67c71c0e72",
+    "tests/web/package.json": "3d15a071275431e09d480ce607275ec89c94ba1041ee7da342ea06a8b3261b72",
+    "tests/web/signed.spec.mjs": "9a6c4dc4ea01fa2953c0ee7eae79dbea56eb347066147cbbad951058cf6759d0",
+    "tests/web/unit/actions.test.mjs": "2882999c6876743bc26d7c1fa68faee244138651763c9376b34de80bb1c52343",
+    "tests/web/unit/locale.test.mjs": "3a1d8b0ba24d134be1649d35f240250bc2438a301f7a546af2ac3702a49af8bc",
+    "tests/web/unit/navigation.test.mjs": "59490f331a4ce541b20ef24501e85fb66b7cfa5182e443ba08881ffd2fdc9641",
+    "tests/web/ux-datasets.mjs": "52d36412c4c624b01d87731ce2755136ed1b49047f160126a0ea577291087334",
+    "tests/web/ux-fixture.mjs": "1fe9b34eba9e678f2a261bf7adf0c22f1279929d80480f446f67597806923e90",
+    "tests/web/workspace.spec.mjs": "5eb41484d5677d5744768e692eeb01eebc813bb710356c49e5622a46aead01f8"
+  },
+  "hosted_infrastructure_failure": {
+    "cause": "Docker Hub anonymous pull rate limit",
+    "runs": [
+      37988825893,
+      37990333088,
+      37992206088
+    ],
+    "browser_packages_ubuntu_windows": "passed",
+    "backend_check": "failed due to registry response; local gates passed"
+  },
+  "manual_pending": [
+    "representative-user usability and comprehension",
+    "human baseline and task timing",
+    "manual screen-reader",
+    "manual native-browser zoom"
+  ],
+  "publication": "not performed"
+}
