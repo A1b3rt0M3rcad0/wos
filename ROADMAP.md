@@ -1230,6 +1230,12 @@ return. Local Go1.27.2 execution passed. The first runner retained mktemp mode
 changing product file protections. Ordinary/native Windows suites explicitly
 do not certify this Linux capacity experiment. CI requires the actual named
 PASS and retains the log. Permission-denied/process-death tests remain separate.
+P12 T32 signed replica-clock experiment passed three PostgreSQL race runs
+(3.058s) on Go 1.27.2. Two service instances use clocks +/-365 days; acquisition
+and issuer authority deadlines use database time, renewal remains current,
+takeover preserves expiry and increases fencing, and old authority is denied.
+This is an actual shared-database test, not a claim of separately deployed hosts.
+Existing unsigned clock tests remain intact; final source/platform gates apply.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
