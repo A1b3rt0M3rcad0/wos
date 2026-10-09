@@ -48,3 +48,13 @@ func TestInvalidFindingRejectedBeforeReturnFreeze(t *testing.T) {
 		})
 	}
 }
+
+func TestNonApprovalAssessmentsRejectedBeforeFreeze(t *testing.T) {
+	for _, decision := range []string{"changes_requested", "inconclusive"} {
+		var draft ReviewDraftV2
+		raw := []byte(`{"decision":"` + decision + `","progress":{},"material":{"reason":"Actual checks","criterion_assessments":[{"criterion_id":"0199ac10-0000-7000-8000-000000000010","criterion_revision":"1","result":"met","rationale":"Passed"}]}}`)
+		if err := DecodeV2Document(raw, &draft); err == nil {
+			t.Fatal("non-approval could freeze criterion assessments")
+		}
+	}
+}

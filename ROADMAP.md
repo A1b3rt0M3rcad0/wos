@@ -1380,3 +1380,8 @@ network preflight; generated editable schemas and progressive skill guides
 expose the exclusive choice. Race regression cases prove original profile and
 contract bytes remain unchanged. A previously frozen rejected experimental
 return stays preserved and is not relabeled as accepted.
+A subsequent controlled non-approval attempt correctly failed the server guard
+because it included criterion assessments. Editable review parsing now rejects
+that combination before freezing; the progressive guides explicitly require
+findings/reason for non-approval and assessments only for approval. The original
+rejected requests remain preserved, with no fabricated receipt or acceptance.
