@@ -1,0 +1,11 @@
+{
+  "lifecycle": "done",
+  "task_id": "01a11f99-ab01-7ba4-86a8-5c6d1c8866ba",
+  "executor_contract_directory_empty": true,
+  "reviewer_contract_directory_empty": true,
+  "initial_client_source": "c1080053865eca06bc097e38fbecdf273688e1e1",
+  "broker_source": "52d225dcdcf86df05a36b17db7ddf5313a1d0b40",
+  "server_sha256": "fee05e54401ae61d5cfb445c2df7e3a2a8aad2ac379b4216e47ba7e7b06e5d3e",
+  "client_sha256": "0c3a41a9c42efce5265f0870b7ea8ca8776823f216fddf05f8fff1e22bee1013",
+  "original_intention_recovered_unchanged": "01a11f9b-aa74-7a6c-b868-0f8034490a6d"
+}

@@ -1,0 +1,289 @@
+{
+  "schema": 1,
+  "source_commit": "52d225dcdcf86df05a36b17db7ddf5313a1d0b40",
+  "tasks": [
+    {
+      "id": "normalize-title-001",
+      "outcome_id": "normalize-title",
+      "quality_contract_digest": "sha256:44b8a04043555866ea7e9ab331eeceeab0dc9ae500fa857fca6a2b14b6ebdb1c"
+    }
+  ],
+  "strategies": {
+    "A": {
+      "model_harness_configuration_digest": "sha256:6fd60ffc81dfee8352750f9e61317bf5b2d4dc9dd15e9d305270ccab8196640a",
+      "attempts": [
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "A-1-single-executor-self-review",
+          "task_id": "normalize-title-001",
+          "phase": "execution",
+          "status": "passed"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "A-2-external-quality",
+          "task_id": "normalize-title-001",
+          "phase": "integration",
+          "status": "passed"
+        }
+      ],
+      "accepted_tasks": [
+        "normalize-title-001"
+      ],
+      "accepted_outcomes": [],
+      "quality_evidence_ref": "docs/audit/controlled-codex-2026-10-09/A-quality.json",
+      "integration_evidence_ref": "docs/audit/controlled-codex-2026-10-09/A-quality.json",
+      "observed_timing": {
+        "started_at": "2026-10-09T07:22:10.104296+00:00",
+        "accepted_at": "2026-10-09T07:28:29.275Z",
+        "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+      }
+    },
+    "B": {
+      "model_harness_configuration_digest": "sha256:6fd60ffc81dfee8352750f9e61317bf5b2d4dc9dd15e9d305270ccab8196640a",
+      "attempts": [
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "B-1-executor",
+          "task_id": "normalize-title-001",
+          "phase": "execution",
+          "status": "passed"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "B-2-external-handoff",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "completed"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "B-3-fresh-reviewer",
+          "task_id": "normalize-title-001",
+          "phase": "review",
+          "status": "approved"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "B-4-external-quality",
+          "task_id": "normalize-title-001",
+          "phase": "integration",
+          "status": "passed"
+        }
+      ],
+      "accepted_tasks": [
+        "normalize-title-001"
+      ],
+      "accepted_outcomes": [],
+      "quality_evidence_ref": "docs/audit/controlled-codex-2026-10-09/B-quality.json",
+      "integration_evidence_ref": "docs/audit/controlled-codex-2026-10-09/B-quality.json",
+      "observed_timing": {
+        "started_at": "2026-10-09T07:28:39Z",
+        "accepted_at": "2026-10-09T07:30:32.939Z",
+        "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+      }
+    },
+    "C": {
+      "model_harness_configuration_digest": "sha256:6fd60ffc81dfee8352750f9e61317bf5b2d4dc9dd15e9d305270ccab8196640a",
+      "attempts": [
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-1-first-executor",
+          "task_id": "normalize-title-001",
+          "phase": "execution",
+          "status": "code_passed_return_rejected"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-2-first-finish",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "500_evidence_error"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-3-first-CID-recovery",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "usage_rejected"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-4-first-exact-recovery",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "same_return_rejected"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-5-new-owned-fixture",
+          "task_id": "normalize-title-001",
+          "phase": "planning",
+          "status": "initialized"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-6-retry-executor",
+          "task_id": "normalize-title-001",
+          "phase": "execution",
+          "status": "code_passed"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-7-retry-finish",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "409_submission_not_accepted"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-8-retry-CID-recovery",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "usage_rejected"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-9-retry-exact-recovery-before-fix",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "same_return_rejected"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-10-broker-upgrade-same-database-issuer",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "criterion_resolution_fix"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-11-original-exact-recovery-after-fix",
+          "task_id": "normalize-title-001",
+          "phase": "coordination",
+          "status": "accepted_original_bytes"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-12-fresh-reviewer",
+          "task_id": "normalize-title-001",
+          "phase": "review",
+          "status": "approved"
+        },
+        {
+          "input_tokens": null,
+          "output_tokens": null,
+          "cached_tokens": null,
+          "tool_calls": null,
+          "human_interventions": null,
+          "cost": null,
+          "id": "C-13-external-quality",
+          "task_id": "normalize-title-001",
+          "phase": "integration",
+          "status": "passed"
+        }
+      ],
+      "accepted_tasks": [
+        "normalize-title-001"
+      ],
+      "accepted_outcomes": [],
+      "quality_evidence_ref": "docs/audit/controlled-codex-2026-10-09/C-quality.json",
+      "integration_evidence_ref": "docs/audit/controlled-codex-2026-10-09/C-quality.json",
+      "observed_timing": {
+        "started_at": "2026-10-09T07:30:32Z",
+        "accepted_at": "2026-10-09T07:45:38.464Z",
+        "evidence_ref": "docs/audit/controlled-codex-2026-10-09/observations.json"
+      }
+    }
+  }
+}

@@ -2610,9 +2610,11 @@
       "candidate_go_tests": [],
       "other_resources": [
         "tools/acceptance/context-cost-report.py",
-        "docs/context-cost-benchmark.md"
+        "docs/context-cost-benchmark.md",
+        "docs/audit/controlled-codex-2026-10-09/observations.json",
+        "docs/audit/controlled-codex-2026-10-09/report.json"
       ],
-      "limitation": "Controlled reporter is implemented and rejects false comparisons; A/B provider-backed controls and token/billing data are unavailable in this host."
+      "limitation": "Actual A/B/C managed Codex functional calibration: one task each, same43 external checks. Includes failed C attempts, in-place source repair and exact recovery; not steady-state performance. Provider billing/tokens unknown."
     },
     {
       "id": "T96",

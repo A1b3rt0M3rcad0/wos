@@ -20,6 +20,31 @@ def fixture():
 
 
 class MeasurementTests(unittest.TestCase):
+    def test_observed_timing_preserves_real_timezone_and_unknown_cost(self):
+        data = fixture()
+        strategy = data["strategies"]["C"]
+        strategy["attempts"][0]["cost"] = None
+        strategy["observed_timing"] = {"started_at": "2026-10-09T07:00:00+00:00",
+                                       "accepted_at": "2026-10-09T09:01:30+02:00",
+                                       "evidence_ref": "test-only:clock"}
+        result = module.report(data)["strategies"]["C"]
+        self.assertEqual(result["observed_time_to_acceptance_seconds"], 90)
+        self.assertIsNone(result["total_cost"])
+
+    def test_invalid_or_unaccepted_timing_is_rejected(self):
+        for change in ["backwards", "naive", "malformed", "missing_evidence", "unaccepted"]:
+            with self.subTest(change=change):
+                data = fixture()
+                strategy = data["strategies"]["C"]
+                timing = {"started_at": "2026-10-09T07:00:00Z", "accepted_at": "2026-10-09T07:01:00Z", "evidence_ref": "test-only:clock"}
+                strategy["observed_timing"] = timing
+                if change == "backwards": timing["accepted_at"] = "2026-10-09T06:00:00Z"
+                elif change == "naive": timing["started_at"] = "2026-10-09T07:00:00"
+                elif change == "malformed": timing["started_at"] = "unknown"
+                elif change == "missing_evidence": timing.pop("evidence_ref")
+                else: strategy.update(accepted_tasks=[], accepted_outcomes=[])
+                with self.assertRaises(AssertionError): module.report(data)
+
     def test_failed_attempt_and_review_are_in_cost_denominator(self):
         data = fixture()
         for identifier, phase, cost in [("retry", "execution", "1.25"), ("review", "review", "0.50")]:

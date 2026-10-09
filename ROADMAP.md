@@ -914,7 +914,7 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P09 | Implemented and tested | Protected signing/return/finish, original-CID recovery and verified receipt cleanup. Native death and real Linux ENOSPC fixtures; final combined-source gates pending. |
 | P10 | Implemented and tested | Explicit cutover, bounded preserving workspace migration, actual v0.2 historical upgrade and old-writer readiness refusal, pending SQL restores, host issuer recovery and client pin approval. |
 | P11 | Implemented and tested | Five progressive guides, signed UI projections and guarded actions, exact correction acknowledgement and installed-binary independent correction journey. |
-| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. Controlled A/B provider measurements and exhaustive assertion audit remain explicitly unclaimed. |
+| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. A/B/C Codex functional controls ran with one task each and identical external checks; provider usage/cost and exhaustive assertion audit remain explicitly unclaimed. |
 | P13 | Coordinated 0.3.0 prepared | Version/manifest/OpenAPI/notices/upgrade/skills aligned; same-source verifier precedes explicit registry publication. |
 
 R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.
@@ -1351,3 +1351,14 @@ the CLI archives, so npm agents need no source checkout to discover typed
 editable material. Package metadata matches the live client signed-v2/schema-2
 capabilities and retains explicit legacy compatibility; installed-package
 verification checks schema inclusion and protocol metadata against the binary.
+
+P12 T95 actual managed Codex A/B/C calibration is retained under
+`docs/audit/controlled-codex-2026-10-09`: one common Unicode normalizer task,
+fresh executor/reviewer histories for B/C, same inherited models/native harness
+and 43 external checks for all strategies. Parent-observed wall times include
+orchestration and C development/remediation; first malformed return and second
+criterion-reference failure remain recorded. C recovered unchanged original
+signed bytes after same-database/issuer upgrade, then received independent
+revision-1 approval; Task DONE and both empty contract directories were checked.
+Provider tokens/cache/tool counts/cost remain null, no Outcome achievement or
+savings is inferred. The reporter now validates observed timezone-bearing timing.

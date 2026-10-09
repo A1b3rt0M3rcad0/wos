@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "kind": "actual-external-controlled-quality",
+  "commit": "de031c44cf61e359beb9ad95749c75e29f8ac7b8",
+  "node": "v24.19.0",
+  "tests": "4",
+  "external_assertions": 43,
+  "quality_passed": true,
+  "integration_passed": true,
+  "accepted_at": "2026-10-09T07:28:29.275Z",
+  "validator_sha256": "6f759ae8bfad37837304c863005d5e382d14bdfb814c4ec5d69968ae457566f0"
+}
