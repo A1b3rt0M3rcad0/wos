@@ -102,3 +102,6 @@ metadata. `work validate` and generic `--help` are not signed protocol operation
 use focal `show` and the coordinated packaged schema. If local preparation fails,
 inspect pending state and recover before changing a draft. Never edit a frozen
 intention after an uncertain send.
+
+After changes_requested, use [the explicit correction flow](correction.md).
+Correction is intentionally excluded from generic --next discovery.

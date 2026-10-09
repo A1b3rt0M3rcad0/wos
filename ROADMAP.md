@@ -1213,3 +1213,14 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+Installed signed acceptance now drives an actual subprocess correction round:
+planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
+contract with exact --previous-review acknowledgement, explicit frozen finding
+response, required original criterion assessment, Task DONE and empty profiles.
+The first fixture used generic --next, which intentionally skips corrections;
+it now acknowledges the original case rather than weakening acquisition guards.
+The fixture used the wrong criterion DTO field and leaked a block-local variable
+into final assertions; both fixture errors are corrected without relaxing strict
+schema/cleanup checks. Five progressive guides and the human UI now show the
+required correction acknowledgement. This automated correction scenario is
+distinct from the managed Codex pilot, which accepted its initial delivery.

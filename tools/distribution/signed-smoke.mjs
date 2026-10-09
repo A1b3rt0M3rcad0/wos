@@ -9,7 +9,6 @@ import {randomUUID,randomBytes,createPrivateKey,createPublicKey,createHash} from
 
 // Execute installed binaries only, outside the source checkout. No browser or Go test helper.
 export async function verifySignedPackage(serverBinary, clientBinary) {
- const decision='approved';
  const directory=await mkdtemp(join(tmpdir(),'wos-signed-ui-'));
  const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
  const url=`http://127.0.0.1:${port}`,namespace='01a11991-0000-7000-8000-000000000001',token=randomBytes(32).toString('base64url');
@@ -37,7 +36,10 @@ export async function verifySignedPackage(serverBinary, clientBinary) {
   identity=await api('/security/signing-identity',token);
   await signing({namespace_id:namespace,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:namespace,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
   for(const [index,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:index+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit signed browser fixture drain'});
-  const work=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
+  const createdWork=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
+  const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:createdWork.id},expected_version:createdWork.version,title:'Original installed-package obligation checked',required:true,verification_mode:'attestation'});
+  assert.ok(criterion.id);assert.match(String(criterion.criterion_revision),/^[1-9][0-9]*$/);
+  const work=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${createdWork.id}`,token)).value;
   const trust=await api(`/namespaces/${namespace}/signed-trust`,token);
   async function provision(name,permissions){
    const own=await api('/security/signing-identity',token);
@@ -65,17 +67,34 @@ export async function verifySignedPackage(serverBinary, clientBinary) {
   });
   cli(executor.workspace,executor.name,executor.environment,'work','finish',executionFile.slice(0,-5));
   assert.deepEqual(await readdir(executionDirectory),[],'executor obligation cleanup is separate from Task approval');
+  const reviewDirectory=join(reviewer.workspace,'.wos/profiles/reviewer/contract');
+  for (const decision of ['changes_requested','approved']) {
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','checkout','--next');
-  const reviewDirectory=join(reviewer.workspace,'.wos/profiles/reviewer/contract'),reviewFile=(await readdir(reviewDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(reviewFile);
-  await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
+  const reviewFile=(await readdir(reviewDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(reviewFile);
+  await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='approved'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  criterion_assessments:',indent+'    - criterion_id: '+criterion.id,indent+'      criterion_revision: "'+criterion.criterion_revision+'"',indent+'      result: met',indent+'      rationale: "Integration fixture checked original attestation requirement"')}if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','finish',reviewFile.slice(0,-5));assert.deepEqual(await readdir(reviewDirectory),[]);
+  if(decision==='changes_requested') {
+   const pending=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token)).value;
+   assert.notEqual(pending.lifecycle,'done','changes requested is not Task completion');
+   assert.ok(pending.correction_review_case_id,'correction names the original prior review');
+   cli(executor.workspace,executor.name,executor.environment,'work','checkout',work.id,'--version',String(pending.version),'--previous-review',pending.correction_review_case_id);
+   const correction=(await readdir(executionDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(correction);assert.notEqual(correction,executionFile,'correction has a fresh contract');
+   cli(executor.workspace,executor.name,executor.environment,'work','show',correction.slice(0,-5),'--for-agent');
+   await editDraft(join(executionDirectory,correction),'execution',lines=>{
+    const changed=lines.map(line=>/^\s+summary:/.test(line)?line.replace(/summary:.*/,'summary: "Correction addresses the original frozen finding"'):line);
+    const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];
+    changed.splice(material+1,0,indent+'  reason: "Test-only correction round, original scope preserved"',indent+'  correction_responses:',indent+'    - finding_id: 01a11991-0000-7000-8000-000000000002',indent+'      summary: "Original requirement checked; frozen finding explicitly addressed"');return changed;
+   });
+   cli(executor.workspace,executor.name,executor.environment,'work','finish',correction.slice(0,-5));assert.deepEqual(await readdir(executionDirectory),[]);
+  }
+  }
   cli(executor.workspace,executor.name,executor.environment,'work','recover');
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','recover');
   assert.deepEqual(await readdir(executionDirectory),[]);
   assert.deepEqual(await readdir(reviewDirectory),[]);
   const completed=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token);
   assert.equal(completed.value.lifecycle,'done','independent reviewer actually completes Task');
-  return {protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','post-cleanup work/review recover']};
+  return {protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
  }finally{
   if(child.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended}await rm(directory,{recursive:true,force:true});
  }
