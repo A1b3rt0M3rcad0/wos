@@ -81,7 +81,7 @@ type options struct {
 
 func parseOptions(args []string) (options, error) {
 	o := options{values: map[string]string{}}
-	booleans := map[string]bool{"next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true}
+	booleans := map[string]bool{"signing-key-stdin": true, "token-stdin": true, "generate-signing-key": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true}
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		if !strings.HasPrefix(arg, "--") {
@@ -89,7 +89,7 @@ func parseOptions(args []string) (options, error) {
 			continue
 		}
 		key, value, has := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		allowed := map[string]bool{"workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "command": true}
+		allowed := map[string]bool{"signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "command": true}
 		if !allowed[key] {
 			return o, usage("unknown flag --" + key)
 		}
@@ -208,15 +208,36 @@ func run(ctx context.Context, o options) (Output, error) {
 	}
 	root := o.values["workspace"]
 	if root == "" {
-		root = "."
+		root = os.Getenv("WOS_WORKSPACE")
+		if root == "" {
+			root = "."
+		}
 	}
 	w, err := OpenWorkspace(root)
 	if err != nil {
 		return result, &LocalError{Err: err}
 	}
 	defer w.Close()
+	if o.args[0] == "project" {
+		return projectInitializeV2(w, o)
+	}
+	if o.args[0] == "profile" {
+		return profileCommandV2(ctx, w, o, defaultSecretResolverV2(w))
+	}
+	if o.args[0] == "init" && o.values["workspace-schema"] == "2" {
+		o.args = []string{"project", "init"}
+		return projectInitializeV2(w, o)
+	}
+	if o.args[0] == "init" && o.values["workspace-schema"] != "" && o.values["workspace-schema"] != "1" {
+		return result, usage("workspace-schema must be 1 or 2")
+	}
 	if o.args[0] == "init" {
 		return initialize(ctx, w, o)
+	}
+	_, projectYAML := w.root.Stat(".wos/project.yaml")
+	_, projectYML := w.root.Stat(".wos/project.yml")
+	if projectYAML == nil || projectYML == nil || o.values["profile"] != "" || os.Getenv("WOS_PROFILE") != "" {
+		return runWorkspaceV2(ctx, w, o)
 	}
 	config, client, err := loadClient(w)
 	if err != nil {

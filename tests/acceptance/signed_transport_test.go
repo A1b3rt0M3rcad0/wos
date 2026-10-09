@@ -173,6 +173,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	if registered.Key == nil || registered.Key.PrincipalID != "worker" {
 		t.Fatal("MCP registration changed ownership")
 	}
+	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions)
 	u, e := store.Begin(ctx)
 	must(e)
 	outcome, e := d.NewOutcome(scope.OutcomeID, ns, "Signed parity", "", "Exact scoped delivery", d.PriorityNormal, now)
