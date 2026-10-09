@@ -77,6 +77,13 @@ func (r outcomeRepository) SearchReferences(ctx context.Context, scope domain.Sc
 			q += " AND strpos(translate(t." + title + ",'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),translate(?,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))>0"
 			args = append(args, f.Query)
 		}
+		if f.Priority != "" {
+			if kind != domain.EntityKindWorkItem {
+				return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "priority requires Task kind")
+			}
+			q += " AND t.priority=?"
+			args = append(args, string(f.Priority))
+		}
 		if f.Lifecycle != "" {
 			q += " AND t.lifecycle=?"
 			args = append(args, f.Lifecycle)

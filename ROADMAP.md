@@ -1415,8 +1415,8 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | UX-ACT-01 | 🚧 | Explicit contextual registry and scoped permission hints; browser acceptance in progress |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
 | UX-CMP-01 | ✅ | Typed server-searched reference pickers; 1,001-item, duplicate-title, keyboard and stale-cursor browser checks passed |
-| UX-FRM-01–03 | 🚧 | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
-| UX-NAV-01 | ⬜ | Six areas, deep URLs, async generation isolation |
+| UX-FRM-01–03 | ✅ | Dedicated forms and persisted Draft preparation checklist; explicit activation retained |
+| UX-NAV-01 | ✅ | Six purpose areas, Work status filters, scoped deep links with reload/back/forward; browser checks passed |
 | UX-PLN-01 | ✅ | Visual phases/milestones/references, draft diff, reason, publication and separate activation; immutable history browser check passed |
 | UX-EVD-01 / UX-ISS-01 | ✅ | Exact-definition assessments and independent Issue/Blocker resolution passed real-browser journeys |
 | UX-OPS-01 / UX-ADM-01 | ⬜ | Protocol-specific guidance and typed administration |
@@ -1436,3 +1436,5 @@ UX-LOC-01 acceptance: six embedded-server browser journeys passed on 2026-10-09,
 UX-ACT-01 API/registry slice: effective scoped permission hints exposed through HTTP/MCP, explicit presentation surfaces and permissions checked against all catalog operations, lifecycle/material/protocol/lease-holder guards tested. Common-client form/picker wiring remains under browser acceptance. PR #81 English migration integrated after all five hosted checks passed (merge `49e33f4`).
 
 UX human-flow slice acceptance: sixteen embedded-server browser tests passed on 2026-10-09 (ten common journeys plus six protocol/domain regressions). Dedicated Outcome/Objective/Task inputs, reference search, visual Roadmap, exact-revision verification, compound/independent impediment handling and immutable intent retries are implemented. Six-area navigation, Draft checklist, final accessibility/distribution gates and representative-user/manual screen-reader checks remain outstanding. See `docs/ux/dedicated-human-journeys.md`.
+
+UX navigation/search slice acceptance: new six-area, Draft checklist, reload/back/forward/item and 1,001-Task global title/priority browser checks passed; compatibility journeys passed after purpose-navigation migration. Switching to Board invalidates outstanding List renders. Additive Task priority query passed Memory, SQLite and real PostgreSQL tests; HTTP/MCP permission-hint shape parity also passed. API access, CAS and domain state semantics remain unchanged. Hosted PR #83 browser/package/Ubuntu/Windows checks passed, while core CI was interrupted at a Docker Hub anonymous-pull rate limit; a failed-job rerun was requested. No CI application failure is inferred from that infrastructure response.

@@ -11,6 +11,7 @@ type ReferenceFilter struct {
 	Kinds     []domain.EntityKind
 	Query     string
 	Lifecycle string
+	Priority  domain.Priority
 	ID        domain.ID
 	AfterKind domain.EntityKind
 	AfterID   domain.ID
