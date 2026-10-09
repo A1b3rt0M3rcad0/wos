@@ -1262,6 +1262,12 @@ YAML 45,747. These are bounded runs, not exhaustive security proof or a coverage
 percentage. CI now rejects seed-only/zero-execution evidence and uploads raw
 Go JSON plus target counts/source/compiler. Hosted final-source campaign remains
 required; no parser/security behavior was weakened to pass.
+P12 T95 measurement tooling validates controlled A/B/C task and quality scopes,
+identical B/C models/harnesses, decimal costs/provenance and retained failed,
+review/correction/integration attempts. Unknown usage remains null; no bytes-to-
+tokens conversion or fabricated savings. Five negative/aggregation test cases
+pass. Managed Codex C succeeded, but A/B controls and provider usage/billing are
+not exposed here; comparative savings remain unmeasured and explicitly pending.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
