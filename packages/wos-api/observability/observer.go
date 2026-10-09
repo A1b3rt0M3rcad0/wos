@@ -122,14 +122,16 @@ func (o *Observer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Cumulative nanoseconds/counts allow rates and mean latency to be computed
 // without storing identifiers or high-cardinality documentary data as labels.
 type timing struct {
-	Count      uint64 `json:"count"`
-	Errors     uint64 `json:"errors"`
-	DurationNS uint64 `json:"duration_ns"`
-	MaxNS      uint64 `json:"max_ns"`
-	WaitNS     uint64 `json:"transaction_wait_ns,omitempty"`
-	GuardNS    uint64 `json:"guard_ns,omitempty"`
-	CommitNS   uint64 `json:"commit_ns,omitempty"`
-	Bytes      uint64 `json:"response_bytes,omitempty"`
+	Count         uint64 `json:"count"`
+	Errors        uint64 `json:"errors"`
+	DurationNS    uint64 `json:"duration_ns"`
+	MaxNS         uint64 `json:"max_ns"`
+	WaitNS        uint64 `json:"transaction_wait_ns,omitempty"`
+	GuardNS       uint64 `json:"guard_ns,omitempty"`
+	CommitNS      uint64 `json:"commit_ns,omitempty"`
+	ReturnedItems uint64 `json:"returned_items,omitempty"`
+	EmptyPages    uint64 `json:"empty_pages,omitempty"`
+	Bytes         uint64 `json:"response_bytes,omitempty"`
 }
 
 func (t *timing) add(d time.Duration, failed bool) {
@@ -146,6 +148,12 @@ func (o *Observer) ObserveQuery(q ports.QueryObservation) {
 	o.mu.Lock()
 	t := o.queryTiming[q.Name]
 	t.add(q.Duration, q.ErrorCode != "")
+	if q.ReturnedItems != nil && q.ErrorCode == "" {
+		t.ReturnedItems += uint64(*q.ReturnedItems)
+		if *q.ReturnedItems == 0 {
+			t.EmptyPages++
+		}
+	}
 	o.queryTiming[q.Name] = t
 	o.mu.Unlock()
 	if o.Logger != nil {

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (s *Service) observeQuery(ctx context.Context, name string, scope domain.Scope, revision *domain.OutcomeRevision, err *error, started time.Time) {
+func (s *Service) observeQuery(ctx context.Context, name string, scope domain.Scope, revision *domain.OutcomeRevision, err *error, started time.Time, returnedItems ...*int) {
 	observer, ok := s.observer.(ports.QueryObserver)
 	if !ok {
 		return
@@ -17,5 +17,9 @@ func (s *Service) observeQuery(ctx context.Context, name string, scope domain.Sc
 		code = domain.ErrorCode("internal_error")
 	}
 	identity, _ := IdentityFromContext(ctx)
-	observer.ObserveQuery(ports.QueryObservation{Name: name, Scope: scope, PrincipalID: identity.PrincipalID, Actor: identity.Actor, Revision: *revision, Duration: time.Since(started), ErrorCode: code})
+	var count *int
+	if *err == nil && len(returnedItems) > 0 {
+		count = returnedItems[0]
+	}
+	observer.ObserveQuery(ports.QueryObservation{ReturnedItems: count, Name: name, Scope: scope, PrincipalID: identity.PrincipalID, Actor: identity.Actor, Revision: *revision, Duration: time.Since(started), ErrorCode: code})
 }

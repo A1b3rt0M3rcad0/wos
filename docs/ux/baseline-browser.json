@@ -1,0 +1,15 @@
+{
+  "source": "5ea787c947e100a57e9b283bc1131245600888d3",
+  "kind": "automated regression baseline, not human usability",
+  "stats": {
+    "startTime": "2026-10-09T19:20:57.239Z",
+    "duration": 44139.675,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "human_usability": "not measured",
+  "manual_screen_reader": "pending; owner has no testers available",
+  "environment": "system Chromium; writable XDG cache/config"
+}

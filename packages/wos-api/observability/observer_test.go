@@ -51,3 +51,15 @@ func TestConcurrentMetricsAndLogsExcludeRequestContent(t *testing.T) {
 		}
 	}
 }
+
+func TestReferenceSearchCountsEmptyPagesWithoutContent(t *testing.T) {
+	o := New(nil)
+	zero, two := 0, 2
+	o.ObserveQuery(ports.QueryObservation{Name: "reference_search", ReturnedItems: &zero})
+	o.ObserveQuery(ports.QueryObservation{Name: "reference_search", ReturnedItems: &two})
+	o.ObserveQuery(ports.QueryObservation{Name: "reference_search", ErrorCode: "forbidden", ReturnedItems: &zero})
+	v := o.queryTiming["reference_search"]
+	if v.Count != 3 || v.EmptyPages != 1 || v.ReturnedItems != 2 || v.Errors != 1 {
+		t.Fatalf("incorrect query metrics: %+v", v)
+	}
+}

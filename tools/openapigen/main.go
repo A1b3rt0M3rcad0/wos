@@ -6,6 +6,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"os"
 	"reflect"
@@ -31,6 +32,18 @@ func main() {
 		schemas[name] = commands.SignedSchema(typed)
 	}
 	paths := map[string]any{}
+	schemas["ReferenceCandidate"] = commands.Schema(reflect.TypeFor[ports.ReferenceCandidate]())
+	schemas["ReferencePage"] = commands.Schema(reflect.TypeFor[application.ReferencePage]())
+	refsParameters := []any{}
+	for _, p := range []string{"namespace_id", "outcome_id"} {
+		refsParameters = append(refsParameters, map[string]any{"name": p, "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}})
+	}
+	for _, p := range []string{"kind", "query", "lifecycle", "cursor", "id"} {
+		refsParameters = append(refsParameters, map[string]any{"name": p, "in": "query", "required": p == "kind", "schema": map[string]any{"type": "string"}})
+	}
+	refsParameters = append(refsParameters, map[string]any{"name": "limit", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 25}})
+	paths["/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/references"] = map[string]any{"get": map[string]any{"operationId": "searchReferences", "description": "Authorized bounded reference metadata. kind is a comma-separated allowlist. Query uses ASCII case-insensitive substring matching, preserving Unicode otherwise. Deterministic kind/ID keysets bind scope, filters and Outcome revision. id resolves a selected candidate independently of paging; cannot combine with query/cursor. Results never grant mutation authority.", "parameters": refsParameters, "responses": map[string]any{"200": map[string]any{"description": "Bounded candidates and revision-bound next cursor", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/ReferencePage"}}}}, "422": map[string]any{"description": "Invalid kind, filter, ID, limit or cursor binding"}, "403": map[string]any{"description": "Current authorization denied"}, "409": map[string]any{"description": "Outcome changed; explicitly reload search while preserving selected IDs"}}}}
+
 	schemas["SigningSecurityIntentV2"] = commands.Schema(reflect.TypeFor[application.SigningSecurityIntent]())
 	schemas["SignedStateQueryV2"] = commands.SignedSchema(reflect.TypeFor[application.SignedStateQuery]())
 	schemas["SignedStateResultV2"] = commands.SignedSchema(reflect.TypeFor[application.SignedStateResult]())
