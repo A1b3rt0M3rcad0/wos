@@ -118,6 +118,17 @@ jobs:
             signing-envelope-fuzz.jsonl
             restricted-yaml-fuzz.jsonl
           if-no-files-found: error
+      - name: Real full-disk receipt cleanup
+        run: |
+          set -o pipefail
+          bash tools/acceptance/full-disk-cleanup.sh | tee full-disk-cleanup.log
+          test "$(grep -c '^--- PASS: TestReceiptCleanupRecoversRealFullDisk' full-disk-cleanup.log)" = 1
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: signed-full-disk-cleanup
+          path: full-disk-cleanup.log
+          if-no-files-found: error
 
       - name: Build standalone binary
         run: go build -o ./bin/wos ./packages/wos-api/cmd/wos

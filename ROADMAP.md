@@ -1243,6 +1243,15 @@ pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
 
+P12 T60 now has real Linux ENOSPC acceptance: a disconnected disposable Docker
+container supplies a 1 MiB tmpfs, capacity is exhausted, receipt persistence
+fails with ENOSPC, exact contract/profile/artifact bytes remain unchanged, then
+freeing only owned filler capacity allows receipt-driven cleanup without a new
+return. Local Go1.27.2 execution passed. The first runner retained mktemp mode
+0600 on its test binary; explicit chmod 755 fixes container execution, without
+changing product file protections. Ordinary/native Windows suites explicitly
+do not certify this Linux capacity experiment. CI requires the actual named
+PASS and retains the log. Permission-denied/process-death tests remain separate.
 P12 T32 signed replica-clock experiment passed three PostgreSQL race runs
 (3.058s) on Go 1.27.2. Two service instances use clocks +/-365 days; acquisition
 and issuer authority deadlines use database time, renewal remains current,
