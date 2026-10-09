@@ -63,7 +63,7 @@ func (r signedWorkContractRepository) List(ctx context.Context, scope d.Scope, f
 	for rows.Next() {
 		var state string
 		if err := rows.Scan(&state); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signed state", err)
 		}
 		var c d.WorkContract
 		if err := json.Unmarshal([]byte(state), &c); err != nil {
@@ -74,7 +74,7 @@ func (r signedWorkContractRepository) List(ctx context.Context, scope d.Scope, f
 		}
 		out = append(out, c)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signed state", rows.Err())
 }
 func signedContractState(c d.WorkContract) (string, error) {
 	c.Spec = d.WorkContractSpec{}
@@ -156,14 +156,14 @@ func (r signedWorkContractRepository) ListCheckpoints(ctx context.Context, scope
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_checkpoints WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("query signed state", err)
 	}
 	defer rows.Close()
 	out := []d.WorkCheckpoint{}
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signed state", err)
 		}
 		var v d.WorkCheckpoint
 		if err := json.Unmarshal([]byte(raw), &v); err != nil {
@@ -174,7 +174,7 @@ func (r signedWorkContractRepository) ListCheckpoints(ctx context.Context, scope
 		}
 		out = append(out, v)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signed state", rows.Err())
 }
 func (r signedWorkContractRepository) InsertSubmission(ctx context.Context, p d.WorkSubmission) error {
 	if err := p.Validate(); err != nil {
@@ -227,14 +227,14 @@ func (r signedWorkContractRepository) ListSubmissions(ctx context.Context, scope
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_submissions WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("query signed state", err)
 	}
 	defer rows.Close()
 	out := []d.WorkSubmission{}
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signed state", err)
 		}
 		var v d.WorkSubmission
 		if err := json.Unmarshal([]byte(raw), &v); err != nil {
@@ -245,7 +245,7 @@ func (r signedWorkContractRepository) ListSubmissions(ctx context.Context, scope
 		}
 		out = append(out, v)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signed state", rows.Err())
 }
 
 func (r signedWorkContractRepository) GetCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (d.WorkCheckpoint, error) {

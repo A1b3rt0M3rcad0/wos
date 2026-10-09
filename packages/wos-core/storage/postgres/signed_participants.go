@@ -23,9 +23,9 @@ func (r signedContractRepository) ExecutionParticipants(ctx context.Context, sco
 	for rows.Next() {
 		var p d.ExecutionParticipant
 		if err = rows.Scan(&p.PrincipalID, &p.SeparationGroup); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signed state", err)
 		}
 		out = append(out, p)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signed state", rows.Err())
 }

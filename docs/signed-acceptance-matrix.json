@@ -1,0 +1,2161 @@
+{
+  "schema": 1,
+  "scope": "Proposed scenario traceability; no coverage percentage and no inference of accepted scenarios from test symbols. Execution receipts must bind one immutable source.",
+  "requirements_source": "docs/signed-contracts-implementation-plan.md",
+  "scenarios": [
+    {
+      "id": "T01",
+      "scenario": "Criar profile com token válido e enrollment autorizado.",
+      "required_assertion": "Principal/Namespace reais são fixados; chave privada não aparece em arquivo/log.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T02",
+      "scenario": "Criar com token inválido, revogado ou expirado.",
+      "required_assertion": "Nenhum profile operacional completo nem chave registrada indevidamente.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T03",
+      "scenario": "Dois profiles/credenciais do mesmo Principal.",
+      "required_assertion": "Compartilham limites/identidade de revisão; não viram dois atores independentes.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T04",
+      "scenario": "Chave de assinatura pertencente a outro Principal.",
+      "required_assertion": "Retorno rejeitado, mesmo com assinatura matematicamente válida.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T05",
+      "scenario": "Alterar permissões/role no YAML.",
+      "required_assertion": "Nenhuma elevação; servidor ignora campos não autorizados/rejeita schema.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T06",
+      "scenario": "Credencial reviewed tenta `direct`.",
+      "required_assertion": "Rejeição ou `auto` previamente solicitado para revisão; nunca `DONE` direto.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T07",
+      "scenario": "Deployment exige independência do Outcome.",
+      "required_assertion": "Policy de Task menos restritiva não enfraquece o deployment.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T08",
+      "scenario": "Revogar credencial/grant entre autenticação e commit.",
+      "required_assertion": "Revalidação transacional impede nova mutação.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/security_admin_test.go",
+          "test": "TestPermissionRevokedWhileAwaitingTransactionCannotMutate"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T09",
+      "scenario": "Reutilizar challenge de enrollment.",
+      "required_assertion": "Segunda tentativa não registra outra chave; replay permitido só da intenção idêntica confirmada.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T10",
+      "scenario": "Challenge expirado, de outro Principal ou outra finalidade.",
+      "required_assertion": "Registro rejeitado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T11",
+      "scenario": "API Key sozinha tenta substituir signing key.",
+      "required_assertion": "Sem enrollment autorizado/prova anterior, não substitui.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T12",
+      "scenario": "Rotação autorizada com chave anterior ou recovery administrativo.",
+      "required_assertion": "Nova chave válida; histórico antigo verificável e atribuído à chave original.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T13",
+      "scenario": "Chave retirada/revogada assina operação nova.",
+      "required_assertion": "Rejeição; consulta histórica distingue validade passada de autoridade atual.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signing_identity_test.go",
+          "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation"
+        },
+        {
+          "path": "packages/wos-cli/profile_provision_v2_test.go",
+          "test": "TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T14",
+      "scenario": "Rotação da chave do servidor.",
+      "required_assertion": "Specs antigas verificáveis; grants novos assinados pelo novo emissor confiável.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/issuer_recovery_test.go",
+          "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T15",
+      "scenario": "Servidor sobe sem signer configurado no protocolo v2.",
+      "required_assertion": "Readiness/novas emissões falham explicitamente; não gera chave efêmera silenciosa.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-api/internal/server/signed_readiness_test.go",
+          "test": "TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T16",
+      "scenario": "Réplicas com trust set/server ID incompatíveis.",
+      "required_assertion": "Configuração não passa o gate; não alterna identidades sem aviso.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-api/internal/server/signing_test.go",
+          "test": "TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T17",
+      "scenario": "Vetores Ed25519/DSSE e codec independente.",
+      "required_assertion": "Bytes/verificação compatíveis; comprimentos inválidos retornam erro, não panic.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T18",
+      "scenario": "Alterar instrução, critério ou dependência da spec assinada.",
+      "required_assertion": "Verificação/digest rejeita a mudança.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T19",
+      "scenario": "Alterar material, checksum ou decisão após assinatura.",
+      "required_assertion": "Não executa a intenção modificada.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T20",
+      "scenario": "Reusar assinatura de execução em payload de revisão/receipt.",
+      "required_assertion": "Purpose mismatch rejeitado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T21",
+      "scenario": "Duplicar chaves YAML/JSON, alias, merge ou campo desconhecido.",
+      "required_assertion": "Parser/schema rejeita sem interpretação ambígua.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T22",
+      "scenario": "Diferenças de espaços/ordem permitida versus Unicode distinto.",
+      "required_assertion": "Apresentação equivalente preserva assinatura; conteúdo semanticamente distinto não.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T23",
+      "scenario": "Fencing acima de 2^53 e próximo de uint64 máximo.",
+      "required_assertion": "Ida e volta exata; overflow rejeitado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedTrustQuotesNamespaceCASWithoutChangingProtocolMarkerOrLegacyEncoding"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T24",
+      "scenario": "Envelope e comando paralelo não assinado com valores diferentes.",
+      "required_assertion": "Só payload verificado chega à Application; campo paralelo não influencia.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestIndependentEd25519DSSEVector"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestPurposeIdentityAndTampering"
+        },
+        {
+          "path": "packages/wos-cli/yaml_test.go",
+          "test": "TestRestrictedYAMLRejectsDangerousOrAmbiguousForms"
+        },
+        {
+          "path": "packages/wos-core/signing/codec_test.go",
+          "test": "TestExactNewProtocolCounters"
+        },
+        {
+          "path": "packages/wos-core/application/signed_wire_test.go",
+          "test": "TestSignedMutationWirePreservesPrecisionAndIssuedProof"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T25",
+      "scenario": "Dois Principals adquirem a mesma Task simultaneamente.",
+      "required_assertion": "Um vencedor; o outro recebe conflito/ausência elegível, sem duas autoridades.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T26",
+      "scenario": "Expiração no instante exato do retorno.",
+      "required_assertion": "Relógio do servidor decide; assinatura anterior ao prazo não autoriza commit tardio.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T27",
+      "scenario": "Takeover por mesmo Principal.",
+      "required_assertion": "Nova execution/fencing; antiga não renova, sincroniza ou finaliza.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T28",
+      "scenario": "Renovação repetida com mesma idempotency key.",
+      "required_assertion": "Não estende tempo duas vezes; resultado original.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T29",
+      "scenario": "Contrato entregue/completed tenta reativação.",
+      "required_assertion": "Rejeição; somente nova aquisição conforme estado da Task.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T30",
+      "scenario": "Executor tenta readquirir Task com ReviewCase aberto.",
+      "required_assertion": "Bloqueio por revisão pendente, mesmo sem lease de execução ativo.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T31",
+      "scenario": "Reviewer expira durante análise.",
+      "required_assertion": "Outro reviewer pode adquirir o caso; decisão antiga não finaliza.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T32",
+      "scenario": "Instâncias com clock skew e PostgreSQL real.",
+      "required_assertion": "Tempo autoritativo mantém exclusividade e prazo coerentes.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Explicit multiple-host clock-skew experiment remains to be recorded."
+    },
+    {
+      "id": "T33",
+      "scenario": "Retorno direto autorizado com critérios atendidos.",
+      "required_assertion": "Docs/submission/assessments/Task/contrato/events/receipt no mesmo commit.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T34",
+      "scenario": "Falha injetada em cada estágio do retorno.",
+      "required_assertion": "Rollback integral; nada parcialmente aceito.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Existing rollback assertions do not yet attest injected failure at every write stage."
+    },
+    {
+      "id": "T35",
+      "scenario": "Critério obrigatório sem avaliação válida.",
+      "required_assertion": "Não conclui, apesar de assinatura/credencial válidas.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T36",
+      "scenario": "Evidência retirada ou versão de artefato diferente.",
+      "required_assertion": "Rejeita material inconsistente e preserva histórico.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T37",
+      "scenario": "Registro com local_key duplicada, referência desconhecida ou escopo diferente.",
+      "required_assertion": "Não gera entidades cross-scope nem mapeamento ambíguo.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T38",
+      "scenario": "Policy endurecida após aquisição.",
+      "required_assertion": "Retorno respeita regra atual mais restritiva; não faz downgrade silencioso.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T39",
+      "scenario": "Policy relaxada/credencial trocada após aquisição reviewed.",
+      "required_assertion": "Contrato mantém piso original até intervenção explícita registrada.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T40",
+      "scenario": "Retorno para review aceito.",
+      "required_assertion": "WorkContract `delivered`, caso pendente e obrigação local encerrada atomicamente.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T41",
+      "scenario": "Reviewer conclui após executor/processo/arquivo desaparecer.",
+      "required_assertion": "Aprovação usa exclusivamente autoridade do reviewer.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T42",
+      "scenario": "Executor troca profile/key e tenta revisar.",
+      "required_assertion": "Histórico do Principal impede bypass.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T43",
+      "scenario": "Aprovação de submissão antiga após correção nova.",
+      "required_assertion": "Não aceita; digest/round alvo permanece exato.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T44",
+      "scenario": "Changes requested com findings endereçáveis.",
+      "required_assertion": "Caso e decisão preservados; correção recebe novo contrato/fencing.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T45",
+      "scenario": "Novo executor autorizado assume correção.",
+      "required_assertion": "Autoria independente e ligação à submissão/findings anteriores.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T46",
+      "scenario": "Aprovação com blocker/dependência incompatível inserida concorrentemente.",
+      "required_assertion": "Nenhum `DONE` parcial; contrato de revisão preservado para reconciliação.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T47",
+      "scenario": "Mudar material da spec durante review sem comando administrativo.",
+      "required_assertion": "Operação bloqueada; replanejamento explícito supersede quando autorizado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T48",
+      "scenario": "Review inconclusiva, cancelada ou revogada.",
+      "required_assertion": "Sem aprovação falsa; disponibilidade do caso/Task segue a política definida.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T49",
+      "scenario": "Dois chats operam profiles diferentes no mesmo projeto.",
+      "required_assertion": "Sem troca de credenciais, contrato ou pending operations.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T50",
+      "scenario": "Múltiplos profiles sem flag/env.",
+      "required_assertion": "Mutação falha; não escolhe o último/primeiro profile.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T51",
+      "scenario": "Mudar servidor/Namespace/profile binding com intenção pendente.",
+      "required_assertion": "Não redireciona token ou retorno a outro destino.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T52",
+      "scenario": "Path traversal, symlink/reparse, arquivo especial ou nome reservado.",
+      "required_assertion": "Confina leitura/gravação/exclusão aos alvos válidos.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T53",
+      "scenario": "Colisão por caixa e `.yaml`/`.yml` do mesmo contrato.",
+      "required_assertion": "Rejeição explícita de ambiguidade em plataformas relevantes.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T54",
+      "scenario": "Editar draft enquanto CLI renova/atualiza metadados.",
+      "required_assertion": "Compare-and-swap preserva a edição ou reporta conflito.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T55",
+      "scenario": "Arquivo maior que limite ou envelope base64 fora do teto.",
+      "required_assertion": "Erro determinístico antes de consumo descontrolado; sem truncar.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T56",
+      "scenario": "Agente consulta `show --for-agent`/diagnósticos.",
+      "required_assertion": "Sem secret/proof técnica desnecessária; campos omitidos declarados.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileSelectionCaseSafetyAndObservedEditorCAS"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestProfileBindingRejectsDestinationCredentialKeyAndPendingTampering"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2RegularFileAndMountedSecretConfinement"
+        },
+        {
+          "path": "packages/wos-cli/profiles_v2_test.go",
+          "test": "TestV2PresentationLimitsAndExactFieldNames"
+        },
+        {
+          "path": "packages/wos-cli/contract_v2_test.go",
+          "test": "TestV2SingleContractYAMLPreservesProofCountersAndDraftIsolation"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T57",
+      "scenario": "Crash após aquisição no servidor e antes do YAML local.",
+      "required_assertion": "Recovery usa pending do profile e materializa o contrato original.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T58",
+      "scenario": "Crash após materialização e antes de limpar pending do profile.",
+      "required_assertion": "Não sobrescreve draft nem adquire outra Task.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T59",
+      "scenario": "Resposta de retorno perdida após commit.",
+      "required_assertion": "Replay/receipt confirma o original; não duplica evidência/conclusão/trigger.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T60",
+      "scenario": "Disco cheio/permissão negada ao guardar receipt ou remover arquivo.",
+      "required_assertion": "Commit remoto comunicado; cleanup recuperável; nada apagado por aproximação.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Permission/durable journal failure is covered; an actual disk-capacity exhaustion experiment is not attested."
+    },
+    {
+      "id": "T61",
+      "scenario": "Rascunho alterado entre envio e resposta.",
+      "required_assertion": "Não exclui conteúdo não coberto pelo receipt.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T62",
+      "scenario": "Receipt errado/de outro contrato/servidor/Principal/digest.",
+      "required_assertion": "Não autoriza exclusão.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T63",
+      "scenario": "Cache de idempotência expirado, contrato com aceitação histórica.",
+      "required_assertion": "Recupera pelo registro durável; ausência de cache não vira “falhou”.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T64",
+      "scenario": "Crash após delete ou temporário/lock abandonado.",
+      "required_assertion": "Reconciliação segura; sem duplicação e sem roubar lock de processo vivo.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/publication_v2_test.go",
+          "test": "TestAtomicContractPublicationRecoversProcessDeathAndDraftEdits"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupPreservesUnconfirmedEditsAndUnrelatedFiles"
+        },
+        {
+          "path": "packages/wos-cli/return_v2_test.go",
+          "test": "TestReceiptCleanupRecoversNativeProcessDeath"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T65",
+      "scenario": "`--count 3`, apenas duas Tasks elegíveis.",
+      "required_assertion": "Retorna duas aquisições e explica incompletude/ausência sem fabricar terceira.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T66",
+      "scenario": "Falha no segundo item de lote de cinco.",
+      "required_assertion": "Contratos anteriores preservados; recovery não reinicia lote com novas intenções.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T67",
+      "scenario": "Busca paginada incompleta sem Task na primeira página.",
+      "required_assertion": "Não declara ausência global; preserva cursor/search_complete.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T68",
+      "scenario": "Repetir busca vazia idempotente após surgir Task.",
+      "required_assertion": "Replay vazio original; nova busca exige nova intenção.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T69",
+      "scenario": "Quota por Principal e profiles/credenciais adicionais.",
+      "required_assertion": "Não contorna limite de contratos ativos.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T70",
+      "scenario": "Dois processos manipulam o mesmo contrato com atomic rename.",
+      "required_assertion": "Lock estável e CAS evitam duas conclusões/limpezas concorrentes.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T71",
+      "scenario": "Keepalive de lote com um contrato expirado/revogado.",
+      "required_assertion": "Resultado por contrato; outros não são perdidos/cancelados.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T72",
+      "scenario": "Ordem de locks com aquisição, sync, recovery e cleanup simultâneos.",
+      "required_assertion": "Sem deadlock/lock global que serialize toda a execução do projeto.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/pending_acquisition_v2_test.go",
+          "test": "TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_next_test.go",
+          "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor"
+        },
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_acquisition_test.go",
+          "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Stable profile locks are covered; full mixed-operation deadlock/latency experiment remains."
+    },
+    {
+      "id": "T73",
+      "scenario": "Aquisição HTTP, retorno MCP, revisão SDK.",
+      "required_assertion": "Mesmo domínio e resultado; sem estado oculto de sessão MCP.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T74",
+      "scenario": "Endpoints antigos complete/finalize/assessment em Namespace v2.",
+      "required_assertion": "Rejeitam caminho incompatível; nenhum bypass por payload equivalente.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T75",
+      "scenario": "Chamada embedded direta e comandos administrativos.",
+      "required_assertion": "Políticas/assinaturas aplicadas; intervenção administrativa não vira review normal.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T76",
+      "scenario": "UI tenta mutação unsigned onde assinatura é exigida.",
+      "required_assertion": "Não conclui; UX mostra fluxo realmente suportado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [
+        "tests/web/signed.spec.mjs"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T77",
+      "scenario": "Redirect de mutação para outro host.",
+      "required_assertion": "Não envia token/assinatura a destino novo.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T78",
+      "scenario": "Requisição com ActorRef ou Principal declarados para outro agente.",
+      "required_assertion": "Autoria/autoridade derivadas da identidade autenticada e delegação permitida.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T79",
+      "scenario": "Resposta grande/receipt omitido parcialmente.",
+      "required_assertion": "Resultado compacto mantém prova de commit e caminho explícito de consulta.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T80",
+      "scenario": "Regenerar OpenAPI/MCP/SQL/schemas/SDK.",
+      "required_assertion": "Sem drift; golden v1 e v2 preservam tipos e fingerprints.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        },
+        {
+          "path": "packages/wos-cli/journal_test.go",
+          "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_return_test.go",
+          "test": "TestSignedAtomicReturnAndDurableAcceptance"
+        },
+        {
+          "path": "packages/wos-core/application/signed_review_spec_test.go",
+          "test": "TestReviewSpecificationExplicitlyReferencesOversizeMaterial"
+        }
+      ],
+      "other_resources": [
+        "tools/postgresgen/generate.py",
+        "tools/mcpgen/main.go",
+        "tools/openapigen/main.go",
+        "tools/wosclischemas/main.go"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T81",
+      "scenario": "Upgrade de banco com dataset v0.2.0.",
+      "required_assertion": "WorkItems, contratos, critérios, signatures ausentes e receipts históricos corretos.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [
+        "tests/acceptance/historical_upgrade.py"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T82",
+      "scenario": "Cutover com contrato v1 ainda válido.",
+      "required_assertion": "Ativação recusada até drenagem adequada.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [
+        "tests/acceptance/historical_upgrade.py"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T83",
+      "scenario": "Cliente/writer antigo após ativação v2.",
+      "required_assertion": "Mutação incompatível rejeitada; não ignora ReviewCase/status novo.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [
+        "tests/acceptance/historical_upgrade.py"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T84",
+      "scenario": "Workspace v1 com drafts e sent_unknown.",
+      "required_assertion": "Migração preserva conteúdo e reconcilia intenção antes de descartar originais.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T85",
+      "scenario": "Migração interrompida em cada etapa.",
+      "required_assertion": "Reexecução segura, sem nova aquisição ou assinatura histórica fabricada.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T86",
+      "scenario": "Restore SQLite e PostgreSQL com execução/review/correção pendentes.",
+      "required_assertion": "Continuidade e fencing corretos nos três cenários.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T87",
+      "scenario": "Histórico após rotação/revogação e perda do signer privado antigo.",
+      "required_assertion": "Verificação com chaves públicas preservada; nova emissão exige signer configurado.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/issuer_recovery_test.go",
+          "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T88",
+      "scenario": "Replays antigos após encoder/DTO v2 introduzido.",
+      "required_assertion": "Mesma intenção v1 mantém fingerprint e resultado originais.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_cutover_test.go",
+          "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt"
+        },
+        {
+          "path": "packages/wos-cli/migration_convert_v2_test.go",
+          "test": "TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_contracts_test.go",
+          "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore"
+        }
+      ],
+      "other_resources": [
+        "tests/acceptance/historical_upgrade.py"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T89",
+      "scenario": "Três processos: planner, executor e reviewer, com correção.",
+      "required_assertion": "Jornada completa sem compartilhar histórico de chat/credenciais.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Managed Codex fresh executor/reviewer pilot passed initial delivery; correction is automated, not a managed fresh-agent pilot round."
+    },
+    {
+      "id": "T90",
+      "scenario": "Evento `work_item.completed` e webhook duplicado.",
+      "required_assertion": "Só após commit de `DONE`; consumidor deduplica por identidade estável.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "General outbox deduplication is covered; final signed completion/outbox combined proof remains."
+    },
+    {
+      "id": "T91",
+      "scenario": "Queda de servidor/worker antes e depois de outbox commit.",
+      "required_assertion": "Sinal não desaparece nem exige execução exatamente uma vez de ponta a ponta.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_review_journey_test.go",
+          "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/integration_contract_test.go",
+          "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "General outbox crash/restart fixtures are covered; full signed consumer crash experiment remains."
+    },
+    {
+      "id": "T92",
+      "scenario": "Linux e Windows nativos: profiles, keys, filesystem e cleanup.",
+      "required_assertion": "Binário real testado; cross-compilação isolada não conta.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-cli/locks_v2_test.go",
+          "test": "TestV2StableLockAcrossProcessesProfilesAndOwnerDeath"
+        }
+      ],
+      "other_resources": [
+        "tools/distribution/platform.mjs",
+        "tools/acceptance/native-keyring.sh"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T93",
+      "scenario": "Pacote instalado offline com schemas/notices/skills.",
+      "required_assertion": "Fluxo autenticado de profile a finish/recover funciona fora da árvore de source.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [],
+      "other_resources": [
+        "tools/distribution/signed-smoke.mjs"
+      ],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    },
+    {
+      "id": "T94",
+      "scenario": "Carga em um e vários Outcomes, históricos densos e reviews.",
+      "required_assertion": "Medir latência/conflitos/throughput sem enfraquecer guards para “passar”.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [
+        {
+          "path": "packages/wos-core/storage/sqlite/signed_load_test.go",
+          "test": "TestSignedWorkReviewLoadMatrix"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "Signed fixture measures 1/4 Outcomes, 2/8 consumers and 0/16 accepted historical tasks per Outcome; not a million-row dataset or production SLA."
+    },
+    {
+      "id": "T95",
+      "scenario": "Benchmark de contexto e custo com comparadores controlados.",
+      "required_assertion": "Custo por entrega aceita inclui retries/review; resultado sem promessa fabricada.",
+      "coverage_status": "partial",
+      "candidate_go_tests": [],
+      "other_resources": [],
+      "limitation": "Managed Codex has no provider usage/billing telemetry; no controlled baseline/savings result is claimed."
+    },
+    {
+      "id": "T96",
+      "scenario": "Nova sessão usa só profile, contrato e referências do servidor.",
+      "required_assertion": "Consegue continuar; ao finalizar, apenas profile permanece, com `contract/` vazio.",
+      "coverage_status": "mapped_requires_assertion_audit",
+      "candidate_go_tests": [
+        {
+          "path": "tests/acceptance/signed_transport_test.go",
+          "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+        }
+      ],
+      "other_resources": [],
+      "limitation": "A matching passing test is execution evidence, not automatic proof of every assertion in this scenario."
+    }
+  ]
+}
