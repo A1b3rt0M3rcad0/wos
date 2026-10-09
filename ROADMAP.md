@@ -1135,6 +1135,21 @@ open. T15 readiness source 2941bba passed the complete runtime race suite
 actionlint and catalogue. Merging the guide baseline changes documentation only;
 new hosted source checks remain required for the readiness PR.
 
+P10 T81/T82/T83/T88 actual historical fixture: the pinned v0.2.0 executable
+produces schema-19 unsigned contracts/material/criteria/seven receipts. Closed
+SQLite backup API and PostgreSQL custom dump restore into clean targets; schema
+26 upgrade preserves original rows, WorkItem versions and exact replay results
+without historical signatures. Premature activation with an active v1 contract
+is refused, followed by explicit revocation/cutover. The exact old process may
+bind but returns readiness 503 and rejects unsigned acquisition with unknown
+work protocol (422), committing no history; full startup refusal cannot be
+retrofitted and deployment must retire old writers/revoke database credentials.
+Both local drivers passed on service source 5461815. Initial fixture copied
+SQLite without closing a reader/checkpointing WAL; using the backup API fixed
+the fixture, not product code. Its initial guessed error status 400 was corrected
+to the observed precise compatibility rejection 422/invalid_argument. CI now
+builds both exact sources and uploads provenance; hosted validation pending.
+Signed pending-state restore and final P12/P13 acceptance remain separate.
 P11/P12 signed transport consistency: Namespace protocol CAS counters in signed
 trust are quoted separately from the literal protocol-2 marker; signed schema
 counter types match exact decimal metadata while unsigned encoders/schemas stay
@@ -1166,3 +1181,21 @@ HTTP/CLI journey on Linux/Windows, but the standalone signing fixture omitted
 the required signer_key_id from its payload. Both failed and produced no accepted
 platform proof. The fixture now supplies the exact selected identity; signing
 validation is unchanged and the native gates must rerun.
+P12 T86 pending-state restore started: the existing authenticated signed
+execution/review/correction journey now takes clean SQL backups at each pending
+authority stage, restores into clean targets and resumes the same workflow.
+Version/fencing/lease metadata and exact authority envelope bytes are compared
+across restore, then delivery, review takeover, correction and approval continue
+against restored storage. Memory is explicitly excluded from database restore
+claims. Both clean restores passed with the complete authenticated correction/approval
+journey: SQLite race 13.231s, PostgreSQL race 30.151s with three empty target
+databases. The initial correction-stage fixture used the already revoked
+original executor to read metadata; it now uses the current authorized
+correction executor, retaining denial assertions. Hosted checks remain pending.
+
+Native keyring gate rerun passed all five hosted checks on PR64 head 6a26bcc.
+The downloaded Linux/Windows receipts explicitly record native_keyring_executed,
+actual passing counts and individual skips. PR62 historical upgrade and PR63
+pending execution/review/correction restores are integrated after their hosted
+gates passed. This documentation merge requires a fresh source check before
+PR64 integration; final release receipts still require the final combined source.
