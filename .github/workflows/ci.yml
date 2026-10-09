@@ -89,15 +89,65 @@ jobs:
           git diff --exit-code -- packages/wos-core/storage/memory/signed_work_contracts.go packages/wos-core/storage/sqlite/signed_work_contracts.go packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
           python3 tools/eventcatalog/check.py
 
+      - name: Controlled context/cost report validation
+        run: |
+          python3 tools/acceptance/context-cost-report-test.py
+          python3 tools/acceptance/scenario-execution-report-test.py
+
       - name: Unit and contract tests
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: go test ./...
+        run: |
+          if go test -json ./... > unit-contract-tests.jsonl; then
+            echo 'Unit/contract execution recorded'
+          else
+            status=$?
+            cat unit-contract-tests.jsonl
+            exit "$status"
+          fi
 
       - name: Race detector
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: go test -race ./...
+        run: |
+          if go test -json -race ./... > race-tests.jsonl; then
+            echo 'Race execution recorded'
+          else
+            status=$?
+            cat race-tests.jsonl
+            exit "$status"
+          fi
+
+      - name: Active signed codec and restricted YAML fuzz campaigns
+        shell: bash
+        run: |
+          go test -json -run '^$' -fuzz '^FuzzCanonical$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-canonical-fuzz.jsonl
+          go test -json -run '^$' -fuzz '^FuzzEnvelope$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-envelope-fuzz.jsonl
+          go test -json -run '^$' -fuzz '^FuzzYAMLJSON$' -fuzztime=10s -parallel=2 ./packages/wos-cli > restricted-yaml-fuzz.jsonl
+          python3 tools/acceptance/fuzz-report.py "$(git rev-parse HEAD)" signing-canonical-fuzz.jsonl signing-envelope-fuzz.jsonl restricted-yaml-fuzz.jsonl signed-fuzz.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: signed-active-fuzz
+          path: |
+            signed-fuzz.json
+            signing-canonical-fuzz.jsonl
+            signing-envelope-fuzz.jsonl
+            restricted-yaml-fuzz.jsonl
+          if-no-files-found: error
+      - name: Real full-disk receipt cleanup
+        run: |
+          set -o pipefail
+          bash tools/acceptance/full-disk-cleanup.sh | tee full-disk-cleanup.log
+          test "$(grep -c '^--- PASS: TestReceiptCleanupRecoversRealFullDisk' full-disk-cleanup.log)" = 1
+          go tool test2json -t -p github.com/A1b3rt0M3rcad0/wos/packages/wos-cli < full-disk-cleanup.log > full-disk-cleanup.jsonl
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: signed-full-disk-cleanup
+          path: |
+            full-disk-cleanup.log
+            full-disk-cleanup.jsonl
+          if-no-files-found: error
 
       - name: Build standalone binary
         run: go build -o ./bin/wos ./packages/wos-api/cmd/wos
@@ -192,6 +242,21 @@ jobs:
           name: work-contract-load
           path: work-contract-load.json
 
+      - name: Measure signed work and independent review contention
+        env:
+          WOS_SIGNED_LOAD: '1'
+        shell: bash
+        run: |
+          go test -count=1 -json ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres -run '^TestSignedWorkReviewLoadMatrix$' > signed-work-review-load.jsonl
+          python3 tools/acceptance/signed-load-report.py signed-work-review-load.jsonl "$(git rev-parse HEAD)" signed-work-review-load.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: signed-work-review-load
+          path: |
+            signed-work-review-load.json
+            signed-work-review-load.jsonl
+          if-no-files-found: error
+
       - name: Smoke standalone HTTP runtime
         shell: bash
         run: |
@@ -229,3 +294,15 @@ jobs:
           fi
 
           curl --fail --silent --show-error http://127.0.0.1:18080/livez >/dev/null
+
+      - name: Bind T01-T96 mappings to actual execution
+        run: python3 tools/acceptance/scenario-execution-report.py "$(git rev-parse HEAD)" scenario-execution.json unit-contract-tests.jsonl race-tests.jsonl signed-work-review-load.jsonl full-disk-cleanup.jsonl
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: signed-scenario-execution
+          path: |
+            scenario-execution.json
+            unit-contract-tests.jsonl
+            race-tests.jsonl
+          if-no-files-found: warn

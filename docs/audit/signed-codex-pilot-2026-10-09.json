@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "actual-managed-Codex-pilot",
+  "measured_at": "2026-10-09T06:01:26.425Z",
+  "namespace": "01a11b00-0000-7000-8000-000000000001",
+  "outcome_id": "01a11f37-3058-78df-a453-1ad90687c1b6",
+  "work_item_id": "01a11f37-3091-79d8-b16c-441d3a11cbb5",
+  "work_item_version": 3,
+  "principals": [
+    "pilot-planner",
+    "pilot-executor",
+    "pilot-reviewer"
+  ],
+  "profiles": [
+    "executor",
+    "reviewer"
+  ],
+  "context_isolation": "fresh managed Codex task histories; shared filesystem and OS account",
+  "provider_token_usage": null,
+  "provider_cost": null,
+  "executor_agent": "/root/codex_pilot_executor",
+  "reviewer_agent": "/root/codex_pilot_reviewer",
+  "delivery_commit": "78b50af6bfb1ce182813e41f1704baaadd311700",
+  "executor_contract": "01a11f3c-986d-72bd-88c0-c6802e843f20",
+  "review_contract": "01a11f3e-3e67-7be1-9bf8-b3fe53c672fb",
+  "execution_acceptance_digest": "sha256:78c98f860d3b0a75f1364283a00980a8c829ec7b17e9d3019b859730bce580f0",
+  "review_acceptance_digest": "sha256:ca3172248a37339321051fe21753407923c64f5cd91536f696ba991f3b40a0c3",
+  "task_lifecycle": "done",
+  "contracts_remaining": {
+    "executor": 0,
+    "reviewer": 0
+  },
+  "node_tests": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "independent_whitespace_checks": 25,
+    "independent_invalid_inputs": 5,
+    "idempotence_checked": true
+  },
+  "server_binary_sha256": "b1a2a111ab4403bf3770d2457119ecfac0bf2ada2d320ddbac82580b877be244",
+  "client_binary_sha256": "e4a6519a30ea227b2365d2b103b7a59a516f67d22d83b24503bca713c6024494",
+  "limitations": [
+    "Development binaries, not final release receipts",
+    "No controlled full-context/baseline comparator",
+    "No provider token or billing telemetry; cost and savings unmeasured",
+    "Shared filesystem/OS account; no privilege isolation",
+    "Successful initial delivery; no correction round in this managed pilot"
+  ],
+  "issues": [
+    "CLI version advertised legacy protocol",
+    "Review guide omitted criterion_assessments schema",
+    "Reviewer used approve; rejected before signing, corrected to approved after recovery"
+  ],
+  "server_source_commit": "262492e6d46d731e351dc35e85d43ccb653caa0d",
+  "client_source_commit": "7137d54c392b320ec8e4f3f22a5396e6c7ad099f",
+  "go_build_vcs_modified": false,
+  "go": "go1.27.1 linux/amd64",
+  "submission_id": "01a11f3d-8a29-79a6-826f-f06fd80f8ae2",
+  "review_case_id": "01a11f3d-8a29-7297-aa88-074888d44f50"
+}

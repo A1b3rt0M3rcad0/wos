@@ -17,6 +17,8 @@ async function fixture(t) {
     await fs.mkdir(path.join(dir,'packages',name),{recursive:true});
     await fs.writeFile(path.join(dir,'packages',name,'package.json'),JSON.stringify({name,version:'0.1.0',...(name==='wos-skill'?{wosCompatibility:{service:'0.1.0',httpApi:'v1',snapshotSchema:1}}:{})}));
   }
+  await fs.mkdir(path.join(dir,'packages/wos-api'),{recursive:true});
+  await fs.writeFile(path.join(dir,'packages/wos-api/commands.openapi.json'),JSON.stringify({openapi:'3.1.0',info:{version:'0.1.0'},paths:{'/unchanged':{get:{operationId:'preserved'}}}}));
   return dir;
 }
 async function change(dir,name,bump,summary='A bounded change') {
@@ -42,6 +44,8 @@ test('preparation is repeatable, consumes changes and synchronizes both packages
   assert.equal((await prepareRelease(dir)).version,'0.1.1');
   for(const folder of ['wos-npm','wos-skill'])assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages',folder,'package.json'),'utf8')).version,'0.1.1');
   assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages/wos-skill/package.json'),'utf8')).wosCompatibility.service,'0.1.1');
+  const api=JSON.parse(await fs.readFile(path.join(dir,'packages/wos-api/commands.openapi.json'),'utf8'));
+  assert.equal(api.info.version,'0.1.1');assert.equal(api.paths['/unchanged'].get.operationId,'preserved');
   assert.match(await fs.readFile(path.join(dir,'docs/releases/0.1.1.md'),'utf8'),/Fix claim handoff/);
   assert.match(await fs.readFile(path.join(dir,'CHANGELOG.md'),'utf8'),/Existing history/);
   await change(dir,'d','patch');await change(dir,'e','major');
@@ -59,6 +63,15 @@ test('bad changes and unsynchronized packages fail before writing any release st
   await fs.writeFile(path.join(dir,'packages/wos-npm/package.json'),'{"version":"9.9.9"}');
   await assert.rejects(prepareRelease(dir),/synchronized/);
   assert.equal(await fs.readFile(path.join(dir,'VERSION'),'utf8'),'0.1.0\n');
+});
+
+test('stale OpenAPI fails before consuming or changing coordinated version', async t => {
+ const dir=await fixture(t);await change(dir,'good','minor');
+ const filename=path.join(dir,'packages/wos-api/commands.openapi.json');
+ await fs.writeFile(filename,JSON.stringify({info:{version:'9.9.9'}}));
+ await assert.rejects(prepareRelease(dir),/OpenAPI release/);
+ assert.equal(await fs.readFile(path.join(dir,'VERSION'),'utf8'),'0.1.0\n');
+ assert.equal((await releasePlan(dir)).changes.length,1);
 });
 
 function publicationFixture() {

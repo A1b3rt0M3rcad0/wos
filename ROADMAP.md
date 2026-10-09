@@ -3,8 +3,8 @@
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-09
-**Current target:** Release 0.1  
-**Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
+**Current target:** Coordinated 0.3.0 signed-protocol validation candidate  
+**Current wave:** P12 combined-source acceptance and P13 release preparation; original Waves 01–18 accepted
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -817,10 +817,10 @@ Complete CI, contract suites, race detector, benchmark fixtures, failure injecti
 | Stage | Status | Acceptance |
 | --- | --- | --- |
 | D1 — Design and release policy | ✅ | [Complete plan](docs/distribution-plan.md) and ADR-017 define boundaries, tradeoffs, PR sequence, compatibility and external requirements |
-| D2 — Portable skills installer | ✅ | Four portable skills, npm tarball, four project/user destinations and generic path; safe install/update/remove; four tests and offline installed-tarball consumer pass. Native runtime execution is not claimed |
+| D2 — Portable skills installer | ✅ | Five portable skills, four managed discovery roots and generic path; safe install/update/remove and installed tarball verification. Codex pilot is distinct from universal runtime certification. |
 | D3 — Service distribution | ✅ | Native metadata/integrity, versioned tarballs and Linux archive; real offline-installed service passes HTTP/MCP/UI, SIGTERM, exit status and corruption checks; Docker release metadata supported |
 | D4 — Automated release | ✅ | Changes/version PR and reusable exact-source gates; verified immutable npm/GHCR/GitHub publication adapters and partial-failure replay; workflow lint, 15 Node contracts, reproducible assets and full local WOS gates pass. Hosted publication remains separately blocked |
-| External publication | ⛔ | npm publishing identity not available; Actions billing prevents jobs; package ownership/trusted publisher requires titular configuration |
+| External publication | Explicitly deferred | Hosted Actions now execute; npm/GHCR/GitHub writes require explicit publish=true and authorized registry identity. No registry publication claimed. |
 
 Do not conflate a portable skill with executed integration in every agent, nor implemented CI/CD with a successful hosted release. Original Waves 01–18 remain accepted; this is distribution work outside the original completion claim.
 
@@ -870,11 +870,11 @@ Owner authorized execution on 2026-10-08 of [the supplied plan](docs/work-contra
 | C05 | Implemented and transport-tested | Typed HTTP/MCP/SDK, bounded queries, capabilities, drift |
 | C06 | Implementado e testado | Sync documental atômico com local keys, checkpoints, submissões imutáveis, avaliação vinculada ao material, finalize e proteções de bypass; testes de aplicação, HTTP/MCP e restauração SQL. |
 | C07 | Implementado e testado em Linux | Cliente API-only, YAML restrito/schemas, checkout/dry-run, planejamento/revisão via DTOs tipados; percurso real HTTP/CLI. |
-| C08 | Implementado, gate Windows pendente | Journal/recibos, recover de aquisição e mutações, locks, refresh preservando rascunhos, renew/takeover/keepalive foreground, sync/submit/finalize/finish; falhas de transporte/disco testadas em Linux. Windows precisa execução real em CI. |
+| C08 | Implemented; actual native Linux/Windows gates executed | Durable recovery, stable native process locks and protected keyring execution passed on integrated precursor sources. Final 0.3 receipts are a separate gate. |
 | C09 | Interface/skills implementadas e verificadas | Human contract UI, skills and client planning |
 | C10 | Implemented and locally verified | Explicit Namespace phases, current lease policy, old receipt replay, shared/exclusive writer guards and bounded expiry reconciliation. Actual SQLite/PostgreSQL transition/restart tests pass; operators must stop old binaries before activation. |
-| C11 | Implemented and locally verified | Independent HTTP/MCP + local CLI on Memory/SQLite/PostgreSQL, focal reads and bounded progress expansion; 54 local load cases passed. Woobe runtime and actual Windows remain external gates. |
-| C12 | Implemented and locally verified; external release gates pending | Coordinated 0.2.0 service/client/five skills, Linux npm and Linux/Windows native assets, exact-source platform receipts, checksums/notices and Docker client. Offline authenticated package journey passed. Actual Windows and registry publication remain blocked externally. |
+| C11 | Implemented and tested | Actual HTTP/MCP/SDK/CLI and SQL restore, bounded reads and workload measurements. Woobe-specific runtime validation remains external. |
+| C12 | Implemented; 0.3 prepared | Service/client/five skills and immutable packages/native assets/notices; final combined-source verification and explicit publication remain separate. |
 
 T01–T88 in the plan are acceptance traceability, not passed tests. Actual Windows execution and deployed Woobe are not currently available; neither may be inferred from cross-compilation or HTTP parity. Existing Actions billing/npm identity blockers remain separate operational limitations; useful implementation continues independently.
 
@@ -904,18 +904,18 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | --- | --- | --- |
 | P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
 | P01 | Codec implemented and locally verified | Public pure signing package, six payload purposes, typed bindings/counters, exact verified DTO, local mapping/proof and independent Python vector. Race signing/domain, vet and two 15-second fuzz campaigns passed; no runtime authorization claim. |
-| P02 | Identity foundation implemented and locally verified | Authorized one-use enrollment, possession-bound rotation, credential restrictions/floors, stable Principal groups, durable security receipts and all three adapters. Signed work/review operations remain P03–P06. |
+| P02 | Implemented and tested | Principal-bound enrollment/rotation/revocation, credential policies and durable security receipts integrated with signed operations. |
 | P03 | Implemented incrementally; exhaustive acceptance remains P12 | Signed issuance/runtime trust and storage foundations integrated with subsequent delivery/review/cutover work; final-source gates remain open. |
 | P04 | Core implemented and locally verified; exhaustive acceptance remains P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
 | P05 | Core implemented and locally verified; exhaustive acceptance remains P06/P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
 | P06 | Implemented and locally verified; exhaustive matrix remains P12 | Exact signed schemas/counters, live Outcome scope filtering, public identity/enrollment, bounded focal proofs/material, unsigned guards and actual HTTP/MCP/SDK independent review journey. Full race/vet/restore and generator gates passed locally. |
-| P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Operational execution/review workflows are implemented in P08/P09; native keyring execution remains unaccepted. |
+| P07 | Implemented; native protected-store gates executed | Approved protected profiles and exact workspace binding, Linux Secret Service and Windows Credential Manager actual hosted execution. Final combined-source receipts required. |
 | P08 | Implemented incrementally; exhaustive fault acceptance remains P12 | Stable locks, bounded execution/review batches, embedded intentions, verified atomic materialization, renew/resume/refresh and supervised keepalive integrated. Extended final-source process/file failure gates remain open. |
-| P09 | In progress — signed CLI return and receipt cleanup | Protected local sign/send/finish, original-CID frozen recovery, issuer receipt verification and single-file cleanup implemented; final-source/full and exhaustive fault acceptance remain required. |
-| P10 | In progress | Explicit cutover, preserving workspace migration, schema compatibility, host issuer recovery and client pin approval integrated; historical v0.2 dataset/old-binary and complete restore acceptance remain pending. |
-| P11 | In progress | Five signed-protocol skills and client guide alignment locally verified; UI read models/guarded actions and final operational guide acceptance remain pending. |
-| P12 | Planned; external platform/pilot gates unresolved | Real SQL/restore, independent processes, failures/load/context benchmarks; native Windows and actual consumer separately proven. |
-| P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
+| P09 | Implemented and tested | Protected signing/return/finish, original-CID recovery and verified receipt cleanup. Native death and real Linux ENOSPC fixtures; final combined-source gates pending. |
+| P10 | Implemented and tested | Explicit cutover, bounded preserving workspace migration, actual v0.2 historical upgrade and old-writer readiness refusal, pending SQL restores, host issuer recovery and client pin approval. |
+| P11 | Implemented and tested | Five progressive guides, signed UI projections and guarded actions, exact correction acknowledgement and installed-binary independent correction journey. |
+| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. Controlled A/B provider measurements and exhaustive assertion audit remain explicitly unclaimed. |
+| P13 | Coordinated 0.3.0 prepared | Version/manifest/OpenAPI/notices/upgrade/skills aligned; same-source verifier precedes explicit registry publication. |
 
 R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.
 
@@ -1207,6 +1207,28 @@ databases. The initial correction-stage fixture used the already revoked
 original executor to read metadata; it now uses the current authorized
 correction executor, retaining denial assertions. Hosted checks remain pending.
 
+P12 signed workload matrix covers 1/4 Outcomes, 2/8 concurrent consumers and
+0/16 fully accepted historical Tasks per Outcome, with independent attestation
+review and exact original approval replay. All 16 SQLite/PostgreSQL measurements
+passed locally; issuance remained bounded. DONE is absent before review and
+exactly one completion event/outbox delivery is committed after approval/replay.
+The initial real PostgreSQL workload failed on unclassified serialization errors
+in signed quota/read queries. Storage SQL boundaries now map those failures to
+transaction_conflict; three repeated multi-Outcome race runs passed (67.870s)
+without replacing CID/envelopes or relaxing guards. The final full matrix passed
+in SQLite/PostgreSQL (PostgreSQL 98.285s, non-race measurements). Updated query
+error boundaries require fresh source verification. The report includes honest
+SQL-count/data-density limitations; no production latency/cost SLA is claimed.
+
+The actual managed Codex pilot used fresh executor and reviewer task histories,
+distinct profiles/Principals and the installed npm skill. Four actual Node tests,
+25 independent whitespace checks and five invalid inputs passed; required
+criteria were independently met, Task is DONE and both contract directories empty.
+Go binary VCS metadata records separate exact development service/client sources,
+not final coordinated release evidence. No OS privilege isolation or provider
+token/billing savings is claimed. T01–T96 traceability maps tests/resources and
+explicit assertion-audit/experiment gaps without treating test names as scenario
+acceptance. CI now requires all 16 signed measurements on its committed source.
 P13 separates coordinated verification from registry publication. Manifest
 integration runs all four same-source workflows and uploads hash-checked assets,
 actual native receipts and package acceptance. Real registry publication requires
@@ -1221,12 +1243,49 @@ pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
 
+P12 T60 now has real Linux ENOSPC acceptance: a disconnected disposable Docker
+container supplies a 1 MiB tmpfs, capacity is exhausted, receipt persistence
+fails with ENOSPC, exact contract/profile/artifact bytes remain unchanged, then
+freeing only owned filler capacity allows receipt-driven cleanup without a new
+return. Local Go1.27.2 execution passed. The first runner retained mktemp mode
+0600 on its test binary; explicit chmod 755 fixes container execution, without
+changing product file protections. Ordinary/native Windows suites explicitly
+do not certify this Linux capacity experiment. CI requires the actual named
+PASS and retains the log. Permission-denied/process-death tests remain separate.
 P12 T32 signed replica-clock experiment passed three PostgreSQL race runs
 (3.058s) on Go 1.27.2. Two service instances use clocks +/-365 days; acquisition
 and issuer authority deadlines use database time, renewal remains current,
 takeover preserves expiry and increases fencing, and old authority is denied.
 This is an actual shared-database test, not a claim of separately deployed hosts.
 Existing unsigned clock tests remain intact; final source/platform gates apply.
+The first hosted signed-load gate exposed generated-source drift: signedgen
+regenerated v1-based signed work storage without the new SQL error boundaries.
+The generator now preserves the signed-only mapping; v1 source is unchanged.
+A Go 1.27.2 targeted PostgreSQL clean-restore check hit its 40-second pg_dump
+timeout on the long-lived test database catalog; rerun uses a new owned disposable
+database instead of changing the timeout or deleting existing fixture data.
+P12 active fuzz campaigns execute canonical JSON/DSSE decoding and restricted
+YAML parsing, with two workers and a 10-second budget each. Go 1.27.2 local
+source 0ee312f passed actual mutations: canonical 21,915, envelope 91,292,
+YAML 45,747. These are bounded runs, not exhaustive security proof or a coverage
+percentage. CI now rejects seed-only/zero-execution evidence and uploads raw
+Go JSON plus target counts/source/compiler. Hosted final-source campaign remains
+required; no parser/security behavior was weakened to pass.
+P12 T95 measurement tooling validates controlled A/B/C task and quality scopes,
+identical B/C models/harnesses, decimal costs/provenance and retained failed,
+review/correction/integration attempts. Unknown usage remains null; no bytes-to-
+tokens conversion or fabricated savings. Five negative/aggregation test cases
+pass. Managed Codex C succeeded, but A/B controls and provider usage/billing are
+not exposed here; comparative savings remain unmeasured and explicitly pending.
+P12 T34 exercises real SQLite/PostgreSQL rollback boundaries for artifact,
+evidence, submission, contract, Task, return fact, Outcome revision, acceptance
+fact, Domain/Integration Event, idempotency reservation/completion, durable
+operation recording and review-case insertion. Late receipt-signing and pre-
+commit failures retain every optional SQL capability/clock through concrete
+unit embedding. All affected table rows compare exactly with the baseline; the
+original immutable signed request succeeds after faults are removed. Go1.27.2
+race suites pass on both SQL backends. This is before-commit fault injection,
+not proof of network loss after commit or every statement inside each adapter.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
@@ -1238,3 +1297,34 @@ into final assertions; both fixture errors are corrected without relaxing strict
 schema/cleanup checks. Five progressive guides and the human UI now show the
 required correction acknowledgement. This automated correction scenario is
 distinct from the managed Codex pilot, which accepted its initial delivery.
+
+Signed SQL boundary regression rerun passed with Go1.27.2 and a new owned clean
+PostgreSQL database (SQLite 17.945s, PostgreSQL 12.789s), resolving catalog-only
+pg_dump timeout diagnosis without changing restore deadlines or existing data.
+P12 T90/T91 signed-load acceptance also checks one completion worker recovery
+row per backend: leave the committed signal leased without acknowledgement,
+reopen storage connections, reclaim the exact body/ID after expiry with increased
+fencing, reject the old acknowledgement and finish without a duplicate signal.
+Both real SQL race cases pass (SQLite 5.441s, PostgreSQL 4.380s). This models
+worker absence and storage restart; it does not claim an OS kill experiment.
+P13 coordinated 0.3.0 preparation updates VERSION, both npm packages and service
+compatibility, release manifest, changelog and upgrade notes together. Existing
+Namespace phases/unsigned history remain explicit compatibility paths, so this
+opt-in protocol addition uses a minor bump. This release is prepared, not
+registry-published or certified from parent-commit receipts. Remaining P12 PRs
+and all same-source final gates must integrate before operational acceptance.
+
+The first 0.3 hosted source gate rejected stale OpenAPI release metadata (0.2).
+Preparation now validates and updates that generated metadata before writing
+coordinated version state; unchanged public paths remain exact and stale inputs
+fail before consuming the queue. Release automation includes the OpenAPI file
+in its commit and explicitly dispatches four verification workflows for its
+bot-created PR, which GITHUB_TOKEN events otherwise do not start. Publication
+remains separately explicit. The failing gate is rerun rather than disabled.
+
+Combined integration preserves the independent feature PR heads/commits and
+checks generation drift on their merged source. T01–T96 now map actual Go JSON
+execution (including generated PostgreSQL counterparts and individual skips);
+passing names never automatically accept all scenario assertions. Hosted final
+source verification remains required. Historical progress entries below their
+phase tables describe earlier states and do not override the current tables.

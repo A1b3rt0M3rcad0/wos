@@ -15,29 +15,29 @@ func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.I
 	var result d.LegacySignedOperationResult
 	rows, e := r.u.tx.QueryContext(ctx, `SELECT command_name,request_hash,command_id,outcome_revision,response_json,created_at FROM idempotency_records WHERE namespace_id=$1 AND principal_id=$2 AND idempotency_key=$3 AND status='completed' AND command_name IN ('AcquireSignedWorkContract','AcquireNextSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract','ReturnSignedWork','AcquireSignedReviewContract','AcquireNextSignedReviewContract','RenewSignedReviewContract','ResumeSignedReviewContract','ReturnSignedReview','InterveneSignedReviewCase','RevokeSignedContract','ReconcileSignedContracts') ORDER BY command_name LIMIT 2`, namespace.String(), principal, key)
 	if e != nil {
-		return result, e
+		return result, mapSQLError("read legacy signed operation", e)
 	}
 	defer rows.Close()
 	if !rows.Next() {
 		if e = rows.Err(); e != nil {
-			return result, e
+			return result, mapSQLError("read legacy signed operation", e)
 		}
 		return result, d.NewError(d.ErrorCodeNotFound, "legacy signed result absent")
 	}
 	var response, revision string
 	var recorded int64
 	if e = rows.Scan(&result.CommandName, &result.Fingerprint, &result.Result.CommandID, &revision, &response, &recorded); e != nil {
-		return result, e
+		return result, mapSQLError("read legacy signed operation", e)
 	}
 	if rows.Next() {
 		return result, d.NewError(d.ErrorCodeIdempotencyConflict, "legacy intention names multiple signed commands; explicit reconciliation required")
 	}
 	if e = rows.Err(); e != nil {
-		return result, e
+		return result, mapSQLError("read legacy signed operation", e)
 	}
 	number, e := strconv.ParseUint(revision, 10, 64)
 	if e != nil {
-		return result, e
+		return result, mapSQLError("read legacy signed operation", e)
 	}
 	result.Result.OutcomeRevision = d.OutcomeRevision(number)
 	result.Result.ResponseJSON = json.RawMessage(response)
