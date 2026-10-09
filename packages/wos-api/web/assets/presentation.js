@@ -1,3 +1,4 @@
+import {copy} from "./en-US.js";
 // Presentation only. Lifecycle, readiness, proofs and permissions come from the API.
 const ns = "http://www.w3.org/2000/svg";
 export const node = (tag, text, className) => {
@@ -45,103 +46,103 @@ export function icon(name) {
   return svg;
 }
 export const names = {
-  draft: "Rascunho",
-  planned: "Planejado",
-  archived: "Arquivado",
-  wont_fix: "Sem correção",
-  duplicate: "Duplicado",
-  active: "Ativo",
-  achieved: "Alcançado",
-  failed: "Falhou",
-  abandoned: "Abandonado",
+  draft: copy.text.draft,
+  planned: copy.text.planned,
+  archived: copy.text.archived,
+  wont_fix: copy.text.wonTFix,
+  duplicate: copy.text.duplicate,
+  active: copy.text.active,
+  achieved: copy.text.achievedf6c90c,
+  failed: copy.text.failed,
+  abandoned: copy.text.abandoned,
   backlog: "Backlog",
-  todo: "A fazer",
-  in_progress: "Em execução",
-  done: "Concluído",
-  cancelled: "Cancelado",
-  ready: "Pronto para execução",
-  blocked: "Bloqueado",
-  waiting_scope: "Aguardando ativação",
-  waiting_dependencies: "Aguardando dependências",
-  scheduled: "Programado",
-  attention_needed: "Precisa de atenção",
-  open: "Aberto",
-  resolved: "Resolvido",
-  investigating: "Em investigação",
-  recorded: "Registrado",
-  retracted: "Retirada",
-  superseded: "Substituído",
-  valid: "Válida",
-  published: "Publicado",
-  accepted: "Aceita",
-  proposed: "Proposta",
-  high: "Alta",
-  critical: "Crítica",
+  todo: copy.text.toDo,
+  in_progress: copy.text.inProgress,
+  done: copy.text.done,
+  cancelled: copy.text.cancelled,
+  ready: copy.text.ready,
+  blocked: copy.text.blocked,
+  waiting_scope: copy.text.waitingForActivation,
+  waiting_dependencies: copy.text.waitingForDependencies,
+  scheduled: copy.text.scheduled,
+  attention_needed: copy.text.needsAttention,
+  open: copy.text.open,
+  resolved: copy.text.resolved,
+  investigating: copy.text.investigating,
+  recorded: copy.text.registered,
+  retracted: copy.text.retracted,
+  superseded: copy.text.superseded,
+  valid: copy.text.validf51622,
+  published: copy.text.published,
+  accepted: copy.text.accepted,
+  proposed: copy.text.proposed,
+  high: copy.text.high,
+  critical: copy.text.critical,
   normal: "Normal",
-  low: "Baixa",
-  major: "Alta",
-  minor: "Baixa",
-  informational: "Informativa",
-  met: "Comprovado",
-  not_met: "Não comprovado",
-  inconclusive: "Inconclusivo",
-  waived: "Dispensado",
-  attestation: "Declaração",
-  evidence_review: "Revisão de evidência",
-  external_evaluation: "Avaliação externa",
-  test_result: "Resultado de teste",
-  inspection: "Inspeção",
-  measurement: "Medição",
-  source: "Fonte",
-  supports: "Apoia",
-  contradicts: "Contradiz",
-  neutral: "Neutra",
-  direct: "Direto",
-  independent_review: "Revisão independente",
-  retired: "Retirada",
-  revoked: "Revogada",
-  delivered: "Entrega aceita do executor",
-  changes_requested: "Alterações solicitadas",
-  in_review: "Em revisão",
-  subtree: "Inclui descendentes",
-  human: "Humano",
-  agent: "Agente",
-  service: "Serviço",
-  automation: "Automação",
-  external_system: "Sistema externo",
-  reference: "Item relacionado",
-  phase: "Fase",
-  milestone: "Marco",
-  none: "Sem reserva",
-  expired: "Expirada",
-  hard_dependency_unsatisfied: "Dependência ainda não concluída",
-  not_before: "Início programado ainda não chegou",
-  lease_expired: "A reserva expirou",
-  active_lease: "Reserva em vigor",
-  outcome_archived: "Resultado arquivado",
-  objective_terminal: "O objetivo já está encerrado",
-  depends_on: "Depende de",
-  lifecycle_not_ready: "Item fora de execução",
-  outcome_not_active: "O resultado ainda não está ativo",
-  objective_not_active: "O objetivo ainda não está ativo",
-  evidence_retracted: "Evidência retirada",
-  assessment_not_met: "Critério não comprovado",
-  assessment_inconclusive: "Avaliação inconclusiva",
-  criterion_revision_changed: "Critério revisado",
+  low: copy.text.low,
+  major: copy.text.high,
+  minor: copy.text.low,
+  informational: copy.text.informational,
+  met: copy.text.met,
+  not_met: copy.text.notMet,
+  inconclusive: copy.text.inconclusive,
+  waived: copy.text.waivedNotVerified,
+  attestation: copy.text.attestation,
+  evidence_review: copy.text.evidenceReview,
+  external_evaluation: copy.text.externalEvaluation,
+  test_result: copy.text.testResult,
+  inspection: copy.text.inspection,
+  measurement: copy.text.measurement,
+  source: copy.text.source,
+  supports: copy.text.supports,
+  contradicts: copy.text.contradicts,
+  neutral: copy.text.neutral,
+  direct: copy.text.direct,
+  independent_review: copy.text.independentReview,
+  retired: copy.text.retracted,
+  revoked: copy.text.revoked,
+  delivered: copy.text.executorSubmissionAccepted,
+  changes_requested: copy.text.changesRequested,
+  in_review: copy.text.inReview,
+  subtree: copy.text.includesDescendants,
+  human: copy.text.human,
+  agent: copy.text.agent,
+  service: copy.text.service,
+  automation: copy.text.automation,
+  external_system: copy.text.externalSystem,
+  reference: copy.text.relatedItem,
+  phase: copy.text.phase,
+  milestone: copy.text.milestone,
+  none: copy.text.unassigned,
+  expired: copy.text.expired,
+  hard_dependency_unsatisfied: copy.text.dependencyNotCompleted,
+  not_before: copy.text.scheduledStartHasNotArrived,
+  lease_expired: copy.text.reservationExpired,
+  active_lease: copy.text.activeReservation,
+  outcome_archived: copy.text.outcomeArchived,
+  objective_terminal: copy.text.objectiveIsTerminal,
+  depends_on: copy.text.dependsOn,
+  lifecycle_not_ready: copy.text.itemIsNotReadyForExecution,
+  outcome_not_active: copy.text.outcomeIsNotActive,
+  objective_not_active: copy.text.objectiveIsNotActive,
+  evidence_retracted: copy.text.evidenceRetracted,
+  assessment_not_met: copy.text.criterionNotMet,
+  assessment_inconclusive: copy.text.inconclusiveAssessment,
+  criterion_revision_changed: copy.text.criterionRevised,
 };
 export const display = (value) =>
   names[value] || String(value ?? "").replaceAll("_", " ");
 export const kindName = (kind) =>
   ({
-    outcome: "Resultado",
-    objective: "Objetivo",
-    work_item: "Trabalho",
-    issue: "Problema",
-    blocker: "Impedimento",
-    roadmap: "Plano",
-    evidence: "Evidência",
-    artifact: "Artefato",
-    decision: "Decisão",
+    outcome: copy.text.outcome,
+    objective: copy.text.objective,
+    work_item: copy.text.task4bc74b,
+    issue: copy.text.issueKind,
+    blocker: copy.text.blockerKind,
+    roadmap: copy.text.roadmap,
+    evidence: copy.text.evidence,
+    artifact: copy.text.artifact,
+    decision: copy.text.decision640ae4,
   })[kind] || display(kind);
 export const tone = (value) =>
   [
@@ -176,17 +177,28 @@ export function date(value) {
   const d = new Date(value);
   return Number.isNaN(d.valueOf())
     ? String(value)
-    : new Intl.DateTimeFormat("pt-BR", {
-        dateStyle: "short",
+    : new Intl.DateTimeFormat("en-US", {
+        dateStyle: "medium",
         timeStyle: "short",
-      }).format(d);
+ timeZone: "UTC",
+      }).format(d)+" UTC";
+}
+
+// Free text and identifiers retain the caller's content, even if they happen to
+// equal a wire enum. Only explicitly typed presentation fields receive labels.
+export function formatValue(value, key = "") {
+  if (key.endsWith("_at") || key.startsWith("planned_")) return date(value);
+  if (typeof value === "boolean") return value ? copy.text.yes : copy.text.no;
+  return ["lifecycle", "status", "priority", "readiness", "verification_mode",
+    "evidence_type", "result", "stance", "severity", "propagation", "node_type", "kind"]
+    .includes(key) ? display(value) : String(value);
 }
 export function donut(parts, total) {
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 150 150");
   svg.setAttribute("class", "status-chart");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", `Distribuição do trabalho: ${total} itens`);
+  svg.setAttribute("aria-label", `Task distribution: ${total} items`);
   let offset = 0;
   const circle = (color, length) => {
     const c = document.createElementNS(ns, "circle");
@@ -211,7 +223,7 @@ export function donut(parts, total) {
     if (total && p.count) circle(p.color, (358.14 * p.count) / total);
   for (const [y, text, cls] of [
     [74, String(total), "chart-total"],
-    [94, "itens de trabalho", "chart-caption"],
+    [94, copy.text.taskItems, "chart-caption"],
   ]) {
     const t = document.createElementNS(ns, "text");
     t.setAttribute("x", "75");

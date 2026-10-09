@@ -2,6 +2,11 @@
   "name": "wos-browser-contracts",
   "private": true,
   "type": "module",
-  "scripts": {"test": "playwright test"},
-  "devDependencies": {"playwright": "1.62.1"}
+  "scripts": {
+    "test": "npm run test:unit && playwright test",
+    "test:unit": "node --test unit/*.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
 }
