@@ -1,11 +1,19 @@
-import {request} from "./api-client.js";
-import {areas,areaFor,readRoute,routeQuery,workSections} from "./navigation.js";
-import {humanActions, availableActions,permissionLabels} from "./actions.js";
-import {humanForm} from "./human-forms.js";
-import {createIntent,sameScope,reconcileDraft} from "./intents.js";
-import {button as actionButton} from "./ui.js";
-import {copy, initializeCopy} from "./en-US.js";
- initializeCopy(document);
+import { message } from "./en-US.js";
+import { contractViews } from "./contracts-view.js";
+import { request as networkRequest } from "./api-client.js";
+import {
+  areas,
+  areaFor,
+  readRoute,
+  routeQuery,
+  workSections,
+} from "./navigation.js";
+import { humanActions, availableActions, permissionLabels } from "./actions.js";
+import { humanForm } from "./human-forms.js";
+import { createIntent, sameScope, reconcileDraft } from "./intents.js";
+import { button as actionButton } from "./ui.js";
+import { copy, initializeCopy } from "./en-US.js";
+initializeCopy(document);
 import {
   icon,
   display,
@@ -42,15 +50,25 @@ const state = {
   selected: null,
   entities: new Map(),
   criterion: null,
- contractView: null,
- submission: null,
- detailGeneration: 0,
+  contractView: null,
+  submission: null,
+  detailGeneration: 0,
   catalog: [],
   next: "",
   pending: null,
 };
 const labels = {
- contract_id:copy.text.contract, execution_id:copy.text.execution, spec_digest:copy.text.specificationIntegrity, expected_contract_version:copy.text.contractVersion, expected_work_item_version:copy.text.taskVersion, expected_lease_version:copy.text.leaseVersion, submission_id:copy.text.reviewedSubmission, supersedes_submission_id:copy.text.previousSubmission, authority:copy.text.executionAuthority, checkpoint:copy.text.materialProgress, material:copy.text.submittedMaterial,
+  contract_id: copy.text.contract,
+  execution_id: copy.text.execution,
+  spec_digest: copy.text.specificationIntegrity,
+  expected_contract_version: copy.text.contractVersion,
+  expected_work_item_version: copy.text.taskVersion,
+  expected_lease_version: copy.text.leaseVersion,
+  submission_id: copy.text.reviewedSubmission,
+  supersedes_submission_id: copy.text.previousSubmission,
+  authority: copy.text.executionAuthority,
+  checkpoint: copy.text.materialProgress,
+  material: copy.text.submittedMaterial,
   blocked_ref: copy.text.blockedItem,
   cause_ref: copy.text.blockingCause,
   resolution_summary: copy.text.resolutionSummary,
@@ -172,12 +190,12 @@ const human = (s) =>
     principal_id: copy.text.principal,
     actor_ref: copy.text.actor,
     concluded_at: copy.text.concluded,
-    owner_ref: "Item",
-    entity_ref: "Item",
+    owner_ref: copy.text.item,
+    entity_ref: copy.text.item,
     recorded_at: copy.text.recorded,
     node_type: copy.text.itemType,
     content_hash: copy.text.contentHash,
-    checksum: "Checksum",
+    checksum: copy.text.checksum,
     obligations: copy.text.requirements,
     assessments: copy.text.assessments,
     criteria: copy.text.successCriteria,
@@ -188,7 +206,12 @@ const human = (s) =>
   }[s] ||
   display(s);
 const verbs = {
- acquire:copy.text.acquire, resume:copy.text.resume, sync:copy.text.saveProgressFor, submit:copy.text.submit, finalize:copy.text.finalize, revoke:copy.text.revoke,
+  acquire: copy.text.acquire,
+  resume: copy.text.resume,
+  sync: copy.text.saveProgressFor,
+  submit: copy.text.submit,
+  finalize: copy.text.finalize,
+  revoke: copy.text.revoke,
   create: copy.text.create,
   register: copy.text.record,
   add: copy.text.add,
@@ -221,7 +244,9 @@ const verbs = {
   redeliver: copy.text.redeliver,
 };
 const actionSubjects = {
- work_contract:copy.text.contractcc8321, next_work_contract:copy.text.nextContract, work_result:copy.text.submission,
+  work_contract: copy.text.contractcc8321,
+  next_work_contract: copy.text.nextContract,
+  work_result: copy.text.submission,
   criterion_assessment: copy.text.criterionAssessment,
   criterion: copy.text.successCriterion048852,
   criterion_definition: copy.text.criterionDefinition,
@@ -245,15 +270,58 @@ const actionName = (name) => {
   const [verb, ...subject] = name.split("_");
   return `${verbs[verb] || display(verb)} ${actionSubjects[subject.join("_")] || display(subject.join("_"))}`;
 };
+async function request(path, options = {}) {
+  const generation = state.generation;
+  try {
+    return await networkRequest(path, options);
+  } catch (error) {
+    if (generation !== state.generation) {
+      error.discarded = true;
+      error.name = "AbortError";
+    } else if ([401, 403].includes(error.status) && state.namespace) {
+      state.permissions = [];
+      state.entities.clear();
+      state.loaded.clear();
+      state.boardLoaded.clear();
+      $("developer-tools").hidden = true;
+      $("administration").hidden = true;
+      $("actions").disabled = true;
+      $("outcome").hidden = true;
+      $("detail-dialog").close();
+      $("detail-content").replaceChildren();
+      $("content").replaceChildren();
+    }
+    throw error;
+  }
+}
 const { api_prefix: api } = await request("/app/config");
 const inventory = await request("/app/command-exposure.json");
-const currentScope=()=>({namespace_id:state.namespace,outcome_id:state.outcome?.id});
-async function refreshPermissions(){const namespace=state.namespace,generation=state.generation,scope=currentScope();const value=await request(`${api}/namespaces/${namespace}/effective-permissions${scope.outcome_id?`?outcome_id=${scope.outcome_id}`:""}`);if(generation!==state.generation||namespace!==state.namespace)return;state.permissions=value.permissions;$("developer-tools").hidden=!state.permissions.includes("namespace:admin");$("administration").hidden=!state.permissions.includes("namespace:admin");for(const id of ["create-outcome","empty-create"]){$(id).disabled=!state.permissions.includes("outcome:write");}}
+const currentScope = () => ({
+  namespace_id: state.namespace,
+  outcome_id: state.outcome?.id,
+});
+async function refreshPermissions() {
+  const namespace = state.namespace,
+    generation = state.generation,
+    scope = currentScope();
+  const value = await request(
+    `${api}/namespaces/${namespace}/effective-permissions${scope.outcome_id ? `?outcome_id=${scope.outcome_id}` : ""}`,
+  );
+  if (generation !== state.generation || namespace !== state.namespace) return;
+  state.permissions = value.permissions;
+  $("actions").disabled = false;
+  $("developer-tools").hidden = !state.permissions.includes("namespace:admin");
+  $("administration").hidden = !state.permissions.includes("namespace:admin");
+  for (const id of ["create-outcome", "empty-create"]) {
+    $(id).disabled = !state.permissions.includes("outcome:write");
+  }
+}
 function notice(message, error = false) {
   $("notice").textContent = message;
   $("notice").classList.toggle("error", error);
 }
 function report(error) {
+  if (error.discarded || error.name === "AbortError") return;
   notice(
     error.code === "version_conflict" || error.code === "precondition_failed"
       ? copy.text.stateChangedRefreshAndReviewYourIntentBeforeTryingAgain
@@ -263,6 +331,33 @@ function report(error) {
 }
 const base = () => `${api}/namespaces/${state.namespace}/outcomes`;
 const outcomeBase = () => `${base()}/${state.outcome.id}`;
+const {
+  contractSection,
+  commandAvailableInUI,
+  refreshNamespaceProtocol,
+  renderProtocolBanner,
+  bindProtocolEvents,
+} = contractViews({
+  state,
+  api,
+  request,
+  inventory,
+  $,
+  el,
+  copy,
+  date,
+  display,
+  badge,
+  readable,
+  referenceButton,
+  outcomeBase,
+  notice,
+  report,
+  openCommands,
+  shortId,
+});
+bindProtocolEvents();
+
 function el(tag, text, className) {
   const node = document.createElement(tag);
   if (text !== undefined) node.textContent = text;
@@ -271,8 +366,11 @@ function el(tag, text, className) {
 }
 async function connect(namespace) {
   state.generation++;
+  state.detailGeneration++;
   state.namespace = namespace;
-  state.permissions=[];state.principal="";state.actorKey="";
+  state.permissions = [];
+  state.principal = "";
+  state.actorKey = "";
   state.protocol = null;
   $("signed-protocol-info").hidden = true;
   $("connect").hidden = true;
@@ -280,7 +378,13 @@ async function connect(namespace) {
   state.catalog = (await request(`${api}/commands`)).commands;
   await refreshNamespaceProtocol();
   await refreshPermissions();
-  const identity=await request(`${api}/identity`).catch(()=>({}));state.principal=identity.principal_id||"";state.actorKey=JSON.stringify([identity.actor_ref?.kind,identity.actor_ref?.provider,identity.actor_ref?.id]);
+  const identity = await request(`${api}/identity`).catch(() => ({}));
+  state.principal = identity.principal_id || "";
+  state.actorKey = JSON.stringify([
+    identity.actor_ref?.kind,
+    identity.actor_ref?.provider,
+    identity.actor_ref?.id,
+  ]);
   await discover();
   $("context-name").textContent =
     $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
@@ -293,7 +397,17 @@ async function namespaces() {
     option.value = n.id;
     $("namespace").append(option);
   }
-  if (result.items.length) {const route=readRoute(location.search);const target=route?result.items.find(n=>n.id===route.namespace):result.items[0];if(!target)throw Error("The linked workspace is not available to this account.");$("namespace").value=target.id;await connect(target.id);if(route)await restoreRoute(route);}
+  if (result.items.length) {
+    const route = readRoute(location.search);
+    const target = route
+      ? result.items.find((n) => n.id === route.namespace)
+      : result.items[0];
+    if (!target)
+      throw Error(copy.text.theLinkedWorkspaceIsNotAvailableToThisAccount);
+    $("namespace").value = target.id;
+    await connect(target.id);
+    if (route) await restoreRoute(route);
+  }
 }
 $("login").onsubmit = async (event) => {
   event.preventDefault();
@@ -383,7 +497,8 @@ async function openOutcome(outcome) {
   state.outcome = outcome;
   state.selected = outcome;
   state.criterion = null;
-  state.view = "summary";state.area="overview";
+  state.view = "summary";
+  state.area = "overview";
   state.snapshot = null;
   $("item-search").value = "";
   $("item-priority").value = "";
@@ -407,7 +522,7 @@ async function openOutcome(outcome) {
     await refresh();
     writeRoute();
   } catch (error) {
-    if(generation!==state.generation)return;
+    if (generation !== state.generation) return;
     $("empty").hidden = false;
     throw error;
   } finally {
@@ -453,10 +568,13 @@ async function refresh() {
   $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
   $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
   $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
-  $("revision").textContent =
-    `Revision ${snapshot.outcome_revision} · ${date(snapshot.evaluated_at)}`;
+  $("revision").textContent = message(
+    "revision0c81",
+    snapshot.outcome_revision,
+    date(snapshot.evaluated_at),
+  );
   await refreshPermissions();
-  if(generation!==state.generation)return;
+  if (generation !== state.generation) return;
   renderMetrics();
   renderTabs();
   renderSummary();
@@ -468,7 +586,24 @@ async function refresh() {
       : copy.text.sharedStateRefreshed,
   );
 }
-$("copy-workspace-link").onclick=async()=>{try{await navigator.clipboard.writeText(location.origin+location.pathname+routeQuery({namespace:state.namespace,outcome:state.outcome.id,area:state.area,section:state.section,view:state.view}));notice("Workspace link copied.");}catch(error){report(error);}};
+$("copy-workspace-link").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(
+      location.origin +
+        location.pathname +
+        routeQuery({
+          namespace: state.namespace,
+          outcome: state.outcome.id,
+          area: state.area,
+          section: state.section,
+          view: state.view,
+        }),
+    );
+    notice(copy.text.workspaceLinkCopied);
+  } catch (error) {
+    report(error);
+  }
+};
 $("refresh").onclick = () => refresh().catch(report);
 $("navigation-toggle").onclick = () => {
   const sidebar = document.querySelector(".sidebar");
@@ -506,13 +641,92 @@ const sectionIcons = {
   conclusion_contestations: "alert",
 };
 function renderTabs() {
- $("area-tabs").replaceChildren();for(const [area,definition] of Object.entries(areas)){const b=actionButton(definition.label,()=>navigateArea(area),"quiet");b.dataset.area=area;b.setAttribute("aria-pressed",String(state.area===area));b.classList.toggle("selected",state.area===area);$("area-tabs").append(b);}
- $("tabs").replaceChildren();for(const section of areas[state.area].sections){const b=actionButton(human(section),()=>navigateSection(section),"quiet");b.dataset.section=section;b.setAttribute("aria-pressed",String(section===state.section));b.classList.toggle("selected",section===state.section);$("tabs").append(b);}
+  $("area-tabs").replaceChildren();
+  for (const [area, definition] of Object.entries(areas)) {
+    const b = actionButton(definition.label, () => navigateArea(area), "quiet");
+    b.dataset.area = area;
+    b.setAttribute("aria-pressed", String(state.area === area));
+    b.classList.toggle("selected", state.area === area);
+    $("area-tabs").append(b);
+  }
+  $("tabs").replaceChildren();
+  for (const section of areas[state.area].sections) {
+    const b = actionButton(
+      human(section),
+      () => navigateSection(section),
+      "quiet",
+    );
+    b.dataset.section = section;
+    b.setAttribute("aria-pressed", String(section === state.section));
+    b.classList.toggle("selected", section === state.section);
+    $("tabs").append(b);
+  }
 }
-function writeRoute(item=null,replace=false){if(state.restoringRoute||!state.outcome)return;const query=routeQuery({namespace:state.namespace,outcome:state.outcome.id,area:state.area,section:state.section,view:state.view,item});const target=location.pathname+query;if(target===location.pathname+location.search)return;history[replace?"replaceState":"pushState"]({},"",target);}
-async function restoreRoute(route){if(!route)return;state.restoringRoute=true;try{if(state.namespace!==route.namespace){const option=[...$("namespace").options].find(n=>n.value===route.namespace);if(!option)throw Error("The linked workspace is not available to this account.");$("namespace").value=route.namespace;state.outcome=null;state.snapshot=null;await connect(route.namespace);}if(state.outcome?.id!==route.outcome){const value=await request(`${base()}/${route.outcome}`);await openOutcome(value.value||value);}state.area=route.area;state.section=route.section;state.view=route.view;renderTabs();applyView();await renderSection();if(route.item)await showEntity(route.item);else $("detail-dialog").close();}finally{state.restoringRoute=false;}}
-window.addEventListener("popstate",()=>{try{const route=readRoute(location.search);if(route)restoreRoute(route).catch(report);}catch(error){report(error);}});
-function navigateArea(area){state.area=area;state.section=areas[area].sections[0]||"work_items";state.view=area==="overview"?"summary":"list";$("item-search").value="";$("item-priority").value="";$("work-status").value=state.section;renderTabs();applyView();writeRoute();renderSection().catch(report);}
+function writeRoute(item = null, replace = false) {
+  if (state.restoringRoute || !state.outcome) return;
+  const query = routeQuery({
+    namespace: state.namespace,
+    outcome: state.outcome.id,
+    area: state.area,
+    section: state.section,
+    view: state.view,
+    item,
+  });
+  const target = location.pathname + query;
+  if (target === location.pathname + location.search) return;
+  history[replace ? "replaceState" : "pushState"]({}, "", target);
+}
+async function restoreRoute(route) {
+  if (!route) return;
+  state.restoringRoute = true;
+  try {
+    if (state.namespace !== route.namespace) {
+      const option = [...$("namespace").options].find(
+        (n) => n.value === route.namespace,
+      );
+      if (!option)
+        throw Error(copy.text.theLinkedWorkspaceIsNotAvailableToThisAccount);
+      $("namespace").value = route.namespace;
+      state.outcome = null;
+      state.snapshot = null;
+      await connect(route.namespace);
+    }
+    if (state.outcome?.id !== route.outcome) {
+      const value = await request(`${base()}/${route.outcome}`);
+      await openOutcome(value.value || value);
+    }
+    state.area = route.area;
+    state.section = route.section;
+    state.view = route.view;
+    renderTabs();
+    applyView();
+    await renderSection();
+    if (route.item) await showEntity(route.item);
+    else $("detail-dialog").close();
+  } finally {
+    state.restoringRoute = false;
+  }
+}
+window.addEventListener("popstate", () => {
+  try {
+    const route = readRoute(location.search);
+    if (route) restoreRoute(route).catch(report);
+  } catch (error) {
+    report(error);
+  }
+});
+function navigateArea(area) {
+  state.area = area;
+  state.section = areas[area].sections[0] || "work_items";
+  state.view = area === "overview" ? "summary" : "list";
+  $("item-search").value = "";
+  $("item-priority").value = "";
+  $("work-status").value = state.section;
+  renderTabs();
+  applyView();
+  writeRoute();
+  renderSection().catch(report);
+}
 function applyView() {
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary";
@@ -523,9 +737,11 @@ function applyView() {
       String(button.dataset.view === state.view),
     );
   }
-  $("view-tabs").hidden=state.area!=="work";$("work-status-label").hidden=state.area!=="work"||state.view==="board";
+  $("view-tabs").hidden = state.area !== "work";
+  $("work-status-label").hidden =
+    state.area !== "work" || state.view === "board";
   const board = state.view === "board";
-  $("tabs").hidden = board||state.area==="work";
+  $("tabs").hidden = board || state.area === "work";
   $("add-item").textContent =
     board ||
     ["work_items", "ready_work", "blocked_work", "in_progress_work"].includes(
@@ -533,13 +749,17 @@ function applyView() {
     )
       ? copy.text.newTask
       : `+ ${actionName(sectionCommand())}`;
-  $("add-item").hidden = (!board && !sectionCommand())||!state.permissions.includes(inventory[board?"create_work_item":sectionCommand()]?.permission);
+  $("add-item").hidden =
+    (!board && !sectionCommand()) ||
+    !state.permissions.includes(
+      inventory[board ? "create_work_item" : sectionCommand()]?.permission,
+    );
 }
 function navigateSection(section) {
   state.section = section;
-  state.area=areaFor(section);
+  state.area = areaFor(section);
   state.view = "list";
-  $("work-status").value=section;
+  $("work-status").value = section;
   renderTabs();
   $("item-search").value = "";
   $("item-priority").value = "";
@@ -550,14 +770,20 @@ function navigateSection(section) {
 for (const button of $("view-tabs").children) {
   button.prepend(icon(button.dataset.view));
   button.onclick = () => {
-    state.area="work";state.view = button.dataset.view;
-    renderTabs();writeRoute();
+    state.area = "work";
+    state.view = button.dataset.view;
+    renderTabs();
+    writeRoute();
     applyView();
     renderSection().catch(report);
   };
 }
-let searchTimer;$("item-search").oninput = () => {clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderSection().catch(report),180);};
-$("work-status").onchange=()=>navigateSection($("work-status").value);
+let searchTimer;
+$("item-search").oninput = () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => renderSection().catch(report), 180);
+};
+$("work-status").onchange = () => navigateSection($("work-status").value);
 $("item-priority").onchange = () => renderSection().catch(report);
 const createForSection = {
   work_items: "create_work_item",
@@ -611,7 +837,9 @@ function renderMetrics() {
     );
     const value = el(
       "strong",
-      m.value === null ? copy.text.notApplicable : `${Math.round(m.value * 100)}%`,
+      m.value === null
+        ? copy.text.notApplicable
+        : `${Math.round(m.value * 100)}%`,
       m.value === null ? "not-applicable" : "",
     );
     const progress = el("progress");
@@ -619,7 +847,7 @@ function renderMetrics() {
     progress.value = m.numerator;
     progress.setAttribute(
       "aria-label",
-      `${human(key)}: ${m.numerator} of ${m.denominator}`,
+      message("of", human(key), m.numerator, m.denominator),
     );
     card.append(
       label,
@@ -627,9 +855,25 @@ function renderMetrics() {
       progress,
       el(
         "small",
-        `${m.numerator} of ${m.denominator} ${key.includes("criteria") ? copy.text.criteria : copy.text.items}`,
+        message(
+          "ofc71c",
+          m.numerator,
+          m.denominator,
+          key.includes("criteria") ? copy.text.criteria : copy.text.items,
+        ),
       ),
     );
+    const link = actionButton(
+      copy.text.reviewContributingItems,
+      () =>
+        key.includes("criteria")
+          ? showEntity(state.snapshot.outcome.ref).catch(report)
+          : navigateSection(
+              key === "work_completion" ? "work_items" : "objectives",
+            ),
+      "text-button",
+    );
+    card.append(link);
     $("metrics").append(card);
   }
 }
@@ -667,20 +911,121 @@ function renderSummary() {
     [copy.text.newTask3e9922, "create_work_item"],
     [copy.text.registerEvidence, "register_evidence"],
   ]) {
-    if(!state.permissions.includes(inventory[command]?.permission))continue;
+    if (!state.permissions.includes(inventory[command]?.permission)) continue;
     const b = el("button", label, "quiet");
     b.onclick = () => createItem(command);
     quick.append(b);
   }
   purpose.append(quick);
   root.append(purpose);
-  if(state.outcome.lifecycle==="draft"){
-   const setup=summaryCard("Prepare your Outcome");setup.classList.add("setup-checklist");setup.append(el("p","This Draft is saved. Review these steps before explicitly activating it; Tasks and Roadmaps are optional."));
-   const rows=[["Define success criteria",(state.outcome.criteria?.items||[]).some(c=>!c.retired_at),()=>{state.selected={...state.outcome,_kind:"outcome"};openCommands("add_criterion");},"planning:write"],["Add an Objective",c.objectives>0,()=>createItem("create_objective"),"planning:write"],["Add a Task (optional)",c.work_items>0,()=>createItem("create_work_item"),"work:write"],["Create a Roadmap (optional)",c.roadmaps>0||c.active_roadmaps>0,()=>createItem("create_roadmap"),"planning:write"]];
-   for(const [label,done,run,permission]of rows){const row=el("div",undefined,"checklist-row");row.append(el("span",done?"✓":"○"),el("span",label));if(state.permissions.includes(permission))row.append(actionButton(done?"Review":"Set up",done?()=>label.includes("criteria")?showEntity(state.snapshot.outcome.ref):navigateSection(label.includes("Objective")?"objectives":label.includes("Task")?"work_items":"roadmaps"):run,"quiet"));setup.append(row);}
-   if(state.permissions.includes("outcome:write"))setup.append(actionButton("Activate outcome",()=>{state.selected={...state.outcome,_kind:"outcome"};openCommands("activate_outcome");}));root.append(setup);
+  if (state.outcome.lifecycle === "draft") {
+    const setup = summaryCard(copy.text.prepareYourOutcome);
+    setup.classList.add("setup-checklist");
+    setup.append(
+      el("p", copy.text.thisDraftIsSavedReviewTheseStepsBeforeExplicitly),
+    );
+    const rows = [
+      [
+        copy.text.defineSuccessCriteria,
+        (state.outcome.criteria?.items || []).some((c) => !c.retired_at),
+        () => {
+          state.selected = { ...state.outcome, _kind: "outcome" };
+          openCommands("add_criterion");
+        },
+        "planning:write",
+      ],
+      [
+        copy.text.addAnObjective,
+        c.objectives > 0,
+        () => createItem("create_objective"),
+        "planning:write",
+      ],
+      [
+        copy.text.addATaskOptional,
+        c.work_items > 0,
+        () => createItem("create_work_item"),
+        "work:write",
+      ],
+      [
+        copy.text.createARoadmapOptional,
+        c.roadmaps > 0 || c.active_roadmaps > 0,
+        () => createItem("create_roadmap"),
+        "planning:write",
+      ],
+    ];
+    for (const [label, done, run, permission] of rows) {
+      const row = el("div", undefined, "checklist-row");
+      row.append(el("span", done ? "✓" : "○"), el("span", label));
+      if (state.permissions.includes(permission))
+        row.append(
+          actionButton(
+            done ? copy.text.review : copy.text.setUp,
+            done
+              ? () =>
+                  label.includes("criteria")
+                    ? showEntity(state.snapshot.outcome.ref)
+                    : navigateSection(
+                        label.includes(copy.text.objective)
+                          ? "objectives"
+                          : label.includes(copy.text.task4bc74b)
+                            ? "work_items"
+                            : "roadmaps",
+                      )
+              : run,
+            "quiet",
+          ),
+        );
+      setup.append(row);
+    }
+    if (state.permissions.includes("outcome:write"))
+      setup.append(
+        actionButton(copy.text.activateOutcome, () => {
+          state.selected = { ...state.outcome, _kind: "outcome" };
+          openCommands("activate_outcome");
+        }),
+      );
+    root.append(setup);
   }
-  const next=summaryCard("Suggested next step");const suggestion=c.blocked_work?{text:"Review blocking impact",reason:"Blocked Tasks are present in the current state.",section:"blockers"}:!(state.outcome.criteria?.items||[]).length?{text:"Define success criteria",reason:"No success criteria are recorded yet.",command:"add_criterion"}:!c.work_items?{text:"Add a Task",reason:"No Tasks are recorded yet.",command:"create_work_item"}:{text:"Review current work",reason:"Tasks are available for explicit coordination.",section:"work_items"};next.append(el("p",suggestion.reason),el("small","A presentation hint from persisted state; no planning or execution occurs automatically."),actionButton(suggestion.text,()=>{if(suggestion.section)navigateSection(suggestion.section);else{state.selected={...state.outcome,_kind:"outcome"};openCommands(suggestion.command);}},"quiet"));root.append(next);
+  const next = summaryCard(copy.text.suggestedNextStep);
+  const suggestion = c.blocked_work
+    ? {
+        text: copy.text.reviewBlockingImpact,
+        reason: copy.text.blockedTasksArePresentInTheCurrentState,
+        section: "blockers",
+      }
+    : !(state.outcome.criteria?.items || []).length
+      ? {
+          text: copy.text.defineSuccessCriteria,
+          reason: copy.text.noSuccessCriteriaAreRecordedYet,
+          command: "add_criterion",
+        }
+      : !c.work_items
+        ? {
+            text: copy.text.addATask,
+            reason: copy.text.noTasksAreRecordedYet,
+            command: "create_work_item",
+          }
+        : {
+            text: copy.text.reviewCurrentWork,
+            reason: copy.text.tasksAreAvailableForExplicitCoordination,
+            section: "work_items",
+          };
+  next.append(
+    el("p", suggestion.reason),
+    el("small", copy.text.aPresentationHintFromPersistedStateNoPlanningOr),
+    actionButton(
+      suggestion.text,
+      () => {
+        if (suggestion.section) navigateSection(suggestion.section);
+        else {
+          state.selected = { ...state.outcome, _kind: "outcome" };
+          openCommands(suggestion.command);
+        }
+      },
+      "quiet",
+    ),
+  );
+  root.append(next);
 
   const status = summaryCard(copy.text.taskOverview, "work_items");
   const done = c.done_work || 0,
@@ -697,7 +1042,12 @@ function renderSummary() {
       color: "#d6d2c8",
       tone: "",
     },
-    { title: copy.text.inProgress, count: active, color: "#e97335", tone: "orange" },
+    {
+      title: copy.text.inProgress,
+      count: active,
+      color: "#e97335",
+      tone: "orange",
+    },
     {
       title: copy.text.blockedNeedsAttention,
       count: blocked,
@@ -751,7 +1101,8 @@ function renderSummary() {
     counts,
     el(
       "p",
-      copy.text.taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561,
+      copy.text
+        .taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561,
     ),
   );
   root.append(proof);
@@ -776,14 +1127,18 @@ function renderSummary() {
     alert.append(
       el(
         "p",
-        `${blocked} blocked items or reservations to review. ${c.conclusion_contestations || 0} contested conclusions recorded.`,
+        message(
+          "blockedItemsOrReservationsToReviewContestedConclusionsRecorded",
+          blocked,
+          c.conclusion_contestations || 0,
+        ),
       ),
     );
     root.append(alert);
   }
 }
 function titleOf(ref) {
-  if (!ref) return "Item";
+  if (!ref) return copy.text.item;
   if (ref.kind === "outcome" && ref.id === state.outcome?.id)
     return state.outcome.title;
   return (
@@ -830,7 +1185,11 @@ function itemView(item, mode = "card") {
       referenceButton(ref),
       el(
         "small",
-        `Revision ${item.slot.revision_number} · ${item.node_count} published items`,
+        message(
+          "revisionPublishedItems",
+          item.slot.revision_number,
+          item.node_count,
+        ),
       ),
       badge("active"),
     );
@@ -853,7 +1212,8 @@ function itemView(item, mode = "card") {
     card.append(
       el(
         "p",
-        copy.text.theConclusionRemainsInHistoryReviewTheNewObservationBeforeRe45f90af8,
+        copy.text
+          .theConclusionRemainsInHistoryReviewTheNewObservationBeforeRe45f90af8,
       ),
     );
     return card;
@@ -920,7 +1280,7 @@ function itemView(item, mode = "card") {
       button.append(
         el(
           "small",
-          status.readiness_reasons.map(display).join(" · "),
+          status.readiness_reasons.map(display).join(copy.text.message),
           "board-reason",
         ),
       );
@@ -928,7 +1288,7 @@ function itemView(item, mode = "card") {
       button.append(
         el(
           "small",
-          `Roadmap: ${item.plan_label} · revision ${item.revision_number}`,
+          message("roadmapRevision592f", item.plan_label, item.revision_number),
         ),
       );
   }
@@ -1001,13 +1361,23 @@ function eventName(type) {
   return display(normalized);
 }
 function emptySection(title, command) {
+  if (title === copy.text.noRecordsInThisSectionYet)
+    title =
+      {
+        work_items: copy.text.noTasksYet,
+        objectives: copy.text.noObjectivesYet,
+        roadmaps: copy.text.noRoadmapsYet,
+        evidence: copy.text.noEvidenceYet,
+        issues: copy.text.noIssuesYet,
+        blockers: copy.text.noBlockersYet,
+      }[state.section] || title;
   const box = el("div", undefined, "empty-section");
   box.append(
     icon(sectionIcons[state.section] || "work_item"),
     el("h3", title),
     el("p", copy.text.activityAppearsHereAsWorkProgresses),
   );
-  if (command) {
+  if (command && state.permissions.includes(inventory[command]?.permission)) {
     const b = el("button", actionName(command), "quiet");
     b.onclick = () => createItem(command);
     box.append(b);
@@ -1058,41 +1428,108 @@ async function sectionData(section, cursor = "", append = false) {
     next,
   };
 }
-async function searchedTasks(cursor="",append=false){const scope=outcomeBase(),generation=state.generation;const q=new URLSearchParams({kind:"work_item",limit:"25",query:$("item-search").value});if($("item-priority").value)q.set("priority",$("item-priority").value);if(cursor)q.set("cursor",cursor);const page=await request(`${scope}/references?${q}`);const results=await Promise.all(page.items.map(item=>request(`${scope}/work-items/${item.ref.id}`)));if(generation!==state.generation)return {items:[]};if(results.some(r=>r.outcome_revision!==page.outcome_revision)){const e=Error("State changed while loading search results. Refresh the search.");e.code="precondition_failed";throw e;}const items=results.map((r,i)=>({...r.value,ref:page.items[i].ref}));return {items:append?[...(state.loaded.get("work_items")?.items||[]),...items]:items,next:page.next_cursor};}
+async function searchedTasks(cursor = "", append = false) {
+  const scope = outcomeBase(),
+    generation = state.generation;
+  const q = new URLSearchParams({
+    kind: "work_item",
+    limit: "25",
+    query: $("item-search").value,
+  });
+  if ($("item-priority").value) q.set("priority", $("item-priority").value);
+  if (cursor) q.set("cursor", cursor);
+  const page = await request(`${scope}/references?${q}`);
+  const results = await Promise.all(
+    page.items.map((item) => request(`${scope}/work-items/${item.ref.id}`)),
+  );
+  if (generation !== state.generation) return { items: [] };
+  if (results.some((r) => r.outcome_revision !== page.outcome_revision)) {
+    const e = Error(
+      copy.text.stateChangedWhileLoadingSearchResultsRefreshTheSearch,
+    );
+    e.code = "precondition_failed";
+    throw e;
+  }
+  const items = results.map((r, i) => ({ ...r.value, ref: page.items[i].ref }));
+  return {
+    items: append
+      ? [...(state.loaded.get("work_items")?.items || []), ...items]
+      : items,
+    next: page.next_cursor,
+  };
+}
 async function renderSection(cursor = "", append = false) {
   if (!state.snapshot || state.view === "summary") return;
-  if (state.view === "board") {state.renderId++;return renderBoard();}
+  if (state.view === "board") {
+    state.renderId++;
+    return renderBoard();
+  }
   const section = state.section,
     generation = state.generation,
     run = ++state.renderId;
-  const globalWork=section==="work_items";
-  let data;try{data=globalWork?await searchedTasks(cursor,append):await sectionData(section,cursor,append);}catch(error){if(generation===state.generation&&run===state.renderId)throw error;return;}
+  const globalWork = section === "work_items";
+  let data;
+  try {
+    data = globalWork
+      ? await searchedTasks(cursor, append)
+      : await sectionData(section, cursor, append);
+  } catch (error) {
+    if (generation === state.generation && run === state.renderId) throw error;
+    return;
+  }
   if (generation !== state.generation || run !== state.renderId) return;
+  if (section === "objectives") {
+    const path = outcomeBase(),
+      revision = state.snapshot.outcome_revision;
+    const missing = data.items.filter((x) => !x._hierarchy_loaded);
+    const hydrated = await Promise.all(
+      missing.map(async (x) => {
+        const r = await request(`${path}/objectives/${x.ref.id}`);
+        if (r.outcome_revision !== revision)
+          throw Error(
+            copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+          );
+        return { ...r.value, ref: x.ref, _hierarchy_loaded: true };
+      }),
+    );
+    if (generation !== state.generation || run !== state.renderId) return;
+    const map = new Map(hydrated.map((x) => [x.ref.id, x]));
+    data.items = data.items.map((x) => map.get(x.ref.id) || x);
+  }
   state.loaded.set(section, data);
   const content = $("content");
   content.replaceChildren();
   const heading = el("div", undefined, "content-heading");
-  const shown = globalWork?data.items:data.items.filter(matches);
+  const shown = globalWork ? data.items : data.items.filter(matches);
   heading.append(
     el("h2", human(section)),
     el(
       "small",
-      `${shown.length} items shown${state.snapshot.counts[section] !== undefined ? ` · ${state.snapshot.counts[section]} total` : ""}`,
+      message(
+        "itemsShown",
+        shown.length,
+        state.snapshot.counts[section] !== undefined
+          ? ` · ${state.snapshot.counts[section]} total`
+          : "",
+      ),
     ),
   );
   content.append(heading);
-  if(globalWork)content.append(el("p","Search and priority filter cover every authorized Task. Pages are bound to the Outcome revision.","section-note"));
+  if (globalWork)
+    content.append(
+      el(
+        "p",
+        copy.text.searchAndPriorityFilterCoverEveryAuthorizedTaskPages,
+        "section-note",
+      ),
+    );
   for (const b of $("tabs").children) {
     b.classList.toggle("selected", b.dataset.section === section);
     b.setAttribute("aria-pressed", String(b.dataset.section === section));
   }
   if (!globalWork)
     content.append(
-      el(
-        "p",
-        copy.text.filterAppliesToLoadedItemsInThisView,
-        "section-note",
-      ),
+      el("p", copy.text.filterAppliesToLoadedItemsInThisView, "section-note"),
     );
   if (!shown.length)
     content.append(
@@ -1111,14 +1548,32 @@ async function renderSection(cursor = "", append = false) {
       if (!rows) {
         const head = el("div", undefined, "list-head");
         head.append(
-          el("span", "Item"),
+          el("span", copy.text.item),
           el("span", copy.text.lifecycle),
           el("span", copy.text.priority),
         );
         list.append(head);
         content.append(list);
       }
-      list.append(itemView(item, "list"));
+      const row = itemView(item, "list");
+      if (section === "objectives" && entity.parent_objective_id) {
+        const parent = data.items.find(
+          (x) => x.ref.id === entity.parent_objective_id,
+        );
+        row.classList.add("objective-child");
+        row.append(
+          referenceButton({
+            namespace_id: state.namespace,
+            outcome_id: state.outcome.id,
+            kind: "objective",
+            id: entity.parent_objective_id,
+          }),
+        );
+        row.title = parent
+          ? message("withinObjective", parent.title)
+          : copy.text.parentObjectiveOutsidePage;
+      }
+      list.append(row);
       rows++;
     } else if (section === "graph") {
       const ref = item.from || item.source_ref,
@@ -1136,7 +1591,7 @@ async function renderSection(cursor = "", append = false) {
     } else content.append(itemView(item));
   }
   if (data.next) {
-    const more = el("button", copy.text.loadMore, "quiet more-button");
+    const more = el("button", copy.text.loadMore, copy.text.quietMoreButton);
     more.dataset.more = "true";
     more.onclick = () => renderSection(data.next, true).catch(report);
     content.append(more);
@@ -1154,7 +1609,11 @@ const boardGroups = [
     ],
   },
   { title: copy.text.ready, tone: "", sections: ["ready_work"] },
-  { title: copy.text.inProgress, tone: "orange", sections: ["in_progress_work"] },
+  {
+    title: copy.text.inProgress,
+    tone: "orange",
+    sections: ["in_progress_work"],
+  },
   {
     title: copy.text.blockers,
     tone: "red",
@@ -1171,7 +1630,8 @@ function renderBoard() {
   content.replaceChildren(
     el(
       "p",
-      copy.text.theBoardShowsCurrentReadinessAndReservationsOpenATaskToChooseAnAction,
+      copy.text
+        .theBoardShowsCurrentReadinessAndReservationsOpenATaskToChooseAnAction,
       "board-caption",
     ),
   );
@@ -1209,9 +1669,7 @@ function renderBoard() {
       column.append(
         el(
           "p",
-          count
-            ? copy.text.noLoadedItemsMatchTheFilters
-            : copy.text.noItems,
+          count ? copy.text.noLoadedItemsMatchTheFilters : copy.text.noItems,
           "board-empty",
         ),
       );
@@ -1224,8 +1682,8 @@ function renderBoard() {
       if (cursor) {
         const more = el(
           "button",
-          `Load more · ${display(section.replace("_work", ""))}`,
-          "quiet more-button",
+          message("loadMore1c89", display(section.replace("_work", ""))),
+          copy.text.quietMoreButton,
         );
         more.onclick = async () => {
           const generation = state.generation;
@@ -1278,10 +1736,13 @@ const plurals = {
   artifact: "artifacts",
   roadmap: "roadmaps",
 };
-function readable(value, key = "", depth = 0, authored=false) {
-  authored=authored||["external_context","metadata","execution_context"].includes(key);
+function readable(value, key = "", depth = 0, authored = false) {
+  authored =
+    authored ||
+    ["external_context", "metadata", "execution_context"].includes(key);
   if (value === null || value === undefined) return el("span", "—");
-  if (typeof value !== "object") return el("span", authored?String(value):formatValue(value,key));
+  if (typeof value !== "object")
+    return el("span", authored ? String(value) : formatValue(value, key));
   if (depth > 4)
     return el("span", copy.text.openTechnicalDetailsForMoreInformation);
   if (value.kind && value.id && value.namespace_id)
@@ -1291,7 +1752,7 @@ function readable(value, key = "", depth = 0, authored=false) {
     if (!value.length) list.append(el("span", copy.text.noRecords));
     for (const v of value) {
       const row = el("div", undefined, "readable-row");
-      row.append(readable(v, key, depth + 1,authored));
+      row.append(readable(v, key, depth + 1, authored));
       list.append(row);
     }
     return list;
@@ -1313,9 +1774,9 @@ function readable(value, key = "", depth = 0, authored=false) {
       ].includes(k)
     )
       continue;
-    list.append(el("dt", authored?k:human(k)));
+    list.append(el("dt", authored ? k : human(k)));
     const dd = el("dd");
-    dd.append(readable(v, k, depth + 1,authored));
+    dd.append(readable(v, k, depth + 1, authored));
     list.append(dd);
   }
   return list;
@@ -1335,14 +1796,20 @@ function conclusionView(conclusion) {
     card.append(
       el(
         "p",
-        `${conclusion.assessments.length} assessments used in the conclusion.`,
+        message(
+          "assessmentsUsedInTheConclusion",
+          conclusion.assessments.length,
+        ),
       ),
     );
   if (conclusion.obligations?.required_objective_ids?.length)
     card.append(
       el(
         "p",
-        `${conclusion.obligations.required_objective_ids.length} required objectives verified.`,
+        message(
+          "requiredObjectivesVerified",
+          conclusion.obligations.required_objective_ids.length,
+        ),
       ),
     );
   return card;
@@ -1355,7 +1822,7 @@ function planNodes(nodes) {
     const row = el(
       "div",
       undefined,
-      `plan-node${n.parent_node_key ? " plan-node-child" : ""}`,
+      `plan-node${n.parent_node_key ? copy.text.planNodeChild : ""}`,
     );
     const body = el("div");
     body.append(
@@ -1379,16 +1846,42 @@ function planNodes(nodes) {
   if (!nodes?.length) box.append(el("p", copy.text.thisRoadmapHasNoItemsYet));
   return box;
 }
-function effectiveActions(context=state.criterion?"criterion":state.selected?._kind||"outcome",entity=state.selected||state.outcome||{}) {
- return availableActions({context,entity,criterion:state.criterion,protocol:state.protocol,permissions:state.permissions,principal:state.principal,inventory});
+function effectiveActions(
+  context = state.criterion ? "criterion" : state.selected?._kind || "outcome",
+  entity = state.selected || state.outcome || {},
+) {
+  return availableActions({
+    context,
+    entity,
+    criterion: state.criterion,
+    protocol: state.protocol,
+    permissions: state.permissions,
+    principal: state.principal,
+    inventory,
+  });
 }
 function quickActions(kind, entity) {
- const container=el("div",undefined,"quick-actions");
- for(const action of effectiveActions(kind,entity))container.append(actionButton(action.label,()=>{state.selected={...entity,_kind:kind};openCommands(action.name)},"quiet"));
- return container;
+  const container = el("div", undefined, "quick-actions");
+  const advanced = el("details");
+  advanced.append(el("summary", copy.text.advanced));
+  for (const action of effectiveActions(kind, entity)) {
+    const destination = action.advanced ? advanced : container;
+    destination.append(
+      actionButton(
+        action.label,
+        () => {
+          state.selected = { ...entity, _kind: kind };
+          openCommands(action.name);
+        },
+        "quiet",
+      ),
+    );
+  }
+  if (advanced.children.length > 1) container.append(advanced);
+  return container;
 }
 async function showEntity(ref) {
- const detailGeneration=++state.detailGeneration;
+  const detailGeneration = ++state.detailGeneration;
   const generation = state.generation;
   if (
     ref.namespace_id !== state.namespace ||
@@ -1403,11 +1896,25 @@ async function showEntity(ref) {
       : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
   const result = await request(path);
   let operationalState;
-  if(ref.kind==="work_item"){const projection=await request(`${path}/operational-state`);if(generation!==state.generation||detailGeneration!==state.detailGeneration)return;if(result.outcome_revision!==projection.outcome_revision)throw Error("This task changed while loading. Refresh to review a consistent state.");operationalState=projection.state;}
+  if (ref.kind === "work_item") {
+    const projection = await request(`${path}/operational-state`);
+    if (
+      generation !== state.generation ||
+      detailGeneration !== state.detailGeneration
+    )
+      return;
+    if (result.outcome_revision !== projection.outcome_revision)
+      throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
+    operationalState = projection.state;
+  }
   if (generation !== state.generation) return;
-  if (detailGeneration!==state.detailGeneration) return;
- const entity = {...(result.value||result),...(operationalState?{_operational_state:operationalState}:{})};
- state.contractView=null;state.submission=null;
+  if (detailGeneration !== state.detailGeneration) return;
+  const entity = {
+    ...(result.value || result),
+    ...(operationalState ? { _operational_state: operationalState } : {}),
+  };
+  state.contractView = null;
+  state.submission = null;
   state.selected = { ...entity, _kind: ref.kind };
   state.criterion = null;
   state.entities.set(`${ref.kind}/${ref.id}`, {
@@ -1424,11 +1931,36 @@ async function showEntity(ref) {
   if (entity.lifecycle) status.append(badge(entity.lifecycle));
   if (entity.priority)
     status.append(
-      el("span", `Priority ${display(entity.priority)}`, "badge"),
+      el("span", message("prioritye9f4", display(entity.priority)), "badge"),
     );
-  if (entity.archived_at) status.append(el("span", copy.text.archived, "badge"));
+  if (entity.archived_at)
+    status.append(el("span", copy.text.archived, "badge"));
   detail.append(status);
-  if(entity._operational_state){const readiness=el("section",undefined,"detail-section");readiness.append(el("h3","Operational readiness"),badge(entity._operational_state.display_state),el("p",`Reservation authority: ${display(entity._operational_state.lease_status)} · evaluated ${date(entity._operational_state.evaluated_at)}`));if(entity._operational_state.readiness_reasons?.length)readiness.append(el("p",entity._operational_state.readiness_reasons.map(display).join(" · ")));detail.append(readiness);}
+  if (entity._operational_state) {
+    const readiness = el("section", undefined, "detail-section");
+    readiness.append(
+      el("h3", copy.text.operationalReadiness),
+      badge(entity._operational_state.display_state),
+      el(
+        "p",
+        message(
+          "reservationAuthorityEvaluated",
+          display(entity._operational_state.lease_status),
+          date(entity._operational_state.evaluated_at),
+        ),
+      ),
+    );
+    if (entity._operational_state.readiness_reasons?.length)
+      readiness.append(
+        el(
+          "p",
+          entity._operational_state.readiness_reasons
+            .map(display)
+            .join(copy.text.message),
+        ),
+      );
+    detail.append(readiness);
+  }
   const description =
     entity.desired_state ||
     entity.description ||
@@ -1468,7 +2000,7 @@ async function showEntity(ref) {
           const a = el("a", entity[key]);
           a.href = u.href;
           a.target = "_blank";
-          a.rel = "noopener noreferrer";
+          a.rel = copy.text.noopenerNoreferrer;
           dd.append(a);
         } else dd.append(el("span", entity[key]));
       } catch {
@@ -1484,23 +2016,36 @@ async function showEntity(ref) {
       el("h3", copy.text.executionReservation),
       el(
         "p",
-        `${entity.current_lease.actor_ref?.id || entity.current_lease.principal_id} · expires ${date(entity.current_lease.expires_at)}`,
+        message(
+          "expires",
+          entity.current_lease.actor_ref?.id ||
+            entity.current_lease.principal_id,
+          date(entity.current_lease.expires_at),
+        ),
       ),
     );
     detail.append(lease);
   }
-if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(detail,entity,detailGeneration);if(detailGeneration!==state.detailGeneration)return;}
+  if (ref.kind === "work_item" && entity.contracts_enabled) {
+    await contractSection(detail, entity, detailGeneration);
+    if (detailGeneration !== state.detailGeneration) return;
+  }
   const criteria = entity.criteria?.items || [];
   if (criteria.length) {
     const group = el("section", undefined, "detail-section");
     group.append(el("h3", copy.text.successCriteria));
     for (const criterion of criteria) {
-      const button = el("button", undefined, "item criterion-item");
+      const button = el("button", undefined, copy.text.itemCriterionItem);
       button.append(
         el("strong", criterion.title),
         el(
           "small",
-          `${criterion.required ? copy.text.required : copy.text.optional} · ${display(criterion.verification_mode)} · revision ${criterion.criterion_revision}`,
+          message(
+            "revision51f7",
+            criterion.required ? copy.text.required : copy.text.optional,
+            display(criterion.verification_mode),
+            criterion.criterion_revision,
+          ),
         ),
       );
       const assessment = entity.criteria.current_assessments?.[criterion.id];
@@ -1534,7 +2079,7 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
       const draft = el("details");
       draft.open = true;
       draft.append(
-        el("summary", `Draft · version ${entity.draft.draft_version}`),
+        el("summary", message("draftVersion3d05", entity.draft.draft_version)),
         planNodes(entity.draft.nodes),
       );
       detail.append(draft);
@@ -1545,7 +2090,11 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
       history.append(
         el(
           "summary",
-          `Revision ${revision.revision_number} · ${revision.reason || copy.text.publishedRoadmap}`,
+          message(
+            "revision0c81",
+            revision.revision_number,
+            revision.reason || copy.text.publishedRoadmap,
+          ),
         ),
         planNodes(revision.nodes),
       );
@@ -1560,10 +2109,11 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
   detail.append(tech);
   $("detail-actions").querySelector(".quick-actions")?.remove();
   $("detail-actions").prepend(quickActions(ref.kind, entity));
-  if (!$("detail-dialog").open) $("detail-dialog").showModal();writeRoute(ref);
+  if (!$("detail-dialog").open) $("detail-dialog").showModal();
+  writeRoute(ref);
 }
 $("close-detail").onclick = () => $("detail-dialog").close();
-$("detail-dialog").addEventListener("close",()=>writeRoute());
+$("detail-dialog").addEventListener("close", () => writeRoute());
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
   state.selected = { ...state.outcome, _kind: "outcome" };
@@ -1615,12 +2165,19 @@ function defaults() {
         ["blocker", "blocker_id"],
       ].map(([k, f]) => [f, kind === k ? e.id : undefined]),
     ),
-contract_id:state.contractView?.contract.id,
- expected_contract_version:state.contractView?.contract.version,
- expected_work_item_version:e.version,
- expected_lease_version:state.contractView?.contract.lease_version,
- authority: state.contractView ? {execution_id:state.contractView.contract.execution_id,fencing_token:state.contractView.contract.fencing_token,spec_digest:state.contractView.contract.spec_digest}:undefined,
- submission_id:state.submission?.id||state.contractView?.contract.latest_submission_id,
+    contract_id: state.contractView?.contract.id,
+    expected_contract_version: state.contractView?.contract.version,
+    expected_work_item_version: e.version,
+    expected_lease_version: state.contractView?.contract.lease_version,
+    authority: state.contractView
+      ? {
+          execution_id: state.contractView.contract.execution_id,
+          fencing_token: state.contractView.contract.fencing_token,
+          spec_digest: state.contractView.contract.spec_digest,
+        }
+      : undefined,
+    submission_id:
+      state.submission?.id || state.contractView?.contract.latest_submission_id,
     claim_id: e.current_lease?.claim_id,
     fencing_token: e.current_lease?.fencing_token,
     criterion_id: state.criterion?.id,
@@ -1630,12 +2187,30 @@ contract_id:state.contractView?.contract.id,
   };
 }
 function openTechnicalCommands(name) {
-  if(state.pending){openCommands();return;}
-  if(!state.permissions.includes("namespace:admin")){notice("Developer tools require workspace administration permission.",true);return;}
-  state.humanForm?.dispose();state.humanForm=null;state.technical=true;state.formScope=currentScope();state.formGeneration=state.generation;
-  $("command-select").closest("label").hidden=false;$("conflict-review").replaceChildren();
+  if (state.pending) {
+    openCommands();
+    return;
+  }
+  if (!state.permissions.includes("namespace:admin")) {
+    notice(
+      copy.text.developerToolsRequireWorkspaceAdministrationPermission,
+      true,
+    );
+    return;
+  }
+  state.humanForm?.dispose();
+  state.humanForm = null;
+  state.technical = true;
+  state.formScope = currentScope();
+  state.formGeneration = state.generation;
+  $("command-select").closest("label").hidden = false;
+  $("conflict-review").replaceChildren();
   if (name && !commandAvailableInUI(name)) {
-    notice(copy.text.thisFlowRequiresAnAuthorizedProfileAndProtectedSignatureUseW6de2babd, true);
+    notice(
+      copy.text
+        .thisFlowRequiresAnAuthorizedProfileAndProtectedSignatureUseW6de2babd,
+      true,
+    );
     return;
   }
   $("submit-command").disabled = false;
@@ -1651,7 +2226,18 @@ function openTechnicalCommands(name) {
   const kind = state.selected?._kind || "outcome";
   for (const d of state.catalog) {
     if (!commandAvailableInUI(d.name)) continue;
- if(state.selected?.contracts_enabled&&["claim_work_item","release_work_item","renew_work_item_lease","reclaim_work_item","complete_work_item","administrative_complete_work_item"].includes(d.name))continue;
+    if (
+      state.selected?.contracts_enabled &&
+      [
+        "claim_work_item",
+        "release_work_item",
+        "renew_work_item_lease",
+        "reclaim_work_item",
+        "complete_work_item",
+        "administrative_complete_work_item",
+      ].includes(d.name)
+    )
+      continue;
     const option = el("option", actionName(d.name));
     option.value = d.name;
     (d.name.endsWith(`_${kind}`) ||
@@ -1710,11 +2296,33 @@ function field(name, schema, value, required = false) {
     name !== "parent_objective_id"
   )
     return { node: wrap, get: () => value };
-  if(name==="permissions"){const node=el("fieldset");node.append(el("legend","Permissions"));const controls=Object.keys(permissionLabels).map(permission=>{const label=el("label",undefined,"check-label"),input=el("input");input.type="checkbox";input.checked=(value||[]).includes(permission);label.append(input,document.createTextNode(permissionLabels[permission]));node.append(label);return {permission,input}});return {node,get:()=>controls.filter(x=>x.input.checked).map(x=>x.permission)};}
+  if (name === "permissions") {
+    const node = el("fieldset");
+    node.append(el("legend", copy.text.permissions));
+    const controls = Object.keys(permissionLabels).map((permission) => {
+      const label = el("label", undefined, "check-label"),
+        input = el("input");
+      input.type = "checkbox";
+      input.checked = (value || []).includes(permission);
+      label.append(
+        input,
+        document.createTextNode(permissionLabels[permission]),
+      );
+      node.append(label);
+      return { permission, input };
+    });
+    return {
+      node,
+      get: () =>
+        controls.filter((x) => x.input.checked).map((x) => x.permission),
+    };
+  }
   if (entityKind) {
     const label = el("label", human(name)),
       select = el("select");
-    select.append(Object.assign(el("option", copy.text.chooseAnItem), { value: "" }));
+    select.append(
+      Object.assign(el("option", copy.text.chooseAnItem), { value: "" }),
+    );
     const items = new Map(state.entities);
     for (const section of Object.values(state.snapshot?.sections || {})) {
       for (const entry of section) {
@@ -1812,15 +2420,15 @@ function field(name, schema, value, required = false) {
     const label = el("label", `${human(name)} (JSON)`);
     const input = el("textarea");
     input.value = value === undefined ? "" : JSON.stringify(value);
-    input.placeholder = 'Example: "value", true, ["item"] or {"key":"value"}';
+    input.placeholder = copy.text.exampleValueTrueItemOrKeyValue;
     label.append(input);
     wrap.append(label);
     getter = () => (input.value.trim() ? JSON.parse(input.value) : undefined);
   } else if (schema.type === "object" && !schema.properties) {
-    const label = el("label", `${human(name)} (context pairs in JSON)`);
+    const label = el("label", message("contextPairsInJSON", human(name)));
     const input = el("textarea");
     input.value = value === undefined ? "{}" : JSON.stringify(value, null, 2);
-    input.placeholder = '{"product":"example", "user_id":"person-42"}';
+    input.placeholder = copy.text.productExampleUserIdPerson42;
     label.append(input);
     wrap.append(label);
     getter = () => (input.value.trim() ? JSON.parse(input.value) : undefined);
@@ -1994,20 +2602,31 @@ function buildForm() {
   $("command-title").textContent = actionName(descriptor.name);
   $("command-help").textContent =
     descriptor.name === "record_criterion_assessment"
-      ? copy.text.reviewEvidenceAndRecordAnAssessmentEvidenceAloneDoesNotVerifyTheCriterion
+      ? copy.text
+          .reviewEvidenceAndRecordAnAssessmentEvidenceAloneDoesNotVerifyTheCriterion
       : descriptor.name === "claim_work_item"
-        ? copy.text.reserveWorkBeforeExecutingATimeLimitedReservationPreventsCon7f9d6428
+        ? copy.text
+            .reserveWorkBeforeExecutingATimeLimitedReservationPreventsCon7f9d6428
         : copy.text.theChangeIsSharedWithAllParticipantsReviewBeforeConfirming;
   const context = el(
     "div",
     state.criterion
-      ? `Success criterion: ${state.criterion.title} · revision ${state.criterion.criterion_revision}`
+      ? message(
+          "successCriterionRevision",
+          state.criterion.title,
+          state.criterion.criterion_revision,
+        )
       : state.selected
-        ? `${kindName(state.selected._kind || "outcome")}: ${state.selected.title || state.selected.name || state.selected.description || state.outcome?.title || ""}${state.selected.version ? ` · version ${state.selected.version}` : ""}`
+        ? `${kindName(state.selected._kind || "outcome")}: ${state.selected.title || state.selected.name || state.selected.description || state.outcome?.title || ""}${state.selected.version ? message("versiona6e5", state.selected.version) : ""}`
         : copy.text.newOutcomeInThisWorkspace,
     "field-context",
   );
-  const form = field(copy.text.information, descriptor.schema, defaults(), true);
+  const form = field(
+    copy.text.information,
+    descriptor.schema,
+    defaults(),
+    true,
+  );
   $("fields").replaceChildren(context, form.node);
   formGetter = form.get;
   $("command-error").textContent = "";
@@ -2017,68 +2636,334 @@ function buildForm() {
 
 $("command-select").onchange = buildForm;
 $("close-command").onclick = () => $("command-dialog").close();
-$("command-dialog").addEventListener("close",()=>state.humanForm?.dispose());
-function projectCommand(name,value){
- // The technical catalog validates transport compatibility; it does not generate human fields.
- const allowed=state.catalog.find(x=>x.name===name)?.schema.properties||{};
- return Object.fromEntries(Object.entries(value).filter(([key])=>key in allowed));
+$("command-dialog").addEventListener("close", () => state.humanForm?.dispose());
+function projectCommand(name, value) {
+  // The technical catalog validates transport compatibility; it does not generate human fields.
+  const allowed =
+    state.catalog.find((x) => x.name === name)?.schema.properties || {};
+  return Object.fromEntries(
+    Object.entries(value).filter(([key]) => key in allowed),
+  );
 }
 function openCommands(name) {
- if(state.submitting){notice("Wait for the current change to finish before starting another.",true);return;}
- if(!state.principal){notice("Wait for the authenticated workspace identity to load.",true);return;}
- if(state.pending){notice("Resolve the previous uncertain response with Retry the same intent before starting another change.",true);$("command-dialog").showModal();return;}
- if(!name){
-  const menu=$("action-options");menu.replaceChildren();
-  for(const action of effectiveActions())menu.append(actionButton(action.label,()=>{$("action-dialog").close();openCommands(action.name)},"quiet"));
-  if(!menu.children.length)menu.append(el("p","No changes are available for your current permissions and this item. The API always checks authorization again."));
-  $("action-dialog").showModal();return;
- }
- const context=name==='create_outcome'?"workspace":state.criterion?"criterion":state.selected?._kind||"outcome";
- if(!effectiveActions(context).some(a=>a.name===name)){notice("This action is unavailable in the current state, permission or protocol. Signed execution requires an authorized external profile.",true);return;}
- if(!commandAvailableInUI(name))return;
- state.humanForm?.dispose();state.technical=false;state.formScope=currentScope();state.formGeneration=state.generation;
- $("command-select").replaceChildren(Object.assign(el("option",humanActions[name].label),{value:name}));$("command-select").closest("label").hidden=true;
- $("command-title").textContent=humanActions[name].label;$("command-help").textContent="Review your intent before saving. The server checks permissions and current state.";$("submit-command").textContent=name==='create_outcome'?"Save draft":name==='replace_roadmap_draft'?"Save draft":name==='publish_roadmap_draft'?"Publish revision":"Save changes";
- state.humanForm=humanForm(name,{scope:state.formScope,entity:state.selected||{},criterion:state.criterion,request:(path,options)=>request(`${api}${path}`,options),permissions:state.permissions,protocol:state.protocol,submission:state.submission,contractView:state.contractView});
- formGetter=state.humanForm.get;$("fields").replaceChildren(...(state.selected?.title?[el("p",`${kindName(state.selected._kind||"outcome")}: ${state.selected.title}`,"field-context")]:[]),state.humanForm.node);$("command-error").textContent="";$("conflict-review").replaceChildren();$("retry-command").hidden=true;$("submit-command").disabled=false;$("detail-dialog").close();$("command-dialog").showModal();
+  if (state.submitting) {
+    notice(copy.text.waitForTheCurrentChangeToFinishBeforeStarting, true);
+    return;
+  }
+  if (!state.principal) {
+    notice(copy.text.waitForTheAuthenticatedWorkspaceIdentityToLoad, true);
+    return;
+  }
+  if (state.pending) {
+    notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
+    $("command-dialog").showModal();
+    return;
+  }
+  if (!name) {
+    const menu = $("action-options");
+    menu.replaceChildren();
+    const advanced = el("details");
+    advanced.append(el("summary", copy.text.advanced));
+    for (const action of effectiveActions())
+      (action.advanced ? advanced : menu).append(
+        actionButton(
+          action.label,
+          () => {
+            $("action-dialog").close();
+            openCommands(action.name);
+          },
+          "quiet",
+        ),
+      );
+    if (advanced.children.length > 1) menu.append(advanced);
+    if (!menu.children.length)
+      menu.append(
+        el("p", copy.text.noChangesAreAvailableForYourCurrentPermissionsAnd),
+      );
+    $("action-dialog").showModal();
+    return;
+  }
+  const context =
+    name === "create_outcome"
+      ? "workspace"
+      : state.criterion
+        ? "criterion"
+        : state.selected?._kind || "outcome";
+  if (!effectiveActions(context).some((a) => a.name === name)) {
+    notice(copy.text.thisActionIsUnavailableInTheCurrentStatePermission, true);
+    return;
+  }
+  if (!commandAvailableInUI(name)) return;
+  state.humanForm?.dispose();
+  state.technical = false;
+  state.formScope = currentScope();
+  state.formGeneration = state.generation;
+  $("command-select").replaceChildren(
+    Object.assign(el("option", humanActions[name].label), { value: name }),
+  );
+  $("command-select").closest("label").hidden = true;
+  $("command-title").textContent = humanActions[name].label;
+  $("command-help").textContent =
+    copy.text.reviewYourIntentBeforeSavingTheServerChecksPermissions;
+  $("submit-command").textContent =
+    name === "create_outcome"
+      ? copy.text.saveDraft
+      : name === "replace_roadmap_draft"
+        ? copy.text.saveDraft
+        : name === "publish_roadmap_draft"
+          ? copy.text.publishRevision
+          : copy.text.saveChanges;
+  state.humanForm = humanForm(name, {
+    scope: state.formScope,
+    entity: state.selected || {},
+    criterion: state.criterion,
+    request: (path, options) => request(`${api}${path}`, options),
+    permissions: state.permissions,
+    protocol: state.protocol,
+    submission: state.submission,
+    contractView: state.contractView,
+  });
+  formGetter = state.humanForm.get;
+  $("fields").replaceChildren(
+    ...(state.selected?.title
+      ? [
+          el(
+            "p",
+            `${kindName(state.selected._kind || "outcome")}: ${state.selected.title}`,
+            "field-context",
+          ),
+        ]
+      : []),
+    state.humanForm.node,
+  );
+  $("command-error").textContent = "";
+  $("conflict-review").replaceChildren();
+  $("retry-command").hidden = true;
+  $("submit-command").disabled = false;
+  $("detail-dialog").close();
+  $("command-dialog").showModal();
 }
-$("close-actions").onclick=()=>$("action-dialog").close();
-$("developer-tools").onclick=()=>{if(state.pending){openCommands();return;}openTechnicalCommands();};
+$("close-actions").onclick = () => $("action-dialog").close();
+$("developer-tools").onclick = () => {
+  if (state.pending) {
+    openCommands();
+    return;
+  }
+  openTechnicalCommands();
+};
 async function submit(retry = false, reconciled) {
- if(state.submitting)return;state.submitting=true;$("submit-command").disabled=true;$("retry-command").disabled=true;
- let committed=false,dispatched=false;const dispatchGeneration=state.generation;
- try {
-  if(!retry){const scope=state.formScope,generation=state.formGeneration;const command=reconciled||await formGetter();if(generation!==state.generation||!sameScope(scope,currentScope()))throw Error("Workspace context changed. Reopen the form in the intended Outcome.");state.pending=createIntent($("command-select").value,projectCommand($("command-select").value,command),scope,undefined,{principal_id:state.principal,actor_key:state.actorKey});}
-  const pending=state.pending;if(!pending)return;if(retry&&sameScope(pending.scope,currentScope()))state.formGeneration=state.generation;
-  if(!sameScope(pending.scope,currentScope()))throw Error("Return to the original workspace and Outcome before retrying this intent.");
-  if(pending.identity.principal_id!==state.principal||pending.identity.actor_key!==state.actorKey)throw Error("This intent belongs to the original authenticated identity. Reconnect with that identity to reconcile it.");
-  await refreshNamespaceProtocol();await refreshPermissions();
-  if(!sameScope(pending.scope,currentScope())||dispatchGeneration!==state.generation)throw Error("Workspace context changed before dispatch.");
-  if(!commandAvailableInUI(pending.name)||!state.permissions.includes(inventory[pending.name]?.permission))throw Error("The protocol or permission changed. This intent cannot be dispatched.");
-  dispatched=true;const result=await request(`${api}/commands/${pending.name}`,{method:"POST",headers:{"Idempotency-Key":pending.key},body:pending.body});
-  committed=true;state.pending=null;
-  if(!sameScope(pending.scope,currentScope())||state.formGeneration!==state.generation)return;
-  $("command-dialog").close();state.humanForm?.dispose();$("fields").inert=false;
-  if(result.value?.desired_state!==undefined){state.outcome=result.value;state.selected={...result.value,_kind:"outcome"};if(pending.name==='create_outcome'){state.generation++;state.view='summary';}}
-  const newSection=pending.name==="report_issue_with_blocker"?"issues":Object.entries(createForSection).find(([,command])=>command===pending.name)?.[0];if(newSection){state.section=newSection;state.area=areaFor(newSection);state.view='list';$("item-search").value='';$("item-priority").value='';}
-  await discover();if(state.outcome)await refresh();
-  notice(pending.name==='create_outcome'?"Draft saved. Continue setup with criteria, objectives and tasks. Activation remains a separate decision.":result.result_omitted?copy.text.changeRecordedCheckTheRefreshedState:copy.text.changeSaved);
- } catch(e){
-  $("command-error").className='danger';$("command-error").textContent=committed?"Saved, but the refreshed view could not be loaded. Refresh the workspace to see persisted state.":e.code==='version_conflict'?copy.text.aNewerVersionExistsReviewChangesBeforeSaving:e.message;
-  if(committed){report(e);return;}
-  if(state.pending&&(retry||dispatched&&(e.status===undefined||e.status>=500))){$("retry-command").hidden=false;$("fields").inert=true;$("command-error").textContent+=copy.text.theResponseMayHaveBeenLostAfterCommitRetryTheSameIntentToRecoverTheResult;}
-  else {const pending=state.pending;state.pending=null;$("fields").inert=false;if(pending&&(e.code==='version_conflict'||e.code==='precondition_failed'))offerConflict(pending);}
- } finally {state.submitting=false;$("submit-command").disabled=!$("retry-command").hidden;$("retry-command").disabled=false;}
+  if (state.submitting) return;
+  state.submitting = true;
+  $("submit-command").disabled = true;
+  $("retry-command").disabled = true;
+  let committed = false,
+    dispatched = false;
+  const dispatchGeneration = state.generation;
+  try {
+    if (!retry) {
+      const scope = state.formScope,
+        generation = state.formGeneration;
+      const command = reconciled || (await formGetter());
+      if (generation !== state.generation || !sameScope(scope, currentScope()))
+        throw Error(
+          copy.text.workspaceContextChangedReopenTheFormInTheIntended,
+        );
+      state.pending = createIntent(
+        $("command-select").value,
+        projectCommand($("command-select").value, command),
+        scope,
+        undefined,
+        { principal_id: state.principal, actor_key: state.actorKey },
+      );
+    }
+    const pending = state.pending;
+    if (!pending) return;
+    if (retry && sameScope(pending.scope, currentScope()))
+      state.formGeneration = state.generation;
+    if (!sameScope(pending.scope, currentScope()))
+      throw Error(
+        copy.text.returnToTheOriginalWorkspaceAndOutcomeBeforeRetrying,
+      );
+    if (
+      pending.identity.principal_id !== state.principal ||
+      pending.identity.actor_key !== state.actorKey
+    )
+      throw Error(
+        copy.text.thisIntentBelongsToTheOriginalAuthenticatedIdentityReconnect,
+      );
+    await refreshNamespaceProtocol();
+    await refreshPermissions();
+    if (
+      !sameScope(pending.scope, currentScope()) ||
+      dispatchGeneration !== state.generation
+    )
+      throw Error(copy.text.workspaceContextChangedBeforeDispatch);
+    if (
+      !commandAvailableInUI(pending.name) ||
+      !state.permissions.includes(inventory[pending.name]?.permission)
+    )
+      throw Error(copy.text.theProtocolOrPermissionChangedThisIntentCannotBe);
+    dispatched = true;
+    const result = await request(`${api}/commands/${pending.name}`, {
+      method: "POST",
+      headers: { "Idempotency-Key": pending.key },
+      body: pending.body,
+    });
+    committed = true;
+    state.pending = null;
+    if (
+      !sameScope(pending.scope, currentScope()) ||
+      state.formGeneration !== state.generation
+    )
+      return;
+    $("command-dialog").close();
+    state.humanForm?.dispose();
+    $("fields").inert = false;
+    if (result.value?.desired_state !== undefined) {
+      state.outcome = result.value;
+      state.selected = { ...result.value, _kind: "outcome" };
+      if (pending.name === "create_outcome") {
+        state.generation++;
+        state.view = "summary";
+        state.area = "overview";
+      }
+    }
+    const newSection =
+      pending.name === "report_issue_with_blocker"
+        ? "issues"
+        : Object.entries(createForSection).find(
+            ([, command]) => command === pending.name,
+          )?.[0];
+    if (newSection) {
+      state.section = newSection;
+      state.area = areaFor(newSection);
+      state.view = "list";
+      $("item-search").value = "";
+      $("item-priority").value = "";
+    }
+    await discover();
+    if (state.outcome) await refresh();
+    writeRoute();
+    if (!state.technical && pending.name === "create_work_item")
+      await showEntity({
+        ...pending.scope,
+        kind: "work_item",
+        id: result.value.id,
+      });
+    notice(
+      pending.name === "create_outcome"
+        ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks
+        : result.result_omitted
+          ? copy.text.changeRecordedCheckTheRefreshedState
+          : copy.text.changeSaved,
+    );
+  } catch (e) {
+    $("command-error").className = "danger";
+    $("command-error").textContent = committed
+      ? copy.text.savedButTheRefreshedViewCouldNotBeLoaded
+      : e.code === "version_conflict"
+        ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
+        : e.message;
+    if (committed) {
+      report(e);
+      return;
+    }
+    if (
+      state.pending &&
+      (retry || (dispatched && (e.status === undefined || e.status >= 500)))
+    ) {
+      $("retry-command").hidden = false;
+      $("fields").inert = true;
+      $("command-error").textContent +=
+        copy.text.theResponseMayHaveBeenLostAfterCommitRetryTheSameIntentToRecoverTheResult;
+    } else {
+      const pending = state.pending;
+      state.pending = null;
+      $("fields").inert = false;
+      if (
+        pending &&
+        (e.code === "version_conflict" || e.code === "precondition_failed")
+      )
+        offerConflict(pending);
+    }
+  } finally {
+    state.submitting = false;
+    $("submit-command").disabled = !$("retry-command").hidden;
+    $("retry-command").disabled = false;
+  }
 }
-const rebaseEdits=new Set(['update_outcome','update_objective','update_work_item','update_issue','update_blocker_description','replace_roadmap_draft']);
-function offerConflict(pending){
- const root=$("conflict-review");root.replaceChildren(el('h3','This item changed while you were editing'),el('p','Your local draft is retained. Loading the latest state does not save anything.'));
- if(!rebaseEdits.has(pending.name)){root.append(el('p','This transition or assessment needs a fresh state/definition review. Reopen the item to make a new decision; your entries remain visible here.'));return;}
- root.append(actionButton('Compare with latest state',async()=>{try{
-  const entity=state.selected,kind=entity?._kind||'outcome',path=kind==='outcome'?outcomeBase():`${outcomeBase()}/${plurals[kind]}/${entity.id}`;
-  const result=await request(path);if(!sameScope(pending.scope,currentScope()))return;const latest=result.value||result,local=JSON.parse(pending.body).command;
-  root.replaceChildren(el('h3','Review latest state and your local draft'));const columns=el('div',undefined,'conflict-columns');for(const [label,data]of [['Latest saved state',latest],['Your local changes',local]]){const box=el('section');box.append(el('h4',label),readable(data));columns.append(box);}root.append(columns,actionButton('Use latest version and save my edits',()=>{const next=reconcileDraft(local,latest);state.formScope=pending.scope;state.formGeneration=state.generation;submit(false,next).catch(report)},'quiet'));
- }catch(error){report(error);}},'quiet'));
+const rebaseEdits = new Set([
+  "update_outcome",
+  "update_objective",
+  "update_work_item",
+  "update_issue",
+  "update_blocker_description",
+  "replace_roadmap_draft",
+]);
+function offerConflict(pending) {
+  const root = $("conflict-review");
+  const discard = () => {
+    $("command-dialog").close();
+    refresh().catch(report);
+  };
+  root.replaceChildren(
+    el("h3", copy.text.thisItemChangedWhileYouWereEditing),
+    el("p", copy.text.yourLocalDraftIsRetainedLoadingTheLatestState),
+  );
+  root.append(actionButton(copy.text.discardLocalEdits, discard, "quiet"));
+  if (!rebaseEdits.has(pending.name)) {
+    root.append(
+      el("p", copy.text.thisTransitionOrAssessmentNeedsAFreshStateDefinition),
+    );
+    return;
+  }
+  root.append(
+    actionButton(
+      copy.text.compareWithLatestState,
+      async () => {
+        try {
+          const entity = state.selected,
+            kind = entity?._kind || "outcome",
+            path =
+              kind === "outcome"
+                ? outcomeBase()
+                : `${outcomeBase()}/${plurals[kind]}/${entity.id}`;
+          const result = await request(path);
+          if (!sameScope(pending.scope, currentScope())) return;
+          const latest = result.value || result,
+            local = JSON.parse(pending.body).command;
+          root.replaceChildren(
+            el("h3", copy.text.reviewLatestStateAndYourLocalDraft),
+          );
+          const columns = el("div", undefined, "conflict-columns");
+          for (const [label, data] of [
+            [copy.text.latestSavedState, latest],
+            [copy.text.yourLocalChanges, local],
+          ]) {
+            const box = el("section");
+            box.append(el("h4", label), readable(data));
+            columns.append(box);
+          }
+          root.append(
+            columns,
+            actionButton(
+              copy.text.useLatestVersionAndSaveMyEdits,
+              () => {
+                const next = reconcileDraft(local, latest);
+                state.formScope = pending.scope;
+                state.formGeneration = state.generation;
+                submit(false, next).catch(report);
+              },
+              "quiet",
+            ),
+          );
+        } catch (error) {
+          report(error);
+        }
+      },
+      "quiet",
+    ),
+  );
 }
 $("command-form").onsubmit = (event) => {
   event.preventDefault();
@@ -2089,12 +2974,19 @@ namespaces().catch(() => {});
 
 let administration, adminGetter, adminPending;
 $("administration").onclick = async () => {
+  const generation = state.generation,
+    namespace = state.namespace;
   try {
-    administration = await request(
+    const result = await request(
       `${api}/namespaces/${state.namespace}/administration`,
     );
-    $("admin-version").textContent =
-      `Administration version ${administration.namespace_version}`;
+    if (generation !== state.generation || namespace !== state.namespace)
+      return;
+    administration = result;
+    $("admin-version").textContent = message(
+      "administrationVersion",
+      administration.namespace_version,
+    );
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = "";
     $("admin-secret").hidden = true;
@@ -2166,11 +3058,14 @@ async function submitAdmin(retry = false) {
     administration = await request(
       `${api}/namespaces/${state.namespace}/administration`,
     );
-    $("admin-version").textContent =
-      `Administration version ${administration.namespace_version}`;
+    $("admin-version").textContent = message(
+      "administrationVersion",
+      administration.namespace_version,
+    );
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = response.result?.token_omitted
-      ? copy.text.thePreviousIssuanceWasConfirmedTheCredentialCannotBeRecovere660cace4
+      ? copy.text
+          .thePreviousIssuanceWasConfirmedTheCredentialCannotBeRecovere660cace4
       : copy.text.changeRecorded;
     if (response.token) {
       $("admin-token").value = response.token;
@@ -2197,196 +3092,3 @@ $("retry-admin").onclick = () => submitAdmin(true).catch(report);
 
 $("view-outcome").onclick = () =>
   showEntity(state.snapshot.outcome.ref).catch(report);
-
-
-async function contractSection(detail,entity,generation) {
- if (state.protocol?.phase === "signed_contracts_v2") {
-  return signedContractSection(detail, entity, generation);
- }
-
- const section=el("section",undefined,"detail-section contract-section");section.append(el("h3",copy.text.workContract));detail.append(section);
- let loadGeneration=0;
- const load=async(id,expand)=>{
-  const requested=++loadGeneration;
-  const response=await request(`${outcomeBase()}/work-contracts/${id}`);if(generation!==state.detailGeneration||requested!==loadGeneration)return;
-  const view=response.value||response,c=view.contract;
-  if(expand&&view.omitted?.[expand]){const expanded=await request(`${outcomeBase()}/${view.omitted[expand]}`);if(generation!==state.detailGeneration||requested!==loadGeneration)return;view[expand]=expanded.value||expanded;delete view.omitted[expand]}
-  state.contractView=view;state.submission=view.latest_submission||null;
-  const status={active:copy.text.activeReservation,expired:copy.text.expiredReservation,revoked:copy.text.revokedContract,completed:copy.text.deliveryCompleted};
-  section.replaceChildren(el("h3",copy.text.workContract),el("strong",status[view.effective_status]||view.effective_status));
-  const info=el("dl",undefined,"detail-properties");for(const [label,value] of [[copy.text.holder,c.holder_principal_id],[copy.text.reservationExpiry,date(c.expires_at)],[copy.text.checkpointVersion,String(c.version)],[copy.text.leaseVersion,String(c.lease_version)],[copy.text.executionPermitted,view.execution_allowed?copy.text.yes:copy.text.no]]) info.append(el("dt",label),el("dd",value));section.append(info);
-  if(view.reasons?.length) section.append(el("p",view.reasons.map(reason=>reason.message||display(reason.code)).join(" · "),"contract-notice"));
-  for(const [key,label] of [["latest_checkpoint",copy.text.loadLatestCheckpoint],["latest_submission",copy.text.loadLatestSubmission]])if(view.omitted?.[key]){const button=el("button",label,"quiet");button.onclick=()=>load(c.id,key).catch(error=>notice(error.message,true));section.append(button)}
-  if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4",copy.text.latestCheckpoint),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",`Next action: ${checkpoint.next_action}`));if(checkpoint.pending?.length)progress.append(el("p",`Pending: ${checkpoint.pending.join(" · ")}`));if(checkpoint.dirty)progress.append(el("small",copy.text.localChangesHaveNotYetBeenTransferredToWos));if(checkpoint.working_commit)progress.append(el("small",`Code reference: ${checkpoint.working_commit}`));section.append(progress);}
-  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4",copy.text.submissionForAssessment),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artifacts · ${submission.material.evidence_ids?.length||0} evidence · submitted ${date(submission.submitted_at)}`));const review=el("button",copy.text.reviewSubmission,"quiet");review.disabled=view.effective_status!=="active"||c.id!==entity.current_contract_id;review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice(copy.text.thisTaskRequiresNoCriterionAssessmentFinalizationRemainsExplicit);return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
-  if(view.effective_status==="active"&&c.id===entity.current_contract_id){const revoke=el("button",copy.text.revokeContract,"quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
-  const audit=el("details",undefined,"technical");audit.append(el("summary",copy.text.contractIdentityAndSpecification),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
- };
- try {
-  if(entity.current_contract_id)await load(entity.current_contract_id);else section.append(el("p",entity.lifecycle==="in_progress"?copy.text.recoverableWorkExplicitlyAcquireANewContractToExecute:copy.text.noActiveReservationAcquisitionIsExplicit));
-  const history=el("details");history.append(el("summary",copy.text.contractHistory));const body=el("div");history.append(body);let cursor="",loaded=false;
-  const more=el("button",copy.text.loadContracts,"quiet");const loadHistory=async()=>{const page=await request(`${outcomeBase()}/work-contracts?work_item_id=${encodeURIComponent(entity.id)}&limit=10&cursor=${encodeURIComponent(cursor)}`);if(generation!==state.detailGeneration)return;loaded=true;for(const contract of page.items||[]){const button=el("button",`${shortId(contract.id)} · ${contract.status} · ${date(contract.acquired_at)}`,"quiet");button.onclick=()=>load(contract.id).catch(error=>notice(error.message,true));body.append(button)}cursor=page.next_cursor||"";more.hidden=!cursor;if(!page.items?.length)body.append(el("p",copy.text.noContractsRecorded));};more.onclick=()=>loadHistory().catch(error=>notice(error.message,true));history.ontoggle=()=>{if(history.open&&!loaded)loadHistory().catch(error=>notice(error.message,true))};history.append(more);detail.append(history);
- } catch(error){section.append(el("p",`Could not load the contract: ${error.message}`,"contract-notice"));}
-}
-
-
-const unsignedExecutionActions = new Set([
-  "claim_work_item", "release_work_item", "renew_work_item_lease", "reclaim_work_item",
-  "complete_work_item", "administrative_complete_work_item", "acquire_work_contract",
-  "acquire_next_work_contract", "renew_work_contract", "resume_work_contract",
-  "sync_work_contract", "submit_work_result", "finalize_work_contract", "revoke_work_contract",
-]);
-function commandAvailableInUI(name) {
-  // Browser forms never hold an agent private key or manufacture a proof.
-  if (inventory[name]?.exposure === "S") return false;
-  if (state.protocol?.phase === "signed_contracts_v2" && state.selected?._kind === "work_item" && ["attest_criterion", "record_criterion_assessment", "waive_criterion"].includes(name)) return false;
-  return state.protocol?.phase !== "signed_contracts_v2" || !unsignedExecutionActions.has(name);
-}
-async function refreshNamespaceProtocol() {
-  const namespace = state.namespace, generation = state.generation;
-  const protocol = await request(`${api}/namespaces/${namespace}/work-protocol`);
-  if (generation !== state.generation || namespace !== state.namespace) return;
-  state.protocol = protocol;
-  renderProtocolBanner();
-}
-function renderProtocolBanner() {
-  const panel = $("signed-protocol-info");
-  const phase = state.protocol?.phase;
-  panel.hidden = !["signed_contracts_v2", "draining_to_signed_v2"].includes(phase);
-  $("signed-protocol-label").textContent = phase === "signed_contracts_v2"
-    ? copy.text.signedContractsIndependentExecutionAndReview
-    : copy.text.preparingSignedContractsNewLegacyReservationsSuspended;
-}
-$("signed-protocol-info").ontoggle = () => {
-  if ($("signed-protocol-info").open) loadSignedIdentity().catch(report);
-};
-async function loadSignedIdentity() {
-  const namespace = state.namespace, generation = state.generation;
-  const target = $("signed-protocol-content");
-  target.replaceChildren(el("p", copy.text.loadingIdentityAndPolicies));
-  const [trust, identity] = await Promise.all([
-    request(`${api}/namespaces/${namespace}/signed-trust`),
-    request(`${api}/security/signing-identity`),
-  ]);
-  if (generation !== state.generation || namespace !== state.namespace) return;
-  const identityCard = el("section", undefined, "signed-identity-card");
-  identityCard.append(el("h3", copy.text.workspaceIdentity));
-  const properties = el("dl", undefined, "detail-properties");
-  for (const [label, value] of [
-    [copy.text.account, identity.principal_id], [copy.text.credential, identity.credential_id],
-    [copy.text.persistentServer, trust.server?.server_id], [copy.text.currentIssuer, trust.server?.fingerprint],
-    [copy.text.credentialAcceptanceRequirement, display(identity.credential_policy?.acceptance_floor || copy.text.notConfigured)],
-  ]) properties.append(el("dt", label), el("dd", value || copy.text.notAvailable));
-  identityCard.append(properties);
-  const keys = el("section", undefined, "signed-identity-card");
-  keys.append(el("h3", copy.text.identityKeys));
-  for (const key of identity.keys || []) {
-    const row = el("p", undefined, "signed-key");
-    row.append(badge(key.status), el("code", shortId(key.id)), el("small", key.fingerprint));
-    keys.append(row);
-  }
-  if (!identity.keys?.length) keys.append(el("p", copy.text.noKeysReturnedByThisQuery));
-  if (identity.keys_truncated) keys.append(el("small", copy.text.partialListContinueThroughApiPagesForOtherKeys));
-  const onboarding = el("section", undefined, "signed-identity-card signed-onboarding");
-  onboarding.append(el("h3", copy.text.connectAProfile), el("p", copy.text.askAnAdministratorForACredentialAndEnrollmentForYourRoleVeri4e28b08c));
-  const example = `wosctl init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
-  onboarding.append(el("pre", example), el("p", copy.text.tokensAndPrivateKeysStayOnTheHostInProtectedReferencesInstal90b2e966));
-  const history = el("details", undefined, "technical");
-  history.append(el("summary", copy.text.retainedPublicIssuers));
-  for (const issuer of trust.issuer_history || []) history.append(el("p", `${shortId(issuer.issuer_key_id)} · ${issuer.fingerprint}`));
-  if (trust.search_complete === false) history.append(el("small", copy.text.partialHistoryContinueWithTheApiCursor));
-  target.replaceChildren(identityCard, keys, onboarding, history);
-}
-function decodeSignedProjection(encoded) {
-  const bytes = Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
-  return JSON.parse(new TextDecoder("utf-8", {fatal:true}).decode(bytes));
-}
-async function signedContractSection(detail, entity, generation) {
-  state.contractView = null;
-  state.submission = null;
-  const section = el("section", undefined, "detail-section contract-section signed-contract-section");
-  section.append(el("h3", copy.text.signedExecutionAndReview), el("p", copy.text.signaturesEstablishOriginAndIntegrityQualityRequiresExplicitd2f2854a, "contract-notice"));
-  detail.append(section);
-  const current = () => generation === state.detailGeneration;
-  try {
-    if (entity.current_contract_id) {
-      const result = await request(`${outcomeBase()}/signed-state/execution/${entity.current_contract_id}`);
-      if (!current()) return;
-      const contract = result.contract;
-      const names = {active:copy.text.executionReserved, delivered:copy.text.executorSubmissionAccepted, completed:copy.text.requirementCompleted, revoked:copy.text.revokedContract, expired:copy.text.expiredReservation};
-      section.append(el("strong", names[contract.effective_status] || display(contract.effective_status)));
-      const info = el("dl", undefined, "detail-properties");
-      for (const [label, value] of [[copy.text.holder,contract.holder_principal_id],[copy.text.expiry,date(contract.expires_at)],[copy.text.reservationCurrentlyValid,contract.lease_valid?copy.text.yes:copy.text.no],[copy.text.contractVersion,contract.contract_version],[copy.text.leaseVersion,contract.lease_version]]) info.append(el("dt",label),el("dd",String(value)));
-      section.append(info);
-    }
-    let pendingReviewVersion;
-    const caseIDs = [...new Set([entity.pending_review_case_id, entity.correction_review_case_id, entity.latest_review_case_id].filter(Boolean))];
-    for (const id of caseIDs) {
-      const result = await request(`${outcomeBase()}/signed-state/case/${id}`);
-      if (!current()) return;
-      const review = result.review_case;
-      if (review.id === entity.pending_review_case_id) pendingReviewVersion = review.version;
-      const card = el("section", undefined, "signed-review-card");
-      const names = {pending:copy.text.awaitingIndependentReview,in_review:copy.text.reviewInProgress,approved:copy.text.reviewApproved,changes_requested:copy.text.changesRequested,cancelled:copy.text.reviewCancelled,superseded:copy.text.reviewSuperseded};
-      card.append(el("h4", names[review.status] || display(review.status)), el("p", `Rodada ${review.round} · caso ${shortId(review.id)}`));
-      card.append(el("p", `Entrega ${shortId(review.submission_id)} · acceptance requirement ${display(review.acceptance_floor)}`));
-      const materialButton = el("button", copy.text.loadAcceptedMaterial, "quiet");
-      materialButton.onclick = async () => {
-        materialButton.disabled = true;
-        try {
-          const accepted = await request(`${outcomeBase()}/signed-state/submission/${review.submission_id}?digest=${encodeURIComponent(review.submission_digest)}`);
-          if (!current()) return;
-          const material = decodeSignedProjection(accepted.material_payload);
-          const delivery = el("section", undefined, "contract-delivery");
-          delivery.append(el("h4", copy.text.acceptedExecutorMaterial), el("p", material.summary), el("small", `${material.artifacts?.length || 0} artifacts · ${material.evidence_ids?.length || 0} evidence`));
-          const canonical = el("details", undefined, "technical");
-          canonical.append(el("summary", copy.text.materialReferences), el("pre", JSON.stringify(material, null, 2)));
-          delivery.append(canonical);
-          card.insertBefore(delivery, materialButton);
-          materialButton.remove();
-        } catch (error) {
-          if (current()) notice(error.message, true);
-          materialButton.disabled = false;
-        }
-      };
-      card.append(materialButton);
-      if (review.close_reason) card.append(el("p", review.close_reason));
-      if (review.status === "changes_requested" && review.latest_decision_id) {
-        const acceptedDecision = await request(`${outcomeBase()}/signed-state/correction/${review.id}`);
-        if (!current()) return;
-        const decision = decodeSignedProjection(acceptedDecision.envelope.payload);
-        card.append(el("h4", copy.text.requiredCorrections), el("p", decision.material.reason));
-        for (const finding of decision.material.findings || []) {
-          const item = el("div", undefined, "signed-finding");
-          item.append(el("p", finding.description), el("small", `Requirement: ${finding.requirement_ref || shortId(finding.criterion_id)}`));
-          card.append(item);
-        }
-        card.append(el("p", copy.text.theNextExecutionMustAddressEveryFindingOnExistingRequirement480c9676));
-      }
-      if (review.current_contract_id) {
-        const reserved = await request(`${outcomeBase()}/signed-state/review/${review.current_contract_id}`);
-        if (!current()) return;
-        card.append(el("small", `Reviewer: ${reserved.contract.holder_principal_id} · reserva ${reserved.contract.lease_valid?copy.text.valid:copy.text.noCurrentAuthority}`));
-      }
-      const audit = el("details", undefined, "technical");
-      audit.append(el("summary", copy.text.reviewedMaterialIdentity), el("pre", JSON.stringify({review_case_id:review.id,submission_id:review.submission_id,submission_digest:review.submission_digest,acceptance_policy_revision:review.policy_revision,latest_decision_id:review.latest_decision_id},null,2)));
-      card.append(audit);
-      section.append(card);
-    }
-    if (!entity.current_contract_id && !caseIDs.length) section.append(el("p", copy.text.noReservedExecutionOrReviewForThisTaskAcquisitionIsExplicit));
-    if (entity.pending_review_case_id) section.append(el("p", copy.text.theExecutorSubmissionWasAcceptedThisTaskAwaitsIndependentRev88610774));
-    const instructions = el("details", undefined, "signed-next-step");
-    instructions.append(el("summary", copy.text.executeOrReviewWithAProfile));
-    instructions.append(el("p", copy.text.useYourAuthorizedProfileOnTheHostTheBrowserNeverStoresAPriva48737f91));
-    instructions.append(el("pre", `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
-wosctl --profile executor work show CONTRACT_UUID --for-agent
-wosctl --profile executor work finish CONTRACT_UUID`));
-    if (entity.pending_review_case_id && pendingReviewVersion !== undefined) instructions.append(el("pre", `wosctl --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
-wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
-wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID`));
-    instructions.append(el("p", copy.text.afterAnUncertainResponseUseWorkRecoverOrReviewRecoverWithThefd343e16));
-    section.append(instructions);
-  } catch (error) {
-    if (current()) section.append(el("p", `Could not load signed state: ${error.message}`, "contract-notice"));
-  }
-}

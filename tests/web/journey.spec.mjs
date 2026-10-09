@@ -1,102 +1,772 @@
-import {test,expect,chromium} from 'playwright/test';
-import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
-import {mkdtemp,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {resolve,join} from 'node:path';
-import {createServer} from 'node:net';
-import {once} from 'node:events';
-import {randomUUID,randomBytes} from 'node:crypto';
+import { test, expect, chromium } from "playwright/test";
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import { createServer } from "node:net";
+import { once } from "node:events";
+import { randomUUID, randomBytes } from "node:crypto";
 
-test('human plans, agent executes by MCP, human certifies, new browser resumes after restart',async({browser})=>{
- test.setTimeout(120000);
- const directory=await mkdtemp(join(tmpdir(),'wos-browser-'));
- const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
- const url=`http://127.0.0.1:${port}`;const namespace='0199d090-0000-7000-8000-000000000001';const bootstrap=randomBytes(32).toString('base64url');
- let process,logs='';
- async function start(){process=spawn(resolve('../../bin/wos'),['server'],{env:{...globalThis.process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:bootstrap,WOS_BOOTSTRAP_NAMESPACE_ID:namespace,WOS_BOOTSTRAP_NAMESPACE_NAME:'Browser journey',WOS_LOCAL_PRINCIPAL_ID:'human',WOS_MCP_ENABLED:'true'},stdio:['ignore','ignore','pipe']});process.stderr.on('data',b=>logs=(logs+b.toString()).slice(-16000));for(let i=0;i<100;i++){try{if((await fetch(url+'/readyz')).ok)return}catch{};await new Promise(done=>setTimeout(done,50))}throw Error('server did not become ready: '+logs)}
- async function stop(){if(!process||process.exitCode!==null)return;const finished=once(process,'exit');process.kill('SIGTERM');await finished}
- async function api(path,token=bootstrap,body){const response=await fetch(url+'/api/v1'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,...(body?{'Idempotency-Key':randomUUID()}: {})},body:body?JSON.stringify(body):undefined});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result}
- let sequence=0;
- async function mcp(token,method,params,id=++sequence){const response=await fetch(url+'/mcp',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json, text/event-stream','Authorization':`Bearer ${token}`,'MCP-Protocol-Version':'2025-06-18'},body:JSON.stringify({jsonrpc:'2.0',...(id!==null?{id}:{}),method,params})});assert.ok(response.ok,`MCP ${method} ${response.status}`);const raw=await response.text();if(!raw)return null;const message=JSON.parse(raw);assert.equal(message.error,undefined);return message.result}
- async function command(token,name,cmd){const result=await mcp(token,'tools/call',{name:'wos_'+name,arguments:{idempotency_key:randomUUID(),command:cmd}});assert.ok(!result.isError,JSON.stringify(result));return result.structuredContent}
- let context,resumeBrowser;
- try{
-  await start();
-  const grant=await api('/security/commands',bootstrap,{namespace_id:namespace,expected_namespace_version:1,operation:'set_grant',principal_id:'agent',permissions:['state:read','work:write']});
-  const issued=await api('/security/commands',bootstrap,{namespace_id:namespace,expected_namespace_version:grant.result.namespace_version,operation:'issue_credential',principal_id:'agent',actor_ref:{kind:'agent',provider:'browser-contract',id:'agent-one'},expires_at:new Date(Date.now()+3600000).toISOString()});const agentToken=issued.token;
-  context=await browser.newContext();const page=await context.newPage();
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(url+'/app/');await page.getByLabel('Access credential',{exact:true}).fill(bootstrap);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByText('Choose an outcome',{exact:true})).toBeVisible();
-  async function open(name,from='root'){if(from!=='create'){await page.locator(from==='entity'?'#entity-actions':'#actions').click();await page.keyboard.press('Escape');await page.keyboard.press('Escape')}await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption(name)}
-  async function submit(){await page.locator('#submit-command').click();try{await expect(page.locator('#command-dialog')).not.toBeVisible()}catch(error){throw new Error((await page.locator('#command-error').textContent())||await page.locator('#fields').innerText(),{cause:error})}}
-  await open('create_outcome','create');await page.getByLabel('Title',{exact:true}).fill('Verifiable mixed journey');await page.getByLabel('Desired outcome',{exact:true}).fill('Human reviews agent delivery without conversation history');await submit();
-  await open('add_criterion');await page.getByLabel('Title',{exact:true}).fill('Entrega revisada');await page.getByLabel('Required',{exact:true}).check();await submit();
-  await open('activate_outcome');await submit();
-  await open('create_work_item');await page.getByLabel('Title',{exact:true}).fill('Executar entrega');await submit();
-  const discovery=await api(`/namespaces/${namespace}/outcomes?text=Verifiable`,agentToken);const outcome=discovery.items[0];const scope={namespace_id:namespace,outcome_id:outcome.id};const snapshot=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,agentToken);const work=snapshot.sections.work_items[0];
-  // Human publishes a plan by selecting an existing entity, without copying its ID.
-  await open('create_roadmap');await page.getByLabel('Title',{exact:true}).fill('Plano humano');await submit();await page.getByRole('button',{name:'All roadmaps',exact:true}).click();await page.locator('#content').getByRole('button').filter({hasText:'Plano humano'}).click();
-  await open('open_roadmap_draft','entity');await submit();await page.getByRole('button',{name:'All roadmaps',exact:true}).click();await page.locator('#content').getByRole('button').filter({hasText:'Plano humano'}).click();await open('replace_roadmap_draft','entity');
-  const nodes=page.locator('fieldset').filter({has:page.locator('legend').getByText('Roadmap items',{exact:true})}).last();await nodes.getByRole('button',{name:'Add item',exact:true}).first().click();await nodes.getByLabel('Node key',{exact:true}).fill('delivery');await nodes.getByRole('textbox',{name:'Title',exact:true}).fill('Entrega planejada');await nodes.getByRole('combobox',{name:'Related item',exact:true}).selectOption(`work_item/${work.ref.id}`);await submit();
-  await page.getByRole('button',{name:'All roadmaps',exact:true}).click();await page.locator('#content').getByRole('button').filter({hasText:'Plano humano'}).click();await open('publish_roadmap_draft','entity');await submit();await page.getByRole('button',{name:'All roadmaps',exact:true}).click();await page.locator('#content').getByRole('button').filter({hasText:'Plano humano'}).click();await open('activate_roadmap_revision','entity');await page.getByLabel('Published revision',{exact:true}).fill('1');await submit();
-  // Replanning starts from revision 1 and preserves its immutable content.
-  const plans=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps`,agentToken);const roadmap=plans.items[0];const planPath=`/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps/${roadmap.id}`;const originalPlan=await api(planPath,agentToken);const revisionOne=JSON.stringify(originalPlan.value.revisions[0]);
-  async function planAction(name){await page.getByRole('button',{name:'All roadmaps',exact:true}).click();await page.locator('#content').getByRole('button').filter({hasText:'Plano humano'}).click();await open(name,'entity')}
-  await planAction('open_roadmap_draft');await page.getByLabel('Base revision',{exact:true}).fill('1');await submit();await planAction('replace_roadmap_draft');const replanned=page.locator('fieldset').filter({has:page.locator('legend').getByText('Roadmap items',{exact:true})}).last();await replanned.getByRole('textbox',{name:'Title',exact:true}).fill('Entrega replanejada');await submit();await planAction('publish_roadmap_draft');await submit();await planAction('activate_roadmap_revision');await page.getByLabel('Published revision',{exact:true}).fill('2');await submit();const updatedPlan=await api(planPath,agentToken);assert.equal(JSON.stringify(updatedPlan.value.revisions[0]),revisionOne);assert.equal(updatedPlan.value.revisions.length,2);
-  await mcp(agentToken,'initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'independent-agent',version:'1'}});await mcp(agentToken,'notifications/initialized',{},null);const tools=await mcp(agentToken,'tools/list',{});assert.ok(tools.tools.some(t=>t.name==='wos_get_work_context'));
-  const claimed=await command(agentToken,'claim_work_item',{scope,work_item_id:work.ref.id,expected_version:work.version,ttl_seconds:900});const lease=claimed.value.current_lease;
-  await command(agentToken,'complete_work_item',{scope,work_item_id:work.ref.id,expected_version:claimed.value.version,claim_id:lease.claim_id,fencing_token:lease.fencing_token,result_summary:'Entrega produzida pelo agente',reason:'Entrega concluída com execução rastreável'});
-  const continued=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,agentToken);const planReference=continued.sections.active_plan_references[0];assert.equal(planReference.current.lifecycle,'done');assert.equal(planReference.published_reference_title,'Executar entrega');assert.equal(planReference.plan_label,'Entrega replanejada');
-  const live=await api(`/namespaces/${namespace}/outcomes/${outcome.id}`,agentToken);assert.equal(live.value.lifecycle,'active','work must not certify the Outcome');
-  await page.locator('#refresh').click();await page.locator('#view-outcome').click();await page.getByRole('button').filter({hasText:'Entrega revisada'}).click();await page.keyboard.press('Escape');await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption('record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('Verificação humana da entrega persistida');await submit();await open('achieve_outcome');await page.getByLabel('Reason',{exact:true}).fill('Critério avaliado e trabalho revisado');await submit();await expect(page.locator('#state')).toHaveText('Achieved');await page.setViewportSize({width:390,height:844});await expect(page.locator('#view-outcome')).toBeVisible();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),'mobile horizontal overflow');await page.setViewportSize({width:1280,height:900});if(globalThis.process.env.WOS_BROWSER_SCREENSHOT)await page.screenshot({path:globalThis.process.env.WOS_BROWSER_SCREENSHOT,fullPage:true});
-  await stop();await start();await context.close();resumeBrowser=await chromium.launch({headless:true,...(globalThis.process.env.WOS_TEST_CHROMIUM_PATH?{executablePath:globalThis.process.env.WOS_TEST_CHROMIUM_PATH,args:['--no-sandbox','--no-zygote','--disable-dev-shm-usage']}: {})});context=await resumeBrowser.newContext();const resumed=await context.newPage();await resumed.goto(url+'/app/');await resumed.getByLabel('Access credential',{exact:true}).fill(bootstrap);await resumed.getByRole('button',{name:'Sign in',exact:true}).click();await resumed.locator('#outcomes').getByRole('button').filter({hasText:'Verifiable mixed journey'}).click();await expect(resumed.locator('#state')).toHaveText('Achieved');await resumed.locator('#view-outcome').click();await expect(resumed.getByText('Current conclusion',{exact:true})).toBeVisible();assert.deepEqual(errors,[]);
- }finally{if(context)await context.close();if(resumeBrowser)await resumeBrowser.close();await stop();await rm(directory,{recursive:true,force:true})}
+test("human plans, agent executes by MCP, human certifies, new browser resumes after restart", async ({
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const directory = await mkdtemp(join(tmpdir(), "wos-browser-"));
+  const socket = createServer();
+  socket.listen(0, "127.0.0.1");
+  await once(socket, "listening");
+  const port = socket.address().port;
+  await new Promise((done) => socket.close(done));
+  const url = `http://127.0.0.1:${port}`;
+  const namespace = "0199d090-0000-7000-8000-000000000001";
+  const bootstrap = randomBytes(32).toString("base64url");
+  let process,
+    logs = "";
+  async function start() {
+    process = spawn(resolve("../../bin/wos"), ["server"], {
+      env: {
+        ...globalThis.process.env,
+        WOS_LISTEN: `127.0.0.1:${port}`,
+        WOS_SQLITE_PATH: join(directory, "wos.db"),
+        WOS_AUTH_MODE: "api_token",
+        WOS_BOOTSTRAP_TOKEN: bootstrap,
+        WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
+        WOS_BOOTSTRAP_NAMESPACE_NAME: "Browser journey",
+        WOS_LOCAL_PRINCIPAL_ID: "human",
+        WOS_MCP_ENABLED: "true",
+      },
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    process.stderr.on(
+      "data",
+      (b) => (logs = (logs + b.toString()).slice(-16000)),
+    );
+    for (let i = 0; i < 100; i++) {
+      try {
+        if ((await fetch(url + "/readyz")).ok) return;
+      } catch {}
+      await new Promise((done) => setTimeout(done, 50));
+    }
+    throw Error("server did not become ready: " + logs);
+  }
+  async function stop() {
+    if (!process || process.exitCode !== null) return;
+    const finished = once(process, "exit");
+    process.kill("SIGTERM");
+    await finished;
+  }
+  async function api(path, token = bootstrap, body) {
+    const response = await fetch(url + "/api/v1" + path, {
+      method: body ? "POST" : "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Idempotency-Key": randomUUID() } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const result = await response.json();
+    assert.ok(response.ok, JSON.stringify(result));
+    return result;
+  }
+  let sequence = 0;
+  async function mcp(token, method, params, id = ++sequence) {
+    const response = await fetch(url + "/mcp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        Authorization: `Bearer ${token}`,
+        "MCP-Protocol-Version": "2025-06-18",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        ...(id !== null ? { id } : {}),
+        method,
+        params,
+      }),
+    });
+    assert.ok(response.ok, `MCP ${method} ${response.status}`);
+    const raw = await response.text();
+    if (!raw) return null;
+    const message = JSON.parse(raw);
+    assert.equal(message.error, undefined);
+    return message.result;
+  }
+  async function command(token, name, cmd) {
+    const result = await mcp(token, "tools/call", {
+      name: "wos_" + name,
+      arguments: { idempotency_key: randomUUID(), command: cmd },
+    });
+    assert.ok(!result.isError, JSON.stringify(result));
+    return result.structuredContent;
+  }
+  let context, resumeBrowser;
+  try {
+    await start();
+    const grant = await api("/security/commands", bootstrap, {
+      namespace_id: namespace,
+      expected_namespace_version: 1,
+      operation: "set_grant",
+      principal_id: "agent",
+      permissions: ["state:read", "work:write"],
+    });
+    const issued = await api("/security/commands", bootstrap, {
+      namespace_id: namespace,
+      expected_namespace_version: grant.result.namespace_version,
+      operation: "issue_credential",
+      principal_id: "agent",
+      actor_ref: {
+        kind: "agent",
+        provider: "browser-contract",
+        id: "agent-one",
+      },
+      expires_at: new Date(Date.now() + 3600000).toISOString(),
+    });
+    const agentToken = issued.token;
+    context = await browser.newContext();
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(url + "/app/");
+    await page.getByLabel("Access credential", { exact: true }).fill(bootstrap);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(
+      page.getByText("Choose an outcome", { exact: true }),
+    ).toBeVisible();
+    async function open(name, from = "root") {
+      if (from !== "create") {
+        await page
+          .locator(from === "entity" ? "#entity-actions" : "#actions")
+          .click();
+        await page.keyboard.press("Escape");
+        await page.keyboard.press("Escape");
+      }
+      await page.locator("#developer-tools").click();
+      await page.locator("#command-select").selectOption(name);
+    }
+    async function submit() {
+      await page.locator("#submit-command").click();
+      try {
+        await expect(page.locator("#command-dialog")).not.toBeVisible();
+      } catch (error) {
+        throw new Error(
+          (await page.locator("#command-error").textContent()) ||
+            (await page.locator("#fields").innerText()),
+          { cause: error },
+        );
+      }
+    }
+    await open("create_outcome", "create");
+    await page
+      .getByLabel("Title", { exact: true })
+      .fill("Verifiable mixed journey");
+    await page
+      .getByLabel("Desired outcome", { exact: true })
+      .fill("Human reviews agent delivery without conversation history");
+    await submit();
+    await open("add_criterion");
+    await page.getByLabel("Title", { exact: true }).fill("Entrega revisada");
+    await page.getByLabel("Required", { exact: true }).check();
+    await submit();
+    await open("activate_outcome");
+    await submit();
+    await open("create_work_item");
+    await page.getByLabel("Title", { exact: true }).fill("Executar entrega");
+    await submit();
+    const discovery = await api(
+      `/namespaces/${namespace}/outcomes?text=Verifiable`,
+      agentToken,
+    );
+    const outcome = discovery.items[0];
+    const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    const snapshot = await api(
+      `/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,
+      agentToken,
+    );
+    const work = snapshot.sections.work_items[0];
+    // Human publishes a plan by selecting an existing entity, without copying its ID.
+    await open("create_roadmap");
+    await page.getByLabel("Title", { exact: true }).fill("Plano humano");
+    await submit();
+    await page
+      .getByRole("button", { name: "All roadmaps", exact: true })
+      .click();
+    await page
+      .locator("#content")
+      .getByRole("button")
+      .filter({ hasText: "Plano humano" })
+      .click();
+    await open("open_roadmap_draft", "entity");
+    await submit();
+    await page
+      .getByRole("button", { name: "All roadmaps", exact: true })
+      .click();
+    await page
+      .locator("#content")
+      .getByRole("button")
+      .filter({ hasText: "Plano humano" })
+      .click();
+    await open("replace_roadmap_draft", "entity");
+    const nodes = page
+      .locator("fieldset")
+      .filter({
+        has: page.locator("legend").getByText("Roadmap items", { exact: true }),
+      })
+      .last();
+    await nodes
+      .getByRole("button", { name: "Add item", exact: true })
+      .first()
+      .click();
+    await nodes.getByLabel("Node key", { exact: true }).fill("delivery");
+    await nodes
+      .getByRole("textbox", { name: "Title", exact: true })
+      .fill("Entrega planejada");
+    await nodes
+      .getByRole("combobox", { name: "Related item", exact: true })
+      .selectOption(`work_item/${work.ref.id}`);
+    await submit();
+    await page
+      .getByRole("button", { name: "All roadmaps", exact: true })
+      .click();
+    await page
+      .locator("#content")
+      .getByRole("button")
+      .filter({ hasText: "Plano humano" })
+      .click();
+    await open("publish_roadmap_draft", "entity");
+    await submit();
+    await page
+      .getByRole("button", { name: "All roadmaps", exact: true })
+      .click();
+    await page
+      .locator("#content")
+      .getByRole("button")
+      .filter({ hasText: "Plano humano" })
+      .click();
+    await open("activate_roadmap_revision", "entity");
+    await page.getByLabel("Published revision", { exact: true }).fill("1");
+    await submit();
+    // Replanning starts from revision 1 and preserves its immutable content.
+    const plans = await api(
+      `/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps`,
+      agentToken,
+    );
+    const roadmap = plans.items[0];
+    const planPath = `/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps/${roadmap.id}`;
+    const originalPlan = await api(planPath, agentToken);
+    const revisionOne = JSON.stringify(originalPlan.value.revisions[0]);
+    async function planAction(name) {
+      await page
+        .getByRole("button", { name: "All roadmaps", exact: true })
+        .click();
+      await page
+        .locator("#content")
+        .getByRole("button")
+        .filter({ hasText: "Plano humano" })
+        .click();
+      await open(name, "entity");
+    }
+    await planAction("open_roadmap_draft");
+    await page.getByLabel("Base revision", { exact: true }).fill("1");
+    await submit();
+    await planAction("replace_roadmap_draft");
+    const replanned = page
+      .locator("fieldset")
+      .filter({
+        has: page.locator("legend").getByText("Roadmap items", { exact: true }),
+      })
+      .last();
+    await replanned
+      .getByRole("textbox", { name: "Title", exact: true })
+      .fill("Entrega replanejada");
+    await submit();
+    await planAction("publish_roadmap_draft");
+    await submit();
+    await planAction("activate_roadmap_revision");
+    await page.getByLabel("Published revision", { exact: true }).fill("2");
+    await submit();
+    const updatedPlan = await api(planPath, agentToken);
+    assert.equal(JSON.stringify(updatedPlan.value.revisions[0]), revisionOne);
+    assert.equal(updatedPlan.value.revisions.length, 2);
+    await mcp(agentToken, "initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "independent-agent", version: "1" },
+    });
+    await mcp(agentToken, "notifications/initialized", {}, null);
+    const tools = await mcp(agentToken, "tools/list", {});
+    assert.ok(tools.tools.some((t) => t.name === "wos_get_work_context"));
+    const claimed = await command(agentToken, "claim_work_item", {
+      scope,
+      work_item_id: work.ref.id,
+      expected_version: work.version,
+      ttl_seconds: 900,
+    });
+    const lease = claimed.value.current_lease;
+    await command(agentToken, "complete_work_item", {
+      scope,
+      work_item_id: work.ref.id,
+      expected_version: claimed.value.version,
+      claim_id: lease.claim_id,
+      fencing_token: lease.fencing_token,
+      result_summary: "Entrega produzida pelo agente",
+      reason: "Entrega concluída com execução rastreável",
+    });
+    const continued = await api(
+      `/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,
+      agentToken,
+    );
+    const planReference = continued.sections.active_plan_references[0];
+    assert.equal(planReference.current.lifecycle, "done");
+    assert.equal(planReference.published_reference_title, "Executar entrega");
+    assert.equal(planReference.plan_label, "Entrega replanejada");
+    const live = await api(
+      `/namespaces/${namespace}/outcomes/${outcome.id}`,
+      agentToken,
+    );
+    assert.equal(
+      live.value.lifecycle,
+      "active",
+      "work must not certify the Outcome",
+    );
+    await page.locator("#refresh").click();
+    await page.locator("#view-outcome").click();
+    await page
+      .getByRole("button")
+      .filter({ hasText: "Entrega revisada" })
+      .click();
+    await page.keyboard.press("Escape");
+    await page.locator("#developer-tools").click();
+    await page
+      .locator("#command-select")
+      .selectOption("record_criterion_assessment");
+    await page
+      .getByLabel("Rationale", { exact: true })
+      .fill("Verificação humana da entrega persistida");
+    await submit();
+    await open("achieve_outcome");
+    await page
+      .getByLabel("Reason", { exact: true })
+      .fill("Critério avaliado e trabalho revisado");
+    await submit();
+    await expect(page.locator("#state")).toHaveText("Achieved");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator("#view-outcome")).toBeVisible();
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+      "mobile horizontal overflow",
+    );
+    await page.setViewportSize({ width: 1280, height: 900 });
+    if (globalThis.process.env.WOS_BROWSER_SCREENSHOT)
+      await page.screenshot({
+        path: globalThis.process.env.WOS_BROWSER_SCREENSHOT,
+        fullPage: true,
+      });
+    await stop();
+    await start();
+    await context.close();
+    resumeBrowser = await chromium.launch({
+      headless: true,
+      ...(globalThis.process.env.WOS_TEST_CHROMIUM_PATH
+        ? {
+            executablePath: globalThis.process.env.WOS_TEST_CHROMIUM_PATH,
+            args: ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"],
+          }
+        : {}),
+    });
+    context = await resumeBrowser.newContext();
+    const resumed = await context.newPage();
+    await resumed.goto(url + "/app/");
+    await resumed
+      .getByLabel("Access credential", { exact: true })
+      .fill(bootstrap);
+    await resumed.getByRole("button", { name: "Sign in", exact: true }).click();
+    await resumed
+      .locator("#outcomes")
+      .getByRole("button")
+      .filter({ hasText: "Verifiable mixed journey" })
+      .click();
+    await expect(resumed.locator("#state")).toHaveText("Achieved");
+    await resumed.locator("#view-outcome").click();
+    await expect(
+      resumed.getByText("Current conclusion", { exact: true }),
+    ).toBeVisible();
+    assert.deepEqual(errors, []);
+  } finally {
+    if (context) await context.close();
+    if (resumeBrowser) await resumeBrowser.close();
+    await stop();
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
-test('human reviews evidence, resolves blockers, reconciles conflict and preserves contested history',async({browser})=>{
- test.setTimeout(120000);
- const directory=await mkdtemp(join(tmpdir(),'wos-review-'));
- const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
- const url=`http://127.0.0.1:${port}`,namespace='01a11780-0000-7000-8000-000000000001',bootstrap=randomBytes(32).toString('base64url');
- const child=spawn(resolve('../../bin/wos'),['server'],{env:{...globalThis.process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:bootstrap,WOS_BOOTSTRAP_NAMESPACE_ID:namespace,WOS_BOOTSTRAP_NAMESPACE_NAME:'Human review',WOS_LOCAL_PRINCIPAL_ID:'reviewer'},stdio:'ignore'});
- const context=await browser.newContext();const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- async function api(path,command){const response=await fetch(url+'/api/v1'+path,{method:command?'POST':'GET',headers:{'Authorization':`Bearer ${bootstrap}`,'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:command?JSON.stringify({command}):undefined});const data=await response.json();assert.ok(response.ok,JSON.stringify(data));return data}
- async function open(name,entity=false){await page.locator(entity?'#entity-actions':'#actions').click();await page.keyboard.press('Escape');await page.keyboard.press('Escape');await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption(name)}
- async function submit(){await page.locator('#submit-command').click();try{await expect(page.locator('#command-dialog')).not.toBeVisible()}catch(error){throw new Error((await page.locator('#command-error').textContent())||await page.locator('#fields').innerText(),{cause:error})}}
- async function entity(tab,title){const area={Objectives:'Plan',Issues:'Issues',Blockers:'Issues',Evidence:'Evidence',Blocked:'Work',Ready:'Work',Tasks:'Work'}[tab];if(area)await page.locator('#area-tabs').getByRole('button',{name:area,exact:true}).click();if(['Blocked','Ready','Tasks'].includes(tab))await page.getByLabel('Work status',{exact:true}).selectOption({Blocked:'blocked_work',Ready:'ready_work',Tasks:'work_items'}[tab]);else if(!['Issues','Evidence'].includes(tab))await page.locator('#tabs').getByRole('button',{name:tab,exact:true}).click();await page.locator('#content').getByRole('button',{name:new RegExp(title)}).click()}
- try{
-  for(let i=0;i<100;i++){try{if((await fetch(url+'/readyz')).ok)break}catch{};await new Promise(done=>setTimeout(done,50))}
-  await page.goto(url+'/app/');await page.getByLabel('Access credential',{exact:true}).fill(bootstrap);await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByText('Choose an outcome',{exact:true})).toBeVisible();
-  await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption('create_outcome');await page.getByLabel('Title',{exact:true}).fill('Proof and collaboration');await page.getByLabel('Desired outcome',{exact:true}).fill('Human evidence review remains auditable');await submit();
-  await open('add_criterion');await page.getByLabel('Title',{exact:true}).fill('Prova observada');await page.getByLabel('Required',{exact:true}).check();await page.getByRole('combobox',{name:'Verification method',exact:true}).selectOption('evidence_review');await submit();
-  await open('activate_outcome');await submit();
-  await open('create_objective');await page.getByLabel('Title',{exact:true}).fill('Revisão obrigatória');await page.getByLabel('Required for outcome',{exact:true}).check();await submit();
-  await entity('Objectives','Revisão obrigatória');await open('add_criterion',true);await page.getByLabel('Title',{exact:true}).fill('Revisão humana');await page.getByLabel('Required',{exact:true}).check();await submit();
-  await entity('Objectives','Revisão obrigatória');await open('start_objective',true);await submit();
-  await open('create_work_item');await page.getByLabel('Title',{exact:true}).fill('Trabalho para revisar');await page.getByRole('combobox',{name:'Objective',exact:true}).selectOption({label:'Revisão obrigatória'});await submit();
-  await open('create_issue');await page.getByLabel('Title',{exact:true}).fill('Problema identificado');await page.getByRole('combobox',{name:'Severity',exact:true}).selectOption('major');await submit();
-  await open('create_blocker');await page.getByRole('textbox',{name:'Description',exact:true}).fill('Aguardar correção');await page.getByRole('combobox',{name:'Blocked item',exact:true}).selectOption({label:'Trabalho para revisar · Task'});await page.getByRole('combobox',{name:'Propagation',exact:true}).selectOption('direct');await page.getByRole('combobox',{name:'Blocking cause',exact:true}).selectOption({label:'Problema identificado · Issue'});await submit();
-  await page.locator('#area-tabs').getByRole('button',{name:'Work',exact:true}).click();await page.getByLabel('Work status',{exact:true}).selectOption('blocked_work');await expect(page.locator('#content')).toContainText('Trabalho para revisar');
-  await entity('Issues','Problema identificado');await open('resolve_issue',true);await page.getByLabel('Resolution summary',{exact:true}).fill('Correção verificada');await submit();
-  await page.locator('#area-tabs').getByRole('button',{name:'Work',exact:true}).click();await page.getByLabel('Work status',{exact:true}).selectOption('blocked_work');await expect(page.locator('#content')).toContainText('Trabalho para revisar');
-  await entity('Blockers','Aguardar correção');await open('resolve_blocker',true);await page.getByLabel('Resolution summary',{exact:true}).fill('Liberação explícita');await submit();
-  await entity('Tasks','Trabalho para revisar');await open('claim_work_item',true);await submit();await entity('Tasks','Trabalho para revisar');await open('complete_work_item',true);await page.getByLabel('Task result',{exact:true}).fill('Entrega disponível');await page.getByLabel('Reason',{exact:true}).fill('Trabalho concluído');await submit();
-  await open('register_evidence');await page.getByRole('combobox',{name:'Evidence type',exact:true}).selectOption('test_result');await page.getByRole('textbox',{name:'Description',exact:true}).fill('Teste executado com sucesso');await page.getByRole('textbox',{name:'Provider',exact:true}).fill('human-review');await page.getByRole('textbox',{name:'URL',exact:true}).fill('https://example.test/test-run');await page.getByLabel('Observation date',{exact:true}).fill('2026-10-07T12:00');await submit();
-  // A second writer changes the version while the first user's form is open.
-  const discovery=await api(`/namespaces/${namespace}/outcomes`);const outcome=discovery.items[0];const scope={namespace_id:namespace,outcome_id:outcome.id};
-  await open('update_outcome');await page.getByLabel('Title',{exact:true}).fill('My stale title');
-  await api('/commands/update_outcome',{scope,expected_version:outcome.version,title:'Changed by another participant'});
-  await page.locator('#submit-command').click();await expect(page.locator('#command-error')).toContainText('A newer version exists');await page.keyboard.press('Escape');await page.locator('#refresh').click();await expect(page.locator('#title')).toHaveText('Changed by another participant');
-  await page.locator('#view-outcome').click();await page.getByRole('button',{name:/Prova observada/}).click();await page.keyboard.press('Escape');await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption('record_criterion_assessment');
-  const evidenceGroup=page.locator('fieldset').filter({has:page.locator('legend').getByText('Evidence used',{exact:true})}).last();await evidenceGroup.getByRole('button',{name:'Add item',exact:true}).click();await evidenceGroup.getByRole('combobox',{name:'Evidence',exact:true}).selectOption({label:'Teste executado com sucesso'});await page.getByLabel('Rationale',{exact:true}).fill('Observação revisada');await submit();
-  await open('achieve_outcome');await page.getByLabel('Reason',{exact:true}).fill('Tentativa antes de concluir Objective');await page.locator('#submit-command').click();await expect(page.locator('#command-error')).not.toBeEmpty();await page.keyboard.press('Escape');
-  await entity('Objectives','Revisão obrigatória');await page.getByRole('button',{name:/Attestation/}).click();await page.keyboard.press('Escape');await page.locator('#developer-tools').click();await page.locator('#command-select').selectOption('record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('Revisão humana concluída');await submit();await entity('Objectives','Revisão obrigatória');await open('achieve_objective',true);await page.getByLabel('Reason',{exact:true}).fill('Objetivo explicitamente alcançado');await submit();
-  await open('achieve_outcome');await page.getByLabel('Reason',{exact:true}).fill('Prova e obrigações satisfeitas');await submit();await expect(page.locator('#state')).toHaveText('Achieved');
-  await entity('Evidence','Teste executado com sucesso');await open('retract_evidence',true);await page.getByLabel('Reason',{exact:true}).fill('Nova observação contradiz o teste');await submit();await page.locator('#area-tabs').getByRole('button',{name:'Activity',exact:true}).click();await page.locator('#tabs').getByRole('button',{name:'Contested conclusions',exact:true}).click();await expect(page.locator('#content')).toContainText('Evidence retracted');await expect(page.locator('#state')).toHaveText('Achieved');
-  await open('archive_outcome');await submit();await open('unarchive_outcome');await page.getByLabel('Reason',{exact:true}).fill('Retomar consulta');await submit();await expect(page.locator('#state')).toHaveText('Achieved');
-  await page.setViewportSize({width:390,height:844});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),JSON.stringify(await page.evaluate(()=>Array.from(document.querySelectorAll('body *')).filter(e=>e.getBoundingClientRect().right>innerWidth).map(e=>({tag:e.tagName,id:e.id,cls:e.className})))));
-  await page.locator('#actions').focus();await page.keyboard.press('Enter');await expect(page.locator('#action-dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#action-dialog')).not.toBeVisible();await expect(page.locator('#actions')).toBeFocused();
-  assert.deepEqual(await page.evaluate(()=>Array.from(document.querySelectorAll('input,select,textarea')).filter(e=>e.getClientRects().length&&!e.labels?.length&&!e.getAttribute('aria-label')).map(e=>e.id)),[]); assert.deepEqual(errors,[]);
- }finally{await context.close();if(child.exitCode===null){const finished=once(child,'exit');child.kill('SIGTERM');await finished}await rm(directory,{recursive:true,force:true})}
+test("human reviews evidence, resolves blockers, reconciles conflict and preserves contested history", async ({
+  browser,
+}) => {
+  test.setTimeout(120000);
+  const directory = await mkdtemp(join(tmpdir(), "wos-review-"));
+  const socket = createServer();
+  socket.listen(0, "127.0.0.1");
+  await once(socket, "listening");
+  const port = socket.address().port;
+  await new Promise((done) => socket.close(done));
+  const url = `http://127.0.0.1:${port}`,
+    namespace = "01a11780-0000-7000-8000-000000000001",
+    bootstrap = randomBytes(32).toString("base64url");
+  const child = spawn(resolve("../../bin/wos"), ["server"], {
+    env: {
+      ...globalThis.process.env,
+      WOS_LISTEN: `127.0.0.1:${port}`,
+      WOS_SQLITE_PATH: join(directory, "wos.db"),
+      WOS_AUTH_MODE: "api_token",
+      WOS_BOOTSTRAP_TOKEN: bootstrap,
+      WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
+      WOS_BOOTSTRAP_NAMESPACE_NAME: "Human review",
+      WOS_LOCAL_PRINCIPAL_ID: "reviewer",
+    },
+    stdio: "ignore",
+  });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  async function api(path, command) {
+    const response = await fetch(url + "/api/v1" + path, {
+      method: command ? "POST" : "GET",
+      headers: {
+        Authorization: `Bearer ${bootstrap}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": randomUUID(),
+      },
+      body: command ? JSON.stringify({ command }) : undefined,
+    });
+    const data = await response.json();
+    assert.ok(response.ok, JSON.stringify(data));
+    return data;
+  }
+  async function open(name, entity = false) {
+    await page.locator(entity ? "#entity-actions" : "#actions").click();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await page.locator("#developer-tools").click();
+    await page.locator("#command-select").selectOption(name);
+  }
+  async function submit() {
+    await page.locator("#submit-command").click();
+    try {
+      await expect(page.locator("#command-dialog")).not.toBeVisible();
+    } catch (error) {
+      throw new Error(
+        (await page.locator("#command-error").textContent()) ||
+          (await page.locator("#fields").innerText()),
+        { cause: error },
+      );
+    }
+  }
+  async function entity(tab, title) {
+    const area = {
+      Objectives: "Plan",
+      Issues: "Issues",
+      Blockers: "Issues",
+      Evidence: "Evidence",
+      Blocked: "Work",
+      Ready: "Work",
+      Tasks: "Work",
+    }[tab];
+    if (area)
+      await page
+        .locator("#area-tabs")
+        .getByRole("button", { name: area, exact: true })
+        .click();
+    if (["Blocked", "Ready", "Tasks"].includes(tab))
+      await page
+        .getByLabel("Work status", { exact: true })
+        .selectOption(
+          { Blocked: "blocked_work", Ready: "ready_work", Tasks: "work_items" }[
+            tab
+          ],
+        );
+    else if (!["Issues", "Evidence"].includes(tab))
+      await page
+        .locator("#tabs")
+        .getByRole("button", { name: tab, exact: true })
+        .click();
+    await page
+      .locator("#content")
+      .getByRole("button", { name: new RegExp(title) })
+      .click();
+  }
+  try {
+    for (let i = 0; i < 100; i++) {
+      try {
+        if ((await fetch(url + "/readyz")).ok) break;
+      } catch {}
+      await new Promise((done) => setTimeout(done, 50));
+    }
+    await page.goto(url + "/app/");
+    await page.getByLabel("Access credential", { exact: true }).fill(bootstrap);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(
+      page.getByText("Choose an outcome", { exact: true }),
+    ).toBeVisible();
+    await page.locator("#developer-tools").click();
+    await page.locator("#command-select").selectOption("create_outcome");
+    await page
+      .getByLabel("Title", { exact: true })
+      .fill("Proof and collaboration");
+    await page
+      .getByLabel("Desired outcome", { exact: true })
+      .fill("Human evidence review remains auditable");
+    await submit();
+    await open("add_criterion");
+    await page.getByLabel("Title", { exact: true }).fill("Prova observada");
+    await page.getByLabel("Required", { exact: true }).check();
+    await page
+      .getByRole("combobox", { name: "Verification method", exact: true })
+      .selectOption("evidence_review");
+    await submit();
+    await open("activate_outcome");
+    await submit();
+    await open("create_objective");
+    await page.getByLabel("Title", { exact: true }).fill("Revisão obrigatória");
+    await page.getByLabel("Required for outcome", { exact: true }).check();
+    await submit();
+    await entity("Objectives", "Revisão obrigatória");
+    await open("add_criterion", true);
+    await page.getByLabel("Title", { exact: true }).fill("Revisão humana");
+    await page.getByLabel("Required", { exact: true }).check();
+    await submit();
+    await entity("Objectives", "Revisão obrigatória");
+    await open("start_objective", true);
+    await submit();
+    await open("create_work_item");
+    await page
+      .getByLabel("Title", { exact: true })
+      .fill("Trabalho para revisar");
+    await page
+      .getByRole("combobox", { name: "Objective", exact: true })
+      .selectOption({ label: "Revisão obrigatória" });
+    await submit();
+    await open("create_issue");
+    await page
+      .getByLabel("Title", { exact: true })
+      .fill("Problema identificado");
+    await page
+      .getByRole("combobox", { name: "Severity", exact: true })
+      .selectOption("major");
+    await submit();
+    await open("create_blocker");
+    await page
+      .getByRole("textbox", { name: "Description", exact: true })
+      .fill("Aguardar correção");
+    await page
+      .getByRole("combobox", { name: "Blocked item", exact: true })
+      .selectOption({ label: "Trabalho para revisar · Task" });
+    await page
+      .getByRole("combobox", { name: "Propagation", exact: true })
+      .selectOption("direct");
+    await page
+      .getByRole("combobox", { name: "Blocking cause", exact: true })
+      .selectOption({ label: "Problema identificado · Issue" });
+    await submit();
+    await page
+      .locator("#area-tabs")
+      .getByRole("button", { name: "Work", exact: true })
+      .click();
+    await page
+      .getByLabel("Work status", { exact: true })
+      .selectOption("blocked_work");
+    await expect(page.locator("#content")).toContainText(
+      "Trabalho para revisar",
+    );
+    await entity("Issues", "Problema identificado");
+    await open("resolve_issue", true);
+    await page
+      .getByLabel("Resolution summary", { exact: true })
+      .fill("Correção verificada");
+    await submit();
+    await page
+      .locator("#area-tabs")
+      .getByRole("button", { name: "Work", exact: true })
+      .click();
+    await page
+      .getByLabel("Work status", { exact: true })
+      .selectOption("blocked_work");
+    await expect(page.locator("#content")).toContainText(
+      "Trabalho para revisar",
+    );
+    await entity("Blockers", "Aguardar correção");
+    await open("resolve_blocker", true);
+    await page
+      .getByLabel("Resolution summary", { exact: true })
+      .fill("Liberação explícita");
+    await submit();
+    await entity("Tasks", "Trabalho para revisar");
+    await open("claim_work_item", true);
+    await submit();
+    await entity("Tasks", "Trabalho para revisar");
+    await open("complete_work_item", true);
+    await page
+      .getByLabel("Task result", { exact: true })
+      .fill("Entrega disponível");
+    await page.getByLabel("Reason", { exact: true }).fill("Trabalho concluído");
+    await submit();
+    await open("register_evidence");
+    await page
+      .getByRole("combobox", { name: "Evidence type", exact: true })
+      .selectOption("test_result");
+    await page
+      .getByRole("textbox", { name: "Description", exact: true })
+      .fill("Teste executado com sucesso");
+    await page
+      .getByRole("textbox", { name: "Provider", exact: true })
+      .fill("human-review");
+    await page
+      .getByRole("textbox", { name: "URL", exact: true })
+      .fill("https://example.test/test-run");
+    await page
+      .getByLabel("Observation date", { exact: true })
+      .fill("2026-10-07T12:00");
+    await submit();
+    // A second writer changes the version while the first user's form is open.
+    const discovery = await api(`/namespaces/${namespace}/outcomes`);
+    const outcome = discovery.items[0];
+    const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    await open("update_outcome");
+    await page.getByLabel("Title", { exact: true }).fill("My stale title");
+    await api("/commands/update_outcome", {
+      scope,
+      expected_version: outcome.version,
+      title: "Changed by another participant",
+    });
+    await page.locator("#submit-command").click();
+    await expect(page.locator("#command-error")).toContainText(
+      "A newer version exists",
+    );
+    await page.keyboard.press("Escape");
+    await page.locator("#refresh").click();
+    await expect(page.locator("#title")).toHaveText(
+      "Changed by another participant",
+    );
+    await page.locator("#view-outcome").click();
+    await page.getByRole("button", { name: /Prova observada/ }).click();
+    await page.keyboard.press("Escape");
+    await page.locator("#developer-tools").click();
+    await page
+      .locator("#command-select")
+      .selectOption("record_criterion_assessment");
+    const evidenceGroup = page
+      .locator("fieldset")
+      .filter({
+        has: page.locator("legend").getByText("Evidence used", { exact: true }),
+      })
+      .last();
+    await evidenceGroup
+      .getByRole("button", { name: "Add item", exact: true })
+      .click();
+    await evidenceGroup
+      .getByRole("combobox", { name: "Evidence", exact: true })
+      .selectOption({ label: "Teste executado com sucesso" });
+    await page
+      .getByLabel("Rationale", { exact: true })
+      .fill("Observação revisada");
+    await submit();
+    await open("achieve_outcome");
+    await page
+      .getByLabel("Reason", { exact: true })
+      .fill("Tentativa antes de concluir Objective");
+    await page.locator("#submit-command").click();
+    await expect(page.locator("#command-error")).not.toBeEmpty();
+    await page.keyboard.press("Escape");
+    await entity("Objectives", "Revisão obrigatória");
+    await page.getByRole("button", { name: /Attestation/ }).click();
+    await page.keyboard.press("Escape");
+    await page.locator("#developer-tools").click();
+    await page
+      .locator("#command-select")
+      .selectOption("record_criterion_assessment");
+    await page
+      .getByLabel("Rationale", { exact: true })
+      .fill("Revisão humana concluída");
+    await submit();
+    await entity("Objectives", "Revisão obrigatória");
+    await open("achieve_objective", true);
+    await page
+      .getByLabel("Reason", { exact: true })
+      .fill("Objetivo explicitamente alcançado");
+    await submit();
+    await open("achieve_outcome");
+    await page
+      .getByLabel("Reason", { exact: true })
+      .fill("Prova e obrigações satisfeitas");
+    await submit();
+    await expect(page.locator("#state")).toHaveText("Achieved");
+    await entity("Evidence", "Teste executado com sucesso");
+    await open("retract_evidence", true);
+    await page
+      .getByLabel("Reason", { exact: true })
+      .fill("Nova observação contradiz o teste");
+    await submit();
+    await page
+      .locator("#area-tabs")
+      .getByRole("button", { name: "Activity", exact: true })
+      .click();
+    await page
+      .locator("#tabs")
+      .getByRole("button", { name: "Contested conclusions", exact: true })
+      .click();
+    await expect(page.locator("#content")).toContainText("Evidence retracted");
+    await expect(page.locator("#state")).toHaveText("Achieved");
+    await open("archive_outcome");
+    await submit();
+    await open("unarchive_outcome");
+    await page.getByLabel("Reason", { exact: true }).fill("Retomar consulta");
+    await submit();
+    await expect(page.locator("#state")).toHaveText("Achieved");
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      JSON.stringify(
+        await page.evaluate(() =>
+          Array.from(document.querySelectorAll("body *"))
+            .filter((e) => e.getBoundingClientRect().right > innerWidth)
+            .map((e) => ({ tag: e.tagName, id: e.id, cls: e.className })),
+        ),
+      ),
+    );
+    await page.locator("#actions").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#action-dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#action-dialog")).not.toBeVisible();
+    await expect(page.locator("#actions")).toBeFocused();
+    assert.deepEqual(
+      await page.evaluate(() =>
+        Array.from(document.querySelectorAll("input,select,textarea"))
+          .filter(
+            (e) =>
+              e.getClientRects().length &&
+              !e.labels?.length &&
+              !e.getAttribute("aria-label"),
+          )
+          .map((e) => e.id),
+      ),
+      [],
+    );
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+    if (child.exitCode === null) {
+      const finished = once(child, "exit");
+      child.kill("SIGTERM");
+      await finished;
+    }
+    await rm(directory, { recursive: true, force: true });
+  }
 });

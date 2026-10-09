@@ -11,10 +11,10 @@
   background: #f8f7f4;
   font-size: 14px;
   --ink: #252523;
-  --muted: #716f68;
+  --muted: #625e54;
   --line: #e5e3dc;
   --surface: #fff;
-  --accent: #ce4300;
+  --accent: #b83b00;
   --orange: #fff0e6;
   --green: #15774d;
   --danger: #b42332;
@@ -342,7 +342,7 @@ h3 {
 }
 .sidebar-caption {
   display: block;
-  color: #949087;
+  color: #6d675c;
   font:
     9px ui-monospace,
     monospace;
@@ -675,7 +675,7 @@ progress::-moz-progress-bar {
   font:
     9px ui-monospace,
     monospace;
-  color: #999489;
+  color: #6d675c;
 }
 .item-filters {
   display: flex;
@@ -910,7 +910,7 @@ progress::-moz-progress-bar {
     10px ui-monospace,
     monospace;
   margin-left: auto;
-  color: #9a9488;
+  color: #6d675c;
 }
 .board .item {
   box-shadow: 0 2px 3px #201b0e05;
@@ -1422,7 +1422,7 @@ summary {
 }
 .login-footnote {
   font-size: 10px !important;
-  color: #928a7b;
+  color: #6d675c;
   margin-top: 20px !important;
   line-height: 1.8;
 }
@@ -1871,3 +1871,7 @@ svg {
 @media(max-width:600px){.action-options,.conflict-columns {grid-template-columns:1fr;}.list-editor-row {flex-wrap:wrap;}.human-form {gap:12px;}}
 
 .checklist-row{display:flex;align-items:center;gap:12px;padding:8px 0}.checklist-row>span:nth-child(2){flex:1}#work-status-label{display:flex;align-items:center;gap:12px;margin:12px 0}#area-tabs{overflow-x:auto}.setup-checklist{grid-column:1/-1}
+
+.context-edit-row,.participant-edit-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0} @media(max-width:600px){.context-edit-row,.participant-edit-row{grid-template-columns:minmax(0,1fr)}}
+
+.objective-child{padding-inline-start:28px;border-inline-start:3px solid var(--line)}

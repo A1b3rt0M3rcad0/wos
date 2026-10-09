@@ -40,7 +40,7 @@ test('static shell fallbacks agree with the single official copy catalog',async(
 test('official web source contains no Portuguese locale or accented copy',async()=>{
   // Historical documents and authored fixtures are outside this official-copy
   // gate. This does not prohibit Unicode supplied by users.
-  for(const name of ['index.html','app.js','presentation.js','en-US.js','command-exposure.json']) {
+  for(const name of ['index.html','app.js','presentation.js','en-US.js','command-exposure.json','actions.js','intents.js','human-forms.js','reference-picker.js','roadmap-editor.js','navigation.js','contracts-view.js','api-client.js','ui.js','advanced-editors.js']) {
     const text=await readFile(asset(name),'utf8');
     assert.doesNotMatch(text,/pt-BR|[À-ÖØ-öø-ÿ]/,name);
   }
