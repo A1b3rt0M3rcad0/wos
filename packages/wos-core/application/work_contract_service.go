@@ -307,6 +307,9 @@ func contractCommandEvents[T any](s *Service, cc d.CommandContext, meta commandM
 			return nil, true, nil
 		}
 		meta.Name = "AcquireWorkContract"
+		if next.Result.Contract.SignedBinding != nil {
+			meta.Name = "AcquireSignedWorkContract"
+		}
 		return contractCommandEvents(s, cc, meta, *next.Result, rev)
 	}
 	result, ok := any(value).(WorkContractResult)

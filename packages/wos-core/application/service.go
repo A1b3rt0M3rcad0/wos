@@ -426,7 +426,7 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 			if e != nil {
 				return domain.WorkItem{}, 0, e
 			}
-			item.ContractsEnabled = p.Phase == domain.WorkProtocolContracts
+			item.ContractsEnabled = p.Phase == domain.WorkProtocolContracts || p.Phase == domain.WorkProtocolSigned || p.Phase == domain.WorkProtocolSignedDraining
 		}
 		if cmd.ExecutionSpec != nil {
 			if err := cmd.ExecutionSpec.Validate(); err != nil {

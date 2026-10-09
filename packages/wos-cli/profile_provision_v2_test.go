@@ -42,7 +42,7 @@ func TestProfileProtectedProvisioningReusesKeyAndRejectsUnapprovedPins(t *testin
 		calls++
 		switch r.URL.Path {
 		case "/api/v1/security/signing-identity":
-			json.NewEncoder(rw).Encode(a.SigningIdentityView{ServerID: project.Connection.ExpectedServerID.String(), NamespaceID: project.Scope.NamespaceID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, Enrollment: &challenge})
+			json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: project.Connection.ExpectedServerID.String(), NamespaceID: project.Scope.NamespaceID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, Enrollment: &challenge})
 		default:
 			json.NewEncoder(rw).Encode(a.SignedStateResult{NamespaceID: project.Scope.NamespaceID, Resource: "trust", ProtocolVersion: 2, Server: &d.ServerIdentity{ID: project.Connection.ExpectedServerID, IssuerKeyID: template.Binding.IssuerKeys[0].KeyID, PublicKey: template.Binding.IssuerKeys[0].PublicKey, Fingerprint: template.Binding.IssuerKeys[0].Fingerprint}})
 		}

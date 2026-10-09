@@ -18,6 +18,11 @@ func legacySignedCacheCredential(ctx context.Context, u ports.UnitOfWork, scope 
 			return "", d.NewError(d.ErrorCodeIdempotencyState, "cached signed execution binding absent")
 		}
 		return result.Contract.SignedBinding.CredentialID, nil
+	case WorkContractAcquisition:
+		if !result.Acquired || result.Result == nil {
+			return "", d.NewError(d.ErrorCodeIdempotencyState, "legacy empty search lacks an original credential binding")
+		}
+		return legacySignedCacheCredential(ctx, u, scope, *result.Result)
 	case SignedReviewContractResult:
 		if result.Contract.Scope != scope {
 			return "", d.NewError(d.ErrorCodeIdempotencyState, "cached signed review scope differs")
@@ -58,7 +63,13 @@ func legacySignedCacheCredential(ctx context.Context, u ports.UnitOfWork, scope 
 func legacySignedOperationView(ctx context.Context, u ports.UnitOfWork, scope d.Scope, principal, key string, legacy d.LegacySignedOperationResult) (d.SignedOperationResult, error) {
 	var value any
 	switch legacy.CommandName {
-	case "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract":
+	case "AcquireNextSignedWorkContract":
+		var result MutationResult[WorkContractAcquisition]
+		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+			return d.SignedOperationResult{}, e
+		}
+		value = result.Value
+	case "AcquireSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract":
 		var result MutationResult[WorkContractResult]
 		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
 			return d.SignedOperationResult{}, e
@@ -84,4 +95,21 @@ func legacySignedOperationView(ctx context.Context, u ports.UnitOfWork, scope d.
 		return d.SignedOperationResult{}, e
 	}
 	return d.SignedOperationResult{Scope: scope, PrincipalID: principal, CredentialID: cid, CommandName: legacy.CommandName, IdempotencyKey: key, Fingerprint: legacy.Fingerprint, Result: legacy.Result, RecordedAt: legacy.RecordedAt}, nil
+}
+
+// SignedCommandFingerprint lets a harness compare a durable operation expansion
+// to its frozen typed intention without duplicating normalization or v1 hashing.
+// It grants no authority and does not accept transport maps as typed commands.
+func SignedCommandFingerprint(actor d.ActorRef, command any) (string, error) {
+	if e := actor.Validate(); e != nil {
+		return "", e
+	}
+	metadata, e := buildCommandMetadata(d.CommandContext{Actor: actor}, command)
+	if e != nil {
+		return "", e
+	}
+	if !signedCommand(metadata.Name) {
+		return "", d.NewError(d.ErrorCodeInvalidArgument, "typed signed command required")
+	}
+	return metadata.Fingerprint, nil
 }

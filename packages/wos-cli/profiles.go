@@ -76,15 +76,16 @@ type ProfilePendingScopeV2 struct {
 	OutcomeID   d.ID `json:"outcome_id,omitempty"`
 }
 type PendingOperationV2 struct {
-	ID             d.ID                  `json:"id"`
-	Operation      string                `json:"operation"`
-	State          string                `json:"state"`
-	Scope          ProfilePendingScopeV2 `json:"scope"`
-	IdempotencyKey string                `json:"idempotency_key"`
-	Payload        string                `json:"payload"`
-	PayloadDigest  string                `json:"payload_digest"`
-	ContractID     *d.ID                 `json:"contract_id,omitempty"`
-	Response       string                `json:"response,omitempty"`
+	ID                 d.ID                  `json:"id"`
+	Operation          string                `json:"operation"`
+	State              string                `json:"state"`
+	Scope              ProfilePendingScopeV2 `json:"scope"`
+	IdempotencyKey     string                `json:"idempotency_key"`
+	Payload            string                `json:"payload"`
+	PayloadDigest      string                `json:"payload_digest"`
+	RequestFingerprint string                `json:"request_fingerprint,omitempty"`
+	ContractID         *d.ID                 `json:"contract_id,omitempty"`
+	Response           string                `json:"response,omitempty"`
 }
 
 func validProfileName(name string) bool {
@@ -156,7 +157,20 @@ func (p ProfileV2) Validate() error {
 	if p.Lease.RequestedTTLSeconds < 30 || p.Lease.RequestedTTLSeconds > 3600 || (p.Output.DefaultFormat != "json" && p.Output.DefaultFormat != "text") {
 		return fmt.Errorf("invalid signed profile lease/output")
 	}
+	pendingIDs := map[d.ID]bool{}
+	pendingKeys := map[string]bool{}
 	for _, pending := range p.Local.PendingOperations {
+		if pendingIDs[pending.ID] || pendingKeys[pending.IdempotencyKey] {
+			return fmt.Errorf("duplicate pending identity or intention")
+		}
+		pendingIDs[pending.ID] = true
+		pendingKeys[pending.IdempotencyKey] = true
+		if pending.RequestFingerprint != "" {
+			raw, e := hex.DecodeString(pending.RequestFingerprint)
+			if e != nil || len(raw) != 32 || hex.EncodeToString(raw) != pending.RequestFingerprint {
+				return fmt.Errorf("invalid pending request fingerprint")
+			}
+		}
 		if pending.ID.Validate() != nil || pending.Scope.NamespaceID != p.Binding.NamespaceID || pending.Scope.NamespaceID.Validate() != nil || !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,99}$`).MatchString(pending.Operation) {
 			return fmt.Errorf("invalid pending operation binding")
 		}
