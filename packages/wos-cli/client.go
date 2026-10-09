@@ -210,7 +210,7 @@ func outcomePath(scope domain.Scope) string {
 func run(ctx context.Context, o options) (Output, error) {
 	result := Output{Operation: strings.Join(o.args, " ")}
 	if len(o.args) == 1 && o.args[0] == "version" {
-		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "contracts_v1", "workspace_schema": 1}
+		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "signed_contracts_v2", "workspace_schema": 2, "supported_work_protocols": []string{"contracts_v1", "signed_contracts_v2"}, "supported_workspace_schemas": []int{1, 2}}
 		return result, nil
 	}
 	root := o.values["workspace"]
