@@ -43,6 +43,11 @@ func loadContractV2(w *Workspace, profile ProfileV2, id d.ID) (ContractFileV2, C
 	if e != nil {
 		return file, view, path, raw, e
 	}
+	if _, legacy, e := readLegacyUnsignedV2(w, profile, id); e != nil {
+		return file, view, path, raw, e
+	} else if legacy {
+		return file, view, path, raw, fmt.Errorf("legacy_unsigned record cannot authorize signed mutation; original v1 recovery remains in the preserved source workspace")
+	}
 	if e = DecodeV2Document(raw, &file); e != nil {
 		return file, view, path, raw, e
 	}
@@ -174,6 +179,16 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 		items := []any{}
 		for _, id := range ids {
+			legacy, isLegacy, e := readLegacyUnsignedV2(w, profile, id)
+			if e != nil {
+				return result, e
+			}
+			if isLegacy {
+				if kind == "execution" {
+					items = append(items, legacyUnsignedSummaryV2(legacy))
+				}
+				continue
+			}
 			_, view, _, _, e := loadContractV2(w, profile, id)
 			if e != nil {
 				return result, e
@@ -192,6 +207,21 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		id, e := d.ParseID(o.args[2])
 		if e != nil {
 			return result, e
+		}
+		legacy, isLegacy, e := readLegacyUnsignedV2(w, profile, id)
+		if e != nil {
+			return result, e
+		}
+		if isLegacy {
+			if kind != "execution" {
+				return result, usage("legacy unsigned record is not a review contract")
+			}
+			result.ContractID = id
+			result.WorkItemID = legacy.Contract.Contract.WorkItemID
+			result.OutcomeID = legacy.Contract.Contract.Scope.OutcomeID
+			result.Data = legacyUnsignedSummaryV2(legacy)
+			result.RequiresAction = "read-only historical record; use the original v1 workspace for supported legacy recovery; never fabricate signed authority"
+			return result, nil
 		}
 		file, view, path, _, e := loadContractV2(w, profile, id)
 		if e != nil {

@@ -89,7 +89,7 @@ func parseOptions(args []string) (options, error) {
 			continue
 		}
 		key, value, has := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		allowed := map[string]bool{"signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true}
+		allowed := map[string]bool{"destination": true, "to": true, "signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true}
 		if !allowed[key] {
 			return o, usage("unknown flag --" + key)
 		}
@@ -225,6 +225,9 @@ func run(ctx context.Context, o options) (Output, error) {
 		return result, &LocalError{Err: err}
 	}
 	defer w.Close()
+	if o.args[0] == "workspace" {
+		return workspaceMigrationCommandV2(ctx, w, o)
+	}
 	if o.args[0] == "project" {
 		return projectInitializeV2(w, o)
 	}
