@@ -9,7 +9,7 @@ export const sha256 = data => createHash('sha256').update(data).digest('hex');
 export function run(command, args, options = {}) {
   const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', maxBuffer: 8 << 20, ...options });
   if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`${command} failed (${result.status}): ${result.stderr || result.stdout}`);
+  if (result.status !== 0) throw new Error(`${command} failed (${result.status}): ${[result.stdout, result.stderr].filter(Boolean).join("\n")}`);
   return result.stdout.trim();
 }
 export function validVersion(value) {
