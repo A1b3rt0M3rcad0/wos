@@ -248,7 +248,7 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 		switch file.Review.Decision {
 		case "approved", "changes_requested", "inconclusive":
 		default:
-			return intent, fmt.Errorf("review decision differs")
+			return intent, fmt.Errorf("review decision must be approved, changes_requested or inconclusive")
 		}
 		spec := view.ReviewSpecification.Spec
 		payload = signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: binding, ExpectedReviewCaseVersion: file.Local.ReviewCaseVersion, ReviewCaseID: spec.ReviewCaseID.String(), SubmissionID: spec.SubmissionID.String(), SubmissionDigest: spec.SubmissionDigest, Decision: file.Review.Decision, Material: file.Review.Material}
