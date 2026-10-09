@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -43,7 +44,7 @@ func OpenWorkspace(path string) (*Workspace, error) {
 }
 func (w *Workspace) Close() error { return w.root.Close() }
 func (w *Workspace) check(path string) error {
-	if filepath.IsAbs(path) || !filepath.IsLocal(path) || strings.Contains(path, "\\") || strings.Contains(path, ":") {
+	if filepath.IsAbs(path) || !filepath.IsLocal(path) || (runtime.GOOS != "windows" && strings.Contains(path, "\\")) || strings.Contains(path, ":") {
 		return fmt.Errorf("path must stay inside workspace")
 	}
 	current := ""

@@ -12,9 +12,9 @@ async function fixture(t) {
 }
 
 test('project/global destinations match four documented discovery roots and generic explicit path', () => {
-  assert.deepEqual(destinations({agent:'all',project:'/project'}), ['/project/.claude/skills','/project/.agents/skills','/project/.hermes/skills','/project/skills']);
-  assert.deepEqual(destinations({agent:'all',global:true,home:'/user'}), ['/user/.claude/skills','/user/.agents/skills','/user/.hermes/skills','/user/.openclaw/skills']);
-  assert.deepEqual(destinations({agent:'generic',dir:'/custom'}), ['/custom']);
+  assert.deepEqual(destinations({agent:'all',project:'/project'}), ['/project/.claude/skills','/project/.agents/skills','/project/.hermes/skills','/project/skills'].map(p=>path.resolve(p)));
+  assert.deepEqual(destinations({agent:'all',global:true,home:'/user'}), ['/user/.claude/skills','/user/.agents/skills','/user/.hermes/skills','/user/.openclaw/skills'].map(p=>path.resolve(p)));
+  assert.deepEqual(destinations({agent:'generic',dir:'/custom'}), [path.resolve('/custom')]);
   assert.throws(() => destinations({agent:'generic'}), /require --dir/);
   assert.throws(() => destinations({agent:'unknown'}), /Unknown agent/);
   assert.throws(() => destinations({agent:'all',dir:'/custom'}), /cannot be combined/);
