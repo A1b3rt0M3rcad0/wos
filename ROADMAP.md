@@ -1411,7 +1411,8 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | Lot | State | Acceptance |
 | --- | --- | --- |
 | UX-FND-01 | 🚧 | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
-| UX-LOC-01 / UX-ACT-01 | ⬜ | Official en-US copy and contextual action registry |
+| UX-LOC-01 | ✅ | Official en-US catalog, shell, typed labels/UTC dates and user-content preservation; four presentation checks and six real browser journeys passed |
+| UX-ACT-01 | ⬜ | Contextual action registry |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
 | UX-CMP-01 | ⬜ | Accessible typed reference pickers |
 | UX-FRM-01–03 | ⬜ | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
@@ -1426,4 +1427,8 @@ Owner confirmed that no representative users or manual screen-reader testers are
 
 UX-API-01 implementation: additive `SearchReferences` Application query and bounded metadata port; typed HTTP/MCP adapters, all eleven operational reference kinds, revision-bound keyset cursors and authorized exact-ID resolution. Storage/query verification is in progress; completion not claimed. Fresh baseline browser recheck: six tests passed with writable XDG paths, recorded in `docs/ux/baseline-browser.json`.
 
-UX-API-01 local acceptance: all three stores passed eleven reference types and 1,001 Task/Evidence datasets, exact-ID resolution, scoped cursors, Unicode semantics and cached credential revocation. Real HTTP/MCP query parity and empty-page telemetry tests passed. Human latency/comprehension remain unmeasured; automated query latency is separate. Search uses existing scope/ID indexes and bounded projections; no migration or domain change. Hosted feature CI will be checked before merge. PR #79 foundation integrated after all five hosted checks passed (merge `0be1d7d`).
+UX-API-01 local acceptance: all three stores passed eleven reference types and 1,001 Task/Evidence datasets, exact-ID resolution, scoped cursors, Unicode semantics and cached credential revocation. Real HTTP/MCP query parity and empty-page telemetry tests passed. Human latency/comprehension remain unmeasured; automated query latency is separate. Search uses existing scope/ID indexes and bounded projections; no migration or domain change. PR #80 integrated after all five hosted checks passed (merge `dab7adb`). PR #79 foundation integrated after all five hosted checks passed (merge `0be1d7d`).
+
+UX-LOC-01 starts after the accepted foundation and authorized reference query contract. Dynamic official copy and static shell fallbacks bind to `en-US.js`; dates explicitly label UTC, wire/user content is unchanged, and free text is no longer formatted as an enum merely because its value matches one. The technical command picker remains pending UX-ACT-01 and is not claimed resolved by translation.
+
+UX-LOC-01 acceptance: six embedded-server browser journeys passed on 2026-10-09, including legacy leases, unsigned contracts, signed independent review, evidence contestation and mobile checks. Portuguese fixture/user titles are deliberately retained. Historical audit documents are exempt from official-copy translation.

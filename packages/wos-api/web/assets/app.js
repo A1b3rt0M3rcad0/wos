@@ -1,3 +1,5 @@
+import {copy, initializeCopy} from "./en-US.js";
+ initializeCopy(document);
 import {
   icon,
   display,
@@ -6,6 +8,7 @@ import {
   badge,
   shortId,
   date,
+  formatValue,
   donut,
 } from "./presentation.js";
 const $ = (id) => document.getElementById(id);
@@ -31,93 +34,93 @@ const state = {
   pending: null,
 };
 const labels = {
- contract_id:"Contrato", execution_id:"Execução", spec_digest:"Integridade da especificação", expected_contract_version:"Versão do contrato", expected_work_item_version:"Versão do trabalho", expected_lease_version:"Versão da reserva", submission_id:"Entrega avaliada", supersedes_submission_id:"Entrega anterior", authority:"Autoridade da execução", checkpoint:"Progresso material", material:"Material entregue",
-  blocked_ref: "Item impedido",
-  cause_ref: "Causa do impedimento",
-  resolution_summary: "Como foi resolvido",
-  severity: "Gravidade",
-  propagation: "Alcance",
-  captured_at: "Data da observação",
-  source_ref: "Fonte",
-  source_version: "Versão da fonte",
-  evidence_id: "Evidência",
-  artifact_id: "Artefato",
-  base_revision_number: "Revisão de partida",
-  active_plan_references: "Trabalho do plano ativo",
-  required_criteria_met: "Critérios comprovados",
-  required_criteria_waived: "Critérios dispensados",
-  work_completion: "Trabalho concluído",
-  objective_completion: "Objetivos alcançados",
-  required_objectives_completion: "Objetivos obrigatórios alcançados",
-  work_items: "Trabalho",
-  objectives: "Objetivos",
-  ready_work: "Pronto para execução",
-  blocked_work: "Bloqueado",
-  in_progress_work: "Em execução",
-  scheduled_work: "Programado",
-  attention_needed_work: "Precisa de atenção",
-  issues: "Problemas",
-  blockers: "Impedimentos",
-  decisions: "Decisões",
-  evidence: "Evidências",
-  artifacts: "Artefatos",
-  active_roadmaps: "Planos ativos",
-  conclusion_contestations: "Contestações",
-  timeline: "Histórico",
-  roadmaps: "Todos os planos",
-  graph: "Relações",
-  title: "Título",
-  description: "Descrição",
-  desired_state: "Resultado esperado",
-  reason: "Motivo",
-  rationale: "Justificativa",
-  result_summary: "Resultado do trabalho",
-  required: "Obrigatório",
-  priority: "Prioridade",
-  lifecycle: "Estado",
-  verification_mode: "Modo de verificação",
-  expected_version: "Versão observada",
-  expected_roadmap_version: "Versão do plano",
-  expected_draft_version: "Versão do rascunho",
-  criterion_revision: "Revisão do critério",
-  ttl_seconds: "Duração da reserva (segundos)",
-  owner: "Item avaliado",
-  scope: "Contexto",
+ contract_id:copy.text.contract, execution_id:copy.text.execution, spec_digest:copy.text.specificationIntegrity, expected_contract_version:copy.text.contractVersion, expected_work_item_version:copy.text.taskVersion, expected_lease_version:copy.text.leaseVersion, submission_id:copy.text.reviewedSubmission, supersedes_submission_id:copy.text.previousSubmission, authority:copy.text.executionAuthority, checkpoint:copy.text.materialProgress, material:copy.text.submittedMaterial,
+  blocked_ref: copy.text.blockedItem,
+  cause_ref: copy.text.blockingCause,
+  resolution_summary: copy.text.resolutionSummary,
+  severity: copy.text.severity,
+  propagation: copy.text.propagation,
+  captured_at: copy.text.observationDate,
+  source_ref: copy.text.source,
+  source_version: copy.text.sourceVersion,
+  evidence_id: copy.text.evidence,
+  artifact_id: copy.text.artifact,
+  base_revision_number: copy.text.baseRevision,
+  active_plan_references: copy.text.activePlanTasks,
+  required_criteria_met: copy.text.criteriaMet,
+  required_criteria_waived: copy.text.criteriaWaivedNotVerified,
+  work_completion: copy.text.taskProgress,
+  objective_completion: copy.text.objectivesAchieved,
+  required_objectives_completion: copy.text.requiredObjectivesAchieved,
+  work_items: copy.text.tasks,
+  objectives: copy.text.objectives,
+  ready_work: copy.text.ready,
+  blocked_work: copy.text.blocked,
+  in_progress_work: copy.text.inProgress,
+  scheduled_work: copy.text.scheduled,
+  attention_needed_work: copy.text.needsAttention,
+  issues: copy.text.issues,
+  blockers: copy.text.blockers,
+  decisions: copy.text.decisions,
+  evidence: copy.text.evidence,
+  artifacts: copy.text.artifacts,
+  active_roadmaps: copy.text.activeRoadmaps,
+  conclusion_contestations: copy.text.contestedConclusions,
+  timeline: copy.text.activity,
+  roadmaps: copy.text.allRoadmaps,
+  graph: copy.text.relations,
+  title: copy.text.title,
+  description: copy.text.description,
+  desired_state: copy.text.desiredOutcome,
+  reason: copy.text.reason,
+  rationale: copy.text.rationale,
+  result_summary: copy.text.taskResult,
+  required: copy.text.required,
+  priority: copy.text.priority,
+  lifecycle: copy.text.lifecycle,
+  verification_mode: copy.text.verificationMethod,
+  expected_version: copy.text.observedVersion,
+  expected_roadmap_version: copy.text.roadmapVersion,
+  expected_draft_version: copy.text.draftVersion,
+  criterion_revision: copy.text.criterionRevision,
+  ttl_seconds: copy.text.reservationDurationSeconds,
+  owner: copy.text.assessedItem,
+  scope: copy.text.workspace,
   namespace_id: "Namespace",
-  outcome_id: "Resultado",
-  objective_id: "Objetivo",
-  work_item_id: "Trabalho",
-  claim_id: "Reserva",
-  fencing_token: "Proteção da reserva",
-  criterion_id: "Critério",
-  evidence_ids: "Evidências usadas",
-  evaluator_ref: "Avaliador externo",
-  target_ref: "Item relacionado",
-  source_ref: "Origem da relação",
-  reference_ref: "Referência do plano",
-  parent_objective_id: "Objetivo superior",
-  nodes: "Itens do plano",
-  after: "Ordenação do plano",
-  parent_node_key: "Grupo superior",
-  node_key: "Chave do item",
-  planned_start: "Início planejado",
-  planned_end: "Fim planejado",
-  metadata: "Informações adicionais",
-  revision_number: "Revisão publicada",
-  kind: "Tipo",
-  id: "Identificador",
-  provider: "Origem",
-  result: "Avaliação",
-  stance: "Posição da evidência",
-  artifact_type: "Tipo de artefato",
-  evidence_type: "Tipo de evidência",
-  producer_ref: "Produzido por",
-  name: "Nome",
-  uri: "Endereço",
-  chosen_alternative: "Alternativa escolhida",
-  alternatives: "Alternativas",
-  proposal: "Proposta",
-  required_for_outcome: "Obrigatório para o resultado",
+  outcome_id: copy.text.outcome,
+  objective_id: copy.text.objective,
+  work_item_id: copy.text.task4bc74b,
+  claim_id: copy.text.reservation,
+  fencing_token: copy.text.fencingProtection,
+  criterion_id: copy.text.successCriterion,
+  evidence_ids: copy.text.evidenceUsed,
+  evaluator_ref: copy.text.externalEvaluator,
+  target_ref: copy.text.relatedItem,
+  source_ref: copy.text.relationSource,
+  reference_ref: copy.text.roadmapReference,
+  parent_objective_id: copy.text.parentObjective,
+  nodes: copy.text.roadmapItems,
+  after: copy.text.planOrdering,
+  parent_node_key: copy.text.parentGroup,
+  node_key: copy.text.nodeKey,
+  planned_start: copy.text.plannedStart,
+  planned_end: copy.text.plannedEnd,
+  metadata: copy.text.additionalInformation,
+  revision_number: copy.text.publishedRevision,
+  kind: copy.text.type,
+  id: copy.text.identifier,
+  provider: copy.text.provider,
+  result: copy.text.assessment,
+  stance: copy.text.evidenceStance,
+  artifact_type: copy.text.artifactType,
+  evidence_type: copy.text.evidenceType,
+  producer_ref: copy.text.producedBy,
+  name: copy.text.name,
+  uri: copy.text.url,
+  chosen_alternative: copy.text.chosenAlternative,
+  alternatives: copy.text.alternatives,
+  proposal: copy.text.proposal,
+  required_for_outcome: copy.text.requiredForOutcome,
 };
 const choices = {
   severity: ["major", "critical", "minor", "informational"],
@@ -142,85 +145,85 @@ const choices = {
 const human = (s) =>
   labels[s] ||
   {
-    work_item: "Trabalho",
-    objective: "Objetivo",
-    outcome: "Resultado",
-    roadmap: "Plano",
-    created_at: "Criado em",
-    updated_at: "Atualizado em",
-    archived_at: "Arquivado em",
-    version: "Versão",
-    principal_id: "Participante",
-    actor_ref: "Autoria",
-    concluded_at: "Concluído em",
+    work_item: copy.text.task4bc74b,
+    objective: copy.text.objective,
+    outcome: copy.text.outcome,
+    roadmap: copy.text.roadmap,
+    created_at: copy.text.created,
+    updated_at: copy.text.updated,
+    archived_at: copy.text.archived,
+    version: copy.text.version,
+    principal_id: copy.text.principal,
+    actor_ref: copy.text.actor,
+    concluded_at: copy.text.concluded,
     owner_ref: "Item",
     entity_ref: "Item",
-    recorded_at: "Registrado em",
-    node_type: "Tipo de item",
-    content_hash: "Assinatura do conteúdo",
+    recorded_at: copy.text.recorded,
+    node_type: copy.text.itemType,
+    content_hash: copy.text.contentHash,
     checksum: "Checksum",
-    obligations: "Obrigações",
-    assessments: "Avaliações",
-    criteria: "Critérios",
-    external_context: "Contexto externo",
-    assignee_refs: "Responsáveis",
-    not_before: "Disponível a partir de",
-    reference: "Referência",
+    obligations: copy.text.requirements,
+    assessments: copy.text.assessments,
+    criteria: copy.text.successCriteria,
+    external_context: copy.text.externalContext,
+    assignee_refs: copy.text.assignees,
+    not_before: copy.text.scheduledStart,
+    reference: copy.text.reference,
   }[s] ||
   display(s);
 const verbs = {
- acquire:"Adquirir", resume:"Retomar", sync:"Salvar progresso de", submit:"Submeter", finalize:"Finalizar", revoke:"Revogar",
-  create: "Criar",
-  register: "Registrar",
-  add: "Adicionar",
-  update: "Editar",
-  activate: "Ativar",
-  start: "Iniciar",
-  claim: "Reservar",
-  renew: "Renovar reserva de",
-  reclaim: "Assumir reserva expirada de",
-  release: "Liberar reserva de",
-  complete: "Concluir",
-  achieve: "Certificar",
-  reopen: "Reabrir",
-  archive: "Arquivar",
-  unarchive: "Desarquivar",
-  record: "Registrar",
-  publish: "Publicar",
-  replace: "Editar",
-  resolve: "Resolver",
-  retract: "Retirar",
-  cancel: "Cancelar",
-  remove: "Remover",
-  retire: "Desativar",
-  supersede: "Substituir",
-  investigate: "Investigar",
-  open: "Abrir",
-  set: "Definir",
-  clear: "Limpar",
-  delete: "Excluir",
-  redeliver: "Reenviar",
+ acquire:copy.text.acquire, resume:copy.text.resume, sync:copy.text.saveProgressFor, submit:copy.text.submit, finalize:copy.text.finalize, revoke:copy.text.revoke,
+  create: copy.text.create,
+  register: copy.text.record,
+  add: copy.text.add,
+  update: copy.text.edit,
+  activate: copy.text.activate,
+  start: copy.text.start,
+  claim: copy.text.reserve,
+  renew: copy.text.renewReservationFor,
+  reclaim: copy.text.reclaimExpiredReservationFor,
+  release: copy.text.releaseReservationFor,
+  complete: copy.text.complete,
+  achieve: copy.text.markAsAchieved,
+  reopen: copy.text.reopen,
+  archive: copy.text.archive,
+  unarchive: copy.text.unarchive,
+  record: copy.text.record,
+  publish: copy.text.publish,
+  replace: copy.text.edit,
+  resolve: copy.text.resolve,
+  retract: copy.text.retract,
+  cancel: copy.text.cancel,
+  remove: copy.text.remove,
+  retire: copy.text.retire,
+  supersede: copy.text.supersede,
+  investigate: copy.text.investigate,
+  open: copy.text.open,
+  set: copy.text.set,
+  clear: copy.text.clear,
+  delete: copy.text.delete,
+  redeliver: copy.text.redeliver,
 };
 const actionSubjects = {
- work_contract:"contrato", next_work_contract:"próximo contrato", work_result:"entrega",
-  criterion_assessment: "avaliação do critério",
-  criterion: "critério",
-  criterion_definition: "definição do critério",
-  roadmap_draft: "rascunho do plano",
-  roadmap_revision: "revisão do plano",
-  work_item: "trabalho",
-  outcome: "resultado",
-  objective: "objetivo",
-  evidence_link: "vínculo de evidência",
-  evidence: "evidência",
-  artifact: "artefato",
-  decision: "decisão",
-  issue: "problema",
-  blocker: "impedimento",
-  roadmap: "plano",
-  relation: "relação",
-  work_item_assignees: "responsáveis pelo trabalho",
-  trigger: "sinal de integração",
+ work_contract:copy.text.contractcc8321, next_work_contract:copy.text.nextContract, work_result:copy.text.submission,
+  criterion_assessment: copy.text.criterionAssessment,
+  criterion: copy.text.successCriterion048852,
+  criterion_definition: copy.text.criterionDefinition,
+  roadmap_draft: copy.text.roadmapDraft,
+  roadmap_revision: copy.text.roadmapRevision,
+  work_item: copy.text.task,
+  outcome: copy.text.outcome25a63e,
+  objective: copy.text.objectived454be,
+  evidence_link: copy.text.evidenceLink,
+  evidence: copy.text.evidenceee8250,
+  artifact: copy.text.artifactc7c5c1,
+  decision: copy.text.decision,
+  issue: copy.text.issue,
+  blocker: copy.text.blocker,
+  roadmap: copy.text.roadmap3de158,
+  relation: copy.text.relation,
+  work_item_assignees: copy.text.taskAssignees,
+  trigger: copy.text.integrationTrigger,
 };
 const actionName = (name) => {
   const [verb, ...subject] = name.split("_");
@@ -241,7 +244,7 @@ async function request(path, options = {}) {
   }
   if (!response.ok) {
     const error = new Error(
-      data.error?.message || `Resposta ${response.status}`,
+      data.error?.message || `Response ${response.status}`,
     );
     error.code = data.error?.code;
     error.status = response.status;
@@ -257,7 +260,7 @@ function notice(message, error = false) {
 function report(error) {
   notice(
     error.code === "version_conflict" || error.code === "precondition_failed"
-      ? "O estado mudou. Atualize e revise a alteração antes de tentar novamente."
+      ? copy.text.stateChangedRefreshAndReviewYourIntentBeforeTryingAgain
       : error.message,
     true,
   );
@@ -281,7 +284,7 @@ async function connect(namespace) {
   await refreshNamespaceProtocol();
   await discover();
   $("context-name").textContent =
-    $("namespace").selectedOptions[0]?.textContent || "Espaço de trabalho";
+    $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
 }
 async function namespaces() {
   const result = await request(`${api}/namespaces`);
@@ -353,20 +356,20 @@ async function discover(append = false) {
     button.dataset.outcomeId = item.id;
     button.classList.toggle("selected", state.outcome?.id === item.id);
     button.setAttribute("aria-pressed", String(state.outcome?.id === item.id));
-    const copy = el("span", undefined, "nav-item-text");
-    copy.append(
+    const navCopy = el("span", undefined, "nav-item-text");
+    navCopy.append(
       el("strong", item.title),
       el(
         "small",
-        `${display(item.lifecycle)}${item.archived_at ? " · Arquivado" : ""}`,
+        `${display(item.lifecycle)}${item.archived_at ? copy.text.archivedc089d2 : ""}`,
       ),
     );
-    button.append(el("span", undefined, "nav-dot"), copy);
+    button.append(el("span", undefined, "nav-dot"), navCopy);
     button.onclick = () => openOutcome(item).catch(report);
     $("outcomes").append(button);
   }
   if (!page.items.length && !append)
-    $("outcomes").append(el("p", "Nenhum resultado encontrado."));
+    $("outcomes").append(el("p", copy.text.noMatchingOutcomes));
   state.next = page.next_cursor;
   $("more-outcomes").hidden = !state.next;
 }
@@ -425,7 +428,7 @@ async function refresh() {
     live.outcome_revision !== snapshot.outcome_revision
   ) {
     const changed = new Error(
-      "O estado mudou durante a leitura. Atualize para obter uma visualização coerente.",
+      copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
     );
     changed.code = "precondition_failed";
     throw changed;
@@ -450,7 +453,7 @@ async function refresh() {
   $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
   $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
   $("revision").textContent =
-    `Revisão ${snapshot.outcome_revision} · ${date(snapshot.evaluated_at)}`;
+    `Revision ${snapshot.outcome_revision} · ${date(snapshot.evaluated_at)}`;
   renderMetrics();
   renderTabs();
   renderSummary();
@@ -458,8 +461,8 @@ async function refresh() {
   await renderSection();
   notice(
     snapshot.truncated
-      ? "Visualização parcial. Há mais itens nas seções; use “Carregar mais”."
-      : "Estado compartilhado atualizado.",
+      ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
+      : copy.text.sharedStateRefreshed,
   );
 }
 $("refresh").onclick = () => refresh().catch(report);
@@ -553,7 +556,7 @@ function applyView() {
     ["work_items", "ready_work", "blocked_work", "in_progress_work"].includes(
       state.section,
     )
-      ? "+ Criar trabalho"
+      ? copy.text.newTask
       : `+ ${actionName(sectionCommand())}`;
   $("add-item").hidden = !board && !sectionCommand();
 }
@@ -627,7 +630,7 @@ function renderMetrics() {
     );
     const value = el(
       "strong",
-      m.value === null ? "Não se aplica" : `${Math.round(m.value * 100)}%`,
+      m.value === null ? copy.text.notApplicable : `${Math.round(m.value * 100)}%`,
       m.value === null ? "not-applicable" : "",
     );
     const progress = el("progress");
@@ -635,7 +638,7 @@ function renderMetrics() {
     progress.value = m.numerator;
     progress.setAttribute(
       "aria-label",
-      `${human(key)}: ${m.numerator} de ${m.denominator}`,
+      `${human(key)}: ${m.numerator} of ${m.denominator}`,
     );
     card.append(
       label,
@@ -643,7 +646,7 @@ function renderMetrics() {
       progress,
       el(
         "small",
-        `${m.numerator} de ${m.denominator} ${key.includes("criteria") ? "critérios" : "itens"}`,
+        `${m.numerator} of ${m.denominator} ${key.includes("criteria") ? copy.text.criteria : copy.text.items}`,
       ),
     );
     $("metrics").append(card);
@@ -654,7 +657,7 @@ function summaryCard(title, section) {
   const heading = el("div", undefined, "card-heading");
   heading.append(el("h2", title));
   if (section) {
-    const link = el("button", "Ver todos →", "text-button");
+    const link = el("button", copy.text.viewAll, "text-button");
     link.onclick = () => navigateSection(section);
     heading.append(link);
   }
@@ -666,7 +669,7 @@ function renderSummary() {
   root.replaceChildren();
   const s = state.snapshot,
     c = s.counts;
-  const purpose = summaryCard("O que queremos alcançar");
+  const purpose = summaryCard(copy.text.desiredOutcome);
   purpose.classList.add("summary-purpose-card");
   purpose.append(
     el(
@@ -679,9 +682,9 @@ function renderSummary() {
   );
   const quick = el("div", undefined, "summary-quick");
   for (const [label, command] of [
-    ["Adicionar objetivo", "create_objective"],
-    ["Criar trabalho", "create_work_item"],
-    ["Registrar evidência", "register_evidence"],
+    [copy.text.addObjective, "create_objective"],
+    [copy.text.newTask3e9922, "create_work_item"],
+    [copy.text.registerEvidence, "register_evidence"],
   ]) {
     const b = el("button", label, "quiet");
     b.onclick = () => createItem(command);
@@ -689,14 +692,14 @@ function renderSummary() {
   }
   purpose.append(quick);
   root.append(purpose);
-  const status = summaryCard("Visão geral do trabalho", "work_items");
+  const status = summaryCard(copy.text.taskOverview, "work_items");
   const done = c.done_work || 0,
     active = c.in_progress_work || 0,
     blocked = (c.blocked_work || 0) + (c.attention_needed_work || 0),
     total = c.work_items || 0;
   const parts = [
     {
-      title: "A fazer / planejado",
+      title: copy.text.toDoPlanned,
       count: Math.max(
         0,
         total - done - active - blocked - (c.cancelled_work || 0),
@@ -704,16 +707,16 @@ function renderSummary() {
       color: "#d6d2c8",
       tone: "",
     },
-    { title: "Em execução", count: active, color: "#e97335", tone: "orange" },
+    { title: copy.text.inProgress, count: active, color: "#e97335", tone: "orange" },
     {
-      title: "Impedimentos / atenção",
+      title: copy.text.blockedNeedsAttention,
       count: blocked,
       color: "#c75858",
       tone: "red",
     },
-    { title: "Concluído", count: done, color: "#339d71", tone: "green" },
+    { title: copy.text.done, count: done, color: "#339d71", tone: "green" },
     {
-      title: "Cancelado",
+      title: copy.text.cancelled,
       count: c.cancelled_work || 0,
       color: "#8e82b3",
       tone: "violet",
@@ -734,12 +737,12 @@ function renderSummary() {
   body.append(legend);
   status.append(body);
   root.append(status);
-  const proof = summaryCard("Contexto para continuar");
+  const proof = summaryCard(copy.text.continueWithContext);
   const counts = el("div", undefined, "summary-counts");
   for (const [key, title] of [
-    ["objectives", "Objetivos"],
-    ["evidence", "Evidências"],
-    ["roadmaps", "Planos"],
+    ["objectives", copy.text.objectives],
+    ["evidence", copy.text.evidence],
+    ["roadmaps", copy.text.roadmaps],
   ]) {
     const b = el("button");
     b.append(
@@ -749,7 +752,7 @@ function renderSummary() {
           ? String(c.active_roadmaps || 0)
           : String(c[key] || 0),
       ),
-      el("span", key === "roadmaps" ? "Planos ativos" : title),
+      el("span", key === "roadmaps" ? copy.text.activeRoadmaps : title),
     );
     b.onclick = () => navigateSection(key);
     counts.append(b);
@@ -758,11 +761,11 @@ function renderSummary() {
     counts,
     el(
       "p",
-      "Concluir trabalho não certifica o resultado. Revise as obrigações e registre a conclusão explicitamente.",
+      copy.text.taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561,
     ),
   );
   root.append(proof);
-  const recent = summaryCard("Trabalho em foco", "work_items");
+  const recent = summaryCard(copy.text.currentTasks, "work_items");
   recent.classList.add("summary-recent");
   const items = [
     ...(s.sections.ready_work || []),
@@ -772,18 +775,18 @@ function renderSummary() {
   if (!items.length) items.push(...(s.sections.work_items || []).slice(0, 3));
   for (const item of items) recent.append(itemView(item));
   if (!items.length)
-    recent.append(el("p", "Seu próximo passo começa com um item de trabalho."));
+    recent.append(el("p", copy.text.createATaskToOrganizeTheNextStep));
   root.append(recent);
   if (blocked || c.conclusion_contestations) {
     const alert = summaryCard(
-      "Itens que precisam de atenção",
+      copy.text.itemsNeedingAttention,
       c.conclusion_contestations ? "conclusion_contestations" : "blocked_work",
     );
     alert.classList.add("summary-alert");
     alert.append(
       el(
         "p",
-        `${blocked} itens impedidos ou com reserva para revisar. ${c.conclusion_contestations || 0} contestações registradas.`,
+        `${blocked} blocked items or reservations to review. ${c.conclusion_contestations || 0} contested conclusions recorded.`,
       ),
     );
     root.append(alert);
@@ -815,11 +818,11 @@ function operational(item) {
 }
 function matches(item) {
   const e = item.work_item || item.current || item;
-  const query = $("item-search").value.trim().toLocaleLowerCase("pt-BR");
+  const query = $("item-search").value.trim().toLocaleLowerCase("en-US");
   return (
     (!query ||
       `${e.title || ""} ${item.plan_label || ""} ${shortId(e.ref?.id)} ${display(e.lifecycle || "")}`
-        .toLocaleLowerCase("pt-BR")
+        .toLocaleLowerCase("en-US")
         .includes(query)) &&
     (!$("item-priority").value || e.priority === $("item-priority").value)
   );
@@ -837,7 +840,7 @@ function itemView(item, mode = "card") {
       referenceButton(ref),
       el(
         "small",
-        `Revisão ${item.slot.revision_number} · ${item.node_count} itens publicados`,
+        `Revision ${item.slot.revision_number} · ${item.node_count} published items`,
       ),
       badge("active"),
     );
@@ -860,7 +863,7 @@ function itemView(item, mode = "card") {
     card.append(
       el(
         "p",
-        "A conclusão permanece no histórico. Revise a nova observação antes de registrar outra decisão.",
+        copy.text.theConclusionRemainsInHistoryReviewTheNewObservationBeforeRe45f90af8,
       ),
     );
     return card;
@@ -879,8 +882,8 @@ function itemView(item, mode = "card") {
   const main = el("span", undefined, "item-main");
   const symbol = el("span", undefined, `entity-symbol ${entity.ref.kind}`);
   symbol.append(icon(entity.ref.kind));
-  const copy = el("span");
-  copy.append(
+  const itemCopy = el("span");
+  itemCopy.append(
     el("span", entity.title || kindName(entity.ref.kind), "item-title"),
     el(
       "span",
@@ -888,7 +891,7 @@ function itemView(item, mode = "card") {
       "item-subtitle",
     ),
   );
-  main.append(symbol, copy);
+  main.append(symbol, itemCopy);
   button.append(main);
   const lifecycle = status?.display_state || entity.lifecycle;
   const stateCell = el("span", undefined, "item-state");
@@ -935,7 +938,7 @@ function itemView(item, mode = "card") {
       button.append(
         el(
           "small",
-          `Plano: ${item.plan_label} · revisão ${item.revision_number}`,
+          `Roadmap: ${item.plan_label} · revision ${item.revision_number}`,
         ),
       );
   }
@@ -952,7 +955,7 @@ function timelineView(item) {
     }),
     el(
       "p",
-      `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revisão ${item.outcome_revision}`,
+      `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revision ${item.outcome_revision}`,
     ),
     referenceButton(item.entity_ref),
     el("time", date(item.recorded_at)),
@@ -962,36 +965,36 @@ function timelineView(item) {
 }
 function eventName(type) {
   const subjects = {
-    work_item: "Trabalho",
-    objective: "Objetivo",
-    outcome: "Resultado",
-    roadmap: "Plano",
-    evidence: "Evidência",
-    issue: "Problema",
-    blocker: "Impedimento",
-    decision: "Decisão",
-    artifact: "Artefato",
-    criterion: "Critério",
-    relation: "Relação",
+    work_item: copy.text.task4bc74b,
+    objective: copy.text.objective,
+    outcome: copy.text.outcome,
+    roadmap: copy.text.roadmap,
+    evidence: copy.text.evidence,
+    issue: copy.text.issueKind,
+    blocker: copy.text.blockerKind,
+    decision: copy.text.decision640ae4,
+    artifact: copy.text.artifact,
+    criterion: copy.text.successCriterion,
+    relation: copy.text.relation136748,
   };
   const actions = {
-    created: "criado",
-    updated: "atualizado",
-    completed: "concluído",
-    claimed: "reservado",
-    achieved: "alcançado",
-    activated: "ativado",
-    registered: "registrada",
-    retracted: "retirada",
-    resolved: "resolvido",
-    recorded: "registrada",
-    published: "publicado",
-    reopened: "reaberto",
-    archived: "arquivado",
-    assessment_recorded: "avaliação registrada",
-    draft_opened: "rascunho aberto",
-    draft_replaced: "rascunho editado",
-    draft_published: "revisão publicada",
+    created: "created",
+    updated: "updated",
+    completed: copy.text.completed,
+    claimed: "reserved",
+    achieved: copy.text.achieved,
+    activated: "activated",
+    registered: "recorded",
+    retracted: "retracted",
+    resolved: "resolved",
+    recorded: "recorded",
+    published: "published",
+    reopened: "reopened",
+    archived: "archived",
+    assessment_recorded: copy.text.assessmentRecorded,
+    draft_opened: copy.text.draftOpened,
+    draft_replaced: copy.text.draftEdited,
+    draft_published: copy.text.revisionPublished,
   };
   const normalized = type
     .replace(/([a-z])([A-Z])/g, "$1_$2")
@@ -1012,7 +1015,7 @@ function emptySection(title, command) {
   box.append(
     icon(sectionIcons[state.section] || "work_item"),
     el("h3", title),
-    el("p", "Os registros aparecerão aqui conforme o trabalho avança."),
+    el("p", copy.text.activityAppearsHereAsWorkProgresses),
   );
   if (command) {
     const b = el("button", actionName(command), "quiet");
@@ -1082,7 +1085,7 @@ async function renderSection(cursor = "", append = false) {
     el("h2", human(section)),
     el(
       "small",
-      `${shown.length} itens exibidos${state.snapshot.counts[section] !== undefined ? ` · ${state.snapshot.counts[section]} no total` : ""}`,
+      `${shown.length} items shown${state.snapshot.counts[section] !== undefined ? ` · ${state.snapshot.counts[section]} total` : ""}`,
     ),
   );
   content.append(heading);
@@ -1094,7 +1097,7 @@ async function renderSection(cursor = "", append = false) {
     content.append(
       el(
         "p",
-        "Filtro aplicado aos itens carregados nesta visualização.",
+        copy.text.filterAppliesToLoadedItemsInThisView,
         "section-note",
       ),
     );
@@ -1102,8 +1105,8 @@ async function renderSection(cursor = "", append = false) {
     content.append(
       emptySection(
         data.items.length
-          ? "Nenhum item corresponde aos filtros"
-          : "Ainda não há registros nesta seção.",
+          ? copy.text.noItemsMatchTheFilters
+          : copy.text.noRecordsInThisSectionYet,
         data.items.length ? "" : sectionCommand(),
       ),
     );
@@ -1116,8 +1119,8 @@ async function renderSection(cursor = "", append = false) {
         const head = el("div", undefined, "list-head");
         head.append(
           el("span", "Item"),
-          el("span", "Estado"),
-          el("span", "Prioridade"),
+          el("span", copy.text.lifecycle),
+          el("span", copy.text.priority),
         );
         list.append(head);
         content.append(list);
@@ -1140,7 +1143,7 @@ async function renderSection(cursor = "", append = false) {
     } else content.append(itemView(item));
   }
   if (data.next) {
-    const more = el("button", "Carregar mais", "quiet more-button");
+    const more = el("button", copy.text.loadMore, "quiet more-button");
     more.dataset.more = "true";
     more.onclick = () => renderSection(data.next, true).catch(report);
     content.append(more);
@@ -1148,7 +1151,7 @@ async function renderSection(cursor = "", append = false) {
 }
 const boardGroups = [
   {
-    title: "Planejado",
+    title: copy.text.planned,
     tone: "violet",
     sections: [
       "backlog_work",
@@ -1157,15 +1160,15 @@ const boardGroups = [
       "scheduled_work",
     ],
   },
-  { title: "Pronto para execução", tone: "", sections: ["ready_work"] },
-  { title: "Em execução", tone: "orange", sections: ["in_progress_work"] },
+  { title: copy.text.ready, tone: "", sections: ["ready_work"] },
+  { title: copy.text.inProgress, tone: "orange", sections: ["in_progress_work"] },
   {
-    title: "Impedimentos",
+    title: copy.text.blockers,
     tone: "red",
     sections: ["blocked_work", "attention_needed_work"],
   },
   {
-    title: "Concluído",
+    title: copy.text.done,
     tone: "green",
     sections: ["done_work"],
   },
@@ -1175,7 +1178,7 @@ function renderBoard() {
   content.replaceChildren(
     el(
       "p",
-      "O quadro reflete disponibilidade e reservas reais. Abra um item para executar uma ação.",
+      copy.text.theBoardShowsCurrentReadinessAndReservationsOpenATaskToChooseAnAction,
       "board-caption",
     ),
   );
@@ -1183,7 +1186,7 @@ function renderBoard() {
   const groups = [...boardGroups];
   if (state.snapshot.counts.cancelled_work)
     groups.push({
-      title: "Cancelado",
+      title: copy.text.cancelled,
       tone: "violet",
       sections: ["cancelled_work"],
     });
@@ -1214,8 +1217,8 @@ function renderBoard() {
         el(
           "p",
           count
-            ? "Nenhum item carregado corresponde aos filtros"
-            : "Nenhum item",
+            ? copy.text.noLoadedItemsMatchTheFilters
+            : copy.text.noItems,
           "board-empty",
         ),
       );
@@ -1228,7 +1231,7 @@ function renderBoard() {
       if (cursor) {
         const more = el(
           "button",
-          `Carregar mais · ${display(section.replace("_work", ""))}`,
+          `Load more · ${display(section.replace("_work", ""))}`,
           "quiet more-button",
         );
         more.onclick = async () => {
@@ -1267,7 +1270,7 @@ function renderBoard() {
     content.append(
       el(
         "p",
-        "Contagens representam o estado completo. Cartões e filtros incluem os itens já carregados.",
+        copy.text.countsCoverTheFullStateCardsAndFiltersIncludeLoadedItems,
         "section-note",
       ),
     );
@@ -1284,24 +1287,14 @@ const plurals = {
 };
 function readable(value, key = "", depth = 0) {
   if (value === null || value === undefined) return el("span", "—");
-  if (typeof value !== "object")
-    return el(
-      "span",
-      key.endsWith("_at") || key.startsWith("planned_")
-        ? date(value)
-        : typeof value === "boolean"
-          ? value
-            ? "Sim"
-            : "Não"
-          : display(value),
-    );
+  if (typeof value !== "object") return el("span", formatValue(value,key));
   if (depth > 4)
-    return el("span", "Consulte os dados técnicos para mais detalhes.");
+    return el("span", copy.text.openTechnicalDetailsForMoreInformation);
   if (value.kind && value.id && value.namespace_id)
     return referenceButton(value);
   if (Array.isArray(value)) {
     const list = el("div");
-    if (!value.length) list.append(el("span", "Nenhum registro"));
+    if (!value.length) list.append(el("span", copy.text.noRecords));
     for (const v of value) {
       const row = el("div", undefined, "readable-row");
       row.append(readable(v, key, depth + 1));
@@ -1348,14 +1341,14 @@ function conclusionView(conclusion) {
     card.append(
       el(
         "p",
-        `${conclusion.assessments.length} avaliações usadas na conclusão.`,
+        `${conclusion.assessments.length} assessments used in the conclusion.`,
       ),
     );
   if (conclusion.obligations?.required_objective_ids?.length)
     card.append(
       el(
         "p",
-        `${conclusion.obligations.required_objective_ids.length} objetivos obrigatórios verificados.`,
+        `${conclusion.obligations.required_objective_ids.length} required objectives verified.`,
       ),
     );
   return card;
@@ -1389,7 +1382,7 @@ function planNodes(nodes) {
     );
     box.append(row);
   }
-  if (!nodes?.length) box.append(el("p", "Este plano ainda não tem itens."));
+  if (!nodes?.length) box.append(el("p", copy.text.thisRoadmapHasNoItemsYet));
   return box;
 }
 function quickActions(kind, entity) {
@@ -1466,7 +1459,7 @@ async function showEntity(ref) {
     ref.namespace_id !== state.namespace ||
     ref.outcome_id !== state.outcome.id
   ) {
-    notice("Abra o resultado correspondente para consultar este item.", true);
+    notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
     return;
   }
   const path =
@@ -1494,9 +1487,9 @@ async function showEntity(ref) {
   if (entity.lifecycle) status.append(badge(entity.lifecycle));
   if (entity.priority)
     status.append(
-      el("span", `Prioridade ${display(entity.priority)}`, "badge"),
+      el("span", `Priority ${display(entity.priority)}`, "badge"),
     );
-  if (entity.archived_at) status.append(el("span", "Arquivado", "badge"));
+  if (entity.archived_at) status.append(el("span", copy.text.archived, "badge"));
   detail.append(status);
   const description =
     entity.desired_state ||
@@ -1550,10 +1543,10 @@ async function showEntity(ref) {
   if (entity.current_lease) {
     const lease = el("section", undefined, "detail-section");
     lease.append(
-      el("h3", "Reserva de execução"),
+      el("h3", copy.text.executionReservation),
       el(
         "p",
-        `${entity.current_lease.actor_ref?.id || entity.current_lease.principal_id} · expira em ${date(entity.current_lease.expires_at)}`,
+        `${entity.current_lease.actor_ref?.id || entity.current_lease.principal_id} · expires ${date(entity.current_lease.expires_at)}`,
       ),
     );
     detail.append(lease);
@@ -1562,19 +1555,19 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
   const criteria = entity.criteria?.items || [];
   if (criteria.length) {
     const group = el("section", undefined, "detail-section");
-    group.append(el("h3", "Critérios de sucesso"));
+    group.append(el("h3", copy.text.successCriteria));
     for (const criterion of criteria) {
       const button = el("button", undefined, "item criterion-item");
       button.append(
         el("strong", criterion.title),
         el(
           "small",
-          `${criterion.required ? "Obrigatório" : "Opcional"} · ${display(criterion.verification_mode)} · revisão ${criterion.criterion_revision}`,
+          `${criterion.required ? copy.text.required : copy.text.optional} · ${display(criterion.verification_mode)} · revision ${criterion.criterion_revision}`,
         ),
       );
       const assessment = entity.criteria.current_assessments?.[criterion.id];
       if (assessment) button.append(badge(assessment.result));
-      button.append(el("small", "Revisar avaliação →"));
+      button.append(el("small", copy.text.reviewAssessment));
       button.onclick = () => {
         state.criterion = criterion;
         openCommands("record_criterion_assessment");
@@ -1586,14 +1579,14 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
   if (entity.conclusion) {
     const group = el("section", undefined, "detail-section");
     group.append(
-      el("h3", "Conclusão atual"),
+      el("h3", copy.text.currentConclusion),
       conclusionView(entity.conclusion),
     );
     detail.append(group);
   }
   if (entity.conclusion_history?.length) {
     const history = el("details");
-    history.append(el("summary", "Conclusões anteriores"));
+    history.append(el("summary", copy.text.previousConclusions));
     for (const c of entity.conclusion_history)
       history.append(conclusionView(c));
     detail.append(history);
@@ -1603,7 +1596,7 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
       const draft = el("details");
       draft.open = true;
       draft.append(
-        el("summary", `Rascunho · versão ${entity.draft.draft_version}`),
+        el("summary", `Draft · version ${entity.draft.draft_version}`),
         planNodes(entity.draft.nodes),
       );
       detail.append(draft);
@@ -1614,7 +1607,7 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
       history.append(
         el(
           "summary",
-          `Revisão ${revision.revision_number} · ${revision.reason || "Plano publicado"}`,
+          `Revision ${revision.revision_number} · ${revision.reason || copy.text.publishedRoadmap}`,
         ),
         planNodes(revision.nodes),
       );
@@ -1623,7 +1616,7 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
   }
   const tech = el("details", undefined, "technical");
   tech.append(
-    el("summary", "Dados técnicos e auditoria"),
+    el("summary", copy.text.technicalDetailsAndAudit),
     el("pre", JSON.stringify(entity, null, 2)),
   );
   detail.append(tech);
@@ -1699,7 +1692,7 @@ contract_id:state.contractView?.contract.id,
 }
 function openCommands(name) {
   if (name && !commandAvailableInUI(name)) {
-    notice("Este fluxo requer o profile e a assinatura protegida. Use wosctl para execução ou revisão.", true);
+    notice(copy.text.thisFlowRequiresAnAuthorizedProfileAndProtectedSignatureUseW6de2babd, true);
     return;
   }
   $("submit-command").disabled = false;
@@ -1709,9 +1702,9 @@ function openCommands(name) {
   $("command-error").textContent = "";
   $("command-select").replaceChildren();
   const relevant = el("optgroup");
-  relevant.label = "Ações deste item";
+  relevant.label = copy.text.actionsForThisItem;
   const other = el("optgroup");
-  other.label = "Outras ações";
+  other.label = copy.text.otherActions;
   const kind = state.selected?._kind || "outcome";
   for (const d of state.catalog) {
     if (!commandAvailableInUI(d.name)) continue;
@@ -1777,7 +1770,7 @@ function field(name, schema, value, required = false) {
   if (entityKind) {
     const label = el("label", human(name)),
       select = el("select");
-    select.append(Object.assign(el("option", "Escolher item"), { value: "" }));
+    select.append(Object.assign(el("option", copy.text.chooseAnItem), { value: "" }));
     const items = new Map(state.entities);
     for (const section of Object.values(state.snapshot?.sections || {})) {
       for (const entry of section) {
@@ -1811,7 +1804,7 @@ function field(name, schema, value, required = false) {
   ) {
     const label = el("label", human(name));
     const select = el("select");
-    const blank = el("option", "Escolher item");
+    const blank = el("option", copy.text.chooseAnItem);
     blank.value = "";
     select.append(blank);
     const items = new Map(state.entities);
@@ -1854,7 +1847,7 @@ function field(name, schema, value, required = false) {
     const label = el("label");
     const enabled = el("input");
     enabled.type = "checkbox";
-    label.append(enabled, document.createTextNode(` Incluir ${human(name)}`));
+    label.append(enabled, document.createTextNode(` Include ${human(name)}`));
     const child = field(name, schema, undefined, true);
     const group = el("fieldset");
     group.append(child.node);
@@ -1875,15 +1868,15 @@ function field(name, schema, value, required = false) {
     const label = el("label", `${human(name)} (JSON)`);
     const input = el("textarea");
     input.value = value === undefined ? "" : JSON.stringify(value);
-    input.placeholder = 'Exemplo: "valor", true, ["item"] ou {"chave":"valor"}';
+    input.placeholder = 'Example: "value", true, ["item"] or {"key":"value"}';
     label.append(input);
     wrap.append(label);
     getter = () => (input.value.trim() ? JSON.parse(input.value) : undefined);
   } else if (schema.type === "object" && !schema.properties) {
-    const label = el("label", `${human(name)} (pares de contexto em JSON)`);
+    const label = el("label", `${human(name)} (context pairs in JSON)`);
     const input = el("textarea");
     input.value = value === undefined ? "{}" : JSON.stringify(value, null, 2);
-    input.placeholder = '{"product":"exemplo", "user_id":"pessoa-42"}';
+    input.placeholder = '{"product":"example", "user_id":"person-42"}';
     label.append(input);
     wrap.append(label);
     getter = () => (input.value.trim() ? JSON.parse(input.value) : undefined);
@@ -1891,7 +1884,7 @@ function field(name, schema, value, required = false) {
     const group = el("fieldset");
     group.append(el("legend", human(name)));
     const extra = el("details", undefined, "command-extra");
-    extra.append(el("summary", "Informações adicionais e proveniência"));
+    extra.append(el("summary", copy.text.additionalInformationAndProvenance));
     const secondary = el("div");
     extra.append(secondary);
     const fields = {};
@@ -1941,7 +1934,7 @@ function field(name, schema, value, required = false) {
     group.append(el("legend", human(name)));
     const rows = el("div");
     const getters = [];
-    const add = el("button", "Adicionar item", "quiet");
+    const add = el("button", copy.text.addItem, "quiet");
     add.type = "button";
     function append(v) {
       const row = el("div");
@@ -1951,7 +1944,7 @@ function field(name, schema, value, required = false) {
         v,
         true,
       );
-      const remove = el("button", "Remover", "quiet");
+      const remove = el("button", copy.text.remove, "quiet");
       remove.type = "button";
       const item = { get: child.get, active: true };
       getters.push(item);
@@ -1978,7 +1971,7 @@ function field(name, schema, value, required = false) {
     if (options) {
       input = el("select");
       if (!required) {
-        const blank = el("option", "Não informado");
+        const blank = el("option", copy.text.notProvided);
         blank.value = "";
         input.append(blank);
       }
@@ -2057,20 +2050,20 @@ function buildForm() {
   $("command-title").textContent = actionName(descriptor.name);
   $("command-help").textContent =
     descriptor.name === "record_criterion_assessment"
-      ? "Revise a prova e registre sua avaliação. Uma evidência, sozinha, não comprova o critério."
+      ? copy.text.reviewEvidenceAndRecordAnAssessmentEvidenceAloneDoesNotVerifyTheCriterion
       : descriptor.name === "claim_work_item"
-        ? "Reserve o trabalho antes de executar. A reserva tem prazo e evita duas execuções concorrentes."
-        : "A alteração será registrada para todos os participantes. Revise antes de confirmar.";
+        ? copy.text.reserveWorkBeforeExecutingATimeLimitedReservationPreventsCon7f9d6428
+        : copy.text.theChangeIsSharedWithAllParticipantsReviewBeforeConfirming;
   const context = el(
     "div",
     state.criterion
-      ? `Critério: ${state.criterion.title} · revisão ${state.criterion.criterion_revision}`
+      ? `Success criterion: ${state.criterion.title} · revision ${state.criterion.criterion_revision}`
       : state.selected
-        ? `${kindName(state.selected._kind || "outcome")}: ${state.selected.title || state.selected.name || state.selected.description || state.outcome?.title || ""}${state.selected.version ? ` · versão ${state.selected.version}` : ""}`
-        : "Novo resultado neste contexto",
+        ? `${kindName(state.selected._kind || "outcome")}: ${state.selected.title || state.selected.name || state.selected.description || state.outcome?.title || ""}${state.selected.version ? ` · version ${state.selected.version}` : ""}`
+        : copy.text.newOutcomeInThisWorkspace,
     "field-context",
   );
-  const form = field("Informações", descriptor.schema, defaults(), true);
+  const form = field(copy.text.information, descriptor.schema, defaults(), true);
   $("fields").replaceChildren(context, form.node);
   formGetter = form.get;
   $("command-error").textContent = "";
@@ -2094,7 +2087,7 @@ async function submit(retry = false) {
   $("retry-command").hidden = true;
   try {
     await refreshNamespaceProtocol();
-    if (!commandAvailableInUI(pending.name)) throw new Error("O protocolo mudou. Esta ação requer um profile e assinatura protegida; a intenção não foi enviada.");
+    if (!commandAvailableInUI(pending.name)) throw new Error(copy.text.theProtocolChangedThisActionRequiresAnAuthorizedProfileAndPr0325df8a);
     const result = await request(`${api}/commands/${pending.name}`, {
       method: "POST",
       headers: { "Idempotency-Key": pending.key },
@@ -2125,19 +2118,19 @@ async function submit(retry = false) {
     $("command-dialog").close();
     notice(
       result.result_omitted
-        ? "Alteração registrada. Consulte o estado atualizado."
-        : "Alteração registrada e persistida.",
+        ? copy.text.changeRecordedCheckTheRefreshedState
+        : copy.text.changeSaved,
     );
   } catch (e) {
     $("command-error").className = "danger";
     $("command-error").textContent =
       e.code === "version_conflict"
-        ? "A versão mudou. Feche este formulário, atualize e revise sua intenção."
+        ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
         : e.message;
     if (e.status === undefined || e.status >= 500) {
       $("retry-command").hidden = false;
       $("command-error").textContent +=
-        " A resposta pode ter sido perdida após o registro. Repita a mesma tentativa para recuperar o resultado.";
+        copy.text.theResponseMayHaveBeenLostAfterCommitRetryTheSameIntentToRecoverTheResult;
     }
   } finally {
     $("submit-command").disabled = !$("retry-command").hidden;
@@ -2157,7 +2150,7 @@ $("administration").onclick = async () => {
       `${api}/namespaces/${state.namespace}/administration`,
     );
     $("admin-version").textContent =
-      `Versão administrativa ${administration.namespace_version}`;
+      `Administration version ${administration.namespace_version}`;
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = "";
     $("admin-secret").hidden = true;
@@ -2193,7 +2186,7 @@ function buildAdmin() {
   }
   if (op === "revoke_credential") props.credential_id = { type: "string" };
   const rendered = field(
-    "Administração",
+    copy.text.workspaceSettings,
     { type: "object", properties: props, required: Object.keys(props) },
     {},
   );
@@ -2230,11 +2223,11 @@ async function submitAdmin(retry = false) {
       `${api}/namespaces/${state.namespace}/administration`,
     );
     $("admin-version").textContent =
-      `Versão administrativa ${administration.namespace_version}`;
+      `Administration version ${administration.namespace_version}`;
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = response.result?.token_omitted
-      ? "A emissão anterior foi confirmada. A credencial não pode ser recuperada; revogue-a e emita outra."
-      : "Alteração registrada.";
+      ? copy.text.thePreviousIssuanceWasConfirmedTheCredentialCannotBeRecovere660cace4
+      : copy.text.changeRecorded;
     if (response.token) {
       $("admin-token").value = response.token;
       $("admin-secret").hidden = false;
@@ -2244,10 +2237,10 @@ async function submitAdmin(retry = false) {
     if (e.status === undefined || e.status >= 500) {
       $("retry-admin").hidden = false;
       $("admin-error").textContent +=
-        " O registro pode ter ocorrido. Repita a mesma tentativa para consultar o recibo.";
+        copy.text.theChangeMayHaveCommittedRetryTheSameIntentToRetrieveItsReceipt;
     } else
       $("admin-error").textContent +=
-        " Feche e reabra para revisar o estado antes de uma nova intenção.";
+        copy.text.closeAndReopenToReviewCurrentStateBeforeCreatingANewIntent;
   } finally {
     $("submit-admin").disabled = !$("retry-admin").hidden;
   }
@@ -2267,7 +2260,7 @@ async function contractSection(detail,entity,generation) {
   return signedContractSection(detail, entity, generation);
  }
 
- const section=el("section",undefined,"detail-section contract-section");section.append(el("h3","Contrato de trabalho"));detail.append(section);
+ const section=el("section",undefined,"detail-section contract-section");section.append(el("h3",copy.text.workContract));detail.append(section);
  let loadGeneration=0;
  const load=async(id,expand)=>{
   const requested=++loadGeneration;
@@ -2275,21 +2268,21 @@ async function contractSection(detail,entity,generation) {
   const view=response.value||response,c=view.contract;
   if(expand&&view.omitted?.[expand]){const expanded=await request(`${outcomeBase()}/${view.omitted[expand]}`);if(generation!==state.detailGeneration||requested!==loadGeneration)return;view[expand]=expanded.value||expanded;delete view.omitted[expand]}
   state.contractView=view;state.submission=view.latest_submission||null;
-  const status={active:"Reserva ativa",expired:"Reserva expirada",revoked:"Contrato revogado",completed:"Entrega concluída"};
-  section.replaceChildren(el("h3","Contrato de trabalho"),el("strong",status[view.effective_status]||view.effective_status));
-  const info=el("dl",undefined,"detail-properties");for(const [label,value] of [["Titular",c.holder_principal_id],["Prazo da reserva",date(c.expires_at)],["Versão do progresso",String(c.version)],["Versão da reserva",String(c.lease_version)],["Execução permitida",view.execution_allowed?"Sim":"Não"]]) info.append(el("dt",label),el("dd",value));section.append(info);
+  const status={active:copy.text.activeReservation,expired:copy.text.expiredReservation,revoked:copy.text.revokedContract,completed:copy.text.deliveryCompleted};
+  section.replaceChildren(el("h3",copy.text.workContract),el("strong",status[view.effective_status]||view.effective_status));
+  const info=el("dl",undefined,"detail-properties");for(const [label,value] of [[copy.text.holder,c.holder_principal_id],[copy.text.reservationExpiry,date(c.expires_at)],[copy.text.checkpointVersion,String(c.version)],[copy.text.leaseVersion,String(c.lease_version)],[copy.text.executionPermitted,view.execution_allowed?copy.text.yes:copy.text.no]]) info.append(el("dt",label),el("dd",value));section.append(info);
   if(view.reasons?.length) section.append(el("p",view.reasons.map(reason=>reason.message||display(reason.code)).join(" · "),"contract-notice"));
-  for(const [key,label] of [["latest_checkpoint","Carregar último progresso"],["latest_submission","Carregar última entrega"]])if(view.omitted?.[key]){const button=el("button",label,"quiet");button.onclick=()=>load(c.id,key).catch(error=>notice(error.message,true));section.append(button)}
-  if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4","Último progresso"),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",`Próxima ação: ${checkpoint.next_action}`));if(checkpoint.pending?.length)progress.append(el("p",`Pendente: ${checkpoint.pending.join(" · ")}`));if(checkpoint.dirty)progress.append(el("small","Há alterações locais ainda não transferidas ao WOS."));if(checkpoint.working_commit)progress.append(el("small",`Referência de código: ${checkpoint.working_commit}`));section.append(progress);}
-  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4","Entrega para avaliação"),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artefatos · ${submission.material.evidence_ids?.length||0} evidências · submetida em ${date(submission.submitted_at)}`));const review=el("button","Revisar entrega","quiet");review.disabled=view.effective_status!=="active"||c.id!==entity.current_contract_id;review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice("Esta tarefa não exige avaliação de critérios. A finalização continua explícita.");return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
-  if(view.effective_status==="active"&&c.id===entity.current_contract_id){const revoke=el("button","Revogar contrato","quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
-  const audit=el("details",undefined,"technical");audit.append(el("summary","Identidade e especificação contratada"),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
+  for(const [key,label] of [["latest_checkpoint",copy.text.loadLatestCheckpoint],["latest_submission",copy.text.loadLatestSubmission]])if(view.omitted?.[key]){const button=el("button",label,"quiet");button.onclick=()=>load(c.id,key).catch(error=>notice(error.message,true));section.append(button)}
+  if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4",copy.text.latestCheckpoint),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",`Next action: ${checkpoint.next_action}`));if(checkpoint.pending?.length)progress.append(el("p",`Pending: ${checkpoint.pending.join(" · ")}`));if(checkpoint.dirty)progress.append(el("small",copy.text.localChangesHaveNotYetBeenTransferredToWos));if(checkpoint.working_commit)progress.append(el("small",`Code reference: ${checkpoint.working_commit}`));section.append(progress);}
+  if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4",copy.text.submissionForAssessment),el("p",submission.material.summary),el("small",`${submission.material.artifacts?.length||0} artifacts · ${submission.material.evidence_ids?.length||0} evidence · submitted ${date(submission.submitted_at)}`));const review=el("button",copy.text.reviewSubmission,"quiet");review.disabled=view.effective_status!=="active"||c.id!==entity.current_contract_id;review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice(copy.text.thisTaskRequiresNoCriterionAssessmentFinalizationRemainsExplicit);return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
+  if(view.effective_status==="active"&&c.id===entity.current_contract_id){const revoke=el("button",copy.text.revokeContract,"quiet danger");revoke.onclick=()=>openCommands("revoke_work_contract");section.append(revoke);}
+  const audit=el("details",undefined,"technical");audit.append(el("summary",copy.text.contractIdentityAndSpecification),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
  };
  try {
-  if(entity.current_contract_id)await load(entity.current_contract_id);else section.append(el("p",entity.lifecycle==="in_progress"?"Trabalho recuperável: uma nova aquisição é necessária para executar.":"Sem reserva ativa. A aquisição é explícita."));
-  const history=el("details");history.append(el("summary","Histórico de contratos"));const body=el("div");history.append(body);let cursor="",loaded=false;
-  const more=el("button","Carregar contratos","quiet");const loadHistory=async()=>{const page=await request(`${outcomeBase()}/work-contracts?work_item_id=${encodeURIComponent(entity.id)}&limit=10&cursor=${encodeURIComponent(cursor)}`);if(generation!==state.detailGeneration)return;loaded=true;for(const contract of page.items||[]){const button=el("button",`${shortId(contract.id)} · ${contract.status} · ${date(contract.acquired_at)}`,"quiet");button.onclick=()=>load(contract.id).catch(error=>notice(error.message,true));body.append(button)}cursor=page.next_cursor||"";more.hidden=!cursor;if(!page.items?.length)body.append(el("p","Nenhum contrato registrado."));};more.onclick=()=>loadHistory().catch(error=>notice(error.message,true));history.ontoggle=()=>{if(history.open&&!loaded)loadHistory().catch(error=>notice(error.message,true))};history.append(more);detail.append(history);
- } catch(error){section.append(el("p",`Não foi possível consultar o contrato: ${error.message}`,"contract-notice"));}
+  if(entity.current_contract_id)await load(entity.current_contract_id);else section.append(el("p",entity.lifecycle==="in_progress"?copy.text.recoverableWorkExplicitlyAcquireANewContractToExecute:copy.text.noActiveReservationAcquisitionIsExplicit));
+  const history=el("details");history.append(el("summary",copy.text.contractHistory));const body=el("div");history.append(body);let cursor="",loaded=false;
+  const more=el("button",copy.text.loadContracts,"quiet");const loadHistory=async()=>{const page=await request(`${outcomeBase()}/work-contracts?work_item_id=${encodeURIComponent(entity.id)}&limit=10&cursor=${encodeURIComponent(cursor)}`);if(generation!==state.detailGeneration)return;loaded=true;for(const contract of page.items||[]){const button=el("button",`${shortId(contract.id)} · ${contract.status} · ${date(contract.acquired_at)}`,"quiet");button.onclick=()=>load(contract.id).catch(error=>notice(error.message,true));body.append(button)}cursor=page.next_cursor||"";more.hidden=!cursor;if(!page.items?.length)body.append(el("p",copy.text.noContractsRecorded));};more.onclick=()=>loadHistory().catch(error=>notice(error.message,true));history.ontoggle=()=>{if(history.open&&!loaded)loadHistory().catch(error=>notice(error.message,true))};history.append(more);detail.append(history);
+ } catch(error){section.append(el("p",`Could not load the contract: ${error.message}`,"contract-notice"));}
 }
 
 
@@ -2317,8 +2310,8 @@ function renderProtocolBanner() {
   const phase = state.protocol?.phase;
   panel.hidden = !["signed_contracts_v2", "draining_to_signed_v2"].includes(phase);
   $("signed-protocol-label").textContent = phase === "signed_contracts_v2"
-    ? "Contratos assinados · execução e revisão independentes"
-    : "Preparando contratos assinados · novas reservas antigas suspensas";
+    ? copy.text.signedContractsIndependentExecutionAndReview
+    : copy.text.preparingSignedContractsNewLegacyReservationsSuspended;
 }
 $("signed-protocol-info").ontoggle = () => {
   if ($("signed-protocol-info").open) loadSignedIdentity().catch(report);
@@ -2326,38 +2319,38 @@ $("signed-protocol-info").ontoggle = () => {
 async function loadSignedIdentity() {
   const namespace = state.namespace, generation = state.generation;
   const target = $("signed-protocol-content");
-  target.replaceChildren(el("p", "Consultando identidade e políticas…"));
+  target.replaceChildren(el("p", copy.text.loadingIdentityAndPolicies));
   const [trust, identity] = await Promise.all([
     request(`${api}/namespaces/${namespace}/signed-trust`),
     request(`${api}/security/signing-identity`),
   ]);
   if (generation !== state.generation || namespace !== state.namespace) return;
   const identityCard = el("section", undefined, "signed-identity-card");
-  identityCard.append(el("h3", "Identidade deste espaço"));
+  identityCard.append(el("h3", copy.text.workspaceIdentity));
   const properties = el("dl", undefined, "detail-properties");
   for (const [label, value] of [
-    ["Conta", identity.principal_id], ["Credencial", identity.credential_id],
-    ["Servidor persistente", trust.server?.server_id], ["Emissor atual", trust.server?.fingerprint],
-    ["Aceite exigido pela credencial", display(identity.credential_policy?.acceptance_floor || "não configurado")],
-  ]) properties.append(el("dt", label), el("dd", value || "Não disponível"));
+    [copy.text.account, identity.principal_id], [copy.text.credential, identity.credential_id],
+    [copy.text.persistentServer, trust.server?.server_id], [copy.text.currentIssuer, trust.server?.fingerprint],
+    [copy.text.credentialAcceptanceRequirement, display(identity.credential_policy?.acceptance_floor || copy.text.notConfigured)],
+  ]) properties.append(el("dt", label), el("dd", value || copy.text.notAvailable));
   identityCard.append(properties);
   const keys = el("section", undefined, "signed-identity-card");
-  keys.append(el("h3", "Chaves desta identidade"));
+  keys.append(el("h3", copy.text.identityKeys));
   for (const key of identity.keys || []) {
     const row = el("p", undefined, "signed-key");
     row.append(badge(key.status), el("code", shortId(key.id)), el("small", key.fingerprint));
     keys.append(row);
   }
-  if (!identity.keys?.length) keys.append(el("p", "Nenhuma chave retornada nesta consulta."));
-  if (identity.keys_truncated) keys.append(el("small", "Lista parcial. Consulte as páginas da API para outras chaves."));
+  if (!identity.keys?.length) keys.append(el("p", copy.text.noKeysReturnedByThisQuery));
+  if (identity.keys_truncated) keys.append(el("small", copy.text.partialListContinueThroughApiPagesForOtherKeys));
   const onboarding = el("section", undefined, "signed-identity-card signed-onboarding");
-  onboarding.append(el("h3", "Conectar um profile"), el("p", "Peça ao administrador uma credencial e um enrollment para sua função. Confira o emissor por um canal confiável antes de aprovar o profile."));
+  onboarding.append(el("h3", copy.text.connectAProfile), el("p", copy.text.askAnAdministratorForACredentialAndEnrollmentForYourRoleVeri4e28b08c));
   const example = `wosctl init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
-  onboarding.append(el("pre", example), el("p", "Tokens e chaves privadas ficam no host, em referências protegidas. A instalação das skills não cria acesso. Execução e revisão usam profiles próprios."));
+  onboarding.append(el("pre", example), el("p", copy.text.tokensAndPrivateKeysStayOnTheHostInProtectedReferencesInstal90b2e966));
   const history = el("details", undefined, "technical");
-  history.append(el("summary", "Emissores públicos preservados"));
+  history.append(el("summary", copy.text.retainedPublicIssuers));
   for (const issuer of trust.issuer_history || []) history.append(el("p", `${shortId(issuer.issuer_key_id)} · ${issuer.fingerprint}`));
-  if (trust.search_complete === false) history.append(el("small", "Histórico parcial. Continue pelo cursor da API."));
+  if (trust.search_complete === false) history.append(el("small", copy.text.partialHistoryContinueWithTheApiCursor));
   target.replaceChildren(identityCard, keys, onboarding, history);
 }
 function decodeSignedProjection(encoded) {
@@ -2368,7 +2361,7 @@ async function signedContractSection(detail, entity, generation) {
   state.contractView = null;
   state.submission = null;
   const section = el("section", undefined, "detail-section contract-section signed-contract-section");
-  section.append(el("h3", "Execução e revisão assinadas"), el("p", "Assinaturas registram origem e integridade. A qualidade depende da avaliação explícita do material.", "contract-notice"));
+  section.append(el("h3", copy.text.signedExecutionAndReview), el("p", copy.text.signaturesEstablishOriginAndIntegrityQualityRequiresExplicitd2f2854a, "contract-notice"));
   detail.append(section);
   const current = () => generation === state.detailGeneration;
   try {
@@ -2376,10 +2369,10 @@ async function signedContractSection(detail, entity, generation) {
       const result = await request(`${outcomeBase()}/signed-state/execution/${entity.current_contract_id}`);
       if (!current()) return;
       const contract = result.contract;
-      const names = {active:"Execução reservada", delivered:"Entrega aceita do executor", completed:"Obrigação concluída", revoked:"Contrato revogado", expired:"Reserva expirada"};
+      const names = {active:copy.text.executionReserved, delivered:copy.text.executorSubmissionAccepted, completed:copy.text.requirementCompleted, revoked:copy.text.revokedContract, expired:copy.text.expiredReservation};
       section.append(el("strong", names[contract.effective_status] || display(contract.effective_status)));
       const info = el("dl", undefined, "detail-properties");
-      for (const [label, value] of [["Titular",contract.holder_principal_id],["Prazo",date(contract.expires_at)],["Reserva válida agora",contract.lease_valid?"Sim":"Não"],["Versão do contrato",contract.contract_version],["Versão da reserva",contract.lease_version]]) info.append(el("dt",label),el("dd",String(value)));
+      for (const [label, value] of [[copy.text.holder,contract.holder_principal_id],[copy.text.expiry,date(contract.expires_at)],[copy.text.reservationCurrentlyValid,contract.lease_valid?copy.text.yes:copy.text.no],[copy.text.contractVersion,contract.contract_version],[copy.text.leaseVersion,contract.lease_version]]) info.append(el("dt",label),el("dd",String(value)));
       section.append(info);
     }
     let pendingReviewVersion;
@@ -2390,10 +2383,10 @@ async function signedContractSection(detail, entity, generation) {
       const review = result.review_case;
       if (review.id === entity.pending_review_case_id) pendingReviewVersion = review.version;
       const card = el("section", undefined, "signed-review-card");
-      const names = {pending:"Aguardando revisão independente",in_review:"Revisão em andamento",approved:"Revisão aprovada",changes_requested:"Alterações solicitadas",cancelled:"Revisão cancelada",superseded:"Revisão substituída"};
+      const names = {pending:copy.text.awaitingIndependentReview,in_review:copy.text.reviewInProgress,approved:copy.text.reviewApproved,changes_requested:copy.text.changesRequested,cancelled:copy.text.reviewCancelled,superseded:copy.text.reviewSuperseded};
       card.append(el("h4", names[review.status] || display(review.status)), el("p", `Rodada ${review.round} · caso ${shortId(review.id)}`));
-      card.append(el("p", `Entrega ${shortId(review.submission_id)} · exigência ${display(review.acceptance_floor)}`));
-      const materialButton = el("button", "Carregar material aceito", "quiet");
+      card.append(el("p", `Entrega ${shortId(review.submission_id)} · acceptance requirement ${display(review.acceptance_floor)}`));
+      const materialButton = el("button", copy.text.loadAcceptedMaterial, "quiet");
       materialButton.onclick = async () => {
         materialButton.disabled = true;
         try {
@@ -2401,9 +2394,9 @@ async function signedContractSection(detail, entity, generation) {
           if (!current()) return;
           const material = decodeSignedProjection(accepted.material_payload);
           const delivery = el("section", undefined, "contract-delivery");
-          delivery.append(el("h4", "Material aceito do executor"), el("p", material.summary), el("small", `${material.artifacts?.length || 0} artefatos · ${material.evidence_ids?.length || 0} evidências`));
+          delivery.append(el("h4", copy.text.acceptedExecutorMaterial), el("p", material.summary), el("small", `${material.artifacts?.length || 0} artifacts · ${material.evidence_ids?.length || 0} evidence`));
           const canonical = el("details", undefined, "technical");
-          canonical.append(el("summary", "Referências do material"), el("pre", JSON.stringify(material, null, 2)));
+          canonical.append(el("summary", copy.text.materialReferences), el("pre", JSON.stringify(material, null, 2)));
           delivery.append(canonical);
           card.insertBefore(delivery, materialButton);
           materialButton.remove();
@@ -2418,38 +2411,38 @@ async function signedContractSection(detail, entity, generation) {
         const acceptedDecision = await request(`${outcomeBase()}/signed-state/correction/${review.id}`);
         if (!current()) return;
         const decision = decodeSignedProjection(acceptedDecision.envelope.payload);
-        card.append(el("h4", "Correções exigidas"), el("p", decision.material.reason));
+        card.append(el("h4", copy.text.requiredCorrections), el("p", decision.material.reason));
         for (const finding of decision.material.findings || []) {
           const item = el("div", undefined, "signed-finding");
-          item.append(el("p", finding.description), el("small", `Obrigação: ${finding.requirement_ref || shortId(finding.criterion_id)}`));
+          item.append(el("p", finding.description), el("small", `Requirement: ${finding.requirement_ref || shortId(finding.criterion_id)}`));
           card.append(item);
         }
-        card.append(el("p", "A próxima execução deve responder a cada apontamento sobre as obrigações existentes. Ampliação de escopo exige replanejamento explícito."));
+        card.append(el("p", copy.text.theNextExecutionMustAddressEveryFindingOnExistingRequirement480c9676));
       }
       if (review.current_contract_id) {
         const reserved = await request(`${outcomeBase()}/signed-state/review/${review.current_contract_id}`);
         if (!current()) return;
-        card.append(el("small", `Revisor: ${reserved.contract.holder_principal_id} · reserva ${reserved.contract.lease_valid?"válida":"sem autoridade atual"}`));
+        card.append(el("small", `Reviewer: ${reserved.contract.holder_principal_id} · reserva ${reserved.contract.lease_valid?copy.text.valid:copy.text.noCurrentAuthority}`));
       }
       const audit = el("details", undefined, "technical");
-      audit.append(el("summary", "Identidade do material avaliado"), el("pre", JSON.stringify({review_case_id:review.id,submission_id:review.submission_id,submission_digest:review.submission_digest,acceptance_policy_revision:review.policy_revision,latest_decision_id:review.latest_decision_id},null,2)));
+      audit.append(el("summary", copy.text.reviewedMaterialIdentity), el("pre", JSON.stringify({review_case_id:review.id,submission_id:review.submission_id,submission_digest:review.submission_digest,acceptance_policy_revision:review.policy_revision,latest_decision_id:review.latest_decision_id},null,2)));
       card.append(audit);
       section.append(card);
     }
-    if (!entity.current_contract_id && !caseIDs.length) section.append(el("p", "Sem execução reservada ou revisão associada a esta tarefa. A aquisição é explícita."));
-    if (entity.pending_review_case_id) section.append(el("p", "A entrega do executor já foi aceita. A tarefa aguarda uma revisão própria; a aprovação não é inferida da assinatura ou de testes passados."));
+    if (!entity.current_contract_id && !caseIDs.length) section.append(el("p", copy.text.noReservedExecutionOrReviewForThisTaskAcquisitionIsExplicit));
+    if (entity.pending_review_case_id) section.append(el("p", copy.text.theExecutorSubmissionWasAcceptedThisTaskAwaitsIndependentRev88610774));
     const instructions = el("details", undefined, "signed-next-step");
-    instructions.append(el("summary", "Executar ou revisar com um profile"));
-    instructions.append(el("p", "Use seu profile autorizado no host. O navegador não guarda a chave privada nem assina uma decisão em seu nome."));
+    instructions.append(el("summary", copy.text.executeOrReviewWithAProfile));
+    instructions.append(el("p", copy.text.useYourAuthorizedProfileOnTheHostTheBrowserNeverStoresAPriva48737f91));
     instructions.append(el("pre", `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
 wosctl --profile executor work show CONTRACT_UUID --for-agent
 wosctl --profile executor work finish CONTRACT_UUID`));
     if (entity.pending_review_case_id && pendingReviewVersion !== undefined) instructions.append(el("pre", `wosctl --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
 wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
 wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID`));
-    instructions.append(el("p", "Depois de uma resposta incerta, use work recover ou review recover com o profile original. Preserve a intenção e os rascunhos."));
+    instructions.append(el("p", copy.text.afterAnUncertainResponseUseWorkRecoverOrReviewRecoverWithThefd343e16));
     section.append(instructions);
   } catch (error) {
-    if (current()) section.append(el("p", `Não foi possível consultar o estado assinado: ${error.message}`, "contract-notice"));
+    if (current()) section.append(el("p", `Could not load signed state: ${error.message}`, "contract-notice"));
   }
 }

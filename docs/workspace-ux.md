@@ -1,44 +1,17 @@
-# Workspace humano do WOS
+# Human workspace
 
-A interface oficial em `/app/` organiza a colaboração em torno de um resultado. Usa o mesmo estado persistido e os mesmos comandos que HTTP/MCP. A revisão de 7 de outubro de 2026 segue as referências enviadas pelo proprietário: Jira para navegação e fluxo de trabalho; Guild.ai para linguagem visual. [Galeria de telas reais](ui-workspace/README.md).
+The bundled workspace is served at `/app/`. Exchange an access credential for a secure session, choose a workspace and open an Outcome. Official interface copy is English; stored user content and wire identifiers retain their original values. Dates explicitly use UTC.
 
-## Estrutura
+An Outcome describes the intended result. Objectives describe intermediate conditions; Tasks describe work. Completing a Task does not achieve an Objective or Outcome. Evidence supports an assessment; registering evidence does not certify success. A waived criterion is not verified. Issues and their blocking impacts have separate lifecycles. Roadmaps reference work and retain immutable publication history.
 
-- **Barra lateral:** contexto autorizado, busca/filtro/paginação de resultados, seleção persistente durante a navegação e administração. No celular, “Trocar resultado” expande essa navegação. A seleção é da sessão de navegação; não se promete restaurá-la após reload.
-- **Resumo:** resultado esperado, cinco métricas com denominadores, distribuição do trabalho, objetivos/evidências/planos ativos, trabalho em foco e atenção. Os números vêm do snapshot do servidor, incluindo itens fora da página atual. Não são analytics históricos ou uma inferência de execução de agentes.
-- **Lista:** trabalho, objetivos, disponibilidade, problemas/impedimentos, decisões, evidências, artefatos, planos, contestações, histórico e relações. Cada item abre seu detalhe; as coleções maiores mantêm os cursores da API.
-- **Quadro:** Planejado reúne backlog/aguardo/programação; Pronto para execução, Em execução, Impedimentos e Concluído mostram as projeções operacionais do servidor. Cancelados têm coluna própria quando presentes. Um item impedido em execução aparece com sua projeção de impedimento, preservando o lifecycle no detalhe.
-- **Detalhe lateral:** descrição, estado, prioridade, referências relacionadas, autoria da reserva, critérios, conclusões e revisões do plano em formato legível. Os dados técnicos permanecem recolhidos para auditoria. Ações rápidas são contextualizadas pelo tipo/estado, mas o servidor continua validando autorização e todas as precondições.
-- **Formulários:** nomes em português, itens e evidências por nome, contexto explícito, versões/reservas preenchidas a partir da leitura e proveniência adicional recolhida. Critérios abertos pelo detalhe preenchem a identidade/revisão; não é necessário copiar UUIDs. A ação de confirmar permanece visível enquanto os campos rolam.
+## Current acceptance and remaining implementation
 
-## Participar com agentes
+The UX/DX program is tracked in [ROADMAP](../ROADMAP.md#human-workspace-uxdx-program--2026-10-09) and [the experience contract](ux/experience-contract.md). The authorized reference query supports eleven types, bounded metadata, exact-ID resolution and revision-bound pagination in Memory, SQLite and PostgreSQL. A stale cursor requires a fresh search; access is checked again on every request.
 
-1. Selecione o contexto e o resultado. Consulte o resumo e o plano.
-2. Abra um item na lista ou no quadro. Reserve trabalho por comando antes de executar; a reserva possui duração e fencing.
-3. Agentes podem continuar via MCP/HTTP. Atualize a interface para obter seu trabalho, provas e histórico. Não há uma sessão de conversa escondida como fonte do estado.
-4. Registre evidências e avalie o critério pelo detalhe do seu proprietário. A evidência sozinha não comprova o critério.
-5. Certifique Objective/Outcome explicitamente após cumprir suas obrigações. Concluir trabalho não certifica o resultado. Consulte contestações quando houver fatos posteriores.
+The English migration precedes the dedicated forms, searchable reference picker, six-area navigation and visual roadmap editor. Existing local collection filters operate on loaded pages until the new server-search view is introduced. Translation alone does not resolve those interaction problems. Historical October 7 screenshots document the earlier interface, not acceptance of this program.
 
-O quadro é uma visualização. Não oferece arrastar cartões para gravar estados derivados ou ignorar reservas/provas. A mudança de estado passa por uma ação humana explícita e pelo Application service.
+## Verification
 
-## Busca, paginação e concorrência
+Browser tests run the actual embedded service and preserve Portuguese fixture titles as user content. Pure presentation checks verify English fallbacks, official terminology and UTC formatting. Reference tests exercise 1,001 Tasks and Evidence per store, duplicate names, scoped pagination and credential revocation. Hosted CI is available and verified for the foundation and reference-query pull requests.
 
-Busca de resultados usa o contrato de descoberta do servidor. Pesquisa/prioridade de itens filtra os registros **já carregados** na visualização; o aviso explicita esse limite. “Carregar mais” continua a página na lista ou na coluna do quadro. As contagens continuam sendo do snapshot completo. Não se promete busca global em itens omitidos.
-
-Os cursores permanecem vinculados à revisão/tempo/escopo do servidor. Se o snapshot mudar, atualize a leitura; não se altera silenciosamente a intenção nem a versão esperada para fazer uma mutação passar. Recibos idempotentes continuam reconciliando respostas incertas.
-
-Durante a troca de resultado, os controles anteriores ficam ocultos. Respostas atrasadas de outra seleção são descartadas. A revisão do detalhe raíz e do snapshot também deve coincidir para publicar a leitura na interface. A interface é atualizada manualmente; não se anuncia sincronização push ou presença em tempo real.
-
-## Verificação de 7 de outubro de 2026
-
-Go 1.27.1, Node 24.19.0, Playwright 1.62.1, Chromium 151.0.7922.173; Linux amd64. Três jornadas Playwright passaram no código final.
-
-- Humano planeja/replaneja, agente executa via MCP, humano avalia e certifica; outro navegador retoma após restart.
-- Humano registra evidência, resolve Issue/Blocker explicitamente, reconcilia conflito, contesta sem reabrir implicitamente, arquiva/retoma; teclado/foco/campos e viewport móvel.
-- Workspace com 32 WorkItems: resumo/denominadores, quadro e lista paginados, pesquisa/prioridade, reserva real pelo formulário, publicação de plano, prova por nome, referências do impedimento, histórico legível, cancelamento distinto de conclusão, resposta atrasada entre Outcomes e viewport de 390 px.
-
-`go test ./packages/wos-api/... ./tests/boundary` passou com PostgreSQL real configurado, além de `go vet ./packages/wos-api/...`, build, sintaxe dos módulos JavaScript e diff sem erros. A revisão é de apresentação e não altera Domain, contratos, migrações ou dependências. Não se repete o total de 437 testes da entrega anterior como se fosse uma nova execução completa.
-
-Logs: `docs/audit/workspace-2026-10-07-*`. GitHub Actions não iniciou os jobs do PR #15 por cobrança/limite da conta (anotação explícita; nenhuma etapa executada). A validação local não representa CI hospedado verde. Regularize a conta e reexecute os workflows.
-
-Não se certifica WCAG integral por estas jornadas. A interface não inclui workflows customizados, planner/runtime de agentes, analytics de produção, calendário editável ou arraste irrestrito de estados.
+Representative-user usability and manual screen-reader validation remain pending by owner decision. Automated checks do not establish a comprehension rate or WCAG certification.

@@ -1,93 +1,87 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>WOS · Espaço de trabalho</title>
+    <title data-copy="wosWorkspace">WOS · Workspace</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="topbar">
-      <a href="/app/" class="brand" aria-label="WOS · início"
+      <a href="/app/" class="brand" aria-label="WOS · home" data-copy-aria-label="wosHome"
         ><span class="brand-mark">w</span>WOS<span class="brand-caption"
-          >Workspace</span
+           data-copy="workspace">Workspace</span
         ></a
       ><span class="topbar-note"
-        >Humanos e agentes. Um estado compartilhado.</span
+         data-copy="humansAndAgentsOneSharedState">Humans and agents. One shared state.</span
       >
       <div class="topbar-right">
-        <span class="connection"><i></i>Estado persistido</span
-        ><button id="logout" class="quiet">Encerrar sessão</button>
+        <span class="connection"><i></i>Persisted state</span
+        ><button id="logout" class="quiet" data-copy="signOut">Sign out</button>
       </div>
     </header>
     <main>
       <section id="connect" class="login-layout">
         <div class="login-story">
           <p class="eyebrow">WORK OUTCOME SYSTEM</p>
-          <h1>Grandes resultados.<br />Trabalho em conjunto.</h1>
-          <p>
-            Planeje com clareza. Colabore com agentes.<br />Conclua com
-            evidências.
-          </p>
+          <h1 data-copy="meaningfulOutcomes">Meaningful outcomes.<br />Work together.</h1>
+          <p data-copy="planClearlyCollaborateWithAgents">Plan clearly. Collaborate with agents.<br />Verify with evidence.</p>
           <div class="login-cards">
             <div>
-              <span class="badge orange">01 · Planejar</span
-              ><strong>Um resultado que importa</strong
-              ><small>Objetivos, critérios e um plano claro.</small>
+              <span class="badge orange" data-copy="01Plan">01 · Plan</span
+              ><strong data-copy="anOutcomeThatMatters">An outcome that matters</strong
+              ><small data-copy="objectivesCriteriaAndAClearPlan">Objectives, criteria, and a clear plan.</small>
             </div>
             <div>
-              <span class="badge green">02 · Colaborar</span
-              ><strong>Cada entrega tem contexto</strong
-              ><small>Trabalho, reservas e decisões compartilhadas.</small>
+              <span class="badge green">02 · Collaborate</span
+              ><strong data-copy="everyTaskHasContext">Every task has context</strong
+              ><small data-copy="tasksReservationsAndSharedDecisions">Tasks, reservations, and shared decisions.</small>
             </div>
             <div>
-              <span class="badge violet">03 · Verificar</span
-              ><strong>Provas antes de conclusões</strong
-              ><small>Um histórico que continua com você.</small>
+              <span class="badge violet">03 · Verify</span
+              ><strong data-copy="evidenceBeforeConclusions">Evidence before conclusions</strong
+              ><small data-copy="aHistoryYouCanReturnTo">A history you can return to.</small>
             </div>
           </div>
         </div>
         <div class="login-panel panel">
-          <p class="eyebrow">SEU ESPAÇO DE TRABALHO</p>
-          <h2>Vamos continuar?</h2>
-          <p>Acesse os resultados do seu contexto.</p>
+          <p class="eyebrow">YOUR WORKSPACE</p>
+          <h2 data-copy="welcomeBack">Welcome back</h2>
+          <p data-copy="accessOutcomesInYourWorkspace">Access outcomes in your workspace.</p>
           <form id="login">
             <label
-              >Credencial de acesso<input
+              >Access credential<input
                 id="token"
                 type="password"
                 autocomplete="off"
                 required
                 minlength="32"
-                placeholder="Sua credencial de acesso" /></label
-            ><button>Entrar</button>
+                placeholder="Your access credential" data-copy-placeholder="yourAccessCredential" /></label
+            ><button data-copy="signIn">Sign in</button>
           </form>
           <details>
-            <summary>Servidor local</summary>
+            <summary>Local development server</summary>
             <form id="local">
               <label
                 >Namespace<input
                   id="local-ns"
                   required
-                  placeholder="UUIDv7 do contexto de trabalho" /></label
-              ><button>Abrir contexto local</button>
+                  placeholder="Local workspace UUIDv7" data-copy-placeholder="localWorkspaceUuidv7" /></label
+              ><button data-copy="openLocalWorkspace">Open local workspace</button>
             </form>
           </details>
-          <p class="login-footnote">
-            Sua credencial é trocada por uma sessão segura.<br />Ela não fica
-            armazenada no navegador.
-          </p>
+          <p class="login-footnote" data-copy="yourCredentialIsExchangedForASecureSession">Your credential is exchanged for a secure session.<br />It is not stored in the browser.</p>
         </div>
       </section>
       <section id="workspace" hidden>
         <aside
           class="sidebar navigation-collapsed"
-          aria-label="Navegação do espaço de trabalho"
+          aria-label="Workspace navigation" data-copy-aria-label="workspaceNavigation"
         >
           <div class="workspace-switch">
             <span class="workspace-symbol">W</span
-            ><label>Contexto de trabalho<select id="namespace"></select></label>
+            ><label data-copy="workspace">Workspace<select id="namespace"></select></label>
           </div>
           <div class="sidebar-heading">
             <button
@@ -95,83 +89,73 @@
               class="quiet mobile-only"
               aria-controls="outcomes"
               aria-expanded="false"
-            >
-              Trocar resultado</button
-            ><span class="desktop-only">RESULTADOS</span
+            >Switch outcome</button
+            ><span class="desktop-only" data-copy="outcomes">OUTCOMES</span
             ><button
               id="create-outcome"
               class="icon-button"
-              aria-label="Criar resultado"
-              title="Criar resultado"
+              aria-label="New outcome" data-copy-aria-label="newOutcome"
+              title="New outcome" data-copy-title="newOutcome"
             >
               +
             </button>
           </div>
           <form id="search">
             <label class="sr"
-              >Buscar resultados<input
+              >Search outcomes<input
                 id="text"
                 type="search"
-                placeholder="Buscar resultados"
+                placeholder="Search outcomes" data-copy-placeholder="searchOutcomes"
             /></label>
             <details class="search-filters">
-              <summary>Filtrar resultados</summary>
+              <summary>Filter outcomes</summary>
               <label
-                >Estado<select id="lifecycle">
-                  <option value="">Todos</option>
-                  <option value="draft">Rascunho</option>
-                  <option value="active">Ativo</option>
-                  <option value="achieved">Alcançado</option>
-                  <option value="failed">Falhou</option>
-                  <option value="abandoned">Abandonado</option>
+                 data-copy="lifecycle">Lifecycle<select id="lifecycle">
+                  <option value="" data-copy="all">All</option>
+                  <option value="draft" data-copy="draft">Draft</option>
+                  <option value="active" data-copy="active">Active</option>
+                  <option value="achieved" data-copy="achievedf6c90c">Achieved</option>
+                  <option value="failed" data-copy="failed">Failed</option>
+                  <option value="abandoned" data-copy="abandoned">Abandoned</option>
                 </select></label
               ><label class="check-label"
-                ><input id="archived" type="checkbox" /> Incluir
-                arquivados</label
+                ><input id="archived" type="checkbox" / data-copy="includeArchived">Include archived</label
               >
             </details>
-            <button class="quiet search-submit">Buscar</button>
+            <button class="quiet search-submit" data-copy="search">Search</button>
           </form>
           <div id="outcomes" class="outcome-navigation"></div>
-          <button id="more-outcomes" class="quiet" hidden>
-            Mais resultados
-          </button>
+          <button id="more-outcomes" class="quiet" hidden data-copy="moreOutcomes">More outcomes</button>
           <div class="sidebar-bottom">
-            <button id="administration" class="quiet">
-              Administrar contexto</button
+            <button id="administration" class="quiet">Workspace settings</button
             ><span class="sidebar-caption"
-              >Planejar · executar · comprovar</span
+               data-copy="planExecuteVerify">Plan · execute · verify</span
             >
           </div>
         </aside>
         <article id="main-content" tabindex="-1" class="workspace-main">
           <div id="notice" role="status" aria-live="polite"></div>
           <details id="signed-protocol-info" class="signed-protocol-panel" hidden>
-            <summary id="signed-protocol-label">Contratos assinados</summary>
+            <summary id="signed-protocol-label">Signed contracts</summary>
             <div id="signed-protocol-content" class="signed-protocol-grid"></div>
           </details>
-          <div id="workspace-loading" class="empty" role="status" hidden>
-            Carregando resultado…
-          </div>
+          <div id="workspace-loading" class="empty" role="status" hidden data-copy="loadingOutcome">Loading outcome…</div>
           <div id="empty" class="empty">
             <span class="empty-symbol">↗</span>
-            <p class="eyebrow">SEU PRÓXIMO RESULTADO</p>
-            <h2>Escolha um resultado</h2>
-            <p>
-              Um lugar para conectar objetivos, trabalho e evidências.<br />Abra
-              um resultado na lateral ou crie o primeiro.
-            </p>
-            <button id="empty-create">Criar seu primeiro resultado</button>
+            <p class="eyebrow" data-copy="yourNextOutcome">YOUR NEXT OUTCOME</p>
+            <h2 data-copy="chooseAnOutcome">Choose an outcome</h2>
+            <p data-copy="connectObjectivesTasksAndEvidenceInOnePlace">Connect objectives, tasks, and evidence in one place.<br />Open an outcome in the sidebar or create your first.</p>
+            <button id="empty-create" data-copy="createYourFirstOutcome">Create your first outcome</button>
           </div>
           <div id="outcome" hidden>
             <div class="breadcrumbs">
-              <span id="context-name">Espaço de trabalho</span><span>/</span
-              ><span>Resultados</span><span>/</span
+              <span id="context-name" data-copy="workspace">Workspace</span><span>/</span
+              ><span data-copy="outcomes912d8e">Outcomes</span><span>/</span
               ><span id="outcome-key"></span>
             </div>
             <div class="outcome-heading">
               <div class="outcome-heading-text">
-                <p class="eyebrow">RESULTADO COMPARTILHADO</p>
+                <p class="eyebrow" data-copy="sharedOutcome">SHARED OUTCOME</p>
                 <h1 id="title"></h1>
                 <div class="outcome-meta">
                   <span id="state" class="badge"></span
@@ -179,17 +163,15 @@
                 </div>
               </div>
               <div class="heading-actions">
-                <button id="refresh" class="quiet" title="Atualizar estado">
-                  Atualizar</button
-                ><button id="view-outcome" class="quiet">Rever critérios</button
-                ><button id="actions">Registrar alteração</button>
+                <button id="refresh" class="quiet" title="Refresh state" data-copy-title="refreshState">Refresh</button
+                ><button id="view-outcome" class="quiet" data-copy="reviewCriteria">Review criteria</button
+                ><button id="actions" data-copy="chooseAnAction">Choose an action</button>
               </div>
             </div>
-            <nav id="view-tabs" class="view-tabs" aria-label="Visualização">
-              <button data-view="summary" class="selected" aria-pressed="true">
-                Resumo</button
-              ><button data-view="list" aria-pressed="false">Lista</button
-              ><button data-view="board" aria-pressed="false">Quadro</button>
+            <nav id="view-tabs" class="view-tabs" aria-label="View" data-copy-aria-label="view">
+              <button data-view="summary" class="selected" aria-pressed="true">Overview</button
+              ><button data-view="list" aria-pressed="false" data-copy="list">List</button
+              ><button data-view="board" aria-pressed="false" data-copy="board">Board</button>
             </nav>
             <section id="summary-view">
               <div id="metrics" class="metrics"></div>
@@ -197,26 +179,26 @@
             </section>
             <section id="items-view">
               <div class="items-toolbar">
-                <nav id="tabs" aria-label="Itens do resultado"></nav>
+                <nav id="tabs" aria-label="Outcome items" data-copy-aria-label="outcomeItems"></nav>
                 <div class="item-filters">
                   <label class="search-label"
-                    >Pesquisar itens<input
+                    >Search items<input
                       id="item-search"
                       type="search"
-                      placeholder="Pesquisar nesta visualização" /></label
+                      placeholder="Search this view" data-copy-placeholder="searchThisView" /></label
                   ><label
-                    ><span id="priority-filter-label">Prioridade</span
+                    ><span id="priority-filter-label" data-copy="priority">Priority</span
                     ><select
                       id="item-priority"
                       aria-labelledby="priority-filter-label"
                     >
-                      <option value="">Todas</option>
-                      <option value="critical">Crítica</option>
-                      <option value="high">Alta</option>
-                      <option value="normal">Normal</option>
-                      <option value="low">Baixa</option>
+                      <option value="">All</option>
+                      <option value="critical" data-copy="critical">Critical</option>
+                      <option value="high" data-copy="high">High</option>
+                      <option value="normal" data-copy="normal">Normal</option>
+                      <option value="low" data-copy="low">Low</option>
                     </select></label
-                  ><button id="add-item" class="quiet">+ Criar trabalho</button>
+                  ><button id="add-item" class="quiet" data-copy="newTask">+ New task</button>
                 </div>
               </div>
               <section id="content" class="content-surface"></section>
@@ -229,27 +211,25 @@
       <form id="command-form">
         <div class="dialog-heading">
           <div>
-            <p class="eyebrow">REGISTRAR NO ESTADO COMPARTILHADO</p>
-            <h2 id="command-title">Registrar alteração</h2>
+            <p class="eyebrow" data-copy="updateSharedState">UPDATE SHARED STATE</p>
+            <h2 id="command-title" data-copy="chooseAnAction">Choose an action</h2>
           </div>
           <button
             id="close-command"
             type="button"
             class="icon-button"
-            aria-label="Fechar"
+            aria-label="Close" data-copy-aria-label="close"
           >
             ×
           </button>
         </div>
-        <label>Ação<select id="command-select"></select></label>
-        <p id="command-help">Revise as informações antes de registrar.</p>
+        <label data-copy="action">Action<select id="command-select"></select></label>
+        <p id="command-help" data-copy="reviewTheInformationBeforeSaving">Review the information before saving.</p>
         <div id="fields"></div>
         <div id="command-error" role="alert"></div>
         <footer>
-          <button id="submit-command">Registrar</button
-          ><button id="retry-command" type="button" class="quiet" hidden>
-            Repetir a mesma tentativa
-          </button>
+          <button id="submit-command">Record</button
+          ><button id="retry-command" type="button" class="quiet" hidden data-copy="retryTheSameIntent">Retry the same intent</button>
         </footer>
       </form>
     </dialog>
@@ -263,56 +243,51 @@
           <p id="detail-kind" class="eyebrow"></p>
           <h2 id="detail-title"></h2>
         </div>
-        <button id="close-detail" class="icon-button" aria-label="Fechar">
+        <button id="close-detail" class="icon-button" aria-label="Close" data-copy-aria-label="close">
           ×
         </button>
       </div>
       <div id="detail-content"></div>
       <footer id="detail-actions">
-        <button id="entity-actions">Alterar este item</button>
+        <button id="entity-actions">Item actions</button>
       </footer>
     </dialog>
     <dialog id="admin-dialog" aria-labelledby="admin-title">
       <form id="admin-form">
         <div class="dialog-heading">
-          <h2 id="admin-title">Administrar contexto</h2>
+          <h2 id="admin-title">Workspace settings</h2>
           <button
             id="close-admin"
             type="button"
             class="icon-button"
-            aria-label="Fechar"
+            aria-label="Close" data-copy-aria-label="close"
           >
             ×
           </button>
         </div>
         <p id="admin-version"></p>
         <label
-          >Ação<select id="admin-operation">
-            <option value="set_grant">Definir permissões</option>
-            <option value="issue_credential">Emitir credencial</option>
-            <option value="revoke_credential">Revogar credencial</option>
-            <option value="create_namespace">Criar contexto</option>
+           data-copy="action">Action<select id="admin-operation">
+            <option value="set_grant" data-copy="setPermissions">Set permissions</option>
+            <option value="issue_credential" data-copy="issueCredential">Issue credential</option>
+            <option value="revoke_credential" data-copy="revokeCredential">Revoke credential</option>
+            <option value="create_namespace" data-copy="createWorkspace">Create workspace</option>
           </select></label
         >
         <div id="admin-fields"></div>
         <p id="admin-error" role="alert"></p>
         <div id="admin-secret" hidden>
-          <p>
-            Guarde a credencial agora. O servidor não poderá mostrá-la
-            novamente.
-          </p>
+          <p>Save the credential now. The server cannot show it again.</p>
           <textarea
             id="admin-token"
             readonly
-            aria-label="Credencial emitida"
+            aria-label="Issued credential" data-copy-aria-label="issuedCredential"
           ></textarea>
         </div>
-        <button id="submit-admin">Registrar</button
-        ><button id="retry-admin" type="button" class="quiet" hidden>
-          Repetir a mesma tentativa
-        </button>
+        <button id="submit-admin" data-copy="record">Record</button
+        ><button id="retry-admin" type="button" class="quiet" hidden data-copy="retryTheSameIntent">Retry the same intent</button>
         <details>
-          <summary>Permissões e histórico</summary>
+          <summary>Permissions and history</summary>
           <div id="admin-snapshot"></div>
         </details>
       </form>
