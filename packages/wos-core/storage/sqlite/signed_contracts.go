@@ -33,7 +33,7 @@ func signedRows[T any](rows *sql.Rows, validate func(T) error) ([]T, error) {
 		var raw string
 		var v T
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signed state", err)
 		}
 		if err := json.Unmarshal([]byte(raw), &v); err != nil {
 			return nil, err
@@ -43,7 +43,7 @@ func signedRows[T any](rows *sql.Rows, validate func(T) error) ([]T, error) {
 		}
 		out = append(out, v)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signed state", rows.Err())
 }
 func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f ports.ReviewFilter) ([]d.ReviewCase, error) {
 	if f.Limit < 1 || f.Limit > 101 {
@@ -51,7 +51,7 @@ func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f po
 	}
 	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_cases WHERE namespace_id=? AND outcome_id=? AND (?=0 OR status IN ('pending','in_review')) AND (?='' OR work_item_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), boolInt(f.OpenOnly), f.WorkItemID.String(), f.WorkItemID.String(), f.Status, f.Status, f.After.String(), f.Limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("query signed state", err)
 	}
 	return signedRows(rows, func(c d.ReviewCase) error {
 		if c.Scope != scope {
@@ -67,7 +67,7 @@ func (r signedContractRepository) OpenCase(ctx context.Context, scope d.Scope, w
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("read open signed case", err)
 	}
 	parsed, err := d.ParseID(id)
 	if err != nil {
@@ -135,7 +135,7 @@ func (r signedContractRepository) ReviewContracts(ctx context.Context, scope d.S
 	}
 	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, f.Status, f.Status, f.After.String(), f.Limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("query signed state", err)
 	}
 	return signedRows(rows, func(c d.ReviewContract) error {
 		if c.Scope != scope {
@@ -203,7 +203,7 @@ func (r signedContractRepository) Facts(ctx context.Context, scope d.Scope, cont
 	}
 	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signed_protocol_facts WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND (?='' OR kind=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), kind, kind, after.String(), limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("query signed state", err)
 	}
 	return signedRows(rows, func(f d.SignedFact) error {
 		if f.Scope != scope || f.ContractID != contract {
@@ -257,8 +257,8 @@ func (r signedContractRepository) Counts(ctx context.Context, ns d.ID, principal
 	var c ports.SignedActiveCounts
 	err := r.u.tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(CASE WHEN holder_principal_id=? THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN credential_id=? THEN 1 ELSE 0 END),0),COUNT(*) FROM signed_work_contracts WHERE namespace_id=? AND status='active' AND expires_at>?`, principal, credential.String(), ns.String(), encodeTime(now)).Scan(&c.PrincipalWork, &c.CredentialWork, &c.NamespaceWork)
 	if err != nil {
-		return c, err
+		return c, mapSQLError("count active signed authority", err)
 	}
 	err = r.u.tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(CASE WHEN holder_principal_id=? THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN credential_id=? THEN 1 ELSE 0 END),0),COUNT(*) FROM work_review_contracts WHERE namespace_id=? AND status='active' AND expires_at>?`, principal, credential.String(), ns.String(), encodeTime(now)).Scan(&c.PrincipalReview, &c.CredentialReview, &c.NamespaceReview)
-	return c, err
+	return c, mapSQLError("count active signed authority", err)
 }

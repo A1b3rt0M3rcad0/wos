@@ -1207,6 +1207,28 @@ databases. The initial correction-stage fixture used the already revoked
 original executor to read metadata; it now uses the current authorized
 correction executor, retaining denial assertions. Hosted checks remain pending.
 
+P12 signed workload matrix covers 1/4 Outcomes, 2/8 concurrent consumers and
+0/16 fully accepted historical Tasks per Outcome, with independent attestation
+review and exact original approval replay. All 16 SQLite/PostgreSQL measurements
+passed locally; issuance remained bounded. DONE is absent before review and
+exactly one completion event/outbox delivery is committed after approval/replay.
+The initial real PostgreSQL workload failed on unclassified serialization errors
+in signed quota/read queries. Storage SQL boundaries now map those failures to
+transaction_conflict; three repeated multi-Outcome race runs passed (67.870s)
+without replacing CID/envelopes or relaxing guards. The final full matrix passed
+in SQLite/PostgreSQL (PostgreSQL 98.285s, non-race measurements). Updated query
+error boundaries require fresh source verification. The report includes honest
+SQL-count/data-density limitations; no production latency/cost SLA is claimed.
+
+The actual managed Codex pilot used fresh executor and reviewer task histories,
+distinct profiles/Principals and the installed npm skill. Four actual Node tests,
+25 independent whitespace checks and five invalid inputs passed; required
+criteria were independently met, Task is DONE and both contract directories empty.
+Go binary VCS metadata records separate exact development service/client sources,
+not final coordinated release evidence. No OS privilege isolation or provider
+token/billing savings is claimed. T01–T96 traceability maps tests/resources and
+explicit assertion-audit/experiment gaps without treating test names as scenario
+acceptance. CI now requires all 16 signed measurements on its committed source.
 P13 separates coordinated verification from registry publication. Manifest
 integration runs all four same-source workflows and uploads hash-checked assets,
 actual native receipts and package acceptance. Real registry publication requires
@@ -1227,6 +1249,12 @@ and issuer authority deadlines use database time, renewal remains current,
 takeover preserves expiry and increases fencing, and old authority is denied.
 This is an actual shared-database test, not a claim of separately deployed hosts.
 Existing unsigned clock tests remain intact; final source/platform gates apply.
+The first hosted signed-load gate exposed generated-source drift: signedgen
+regenerated v1-based signed work storage without the new SQL error boundaries.
+The generator now preserves the signed-only mapping; v1 source is unchanged.
+A Go 1.27.2 targeted PostgreSQL clean-restore check hit its 40-second pg_dump
+timeout on the long-lived test database catalog; rerun uses a new owned disposable
+database instead of changing the timeout or deleting existing fixture data.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
@@ -1238,3 +1266,13 @@ into final assertions; both fixture errors are corrected without relaxing strict
 schema/cleanup checks. Five progressive guides and the human UI now show the
 required correction acknowledgement. This automated correction scenario is
 distinct from the managed Codex pilot, which accepted its initial delivery.
+
+Signed SQL boundary regression rerun passed with Go1.27.2 and a new owned clean
+PostgreSQL database (SQLite 17.945s, PostgreSQL 12.789s), resolving catalog-only
+pg_dump timeout diagnosis without changing restore deadlines or existing data.
+P12 T90/T91 signed-load acceptance also checks one completion worker recovery
+row per backend: leave the committed signal leased without acknowledgement,
+reopen storage connections, reclaim the exact body/ID after expiry with increased
+fencing, reject the old acknowledgement and finish without a duplicate signal.
+Both real SQL race cases pass (SQLite 5.441s, PostgreSQL 4.380s). This models
+worker absence and storage restart; it does not claim an OS kill experiment.
