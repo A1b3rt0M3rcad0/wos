@@ -1215,6 +1215,13 @@ not final coordinated release evidence. No OS privilege isolation or provider
 token/billing savings is claimed. T01–T96 traceability maps tests/resources and
 explicit assertion-audit/experiment gaps without treating test names as scenario
 acceptance. CI now requires all 16 signed measurements on its committed source.
+P13 separates coordinated verification from registry publication. Manifest
+integration runs all four same-source workflows and uploads hash-checked assets,
+actual native receipts and package acceptance. Real registry publication requires
+explicit workflow_dispatch publish=true, so finishing the plan does not silently
+publish a version. Registry credentials and final source acceptance remain separate.
+Existing hosted Linux/Windows execution replaces stale billing-only claims in
+release instructions; no registry publication is claimed.
 Native keyring gate rerun passed all five hosted checks on PR64 head 6a26bcc.
 The downloaded Linux/Windows receipts explicitly record native_keyring_executed,
 actual passing counts and individual skips. PR62 historical upgrade and PR63
