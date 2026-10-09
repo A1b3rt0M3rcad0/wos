@@ -105,3 +105,24 @@ Agent show reports a pending lease operation without expanding its technical blo
 Signed Go SDK mutations accept the operation registry's bounded technical result
 size (1 MiB plus 64 KiB transport overhead); ordinary v1 limits remain 256 KiB.
 This changes neither signature validation nor agent context budgets.
+
+### Interrupted local publication
+
+Initial v2 document creation stages and fsyncs complete YAML, then publishes it
+exclusively; existing destinations are never overwritten. Accepted contract
+materialization uses a temporary filename bound to the original pending ID. It
+repairs only the exact constructor prefix of that accepted intention, or retains
+a complete verified staged draft. Unknown/different contents remain untouched
+for explicit reconciliation. Ordinary reads can remove a recognized temporary
+alias only when its identity proves exactly two links inside the confined root;
+the destination retains all current contents. Additional/outside links, symlinks,
+reparse points and ambiguous `.yaml`/`.yml` destinations remain rejected.
+
+Technical staging entries are bounded and are not agent context or additional
+operational directories. Recovery tolerates process death after stage fsync,
+exclusive publication and staging unlink without a new acquisition. User edits
+and a destination renamed to `.yml` remain intact. General initial onboarding
+stages that never reached publication and unrelated replacement temporaries are
+preserved for diagnosis; they are not automatically attributed to accepted work.
+Cooperative stable locks plus observed content CAS protect replacement writes;
+profiles do not provide isolation against a hostile writer with the same OS user.

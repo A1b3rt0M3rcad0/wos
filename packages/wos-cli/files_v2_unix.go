@@ -8,16 +8,26 @@ import (
 	"syscall"
 )
 
-func validateRegularV2(file *os.File) error {
+func regularLinksV2(file *os.File) (uint64, error) {
 	info, e := file.Stat()
+	if e != nil {
+		return 0, e
+	}
+	if !info.Mode().IsRegular() {
+		return 0, fmt.Errorf("local v2 file must be regular")
+	}
+	stat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return 0, fmt.Errorf("file identity unavailable")
+	}
+	return uint64(stat.Nlink), nil
+}
+func validateRegularV2(file *os.File) error {
+	links, e := regularLinksV2(file)
 	if e != nil {
 		return e
 	}
-	if !info.Mode().IsRegular() {
-		return fmt.Errorf("local v2 file must be regular")
-	}
-	stat, ok := info.Sys().(*syscall.Stat_t)
-	if !ok || stat.Nlink != 1 {
+	if links != 1 {
 		return fmt.Errorf("hardlinks or unverifiable file identity are forbidden")
 	}
 	return nil

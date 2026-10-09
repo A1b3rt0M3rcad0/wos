@@ -7,19 +7,29 @@ import (
 	"unsafe"
 )
 
-func validateRegularV2(file *os.File) error {
+func regularLinksV2(file *os.File) (uint64, error) {
 	info, e := file.Stat()
 	if e != nil {
-		return e
+		return 0, e
 	}
 	if !info.Mode().IsRegular() {
-		return fmt.Errorf("local v2 file must be regular")
+		return 0, fmt.Errorf("local v2 file must be regular")
 	}
 	var handle windows.ByHandleFileInformation
 	if e = windows.GetFileInformationByHandle(windows.Handle(file.Fd()), &handle); e != nil {
+		return 0, e
+	}
+	if handle.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+		return 0, fmt.Errorf("reparse files are forbidden")
+	}
+	return uint64(handle.NumberOfLinks), nil
+}
+func validateRegularV2(file *os.File) error {
+	links, e := regularLinksV2(file)
+	if e != nil {
 		return e
 	}
-	if handle.NumberOfLinks != 1 || handle.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+	if links != 1 {
 		return fmt.Errorf("hardlinks/reparse files are forbidden")
 	}
 	return nil

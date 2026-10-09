@@ -10,8 +10,10 @@ import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type acquisitionAcceptedV2 struct {
@@ -121,13 +123,39 @@ func contractIDsV2(w *Workspace, profile string) ([]d.ID, error) {
 		return nil, e
 	}
 	defer dir.Close()
-	entries, e := dir.ReadDir(-1)
-	if e != nil {
+	entries, e := dir.ReadDir(112)
+	if e != nil && e != io.EOF {
 		return nil, e
+	}
+	if len(entries) >= 112 {
+		return nil, fmt.Errorf("contract directory scan bound reached; preserve files for reconciliation")
 	}
 	ids := []d.ID{}
 	seen := map[d.ID]bool{}
 	for _, entry := range entries {
+		if isContractStageV2(entry.Name()) {
+			stage := filepath.Join(path, entry.Name())
+			if _, _, e = w.readStageV2(stage, 1); e != nil {
+				if os.IsNotExist(e) {
+					continue
+				}
+				// A published two-alias pair is normalized by the ordinary
+				// confined reader before another batch item scans this folder.
+				base := strings.TrimSuffix(strings.Split(entry.Name(), ".materialize-")[0], ".yaml")
+				target, resolveError := w.DocumentPath(filepath.Join(path, base))
+				if resolveError != nil {
+					return nil, resolveError
+				}
+				if _, e = w.ReadV2(target); e != nil {
+					return nil, e
+				}
+				if _, _, e = w.readStageV2(stage, 1); e != nil && !os.IsNotExist(e) {
+					return nil, e
+				}
+			}
+			continue // technical stage is not execution material or agent context
+		}
+
 		extension := filepath.Ext(entry.Name())
 		id := d.ID(entry.Name()[:len(entry.Name())-len(extension)])
 		if (extension != ".yaml" && extension != ".yml") || entry.IsDir() || entry.Type()&os.ModeSymlink != 0 || id.Validate() != nil || seen[id] {
@@ -376,6 +404,9 @@ func recoverAcquisitionV2(ctx context.Context, w *Workspace, profile ProfileV2, 
 				return e
 			}
 			defer release()
+			if e = w.recoverContractStageV2(*current, id, intent.ID, *accepted.Contract); e != nil {
+				return e
+			}
 			path, e := w.DocumentPath(filepath.Join(".wos/profiles", current.Name, "contract", id.String()))
 			if e != nil {
 				return e
@@ -404,7 +435,7 @@ func recoverAcquisitionV2(ctx context.Context, w *Workspace, profile ProfileV2, 
 				if len(files) >= 100 {
 					return fmt.Errorf("local contract limit reached; accepted intention preserved")
 				}
-				if e = w.CreateV2(contractPathV2(current.Name, id), accepted.Contract); e != nil {
+				if e = w.createAcceptedContractV2(*current, id, intent.ID, *accepted.Contract); e != nil {
 					return e
 				}
 			} else {
