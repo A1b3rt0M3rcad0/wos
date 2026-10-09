@@ -1412,10 +1412,10 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | --- | --- | --- |
 | UX-FND-01 | 🚧 | Explicit 100-command inventory, copy inventory, glossary, journey contracts and repeatable datasets; human baseline not measured |
 | UX-LOC-01 | ✅ | Official en-US catalog, shell, typed labels/UTC dates and user-content preservation; four presentation checks and six real browser journeys passed |
-| UX-ACT-01 | ⬜ | Contextual action registry |
+| UX-ACT-01 | 🚧 | Explicit contextual registry and scoped permission hints; browser acceptance in progress |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
-| UX-CMP-01 | ⬜ | Accessible typed reference pickers |
-| UX-FRM-01–03 | ⬜ | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
+| UX-CMP-01 | 🚧 | Accessible typed reference pickers |
+| UX-FRM-01–03 | 🚧 | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
 | UX-NAV-01 | ⬜ | Six areas, deep URLs, async generation isolation |
 | UX-PLN-01 | ⬜ | Visual draft editor, immutable revision preview, explicit publish/activate |
 | UX-EVD-01 / UX-ISS-01 | ⬜ | Explicit assessments and independent issue/blocker flows |
@@ -1432,3 +1432,5 @@ UX-API-01 local acceptance: all three stores passed eleven reference types and 1
 UX-LOC-01 starts after the accepted foundation and authorized reference query contract. Dynamic official copy and static shell fallbacks bind to `en-US.js`; dates explicitly label UTC, wire/user content is unchanged, and free text is no longer formatted as an enum merely because its value matches one. The technical command picker remains pending UX-ACT-01 and is not claimed resolved by translation.
 
 UX-LOC-01 acceptance: six embedded-server browser journeys passed on 2026-10-09, including legacy leases, unsigned contracts, signed independent review, evidence contestation and mobile checks. Portuguese fixture/user titles are deliberately retained. Historical audit documents are exempt from official-copy translation.
+
+UX-ACT-01 API/registry slice: effective scoped permission hints exposed through HTTP/MCP, explicit presentation surfaces and permissions checked against all catalog operations, lifecycle/material/protocol/lease-holder guards tested. Common-client form/picker wiring remains under browser acceptance. PR #81 English migration integrated after all five hosted checks passed (merge `49e33f4`).

@@ -92,3 +92,8 @@ type AccessSnapshotRequest struct {
 type AccessSnapshotUnitOfWork interface {
 	AuthorizeAccessSnapshot(context.Context, AccessSnapshotRequest) error
 }
+
+// AllPermissions returns a fresh, bounded list of supported grant values.
+func AllPermissions() []Permission {
+	return []Permission{PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive}
+}

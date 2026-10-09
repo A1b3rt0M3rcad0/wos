@@ -122,6 +122,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/commands/{command_id}", h.getCommandReceipt)
 	h.mux.HandleFunc("GET "+h.prefix+"/commands", h.commandCatalog)
 	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
+	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/effective-permissions", h.effectivePermissions)
 	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
 
 	h.mux.HandleFunc("GET "+base+"/{outcome_id}/references", h.searchReferences)
