@@ -1835,3 +1835,15 @@ svg {
 .contract-progress h4, .contract-delivery h4 { margin: 0 0 10px; }
 .contract-notice { padding: 12px 16px; border-left: 3px solid #ff5a00; background: #fff4ed; }
 .contract-section small { display: block; margin: 8px 0; color: #696660; }
+
+
+.signed-protocol-panel { margin: 16px 0; border: 1px solid #e5ded5; border-left: 3px solid #fa5b16; border-radius: 10px; background: #fff; padding: 16px 20px; }
+.signed-protocol-panel > summary { font-weight: 600; cursor: pointer; }
+.signed-protocol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; padding-top: 20px; }
+.signed-identity-card h3 { margin-top: 0; font-size: 15px; }
+.signed-identity-card pre, .signed-next-step pre { white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #e5ded5; border-radius: 6px; padding: 12px; background: #faf9f6; font-size: 12px; }
+.signed-key { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.signed-key small, .signed-identity-card dd { overflow-wrap: anywhere; }
+.signed-review-card { margin: 16px 0; padding: 16px; background: #faf9f6; border: 1px solid #e5ded5; border-radius: 8px; }
+.signed-review-card h4 { margin-top: 0; }
+.signed-next-step { margin-top: 16px; }

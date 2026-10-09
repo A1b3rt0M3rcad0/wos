@@ -1095,3 +1095,18 @@ these are incremental source-specific proofs, not final-release certification.
 P10 historical dataset/old binary and P11 UI/P12/P13 remain required. P11 guide
 work proceeds against stable signed interfaces while those independent gates
 continue; no wave-completion claim is inferred from this merge.
+
+
+P11 signed UI projection work started: the workspace observes live Namespace
+protocol, shows a public issuer/credential/key/onboarding panel, and reads focal
+signed execution/review cases instead of routing signed Tasks through legacy
+contract queries. Pending review, acceptance versus quality and protected-profile
+next steps are explicit. Legacy execution/raw Task assessment actions and signed
+proof-bearing commands are excluded from browser forms; a fresh protocol read
+before mutation blocks a stale-form substitution. Parent planning/assessment
+remains separate. Browser fixtures use the actual protected CLI with separate executor/reviewer
+Principals, exact accepted material and both approved/changes_requested decisions.
+Corrections expose accepted findings on existing obligations; no unsigned browser
+mutation replaces review. All six browser journeys passed (30.1s), including
+legacy cutover and planning/assessment regression. Native onboarding remains
+explicit through profiles; runtime pilot and final source acceptance remain open.

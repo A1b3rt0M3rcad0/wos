@@ -26,6 +26,7 @@ jobs:
           go-version-file: go.mod
           cache: false
       - run: go build -o bin/wos ./packages/wos-api/cmd/wos
+      - run: go build -o bin/wosctl ./packages/wos-cli/cmd/wosctl
       - run: npm ci
         working-directory: tests/web
       - run: npx playwright install --with-deps chromium
