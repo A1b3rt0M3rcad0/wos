@@ -83,6 +83,8 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 	}
 	result.Operation = prefix + " " + o.args[1]
 	switch o.args[1] {
+	case "renew", "resume", "refresh", "keepalive":
+		return leaseCommandV2(ctx, w, profile, client, token, identity, o)
 	case "checkout":
 		if kind == "review" {
 			return checkoutReviewV2(ctx, w, profile, client, token, identity, o)
@@ -108,6 +110,25 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		items := []any{}
 		result.Data = map[string]any{"items": items}
 		for _, intent := range current.Local.PendingOperations {
+			isLease := leaseOperationV2(intent.Operation)
+			leaseKindMatches := isLease && ((kind == "execution" && (intent.Operation == "RenewSignedWorkContract" || intent.Operation == "ResumeSignedWorkContract")) || (kind == "review" && (intent.Operation == "RenewSignedReviewContract" || intent.Operation == "ResumeSignedReviewContract")))
+			if leaseKindMatches {
+				accepted, e := recoverLeaseV2(ctx, w, profile, client, token, intent)
+				if !accepted.CommandID.IsZero() {
+					result.Committed = true
+				}
+				item := map[string]any{"intention_id": intent.ID, "lease_materialized": e == nil}
+				if !accepted.CommandID.IsZero() {
+					item["command_id"] = accepted.CommandID
+				}
+				items = append(items, item)
+				result.Data = map[string]any{"items": items}
+				if e != nil {
+					result.RequiresAction = "preserve and reconcile original lease intention"
+					return result, e
+				}
+				continue
+			}
 			matches := intent.Operation == "AcquireSignedWorkContract" || intent.Operation == "AcquireNextSignedWorkContract"
 			if kind == "review" {
 				matches = intent.Operation == "AcquireSignedReviewContract" || intent.Operation == "AcquireNextSignedReviewContract"
@@ -171,15 +192,21 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		result.OutcomeID = scope.OutcomeID
 		// All frozen instructions/constraints/criteria are kept; proofs and history
 		// are harness-only. Showing a contract never renews or takes over execution.
+		pendingLease := false
+		for _, pending := range profile.Local.PendingOperations {
+			if pending.ContractID != nil && *pending.ContractID == id && leaseOperationV2(pending.Operation) {
+				pendingLease = true
+			}
+		}
 		if kind == "review" {
 			specification, e := reviewAgentSpecificationV2(profile, view)
 			if e != nil {
 				return result, e
 			}
-			result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": specification, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Review.Progress, "decision": file.Review.Decision, "pending_final_return": file.Local.Pending != nil}
+			result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": specification, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Review.Progress, "decision": file.Review.Decision, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
 			return result, nil
 		}
-		result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": view.WorkSpecification.Spec, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Execution.Progress, "completion_intent": file.Execution.CompletionIntent, "pending_final_return": file.Local.Pending != nil}
+		result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": view.WorkSpecification.Spec, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Execution.Progress, "completion_intent": file.Execution.CompletionIntent, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
 		return result, nil
 	default:
 		return result, usage("signed work operation is not implemented; preserve its contract")

@@ -52,6 +52,9 @@ func pendingIndexV2(profile *ProfileV2, intent PendingOperationV2) (int, error) 
 		if current.ID != intent.ID {
 			continue
 		}
+		if intent.ContractID != nil && (current.ContractID == nil || *current.ContractID != *intent.ContractID) {
+			return -1, fmt.Errorf("pending contract target changed")
+		}
 		if current.Operation != intent.Operation || current.Scope != intent.Scope || current.IdempotencyKey != intent.IdempotencyKey || current.Payload != intent.Payload || current.PayloadDigest != intent.PayloadDigest || current.RequestFingerprint != intent.RequestFingerprint {
 			return -1, fmt.Errorf("pending intention changed")
 		}
