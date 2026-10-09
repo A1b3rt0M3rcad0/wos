@@ -7004,6 +7004,38 @@
               "findings": {
                 "items": {
                   "additionalProperties": false,
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "criterion_id": {
+                          "type": "string"
+                        },
+                        "requirement_ref": {
+                          "enum": [
+                            "",
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "criterion_id"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "criterion_id": {
+                          "type": "null"
+                        },
+                        "requirement_ref": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "requirement_ref"
+                      ]
+                    }
+                  ],
                   "properties": {
                     "criterion_id": {
                       "anyOf": [
@@ -9408,6 +9440,38 @@
               "correction_findings": {
                 "items": {
                   "additionalProperties": false,
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "criterion_id": {
+                          "type": "string"
+                        },
+                        "requirement_ref": {
+                          "enum": [
+                            "",
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "criterion_id"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "criterion_id": {
+                          "type": "null"
+                        },
+                        "requirement_ref": {
+                          "minLength": 1,
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "requirement_ref"
+                      ]
+                    }
+                  ],
                   "properties": {
                     "criterion_id": {
                       "anyOf": [

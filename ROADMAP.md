@@ -905,17 +905,17 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
 | P01 | Codec implemented and locally verified | Public pure signing package, six payload purposes, typed bindings/counters, exact verified DTO, local mapping/proof and independent Python vector. Race signing/domain, vet and two 15-second fuzz campaigns passed; no runtime authorization claim. |
 | P02 | Implemented and tested | Principal-bound enrollment/rotation/revocation, credential policies and durable security receipts integrated with signed operations. |
-| P03 | Implemented incrementally; exhaustive acceptance remains P12 | Signed issuance/runtime trust and storage foundations integrated with subsequent delivery/review/cutover work; final-source gates remain open. |
-| P04 | Core implemented and locally verified; exhaustive acceptance remains P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
-| P05 | Core implemented and locally verified; exhaustive acceptance remains P06/P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
-| P06 | Implemented and locally verified; exhaustive matrix remains P12 | Exact signed schemas/counters, live Outcome scope filtering, public identity/enrollment, bounded focal proofs/material, unsigned guards and actual HTTP/MCP/SDK independent review journey. Full race/vet/restore and generator gates passed locally. |
-| P07 | Implemented; native protected-store gates executed | Approved protected profiles and exact workspace binding, Linux Secret Service and Windows Credential Manager actual hosted execution. Final combined-source receipts required. |
-| P08 | Implemented incrementally; exhaustive fault acceptance remains P12 | Stable locks, bounded execution/review batches, embedded intentions, verified atomic materialization, renew/resume/refresh and supervised keepalive integrated. Extended final-source process/file failure gates remain open. |
-| P09 | Implemented and tested | Protected signing/return/finish, original-CID recovery and verified receipt cleanup. Native death and real Linux ENOSPC fixtures; final combined-source gates pending. |
+| P03 | Implemented; essential release gates in P12 | Signed issuance/runtime trust and storage foundations integrated with subsequent delivery/review/cutover work; final-source gates are required for each release. |
+| P04 | Implemented; essential release gates in P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
+| P05 | Implemented; cross-transport and release gates in P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
+| P06 | Implemented; essential release gates in P12 | Exact signed schemas/counters, live Outcome scope filtering, public identity/enrollment, bounded focal proofs/material, unsigned guards and actual HTTP/MCP/SDK independent review journey. Full race/vet/restore and generator gates passed locally. |
+| P07 | Implemented; native protected-store gates executed | Approved protected profiles and exact workspace binding, Linux Secret Service and Windows Credential Manager actual hosted execution. Same-source native receipts are required for each release. |
+| P08 | Implemented; fault and release gates in P12 | Stable locks, bounded execution/review batches, embedded intentions, verified atomic materialization, renew/resume/refresh and supervised keepalive integrated. Process/file failure gates execute on the source selected for release. |
+| P09 | Implemented and tested | Protected signing/return/finish, original-CID recovery and verified receipt cleanup. Native death and real Linux ENOSPC fixtures; same-source release gates remain mandatory. |
 | P10 | Implemented and tested | Explicit cutover, bounded preserving workspace migration, actual v0.2 historical upgrade and old-writer readiness refusal, pending SQL restores, host issuer recovery and client pin approval. |
 | P11 | Implemented and tested | Five progressive guides, signed UI projections and guarded actions, exact correction acknowledgement and installed-binary independent correction journey. |
-| P12 | Combined-source acceptance candidate | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. A/B/C Codex functional controls ran with one task each and identical external checks; provider usage/cost and exhaustive assertion audit remain explicitly unclaimed. |
-| P13 | Coordinated 0.3.0 prepared | Version/manifest/OpenAPI/notices/upgrade/skills aligned; same-source verifier precedes explicit registry publication. |
+| P12 | Implemented; release-source acceptance is gated | Real SQL/race/restore, native platforms/keyrings, installed correction, bounded load/fuzz/faults and fresh-context Codex pilot. A/B/C Codex functional controls ran with one task each and identical external checks; provider usage/cost and exhaustive assertion audit remain explicitly unclaimed. |
+| P13 | Coordinated 0.3.0 implemented; publication explicit | Version/manifest/OpenAPI/notices/upgrade/skills aligned; same-source verifier precedes explicit registry publication. |
 
 R01–R24 / T01–T96 traceability is in plan section 20.13; acceptance is not inferred from fixture/file/commit counts. Native Windows, hosted Actions billing, registry identity and actual Woobe/model telemetry were unavailable in the previous phase and must be rechecked, not assumed fixed. No secret values are requested or persisted by this design wave.
 
@@ -1312,7 +1312,7 @@ compatibility, release manifest, changelog and upgrade notes together. Existing
 Namespace phases/unsigned history remain explicit compatibility paths, so this
 opt-in protocol addition uses a minor bump. This release is prepared, not
 registry-published or certified from parent-commit receipts. Remaining P12 PRs
-and all same-source final gates must integrate before operational acceptance.
+are integrated; all same-source final gates must pass for the source selected for release.
 
 The first 0.3 hosted source gate rejected stale OpenAPI release metadata (0.2).
 Preparation now validates and updates that generated metadata before writing
@@ -1372,3 +1372,34 @@ verified. Three native Linux race repetitions passed; platform CI exercises the
 same test on its actual host. Fixtures are explicit local signed receipt unit
 data; SQL/network/load proof remains in the independent real-service gates.
 Signed v2 has maintenance/return operations, not the legacy `sync` command.
+
+P12 managed correction review found a second malformed-draft trap: one finding
+contained both criterion_id and requirement_ref. Shared Domain structural
+validation now rejects missing/ambiguous obligations before local signing or
+network preflight; generated editable schemas and progressive skill guides
+expose the exclusive choice. Race regression cases prove original profile and
+contract bytes remain unchanged. A previously frozen rejected experimental
+return stays preserved and is not relabeled as accepted.
+A subsequent controlled non-approval attempt correctly failed the server guard
+because it included criterion assessments. Editable review parsing now rejects
+that combination before freezing; the progressive guides explicitly require
+findings/reason for non-approval and assessments only for approval. The original
+rejected requests remain preserved, with no fabricated receipt or acceptance.
+The final managed correction review uncovered an immutable-source prerequisite:
+complementary reviewer records need an existing delivered artifact version or
+checksum. A commit mentioned only in evidence does not satisfy it. The CLI now
+shares the server's source-binding guard before network/signing; guides explain
+when to omit complementary records and use actual checks in assessment rationale.
+The rejected review is retained, rather than modified after freezing.
+
+P12 managed Codex correction is now actually exercised separately from A/B/C:
+controlled incomplete delivery, independent changes_requested at the original
+criterion, fresh executor correction response and fresh independent round-2
+approval. Parent queried Task DONE (version9), unchanged revision-1 criteria,
+clean tested commit, 43 external checks and verified cleanup for accepted CIDs.
+Exactly three rejected review documents remain preserved with unchanged hashes;
+these are not counted as pending cleanup of accepted obligations. See
+`docs/audit/signed-codex-correction-2026-10-09.json` for exact source/provenance.
+Shared OS/filesystem and unknown provider billing remain explicit limits.
+Local Compose copied .env.example unchanged and passed readiness/liveness/UI
+checks on its documented source, preserving existing projects and data.

@@ -127,6 +127,9 @@ func typeSchema(t reflect.Type) map[string]any {
 			}
 		}
 		schema := map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
+		if t == reflect.TypeFor[domain.SignedFinding]() {
+			schema["oneOf"] = findingObligationAlternatives()
+		}
 		if field, ok := t.FieldByName("EvidenceType"); ok && field.Type == reflect.TypeFor[domain.EvidenceType]() {
 			if _, ok := p["measurement"]; ok {
 				schema["if"] = map[string]any{"required": []string{"evidence_type"}, "properties": map[string]any{"evidence_type": map[string]any{"const": "measurement"}}}
@@ -235,5 +238,13 @@ func normalizeValue(value any, t reflect.Type) (any, error) {
 		return a, nil
 	default:
 		return value, nil
+	}
+}
+
+// Editable and exact signed schemas describe the same exclusive obligation.
+func findingObligationAlternatives() []any {
+	return []any{
+		map[string]any{"required": []string{"criterion_id"}, "properties": map[string]any{"criterion_id": map[string]any{"type": "string"}, "requirement_ref": map[string]any{"enum": []any{"", nil}}}},
+		map[string]any{"required": []string{"requirement_ref"}, "properties": map[string]any{"criterion_id": map[string]any{"type": "null"}, "requirement_ref": map[string]any{"type": "string", "minLength": 1}}},
 	}
 }

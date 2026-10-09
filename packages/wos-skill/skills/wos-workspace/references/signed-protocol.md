@@ -96,7 +96,13 @@ review:
 
 Assessment results are `met`, `not_met`, `inconclusive` or `waived`; only use
 `met` after checking fulfillment. Do not invent evidence IDs or revisions.
-`changes_requested` requires findings tied to original requirement references.
+`changes_requested` requires findings tied to an original obligation. Each finding
+contains exactly one `criterion_id` OR `requirement_ref`, never both; include its
+UUIDv7 `id` and factual `description`. The CLI rejects malformed findings before
+freezing the return. For `changes_requested` or `inconclusive`, omit
+`criterion_assessments` completely, including assessments of passing criteria;
+record unmet obligations in findings and observed checks in the reason/evidence.
+Only `approved` sends criterion assessments. Existing frozen intentions remain unchanged.
 There is no `material.decision`; submission/case IDs come from verified issued
 metadata. `work validate` and generic `--help` are not signed protocol operations;
 use focal `show` and the coordinated packaged schema. If local preparation fails,
@@ -109,3 +115,12 @@ Correction is intentionally excluded from generic --next discovery.
 Evidence semantics: `evidence_type: test_result` records test observations in its description/source; it must not contain `measurement`. Numeric evidence uses `evidence_type: measurement` with nonempty `measurement.value`. The same rule applies to executor and reviewer drafts. The CLI validates this before freezing a return; the server remains authoritative. Preserve any already-frozen rejected intention and its original files; do not edit signed bytes or invent a replacement acquisition to repair uncertainty.
 
 For editable material shapes, read only the relevant execution/review section of `schemas/contract-v2.schema.json` in the verified CLI archive, or `node_modules/@a1b3rt0m3rcad0/wos/schemas/contract-v2.schema.json` in the npm installation. Preserve the issued result binding fields. Criterion-local evidence references attach selected registered evidence to the submission; an extra general evidence selection is unnecessary. Required assessments remain explicit typed review records at the original criterion revision.
+
+Additional reviewer artifacts/evidence/links require `reviewed_source_version`
+matching an immutable artifact source_version or checksum in the accepted
+executor submission. Each added record must carry that same version/checksum.
+A commit mentioned only in a summary/evidence description is insufficient.
+If the accepted delivery has no such artifact, omit complementary records and
+assess the original criteria using the accepted material, actual checks and
+explicit rationales. The CLI checks embedded submission source bindings before
+freezing a return; for explicitly omitted material the server remains authoritative.

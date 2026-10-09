@@ -225,7 +225,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 			if _, _, err = s.signedAccess(ctx, u, scope, ports.PermissionRecordsWrite, key.ID); err != nil {
 				return zero, 0, err
 			}
-			if err = validateComplementaryReviewSource(target.Submission.Material(), request.Material); err != nil {
+			if err = ValidateComplementaryReviewSource(target.Submission.Material(), request.Material); err != nil {
 				return zero, 0, err
 			}
 		}
@@ -372,7 +372,9 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		return SignedReturnResult{Receipt: receiptDoc, work: &registered, review: &review, reviewAuthority: &contract, reviewDecision: request.Decision}, revision, nil
 	})
 }
-func validateComplementaryReviewSource(target d.WorkResultMaterial, input SignedReviewMaterial) error {
+
+// ValidateComplementaryReviewSource binds additional reviewer records to an immutable delivered artifact.
+func ValidateComplementaryReviewSource(target d.WorkResultMaterial, input SignedReviewMaterial) error {
 	exact := false
 	for _, a := range target.Artifacts {
 		exact = exact || input.ReviewedSourceVersion != "" && (input.ReviewedSourceVersion == a.SourceVersion || input.ReviewedSourceVersion == a.Checksum)
