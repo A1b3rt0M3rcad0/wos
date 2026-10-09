@@ -14,6 +14,7 @@ type ReferenceQuery struct {
 	Kinds     []domain.EntityKind `json:"kinds"`
 	Query     string              `json:"query,omitempty"`
 	Lifecycle string              `json:"lifecycle,omitempty"`
+	Priority  domain.Priority     `json:"priority,omitempty"`
 	ID        domain.ID           `json:"id,omitempty"`
 	Limit     int                 `json:"limit,omitempty"`
 	Cursor    string              `json:"cursor,omitempty"`
@@ -66,6 +67,9 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid or duplicate reference kind")
 		}
 	}
+	if q.Priority != "" && (!q.Priority.Valid() || len(kinds) != 1 || kinds[0] != domain.EntityKindWorkItem) {
+		return result, domain.NewError(domain.ErrorCodeInvalidArgument, "priority filtering requires Task kind and a supported priority")
+	}
 	if !q.ID.IsZero() {
 		if err := q.ID.Validate(); err != nil {
 			return result, err
@@ -74,11 +78,11 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "reference resolution cannot use search or cursor")
 		}
 	}
-	f := ports.ReferenceFilter{Kinds: kinds, Query: strings.TrimSpace(q.Query), Lifecycle: q.Lifecycle, ID: q.ID, Limit: n + 1}
+	f := ports.ReferenceFilter{Kinds: kinds, Query: strings.TrimSpace(q.Query), Lifecycle: q.Lifecycle, Priority: q.Priority, ID: q.ID, Limit: n + 1}
 	hash := filterHash(struct {
-		Kinds                []domain.EntityKind
-		Query, Lifecycle, ID string
-	}{kinds, f.Query, q.Lifecycle, q.ID.String()})
+		Kinds                          []domain.EntityKind
+		Query, Lifecycle, ID, Priority string
+	}{kinds, f.Query, q.Lifecycle, q.ID.String(), string(q.Priority)})
 	var cursor queryCursor
 	if q.Cursor != "" {
 		cursor, err = decodeCursor(q.Cursor, scope.NamespaceID, scope.OutcomeID, "references", hash)

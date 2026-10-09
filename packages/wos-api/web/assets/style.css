@@ -1869,3 +1869,5 @@ svg {
 .conflict-columns {display:grid;grid-template-columns:1fr 1fr;gap:16px;max-height:360px;overflow:auto;}
 .conflict-columns section {min-width:0;background:var(--orange);padding:12px;overflow-wrap:anywhere;}
 @media(max-width:600px){.action-options,.conflict-columns {grid-template-columns:1fr;}.list-editor-row {flex-wrap:wrap;}.human-form {gap:12px;}}
+
+.checklist-row{display:flex;align-items:center;gap:12px;padding:8px 0}.checklist-row>span:nth-child(2){flex:1}#work-status-label{display:flex;align-items:center;gap:12px;margin:12px 0}#area-tabs{overflow-x:auto}.setup-checklist{grid-column:1/-1}

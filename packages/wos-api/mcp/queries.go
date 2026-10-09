@@ -54,13 +54,14 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 			var value any
 			switch name {
 			case "wos_effective_permissions":
-				value, err = s.EffectivePermissions(ctx, scope)
+				permissions, permissionErr := s.EffectivePermissions(ctx, scope)
+				value, err = map[string]any{"permissions": permissions, "execution_authority": false}, permissionErr
 			case "wos_search_references":
 				kinds := []domain.EntityKind{}
 				for _, kind := range q.Kinds {
 					kinds = append(kinds, domain.EntityKind(kind))
 				}
-				value, err = s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: kinds, Query: q.Text, Lifecycle: q.Lifecycle, ID: q.EntityID, Limit: q.Limit, Cursor: q.Cursor})
+				value, err = s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: kinds, Query: q.Text, Lifecycle: q.Lifecycle, Priority: q.Priority, ID: q.EntityID, Limit: q.Limit, Cursor: q.Cursor})
 			case "wos_get_namespace_work_protocol":
 				value, err = s.GetNamespaceWorkProtocol(ctx, q.NamespaceID)
 			case "wos_list_available_work":

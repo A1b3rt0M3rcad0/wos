@@ -48,6 +48,9 @@ func (r outcomeRepository) SearchReferences(ctx context.Context, scope domain.Sc
 		add(v.Ref(), v.Version, string(v.Title), string(v.Lifecycle), context)
 	}
 	for _, v := range r.tx.workItems {
+		if f.Priority != "" && v.Priority != f.Priority {
+			continue
+		}
 		context := ""
 		if v.ObjectiveID != nil {
 			if o, ok := r.tx.objectives[entityKey(scope, *v.ObjectiveID)]; ok {

@@ -38,7 +38,7 @@ func main() {
 	for _, p := range []string{"namespace_id", "outcome_id"} {
 		refsParameters = append(refsParameters, map[string]any{"name": p, "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}})
 	}
-	for _, p := range []string{"kind", "query", "lifecycle", "cursor", "id"} {
+	for _, p := range []string{"kind", "query", "lifecycle", "priority", "cursor", "id"} {
 		refsParameters = append(refsParameters, map[string]any{"name": p, "in": "query", "required": p == "kind", "schema": map[string]any{"type": "string"}})
 	}
 	refsParameters = append(refsParameters, map[string]any{"name": "limit", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 25}})

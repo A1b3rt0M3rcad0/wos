@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-copy="wosWorkspace">WOS · Workspace</title>
+    <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -163,14 +164,14 @@
                 </div>
               </div>
               <div class="heading-actions">
-                <button id="refresh" class="quiet" title="Refresh state" data-copy-title="refreshState">Refresh</button
+                <button id="copy-workspace-link" class="quiet">Copy link</button><button id="refresh" class="quiet" title="Refresh state" data-copy-title="refreshState">Refresh</button
                 ><button id="view-outcome" class="quiet" data-copy="reviewCriteria">Review criteria</button
                 ><button id="actions" data-copy="chooseAnAction">Choose an action</button>
               </div>
             </div>
+            <nav id="area-tabs" class="view-tabs" aria-label="Outcome areas"></nav>
             <nav id="view-tabs" class="view-tabs" aria-label="View" data-copy-aria-label="view">
-              <button data-view="summary" class="selected" aria-pressed="true">Overview</button
-              ><button data-view="list" aria-pressed="false" data-copy="list">List</button
+              <button data-view="list" aria-pressed="false" data-copy="list">List</button
               ><button data-view="board" aria-pressed="false" data-copy="board">Board</button>
             </nav>
             <section id="summary-view">
@@ -201,7 +202,7 @@
                   ><button id="add-item" class="quiet" data-copy="newTask">+ New task</button>
                 </div>
               </div>
-              <section id="content" class="content-surface"></section>
+              <div id="work-status-label"><label for="work-status">Work status</label><select id="work-status"><option value="work_items">All Tasks</option><option value="backlog_work">Backlog</option><option value="waiting_scope_work">Needs scope</option><option value="waiting_dependencies_work">Waiting on dependencies</option><option value="scheduled_work">Scheduled</option><option value="ready_work">Ready</option><option value="in_progress_work">In progress</option><option value="blocked_work">Blocked</option><option value="attention_needed_work">Needs attention</option><option value="done_work">Done</option><option value="cancelled_work">Cancelled</option></select></div><section id="content" class="content-surface"></section>
             </section>
           </div>
         </article>

@@ -1,3 +1,5 @@
+import {request} from "./api-client.js";
+import {areas,areaFor,readRoute,routeQuery,workSections} from "./navigation.js";
 import {humanActions, availableActions,permissionLabels} from "./actions.js";
 import {humanForm} from "./human-forms.js";
 import {createIntent,sameScope,reconcileDraft} from "./intents.js";
@@ -31,6 +33,8 @@ const state = {
   snapshot: null,
   section: "work_items",
   view: "summary",
+  area: "overview",
+  restoringRoute: false,
   generation: 0,
   renderId: 0,
   loaded: new Map(),
@@ -241,29 +245,6 @@ const actionName = (name) => {
   const [verb, ...subject] = name.split("_");
   return `${verbs[verb] || display(verb)} ${actionSubjects[subject.join("_")] || display(subject.join("_"))}`;
 };
-async function request(path, options = {}) {
-  const response = await fetch(path, {
-    credentials: "same-origin",
-    ...options,
-    headers: { "Content-Type": "application/json", ...options.headers },
-  });
-  const text = await response.text();
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { error: { message: text } };
-  }
-  if (!response.ok) {
-    const error = new Error(
-      data.error?.message || `Response ${response.status}`,
-    );
-    error.code = data.error?.code;
-    error.status = response.status;
-    throw error;
-  }
-  return data;
-}
 const { api_prefix: api } = await request("/app/config");
 const inventory = await request("/app/command-exposure.json");
 const currentScope=()=>({namespace_id:state.namespace,outcome_id:state.outcome?.id});
@@ -312,7 +293,7 @@ async function namespaces() {
     option.value = n.id;
     $("namespace").append(option);
   }
-  if (result.items.length) await connect(result.items[0].id);
+  if (result.items.length) {const route=readRoute(location.search);const target=route?result.items.find(n=>n.id===route.namespace):result.items[0];if(!target)throw Error("The linked workspace is not available to this account.");$("namespace").value=target.id;await connect(target.id);if(route)await restoreRoute(route);}
 }
 $("login").onsubmit = async (event) => {
   event.preventDefault();
@@ -402,7 +383,7 @@ async function openOutcome(outcome) {
   state.outcome = outcome;
   state.selected = outcome;
   state.criterion = null;
-  state.view = "summary";
+  state.view = "summary";state.area="overview";
   state.snapshot = null;
   $("item-search").value = "";
   $("item-priority").value = "";
@@ -424,6 +405,7 @@ async function openOutcome(outcome) {
   const generation = state.generation;
   try {
     await refresh();
+    writeRoute();
   } catch (error) {
     if(generation!==state.generation)return;
     $("empty").hidden = false;
@@ -486,6 +468,7 @@ async function refresh() {
       : copy.text.sharedStateRefreshed,
   );
 }
+$("copy-workspace-link").onclick=async()=>{try{await navigator.clipboard.writeText(location.origin+location.pathname+routeQuery({namespace:state.namespace,outcome:state.outcome.id,area:state.area,section:state.section,view:state.view}));notice("Workspace link copied.");}catch(error){report(error);}};
 $("refresh").onclick = () => refresh().catch(report);
 $("navigation-toggle").onclick = () => {
   const sidebar = document.querySelector(".sidebar");
@@ -522,44 +505,14 @@ const sectionIcons = {
   graph: "graph",
   conclusion_contestations: "alert",
 };
-const sections = [
-  "work_items",
-  "objectives",
-  "ready_work",
-  "blocked_work",
-  "in_progress_work",
-  "issues",
-  "blockers",
-  "decisions",
-  "evidence",
-  "artifacts",
-  "active_roadmaps",
-  "active_plan_references",
-  "roadmaps",
-  "conclusion_contestations",
-  "timeline",
-  "graph",
-];
 function renderTabs() {
-  $("tabs").replaceChildren();
-  for (const section of sections) {
-    const button = el("button", undefined, "quiet");
-    button.setAttribute("aria-label", human(section));
-    button.append(
-      icon(sectionIcons[section] || "work_item"),
-      el("span", human(section)),
-    );
-    if (state.snapshot.counts[section] !== undefined)
-      button.append(
-        el("span", String(state.snapshot.counts[section]), "tab-count"),
-      );
-    button.dataset.section = section;
-    button.classList.toggle("selected", section === state.section);
-    button.setAttribute("aria-pressed", String(section === state.section));
-    button.onclick = () => navigateSection(section);
-    $("tabs").append(button);
-  }
+ $("area-tabs").replaceChildren();for(const [area,definition] of Object.entries(areas)){const b=actionButton(definition.label,()=>navigateArea(area),"quiet");b.dataset.area=area;b.setAttribute("aria-pressed",String(state.area===area));b.classList.toggle("selected",state.area===area);$("area-tabs").append(b);}
+ $("tabs").replaceChildren();for(const section of areas[state.area].sections){const b=actionButton(human(section),()=>navigateSection(section),"quiet");b.dataset.section=section;b.setAttribute("aria-pressed",String(section===state.section));b.classList.toggle("selected",section===state.section);$("tabs").append(b);}
 }
+function writeRoute(item=null,replace=false){if(state.restoringRoute||!state.outcome)return;const query=routeQuery({namespace:state.namespace,outcome:state.outcome.id,area:state.area,section:state.section,view:state.view,item});const target=location.pathname+query;if(target===location.pathname+location.search)return;history[replace?"replaceState":"pushState"]({},"",target);}
+async function restoreRoute(route){if(!route)return;state.restoringRoute=true;try{if(state.namespace!==route.namespace){const option=[...$("namespace").options].find(n=>n.value===route.namespace);if(!option)throw Error("The linked workspace is not available to this account.");$("namespace").value=route.namespace;state.outcome=null;state.snapshot=null;await connect(route.namespace);}if(state.outcome?.id!==route.outcome){const value=await request(`${base()}/${route.outcome}`);await openOutcome(value.value||value);}state.area=route.area;state.section=route.section;state.view=route.view;renderTabs();applyView();await renderSection();if(route.item)await showEntity(route.item);else $("detail-dialog").close();}finally{state.restoringRoute=false;}}
+window.addEventListener("popstate",()=>{try{const route=readRoute(location.search);if(route)restoreRoute(route).catch(report);}catch(error){report(error);}});
+function navigateArea(area){state.area=area;state.section=areas[area].sections[0]||"work_items";state.view=area==="overview"?"summary":"list";$("item-search").value="";$("item-priority").value="";$("work-status").value=state.section;renderTabs();applyView();writeRoute();renderSection().catch(report);}
 function applyView() {
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary";
@@ -570,8 +523,9 @@ function applyView() {
       String(button.dataset.view === state.view),
     );
   }
+  $("view-tabs").hidden=state.area!=="work";$("work-status-label").hidden=state.area!=="work"||state.view==="board";
   const board = state.view === "board";
-  $("tabs").hidden = board;
+  $("tabs").hidden = board||state.area==="work";
   $("add-item").textContent =
     board ||
     ["work_items", "ready_work", "blocked_work", "in_progress_work"].includes(
@@ -583,21 +537,27 @@ function applyView() {
 }
 function navigateSection(section) {
   state.section = section;
+  state.area=areaFor(section);
   state.view = "list";
+  $("work-status").value=section;
+  renderTabs();
   $("item-search").value = "";
   $("item-priority").value = "";
   applyView();
+  writeRoute();
   renderSection().catch(report);
 }
 for (const button of $("view-tabs").children) {
   button.prepend(icon(button.dataset.view));
   button.onclick = () => {
-    state.view = button.dataset.view;
+    state.area="work";state.view = button.dataset.view;
+    renderTabs();writeRoute();
     applyView();
     renderSection().catch(report);
   };
 }
-$("item-search").oninput = () => renderSection().catch(report);
+let searchTimer;$("item-search").oninput = () => {clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderSection().catch(report),180);};
+$("work-status").onchange=()=>navigateSection($("work-status").value);
 $("item-priority").onchange = () => renderSection().catch(report);
 const createForSection = {
   work_items: "create_work_item",
@@ -707,12 +667,21 @@ function renderSummary() {
     [copy.text.newTask3e9922, "create_work_item"],
     [copy.text.registerEvidence, "register_evidence"],
   ]) {
+    if(!state.permissions.includes(inventory[command]?.permission))continue;
     const b = el("button", label, "quiet");
     b.onclick = () => createItem(command);
     quick.append(b);
   }
   purpose.append(quick);
   root.append(purpose);
+  if(state.outcome.lifecycle==="draft"){
+   const setup=summaryCard("Prepare your Outcome");setup.classList.add("setup-checklist");setup.append(el("p","This Draft is saved. Review these steps before explicitly activating it; Tasks and Roadmaps are optional."));
+   const rows=[["Define success criteria",(state.outcome.criteria?.items||[]).some(c=>!c.retired_at),()=>{state.selected={...state.outcome,_kind:"outcome"};openCommands("add_criterion");},"planning:write"],["Add an Objective",c.objectives>0,()=>createItem("create_objective"),"planning:write"],["Add a Task (optional)",c.work_items>0,()=>createItem("create_work_item"),"work:write"],["Create a Roadmap (optional)",c.roadmaps>0||c.active_roadmaps>0,()=>createItem("create_roadmap"),"planning:write"]];
+   for(const [label,done,run,permission]of rows){const row=el("div",undefined,"checklist-row");row.append(el("span",done?"✓":"○"),el("span",label));if(state.permissions.includes(permission))row.append(actionButton(done?"Review":"Set up",done?()=>label.includes("criteria")?showEntity(state.snapshot.outcome.ref):navigateSection(label.includes("Objective")?"objectives":label.includes("Task")?"work_items":"roadmaps"):run,"quiet"));setup.append(row);}
+   if(state.permissions.includes("outcome:write"))setup.append(actionButton("Activate outcome",()=>{state.selected={...state.outcome,_kind:"outcome"};openCommands("activate_outcome");}));root.append(setup);
+  }
+  const next=summaryCard("Suggested next step");const suggestion=c.blocked_work?{text:"Review blocking impact",reason:"Blocked Tasks are present in the current state.",section:"blockers"}:!(state.outcome.criteria?.items||[]).length?{text:"Define success criteria",reason:"No success criteria are recorded yet.",command:"add_criterion"}:!c.work_items?{text:"Add a Task",reason:"No Tasks are recorded yet.",command:"create_work_item"}:{text:"Review current work",reason:"Tasks are available for explicit coordination.",section:"work_items"};next.append(el("p",suggestion.reason),el("small","A presentation hint from persisted state; no planning or execution occurs automatically."),actionButton(suggestion.text,()=>{if(suggestion.section)navigateSection(suggestion.section);else{state.selected={...state.outcome,_kind:"outcome"};openCommands(suggestion.command);}},"quiet"));root.append(next);
+
   const status = summaryCard(copy.text.taskOverview, "work_items");
   const done = c.done_work || 0,
     active = c.in_progress_work || 0,
@@ -1089,19 +1058,21 @@ async function sectionData(section, cursor = "", append = false) {
     next,
   };
 }
+async function searchedTasks(cursor="",append=false){const scope=outcomeBase(),generation=state.generation;const q=new URLSearchParams({kind:"work_item",limit:"25",query:$("item-search").value});if($("item-priority").value)q.set("priority",$("item-priority").value);if(cursor)q.set("cursor",cursor);const page=await request(`${scope}/references?${q}`);const results=await Promise.all(page.items.map(item=>request(`${scope}/work-items/${item.ref.id}`)));if(generation!==state.generation)return {items:[]};if(results.some(r=>r.outcome_revision!==page.outcome_revision)){const e=Error("State changed while loading search results. Refresh the search.");e.code="precondition_failed";throw e;}const items=results.map((r,i)=>({...r.value,ref:page.items[i].ref}));return {items:append?[...(state.loaded.get("work_items")?.items||[]),...items]:items,next:page.next_cursor};}
 async function renderSection(cursor = "", append = false) {
   if (!state.snapshot || state.view === "summary") return;
-  if (state.view === "board") return renderBoard();
+  if (state.view === "board") {state.renderId++;return renderBoard();}
   const section = state.section,
     generation = state.generation,
     run = ++state.renderId;
-  let data;try{data=await sectionData(section,cursor,append);}catch(error){if(generation===state.generation&&run===state.renderId)throw error;return;}
+  const globalWork=section==="work_items";
+  let data;try{data=globalWork?await searchedTasks(cursor,append):await sectionData(section,cursor,append);}catch(error){if(generation===state.generation&&run===state.renderId)throw error;return;}
   if (generation !== state.generation || run !== state.renderId) return;
   state.loaded.set(section, data);
   const content = $("content");
   content.replaceChildren();
   const heading = el("div", undefined, "content-heading");
-  const shown = data.items.filter(matches);
+  const shown = globalWork?data.items:data.items.filter(matches);
   heading.append(
     el("h2", human(section)),
     el(
@@ -1110,11 +1081,12 @@ async function renderSection(cursor = "", append = false) {
     ),
   );
   content.append(heading);
+  if(globalWork)content.append(el("p","Search and priority filter cover every authorized Task. Pages are bound to the Outcome revision.","section-note"));
   for (const b of $("tabs").children) {
     b.classList.toggle("selected", b.dataset.section === section);
     b.setAttribute("aria-pressed", String(b.dataset.section === section));
   }
-  if ($("item-search").value || $("item-priority").value)
+  if (!globalWork)
     content.append(
       el(
         "p",
@@ -1588,9 +1560,10 @@ if(ref.kind==="work_item"&&entity.contracts_enabled) {await contractSection(deta
   detail.append(tech);
   $("detail-actions").querySelector(".quick-actions")?.remove();
   $("detail-actions").prepend(quickActions(ref.kind, entity));
-  if (!$("detail-dialog").open) $("detail-dialog").showModal();
+  if (!$("detail-dialog").open) $("detail-dialog").showModal();writeRoute(ref);
 }
 $("close-detail").onclick = () => $("detail-dialog").close();
+$("detail-dialog").addEventListener("close",()=>writeRoute());
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
   state.selected = { ...state.outcome, _kind: "outcome" };
@@ -2087,7 +2060,7 @@ async function submit(retry = false, reconciled) {
   if(!sameScope(pending.scope,currentScope())||state.formGeneration!==state.generation)return;
   $("command-dialog").close();state.humanForm?.dispose();$("fields").inert=false;
   if(result.value?.desired_state!==undefined){state.outcome=result.value;state.selected={...result.value,_kind:"outcome"};if(pending.name==='create_outcome'){state.generation++;state.view='summary';}}
-  const newSection=pending.name==="report_issue_with_blocker"?"issues":Object.entries(createForSection).find(([,command])=>command===pending.name)?.[0];if(newSection){state.section=newSection;state.view='list';$("item-search").value='';$("item-priority").value='';}
+  const newSection=pending.name==="report_issue_with_blocker"?"issues":Object.entries(createForSection).find(([,command])=>command===pending.name)?.[0];if(newSection){state.section=newSection;state.area=areaFor(newSection);state.view='list';$("item-search").value='';$("item-priority").value='';}
   await discover();if(state.outcome)await refresh();
   notice(pending.name==='create_outcome'?"Draft saved. Continue setup with criteria, objectives and tasks. Activation remains a separate decision.":result.result_omitted?copy.text.changeRecordedCheckTheRefreshedState:copy.text.changeSaved);
  } catch(e){

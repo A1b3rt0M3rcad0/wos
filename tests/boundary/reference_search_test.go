@@ -100,7 +100,11 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			title = "Off-page target"
 			description = "Off-page observation"
 		}
-		v, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, Title: title, Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo, ObjectiveID: &objective.Value.ID})
+		priority := domain.PriorityNormal
+		if i == count-1 {
+			priority = domain.PriorityHigh
+		}
+		v, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, Title: title, Priority: priority, Lifecycle: domain.WorkItemLifecycleTodo, ObjectiveID: &objective.Value.ID})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -113,6 +117,22 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			t.Fatal(e)
 		}
 		lastEvidence = ev.Value
+	}
+	high, priorityErr := s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindWorkItem}, Priority: domain.PriorityHigh, Query: "Off-page"})
+	if priorityErr != nil || len(high.Items) != 1 || high.Items[0].Ref.ID != lastTask.ID {
+		t.Fatalf("priority off-page query: %+v %v", high, priorityErr)
+	}
+	if _, e := s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindEvidence}, Priority: domain.PriorityHigh}); e == nil {
+		t.Fatal("priority accepted for Evidence")
+	}
+	normal, priorityErr := s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindWorkItem}, Priority: domain.PriorityNormal, Limit: 1})
+	if priorityErr != nil {
+		t.Fatal(priorityErr)
+	}
+	if normal.NextCursor != "" {
+		if _, e := s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindWorkItem}, Priority: domain.PriorityHigh, Cursor: normal.NextCursor}); e == nil {
+			t.Fatal("cursor accepted with changed priority")
+		}
 	}
 	query := application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindWorkItem}, Limit: 37}
 	seen := map[domain.ID]bool{}

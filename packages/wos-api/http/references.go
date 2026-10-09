@@ -26,7 +26,7 @@ func (h *Handler) searchReferences(w http.ResponseWriter, r *http.Request) {
 	for _, kind := range strings.Split(r.URL.Query().Get("kind"), ",") {
 		kinds = append(kinds, domain.EntityKind(kind))
 	}
-	q := application.ReferenceQuery{Kinds: kinds, Query: r.URL.Query().Get("query"), Lifecycle: r.URL.Query().Get("lifecycle"), Limit: n, Cursor: r.URL.Query().Get("cursor")}
+	q := application.ReferenceQuery{Kinds: kinds, Query: r.URL.Query().Get("query"), Lifecycle: r.URL.Query().Get("lifecycle"), Priority: domain.Priority(r.URL.Query().Get("priority")), Limit: n, Cursor: r.URL.Query().Get("cursor")}
 	if raw := r.URL.Query().Get("id"); raw != "" {
 		q.ID, err = domain.ParseID(raw)
 		if err != nil {
