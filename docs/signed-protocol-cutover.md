@@ -37,3 +37,11 @@ create new authority. Mixed old/new database writers are unsupported.
 This document covers server activation and recoverable schema-2 operator changes.
 Workspace schema-1 conversion, issuer replacement and final release acceptance
 remain separate implementation items recorded in ROADMAP.md.
+
+
+Startup checks database compatibility before bootstrap or serving, including
+when automatic migrations are disabled. A newer schema is refused under the
+migration transaction, without changing migration history. This protects
+subsequent binaries that contain the guard. It cannot add a guard to already
+released binaries: retire old processes and their database credentials before
+cutover, and verify the actual historical binary separately.
