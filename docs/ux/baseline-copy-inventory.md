@@ -1,0 +1,245 @@
+# Baseline product copy inventory
+
+Source: 5ea787c. Official UI strings require migration; identifiers and user content must retain their original values. Lines are baseline locations, not permanent anchors.
+
+- `index.html:2`: <html lang="pt-BR">
+- `index.html:6`: <title>WOS · Espaço de trabalho</title>
+- `index.html:10`: <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+- `index.html:12`: <a href="/app/" class="brand" aria-label="WOS · início"
+- `index.html:21`: ><button id="logout" class="quiet">Encerrar sessão</button>
+- `index.html:31`: evidências.
+- `index.html:37`: ><small>Objetivos, critérios e um plano claro.</small>
+- `index.html:42`: ><small>Trabalho, reservas e decisões compartilhadas.</small>
+- `index.html:46`: ><strong>Provas antes de conclusões</strong
+- `index.html:47`: ><small>Um histórico que continua com você.</small>
+- `index.html:52`: <p class="eyebrow">SEU ESPAÇO DE TRABALHO</p>
+- `index.html:78`: Sua credencial é trocada por uma sessão segura.<br />Ela não fica
+- `index.html:86`: aria-label="Navegação do espaço de trabalho"
+- `index.html:124`: <option value="achieved">Alcançado</option>
+- `index.html:158`: <p class="eyebrow">SEU PRÓXIMO RESULTADO</p>
+- `index.html:161`: Um lugar para conectar objetivos, trabalho e evidências.<br />Abra
+- `index.html:168`: <span id="context-name">Espaço de trabalho</span><span>/</span
+- `index.html:184`: ><button id="view-outcome" class="quiet">Rever critérios</button
+- `index.html:185`: ><button id="actions">Registrar alteração</button>
+- `index.html:188`: <nav id="view-tabs" class="view-tabs" aria-label="Visualização">
+- `index.html:206`: placeholder="Pesquisar nesta visualização" /></label
+- `index.html:214`: <option value="critical">Crítica</option>
+- `index.html:233`: <h2 id="command-title">Registrar alteração</h2>
+- `index.html:241`: ×
+- `index.html:244`: <label>Ação<select id="command-select"></select></label>
+- `index.html:245`: <p id="command-help">Revise as informações antes de registrar.</p>
+- `index.html:267`: ×
+- `index.html:285`: ×
+- `index.html:290`: >Ação<select id="admin-operation">
+- `index.html:291`: <option value="set_grant">Definir permissões</option>
+- `index.html:301`: Guarde a credencial agora. O servidor não poderá mostrá-la
+- `index.html:315`: <summary>Permissões e histórico</summary>
+- `app.js:34`: contract_id:"Contrato", execution_id:"Execução", spec_digest:"Integridade da especificação", expected_contract_version:"Versão do contrato", expected_work_item_version:"Versão do trabalho", expected_lease_version:"Versão da reserva", submission_id:"Entrega avaliada", supersedes_submission_id:"Entrega anterior", authority:"Autoridade da execução", checkpoint:"Progresso material", material:"Material entregue",
+- `app.js:40`: captured_at: "Data da observação",
+- `app.js:42`: source_version: "Versão da fonte",
+- `app.js:43`: evidence_id: "Evidência",
+- `app.js:45`: base_revision_number: "Revisão de partida",
+- `app.js:47`: required_criteria_met: "Critérios comprovados",
+- `app.js:48`: required_criteria_waived: "Critérios dispensados",
+- `app.js:49`: work_completion: "Trabalho concluído",
+- `app.js:50`: objective_completion: "Objetivos alcançados",
+- `app.js:51`: required_objectives_completion: "Objetivos obrigatórios alcançados",
+- `app.js:54`: ready_work: "Pronto para execução",
+- `app.js:56`: in_progress_work: "Em execução",
+- `app.js:58`: attention_needed_work: "Precisa de atenção",
+- `app.js:61`: decisions: "Decisões",
+- `app.js:62`: evidence: "Evidências",
+- `app.js:65`: conclusion_contestations: "Contestações",
+- `app.js:66`: timeline: "Histórico",
+- `app.js:68`: graph: "Relações",
+- `app.js:69`: title: "Título",
+- `app.js:70`: description: "Descrição",
+- `app.js:75`: required: "Obrigatório",
+- `app.js:78`: verification_mode: "Modo de verificação",
+- `app.js:79`: expected_version: "Versão observada",
+- `app.js:80`: expected_roadmap_version: "Versão do plano",
+- `app.js:81`: expected_draft_version: "Versão do rascunho",
+- `app.js:82`: criterion_revision: "Revisão do critério",
+- `app.js:83`: ttl_seconds: "Duração da reserva (segundos)",
+- `app.js:91`: fencing_token: "Proteção da reserva",
+- `app.js:92`: criterion_id: "Critério",
+- `app.js:93`: evidence_ids: "Evidências usadas",
+- `app.js:96`: source_ref: "Origem da relação",
+- `app.js:97`: reference_ref: "Referência do plano",
+- `app.js:100`: after: "Ordenação do plano",
+- `app.js:103`: planned_start: "Início planejado",
+- `app.js:105`: metadata: "Informações adicionais",
+- `app.js:106`: revision_number: "Revisão publicada",
+- `app.js:110`: result: "Avaliação",
+- `app.js:111`: stance: "Posição da evidência",
+- `app.js:113`: evidence_type: "Tipo de evidência",
+- `app.js:116`: uri: "Endereço",
+- `app.js:120`: required_for_outcome: "Obrigatório para o resultado",
+- `app.js:152`: version: "Versão",
+- `app.js:155`: concluded_at: "Concluído em",
+- `app.js:160`: content_hash: "Assinatura do conteúdo",
+- `app.js:162`: obligations: "Obrigações",
+- `app.js:163`: assessments: "Avaliações",
+- `app.js:164`: criteria: "Critérios",
+- `app.js:166`: assignee_refs: "Responsáveis",
+- `app.js:167`: not_before: "Disponível a partir de",
+- `app.js:168`: reference: "Referência",
+- `app.js:205`: work_contract:"contrato", next_work_contract:"próximo contrato", work_result:"entrega",
+- `app.js:206`: criterion_assessment: "avaliação do critério",
+- `app.js:207`: criterion: "critério",
+- `app.js:208`: criterion_definition: "definição do critério",
+- `app.js:210`: roadmap_revision: "revisão do plano",
+- `app.js:214`: evidence_link: "vínculo de evidência",
+- `app.js:215`: evidence: "evidência",
+- `app.js:217`: decision: "decisão",
+- `app.js:221`: relation: "relação",
+- `app.js:222`: work_item_assignees: "responsáveis pelo trabalho",
+- `app.js:223`: trigger: "sinal de integração",
+- `app.js:260`: ? "O estado mudou. Atualize e revise a alteração antes de tentar novamente."
+- `app.js:284`: $("namespace").selectedOptions[0]?.textContent || "Espaço de trabalho";
+- `app.js:428`: "O estado mudou durante a leitura. Atualize para obter uma visualização coerente.",
+- `app.js:453`: \`Revisão ${snapshot.outcome_revision} · ${date(snapshot.evaluated_at)}\`;
+- `app.js:461`: ? "Visualização parcial. Há mais itens nas seções; use “Carregar mais”."
+- `app.js:630`: m.value === null ? "Não se aplica" : \`${Math.round(m.value * 100)}%\`,
+- `app.js:646`: \`${m.numerator} de ${m.denominator} ${key.includes("criteria") ? "critérios" : "itens"}\`,
+- `app.js:669`: const purpose = summaryCard("O que queremos alcançar");
+- `app.js:684`: ["Registrar evidência", "register_evidence"],
+- `app.js:692`: const status = summaryCard("Visão geral do trabalho", "work_items");
+- `app.js:707`: { title: "Em execução", count: active, color: "#e97335", tone: "orange" },
+- `app.js:709`: title: "Impedimentos / atenção",
+- `app.js:714`: { title: "Concluído", count: done, color: "#339d71", tone: "green" },
+- `app.js:741`: ["evidence", "Evidências"],
+- `app.js:761`: "Concluir trabalho não certifica o resultado. Revise as obrigações e registre a conclusão explicitamente.",
+- `app.js:775`: recent.append(el("p", "Seu próximo passo começa com um item de trabalho."));
+- `app.js:779`: "Itens que precisam de atenção",
+- `app.js:786`: \`${blocked} itens impedidos ou com reserva para revisar. ${c.conclusion_contestations || 0} contestações registradas.\`,
+- `app.js:818`: const query = $("item-search").value.trim().toLocaleLowerCase("pt-BR");
+- `app.js:822`: .toLocaleLowerCase("pt-BR")
+- `app.js:840`: \`Revisão ${item.slot.revision_number} · ${item.node_count} itens publicados\`,
+- `app.js:863`: "A conclusão permanece no histórico. Revise a nova observação antes de registrar outra decisão.",
+- `app.js:938`: \`Plano: ${item.plan_label} · revisão ${item.revision_number}\`,
+- `app.js:955`: \`${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revisão ${item.outcome_revision}\`,
+- `app.js:969`: evidence: "Evidência",
+- `app.js:972`: decision: "Decisão",
+- `app.js:974`: criterion: "Critério",
+- `app.js:975`: relation: "Relação",
+- `app.js:980`: completed: "concluído",
+- `app.js:982`: achieved: "alcançado",
+- `app.js:991`: assessment_recorded: "avaliação registrada",
+- `app.js:994`: draft_published: "revisão publicada",
+- `app.js:1015`: el("p", "Os registros aparecerão aqui conforme o trabalho avança."),
+- `app.js:1097`: "Filtro aplicado aos itens carregados nesta visualização.",
+- `app.js:1106`: : "Ainda não há registros nesta seção.",
+- `app.js:1160`: { title: "Pronto para execução", tone: "", sections: ["ready_work"] },
+- `app.js:1161`: { title: "Em execução", tone: "orange", sections: ["in_progress_work"] },
+- `app.js:1168`: title: "Concluído",
+- `app.js:1178`: "O quadro reflete disponibilidade e reservas reais. Abra um item para executar uma ação.",
+- `app.js:1270`: "Contagens representam o estado completo. Cartões e filtros incluem os itens já carregados.",
+- `app.js:1295`: : "Não"
+- `app.js:1299`: return el("span", "Consulte os dados técnicos para mais detalhes.");
+- `app.js:1351`: \`${conclusion.assessments.length} avaliações usadas na conclusão.\`,
+- `app.js:1358`: \`${conclusion.obligations.required_objective_ids.length} objetivos obrigatórios verificados.\`,
+- `app.js:1392`: if (!nodes?.length) box.append(el("p", "Este plano ainda não tem itens."));
+- `app.js:1553`: el("h3", "Reserva de execução"),
+- `app.js:1565`: group.append(el("h3", "Critérios de sucesso"));
+- `app.js:1572`: \`${criterion.required ? "Obrigatório" : "Opcional"} · ${display(criterion.verification_mode)} · revisão ${criterion.criterion_revision}\`,
+- `app.js:1577`: button.append(el("small", "Revisar avaliação →"));
+- `app.js:1589`: el("h3", "Conclusão atual"),
+- `app.js:1596`: history.append(el("summary", "Conclusões anteriores"));
+- `app.js:1606`: el("summary", \`Rascunho · versão ${entity.draft.draft_version}\`),
+- `app.js:1617`: \`Revisão ${revision.revision_number} · ${revision.reason || "Plano publicado"}\`,
+- `app.js:1626`: el("summary", "Dados técnicos e auditoria"),
+- `app.js:1702`: notice("Este fluxo requer o profile e a assinatura protegida. Use wosctl para execução ou revisão.", true);
+- `app.js:1712`: relevant.label = "Ações deste item";
+- `app.js:1714`: other.label = "Outras ações";
+- `app.js:1894`: extra.append(el("summary", "Informações adicionais e proveniência"));
+- `app.js:1981`: const blank = el("option", "Não informado");
+- `app.js:2060`: ? "Revise a prova e registre sua avaliação. Uma evidência, sozinha, não comprova o critério."
+- `app.js:2062`: ? "Reserve o trabalho antes de executar. A reserva tem prazo e evita duas execuções concorrentes."
+- `app.js:2063`: : "A alteração será registrada para todos os participantes. Revise antes de confirmar.";
+- `app.js:2067`: ? \`Critério: ${state.criterion.title} · revisão ${state.criterion.criterion_revision}\`
+- `app.js:2069`: ? \`${kindName(state.selected._kind || "outcome")}: ${state.selected.title || state.selected.name || state.selected.description || state.outcome?.title || ""}${state.selected.version ? \` · versão ${state.selected.version}\` : ""}\`
+- `app.js:2073`: const form = field("Informações", descriptor.schema, defaults(), true);
+- `app.js:2097`: if (!commandAvailableInUI(pending.name)) throw new Error("O protocolo mudou. Esta ação requer um profile e assinatura protegida; a intenção não foi enviada.");
+- `app.js:2128`: ? "Alteração registrada. Consulte o estado atualizado."
+- `app.js:2129`: : "Alteração registrada e persistida.",
+- `app.js:2135`: ? "A versão mudou. Feche este formulário, atualize e revise sua intenção."
+- `app.js:2140`: " A resposta pode ter sido perdida após o registro. Repita a mesma tentativa para recuperar o resultado.";
+- `app.js:2160`: \`Versão administrativa ${administration.namespace_version}\`;
+- `app.js:2196`: "Administração",
+- `app.js:2233`: \`Versão administrativa ${administration.namespace_version}\`;
+- `app.js:2236`: ? "A emissão anterior foi confirmada. A credencial não pode ser recuperada; revogue-a e emita outra."
+- `app.js:2237`: : "Alteração registrada.";
+- `app.js:2250`: " Feche e reabra para revisar o estado antes de uma nova intenção.";
+- `app.js:2278`: const status={active:"Reserva ativa",expired:"Reserva expirada",revoked:"Contrato revogado",completed:"Entrega concluída"};
+- `app.js:2280`: const info=el("dl",undefined,"detail-properties");for(const [label,value] of [["Titular",c.holder_principal_id],["Prazo da reserva",date(c.expires_at)],["Versão do progresso",String(c.version)],["Versão da reserva",String(c.lease_version)],["Execução permitida",view.execution_allowed?"Sim":"Não"]]) info.append(el("dt",label),el("dd",value));section.append(info);
+- `app.js:2282`: for(const [key,label] of [["latest_checkpoint","Carregar último progresso"],["latest_submission","Carregar última entrega"]])if(view.omitted?.[key]){const button=el("button",label,"quiet");button.onclick=()=>load(c.id,key).catch(error=>notice(error.message,true));section.append(button)}
+- `app.js:2283`: if(view.latest_checkpoint){const checkpoint=view.latest_checkpoint;const progress=el("div",undefined,"contract-progress");progress.append(el("h4","Último progresso"),el("p",checkpoint.summary));if(checkpoint.next_action)progress.append(el("p",\`Próxima ação: ${checkpoint.next_action}\`));if(checkpoint.pending?.length)progress.append(el("p",\`Pendente: ${checkpoint.pending.join(" · ")}\`));if(checkpoint.dirty)progress.append(el("small","Há alterações locais ainda não transferidas ao WOS."));if(checkpoint.working_commit)progress.append(el("small",\`Referência de código: ${checkpoint.working_commit}\`));section.append(progress);}
+- `app.js:2284`: if(view.latest_submission){const submission=view.latest_submission;const delivery=el("div",undefined,"contract-delivery");delivery.append(el("h4","Entrega para avaliação"),el("p",submission.material.summary),el("small",\`${submission.material.artifacts?.length||0} artefatos · ${submission.material.evidence_ids?.length||0} evidências · submetida em ${date(submission.submitted_at)}\`));const review=el("button","Revisar entrega","quiet");review.disabled=view.effective_status!=="active"||c.id!==entity.current_contract_id;review.onclick=()=>{state.submission=submission;state.criterion=entity.criteria?.items?.find(x=>x.required)||entity.criteria?.items?.[0];if(!state.criterion){notice("Esta tarefa não exige avaliação de critérios. A finalização continua explícita.");return;}openCommands("record_criterion_assessment")};delivery.append(review);section.append(delivery);}
+- `app.js:2286`: const audit=el("details",undefined,"technical");audit.append(el("summary","Identidade e especificação contratada"),el("pre",JSON.stringify({contract_id:c.id,execution_id:c.execution_id,fencing_token:c.fencing_token,spec_digest:c.spec_digest,spec:c.spec},null,2)));section.append(audit);
+- `app.js:2289`: if(entity.current_contract_id)await load(entity.current_contract_id);else section.append(el("p",entity.lifecycle==="in_progress"?"Trabalho recuperável: uma nova aquisição é necessária para executar.":"Sem reserva ativa. A aquisição é explícita."));
+- `app.js:2290`: const history=el("details");history.append(el("summary","Histórico de contratos"));const body=el("div");history.append(body);let cursor="",loaded=false;
+- `app.js:2292`: } catch(error){section.append(el("p",\`Não foi possível consultar o contrato: ${error.message}\`,"contract-notice"));}
+- `app.js:2320`: ? "Contratos assinados · execução e revisão independentes"
+- `app.js:2329`: target.replaceChildren(el("p", "Consultando identidade e políticas…"));
+- `app.js:2336`: identityCard.append(el("h3", "Identidade deste espaço"));
+- `app.js:2341`: ["Aceite exigido pela credencial", display(identity.credential_policy?.acceptance_floor || "não configurado")],
+- `app.js:2342`: ]) properties.append(el("dt", label), el("dd", value || "Não disponível"));
+- `app.js:2352`: if (identity.keys_truncated) keys.append(el("small", "Lista parcial. Consulte as páginas da API para outras chaves."));
+- `app.js:2354`: onboarding.append(el("h3", "Conectar um profile"), el("p", "Peça ao administrador uma credencial e um enrollment para sua função. Confira o emissor por um canal confiável antes de aprovar o profile."));
+- `app.js:2356`: onboarding.append(el("pre", example), el("p", "Tokens e chaves privadas ficam no host, em referências protegidas. A instalação das skills não cria acesso. Execução e revisão usam profiles próprios."));
+- `app.js:2358`: history.append(el("summary", "Emissores públicos preservados"));
+- `app.js:2360`: if (trust.search_complete === false) history.append(el("small", "Histórico parcial. Continue pelo cursor da API."));
+- `app.js:2371`: section.append(el("h3", "Execução e revisão assinadas"), el("p", "Assinaturas registram origem e integridade. A qualidade depende da avaliação explícita do material.", "contract-notice"));
+- `app.js:2379`: const names = {active:"Execução reservada", delivered:"Entrega aceita do executor", completed:"Obrigação concluída", revoked:"Contrato revogado", expired:"Reserva expirada"};
+- `app.js:2382`: for (const [label, value] of [["Titular",contract.holder_principal_id],["Prazo",date(contract.expires_at)],["Reserva válida agora",contract.lease_valid?"Sim":"Não"],["Versão do contrato",contract.contract_version],["Versão da reserva",contract.lease_version]]) info.append(el("dt",label),el("dd",String(value)));
+- `app.js:2393`: const names = {pending:"Aguardando revisão independente",in_review:"Revisão em andamento",approved:"Revisão aprovada",changes_requested:"Alterações solicitadas",cancelled:"Revisão cancelada",superseded:"Revisão substituída"};
+- `app.js:2395`: card.append(el("p", \`Entrega ${shortId(review.submission_id)} · exigência ${display(review.acceptance_floor)}\`));
+- `app.js:2404`: delivery.append(el("h4", "Material aceito do executor"), el("p", material.summary), el("small", \`${material.artifacts?.length || 0} artefatos · ${material.evidence_ids?.length || 0} evidências\`));
+- `app.js:2406`: canonical.append(el("summary", "Referências do material"), el("pre", JSON.stringify(material, null, 2)));
+- `app.js:2421`: card.append(el("h4", "Correções exigidas"), el("p", decision.material.reason));
+- `app.js:2424`: item.append(el("p", finding.description), el("small", \`Obrigação: ${finding.requirement_ref || shortId(finding.criterion_id)}\`));
+- `app.js:2427`: card.append(el("p", "A próxima execução deve responder a cada apontamento sobre as obrigações existentes. Ampliação de escopo exige replanejamento explícito."));
+- `app.js:2432`: card.append(el("small", \`Revisor: ${reserved.contract.holder_principal_id} · reserva ${reserved.contract.lease_valid?"válida":"sem autoridade atual"}\`));
+- `app.js:2439`: if (!entity.current_contract_id && !caseIDs.length) section.append(el("p", "Sem execução reservada ou revisão associada a esta tarefa. A aquisição é explícita."));
+- `app.js:2440`: if (entity.pending_review_case_id) section.append(el("p", "A entrega do executor já foi aceita. A tarefa aguarda uma revisão própria; a aprovação não é inferida da assinatura ou de testes passados."));
+- `app.js:2443`: instructions.append(el("p", "Use seu profile autorizado no host. O navegador não guarda a chave privada nem assina uma decisão em seu nome."));
+- `app.js:2450`: instructions.append(el("p", "Depois de uma resposta incerta, use work recover ou review recover com o profile original. Preserve a intenção e os rascunhos."));
+- `app.js:2453`: if (current()) section.append(el("p", \`Não foi possível consultar o estado assinado: ${error.message}\`, "contract-notice"));
+- `presentation.js:51`: wont_fix: "Sem correção",
+- `presentation.js:54`: achieved: "Alcançado",
+- `presentation.js:59`: in_progress: "Em execução",
+- `presentation.js:60`: done: "Concluído",
+- `presentation.js:62`: ready: "Pronto para execução",
+- `presentation.js:64`: waiting_scope: "Aguardando ativação",
+- `presentation.js:65`: waiting_dependencies: "Aguardando dependências",
+- `presentation.js:67`: attention_needed: "Precisa de atenção",
+- `presentation.js:70`: investigating: "Em investigação",
+- `presentation.js:73`: superseded: "Substituído",
+- `presentation.js:74`: valid: "Válida",
+- `presentation.js:79`: critical: "Crítica",
+- `presentation.js:86`: not_met: "Não comprovado",
+- `presentation.js:89`: attestation: "Declaração",
+- `presentation.js:90`: evidence_review: "Revisão de evidência",
+- `presentation.js:91`: external_evaluation: "Avaliação externa",
+- `presentation.js:93`: inspection: "Inspeção",
+- `presentation.js:94`: measurement: "Medição",
+- `presentation.js:100`: independent_review: "Revisão independente",
+- `presentation.js:104`: changes_requested: "Alterações solicitadas",
+- `presentation.js:105`: in_review: "Em revisão",
+- `presentation.js:109`: service: "Serviço",
+- `presentation.js:110`: automation: "Automação",
+- `presentation.js:117`: hard_dependency_unsatisfied: "Dependência ainda não concluída",
+- `presentation.js:118`: not_before: "Início programado ainda não chegou",
+- `presentation.js:122`: objective_terminal: "O objetivo já está encerrado",
+- `presentation.js:124`: lifecycle_not_ready: "Item fora de execução",
+- `presentation.js:125`: outcome_not_active: "O resultado ainda não está ativo",
+- `presentation.js:126`: objective_not_active: "O objetivo ainda não está ativo",
+- `presentation.js:127`: evidence_retracted: "Evidência retirada",
+- `presentation.js:128`: assessment_not_met: "Critério não comprovado",
+- `presentation.js:129`: assessment_inconclusive: "Avaliação inconclusiva",
+- `presentation.js:130`: criterion_revision_changed: "Critério revisado",
+- `presentation.js:142`: evidence: "Evidência",
+- `presentation.js:144`: decision: "Decisão",
+- `presentation.js:179`: : new Intl.DateTimeFormat("pt-BR", {
+- `presentation.js:189`: svg.setAttribute("aria-label", \`Distribuição do trabalho: ${total} itens\`);
