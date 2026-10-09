@@ -1137,3 +1137,15 @@ new hosted source checks remain required for the readiness PR.
 
 PR #59 readiness integrated after all five hosted checks passed on 95e3921;
 master merge 5461815. Historical upgrade/restore and final release gates remain open.
+
+P12 T86 pending-state restore started: the existing authenticated signed
+execution/review/correction journey now takes clean SQL backups at each pending
+authority stage, restores into clean targets and resumes the same workflow.
+Version/fencing/lease metadata and exact authority envelope bytes are compared
+across restore, then delivery, review takeover, correction and approval continue
+against restored storage. Memory is explicitly excluded from database restore
+claims. Both clean restores passed with the complete authenticated correction/approval
+journey: SQLite race 13.231s, PostgreSQL race 30.151s with three empty target
+databases. The initial correction-stage fixture used the already revoked
+original executor to read metadata; it now uses the current authorized
+correction executor, retaining denial assertions. Hosted checks remain pending.

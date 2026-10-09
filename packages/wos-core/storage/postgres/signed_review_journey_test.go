@@ -14,6 +14,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -113,6 +114,32 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			must(e)
 			c := acquired.Value.Contract
 			work := acquired.Value.WorkItem
+			restorePending := func(stage, kind string, contractID d.ID, readerContext context.Context) {
+				t.Helper()
+				sqlStore, ok := store.(*Store)
+				if !ok {
+					return
+				} // Memory has no database backup/restore contract.
+				query := a.SignedStateQuery{Scope: scope, Resource: kind, ID: contractID}
+				before, e := service.ReadSignedState(readerContext, query)
+				must(e)
+				beforeAuthority, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "authority", ContractKind: kind, ID: contractID})
+				must(e)
+				store = reopenIntegrationFixture(t, sqlStore, sqlStore.Path())
+				sec.Store = store
+				service, e = a.NewService(store, clock, ids)
+				must(e)
+				must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+				after, e := service.ReadSignedState(readerContext, query)
+				must(e)
+				afterAuthority, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "authority", ContractKind: kind, ID: contractID})
+				must(e)
+				if !reflect.DeepEqual(before.Contract, after.Contract) || beforeAuthority.PayloadDigest != afterAuthority.PayloadDigest || !reflect.DeepEqual(beforeAuthority.Envelope, afterAuthority.Envelope) {
+					t.Fatalf("%s restore changed pending authority, version/fence or exact signed bytes", stage)
+				}
+				t.Logf("clean database restore preserved %s authority; continuing the same authenticated journey", stage)
+			}
+			restorePending("execution", "execution", c.ID, agentCtx)
 			rid, e := ids.NewID()
 			must(e)
 			request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
@@ -277,6 +304,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				t.Fatal("independent next review search failed")
 			}
 			acquiredReview := a.MutationResult[a.SignedReviewContractResult]{Value: *searched.Value.Result, CommandID: searched.CommandID, OutcomeRevision: searched.OutcomeRevision}
+			restorePending("review", "review", acquiredReview.Value.Contract.ID, reviewCtx)
 			blockedCC := nextCC(reviewer, "review-active-search-is-empty")
 			blocked, e := service.AcquireNextSignedReviewContract(reviewCtx, blockedCC, searchCmd)
 			must(e)
@@ -374,6 +402,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			correction, e := service.AcquireSignedWorkContract(executorCtx, nextCC(executor, "correction-acquisition"), a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: currentWork.Version, SignerKeyID: executorKey, PreviousReviewCaseID: &review.ID})
 			must(e)
 			correctedContract := correction.Value.Contract
+			restorePending("correction", "execution", correctedContract.ID, executorCtx)
 			if correctedContract.FencingToken <= c.FencingToken || correctedContract.ID == c.ID || correctedContract.SignedBinding.PreviousSubmissionID == nil || len(correctedContract.SignedBinding.CorrectionFindings) != 1 {
 				t.Fatal("correction did not get a new fenced authority and immutable targets")
 			}
