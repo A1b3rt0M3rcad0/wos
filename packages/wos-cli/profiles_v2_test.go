@@ -203,6 +203,11 @@ func TestV2RegularFileAndMountedSecretConfinement(t *testing.T) {
 	if e = os.WriteFile(outside, []byte("synthetic-secret-value"), 0600); e != nil {
 		t.Fatal(e)
 	}
+	outside, e = filepath.EvalSymlinks(outside)
+	if e != nil {
+		t.Fatal(e)
+	}
+	protectSecretFixtureV2(t, outside)
 	resolver := SecretResolver{WorkspaceRoot: root}
 	secret, e := resolver.Read("mounted:" + outside)
 	if e != nil {
