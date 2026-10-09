@@ -83,6 +83,8 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 	}
 	result.Operation = prefix + " " + o.args[1]
 	switch o.args[1] {
+	case "sign", "send", "finish":
+		return returnCommandV2(ctx, w, profile, client, token, identity, o)
 	case "renew", "resume", "refresh", "keepalive":
 		return leaseCommandV2(ctx, w, profile, client, token, identity, o)
 	case "checkout":
@@ -110,6 +112,22 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		items := []any{}
 		result.Data = map[string]any{"items": items}
 		for _, intent := range current.Local.PendingOperations {
+			if returnPendingV2(intent.Operation) && ((kind == "execution" && intent.Operation == "ReturnSignedWork") || (kind == "review" && intent.Operation == "ReturnSignedReview")) {
+				if intent.State == "prepared_signed" {
+					items = append(items, map[string]any{"intention_id": intent.ID, "state": "prepared_signed", "requires_action": "send explicitly"})
+					result.Data = map[string]any{"items": items}
+					continue
+				}
+				_, committed, e := recoverReturnV2(ctx, w, profile, client, token, intent, false)
+				result.Committed = result.Committed || committed
+				items = append(items, map[string]any{"intention_id": intent.ID, "remote_committed": committed, "cleanup_pending": committed && e != nil})
+				result.Data = map[string]any{"items": items}
+				if e != nil {
+					result.RequiresAction = "preserve frozen return and reconcile its original receipt"
+					return result, e
+				}
+				continue
+			}
 			isLease := leaseOperationV2(intent.Operation)
 			leaseKindMatches := isLease && ((kind == "execution" && (intent.Operation == "RenewSignedWorkContract" || intent.Operation == "ResumeSignedWorkContract")) || (kind == "review" && (intent.Operation == "RenewSignedReviewContract" || intent.Operation == "ResumeSignedReviewContract")))
 			if leaseKindMatches {
