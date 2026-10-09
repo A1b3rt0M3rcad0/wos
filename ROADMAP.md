@@ -1199,3 +1199,10 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+
+P12 T32 signed replica-clock experiment passed three PostgreSQL race runs
+(3.058s) on Go 1.27.2. Two service instances use clocks +/-365 days; acquisition
+and issuer authority deadlines use database time, renewal remains current,
+takeover preserves expiry and increases fencing, and old authority is denied.
+This is an actual shared-database test, not a claim of separately deployed hosts.
+Existing unsigned clock tests remain intact; final source/platform gates apply.
