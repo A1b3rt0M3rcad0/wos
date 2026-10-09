@@ -1,4 +1,3 @@
-import {test,expect} from 'playwright/test';
 import assert from 'node:assert/strict';
 import {spawn,execFileSync} from 'node:child_process';
 import {mkdtemp,rm,mkdir,writeFile,readFile,readdir} from 'node:fs/promises';
@@ -8,19 +7,18 @@ import {createServer} from 'node:net';
 import {once} from 'node:events';
 import {randomUUID,randomBytes,createPrivateKey,createPublicKey,createHash} from 'node:crypto';
 
-for (const decision of ['approved','changes_requested']) test(`signed work shows accepted delivery, independent review and protected profile actions: ${decision}`,async({browser})=>{
+// Execute installed binaries only, outside the source checkout. No browser or Go test helper.
+export async function verifySignedPackage(serverBinary, clientBinary) {
  const directory=await mkdtemp(join(tmpdir(),'wos-signed-ui-'));
  const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
  const url=`http://127.0.0.1:${port}`,namespace='01a11991-0000-7000-8000-000000000001',token=randomBytes(32).toString('base64url');
  const issuerSeed=randomBytes(32).toString('base64');
- let logs='';const child=spawn(resolve('../../bin/wos'),['server'],{env:{...process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:token,WOS_BOOTSTRAP_NAMESPACE_ID:namespace,WOS_BOOTSTRAP_NAMESPACE_NAME:'Signed workspace',WOS_LOCAL_PRINCIPAL_ID:'human',WOS_SERVER_SIGNING_SEED_ENV:'WOS_UI_ISSUER_SEED',WOS_UI_ISSUER_SEED:issuerSeed,WOS_SIGNED_ACCEPTANCE_FLOOR:'independent_review'},stdio:['ignore','ignore','pipe']});
+ let logs='';const child=spawn(serverBinary,['server'],{env:{...process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:token,WOS_BOOTSTRAP_NAMESPACE_ID:namespace,WOS_BOOTSTRAP_NAMESPACE_NAME:'Signed workspace',WOS_LOCAL_PRINCIPAL_ID:'human',WOS_SERVER_SIGNING_SEED_ENV:'WOS_UI_ISSUER_SEED',WOS_UI_ISSUER_SEED:issuerSeed,WOS_SIGNED_ACCEPTANCE_FLOOR:'independent_review'},stdio:['ignore','ignore','pipe']});
  child.stderr.on('data',b=>logs=(logs+b.toString()).slice(-8000));
- const context=await browser.newContext(),page=await context.newPage(),errors=[],mutations=[];
- page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.method()==='POST'&&r.url().includes('/commands/'))mutations.push(r.url())});
  async function api(path,credential,body){const response=await fetch(url+'/api/v1'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${credential}`,'Content-Type':'application/json',...(body?{'Idempotency-Key':randomUUID()}: {})},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json();assert.ok(response.ok,JSON.stringify(data));return data}
  const command=async(name,value)=>(await api('/commands/'+name,token,{command:value})).value;
  const signing=async(value)=>api('/security/signing-commands',token,value);
- const cli=(workspace,profile,environment,...args)=>JSON.parse(execFileSync(resolve('../../bin/wosctl'),[...args,'--workspace',workspace,'--profile',profile,'--output','json'],{env:{...process.env,...environment},encoding:'utf8',timeout:20000}));
+ const cli=(workspace,profile,environment,...args)=>JSON.parse(execFileSync(clientBinary,[...args,'--workspace',workspace,'--profile',profile,'--output','json'],{env:{...process.env,...environment},encoding:'utf8',timeout:20000}));
  async function editDraft(path,section,changes){
   const original=await readFile(path,'utf8'),lines=original.split('\n');const start=lines.indexOf(section+':');assert.ok(start>=0,'editable draft exists');
   let end=start+1;while(end<lines.length&&(lines[end].startsWith(' ')||!lines[end]))end++;
@@ -38,7 +36,10 @@ for (const decision of ['approved','changes_requested']) test(`signed work shows
   identity=await api('/security/signing-identity',token);
   await signing({namespace_id:namespace,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:namespace,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
   for(const [index,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:index+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit signed browser fixture drain'});
-  const work=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
+  const createdWork=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
+  const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:createdWork.id},expected_version:createdWork.version,title:'Original installed-package obligation checked',required:true,verification_mode:'attestation'});
+  assert.ok(criterion.id);assert.match(String(criterion.criterion_revision),/^[1-9][0-9]*$/);
+  const work=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${createdWork.id}`,token)).value;
   const trust=await api(`/namespaces/${namespace}/signed-trust`,token);
   async function provision(name,permissions){
    const own=await api('/security/signing-identity',token);
@@ -59,26 +60,42 @@ for (const decision of ['approved','changes_requested']) test(`signed work shows
   const reviewer=await provision('reviewer',['state:read','identity.signing_key.enroll','work.review.acquire','work.review.decide','assessment:write','conclusion:write']);
   cli(executor.workspace,executor.name,executor.environment,'work','checkout',work.id,'--version',String(work.version));
   const executionDirectory=join(executor.workspace,'.wos/profiles/executor/contract'),executionFile=(await readdir(executionDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(executionFile);
+  const projection=cli(executor.workspace,executor.name,executor.environment,'work','show',executionFile.slice(0,-5),'--for-agent');assert.ok(!JSON.stringify(projection).includes('private_key_ref'));
   await editDraft(join(executionDirectory,executionFile),'execution',lines=>{
    let summaries=0;const changed=lines.map(line=>{if(/^\s+summary:/.test(line)){summaries++;return line.replace(/summary:.*/, 'summary: "Material exato entregue pelo executor"')}return line});assert.ok(summaries>0);
    const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  reason: "Entrega exige avaliação independente"');return changed;
   });
   cli(executor.workspace,executor.name,executor.environment,'work','finish',executionFile.slice(0,-5));
   assert.deepEqual(await readdir(executionDirectory),[],'executor obligation cleanup is separate from Task approval');
-  await page.goto(url+'/app/');await page.getByLabel('Credencial de acesso',{exact:true}).fill(token);await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await page.locator('#signed-protocol-label').click();await expect(page.getByText('Identidade deste espaço',{exact:true})).toBeVisible();await expect(page.getByText(trust.server.fingerprint,{exact:true}).first()).toBeVisible();await expect(page.getByText(trust.server.server_id,{exact:true})).toBeVisible();
-  await page.locator('#outcomes').getByRole('button').filter({hasText:outcome.title}).click();await page.getByRole('button',{name:'Quadro',exact:true}).click();await page.getByRole('button').filter({hasText:work.title}).first().click();
-  await expect(page.getByText('Aguardando revisão independente',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Revisar entrega',exact:true})).toHaveCount(0);
-  await page.getByRole('button',{name:'Carregar material aceito',exact:true}).click();await expect(page.getByText('Material exato entregue pelo executor',{exact:true})).toBeVisible();
-  await page.locator('#entity-actions').click();const choices=await page.locator('#command-select option').evaluateAll(options=>options.map(o=>o.value));assert.ok(!choices.includes('record_criterion_assessment'));assert.ok(!choices.includes('finalize_work_contract'));assert.ok(!choices.includes('return_signed_review'));await page.locator('#command-dialog').getByRole('button',{name:'Fechar',exact:true}).click();
+  const reviewDirectory=join(reviewer.workspace,'.wos/profiles/reviewer/contract');
+  for (const decision of ['changes_requested','approved']) {
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','checkout','--next');
-  const reviewDirectory=join(reviewer.workspace,'.wos/profiles/reviewer/contract'),reviewFile=(await readdir(reviewDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(reviewFile);
-  await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
+  const reviewFile=(await readdir(reviewDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(reviewFile);
+  await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='approved'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  criterion_assessments:',indent+'    - criterion_id: '+criterion.id,indent+'      criterion_revision: "'+criterion.criterion_revision+'"',indent+'      result: met',indent+'      rationale: "Integration fixture checked original attestation requirement"')}if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','finish',reviewFile.slice(0,-5));assert.deepEqual(await readdir(reviewDirectory),[]);
-  await expect(page.locator('#detail-dialog')).not.toBeVisible();await page.locator('#refresh').click();await page.getByRole('button').filter({hasText:work.title}).first().click();await expect(page.getByText(decision==='approved'?'Revisão aprovada':'Alterações solicitadas',{exact:true})).toBeVisible();if(decision==='changes_requested'){await expect(page.getByText('Confirmar cumprimento da tarefa original',{exact:true})).toBeVisible();await expect(page.getByText('Obrigação: task.title',{exact:true})).toBeVisible();await expect(page.locator('.signed-next-step pre').first()).toContainText('--previous-review');}
-  assert.deepEqual(mutations,[],'browser projections never submit an unsigned substitute or fabricate a signature');assert.deepEqual(errors,[]);
-  if(process.env.WOS_BROWSER_ARTIFACT_DIR)await page.screenshot({path:join(process.env.WOS_BROWSER_ARTIFACT_DIR,`10-signed-review-${decision}.png`),fullPage:true});
+  if(decision==='changes_requested') {
+   const pending=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token)).value;
+   assert.notEqual(pending.lifecycle,'done','changes requested is not Task completion');
+   assert.ok(pending.correction_review_case_id,'correction names the original prior review');
+   cli(executor.workspace,executor.name,executor.environment,'work','checkout',work.id,'--version',String(pending.version),'--previous-review',pending.correction_review_case_id);
+   const correction=(await readdir(executionDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(correction);assert.notEqual(correction,executionFile,'correction has a fresh contract');
+   cli(executor.workspace,executor.name,executor.environment,'work','show',correction.slice(0,-5),'--for-agent');
+   await editDraft(join(executionDirectory,correction),'execution',lines=>{
+    const changed=lines.map(line=>/^\s+summary:/.test(line)?line.replace(/summary:.*/,'summary: "Correction addresses the original frozen finding"'):line);
+    const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];
+    changed.splice(material+1,0,indent+'  reason: "Test-only correction round, original scope preserved"',indent+'  correction_responses:',indent+'    - finding_id: 01a11991-0000-7000-8000-000000000002',indent+'      summary: "Original requirement checked; frozen finding explicitly addressed"');return changed;
+   });
+   cli(executor.workspace,executor.name,executor.environment,'work','finish',correction.slice(0,-5));assert.deepEqual(await readdir(executionDirectory),[]);
+  }
+  }
+  cli(executor.workspace,executor.name,executor.environment,'work','recover');
+  cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','recover');
+  assert.deepEqual(await readdir(executionDirectory),[]);
+  assert.deepEqual(await readdir(reviewDirectory),[]);
+  const completed=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token);
+  assert.equal(completed.value.lifecycle,'done','independent reviewer actually completes Task');
+  return {protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
  }finally{
-  await context.close();if(child.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended}await rm(directory,{recursive:true,force:true});
+  if(child.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended}await rm(directory,{recursive:true,force:true});
  }
-});
+}

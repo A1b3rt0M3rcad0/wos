@@ -22,7 +22,7 @@ func TestVersionNeedsNoWorkspaceCredentialsOrService(t *testing.T) {
 			Protocol string `json:"work_protocol"`
 		}
 	}
-	if err := json.Unmarshal(output.Bytes(), &value); err != nil || value.Operation != "version" || value.Data.Version != Version || value.Data.Commit != Commit || value.Data.Protocol != "contracts_v1" {
+	if err := json.Unmarshal(output.Bytes(), &value); err != nil || value.Operation != "version" || value.Data.Version != Version || value.Data.Commit != Commit || value.Data.Protocol != "signed_contracts_v2" {
 		t.Fatal("invalid release identity", err, output.String())
 	}
 	output.Reset()
