@@ -3,6 +3,7 @@ No existing migration or historical row is modified. Domain guards and separate
 ports preserve signed bindings; PostgreSQL generation consumes the SQL output.
 """
 from pathlib import Path
+import re
 root=Path('packages/wos-core/storage')
 for backend in ['sqlite','memory']:
  source=(root/backend/'work_contracts.go').read_text()
@@ -14,6 +15,11 @@ for backend in ['sqlite','memory']:
   source=source.replace('work_contract','signed_work_contract').replace('contractState','signedContractState')
   source=source.replace('work_item_id,holder_principal_id,status','work_item_id,credential_id,holder_principal_id,status').replace('VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)','VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').replace('c.WorkItemID.String(), c.HolderPrincipalID','c.WorkItemID.String(), c.SignedBinding.CredentialID.String(), c.HolderPrincipalID')
   source=source.replace('int64(c.Version)','strconv.FormatUint(uint64(c.Version),10)').replace('int64(c.LeaseVersion)','strconv.FormatUint(uint64(c.LeaseVersion),10)').replace('int64(version)','strconv.FormatUint(uint64(version),10)').replace('int64(lease)','strconv.FormatUint(uint64(lease),10)')
+  # Keep signed SQL error boundaries retryable without altering v1 storage.
+  source=re.sub(r'(rows, err := [^\n]*\.QueryContext[^\n]*\n\tif err != nil \{\n\t\t)return nil, err',r'\1return nil, mapSQLError("query signed state", err)',source)
+  source=re.sub(r'(if err (?::=|=) rows.Scan\([^\n]+\); err != nil \{\n\t\t\t)return nil, err',r'\1return nil, mapSQLError("scan signed state", err)',source)
+  source=source.replace('return out, rows.Err()', 'return out, mapSQLError("iterate signed state", rows.Err())')
+
  else:
   start=source.index('type signedWorkContractRepository')
   end=source.index('func (r workItemRepository) ContractCandidates')

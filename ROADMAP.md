@@ -1221,3 +1221,9 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+The first hosted signed-load gate exposed generated-source drift: signedgen
+regenerated v1-based signed work storage without the new SQL error boundaries.
+The generator now preserves the signed-only mapping; v1 source is unchanged.
+A Go 1.27.2 targeted PostgreSQL clean-restore check hit its 40-second pg_dump
+timeout on the long-lived test database catalog; rerun uses a new owned disposable
+database instead of changing the timeout or deleting existing fixture data.
