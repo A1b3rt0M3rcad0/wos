@@ -12,7 +12,7 @@ func TestSQLiteDrivePathIsNotURIHost(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
-		if parsed.Scheme != "file" || parsed.Host != "" || parsed.Path != "/"+path {
+		if parsed.Scheme != "file" || parsed.Host != "" || parsed.Opaque != (&url.URL{Path: path}).EscapedPath() || parsed.Path != "" {
 			t.Fatalf("drive became URI authority: %s", parsed.String())
 		}
 		if parsed.Query().Get("_txlock") != "immediate" || len(parsed.Query()["_pragma"]) != 4 {

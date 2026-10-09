@@ -124,12 +124,14 @@ func Open(path string, opts Options) (*Store, error) {
 
 func sqliteDSN(path string, busyTimeout time.Duration) string {
 	uriPath := filepath.ToSlash(path)
-	// A Windows drive is a URI path segment, never the file URI authority.
-	// file://C:/... is rejected by SQLite; file:///C:/... names the local drive.
-	if len(uriPath) >= 3 && uriPath[1] == ':' && uriPath[2] == '/' {
-		uriPath = "/" + uriPath
-	}
 	u := &url.URL{Scheme: "file", Path: uriPath}
+	// This Go VFS receives SQLite's parsed name directly. A Windows drive
+	// must remain C:/..., rather than an authority or the invalid /C:/... .
+	// Opaque file:C:/... preserves that native name and still escapes bytes.
+	if len(uriPath) >= 3 && uriPath[1] == ':' && uriPath[2] == '/' {
+		u.Path = ""
+		u.Opaque = (&url.URL{Path: uriPath}).EscapedPath()
+	}
 	q := u.Query()
 	q.Set("_txlock", "immediate")
 	q.Add("_pragma", "foreign_keys(1)")
