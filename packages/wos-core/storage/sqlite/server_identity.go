@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"sort"
@@ -150,4 +151,30 @@ func (r serverIdentityRepository) IssuerHistory(ctx context.Context, after d.ID,
 		result = result[:limit]
 	}
 	return result, nil
+}
+
+// SignedIssuerReady is a host health projection, not an authorization grant.
+// One read snapshot observes current issuer and whether any Namespace requires
+// signed issuance. It never writes, acquires work or exposes tenant identities.
+func (s *Store) SignedIssuerReady(ctx context.Context, configured *d.ServerIdentity) (bool, error) {
+	var current sql.NullString
+	var required bool
+	e := s.db.QueryRowContext(ctx, `SELECT (SELECT state_json FROM server_protocol_identity AS current_issuer WHERE singleton=1), EXISTS(SELECT 1 FROM namespace_work_protocol WHERE phase='signed_contracts_v2')`).Scan(&current, &required)
+	if e != nil {
+		return false, mapSQLError("signed issuer readiness", e)
+	}
+	if configured == nil {
+		return !required, nil
+	}
+	if !current.Valid {
+		return false, nil
+	}
+	var identity d.ServerIdentity
+	if e = unmarshalJSON(current.String, &identity); e != nil {
+		return false, e
+	}
+	if e = identity.Validate(); e != nil {
+		return false, e
+	}
+	return identity == *configured, nil
 }

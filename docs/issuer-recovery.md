@@ -33,6 +33,13 @@ The private old seed is unnecessary and no historical fact is re-signed.
 Restart replicas with the approved replacement reference. Normal runtime startup
 continues to reject silent seed replacement. Shared issuer reads and exclusive
 replacement serialize current issuance; stale signer configuration fails closed.
+Readiness compares each replica's configured public signer with the current
+persistent issuer. A stale replica reports HTTP 503 after replacement. A restored
+runtime without a configured signer also reports 503 if any Namespace has active
+signed protocol, while liveness and authorized historical reads remain available.
+No ephemeral replacement key is created; provision the approved signer before
+routing new work to that replica.
+
 Historical public keys remain available through authenticated bounded `trust`
 queries, with `limit` and `cursor` and explicit search completion.
 

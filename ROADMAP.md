@@ -1084,6 +1084,21 @@ PostgreSQL 20.374s, runtime 5.592s and CLI 2.207s. Full regression, hosted nativ
 checks and integration remain pending; this does not complete P10 or P12.
 
 
+P10/P12 T15 readiness continuation: host readiness observes the current instance
+issuer and whether any Namespace requires signed issuance in one read snapshot.
+A signed runtime without a configured signer and a stale replica after explicit
+issuer recovery report HTTP 503; ordinary unsigned startup remains ready without
+a signing key. Authenticated historical trust remains readable and liveness is
+independent. No key is generated silently. The actual SDK fixture provisions a
+valid credential policy/agent key, explicitly activates signed protocol, restarts
+without the issuer and verifies readiness/liveness, unchanged public trust,
+negative issuer preflight and explicit new-issuance refusal on SQLite/PostgreSQL.
+Targeted race passed (10.827s); initial fixture runs lacked an enrollment grant,
+used a too-short idempotency key and expected readiness in the trust resource
+rather than protocol_preflight. Those failed fixtures are not counted as passes;
+the product assertions remain intact. Broader runtime regression and hosted
+gates remain required before integration; historical dataset and P11–P13 remain
+open.
 PR #57 integrated host issuer recovery and interruption-safe client trust on
 master f06d63c. Full frozen-source race suite passed with real PostgreSQL/clean
 restore (214.673s), SQLite (126.291s), runtime (47.389s), CLI (8.862s), actual
@@ -1110,3 +1125,15 @@ Corrections expose accepted findings on existing obligations; no unsigned browse
 mutation replaces review. All six browser journeys passed (30.1s), including
 legacy cutover and planning/assessment regression. Native onboarding remains
 explicit through profiles; runtime pilot and final source acceptance remain open.
+
+PR #58 integrated the five signed-protocol skills and client-guide alignment on
+master c91c694. All hosted browser/package/full/native Linux/Windows checks
+passed on combined source 129797f. Installer acceptance is not certification of
+execution in every consumer agent; P11 UI and final operational acceptance remain
+open. T15 readiness source 2941bba passed the complete runtime race suite
+(51.364s), actual Memory/SQLite/PostgreSQL signed acceptance (43.777s), vet,
+actionlint and catalogue. Merging the guide baseline changes documentation only;
+new hosted source checks remain required for the readiness PR.
+
+PR #59 readiness integrated after all five hosted checks passed on 95e3921;
+master merge 5461815. Historical upgrade/restore and final release gates remain open.
