@@ -2441,7 +2441,7 @@ async function signedContractSection(detail, entity, generation) {
     const instructions = el("details", undefined, "signed-next-step");
     instructions.append(el("summary", "Executar ou revisar com um profile"));
     instructions.append(el("p", "Use seu profile autorizado no host. O navegador não guarda a chave privada nem assina uma decisão em seu nome."));
-    instructions.append(el("pre", `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}
+    instructions.append(el("pre", `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
 wosctl --profile executor work show CONTRACT_UUID --for-agent
 wosctl --profile executor work finish CONTRACT_UUID`));
     if (entity.pending_review_case_id && pendingReviewVersion !== undefined) instructions.append(el("pre", `wosctl --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}

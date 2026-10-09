@@ -70,3 +70,38 @@ review uses `wos_acquire_signed_review_contract`, and frozen returns use
 `wos_return_signed_work` / `wos_return_signed_review`. Signed envelopes and
 verification belong in the protected harness, outside the language-model view.
 The server authorizes every mutation from current grants/policy/authority.
+
+## Editable signed review example
+
+`review.decision` accepts exactly `approved`, `changes_requested` or
+`inconclusive`. Use original criterion IDs/revisions from `review show`; prose
+alone does not satisfy a required criterion. Edit only the draft:
+
+```yaml
+review:
+  progress:
+    summary: Examined the accepted commit and ran independent checks
+    blockers: []
+    next_action: Return the independent decision
+  decision: approved
+  material:
+    reason: Describe what was actually checked
+    reviewed_source_version: ACTUAL_COMMIT
+    criterion_assessments:
+      - criterion_id: ORIGINAL_CRITERION_UUID
+        criterion_revision: "1"
+        result: met
+        rationale: Actual evidence for this original criterion
+```
+
+Assessment results are `met`, `not_met`, `inconclusive` or `waived`; only use
+`met` after checking fulfillment. Do not invent evidence IDs or revisions.
+`changes_requested` requires findings tied to original requirement references.
+There is no `material.decision`; submission/case IDs come from verified issued
+metadata. `work validate` and generic `--help` are not signed protocol operations;
+use focal `show` and the coordinated packaged schema. If local preparation fails,
+inspect pending state and recover before changing a draft. Never edit a frozen
+intention after an uncertain send.
+
+After changes_requested, use [the explicit correction flow](correction.md).
+Correction is intentionally excluded from generic --next discovery.
