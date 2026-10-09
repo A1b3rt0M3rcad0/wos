@@ -1231,3 +1231,10 @@ into final assertions; both fixture errors are corrected without relaxing strict
 schema/cleanup checks. Five progressive guides and the human UI now show the
 required correction acknowledgement. This automated correction scenario is
 distinct from the managed Codex pilot, which accepted its initial delivery.
+
+P13 coordinated 0.3.0 preparation updates VERSION, both npm packages and service
+compatibility, release manifest, changelog and upgrade notes together. Existing
+Namespace phases/unsigned history remain explicit compatibility paths, so this
+opt-in protocol addition uses a minor bump. This release is prepared, not
+registry-published or certified from parent-commit receipts. Remaining P12 PRs
+and all same-source final gates must integrate before operational acceptance.

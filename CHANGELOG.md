@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 — prepared for release
+
+- Add opt-in signed contract protocol v2, protected actor profiles, independent review and correction, receipt-driven cleanup and historical upgrade/restore; align five portable skills and the human workspace, and separate coordinated verification from explicit registry publication.
+
 ## 0.2.0 — prepared for release
 
 - Add persistent execution contracts, immutable checkpoints/submissions and exact review binding; explicit Namespace cutover, bounded HTTP/MCP/SDK context, API-only YAML wosctl with durable recovery, five npm skills and matching native-platform release gates.

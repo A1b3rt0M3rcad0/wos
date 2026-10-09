@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "version": "0.2.0",
-  "previous_prepared_version": "0.1.0",
+  "version": "0.3.0",
+  "previous_prepared_version": "0.2.0",
   "bump": "minor",
   "changes": [
     {
-      "file": "work-contracts-cli.json",
+      "file": "signed-profiles.json",
       "bump": "minor",
-      "summary": "Add persistent execution contracts, immutable checkpoints/submissions and exact review binding; explicit Namespace cutover, bounded HTTP/MCP/SDK context, API-only YAML wosctl with durable recovery, five npm skills and matching native-platform release gates."
+      "summary": "Add opt-in signed contract protocol v2, protected actor profiles, independent review and correction, receipt-driven cleanup and historical upgrade/restore; align five portable skills and the human workspace, and separate coordinated verification from explicit registry publication."
     }
   ]
 }
