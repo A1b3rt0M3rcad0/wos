@@ -13,9 +13,16 @@ type SignedFinding struct {
 	Description    string `json:"description"`
 }
 
-func (f SignedFinding) ValidateAgainst(spec WorkContractSpec) error {
+func (f SignedFinding) Validate() error {
 	if f.ID.Validate() != nil || strings.TrimSpace(f.Description) == "" || len(f.Description) > 16384 || (f.CriterionID == nil) == (f.RequirementRef == "") {
 		return NewError(ErrorCodeInvalidArgument, "finding needs identity, description and exactly one existing obligation")
+	}
+	return nil
+}
+
+func (f SignedFinding) ValidateAgainst(spec WorkContractSpec) error {
+	if err := f.Validate(); err != nil {
+		return err
 	}
 	if f.CriterionID != nil {
 		for _, c := range spec.Criteria {

@@ -62,6 +62,11 @@ func (v *ReviewDraftV2) UnmarshalJSON(raw []byte) error {
 	if e = commands.Decode(normalized, (*plain)(v)); e != nil {
 		return e
 	}
+	for _, finding := range v.Material.Findings {
+		if e = finding.Validate(); e != nil {
+			return fmt.Errorf("finding %q: %w", finding.ID, e)
+		}
+	}
 	return validateDraftEvidenceV2(v.Material.Evidence)
 }
 

@@ -96,7 +96,10 @@ review:
 
 Assessment results are `met`, `not_met`, `inconclusive` or `waived`; only use
 `met` after checking fulfillment. Do not invent evidence IDs or revisions.
-`changes_requested` requires findings tied to original requirement references.
+`changes_requested` requires findings tied to an original obligation. Each finding
+contains exactly one `criterion_id` OR `requirement_ref`, never both; include its
+UUIDv7 `id` and factual `description`. The CLI rejects malformed findings before
+freezing the return. Existing frozen intentions remain unchanged.
 There is no `material.decision`; submission/case IDs come from verified issued
 metadata. `work validate` and generic `--help` are not signed protocol operations;
 use focal `show` and the coordinated packaged schema. If local preparation fails,
