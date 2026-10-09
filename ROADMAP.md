@@ -1137,3 +1137,19 @@ new hosted source checks remain required for the readiness PR.
 
 PR #59 readiness integrated after all five hosted checks passed on 95e3921;
 master merge 5461815. Historical upgrade/restore and final release gates remain open.
+
+P12 native keyring gate started: platform CI now requires an actual OS credential
+service. An isolated Linux DBus/Secret Service fixture and native Windows
+Credential Manager run protected reference read/write, exact profile MAC and
+signing-key fingerprint checks, signing/verification and child-process reads. The actual executor/reviewer
+HTTP/CLI lost-response fixture selects those native references in platform CI,
+without passing credentials/seeds through child process environments.
+Randomly named synthetic entries are deleted; no plaintext fallback, private
+process arguments or repository secrets are introduced. Native receipt verification
+rejects proofs without the executed keyring gate. Local Linux lacks the daemon;
+actual native execution remains pending until hosted jobs finish. Native receipts
+now list actual passing Go test count and individual skips, including unavailable
+PostgreSQL on client-only hosts, instead of implying every suite ran. Local
+Memory/SQLite fallback transport passed (24.272s); PostgreSQL was explicitly
+skipped there. Distribution gate unit tests and negative secret redaction pass;
+those are not counted as real local keyring execution.
