@@ -102,6 +102,31 @@ jobs:
       - name: Build standalone binary
         run: go build -o ./bin/wos ./packages/wos-api/cmd/wos
 
+      - name: Actual v0.2 database upgrade, clean restore and old writer refusal
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        shell: bash
+        run: |
+          historical_ref=b75aa3e0ca6d649cafadf8450d9b5d606367dda4
+          git fetch --no-tags --depth=1 origin "$historical_ref"
+          historical_source="$(mktemp -d)"
+          trap 'rm -rf "$historical_source"' EXIT
+          git archive "$historical_ref" | tar -x -C "$historical_source"
+          historical_built_at="$(git show -s --format=%cI "$historical_ref")"
+          (cd "$historical_source" && go build -trimpath -buildvcs=false \
+            -ldflags "-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Version=0.2.0 -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=$historical_ref -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.BuiltAt=$historical_built_at" \
+            -o "$historical_source/wos-v020" ./packages/wos-api/cmd/wos)
+          current_ref="$(git rev-parse HEAD)"
+          go build -trimpath -buildvcs=false \
+            -ldflags "-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Version=$(cat VERSION) -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=$current_ref" \
+            -o ./bin/wos-upgrade-test ./packages/wos-api/cmd/wos
+          python3 tests/acceptance/historical_upgrade.py --binary bin/wos-upgrade-test \
+            --old-binary "$historical_source/wos-v020" --source "$current_ref" --report historical-upgrade.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: historical-v020-upgrade
+          path: historical-upgrade.json
+
       - name: Smoke version command
         run: ./bin/wos version
 
