@@ -13,6 +13,10 @@ func signedCommand(name string) bool {
 	}
 	return false
 }
+func signedCutoverCommand(command any) bool {
+	cmd, ok := command.(SetNamespaceWorkProtocolCommand)
+	return ok && (cmd.Phase == d.WorkProtocolSignedDraining || cmd.Phase == d.WorkProtocolSigned)
+}
 func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, permission ports.Permission, keyID d.ID) (Identity, d.CredentialPolicy, error) {
 	var policy d.CredentialPolicy
 	identity, ok := IdentityFromContext(ctx)

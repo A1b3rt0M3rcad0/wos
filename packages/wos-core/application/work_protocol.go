@@ -52,9 +52,9 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 		if cmd.Reason == "" {
 			return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "protocol change requires reason")
 		}
-		legal := p.Phase == cmd.Phase || p.Phase == domain.WorkProtocolLegacy && cmd.Phase == domain.WorkProtocolDraining || p.Phase == domain.WorkProtocolDraining && cmd.Phase == domain.WorkProtocolContracts
+		legal := p.Phase == cmd.Phase || p.Phase == domain.WorkProtocolLegacy && cmd.Phase == domain.WorkProtocolDraining || p.Phase == domain.WorkProtocolDraining && cmd.Phase == domain.WorkProtocolContracts || p.Phase == domain.WorkProtocolContracts && cmd.Phase == domain.WorkProtocolSignedDraining || p.Phase == domain.WorkProtocolSignedDraining && cmd.Phase == domain.WorkProtocolSigned
 		if !legal {
-			return zero, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "protocol requires legacy -> draining -> contracts_v1; downgrade is unsupported")
+			return zero, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "protocol requires legacy -> draining -> contracts_v1 -> draining_to_signed_v2 -> signed_contracts_v2; downgrade is unsupported")
 		}
 		scopes, err := repo.Scopes(ctx, cmd.Scope.NamespaceID)
 		if err != nil {
@@ -97,6 +97,46 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 			if p.Phase != domain.WorkProtocolContracts {
 				if err = repo.EnableContracts(ctx, p.NamespaceID, now); err != nil {
 					return zero, 0, err
+				}
+			}
+		}
+		if next.Phase == domain.WorkProtocolSignedDraining {
+			next.WriterEpoch = 1
+			next.WritersDrained = false
+		}
+		if next.Phase == domain.WorkProtocolSigned {
+			if !cmd.WritersDrained {
+				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "operator must explicitly retire and drain all v1 writers")
+			}
+			if count, e := repo.ValidLegacyLeases(ctx, p.NamespaceID, now); e != nil {
+				return zero, 0, e
+			} else if count > 0 {
+				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "valid legacy claims remain")
+			}
+			if count, e := repo.ValidUnsignedContracts(ctx, p.NamespaceID, now); e != nil {
+				return zero, 0, e
+			} else if count > 0 {
+				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "valid unsigned contract authority remains")
+			}
+			if _, e := s.requireSignedIssuer(ctx, u, p.NamespaceID); e != nil {
+				return zero, 0, e
+			}
+			registry, e := signingRepository(u)
+			if e != nil {
+				return zero, 0, e
+			}
+			policy, e := registry.AcceptancePolicy(ctx, p.NamespaceID, nil, nil)
+			if e != nil {
+				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "explicit Namespace acceptance policy required before signed activation")
+			}
+			if e = policy.Validate(); e != nil {
+				return zero, 0, e
+			}
+			next.WriterEpoch = 2
+			next.WritersDrained = true
+			if p.Phase != domain.WorkProtocolSigned {
+				if e = repo.EnableContracts(ctx, p.NamespaceID, now); e != nil {
+					return zero, 0, e
 				}
 			}
 		}

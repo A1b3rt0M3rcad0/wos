@@ -37,7 +37,7 @@ func (r SignedOperationResult) Validate() error {
 		return NewError(ErrorCodeInvalidArgument, "invalid durable signed operation binding")
 	}
 	switch r.CommandName {
-	case "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
+	case "SetNamespaceWorkProtocol", "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
 	default:
 		return NewError(ErrorCodeInvalidArgument, "unknown durable signed operation")
 	}

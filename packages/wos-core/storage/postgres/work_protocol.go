@@ -66,6 +66,11 @@ func (r workProtocolRepository) ValidLegacyLeases(ctx context.Context, ns d.ID, 
 	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_items WHERE namespace_id=$1 AND lease_claim_id IS NOT NULL AND lease_expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
 	return count, err
 }
+func (r workProtocolRepository) ValidUnsignedContracts(ctx context.Context, ns d.ID, now time.Time) (int, error) {
+	var count int
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_contracts WHERE namespace_id=$1 AND status='active' AND expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
+	return count, mapSQLError("count valid unsigned authority", err)
+}
 func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, now time.Time) error {
 	count, err := r.ValidLegacyLeases(ctx, ns, now)
 	if err != nil {

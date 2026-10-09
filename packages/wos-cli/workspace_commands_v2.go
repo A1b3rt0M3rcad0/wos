@@ -22,6 +22,8 @@ func runWorkspaceV2(ctx context.Context, w *Workspace, o options) (Output, error
 		return result, e
 	}
 	switch o.args[0] {
+	case "protocol":
+		return protocolCommandV2(ctx, w, profile, client, token, identity, o)
 	case "work", "review":
 		return workCommandV2(ctx, w, profile, client, token, identity, o)
 	case "auth":

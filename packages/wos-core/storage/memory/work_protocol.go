@@ -49,6 +49,15 @@ func (r workProtocolRepository) ValidLegacyLeases(ctx context.Context, ns d.ID, 
 	}
 	return count, ctx.Err()
 }
+func (r workProtocolRepository) ValidUnsignedContracts(ctx context.Context, ns d.ID, now time.Time) (int, error) {
+	count := 0
+	for _, c := range r.tx.contracts {
+		if c.Scope.NamespaceID == ns && c.Status == d.ContractActive && now.Before(c.ExpiresAt) {
+			count++
+		}
+	}
+	return count, ctx.Err()
+}
 func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, now time.Time) error {
 	if n, err := r.ValidLegacyLeases(ctx, ns, now); err != nil {
 		return err
