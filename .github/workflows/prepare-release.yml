@@ -6,6 +6,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 concurrency:
   group: prepare-release
   cancel-in-progress: false
@@ -34,7 +35,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -C release/next
-          git add VERSION packages/wos-npm/package.json packages/wos-skill/package.json release-manifest.json docs/releases CHANGELOG.md .changes
+          git add VERSION packages/wos-api/commands.openapi.json packages/wos-npm/package.json packages/wos-skill/package.json release-manifest.json docs/releases CHANGELOG.md .changes
           git commit -m "chore(release): prepare v$(cat VERSION)"
           # Only the automation-owned branch is updated, never master or a feature branch.
           git fetch origin release/next || true
@@ -47,3 +48,8 @@ jobs:
           else
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$existing" -f "title=chore(release): v$version" -F body=@/tmp/wos-release-pr.md
           fi
+          # GITHUB_TOKEN-created pushes/PRs do not trigger sibling workflows.
+          # workflow_dispatch is explicit and runs only verification, not publication.
+          for workflow in ci.yml web.yml packages.yml cli.yml; do
+            gh workflow run "$workflow" --ref release/next
+          done

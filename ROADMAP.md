@@ -1238,3 +1238,11 @@ Namespace phases/unsigned history remain explicit compatibility paths, so this
 opt-in protocol addition uses a minor bump. This release is prepared, not
 registry-published or certified from parent-commit receipts. Remaining P12 PRs
 and all same-source final gates must integrate before operational acceptance.
+
+The first 0.3 hosted source gate rejected stale OpenAPI release metadata (0.2).
+Preparation now validates and updates that generated metadata before writing
+coordinated version state; unchanged public paths remain exact and stale inputs
+fail before consuming the queue. Release automation includes the OpenAPI file
+in its commit and explicitly dispatches four verification workflows for its
+bot-created PR, which GITHUB_TOKEN events otherwise do not start. Publication
+remains separately explicit. The failing gate is rerun rather than disabled.
