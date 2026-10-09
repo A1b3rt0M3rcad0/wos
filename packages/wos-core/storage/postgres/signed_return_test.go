@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -13,6 +14,8 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 )
@@ -182,6 +185,58 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						t.Fatal("failed atomic return changed authority")
 					}
 					must(check.Rollback())
+					if backend == "sql" {
+						sqlStore := store.(*Store)
+						stages := []signedSQLFaultStage{
+							{"artifact", "artifacts", "INSERT", ""},
+							{"evidence", "evidence", "INSERT", ""},
+							{"submission", "signed_work_contract_submissions", "INSERT", ""},
+							{"contract", "signed_work_contracts", "UPDATE", ""},
+							{"task", "work_items", "UPDATE", ""},
+							{"return_fact", "signed_protocol_facts", "INSERT", "NEW.kind='return'"},
+							{"revision", "outcome_coordination", "UPDATE", ""},
+							{"receipt", "signed_protocol_facts", "INSERT", "NEW.kind='acceptance'"},
+							{"domain_event", "domain_events", "INSERT", ""},
+							{"integration_event", "integration_events", "INSERT", ""},
+							{"idempotency_reservation", "idempotency_records", "INSERT", ""},
+							{"idempotency_completion", "idempotency_records", "UPDATE", ""},
+							{"durable_operation", "signed_operation_results", "INSERT", ""},
+						}
+						if floor == d.AcceptanceIndependentReview {
+							stages = append(stages, signedSQLFaultStage{"review_case", "work_review_cases", "INSERT", ""})
+						}
+						baseline := signedSQLFaultSnapshot(t, sqlStore)
+						for _, stage := range stages {
+							remove := injectSignedSQLFault(t, sqlStore, stage)
+							_, faultErr := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+							remove()
+							if faultErr == nil || !strings.Contains(faultErr.Error(), "signed_test_fault") {
+								t.Fatalf("%s did not reach its injected SQL boundary: %v", stage.name, faultErr)
+							}
+							if got := signedSQLFaultSnapshot(t, sqlStore); got != baseline {
+								t.Fatalf("%s leaked partially committed rows, authority, receipt, events or idempotency", stage.name)
+							}
+							t.Logf("injected %s rollback preserved exact SQL state; original signed intent remains retryable", stage.name)
+						}
+
+						for _, point := range []string{"receipt_signing", "before_commit"} {
+							fail := false
+							tx := signedCommitFaultManager{base: sqlStore, fail: &fail}
+							lateService, err := a.NewService(tx, clock, ids)
+							must(err)
+							issuer := &signedReceiptFaultIssuer{LocalContractSigner: acquisitionIssuer{server, private}, fail: &fail, point: point}
+							must(lateService.ConfigureSignedIssuer(ctx, issuer, d.AcceptanceDirect))
+							fail = true
+							issuer.commitOnly = point == "before_commit"
+							_, faultErr := lateService.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+							if faultErr == nil || !strings.Contains(faultErr.Error(), "signed_test_fault") {
+								t.Fatalf("%s missed injected late boundary: %v", point, faultErr)
+							}
+							if got := signedSQLFaultSnapshot(t, sqlStore); got != baseline {
+								t.Fatalf("%s leaked partial return state", point)
+							}
+						}
+					}
 					returned, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
 					must(e)
 					wire, e := returned.Value.Receipt.Envelope()
@@ -281,4 +336,138 @@ func mustCanonical(t *testing.T, value any) []byte {
 		t.Fatal(err)
 	}
 	return raw
+}
+
+// Faults execute in real SQL transactions, after earlier return stages have written.
+// Every table is compared byte-for-byte after rollback, including the original
+// authority, aggregate JSON, event/outbox facts and short/durable replay state.
+type signedSQLFaultStage struct{ name, table, operation, condition string }
+
+func injectSignedSQLFault(t *testing.T, store *Store, stage signedSQLFaultStage) func() {
+	t.Helper()
+	name := "signed_test_fault_trigger"
+	postgres := strings.Contains(fmt.Sprintf("%T", store.db.Driver()), "stdlib")
+	statement := "CREATE TRIGGER " + name + " BEFORE " + stage.operation + " ON " + stage.table
+	if postgres {
+		body := "RAISE EXCEPTION 'signed_test_fault';"
+		if stage.condition != "" {
+			body = "IF " + stage.condition + " THEN " + body + " END IF;"
+		}
+		_, err := store.db.ExecContext(context.Background(), "CREATE FUNCTION signed_test_fault_fn() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN "+body+" RETURN NEW; END $$")
+		if err != nil {
+			t.Fatal(err)
+		}
+		statement += " FOR EACH ROW EXECUTE FUNCTION signed_test_fault_fn()"
+	} else {
+		if stage.condition != "" {
+			statement += " WHEN " + stage.condition
+		}
+		statement += " BEGIN SELECT RAISE(ABORT, 'signed_test_fault'); END"
+	}
+	if _, err := store.db.ExecContext(context.Background(), statement); err != nil {
+		t.Fatal(err)
+	}
+	return func() {
+		statement := "DROP TRIGGER " + name
+		if postgres {
+			statement += " ON " + stage.table
+		}
+		if _, err := store.db.ExecContext(context.Background(), statement); err != nil {
+			t.Fatal(err)
+		}
+		if postgres {
+			if _, err := store.db.ExecContext(context.Background(), "DROP FUNCTION signed_test_fault_fn()"); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+}
+
+func signedSQLFaultSnapshot(t *testing.T, store *Store) string {
+	t.Helper()
+	tables := []string{"artifacts", "evidence", "evidence_links", "signed_work_contract_submissions", "signed_work_contracts", "work_items", "work_review_cases", "signed_protocol_facts", "outcome_coordination", "domain_events", "integration_events", "integration_deliveries", "trigger_firings", "idempotency_records", "signed_operation_results"}
+	result := map[string][]string{}
+	for _, table := range tables {
+		rows, err := store.db.QueryContext(context.Background(), "SELECT * FROM "+table)
+		if err != nil {
+			t.Fatal(err)
+		}
+		columns, err := rows.Columns()
+		if err != nil {
+			rows.Close()
+			t.Fatal(err)
+		}
+		entries := []string{}
+		for rows.Next() {
+			values := make([]any, len(columns))
+			destinations := make([]any, len(values))
+			for i := range values {
+				destinations[i] = &values[i]
+			}
+			if err := rows.Scan(destinations...); err != nil {
+				rows.Close()
+				t.Fatal(err)
+			}
+			raw, err := json.Marshal(values)
+			if err != nil {
+				rows.Close()
+				t.Fatal(err)
+			}
+			entries = append(entries, string(raw))
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			t.Fatal(err)
+		}
+		rows.Close()
+		sort.Strings(entries)
+		result[table] = entries
+	}
+	raw, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(raw)
+}
+
+// The concrete SQL unit is embedded so every optional capability and database
+// evaluation clock remains available. Failure happens before the real commit;
+// this is not a simulation of ambiguous network loss after commit.
+type signedCommitFaultManager struct {
+	base *Store
+	fail *bool
+}
+
+func (m signedCommitFaultManager) Begin(ctx context.Context) (ports.UnitOfWork, error) {
+	u, err := m.base.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return signedCommitFaultUnit{unitOfWork: u.(*unitOfWork), fail: m.fail}, nil
+}
+
+type signedCommitFaultUnit struct {
+	*unitOfWork
+	fail *bool
+}
+
+func (u signedCommitFaultUnit) Commit() error {
+	if *u.fail {
+		return fmt.Errorf("signed_test_fault: before real commit")
+	}
+	return u.unitOfWork.Commit()
+}
+
+type signedReceiptFaultIssuer struct {
+	ports.LocalContractSigner
+	fail       *bool
+	point      string
+	commitOnly bool
+}
+
+func (s *signedReceiptFaultIssuer) SignCanonical(purpose string, raw []byte) (json.RawMessage, error) {
+	if *s.fail && !s.commitOnly && purpose == string(signing.AcceptanceReceipt) {
+		return nil, fmt.Errorf("signed_test_fault: receipt signing")
+	}
+	return s.LocalContractSigner.SignCanonical(purpose, raw)
 }

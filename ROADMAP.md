@@ -1268,6 +1268,15 @@ review/correction/integration attempts. Unknown usage remains null; no bytes-to-
 tokens conversion or fabricated savings. Five negative/aggregation test cases
 pass. Managed Codex C succeeded, but A/B controls and provider usage/billing are
 not exposed here; comparative savings remain unmeasured and explicitly pending.
+P12 T34 exercises real SQLite/PostgreSQL rollback boundaries for artifact,
+evidence, submission, contract, Task, return fact, Outcome revision, acceptance
+fact, Domain/Integration Event, idempotency reservation/completion, durable
+operation recording and review-case insertion. Late receipt-signing and pre-
+commit failures retain every optional SQL capability/clock through concrete
+unit embedding. All affected table rows compare exactly with the baseline; the
+original immutable signed request succeeds after faults are removed. Go1.27.2
+race suites pass on both SQL backends. This is before-commit fault injection,
+not proof of network loss after commit or every statement inside each adapter.
 Installed signed acceptance now drives an actual subprocess correction round:
 planner HTTP commands, executor/reviewer CLI processes, changes_requested, fresh
 contract with exact --previous-review acknowledgement, explicit frozen finding
