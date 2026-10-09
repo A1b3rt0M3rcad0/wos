@@ -1000,3 +1000,20 @@ without rewriting old signed facts. Implementation must retain persistent
 ServerID/public history, freeze CAS and provenance, order global issuance against
 replacement, and explicitly update client trust without breaking pending returns.
 No recovery command is implemented by this design note; acceptance remains open.
+
+
+Issuer recovery foundation work in progress: pure host composition proves the
+approved replacement signer before its transaction and rejects tenant identity
+contexts. Memory/SQLite/PostgreSQL persist immutable public issuer history and
+frozen recovery receipts, preserve ServerID/instance creation time, CAS the
+predecessor and replay a receipt without reinstalling a superseded issuer. SQL
+shared issuer reads order issuance against the exclusive recovery lock. Targeted
+race/clean restore tests passed (SQLite 4.106s, PostgreSQL 16.661s), verifying old
+public proofs after clearing the old private key and rejecting stale configuration.
+The source host executable command and paginated public trust projection are
+implemented; actual runtime restart/HTTP tests passed SQLite and PostgreSQL
+(4.215s), including refusal of silent replacement, wrong declared pin, exact
+receipt replay and private-seed absence from the receipt. Client pin updates,
+actual signed issuance/return after rotation and complete regression remain
+unimplemented or unaccepted. This increment is not integrated and is not P10
+completion.

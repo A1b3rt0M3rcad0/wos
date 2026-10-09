@@ -59,6 +59,7 @@ type SignedStateResult struct {
 	Resource             string                   `json:"resource"`
 	OutcomeRevision      signing.Decimal          `json:"outcome_revision"`
 	EvaluatedAt          time.Time                `json:"evaluated_at"`
+	IssuerHistory        []d.ServerIdentity       `json:"issuer_history,omitempty"`
 	Server               *d.ServerIdentity        `json:"server,omitempty"`
 	Protocol             *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
 	Contract             *SignedContractMetadata  `json:"contract,omitempty"`
@@ -134,6 +135,34 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if err != nil {
 			return zero, err
 		}
+		historyRepo, ok := serverRepo.ServerIdentity().(ports.IssuerRecoveryRepository)
+		if !ok {
+			return zero, d.NewError(d.ErrorCodeInvalidConfig, "issuer history unavailable")
+		}
+		limit := q.Limit
+		if limit == 0 {
+			limit = 100
+		}
+		if limit < 1 || limit > 100 {
+			return zero, d.NewError(d.ErrorCodeInvalidArgument, "issuer history limit must be 1..100")
+		}
+		var after d.ID
+		if q.Cursor != "" {
+			after, err = d.ParseID(q.Cursor)
+			if err != nil {
+				return zero, err
+			}
+		}
+		history, err := historyRepo.IssuerHistory(ctx, after, limit+1)
+		if err != nil {
+			return zero, err
+		}
+		result.SearchComplete = len(history) <= limit
+		if len(history) > limit {
+			history = history[:limit]
+			result.NextCursor = history[len(history)-1].IssuerKeyID.String()
+		}
+		result.IssuerHistory = history
 		result.Server, result.Protocol = &server, &protocol
 		return result, nil
 	}
