@@ -459,6 +459,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 			domain.ErrorCodeInvalidIdempotencyKey:
 			status = http.StatusBadRequest
 		case domain.ErrorCodeInvalidArgument,
+			domain.ErrorCodeEvidence,
 			domain.ErrorCodeInvalidRelation,
 			domain.ErrorCodeCriterion,
 			domain.ErrorCodeAssessment,

@@ -126,7 +126,15 @@ func typeSchema(t reflect.Type) map[string]any {
 				required = append(required, name)
 			}
 		}
-		return map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
+		schema := map[string]any{"type": "object", "properties": p, "required": required, "additionalProperties": false}
+		if field, ok := t.FieldByName("EvidenceType"); ok && field.Type == reflect.TypeFor[domain.EvidenceType]() {
+			if _, ok := p["measurement"]; ok {
+				schema["if"] = map[string]any{"required": []string{"evidence_type"}, "properties": map[string]any{"evidence_type": map[string]any{"const": "measurement"}}}
+				schema["then"] = map[string]any{"required": []string{"measurement"}, "properties": map[string]any{"measurement": map[string]any{"type": "object"}}}
+				schema["else"] = map[string]any{"properties": map[string]any{"measurement": map[string]any{"type": "null"}}}
+			}
+		}
+		return schema
 	default:
 		return map[string]any{}
 	}

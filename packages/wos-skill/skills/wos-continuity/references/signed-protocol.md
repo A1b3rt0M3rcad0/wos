@@ -105,3 +105,5 @@ intention after an uncertain send.
 
 After changes_requested, use [the explicit correction flow](correction.md).
 Correction is intentionally excluded from generic --next discovery.
+
+Evidence semantics: `evidence_type: test_result` records test observations in its description/source; it must not contain `measurement`. Numeric evidence uses `evidence_type: measurement` with nonempty `measurement.value`. The same rule applies to executor and reviewer drafts. The CLI validates this before freezing a return; the server remains authoritative. Preserve any already-frozen rejected intention and its original files; do not edit signed bytes or invent a replacement acquisition to repair uncertainty.

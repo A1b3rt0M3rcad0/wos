@@ -1328,3 +1328,13 @@ execution (including generated PostgreSQL counterparts and individual skips);
 passing names never automatically accept all scenario assertions. Hosted final
 source verification remains required. Historical progress entries below their
 phase tables describe earlier states and do not override the current tables.
+
+P12 managed Codex 0.3.0 pilot found a concrete invalid-material trap: a
+`test_result` evidence draft containing measurement passed local parsing and
+failed remotely after immutable freezing. Client execution/review parsing now
+shares Domain measurement/type validation before network/signing; human command,
+MCP/OpenAPI and packaged draft schemas expose the conditional rule. HTTP maps
+`evidence_error` to nonretryable 422 rather than 500. Regression checks retain
+exact original contract/profile bytes and prove no pending intention is created
+on malformed material. The failed experimental fixture is preserved; this
+change does not rewrite any previously frozen payload or manufacture acceptance.
