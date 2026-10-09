@@ -32,60 +32,60 @@ func (s *localIssuer) SignCanonical(purpose string, payload []byte) (json.RawMes
 	}
 	return json.Marshal(document.Proof)
 }
-func configureSignedRuntime(ctx context.Context, config Config, store runtimeStore, service *application.Service, security *application.SecurityService, ids ports.IDGenerator) error {
+func configureSignedRuntime(ctx context.Context, config Config, store runtimeStore, service *application.Service, security *application.SecurityService, ids ports.IDGenerator) (*d.ServerIdentity, error) {
 	uow, err := store.Begin(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	repo, ok := uow.(ports.ServerIdentityUnitOfWork)
 	if !ok {
 		_ = uow.Rollback()
-		return d.NewError(d.ErrorCodeInvalidConfig, "persistent signed server identity unavailable")
+		return nil, d.NewError(d.ErrorCodeInvalidConfig, "persistent signed server identity unavailable")
 	}
 	pinned, readErr := repo.ServerIdentity().Server(ctx)
 	_ = uow.Rollback()
 	if readErr != nil {
 		if code, _ := d.ErrorCodeOf(readErr); code != d.ErrorCodeNotFound {
-			return readErr
+			return nil, readErr
 		}
 	}
 	if config.Signing.SeedEnv == "" {
 		if readErr == nil && security != nil {
 			security.ServerID = pinned.ID.String()
 		}
-		return nil
+		return nil, nil
 	}
 	if security == nil || config.Auth.Mode != AuthModeAPIToken {
-		return d.NewError(d.ErrorCodeInvalidConfig, "signed runtime requires scoped API credentials")
+		return nil, d.NewError(d.ErrorCodeInvalidConfig, "signed runtime requires scoped API credentials")
 	}
 	if !regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`).MatchString(config.Signing.SeedEnv) {
-		return d.NewError(d.ErrorCodeInvalidConfig, "signing seed reference must name an environment variable")
+		return nil, d.NewError(d.ErrorCodeInvalidConfig, "signing seed reference must name an environment variable")
 	}
 	encoded := os.Getenv(config.Signing.SeedEnv)
 	seed, err := base64.StdEncoding.Strict().DecodeString(encoded)
 	if err != nil || len(seed) != ed25519.SeedSize || base64.StdEncoding.EncodeToString(seed) != encoded {
-		return d.NewError(d.ErrorCodeInvalidConfig, "signing seed reference is missing or not canonical base64 Ed25519 seed")
+		return nil, d.NewError(d.ErrorCodeInvalidConfig, "signing seed reference is missing or not canonical base64 Ed25519 seed")
 	}
 	private := ed25519.NewKeyFromSeed(seed)
 	clear(seed)
 	public := private.Public().(ed25519.PublicKey)
 	fp, err := signing.Fingerprint(public)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if readErr == nil {
 		if pinned.PublicKey != base64.StdEncoding.EncodeToString(public) || pinned.Fingerprint != fp {
 			clear(private)
-			return d.NewError(d.ErrorCodeInvalidConfig, "signing seed differs from persisted public trust; explicit recovery required")
+			return nil, d.NewError(d.ErrorCodeInvalidConfig, "signing seed differs from persisted public trust; explicit recovery required")
 		}
 	} else {
 		serverID, e := ids.NewID()
 		if e != nil {
-			return e
+			return nil, e
 		}
 		keyID, e := ids.NewID()
 		if e != nil {
-			return e
+			return nil, e
 		}
 		pinned = d.ServerIdentity{ID: serverID, IssuerKeyID: keyID, PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, CreatedAt: systemClock{}.Now().UTC()}
 	}
@@ -98,8 +98,8 @@ func configureSignedRuntime(ctx context.Context, config Config, store runtimeSto
 	}
 	if err = service.ConfigureSignedIssuer(ctx, &localIssuer{identity: pinned, private: private}, floor); err != nil {
 		clear(private)
-		return err
+		return nil, err
 	}
 	security.ServerID = pinned.ID.String()
-	return nil
+	return &pinned, nil
 }

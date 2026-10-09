@@ -1062,3 +1062,20 @@ compatibility even with migrations disabled, before mutation; future-history
 sentinels remain untouched. Combined targeted race passed SQLite 3.023s,
 PostgreSQL 20.374s, runtime 5.592s and CLI 2.207s. Full regression, hosted native
 checks and integration remain pending; this does not complete P10 or P12.
+
+
+P10/P12 T15 readiness continuation: host readiness observes the current instance
+issuer and whether any Namespace requires signed issuance in one read snapshot.
+A signed runtime without a configured signer and a stale replica after explicit
+issuer recovery report HTTP 503; ordinary unsigned startup remains ready without
+a signing key. Authenticated historical trust remains readable and liveness is
+independent. No key is generated silently. The actual SDK fixture provisions a
+valid credential policy/agent key, explicitly activates signed protocol, restarts
+without the issuer and verifies readiness/liveness, unchanged public trust,
+negative issuer preflight and explicit new-issuance refusal on SQLite/PostgreSQL.
+Targeted race passed (10.827s); initial fixture runs lacked an enrollment grant,
+used a too-short idempotency key and expected readiness in the trust resource
+rather than protocol_preflight. Those failed fixtures are not counted as passes;
+the product assertions remain intact. Broader runtime regression and hosted
+gates remain required before integration; historical dataset and P11–P13 remain
+open.

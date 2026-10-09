@@ -43,7 +43,7 @@ func TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust(t *testi
 		old, e := u.(ports.ServerIdentityUnitOfWork).ServerIdentity().Server(ctx)
 		must(e)
 		must(u.Rollback())
-		must(initial.Close())
+
 		newPublic := ed25519.NewKeyFromSeed(newSeed).Public().(ed25519.PublicKey)
 		fp, e := signing.Fingerprint(newPublic)
 		must(e)
@@ -65,6 +65,12 @@ func TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust(t *testi
 		if replay || record.Replacement.ID != old.ID || record.Replacement.CreatedAt != old.CreatedAt {
 			t.Fatal("host recovery replaced persistent instance identity")
 		}
+		staleReady := httptest.NewRecorder()
+		initial.Handler().ServeHTTP(staleReady, httptest.NewRequest("GET", "/readyz", nil))
+		if staleReady.Code != 503 {
+			t.Fatal("recovered issuer left an old configured replica ready", staleReady.Code)
+		}
+		must(initial.Close())
 		clear(oldSeed)
 		again, replay, e := RecoverIssuer(ctx, cfg, intent)
 		must(e)

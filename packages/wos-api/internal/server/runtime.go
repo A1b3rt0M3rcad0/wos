@@ -33,6 +33,7 @@ type Runtime struct {
 	root           http.Handler
 	mcpServer      *mcp.Server
 	deliveryWorker *integration.Worker
+	issuerIdentity *domain.ServerIdentity
 }
 
 type runtimeStore interface {
@@ -40,6 +41,7 @@ type runtimeStore interface {
 	ports.SecurityStore
 	Close() error
 	SchemaVersion(context.Context) (int64, error)
+	SignedIssuerReady(context.Context, *domain.ServerIdentity) (bool, error)
 	Migrate(context.Context) error
 }
 
@@ -131,7 +133,8 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	observer := observability.New(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
 	service.SetObserver(observer)
 	service.SetIndependentReviewer(config.Auth.IndependentReviewer)
-	if err = configureSignedRuntime(context.Background(), config, store, service, security, ids); err != nil {
+	issuerIdentity, err := configureSignedRuntime(context.Background(), config, store, service, security, ids)
+	if err != nil {
 		_ = store.Close()
 		return nil, err
 	}
@@ -163,7 +166,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime := &Runtime{config: config, store: store}
+	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity}
 	if config.Integration.WorkerEnabled {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
@@ -339,7 +342,15 @@ func (r *Runtime) handleReady(w http.ResponseWriter, request *http.Request) {
 	defer cancel()
 	version, err := r.store.SchemaVersion(ctx)
 	supported, _ := sqlite.LatestSchemaVersion()
+	if r.config.Storage.Driver == StorageDriverPostgres {
+		supported, _ = postgres.LatestSchemaVersion()
+	}
 	if err != nil || version != supported {
+		writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+		return
+	}
+	issuerReady, err := r.store.SignedIssuerReady(ctx, r.issuerIdentity)
+	if err != nil || !issuerReady {
 		writeHealth(w, http.StatusServiceUnavailable, "not_ready")
 		return
 	}
