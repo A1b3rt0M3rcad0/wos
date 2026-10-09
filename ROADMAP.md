@@ -1372,3 +1372,11 @@ verified. Three native Linux race repetitions passed; platform CI exercises the
 same test on its actual host. Fixtures are explicit local signed receipt unit
 data; SQL/network/load proof remains in the independent real-service gates.
 Signed v2 has maintenance/return operations, not the legacy `sync` command.
+
+P12 managed correction review found a second malformed-draft trap: one finding
+contained both criterion_id and requirement_ref. Shared Domain structural
+validation now rejects missing/ambiguous obligations before local signing or
+network preflight; generated editable schemas and progressive skill guides
+expose the exclusive choice. Race regression cases prove original profile and
+contract bytes remain unchanged. A previously frozen rejected experimental
+return stays preserved and is not relabeled as accepted.
