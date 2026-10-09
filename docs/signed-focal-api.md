@@ -71,3 +71,12 @@ review result, `search_complete`, `next_cursor` and reasons. It skips active rev
 authority and reviewers excluded by execution history/groups. Empty intentions
 remain empty on replay; accepted replay preserves the original fenced authority
 after takeover. It does not decide a review or schedule an agent.
+
+Signed execution/review metadata includes the original `credential_id`, sourced
+from the authoritative contract binding. This is a public identity identifier,
+not a bearer secret. A host must compare it with its pinned profile before
+signing, applying refreshed authority or attributing receipt cleanup. Shared
+Principal/history read access alone does not confer another credential's work.
+Historical return replay rechecks the original CredentialID even if both operation
+cache layers have no row; the original CID can recover acceptance after key
+retirement, while another CID sharing Principal/Actor/key permissions cannot.

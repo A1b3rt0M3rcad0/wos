@@ -438,6 +438,38 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			approved, e := sendReview(finalReview.Value, "approved", "final-review-approved", approvalMaterial)
 			must(e)
 			approvedReceipt := decodeReceipt(t, approved.Value.Receipt, server, pub)
+			factUnit, e := store.Begin(ctx)
+			must(e)
+			originalDecision, e := factUnit.(ports.SignedContractUnitOfWork).SignedContracts().Fact(ctx, scope, d.ID(approvedReceipt.DecisionID))
+			must(e)
+			var originalProof signing.Proof
+			must(signing.DecodeStrict(originalDecision.Proof, &originalProof, 4096))
+			originalEnvelope, e := (signing.Document{Payload: json.RawMessage(originalDecision.Payload), Proof: originalProof}).Envelope()
+			must(e)
+			must(factUnit.Rollback())
+			historical, e := a.NewService(signedHistoricalSource{base: store}, clock, ids)
+			must(e)
+			acceptedReplay, e := historical.ReturnSignedReview(reviewCtx, nextCC(reviewer, approvedReceipt.IdempotencyKey), a.ReturnSignedReviewCommand{Envelope: originalEnvelope})
+			must(e)
+			if !acceptedReplay.IdempotentReplay || string(acceptedReplay.Value.Receipt.Payload) != string(approved.Value.Receipt.Payload) {
+				t.Fatal("cacheless original reviewer lost accepted decision")
+			}
+			anotherCredential, anotherToken, e := sec.IssueCredential(adminCtx, ns, reviewer.PrincipalID, reviewer.Actor, now.Add(time.Hour))
+			must(e)
+			anotherIdentity, e := sec.Authenticate(ctx, anotherToken)
+			must(e)
+			policyUnit, e := store.Begin(ctx)
+			must(e)
+			anotherPolicy := reviewPolicy
+			anotherPolicy.CredentialID = anotherCredential.ID
+			anotherPolicy.Version = 1
+			must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, anotherPolicy, 0))
+			must(policyUnit.Commit())
+			if _, e = historical.ReturnSignedReview(a.WithIdentity(ctx, anotherIdentity), nextCC(anotherIdentity, approvedReceipt.IdempotencyKey), a.ReturnSignedReviewCommand{Envelope: originalEnvelope}); e == nil {
+				t.Fatal("another reviewer CID replayed cacheless accepted decision")
+			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
+				t.Fatalf("wrong historical reviewer CID error: %v", e)
+			}
 			guardCC.CommandID, e = ids.NewID()
 			must(e)
 			guardCC.PrincipalID, guardCC.Actor = reviewer.PrincipalID, reviewer.Actor
@@ -448,6 +480,11 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 
 			if approvedReceipt.Disposition != "review_approved" || approvedReceipt.WorkItemLifecycle != "done" {
 				t.Fatal("independent approval did not complete the Task")
+			}
+			metadataCID, e := service.ReadSignedState(reviewCtx, a.SignedStateQuery{Scope: scope, Resource: "review", ID: finalReview.Value.Contract.ID})
+			must(e)
+			if metadataCID.Contract == nil || metadataCID.Contract.CredentialID != reviewer.CredentialID {
+				t.Fatal("review focal metadata lost original CID")
 			}
 			u, e = store.Begin(ctx)
 			must(e)

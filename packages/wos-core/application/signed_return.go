@@ -129,6 +129,9 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		}
 		digest := signing.Digest(raw)
 		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
+			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "execution", d.ID(request.ContractID)); e != nil {
+				return zero, 0, e
+			}
 			if prior.Scope != scope || prior.ContractKind != "execution" || prior.RequestDigest != digest || prior.RequestID == nil || *prior.RequestID != d.ID(request.RequestID) {
 				return zero, 0, d.NewError(d.ErrorCodeIdempotencyConflict, "confirmed signed intent differs")
 			}

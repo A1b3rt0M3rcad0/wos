@@ -21,6 +21,7 @@ type SignedStateQuery struct {
 	Cursor         string  `json:"cursor,omitempty"`
 }
 type SignedContractMetadata struct {
+	CredentialID          d.ID                `json:"credential_id"`
 	ID                    d.ID                `json:"contract_id"`
 	Kind                  string              `json:"contract_kind"`
 	WorkItemID            d.ID                `json:"work_item_id"`
@@ -403,14 +404,14 @@ func signedContractState(ctx context.Context, u ports.UnitOfWork, scope d.Scope,
 			return state, d.NewError(d.ErrorCodeSignedProtocolRequired, "signed execution required")
 		}
 		workID = c.WorkItemID
-		state = SignedContractMetadata{ID: c.ID, Kind: kind, WorkItemID: c.WorkItemID, HolderPrincipalID: c.HolderPrincipalID, Status: c.Status, EffectiveStatus: c.EffectiveStatus(now), Version: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), ExecutionID: c.ExecutionID, FencingToken: signing.Decimal(c.FencingToken), ExpiresAt: c.ExpiresAt, SpecDigest: c.SignedBinding.SpecificationDigest, IssuedSpecificationID: c.IssuedSpecificationID, LatestAuthorityID: c.LatestAuthorityID, SubmissionID: c.LatestSubmissionID, LeaseValid: c.ValidAt(now)}
+		state = SignedContractMetadata{CredentialID: c.SignedBinding.CredentialID, ID: c.ID, Kind: kind, WorkItemID: c.WorkItemID, HolderPrincipalID: c.HolderPrincipalID, Status: c.Status, EffectiveStatus: c.EffectiveStatus(now), Version: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), ExecutionID: c.ExecutionID, FencingToken: signing.Decimal(c.FencingToken), ExpiresAt: c.ExpiresAt, SpecDigest: c.SignedBinding.SpecificationDigest, IssuedSpecificationID: c.IssuedSpecificationID, LatestAuthorityID: c.LatestAuthorityID, SubmissionID: c.LatestSubmissionID, LeaseValid: c.ValidAt(now)}
 	case "review":
 		c, err := repo.ReviewContract(ctx, scope, id)
 		if err != nil {
 			return state, err
 		}
 		workID = c.WorkItemID
-		state = SignedContractMetadata{ID: c.ID, Kind: kind, WorkItemID: c.WorkItemID, HolderPrincipalID: c.HolderPrincipalID, Status: c.Status, EffectiveStatus: c.EffectiveStatus(now), Version: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), ExecutionID: c.ExecutionID, FencingToken: signing.Decimal(c.FencingToken), ExpiresAt: c.ExpiresAt, SpecDigest: c.Binding.SpecificationDigest, IssuedSpecificationID: c.IssuedSpecificationID, LatestAuthorityID: c.LatestAuthorityID, SubmissionID: &c.SubmissionID, ReviewCaseID: &c.CaseID, LeaseValid: c.ValidAt(now)}
+		state = SignedContractMetadata{CredentialID: c.Binding.CredentialID, ID: c.ID, Kind: kind, WorkItemID: c.WorkItemID, HolderPrincipalID: c.HolderPrincipalID, Status: c.Status, EffectiveStatus: c.EffectiveStatus(now), Version: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), ExecutionID: c.ExecutionID, FencingToken: signing.Decimal(c.FencingToken), ExpiresAt: c.ExpiresAt, SpecDigest: c.Binding.SpecificationDigest, IssuedSpecificationID: c.IssuedSpecificationID, LatestAuthorityID: c.LatestAuthorityID, SubmissionID: &c.SubmissionID, ReviewCaseID: &c.CaseID, LeaseValid: c.ValidAt(now)}
 		review, err := repo.Case(ctx, scope, c.CaseID)
 		if err != nil {
 			return state, err
