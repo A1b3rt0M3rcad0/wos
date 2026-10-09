@@ -8289,6 +8289,127 @@
               }
             ]
           },
+          "signed_protocol_readiness": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "evaluated_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "issuer_ready": {
+                    "type": "boolean"
+                  },
+                  "namespace_policy_ready": {
+                    "type": "boolean"
+                  },
+                  "namespace_policy_revision": {
+                    "pattern": "^(0|[1-9][0-9]{0,19})$",
+                    "type": "string"
+                  },
+                  "protocol": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "lease_policy": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "default_ttl_seconds": {
+                            "type": "integer"
+                          },
+                          "max_ttl_seconds": {
+                            "type": "integer"
+                          },
+                          "min_ttl_seconds": {
+                            "type": "integer"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "revision",
+                          "default_ttl_seconds",
+                          "min_ttl_seconds",
+                          "max_ttl_seconds"
+                        ],
+                        "type": "object"
+                      },
+                      "namespace_id": {
+                        "maxLength": 65536,
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "phase": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "protocol_version": {
+                        "type": "integer"
+                      },
+                      "reason": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "updated_by": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "writer_epoch": {
+                        "type": "integer"
+                      },
+                      "writers_drained": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "namespace_id",
+                      "protocol_version",
+                      "phase",
+                      "writer_epoch",
+                      "lease_policy",
+                      "updated_at",
+                      "updated_by",
+                      "reason",
+                      "writers_drained"
+                    ],
+                    "type": "object"
+                  },
+                  "ready_with_operator_drain": {
+                    "type": "boolean"
+                  },
+                  "requires_operator_drain": {
+                    "type": "boolean"
+                  },
+                  "valid_legacy_claims": {
+                    "type": "integer"
+                  },
+                  "valid_unsigned_contracts": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "protocol",
+                  "valid_legacy_claims",
+                  "valid_unsigned_contracts",
+                  "issuer_ready",
+                  "namespace_policy_ready",
+                  "namespace_policy_revision",
+                  "ready_with_operator_drain",
+                  "requires_operator_drain",
+                  "evaluated_at"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "signer_key": {
             "anyOf": [
               {
