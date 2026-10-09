@@ -82,7 +82,11 @@ func SignedSchema(t reflect.Type) map[string]any {
 				required = append(required, name)
 			}
 		}
-		return map[string]any{"type": "object", "properties": fields, "required": required, "additionalProperties": false}
+		schema := map[string]any{"type": "object", "properties": fields, "required": required, "additionalProperties": false}
+		if t == reflect.TypeFor[d.SignedFinding]() {
+			schema["oneOf"] = findingObligationAlternatives()
+		}
+		return schema
 	case reflect.Slice, reflect.Array:
 		return map[string]any{"type": "array", "items": SignedSchema(t.Elem()), "maxItems": signing.MaxNodes}
 	case reflect.Map:
