@@ -26,7 +26,7 @@ import (
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
 )
 
-func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.SecurityService, adminCtx context.Context, operator *sdk.Client, scope d.Scope, server d.ServerIdentity, permissions []ports.Permission) {
+func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.SecurityService, adminCtx context.Context, operator *sdk.Client, scope d.Scope, server d.ServerIdentity, permissions []ports.Permission, rotateIssuer func() d.ServerIdentity) {
 	t.Helper()
 	ctx := context.Background()
 	must := func(e error) {
@@ -428,6 +428,25 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	if liveFile.Local.Pending == nil || liveFile.Local.Pending.State != "prepared_signed" || liveFile.Local.Pending.CredentialID != credential.ID {
 		t.Fatal("sign did not persist original-CID frozen intention")
 	}
+	// Rotate after local signing, before the original return is sent. Trust
+	// approval must preserve the exact prepared signature and issued documents.
+	newServer := rotateIssuer()
+	runReturn(6, "work", "send", acceptedContract.ID.String())
+	if returnCalls.Load() != 0 {
+		t.Fatal("untrusted issuer caused a return mutation")
+	}
+	runReturn(0, "profile", "trust", "--issuer-fingerprint", newServer.Fingerprint)
+	execute(0, "--profile", "executor_cli", "profile", "trust", "--issuer-fingerprint", newServer.Fingerprint)
+	afterTrust, e := returnedWorkspace.ReadV2(livePath)
+	must(e)
+	if !bytes.Equal(afterTrust, pendingRaw) {
+		t.Fatal("issuer approval rewrote prepared original-CID return")
+	}
+	currentProfile, e = workspace.LoadProfileV2("executor_cli")
+	must(e)
+	if len(currentProfile.Binding.IssuerKeys) != 2 {
+		t.Fatal("issuer approval discarded historical public pin")
+	}
 	originalDraft := liveFile.Execution.Progress
 	runReturn(0, "work", "recover")
 	if returnCalls.Load() != 0 {
@@ -514,7 +533,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 
 // The key was enrolled over the public API before this fixture. Installation
 // records only protected references; checkout uses actual authenticated HTTP.
-func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, server d.ServerIdentity, credential ports.Credential, token string, key d.SigningKey, private ed25519.PrivateKey, reviewer *sdk.Client) (sdk.CommandResult[a.SignedReviewContractResult], signing.Envelope, signing.ReviewReturnPayload[a.SignedReviewMaterial]) {
+func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, server d.ServerIdentity, credential ports.Credential, token string, key d.SigningKey, private ed25519.PrivateKey, reviewer *sdk.Client, historicalIssuers ...d.ServerIdentity) (sdk.CommandResult[a.SignedReviewContractResult], signing.Envelope, signing.ReviewReturnPayload[a.SignedReviewMaterial]) {
 	t.Helper()
 	ctx := context.Background()
 	must := func(e error) {
@@ -570,6 +589,11 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 	must(e)
 	defer w.Close()
 	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "reviewer", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: credential.PrincipalID, CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_REVIEW_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: key.ID, PrivateKeyRef: "env:WOS_CLI_REVIEW_KEY", PublicKeyFingerprint: key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	for _, historical := range historicalIssuers {
+		if historical.IssuerKeyID != server.IssuerKeyID {
+			profile.Binding.IssuerKeys = append(profile.Binding.IssuerKeys, cli.ProfileIssuerV2{KeyID: historical.IssuerKeyID, PublicKey: historical.PublicKey, Fingerprint: historical.Fingerprint})
+		}
+	}
 	must(profile.SealBinding([]byte(token)))
 	must(w.CreateV2(".wos/profiles/reviewer/profile.yaml", profile))
 	execute(6, "review", "checkout", "--next")

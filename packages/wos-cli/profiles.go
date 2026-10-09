@@ -51,11 +51,20 @@ type ProfileSigningV2 struct {
 	PrivateKeyRef        string `json:"private_key_ref"`
 	PublicKeyFingerprint string `json:"public_key_fingerprint"`
 }
+
+// This bounded trust lineage authenticates original local recovery MACs across
+// an explicit issuer-pin append. It never changes a frozen signed intention.
+type PriorIssuerBindingV2 struct {
+	BindingMAC     string `json:"binding_mac"`
+	IdentityDigest string `json:"identity_digest"`
+}
+
 type ProfileLocalV2 struct {
-	SchemaVersion     int                  `json:"schema_version"`
-	PendingMAC        string               `json:"pending_mac"`
-	BindingMAC        string               `json:"binding_mac"`
-	PendingOperations []PendingOperationV2 `json:"pending_operations"`
+	SchemaVersion       int                    `json:"schema_version"`
+	PendingMAC          string                 `json:"pending_mac"`
+	BindingMAC          string                 `json:"binding_mac"`
+	PendingOperations   []PendingOperationV2   `json:"pending_operations"`
+	PriorIssuerBindings []PriorIssuerBindingV2 `json:"prior_issuer_bindings,omitempty"`
 }
 type ProfileV2 struct {
 	SchemaVersion  int                     `json:"schema_version"`
@@ -128,6 +137,21 @@ func (p ProjectV2) Validate() error {
 func (p ProfileV2) Validate() error {
 	if p.SchemaVersion != 2 || p.Kind != "WOSProfile" || !validProfileName(p.Name) || p.Local.SchemaVersion != 1 || len(p.Local.PendingOperations) > 10 {
 		return fmt.Errorf("invalid profile schema/name or pending limit")
+	}
+	if len(p.Local.PriorIssuerBindings) > 9 {
+		return fmt.Errorf("issuer trust lineage bound exceeded")
+	}
+	identityDigest, e := p.issuerIndependentIdentityDigest()
+	if e != nil {
+		return e
+	}
+	priorSeen := map[string]bool{}
+	for _, prior := range p.Local.PriorIssuerBindings {
+		raw, e := hex.DecodeString(prior.BindingMAC)
+		if e != nil || len(raw) != sha256.Size || hex.EncodeToString(raw) != prior.BindingMAC || priorSeen[prior.BindingMAC] || prior.IdentityDigest != identityDigest {
+			return fmt.Errorf("issuer trust lineage differs from immutable profile identity")
+		}
+		priorSeen[prior.BindingMAC] = true
 	}
 	origin, e := exactOrigin(p.Binding.ServerOrigin)
 	if e != nil || origin != p.Binding.ServerOrigin {
@@ -222,10 +246,11 @@ func (p *ProfileV2) SealBinding(token []byte) error {
 	mac.Write(raw)
 	p.Local.BindingMAC = hex.EncodeToString(mac.Sum(nil))
 	pending, e := json.Marshal(struct {
-		Name       string               `json:"name"`
-		BindingMAC string               `json:"binding_mac"`
-		Operations []PendingOperationV2 `json:"operations"`
-	}{p.Name, p.Local.BindingMAC, p.Local.PendingOperations})
+		Name                string                 `json:"name"`
+		BindingMAC          string                 `json:"binding_mac"`
+		Operations          []PendingOperationV2   `json:"operations"`
+		PriorIssuerBindings []PriorIssuerBindingV2 `json:"prior_issuer_bindings,omitempty"`
+	}{p.Name, p.Local.BindingMAC, p.Local.PendingOperations, p.Local.PriorIssuerBindings})
 	if e != nil {
 		return e
 	}
@@ -254,4 +279,13 @@ func (p ProfileV2) VerifyBinding(token []byte) error {
 		return fmt.Errorf("profile pending intent changed; preserve it for explicit reconciliation")
 	}
 	return nil
+}
+
+func (p ProfileV2) issuerIndependentIdentityDigest() (string, error) {
+	p.Binding.IssuerKeys = nil
+	raw, e := p.bindingMessage()
+	if e != nil {
+		return "", e
+	}
+	return signing.Digest(raw), nil
 }

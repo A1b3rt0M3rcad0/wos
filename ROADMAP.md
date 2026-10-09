@@ -1009,3 +1009,56 @@ parallel run timed out in the existing 30-second go-run MCP subprocess discovery
 and is not counted as a full pass. Vet, actionlint and catalogue passed. PR #55
 hosted browser, packages, full verification and native Linux/Windows passed. This adds forward protection, not retroactive protection to released
 v0.2.0 executables; actual old-binary and historical dataset acceptance remain P10.
+
+P10 issuer recovery design started: ADR 028 records the missing host-managed
+replacement path required by T14/T87, separate from tenant administration and
+without rewriting old signed facts. Implementation must retain persistent
+ServerID/public history, freeze CAS and provenance, order global issuance against
+replacement, and explicitly update client trust without breaking pending returns.
+No recovery command is implemented by this design note; acceptance remains open.
+
+
+Issuer recovery foundation work in progress: pure host composition proves the
+approved replacement signer before its transaction and rejects tenant identity
+contexts. Memory/SQLite/PostgreSQL persist immutable public issuer history and
+frozen recovery receipts, preserve ServerID/instance creation time, CAS the
+predecessor and replay a receipt without reinstalling a superseded issuer. SQL
+shared issuer reads order issuance against the exclusive recovery lock. Targeted
+race/clean restore tests passed (SQLite 4.106s, PostgreSQL 16.661s), verifying old
+public proofs after clearing the old private key and rejecting stale configuration.
+The source host executable command and paginated public trust projection are
+implemented; actual runtime restart/HTTP tests passed SQLite and PostgreSQL
+(4.215s), including refusal of silent replacement, wrong declared pin, exact
+receipt replay and private-seed absence from the receipt. Client pin updates,
+actual signed issuance/return after rotation and complete regression remain
+unimplemented or unaccepted. This increment is not integrated and is not P10
+completion.
+
+
+
+PR #56 integrated workspace migration together with PR #55 compatibility checks.
+The combined source d3e9d9e passed actual Memory/SQLite/PostgreSQL signed CLI
+acceptance (48.186s), migration/precision race checks (1.959s), and runtime
+schema/MCP subprocess checks (7.695s). All hosted browser, package, full
+verification and native Linux/Windows checks passed on its synthetic PR merge;
+these receipts do not certify a later final-release source.
+
+
+P10 issuer recovery/client trust continuation: schema-2 `profile trust` verifies
+explicit independently approved current fingerprint and the unchanged origin,
+ServerID, Namespace, Principal and original CID. One atomic profile append retains
+old pins and authenticated bounded prior binding MACs; contract bytes, signatures,
+request IDs and pending intentions are unchanged. No trust RPC holds the profile
+publication guard. Native Linux child-process exit after publication, `.yml`
+mutation, repeated approval without rewrites, tampered lineage and moved-origin
+rejection passed targeted race tests. The actual HTTP/CLI journey now rotates
+after preparing a return, rejects stale issuance and unapproved trust, clears the
+old private issuer, approves both local profiles, sends the original return under
+the new issuer and recovers a lost response before independent review. This
+passed Memory/SQLite/real PostgreSQL (42.384s). Shared recovery/restore tests also
+verify reused-fingerprint parity and that replaying an old host receipt after a
+second rotation never reinstalls its retired key. The host command checks schema
+compatibility even with migrations disabled, before mutation; future-history
+sentinels remain untouched. Combined targeted race passed SQLite 3.023s,
+PostgreSQL 20.374s, runtime 5.592s and CLI 2.207s. Full regression, hosted native
+checks and integration remain pending; this does not complete P10 or P12.

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -16,6 +17,29 @@ func main() {
 }
 
 func run(args []string) int {
+	if len(args) == 4 && args[0] == "issuer" && args[1] == "recover" && args[2] == "--file" {
+		file, err := os.Open(args[3])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		intent, err := server.DecodeIssuerRecoveryIntent(file)
+		file.Close()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		receipt, replay, err := server.RecoverIssuer(context.Background(), server.ConfigFromEnv(), intent)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		if err = json.NewEncoder(os.Stdout).Encode(map[string]any{"operation": "issuer_recovery", "receipt": receipt, "idempotent_replay": replay}); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		return 0
+	}
 	if len(args) == 4 && args[0] == "db" && args[1] == "restore" {
 		if err := sqlite.RestoreFile(args[2], args[3]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -96,6 +120,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION>")
+	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
 	return 2
 }

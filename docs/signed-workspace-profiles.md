@@ -30,6 +30,12 @@ The operational layout is:
 
 Enrollment recovery is `wosctl --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. Work acquisition uses its own durable frozen intentions, described below; enrollment is not reused as work authority.
 
+After an operator explicitly recovers the instance issuer, approve its independently
+verified replacement with `wosctl --profile executor_a profile trust --issuer-fingerprint sha256:<approved-fingerprint>`.
+This appends public trust atomically without rewriting contracts or frozen returns;
+old pins remain for historical verification. See [issuer recovery](issuer-recovery.md)
+for host access, bounded trust history and interruption handling.
+
 `profile inspect` and `auth status` return compact identity, selected public key status and credential restrictions. They are observations; each domain command rechecks current grants, credential policy, scope and authority. `doctor` verifies destination/issuer and local signing-key fingerprint without revealing secret values. It does not acquire or renew work.
 
 `profile remove` refuses pending intentions and nonempty contract directories. It removes only known local profile files and empty directories, preserves shared secrets, and does not revoke a remote credential or contract. A changed API credential or profile destination needs explicit new onboarding; local integrity tags do not silently rebind existing work.

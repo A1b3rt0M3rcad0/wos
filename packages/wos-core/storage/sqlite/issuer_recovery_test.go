@@ -1,0 +1,144 @@
+package sqlite
+
+import (
+	"context"
+	"crypto/ed25519"
+	"encoding/base64"
+	"path/filepath"
+	"reflect"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+)
+
+func TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Now().UTC()
+			var store ports.TransactionManager
+			path := filepath.Join(t.TempDir(), "issuer.db")
+			var sqlStore *Store
+			if backend == "memory" {
+				store = memory.New()
+			} else {
+				sqlStore = openTestStore(t, path)
+				store = sqlStore
+			}
+			must := func(e error) {
+				t.Helper()
+				if e != nil {
+					t.Fatal(e)
+				}
+			}
+			issuer := func(id d.ID, value byte) acquisitionIssuer {
+				seed := make([]byte, ed25519.SeedSize)
+				seed[0] = value
+				private := ed25519.NewKeyFromSeed(seed)
+				public := private.Public().(ed25519.PublicKey)
+				fp, e := signing.Fingerprint(public)
+				must(e)
+				return acquisitionIssuer{identity: d.ServerIdentity{ID: testID("0199a555-0000-7000-8000-000000000001"), IssuerKeyID: id, PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, CreatedAt: now}, private: private}
+			}
+			old := issuer(testID("0199a555-0000-7000-8000-000000000002"), 1)
+			replacement := issuer(testID("0199a555-0000-7000-8000-000000000003"), 2)
+			service, e := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199a556", next: 1})
+			must(e)
+			must(service.ConfigureSignedIssuer(ctx, old, d.AcceptanceIndependentReview))
+			oldEnvelope, e := signing.Sign(signing.ContractSpec, map[string]any{"protocol_version": 2, "signer_key_id": old.identity.IssuerKeyID.String(), "snapshot": "historical-public-proof"}, old.identity.IssuerKeyID.String(), old.private)
+			must(e)
+			intent := a.IssuerRecoveryIntent{ServerID: old.identity.ID, PreviousIssuerID: old.identity.IssuerKeyID, PreviousFingerprint: old.identity.Fingerprint, NewIssuerID: replacement.identity.IssuerKeyID, NewFingerprint: replacement.identity.Fingerprint, Reason: "operator restores with independently approved replacement seed"}
+			tenantCtx := a.WithIdentity(ctx, a.Identity{NamespaceID: testID("0199a555-0000-7000-8000-000000000004"), PrincipalID: "tenant-admin"})
+			if _, _, e = a.RecoverServerIssuer(tenantCtx, store, sqliteFixedClock{now}, intent, replacement); e == nil {
+				t.Fatal("tenant context could replace instance issuer")
+			}
+			record, replayed, e := a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, intent, replacement)
+			must(e)
+			if replayed || record.Previous != old.identity || record.Replacement != replacement.identity {
+				t.Fatal("recovery changed public instance identity")
+			}
+			// No old private signer is needed to reopen/restore the recovered instance.
+			clear(old.private)
+			if backend == "sql" {
+				sqlStore = reopenIntegrationFixture(t, sqlStore, path)
+				store = sqlStore
+			}
+			again, replayed, e := a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now.Add(time.Hour)}, intent, replacement)
+			must(e)
+			if !replayed || !reflect.DeepEqual(again, record) {
+				t.Fatal("same frozen recovery lost its receipt")
+			}
+			conflict := intent
+			conflict.Reason = "different intention"
+			if _, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, conflict, replacement); e == nil {
+				t.Fatal("new reason replaced original recovery receipt")
+			}
+			stale := issuer(testID("0199a555-0000-7000-8000-000000000005"), 3)
+			staleIntent := intent
+			staleIntent.NewIssuerID = stale.identity.IssuerKeyID
+			staleIntent.NewFingerprint = stale.identity.Fingerprint
+			if _, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, staleIntent, stale); e == nil {
+				t.Fatal("stale predecessor replaced current issuer")
+			}
+			u, e := store.Begin(ctx)
+			must(e)
+			repo := u.(ports.ServerIdentityUnitOfWork).ServerIdentity()
+			current, e := repo.Server(ctx)
+			must(e)
+			if current != replacement.identity {
+				t.Fatal("recovery replay or stale command changed issuer")
+			}
+			history, e := repo.(ports.IssuerRecoveryRepository).IssuerHistory(ctx, "", 101)
+			must(e)
+			if len(history) != 2 || history[0] != old.identity || history[1] != replacement.identity {
+				t.Fatal("public history lost", history)
+			}
+			oldPublic, e := history[0].PublicBytes()
+			must(e)
+			_, e = signing.Verify(oldEnvelope, signing.ContractSpec, old.identity.IssuerKeyID.String(), oldPublic)
+			must(e)
+			must(u.Rollback())
+			restarted, e := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199a556", next: 2})
+			must(e)
+			if e = restarted.ConfigureSignedIssuer(ctx, issuer(old.identity.IssuerKeyID, 1), d.AcceptanceIndependentReview); e == nil {
+				t.Fatal("old configured replica accepted replacement trust")
+			}
+			must(restarted.ConfigureSignedIssuer(ctx, replacement, d.AcceptanceIndependentReview))
+			// Public fingerprints cannot be reused under a new ID. Check storage
+			// parity, not merely the predecessor comparison.
+			reused := issuer(testID("0199a555-0000-7000-8000-000000000006"), 1)
+			reusedIntent := a.IssuerRecoveryIntent{ServerID: replacement.identity.ID, PreviousIssuerID: replacement.identity.IssuerKeyID, PreviousFingerprint: replacement.identity.Fingerprint, NewIssuerID: reused.identity.IssuerKeyID, NewFingerprint: reused.identity.Fingerprint, Reason: "historical fingerprint must not be reused"}
+			_, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, reusedIntent, reused)
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeAlreadyExists {
+				t.Fatalf("historical fingerprint reuse parity: %v", e)
+			}
+			second := issuer(testID("0199a555-0000-7000-8000-000000000007"), 7)
+			secondIntent := a.IssuerRecoveryIntent{ServerID: replacement.identity.ID, PreviousIssuerID: replacement.identity.IssuerKeyID, PreviousFingerprint: replacement.identity.Fingerprint, NewIssuerID: second.identity.IssuerKeyID, NewFingerprint: second.identity.Fingerprint, Reason: "second independently approved replacement"}
+			_, _, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, secondIntent, second)
+			must(e)
+			clear(replacement.private)
+			// Restore possession of the first replacement only to reconcile its
+			// original host receipt. The current key must remain the second one.
+			firstSigner := issuer(replacement.identity.IssuerKeyID, 2)
+			again, replayed, e = a.RecoverServerIssuer(ctx, store, sqliteFixedClock{now}, intent, firstSigner)
+			must(e)
+			if !replayed || again != record {
+				t.Fatal("old recovery receipt changed after another replacement")
+			}
+			u, e = store.Begin(ctx)
+			must(e)
+			current, e = u.(ports.ServerIdentityUnitOfWork).ServerIdentity().Server(ctx)
+			must(e)
+			must(u.Rollback())
+			if current != second.identity {
+				t.Fatal("replaying an old host receipt reinstalled its retired key")
+			}
+
+		})
+	}
+}

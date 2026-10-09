@@ -47,7 +47,11 @@ func mutateProfileV2(ctx context.Context, w *Workspace, expected ProfileV2, toke
 	if e = current.SealBinding(token); e != nil {
 		return e
 	}
-	return w.WriteV2(profilePathV2(current.Name), current, signing.Digest(raw))
+	path, e := w.DocumentPath(filepath.Join(".wos/profiles", current.Name, "profile"))
+	if e != nil {
+		return e
+	}
+	return w.WriteV2(path, current, signing.Digest(raw))
 }
 func pendingIndexV2(profile *ProfileV2, intent PendingOperationV2) (int, error) {
 	for i, current := range profile.Local.PendingOperations {
