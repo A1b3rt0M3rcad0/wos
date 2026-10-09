@@ -11,8 +11,16 @@
     "service": "0.2.0",
     "httpApi": "v1",
     "snapshotSchema": 1,
-    "workProtocol": "contracts_v1",
-    "workspaceSchema": 1
+    "workProtocol": "signed_contracts_v2",
+    "workspaceSchema": 2,
+    "supportedWorkProtocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supportedWorkspaceSchemas": [
+      1,
+      2
+    ]
   },
   "bin": {
     "wos-skill": "bin/wos-skill.mjs"

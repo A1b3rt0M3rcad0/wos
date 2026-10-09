@@ -1144,3 +1144,18 @@ PostgreSQL acceptance passed (35.559s). OpenAPI regenerated without altering
 v1 command encoders. Hosted/native checks remain required on this source.
 PR #59 readiness integrated after all five hosted checks passed on 95e3921;
 master merge 5461815. Historical upgrade/restore and final release gates remain open.
+
+P12/P13 installed signed package acceptance now exercises protected enrollment,
+signed execution checkout/show/finish, independent review finish and both
+recover operations after cleanup outside the source checkout. The fresh Codex
+pilot identified stale CLI/skill protocol metadata and missing explicit review
+draft examples; preferred protocol/schema now advertise v2 while supported
+legacy arrays preserve v1 compatibility. Five guides document exact review
+decisions and criterion assessments. Required final source/platform checks and
+release version preparation remain open.
+Local development offline npm install completed the signed workflow and verified
+Task DONE after independent review; all five skill installer tests passed and
+the CLI version contract passed race (1.041s). The invalid review enum diagnostic
+now lists exact allowed values. Local artifacts built from a dirty development
+checkout are not final immutable-source release proofs; hosted checks must
+repeat acceptance on the committed source.
