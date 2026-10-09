@@ -1362,3 +1362,13 @@ signed bytes after same-database/issuer upgrade, then received independent
 revision-1 approval; Task DONE and both empty contract directories were checked.
 Provider tokens/cache/tool counts/cost remain null, no Outcome achievement or
 savings is inferred. The reporter now validates observed timezone-bearing timing.
+
+P12 T72 bounded mixed local operation experiment executes actual three-intent
+acquisition, original-CID lease preparation, accepted receipt recovery and
+cleanup concurrently in one workspace. A separately held profile blocks only
+its own acquisition; every independent path finishes before release. Exact
+maintenance contract bytes, batch contents and empty accepted profiles are
+verified. Three native Linux race repetitions passed; platform CI exercises the
+same test on its actual host. Fixtures are explicit local signed receipt unit
+data; SQL/network/load proof remains in the independent real-service gates.
+Signed v2 has maintenance/return operations, not the legacy `sync` command.

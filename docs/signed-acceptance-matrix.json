@@ -1867,7 +1867,7 @@
       "id": "T72",
       "scenario": "Ordem de locks com aquisição, sync, recovery e cleanup simultâneos.",
       "required_assertion": "Sem deadlock/lock global que serialize toda a execução do projeto.",
-      "coverage_status": "partial",
+      "coverage_status": "implemented_requires_execution_and_assertion_audit",
       "candidate_go_tests": [
         {
           "path": "packages/wos-cli/pending_acquisition_v2_test.go",
@@ -1892,10 +1892,14 @@
         {
           "path": "packages/wos-core/storage/postgres/signed_acquisition_test.go",
           "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota"
+        },
+        {
+          "path": "packages/wos-cli/mixed_locks_v2_test.go",
+          "test": "TestSignedMixedLocalOperationsDoNotShareGlobalLock"
         }
       ],
       "other_resources": [],
-      "limitation": "Stable profile locks are covered; full mixed-operation deadlock/latency experiment remains."
+      "limitation": "Bounded actual local acquisition-batch, lease preparation, verified receipt recovery and cleanup overlap while another profile stays locked. Three native Linux race repetitions passed; native-host CI reruns it. No signed-v2 sync command exists; SQL/network contention is covered by separate signed load/journey gates, not inferred from synthetic local receipt fixtures."
     },
     {
       "id": "T73",
