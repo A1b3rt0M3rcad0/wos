@@ -89,7 +89,7 @@ func commandPermission(name string) ports.Permission {
 		return ports.PermissionWorkContractReturn
 	case "ReturnSignedReview":
 		return ports.PermissionWorkReviewDecide
-	case "AcquireSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract":
+	case "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract":
 		return ports.PermissionWorkReviewAcquire
 	case "FinalizeWorkContract":
 		return ports.PermissionConclusionWrite

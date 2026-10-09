@@ -269,7 +269,10 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(sec.RevokeCredential(adminCtx, ns, credential.ID))
 	caseView, e := reviewer.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "case", ID: d.ID(receipt.ReviewCaseID)})
 	must(e)
-	assigned, e := reviewer.AcquireSignedReviewContract(ctx, "transport-sdk-review-acquire", a.AcquireSignedReviewContractCommand{Scope: scope, ReviewCaseID: caseView.ReviewCase.ID, ExpectedReviewCaseVersion: caseView.ReviewCase.Version, SignerKeyID: reviewRegistered.Key.ID, TTLSeconds: 300})
+	if caseView.ReviewCase == nil {
+		t.Fatal("delivery lost independent review case")
+	}
+	assigned := signedCLIReviewCheckout(t, mux, scope, server, reviewCredential, reviewToken, *reviewRegistered.Key, reviewPrivate, reviewer)
 	must(e)
 	rc := assigned.Value.Contract
 	reviewRequestID, e := generator.NewID()

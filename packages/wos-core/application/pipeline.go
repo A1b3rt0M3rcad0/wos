@@ -427,6 +427,16 @@ func eventsForCommand[T any](
 	if r, ok := any(value).(SignedInterventionResult); ok {
 		return signedInterventionEvents(s, commandContext, meta, r, revision)
 	}
+	if next, ok := any(value).(SignedReviewAcquisition); ok {
+		if !next.Acquired {
+			return nil, nil
+		}
+		if next.Result == nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "acquired review result missing")
+		}
+		meta.Name = "AcquireSignedReviewContract"
+		return signedReviewEvents(s, commandContext, meta, *next.Result, revision)
+	}
 	if r, ok := any(value).(SignedReviewContractResult); ok {
 		return signedReviewEvents(s, commandContext, meta, r, revision)
 	}

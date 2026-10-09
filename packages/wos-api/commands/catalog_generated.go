@@ -22,6 +22,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.AchieveOutcomeCommand](c, "achieve_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveOutcomeCommand) (any, error) {
 		return service.AchieveOutcome(ctx, cc, cmd)
 	})
+	register[application.AcquireNextSignedReviewContractCommand](c, "acquire_next_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextSignedReviewContractCommand) (any, error) {
+		return service.AcquireNextSignedReviewContract(ctx, cc, cmd)
+	})
 	register[application.AcquireNextSignedWorkContractCommand](c, "acquire_next_signed_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextSignedWorkContractCommand) (any, error) {
 		return service.AcquireNextSignedWorkContract(ctx, cc, cmd)
 	})

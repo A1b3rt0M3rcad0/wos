@@ -19,6 +19,9 @@ func (c *Client) AchieveObjective(ctx context.Context, key string, cmd applicati
 func (c *Client) AchieveOutcome(ctx context.Context, key string, cmd application.AchieveOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "achieve_outcome", key, cmd)
 }
+func (c *Client) AcquireNextSignedReviewContract(ctx context.Context, key string, cmd application.AcquireNextSignedReviewContractCommand) (CommandResult[application.SignedReviewAcquisition], error) {
+	return command[application.SignedReviewAcquisition](ctx, c, "acquire_next_signed_review_contract", key, cmd)
+}
 func (c *Client) AcquireNextSignedWorkContract(ctx context.Context, key string, cmd application.AcquireNextSignedWorkContractCommand) (CommandResult[application.WorkContractAcquisition], error) {
 	return command[application.WorkContractAcquisition](ctx, c, "acquire_next_signed_work_contract", key, cmd)
 }

@@ -71,13 +71,22 @@ func compactAcquisitionV2(profile ProfileV2, value acquisitionAcceptedV2) any {
 	return item
 }
 func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, identity a.SigningIdentityView, o options) (Output, error) {
-	result := Output{Operation: "work"}
+	kind := "execution"
+	prefix := "work"
+	if o.args[0] == "review" {
+		kind = "review"
+		prefix = "review"
+	}
+	result := Output{Operation: prefix}
 	if len(o.args) < 2 {
 		return result, usage("work checkout|recover|list|show <contract-id>")
 	}
-	result.Operation = "work " + o.args[1]
+	result.Operation = prefix + " " + o.args[1]
 	switch o.args[1] {
 	case "checkout":
+		if kind == "review" {
+			return checkoutReviewV2(ctx, w, profile, client, token, identity, o)
+		}
 		return checkoutWorkV2(ctx, w, profile, client, token, identity, o)
 	case "recover":
 		if len(o.args) != 2 {
@@ -99,7 +108,11 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		items := []any{}
 		result.Data = map[string]any{"items": items}
 		for _, intent := range current.Local.PendingOperations {
-			if intent.Operation != "AcquireSignedWorkContract" && intent.Operation != "AcquireNextSignedWorkContract" {
+			matches := intent.Operation == "AcquireSignedWorkContract" || intent.Operation == "AcquireNextSignedWorkContract"
+			if kind == "review" {
+				matches = intent.Operation == "AcquireSignedReviewContract" || intent.Operation == "AcquireNextSignedReviewContract"
+			}
+			if !matches {
 				continue
 			}
 			accepted, e := recoverAcquisitionV2(ctx, w, profile, client, token, intent)
@@ -126,7 +139,7 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 			if e != nil {
 				return result, e
 			}
-			if view.Authority.ContractKind != "execution" {
+			if view.Authority.ContractKind != kind {
 				continue
 			}
 			items = append(items, map[string]any{"contract_id": id, "work_item_id": view.Authority.WorkItemID, "outcome_id": view.Authority.OutcomeID, "expires_at": view.Authority.ExpiresAt})
@@ -145,11 +158,11 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		if e != nil {
 			return result, e
 		}
-		if view.Authority.ContractKind != "execution" {
-			return result, usage("review contract requires review commands")
+		if view.Authority.ContractKind != kind {
+			return result, usage("contract kind differs from selected command")
 		}
 		scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
-		state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "execution", ID: id})
+		state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 		if e != nil {
 			return result, e
 		}
@@ -158,6 +171,14 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		result.OutcomeID = scope.OutcomeID
 		// All frozen instructions/constraints/criteria are kept; proofs and history
 		// are harness-only. Showing a contract never renews or takes over execution.
+		if kind == "review" {
+			specification, e := reviewAgentSpecificationV2(profile, view)
+			if e != nil {
+				return result, e
+			}
+			result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": specification, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Review.Progress, "decision": file.Review.Decision, "pending_final_return": file.Local.Pending != nil}
+			return result, nil
+		}
 		result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": view.WorkSpecification.Spec, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Execution.Progress, "completion_intent": file.Execution.CompletionIntent, "pending_final_return": file.Local.Pending != nil}
 		return result, nil
 	default:
