@@ -55,8 +55,10 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	root := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	t.Setenv("LOCALAPPDATA", t.TempDir())
-	t.Setenv("WOS_CLI_PROFILE_TEST_TOKEN", token)
-	t.Setenv("WOS_CLI_PROFILE_TEST_KEY", base64.StdEncoding.EncodeToString(private.Seed()))
+	if os.Getenv("WOS_TEST_NATIVE_KEYRING") != "1" {
+		t.Setenv("WOS_CLI_PROFILE_TEST_TOKEN", token)
+		t.Setenv("WOS_CLI_PROFILE_TEST_KEY", base64.StdEncoding.EncodeToString(private.Seed()))
+	}
 	var drop atomic.Bool
 	drop.Store(true)
 	var registrationCalls atomic.Int32
@@ -179,6 +181,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	execute(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String())
 	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "executor_cli", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_PROFILE_TEST_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: enrollment.Enrollment.KeyID, PrivateKeyRef: "env:WOS_CLI_PROFILE_TEST_KEY", PublicKeyFingerprint: fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	useNativeKeyringProfile(t, &profile, token, private)
 	proposal, e := cli.EncodeV2Document(profile)
 	must(e)
 	must(os.WriteFile(filepath.Join(root, "proposal.yaml"), proposal, 0600))
@@ -543,8 +546,10 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 		}
 	}
 	root := t.TempDir()
-	t.Setenv("WOS_CLI_REVIEW_TOKEN", token)
-	t.Setenv("WOS_CLI_REVIEW_KEY", base64.StdEncoding.EncodeToString(private.Seed()))
+	if os.Getenv("WOS_TEST_NATIVE_KEYRING") != "1" {
+		t.Setenv("WOS_CLI_REVIEW_TOKEN", token)
+		t.Setenv("WOS_CLI_REVIEW_KEY", base64.StdEncoding.EncodeToString(private.Seed()))
+	}
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	var drop atomic.Bool
 	drop.Store(true)
@@ -589,6 +594,7 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 	must(e)
 	defer w.Close()
 	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "reviewer", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: credential.PrincipalID, CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_REVIEW_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: key.ID, PrivateKeyRef: "env:WOS_CLI_REVIEW_KEY", PublicKeyFingerprint: key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	useNativeKeyringProfile(t, &profile, token, private)
 	for _, historical := range historicalIssuers {
 		if historical.IssuerKeyID != server.IssuerKeyID {
 			profile.Binding.IssuerKeys = append(profile.Binding.IssuerKeys, cli.ProfileIssuerV2{KeyID: historical.IssuerKeyID, PublicKey: historical.PublicKey, Fingerprint: historical.Fingerprint})

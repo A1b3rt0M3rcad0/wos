@@ -29,7 +29,16 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: 24.19.0
-      - name: Execute native client, filesystem, protocol and installer acceptance
+      - name: Install native Linux Secret Service fixture
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y gnome-keyring dbus
+      - name: Execute native Linux client and protected keyring acceptance
+        if: runner.os == 'Linux'
+        run: sh tools/acceptance/native-keyring.sh
+      - name: Execute native Windows client and protected Credential Manager acceptance
+        if: runner.os == 'Windows'
+        env:
+          WOS_TEST_NATIVE_KEYRING: '1'
         run: node tools/distribution/platform.mjs record
       - uses: actions/upload-artifact@v7.0.2
         with:
