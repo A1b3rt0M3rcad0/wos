@@ -1171,3 +1171,11 @@ journey: SQLite race 13.231s, PostgreSQL race 30.151s with three empty target
 databases. The initial correction-stage fixture used the already revoked
 original executor to read metadata; it now uses the current authorized
 correction executor, retaining denial assertions. Hosted checks remain pending.
+
+P13 separates coordinated verification from registry publication. Manifest
+integration runs all four same-source workflows and uploads hash-checked assets,
+actual native receipts and package acceptance. Real registry publication requires
+explicit workflow_dispatch publish=true, so finishing the plan does not silently
+publish a version. Registry credentials and final source acceptance remain separate.
+Existing hosted Linux/Windows execution replaces stale billing-only claims in
+release instructions; no registry publication is claimed.
