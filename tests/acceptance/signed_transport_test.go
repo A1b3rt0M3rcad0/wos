@@ -173,7 +173,6 @@ func signedTransportJourney(t *testing.T, store interface {
 	if registered.Key == nil || registered.Key.PrincipalID != "worker" {
 		t.Fatal("MCP registration changed ownership")
 	}
-	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions)
 	u, e := store.Begin(ctx)
 	must(e)
 	outcome, e := d.NewOutcome(scope.OutcomeID, ns, "Signed parity", "", "Exact scoped delivery", d.PriorityNormal, now)
@@ -198,6 +197,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	phase.Reason = "fixture activation; public cutover tested separately"
 	must(p.Save(ctx, phase, previous))
 	must(u.Commit())
+	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions)
 	acquired, e := worker.AcquireSignedWorkContract(ctx, "transport-signed-acquisition", a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: work.Version, SignerKeyID: registered.Key.ID, TTLSeconds: 300})
 	must(e)
 	operation, e := worker.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: "transport-signed-acquisition"})

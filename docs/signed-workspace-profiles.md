@@ -28,7 +28,7 @@ The operational layout is:
 .wos/profiles/executor_a/contract/CONTRACT_UUID.yaml
 ```
 
-Enrollment recovery is `wosctl --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. This enrollment behavior does not yet imply durable work acquisition: that is P08.
+Enrollment recovery is `wosctl --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. Work acquisition uses its own durable frozen intentions, described below; enrollment is not reused as work authority.
 
 `profile inspect` and `auth status` return compact identity, selected public key status and credential restrictions. They are observations; each domain command rechecks current grants, credential policy, scope and authority. `doctor` verifies destination/issuer and local signing-key fingerprint without revealing secret values. It does not acquire or renew work.
 
@@ -36,4 +36,26 @@ Enrollment recovery is `wosctl --profile executor_a profile recover`. The frozen
 
 Stable locks live outside the operational workspace. Unix lock files are private, are never unlinked and release on process death. Windows uses global named mutexes across interactive/service sessions and fails closed if unavailable; cross-compilation is not native certification. The file writer preserves editor changes observed before replacement. A noncooperating OS writer can race the final comparison/rename; profiles do not isolate hostile processes under the same OS account.
 
-P08 work acquisition/batches/recovery and P09 sign/send/finish remain in progress. Until those commands are implemented, a schema-2 project rejects legacy substitutions. The project does not yet claim a complete schema-2 operational workflow or native keyring certification.
+P08 review checkout, operational lease maintenance and comprehensive file/process failure recovery remain in progress. P09 sign/send/finish is not implemented yet. A schema-2 project rejects legacy substitutions. The project does not yet claim a complete schema-2 operational workflow or native keyring certification.
+
+## Work acquisition and recovery
+
+```sh
+wosctl --profile executor_a work checkout --next --count 3 --limit 25 --output json
+wosctl --profile executor_a work checkout TASK_UUID --version EXACT_VERSION
+wosctl --profile executor_a work recover --all-pending --output json
+wosctl --profile executor_a work list --output json
+wosctl --profile executor_a work show CONTRACT_UUID --for-agent --output json
+```
+
+`--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server still limits a Principal to three active execution contracts across credentials and profiles. A request for five may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
+
+A search that found nothing is also durable. Repeating its intention returns the original empty result even after a new Task appears. An incomplete page retains `search_complete: false` and `next_cursor`; it does not declare global absence. Continuing that cursor is an explicit new checkout intention. Corrections and replanned deliveries require explicit Task checkout with `--previous-review REVIEW_CASE_UUID`; generic next search does not silently acknowledge their findings.
+
+Preparation and technical response persistence use short stable profile locks. Requests run without a profile lock. Recovery merges only the matching frozen intention into the latest validated profile snapshot, preserving other processes' intentions and observed editor changes. An accepted result is persisted as `accepted_unmaterialized` before publishing its one contract file; the intention is removed only after materialization. Existing valid contract drafts are preserved. Corrupted, ambiguous or unexpected files fail explicitly and remain available for reconciliation.
+
+For an unknown response, recovery first reads the original credential-bound durable operation and matches its command/fingerprint and exact response digest. This can reconcile acceptance after the agent signing key was revoked, without issuing another acquisition or extending expiry. Missing acceptance may be retried only with the original frozen command and live authorization. Destination, scope, CredentialID and issuer proof are checked; operation expansion is technical harness data and never current authority. An unknown/rejected unresolved intention is preserved, not rewritten with new CAS values.
+
+`show --for-agent` returns the selected frozen instructions, constraints, criteria, current focal metadata and local progress. It omits issuer proofs, private references and other Outcome history. Read-only show/list/recover with no pending intentions do not acquire or renew work. A stored grant may have expired or lost authorization; final mutations must use their own live protocol checks.
+
+Real HTTP fixtures on Memory, SQLite and PostgreSQL cover the second response lost after commit in a five-item batch, two eligible Tasks, preservation of an edited first draft, recovery without duplicate contracts and accepted-state reconciliation after key revocation. Shared storage tests cover durable empty search, pagination, cache-unavailable replay, exact original public response and Principal quota. The remaining P08/P09 and native gates above are not inferred from those fixtures.

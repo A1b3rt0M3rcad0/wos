@@ -435,6 +435,7 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 // SigningIdentityView reveals only the current credential's public identity.
 // Private signing material never enters WOS or this response.
 type SigningIdentityView struct {
+	Actor            d.ActorRef           `json:"actor_ref"`
 	ServerID         string               `json:"server_id"`
 	NamespaceVersion d.Version            `json:"namespace_version,string"`
 	KeysTruncated    bool                 `json:"keys_truncated"`
@@ -488,7 +489,7 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	if err != nil {
 		return result, err
 	}
-	result = SigningIdentityView{ServerID: s.ServerID, NamespaceVersion: namespaceVersion, NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
+	result = SigningIdentityView{Actor: credential.Actor, ServerID: s.ServerID, NamespaceVersion: namespaceVersion, NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
 	if persistent, ok := uow.(ports.ServerIdentityUnitOfWork); ok {
 		server, e := persistent.ServerIdentity().Server(ctx)
 		if e == nil {

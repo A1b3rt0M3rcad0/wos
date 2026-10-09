@@ -85,33 +85,37 @@ func (w *Workspace) LoadProjectV2() (ProjectV2, error) {
 	return project, project.Validate()
 }
 func (w *Workspace) LoadProfileV2(name string) (ProfileV2, error) {
+	profile, _, e := w.readProfileSnapshotV2(name)
+	return profile, e
+}
+func (w *Workspace) readProfileSnapshotV2(name string) (ProfileV2, []byte, error) {
 	var profile ProfileV2
 	if !validProfileName(name) {
-		return profile, fmt.Errorf("invalid profile name")
+		return profile, nil, fmt.Errorf("invalid profile name")
 	}
 	path, e := w.DocumentPath(filepath.Join(".wos/profiles", name, "profile"))
 	if e != nil {
-		return profile, e
+		return profile, nil, e
 	}
 	raw, e := w.ReadV2(path)
 	if e != nil {
-		return profile, e
+		return profile, nil, e
 	}
 	if e = DecodeV2Document(raw, &profile); e != nil {
-		return profile, e
+		return profile, nil, e
 	}
 	if profile.Name != name {
-		return profile, fmt.Errorf("profile directory/header binding differs")
+		return profile, nil, fmt.Errorf("profile directory/header binding differs")
 	}
 	if e = profile.Validate(); e != nil {
-		return profile, e
+		return profile, nil, e
 	}
 	project, e := w.LoadProjectV2()
 	if e != nil {
-		return profile, e
+		return profile, nil, e
 	}
 	if project.Connection.ServerURL != profile.Binding.ServerOrigin || project.Connection.ExpectedServerID != profile.Binding.ServerID || project.Scope.NamespaceID != profile.Binding.NamespaceID {
-		return profile, fmt.Errorf("project/profile destination binding differs")
+		return profile, nil, fmt.Errorf("project/profile destination binding differs")
 	}
-	return profile, nil
+	return profile, raw, nil
 }

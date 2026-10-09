@@ -53,6 +53,12 @@
                 "maxLength": 65536,
                 "type": "string"
               },
+              "request_fingerprint": {
+                "maxLength": 64,
+                "minLength": 64,
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
               "response": {
                 "contentEncoding": "base64",
                 "maxLength": 349528,

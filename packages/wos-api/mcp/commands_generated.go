@@ -22,6 +22,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.AchieveOutcomeCommand](server, ids, options, "wos_achieve_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveOutcomeCommand) (any, error) {
 		return service.AchieveOutcome(ctx, cc, cmd)
 	})
+	registerCommand[application.AcquireNextSignedWorkContractCommand](server, ids, options, "wos_acquire_next_signed_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextSignedWorkContractCommand) (any, error) {
+		return service.AcquireNextSignedWorkContract(ctx, cc, cmd)
+	})
 	registerCommand[application.AcquireNextWorkContractCommand](server, ids, options, "wos_acquire_next_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.AcquireNextWorkContractCommand) (any, error) {
 		return service.AcquireNextWorkContract(ctx, cc, cmd)
 	})

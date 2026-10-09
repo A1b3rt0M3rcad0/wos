@@ -446,10 +446,21 @@ func recoverProfileEnrollmentV2(ctx context.Context, w *Workspace, profile Profi
 		if intent.Operation != pending.Operation || intent.NamespaceID != profile.Binding.NamespaceID || intent.Proof == nil {
 			return result, fmt.Errorf("pending registration binding differs")
 		}
-		before, e := w.ReadV2(profilePathV2(profile.Name))
+		latest, before, e := w.readProfileSnapshotV2(profile.Name)
 		if e != nil {
 			return result, e
 		}
+		if e = latest.VerifyBinding(token); e != nil {
+			return result, e
+		}
+		if latest.Local.BindingMAC != profile.Local.BindingMAC {
+			return result, fmt.Errorf("profile binding changed; enrollment preserved")
+		}
+		index, e := pendingIndexV2(&latest, pending)
+		if e != nil || index != 0 {
+			return result, fmt.Errorf("frozen enrollment changed; preserve it for reconciliation")
+		}
+		profile = latest
 		profile.Local.PendingOperations[0].State = "sent_unknown"
 		if e = profile.SealBinding(token); e != nil {
 			return result, e

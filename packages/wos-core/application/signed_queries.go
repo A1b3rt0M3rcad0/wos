@@ -47,31 +47,32 @@ type SignedContractMetadata struct {
 // avoids HTML-escape expansion; its digest is linked by the issuer acceptance.
 // No query supplies execution authority or claims an evaluation of quality.
 type SignedStateResult struct {
-	OperationCommandID *d.ID                    `json:"operation_command_id,omitempty"`
-	OperationName      string                   `json:"operation_name,omitempty"`
-	OperationPayload   string                   `json:"operation_result_payload,omitempty"`
-	ProtocolVersion    int                      `json:"protocol_version"`
-	NamespaceID        d.ID                     `json:"namespace_id"`
-	Scope              *d.Scope                 `json:"scope,omitempty"`
-	Resource           string                   `json:"resource"`
-	OutcomeRevision    signing.Decimal          `json:"outcome_revision"`
-	EvaluatedAt        time.Time                `json:"evaluated_at"`
-	Server             *d.ServerIdentity        `json:"server,omitempty"`
-	Protocol           *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
-	Contract           *SignedContractMetadata  `json:"contract,omitempty"`
-	ReviewCase         *d.ReviewCase            `json:"review_case,omitempty"`
-	Cases              []d.ReviewCase           `json:"cases,omitempty"`
-	NextCursor         string                   `json:"next_cursor,omitempty"`
-	SearchComplete     bool                     `json:"search_complete,omitempty"`
-	Scanned            int                      `json:"scanned,omitempty"`
-	FactID             *d.ID                    `json:"fact_id,omitempty"`
-	PayloadDigest      string                   `json:"payload_digest,omitempty"`
-	Envelope           *signing.Envelope        `json:"envelope,omitempty"`
-	SignerKey          *d.SigningKey            `json:"signer_key,omitempty"`
-	SubmissionID       *d.ID                    `json:"submission_id,omitempty"`
-	SubmissionDigest   string                   `json:"submission_digest,omitempty"`
-	MaterialPayload    string                   `json:"material_payload,omitempty"`
-	AcceptanceFactID   *d.ID                    `json:"acceptance_fact_id,omitempty"`
+	OperationFingerprint string                   `json:"operation_fingerprint,omitempty"`
+	OperationCommandID   *d.ID                    `json:"operation_command_id,omitempty"`
+	OperationName        string                   `json:"operation_name,omitempty"`
+	OperationPayload     string                   `json:"operation_result_payload,omitempty"`
+	ProtocolVersion      int                      `json:"protocol_version"`
+	NamespaceID          d.ID                     `json:"namespace_id"`
+	Scope                *d.Scope                 `json:"scope,omitempty"`
+	Resource             string                   `json:"resource"`
+	OutcomeRevision      signing.Decimal          `json:"outcome_revision"`
+	EvaluatedAt          time.Time                `json:"evaluated_at"`
+	Server               *d.ServerIdentity        `json:"server,omitempty"`
+	Protocol             *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
+	Contract             *SignedContractMetadata  `json:"contract,omitempty"`
+	ReviewCase           *d.ReviewCase            `json:"review_case,omitempty"`
+	Cases                []d.ReviewCase           `json:"cases,omitempty"`
+	NextCursor           string                   `json:"next_cursor,omitempty"`
+	SearchComplete       bool                     `json:"search_complete,omitempty"`
+	Scanned              int                      `json:"scanned,omitempty"`
+	FactID               *d.ID                    `json:"fact_id,omitempty"`
+	PayloadDigest        string                   `json:"payload_digest,omitempty"`
+	Envelope             *signing.Envelope        `json:"envelope,omitempty"`
+	SignerKey            *d.SigningKey            `json:"signer_key,omitempty"`
+	SubmissionID         *d.ID                    `json:"submission_id,omitempty"`
+	SubmissionDigest     string                   `json:"submission_digest,omitempty"`
+	MaterialPayload      string                   `json:"material_payload,omitempty"`
+	AcceptanceFactID     *d.ID                    `json:"acceptance_fact_id,omitempty"`
 }
 
 func (r SignedStateResult) MarshalJSON() ([]byte, error) {
@@ -184,6 +185,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		}
 		result.OperationCommandID = &accepted.Result.CommandID
 		result.OperationName = accepted.CommandName
+		result.OperationFingerprint = accepted.Fingerprint
 		result.OperationPayload = base64.StdEncoding.EncodeToString(accepted.Result.ResponseJSON)
 	case "execution", "review", "specification", "authority":
 		kind := q.ContractKind
@@ -374,7 +376,11 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if err != nil {
 		return zero, err
 	}
-	if len(raw) > MaxSnapshotBytes {
+	maximum := MaxSnapshotBytes
+	if q.Resource == "operation" {
+		maximum = base64.StdEncoding.EncodedLen(d.MaxSignedOperationResultBytes) + (64 << 10)
+	}
+	if len(raw) > maximum {
 		return zero, d.NewError(d.ErrorCodeGraphLimitExceeded, "signed query byte limit exceeded; use a smaller page")
 	}
 	return result, nil
