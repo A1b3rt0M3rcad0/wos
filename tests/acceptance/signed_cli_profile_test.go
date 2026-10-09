@@ -60,12 +60,35 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	var registrationCalls atomic.Int32
 	var dropCheckout atomic.Bool
 	var acquisitionCalls atomic.Int32
+	var dropReturn atomic.Bool
+	var returnCalls atomic.Int32
 	var dropRenew atomic.Bool
 	var renewalCalls atomic.Int32
 	var checkRenewalLock func()
 	var firstAcquireKey atomic.Value
 	firstAcquireKey.Store("")
 	endpoint := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/return_signed_work") {
+			returnCalls.Add(1)
+			recorded := httptest.NewRecorder()
+			handler.ServeHTTP(recorded, r)
+			if dropReturn.Load() && recorded.Code < 400 {
+				connection, _, e := rw.(http.Hijacker).Hijack()
+				if e != nil {
+					t.Error(e)
+					return
+				}
+				connection.Close()
+				return
+			}
+			for k, vs := range recorded.Header() {
+				rw.Header()[k] = vs
+			}
+			rw.WriteHeader(recorded.Code)
+			_, _ = rw.Write(recorded.Body.Bytes())
+			return
+		}
 
 		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/renew_signed_work_contract") {
 			renewalCalls.Add(1)
@@ -367,6 +390,94 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 		t.Fatal("keepalive deleted revoked unsubmitted draft")
 	}
 
+	// A separate approved checkout root demonstrates receipt-bound cleanup
+	// without ever removing another workspace's unconfirmed draft.
+	returnRoot := t.TempDir()
+	returnedWorkspace, e := cli.OpenWorkspace(returnRoot)
+	must(e)
+	defer returnedWorkspace.Close()
+	project, e := workspace.LoadProjectV2()
+	must(e)
+	must(returnedWorkspace.CreateV2(".wos/project.yaml", project))
+	must(returnedWorkspace.CreateV2(".wos/profiles/executor_cli/profile.yaml", currentProfile))
+	livePath := ".wos/profiles/executor_cli/contract/" + acceptedContract.ID.String() + ".yaml"
+	liveRaw, e := workspace.ReadV2(livePath)
+	must(e)
+	var liveFile cli.ContractFileV2
+	must(cli.DecodeV2Document(liveRaw, &liveFile))
+	liveFile.Execution.Material.Result.Summary = "bounded CLI delivery for independent review"
+	liveFile.Execution.Material.Reason = "actual protected local signing and original receipt recovery"
+	must(returnedWorkspace.CreateV2(livePath, liveFile))
+	runReturn := func(expected int, args ...string) cli.Output {
+		t.Helper()
+		var out, diagnostics bytes.Buffer
+		code := cli.Run(ctx, append(args, "--workspace", returnRoot, "--profile", "executor_cli", "--output", "json"), &out, &diagnostics)
+		if code != expected {
+			t.Fatalf("return CLI %v exit %d expected %d: %s %s", args, code, expected, out.String(), diagnostics.String())
+		}
+		var result cli.Output
+		must(json.Unmarshal(out.Bytes(), &result))
+		return result
+	}
+	runReturn(0, "work", "sign", acceptedContract.ID.String())
+	pendingRaw, e := returnedWorkspace.ReadV2(livePath)
+	must(e)
+	must(cli.DecodeV2Document(pendingRaw, &liveFile))
+	if liveFile.Local.Pending == nil || liveFile.Local.Pending.State != "prepared_signed" || liveFile.Local.Pending.CredentialID != credential.ID {
+		t.Fatal("sign did not persist original-CID frozen intention")
+	}
+	originalDraft := liveFile.Execution.Progress
+	runReturn(0, "work", "recover")
+	if returnCalls.Load() != 0 {
+		t.Fatal("recover sent an unsent prepared signature")
+	}
+	dropReturn.Store(true)
+	runReturn(6, "work", "send", acceptedContract.ID.String())
+	returnBefore := returnCalls.Load()
+	changed, e := returnedWorkspace.ReadV2(livePath)
+	must(e)
+	must(cli.DecodeV2Document(changed, &liveFile))
+	liveFile.Execution.Progress.Summary = "unconfirmed edit after uncertain return"
+	must(returnedWorkspace.WriteV2(livePath, liveFile, signing.Digest(changed)))
+	dropReturn.Store(false)
+	confirmed := runReturn(6, "work", "recover")
+	if !confirmed.Committed {
+		t.Fatal("accepted return lost remote-commit diagnostic")
+	}
+	if returnCalls.Load() != returnBefore {
+		t.Fatal("receipt recovery posted return again")
+	}
+	protected, e := returnedWorkspace.ReadV2(livePath)
+	must(e)
+	must(cli.DecodeV2Document(protected, &liveFile))
+	if liveFile.Local.AcceptanceReceipt == nil || liveFile.Execution.Progress.Summary != "unconfirmed edit after uncertain return" {
+		t.Fatal("accepted cleanup lost receipt or unconfirmed edit")
+	}
+	liveFile.Execution.Progress = originalDraft
+	must(returnedWorkspace.WriteV2(livePath, liveFile, signing.Digest(protected)))
+	finished := runReturn(0, "work", "recover")
+	if !finished.Committed {
+		t.Fatal("cleanup retry did not report existing remote commit")
+	}
+	if _, e = os.Stat(filepath.Join(returnRoot, livePath)); !os.IsNotExist(e) {
+		t.Fatal("verified closed unchanged contract was not removed")
+	}
+	if _, e = workspace.ReadV2(livePath); e != nil {
+		t.Fatal("cleanup removed another workspace's draft")
+	}
+	closedProfile, e := returnedWorkspace.LoadProfileV2("executor_cli")
+	must(e)
+	if len(closedProfile.Local.PendingOperations) != 0 {
+		t.Fatal("closed return retained bounded pending intention")
+	}
+	dirs, e := os.ReadDir(filepath.Join(returnRoot, ".wos/profiles/executor_cli"))
+	must(e)
+	for _, entry := range dirs {
+		if entry.IsDir() && entry.Name() != "contract" {
+			t.Fatal("return created an operational history directory")
+		}
+	}
+
 	// Recreate the still-pending local intention from the materialize-before-remove
 	// crash window, then revoke its original agent key. Recovery reads accepted
 	// state and verifies issued proof; it must not call acquisition again.
@@ -401,7 +512,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 
 // The key was enrolled over the public API before this fixture. Installation
 // records only protected references; checkout uses actual authenticated HTTP.
-func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, server d.ServerIdentity, credential ports.Credential, token string, key d.SigningKey, private ed25519.PrivateKey, reviewer *sdk.Client) sdk.CommandResult[a.SignedReviewContractResult] {
+func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, server d.ServerIdentity, credential ports.Credential, token string, key d.SigningKey, private ed25519.PrivateKey, reviewer *sdk.Client) (sdk.CommandResult[a.SignedReviewContractResult], signing.Envelope, signing.ReviewReturnPayload[a.SignedReviewMaterial]) {
 	t.Helper()
 	ctx := context.Background()
 	must := func(e error) {
@@ -555,5 +666,32 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 	latest.Contract.FencingToken = d.FencingToken(finalView.Authority.FencingToken)
 	latest.Contract.ExpiresAt, e = time.Parse(time.RFC3339Nano, finalView.Authority.ExpiresAt)
 	must(e)
-	return sdk.CommandResult[a.SignedReviewContractResult]{Value: latest, CommandID: search.CommandID, OutcomeRevision: search.OutcomeRevision}
+	file.Review.Decision = "approved"
+	file.Review.Material.Reason = "independent CLI review of the exact immutable submission"
+	must(w.WriteV2(path, file, signing.Digest(finalRaw)))
+	execute(0, "review", "sign", id.String())
+	signedRaw, e := w.ReadV2(path)
+	must(e)
+	must(cli.DecodeV2Document(signedRaw, &file))
+	if file.Local.Pending == nil {
+		t.Fatal("review sign did not freeze exact return")
+	}
+	envelope := file.Local.Pending.Envelope
+	payload, e := base64.StdEncoding.Strict().DecodeString(envelope.Payload)
+	must(e)
+	var decision signing.ReviewReturnPayload[a.SignedReviewMaterial]
+	must(signing.DecodeStrict(payload, &decision, 180<<10))
+	finished := execute(0, "review", "finish", id.String())
+	if !finished.Committed {
+		t.Fatal("independent CLI finish lost remote commit")
+	}
+	if _, e = os.Stat(filepath.Join(root, path)); !os.IsNotExist(e) {
+		t.Fatal("closed review contract was not removed")
+	}
+	finishedProfile, e := w.LoadProfileV2("reviewer")
+	must(e)
+	if len(finishedProfile.Local.PendingOperations) != 0 {
+		t.Fatal("finished review retained pending operation")
+	}
+	return sdk.CommandResult[a.SignedReviewContractResult]{Value: latest, CommandID: search.CommandID, OutcomeRevision: search.OutcomeRevision}, envelope, decision
 }

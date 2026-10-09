@@ -272,14 +272,9 @@ func signedTransportJourney(t *testing.T, store interface {
 	if caseView.ReviewCase == nil {
 		t.Fatal("delivery lost independent review case")
 	}
-	assigned := signedCLIReviewCheckout(t, mux, scope, server, reviewCredential, reviewToken, *reviewRegistered.Key, reviewPrivate, reviewer)
-	must(e)
-	rc := assigned.Value.Contract
-	reviewRequestID, e := generator.NewID()
-	must(e)
-	decision := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "reviewer", SignerKeyID: reviewRegistered.Key.ID.String()}, OperationKind: "review_return", RequestID: reviewRequestID.String(), IdempotencyKey: "transport-sdk-review-approve", ContractID: rc.ID.String(), WorkItemID: work.ID.String(), ExecutionID: rc.ExecutionID.String(), FencingToken: signing.Decimal(rc.FencingToken), SpecDigest: rc.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(assigned.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(rc.Version), ExpectedLeaseVersion: signing.Decimal(rc.LeaseVersion), ExpectedWorkItemVersion: assigned.Value.WorkItemVersion, PolicyRevision: signing.Decimal(reviewRegistered.CredentialPolicy.Version)}, ExpectedReviewCaseVersion: signing.Decimal(assigned.Value.Case.Version), ReviewCaseID: assigned.Value.Case.ID.String(), SubmissionID: receipt.SubmissionID, SubmissionDigest: receipt.SubmissionDigest, Decision: "approved", Material: a.SignedReviewMaterial{Reason: "independent review of exact submitted result; no mandatory criteria"}}
-	decisionEnvelope, e := signing.Sign(signing.ReviewReturn, decision, reviewRegistered.Key.ID.String(), reviewPrivate)
-	must(e)
+	_, decisionEnvelope, decision := signedCLIReviewCheckout(t, mux, scope, server, reviewCredential, reviewToken, *reviewRegistered.Key, reviewPrivate, reviewer)
+	// The original CLI has removed its closed file; SDK replay uses the exact
+	// frozen request and confirms immutable acceptance, not a new decision.
 	approved, e := reviewer.ReturnSignedReview(ctx, decision.IdempotencyKey, a.ReturnSignedReviewCommand{Envelope: decisionEnvelope})
 	must(e)
 	approvedEnvelope, e := approved.Value.Receipt.Envelope()

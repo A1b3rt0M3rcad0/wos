@@ -85,6 +85,11 @@
             {
               "additionalProperties": false,
               "properties": {
+                "credential_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
                 "draft_digest": {
                   "maxLength": 65536,
                   "type": "string"
@@ -139,6 +144,10 @@
                   ],
                   "type": "object"
                 },
+                "pending_mac": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
                 "request_digest": {
                   "maxLength": 65536,
                   "type": "string"
@@ -148,12 +157,19 @@
                   "maxLength": 349528,
                   "type": "string"
                 },
+                "signer_public_key": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
                 "state": {
                   "maxLength": 65536,
                   "type": "string"
                 }
               },
               "required": [
+                "credential_id",
+                "signer_public_key",
+                "pending_mac",
                 "state",
                 "envelope",
                 "draft_digest",
