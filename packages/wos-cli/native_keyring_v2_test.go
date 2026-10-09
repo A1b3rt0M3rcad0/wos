@@ -39,7 +39,7 @@ func nativeKeyringProfile(t *testing.T, name string) {
 		t.Fatal("native keyring signing reference unavailable or mismatched")
 	}
 	defer clear(private)
-	envelope, err := signing.Sign(signing.WorkReturn, map[string]any{"summary": "Native protected signer", "protocol_version": 2}, profile.Signing.KeyID.String(), private)
+	envelope, err := signing.Sign(signing.WorkReturn, map[string]any{"summary": "Native protected signer", "protocol_version": 2, "signer_key_id": profile.Signing.KeyID.String()}, profile.Signing.KeyID.String(), private)
 	if err != nil {
 		t.Fatal("native protected signing failed")
 	}

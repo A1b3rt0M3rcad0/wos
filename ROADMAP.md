@@ -1153,3 +1153,9 @@ PostgreSQL on client-only hosts, instead of implying every suite ran. Local
 Memory/SQLite fallback transport passed (24.272s); PostgreSQL was explicitly
 skipped there. Distribution gate unit tests and negative secret redaction pass;
 those are not counted as real local keyring execution.
+
+The first native keyring jobs reached actual protected reads and the real
+HTTP/CLI journey on Linux/Windows, but the standalone signing fixture omitted
+the required signer_key_id from its payload. Both failed and produced no accepted
+platform proof. The fixture now supplies the exact selected identity; signing
+validation is unchanged and the native gates must rerun.
