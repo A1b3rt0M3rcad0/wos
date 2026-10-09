@@ -1199,3 +1199,11 @@ actual passing counts and individual skips. PR62 historical upgrade and PR63
 pending execution/review/correction restores are integrated after their hosted
 gates passed. This documentation merge requires a fresh source check before
 PR64 integration; final release receipts still require the final combined source.
+
+P12 active fuzz campaigns execute canonical JSON/DSSE decoding and restricted
+YAML parsing, with two workers and a 10-second budget each. Go 1.27.2 local
+source 0ee312f passed actual mutations: canonical 21,915, envelope 91,292,
+YAML 45,747. These are bounded runs, not exhaustive security proof or a coverage
+percentage. CI now rejects seed-only/zero-execution evidence and uploads raw
+Go JSON plus target counts/source/compiler. Hosted final-source campaign remains
+required; no parser/security behavior was weakened to pass.

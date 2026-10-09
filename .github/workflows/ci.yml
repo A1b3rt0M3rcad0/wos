@@ -99,6 +99,23 @@ jobs:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: go test -race ./...
 
+      - name: Active signed codec and restricted YAML fuzz campaigns
+        shell: bash
+        run: |
+          go test -json -run '^$' -fuzz '^FuzzCanonical$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-canonical-fuzz.jsonl
+          go test -json -run '^$' -fuzz '^FuzzEnvelope$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-envelope-fuzz.jsonl
+          go test -json -run '^$' -fuzz '^FuzzYAMLJSON$' -fuzztime=10s -parallel=2 ./packages/wos-cli > restricted-yaml-fuzz.jsonl
+          python3 tools/acceptance/fuzz-report.py "$(git rev-parse HEAD)" signing-canonical-fuzz.jsonl signing-envelope-fuzz.jsonl restricted-yaml-fuzz.jsonl signed-fuzz.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: signed-active-fuzz
+          path: |
+            signed-fuzz.json
+            signing-canonical-fuzz.jsonl
+            signing-envelope-fuzz.jsonl
+            restricted-yaml-fuzz.jsonl
+          if-no-files-found: error
+
       - name: Build standalone binary
         run: go build -o ./bin/wos ./packages/wos-api/cmd/wos
 
