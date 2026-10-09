@@ -18,7 +18,9 @@ for name in ['signed_operations.go','signed_participants.go','server_identity.go
   q=q.replace("json_extract(state_json,'$.signed_binding.separation_group')","state_json::jsonb #>> '{signed_binding,separation_group}'")
   if 'SELECT version FROM namespaces WHERE' in q:q+=' FOR UPDATE'
   if 'SELECT lifecycle FROM namespaces WHERE' in q:q+=' FOR SHARE'
-  if name=='access.go' and ' FROM credentials WHERE digest=' in q:q+=' FOR SHARE'
+  if name=='server_identity.go' and 'SELECT state_json FROM server_protocol_identity WHERE singleton=1' in q:
+   q+= ' FOR UPDATE' if '/* issuer recovery */' in q else ' FOR SHARE'
+  if name=='access.go'  and ' FROM credentials WHERE digest=' in q:q+=' FOR SHARE'
   if re.search(r'SELECT state_revision\s+FROM outcome_coordination',q):q+=' FOR UPDATE'
   counter=0
   def placeholder(_):
@@ -51,7 +53,7 @@ for p in (source/'migrations').glob('*.sql'):
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['migration_compatibility_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
+for name in ['migration_compatibility_test.go','issuer_recovery_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1)
  s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)

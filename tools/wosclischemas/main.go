@@ -38,6 +38,12 @@ func main() {
 			properties["protocol"] = map[string]any{"type": "string", "const": "legacy_unsigned"}
 			quoteLegacySchemaCounters(schema)
 		case "profile-v2":
+			properties["binding"].(map[string]any)["properties"].(map[string]any)["issuer_keys"].(map[string]any)["maxItems"] = 10
+			lineage := properties["_local"].(map[string]any)["properties"].(map[string]any)["prior_issuer_bindings"].(map[string]any)
+			lineage["maxItems"] = 9
+			lineageFields := lineage["items"].(map[string]any)["properties"].(map[string]any)
+			lineageFields["binding_mac"] = map[string]any{"type": "string", "pattern": "^[a-f0-9]{64}$", "minLength": 64, "maxLength": 64}
+			lineageFields["identity_digest"] = map[string]any{"type": "string", "pattern": "^sha256:[a-f0-9]{64}$", "minLength": 71, "maxLength": 71}
 			local := properties["_local"].(map[string]any)["properties"].(map[string]any)
 			pending := local["pending_operations"].(map[string]any)
 			pending["maxItems"] = 10

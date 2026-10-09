@@ -7911,6 +7911,45 @@
               }
             ]
           },
+          "issuer_history": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "fingerprint": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "issuer_key_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "public_key": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "server_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "server_id",
+                "issuer_key_id",
+                "public_key",
+                "fingerprint",
+                "created_at"
+              ],
+              "type": "object"
+            },
+            "maxItems": 10000,
+            "type": "array"
+          },
           "material_payload": {
             "contentEncoding": "base64",
             "maxLength": 245760,

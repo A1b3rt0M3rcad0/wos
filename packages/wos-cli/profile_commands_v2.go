@@ -195,7 +195,7 @@ func projectInitializeV2(w *Workspace, o options) (Output, error) {
 func profileCommandV2(ctx context.Context, w *Workspace, o options, resolver SecretResolver) (Output, error) {
 	result := Output{Operation: strings.Join(o.args, " ")}
 	if len(o.args) < 2 {
-		return result, usage("profile list|create|inspect|recover|remove")
+		return result, usage("profile list|create|inspect|recover|remove|trust")
 	}
 	if o.args[1] == "list" {
 		if len(o.args) != 2 {
@@ -221,6 +221,9 @@ func profileCommandV2(ctx context.Context, w *Workspace, o options, resolver Sec
 	selected, e := w.SelectProfileV2(name, os.Getenv("WOS_PROFILE"))
 	if e != nil {
 		return result, e
+	}
+	if o.args[1] == "trust" {
+		return approveCurrentIssuerV2(ctx, w, selected, o, resolver)
 	}
 	release, e := w.LockV2(ctx, selected, "")
 	if e != nil {
@@ -281,7 +284,7 @@ func profileCommandV2(ctx context.Context, w *Workspace, o options, resolver Sec
 		result.Data = map[string]any{"removed": selected, "remote_identity_revoked": false, "secrets_removed": false}
 		return result, nil
 	default:
-		return result, usage("profile list|create|inspect|recover|remove")
+		return result, usage("profile list|create|inspect|recover|remove|trust")
 	}
 }
 

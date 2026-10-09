@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-08
+**Last reviewed:** 2026-10-09
 **Current target:** Release 0.1  
 **Current wave:** Waves 01–18 accepted for validation; final integration through PR #14
 
@@ -905,15 +905,15 @@ Owner authorized execution of [the new plan](docs/signed-contracts-implementatio
 | P00 | Design accepted; implementation baseline frozen | Full original plan, ADRs, bypass/tables inventory, migration reservations and four design fixtures; no proposed command advertised as existing. |
 | P01 | Codec implemented and locally verified | Public pure signing package, six payload purposes, typed bindings/counters, exact verified DTO, local mapping/proof and independent Python vector. Race signing/domain, vet and two 15-second fuzz campaigns passed; no runtime authorization claim. |
 | P02 | Identity foundation implemented and locally verified | Authorized one-use enrollment, possession-bound rotation, credential restrictions/floors, stable Principal groups, durable security receipts and all three adapters. Signed work/review operations remain P03–P06. |
-| P03 | In progress | Signed issuance, runtime trust and domain/storage foundations verified; atomic delivery, reviews and full cutover/guards remain following waves. |
+| P03 | Implemented incrementally; exhaustive acceptance remains P12 | Signed issuance/runtime trust and storage foundations integrated with subsequent delivery/review/cutover work; final-source gates remain open. |
 | P04 | Core implemented and locally verified; exhaustive acceptance remains P12 | Atomic signed return implemented: exact envelope/spec verification, documentary local keys, fresh explicit direct assessments, delivery/review handoff and durable signed acceptance. |
 | P05 | Core implemented and locally verified; exhaustive acceptance remains P06/P12 | Independent signed review/leases, exact immutable targets, correction rounds, Task completion and explicit administrative interventions. Exhaustive cross-transport/fault acceptance remains P06/P12. |
 | P06 | Implemented and locally verified; exhaustive matrix remains P12 | Exact signed schemas/counters, live Outcome scope filtering, public identity/enrollment, bounded focal proofs/material, unsigned guards and actual HTTP/MCP/SDK independent review journey. Full race/vet/restore and generator gates passed locally. |
-| P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Full operational workflows remain P08/P09. |
-| P08 | In progress — work batches and durable local acquisition | Stable locks, server recovery, independent work searches and embedded profile intentions/materialization implemented. Review checkout, renew/keepalive and comprehensive process/file failure acceptance remain pending. |
+| P07 | Implemented and locally verified; native secret-store gates remain P12 | Project/profile CRUD, approved destination and pins, protected stdin/generation/import, possession enrollment with durable replay, secret references and exact single-contract YAML. Operational execution/review workflows are implemented in P08/P09; native keyring execution remains unaccepted. |
+| P08 | Implemented incrementally; exhaustive fault acceptance remains P12 | Stable locks, bounded execution/review batches, embedded intentions, verified atomic materialization, renew/resume/refresh and supervised keepalive integrated. Extended final-source process/file failure gates remain open. |
 | P09 | In progress — signed CLI return and receipt cleanup | Protected local sign/send/finish, original-CID frozen recovery, issuer receipt verification and single-file cleanup implemented; final-source/full and exhaustive fault acceptance remain required. |
-| P10 | In progress | Explicit server cutover, recoverable schema-2 operator intentions and preserving workspace migration implemented; full legacy upgrade/restore and issuer recovery acceptance remain pending. |
-| P11 | Planned | UI read models/guarded actions, five skills and operating guides. |
+| P10 | In progress | Explicit cutover, preserving workspace migration, schema compatibility, host issuer recovery and client pin approval integrated; historical v0.2 dataset/old-binary and complete restore acceptance remain pending. |
+| P11 | In progress | Five signed-protocol skills and client guide alignment locally verified; UI read models/guarded actions and final operational guide acceptance remain pending. |
 | P12 | Planned; external platform/pilot gates unresolved | Real SQL/restore, independent processes, failures/load/context benchmarks; native Windows and actual consumer separately proven. |
 | P13 | Planned; publication separately gated | Exact-source packages/notices/native receipts and upgrade documentation; no registry claim from build. |
 
@@ -1030,3 +1030,68 @@ legacy recipes from the protected signed flow; signed workspace docs explain
 immutable original-CID returns and receipt-bound cleanup, distinguish executor
 acceptance from review/quality, and retain native-keyring/final-source gates.
 Registry publication is not inferred from source guide changes.
+P10 issuer recovery design started: ADR 028 records the missing host-managed
+replacement path required by T14/T87, separate from tenant administration and
+without rewriting old signed facts. Implementation must retain persistent
+ServerID/public history, freeze CAS and provenance, order global issuance against
+replacement, and explicitly update client trust without breaking pending returns.
+No recovery command is implemented by this design note; acceptance remains open.
+
+
+Issuer recovery foundation work in progress: pure host composition proves the
+approved replacement signer before its transaction and rejects tenant identity
+contexts. Memory/SQLite/PostgreSQL persist immutable public issuer history and
+frozen recovery receipts, preserve ServerID/instance creation time, CAS the
+predecessor and replay a receipt without reinstalling a superseded issuer. SQL
+shared issuer reads order issuance against the exclusive recovery lock. Targeted
+race/clean restore tests passed (SQLite 4.106s, PostgreSQL 16.661s), verifying old
+public proofs after clearing the old private key and rejecting stale configuration.
+The source host executable command and paginated public trust projection are
+implemented; actual runtime restart/HTTP tests passed SQLite and PostgreSQL
+(4.215s), including refusal of silent replacement, wrong declared pin, exact
+receipt replay and private-seed absence from the receipt. Client pin updates,
+actual signed issuance/return after rotation and complete regression remain
+unimplemented or unaccepted. This increment is not integrated and is not P10
+completion.
+
+
+
+PR #56 integrated workspace migration together with PR #55 compatibility checks.
+The combined source d3e9d9e passed actual Memory/SQLite/PostgreSQL signed CLI
+acceptance (48.186s), migration/precision race checks (1.959s), and runtime
+schema/MCP subprocess checks (7.695s). All hosted browser, package, full
+verification and native Linux/Windows checks passed on its synthetic PR merge;
+these receipts do not certify a later final-release source.
+
+
+P10 issuer recovery/client trust continuation: schema-2 `profile trust` verifies
+explicit independently approved current fingerprint and the unchanged origin,
+ServerID, Namespace, Principal and original CID. One atomic profile append retains
+old pins and authenticated bounded prior binding MACs; contract bytes, signatures,
+request IDs and pending intentions are unchanged. No trust RPC holds the profile
+publication guard. Native Linux child-process exit after publication, `.yml`
+mutation, repeated approval without rewrites, tampered lineage and moved-origin
+rejection passed targeted race tests. The actual HTTP/CLI journey now rotates
+after preparing a return, rejects stale issuance and unapproved trust, clears the
+old private issuer, approves both local profiles, sends the original return under
+the new issuer and recovers a lost response before independent review. This
+passed Memory/SQLite/real PostgreSQL (42.384s). Shared recovery/restore tests also
+verify reused-fingerprint parity and that replaying an old host receipt after a
+second rotation never reinstalls its retired key. The host command checks schema
+compatibility even with migrations disabled, before mutation; future-history
+sentinels remain untouched. Combined targeted race passed SQLite 3.023s,
+PostgreSQL 20.374s, runtime 5.592s and CLI 2.207s. Full regression, hosted native
+checks and integration remain pending; this does not complete P10 or P12.
+
+
+PR #57 integrated host issuer recovery and interruption-safe client trust on
+master f06d63c. Full frozen-source race suite passed with real PostgreSQL/clean
+restore (214.673s), SQLite (126.291s), runtime (47.389s), CLI (8.862s), actual
+signed acceptance (41.944s) and architectural boundaries (6.441s). Vet,
+actionlint and catalogue passed. All hosted browser/package/full/native checks
+passed. Native Linux/Windows receipts from run 37885413406 identify synthetic PR
+merge source 78bf2e2d005ce64d02032e75608c823bd9730450 and version 0.2.0;
+these are incremental source-specific proofs, not final-release certification.
+P10 historical dataset/old binary and P11 UI/P12/P13 remain required. P11 guide
+work proceeds against stable signed interfaces while those independent gates
+continue; no wave-completion claim is inferred from this merge.

@@ -13,6 +13,8 @@ import (
 
 type Store struct {
 	serverIdentity           *domain.ServerIdentity
+	issuerHistory            map[domain.ID]domain.ServerIdentity
+	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
 	signedSubmissions        map[string]domain.WorkSubmission
@@ -96,6 +98,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 		store:           s,
 		signedContracts: cloneContractMap(s.signedContracts), signedCheckpoints: cloneCheckpointMap(s.signedCheckpoints), signedSubmissions: cloneSubmissionMap(s.signedSubmissions), signedReview: cloneSignedReview(s.signedReview),
 		serverIdentity:           cloneServerIdentity(s.serverIdentity),
+		issuerHistory:            cloneIssuerHistory(s.issuerHistory),
+		issuerRecoveries:         cloneIssuerRecoveries(s.issuerRecoveries),
 		security:                 cloneMemorySecurityState(s.security),
 		outcomes:                 cloneOutcomes(s.outcomes),
 		objectives:               cloneObjectives(s.objectives),
@@ -143,6 +147,8 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 
 type transaction struct {
 	serverIdentity           *domain.ServerIdentity
+	issuerHistory            map[domain.ID]domain.ServerIdentity
+	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
 	signedSubmissions        map[string]domain.WorkSubmission
@@ -220,6 +226,8 @@ func (tx *transaction) Commit() error {
 	tx.store.signedSubmissions = cloneSubmissionMap(tx.signedSubmissions)
 	tx.store.signedReview = cloneSignedReview(tx.signedReview)
 	tx.store.serverIdentity = cloneServerIdentity(tx.serverIdentity)
+	tx.store.issuerHistory = cloneIssuerHistory(tx.issuerHistory)
+	tx.store.issuerRecoveries = cloneIssuerRecoveries(tx.issuerRecoveries)
 	tx.store.security = cloneMemorySecurityState(tx.security)
 	tx.store.protocols = cloneProtocols(tx.protocols)
 	tx.store.contracts = cloneContractMap(tx.contracts)
