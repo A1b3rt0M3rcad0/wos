@@ -1,6 +1,6 @@
 // A dispatched intent is immutable, scoped and replayed byte-for-byte.
-export function createIntent(name,command,scope,key=crypto.randomUUID()) {
- const body=JSON.stringify({command});return Object.freeze({name,body,key,scope:Object.freeze({...scope})});
+export function createIntent(name,command,scope,key=crypto.randomUUID(),identity={}) {
+ const body=JSON.stringify({command});return Object.freeze({name,body,key,identity:Object.freeze({...identity}),scope:Object.freeze({...scope})});
 }
 export function sameScope(a,b){return a.namespace_id===b.namespace_id&&a.outcome_id===b.outcome_id;}
 export function reconcileDraft(local,latest) {

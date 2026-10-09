@@ -409,6 +409,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     await page
       .getByRole("button", { name: /Fluxo principal validado/ })
       .click();
+    await page.keyboard.press("Escape");await page.locator("#developer-tools").click();await page.locator("#command-select").selectOption("record_criterion_assessment");
     await expect(page.locator("#fields")).toContainText(
       "Fluxo principal validado no navegador",
     );
@@ -508,7 +509,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     await shot("08-mobile");
     await page.locator("#actions").focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("#command-dialog")).toBeVisible();
+    await expect(page.locator("#action-dialog")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.locator("#actions")).toBeFocused();
     assert.deepEqual(errors, []);

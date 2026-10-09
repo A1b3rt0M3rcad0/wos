@@ -1414,13 +1414,13 @@ Owner requested execution of `docs/ux/original-plan-2026-10-09.md` against basel
 | UX-LOC-01 | ✅ | Official en-US catalog, shell, typed labels/UTC dates and user-content preservation; four presentation checks and six real browser journeys passed |
 | UX-ACT-01 | 🚧 | Explicit contextual registry and scoped permission hints; browser acceptance in progress |
 | UX-API-01 | ✅ | Eleven-kind authorized bounded metadata search; Memory/SQLite/PostgreSQL 1,001 Task + Evidence parity, revocation/cursor/HTTP-MCP tests passed locally |
-| UX-CMP-01 | 🚧 | Accessible typed reference pickers |
+| UX-CMP-01 | ✅ | Typed server-searched reference pickers; 1,001-item, duplicate-title, keyboard and stale-cursor browser checks passed |
 | UX-FRM-01–03 | 🚧 | Dedicated Outcome/Objective/Task forms and persisted Draft setup |
 | UX-NAV-01 | ⬜ | Six areas, deep URLs, async generation isolation |
-| UX-PLN-01 | ⬜ | Visual draft editor, immutable revision preview, explicit publish/activate |
-| UX-EVD-01 / UX-ISS-01 | ⬜ | Explicit assessments and independent issue/blocker flows |
+| UX-PLN-01 | ✅ | Visual phases/milestones/references, draft diff, reason, publication and separate activation; immutable history browser check passed |
+| UX-EVD-01 / UX-ISS-01 | ✅ | Exact-definition assessments and independent Issue/Blocker resolution passed real-browser journeys |
 | UX-OPS-01 / UX-ADM-01 | ⬜ | Protocol-specific guidance and typed administration |
-| UX-CAS-01 | ⬜ | Draft-preserving conflict review and frozen-intent uncertain retry |
+| UX-CAS-01 | ✅ | Retained edits, explicit comparison/reconfirmation and identical-byte/key uncertain replay passed real-browser checks |
 | UX-QA-01 / UX-REL-01 | ⬜ | Real browser/accessibility/storage tests, embedded assets and distribution checks |
 
 Owner confirmed that no representative users or manual screen-reader testers are available; that validation remains pending. Human baseline and representative-user/screen-reader measurements remain **not measured**. Automation timings cannot establish human comprehension or WCAG certification. No UX lot is complete solely because this plan or its inventory exists.
@@ -1434,3 +1434,5 @@ UX-LOC-01 starts after the accepted foundation and authorized reference query co
 UX-LOC-01 acceptance: six embedded-server browser journeys passed on 2026-10-09, including legacy leases, unsigned contracts, signed independent review, evidence contestation and mobile checks. Portuguese fixture/user titles are deliberately retained. Historical audit documents are exempt from official-copy translation.
 
 UX-ACT-01 API/registry slice: effective scoped permission hints exposed through HTTP/MCP, explicit presentation surfaces and permissions checked against all catalog operations, lifecycle/material/protocol/lease-holder guards tested. Common-client form/picker wiring remains under browser acceptance. PR #81 English migration integrated after all five hosted checks passed (merge `49e33f4`).
+
+UX human-flow slice acceptance: sixteen embedded-server browser tests passed on 2026-10-09 (ten common journeys plus six protocol/domain regressions). Dedicated Outcome/Objective/Task inputs, reference search, visual Roadmap, exact-revision verification, compound/independent impediment handling and immutable intent retries are implemented. Six-area navigation, Draft checklist, final accessibility/distribution gates and representative-user/manual screen-reader checks remain outstanding. See `docs/ux/dedicated-human-journeys.md`.
