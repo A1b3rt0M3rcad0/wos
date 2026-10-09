@@ -174,6 +174,9 @@ func (p ProfileV2) Validate() error {
 		if pending.ID.Validate() != nil || pending.Scope.NamespaceID != p.Binding.NamespaceID || pending.Scope.NamespaceID.Validate() != nil || !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,99}$`).MatchString(pending.Operation) {
 			return fmt.Errorf("invalid pending operation binding")
 		}
+		if pending.ContractID != nil && pending.ContractID.Validate() != nil {
+			return fmt.Errorf("invalid pending contract ID")
+		}
 		if pending.Scope.OutcomeID != "" && pending.Scope.OutcomeID.Validate() != nil {
 			return fmt.Errorf("invalid pending Outcome")
 		}

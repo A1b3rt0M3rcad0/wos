@@ -78,3 +78,30 @@ exact submitted material, omission references and public receipt fields, while
 signature proofs stay in the local document for host verification. No returned
 receipt is an evaluation of quality. Review sign/send/finish and lease maintenance
 are separate subsequent implementation steps.
+
+### Lease maintenance
+
+`work renew <contract-id> --ttl 300` and `review renew <contract-id>` freeze the
+original grant, lease CAS, destination, actor fingerprint and independent
+idempotency key in the profile before contacting WOS. An uncertain response is
+recovered with `work recover` or `review recover`: lookup of the accepted operation
+comes first, and the accepted grant is merged into the latest observed draft.
+Draft edits are retained. A changed authority, unresolved contract intention or
+pending/accepted final return pauses maintenance instead of replacing intent.
+
+`work resume <contract-id>` / `review resume <contract-id>` explicitly take over
+execution with a new fence; `--ttl` is rejected because takeover never extends
+expiry. Explicit `refresh` only reads current state/proof and preserves semantic
+Task/case CAS. It does not acquire, renew or silently rebase changed material.
+
+`work keepalive --all-active --foreground --interval 60` (or `review keepalive`)
+runs in the host CLI until interrupted. `--once` performs one bounded pass for
+supervision and testing. Items fail independently; revoked/expired authority and
+pending final returns are skipped and their files retained. Uncertain intentions
+require explicit recovery. Profile locks are short and are released during all
+network calls and waits. WOS itself runs no keepalive daemon or agent scheduler.
+Agent show reports a pending lease operation without expanding its technical blob.
+
+Signed Go SDK mutations accept the operation registry's bounded technical result
+size (1 MiB plus 64 KiB transport overhead); ordinary v1 limits remain 256 KiB.
+This changes neither signature validation nor agent context budgets.

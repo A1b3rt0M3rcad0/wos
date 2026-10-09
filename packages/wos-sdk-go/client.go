@@ -128,7 +128,12 @@ func command[T any](ctx context.Context, c *Client, name, key string, cmd any) (
 	if err != nil {
 		return result, err
 	}
-	err = c.do(ctx, "POST", "/commands/"+name, key, map[string]any{"command": json.RawMessage(raw)}, &result)
+	maximum := int64(256 << 10)
+	switch cmd.(type) {
+	case application.AcquireSignedWorkContractCommand, application.AcquireNextSignedWorkContractCommand, application.RenewSignedWorkContractCommand, application.ResumeSignedWorkContractCommand, application.ReturnSignedWorkCommand, application.AcquireSignedReviewContractCommand, application.AcquireNextSignedReviewContractCommand, application.RenewSignedReviewContractCommand, application.ResumeSignedReviewContractCommand, application.ReturnSignedReviewCommand, application.InterveneSignedReviewCaseCommand, application.RevokeSignedContractCommand:
+		maximum = domain.MaxSignedOperationResultBytes + (64 << 10)
+	}
+	err = c.doBounded(ctx, "POST", "/commands/"+name, key, map[string]any{"command": json.RawMessage(raw)}, &result, maximum)
 	return result, err
 }
 func scopePath(scope domain.Scope) string {

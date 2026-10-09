@@ -81,7 +81,7 @@ type options struct {
 
 func parseOptions(args []string) (options, error) {
 	o := options{values: map[string]string{}}
-	booleans := map[string]bool{"signing-key-stdin": true, "token-stdin": true, "generate-signing-key": true, "all-pending": true, "all-active": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true}
+	booleans := map[string]bool{"signing-key-stdin": true, "token-stdin": true, "generate-signing-key": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true}
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		if !strings.HasPrefix(arg, "--") {
@@ -89,7 +89,7 @@ func parseOptions(args []string) (options, error) {
 			continue
 		}
 		key, value, has := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		allowed := map[string]bool{"signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true}
+		allowed := map[string]bool{"signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true}
 		if !allowed[key] {
 			return o, usage("unknown flag --" + key)
 		}

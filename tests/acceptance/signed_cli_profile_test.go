@@ -60,10 +60,36 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	var registrationCalls atomic.Int32
 	var dropCheckout atomic.Bool
 	var acquisitionCalls atomic.Int32
+	var dropRenew atomic.Bool
+	var renewalCalls atomic.Int32
+	var checkRenewalLock func()
 	var firstAcquireKey atomic.Value
 	firstAcquireKey.Store("")
 	endpoint := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/renew_signed_work_contract") {
+			renewalCalls.Add(1)
+			if checkRenewalLock != nil {
+				checkRenewalLock()
+			}
+			recorded := httptest.NewRecorder()
+			handler.ServeHTTP(recorded, r)
+			if dropRenew.Load() && recorded.Code < 400 {
+				connection, _, e := rw.(http.Hijacker).Hijack()
+				if e != nil {
+					t.Error(e)
+					return
+				}
+				connection.Close()
+				return
+			}
+			for key, values := range recorded.Header() {
+				rw.Header()[key] = values
+			}
+			rw.WriteHeader(recorded.Code)
+			_, _ = rw.Write(recorded.Body.Bytes())
+			return
+		}
 		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/acquire_next_signed_work_contract") {
 			acquisitionCalls.Add(1)
 			key := r.Header.Get("Idempotency-Key")
@@ -139,6 +165,16 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	workspace, e := cli.OpenWorkspace(root)
 	must(e)
 	defer workspace.Close()
+	checkRenewalLock = func() {
+		deadline, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+		release, e := workspace.LockV2(deadline, "executor_cli", "")
+		if e != nil {
+			t.Errorf("lease request held profile lock during network: %v", e)
+			return
+		}
+		release()
+	}
 	pending, e := workspace.LoadProfileV2("executor_cli")
 	must(e)
 	if len(pending.Local.PendingOperations) != 1 || pending.Local.PendingOperations[0].State != "sent_unknown" {
@@ -240,6 +276,73 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	if acquisitionCalls.Load() != beforeCalls {
 		t.Fatal("recover/show/list performed a new acquisition")
+	}
+
+	// Renewal response is lost after commit. Recovery must merge the original
+	// authority into the draft edited after the failed request, without renewal.
+	initialLeaseVersion := view.Authority.LeaseVersion
+	dropRenew.Store(true)
+	execute(6, "--profile", "executor_cli", "work", "renew", view.Authority.ContractID, "--ttl", "300")
+	leasePending, e := workspace.LoadProfileV2("executor_cli")
+	must(e)
+	if len(leasePending.Local.PendingOperations) != 1 || leasePending.Local.PendingOperations[0].Operation != "RenewSignedWorkContract" || leasePending.Local.PendingOperations[0].State != "sent_unknown" {
+		t.Fatal("lost renewal intention discarded")
+	}
+	editedRaw, e := workspace.ReadV2(firstPath)
+	must(e)
+	must(cli.DecodeV2Document(editedRaw, &firstFile))
+	firstFile.Execution.Progress.Summary = "edited while original renewal response was uncertain"
+	must(workspace.WriteV2(firstPath, firstFile, signing.Digest(editedRaw)))
+	renewBefore := renewalCalls.Load()
+	dropRenew.Store(false)
+	execute(0, "--profile", "executor_cli", "work", "recover")
+	if renewalCalls.Load() != renewBefore {
+		t.Fatal("lease recovery renewed instead of reconciling original operation")
+	}
+	refreshedRaw, e := workspace.ReadV2(firstPath)
+	must(e)
+	must(cli.DecodeV2Document(refreshedRaw, &firstFile))
+	view, e = firstFile.VerifyIssued(currentProfile)
+	must(e)
+	if view.Authority.LeaseVersion != initialLeaseVersion+1 || firstFile.Execution.Progress.Summary != "edited while original renewal response was uncertain" {
+		t.Fatal("renewal recovery lost exact lease/draft")
+	}
+	oldFence, oldExpiry := view.Authority.FencingToken, view.Authority.ExpiresAt
+	execute(0, "--profile", "executor_cli", "work", "resume", view.Authority.ContractID)
+	resumedRaw, e := workspace.ReadV2(firstPath)
+	must(e)
+	must(cli.DecodeV2Document(resumedRaw, &firstFile))
+	view, e = firstFile.VerifyIssued(currentProfile)
+	must(e)
+	if view.Authority.FencingToken <= oldFence || view.Authority.ExpiresAt != oldExpiry {
+		t.Fatal("CLI takeover extended lease or lost fencing")
+	}
+	execute(0, "--profile", "executor_cli", "work", "refresh", view.Authority.ContractID)
+	execute(0, "--profile", "executor_cli", "work", "keepalive", "--all-active", "--once")
+	if renewalCalls.Load() != renewBefore+2 {
+		t.Fatal("keepalive failed to renew both independent live contracts")
+	}
+	// Administrative revocation leaves one local contract inert. Keepalive must
+	// continue renewing the other contract and preserve both local drafts.
+	adminIdentity, e := operator.SigningIdentity(ctx, nil)
+	must(e)
+	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	must(e)
+	activeState, e := operator.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "execution", ID: d.ID(view.Authority.ContractID)})
+	must(e)
+	_, e = operator.RevokeSignedContract(ctx, "cli-revoke-one-lease", a.RevokeSignedContractCommand{Scope: batchScope, ContractKind: "execution", ContractID: d.ID(view.Authority.ContractID), ExpectedContractVersion: d.Version(activeState.Contract.Version), Reason: "keepalive must continue the other local contract"})
+	must(e)
+	execute(0, "--profile", "executor_cli", "work", "keepalive", "--all-active", "--once")
+	if renewalCalls.Load() != renewBefore+3 {
+		t.Fatal("one revoked lease stopped another contract keepalive")
+	}
+	currentProfile, e = workspace.LoadProfileV2("executor_cli")
+	must(e)
+	if len(currentProfile.Local.PendingOperations) != 0 {
+		t.Fatal("successful lease maintenance retained uncertain intentions")
+	}
+	if _, e = workspace.ReadV2(firstPath); e != nil {
+		t.Fatal("keepalive deleted revoked unsubmitted draft")
 	}
 
 	// Recreate the still-pending local intention from the materialize-before-remove
@@ -378,5 +481,57 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 	if calls.Load() != before {
 		t.Fatal("review show/list/recover acquired fresh work")
 	}
-	return sdk.CommandResult[a.SignedReviewContractResult]{Value: *search.Value.Result, CommandID: search.CommandID, OutcomeRevision: search.OutcomeRevision}
+	initial, e := file.VerifyIssued(profile)
+	must(e)
+	execute(0, "review", "renew", id.String())
+	renewedRaw, e := w.ReadV2(path)
+	must(e)
+	must(cli.DecodeV2Document(renewedRaw, &file))
+	renewed, e := file.VerifyIssued(profile)
+	must(e)
+	if renewed.Authority.LeaseVersion != initial.Authority.LeaseVersion+1 || file.Review.Progress.Summary != "independent reviewer draft preserved" {
+		t.Fatal("review renewal lost authority/draft")
+	}
+	execute(0, "review", "resume", id.String())
+	resumedRaw, e := w.ReadV2(path)
+	must(e)
+	must(cli.DecodeV2Document(resumedRaw, &file))
+	resumed, e := file.VerifyIssued(profile)
+	must(e)
+	if resumed.Authority.FencingToken <= renewed.Authority.FencingToken || resumed.Authority.ExpiresAt != renewed.Authority.ExpiresAt {
+		t.Fatal("review takeover extended expiry")
+	}
+	execute(0, "review", "refresh", id.String())
+	maintenance := execute(0, "review", "keepalive", "--all-active", "--once")
+	encoded, e := json.Marshal(maintenance.Data)
+	must(e)
+	var summary struct {
+		Items []struct {
+			ContractID d.ID `json:"contract_id"`
+			Renewed    bool `json:"renewed"`
+		}
+	}
+	must(json.Unmarshal(encoded, &summary))
+	if len(summary.Items) != 1 || !summary.Items[0].Renewed {
+		t.Fatal("review keepalive did not renew")
+	}
+	// Focal operation result is the authoritative response retained for the last
+	// accepted intention. Discover its command ID through current grant/state
+	// and reconstruct the DTO using the verified document and exact focal CAS.
+	finalRaw, e := w.ReadV2(path)
+	must(e)
+	must(cli.DecodeV2Document(finalRaw, &file))
+	finalView, e := file.VerifyIssued(profile)
+	must(e)
+	latest := *search.Value.Result
+	latest.IssuedAuthority = file.Issued.Authority
+	latest.WorkItemVersion = file.Local.WorkItemVersion
+	latest.Case.Version = d.Version(file.Local.ReviewCaseVersion)
+	latest.Contract.Version = d.Version(finalView.Authority.ContractVersion)
+	latest.Contract.LeaseVersion = d.Version(finalView.Authority.LeaseVersion)
+	latest.Contract.ExecutionID = d.ID(finalView.Authority.ExecutionID)
+	latest.Contract.FencingToken = d.FencingToken(finalView.Authority.FencingToken)
+	latest.Contract.ExpiresAt, e = time.Parse(time.RFC3339Nano, finalView.Authority.ExpiresAt)
+	must(e)
+	return sdk.CommandResult[a.SignedReviewContractResult]{Value: latest, CommandID: search.CommandID, OutcomeRevision: search.OutcomeRevision}
 }
