@@ -28,6 +28,14 @@ func quoteSignedCounters(value any) {
 			if key == "payload" || key == "response_json" || key == "external_context" {
 				continue
 			}
+			// The Namespace CAS version shares a name with the literal signed
+			// protocol marker. Quote only the mutable Namespace projection.
+			if key == "protocol_version" && node["phase"] != nil && node["writer_epoch"] != nil {
+				if number, ok := child.(json.Number); ok {
+					node[key] = string(number)
+					continue
+				}
+			}
 			switch key {
 			case "last_fencing_token", "fencing_token", "round", "version", "revision", "lease_version", "contract_version", "policy_revision", "criterion_revision", "outcome_revision", "work_item_version", "work_item_version_at_acquire", "outcome_revision_at_acquire":
 				if number, ok := child.(json.Number); ok {

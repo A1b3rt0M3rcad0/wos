@@ -1135,5 +1135,12 @@ open. T15 readiness source 2941bba passed the complete runtime race suite
 actionlint and catalogue. Merging the guide baseline changes documentation only;
 new hosted source checks remain required for the readiness PR.
 
+P11/P12 signed transport consistency: Namespace protocol CAS counters in signed
+trust are quoted separately from the literal protocol-2 marker; signed schema
+counter types match exact decimal metadata while unsigned encoders/schemas stay
+unchanged. Max uint64/typed-client and protocol-marker tests passed. Application, command
+and SDK race suites passed (2.322s/1.080s/2.218s); actual signed Memory/SQLite/
+PostgreSQL acceptance passed (35.559s). OpenAPI regenerated without altering
+v1 command encoders. Hosted/native checks remain required on this source.
 PR #59 readiness integrated after all five hosted checks passed on 95e3921;
 master merge 5461815. Historical upgrade/restore and final release gates remain open.
