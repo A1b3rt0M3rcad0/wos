@@ -15,7 +15,7 @@ func SignedSchema(t reflect.Type) map[string]any {
 	if t.Kind() == reflect.Pointer {
 		return map[string]any{"anyOf": []any{SignedSchema(t.Elem()), map[string]any{"type": "null"}}}
 	}
-	if t == reflect.TypeFor[signing.Decimal]() || t == reflect.TypeFor[d.FencingToken]() {
+	if t == reflect.TypeFor[signing.Decimal]() || t == reflect.TypeFor[d.FencingToken]() || t == reflect.TypeFor[d.Version]() || t == reflect.TypeFor[d.OutcomeRevision]() || t == reflect.TypeFor[d.CriterionRevision]() {
 		return map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
 	}
 	if t == reflect.TypeFor[time.Time]() {
