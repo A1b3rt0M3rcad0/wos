@@ -1174,6 +1174,27 @@ the CLI version contract passed race (1.041s). The invalid review enum diagnosti
 now lists exact allowed values. Local artifacts built from a dirty development
 checkout are not final immutable-source release proofs; hosted checks must
 repeat acceptance on the committed source.
+P12 native keyring gate started: platform CI now requires an actual OS credential
+service. An isolated Linux DBus/Secret Service fixture and native Windows
+Credential Manager run protected reference read/write, exact profile MAC and
+signing-key fingerprint checks, signing/verification and child-process reads. The actual executor/reviewer
+HTTP/CLI lost-response fixture selects those native references in platform CI,
+without passing credentials/seeds through child process environments.
+Randomly named synthetic entries are deleted; no plaintext fallback, private
+process arguments or repository secrets are introduced. Native receipt verification
+rejects proofs without the executed keyring gate. Local Linux lacks the daemon;
+actual native execution remains pending until hosted jobs finish. Native receipts
+now list actual passing Go test count and individual skips, including unavailable
+PostgreSQL on client-only hosts, instead of implying every suite ran. Local
+Memory/SQLite fallback transport passed (24.272s); PostgreSQL was explicitly
+skipped there. Distribution gate unit tests and negative secret redaction pass;
+those are not counted as real local keyring execution.
+
+The first native keyring jobs reached actual protected reads and the real
+HTTP/CLI journey on Linux/Windows, but the standalone signing fixture omitted
+the required signer_key_id from its payload. Both failed and produced no accepted
+platform proof. The fixture now supplies the exact selected identity; signing
+validation is unchanged and the native gates must rerun.
 P12 T86 pending-state restore started: the existing authenticated signed
 execution/review/correction journey now takes clean SQL backups at each pending
 authority stage, restores into clean targets and resumes the same workflow.
@@ -1185,3 +1206,10 @@ journey: SQLite race 13.231s, PostgreSQL race 30.151s with three empty target
 databases. The initial correction-stage fixture used the already revoked
 original executor to read metadata; it now uses the current authorized
 correction executor, retaining denial assertions. Hosted checks remain pending.
+
+Native keyring gate rerun passed all five hosted checks on PR64 head 6a26bcc.
+The downloaded Linux/Windows receipts explicitly record native_keyring_executed,
+actual passing counts and individual skips. PR62 historical upgrade and PR63
+pending execution/review/correction restores are integrated after their hosted
+gates passed. This documentation merge requires a fresh source check before
+PR64 integration; final release receipts still require the final combined source.
