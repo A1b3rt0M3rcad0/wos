@@ -107,9 +107,80 @@ func transactCommand[T any, C any](
 			}
 		}
 	}
+	var signedIdentity Identity
 	if signedCommand(meta.Name) {
-		if _, _, err := service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), domain.ID("")); err != nil {
-			return MutationResult[T]{Value: zero}, err
+		selectedKey := domain.ID("")
+		value := reflect.ValueOf(command)
+		if value.Kind() == reflect.Pointer {
+			value = value.Elem()
+		}
+		if field := value.FieldByName("SignerKeyID"); field.IsValid() && field.Type() == reflect.TypeFor[domain.ID]() {
+			selectedKey = field.Interface().(domain.ID)
+		}
+		var accessError error
+		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey)
+		if accessError != nil {
+			return MutationResult[T]{Value: zero}, accessError
+		}
+	}
+	var signedOperations ports.SignedOperationRepository
+	if signedCommand(meta.Name) && commandContext.IdempotencyKey != "" {
+		durable, ok := uow.(ports.SignedOperationUnitOfWork)
+		if !ok {
+			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeInvalidConfig, "durable signed operation repository required")
+		}
+		signedOperations = durable.SignedOperations()
+		previous, lookupError := signedOperations.Get(ctx, meta.NamespaceID, commandContext.PrincipalID, commandContext.IdempotencyKey)
+		if lookupError == nil {
+			if previous.Scope != meta.Scope || previous.CredentialID != signedIdentity.CredentialID || previous.CommandName != meta.Name || previous.Fingerprint != meta.Fingerprint {
+				return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "signed intention belongs to different scope, credential or command")
+			}
+			var replay MutationResult[T]
+			if err = json.Unmarshal(previous.Result.ResponseJSON, &replay); err != nil {
+				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "durable signed result cannot be decoded", err)
+			}
+			replay.CommandID = previous.Result.CommandID
+			replay.OutcomeRevision = previous.Result.OutcomeRevision
+			replay.IdempotentReplay = true
+			return replay, nil
+		}
+		if code, _ := domain.ErrorCodeOf(lookupError); code != domain.ErrorCodeNotFound {
+			return MutationResult[T]{Value: zero}, lookupError
+		}
+		legacy, legacyError := signedOperations.FindLegacy(ctx, meta.NamespaceID, commandContext.PrincipalID, commandContext.IdempotencyKey)
+		if legacyError == nil {
+			if legacy.CommandName != meta.Name || legacy.Fingerprint != meta.Fingerprint {
+				return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "legacy signed intention differs from requested command")
+			}
+			var replay MutationResult[T]
+			if e := json.Unmarshal(legacy.Result.ResponseJSON, &replay); e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			originalCID, e := legacySignedCacheCredential(ctx, uow, meta.Scope, replay.Value)
+			if e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			if originalCID != signedIdentity.CredentialID {
+				return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "legacy signed intention belongs to another credential")
+			}
+			now, e := securityTransactionTime(ctx, uow, service.clock)
+			if e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			if e = signedOperations.Insert(ctx, domain.SignedOperationResult{Scope: meta.Scope, PrincipalID: commandContext.PrincipalID, CredentialID: originalCID, CommandName: meta.Name, IdempotencyKey: commandContext.IdempotencyKey, Fingerprint: legacy.Fingerprint, Result: legacy.Result, RecordedAt: now}); e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			if e = uow.Commit(); e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			committed = true
+			replay.CommandID = legacy.Result.CommandID
+			replay.OutcomeRevision = legacy.Result.OutcomeRevision
+			replay.IdempotentReplay = true
+			return replay, nil
+		}
+		if code, _ := domain.ErrorCodeOf(legacyError); code != domain.ErrorCodeNotFound {
+			return MutationResult[T]{Value: zero}, legacyError
 		}
 	}
 	var reservation domain.IdempotencyReservation
@@ -128,6 +199,26 @@ func transactCommand[T any, C any](
 			var replay MutationResult[T]
 			if err := json.Unmarshal(reservation.Replay.ResponseJSON, &replay); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "stored command result cannot be decoded", err)
+			}
+			if signedOperations != nil {
+				originalCID, e := legacySignedCacheCredential(ctx, uow, meta.Scope, replay.Value)
+				if e != nil {
+					return MutationResult[T]{Value: zero}, e
+				}
+				if originalCID != signedIdentity.CredentialID {
+					return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "cached signed intention belongs to another credential")
+				}
+				now, e := securityTransactionTime(ctx, uow, service.clock)
+				if e != nil {
+					return MutationResult[T]{Value: zero}, e
+				}
+				if e = signedOperations.Insert(ctx, domain.SignedOperationResult{Scope: meta.Scope, PrincipalID: commandContext.PrincipalID, CredentialID: originalCID, CommandName: meta.Name, IdempotencyKey: commandContext.IdempotencyKey, Fingerprint: meta.Fingerprint, Result: *reservation.Replay, RecordedAt: now}); e != nil {
+					return MutationResult[T]{Value: zero}, e
+				}
+				if e = uow.Commit(); e != nil {
+					return MutationResult[T]{Value: zero}, e
+				}
+				committed = true
 			}
 			replay.CommandID = reservation.Replay.CommandID
 			replay.OutcomeRevision = reservation.Replay.OutcomeRevision
@@ -178,6 +269,16 @@ func transactCommand[T any, C any](
 			ResponseJSON:    response,
 		}); err != nil {
 			return MutationResult[T]{Value: zero}, err
+		}
+		if signedOperations != nil {
+			now, e := securityTransactionTime(ctx, uow, service.clock)
+			if e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
+			e = signedOperations.Insert(ctx, domain.SignedOperationResult{Scope: meta.Scope, PrincipalID: commandContext.PrincipalID, CredentialID: signedIdentity.CredentialID, CommandName: meta.Name, IdempotencyKey: commandContext.IdempotencyKey, Fingerprint: meta.Fingerprint, Result: domain.StoredCommandResult{CommandID: result.CommandID, OutcomeRevision: revision, ResponseJSON: response}, RecordedAt: now})
+			if e != nil {
+				return MutationResult[T]{Value: zero}, e
+			}
 		}
 	}
 

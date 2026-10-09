@@ -2,6 +2,7 @@ package wossdk
 
 import (
 	"context"
+	"encoding/base64"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"net/http"
@@ -37,7 +38,13 @@ func (c *Client) ReadSignedState(ctx context.Context, query a.SignedStateQuery) 
 	if len(parameters) > 0 {
 		path += "?" + parameters.Encode()
 	}
-	err := c.do(ctx, http.MethodGet, path, "", nil, &result)
+	maximum := int64(256 << 10)
+	if query.Resource == "operation" {
+		// The registry stores at most 1 MiB; base64 expands it by 4/3.
+		// Leave bounded room for the focal metadata, without widening v1 reads.
+		maximum = int64(base64.StdEncoding.EncodedLen(d.MaxSignedOperationResultBytes) + (64 << 10))
+	}
+	err := c.doBounded(ctx, http.MethodGet, path, "", nil, &result, maximum)
 	return result, err
 }
 func (c *Client) GetSignedTrust(ctx context.Context, namespace d.ID) (a.SignedStateResult, error) {

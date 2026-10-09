@@ -64,6 +64,11 @@ func NewIdempotencyKey() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 func (c *Client) do(ctx context.Context, method, path, key string, input, out any) error {
+	return c.doBounded(ctx, method, path, key, input, out, 256<<10)
+}
+
+// Technical expansions have explicit bounds distinct from ordinary responses.
+func (c *Client) doBounded(ctx context.Context, method, path, key string, input, out any, maximum int64) error {
 	var body io.Reader
 	if input != nil {
 		b, err := json.Marshal(input)
@@ -88,12 +93,12 @@ func (c *Client) do(ctx context.Context, method, path, key string, input, out an
 		return err
 	}
 	defer resp.Body.Close()
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, (256<<10)+1))
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maximum+1))
 	if err != nil {
 		return err
 	}
-	if len(raw) > 256<<10 {
-		return fmt.Errorf("WOS response exceeds 256 KiB")
+	if int64(len(raw)) > maximum {
+		return fmt.Errorf("WOS response exceeds %d bytes", maximum)
 	}
 	if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 		return &Error{Status: resp.StatusCode, Code: "transport_redirect", Message: "redirect refused; restore the exact trusted destination"}

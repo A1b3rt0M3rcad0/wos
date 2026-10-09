@@ -200,6 +200,15 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(u.Commit())
 	acquired, e := worker.AcquireSignedWorkContract(ctx, "transport-signed-acquisition", a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: work.Version, SignerKeyID: registered.Key.ID, TTLSeconds: 300})
 	must(e)
+	operation, e := worker.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: "transport-signed-acquisition"})
+	must(e)
+	originalResponse, e := base64.StdEncoding.Strict().DecodeString(operation.OperationPayload)
+	must(e)
+	var originalAcquisition sdk.CommandResult[a.WorkContractResult]
+	must(json.Unmarshal(originalResponse, &originalAcquisition))
+	if operation.OperationCommandID == nil || *operation.OperationCommandID != acquired.CommandID || operation.PayloadDigest != signing.Digest(originalResponse) || originalAcquisition.Value.Contract.ID != acquired.Value.Contract.ID {
+		t.Fatal("HTTP durable acquisition expansion changed original response")
+	}
 	c := acquired.Value.Contract
 	requestID, e := generator.NewID()
 	must(e)

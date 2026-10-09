@@ -27,3 +27,5 @@ Initial Wave 01 records:
 - [ADR-016 — PostgreSQL lease time authority](./0016-postgres-lease-time-authority.md)
 
 The original specification proposed numbers, not immutable file identities. Accepted ADR-011 records package topology; criteria/conclusions are materialized in ADR-013, leases in ADR-016 and the public contracts, triggers and identity in ADR-014/015. These records preserve the implemented decisions rather than renumbering accepted history.
+
+- [ADR-027 — Durable signed operation results](./0027-durable-signed-operation-results.md)

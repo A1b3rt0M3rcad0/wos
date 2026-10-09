@@ -47,28 +47,31 @@ type SignedContractMetadata struct {
 // avoids HTML-escape expansion; its digest is linked by the issuer acceptance.
 // No query supplies execution authority or claims an evaluation of quality.
 type SignedStateResult struct {
-	ProtocolVersion  int                      `json:"protocol_version"`
-	NamespaceID      d.ID                     `json:"namespace_id"`
-	Scope            *d.Scope                 `json:"scope,omitempty"`
-	Resource         string                   `json:"resource"`
-	OutcomeRevision  signing.Decimal          `json:"outcome_revision"`
-	EvaluatedAt      time.Time                `json:"evaluated_at"`
-	Server           *d.ServerIdentity        `json:"server,omitempty"`
-	Protocol         *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
-	Contract         *SignedContractMetadata  `json:"contract,omitempty"`
-	ReviewCase       *d.ReviewCase            `json:"review_case,omitempty"`
-	Cases            []d.ReviewCase           `json:"cases,omitempty"`
-	NextCursor       string                   `json:"next_cursor,omitempty"`
-	SearchComplete   bool                     `json:"search_complete,omitempty"`
-	Scanned          int                      `json:"scanned,omitempty"`
-	FactID           *d.ID                    `json:"fact_id,omitempty"`
-	PayloadDigest    string                   `json:"payload_digest,omitempty"`
-	Envelope         *signing.Envelope        `json:"envelope,omitempty"`
-	SignerKey        *d.SigningKey            `json:"signer_key,omitempty"`
-	SubmissionID     *d.ID                    `json:"submission_id,omitempty"`
-	SubmissionDigest string                   `json:"submission_digest,omitempty"`
-	MaterialPayload  string                   `json:"material_payload,omitempty"`
-	AcceptanceFactID *d.ID                    `json:"acceptance_fact_id,omitempty"`
+	OperationCommandID *d.ID                    `json:"operation_command_id,omitempty"`
+	OperationName      string                   `json:"operation_name,omitempty"`
+	OperationPayload   string                   `json:"operation_result_payload,omitempty"`
+	ProtocolVersion    int                      `json:"protocol_version"`
+	NamespaceID        d.ID                     `json:"namespace_id"`
+	Scope              *d.Scope                 `json:"scope,omitempty"`
+	Resource           string                   `json:"resource"`
+	OutcomeRevision    signing.Decimal          `json:"outcome_revision"`
+	EvaluatedAt        time.Time                `json:"evaluated_at"`
+	Server             *d.ServerIdentity        `json:"server,omitempty"`
+	Protocol           *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
+	Contract           *SignedContractMetadata  `json:"contract,omitempty"`
+	ReviewCase         *d.ReviewCase            `json:"review_case,omitempty"`
+	Cases              []d.ReviewCase           `json:"cases,omitempty"`
+	NextCursor         string                   `json:"next_cursor,omitempty"`
+	SearchComplete     bool                     `json:"search_complete,omitempty"`
+	Scanned            int                      `json:"scanned,omitempty"`
+	FactID             *d.ID                    `json:"fact_id,omitempty"`
+	PayloadDigest      string                   `json:"payload_digest,omitempty"`
+	Envelope           *signing.Envelope        `json:"envelope,omitempty"`
+	SignerKey          *d.SigningKey            `json:"signer_key,omitempty"`
+	SubmissionID       *d.ID                    `json:"submission_id,omitempty"`
+	SubmissionDigest   string                   `json:"submission_digest,omitempty"`
+	MaterialPayload    string                   `json:"material_payload,omitempty"`
+	AcceptanceFactID   *d.ID                    `json:"acceptance_fact_id,omitempty"`
 }
 
 func (r SignedStateResult) MarshalJSON() ([]byte, error) {
@@ -141,10 +144,47 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if err != nil {
 		return zero, err
 	}
-	if q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.ID.Validate() != nil {
+	if q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.Resource != "operation" && q.ID.Validate() != nil {
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "resource identifier required")
 	}
 	switch q.Resource {
+	case "operation":
+		if err = d.ValidateIdempotencyKey(q.IdempotencyKey); err != nil {
+			return zero, err
+		}
+		durable, ok := u.(ports.SignedOperationUnitOfWork)
+		if !ok {
+			return zero, d.NewError(d.ErrorCodeInvalidConfig, "durable signed operation repository required")
+		}
+		accepted, err := durable.SignedOperations().Get(ctx, q.Scope.NamespaceID, identity.PrincipalID, q.IdempotencyKey)
+		if code, _ := d.ErrorCodeOf(err); code == d.ErrorCodeNotFound {
+			legacy, e := durable.SignedOperations().FindLegacy(ctx, q.Scope.NamespaceID, identity.PrincipalID, q.IdempotencyKey)
+			if e != nil {
+				return zero, e
+			}
+			accepted, err = legacySignedOperationView(ctx, u, q.Scope, identity.PrincipalID, q.IdempotencyKey, legacy)
+		}
+		if err != nil {
+			return zero, err
+		}
+		registry, err := signingRepository(u)
+		if err != nil {
+			return zero, err
+		}
+		credential, err := registry.CredentialByDigest(ctx, identity.CredentialDigest)
+		if err != nil {
+			return zero, err
+		}
+		if accepted.Scope != q.Scope || accepted.CredentialID != credential.ID {
+			return zero, d.NewError(d.ErrorCodeNotFound, "signed operation unavailable in selected credential/scope")
+		}
+		result.PayloadDigest = signing.Digest(accepted.Result.ResponseJSON)
+		if q.Digest != "" && q.Digest != result.PayloadDigest {
+			return zero, d.NewError(d.ErrorCodeContractSpecMismatch, "durable response digest differs")
+		}
+		result.OperationCommandID = &accepted.Result.CommandID
+		result.OperationName = accepted.CommandName
+		result.OperationPayload = base64.StdEncoding.EncodeToString(accepted.Result.ResponseJSON)
 	case "execution", "review", "specification", "authority":
 		kind := q.ContractKind
 		if q.Resource == "execution" || q.Resource == "review" {

@@ -8,7 +8,7 @@ import (
 )
 
 func registerSignedQueries(server *mcp.Server, service *a.Service, options Options) {
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_read_signed_state", Description: "Read one authorized signed-v2 resource: execution, review, specification, authority, case, correction, fact, submission, receipt, cases or review_queue. Exact Outcome scope required. Metadata is compact; proof/material expansions are digest-bound. Receipt lookup is only for the authenticated Principal. Collections scan at most limit (1–100, default 25); follow next_cursor. Queue expiry is read-only and never grants authority."}, func(ctx context.Context, request *mcp.CallToolRequest, query a.SignedStateQuery) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_read_signed_state", Description: "Read one authorized signed-v2 resource: execution, review, specification, authority, case, correction, fact, submission, receipt, operation, cases or review_queue. Operation is a credential-bound durable original-response expansion for harness recovery, at most 1 MiB decoded; do not put its technical blob in agent context. Exact Outcome scope required. Metadata is compact; proof/material expansions are digest-bound. Receipt lookup is only for the authenticated Principal. Collections scan at most limit (1–100, default 25); follow next_cursor. Queue expiry is read-only and never grants authority."}, func(ctx context.Context, request *mcp.CallToolRequest, query a.SignedStateQuery) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, request, options)
 		defer cancel()
 		if err != nil {

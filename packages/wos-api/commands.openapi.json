@@ -7807,7 +7807,8 @@
             ]
           },
           "material_payload": {
-            "maxLength": 65536,
+            "contentEncoding": "base64",
+            "maxLength": 245760,
             "type": "string"
           },
           "namespace_id": {
@@ -7895,6 +7896,27 @@
           },
           "next_cursor": {
             "maxLength": 65536,
+            "type": "string"
+          },
+          "operation_command_id": {
+            "anyOf": [
+              {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation_name": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "operation_result_payload": {
+            "contentEncoding": "base64",
+            "maxLength": 1398104,
             "type": "string"
           },
           "outcome_revision": {

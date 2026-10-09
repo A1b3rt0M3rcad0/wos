@@ -63,6 +63,14 @@ func SignedSchema(t reflect.Type) map[string]any {
 					field["minItems"], field["maxItems"] = 1, 1
 				}
 			}
+			if t.Name() == "SignedStateResult" && t.PkgPath() == "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application" {
+				if name == "operation_result_payload" {
+					field = map[string]any{"type": "string", "contentEncoding": "base64", "maxLength": 1398104}
+				}
+				if name == "material_payload" {
+					field = map[string]any{"type": "string", "contentEncoding": "base64", "maxLength": 245760}
+				}
+			}
 			if f.Type.Kind() == reflect.Slice && (name == "artifacts" || name == "evidence" || name == "evidence_links" || name == "findings" || name == "correction_responses" || name == "execution_principals" || name == "execution_groups") {
 				field["maxItems"] = 100
 			}
