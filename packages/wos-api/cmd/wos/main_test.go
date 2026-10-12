@@ -20,13 +20,20 @@ func captureCommand(t *testing.T, args ...string) (int, []byte) {
 	defer out.Close()
 	os.Stdout, os.Stderr = writer, writer
 	defer func() { os.Stdout, os.Stderr = oldOut, oldErr }()
+	// Drain concurrently: Windows anonymous pipes are smaller than root help.
+	type captured struct {
+		data []byte
+		err  error
+	}
+	result := make(chan captured, 1)
+	go func() { data, err := io.ReadAll(out); result <- captured{data, err} }()
 	code := run(args)
 	writer.Close()
-	data, err := io.ReadAll(out)
-	if err != nil {
-		t.Fatal(err)
+	value := <-result
+	if value.err != nil {
+		t.Fatal(value.err)
 	}
-	return code, data
+	return code, value.data
 }
 
 func TestUnifiedWOSClientUsesServiceReleaseIdentity(t *testing.T) {
