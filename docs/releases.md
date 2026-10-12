@@ -78,3 +78,7 @@ Current local state: source/artifacts can be prepared and tested on Linux. Nativ
 Final release publication still requires receipts matching its exact source/binaries. Account-side
 npm authorization remains separate. No released 0.2.0/npm/GHCR claim is made until
 publication and immutable identities have actually been verified.
+
+## Native CLI npm package
+
+`@a1b3rt0m3rcad0/wos-cli` ships native Go `wos` and `wosctl` for Linux/Windows amd64. npm/Node runs a small launcher that chooses and checks a platform-specific Go executable; native Go performs skill installation. The initial 0.4.0 CLI npm publication has a separate source-gated workflow and publishes only that npm package once exact-source core/browser/packages/Windows/Linux gates pass. `release.yml` remains the explicit publication mechanism for the three coordinated npm packages, GHCR and GitHub Releases; it reconciles any already-published byte-identical CLI version. Windows WOS server runtime is not certified by the CLI package.

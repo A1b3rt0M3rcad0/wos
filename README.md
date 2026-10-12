@@ -6,7 +6,7 @@ WOS stores the state, authority, plans, and verifiable evidence surrounding an i
 
 WOS is a standalone Go server with an embeddable Core, an HTTP API, an MCP server, a human workspace, an API-only CLI (`wosctl`), and **five agent skills installable directly from the native `wos` CLI**, without Node.js or npm.
 
-> **Release status:** The repository currently prepares `0.3.0`; the documented `1.0.0` target is **not yet a certified/published stable release**. See [ROADMAP.md](ROADMAP.md) and [the release guide](docs/releases.md). A prepared version or successful local test is not a published release.
+> **Release status:** The repository maintains a prepared version in `VERSION`; the documented `1.0.0` target is **not yet a certified/published stable release**. See [ROADMAP.md](ROADMAP.md) and [the release guide](docs/releases.md). A prepared version or successful local test is not a published release.
 
 ## What WOS provides
 

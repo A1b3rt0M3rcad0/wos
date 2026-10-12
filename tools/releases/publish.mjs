@@ -170,7 +170,7 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const dry=process.argv.length===3 && process.argv[2]==='--dry-run';
     if(process.argv.length>2&&!dry)throw new Error('Usage: node tools/releases/publish.mjs [--dry-run]');
     const release=await loadRelease();
-    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['require matching native Linux and Windows acceptance receipts','verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile both npm tarballs','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
+    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['require matching native Linux and Windows acceptance receipts','verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile all three npm tarballs','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
     else {
       if(process.env.WOS_RELEASE_PUBLISH!=='1'||process.env.GITHUB_REPOSITORY?.toLowerCase()!==repository.toLowerCase()||!process.env.GH_TOKEN)throw new Error('Publication requires the authorized repository workflow and WOS_RELEASE_PUBLISH=1');
       if(process.env.NPM_AUTH_MODE!=='oidc'&&!process.env.NODE_AUTH_TOKEN)throw new Error('Configure npm trusted publishing or NPM_TOKEN in GitHub Actions; never put credentials in source');
