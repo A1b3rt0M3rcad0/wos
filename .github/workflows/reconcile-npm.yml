@@ -32,8 +32,9 @@ jobs:
           import {execFileSync} from 'node:child_process';
           import {appendFileSync} from 'node:fs';
           assert.match(process.env.ORIGINAL_RUN,/^[1-9][0-9]*$/);
-          const run=JSON.parse(execFileSync('gh',['run','view',process.env.ORIGINAL_RUN,'--json','headSha,workflowName,jobs'],{encoding:'utf8'}));
+          const run=JSON.parse(execFileSync('gh',['run','view',process.env.ORIGINAL_RUN,'--json','headSha,headBranch,event,workflowName,jobs'],{encoding:'utf8'}));
           assert.equal(run.workflowName,'Publish native WOS CLI npm 0.4.0');assert.match(run.headSha,/^[a-f0-9]{40}$/);
+          assert.equal(run.headBranch,'master');assert.ok(['push','workflow_dispatch'].includes(run.event),'original run must use canonical master publication');
           for(const name of ['core / WOS verification','browser / browser','packages / packages','client / platform (ubuntu-latest)','client / platform (windows-latest)'])assert.ok(run.jobs.some(j=>j.name===name&&j.conclusion==='success'),name+' must have passed');
           execFileSync('gh',['run','download',process.env.ORIGINAL_RUN,'--name','wos-packages-'+run.headSha,'--dir','dist'],{stdio:'inherit'});
           for(const os of ['ubuntu-latest','windows-latest'])execFileSync('gh',['run','download',process.env.ORIGINAL_RUN,'--name','wosctl-platform-'+os,'--dir','dist/acceptance'],{stdio:'inherit'});
