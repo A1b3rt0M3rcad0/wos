@@ -85,3 +85,5 @@ In remote PostgreSQL composition, database time arbitrates leases after guard ac
 ## Builds behind an HTTPS proxy
 
 The Dockerfile uses the pinned official Go image and copies its standard CA bundle into Alpine. A proxy with a private CA can supply `docker build --secret id=go-ca-bundle,src=/path/to/bundle.pem .`. The temporary mount is used only for verified-TLS Go downloads; it is not copied into the runtime and is unnecessary for ordinary installations. Build proxy and DNS settings belong to the host.
+
+For the stable-plan capacity envelope, data-class retention, hourly backup targets, clean restore checklist and reference diagnostics/alerts, see [the operational reference](stable/operations-reference.md).
