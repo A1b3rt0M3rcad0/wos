@@ -1549,6 +1549,10 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
 
+### Release preparation respects active master rules
+
+Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
+
 ### C — enrollment boundary assertions (T10)
 
 The shared enrollment test now independently verifies correctly signed wrong-purpose/wrong-Principal proofs, another authenticated Principal attempting the same challenge, and a separate approved challenge with a persisted elapsed deadline while the credential is still valid (PostgreSQL uses authoritative transaction time). Each must fail with forbidden, leave enrollment unconsumed/version unchanged, and leave its key absent. The original approved challenge must still succeed afterward. Local Memory/SQLite/real PostgreSQL execution passed all 22 tests/subtests without skips; exact-source hosted acceptance is still required. The elapsed challenge is a controlled persisted fixture, not a claim that PostgreSQL obeys the injected Go clock.
