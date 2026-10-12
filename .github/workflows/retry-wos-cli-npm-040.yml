@@ -1,0 +1,73 @@
+name: Recover native WOS CLI npm 0.4.0 publication
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/retry-wos-cli-npm-040.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: b4ff8c5693dd63993c822d32a5bfd39964e5c031
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+          registry-url: https://registry.npmjs.org
+      - name: Pin npm publisher
+        run: npm install --global npm@11.9.0 --ignore-scripts
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          run-id: 38287585655
+          github-token: ${{ github.token }}
+          name: wos-packages-b4ff8c5693dd63993c822d32a5bfd39964e5c031
+          path: dist
+      - name: Verify previously passed exact-source release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = b4ff8c5693dd63993c822d32a5bfd39964e5c031
+          test "$(cat VERSION)" = 0.4.0
+          (cd dist && sha256sum --check SHA256SUMS)
+          node --input-type=module -e 'import fs from "node:fs"; const m=JSON.parse(fs.readFileSync("dist/distribution.json","utf8")); if(m.version!=="0.4.0"||m.commit!=="b4ff8c5693dd63993c822d32a5bfd39964e5c031"||!m.artifacts.some(a=>a.kind==="wos-cli"&&a.name==="@a1b3rt0m3rcad0/wos-cli"))process.exit(1)'
+      - name: Diagnose npm publishing identity
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo 'NPM_TOKEN secret was not provided'; exit 1; fi
+          npm whoami --registry=https://registry.npmjs.org/
+      - name: Publish or reconcile exact npm CLI tarball
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view '@a1b3rt0m3rcad0/wos-cli@0.4.0' dist.integrity --json --registry=https://registry.npmjs.org/ > /tmp/wos-cli-registry.json 2>/tmp/wos-cli-registry.err; then
+            echo 'Existing npm version detected: verify immutable registry bytes'
+          else
+            if ! grep -q 'E404' /tmp/wos-cli-registry.json /tmp/wos-cli-registry.err; then
+              cat /tmp/wos-cli-registry.err
+              echo 'Registry read failure is not an absent version'
+              exit 1
+            fi
+            npm publish dist/wos-cli-0.4.0.tgz --ignore-scripts --access=public --tag=latest --registry=https://registry.npmjs.org/
+          fi
+          for i in 1 2 3 4 5 6; do
+            if npm view '@a1b3rt0m3rcad0/wos-cli@0.4.0' dist.integrity --json --registry=https://registry.npmjs.org/ > /tmp/wos-cli-published.json 2>/tmp/wos-cli-published.err; then
+              if node --input-type=module -e 'import fs from "node:fs"; const m=JSON.parse(fs.readFileSync("dist/distribution.json","utf8")); const a=m.artifacts.find(x=>x.kind==="wos-cli"); const actual=JSON.parse(fs.readFileSync("/tmp/wos-cli-published.json","utf8")); if(actual!==a.integrity)process.exit(1)'; then
+                echo 'WOS CLI 0.4.0 published; npm integrity matches source-bound verified artifact'
+                exit 0
+              fi
+              echo 'Registry integrity differs; refusing to claim success'
+              exit 1
+            fi
+            sleep 5
+          done
+          echo 'npm publication not visible with expected integrity after checks'
+          cat /tmp/wos-cli-published.err
+          exit 1
