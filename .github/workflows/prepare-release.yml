@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  actions: write
+  pull-requests: write
 concurrency:
   group: prepare-release
   cancel-in-progress: false
@@ -27,7 +27,7 @@ jobs:
           node tools/releases/version.mjs prepare > /tmp/wos-release-plan.json
           node --test tools/releases/compatibility.test.mjs
           node -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync("/tmp/wos-release-plan.json")); fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${p!==null}\n`);'
-      - name: Record generated metadata and dispatch the gated release
+      - name: Record generated metadata on a release branch
         if: steps.plan.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,10 +44,22 @@ jobs:
           for(const file of changed)assert.ok(fixed.has(file)||/^\.changes\/[a-z0-9-]+\.json$/.test(file)||/^docs\/releases\/[0-9]+\.[0-9]+\.[0-9]+\.md$/.test(file),'unexpected non-metadata change: '+file);
           JS
           git commit -m "chore(release): prepare v$(cat VERSION)"
-          # A normal fast-forward push only. A concurrent source update fails
-          # safely; its master push queues another preparation. No force/bypass.
-          git push origin HEAD:master
-          prepared_source=$(git rev-parse HEAD)
-          # GITHUB_TOKEN pushes do not trigger sibling workflows, so explicitly
-          # dispatch exact-source validation/publication after recording version.
-          gh workflow run release.yml --ref master -f source_sha="$prepared_source" -f publish=true
+          release_branch="release/prepared-${GITHUB_SHA}"
+          # Preserve master rules. Only the generated branch is written here.
+          git push origin "HEAD:refs/heads/$release_branch"
+          existing_pr=$(gh pr list --head "$release_branch" --base master --json url --jq '.[0].url // empty')
+          if test -n "$existing_pr"; then
+            echo "Prepared release PR: $existing_pr" >> "$GITHUB_STEP_SUMMARY"
+          elif gh pr create --head "$release_branch" --base master \
+            --title "chore(release): prepare v$(cat VERSION)" \
+            --body 'Generated version metadata only. Merging this PR triggers exact-source validation and coordinated publication.' \
+            > /tmp/wos-prepared-pr.out 2> /tmp/wos-prepared-pr.err; then
+            cat /tmp/wos-prepared-pr.out >> "$GITHUB_STEP_SUMMARY"
+          elif grep -Fq 'GitHub Actions is not permitted to create or approve pull requests' /tmp/wos-prepared-pr.err; then
+            # Preparation is complete, publication is still pending integration.
+            # An authorized agent can open this PR using its existing connection.
+            echo "Version prepared on $release_branch; PR creation is unavailable to the Actions bot. Publication remains pending PR integration." >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat /tmp/wos-prepared-pr.err >&2
+            exit 1
+          fi
