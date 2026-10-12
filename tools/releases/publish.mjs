@@ -14,13 +14,14 @@ export async function loadRelease(output=path.join(root,'dist')) {
   validVersion(manifest.version);
   if(manifest.schema!==1 || !/^[a-f0-9]{40}$/.test(manifest.commit) || manifest.artifacts.length!==6)throw new Error('Invalid distribution manifest');
   const expected={wos:`wos-${manifest.version}.tgz`,'wos-skill':`wos-skill-${manifest.version}.tgz`,'wos-cli':`wos-cli-${manifest.version}.tgz`,archive:`wos_${manifest.version}_linux_amd64.tar.gz`,"client-linux":`wosctl_${manifest.version}_linux_amd64.tar.gz`,"client-windows":`wosctl_${manifest.version}_windows_amd64.zip`};
+  const npmPackageNames={wos:'@a1b3rt0m3rcad0/wos','wos-skill':'@a1b3rt0m3rcad0/wos-skill','wos-cli':'@woobeai/wos-cli'};
   const seen=new Set();
   for(const a of manifest.artifacts) {
     if(seen.has(a.kind) || a.filename!==expected[a.kind])throw new Error('Invalid/duplicate distribution artifact');seen.add(a.kind);
     const bytes=await fs.readFile(path.join(output,a.filename));
     if(sha256(bytes)!==a.sha256)throw new Error(`Corrupt artifact: ${a.filename}`);
     if(a.kind.startsWith('client-')&&(!/^[a-f0-9]{64}$/.test(a.binary_sha256)||a.platform!==a.kind.slice(7)||a.arch!=='amd64'))throw new Error('Invalid client binary identity');
-    if(['wos','wos-skill','wos-cli'].includes(a.kind) && (a.name!==`@a1b3rt0m3rcad0/${a.kind}` || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
+    if(['wos','wos-skill','wos-cli'].includes(a.kind) && (a.name!==npmPackageNames[a.kind] || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
   }
   const version=(await fs.readFile(path.join(root,'VERSION'),'utf8')).trim();
   const prepared=JSON.parse(await fs.readFile(path.join(root,'release-manifest.json'),'utf8'));

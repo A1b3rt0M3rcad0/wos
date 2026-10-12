@@ -15,7 +15,7 @@ test('both package identities/versions are synchronized without install hooks or
   for(const folder of ['wos-npm','wos-skill','wos-cli-npm']) {
     const pkg=JSON.parse(await readFile(path.join(root,'packages',folder,'package.json'),'utf8'));
     assert.equal(pkg.version,version); assert.equal(pkg.license,'Apache-2.0');
-    assert.ok(pkg.name.startsWith('@a1b3rt0m3rcad0/'));
+    assert.equal(pkg.name, { 'wos-npm':'@a1b3rt0m3rcad0/wos', 'wos-skill':'@a1b3rt0m3rcad0/wos-skill', 'wos-cli-npm':'@woobeai/wos-cli' }[folder]);
     assert.equal(pkg.dependencies,undefined);
     for(const hook of ['preinstall','install','postinstall','prepare']) assert.equal(pkg.scripts?.[hook],undefined);
   }

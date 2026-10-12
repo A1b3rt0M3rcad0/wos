@@ -6,7 +6,7 @@
 
 ## Decision
 
-Publish `@a1b3rt0m3rcad0/wos-cli` as a separate npm package with exact-source Linux amd64 and Windows amd64 Go binaries. Expose `wos` and `wosctl` executable names, with a minimal Node launcher used exclusively to select the native host binary, validate source-bound checksums and relay exit status/signals. The actual skill installer and signed work client remain native Go implementations, without Node-powered logic or required server/network access for installing bundled Agent Skills.
+Publish `@woobeai/wos-cli` as a separate npm package with exact-source Linux amd64 and Windows amd64 Go binaries. Expose `wos` and `wosctl` executable names, with a minimal Node launcher used exclusively to select the native host binary, validate source-bound checksums and relay exit status/signals. The actual skill installer and signed work client remain native Go implementations, without Node-powered logic or required server/network access for installing bundled Agent Skills.
 
 Keep the Linux server npm package `@a1b3rt0m3rcad0/wos` and the optional pure instruction bundle `@a1b3rt0m3rcad0/wos-skill` separate. The three packages use coordinated VERSION and the same immutable release source. Do not install overlapping globally exposed `wos`/`wosctl` bins from both CLI and server npm distributions into one prefix.
 

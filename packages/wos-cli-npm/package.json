@@ -1,5 +1,5 @@
 {
-  "name": "@a1b3rt0m3rcad0/wos-cli",
+  "name": "@woobeai/wos-cli",
   "version": "0.4.0",
   "description": "Native Go WOS and wosctl CLI for Linux and Windows x64; install agent skills without Node-powered logic",
   "type": "module",
