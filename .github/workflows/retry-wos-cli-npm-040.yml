@@ -55,7 +55,7 @@ jobs:
               echo 'Registry read failure is not an absent version'
               exit 1
             fi
-            npm publish dist/wos-cli-0.4.0.tgz --ignore-scripts --access=public --tag=latest --registry=https://registry.npmjs.org/
+            npm publish ./dist/wos-cli-0.4.0.tgz --ignore-scripts --access=public --tag=latest --registry=https://registry.npmjs.org/
           fi
           for i in 1 2 3 4 5 6; do
             if npm view '@a1b3rt0m3rcad0/wos-cli@0.4.0' dist.integrity --json --registry=https://registry.npmjs.org/ > /tmp/wos-cli-published.json 2>/tmp/wos-cli-published.err; then
