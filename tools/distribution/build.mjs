@@ -35,7 +35,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const builtAt = new Date(Number(epoch) * 1000).toISOString().replace('.000Z','Z');
   const stages = {};
   await fs.mkdir(output, { recursive: true });
-  for (const [kind, src] of [['wos','wos-npm'], ['wos-skill','wos-skill']]) {
+  for (const [kind, src] of [['wos','wos-npm'], ['wos-skill','wos-skill'], ['wos-cli','wos-cli-npm']]) {
     const stage = path.join(output,'npm',kind);
     await fs.rm(stage,{recursive:true,force:true}); await fs.mkdir(stage,{recursive:true});
     const pkg = JSON.parse(await fs.readFile(path.join(source,'packages',src,'package.json'),'utf8'));
@@ -48,7 +48,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.writeFile(path.join(stage,'package.json'),JSON.stringify(pkg,null,2)+'\n');
     await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));
     stages[kind] = {stage,pkg};
-    if (kind === 'wos') await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});
+    if (kind === 'wos' || kind === 'wos-cli') await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});
   }
   const native=path.join(stages.wos.stage,'native'); await fs.mkdir(native);
   const metadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server';
@@ -60,6 +60,25 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]}}};
   await fs.writeFile(path.join(stages.wos.stage,'release.json'),JSON.stringify(release,null,2)+'\n');
   run('sh',['tools/distribution/notices.sh',path.join(stages.wos.stage,'third-party-notices')],{cwd:source});
+  // The standalone npm CLI embeds source-identical Linux and Windows Go binaries.
+  const cliNative=path.join(stages['wos-cli'].stage,'native');
+  const cliBinaries={};
+  for(const [platform,goos] of [['linux-amd64','linux'],['windows-amd64','windows']]) {
+    const folder=path.join(cliNative,platform);await fs.mkdir(folder,{recursive:true});
+    const ext=goos==='windows'?'.exe':'';
+    for(const name of ['wos','wosctl']) {
+      const dest=path.join(folder,name+ext);
+      if(goos==='linux') await fs.copyFile(path.join(native,name),dest);
+      else {
+        const flags=name==='wos'?ldflags:clientFlags;
+        const target=name==='wos'?'./packages/wos-api/cmd/wos':'./packages/wos-cli/cmd/wosctl';
+        run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${flags}`,'-o',dest,target],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'windows',GOARCH:'amd64'}});
+      }
+      cliBinaries[platform]??={};cliBinaries[platform][name]={sha256:sha256(await fs.readFile(dest))};
+    }
+  }
+  await fs.writeFile(path.join(stages['wos-cli'].stage,'release.json'),JSON.stringify({schema:1,version,commit,built_at:builtAt,binaries:cliBinaries,work_protocol:'signed_contracts_v2',workspace_schema:2},null,2)+'\n');
+  await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(stages['wos-cli'].stage,'third-party-notices'),{recursive:true});
   const artifacts=[];
   for(const [kind,{stage,pkg}] of Object.entries(stages)) {
     await normalize(stage);
@@ -88,7 +107,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     else run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,filename),'-C',stage,'.']);
     artifacts.push({kind:`client-${platform}`,filename,sha256:sha256(await fs.readFile(path.join(output,filename))),binary_sha256:clientRelease.sha256,platform,arch:'amd64'});
   }
-  const manifest={schema:1,version,commit,built_at:builtAt,artifacts};
+  const manifest={schema:1,version,commit,built_at:builtAt,artifacts,cli_binaries:cliBinaries};
   await fs.writeFile(path.join(output,'distribution.json'),JSON.stringify(manifest,null,2)+'\n');
   await fs.writeFile(path.join(output,'SHA256SUMS'),[...artifacts.map(a=>`${a.sha256}  ${a.filename}`),`${sha256(await fs.readFile(path.join(output,'distribution.json')))}  distribution.json`].join('\n')+'\n');
   return manifest;

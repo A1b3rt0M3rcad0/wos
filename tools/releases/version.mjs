@@ -36,7 +36,7 @@ export async function prepareRelease(source=root) {
   const plan=await releasePlan(source);if(!plan)return null;
   // All semantic inputs are validated before any writes.
   const packages=[];
-  for(const folder of ['wos-npm','wos-skill']) {
+  for(const folder of ['wos-npm','wos-skill','wos-cli-npm']) {
     const filename=path.join(source,'packages',folder,'package.json');
     const pkg=JSON.parse(await fs.readFile(filename,'utf8'));
     if(pkg.version!==(await fs.readFile(path.join(source,'VERSION'),'utf8')).trim())throw new Error('Package versions must be synchronized before preparing release');
@@ -48,7 +48,7 @@ export async function prepareRelease(source=root) {
   const openapi=JSON.parse(await fs.readFile(openapiFile,'utf8'));
   if(openapi.info?.version!==(await fs.readFile(path.join(source,'VERSION'),'utf8')).trim())throw new Error('OpenAPI release/version mismatch');
   openapi.info.version=plan.version;
-  const notes=`# WOS ${plan.version}\n\n${plan.changes.map(x=>`- ${x.summary}`).join('\n')}\n\nPackages: WOS service with wosctl and five portable skills. Service target: Linux amd64. Client assets: Linux amd64 and Windows amd64; actual matching native test receipts are required before publication. Skills require Node >=22 and a compatible runtime. Cross-building and release preparation do not certify Windows or registry publication.\n`;
+  const notes=`# WOS ${plan.version}\n\n${plan.changes.map(x=>`- ${x.summary}`).join('\n')}\n\nPackages: Linux WOS service with wosctl, cross-platform native WOS CLI for Linux/Windows x64 and five portable skills. Service target: Linux amd64. Client assets: Linux amd64 and Windows amd64; actual matching native test receipts are required before publication. Skills require Node >=22 and a compatible runtime. Cross-building and release preparation do not certify Windows or registry publication.\n`;
   const changelogFile=path.join(source,'CHANGELOG.md');
   const changelog=await fs.readFile(changelogFile,'utf8');
   if(!changelog.startsWith('# Changelog\n'))throw new Error('Unexpected changelog format');
