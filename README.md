@@ -51,15 +51,14 @@ For PostgreSQL, set `WOS_STORAGE_DRIVER=postgres`, `WOS_POSTGRES_PASSWORD` and `
 
 ```bash
 go build -trimpath -o ./bin/wos ./packages/wos-api/cmd/wos
-go build -trimpath -o ./bin/wosctl ./packages/wos-cli/cmd/wosctl
 ./bin/wos version
 ./bin/wos config validate
 ./bin/wos server
 ```
 
-The only npm installation is `npm install -g wosctl@latest`. On Linux or Windows x64, this package supplies both Go commands through a small platform/integrity launcher. The `wos skill` operation itself is implemented in Go and does not use Node.js logic or a network connection.
+The only npm installation is `npm install -g wosctl@latest`. On Linux or Windows x64, this package supplies the unified `wos` command through a small platform/integrity launcher. The `wos skill` operation itself is implemented in Go and does not use Node.js logic or a network connection.
 
-The source declares Go 1.27. The `wos` executable contains the HTTP/MCP server, embedded web application, and built-in skill bundles. `wosctl` is a separate, API-only client and does not open the server's database.
+The source declares Go 1.27. The `wos` executable contains the HTTP/MCP server, embedded web application, and built-in skill bundles. Client operations such as `wos work` and `wos review` use the public API and do not open the server database; `wosctl` is retained as a compatibility alias.
 
 **Supported release target:** Linux amd64 for the standalone service, SQLite or PostgreSQL 18.6, HTTP and MCP. The standalone `wosctl` client also has Linux/Windows amd64 native acceptance. Other platforms or runtimes require additional certification; compiling a binary alone does not provide it.
 

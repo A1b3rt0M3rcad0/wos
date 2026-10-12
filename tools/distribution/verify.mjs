@@ -109,9 +109,9 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const signed=await verifySignedPackage(cli,client);
     assert.equal(signed.protocol,'signed_contracts_v2');
     const binary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wos');
-    await fs.appendFile(binary,'corruption');
+    await fs.writeFile(binary+'.corrupt',Buffer.concat([await fs.readFile(binary),Buffer.from('corruption')]));await fs.rename(binary+'.corrupt',binary);
     assert.throws(()=>run(cli,['version']),/checksum mismatch/);
-    const clientBinary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wosctl');await fs.appendFile(clientBinary,'corruption');assert.throws(()=>run(path.join(consumer,'node_modules/.bin/wosctl'),['version']),/checksum mismatch/);
+    const clientBinary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wosctl');await fs.writeFile(clientBinary+'.corrupt',Buffer.concat([await fs.readFile(clientBinary),Buffer.from('corruption')]));await fs.rename(clientBinary+'.corrupt',clientBinary);assert.throws(()=>run(path.join(consumer,'node_modules/.bin/wosctl'),['version']),/checksum mismatch/);
     return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','native Go offline skill install/update/doctor/uninstall and generic destination','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection','cross-platform standalone Go CLI npm package']};
   } finally {if(server)await stop(server);await fs.rm(consumer,{recursive:true,force:true});}
 }
