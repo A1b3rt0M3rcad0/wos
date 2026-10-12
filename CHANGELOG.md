@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 — prepared for release
+
+- Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation.
+
 ## 0.4.1 — prepared for release
 
 - Unify public wos operations, correct product metadata, preserve pagination and publish qualified wosctl releases automatically after exact-source CI.
