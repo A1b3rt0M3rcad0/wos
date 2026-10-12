@@ -43,7 +43,7 @@ export async function loadRelease(output=path.join(root,'dist')) {
 // the upload here: only explicit absence is retried; mismatches and access errors
 // stop immediately, preserving immutable registry identities.
 export async function awaitNpmIntegrity(npm, artifact, {attempts=8, delayMs=1500, wait=pause}={}) {
-  if (!Number.isInteger(attempts) || attempts<1 || attempts>20 || delayMs<0 || delayMs>5000) throw new Error('Invalid bounded npm verification policy');
+  if (!Number.isInteger(attempts) || attempts<1 || attempts>31 || delayMs<0 || delayMs>30000) throw new Error('Invalid bounded npm verification policy');
   for(let attempt=1; attempt<=attempts; attempt++) {
     const integrity=await npm.integrity(artifact.name,artifact.version);
     if(integrity===artifact.integrity) return;
@@ -69,7 +69,7 @@ export async function publishRelease(release,{store,npm,image}) {
   for(const asset of assets)await store.ensureAsset(draft,asset,release.output);
   for(const a of manifest.artifacts.filter(a=>a.kind==='wos-cli')) {
     if(!published.has(a.name))await npm.publish(a,release.output);
-    await awaitNpmIntegrity(npm,a);
+    await awaitNpmIntegrity(npm,a,{attempts:31,delayMs:30000});
   }
   await image.publish(manifest);
   await image.check(manifest,true);
@@ -186,7 +186,7 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const dry=process.argv.length===3 && process.argv[2]==='--dry-run';
     if(process.argv.length>2&&!dry)throw new Error('Usage: node tools/releases/publish.mjs [--dry-run]');
     const release=await loadRelease();
-    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['require matching native Linux and Windows acceptance receipts','verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile all three npm tarballs','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
+    if(dry)console.log(JSON.stringify({dryRun:true,version:release.manifest.version,commit:release.manifest.commit,assets:release.assets.map(a=>a.filename),steps:['require matching native Linux and Windows acceptance receipts','verify immutable tag/registry/image identities','ensure draft and verified assets','publish/reconcile the single wosctl npm tarball','publish/reconcile tested GHCR image','finalize GitHub Release']},null,2));
     else {
       if(process.env.WOS_RELEASE_PUBLISH!=='1'||process.env.GITHUB_REPOSITORY?.toLowerCase()!==repository.toLowerCase()||!process.env.GH_TOKEN)throw new Error('Publication requires the authorized repository workflow and WOS_RELEASE_PUBLISH=1');
       if(process.env.NPM_AUTH_MODE!=='oidc'&&!process.env.NODE_AUTH_TOKEN)throw new Error('Configure npm trusted publishing or NPM_TOKEN in GitHub Actions; never put credentials in source');

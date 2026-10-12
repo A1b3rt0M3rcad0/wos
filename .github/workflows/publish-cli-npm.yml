@@ -83,10 +83,12 @@ jobs:
           WOS_CLI_PUBLISH: '1'
         run: node tools/releases/publish-cli-npm.mjs
       - uses: actions/upload-artifact@v7.0.2
+        if: always()
         with:
           name: npm-cli-publication-${{ github.sha }}
           path: |
             dist/npm-publication.json
+            dist/npm-publication-pending.json
             dist/wosctl-*.tgz
             dist/distribution.json
             dist/SHA256SUMS

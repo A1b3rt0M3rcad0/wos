@@ -3,6 +3,7 @@ import {mkdtemp,readFile,rm,mkdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {verifySignedPackage} from './signed-smoke.mjs';
 
 const version=process.env.WOS_PUBLISHED_VERSION,commit=process.env.WOS_EXPECTED_COMMIT;
 assert.match(version??'',/^\d+\.\d+\.\d+$/);
@@ -34,6 +35,8 @@ try {
  assert.equal(JSON.parse(cli('wos',['skill','install','--agent','generic','--dir',generic])).length,5);
  assert.ok(JSON.parse(cli('wos',['skill','doctor','--agent','generic','--dir',generic])).every(x=>x.action==='installed'));
  assert.equal(JSON.parse(cli('wos',['skill','uninstall','--agent','generic','--dir',generic])).length,5);
- const receipt={schema:1,name:'wosctl',version,commit,native_host:process.platform,arch:process.arch,registry_install:'npm install -g wosctl@latest',checks:['global public registry installation','wos/wosctl source versions','native Go skills install/doctor/update/uninstall','codex/all/generic destinations'],passed:true};
+ const native=path.join(pkgRoot,'native',process.platform==='win32'?'windows-amd64':'linux-amd64',process.platform==='win32'?'wos.exe':'wos');
+ const signed_journey=await verifySignedPackage(native,native);
+ const receipt={schema:1,signed_journey,name:'wosctl',version,commit,native_host:process.platform,arch:process.arch,registry_install:'npm install -g wosctl@latest',checks:['global public registry installation','wos/wosctl source versions','native Go skills install/doctor/update/uninstall','codex/all/generic destinations','installed signed executor/reviewer/correction/recovery outside checkout'],passed:true};
  await mkdir('dist',{recursive:true});await writeFile(`dist/published-consumer-${process.platform}.json`,JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));
 } finally {await rm(prefix,{recursive:true,force:true});}
