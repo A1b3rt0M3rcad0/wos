@@ -1,18 +1,13 @@
 {
   "schema": 1,
-  "version": "0.4.0",
-  "previous_prepared_version": "0.3.0",
-  "bump": "minor",
+  "version": "0.4.1",
+  "previous_prepared_version": "0.4.0",
+  "bump": "patch",
   "changes": [
     {
-      "file": "native-wos-skill-cli.json",
-      "bump": "minor",
-      "summary": "Add native offline Go `wos skill` installation, updates, verification and uninstall for the five canonical WOS agent skills."
-    },
-    {
-      "file": "npm-native-wos-cli.json",
-      "bump": "minor",
-      "summary": "Distribute native Go wos/wosctl CLI to Linux and Windows x64 through a standalone npm package; integrate versioning and immutable release verification."
+      "file": "wks-automatic-release.json",
+      "bump": "patch",
+      "summary": "Unify public wos operations, correct product metadata, preserve pagination and publish qualified wosctl releases automatically after exact-source CI."
     }
   ]
 }
