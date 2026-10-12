@@ -10,7 +10,7 @@ try {
   if (release.manifest.version !== '0.4.0') throw new Error('Initial npm CLI publication is limited to v0.4.0');
   await verifyNativePlatforms(release.manifest);
   const entry = release.manifest.artifacts.find(a => a.kind === 'wos-cli');
-  if (!entry) throw new Error('Native CLI npm artifact missing');
+  if (!entry || entry.name !== '@woobeai/wos-cli') throw new Error('Native CLI npm artifact identity differs from approved registry scope');
   const npm = realAdapters().npm;
   const existing = await npm.integrity(entry.name, entry.version);
   if (existing && existing !== entry.integrity) throw new Error('This npm version has different bytes; immutable version cannot be overwritten');

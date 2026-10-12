@@ -1477,8 +1477,12 @@ reviewable PR integration are still required before marking this gate complete.
 
 **State:** proposed for v0.4.0; exact-source CI and real npm registry publication not yet accepted.
 
-- Add `@a1b3rt0m3rcad0/wos-cli` with Go `wos` and `wosctl` executables for Linux/Windows amd64 and a minimal platform-integrity npm launcher.
+- Add `@woobeai/wos-cli` with Go `wos` and `wosctl` executables for Linux/Windows amd64 and a minimal platform-integrity npm launcher.
 - The standalone native `wos skill` installer is still executed by Go; no Node.js code performs skill installation or accesses the WOS server.
 - Require native Windows/Linux execution of skill install, doctor and uninstall, verified native receipts, coordinated version metadata and reproducible offline npm installation.
 - For the 0.4.0 candidate, publish this CLI package only through a source-gated GitHub workflow after all backend/browser/CLI/distribution checks; do not mark service, GHCR, skills, or GitHub release as published.
 - Future releases use the existing explicit coordinated publication workflow; no default auto-publication of future versions is authorized.
+
+### npm CLI publication scope correction — 2026-10-12
+
+The first 0.4.0 publication attempts authenticated as npm account `woobeai` but `@a1b3rt0m3rcad0/wos-cli` failed with `E404 Scope not found`. The CLI-only artifact now uses `@woobeai/wos-cli`; server and separate skills package retain their existing names without asserting npm ownership. The obsolete fixed-SHA failed recovery workflow was removed. The new package must pass exact-source complete CI and publish with independently verified registry integrity before this entry can be marked complete. This change does not retroactively mark the failed attempts as successful.

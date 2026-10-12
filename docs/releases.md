@@ -2,7 +2,7 @@
 
 ## Produtos
 
-`VERSION` é a versão SemVer coordenada de três pacotes: `@a1b3rt0m3rcad0/wos` (serviço Linux amd64), `@a1b3rt0m3rcad0/wos-cli` (CLI Go com `wos` e `wosctl` para Linux/Windows amd64) e `@a1b3rt0m3rcad0/wos-skill` (skills portáveis, Node >=22). npm usa um launcher Node pequeno para escolher/verificar o executável Go; `wos skill` permanece implementação Go. Não confundir SemVer com HTTP `/v1`, versão de snapshot/evento, migração SQL ou protocolo MCP negociado.
+`VERSION` é a versão SemVer coordenada de três pacotes: `@a1b3rt0m3rcad0/wos` (serviço Linux amd64), `@woobeai/wos-cli` (CLI Go com `wos` e `wosctl` para Linux/Windows amd64) e `@a1b3rt0m3rcad0/wos-skill` (skills portáveis, Node >=22). npm usa um launcher Node pequeno para escolher/verificar o executável Go; `wos skill` permanece implementação Go. Não confundir SemVer com HTTP `/v1`, versão de snapshot/evento, migração SQL ou protocolo MCP negociado.
 
 O campo `wosCompatibility` do pacote de skills identifica a versão coordenada de serviço e os contratos alvo; não certifica outras versões ou runtimes. Um major Go >=2 também exige revisar o module path/imports conforme Go semantic import versioning antes de publicar a tag; o gerador de versões não migra imports ou contratos automaticamente.
 
@@ -81,4 +81,4 @@ publication and immutable identities have actually been verified.
 
 ## Native CLI npm package
 
-`@a1b3rt0m3rcad0/wos-cli` ships native Go `wos` and `wosctl` for Linux/Windows amd64. npm/Node runs a small launcher that chooses and checks a platform-specific Go executable; native Go performs skill installation. The initial 0.4.0 CLI npm publication has a separate source-gated workflow and publishes only that npm package once exact-source core/browser/packages/Windows/Linux gates pass. `release.yml` remains the explicit publication mechanism for the three coordinated npm packages, GHCR and GitHub Releases; it reconciles any already-published byte-identical CLI version. Windows WOS server runtime is not certified by the CLI package.
+`@woobeai/wos-cli` ships native Go `wos` and `wosctl` for Linux/Windows amd64. npm/Node runs a small launcher that chooses and checks a platform-specific Go executable; native Go performs skill installation. The initial 0.4.0 CLI npm publication has a separate source-gated workflow and publishes only that npm package once exact-source core/browser/packages/Windows/Linux gates pass. `release.yml` remains the explicit publication mechanism for the three coordinated npm packages, GHCR and GitHub Releases; it reconciles any already-published byte-identical CLI version. Windows WOS server runtime is not certified by the CLI package.
