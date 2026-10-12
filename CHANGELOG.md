@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 — prepared for release
+
+- Add native offline Go `wos skill` installation, updates, verification and uninstall for the five canonical WOS agent skills.
+- Distribute native Go wos/wosctl CLI to Linux and Windows x64 through a standalone npm package; integrate versioning and immutable release verification.
+
 ## 0.3.0 — prepared for release
 
 - Add opt-in signed contract protocol v2, protected actor profiles, independent review and correction, receipt-driven cleanup and historical upgrade/restore; align five portable skills and the human workspace, and separate coordinated verification from explicit registry publication.

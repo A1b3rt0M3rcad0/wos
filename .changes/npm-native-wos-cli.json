@@ -1,4 +1,0 @@
-{
-  "bump": "minor",
-  "summary": "Distribute native Go wos/wosctl CLI to Linux and Windows x64 through a standalone npm package; integrate versioning and immutable release verification."
-}
