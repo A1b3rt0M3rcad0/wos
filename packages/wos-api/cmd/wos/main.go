@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
@@ -23,9 +24,14 @@ func run(args []string) int {
 	if server.Version != "dev" {
 		wosskill.ReleaseVersion = server.Version
 	}
+	if len(args) > 0 && strings.HasPrefix(args[0], "--") && args[0] != "--version" && args[0] != "--help" {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		return cli.Run(ctx, args, os.Stdout, os.Stderr)
+	}
 	if len(args) > 0 {
 		switch args[0] {
-		case "init", "auth", "capabilities", "work", "contract", "outcome", "objective", "roadmap", "review", "profile", "project", "workspace", "protocol":
+		case "init", "auth", "capabilities", "work", "contract", "outcome", "objective", "roadmap", "review", "profile", "project", "workspace", "protocol", "doctor":
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 			return cli.Run(ctx, args, os.Stdout, os.Stderr)

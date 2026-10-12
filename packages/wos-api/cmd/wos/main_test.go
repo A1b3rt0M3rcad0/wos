@@ -32,7 +32,7 @@ func TestUnifiedWOSClientUsesServiceReleaseIdentity(t *testing.T) {
 	oldVersion, oldCommit, oldBuilt := server.Version, server.Commit, server.BuiltAt
 	defer func() { server.Version, server.Commit, server.BuiltAt = oldVersion, oldCommit, oldBuilt }()
 	server.Version, server.Commit, server.BuiltAt = "0.4.0", "0123456789abcdef0123456789abcdef01234567", "2026-10-12T12:00:00Z"
-	code, output := captureCommand(t, "version", "--output", "json")
+	code, output := captureCommand(t, "--output", "json", "version")
 	if code != 0 {
 		t.Fatalf("version failed: %s", output)
 	}

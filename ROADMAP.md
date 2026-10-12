@@ -1507,3 +1507,5 @@ Owner clarification: no scoped replacement and no separate public npm service/sk
 Owner operation-name clarification: all public operations use `wos <command>`. The unified Go wos root now composes server/database/skills plus the existing native profile/work/review client groups; wosctl remains a compatibility alias. Native/browser/distribution tests must exercise the unified root, not merely install a renamed npm wrapper.
 
 Unified package verification reached signed independent review/correction successfully; corruption testing now replaces an owned binary atomically to avoid Linux ETXTBSY while preserving checksum rejection. The actual browser handoff regression selects `wos` instructions and invokes the unified Go binary.
+
+Actual offline unified package acceptance passed, including unsigned checkout, signed execution/correction/independent review, native skills/all/generic destinations, shutdown and corruption rejection. Further entrypoint checks cover global flags before commands, matching copied `wos --profile … work/review …` instructions, and the existing doctor client operation.
