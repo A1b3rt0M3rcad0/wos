@@ -1541,6 +1541,13 @@ Recovery verification locally accepted the real original hosted artifacts and na
 
 PRs #92, #93 and #95 passed all five hosted checks and are integrated. Public wosctl 0.4.0 is SRI-verified with successful registry-installed native Linux/Windows skill receipts in run 38297440817. Full registry-installed signed journey is checked additionally through the read-only recovery workflow. Branch-rule setup is not an outstanding owner action under the WKS-model clarification.
 
+
+### WKS automation follow-up: remove bot-PR settings dependency
+
+After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub Actions is not permitted to create or approve pull requests" (run 38305750972). The owner requested the WKS model without additional GitHub settings. Version preparation now validates the declared reviewed changes and records only allowlisted mechanical version/notes/manifest/OpenAPI metadata through a normal fast-forward master push. It uses no force push, administrative bypass or PR-approval permission. A concurrent master update fails safely and queues a new preparation from its push. GITHUB_TOKEN suppresses sibling push workflows, so the preparer explicitly dispatches exact-source release checks/publication. All backend/browser/packages/native gates remain prerequisites. This replaces the failed bot-PR step; no additional owner configuration is requested.
+
+Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
+
 ### D — dense continuity measurements, first operational slice
 
 The shared SQLite/PostgreSQL benchmark now accepts 100/1,000/10,000 WorkItems per Outcome and measures focal work context beside the full continuity projection, with allocation/response size and empirical p50/p95/p99. Local 1,000-item execution passed for SQLite and real PostgreSQL (100 samples per sequential query, GOMAXPROCS=3); each rich WorkItem has an actual criterion and explicit assessment. PostgreSQL rich snapshot mean/p95/p99: 82.48/120.33/136.92 ms; focal context: 15.35/20.91/28.78 ms, 2,225 bytes versus 32,643. Four-reader evidence is not claimed: this run used three readers and measured 24.36 PostgreSQL snapshots/s. SQLite reported 32 SQL statements/rich snapshot and 34/focal context; PostgreSQL SQL count was unavailable and is not invented. This demonstrates response caps do not bound full reconstruction; agents should prefer focal context and expand proof by reference. Larger-history envelopes, production percentiles, CPU profiles, restore/retention and final-source records remain separate acceptance work.
