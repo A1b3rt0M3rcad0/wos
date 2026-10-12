@@ -1,0 +1,95 @@
+{
+  "artifact": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs",
+  "sha256": "4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d",
+  "mode": "0444",
+  "test_count": 21,
+  "passed": 21,
+  "failed": 0,
+  "checksum_before_and_after_matches": true,
+  "results": [
+    {
+      "name": "trim",
+      "passed": true
+    },
+    {
+      "name": "internal spaces",
+      "passed": true
+    },
+    {
+      "name": "mixed whitespace",
+      "passed": true
+    },
+    {
+      "name": "whitespace only",
+      "passed": true
+    },
+    {
+      "name": "empty string",
+      "passed": true
+    },
+    {
+      "name": "unchanged text",
+      "passed": true
+    },
+    {
+      "name": "unicode whitespace",
+      "passed": true
+    },
+    {
+      "name": "TypeError null",
+      "passed": true
+    },
+    {
+      "name": "TypeError undefined",
+      "passed": true
+    },
+    {
+      "name": "TypeError number zero",
+      "passed": true
+    },
+    {
+      "name": "TypeError number finite",
+      "passed": true
+    },
+    {
+      "name": "TypeError number NaN",
+      "passed": true
+    },
+    {
+      "name": "TypeError number Infinity",
+      "passed": true
+    },
+    {
+      "name": "TypeError boolean true",
+      "passed": true
+    },
+    {
+      "name": "TypeError boolean false",
+      "passed": true
+    },
+    {
+      "name": "TypeError object",
+      "passed": true
+    },
+    {
+      "name": "TypeError array",
+      "passed": true
+    },
+    {
+      "name": "TypeError boxed string",
+      "passed": true
+    },
+    {
+      "name": "TypeError bigint",
+      "passed": true
+    },
+    {
+      "name": "TypeError symbol",
+      "passed": true
+    },
+    {
+      "name": "TypeError function",
+      "passed": true
+    }
+  ]
+}

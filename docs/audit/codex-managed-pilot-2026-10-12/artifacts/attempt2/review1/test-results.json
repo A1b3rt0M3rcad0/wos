@@ -1,0 +1,52 @@
+{
+  "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs",
+  "sha256": "7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc",
+  "mode": "444",
+  "total": 10,
+  "passed": 8,
+  "failed": 2,
+  "results": [
+    {
+      "name": "trim",
+      "passed": true
+    },
+    {
+      "name": "collapse spaces",
+      "passed": false,
+      "error": "Expected values to be strictly equal:\n\n'a   b' !== 'a b'\n"
+    },
+    {
+      "name": "collapse mixed whitespace",
+      "passed": false,
+      "error": "Expected values to be strictly equal:\n\n'a\\t\\n \\rb' !== 'a b'\n"
+    },
+    {
+      "name": "whitespace only",
+      "passed": true
+    },
+    {
+      "name": "TypeError null",
+      "passed": true
+    },
+    {
+      "name": "TypeError undefined",
+      "passed": true
+    },
+    {
+      "name": "TypeError number",
+      "passed": true
+    },
+    {
+      "name": "TypeError boolean",
+      "passed": true
+    },
+    {
+      "name": "TypeError object",
+      "passed": true
+    },
+    {
+      "name": "TypeError array",
+      "passed": true
+    }
+  ]
+}
