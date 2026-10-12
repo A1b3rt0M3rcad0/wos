@@ -3,7 +3,7 @@
 This npm distribution installs the **native Go** `wos` and `wosctl` executables on Linux x64 and Windows x64. npm/Node.js is used only for package installation and the small platform/integrity launcher. The commands themselves execute compiled Go code. In particular, `wos skill install` runs a Go installer that embeds the canonical WOS Agent Skills and needs no Node.js logic, network access or running WOS server.
 
 ```sh
-npm install --global @a1b3rt0m3rcad0/wos-cli
+npm install --global @woobeai/wos-cli
 wos version
 wos skill install --agent codex
 wos skill install --agent claude

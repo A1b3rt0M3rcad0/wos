@@ -79,7 +79,7 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.equal(JSON.parse(run(nativeWos,['skill','install','--agent','codex','--project',cliRoot])).length,5);
     assert.ok(JSON.parse(run(nativeWos,['skill','doctor','--agent','codex','--project',cliRoot])).every(x=>x.action==='installed'));
     assert.equal(JSON.parse(run(nativeWos,['skill','uninstall','--agent','codex','--project',cliRoot])).length,5);
-    const cliMetadata=JSON.parse(await fs.readFile(path.join(cliRoot,'node_modules/@a1b3rt0m3rcad0/wos-cli/release.json'),'utf8'));
+    const cliMetadata=JSON.parse(await fs.readFile(path.join(cliRoot,'node_modules/@woobeai/wos-cli/release.json'),'utf8'));
     assert.deepEqual(cliMetadata.binaries,manifest.cli_binaries);
     const log=[];
     // Reserve and release an ephemeral TCP port immediately before startup.

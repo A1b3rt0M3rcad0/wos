@@ -75,7 +75,7 @@ test('stale OpenAPI fails before consuming or changing coordinated version', asy
 });
 
 function publicationFixture() {
-  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos',name:'@a1b3rt0m3rcad0/wos',version:'0.1.0',integrity:'service'},{kind:'wos-skill',name:'@a1b3rt0m3rcad0/wos-skill',version:'0.1.0',integrity:'skills'},{kind:'wos-cli',name:'@a1b3rt0m3rcad0/wos-cli',version:'0.1.0',integrity:'client'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
+  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos',name:'@a1b3rt0m3rcad0/wos',version:'0.1.0',integrity:'service'},{kind:'wos-skill',name:'@a1b3rt0m3rcad0/wos-skill',version:'0.1.0',integrity:'skills'},{kind:'wos-cli',name:'@woobeai/wos-cli',version:'0.1.0',integrity:'client'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
   const release={manifest,notes:'release notes',assets:[{filename:'asset'}],output:'/artifacts'};
   const state={registry:new Map(),calls:[],image:false,final:false,failSkills:true};
   const adapters={
