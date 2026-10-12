@@ -1516,6 +1516,12 @@ While A awaits hosted/public registry gates, independent contract hardening proc
 
 Contract-candidate local verification passed 22 package/release/compatibility checks and the real MCP client test against Memory/SQLite/real PostgreSQL. The runtime now advertises the injected product version. The source remains 0.4.0 and stable gates are not inferred from these focused checks.
 
+### C — signed assertion audit, first authority slice
+
+The audit adds 21 separately named, correctly signed return probes across direct/independent-review and with/without required criteria. Probes change server, Namespace, Outcome, Principal, a registered foreign Principal's signing key, contract, task, execution, fencing, specification/authority digests, contract/lease/work/policy versions, purpose, completion intent, documentary scopes and local-key bindings. Each probe verifies the signature independently, requires application rejection, and verifies the original active grant, task version/lifecycle and Outcome revision remain unchanged. The original accepted return then executes, so negative requests cannot consume the real obligation.
+
+Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
+
 
 ### Browser regression found during release hardening
 
