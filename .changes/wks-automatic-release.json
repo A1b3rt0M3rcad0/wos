@@ -1,0 +1,4 @@
+{
+  "bump": "patch",
+  "summary": "Unify public wos operations, correct product metadata, preserve pagination and publish qualified wosctl releases automatically after exact-source CI."
+}
