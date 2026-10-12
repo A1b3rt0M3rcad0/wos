@@ -54,6 +54,19 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.equal(JSON.parse(run(skill,['install','--agent','all','--project',consumer])).length,20);
     run(skill,['doctor','--agent','all','--project',consumer]);
     run(skill,['uninstall','--agent','all','--project',consumer]);
+    // Use the native Go binary directly. These calls must not require Node/npm.
+    const nativeBinary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wos');
+    assert.equal(run(nativeBinary,['skill','version']),manifest.version);
+    const nativeRoot=path.join(consumer,'native-skill-fixture');
+    const preview=JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot,'--dry-run']));
+    assert.equal(preview.length,20); assert.ok(preview.every(x=>x.dryRun===true));
+    assert.equal(JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot])).length,20);
+    assert.ok(JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot])).every(x=>x.action==='unchanged'));
+    assert.ok(JSON.parse(run(nativeBinary,['skill','doctor','--agent','all','--project',nativeRoot])).every(x=>x.action==='installed'));
+    // Node's existing compatibility installer must recognize native Go ownership.
+    run(skill,['doctor','--agent','all','--project',nativeRoot]);
+    assert.ok(JSON.parse(run(nativeBinary,['skill','uninstall','--agent','all','--project',nativeRoot])).every(x=>x.action==='remove'));
+
     const log=[];
     // Reserve and release an ephemeral TCP port immediately before startup.
     const {createServer}=await import('node:net');
@@ -95,7 +108,7 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     await fs.appendFile(binary,'corruption');
     assert.throws(()=>run(cli,['version']),/integrity\/version check failed/);
     const clientBinary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wosctl');await fs.appendFile(clientBinary,'corruption');assert.throws(()=>run(client,['version']),/integrity\/version check failed/);
-    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection']};
+    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','native Go offline skill installer and interoperability','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection']};
   } finally {if(server)await stop(server);await fs.rm(consumer,{recursive:true,force:true});}
 }
 

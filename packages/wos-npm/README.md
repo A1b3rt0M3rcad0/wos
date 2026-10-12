@@ -1,5 +1,11 @@
 # WOS service
 
+The compiled WOS Go binary also embeds the five WOS skills and exposes a native,
+Node-free file installer. Run `wos skill install --agent codex` or
+`wos skill install --agent all`, then `wos skill doctor --agent codex`.
+This works without the separately packaged `wos-skill` executable when using
+native archives or the Go binary directly. The npm wrapper itself still needs Node.
+
 The existing Go service, distributed as a Linux amd64 npm package with an embedded native binary, HTTP/MCP and web workspace. Node >=22 runs the launcher; Core/server behavior stays in Go. No installation script downloads a binary or starts a process.
 
 After registry publication:

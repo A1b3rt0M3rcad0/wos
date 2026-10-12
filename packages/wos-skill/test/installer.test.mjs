@@ -52,6 +52,18 @@ test('user edits, unmanaged bundles, extra files and symlinks are preserved befo
   await assert.rejects(operate('uninstall',{project:extras}),/Locally modified/);
 });
 
+test('native Go managed manifests are compatible regardless of JSON key order', async t => {
+  const root=await fixture(t), opts={agent:'codex',project:root};
+  await operate('install',opts);
+  const marker=path.join(root,'.agents/skills/wos-workspace/.wos-skill.json');
+  const data=JSON.parse(await fs.readFile(marker,'utf8'));
+  data.files=Object.fromEntries(Object.entries(data.files).reverse());
+  await fs.writeFile(marker,JSON.stringify(data,null,2)+'\n');
+  assert.ok((await operate('doctor',opts)).every(x=>x.action==='installed'));
+  assert.ok((await operate('install',opts)).every(x=>x.action==='unchanged'));
+  assert.ok((await operate('uninstall',opts)).every(x=>x.action==='remove'));
+});
+
 test('portable skill frontmatter, bounded metadata and progressive references are bundled', async () => {
   for(const name of names) {
     const text=await fs.readFile(path.join(packageRoot,'skills',name,'SKILL.md'),'utf8');
