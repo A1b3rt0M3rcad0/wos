@@ -3,7 +3,7 @@
 Use this flow only after live Namespace protocol is `signed_contracts_v2`. A
 schema-2 workspace does not activate a Namespace. The operator provisions the
 persistent ServerID, independently approved issuer fingerprint, authorized
-credential/enrollment and protected key reference. Check `wosctl version` against
+credential/enrollment and protected key reference. Check `wos version` against
 the coordinated release; obtain `wos` (service) and `wosctl` (client) separately.
 
 Initialize with explicit `--workspace-schema 2`, `--server`, `--server-id`,
@@ -21,7 +21,7 @@ and bounded technical local recovery state. No operational outbox/history
 folders are required. `.yaml` and `.yml` are aliases; duplicate stems are refused.
 Never edit issued sections, signatures, local markers or frozen intentions.
 
-Execution: `wosctl --profile executor work checkout --next --count 1 --limit 25`,
+Execution: `wos --profile executor work checkout --next --count 1 --limit 25`,
 then `work show CONTRACT_UUID --for-agent --output json`. Edit only the execution
 draft following the packaged contract schema. `work finish CONTRACT_UUID` freezes,
 signs, sends and reconciles the original return. Alternatively run `work sign`,
@@ -30,7 +30,7 @@ Returned execution can close the executor obligation while independent review
 still blocks Task completion; parent Objective/Outcome completion stays explicit.
 
 Review: an independently authorized Principal/profile uses
-`wosctl --profile reviewer review checkout --next`, then
+`wos --profile reviewer review checkout --next`, then
 `review show REVIEW_CONTRACT_UUID --for-agent --output json`. Read exact assigned
 case/delivery, findings, criterion revisions and required evidence. Edit the
 review draft, then `review finish REVIEW_CONTRACT_UUID`. Approval, rejection or
@@ -59,7 +59,7 @@ destination. Legacy imports remain `legacy_unsigned`, never acquire retroactive
 signatures, and signed mutators refuse them. Preserve unresolved journals/receipts.
 
 After host issuer recovery, independently verify the new fingerprint, then use
-`wosctl --profile executor profile trust --issuer-fingerprint sha256:APPROVED_DIGEST`.
+`wos --profile executor profile trust --issuer-fingerprint sha256:APPROVED_DIGEST`.
 It retains historical pins and exact pending returns. Do not blindly trust a
 changed endpoint or re-sign an uncertain return. Native keyring availability and
 all-runtime integration are not established by installer tests or cross-builds.

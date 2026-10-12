@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { setTimeout as pause } from 'node:timers/promises';
 import {verifyNativePlatforms} from '../distribution/platform.mjs';
 import { root, run, sha256, validVersion } from '../distribution/build.mjs';
 
@@ -12,16 +13,16 @@ export const imageName='ghcr.io/a1b3rt0m3rcad0/wos';
 export async function loadRelease(output=path.join(root,'dist')) {
   const manifest=JSON.parse(await fs.readFile(path.join(output,'distribution.json'),'utf8'));
   validVersion(manifest.version);
-  if(manifest.schema!==1 || !/^[a-f0-9]{40}$/.test(manifest.commit) || manifest.artifacts.length!==6)throw new Error('Invalid distribution manifest');
-  const expected={wos:`wos-${manifest.version}.tgz`,'wos-skill':`wos-skill-${manifest.version}.tgz`,'wos-cli':`wos-cli-${manifest.version}.tgz`,archive:`wos_${manifest.version}_linux_amd64.tar.gz`,"client-linux":`wosctl_${manifest.version}_linux_amd64.tar.gz`,"client-windows":`wosctl_${manifest.version}_windows_amd64.zip`};
-  const npmPackageNames={wos:'@a1b3rt0m3rcad0/wos','wos-skill':'@a1b3rt0m3rcad0/wos-skill','wos-cli':'@woobeai/wos-cli'};
+  if(manifest.schema!==1 || !/^[a-f0-9]{40}$/.test(manifest.commit) || manifest.artifacts.length!==4)throw new Error('Invalid distribution manifest');
+  const expected={'wos-cli':`wosctl-${manifest.version}.tgz`,archive:`wos_${manifest.version}_linux_amd64.tar.gz`,"client-linux":`wosctl_${manifest.version}_linux_amd64.tar.gz`,"client-windows":`wosctl_${manifest.version}_windows_amd64.zip`};
+  const npmPackageNames={'wos-cli':'wosctl'};
   const seen=new Set();
   for(const a of manifest.artifacts) {
     if(seen.has(a.kind) || a.filename!==expected[a.kind])throw new Error('Invalid/duplicate distribution artifact');seen.add(a.kind);
     const bytes=await fs.readFile(path.join(output,a.filename));
     if(sha256(bytes)!==a.sha256)throw new Error(`Corrupt artifact: ${a.filename}`);
     if(a.kind.startsWith('client-')&&(!/^[a-f0-9]{64}$/.test(a.binary_sha256)||a.platform!==a.kind.slice(7)||a.arch!=='amd64'))throw new Error('Invalid client binary identity');
-    if(['wos','wos-skill','wos-cli'].includes(a.kind) && (a.name!==npmPackageNames[a.kind] || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
+    if(a.kind==='wos-cli' && (a.name!==npmPackageNames[a.kind] || a.version!==manifest.version || a.integrity!==`sha512-${createHash('sha512').update(bytes).digest('base64')}`))throw new Error(`Invalid npm identity/integrity: ${a.kind}`);
   }
   const version=(await fs.readFile(path.join(root,'VERSION'),'utf8')).trim();
   const prepared=JSON.parse(await fs.readFile(path.join(root,'release-manifest.json'),'utf8'));
@@ -38,12 +39,26 @@ export async function loadRelease(output=path.join(root,'dist')) {
   return {manifest,notes,assets,output};
 }
 
+// A successful upload can precede public metadata propagation. Never repeat
+// the upload here: only explicit absence is retried; mismatches and access errors
+// stop immediately, preserving immutable registry identities.
+export async function awaitNpmIntegrity(npm, artifact, {attempts=8, delayMs=1500, wait=pause}={}) {
+  if (!Number.isInteger(attempts) || attempts<1 || attempts>20 || delayMs<0 || delayMs>5000) throw new Error('Invalid bounded npm verification policy');
+  for(let attempt=1; attempt<=attempts; attempt++) {
+    const integrity=await npm.integrity(artifact.name,artifact.version);
+    if(integrity===artifact.integrity) return;
+    if(integrity!==null) throw new Error(`Published npm integrity differs: ${artifact.name}@${artifact.version}; never overwrite immutable content`);
+    if(attempt<attempts) await wait(delayMs);
+  }
+  throw new Error(`Published npm metadata remains absent after ${attempts} checks: ${artifact.name}@${artifact.version}; inspect the original artifact before retrying publication`);
+}
+
 export async function publishRelease(release,{store,npm,image}) {
   const {manifest,notes,assets}=release;
   const tag=`v${manifest.version}`;
   // Check all identities before writing; registry versions are immutable.
   const published=new Set();
-  for(const a of manifest.artifacts.filter(a=>['wos','wos-skill','wos-cli'].includes(a.kind))) {
+  for(const a of manifest.artifacts.filter(a=>a.kind==='wos-cli')) {
     const integrity=await npm.integrity(a.name,a.version);
     if(integrity && integrity!==a.integrity)throw new Error(`Registry content differs for ${a.name}@${a.version}; never overwrite/reuse this version`);
     if(integrity)published.add(a.name);
@@ -52,14 +67,14 @@ export async function publishRelease(release,{store,npm,image}) {
   await store.ensureTag(tag,manifest.commit);
   const draft=await store.ensureDraft(tag,manifest.commit,notes);
   for(const asset of assets)await store.ensureAsset(draft,asset,release.output);
-  for(const a of manifest.artifacts.filter(a=>['wos','wos-skill','wos-cli'].includes(a.kind))) {
+  for(const a of manifest.artifacts.filter(a=>a.kind==='wos-cli')) {
     if(!published.has(a.name))await npm.publish(a,release.output);
-    if(await npm.integrity(a.name,a.version)!==a.integrity)throw new Error(`Published npm integrity could not be verified: ${a.name}`);
+    await awaitNpmIntegrity(npm,a);
   }
   await image.publish(manifest);
   await image.check(manifest,true);
   await store.finalize(draft);
-  return {version:manifest.version,commit:manifest.commit,tag,npm:manifest.artifacts.filter(a=>['wos','wos-skill','wos-cli'].includes(a.kind)).map(a=>a.name),image:`${imageName}:${manifest.version}`};
+  return {version:manifest.version,commit:manifest.commit,tag,npm:manifest.artifacts.filter(a=>a.kind==='wos-cli').map(a=>a.name),image:`${imageName}:${manifest.version}`};
 }
 
 function command(program,args,options={}) {

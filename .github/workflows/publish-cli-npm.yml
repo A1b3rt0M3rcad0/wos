@@ -82,3 +82,34 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           WOS_CLI_PUBLISH: '1'
         run: node tools/releases/publish-cli-npm.mjs
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: npm-cli-publication-${{ github.sha }}
+          path: |
+            dist/npm-publication.json
+            dist/wosctl-*.tgz
+            dist/distribution.json
+            dist/SHA256SUMS
+          if-no-files-found: error
+  published-consumer:
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Install the public latest package and exercise native skills
+        env:
+          WOS_PUBLISHED_VERSION: '0.4.0'
+          WOS_EXPECTED_COMMIT: ${{ github.sha }}
+        run: node tools/distribution/published-consumer.mjs
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: published-wosctl-${{ matrix.os }}
+          path: dist/published-consumer-*.json
+          if-no-files-found: error

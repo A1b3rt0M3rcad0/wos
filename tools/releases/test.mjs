@@ -4,7 +4,7 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {releasePlan,prepareRelease,nextVersion} from './version.mjs';
-import {publishRelease,realAdapters} from './publish.mjs';
+import {publishRelease,realAdapters,awaitNpmIntegrity} from './publish.mjs';
 import {sha256} from '../distribution/build.mjs';
 
 async function fixture(t) {
@@ -13,7 +13,7 @@ async function fixture(t) {
   await fs.writeFile(path.join(dir,'.changes/README.md'),'queue');
   await fs.writeFile(path.join(dir,'VERSION'),'0.1.0\n');
   await fs.writeFile(path.join(dir,'CHANGELOG.md'),'# Changelog\n\nExisting history\n');
-  for(const name of ['wos-npm','wos-skill','wos-cli-npm']) {
+  for(const name of ['wos-cli-npm']) {
     await fs.mkdir(path.join(dir,'packages',name),{recursive:true});
     await fs.writeFile(path.join(dir,'packages',name,'package.json'),JSON.stringify({name,version:'0.1.0',...(name==='wos-skill'?{wosCompatibility:{service:'0.1.0',httpApi:'v1',snapshotSchema:1}}:{})}));
   }
@@ -42,8 +42,7 @@ test('preparation is repeatable, consumes changes and synchronizes both packages
   assert.equal(await prepareRelease(dir),null);
   await change(dir,'c','patch','Fix claim handoff');
   assert.equal((await prepareRelease(dir)).version,'0.1.1');
-  for(const folder of ['wos-npm','wos-skill','wos-cli-npm'])assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages',folder,'package.json'),'utf8')).version,'0.1.1');
-  assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages/wos-skill/package.json'),'utf8')).wosCompatibility.service,'0.1.1');
+  for(const folder of ['wos-cli-npm'])assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages',folder,'package.json'),'utf8')).version,'0.1.1');
   const api=JSON.parse(await fs.readFile(path.join(dir,'packages/wos-api/commands.openapi.json'),'utf8'));
   assert.equal(api.info.version,'0.1.1');assert.equal(api.paths['/unchanged'].get.operationId,'preserved');
   assert.match(await fs.readFile(path.join(dir,'docs/releases/0.1.1.md'),'utf8'),/Fix claim handoff/);
@@ -60,7 +59,7 @@ test('bad changes and unsynchronized packages fail before writing any release st
   await fs.symlink(path.join(dir,'VERSION'),path.join(dir,'.changes/link.json'));
   await assert.rejects(releasePlan(dir),/Invalid change entry/);
   await fs.unlink(path.join(dir,'.changes/link.json'));await change(dir,'good','minor');
-  await fs.writeFile(path.join(dir,'packages/wos-npm/package.json'),'{"version":"9.9.9"}');
+  await fs.writeFile(path.join(dir,'packages/wos-cli-npm/package.json'),'{"version":"9.9.9"}');
   await assert.rejects(prepareRelease(dir),/synchronized/);
   assert.equal(await fs.readFile(path.join(dir,'VERSION'),'utf8'),'0.1.0\n');
 });
@@ -75,31 +74,29 @@ test('stale OpenAPI fails before consuming or changing coordinated version', asy
 });
 
 function publicationFixture() {
-  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos',name:'@a1b3rt0m3rcad0/wos',version:'0.1.0',integrity:'service'},{kind:'wos-skill',name:'@a1b3rt0m3rcad0/wos-skill',version:'0.1.0',integrity:'skills'},{kind:'wos-cli',name:'@woobeai/wos-cli',version:'0.1.0',integrity:'client'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
+  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos-cli',name:'wosctl',version:'0.1.0',integrity:'client'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
   const release={manifest,notes:'release notes',assets:[{filename:'asset'}],output:'/artifacts'};
   const state={registry:new Map(),calls:[],image:false,final:false,failSkills:true};
   const adapters={
     store:{async ensureTag(){state.calls.push('tag');},async ensureDraft(){state.calls.push('draft');return {id:1};},async ensureAsset(){state.calls.push('asset');},async finalize(){state.final=true;state.calls.push('final');}},
-    npm:{async integrity(name){return state.registry.get(name)??null;},async publish(a){state.calls.push(a.name);if(a.kind==='wos-skill'&&state.failSkills)throw new Error('Registry unavailable');state.registry.set(a.name,a.integrity);}},
+    npm:{async integrity(name){return state.registry.get(name)??null;},async publish(a){state.calls.push(a.name);if(a.kind==='wos-cli'&&state.failSkills)throw new Error('Registry unavailable');state.registry.set(a.name,a.integrity);}},
     image:{async check(m,required=false){if(required&&!state.image)throw new Error('Image not available');},async publish(){state.image=true;state.calls.push('image');}},
   };
   return {release,state,adapters};
 }
 
-test('partial registry failure keeps release unfinished and retry reconciles the first immutable package', async () => {
-  const {release,state,adapters}=publicationFixture();
-  await assert.rejects(publishRelease(release,adapters),/Registry unavailable/);
-  assert.equal(state.final,false);assert.equal(state.image,false);
-  assert.equal(state.registry.get('@a1b3rt0m3rcad0/wos'),'service');
-  state.failSkills=false;
-  await publishRelease(release,adapters);
-  assert.equal(state.calls.filter(x=>x==='@a1b3rt0m3rcad0/wos').length,1);
-  assert.equal(state.final,true);assert.equal(state.calls.at(-1),'final');
+test('partial image failure keeps release unfinished and retry reconciles the immutable npm package',async()=>{
+ const {release,state,adapters}=publicationFixture();state.failSkills=false;
+ const publishImage=adapters.image.publish;adapters.image.publish=async()=>{throw Error('Image unavailable');};
+ await assert.rejects(publishRelease(release,adapters),/Image unavailable/);
+ assert.equal(state.final,false);assert.equal(state.registry.get('wosctl'),'client');
+ adapters.image.publish=publishImage;const result=await publishRelease(release,adapters);
+ assert.equal(state.final,true);assert.deepEqual(result.npm,['wosctl']);assert.equal(state.calls.filter(x=>x==='wosctl').length,1);
 });
 
 test('registry collisions and inspection failures stop before publication mutations', async () => {
   const {release,state,adapters}=publicationFixture();
-  state.registry.set('@a1b3rt0m3rcad0/wos','other bytes');
+  state.registry.set('wosctl','other bytes');
   await assert.rejects(publishRelease(release,adapters),/never overwrite/);
   assert.deepEqual(state.calls,[]);
   state.registry.clear();adapters.npm.integrity=async()=>{throw new Error('Unauthorized');};
@@ -143,4 +140,18 @@ test('npm adapter treats only explicit E404 as absent and propagates permission/
   await assert.rejects(npm.integrity('@scope/package','0.1.0'),/only explicit E404/);
   response={status:0,stdout:'"sha512-integrity"',stderr:''};
   assert.equal(await npm.integrity('@scope/package','0.1.0'),'sha512-integrity');
+});
+
+
+test('npm publication verification waits for bounded E404 propagation without uploading again', async () => {
+ const artifact={name:'wosctl',version:'0.4.0',integrity:'sha512-exact'};
+ let reads=0, waits=0;
+ await awaitNpmIntegrity({async integrity(){return ++reads<3?null:artifact.integrity;}},artifact,{attempts:3,wait:async()=>{waits++;}});
+ assert.equal(reads,3);assert.equal(waits,2);
+});
+test('npm verification distinguishes immutable divergence, absence and infrastructure errors',async()=>{
+ const artifact={name:'wosctl',version:'0.4.0',integrity:'sha512-exact'};let reads=0;
+ await assert.rejects(awaitNpmIntegrity({async integrity(){reads++;return 'other';}},artifact,{wait:async()=>assert.fail('Mismatch must not retry')}),/never overwrite/);assert.equal(reads,1);
+ await assert.rejects(awaitNpmIntegrity({async integrity(){return null;}},artifact,{attempts:2,delayMs:0,wait:async()=>{}}),/remains absent after 2/);
+ await assert.rejects(awaitNpmIntegrity({async integrity(){throw Error('E403');}},artifact,{wait:async()=>assert.fail('Access errors must not retry')}),/E403/);
 });

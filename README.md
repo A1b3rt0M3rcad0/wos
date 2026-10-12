@@ -57,7 +57,7 @@ go build -trimpath -o ./bin/wosctl ./packages/wos-cli/cmd/wosctl
 ./bin/wos server
 ```
 
-On Linux or Windows x64, `npm install --global @woobeai/wos-cli` supplies both Go commands through npm with a small platform/integrity launcher. The `wos skill` operation itself is implemented in Go and does not use Node.js logic or a network connection.
+The only npm installation is `npm install -g wosctl@latest`. On Linux or Windows x64, this package supplies both Go commands through a small platform/integrity launcher. The `wos skill` operation itself is implemented in Go and does not use Node.js logic or a network connection.
 
 The source declares Go 1.27. The `wos` executable contains the HTTP/MCP server, embedded web application, and built-in skill bundles. `wosctl` is a separate, API-only client and does not open the server's database.
 
@@ -149,21 +149,21 @@ The recommended new-work protocol is `signed_contracts_v2` with workspace schema
 An administrator must first provision the server's persistent Ed25519 issuer, Namespace policy, credentials, reviewer permissions, and agent-key enrollment. The client receives the server ID, independently approved issuer fingerprint, Namespace/Outcome IDs and authorized enrollment reference.
 
 ```bash
-wosctl init --workspace-schema 2 \
+wos init --workspace-schema 2 \
   --server https://wos.example.test \
   --server-id SERVER_UUID \
   --namespace NAMESPACE_UUID \
   --outcome OUTCOME_UUID
 
-wosctl profile create executor \
+wos profile create executor \
   --token-stdin --generate-signing-key \
   --enrollment ENROLLMENT_UUID \
   --server https://wos.example.test \
   --server-id SERVER_UUID \
   --issuer-fingerprint sha256:APPROVED_FINGERPRINT
 
-wosctl --profile executor auth status --output json
-wosctl --profile executor doctor --output json
+wos --profile executor auth status --output json
+wos --profile executor doctor --output json
 ```
 
 Give each independent executor or reviewer its **own authorized Principal/profile**. Secrets remain in protected OS keyring references, protected mounts or approved environment references; they must not appear in committed YAML or model prompts. The native keyring must be available for the `--generate-signing-key` example. Alternative protected references are documented in [signed workspace profiles](docs/signed-workspace-profiles.md).
@@ -171,15 +171,15 @@ Give each independent executor or reviewer its **own authorized Principal/profil
 ### 2. Acquire, execute, and return a contract
 
 ```bash
-wosctl --profile executor work checkout --next --count 1 --output json
-wosctl --profile executor work list --output json
-wosctl --profile executor work show CONTRACT_UUID --for-agent --output json
+wos --profile executor work checkout --next --count 1 --output json
+wos --profile executor work list --output json
+wos --profile executor work show CONTRACT_UUID --for-agent --output json
 
 # Edit the permitted execution draft in the issued local contract YAML.
-wosctl --profile executor work finish CONTRACT_UUID --output json
+wos --profile executor work finish CONTRACT_UUID --output json
 
 # Reconcile frozen operations after an interrupted or uncertain response.
-wosctl --profile executor work recover --all-pending --output json
+wos --profile executor work recover --all-pending --output json
 ```
 
 The local layout uses `.wos/project.yaml`, `.wos/profiles/<profile>/profile.yaml`, and only that profile's outstanding `contract/<id>.yaml` files. Issued specifications and signed original intentions are immutable. A verified receipt closes the corresponding local obligation; cleanup preserves unconfirmed edits. Delivery to independent review is **not** the same as Task approval.
@@ -187,19 +187,19 @@ The local layout uses `.wos/project.yaml`, `.wos/profiles/<profile>/profile.yaml
 ### 3. Review and request correction
 
 ```bash
-wosctl --profile reviewer review checkout --next --count 1 --output json
-wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent --output json
+wos --profile reviewer review checkout --next --count 1 --output json
+wos --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent --output json
 
 # Edit the exact review draft and criterion assessments, then:
-wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID --output json
-wosctl --profile reviewer review recover --all-pending --output json
+wos --profile reviewer review finish REVIEW_CONTRACT_UUID --output json
+wos --profile reviewer review recover --all-pending --output json
 ```
 
 Approval is bound to the immutable submission and its current criterion revisions. `changes_requested` is a distinct outcome that may require a fresh correction contract; a valid signature never substitutes for material-quality review. Review authority and execution authority are independently enforced.
 
 ### Protocol activation and recovery
 
-The administrator must drain legacy writers and outstanding unsigned authority before activating signed v2. The client supports `wosctl protocol get`, `set`, `preflight` and `recover` with exact CAS versions. Do **not** change Namespace protocol during routine `work checkout` or by skill installation. See [signed cutover](docs/signed-protocol-cutover.md), [issuer recovery](docs/issuer-recovery.md) and [signed returns](docs/signed-cli-returns.md).
+The administrator must drain legacy writers and outstanding unsigned authority before activating signed v2. The client supports `wos protocol get`, `set`, `preflight` and `recover` with exact CAS versions. Do **not** change Namespace protocol during routine `work checkout` or by skill installation. See [signed cutover](docs/signed-protocol-cutover.md), [issuer recovery](docs/issuer-recovery.md) and [signed returns](docs/signed-cli-returns.md).
 
 Legacy `contracts_v1`/workspace-schema-1 operations remain supported for the historical path documented in [wosctl](packages/wos-cli/README.md). They cannot bypass a signed Namespace's execution authority.
 

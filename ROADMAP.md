@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-09
-**Current target:** Human workspace UX/DX acceptance; signed 0.3.0 baseline preserved
-**Current wave:** UX implementation and automated QA/distribution accepted; human usability/screen-reader/native zoom validation pending
+**Last reviewed:** 2026-10-12
+**Current target:** Stable 1.0 hardening; public npm package wosctl
+**Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -1486,3 +1486,22 @@ reviewable PR integration are still required before marking this gate complete.
 ### npm CLI publication scope correction — 2026-10-12
 
 The first 0.4.0 publication attempts authenticated as npm account `woobeai` but `@a1b3rt0m3rcad0/wos-cli` failed with `E404 Scope not found`. The CLI-only artifact now uses `@woobeai/wos-cli`; server and separate skills package retain their existing names without asserting npm ownership. The obsolete fixed-SHA failed recovery workflow was removed. The new package must pass exact-source complete CI and publish with independently verified registry integrity before this entry can be marked complete. This change does not retroactively mark the failed attempts as successful.
+
+## Stable 1.0 hardening — owner plan, 2026-10-12
+
+Source plan: `docs/stable/original-plan-2026-10-12.md`, baseline `40d1703` / 0.4.0. The owner's current naming instruction overrides the historical CLI scope: **`npm install -g wosctl@latest`**. The package remains the native Linux/Windows amd64 Go CLI; WOS does not execute agents. Apache-2.0 remains the established license. Version 1.0.0 is not prepared or published merely because the plan exists.
+
+| Gate | Current state |
+| --- | --- |
+| P0-01 CLI name/publication | In progress: registry read returned 404 for both historical scoped CLI and `wosctl`; rename and bounded metadata reconciliation required, then real published Linux/Windows installation |
+| P0-02 stable contracts | Pending metadata/compatibility freeze and regression evidence |
+| P0-03 signed assertions | Existing mappings need assertion audit; no fabricated 96-scenario completion |
+| P0-04 license | Existing Apache-2.0 retained; artifact consistency to verify |
+| P0-05 protection/release | Pending enforced source gates, registry identities and immutable coordinated release |
+| P1-01–04 operational/security | Existing foundation; capacity, retention/restore, diagnostic and negative-authority evidence to consolidate |
+| P1-05 human validation | Remains pending under prior owner instruction; no participants or manual screen reader available; automated success is separate |
+| P1-06 independent consumer | Native tarballs tested previously; published clean consumer receipt still required |
+
+Owner clarification: no scoped replacement and no separate public npm service/skills package. `npm install -g wosctl@latest` supplies `wos`/`wosctl`; skill installation remains native `wos skill install --agent codex`. The active build/publication/version pipeline is being reduced to that one npm identity while retaining native archives and container deployment. Historical unpublished Node package directories are compatibility fixtures, not distribution claims.
+
+Owner operation-name clarification: all public operations use `wos <command>`. The unified Go wos root now composes server/database/skills plus the existing native profile/work/review client groups; wosctl remains a compatibility alias. Native/browser/distribution tests must exercise the unified root, not merely install a renamed npm wrapper.

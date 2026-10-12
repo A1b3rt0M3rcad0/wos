@@ -6,13 +6,13 @@ Namespace acceptance policy before activation. Namespace administration remains
 required; agent execution permission cannot activate a Namespace.
 
 ```sh
-wosctl protocol get --profile operator
-wosctl protocol set --profile operator --phase draining_to_signed_v2 --version <exact-version> --reason 'retire v1 writers'
-wosctl protocol preflight --profile operator
+wos protocol get --profile operator
+wos protocol set --profile operator --phase draining_to_signed_v2 --version <exact-version> --reason 'retire v1 writers'
+wos protocol preflight --profile operator
 # Stop every old server replica and direct SQL writer; retire their DB credentials.
 # Finish or explicitly revoke remaining valid unsigned execution authority.
-wosctl protocol set --profile operator --phase signed_contracts_v2 --version <exact-version> --writers-drained --reason 'writers and SQL credentials retired'
-wosctl protocol recover --profile operator
+wos protocol set --profile operator --phase signed_contracts_v2 --version <exact-version> --writers-drained --reason 'writers and SQL credentials retired'
+wos protocol recover --profile operator
 ```
 
 The preflight is a bounded advisory snapshot. Activation checks the live state

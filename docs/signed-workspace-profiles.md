@@ -3,13 +3,13 @@
 The administrator supplies the persistent server ID, issuer fingerprint, Namespace, Outcome, credential and authorized enrollment. Agent profiles contain secret references only. Onboarding does not grant permission on the server.
 
 ```sh
-wosctl init --workspace-schema 2 --server https://wos.example.test \
+wos init --workspace-schema 2 --server https://wos.example.test \
   --server-id SERVER_UUID --namespace NAMESPACE_UUID --outcome OUTCOME_UUID
-wosctl profile create executor_a --token-stdin --generate-signing-key \
+wos profile create executor_a --token-stdin --generate-signing-key \
   --enrollment ENROLLMENT_UUID --server https://wos.example.test \
   --server-id SERVER_UUID --issuer-fingerprint sha256:APPROVED_DIGEST
-wosctl --profile executor_a auth status --output json
-wosctl --profile executor_a profile inspect --output json
+wos --profile executor_a auth status --output json
+wos --profile executor_a profile inspect --output json
 ```
 
 Provide the token through the host's protected standard input. No token or private-key flag accepts a secret value. Generated seeds and imported API credentials go only to the OS keyring. If its native credential service is unavailable, creation fails; configure explicit env or protected mounted references instead. Do not place administrative credentials in an executor profile.
@@ -28,10 +28,10 @@ The operational layout is:
 .wos/profiles/executor_a/contract/CONTRACT_UUID.yaml
 ```
 
-Enrollment recovery is `wosctl --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. Work acquisition uses its own durable frozen intentions, described below; enrollment is not reused as work authority.
+Enrollment recovery is `wos --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. Work acquisition uses its own durable frozen intentions, described below; enrollment is not reused as work authority.
 
 After an operator explicitly recovers the instance issuer, approve its independently
-verified replacement with `wosctl --profile executor_a profile trust --issuer-fingerprint sha256:<approved-fingerprint>`.
+verified replacement with `wos --profile executor_a profile trust --issuer-fingerprint sha256:<approved-fingerprint>`.
 This appends public trust atomically without rewriting contracts or frozen returns;
 old pins remain for historical verification. See [issuer recovery](issuer-recovery.md)
 for host access, bounded trust history and interruption handling.
@@ -47,11 +47,11 @@ Schema-2 execution/review checkout, lease maintenance and protected sign/send/fi
 ## Work acquisition and recovery
 
 ```sh
-wosctl --profile executor_a work checkout --next --count 3 --limit 25 --output json
-wosctl --profile executor_a work checkout TASK_UUID --version EXACT_VERSION
-wosctl --profile executor_a work recover --all-pending --output json
-wosctl --profile executor_a work list --output json
-wosctl --profile executor_a work show CONTRACT_UUID --for-agent --output json
+wos --profile executor_a work checkout --next --count 3 --limit 25 --output json
+wos --profile executor_a work checkout TASK_UUID --version EXACT_VERSION
+wos --profile executor_a work recover --all-pending --output json
+wos --profile executor_a work list --output json
+wos --profile executor_a work show CONTRACT_UUID --for-agent --output json
 ```
 
 `--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server still limits a Principal to three active execution contracts across credentials and profiles. A request for five may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
@@ -137,11 +137,11 @@ profiles do not provide isolation against a hostile writer with the same OS user
 ### Signed returns and receipt-bound cleanup
 
 ```sh
-wosctl --profile executor_a work sign CONTRACT_UUID --output json
-wosctl --profile executor_a work send CONTRACT_UUID --output json
-wosctl --profile executor_a work recover --output json
+wos --profile executor_a work sign CONTRACT_UUID --output json
+wos --profile executor_a work send CONTRACT_UUID --output json
+wos --profile executor_a work recover --output json
 # Alternatively: work finish CONTRACT_UUID performs explicit sign/send/reconcile.
-wosctl --profile reviewer_a review finish REVIEW_CONTRACT_UUID --output json
+wos --profile reviewer_a review finish REVIEW_CONTRACT_UUID --output json
 ```
 
 Signing freezes the exact draft, payload, signature, original CID, request ID and

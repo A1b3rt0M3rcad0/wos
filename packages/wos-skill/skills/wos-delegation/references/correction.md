@@ -5,8 +5,8 @@ and `correction_review_case_id`. Generic `work checkout --next` deliberately
 skips corrections: acknowledging the original prior review is required.
 
 ```sh
-wosctl --profile executor work checkout TASK_UUID --version CURRENT_VERSION --previous-review ORIGINAL_CASE_UUID
-wosctl --profile executor work show NEW_CONTRACT_UUID --for-agent --output json
+wos --profile executor work checkout TASK_UUID --version CURRENT_VERSION --previous-review ORIGINAL_CASE_UUID
+wos --profile executor work show NEW_CONTRACT_UUID --for-agent --output json
 ```
 
 Read the original frozen findings and accepted material references. Edit only the

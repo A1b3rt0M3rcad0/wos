@@ -9,7 +9,7 @@ export async function recordNativePlatform(){
  if(process.env.WOS_TEST_NATIVE_KEYRING!=='1')throw new Error('Native release gate requires the actual OS credential service fixture');
  if(!['linux','windows'].includes(platform)||process.arch!=='x64')throw new Error('Native acceptance requires Linux/Windows amd64 host');
  const version=validVersion((await fs.readFile(path.join(root,'VERSION'),'utf8')).trim());const commit=run('git',['rev-parse','HEAD']);const epoch=run('git',['show','-s','--format=%ct',commit]);const builtAt=new Date(Number(epoch)*1000).toISOString().replace('.000Z','Z');
- const events=run('go',['test','-race','-count=1','-json','./packages/wos-cli/...','./packages/wos-sdk-go/...','./tests/acceptance']).split('\n').filter(Boolean).map(line=>JSON.parse(line));
+ const events=run('go',['test','-race','-count=1','-json','./packages/wos-api/cmd/wos','./packages/wos-skill','./packages/wos-cli/...','./packages/wos-sdk-go/...','./tests/acceptance']).split('\n').filter(Boolean).map(line=>JSON.parse(line));
  const goTests={passed:events.filter(event=>event.Action==='pass'&&event.Test).length,skipped:events.filter(event=>event.Action==='skip'&&event.Test).map(event=>`${event.Package}:${event.Test}`)};
  if(!goTests.passed)throw new Error('Native gate executed no passing tests');
  run(process.execPath,['--test','packages/wos-skill/test/*.test.mjs']);
@@ -24,6 +24,7 @@ export async function recordNativePlatform(){
  run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${wosFlags}`,'-o',skillBinary,'./packages/wos-api/cmd/wos'],{env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
  const skillDir=await fs.mkdtemp(path.join(path.dirname(skillBinary),'skill-smoke-'));
  try {
+   const unifiedVersion=JSON.parse(run(skillBinary,['version','--output','json'])).data;assert.equal(unifiedVersion.version,version);assert.equal(unifiedVersion.commit,commit);
    assert.equal(JSON.parse(run(skillBinary,['skill','install','--agent','codex','--project',skillDir])).length,5);
    assert.ok(JSON.parse(run(skillBinary,['skill','doctor','--agent','codex','--project',skillDir])).every(x=>x.action==='installed'));
    assert.equal(JSON.parse(run(skillBinary,['skill','uninstall','--agent','codex','--project',skillDir])).length,5);
