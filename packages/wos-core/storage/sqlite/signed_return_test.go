@@ -51,6 +51,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(err)
 					adminCtx := a.WithIdentity(ctx, admin)
 					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 					credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 					must(err)
 					identity, err := sec.Authenticate(ctx, token)
@@ -73,6 +74,12 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(err)
 					registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 					must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+					foreignPub, foreignPrivate, err := ed25519.GenerateKey(rand.Reader)
+					must(err)
+					foreignFP, err := signing.Fingerprint(foreignPub)
+					must(err)
+					foreignKey := testID("0199a555-0000-7000-8000-000000000099")
+					must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
 					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 					must(registry.SaveCredentialPolicy(ctx, policy, 0))
 					outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
@@ -143,6 +150,86 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					tampered.Payload = envelope.Payload[:len(envelope.Payload)-1] + "A"
 					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: tampered}); e == nil {
 						t.Fatal("tampered return accepted")
+					}
+					// These requests have valid mathematical signatures. Authorization
+					// must reject each changed binding without consuming the real grant.
+					otherID := testID("0199a555-0000-7000-8000-000000000099").String()
+					probes := []struct {
+						name   string
+						mutate func(*signing.WorkReturnPayload[a.SignedReturnMaterial])
+					}{
+						{"server", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ServerID = otherID }},
+						{"namespace", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.NamespaceID = otherID }},
+						{"outcome", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.OutcomeID = otherID }},
+						{"principal", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.PrincipalID = "another-executor" }},
+						{"signer", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.SignerKeyID = otherID }},
+						{"contract", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ContractID = otherID }},
+						{"work_item", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.WorkItemID = works[1].ID.String() }},
+						{"execution", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ExecutionID = otherID }},
+						{"fencing", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.FencingToken++ }},
+						{"specification", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.SpecDigest = signing.Digest([]byte("other specification"))
+						}},
+						{"authority", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.AuthorityDigest = signing.Digest([]byte("other authority"))
+						}},
+						{"contract_version", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ExpectedContractVersion++ }},
+						{"lease_version", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ExpectedLeaseVersion++ }},
+						{"work_version", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ExpectedWorkItemVersion++ }},
+						{"policy_version", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.PolicyRevision++ }},
+						{"operation", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.OperationKind = "review_return" }},
+						{"completion_intent", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.CompletionIntent = "arbitrary" }},
+						{"artifact_scope", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.Material.Artifacts[0].Artifact.Scope.OutcomeID = d.ID(otherID)
+						}},
+						{"evidence_scope", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.Material.Evidence[0].Evidence.Scope.OutcomeID = d.ID(otherID)
+						}},
+						{"duplicate_artifact_key", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.Material.Artifacts = append(p.Material.Artifacts, p.Material.Artifacts[0])
+						}},
+						{"missing_artifact_binding", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) {
+							p.Material.Evidence[0].ArtifactLocalKey = "unregistered"
+						}},
+					}
+					for _, probe := range probes {
+						t.Run("valid_signature_rejects_"+probe.name, func(t *testing.T) {
+							encoded, err := json.Marshal(request)
+							must(err)
+							var changed signing.WorkReturnPayload[a.SignedReturnMaterial]
+							must(json.Unmarshal(encoded, &changed)) // Avoid modifying shared documentary slices.
+							probeID, err := ids.NewID()
+							must(err)
+							changed.RequestID = probeID.String()
+							changed.IdempotencyKey = "negative-binding-" + probe.name
+							probe.mutate(&changed)
+							private, public := agentPrivate, agentPub
+							if probe.name == "signer" {
+								private, public = foreignPrivate, foreignPub
+							}
+							wire, err := signing.Sign(signing.WorkReturn, changed, changed.SignerKeyID, private)
+							must(err)
+							_, err = signing.Verify(wire, signing.WorkReturn, changed.SignerKeyID, public)
+							must(err)
+							probeCC := returnCC
+							probeCC.CommandID = probeID
+							probeCC.IdempotencyKey = changed.IdempotencyKey
+							if _, err = service.ReturnSignedWork(agentCtx, probeCC, a.ReturnSignedWorkCommand{Envelope: wire}); err == nil {
+								t.Fatal("valid signature authorized a changed binding")
+							}
+							check, err := store.Begin(ctx)
+							must(err)
+							defer check.Rollback()
+							actual, err := check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
+							must(err)
+							actualWork, err := check.WorkItems().Get(ctx, scope, work.ID)
+							must(err)
+							coordination, err := check.Coordination().LockOutcome(ctx, scope)
+							must(err)
+							if actual.Status != d.ContractActive || actual.Version != c.Version || actual.LeaseVersion != c.LeaseVersion || actual.LatestSubmissionID != nil || actualWork.Version != work.Version || actualWork.Lifecycle != work.Lifecycle || coordination.Revision != acquired.OutcomeRevision {
+								t.Fatal("rejected request changed grant, work or Outcome revision")
+							}
+						})
 					}
 					// Explicit self-completion cannot bypass a review floor, and direct
 					// completion cannot reuse or omit required explicit assessments.
