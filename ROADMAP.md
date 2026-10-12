@@ -1515,3 +1515,10 @@ Actual offline unified package acceptance passed, including unsigned checkout, s
 While A awaits hosted/public registry gates, independent contract hardening proceeds without declaring A accepted. MCP serverInfo now receives the actual service build version rather than 0.1.0-dev. Both OpenAPI metadata versions follow product SemVer and release preparation synchronizes them. Exact public API/CLI YAML schema fingerprints and license/one-package checks detect unreviewed drift. Compatibility matrix retains unsigned history, explicit signed cutover, legacy alias and exit semantics. Apache-2.0 is retained; historical service/skill manifests are private. VERSION remains 0.4.0; stable publication and manual validation are not asserted.
 
 Contract-candidate local verification passed 22 package/release/compatibility checks and the real MCP client test against Memory/SQLite/real PostgreSQL. The runtime now advertises the injected product version. The source remains 0.4.0 and stable gates are not inferred from these focused checks.
+
+
+### Browser regression found during release hardening
+
+PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
+
+Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.

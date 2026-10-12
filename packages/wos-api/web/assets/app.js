@@ -1459,6 +1459,9 @@ async function searchedTasks(cursor = "", append = false) {
   };
 }
 async function renderSection(cursor = "", append = false) {
+  // Explicit navigation/filter/pagination consumes the current input. A queued
+  // search must not later discard the page the user just loaded.
+  clearTimeout(searchTimer);
   if (!state.snapshot || state.view === "summary") return;
   if (state.view === "board") {
     state.renderId++;
