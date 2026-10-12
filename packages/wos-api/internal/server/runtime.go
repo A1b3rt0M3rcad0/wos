@@ -214,7 +214,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	root.HandleFunc("GET /livez", runtime.handleLive)
 	root.HandleFunc("GET /readyz", runtime.handleReady)
 	if config.MCP.Enabled {
-		options := mcptransport.Options{Security: security, RequestTimeout: config.HTTP.RequestTimeout}
+		options := mcptransport.Options{ProductVersion: Version, Security: security, RequestTimeout: config.HTTP.RequestTimeout}
 		if resolve != nil {
 			options.ResolveIdentity = func(ctx context.Context, headers http.Header) (application.Identity, error) {
 				request, _ := http.NewRequestWithContext(ctx, "POST", "http://wos.local/mcp", nil)

@@ -29,6 +29,9 @@ func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer session.Close()
+		if session.InitializeResult().ServerInfo.Version != CurrentVersion().Version {
+			t.Fatalf("MCP product version differs from service: %s", session.InitializeResult().ServerInfo.Version)
+		}
 		tools, err := session.ListTools(ctx, &mcp.ListToolsParams{})
 		if err != nil {
 			t.Fatal(err)

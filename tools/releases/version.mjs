@@ -47,6 +47,10 @@ export async function prepareRelease(source=root) {
   const openapiFile=path.join(source,'packages/wos-api/commands.openapi.json');
   const openapi=JSON.parse(await fs.readFile(openapiFile,'utf8'));
   if(openapi.info?.version!==(await fs.readFile(path.join(source,'VERSION'),'utf8')).trim())throw new Error('OpenAPI release/version mismatch');
+  const staticFile=path.join(source,'packages/wos-api/openapi.yaml');
+  const staticOpenapi=await fs.readFile(staticFile,'utf8');
+  const staticVersion=staticOpenapi.match(/^  version: ([^\n]+)$/m)?.[1];
+  if(staticVersion!==(await fs.readFile(path.join(source,'VERSION'),'utf8')).trim())throw new Error('Static OpenAPI release/version mismatch');
   openapi.info.version=plan.version;
   const notes=`# WOS ${plan.version}\n\n${plan.changes.map(x=>`- ${x.summary}`).join('\n')}\n\nPackages: Linux WOS service with wosctl, cross-platform native WOS CLI for Linux/Windows x64 and five portable skills. Service target: Linux amd64. Client assets: Linux amd64 and Windows amd64; actual matching native test receipts are required before publication. One npm package: wosctl. Install skills through native wos skill, offline and without Node-powered skill logic; npm installation requires Node >=22. Cross-building and release preparation do not certify Windows or registry publication.\n`;
   const changelogFile=path.join(source,'CHANGELOG.md');
@@ -54,6 +58,7 @@ export async function prepareRelease(source=root) {
   if(!changelog.startsWith('# Changelog\n'))throw new Error('Unexpected changelog format');
   await fs.writeFile(path.join(source,'VERSION'),plan.version+'\n');
   await fs.writeFile(openapiFile,JSON.stringify(openapi,null,2)+'\n');
+  await fs.writeFile(staticFile,staticOpenapi.replace(/^  version: [^\n]+$/m,'  version: '+plan.version));
   for(const {filename,pkg} of packages)await fs.writeFile(filename,JSON.stringify(pkg,null,2)+'\n');
   await fs.writeFile(path.join(source,'release-manifest.json'),JSON.stringify(plan,null,2)+'\n');
   await fs.mkdir(path.join(source,'docs/releases'),{recursive:true});

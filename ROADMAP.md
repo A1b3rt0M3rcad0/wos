@@ -1509,3 +1509,9 @@ Owner operation-name clarification: all public operations use `wos <command>`. T
 Unified package verification reached signed independent review/correction successfully; corruption testing now replaces an owned binary atomically to avoid Linux ETXTBSY while preserving checksum rejection. The actual browser handoff regression selects `wos` instructions and invokes the unified Go binary.
 
 Actual offline unified package acceptance passed, including unsigned checkout, signed execution/correction/independent review, native skills/all/generic destinations, shutdown and corruption rejection. Further entrypoint checks cover global flags before commands, matching copied `wos --profile … work/review …` instructions, and the existing doctor client operation.
+
+### B — public contract candidate freeze
+
+While A awaits hosted/public registry gates, independent contract hardening proceeds without declaring A accepted. MCP serverInfo now receives the actual service build version rather than 0.1.0-dev. Both OpenAPI metadata versions follow product SemVer and release preparation synchronizes them. Exact public API/CLI YAML schema fingerprints and license/one-package checks detect unreviewed drift. Compatibility matrix retains unsigned history, explicit signed cutover, legacy alias and exit semantics. Apache-2.0 is retained; historical service/skill manifests are private. VERSION remains 0.4.0; stable publication and manual validation are not asserted.
+
+Contract-candidate local verification passed 22 package/release/compatibility checks and the real MCP client test against Memory/SQLite/real PostgreSQL. The runtime now advertises the injected product version. The source remains 0.4.0 and stable gates are not inferred from these focused checks.

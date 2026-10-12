@@ -91,7 +91,7 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.match(await (await fetch(base+'/app/')).text(),/id="view-tabs"/);
     const headers={authorization:`Bearer ${credential}`,'content-type':'application/json','accept':'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18'};
     const init=await fetch(base+'/mcp',{method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'npm-distribution-smoke',version:'1'}}})});
-    assert.equal(init.status,200); assert.equal((await init.json()).result.protocolVersion,'2025-06-18');
+    assert.equal(init.status,200); const initialized=(await init.json()).result;assert.equal(initialized.protocolVersion,'2025-06-18');assert.equal(initialized.serverInfo.version,manifest.version);
     const tools=await fetch(base+'/mcp',{method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/list',params:{}})});
     assert.equal(tools.status,200);assert.ok((await tools.json()).result.tools.some(t=>t.name==='wos_claim_work_item'));
     const actor=await fetch(base+'/api/v1/namespaces/0199d000-0000-7000-8000-000000000001/outcomes',{headers});

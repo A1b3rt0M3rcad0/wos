@@ -17,6 +17,8 @@ import (
 const MaxPayloadBytes = 256 << 10
 
 type Options struct {
+	ProductVersion string
+
 	Security        *application.SecurityService
 	ResolveIdentity func(context.Context, http.Header) (application.Identity, error)
 	LocalIdentity   *application.Identity
@@ -30,7 +32,10 @@ func New(service *application.Service, ids ports.IDGenerator, options Options) (
 	if options.RequestTimeout <= 0 {
 		options.RequestTimeout = 15 * time.Second
 	}
-	server := mcp.NewServer(&mcp.Implementation{Name: "wos", Version: "0.1.0-dev"}, &mcp.ServerOptions{Instructions: "WOS preserves shared outcome state. Discover outcomes, read bounded continuity, explicitly claim work and preserve fencing tokens. Candidates are informational; clients decide execution. A timeout may follow a successful commit: retry the SAME intent and idempotency key. Published plans and proof history are immutable."})
+	if options.ProductVersion == "" {
+		options.ProductVersion = "dev"
+	}
+	server := mcp.NewServer(&mcp.Implementation{Name: "wos", Version: options.ProductVersion}, &mcp.ServerOptions{Instructions: "WOS preserves shared outcome state. Discover outcomes, read bounded continuity, explicitly claim work and preserve fencing tokens. Candidates are informational; clients decide execution. A timeout may follow a successful commit: retry the SAME intent and idempotency key. Published plans and proof history are immutable."})
 	registerCommands(server, service, ids, options)
 	registerQueries(server, service, options)
 	registerResources(server, service, options)

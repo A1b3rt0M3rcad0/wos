@@ -35,7 +35,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -C release/next
-          git add VERSION packages/wos-api/commands.openapi.json packages/wos-cli-npm/package.json release-manifest.json docs/releases CHANGELOG.md .changes
+          git add VERSION packages/wos-api/commands.openapi.json packages/wos-api/openapi.yaml packages/wos-cli-npm/package.json release-manifest.json docs/releases CHANGELOG.md .changes
           git commit -m "chore(release): prepare v$(cat VERSION)"
           # Only the automation-owned branch is updated, never master or a feature branch.
           git fetch origin release/next || true
