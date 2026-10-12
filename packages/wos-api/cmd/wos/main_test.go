@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
@@ -19,13 +20,20 @@ func captureCommand(t *testing.T, args ...string) (int, []byte) {
 	defer out.Close()
 	os.Stdout, os.Stderr = writer, writer
 	defer func() { os.Stdout, os.Stderr = oldOut, oldErr }()
+	// Drain concurrently: Windows anonymous pipes are smaller than root help.
+	type captured struct {
+		data []byte
+		err  error
+	}
+	result := make(chan captured, 1)
+	go func() { data, err := io.ReadAll(out); result <- captured{data, err} }()
 	code := run(args)
 	writer.Close()
-	data, err := io.ReadAll(out)
-	if err != nil {
-		t.Fatal(err)
+	value := <-result
+	if value.err != nil {
+		t.Fatal(value.err)
 	}
-	return code, data
+	return code, value.data
 }
 
 func TestUnifiedWOSClientUsesServiceReleaseIdentity(t *testing.T) {
@@ -66,5 +74,18 @@ func TestUnifiedWOSCreatesAndReadsNativeProject(t *testing.T) {
 	}
 	if len(output) == 0 {
 		t.Fatal("client error was not surfaced")
+	}
+}
+
+func TestUnifiedWOSHelpIncludesBundledSkillsAndServiceWithoutConfiguration(t *testing.T) {
+	t.Setenv("WOS_AUTH_MODE", "invalid-unused-configuration")
+	for _, args := range [][]string{{"--help"}, {"skill", "--help"}, {"db", "--help"}, {"--profile", "missing", "work", "--help"}} {
+		code, output := captureCommand(t, args...)
+		if code != 0 || !strings.Contains(string(output), "Usage: wos") {
+			t.Fatal("primary executable failed local help", args, code, string(output))
+		}
+		if len(args) == 1 && !strings.Contains(string(output), "wos skill install --agent codex") {
+			t.Fatal("root help omitted bundled skill installation")
+		}
 	}
 }

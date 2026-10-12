@@ -284,6 +284,8 @@ python3 tests/acceptance/journey.py --binary bin/wos --client http
 
 Storage and signed-protocol acceptance require a real PostgreSQL test instance configured through `WOS_TEST_POSTGRES_DSN` and, where required, `WOS_TEST_POSTGRES_CONTAINER`. Do not point the test suite to a production database. Browser and release packaging have separate repository workflows and dependencies. A skipped optional test is not a successful execution of that test.
 
+Local command discovery is available before configuration: `wos --help`, `wos help work` and `wos catalog --output json`. The catalog identifies the installed release and distinguishes legacy planning from signed work.
+
 The CI/release system consumes declared changes from reviewed source, automatically records only version metadata and runs exact-source Core/browser/CLI/distribution checks. It validates native receipts and publishes qualified artifacts following the WKS model; manual dispatch is reserved for recovery. See [releases](docs/releases.md).
 
 ### 1.0.0 release criteria
