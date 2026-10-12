@@ -109,6 +109,69 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 			if _, err = sec.SigningMutation(agentCtx, "wrong-challenge-registration-1", bad); err == nil {
 				t.Fatal("valid signature accepted another challenge")
 			}
+			// Independently valid signatures must not authorize a different enrollment.
+			assertEnrollmentDenied := func(t *testing.T, intent string, caller context.Context, challenge d.SigningEnrollment, envelope signing.Envelope) {
+				t.Helper()
+				if _, verifyErr := signing.Verify(envelope, signing.KeyEnrollment, challenge.KeyID.String(), pub); verifyErr != nil {
+					t.Fatal("probe must have a mathematically valid signature", verifyErr)
+				}
+				request := register
+				request.EnrollmentID = challenge.ID
+				request.Proof = &envelope
+				_, denied := sec.SigningMutation(caller, intent, request)
+				if code, _ := d.ErrorCodeOf(denied); code != d.ErrorCodeForbidden {
+					t.Fatalf("enrollment authority probe must fail as forbidden: %v", denied)
+				}
+				unit, beginErr := store.Begin(ctx)
+				must(beginErr)
+				defer unit.Rollback()
+				repository := unit.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+				pending, readErr := repository.Enrollment(ctx, ns, challenge.ID)
+				must(readErr)
+				if pending.Consumed || pending.Version != challenge.Version {
+					t.Fatal("rejected proof consumed or changed the enrollment")
+				}
+				if _, keyErr := repository.Key(ctx, ns, challenge.KeyID); keyErr == nil {
+					t.Fatal("rejected proof registered a signing key")
+				} else if code, _ := d.ErrorCodeOf(keyErr); code != d.ErrorCodeNotFound {
+					t.Fatal("cannot verify key absence", keyErr)
+				}
+			}
+			for _, field := range []string{"purpose", "principal"} {
+				t.Run("valid_signature_wrong_"+field, func(t *testing.T) {
+					payload, _, decodeErr := signing.Decode[signing.EnrollmentPayload](proof, signing.KeyEnrollment, enrolled.Enrollment.KeyID.String(), pub)
+					must(decodeErr)
+					if field == "purpose" {
+						payload.Purpose = "issuer"
+					} else {
+						payload.PrincipalID = admin.PrincipalID
+					}
+					probe, signErr := signing.Sign(signing.KeyEnrollment, payload, enrolled.Enrollment.KeyID.String(), private)
+					must(signErr)
+					assertEnrollmentDenied(t, "enrollment-wrong-"+field, agentCtx, *enrolled.Enrollment, probe)
+				})
+			}
+			t.Run("other_principal_cannot_consume_challenge", func(t *testing.T) {
+				assertEnrollmentDenied(t, "enrollment-other-principal", adminCtx, *enrolled.Enrollment, proof)
+			})
+			t.Run("expired_matching_challenge", func(t *testing.T) {
+				// PostgreSQL uses transaction time, so persist an elapsed deadline
+				// in a separate approved fixture instead of faking the Go clock.
+				expired := *enrolled.Enrollment
+				expired.ID = testID("0199a221-0000-7000-8000-000000000077")
+				expired.KeyID = testID("0199a221-0000-7000-8000-000000000078")
+				expired.ExpiresAt = clock.Now().Add(-time.Hour)
+				unit, beginErr := store.Begin(ctx)
+				must(beginErr)
+				repository := unit.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+				if saveErr := repository.SaveEnrollment(ctx, expired, 0); saveErr != nil {
+					unit.Rollback()
+					t.Fatal(saveErr)
+				}
+				must(unit.Commit())
+				assertEnrollmentDenied(t, "enrollment-expired-challenge", agentCtx, expired, proofFor(expired, pub, private))
+			})
+
 			registered, err := sec.SigningMutation(agentCtx, "register-signing-key-1", register)
 			must(err)
 			if registered.Key.PrincipalID != agent.PrincipalID || !registered.Enrollment.Consumed || registered.CredentialPolicy.AcceptanceFloor != d.AcceptanceIndependentReview {
