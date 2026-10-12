@@ -1,0 +1,73 @@
+name: Reconcile approved immutable npm artifact
+on:
+  workflow_dispatch:
+    inputs:
+      publication_run:
+        description: Original CLI publication workflow run, never a rebuilt package
+        required: true
+        type: string
+        default: '38297440817'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.original.outputs.source }}
+      version: ${{ steps.original.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Validate original source and its completed acceptance jobs
+        id: original
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORIGINAL_RUN: ${{ inputs.publication_run }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {appendFileSync} from 'node:fs';
+          assert.match(process.env.ORIGINAL_RUN,/^[1-9][0-9]*$/);
+          const run=JSON.parse(execFileSync('gh',['run','view',process.env.ORIGINAL_RUN,'--json','headSha,workflowName,jobs'],{encoding:'utf8'}));
+          assert.equal(run.workflowName,'Publish native WOS CLI npm 0.4.0');assert.match(run.headSha,/^[a-f0-9]{40}$/);
+          for(const name of ['core / WOS verification','browser / browser','packages / packages','client / platform (ubuntu-latest)','client / platform (windows-latest)'])assert.ok(run.jobs.some(j=>j.name===name&&j.conclusion==='success'),name+' must have passed');
+          execFileSync('gh',['run','download',process.env.ORIGINAL_RUN,'--name','wos-packages-'+run.headSha,'--dir','dist'],{stdio:'inherit'});
+          for(const os of ['ubuntu-latest','windows-latest'])execFileSync('gh',['run','download',process.env.ORIGINAL_RUN,'--name','wosctl-platform-'+os,'--dir','dist/acceptance'],{stdio:'inherit'});
+          appendFileSync(process.env.GITHUB_OUTPUT,'source='+run.headSha+'\nversion=0.4.0\n');
+          JS
+      - name: Verify original checksums and public registry integrity without upload
+        env:
+          WOS_EXPECTED_COMMIT: ${{ steps.original.outputs.source }}
+        run: node tools/releases/reconcile-npm.mjs
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: npm-original-artifact-reconciliation
+          path: dist
+          if-no-files-found: error
+  published-consumer:
+    needs: reconcile
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Exercise published package outside the source checkout
+        env:
+          WOS_PUBLISHED_VERSION: ${{ needs.reconcile.outputs.version }}
+          WOS_EXPECTED_COMMIT: ${{ needs.reconcile.outputs.source }}
+        run: node tools/distribution/published-consumer.mjs
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: reconciled-published-wosctl-${{ matrix.os }}
+          path: dist/published-consumer-*.json
+          if-no-files-found: error

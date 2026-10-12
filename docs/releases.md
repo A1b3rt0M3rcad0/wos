@@ -25,10 +25,17 @@ Artifacts are `wosctl-VERSION.tgz`, `wos_VERSION_linux_amd64.tar.gz`, `wosctl_VE
 
 Initial 0.4.0 publication of `wosctl` is explicitly authorized and source-gated through `publish-cli-npm.yml`. After publication, Linux/Windows consumers install `wosctl@latest` directly from the public registry and exercise `wos skill` without a separately installed skills package. Publication and consumer receipts are uploaded as workflow artifacts.
 
-Future coordinated publication uses explicit `workflow_dispatch` of `release.yml` with `publish=true`; `source_sha` can resume a full original integrated commit. It publishes only `wosctl` to npm, the versioned OCI image and the verified GitHub release assets. The default workflow prepares/verifies without publication. Registry credentials are configured in GitHub, never copied into source or chat. Private repositories cannot claim unsupported npm provenance.
+Merging a prepared release manifest into `master` automatically runs `release.yml`: exact-source tests → qualified artifacts → publication to npm, GHCR and GitHub Release. The publish job consumes the verified artifacts. Like WKS, publication is gated by workflow dependencies and does not require manual branch-rule setup. `workflow_dispatch` with `publish=true` and `source_sha` is the recovery path for the original integrated commit. Only `wosctl` is public on npm. Registry credentials are configured in GitHub, never copied into source or chat. Private repositories cannot claim unsupported npm provenance.
 
 Before any upload, compare existing registry integrity, tag/source identity and image labels. An existing byte-identical npm version is reconciled without upload. Different bytes stop immediately; immutable versions/tags/assets are never overwritten. After a successful upload, bounded polling tolerates temporary explicit 404 metadata propagation; authentication/network errors or a differing integrity stop immediately. Exhausted polling leaves publication unconfirmed and retains the original source/artifact for investigation. It never repeats an upload automatically.
 
 Partial registry/image/asset failures leave the GitHub release unfinished. Resume with the original source; verify every existing artifact and finalize only after all required surfaces are proven. Never infer public availability from a prepared version or an upload process exit alone.
 
 Current publication evidence and outstanding stable gates are tracked in [ROADMAP](../ROADMAP.md) and [the stable plan](stable/original-plan-2026-10-12.md). Apache-2.0 remains the effective license; bundled third-party notices travel with all native/npm/container artifacts.
+
+
+## Staged npm publication
+
+An npm placeholder `0.0.0-stage` is not a released WOS package. If npm stages the upload, a package maintainer must approve the staged version with npm's 2FA before it becomes public; see [npm staged publishing](https://docs.npmjs.com/staged-publishing/). This is a registry requirement, not a WOS approval flow. Verify the stage against the original source and tarball; never rebuild/reupload the same immutable version. The workflow waits up to 15 minutes for the original version and preserves a pending diagnostic and artifacts when unavailable.
+
+After approval, run `reconcile-npm.yml` with the original publication run ID. It reads that run's source gates, original package and native receipts, checks public SRI without uploading, then executes a registry-installed consumer on Linux/Windows. The consumer completes authenticated execution, independent review, correction and recovery outside the source checkout. A Windows test fixture does not add production Windows server support.
