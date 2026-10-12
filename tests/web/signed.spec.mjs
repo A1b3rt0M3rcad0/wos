@@ -83,7 +83,7 @@ for (const decision of ["approved", "changes_requested"])
     const cli = (workspace, profile, environment, ...args) =>
       JSON.parse(
         execFileSync(
-          resolve("../../bin/wosctl"),
+          resolve("../../bin/wos"),
           [
             ...args,
             "--workspace",
@@ -472,7 +472,7 @@ for (const decision of ["approved", "changes_requested"])
         .getByRole("button", { name: "Copy reviewer commands", exact: true })
         .click();
       const handoff = await page.evaluate(() => navigator.clipboard.readText());
-      assert.ok(handoff.includes("wosctl --profile reviewer review checkout"));
+      assert.ok(handoff.includes("wos --profile reviewer review checkout"));
       assert.ok(!handoff.includes(token));
       await expect(
         page.getByRole("button", {

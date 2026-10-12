@@ -1,4 +1,4 @@
-name: Release WOS and skills
+name: Release WOS and wosctl
 on:
   push:
     branches: [master]

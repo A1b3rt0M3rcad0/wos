@@ -47,7 +47,7 @@ Client trust requires explicit approval of the replacement fingerprint while
 retaining old pins. In an approved schema-2 workspace:
 
 ```sh
-wosctl --profile executor profile trust --issuer-fingerprint sha256:<approved-new-fingerprint>
+wos --profile executor profile trust --issuer-fingerprint sha256:<approved-new-fingerprint>
 ```
 
 Use the actual profile name and complete independently approved fingerprint.

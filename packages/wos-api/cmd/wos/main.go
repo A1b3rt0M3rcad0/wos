@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
+	cli "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 	wosskill "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill"
 )
@@ -18,6 +20,31 @@ func main() {
 }
 
 func run(args []string) int {
+	cli.Version, cli.Commit, cli.BuiltAt = server.Version, server.Commit, server.BuiltAt
+	if server.Version != "dev" {
+		wosskill.ReleaseVersion = server.Version
+	}
+	if len(args) > 0 && strings.HasPrefix(args[0], "--") && args[0] != "--version" && args[0] != "--help" {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		return cli.Run(ctx, args, os.Stdout, os.Stderr)
+	}
+	if len(args) > 0 {
+		switch args[0] {
+		case "init", "auth", "capabilities", "work", "contract", "outcome", "objective", "roadmap", "review", "profile", "project", "workspace", "protocol", "doctor":
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+			return cli.Run(ctx, args, os.Stdout, os.Stderr)
+		case "version":
+			if len(args) > 1 {
+				return cli.Run(context.Background(), args, os.Stdout, os.Stderr)
+			}
+		case "--version":
+			fmt.Println(server.CurrentVersion().String())
+			return 0
+		}
+	}
+
 	if len(args) > 0 && args[0] == "skill" {
 		return wosskill.Run(args[1:], os.Stdout, os.Stderr)
 	}
@@ -124,6 +151,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <server|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
+	fmt.Fprintln(os.Stderr, "usage: wos <init|project|profile|workspace|auth|capabilities|work|contract|outcome|objective|roadmap|review|protocol|server|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
 	return 2
 }

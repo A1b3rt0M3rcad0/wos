@@ -18,11 +18,11 @@ limits/layout are specified in the schema-2 guide and packaged schemas.
 
 ```sh
 go build -o wosctl ./packages/wos-cli/cmd/wosctl
-wosctl init --server https://wos.example.test --namespace UUIDv7 --outcome UUIDv7 --credential-env WOS_TOKEN --output json
-wosctl auth status --output json
-wosctl work checkout UUIDv7 --version 2 --output json
-wosctl work checkout --next --outcome UUIDv7 --output json
-wosctl work status UUIDv7 --output json
+wos init --server https://wos.example.test --namespace UUIDv7 --outcome UUIDv7 --credential-env WOS_TOKEN --output json
+wos auth status --output json
+wos work checkout UUIDv7 --version 2 --output json
+wos work checkout --next --outcome UUIDv7 --output json
+wos work status UUIDv7 --output json
 ```
 
 `--workspace PATH` selects an existing project root. Configuration contains an environment
@@ -59,16 +59,16 @@ can be removed only with explicit `work recover --break-lock`; this does not rev
 remote authority and requires the caller to stop the old local process first.
 
 ```sh
-wosctl work validate UUIDv7 --output json
-wosctl work checkpoint UUIDv7 --output json
-wosctl work sync UUIDv7 --output json
-wosctl work submit UUIDv7 --output json
-wosctl work finalize UUIDv7 --submission UUIDv7 --output json
-wosctl work recover UUIDv7 --output json
-wosctl work keepalive UUIDv7 --foreground --output json
-wosctl objective create --file objective.yaml --output json
-wosctl roadmap publish --file publish-command.yaml --output json
-wosctl review attest --file assessment-command.yaml --output json
+wos work validate UUIDv7 --output json
+wos work checkpoint UUIDv7 --output json
+wos work sync UUIDv7 --output json
+wos work submit UUIDv7 --output json
+wos work finalize UUIDv7 --submission UUIDv7 --output json
+wos work recover UUIDv7 --output json
+wos work keepalive UUIDv7 --foreground --output json
+wos objective create --file objective.yaml --output json
+wos roadmap publish --file publish-command.yaml --output json
+wos review attest --file assessment-command.yaml --output json
 ```
 
 Planning/review YAML uses the exact public command DTO, validated against the generated
@@ -90,7 +90,7 @@ from being sent to a different endpoint.
 The coordinated WOS npm service package includes `wos` and `wosctl` on Linux amd64.
 The skill package installs five skills separately. Native client assets contain the
 executable, schema files, licenses, README and `release.json` identifying version,
-commit, platform and SHA-256. `wosctl version --output json` works without credentials,
+commit, platform and SHA-256. `wos version --output json` works without credentials,
 a workspace or a service. Windows ZIP preparation requires actual matching Windows
 workspace/protocol/installer tests before publication; cross-compilation is not a
 supported-platform claim. Standalone clients do not require Node.
@@ -110,8 +110,8 @@ profile uses signed work/review operations with `--profile NAME` on every call.
 To preserve an old workspace in a separate approved schema-2 destination:
 
 ```sh
-wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --dry-run
-wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --destination ./signed-project
+wos workspace migrate --workspace ./legacy-project --to 2 --profile executor --dry-run
+wos workspace migrate --workspace ./legacy-project --to 2 --profile executor --destination ./signed-project
 ```
 
 Repeat the same command after an interruption. Changed drafts are preserved and

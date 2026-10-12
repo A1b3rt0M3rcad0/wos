@@ -61,7 +61,15 @@ type planned struct {
 	digests map[string]string
 }
 
+// ReleaseVersion is supplied by the unified release-built wos executable.
+// Empty preserves the canonical embedded bundle version for library consumers.
+var ReleaseVersion string
+
 func Version() (string, error) {
+	if ReleaseVersion != "" {
+		return ReleaseVersion, nil
+	}
+
 	var data struct {
 		Name    string `json:"name"`
 		Version string `json:"version"`

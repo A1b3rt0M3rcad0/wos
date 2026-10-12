@@ -35,7 +35,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const builtAt = new Date(Number(epoch) * 1000).toISOString().replace('.000Z','Z');
   const stages = {};
   await fs.mkdir(output, { recursive: true });
-  for (const [kind, src] of [['wos','wos-npm'], ['wos-skill','wos-skill'], ['wos-cli','wos-cli-npm']]) {
+  for (const [kind, src] of [['wos-cli','wos-cli-npm']]) {
     const stage = path.join(output,'npm',kind);
     await fs.rm(stage,{recursive:true,force:true}); await fs.mkdir(stage,{recursive:true});
     const pkg = JSON.parse(await fs.readFile(path.join(source,'packages',src,'package.json'),'utf8'));
@@ -50,7 +50,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     stages[kind] = {stage,pkg};
     if (kind === 'wos' || kind === 'wos-cli') await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});
   }
-  const native=path.join(stages.wos.stage,'native'); await fs.mkdir(native);
+  const native=path.join(output,'service-native'); await fs.mkdir(native,{recursive:true});
   const metadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server';
   const ldflags=`-s -w -X ${metadata}.Version=${version} -X ${metadata}.Commit=${commit} -X ${metadata}.BuiltAt=${builtAt}`;
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${ldflags}`,'-o',path.join(native,'wos'),'./packages/wos-api/cmd/wos'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
@@ -58,8 +58,8 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const clientFlags=`-s -w -X ${clientMetadata}.Version=${version} -X ${clientMetadata}.Commit=${commit} -X ${clientMetadata}.BuiltAt=${builtAt}`;
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(native,'wosctl'),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
   const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]}}};
-  await fs.writeFile(path.join(stages.wos.stage,'release.json'),JSON.stringify(release,null,2)+'\n');
-  run('sh',['tools/distribution/notices.sh',path.join(stages.wos.stage,'third-party-notices')],{cwd:source});
+  await fs.writeFile(path.join(output,'server-release.json'),JSON.stringify(release,null,2)+'\n');
+  run('sh',['tools/distribution/notices.sh',path.join(stages['wos-cli'].stage,'third-party-notices')],{cwd:source});
   // The standalone npm CLI embeds source-identical Linux and Windows Go binaries.
   const cliNative=path.join(stages['wos-cli'].stage,'native');
   const cliBinaries={};
@@ -78,19 +78,18 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     }
   }
   await fs.writeFile(path.join(stages['wos-cli'].stage,'release.json'),JSON.stringify({schema:1,version,commit,built_at:builtAt,binaries:cliBinaries,work_protocol:'signed_contracts_v2',workspace_schema:2},null,2)+'\n');
-  await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(stages['wos-cli'].stage,'third-party-notices'),{recursive:true});
   const artifacts=[];
   for(const [kind,{stage,pkg}] of Object.entries(stages)) {
     await normalize(stage);
     const pack=JSON.parse(run('npm',['pack',stage,'--ignore-scripts','--json','--pack-destination',output]))[0];
-    const filename=`${kind}-${version}.tgz`;
+    const filename=`${kind==='wos-cli'?'wosctl':kind}-${version}.tgz`;
     await fs.rename(path.join(output,pack.filename),path.join(output,filename));
     artifacts.push({kind,name:pkg.name,version,filename,integrity:pack.integrity,sha256:sha256(await fs.readFile(path.join(output,filename)))});
   }
   const archiveStage=path.join(output,'archive'); await fs.rm(archiveStage,{recursive:true,force:true}); await fs.mkdir(archiveStage);
-  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(stages.wos.stage,'release.json'),'release.json'],[path.join(source,'packages/wos-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
-  await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
-  await fs.cp(path.join(stages.wos.stage,'schemas'),path.join(archiveStage,'schemas'),{recursive:true});
+  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(output,'server-release.json'),'release.json'],[path.join(source,'packages/wos-cli-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
+  await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
+  await fs.cp(path.join(stages['wos-cli'].stage,'schemas'),path.join(archiveStage,'schemas'),{recursive:true});
   await normalize(archiveStage);
   const archive=`wos_${version}_linux_amd64.tar.gz`;
   run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,archive),'-C',archiveStage,'.']);
@@ -99,9 +98,11 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     const stage=path.join(output,`client-${platform}`);await fs.rm(stage,{recursive:true,force:true});await fs.mkdir(stage,{recursive:true});
     const executable=platform==='windows'?'wosctl.exe':'wosctl';
     run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(stage,executable),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
-    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]};
+    const primary=platform==='windows'?'wos.exe':'wos';
+    await fs.copyFile(path.join(cliNative,platform+'-amd64',primary),path.join(stage,primary));
+    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),wos_sha256:sha256(await fs.readFile(path.join(stage,primary))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]};
     await fs.writeFile(path.join(stage,'release.json'),JSON.stringify(clientRelease,null,2)+'\n');
-    await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages.wos.stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
+    await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
     const filename=`wosctl_${version}_${platform}_amd64.${platform==='windows'?'zip':'tar.gz'}`;
     if(platform==='windows')run('python3',['tools/distribution/zip.py',stage,path.join(output,filename),epoch],{cwd:source});
     else run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,filename),'-C',stage,'.']);

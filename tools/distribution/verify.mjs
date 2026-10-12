@@ -22,40 +22,40 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const stage=path.join(output,`client-${platform}`),filename=platform==='windows'?'wosctl.exe':'wosctl';
     const metadata=JSON.parse(await fs.readFile(path.join(stage,'release.json'),'utf8'));
     assert.equal(metadata.version,manifest.version);assert.equal(metadata.commit,manifest.commit);assert.equal(metadata.built_at,manifest.built_at);assert.equal(metadata.sha256,a.binary_sha256);assert.equal(sha256(await fs.readFile(path.join(stage,filename))),a.binary_sha256);
+    const primary=path.join(stage,platform==='windows'?'wos.exe':'wos');
+    assert.equal(sha256(await fs.readFile(primary)),manifest.cli_binaries[platform+'-amd64'].wos.sha256);
+    assert.equal(metadata.wos_sha256,manifest.cli_binaries[platform+'-amd64'].wos.sha256);
+    if(platform==='linux')assert.equal(JSON.parse(run(primary,['version','--output','json'])).data.commit,manifest.commit);
     const bytes=await fs.readFile(path.join(stage,filename));assert.equal(platform==='windows'?bytes.subarray(0,2).toString():bytes.subarray(1,4).toString(),platform==='windows'?'MZ':'ELF');
     if(platform==='linux'){assert.equal(JSON.parse(run(path.join(stage,filename),['version','--output','json'])).data.commit,manifest.commit)}
   }
   const consumer=await fs.mkdtemp(path.join(os.tmpdir(),'wos-npm-consumer-'));
   let server;
   try {
-    const packs=manifest.artifacts.filter(a=>['wos','wos-skill'].includes(a.kind));
-    assert.equal(packs.length,2);
+    const packs=manifest.artifacts.filter(a=>a.kind==='wos-cli');
+    assert.equal(packs.length,1);
+    assert.equal(packs[0].name,'wosctl');
     run('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--package-lock=false','--prefix',consumer,...packs.map(a=>path.join(output,a.filename))]);
     const cli=path.join(consumer,'node_modules/.bin/wos');
-    const notices=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/third-party-notices');
+    const notices=path.join(consumer,'node_modules/wosctl/third-party-notices');
     assert.ok((await fs.readFile(path.join(notices,'Go-LICENSE.txt'),'utf8')).includes('Copyright'));
     assert.match(await fs.readFile(path.join(notices,'index.md'),'utf8'),/github.com\/modelcontextprotocol\/go-sdk@v1.8.0/);
     const version=run(cli,['version']);
     assert.ok(version.includes(`wos ${manifest.version} (commit ${manifest.commit}, built ${manifest.built_at})`));
     run(cli,['config','validate']);
-    const client=path.join(consumer,'node_modules/.bin/wosctl');
+    const client=cli;
     const clientVersion=JSON.parse(run(client,['version','--output','json'])).data;
     assert.equal(clientVersion.version,manifest.version);assert.equal(clientVersion.commit,manifest.commit);assert.equal(clientVersion.built_at,manifest.built_at);
-    const installedRelease=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/release.json'),'utf8'));
-    assert.equal(installedRelease.clients.wosctl.work_protocol,clientVersion.work_protocol);
-    assert.equal(installedRelease.clients.wosctl.workspace_schema,clientVersion.workspace_schema);
-    assert.deepEqual(installedRelease.clients.wosctl.supported_work_protocols,clientVersion.supported_work_protocols);
-    const draftSchema=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/schemas/contract-v2.schema.json'),'utf8'));
+    const installedRelease=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/wosctl/release.json'),'utf8'));
+    assert.equal(installedRelease.work_protocol,clientVersion.work_protocol);
+    assert.equal(installedRelease.workspace_schema,clientVersion.workspace_schema);
+    assert.ok(clientVersion.supported_work_protocols.includes('signed_contracts_v2'));
+    const draftSchema=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/wosctl/schemas/contract-v2.schema.json'),'utf8'));
     assert.equal(draftSchema.properties.schema_version.const,2);
     assert.match(await fs.readFile(path.join(notices,'index.md'),'utf8'),/go.yaml.in\/yaml\/v3@v3.0.5/);
     assert.throws(()=>run(cli,['not-a-command']),/failed/);
-    const skill=path.join(consumer,'node_modules/.bin/wos-skill');
-    assert.equal(run(skill,['--version']),manifest.version);
-    assert.equal(JSON.parse(run(skill,['install','--agent','all','--project',consumer])).length,20);
-    run(skill,['doctor','--agent','all','--project',consumer]);
-    run(skill,['uninstall','--agent','all','--project',consumer]);
     // Use the native Go binary directly. These calls must not require Node/npm.
-    const nativeBinary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wos');
+    const nativeBinary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wos');
     assert.equal(run(nativeBinary,['skill','version']),manifest.version);
     const nativeRoot=path.join(consumer,'native-skill-fixture');
     const preview=JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot,'--dry-run']));
@@ -63,24 +63,14 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.equal(JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot])).length,20);
     assert.ok(JSON.parse(run(nativeBinary,['skill','install','--agent','all','--project',nativeRoot])).every(x=>x.action==='unchanged'));
     assert.ok(JSON.parse(run(nativeBinary,['skill','doctor','--agent','all','--project',nativeRoot])).every(x=>x.action==='installed'));
-    // Node's existing compatibility installer must recognize native Go ownership.
-    run(skill,['doctor','--agent','all','--project',nativeRoot]);
+    assert.ok(JSON.parse(run(nativeBinary,['skill','update','--agent','all','--project',nativeRoot])).every(x=>x.action==='unchanged'));
+    const genericRoot=path.join(consumer,'generic-skill-fixture');
+    assert.equal(JSON.parse(run(nativeBinary,['skill','install','--agent','generic','--dir',genericRoot])).length,5);
+    assert.ok(JSON.parse(run(nativeBinary,['skill','doctor','--agent','generic','--dir',genericRoot])).every(x=>x.action==='installed'));
+    assert.equal(JSON.parse(run(nativeBinary,['skill','uninstall','--agent','generic','--dir',genericRoot])).length,5);
     assert.ok(JSON.parse(run(nativeBinary,['skill','uninstall','--agent','all','--project',nativeRoot])).every(x=>x.action==='remove'));
 
-    // Separate npm prefix avoids bin conflicts with the server distribution.
-    const standalone=manifest.artifacts.find(a=>a.kind==='wos-cli');assert.ok(standalone);
-    const cliRoot=path.join(consumer,'standalone-client');
-    run('npm',['install','--offline','--ignore-scripts','--no-audit','--no-fund','--package-lock=false','--prefix',cliRoot,path.join(output,standalone.filename)]);
-    const nativeWos=path.join(cliRoot,'node_modules/.bin/wos');
-    const nativeWosctl=path.join(cliRoot,'node_modules/.bin/wosctl');
-    assert.ok(run(nativeWos,['version']).includes(`wos ${manifest.version} (commit ${manifest.commit}`));
-    const independentCtl=JSON.parse(run(nativeWosctl,['version','--output','json'])).data;
-    assert.equal(independentCtl.version,manifest.version);assert.equal(independentCtl.commit,manifest.commit);
-    assert.equal(JSON.parse(run(nativeWos,['skill','install','--agent','codex','--project',cliRoot])).length,5);
-    assert.ok(JSON.parse(run(nativeWos,['skill','doctor','--agent','codex','--project',cliRoot])).every(x=>x.action==='installed'));
-    assert.equal(JSON.parse(run(nativeWos,['skill','uninstall','--agent','codex','--project',cliRoot])).length,5);
-    const cliMetadata=JSON.parse(await fs.readFile(path.join(cliRoot,'node_modules/@woobeai/wos-cli/release.json'),'utf8'));
-    assert.deepEqual(cliMetadata.binaries,manifest.cli_binaries);
+    assert.deepEqual(installedRelease.binaries,manifest.cli_binaries);
     const log=[];
     // Reserve and release an ephemeral TCP port immediately before startup.
     const {createServer}=await import('node:net');
@@ -118,11 +108,11 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     await stop(server); assert.equal(server.exitCode,0,'SIGTERM reaches Go graceful shutdown');server=null;
     const signed=await verifySignedPackage(cli,client);
     assert.equal(signed.protocol,'signed_contracts_v2');
-    const binary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wos');
-    await fs.appendFile(binary,'corruption');
-    assert.throws(()=>run(cli,['version']),/integrity\/version check failed/);
-    const clientBinary=path.join(consumer,'node_modules/@a1b3rt0m3rcad0/wos/native/wosctl');await fs.appendFile(clientBinary,'corruption');assert.throws(()=>run(client,['version']),/integrity\/version check failed/);
-    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','native Go offline skill installer and interoperability','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection','cross-platform standalone Go CLI npm package']};
+    const binary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wos');
+    await fs.writeFile(binary+'.corrupt',Buffer.concat([await fs.readFile(binary),Buffer.from('corruption')]));await fs.rename(binary+'.corrupt',binary);
+    assert.throws(()=>run(cli,['version']),/checksum mismatch/);
+    const clientBinary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wosctl');await fs.writeFile(clientBinary+'.corrupt',Buffer.concat([await fs.readFile(clientBinary),Buffer.from('corruption')]));await fs.rename(clientBinary+'.corrupt',clientBinary);assert.throws(()=>run(path.join(consumer,'node_modules/.bin/wosctl'),['version']),/checksum mismatch/);
+    return {version:manifest.version,commit:manifest.commit,checks:['artifact hashes','offline npm install','server/client source versions and exit propagation','packaged CLI init/checkout/status/recover','signed protected profile checkout/finish/independent review/recover','four skill destinations','native Go offline skill install/update/doctor/uninstall and generic destination','HTTP/MCP/UI readiness','SIGTERM graceful shutdown','corruption rejection','cross-platform standalone Go CLI npm package']};
   } finally {if(server)await stop(server);await fs.rm(consumer,{recursive:true,force:true});}
 }
 

@@ -3,14 +3,14 @@
 Schema-2 workspaces support `work sign`, `work send`, `work finish` and the corresponding `review` commands. Choose an explicit profile when a workspace contains several profiles.
 
 ```sh
-wosctl --profile executor work show CONTRACT_ID --for-agent
+wos --profile executor work show CONTRACT_ID --for-agent
 # Edit execution.progress and execution.material in this contract's YAML.
 # execution.completion_intent is auto, direct or review.
-wosctl --profile executor work sign CONTRACT_ID
-wosctl --profile executor work send CONTRACT_ID
+wos --profile executor work sign CONTRACT_ID
+wos --profile executor work send CONTRACT_ID
 # finish prepares an unsigned draft when needed, then sends and cleans up.
-wosctl --profile executor work finish CONTRACT_ID
-wosctl --profile executor work recover --all-pending
+wos --profile executor work finish CONTRACT_ID
+wos --profile executor work recover --all-pending
 ```
 
 The harness reads the signing key from the approved protected reference. Model output does not contain secrets, signatures or frozen envelopes. Sign checks current own key/policy, original CredentialID, exact authority, fencing and Task/case versions. It does not renew a lease or silently change the draft's expected version. `--completion` must match the explicitly edited execution draft. Core always performs decisive live authorization inside its transaction.

@@ -8,8 +8,8 @@ Migration does not redirect credentials, generate issuer signatures or assume
 that a copied legacy lease grants signed execution authority.
 
 ```sh
-wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --dry-run
-wosctl workspace migrate --workspace ./legacy-project --to 2 --profile executor --destination ./signed-project
+wos workspace migrate --workspace ./legacy-project --to 2 --profile executor --dry-run
+wos workspace migrate --workspace ./legacy-project --to 2 --profile executor --destination ./signed-project
 # After interruption, repeat the same command with the same approved destination.
 ```
 

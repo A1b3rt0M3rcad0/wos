@@ -128,7 +128,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 			err = usage("--break-lock is only allowed with explicit work recover")
 		}
 		if len(o.args) == 0 {
-			err = usage("usage: wosctl init|auth status|capabilities|work|contract|outcome|objective|roadmap|review")
+			err = usage("usage: wos init|auth status|capabilities|work|contract|outcome|objective|roadmap|review")
 		} else {
 			result.Operation = strings.Join(o.args, " ")
 			if err == nil {

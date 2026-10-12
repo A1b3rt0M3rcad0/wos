@@ -378,7 +378,7 @@ export function contractViews({
           .askAnAdministratorForACredentialAndEnrollmentForYourRoleVeri4e28b08c,
       ),
     );
-    const example = `wosctl init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
+    const example = `wos init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
     onboarding.append(
       el("pre", example),
       el(
@@ -673,18 +673,18 @@ export function contractViews({
         instructions.append(
           cliHandoff(
             copy.text.executor,
-            `wosctl --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
-wosctl --profile executor work show CONTRACT_UUID --for-agent
-wosctl --profile executor work finish CONTRACT_UUID`,
+            `wos --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
+wos --profile executor work show CONTRACT_UUID --for-agent
+wos --profile executor work finish CONTRACT_UUID`,
           ),
         );
       if (entity.pending_review_case_id && pendingReviewVersion !== undefined)
         instructions.append(
           cliHandoff(
             copy.text.reviewer,
-            `wosctl --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
-wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
-wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID`,
+            `wos --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
+wos --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
+wos --profile reviewer review finish REVIEW_CONTRACT_UUID`,
           ),
         );
       instructions.append(

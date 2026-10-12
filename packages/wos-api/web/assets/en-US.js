@@ -686,7 +686,7 @@ export const copy = Object.freeze({
     publishedRoadmap: "Published roadmap",
     technicalDetailsAndAudit: "Technical details and audit",
     thisFlowRequiresAnAuthorizedProfileAndProtectedSignatureUseW6de2babd:
-      "This flow requires an authorized profile and protected signature. Use wosctl for execution or review.",
+      "This flow requires an authorized profile and protected signature. Use wos for execution or review.",
     actionsForThisItem: "Actions for this item",
     otherActions: "Other actions",
     chooseAnItem: "Choose an item",

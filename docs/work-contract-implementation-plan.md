@@ -198,7 +198,7 @@ Não importar regras do lock de deployment da Woobe. O contrato do WOS trata uma
 
 Criar **`packages/wos-cli` como componente cliente e `wosctl` como executável**. Preservar `wos` como entrypoint de servidor/administração existente. Isso evita dois binários diferentes com o mesmo nome e permite instalar apenas o cliente em Windows ou macOS.
 
-Os exemplos anteriores `wos work checkout` eram ilustrativos. Neste plano, a sintaxe executável proposta é `wosctl work checkout`. Uma unificação futura do front-end não pode alterar os contratos de domínio nem introduzir escrita direta no banco pelo cliente.
+Os exemplos anteriores `wos work checkout` eram ilustrativos. Neste plano, a sintaxe executável proposta é `wos work checkout`. Uma unificação futura do front-end não pode alterar os contratos de domínio nem introduzir escrita direta no banco pelo cliente.
 
 ---
 
@@ -684,7 +684,7 @@ Critérios ausentes ou negativos não liberam o lock. O resultado permanece subm
 
 ### 11.5 Atalho ergonômico `finish`
 
-`wosctl work finish` pode executar uma sequência explícita: sincronizar os itens pendentes, submeter a entrega e tentar finalizar. Cada mutação tem sua chave e recibo. O comando imprime o ponto alcançado e não afirma conclusão se ficou esperando revisão.
+`wos work finish` pode executar uma sequência explícita: sincronizar os itens pendentes, submeter a entrega e tentar finalizar. Cada mutação tem sua chave e recibo. O comando imprime o ponto alcançado e não afirma conclusão se ficou esperando revisão.
 
 Uma entrega sem critérios obrigatórios ainda exige resumo e as precondições aplicáveis. Não inventar um caminho automático de aprovação de critérios para fazer `finish` sempre retornar sucesso.
 
@@ -1121,32 +1121,32 @@ Todos os comandos desta seção são propostos para `wosctl`. Não confundir com
 
 | Comando | Semântica |
 |---|---|
-| `wosctl init` | Criar workspace e confirmar servidor/Namespace |
-| `wosctl auth status` | Mostrar identidade/escopo resolvidos, sem expor token |
-| `wosctl capabilities` | Inspecionar versão de protocolo, schemas e limites |
-| `wosctl outcome list/get/create` | Consultar/criar Outcomes pelos contratos existentes |
-| `wosctl objective list/get/create` | Gerenciar planejamento básico com autorização |
-| `wosctl work list/get/create` | Consultar/criar WorkItems |
-| `wosctl work checkout <id>` | Adquirir contrato e materializar o workspace |
-| `wosctl work checkout --next --outcome <id>` | Selecionar/adquirir uma elegível |
-| `wosctl work status <id>` | Mostrar contrato efetivo, prazo, pendências e omissões |
-| `wosctl work refresh <id>` | Atualizar estado/contexto sem sobrescrever resultado local |
-| `wosctl work resume <id>` | Reencontrar/materializar aquisição existente; verificar autoridade |
-| `wosctl work resume <id> --takeover` | Anexar nova execução do mesmo titular, com fencing novo |
-| `wosctl work renew <id>` | Solicitar uma renovação |
-| `wosctl work keepalive <id> --foreground` | Loop de renovação explicitamente iniciado |
-| `wosctl work diff <id>` | Mostrar o que será sincronizado e divergências de base |
-| `wosctl work validate <id>` | Validar estrutura e binding local; não declarar aceite remoto |
-| `wosctl work checkpoint <id>` | Registrar checkpoint com recibo |
-| `wosctl work sync <id>` | Persistir itens permitidos, sem concluir |
-| `wosctl work submit <id>` | Congelar entrega e obter submission_id |
-| `wosctl work finalize <id> --submission <id>` | Tentar a conclusão validada |
-| `wosctl work finish <id>` | Sequência ergonômica sync → submit → finalize |
-| `wosctl work recover <id>` | Reconciliar journal/recibos, sem adquirir outra tarefa silenciosamente |
-| `wosctl contract list/get/history` | Inspecionar aquisições e histórico |
-| `wosctl contract revoke <id> --reason <texto>` | Revogação administrativa autorizada |
-| `wosctl review ...` | Consultar submissões e registrar assessments autorizados |
-| `wosctl roadmap ...` | Adaptar operações existentes de draft/publicação/ativação |
+| `wos init` | Criar workspace e confirmar servidor/Namespace |
+| `wos auth status` | Mostrar identidade/escopo resolvidos, sem expor token |
+| `wos capabilities` | Inspecionar versão de protocolo, schemas e limites |
+| `wos outcome list/get/create` | Consultar/criar Outcomes pelos contratos existentes |
+| `wos objective list/get/create` | Gerenciar planejamento básico com autorização |
+| `wos work list/get/create` | Consultar/criar WorkItems |
+| `wos work checkout <id>` | Adquirir contrato e materializar o workspace |
+| `wos work checkout --next --outcome <id>` | Selecionar/adquirir uma elegível |
+| `wos work status <id>` | Mostrar contrato efetivo, prazo, pendências e omissões |
+| `wos work refresh <id>` | Atualizar estado/contexto sem sobrescrever resultado local |
+| `wos work resume <id>` | Reencontrar/materializar aquisição existente; verificar autoridade |
+| `wos work resume <id> --takeover` | Anexar nova execução do mesmo titular, com fencing novo |
+| `wos work renew <id>` | Solicitar uma renovação |
+| `wos work keepalive <id> --foreground` | Loop de renovação explicitamente iniciado |
+| `wos work diff <id>` | Mostrar o que será sincronizado e divergências de base |
+| `wos work validate <id>` | Validar estrutura e binding local; não declarar aceite remoto |
+| `wos work checkpoint <id>` | Registrar checkpoint com recibo |
+| `wos work sync <id>` | Persistir itens permitidos, sem concluir |
+| `wos work submit <id>` | Congelar entrega e obter submission_id |
+| `wos work finalize <id> --submission <id>` | Tentar a conclusão validada |
+| `wos work finish <id>` | Sequência ergonômica sync → submit → finalize |
+| `wos work recover <id>` | Reconciliar journal/recibos, sem adquirir outra tarefa silenciosamente |
+| `wos contract list/get/history` | Inspecionar aquisições e histórico |
+| `wos contract revoke <id> --reason <texto>` | Revogação administrativa autorizada |
+| `wos review ...` | Consultar submissões e registrar assessments autorizados |
+| `wos roadmap ...` | Adaptar operações existentes de draft/publicação/ativação |
 
 Não incluir `unlock` ou `release` acessível ao titular. O comando administrativo recebe contract_id, não apenas WorkItemID.
 
@@ -1232,7 +1232,7 @@ Logs locais e do servidor devem ter redaction. O payload necessário ao retry po
 
 ### 18.1 Quem renova
 
-No runtime remoto, o host ou um helper explicitamente configurado acompanha o lease. No desenvolvimento local, `wosctl work keepalive --foreground` ou integração equivalente do host renova enquanto estiver em execução.
+No runtime remoto, o host ou um helper explicitamente configurado acompanha o lease. No desenvolvimento local, `wos work keepalive --foreground` ou integração equivalente do host renova enquanto estiver em execução.
 
 Não depender de o modelo lembrar de renovar. Também não afirmar que um simples checkout instala um serviço permanente ou detecta automaticamente se o Codex/Claude ainda está trabalhando.
 
@@ -1284,27 +1284,27 @@ Os IDs devem vir da criação/consulta real. As variáveis abaixo representam va
 
 ```bash
 # Cliente configurado e autenticado por referência de credencial.
-wosctl init --profile development
-wosctl auth status --output json
-wosctl capabilities --output json
+wos init --profile development
+wos auth status --output json
+wos capabilities --output json
 
 # Consultar e adquirir uma tarefa específica.
-wosctl work list --outcome "$OUTCOME_ID" --available --limit 5 --output json
-wosctl work checkout "$WORK_ITEM_ID" --ttl 300 --output json
-wosctl work status "$WORK_ITEM_ID" --output json
+wos work list --outcome "$OUTCOME_ID" --available --limit 5 --output json
+wos work checkout "$WORK_ITEM_ID" --ttl 300 --output json
+wos work status "$WORK_ITEM_ID" --output json
 
 # O host inicia/supervisiona esta renovação separadamente da execução do agente.
-wosctl work keepalive "$WORK_ITEM_ID" --foreground
+wos work keepalive "$WORK_ITEM_ID" --foreground
 
 # Durante o trabalho, em outra invocação do cliente:
-wosctl work validate "$WORK_ITEM_ID"
-wosctl work diff "$WORK_ITEM_ID"
-wosctl work checkpoint "$WORK_ITEM_ID" --output json
-wosctl work sync "$WORK_ITEM_ID" --output json
+wos work validate "$WORK_ITEM_ID"
+wos work diff "$WORK_ITEM_ID"
+wos work checkpoint "$WORK_ITEM_ID" --output json
+wos work sync "$WORK_ITEM_ID" --output json
 
 # Entrega e finalização continuam distinguíveis.
-wosctl work submit "$WORK_ITEM_ID" --output json
-wosctl work finalize "$WORK_ITEM_ID" --submission "$SUBMISSION_ID" --output json
+wos work submit "$WORK_ITEM_ID" --output json
+wos work finalize "$WORK_ITEM_ID" --submission "$SUBMISSION_ID" --output json
 ```
 
 Quando houver várias pastas históricas da mesma WorkItem, os comandos exigem seleção inequívoca do contrato ou usam o contrato atual validado no servidor. Nunca escolher silenciosamente a pasta de modificação mais recente.

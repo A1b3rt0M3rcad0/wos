@@ -18,7 +18,7 @@ export async function verifySignedPackage(serverBinary, clientBinary) {
  async function api(path,credential,body){const response=await fetch(url+'/api/v1'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${credential}`,'Content-Type':'application/json',...(body?{'Idempotency-Key':randomUUID()}: {})},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json();assert.ok(response.ok,JSON.stringify(data));return data}
  const command=async(name,value)=>(await api('/commands/'+name,token,{command:value})).value;
  const signing=async(value)=>api('/security/signing-commands',token,value);
- const cli=(workspace,profile,environment,...args)=>JSON.parse(execFileSync(clientBinary,[...args,'--workspace',workspace,'--profile',profile,'--output','json'],{env:{...process.env,...environment},encoding:'utf8',timeout:20000}));
+ const cli=(workspace,profile,environment,...args)=>JSON.parse(execFileSync(clientBinary,['--profile',profile,...args,'--workspace',workspace,'--output','json'],{env:{...process.env,...environment},encoding:'utf8',timeout:20000}));
  async function editDraft(path,section,changes){
   const original=await readFile(path,'utf8'),lines=original.split('\n');const start=lines.indexOf(section+':');assert.ok(start>=0,'editable draft exists');
   let end=start+1;while(end<lines.length&&(lines[end].startsWith(' ')||!lines[end]))end++;

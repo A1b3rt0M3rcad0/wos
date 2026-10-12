@@ -26,4 +26,4 @@ trust rotation and verified receipt cleanup.
 5. Same-holder takeover is explicit and rotates execution/fencing; it does not revive expiry. A new valid contract after expiry preserves the WorkItem ID and in_progress lifecycle but has a new spec/authority. Stop old execution effects.
 6. Return a small resume packet: current obligation, durable progress/proof IDs, authority, blocker, next action and links. Avoid transcript dumps and full Outcome snapshots when a contract suffices.
 
-For local files use wos-workspace and `wosctl work recover/status/diff`; refresh preserves edited result/checkpoint drafts. Read [protocol and recovery](references/protocol.md) when resolving transport ambiguity. Do not invent a release or a fourth terminal contract cause.
+For local files use wos-workspace and `wos work recover/status/diff`; refresh preserves edited result/checkpoint drafts. Read [protocol and recovery](references/protocol.md) when resolving transport ambiguity. Do not invent a release or a fourth terminal contract cause.

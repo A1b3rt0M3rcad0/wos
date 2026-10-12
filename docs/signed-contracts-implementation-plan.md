@@ -930,17 +930,17 @@ O administrador provisiona no WOS os Principals, grants, credenciais com políti
 
 ```bash
 # Inicialização do workspace v2, preservando o binário de cliente existente.
-wosctl init --server https://wos.example.test \
+wos init --server https://wos.example.test \
   --namespace <namespace-id> --outcome <outcome-id> \
   --workspace-schema 2
 
 # Entrada protegida da API Key; chave privada gerada no secret store.
-wosctl profile create executor_a \
+wos profile create executor_a \
   --token-stdin --generate-signing-key \
   --enrollment <enrollment-id>
 
-wosctl --profile executor_a auth status --output json
-wosctl --profile executor_a profile inspect --output json
+wos --profile executor_a auth status --output json
+wos --profile executor_a profile inspect --output json
 ```
 
 A criação verifica a identidade antes de fixá-la no profile, obtém challenge de enrollment, prova posse, registra chave pública e valida a configuração final. Uma criação interrompida deixa estado explícito `enrollment_pending`, sem gerar outra chave indefinidamente ou perder a referência à chave já criada.
@@ -951,21 +951,21 @@ O comando `profile inspect` exibe Principal, servidor, Namespace, key ID, finger
 
 ```bash
 # Adquirir uma Task conhecida.
-wosctl --profile executor_a work checkout <work-item-id> --version <version>
+wos --profile executor_a work checkout <work-item-id> --version <version>
 
 # Ou adquirir até três Tasks elegíveis.
-wosctl --profile executor_a work checkout --next --count 3
+wos --profile executor_a work checkout --next --count 3
 
 # Ler o trabalho sem incluir envelope técnico no contexto.
-wosctl --profile executor_a work show <contract-id> --for-agent
+wos --profile executor_a work show <contract-id> --for-agent
 
 # Executar ferramentas do projeto fora do WOS, preencher execution no YAML.
 # Sincronização intermediária é opcional, mas recomendada antes de longas interrupções.
-wosctl --profile executor_a work validate <contract-id>
-wosctl --profile executor_a work sync <contract-id>
+wos --profile executor_a work validate <contract-id>
+wos --profile executor_a work sync <contract-id>
 
 # Caminho principal: prepara, assina, envia e limpa após confirmação.
-wosctl --profile executor_a work finish <contract-id> --completion direct
+wos --profile executor_a work finish <contract-id> --completion direct
 ```
 
 O retorno direto v2 deve registrar evidências/artefatos novos, submissão, autoavaliações permitidas, conclusão, contrato `completed`, WorkItem `done`, eventos e receipt em **uma transação de domínio**. Não reutilizar a sequência atual do `finish` como se vários commits fossem atomicidade do retorno final. [S04][S08]
@@ -984,8 +984,8 @@ Resultado JSON inclui IDs/digests e distingue `remote_committed` de `local_clean
 ### 11.3. Assinar e enviar em passos separados
 
 ```bash
-wosctl --profile executor_a work sign <contract-id> --completion auto
-wosctl --profile executor_a work send <contract-id>
+wos --profile executor_a work sign <contract-id> --completion auto
+wos --profile executor_a work send <contract-id>
 ```
 
 `sign` grava a intenção congelada no próprio contrato. `send` envia exatamente essa intenção. Se o agente editar o material depois de assinar, o CLI recusa o envio como versão divergente. Se a intenção já foi enviada e sua confirmação é desconhecida, não permite re-assinar sem recovery.
@@ -995,14 +995,14 @@ wosctl --profile executor_a work send <contract-id>
 ### 11.4. Fluxo B — credencial com revisão obrigatória
 
 ```bash
-wosctl profile create executor_b \
+wos profile create executor_b \
   --token-stdin --generate-signing-key --enrollment <enrollment-id>
 
-wosctl --profile executor_b work checkout --next --count 2
-wosctl --profile executor_b work show <contract-id> --for-agent
+wos --profile executor_b work checkout --next --count 2
+wos --profile executor_b work show <contract-id> --for-agent
 
 # Executa, documenta evidências e retorna.
-wosctl --profile executor_b work finish <contract-id> --completion auto
+wos --profile executor_b work finish <contract-id> --completion auto
 ```
 
 A política efetiva resolve `auto` para revisão. Uma solicitação explícita `direct` sem permissão retorna erro de autorização; o CLI não apresenta o resultado como conclusão direta.
@@ -1012,16 +1012,16 @@ O servidor aceita o retorno, fecha o WorkContract como `delivered`, abre ReviewC
 ### 11.5. Fluxo C — reviewer solicita correções
 
 ```bash
-wosctl profile create reviewer_a \
+wos profile create reviewer_a \
   --token-stdin --generate-signing-key --enrollment <enrollment-id>
 
-wosctl --profile reviewer_a review checkout --next --count 1
-wosctl --profile reviewer_a review show <review-contract-id> --for-agent
+wos --profile reviewer_a review checkout --next --count 1
+wos --profile reviewer_a review show <review-contract-id> --for-agent
 
 # Inspeciona artefatos exatos, executa verificações fora do servidor,
 # preenche findings e assessments na seção review do mesmo YAML.
-wosctl --profile reviewer_a review validate <review-contract-id>
-wosctl --profile reviewer_a review finish <review-contract-id>
+wos --profile reviewer_a review validate <review-contract-id>
+wos --profile reviewer_a review finish <review-contract-id>
 ```
 
 Com `decision: changes_requested`, o servidor registra decisão assinada, fecha ReviewContract, torna a Task elegível para correção quando não bloqueada e emite os fatos correspondentes. O CLI exclui o contrato de revisão confirmado.
@@ -1031,11 +1031,11 @@ O servidor não envia a API Key do executor ao reviewer. Também não entrega ao
 ### 11.6. Fluxo D — corrigir e reapresentar
 
 ```bash
-wosctl --profile executor_b work checkout <work-item-id> --version <current-version>
-wosctl --profile executor_b work show <new-contract-id> --for-agent
+wos --profile executor_b work checkout <work-item-id> --version <current-version>
+wos --profile executor_b work show <new-contract-id> --for-agent
 
 # Corrige os findings e registra evidências novas, com novos commits/checksums.
-wosctl --profile executor_b work finish <new-contract-id> --completion auto
+wos --profile executor_b work finish <new-contract-id> --completion auto
 ```
 
 O novo contrato contém referências à entrega anterior, findings pendentes e nova autoridade. A especificação não pode mudar silenciosamente para incorporar exigências fora do escopo. `addressed_findings` vincula cada resposta ao finding original e suas evidências.
@@ -1047,8 +1047,8 @@ Outro executor autorizado pode assumir a correção conforme política de atribu
 O reviewer adquire a revisão da última submissão, marca `approved` com assessments válidos e retorna. Na transação de aceitação o WOS conclui a WorkItem e o contrato de revisão, sem renovar ou reativar o contrato de execução já entregue.
 
 ```bash
-wosctl --profile reviewer_a review checkout --next
-wosctl --profile reviewer_a review finish <review-contract-id>
+wos --profile reviewer_a review checkout --next
+wos --profile reviewer_a review finish <review-contract-id>
 ```
 
 Critério de aceite decisivo: o processo do executor foi encerrado e o YAML dele já não existe, mas a aprovação e o `DONE` continuam funcionando exclusivamente com o profile do reviewer.
@@ -1056,13 +1056,13 @@ Critério de aceite decisivo: o processo do executor foi encerrado e o YAML dele
 ### 11.8. Recuperação e manutenção
 
 ```bash
-wosctl --profile executor_b work recover --all-pending
-wosctl --profile executor_b work refresh <contract-id>
-wosctl --profile executor_b work renew <contract-id>
-wosctl --profile executor_b work keepalive --foreground --all-active
+wos --profile executor_b work recover --all-pending
+wos --profile executor_b work refresh <contract-id>
+wos --profile executor_b work renew <contract-id>
+wos --profile executor_b work keepalive --foreground --all-active
 
 # Diagnose não revela segredos nem altera autoridade.
-wosctl --profile executor_b doctor
+wos --profile executor_b doctor
 ```
 
 `recover` reconcilia intenções existentes. Não é alias de `checkout --next`. `refresh` preserva o draft local e sinaliza conflitos. `resume --takeover` mantém a semântica explícita de fencing já existente, aplicando novo grant assinado. Uma tomada de execução nunca fica escondida em `show` ou `validate`.
@@ -1072,9 +1072,9 @@ wosctl --profile executor_b doctor
 Três chats/processos podem usar:
 
 ```text
-Chat A: wosctl --profile planner ...
-Chat B: wosctl --profile executor_b ...
-Chat C: wosctl --profile reviewer_a ...
+Chat A: wos --profile planner ...
+Chat B: wos --profile executor_b ...
+Chat C: wos --profile reviewer_a ...
 ```
 
 O mesmo repositório e Outcome são compartilhados; credenciais, contratos e intenções pendentes não são. O host fornece isolamento do código e dos segredos quando necessário. A criação dos chats/subagentes e a escolha do modelo continuam fora do servidor WOS.
@@ -1328,7 +1328,7 @@ Não aplicar downgrade automático em incidente. Depois de existirem dados v2, r
 
 ### 16.3. Migração local de schema 1 para schema 2
 
-Criar `wosctl workspace migrate --to 2 --profile <nome> --dry-run`. O dry-run inventaria configuração, contratos, drafts, journals, receipts e conflitos sem alterar nada.
+Criar `wos workspace migrate --to 2 --profile <nome> --dry-run`. O dry-run inventaria configuração, contratos, drafts, journals, receipts e conflitos sem alterar nada.
 
 A conversão deve seguir esta ordem:
 

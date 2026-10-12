@@ -1,7 +1,7 @@
 {
-  "name": "@woobeai/wos-cli",
+  "name": "wosctl",
   "version": "0.4.0",
-  "description": "Native Go WOS and wosctl CLI for Linux and Windows x64; install agent skills without Node-powered logic",
+  "description": "Unified native Go wos command for service, signed work, review and offline skills on Linux/Windows x64",
   "type": "module",
   "license": "Apache-2.0",
   "engines": {
