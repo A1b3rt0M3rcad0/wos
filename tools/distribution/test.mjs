@@ -12,7 +12,7 @@ test('distribution rejects prerelease/untrusted metadata and failed commands', (
 
 test('both package identities/versions are synchronized without install hooks or dependencies', async () => {
   const version=(await readFile(path.join(root,'VERSION'),'utf8')).trim();
-  for(const folder of ['wos-npm','wos-skill']) {
+  for(const folder of ['wos-npm','wos-skill','wos-cli-npm']) {
     const pkg=JSON.parse(await readFile(path.join(root,'packages',folder,'package.json'),'utf8'));
     assert.equal(pkg.version,version); assert.equal(pkg.license,'Apache-2.0');
     assert.ok(pkg.name.startsWith('@a1b3rt0m3rcad0/'));

@@ -1472,3 +1472,13 @@ reviewable PR integration are still required before marking this gate complete.
 - This does not certify native agent execution in every runtime, provision
   credentials or activate signed Namespace protocols.
 
+
+## Native WOS CLI npm distribution — 2026-10-12
+
+**State:** proposed for v0.4.0; exact-source CI and real npm registry publication not yet accepted.
+
+- Add `@a1b3rt0m3rcad0/wos-cli` with Go `wos` and `wosctl` executables for Linux/Windows amd64 and a minimal platform-integrity npm launcher.
+- The standalone native `wos skill` installer is still executed by Go; no Node.js code performs skill installation or accesses the WOS server.
+- Require native Windows/Linux execution of skill install, doctor and uninstall, verified native receipts, coordinated version metadata and reproducible offline npm installation.
+- For the 0.4.0 candidate, publish this CLI package only through a source-gated GitHub workflow after all backend/browser/CLI/distribution checks; do not mark service, GHCR, skills, or GitHub release as published.
+- Future releases use the existing explicit coordinated publication workflow; no default auto-publication of future versions is authorized.

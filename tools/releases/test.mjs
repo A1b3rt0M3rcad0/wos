@@ -13,7 +13,7 @@ async function fixture(t) {
   await fs.writeFile(path.join(dir,'.changes/README.md'),'queue');
   await fs.writeFile(path.join(dir,'VERSION'),'0.1.0\n');
   await fs.writeFile(path.join(dir,'CHANGELOG.md'),'# Changelog\n\nExisting history\n');
-  for(const name of ['wos-npm','wos-skill']) {
+  for(const name of ['wos-npm','wos-skill','wos-cli-npm']) {
     await fs.mkdir(path.join(dir,'packages',name),{recursive:true});
     await fs.writeFile(path.join(dir,'packages',name,'package.json'),JSON.stringify({name,version:'0.1.0',...(name==='wos-skill'?{wosCompatibility:{service:'0.1.0',httpApi:'v1',snapshotSchema:1}}:{})}));
   }
@@ -42,7 +42,7 @@ test('preparation is repeatable, consumes changes and synchronizes both packages
   assert.equal(await prepareRelease(dir),null);
   await change(dir,'c','patch','Fix claim handoff');
   assert.equal((await prepareRelease(dir)).version,'0.1.1');
-  for(const folder of ['wos-npm','wos-skill'])assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages',folder,'package.json'),'utf8')).version,'0.1.1');
+  for(const folder of ['wos-npm','wos-skill','wos-cli-npm'])assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages',folder,'package.json'),'utf8')).version,'0.1.1');
   assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages/wos-skill/package.json'),'utf8')).wosCompatibility.service,'0.1.1');
   const api=JSON.parse(await fs.readFile(path.join(dir,'packages/wos-api/commands.openapi.json'),'utf8'));
   assert.equal(api.info.version,'0.1.1');assert.equal(api.paths['/unchanged'].get.operationId,'preserved');
@@ -75,7 +75,7 @@ test('stale OpenAPI fails before consuming or changing coordinated version', asy
 });
 
 function publicationFixture() {
-  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos',name:'@a1b3rt0m3rcad0/wos',version:'0.1.0',integrity:'service'},{kind:'wos-skill',name:'@a1b3rt0m3rcad0/wos-skill',version:'0.1.0',integrity:'skills'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
+  const manifest={version:'0.1.0',commit:'a'.repeat(40),artifacts:[{kind:'wos',name:'@a1b3rt0m3rcad0/wos',version:'0.1.0',integrity:'service'},{kind:'wos-skill',name:'@a1b3rt0m3rcad0/wos-skill',version:'0.1.0',integrity:'skills'},{kind:'wos-cli',name:'@a1b3rt0m3rcad0/wos-cli',version:'0.1.0',integrity:'client'},{kind:'archive'},{kind:'client-linux'},{kind:'client-windows'}]};
   const release={manifest,notes:'release notes',assets:[{filename:'asset'}],output:'/artifacts'};
   const state={registry:new Map(),calls:[],image:false,final:false,failSkills:true};
   const adapters={
