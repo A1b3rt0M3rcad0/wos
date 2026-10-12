@@ -234,7 +234,7 @@ Remote MCP requests use their own authenticated credentials and the same Namespa
 
 - **Embedded mode:** import the public `packages/wos-core` domain/application/storage packages in a trusted Go host.
 - **Remote mode:** use the lightweight `packages/wos-sdk-go` HTTP client for commands/queries.
-- **CLI mode:** use native `wosctl` for explicit API-only workspace operations and durable local recovery.
+- **CLI mode:** use native `wos` for explicit API-only workspace operations and durable local recovery.
 
 See [embedded](examples/embedded) and [remote client](examples/remote-client) examples. Trusted embedded composition is not a shortcut around security for an untrusted multitenant host: use the authorized service and resolve identities outside model-controlled payloads.
 
@@ -284,7 +284,7 @@ python3 tests/acceptance/journey.py --binary bin/wos --client http
 
 Storage and signed-protocol acceptance require a real PostgreSQL test instance configured through `WOS_TEST_POSTGRES_DSN` and, where required, `WOS_TEST_POSTGRES_CONTAINER`. Do not point the test suite to a production database. Browser and release packaging have separate repository workflows and dependencies. A skipped optional test is not a successful execution of that test.
 
-The CI/release system prepares reviewed version PRs, executes exact-source Core/browser/CLI/distribution checks, validates native receipts and publishes only on explicit authorization. See [releases](docs/releases.md).
+The CI/release system prepares reviewed version PRs, executes exact-source Core/browser/CLI/distribution checks and validates native receipts. Merging a prepared release automatically publishes the qualified artifacts, following the WKS model; manual dispatch is reserved for recovery. See [releases](docs/releases.md).
 
 ### 1.0.0 release criteria
 
