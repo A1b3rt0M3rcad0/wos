@@ -1548,6 +1548,11 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
+
+### Release preparation respects active master rules
+
+Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
+
 ### C — live policy assertion gap closure
 
 The assertion audit found that nominal direct/review floor cases did not independently demonstrate a policy changing after issuance. The shared signed-return matrix now verifies deployment and Outcome floors override a weaker Task policy, current credential hardening is enforced, relaxing current policy cannot weaken the frozen review floor, and another credential of the same Principal cannot replace the original owner. Each mathematically valid probe must fail specifically with forbidden (not parser/stale-policy failure), preserve original authority/task/revision, and permit the original correctly updated request afterward. Local Memory/SQLite/real PostgreSQL acceptance passed 418 tests/subtests, with no skips. This closes explicit T07/T38/T39 authority assertions; exact-source hosted verification remains required.
