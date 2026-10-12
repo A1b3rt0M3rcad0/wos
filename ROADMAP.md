@@ -1547,3 +1547,8 @@ PRs #92, #93 and #95 passed all five hosted checks and are integrated. Public wo
 After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub Actions is not permitted to create or approve pull requests" (run 38305750972). The owner requested the WKS model without additional GitHub settings. Version preparation now validates the declared reviewed changes and records only allowlisted mechanical version/notes/manifest/OpenAPI metadata through a normal fast-forward master push. It uses no force push, administrative bypass or PR-approval permission. A concurrent master update fails safely and queues a new preparation from its push. GITHUB_TOKEN suppresses sibling push workflows, so the preparer explicitly dispatches exact-source release checks/publication. All backend/browser/packages/native gates remain prerequisites. This replaces the failed bot-PR step; no additional owner configuration is requested.
 
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
+
+
+### Release preparation respects active master rules
+
+Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
