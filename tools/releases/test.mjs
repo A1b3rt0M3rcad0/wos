@@ -18,6 +18,7 @@ async function fixture(t) {
     await fs.writeFile(path.join(dir,'packages',name,'package.json'),JSON.stringify({name,version:'0.1.0',...(name==='wos-skill'?{wosCompatibility:{service:'0.1.0',httpApi:'v1',snapshotSchema:1}}:{})}));
   }
   await fs.mkdir(path.join(dir,'packages/wos-api'),{recursive:true});
+  await fs.writeFile(path.join(dir,'packages/wos-api/openapi.yaml'),'openapi: 3.1.0\ninfo:\n  version: 0.1.0\n');
   await fs.writeFile(path.join(dir,'packages/wos-api/commands.openapi.json'),JSON.stringify({openapi:'3.1.0',info:{version:'0.1.0'},paths:{'/unchanged':{get:{operationId:'preserved'}}}}));
   return dir;
 }

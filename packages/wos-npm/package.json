@@ -40,5 +40,6 @@
     "mcp",
     "coordination",
     "outcomes"
-  ]
+  ],
+  "private": true
 }

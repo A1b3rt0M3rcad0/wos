@@ -33,7 +33,7 @@ jobs:
         run: npm install --global npm@11.9.0 --ignore-scripts
       - name: Skills, distribution and release contract tests
         run: |
-          node --test packages/wos-skill/test/*.test.mjs tools/distribution/test.mjs tools/releases/test.mjs
+          node --test packages/wos-skill/test/*.test.mjs tools/distribution/test.mjs tools/releases/test.mjs tools/releases/compatibility.test.mjs
           node tools/releases/version.mjs plan
       - name: Build and verify actual offline npm packages
         run: |
