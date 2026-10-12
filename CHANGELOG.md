@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 — prepared for release
+
+- Unify public wos operations, correct product metadata, preserve pagination and publish qualified wosctl releases automatically after exact-source CI.
+
 ## 0.4.0 — prepared for release
 
 - Add native offline Go `wos skill` installation, updates, verification and uninstall for the five canonical WOS agent skills.

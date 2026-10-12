@@ -1549,6 +1549,10 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
 
+### Release preparation respects active master rules
+
+Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
+
 ### T89 — actual fresh-context Codex pilot evidence
 
 The authorized managed Codex pilot completed independent execution/review, real changes requested, a fresh correction contract and final approval with public `wosctl@0.4.0` source 347e4a4. The corrected frozen artifact passed 21 independent checks; four acceptance receipts and two submission digests were verified independently, final work is done, contracts empty and recovery clean. The first invalid signed review failed HTTP422 and remains preserved; it is not silently counted as success. Sanitized report and byte-identical artifacts are archived under docs/audit/codex-managed-pilot-2026-10-12. Shared filesystem is not privilege isolation, artifact refs are empty and provider token/cost figures are null. This closes the bounded actual managed-agent pilot evidence on that public source, not the final-source 1.0 acceptance gate or human validation.
