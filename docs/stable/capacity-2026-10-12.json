@@ -1,0 +1,299 @@
+{
+  "schema": 1,
+  "source_commit": "09de362daaed7696970f760ba6fa7cdd7ab25e60",
+  "recorded_at": "2026-10-12T20:04:34.919276+00:00",
+  "go": "go version go1.27.2 linux/amd64",
+  "host": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "gomaxprocs": "3",
+  "cases": [
+    {
+      "storage": "sqlite",
+      "work_items_per_outcome": 100,
+      "rich_history": "one required criterion and one explicit assessment per WorkItem, created through Application",
+      "whole_fixture_wall_seconds": 9.87722104502609,
+      "go_process_user_cpu_seconds": 14.417084,
+      "go_process_system_cpu_seconds": 3.159467,
+      "child_peak_rss_kib_high_watermark": 253824,
+      "measurements": [
+        {
+          "benchmark": "snapshot_100_work_items",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 3922812.0,
+            "p50_ns": 3822748.0,
+            "p95_ns": 5540917.0,
+            "p99_ns": 6829324.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32238.0,
+            "sql_statements/op": 23.0,
+            "B/op": 1024961.0,
+            "allocs/op": 6675.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "snapshot_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 7621039.0,
+            "p50_ns": 7474627.0,
+            "p95_ns": 9712427.0,
+            "p99_ns": 11891923.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32627.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1420191.0,
+            "allocs/op": 13445.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "work_context_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 3982462.0,
+            "p50_ns": 3646005.0,
+            "p95_ns": 5382272.0,
+            "p99_ns": 8747094.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 2224.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58596.0,
+            "allocs/op": 1180.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "parallel_snapshot_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 7583496.0,
+            "mean_latency_ns/op": 22548863.0,
+            "pool_wait_ns/op": 12174092.0,
+            "snapshots/s": 131.9,
+            "B/op": 1429525.0,
+            "allocs/op": 13450.0
+          },
+          "sql_statement_count_available": false
+        }
+      ]
+    },
+    {
+      "storage": "postgres",
+      "work_items_per_outcome": 100,
+      "rich_history": "one required criterion and one explicit assessment per WorkItem, created through Application",
+      "whole_fixture_wall_seconds": 25.78250177699374,
+      "go_process_user_cpu_seconds": 11.598611,
+      "go_process_system_cpu_seconds": 4.9659759999999995,
+      "child_peak_rss_kib_high_watermark": 267044,
+      "measurements": [
+        {
+          "benchmark": "snapshot_100_work_items",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 24949198.0,
+            "p50_ns": 17853504.0,
+            "p95_ns": 53494320.0,
+            "p99_ns": 133008950.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32238.0,
+            "B/op": 1057739.0,
+            "allocs/op": 7892.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "snapshot_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 38041905.0,
+            "p50_ns": 34704633.0,
+            "p95_ns": 58155296.0,
+            "p99_ns": 98076759.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32627.0,
+            "B/op": 1507949.0,
+            "allocs/op": 16855.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "work_context_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 18782543.0,
+            "p50_ns": 16949052.0,
+            "p95_ns": 32704909.0,
+            "p99_ns": 37121687.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 2224.0,
+            "B/op": 108681.0,
+            "allocs/op": 2120.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "parallel_snapshot_100_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 12801269.0,
+            "mean_latency_ns/op": 37859647.0,
+            "pool_wait_ns/op": 0.0,
+            "snapshots/s": 78.12,
+            "B/op": 1501203.0,
+            "allocs/op": 16849.0
+          },
+          "sql_statement_count_available": false
+        }
+      ]
+    },
+    {
+      "storage": "sqlite",
+      "work_items_per_outcome": 1000,
+      "rich_history": "one required criterion and one explicit assessment per WorkItem, created through Application",
+      "whole_fixture_wall_seconds": 32.84710415202426,
+      "go_process_user_cpu_seconds": 36.423244999999994,
+      "go_process_system_cpu_seconds": 5.268524000000001,
+      "child_peak_rss_kib_high_watermark": 267044,
+      "measurements": [
+        {
+          "benchmark": "snapshot_1000_work_items",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 21542921.0,
+            "p50_ns": 20441683.0,
+            "p95_ns": 28413138.0,
+            "p99_ns": 38463361.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32251.0,
+            "sql_statements/op": 23.0,
+            "B/op": 8103448.0,
+            "allocs/op": 58019.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "snapshot_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 65595636.0,
+            "p50_ns": 54722473.0,
+            "p95_ns": 117727425.0,
+            "p99_ns": 228047149.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32643.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12261387.0,
+            "allocs/op": 123342.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "work_context_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 16229492.0,
+            "p50_ns": 11406110.0,
+            "p95_ns": 21661537.0,
+            "p99_ns": 130582839.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 2225.0,
+            "sql_statements/op": 34.0,
+            "B/op": 65995.0,
+            "allocs/op": 1182.0
+          },
+          "sql_statement_count_available": true
+        },
+        {
+          "benchmark": "parallel_snapshot_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 43797311.0,
+            "mean_latency_ns/op": 130365964.0,
+            "pool_wait_ns/op": 70123219.0,
+            "snapshots/s": 22.83,
+            "B/op": 12257194.0,
+            "allocs/op": 123341.0
+          },
+          "sql_statement_count_available": false
+        }
+      ]
+    },
+    {
+      "storage": "postgres",
+      "work_items_per_outcome": 1000,
+      "rich_history": "one required criterion and one explicit assessment per WorkItem, created through Application",
+      "whole_fixture_wall_seconds": 89.93069685105002,
+      "go_process_user_cpu_seconds": 24.69236500000001,
+      "go_process_system_cpu_seconds": 17.353144999999998,
+      "child_peak_rss_kib_high_watermark": 267044,
+      "measurements": [
+        {
+          "benchmark": "snapshot_1000_work_items",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 34051962.0,
+            "p50_ns": 33008884.0,
+            "p95_ns": 44632275.0,
+            "p99_ns": 51446037.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32251.0,
+            "B/op": 8235835.0,
+            "allocs/op": 65583.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "snapshot_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 74233742.0,
+            "p50_ns": 70999494.0,
+            "p95_ns": 97321345.0,
+            "p99_ns": 117202659.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 32643.0,
+            "B/op": 12722390.0,
+            "allocs/op": 151102.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "work_context_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 17663796.0,
+            "p50_ns": 16898952.0,
+            "p95_ns": 26198123.0,
+            "p99_ns": 32959612.0,
+            "pool_wait_ns/op": 0.0,
+            "response_bytes": 2225.0,
+            "B/op": 108706.0,
+            "allocs/op": 2120.0
+          },
+          "sql_statement_count_available": false
+        },
+        {
+          "benchmark": "parallel_snapshot_1000_work_items_with_proof",
+          "samples": 100,
+          "metrics": {
+            "ns/op": 38115846.0,
+            "mean_latency_ns/op": 113156281.0,
+            "pool_wait_ns/op": 0.0,
+            "snapshots/s": 26.24,
+            "B/op": 12709479.0,
+            "allocs/op": 151051.0
+          },
+          "sql_statement_count_available": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Reference fixture, not production SLA or billing evidence.",
+    "Go process CPU/RSS and profiles include fixture seeding, compilation and reads; exclude the independent PostgreSQL server.",
+    "Empirical p99 of 100 samples is not a production tail estimate.",
+    "Full continuity still reconstructs the entire Outcome; section byte caps do not bound that cost.",
+    "Unavailable SQL counts remain explicit; no value is inferred."
+  ]
+}
