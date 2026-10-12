@@ -1,7 +1,25 @@
 # wosctl
 
-API-only WOS client; `wos` remains the server/admin executable. No database is opened
-by the client, and no instructions, scripts, agents or artifact URLs are executed.
+The public package is `wosctl`: install with `npm install -g wosctl@latest`.
+All public operations use `wos <command>`, including server administration and
+`wos skill install --agent codex`. API client operations do not open a database
+or execute instructions, scripts, agents or artifact URLs. The historical
+`wosctl` executable is a compatibility client alias.
+
+Discover commands without credentials or a workspace:
+
+```sh
+wos --help
+wos work --help
+wos help outcome
+wos catalog --output json
+```
+
+The local catalog includes its schema version and the executable version/commit.
+It distinguishes signed schema-2 operations from legacy schema-1 planning.
+`outcome context` is not a CLI operation: use `wos outcome get [ID] --output json`
+in schema 1 or `wos --profile NAME work show CONTRACT_ID --for-agent` for the
+issued signed work context. Help reads no workspace, credential or server state.
 
 For a Namespace using `signed_contracts_v2`, follow the
 [signed workspace guide](../../docs/signed-workspace-profiles.md). Initialize
@@ -17,7 +35,7 @@ The commands and separate-journal layout below describe legacy schema 1 and
 limits/layout are specified in the schema-2 guide and packaged schemas.
 
 ```sh
-go build -o wosctl ./packages/wos-cli/cmd/wosctl
+go build -o wos ./packages/wos-api/cmd/wos
 wos init --server https://wos.example.test --namespace UUIDv7 --outcome UUIDv7 --credential-env WOS_TOKEN --output json
 wos auth status --output json
 wos work checkout UUIDv7 --version 2 --output json
@@ -87,8 +105,10 @@ from being sent to a different endpoint.
 
 ## Distribution and versions
 
-The coordinated WOS npm service package includes `wos` and `wosctl` on Linux amd64.
-The skill package installs five skills separately. Native client assets contain the
+The single public npm package `wosctl` bundles the native `wos` entrypoint and
+compatibility `wosctl` alias on Linux/Windows amd64, plus skills installed by
+`wos skill install`. There is no separate public npm service/skill package.
+Native client assets contain the
 executable, schema files, licenses, README and `release.json` identifying version,
 commit, platform and SHA-256. `wos version --output json` works without credentials,
 a workspace or a service. Windows ZIP preparation requires actual matching Windows

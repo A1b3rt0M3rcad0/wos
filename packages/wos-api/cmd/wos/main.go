@@ -24,6 +24,9 @@ func run(args []string) int {
 	if server.Version != "dev" {
 		wosskill.ReleaseVersion = server.Version
 	}
+	if handled, code := cli.HandleHelp(args, os.Stdout, os.Stderr, true); handled {
+		return code
+	}
 	if len(args) > 0 && strings.HasPrefix(args[0], "--") && args[0] != "--version" && args[0] != "--help" {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()

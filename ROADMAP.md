@@ -1549,6 +1549,10 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
 
+### Client operational report — command discovery correction
+
+The 2026-10-12 client report confirmed documentary integration but found that local --help and outcome context did not work. Local root/group help and a version/commit-bound CLI catalog now execute before workspace/credential/server access, through both primary wos and its client alias. Unsupported outcome context returns explicit legacy outcome get and signed work-show alternatives. CLI documentation now reflects the unified wosctl package and bundled native skill installer. Focused offline discovery/root-routing tests passed; signed-client qualification and exact-source hosted integration remain separate evidence.
+
 ### Release preparation respects active master rules
 
 Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
