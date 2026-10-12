@@ -1521,3 +1521,10 @@ Contract-candidate local verification passed 22 package/release/compatibility ch
 The audit adds 21 separately named, correctly signed return probes across direct/independent-review and with/without required criteria. Probes change server, Namespace, Outcome, Principal, a registered foreign Principal's signing key, contract, task, execution, fencing, specification/authority digests, contract/lease/work/policy versions, purpose, completion intent, documentary scopes and local-key bindings. Each probe verifies the signature independently, requires application rejection, and verifies the original active grant, task version/lifecycle and Outcome revision remain unchanged. The original accepted return then executes, so negative requests cannot consume the real obligation.
 
 Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
+
+
+### Browser regression found during release hardening
+
+PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
+
+Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.
