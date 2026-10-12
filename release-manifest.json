@@ -1,13 +1,18 @@
 {
   "schema": 1,
-  "version": "0.3.0",
-  "previous_prepared_version": "0.2.0",
+  "version": "0.4.0",
+  "previous_prepared_version": "0.3.0",
   "bump": "minor",
   "changes": [
     {
-      "file": "signed-profiles.json",
+      "file": "native-wos-skill-cli.json",
       "bump": "minor",
-      "summary": "Add opt-in signed contract protocol v2, protected actor profiles, independent review and correction, receipt-driven cleanup and historical upgrade/restore; align five portable skills and the human workspace, and separate coordinated verification from explicit registry publication."
+      "summary": "Add native offline Go `wos skill` installation, updates, verification and uninstall for the five canonical WOS agent skills."
+    },
+    {
+      "file": "npm-native-wos-cli.json",
+      "bump": "minor",
+      "summary": "Distribute native Go wos/wosctl CLI to Linux and Windows x64 through a standalone npm package; integrate versioning and immutable release verification."
     }
   ]
 }

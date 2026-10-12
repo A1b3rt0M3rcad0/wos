@@ -1,4 +1,0 @@
-{
-  "bump": "minor",
-  "summary": "Add native offline Go `wos skill` installation, updates, verification and uninstall for the five canonical WOS agent skills."
-}
