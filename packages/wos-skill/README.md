@@ -1,5 +1,30 @@
 # WOS Skills
 
+## Install directly using the WOS Go binary (recommended)
+
+The native server/operator executable contains all five skills and installs them
+without Node.js, npm, network access, a running WOS server or an API credential.
+
+```bash
+wos skill install --agent codex
+wos skill install --agent claude
+wos skill install --agent hermes
+wos skill install --agent openclaw
+wos skill install --agent all --dry-run
+wos skill install --agent all
+wos skill doctor --agent codex
+wos skill update --agent codex
+wos skill uninstall --agent codex
+```
+
+The native installer reads the canonical skill sources embedded during the Go
+build, uses the existing `.wos-skill.json` SHA-256 ownership format, preserves
+local modifications and refuses symlink/unmanaged destinations. The optional
+npm installer remains available for compatibility; Node.js is **not** required
+when using `wos skill`.
+
+## Optional standalone npm installer
+
 Portable Agent Skills for bounded WOS coordination, native subagent delegation, continuity and proof review. Runtime APIs and context isolation are consumer responsibilities.
 
 After registry publication:

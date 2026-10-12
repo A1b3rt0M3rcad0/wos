@@ -10,6 +10,7 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
+	wosskill "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill"
 )
 
 func main() {
@@ -17,6 +18,9 @@ func main() {
 }
 
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "skill" {
+		return wosskill.Run(args[1:], os.Stdout, os.Stderr)
+	}
 	if len(args) == 4 && args[0] == "issuer" && args[1] == "recover" && args[2] == "--file" {
 		file, err := os.Open(args[3])
 		if err != nil {
@@ -120,6 +124,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <server|version|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
+	fmt.Fprintln(os.Stderr, "usage: wos <server|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
 	return 2
 }

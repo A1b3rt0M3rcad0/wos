@@ -1,594 +1,334 @@
-# wos — Woobe Outcome Server
+# WOS — Outcome Server
 
-> Persistent, agent-agnostic infrastructure for outcome-oriented state and coordination.
+**Durable, agent-agnostic coordination for work that must survive sessions, processes, and handoffs.**
 
-**WOS (Woobe Outcome Server)** is an independent server and embeddable Go core for preserving the shared state required to pursue outcomes over time.
+WOS stores the state, authority, plans, and verifiable evidence surrounding an intended result. Humans, AI agents, and applications decide what to do and execute work; WOS makes their commitments, progress, reviews, and history inspectable and recoverable.
 
-Humans, agents, agent networks, and conventional applications decide and execute. WOS validates, persists, relates, queries, and coordinates the state around that work.
+WOS is a standalone Go server with an embeddable Core, an HTTP API, an MCP server, a human workspace, an API-only CLI (`wosctl`), and **five agent skills installable directly from the native `wos` CLI**, without Node.js or npm.
 
-> **Project status:** Waves 01–18 and the contract/client extension are integrated; signed v2 adds protected profiles, independent review, correction and receipt-driven recovery. The coordinated 0.3.0 release is prepared; final-source verification and registry publication are separate gates. See [the live roadmap](ROADMAP.md), [signed protocol plan](docs/signed-contracts-implementation-plan.md) and [release notes](docs/releases/0.3.0.md). The service target is Linux amd64 with SQLite or PostgreSQL 18.6; client distribution includes Linux and Windows assets requiring actual native receipts before publication.
+> **Release status:** The repository currently prepares `0.3.0`; the documented `1.0.0` target is **not yet a certified/published stable release**. See [ROADMAP.md](ROADMAP.md) and [the release guide](docs/releases.md). A prepared version or successful local test is not a published release.
 
-Start the local client with `go run ./packages/wos-api/cmd/wos server`, then open `http://127.0.0.1:8080/app/`. See [operations](docs/operations.md), [public contracts](docs/contracts.md), [public event catalogue](docs/integration-events.md), [embedded Go host](examples/embedded) and [the executable remote example](examples/remote-client). WOS is licensed under [Apache 2.0](LICENSE).
-The English human workspace organizes Overview, Plan, Work, Issues, Evidence and Activity around dedicated forms, typed server reference search and a visual Roadmap editor. Task execution, criterion assessment and independent review retain separate authority. See the [workspace guide](docs/workspace-ux.md), [real screenshots](docs/ui-workspace/README.md) and [automated acceptance with pending manual validation](docs/ux/final-acceptance.md).
+## What WOS provides
 
-The contract/client extension is tracked in waves C01–C12 of [ROADMAP.md](ROADMAP.md).
-An API-only [wosctl client](packages/wos-cli/README.md) materializes focal YAML workspaces,
-checkpoints and immutable submissions with receipt recovery. New-protocol contracts end
-only through expiry, explicit administrative revocation or validated completion. The
-legacy claim/release model below describes 0.1 compatibility. Namespace cutover is explicit
-and implemented. Signed workspace schema 2 adds actor profiles and protected signing; native Windows client acceptance runs in hosted CI. See [contract operations](docs/work-contract-operations.md).
+| Area | Capabilities |
+| --- | --- |
+| Outcomes and Objectives | Desired results, structured success criteria, explicit lifecycle and conclusions |
+| Tasks | Bounded WorkItems, operational dependencies, readiness, issues and blockers |
+| Planning | Draft and immutable published Roadmap revisions, activation and history |
+| Contracts | Explicit work acquisition, leases, expiration, fencing, bounded context and durable receipts |
+| Signed execution | Ed25519 profiles, immutable signed work/return envelopes, protected keys, independent review and correction |
+| Continuity | Snapshot, focused context, timeline, graph, checkpoints, recovery and exact-intent replay |
+| Evidence | Artifacts, observations, assessment history, decisions, provenance and contestable conclusions |
+| Integrations | HTTP, MCP stdio/Streamable HTTP, Go SDK, durable events, triggers and signed webhook delivery |
+| Interfaces | Human workspace, `wos` server/operator CLI, `wosctl` agent/work CLI, native agent skill installer |
+| Persistence | SQLite, PostgreSQL, migrations, tested restore paths and transactional consistency |
 
-Portable [agent skills](packages/wos-skill/README.md) guide minimal-context coordination, native delegation, continuity and review. The npm installer supports Claude Code, Codex, Hermes, OpenClaw and explicit generic discovery paths; file installation is verified, all-runtime execution is not. See the [distribution/release implementation plan](docs/distribution-plan.md) for package identity, publication status and limits. npm registry publication is separate from the implementation.
+### What WOS does not do
 
-The [npm service distribution](packages/wos-npm/README.md) embeds the Linux amd64 Go service and API-only wosctl client without install-time downloads or process startup. `node tools/distribution/build.mjs` builds both tarballs, the Linux service archive, Linux/Windows client archives and SHA-256 manifest; `node tools/distribution/verify.mjs` installs the actual packages offline and exercises the server. Use the pinned Go toolchain and Node >=22. Artifacts under `dist/` are local builds, not evidence of registry publication.
+WOS **does not run or schedule agents**, make autonomous planning decisions, execute Tools, infer that evidence is approval, synchronize working directories, or replace an application's own business rules. A contract grants bounded authority over a WOS Task; it is **not** a Git branch lock, filesystem lock or permission to execute arbitrary host commands.
 
-[Release automation](docs/releases.md) prepares a coordinated version PR from `.changes/`, runs full gates on its integrated commit, and prepares verified assets. Explicit publication runs npm/GHCR/GitHub adapters with immutable identity checks and recovery from partial publication. Hosted publication requires working Actions and registry owner configuration; the repository stays private.
+## Quick start: local server
 
+### Docker Compose
 
-## Run locally with Docker Compose
-
-```sh
+```bash
+git clone https://github.com/A1b3rt0M3rcad0/wos.git
+cd wos
 cp .env.example .env
 docker compose up --build -d
 ```
 
-Open **http://localhost:8080/app/** and sign in with `WOS_BOOTSTRAP_TOKEN` from
-`.env`. The example starts the frontend, HTTP API and MCP with SQLite and a
-persistent Docker volume. `WOS_HTTP_PORT` changes the local port. The example
-credentials are public development values; use your own credentials for a shared
-instance. Keep `.env` outside version control.
+Open **http://127.0.0.1:8080/app/** and sign in using `WOS_BOOTSTRAP_TOKEN` from `.env`. The default example binds to loopback, uses persisted SQLite and includes **development-only** credentials. Change all example credentials before configuring a shared or internet-accessible deployment.
 
-`docker compose logs -f wos` shows startup diagnostics. `docker compose down`
-stops the service while preserving its data. Optional PostgreSQL settings are
-listed in `.env.example`. Signed work requires explicit issuer provisioning,
-agent enrollment and Namespace activation; see
-[the signed implementation plan](docs/signed-contracts-implementation-plan.md).
-
-## Why WOS
-
-Agent runtimes are good at executing. Product backends are good at owning product-specific business rules. Neither necessarily provides a durable, neutral model for answering questions such as:
-
-- What result are we trying to achieve?
-- Which verifiable objectives define that result?
-- What work exists, what is ready, what is in progress, and what is blocked?
-- Which plan is currently active?
-- What did previous plan revisions contain?
-- Which issues, blockers, decisions, artifacts, and evidence explain the current state?
-- Which criteria were assessed before an Objective or Outcome was concluded?
-- Can another consumer safely resume the same work without relying on chat history?
-
-WOS exists to preserve that coordination state independently of any particular runtime, model, session, or product.
-
-## Core principle
-
-The main semantic unit is an **Outcome**: a desired, verifiable state.
-
-A completed WorkItem is not the same thing as an achieved Objective. An achieved Objective is not automatically the same thing as an achieved Outcome.
-
-```text
-Outcome
-├── SuccessCriteria
-├── Objectives
-│   ├── SuccessCriteria
-│   └── WorkItems
-├── WorkItems
-├── Roadmaps
-├── Issues
-├── Blockers
-├── Decisions
-├── Evidence
-├── Artifacts
-├── Relations
-├── Events
-└── Triggers
+```bash
+docker compose logs -f wos
+docker compose down            # persistent volumes are retained
 ```
 
-A Roadmap organizes the plan but does not own the operational entities. The Outcome owns the operational scope. Objectives and WorkItems stay live while Roadmap revisions preserve historical plans.
+For PostgreSQL, set `WOS_STORAGE_DRIVER=postgres`, `WOS_POSTGRES_PASSWORD` and `WOS_POSTGRES_DSN` for the `postgres` Compose service, then use `docker compose --profile postgres up --build -d`. See [operations](docs/operations.md) for deployment and upgrade rules.
 
-## Design thesis
+### Build the native Go binary
 
-State belongs to the **work context**, not to the agent or session that started it.
-
-A new session, another agent, a human, or another application must be able to inspect the same Outcome and continue from persisted state.
-
-WOS is therefore a persistent coordination substrate, not an autonomous decision-maker.
-
-## Responsibilities
-
-WOS is designed to:
-
-- create and maintain verifiable Outcomes and Objectives;
-- coordinate WorkItems and explicit execution claims;
-- preserve versioned Roadmaps and their historical revisions;
-- validate transitions, references, criteria, dependencies, and graph invariants;
-- represent Issues and Blockers as separate concepts;
-- register Evidence, Artifacts, Decisions, and provenance;
-- expose deterministic state, graph, readiness, and timeline queries;
-- enforce optimistic concurrency and idempotent remote commands;
-- coordinate WorkItem leases using fencing tokens;
-- persist Domain Events and durable Integration Events;
-- evaluate declarative event-based Triggers and persist signals;
-- isolate state through Namespaces and authorization boundaries;
-- support humans, agents, Agent Networks, and traditional software.
-
-## Non-goals
-
-WOS is intentionally **not**:
-
-- an agent runtime;
-- an LLM inference service;
-- an autonomous planner;
-- a tool executor;
-- an agent scheduler;
-- a replacement for a product backend;
-- a universal knowledge base;
-- a graph database requirement;
-- a general-purpose workflow engine with arbitrary scripts.
-
-WOS may report that work is ready or blocked. It does not decide which agent must execute it.
-
-A Trigger may emit a durable signal. It does not start a Run or execute a WorkItem by itself.
-
-## Core domain
-
-### Outcome
-
-Represents the final desired state.
-
-Initial lifecycle:
-
-```text
-draft -> active -> achieved | failed | abandoned
-                  ^                |
-                  └----- reopen ---┘
+```bash
+go build -trimpath -o ./bin/wos ./packages/wos-api/cmd/wos
+go build -trimpath -o ./bin/wosctl ./packages/wos-cli/cmd/wosctl
+./bin/wos version
+./bin/wos config validate
+./bin/wos server
 ```
 
-Archiving is orthogonal to lifecycle. An achieved Outcome can also be archived.
+The source declares Go 1.27. The `wos` executable contains the HTTP/MCP server, embedded web application, and built-in skill bundles. `wosctl` is a separate, API-only client and does not open the server's database.
 
-### Objective
+**Supported release target:** Linux amd64 for the standalone service, SQLite or PostgreSQL 18.6, HTTP and MCP. The standalone `wosctl` client also has Linux/Windows amd64 native acceptance. Other platforms or runtimes require additional certification; compiling a binary alone does not provide it.
 
-Represents a verifiable condition inside an Outcome.
+## Native agent skill installation — `wos skill`
 
-Initial lifecycle:
+The five maintained WOS skills ship **inside the Go `wos` executable**. Installation copies local instruction files into an agent's discovery directory. It performs no network request, needs no WOS server, does not run an agent and **does not require Node.js or npm**.
 
-```text
-planned -> in_progress -> achieved
-   |                         |
-   └-------> cancelled <-----┘
+```bash
+# Install all five WOS skills in the current project's Codex discovery directory.
+wos skill install --agent codex
+
+# Other supported discovery layouts.
+wos skill install --agent claude
+wos skill install --agent hermes
+wos skill install --agent openclaw
+
+# Preview first, or install for your user rather than one project.
+wos skill install --agent codex --dry-run
+wos skill install --agent codex --global
+
+# Install into all four supported agent discovery directories.
+wos skill install --agent all
+
+# Explicit path for another Agent Skills-compatible runtime.
+wos skill install --agent generic --dir /absolute/path/to/skills
+
+# Inspect, update from this binary's embedded version, or safely remove.
+wos skill list --agent codex
+wos skill doctor --agent codex
+wos skill update --agent codex
+wos skill uninstall --agent codex
+wos skill version
 ```
 
-Reopening returns an Objective to `planned`.
+Use `--project /path/to/project` to select a project root instead of the current directory. Windows commands use native platform paths for `--project` and `--dir`.
 
-Objectives may form a hierarchy, but hierarchy does not imply execution dependency or automatic completion.
+| Agent selector | Project install directory | User-global install directory |
+| --- | --- | --- |
+| `codex` | `.agents/skills/` | `~/.agents/skills/` |
+| `claude` | `.claude/skills/` | `~/.claude/skills/` |
+| `hermes` | `.hermes/skills/` | `~/.hermes/skills/` |
+| `openclaw` | `skills/` under the selected workspace | `~/.openclaw/skills/` |
+| `generic` | Explicit `--dir` | Explicit `--dir` |
 
-### WorkItem
+Installed skills:
 
-Represents an operational unit of work.
+- `wos-coordination` — bounded coordination, contract authority, progress and handoff.
+- `wos-delegation` — task decomposition and controlled handoff to host-managed subagents.
+- `wos-continuity` — continuation and original-intent recovery after session or transport loss.
+- `wos-review` — material-bound assessment and independent review.
+- `wos-workspace` — signed `wosctl`/YAML contract execution and recovery.
 
-Initial lifecycle:
+The installer embeds exactly the same source skill documents as the existing separately distributed skill package. It preflights every destination, tracks managed files with content hashes, refuses symlinks/unmanaged collisions and **preserves user modifications** instead of overwriting them. `--dry-run` is read-only; `update` installs the version bundled with the **invoking WOS binary**, not an unreviewed latest version from a registry. Concurrent writes into the same destination are not supported.
 
-```text
-backlog -> todo -> in_progress -> done
-   |        |          |
-   └--------┴----------┴----> cancelled
-```
+Installing instructions does **not** configure MCP, issue credentials, enroll signing keys or activate signed contracts. Those steps remain explicit and authorized. A runtime may require restart/reload to discover newly installed skills. The installer verifies files and supported layouts; execution by every version of each third-party runtime is a separate integration test.
 
-Operational presentation such as `ready`, `blocked`, `scheduled`, or `attention_needed` is derived from lifecycle, dependencies, Blockers, time constraints, and leases.
-
-### SuccessCriterion
-
-A stable, addressable verification criterion owned by an Outcome, Objective, or WorkItem.
-
-A criterion has its own semantic revision so that an assessment against revision 1 never silently proves revision 2.
-
-Verification modes initially include:
-
-- `attestation`;
-- `evidence_review`;
-- `external_evaluation`.
-
-### CriterionAssessment
-
-An immutable assessment of a criterion revision.
-
-Results:
-
-- `met`;
-- `not_met`;
-- `inconclusive`;
-- `waived`.
-
-Attaching Evidence does not automatically mark a criterion as met. Assessment is explicit.
-
-### Roadmap
-
-A persistent, versioned plan over an Outcome or Objective scope.
-
-Roadmap revisions are immutable after publication. They reference live Objectives and WorkItems instead of duplicating them.
-
-Roadmap ordering is not automatically an operational dependency graph.
-
-### Issue
-
-Represents a problem, anomaly, question, incompatibility, or unexpected result.
-
-An Issue may exist without blocking execution.
-
-### Blocker
-
-Represents an actual impediment over exactly one operational target.
-
-An Issue explains a problem. A Blocker states what is currently prevented.
-
-Resolving an Issue does not automatically resolve its Blockers.
-
-### Evidence
-
-Represents an observation, measurement, test result, inspection, attestation, source, or external evaluation.
-
-Evidence content is immutable; later invalidation is represented by lifecycle/retraction rather than rewriting history.
-
-### Artifact
-
-Represents a material deliverable or external object such as a PR, commit, document, report, dataset, release, deployment, or file.
-
-The MVP stores references and metadata, not arbitrary artifact bytes.
-
-### Decision
-
-Represents an explicit choice, alternatives, rationale, authorship, and supersession history.
-
-Accepted Decisions are not silently rewritten.
-
-### Relation
-
-Represents a typed local relationship.
-
-Initial relation types:
-
-- `depends_on`;
-- `relates_to`;
-- `produces`;
-- `derived_from`.
-
-Operational dependency uses `depends_on` and must remain acyclic.
-
-### Event
-
-Every confirmed domain mutation emits immutable Domain Events in the same transaction.
-
-The current-state tables remain the source of truth. WOS does **not** require full Event Sourcing.
-
-### Trigger
-
-A declarative integration rule:
-
-> when a compatible event occurs, persist a signal for configured destinations.
-
-Triggers create durable integration signals. External consumers decide what to do with them.
-
-## Readiness
-
-Readiness is deterministic and derived.
-
-Conceptually, a WorkItem is ready when:
+## Concepts and lifecycle
 
 ```text
-lifecycle == todo
-AND outcome is active
-AND outcome is not archived
-AND associated objective permits execution
-AND no applicable Blocker is active
-AND all hard dependencies are satisfied
-AND not_before <= evaluated_at
-AND no active lease prevents acquisition
+Namespace (security boundary)
+└── Outcome (desired, verifiable result)
+    ├── SuccessCriteria / Assessments / Conclusions
+    ├── Objectives (optional hierarchy; distinct from Task dependencies)
+    ├── WorkItems / ExecutionContracts / ReviewCases
+    ├── Roadmaps (drafts, immutable published revisions, active slots)
+    ├── Issues / Blockers / Relations
+    ├── Evidence / Artifacts / Decisions
+    └── Events / Triggers / Integration deliveries
 ```
 
-The result carries explicit reasons instead of a hidden model score.
+- An **Outcome** describes the final state sought, not the number of tasks finished.
+- An **Objective** describes a verifiable intermediate condition and may organize other Objectives.
+- A **WorkItem** is a bounded operational task; its `ready`, `blocked` and `scheduled` states are derived projections, not arbitrary lifecycle values.
+- A **Roadmap** references live Objectives and WorkItems. Publishing freezes a revision; activating it is a separate operation. Roadmap order does not automatically add dependencies.
+- An **Issue** records a problem; a **Blocker** records a specific blocking impact. Resolving one does not implicitly resolve the other.
+- **Evidence** records a source or observation, while a **CriterionAssessment** explicitly evaluates the applicable criterion revision. A passing test or signed delivery alone is not acceptance.
+- A **Conclusion** preserves the exact assessed obligations; subsequent evidence can contest it without rewriting history.
 
-## Execution coordination
+An achieved Task does **not** automatically achieve its Objective or Outcome. WOS requires each result to be concluded explicitly under the applicable criteria and authority policy.
 
-WorkItems use explicit leases.
+## Signed work and independent review
 
-A claim contains:
+The recommended new-work protocol is `signed_contracts_v2` with workspace schema 2. It is an **explicit Namespace opt-in**; installing a skill or creating a profile does not activate it.
 
-- claim ID;
-- authenticated principal;
-- declared ActorRef;
-- acquisition time;
-- expiration time;
-- fencing token.
+### 1. Set up an approved workspace
 
-The fencing token prevents a stale claimant from completing work after another consumer reclaimed an expired lease.
+An administrator must first provision the server's persistent Ed25519 issuer, Namespace policy, credentials, reviewer permissions, and agent-key enrollment. The client receives the server ID, independently approved issuer fingerprint, Namespace/Outcome IDs and authorized enrollment reference.
 
-The lease coordinates WOS consumers. External systems still need their own idempotency or fencing semantics for side effects outside WOS.
+```bash
+wosctl init --workspace-schema 2 \
+  --server https://wos.example.test \
+  --server-id SERVER_UUID \
+  --namespace NAMESPACE_UUID \
+  --outcome OUTCOME_UUID
 
-## Concurrency model
+wosctl profile create executor \
+  --token-stdin --generate-signing-key \
+  --enrollment ENROLLMENT_UUID \
+  --server https://wos.example.test \
+  --server-id SERVER_UUID \
+  --issuer-fingerprint sha256:APPROVED_FINGERPRINT
 
-WOS uses two complementary mechanisms:
-
-1. **Outcome coordination guard** for invariants spanning several aggregates.
-2. **`expected_version`** on mutable aggregates to protect client intent.
-
-Each successful command advances an `outcome_revision`, which identifies the transactional order of changes inside one Outcome.
-
-These concepts are deliberately distinct:
-
-- aggregate `version`;
-- Roadmap `revision_number`;
-- Roadmap draft version;
-- Outcome-wide `outcome_revision`.
-
-## Idempotency
-
-Remote mutations require an idempotency key.
-
-Identity is based on:
-
-```text
-(namespace_id, principal_id, command_name, idempotency_key)
+wosctl --profile executor auth status --output json
+wosctl --profile executor doctor --output json
 ```
 
-Replaying the same confirmed command returns the original stored result rather than creating duplicate work or duplicate Events.
+Give each independent executor or reviewer its **own authorized Principal/profile**. Secrets remain in protected OS keyring references, protected mounts or approved environment references; they must not appear in committed YAML or model prompts. The native keyring must be available for the `--generate-signing-key` example. Alternative protected references are documented in [signed workspace profiles](docs/signed-workspace-profiles.md).
 
-## Namespace and identity
+### 2. Acquire, execute, and return a contract
 
-A **Namespace** is the internal isolation and authorization boundary.
+```bash
+wosctl --profile executor work checkout --next --count 1 --output json
+wosctl --profile executor work list --output json
+wosctl --profile executor work show CONTRACT_UUID --for-agent --output json
 
-`ExternalContext` is consumer-provided addressing context. It is not itself an authorization mechanism.
+# Edit the permitted execution draft in the issued local contract YAML.
+wosctl --profile executor work finish CONTRACT_UUID --output json
 
-An authenticated **Principal** is distinct from an **ActorRef**:
-
-- Principal = who is authenticated and authorized;
-- ActorRef = who is declared as the author/actor of a domain action.
-
-Delegated ActorRefs require explicit authorization.
-
-## Architecture
-
-WOS starts as a modular monolith with a public Go Core and multiple adapters.
-
-```text
-                  ┌────────────────────┐
-                  │   WOS standalone   │
-                  │      server        │
-                  └─────────┬──────────┘
-                            │
-             ┌──────────────┴──────────────┐
-             │                             │
-             ▼                             ▼
-        HTTP transport                MCP transport
-             │                             │
-             └──────────────┬──────────────┘
-                            ▼
-                    Application services
-                            │
-               ┌────────────┴────────────┐
-               ▼                         ▼
-             Domain                     Ports
-                                          ▲
-                                          │
-                                Storage / integrations
+# Reconcile frozen operations after an interrupted or uncertain response.
+wosctl --profile executor work recover --all-pending --output json
 ```
 
-Code dependency direction:
+The local layout uses `.wos/project.yaml`, `.wos/profiles/<profile>/profile.yaml`, and only that profile's outstanding `contract/<id>.yaml` files. Issued specifications and signed original intentions are immutable. A verified receipt closes the corresponding local obligation; cleanup preserves unconfirmed edits. Delivery to independent review is **not** the same as Task approval.
 
-```text
-transport -> application -> domain
-                    |
-                    v
-                  ports <- adapters
+### 3. Review and request correction
+
+```bash
+wosctl --profile reviewer review checkout --next --count 1 --output json
+wosctl --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent --output json
+
+# Edit the exact review draft and criterion assessments, then:
+wosctl --profile reviewer review finish REVIEW_CONTRACT_UUID --output json
+wosctl --profile reviewer review recover --all-pending --output json
 ```
 
-The Domain layer does not import HTTP, MCP, SQL, server bootstrap, Woobe, or agent-runtime packages.
+Approval is bound to the immutable submission and its current criterion revisions. `changes_requested` is a distinct outcome that may require a fresh correction contract; a valid signature never substitutes for material-quality review. Review authority and execution authority are independently enforced.
 
-## Deployment modes
+### Protocol activation and recovery
 
-WOS is designed for several deployment modes:
+The administrator must drain legacy writers and outstanding unsigned authority before activating signed v2. The client supports `wosctl protocol get`, `set`, `preflight` and `recover` with exact CAS versions. Do **not** change Namespace protocol during routine `work checkout` or by skill installation. See [signed cutover](docs/signed-protocol-cutover.md), [issuer recovery](docs/issuer-recovery.md) and [signed returns](docs/signed-cli-returns.md).
 
-| Mode | Description |
-| --- | --- |
-| Local | SQLite, loopback, local principal |
-| Standalone | WOS server over HTTP/MCP |
-| Embedded | Go application imports Core and a storage adapter |
-| Multi-user | PostgreSQL plus service authentication |
-| Composed | Another product integrates WOS without changing WOS semantics |
+Legacy `contracts_v1`/workspace-schema-1 operations remain supported for the historical path documented in [wosctl](packages/wos-cli/README.md). They cannot bypass a signed Namespace's execution authority.
 
-WOS must start and operate without Woobe.
+## Interfaces and integration
 
-## Storage
+### HTTP API
 
-Initial storage contract:
+The HTTP API and MCP adapter call the same Application services and share authorization, optimistic concurrency and durable idempotency. The generated public command catalog and OpenAPI documentation live at:
 
-- SQLite for local/single-node deployments;
-- PostgreSQL for remote and multi-replica deployments;
-- equivalent functional behavior validated by shared contract tests.
+- `GET /api/v1/commands`
+- `POST /api/v1/commands/{name}` using `Idempotency-Key` and `{"command": ...}`
+- `GET /api/v1/namespaces/{namespace_id}/outcomes`
+- `GET /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/continuity`
+- `GET /livez`, `GET /readyz`
+- [`packages/wos-api/openapi.yaml`](packages/wos-api/openapi.yaml)
 
-Current state is relational.
+A timed-out mutation may have **committed successfully**. Reconcile the original receipt or retry the **identical request, expected version and idempotency key**. Do not increase a stale version automatically to force a write.
 
-Domain Events are immutable.
+### MCP
 
-Integration Events and outbox deliveries are persisted transactionally with domain mutations.
+The server supports Streamable HTTP (default path `/mcp` when enabled) and stdio:
 
-Redis, a vector database, or a distributed event bus are not MVP requirements.
+```bash
+# Local MCP server, with trusted loopback identity and no HTTP socket.
+WOS_MCP_ENABLED=true wos mcp stdio
 
-## HTTP API
-
-The HTTP API is versioned under:
-
-```text
-/api/v1/namespaces/{namespace_id}
+# Remote service exposes /mcp when WOS_MCP_ENABLED=true.
 ```
 
-Outcome-scoped operations live under:
+Remote MCP requests use their own authenticated credentials and the same Namespace permissions as HTTP. Tools expose explicit commands and bounded queries; WOS never silently executes the requested agent work. The active supported protocol profiles and transport examples are recorded in [public contracts](docs/contracts.md).
 
-```text
-/outcomes/{outcome_id}
+### Go Core / SDK
+
+- **Embedded mode:** import the public `packages/wos-core` domain/application/storage packages in a trusted Go host.
+- **Remote mode:** use the lightweight `packages/wos-sdk-go` HTTP client for commands/queries.
+- **CLI mode:** use native `wosctl` for explicit API-only workspace operations and durable local recovery.
+
+See [embedded](examples/embedded) and [remote client](examples/remote-client) examples. Trusted embedded composition is not a shortcut around security for an untrusted multitenant host: use the authorized service and resolve identities outside model-controlled payloads.
+
+### Durable integration events
+
+WOS emits immutable Domain Events and durable Integration Events. Declarative triggers produce signals; an optional worker delivers signed webhooks with at-least-once semantics. Consumers must verify HMAC signatures and deduplicate by integration-event identity. Triggers **do not launch agents or execute work**.
+
+## Concurrency, integrity, and limits
+
+- **Optimistic concurrency:** mutating aggregates require applicable expected versions.
+- **Coordination:** cross-entity invariants are guarded by the owning Outcome; dependency graphs cannot form cycles.
+- **Leases:** execution has expiry and fencing; stale holders cannot conclude current work.
+- **Idempotency:** remote mutations use stable keys, durable operation results and exact-intent recovery.
+- **Read consistency:** continuity and graph cursors bind scope/revision and report truncation/omissions.
+- **Authorization:** Namespace, authenticated Principal, declared ActorRef and external context are different concepts; metadata never grants authority.
+- **Immutable records:** plans, published submissions, signatures, historical assessments and conclusions are not silently overwritten.
+
+HTTP/MCP payloads and many query results are bounded to 256 KiB; page sizes and YAML drafts have additional limits. A bounded response size does **not** imply bounded database work: large histories and highly contended Outcomes remain subject to measured capacity limits. See [benchmarks](docs/benchmarks.md), [contract load](docs/work-contract-load-evidence.md) and [signed acceptance](docs/signed-acceptance-matrix.json).
+
+## Deploying and operating WOS
+
+**Authentication:** local mode is intentionally loopback-only. Shared mode uses `WOS_AUTH_MODE=api_token`, scoped credentials and Namespace grants. Browser sessions are secure, bounded and revocation-aware. The WOS process does not terminate TLS; expose it behind a correctly configured TLS ingress.
+
+**Databases:** SQLite is suitable for local/single-service operation; PostgreSQL is the recommended shared-service store. Existing migrations are numbered, checksummed and forward-only. A mismatched or future schema must not be served as ready.
+
+**Backup and restore:** SQLite uses `wos db backup` and `wos db restore` (new destination); PostgreSQL uses `pg_dump`/`pg_restore` into a clean database. Preserve all history, security and outbox tables; restoring only current entity rows destroys continuation guarantees. Backup validation and restore drills are deployment responsibilities.
+
+**Issuer and client trust:** signed mode uses an explicitly configured persistent server issuer. Rotation/recovery is an offline authorized operation; pinned historical public keys remain needed to verify accepted documents. See [issuer recovery](docs/issuer-recovery.md).
+
+**Observability:** JSON logs and `/metrics` expose command/query/HTTP/delivery counters and timing information without logging secret values or documentary payloads. Current runtime metrics are not yet a production SLO or complete percentile-tracing system.
+
+**Retention:** idempotency retention defaults to seven days. Domain history and administrative receipts are not automatically purged; plan database capacity and define a retention/archive policy before sustained high-volume use.
+
+## Development and validation
+
+```bash
+go test ./...
+go test -race ./...
+go vet ./...
+
+# Native offline skill-installer tests (no Node.js runtime needed).
+go test ./packages/wos-skill/...
+
+# Deterministic HTTP standalone journey (after building bin/wos).
+python3 tests/acceptance/journey.py --binary bin/wos --client http
 ```
 
-The transport handles DTOs, authentication context, preconditions, and error translation. It does not implement domain rules directly.
+Storage and signed-protocol acceptance require a real PostgreSQL test instance configured through `WOS_TEST_POSTGRES_DSN` and, where required, `WOS_TEST_POSTGRES_CONTAINER`. Do not point the test suite to a production database. Browser and release packaging have separate repository workflows and dependencies. A skipped optional test is not a successful execution of that test.
 
-## MCP
+The CI/release system prepares reviewed version PRs, executes exact-source Core/browser/CLI/distribution checks, validates native receipts and publishes only on explicit authorization. See [releases](docs/releases.md).
 
-MCP is a first-class transport over the same Application services as HTTP.
+### 1.0.0 release criteria
 
-The generated catalog includes tools for:
+The intended stable `1.0.0` should only be tagged after all of the following have corresponding same-source evidence:
 
-- finding Outcomes;
-- getting Outcome state;
-- graph and timeline queries;
-- listing ready work;
-- creating/updating/transiting Outcomes;
-- managing Objectives and WorkItems;
-- claiming, renewing, releasing, reclaiming, and completing work;
-- managing criteria and assessments;
-- Issues and Blockers;
-- Evidence and Artifacts;
-- Decisions and Relations;
-- Roadmaps;
-- Triggers.
+1. Required CI checks pass on the selected commit (including real SQL, race, migration/restore, browser, native CLI and distribution).
+2. Public HTTP/MCP/CLI contracts, release versions, metadata and backward compatibility are frozen and consistent.
+3. Signed work/review/correction, exact recovery, authority revocation and multi-actor handoff complete a real end-to-end journey using packaged binaries.
+4. Critical T01–T96 acceptance assertions are audited; incomplete scenarios are explicitly excluded from 1.0 claims or closed by additional tests.
+5. PostgreSQL contention, continuity-read cost, growth and supported operational limits have measured acceptance thresholds.
+6. Backup/restore, retention, issuer handling, observability and supported deployment security are verified for the advertised production profile.
+7. Essential human workflows receive manual UX/accessibility validation, with unsupported claims explicitly withheld.
+8. Versioned artifacts are built from the accepted source, hashes/native receipts agree, and explicit publication plus fresh-install verification succeeds.
 
-MCP protocol state never becomes the hidden source of business state.
+**A prepared `0.3.0` is not evidence that these gates are already complete.** Source-of-truth implementation state is [ROADMAP.md](ROADMAP.md); historical test reports are source-specific, not blanket certification for later commits.
 
-## Integration with Woobe
-
-WOS is independent from Woobe, but the two systems are complementary.
-
-```text
-Product backend
-      │
-      ├──────────────────────────────┐
-      ▼                              ▼
-    Woobe                           WOS
-Agent execution             Outcome / Work state
-      │                              ▲
-      ├── Tools / MCP                │
-      └──────────────────────────────┘
-                    via MCP
-```
-
-A product backend may also consume WOS directly.
-
-Woobe owns agent execution concerns such as Agent Networks, Sessions, Runs, and runtime traces.
-
-WOS owns persistent state around Outcomes, Objectives, WorkItems, plans, problems, evidence, and coordination.
-
-The product backend remains the source of truth for its own business domain.
-
-## Repository package structure
-
-WOS follows the same product-package convention used by Woobe: distributable product boundaries live under `packages/`.
+## Repository layout
 
 ```text
 packages/
-├── wos-core/
-│   ├── domain/
-│   ├── application/
-│   ├── ports/
-│   └── storage/
-│       ├── memory/
-│       ├── sqlite/
-│       └── postgres/
-└── wos-api/
-    ├── authentication/
-    ├── http/
-    ├── mcp/
-    ├── contracts/
-    ├── openapi.yaml
-    ├── cmd/
-    │   └── wos/
-    │       └── main.go
-    └── internal/
-        ├── server/
-        ├── integration/
-        └── observability/
-
-docs/
-tests/
-examples/
-deploy/
+  wos-core/        domain, application, ports, Memory/SQLite/PostgreSQL adapters
+  wos-api/         Go service, HTTP/MCP, embedded human workspace
+  wos-cli/         native API-only wosctl and YAML signed workspaces
+  wos-sdk-go/      remote Go SDK
+  wos-skill/       five canonical agent skills + native Go installer + optional npm distribution
+  wos-npm/         optional npm wrapper for the precompiled service
+examples/          trusted embedded and standalone remote clients
+docs/              architecture, ADRs, contracts, operations, evidence, releases
+tests/             acceptance, boundary, browser and distribution fixtures
+tools/             generation, benchmarking and release automation
 ```
 
-`wos-core` is the public embeddable Go library and owns the domain, application layer, ports, persistence adapters and migrations. `wos-api` is the executable/API distribution: it exposes HTTP/MCP, owns protocol contracts and composes the standalone runtime and `wos` binary.
+## Reference documentation
 
-Package dependency direction is simply `wos-api -> wos-core`. Core must never depend on API.
-
-## Initial implementation stack
-
-- Go;
-- `net/http`;
-- `database/sql`;
-- explicit SQLite and PostgreSQL adapters;
-- official Go MCP SDK matching the pinned protocol profile;
-- `log/slog`;
-- UUIDv7 identifiers;
-- versioned SQL migrations;
-- optional OpenTelemetry instrumentation at the Server boundary.
-
-The current foundation dependency inventory is documented in [`docs/dependencies.md`](./docs/dependencies.md). Dependencies and protocol profiles are pinned; Domain/Application remain independent of SQL and MCP implementations.
-
-## Development milestones
-
-| Milestone | Target |
-| --- | --- |
-| M1 | Core + SQLite + HTTP; Outcome, Objective, WorkItem and criteria |
-| M2 | Dependencies, Blockers, Issues, leases and documentary records |
-| M3 | Roadmaps, snapshot/graph/timeline and MCP |
-| M4 | PostgreSQL parity, triggers/outbox, auth and packaging |
-| 0.1 | Contracts, CI, examples and documentation validated |
-
-## Release 0.1 acceptance criteria
-
-The initial release is expected to prove that:
-
-1. standalone WOS starts without Woobe;
-2. an external Go program can use embedded mode;
-3. all remote mutations are idempotency-protected;
-4. stale aggregate versions are detected;
-5. concurrent claims and dependency-cycle races preserve invariants;
-6. SQLite and PostgreSQL pass the same storage contract suite;
-7. HTTP and MCP execute the same Application services;
-8. snapshots are coherent, bounded, and explicit about omissions;
-9. published Roadmap revisions are immutable and recoverable;
-10. assessments preserve the criterion revisions and Evidence used;
-11. Triggers produce durable signals without autonomous execution;
-12. restart/restore preserves state required for continuation.
-
-## Testing strategy
-
-The planned test suite includes:
-
-- Domain unit tests for transitions and invariants;
-- Application tests with deterministic Clock/ID generators;
-- shared storage contract tests for SQLite and PostgreSQL;
-- deterministic concurrency tests;
-- HTTP/MCP contract parity tests;
-- migration and restore tests;
-- property tests and fuzzing for graphs, cursors, JSON, and Unicode;
-- `go test -race`;
-- independence tests proving operation without agents, Sessions, Runs, or Woobe.
-
-## Documentation and development workflow
-
-The repository maintains three complementary project documents:
-
-- [`AGENTS.md`](./AGENTS.md) — mandatory development contract for humans and AI agents, including architecture boundaries, testing discipline, and the rule that the live roadmap must remain synchronized with implementation.
-- [`ROADMAP.md`](./ROADMAP.md) — live implementation status. This is the source of truth for what is actually complete, in progress, blocked, or still planned.
-- [`docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`](./docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md) — canonical architecture and detailed implementation specification.
-- [`docs/dependencies.md`](./docs/dependencies.md) — current toolchain/dependency inventory and dependency admission rules.
-
-The architecture document defines the target design. The ROADMAP records real implementation state. Planned capabilities must never be presented as implemented until their acceptance criteria are satisfied.
+- [Development contract](AGENTS.md)
+- [Live implementation roadmap](ROADMAP.md)
+- [Architecture and decisions](docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md)
+- [HTTP/MCP public contracts](docs/contracts.md)
+- [Client operations](packages/wos-cli/README.md)
+- [Signed profiles](docs/signed-workspace-profiles.md)
+- [Work contracts](docs/work-contract-operations.md)
+- [Backup, deployment and telemetry](docs/operations.md)
+- [Current UX acceptance](docs/ux/final-acceptance.md)
+- [Release and publication](docs/releases.md)
 
 ## License
 
-WOS is licensed under [Apache 2.0](LICENSE), independently of Woobe.
-
-## Current state
-
-All 18 implementation waves have acceptance evidence for the standalone WOS validation candidate. HTTP, MCP, the official web client and the Go SDK share durable state and Application services. SQLite and PostgreSQL run the shared contracts, concurrent connection tests and clean restore scenarios. [Verification](docs/verification-2026-10-07.md) maps each release gate to executable evidence; [operations](docs/operations.md) explains authentication, deployment, backup and limits.
-
-For agents, start with [the continuation guide](docs/agents.md). The independent 18-step journey demonstrates two authenticated agents, human verification, plan revision, lease fencing, restart, restore and signed duplicate signals over one Outcome. WOS does not select or execute agents.
-
-The older [completion audit](docs/auditoria-conclusao-2026-10-05.md) remains a historical record and a broader product backlog. Complete deployment of the separate Woobe product is a consumer integration gate, with its compatibility dependency documented in [the reference](examples/woobe-reference/README.md); it is not required to run WOS with independent agents.
-
-The prepared **0.2.0** release adds persistent execution contracts and five skills. Code and local acceptance are integrated independently from publication. Native Linux/Windows proof must match each client binary and source commit before release; Windows and registry gates are not satisfied by the local cross-build. See [0.2.0 notes](docs/releases/0.2.0.md).
+WOS is distributed under [Apache License 2.0](LICENSE). Third-party notices accompany release artifacts.

@@ -1452,3 +1452,23 @@ PRs #79–85 are integrated. All executable correction lots are implemented and 
 Accepted executable source: `315fcadbcb4a6acc614cf908e04b5d55d54e9db9`; final documentation adds no application behavior. Source-bound reports and English current screenshots are in `docs/ux/final-acceptance.md` and `docs/ui-workspace/README.md`. Hosted browser/packages/Ubuntu/native-Windows passed for #83–85; core jobs were refused by Docker Hub anonymous-pull rate limiting, not treated as green. Owner permitted continuing despite refused jobs; local required gates passed before integration.
 
 **Pending human validation:** representative-user comprehension/unaided creation and baseline timing, manual screen-reader use and native browser 200%/400% zoom. Owner explicitly confirmed no representative users or screen-reader testers are available and requested this be recorded as pending. Automated axe/keyboard/reflow and screenshots do not certify WCAG or human usability percentages. Implementation is ready for that validation and human/agent operation; the pending validation is not marked complete.
+
+## Native `wos skill` CLI — candidate for 1.0 hardening (2026-10-12)
+
+**State:** implemented as a Go distribution/client change; local standalone
+installer tests passed. Exact-source hosted Go/distribution verification and
+reviewable PR integration are still required before marking this gate complete.
+
+- The `wos` Go binary imports the canonical Go-embedded agent skills bundle.
+- `wos skill install|update|list|doctor|uninstall|version` supports codex,
+  claude, hermes, openclaw, all and explicit generic destinations, as project,
+  global or explicit paths. It makes no network/API calls and needs no Node.
+- Native and optional npm installers share managed hashes and preserve
+  user-modified/unmanaged/symlink targets; JSON map insertion order is not
+  interpreted as a content modification.
+- Required acceptance: Go package tests, full Go build, actual packaged
+  binary skill install/doctor/uninstall, cross-installer compatibility and
+  offline reproducibility on the immutable source commit.
+- This does not certify native agent execution in every runtime, provision
+  credentials or activate signed Namespace protocols.
+

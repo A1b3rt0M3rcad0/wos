@@ -9,6 +9,9 @@ export const names = ['wos-coordination', 'wos-delegation', 'wos-continuity', 'w
 export const agents = ['claude', 'codex', 'hermes', 'openclaw', 'generic', 'all'];
 const marker = '.wos-skill.json';
 const sha = value => createHash('sha256').update(value).digest('hex');
+// Normalize key order: Go's encoding/json and JS locale sorting emit different
+// object-key orders for the same exact SHA-256 map.
+const sameFiles = (a, b) => JSON.stringify(Object.fromEntries(Object.entries(a).sort(([x],[y])=>x.localeCompare(y)))) === JSON.stringify(Object.fromEntries(Object.entries(b).sort(([x],[y])=>x.localeCompare(y))));
 
 export function destinations({ agent = 'codex', global = false, dir, project = process.cwd(), home = os.homedir() } = {}) {
   if (!agents.includes(agent)) throw new Error(`Unknown agent: ${agent}`);
@@ -62,7 +65,7 @@ async function inspected(root) {
   const data = JSON.parse(await fs.readFile(path.join(root, marker), 'utf8'));
   if (data.package !== '@a1b3rt0m3rcad0/wos-skill' || data.schema !== 1 || !names.includes(data.name)) throw new Error(`Invalid ownership manifest: ${root}`);
   const actual = await contents(root);
-  if (JSON.stringify(actual) !== JSON.stringify(data.files)) throw new Error(`Locally modified skill, preserving it: ${root}`);
+  if (!sameFiles(actual, data.files)) throw new Error(`Locally modified skill, preserving it: ${root}`);
   return { exists: true, ...data };
 }
 
@@ -78,7 +81,7 @@ export async function operate(command, options = {}) {
       const target = path.join(base, name);
       const prior = await inspected(target);
       const files = await contents(path.join(packageRoot, 'skills', name));
-      const same = prior.exists && prior.version === version && JSON.stringify(prior.files) === JSON.stringify(files);
+      const same = prior.exists && prior.version === version && sameFiles(prior.files, files);
       const action = command === 'uninstall' ? (prior.exists ? 'remove' : 'absent') : ['doctor', 'list'].includes(command) ? (prior.exists ? 'installed' : 'absent') : same ? 'unchanged' : prior.exists ? 'update' : 'install';
       plan.push({ target, name, version, action, files, prior });
     }
