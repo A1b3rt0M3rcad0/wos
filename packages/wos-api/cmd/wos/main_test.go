@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
@@ -66,5 +67,18 @@ func TestUnifiedWOSCreatesAndReadsNativeProject(t *testing.T) {
 	}
 	if len(output) == 0 {
 		t.Fatal("client error was not surfaced")
+	}
+}
+
+func TestUnifiedWOSHelpIncludesBundledSkillsAndServiceWithoutConfiguration(t *testing.T) {
+	t.Setenv("WOS_AUTH_MODE", "invalid-unused-configuration")
+	for _, args := range [][]string{{"--help"}, {"skill", "--help"}, {"db", "--help"}, {"--profile", "missing", "work", "--help"}} {
+		code, output := captureCommand(t, args...)
+		if code != 0 || !strings.Contains(string(output), "Usage: wos") {
+			t.Fatal("primary executable failed local help", args, code, string(output))
+		}
+		if len(args) == 1 && !strings.Contains(string(output), "wos skill install --agent codex") {
+			t.Fatal("root help omitted bundled skill installation")
+		}
 	}
 }
