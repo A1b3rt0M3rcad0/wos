@@ -1541,6 +1541,13 @@ Recovery verification locally accepted the real original hosted artifacts and na
 
 PRs #92, #93 and #95 passed all five hosted checks and are integrated. Public wosctl 0.4.0 is SRI-verified with successful registry-installed native Linux/Windows skill receipts in run 38297440817. Full registry-installed signed journey is checked additionally through the read-only recovery workflow. Branch-rule setup is not an outstanding owner action under the WKS-model clarification.
 
+
+### WKS automation follow-up: remove bot-PR settings dependency
+
+After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub Actions is not permitted to create or approve pull requests" (run 38305750972). The owner requested the WKS model without additional GitHub settings. Version preparation now validates the declared reviewed changes and records only allowlisted mechanical version/notes/manifest/OpenAPI metadata through a normal fast-forward master push. It uses no force push, administrative bypass or PR-approval permission. A concurrent master update fails safely and queues a new preparation from its push. GITHUB_TOKEN suppresses sibling push workflows, so the preparer explicitly dispatches exact-source release checks/publication. All backend/browser/packages/native gates remain prerequisites. This replaces the failed bot-PR step; no additional owner configuration is requested.
+
+Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
+
 ### C — live policy assertion gap closure
 
 The assertion audit found that nominal direct/review floor cases did not independently demonstrate a policy changing after issuance. The shared signed-return matrix now verifies deployment and Outcome floors override a weaker Task policy, current credential hardening is enforced, relaxing current policy cannot weaken the frozen review floor, and another credential of the same Principal cannot replace the original owner. Each mathematically valid probe must fail specifically with forbidden (not parser/stale-policy failure), preserve original authority/task/revision, and permit the original correctly updated request afterward. Local Memory/SQLite/real PostgreSQL acceptance passed 418 tests/subtests, with no skips. This closes explicit T07/T38/T39 authority assertions; exact-source hosted verification remains required.
