@@ -233,6 +233,93 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 							}
 						})
 					}
+					assertDirectDenied := func(t *testing.T, caller context.Context, currentPolicy d.CredentialPolicy, key string) {
+						t.Helper()
+						changed := request
+						probeID, err := ids.NewID()
+						must(err)
+						changed.RequestID, changed.IdempotencyKey = probeID.String(), key
+						changed.PolicyRevision, changed.CompletionIntent = signing.Decimal(currentPolicy.Version), "direct"
+						wire, err := signing.Sign(signing.WorkReturn, changed, agentKey.String(), agentPrivate)
+						must(err)
+						_, err = signing.Verify(wire, signing.WorkReturn, agentKey.String(), agentPub)
+						must(err)
+						probeCC := returnCC
+						probeCC.CommandID, probeCC.IdempotencyKey = probeID, key
+						_, err = service.ReturnSignedWork(caller, probeCC, a.ReturnSignedWorkCommand{Envelope: wire})
+						if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeForbidden {
+							t.Fatalf("direct bypass must fail authorization, not stale policy/parser: %v", err)
+						}
+						check, err := store.Begin(ctx)
+						must(err)
+						defer check.Rollback()
+						actual, err := check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
+						must(err)
+						actualWork, err := check.WorkItems().Get(ctx, scope, work.ID)
+						must(err)
+						coordination, err := check.Coordination().LockOutcome(ctx, scope)
+						must(err)
+						if actual.Status != d.ContractActive || actual.Version != c.Version || actual.LatestSubmissionID != nil || actual.SignedBinding.AcceptanceFloor != floor || actualWork.Version != work.Version || actualWork.Lifecycle != work.Lifecycle || coordination.Revision != acquired.OutcomeRevision {
+							t.Fatal("policy bypass changed original frozen authority or task")
+						}
+					}
+					t.Run("deployment_floor_overrides_weak_task_policy", func(t *testing.T) {
+						must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceIndependentReview))
+						assertDirectDenied(t, agentCtx, policy, "deployment-floor-denial")
+						must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+					})
+					t.Run("outcome_floor_overrides_weak_task_policy", func(t *testing.T) {
+						u, err := store.Begin(ctx)
+						must(err)
+						r := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+						outcomePolicy := d.WorkAcceptancePolicy{NamespaceID: ns, OutcomeID: &scope.OutcomeID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+						taskPolicy := outcomePolicy
+						taskPolicy.WorkItemID, taskPolicy.AcceptanceFloor = &work.ID, d.AcceptanceDirect
+						must(r.SaveAcceptancePolicy(ctx, outcomePolicy, 0))
+						must(r.SaveAcceptancePolicy(ctx, taskPolicy, 0))
+						must(u.Commit())
+						assertDirectDenied(t, agentCtx, policy, "outcome-floor-denial")
+						u, err = store.Begin(ctx)
+						must(err)
+						outcomePolicy.Version, outcomePolicy.AcceptanceFloor = 2, d.AcceptanceDirect
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveAcceptancePolicy(ctx, outcomePolicy, 1))
+						must(u.Commit())
+					})
+					t.Run("live_policy_changes_preserve_strongest_floor", func(t *testing.T) {
+						u, err := store.Begin(ctx)
+						must(err)
+						changed := policy
+						changed.Version = 2
+						if floor == d.AcceptanceDirect {
+							changed.AcceptanceFloor = d.AcceptanceIndependentReview
+						} else {
+							changed.AcceptanceFloor = d.AcceptanceDirect
+						}
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, changed, 1))
+						must(u.Commit())
+						assertDirectDenied(t, agentCtx, changed, "changed-live-policy-denial")
+						u, err = store.Begin(ctx)
+						must(err)
+						policy.Version = 3
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 2))
+						must(u.Commit())
+					})
+					t.Run("alternate_credential_cannot_replace_frozen_owner", func(t *testing.T) {
+						alternate, bearer, err := sec.IssueCredential(adminCtx, ns, "executor", identity.Actor, now.Add(time.Hour))
+						must(err)
+						alternateIdentity, err := sec.Authenticate(ctx, bearer)
+						must(err)
+						alternatePolicy := policy
+						alternatePolicy.CredentialID, alternatePolicy.Version, alternatePolicy.AcceptanceFloor = alternate.ID, 1, d.AcceptanceDirect
+						u, err := store.Begin(ctx)
+						must(err)
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, alternatePolicy, 0))
+						must(u.Commit())
+						assertDirectDenied(t, a.WithIdentity(ctx, alternateIdentity), alternatePolicy, "alternate-credential-denial")
+					})
+					request.PolicyRevision = signing.Decimal(policy.Version)
+					envelope, e = signing.Sign(signing.WorkReturn, request, agentKey.String(), agentPrivate)
+					must(e)
 					// Explicit self-completion cannot bypass a review floor, and direct
 					// completion cannot reuse or omit required explicit assessments.
 					denied := request
