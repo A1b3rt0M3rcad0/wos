@@ -1548,6 +1548,11 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
+
+### Release preparation respects active master rules
+
+Run 38308328553 proved that master now requires a PR (GH013); the preceding direct metadata push was rejected and did not change master. Preparation now writes a source-specific release branch, creates a PR when allowed, or records the branch for the connected authorized agent. No rule bypass, force push or additional owner setting is required. A prepared branch is not a published release. Merging the metadata PR triggers the existing exact-source publication gates.
+
 ### D — dense continuity measurements, first operational slice
 
 The shared SQLite/PostgreSQL benchmark now accepts 100/1,000/10,000 WorkItems per Outcome and measures focal work context beside the full continuity projection, with allocation/response size and empirical p50/p95/p99. Local 1,000-item execution passed for SQLite and real PostgreSQL (100 samples per sequential query, GOMAXPROCS=3); each rich WorkItem has an actual criterion and explicit assessment. PostgreSQL rich snapshot mean/p95/p99: 82.48/120.33/136.92 ms; focal context: 15.35/20.91/28.78 ms, 2,225 bytes versus 32,643. Four-reader evidence is not claimed: this run used three readers and measured 24.36 PostgreSQL snapshots/s. SQLite reported 32 SQL statements/rich snapshot and 34/focal context; PostgreSQL SQL count was unavailable and is not invented. This demonstrates response caps do not bound full reconstruction; agents should prefer focal context and expand proof by reference. Larger-history envelopes, production percentiles, CPU profiles, restore/retention and final-source records remain separate acceptance work.
