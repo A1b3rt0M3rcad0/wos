@@ -57,6 +57,8 @@ go build -trimpath -o ./bin/wosctl ./packages/wos-cli/cmd/wosctl
 ./bin/wos server
 ```
 
+On Linux or Windows x64, `npm install --global @a1b3rt0m3rcad0/wos-cli` supplies both Go commands through npm with a small platform/integrity launcher. The `wos skill` operation itself is implemented in Go and does not use Node.js logic or a network connection.
+
 The source declares Go 1.27. The `wos` executable contains the HTTP/MCP server, embedded web application, and built-in skill bundles. `wosctl` is a separate, API-only client and does not open the server's database.
 
 **Supported release target:** Linux amd64 for the standalone service, SQLite or PostgreSQL 18.6, HTTP and MCP. The standalone `wosctl` client also has Linux/Windows amd64 native acceptance. Other platforms or runtimes require additional certification; compiling a binary alone does not provide it.

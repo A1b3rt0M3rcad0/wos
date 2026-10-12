@@ -2,7 +2,7 @@
 
 ## Produtos
 
-`VERSION` é a versão SemVer coordenada dos dois pacotes: `@a1b3rt0m3rcad0/wos` (serviço Linux amd64) e `@a1b3rt0m3rcad0/wos-skill` (skills portáveis, Node >=22). Não confundir SemVer com HTTP `/v1`, versão de snapshot/evento, migração SQL ou protocolo MCP negociado.
+`VERSION` é a versão SemVer coordenada de três pacotes: `@a1b3rt0m3rcad0/wos` (serviço Linux amd64), `@a1b3rt0m3rcad0/wos-cli` (CLI Go com `wos` e `wosctl` para Linux/Windows amd64) e `@a1b3rt0m3rcad0/wos-skill` (skills portáveis, Node >=22). npm usa um launcher Node pequeno para escolher/verificar o executável Go; `wos skill` permanece implementação Go. Não confundir SemVer com HTTP `/v1`, versão de snapshot/evento, migração SQL ou protocolo MCP negociado.
 
 O campo `wosCompatibility` do pacote de skills identifica a versão coordenada de serviço e os contratos alvo; não certifica outras versões ou runtimes. Um major Go >=2 também exige revisar o module path/imports conforme Go semantic import versioning antes de publicar a tag; o gerador de versões não migra imports ou contratos automaticamente.
 
@@ -14,9 +14,9 @@ O arquivo nativo e o container dispensam Node. O wrapper npm do serviço não te
 2. Após merge em `master`, `prepare-release.yml` prepara versões/notas/manifesto e abre ou atualiza o PR reservado `release/next`. Esse branch pertence à automação; não use para outras mudanças. A primeira preparação mantém 0.1.0, seguintes escolhem o maior bump.
 3. Revise e integre o PR. Um PR criado por GITHUB_TOKEN pode não disparar workflows adicionais; o workflow de publicação sempre executa os gates completos depois do merge, independentemente desse comportamento.
 4. `release.yml` verifica o commit exato por quatro workflows reutilizáveis: Go/API/PostgreSQL/race/acceptance/container, navegador, e skills/distribuição/release contracts. Não há publicação em PRs de forks ou branch arbitrário.
-5. Depois dos gates, constrói/testa tarballs e verifica os recibos nativos do mesmo source, publicando os artefatos de validação do job `verify`. Publicação em registries ocorre somente por `workflow_dispatch` com `publish=true`: reconcilia tag imutável/draft, ambos os npm, GHCR e GitHub Release. Integrar o plano ou o manifesto não publica por si só. Tags versionadas não são substituídas. Não há deployment automático em instâncias de clientes, migrations ou reinício de dados.
+5. Depois dos gates, constrói/testa tarballs e verifica os recibos nativos do mesmo source, publicando os artefatos de validação do job `verify`. Publicação em registries ocorre somente por `workflow_dispatch` com `publish=true`: reconcilia tag imutável/draft, os três npm, GHCR e GitHub Release. Integrar o plano ou o manifesto não publica por si só. Tags versionadas não são substituídas. Não há deployment automático em instâncias de clientes, migrations ou reinício de dados.
 
-Build/replay exige o mesmo commit e ferramenta: Go 1.27.2, Node 24.19.0 e npm 11.9.0. Source timestamp vem do commit, não do relógio do job. Os tarballs e arquivo nativo devem ser byte-idênticos entre caminhos de source, verificados por `tools/distribution/reproducible.mjs`. Artefatos são `wos-VERSION.tgz`, `wos-skill-VERSION.tgz`, `wos_VERSION_linux_amd64.tar.gz`, `distribution.json`, `SHA256SUMS`; imagem `ghcr.io/a1b3rt0m3rcad0/wos:VERSION`.
+Build/replay exige o mesmo commit e ferramenta: Go 1.27.2, Node 24.19.0 e npm 11.9.0. Source timestamp vem do commit, não do relógio do job. Os tarballs e arquivo nativo devem ser byte-idênticos entre caminhos de source, verificados por `tools/distribution/reproducible.mjs`. Artefatos são `wos-VERSION.tgz`, `wos-skill-VERSION.tgz`, `wos-cli-VERSION.tgz`, `wos_VERSION_linux_amd64.tar.gz`, `distribution.json`, `SHA256SUMS`; imagem `ghcr.io/a1b3rt0m3rcad0/wos:VERSION`.
 
 ## Configuração pelo titular das contas
 

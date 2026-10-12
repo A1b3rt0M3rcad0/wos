@@ -17,13 +17,25 @@ export async function recordNativePlatform(){
  const executable=path.join(root,'dist','native',platform,platform==='windows'?'wosctl.exe':'wosctl');await fs.mkdir(path.dirname(executable),{recursive:true});
  run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${flags}`,'-o',executable,'./packages/wos-cli/cmd/wosctl'],{env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
  const identity=JSON.parse(run(executable,['version','--output','json'])).data;assert.equal(identity.version,version);assert.equal(identity.commit,commit);assert.equal(identity.built_at,builtAt);
- const proof={schema:1,platform,arch:'amd64',version,commit,built_at:builtAt,binary_sha256:sha256(await fs.readFile(executable)),native_host:process.platform,native_keyring_executed:true,go_tests:goTests,go:run('go',['version']),passed:true,checks:['native Go race workspace/SDK/protocol acceptance','native five-skill installer tests','native client source identity']};
+ // Execute the actual Go WOS skill installer on each native host.
+ const serverMetadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server';
+ const wosFlags=`-s -w -X ${serverMetadata}.Version=${version} -X ${serverMetadata}.Commit=${commit} -X ${serverMetadata}.BuiltAt=${builtAt}`;
+ const skillBinary=path.join(root,'dist','native',platform,platform==='windows'?'wos.exe':'wos');
+ run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${wosFlags}`,'-o',skillBinary,'./packages/wos-api/cmd/wos'],{env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
+ const skillDir=await fs.mkdtemp(path.join(path.dirname(skillBinary),'skill-smoke-'));
+ try {
+   assert.equal(JSON.parse(run(skillBinary,['skill','install','--agent','codex','--project',skillDir])).length,5);
+   assert.ok(JSON.parse(run(skillBinary,['skill','doctor','--agent','codex','--project',skillDir])).every(x=>x.action==='installed'));
+   assert.equal(JSON.parse(run(skillBinary,['skill','uninstall','--agent','codex','--project',skillDir])).length,5);
+ } finally { await fs.rm(skillDir,{recursive:true,force:true}); }
+ const proof={schema:1,platform,arch:'amd64',version,commit,built_at:builtAt,binary_sha256:sha256(await fs.readFile(executable)),wos_binary_sha256:sha256(await fs.readFile(skillBinary)),native_host:process.platform,native_keyring_executed:true,go_tests:goTests,go:run('go',['version']),passed:true,checks:['native Go race workspace/SDK/protocol acceptance','native five-skill installer tests','native client source identity plus Go skill install']};
  await fs.writeFile(path.join(root,'dist',`platform-${platform}-amd64.json`),JSON.stringify(proof,null,2)+'\n');return proof;
 }
 export async function verifyNativePlatforms(manifest,directory=path.join(root,'dist','acceptance')){
  for(const platform of ['linux','windows']){
   const proof=JSON.parse(await fs.readFile(path.join(directory,`platform-${platform}-amd64.json`),'utf8'));
   const binary=manifest.artifacts.find(a=>a.kind===`client-${platform}`);if(!binary)throw new Error('Missing client artifact');
+  if(manifest.cli_binaries?.[platform+'-amd64']?.wos?.sha256 && proof.wos_binary_sha256!==manifest.cli_binaries[platform+'-amd64'].wos.sha256)throw new Error('Native WOS skill executable does not match packaged binary');
   if(proof.schema!==1||!proof.passed||proof.native_keyring_executed!==true||!Number.isInteger(proof.go_tests?.passed)||proof.go_tests.passed<1||!Array.isArray(proof.go_tests.skipped)||proof.platform!==platform||proof.arch!=='amd64'||proof.native_host!==(platform==='windows'?'win32':'linux')||proof.version!==manifest.version||proof.commit!==manifest.commit||proof.built_at!==manifest.built_at||proof.binary_sha256!==binary.binary_sha256||!Array.isArray(proof.checks)||proof.checks.length!==3)throw new Error(`Missing or mismatched native ${platform} acceptance; cross-build is not acceptance`);
  }
  return true;
