@@ -1516,6 +1516,19 @@ While A awaits hosted/public registry gates, independent contract hardening proc
 
 Contract-candidate local verification passed 22 package/release/compatibility checks and the real MCP client test against Memory/SQLite/real PostgreSQL. The runtime now advertises the injected product version. The source remains 0.4.0 and stable gates are not inferred from these focused checks.
 
+### C — signed assertion audit, first authority slice
+
+The audit adds 21 separately named, correctly signed return probes across direct/independent-review and with/without required criteria. Probes change server, Namespace, Outcome, Principal, a registered foreign Principal's signing key, contract, task, execution, fencing, specification/authority digests, contract/lease/work/policy versions, purpose, completion intent, documentary scopes and local-key bindings. Each probe verifies the signature independently, requires application rejection, and verifies the original active grant, task version/lifecycle and Outcome revision remain unchanged. The original accepted return then executes, so negative requests cannot consume the real obligation.
+
+Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
+
+
+### Browser regression found during release hardening
+
+PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
+
+Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.
+
 ### Owner correction — use the WKS CI-controlled release model
 
 The owner requested the WKS model rather than additional GitHub settings steps. Branch protection remains an optional repository administration hardening action, not a prerequisite for this delivery. No effective master protection is asserted: the integration received HTTP 403 and the owner's earlier intent to configure it is not evidence of activation. Required acceptance stays enforced in the publication workflow's dependency graph on the exact source.
@@ -1525,3 +1538,5 @@ The WKS workflows were inspected directly. WOS now automatically publishes after
 Initial wosctl publication run 38297440817 passed all source gates but public version 0.4.0 remained absent. Registry metadata shows a 0.0.0-stage placeholder, consistent with npm staged publishing. The original approved artifact was recovered and independently verified: source 347e4a492d50f69a1aeb0a0c0bb3fde255999ad0; SHA-256 b06b95561624f34354554186a4388b375f9e2fbe70659a96196481c05bbc7e15. No duplicate upload or rebuilt version is authorized by recovery. A read-only recovery workflow verifies the original source gates, native receipts and public integrity, then runs a clean installed consumer on Linux and Windows. Future failed metadata verification preserves original package bytes and a pending diagnostic receipt. Public consumer acceptance now includes authenticated signed execution, independent review, correction and recovery using the installed binaries outside the checkout. Execution is not yet asserted until the public version is approved/available.
 
 Recovery verification locally accepted the real original hosted artifacts and native Linux/Windows receipts, rejected a foreign source and differing registry integrity without registry mutation. The installed original hosted tarball completed the signed executor/reviewer/correction/recovery journey outside source on Linux. Registry-installed acceptance remains pending; that offline execution is not represented as public npm installation. Release/compatibility tests passed 13 checks and actionlint passed the affected workflows.
+
+PRs #92, #93 and #95 passed all five hosted checks and are integrated. Public wosctl 0.4.0 is SRI-verified with successful registry-installed native Linux/Windows skill receipts in run 38297440817. Full registry-installed signed journey is checked additionally through the read-only recovery workflow. Branch-rule setup is not an outstanding owner action under the WKS-model clarification.
