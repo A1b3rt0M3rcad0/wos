@@ -15,7 +15,7 @@ Native Linux server/client archives, the Windows client archive and the OCI imag
 
 ## Prepare and validate
 
-`VERSION` is the product SemVer. HTTP `/api/v1`, negotiated MCP protocol, `signed_contracts_v2`, YAML workspace schema and SQL migrations have independent compatibility identities. `.changes/` records bounded changes; `node tools/releases/version.mjs prepare` creates a reviewable version change, notes and release manifest. Preparation is not publication.
+`VERSION` is the product SemVer. HTTP `/api/v1`, negotiated MCP protocol, `signed_contracts_v2`, YAML workspace schema and SQL migrations have independent compatibility identities. `.changes/` records bounded changes; `node tools/releases/version.mjs prepare` creates the mechanical version change, notes and release manifest. On master, the preparation workflow validates and records only these files through a normal fast-forward push, then explicitly dispatches the gated release. It needs no permission to create/approve PRs. Application changes still use reviewed source PRs. Preparation is not publication.
 
 The workflow validates the exact original source with backend/PostgreSQL/race, browser, packages and native Linux/Windows CLI/keyring gates. Builds use pinned Go 1.27.2, Node 24.19.0 and npm 11.9.0; build timestamps derive from the source commit. `build.mjs`, `verify.mjs` and `reproducible.mjs` check source versions, SHA-256/SRI, offline installation, actual HTTP/MCP/UI, signed profiles/recovery, native skill operations, graceful shutdown, corruption rejection and byte identity across source paths.
 
