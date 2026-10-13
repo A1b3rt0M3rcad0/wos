@@ -1,0 +1,25 @@
+{
+  "source_sha": "5fdd6949c433d734816ac709a844e892486644d1",
+  "project": "wos-client-report-20261012",
+  "port": 18092,
+  "qualification_scope": "owned cloud fixture, not the client desktop localhost:8092",
+  "binary_sha256": "5daf91563aad515f71b03da30b3ec159410dbbf9e267e8b423f940c3a4386e7e",
+  "scope": "native binary copied from the qualified owned Docker image, outside checkout; not registry installation",
+  "result": {
+    "protocol": "signed_contracts_v2",
+    "profiles": [
+      "executor",
+      "reviewer"
+    ],
+    "checks": [
+      "approved enrollment",
+      "protected profile secret references",
+      "signed checkout/show",
+      "work finish and cleanup",
+      "independent review finish and cleanup",
+      "changes requested, fresh correction and explicit finding response",
+      "required original criterion assessment",
+      "post-cleanup work/review recover"
+    ]
+  }
+}
