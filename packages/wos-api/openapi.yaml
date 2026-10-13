@@ -3,7 +3,7 @@
 openapi: 3.1.0
 info:
   title: Woobe Outcome Server HTTP API
-  version: 0.4.1
+  version: 0.4.2
   description: Implemented REST and generated catalog commands over the same Application services. See docs/contracts.md
     for continuity, MCP, auth, replay and limits. Product SemVer is independent of the HTTP /v1 path; generated commands.openapi.json supplements this specification.
 servers:
