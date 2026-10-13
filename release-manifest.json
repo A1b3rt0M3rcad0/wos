@@ -1,13 +1,18 @@
 {
   "schema": 1,
-  "version": "0.4.1",
-  "previous_prepared_version": "0.4.0",
+  "version": "0.4.2",
+  "previous_prepared_version": "0.4.1",
   "bump": "patch",
   "changes": [
     {
-      "file": "wks-automatic-release.json",
+      "file": "client-command-discovery.json",
       "bump": "patch",
-      "summary": "Unify public wos operations, correct product metadata, preserve pagination and publish qualified wosctl releases automatically after exact-source CI."
+      "summary": "Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation."
+    },
+    {
+      "file": "generic-client-recovery.json",
+      "bump": "patch",
+      "summary": "Prevent implicit HTTP mutation replay, preserve compact receipt observations and qualify generic documentary clients across real stores."
     }
   ]
 }
