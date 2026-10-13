@@ -11,6 +11,9 @@ import (
 
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,6 +23,15 @@ func BenchmarkContinuity(b *testing.B) {
 	if os.Getenv("WOS_TEST_POSTGRES_DSN") == "" {
 		b.Skip("real PostgreSQL required")
 	}
+	historySize := 100
+	if requested := os.Getenv("WOS_CONTINUITY_BENCHMARK_HISTORY"); requested != "" {
+		var err error
+		historySize, err = strconv.Atoi(requested)
+		if err != nil || (historySize != 100 && historySize != 1000 && historySize != 10000) {
+			b.Fatal("history must be 100, 1000 or 10000")
+		}
+	}
+
 	store, err := openTestPostgres(filepath.Join(b.TempDir(), "bench.db"), Options{MigrateOnOpen: true})
 	if err != nil {
 		b.Fatal(err)
@@ -39,7 +51,7 @@ func BenchmarkContinuity(b *testing.B) {
 			first = v.Value
 		}
 	}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < historySize; i++ {
 		if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: first.Scope(), Title: fmt.Sprintf("Work %03d", i), Priority: domain.PriorityNormal}); err != nil {
 			b.Fatal(err)
 		}
@@ -49,10 +61,14 @@ func BenchmarkContinuity(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	for i := 0; i < 100; i++ {
+	var focalWorkID domain.ID
+	for i := 0; i < historySize; i++ {
 		work, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: rich.Value.Scope(), Title: fmt.Sprintf("Reviewed work %03d", i), Priority: domain.PriorityNormal})
 		if err != nil {
 			b.Fatal(err)
+		}
+		if i == 0 {
+			focalWorkID = work.Value.ID
 		}
 		criterion, err := service.AddCriterion(ctx, cc, application.AddCriterionCommand{Owner: work.Value.Ref(), ExpectedVersion: 1, Title: "Reviewed", Required: true, VerificationMode: domain.VerificationModeAttestation})
 		if err != nil {
@@ -63,20 +79,24 @@ func BenchmarkContinuity(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-	for _, name := range []string{"discovery_100_outcomes", "snapshot_100_work_items", "snapshot_100_work_items_with_proof"} {
+	for _, name := range []string{"discovery_101_outcomes", fmt.Sprintf("snapshot_%d_work_items", historySize), fmt.Sprintf("snapshot_%d_work_items_with_proof", historySize), fmt.Sprintf("work_context_%d_work_items_with_proof", historySize)} {
 		b.Run(name, func(b *testing.B) {
 			b.ReportAllocs()
 			var before int64
 			_ = store.db.QueryRowContext(ctx, "SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&before)
 			poolBefore := store.db.Stats()
+			var samples []time.Duration
 			for b.Loop() {
+				started := time.Now()
 				var value any
 				var err error
-				if name == "discovery_100_outcomes" {
+				if name == "discovery_101_outcomes" {
 					value, err = service.SearchOutcomes(ctx, ns, ports.OutcomeFilter{}, 25, "")
+				} else if strings.HasPrefix(name, "work_context_") {
+					value, err = service.GetWorkContext(ctx, rich.Value.Scope(), focalWorkID)
 				} else {
 					scope := first.Scope()
-					if name == "snapshot_100_work_items_with_proof" {
+					if strings.HasSuffix(name, "_with_proof") {
 						scope = rich.Value.Scope()
 					}
 					value, err = service.GetContinuity(ctx, scope, 25)
@@ -91,9 +111,15 @@ func BenchmarkContinuity(b *testing.B) {
 				if len(raw) > application.MaxSnapshotBytes {
 					b.Fatal("response cap exceeded")
 				}
+				samples = append(samples, time.Since(started))
 				b.ReportMetric(float64(len(raw)), "response_bytes")
 			}
 			b.StopTimer()
+			sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
+			for _, quantile := range []int{50, 95, 99} {
+				index := (len(samples)*quantile+99)/100 - 1
+				b.ReportMetric(float64(samples[index].Nanoseconds()), fmt.Sprintf("p%d_ns", quantile))
+			}
 			var after int64
 			if err := store.db.QueryRowContext(ctx, "SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&after); err == nil {
 				b.ReportMetric(float64(after-before-1)/float64(b.N), "sql_statements/op")
@@ -101,7 +127,7 @@ func BenchmarkContinuity(b *testing.B) {
 			b.ReportMetric(float64(store.db.Stats().WaitDuration-poolBefore.WaitDuration)/float64(b.N), "pool_wait_ns/op")
 		})
 	}
-	b.Run("parallel_snapshot_100_work_items_with_proof", func(b *testing.B) {
+	b.Run(fmt.Sprintf("parallel_snapshot_%d_work_items_with_proof", historySize), func(b *testing.B) {
 		b.ReportAllocs()
 		var durations atomic.Uint64
 		poolBefore := store.db.Stats()

@@ -230,6 +230,16 @@ jobs:
           fi
           curl --fail --silent --show-error http://127.0.0.1:18081/livez >/dev/null
 
+      - name: Measure dense continuity and focal context on the immutable source
+        env:
+          GOMAXPROCS: '3'
+        run: python3 tools/acceptance/continuity-capacity.py --history 100 1000 --samples 100 --output dist/continuity-capacity
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: dense-continuity-capacity
+          path: dist/continuity-capacity
+          if-no-files-found: error
+
       - name: Measure bounded work-contract contention and context
         env:
           WOS_CONTRACT_LOAD: '1'

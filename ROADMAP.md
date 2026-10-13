@@ -1493,10 +1493,10 @@ Source plan: `docs/stable/original-plan-2026-10-12.md`, baseline `40d1703` / 0.4
 
 | Gate | Current state |
 | --- | --- |
-| P0-01 CLI name/publication | In progress: registry read returned 404 for both historical scoped CLI and `wosctl`; rename and bounded metadata reconciliation required, then real published Linux/Windows installation |
-| P0-02 stable contracts | Pending metadata/compatibility freeze and regression evidence |
+| P0-01 CLI name/publication | Accepted: original approved wosctl 0.4.0 SRI verified publicly; actual registry installation and native skills passed Linux/Windows in run 38297440817 |
+| P0-02 stable contracts | Accepted candidate freeze: PR #92 integrated after all source checks; schema/metadata/license and compatibility regressions passed |
 | P0-03 signed assertions | Existing mappings need assertion audit; no fabricated 96-scenario completion |
-| P0-04 license | Existing Apache-2.0 retained; artifact consistency to verify |
+| P0-04 license | Accepted: existing Apache-2.0 retained; one-package/native artifact checks passed |
 | P0-05 protection/release | Pending enforced source gates, registry identities and immutable coordinated release |
 | P1-01–04 operational/security | Existing foundation; capacity, retention/restore, diagnostic and negative-authority evidence to consolidate |
 | P1-05 human validation | Remains pending under prior owner instruction; no participants or manual screen reader available; automated success is separate |
@@ -1536,6 +1536,18 @@ The authorized managed Codex pilot completed independent execution/review, real 
 PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
 
 Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.
+
+### D — dense continuity measurements, first operational slice
+
+The shared SQLite/PostgreSQL benchmark now accepts 100/1,000/10,000 WorkItems per Outcome and measures focal work context beside the full continuity projection, with allocation/response size and empirical p50/p95/p99. Local 1,000-item execution passed for SQLite and real PostgreSQL (100 samples per sequential query, GOMAXPROCS=3); each rich WorkItem has an actual criterion and explicit assessment. PostgreSQL rich snapshot mean/p95/p99: 82.48/120.33/136.92 ms; focal context: 15.35/20.91/28.78 ms, 2,225 bytes versus 32,643. Four-reader evidence is not claimed: this run used three readers and measured 24.36 PostgreSQL snapshots/s. SQLite reported 32 SQL statements/rich snapshot and 34/focal context; PostgreSQL SQL count was unavailable and is not invented. This demonstrates response caps do not bound full reconstruction; agents should prefer focal context and expand proof by reference. Larger-history envelopes, production percentiles, CPU profiles, restore/retention and final-source records remain separate acceptance work.
+
+
+Dense capacity is now an immutable-source CI fixture: 100/1,000 tasks on SQLite/real PostgreSQL, with separate full/focal projections, empirical quantiles and CPU/heap profiles. The report rejects missing/zero/failing cases and changes to compiler inputs; CI output logs are not confused with source changes. PostgreSQL SQL counts remain unavailable unless pg_stat_statements is configured. Operational reference documents retention by data class, hourly backup and clean restore/upgrade procedures, explicit RPO/RTO targets rather than guarantees, metrics resets/missing production percentiles, external collector diagnostics and production secret/TLS boundaries. `.env.example` and the copy-ready local Compose flow remain unchanged. Reference target acceptance is limited to the measured unprofiled reads; final clean-source profiling and hosted gate integration are still required.
+
+
+Clean-source capacity profiling passed source 09de362daaed7696970f760ba6fa7cdd7ab25e60: 16 real store/history/query cases with 100 samples each, plus CPU/heap profiles. Tracked receipt: docs/stable/capacity-2026-10-12.json. At 1,000 tasks, profiled PostgreSQL rich/focal p95 was 97.32/26.20 ms, SQLite 117.73/21.66 ms; three-reader throughput 26.24/22.83 snapshots/s. The reference focal target is 35 ms; unavailable PostgreSQL SQL counts and observed tail spikes remain explicit. Go/fixture CPU/RSS excludes the independent database process. No 10,000-item, signed-writer-at-1,000 or production-SLA acceptance is inferred.
+
+Public registry wosctl 0.4.0 now matches the original source 347e4a492d50f69a1aeb0a0c0bb3fde255999ad0 tarball SRI. Read-only preflight allowed rerunning the original failed publisher with no duplicate upload. Run 38297440817 completed successfully, including actual public latest installation and native skill management on Linux and Windows. Full public signed-journey acceptance is an additional check in PR #94, separate from those original installer receipts.
 
 ### Owner correction — use the WKS CI-controlled release model
 
