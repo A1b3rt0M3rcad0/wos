@@ -1,0 +1,89 @@
+schema_version: 2
+kind: WOSContractFile
+issued:
+  specification:
+    payload:
+      contract_id: 01a131ea-1d3a-7633-83fc-819554bf59e1
+      contract_kind: execution
+      namespace_id: 01a11991-0000-7000-8000-000000000001
+      outcome_id: 01a131e9-9bf2-74cb-bd26-ca809e85e593
+      principal_id: executor
+      protocol_version: 2
+      server_id: 01a131e9-9bcf-79a1-9a73-a733236560b9
+      signer_key_id: 01a131e9-9bcf-76e2-b8b5-f0d74e333340
+      spec:
+        acceptance_floor: independent_review
+        criteria:
+          - criterion_revision: "1"
+            id: 01a131e9-9c37-7c91-9925-7896d4a8f6ce
+            owner_ref:
+              id: 01a131e9-9c2f-7d80-98ff-cc2474002ffe
+              kind: work_item
+              namespace_id: 01a11991-0000-7000-8000-000000000001
+              outcome_id: 01a131e9-9bf2-74cb-bd26-ca809e85e593
+            required: true
+            status: active
+            title: normalizeLabel frozen artifact passes all four requirements
+            verification_mode: attestation
+        dependencies: []
+        description: ""
+        execution_spec:
+          constraints: []
+          context_refs: []
+          deliverables: []
+          instructions:
+            - Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding.
+          scope_hints: []
+        objective_id: null
+        outcome_intent: Execução e revisão distintas
+        policy_revision: "2"
+        title: Implement normalizeLabel and independently review frozen code
+      work_item_id: 01a131e9-9c2f-7d80-98ff-cc2474002ffe
+    proof:
+      payload_type: application/vnd.wos.contract-spec.v2+json
+      key_id: 01a131e9-9bcf-76e2-b8b5-f0d74e333340
+      signature: hxWoZBwC+U17f1pnu5E0+l+mFMcJIN2CYT3NepUh7AA9QP/VFnZkD13IbROTi3/CjOzHHnawqEUvmYLF5zJ9AA==
+  authority:
+    payload:
+      acceptance_mode: independent_review
+      allowed_signing_key_ids:
+        - 01a131e9-9c61-7de8-af45-2057773452ca
+      contract_id: 01a131ea-1d3a-7633-83fc-819554bf59e1
+      contract_kind: execution
+      contract_version: "1"
+      execution_id: 01a131ea-1d3a-7008-9ab0-9045c1b2f7be
+      expires_at: "2026-10-12T21:04:48.92051803Z"
+      fencing_token: "1"
+      issued_at: "2026-10-12T20:59:48.92051803Z"
+      lease_version: "1"
+      namespace_id: 01a11991-0000-7000-8000-000000000001
+      outcome_id: 01a131e9-9bf2-74cb-bd26-ca809e85e593
+      policy_revision: "2"
+      principal_id: executor
+      protocol_version: 2
+      server_id: 01a131e9-9bcf-79a1-9a73-a733236560b9
+      signer_key_id: 01a131e9-9bcf-76e2-b8b5-f0d74e333340
+      spec_digest: sha256:915cf715b696fa59e130aad385cd9d50ec7f8b64912510b2536287308f3695e3
+      work_item_id: 01a131e9-9c2f-7d80-98ff-cc2474002ffe
+    proof:
+      payload_type: application/vnd.wos.contract-authority.v2+json
+      key_id: 01a131e9-9bcf-76e2-b8b5-f0d74e333340
+      signature: vu3UWbmAbk2wayvA7TSznUmKNE0kCdcHMVY82jXLv1WnIQZuFwZ7SNSajdeKvJq0fWeie04iWBJwEZ4233peDQ==
+execution:
+  completion_intent: review
+  material:
+    result:
+      artifacts: []
+      contract_id: 01a131ea-1d3a-7633-83fc-819554bf59e1
+      criterion_evidence: []
+      evidence_ids: []
+      spec_digest: sha256:915cf715b696fa59e130aad385cd9d50ec7f8b64912510b2536287308f3695e3
+      summary: "Round1 frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.mjs; SHA256 f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1. Implements string trim, whitespace-only empty result, and TypeError for every nonstring. Controlled omission: internal whitespace collapse is deliberately absent as required by issued round1 instructions; independent review should request correction."
+      work_item_id: 01a131e9-9c2f-7d80-98ff-cc2474002ffe
+  progress:
+    next_action: "Independent review of frozen round1 artifact and controlled omission."
+    summary: "Round1 frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.mjs; SHA256 f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1. Implements string trim, whitespace-only empty result, and TypeError for every nonstring. Controlled omission: internal whitespace collapse is deliberately absent as required by issued round1 instructions; independent review should request correction."
+_local:
+  schema_version: 1
+  profile: executor
+  work_item_version: "3"

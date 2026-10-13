@@ -1,0 +1,563 @@
+{
+  "schema_version": 1,
+  "task": "T89 managed Codex pilot",
+  "result": "passed_second_isolated_attempt",
+  "recorded_at": "2026-10-12T21:08:14.982312+00:00",
+  "owner_authorized": true,
+  "runtime": "managed Codex fresh-context subagents external to WOS",
+  "provider_token_counts": null,
+  "provider_cost": null,
+  "source": {
+    "npm_package": "wosctl",
+    "version": "0.4.0",
+    "accepted_commit": "347e4a492d50f69a1aeb0a0c0bb3fde255999ad0",
+    "registry": "https://registry.npmjs.org/wosctl/-/wosctl-0.4.0.tgz",
+    "registry_integrity": "sha512-EoklivzpRtYE0tfxIp1XEW9M0HzzVyKBmWL4djGp34XpV4X0/77trixfCMAPqm7jznuq04AjSuWNe77kO9LM3Q==",
+    "primary_entrypoint": "wos",
+    "native_path": "/tmp/wos-t89-managed-pilot/install/node_modules/wosctl/native/linux-amd64/wos",
+    "native_sha256": "28ca3fb281580f870bc4dca8d90c99b3c9f6e24db5226bdd4696f18d7e462e0b",
+    "release_manifest": {
+      "schema": 1,
+      "version": "0.4.0",
+      "commit": "347e4a492d50f69a1aeb0a0c0bb3fde255999ad0",
+      "built_at": "2026-10-12T19:24:24Z",
+      "binaries": {
+        "linux-amd64": {
+          "wos": {
+            "sha256": "28ca3fb281580f870bc4dca8d90c99b3c9f6e24db5226bdd4696f18d7e462e0b"
+          },
+          "wosctl": {
+            "sha256": "4a9c54125e1941378154fef4e876c47bfb9e3ca0ab1f061489cef75ec89c826c"
+          }
+        },
+        "windows-amd64": {
+          "wos": {
+            "sha256": "9807c3ece234fd5633717836f11189444452288f04b897419853b36f4e46eedb"
+          },
+          "wosctl": {
+            "sha256": "579fe367586b44eb5c59da4abb82ab457a235e297a1254123ea140539e55eb9a"
+          }
+        }
+      },
+      "work_protocol": "signed_contracts_v2",
+      "workspace_schema": 2
+    }
+  },
+  "attempt1": {
+    "result": "failed_preserved",
+    "failure": "independent reviewer signed prose requirement_ref; server rejected HTTP422 existing contracted obligation; original frozen intention preserved unchanged",
+    "test_counts": {
+      "executed": 10,
+      "passed": 8,
+      "failed": 2
+    },
+    "artifact_directory": "/tmp/wos-t89-managed-pilot/artifacts/review1",
+    "accepted_execution_receipt": [
+      {
+        "command": "ReturnSignedWork",
+        "principal_id": "executor",
+        "contract_id": "01a131ea-1d3a-7633-83fc-819554bf59e1",
+        "disposition": "delivered_for_review",
+        "accepted": true,
+        "local_obligation_closed": true,
+        "request_digest": "sha256:d5dfa66173eadc0459d3c0626477cbcb5f8775bf0cbbc6606d9596bbe314f761",
+        "submission_digest": "sha256:a7eede63014bbc0b45c0f3d78779a8e27fa30e96d60f523caf977eb934fd621d",
+        "acceptance_digest": "sha256:efc3b3e216264fab72e4286e0521c8b38cee35813e5352872e13300a64f258c0",
+        "ed25519_verified": true
+      }
+    ],
+    "reviewer_contract_retained": true,
+    "empty_contract_directories": false
+  },
+  "attempt2": {
+    "result": "passed",
+    "principals": [
+      "executor",
+      "reviewer"
+    ],
+    "fresh_context_agents": [
+      "attempt2_executor1",
+      "attempt2_reviewer1",
+      "attempt2_correction",
+      "attempt2_reviewer2"
+    ],
+    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+    "final_lifecycle": "done",
+    "controlled_initial_omission": "internal whitespace collapse explicitly recorded in issued instructions and signed submission",
+    "correction_references_original_review": true,
+    "new_correction_contract": true,
+    "frozen_submissions": [
+      {
+        "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+        "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+        "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+        "material_digest_verified": true,
+        "frozen_artifact": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs",
+        "frozen_sha256": "7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc",
+        "frozen_checksum_bound_in_signed_material": true
+      },
+      {
+        "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+        "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+        "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+        "material_digest_verified": true,
+        "frozen_artifact": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs",
+        "frozen_sha256": "4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d",
+        "frozen_checksum_bound_in_signed_material": true
+      }
+    ],
+    "verified_signed_receipts": [
+      {
+        "command": "ReturnSignedWork",
+        "principal_id": "executor",
+        "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+        "disposition": "delivered_for_review",
+        "accepted": true,
+        "local_obligation_closed": true,
+        "request_digest": "sha256:cf00ef837e10ab5efb024c8b0e6753b5812d40b1a1fad9e2ee40710c8f11610f",
+        "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+        "acceptance_digest": "sha256:31b42eda73cf62094a2171d68834ee8b74f4591687fb53ef9ffedf6eb801099d",
+        "ed25519_verified": true
+      },
+      {
+        "command": "ReturnSignedReview",
+        "principal_id": "reviewer",
+        "contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+        "disposition": "changes_requested",
+        "accepted": true,
+        "local_obligation_closed": true,
+        "request_digest": "sha256:6a68273f6f33d9f8ee2e2e426dd04ff5f454aca1b4ccc93bf5f71abbb00ab016",
+        "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+        "acceptance_digest": "sha256:cc65096f27978bc88b988a16067acabbcc79e391075bd67fcd347cf312ea77e7",
+        "ed25519_verified": true
+      },
+      {
+        "command": "ReturnSignedWork",
+        "principal_id": "executor",
+        "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+        "disposition": "delivered_for_review",
+        "accepted": true,
+        "local_obligation_closed": true,
+        "request_digest": "sha256:a822392908462c1fdd53a9a1e03ebb1612ada3ce7248c7419ac21a4c6eb591b9",
+        "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+        "acceptance_digest": "sha256:047b0b3948aa02759d605d82a64875cfe29d8e59a35d76850d4e132e16559433",
+        "ed25519_verified": true
+      },
+      {
+        "command": "ReturnSignedReview",
+        "principal_id": "reviewer",
+        "contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+        "disposition": "review_approved",
+        "accepted": true,
+        "local_obligation_closed": true,
+        "request_digest": "sha256:40a42e596b7bffd35665f4749db900d86190587366feea64ba46ea439d5ba922",
+        "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+        "acceptance_digest": "sha256:b83e630a1a7fae607c2beab6fecc5f42bd844d087672b3294e4490869c18a14b",
+        "ed25519_verified": true
+      }
+    ],
+    "initial_review_test_results": {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs",
+      "sha256": "7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc",
+      "mode": "444",
+      "total": 10,
+      "passed": 8,
+      "failed": 2,
+      "results": [
+        {
+          "name": "trim",
+          "passed": true
+        },
+        {
+          "name": "collapse spaces",
+          "passed": false,
+          "error": "Expected values to be strictly equal:\n\n'a   b' !== 'a b'\n"
+        },
+        {
+          "name": "collapse mixed whitespace",
+          "passed": false,
+          "error": "Expected values to be strictly equal:\n\n'a\\t\\n \\rb' !== 'a b'\n"
+        },
+        {
+          "name": "whitespace only",
+          "passed": true
+        },
+        {
+          "name": "TypeError null",
+          "passed": true
+        },
+        {
+          "name": "TypeError undefined",
+          "passed": true
+        },
+        {
+          "name": "TypeError number",
+          "passed": true
+        },
+        {
+          "name": "TypeError boolean",
+          "passed": true
+        },
+        {
+          "name": "TypeError object",
+          "passed": true
+        },
+        {
+          "name": "TypeError array",
+          "passed": true
+        }
+      ]
+    },
+    "final_review_test_results": {
+      "artifact": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs",
+      "sha256": "4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d",
+      "mode": "0444",
+      "test_count": 21,
+      "passed": 21,
+      "failed": 0,
+      "checksum_before_and_after_matches": true,
+      "results": [
+        {
+          "name": "trim",
+          "passed": true
+        },
+        {
+          "name": "internal spaces",
+          "passed": true
+        },
+        {
+          "name": "mixed whitespace",
+          "passed": true
+        },
+        {
+          "name": "whitespace only",
+          "passed": true
+        },
+        {
+          "name": "empty string",
+          "passed": true
+        },
+        {
+          "name": "unchanged text",
+          "passed": true
+        },
+        {
+          "name": "unicode whitespace",
+          "passed": true
+        },
+        {
+          "name": "TypeError null",
+          "passed": true
+        },
+        {
+          "name": "TypeError undefined",
+          "passed": true
+        },
+        {
+          "name": "TypeError number zero",
+          "passed": true
+        },
+        {
+          "name": "TypeError number finite",
+          "passed": true
+        },
+        {
+          "name": "TypeError number NaN",
+          "passed": true
+        },
+        {
+          "name": "TypeError number Infinity",
+          "passed": true
+        },
+        {
+          "name": "TypeError boolean true",
+          "passed": true
+        },
+        {
+          "name": "TypeError boolean false",
+          "passed": true
+        },
+        {
+          "name": "TypeError object",
+          "passed": true
+        },
+        {
+          "name": "TypeError array",
+          "passed": true
+        },
+        {
+          "name": "TypeError boxed string",
+          "passed": true
+        },
+        {
+          "name": "TypeError bigint",
+          "passed": true
+        },
+        {
+          "name": "TypeError symbol",
+          "passed": true
+        },
+        {
+          "name": "TypeError function",
+          "passed": true
+        }
+      ]
+    },
+    "contract_directories": {
+      "executor": [],
+      "reviewer": []
+    },
+    "work_recover": {
+      "operation": "work recover",
+      "committed": false,
+      "data": {
+        "items": []
+      }
+    },
+    "review_recover": {
+      "operation": "review recover",
+      "committed": false,
+      "data": {
+        "items": []
+      }
+    }
+  },
+  "limitations": [
+    "Shared OS/user/filesystem is not privilege isolation; role wrappers and prompts load only role credentials but same user can read owned files.",
+    "Readonly frozen artifacts are preserved review snapshots; checksums bind exact submitted/tested bytes, not OS immutability.",
+    "WOS artifact registry references are empty; exact frozen path and SHA256 are bound in signed material summary and submission digest.",
+    "Provisioning copied the reference actor_ref provider label signed-browser-fixture; actual implementation/review/correction were fresh managed Codex agents, not scripted fixture execution.",
+    "No provider token counts or cost figures are available.",
+    "First semantically invalid frozen review has no supported observed CLI rewrite recovery; it was retained and a second isolated full pilot was executed."
+  ],
+  "sanitized_artifact_manifest": [
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt1/public-trust.json",
+      "sha256": "b51fdc753baeb381520d2203c8f14810ebc6bc1b4e8b1edc3eca74e34b7edf9f"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt1/signed-operation-results.json",
+      "sha256": "6a717c92a219bdc468f19e4b9b5838c95ee61a7945f8c3d89c94806310fb0999"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt1/submissions.json",
+      "sha256": "98a0f2a9995fa0fa649f6987c093a9750963fed4c76d94f3e99013a7020986f5"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt1/verified-receipts.json",
+      "sha256": "965e6c8c49abcfa72501f768474cba80d0aa1b4e7fb554cca5f040101241ef68"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/public-trust.json",
+      "sha256": "accf1f85c92020c030ce3cd55d6b33c2d92e1f1f6226fc7c16586c9b253caba9"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review-recover.json",
+      "sha256": "44060906f056680f3b5f5da556941052ac3d53662e957632b12512fe85078cb6"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/contract-before-finish.yaml",
+      "sha256": "3ff17d99d0e3c9e797e9a2a7ed7cdeb6c36e4db4164ef09151880dd25b86797b"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/issued-projection.json",
+      "sha256": "b021819a29d04746e9f30b8068b39c81ad9b040094802e519a7f6f4f8749abe2"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/review-finish.json",
+      "sha256": "65b778d5e0398cff7277d99ebc8337669023ea739644b5802ead667e1d28d76c"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/review-projection.json",
+      "sha256": "f86a05032871e758c5ed4c8fa264f189b3de65d7f904dcfda3c03c5dd264391a"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/test-results.json",
+      "sha256": "edfa6f2b9cd4db6a651d71b31105ce6969c013a5fba614744cff70fa28686290"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/test.mjs",
+      "sha256": "c83c247acf1744b26f379ac9c6649885105dbd7d8617540ac473c57192db8818"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/contract-before-finish.yaml",
+      "sha256": "ddc88dbe4ec983ca3559a5c89dc4402d423a8aa53e899bc0d9b21607fa379993"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/issued-projection.json",
+      "sha256": "f8ce9a44be76115d7dc5b0c192a4ca629772e57f3c50a9ba38756e336ff92a5c"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/projection-before-finish.json",
+      "sha256": "46a5db50f13273e64df076a064c0f8ed99442120a73e55407dd64186e4d89e97"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/review-finish.json",
+      "sha256": "dec0b33f96f66c7d918416f3830f4cf86f79a80831278c0c8462e143e49136c1"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/test-frozen.mjs",
+      "sha256": "fe9577641a47bb097a7c67ffe5d8ddbe3765ae4fa2b262aa7413184a1fb1e569"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/test-results.json",
+      "sha256": "d4512176a18eacd96f063c034425d71b0045d88865617108838ec8d0c4d215b5"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/artifact-sha256.txt",
+      "sha256": "1ba70ec668a26f0af6a77f7a49b2e8608a9a5f4faefac2f53385407101dd97cb"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/contract-before-finish.yaml",
+      "sha256": "796a194806e219d37a014360f7411090ea113eb817d88aca5ffe8757cfe4f929"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs",
+      "sha256": "7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/work-finish.json",
+      "sha256": "dffd78f21d6d6f18e1743f390baedc852ed28042d418bbee21f8ceecfa249e71"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/work-show-before-finish.json",
+      "sha256": "32d7300740992cf7604324e5f47e3d62561c20d85ab05f45168f6493b1e490b8"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/artifact-sha256.txt",
+      "sha256": "89983b757bebbc7fe84559b37c3abba0e48bbd403a11d99ee17ae7827f06b6d3"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/contract-before-finish.yaml",
+      "sha256": "8462b67e313f0643de87aaf869c6384e053552d2260093fbabe281c530e53299"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/contract-comparison.json",
+      "sha256": "b4c992abbfa17a18066fb711d8b612a38f0fee2115ad484ce5d77c4d240ef0ba"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs",
+      "sha256": "4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/test-results.json",
+      "sha256": "6867e5870e393b262a7bc6f57cfa147ed44564bc5969c85eb2d206ea1db55b9f"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/test.mjs",
+      "sha256": "2322047f42a4715c8451ddc959cd95a76aa6d2ed6b152c61ad80523f024eaa6f"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/work-finish.json",
+      "sha256": "df6f197196a5c0511bd09944209779a96dd4ac8462c4456b767cb39ebf5d2043"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/work-show-before-finish.json",
+      "sha256": "55dda37f26802c3df1d30d5a215b1482e17bc8a3ea015fbaf3ceb5cbd683d127"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/signed-operation-results.json",
+      "sha256": "24dbef57acf7bac47ba4016abcfaa58d04395292f672c2faedc3d6ed9e515c96"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/state-after-changes-requested.json",
+      "sha256": "34679ce17194a1e2a1e817212a2e3be9adab1edf0c9bd778e19878b57d837252"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/state-after-correction.json",
+      "sha256": "a53228c6c529df913024b80f4eed44b33352259acb937e3ef70fdb0e3106a682"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/state-after-round1.json",
+      "sha256": "58d2fe5905cd1dc9e3ba8f0d6db0c847bc234a79f269f0f69e826845f379ade1"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/state-final.json",
+      "sha256": "7e9670b5cbf234fb35ede76ef92026b2fc56422f4f8717924f587f5e2add4a24"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/submissions.json",
+      "sha256": "c0ef7e135b10d07020a31111513aeca38b59e37b3855ec6e9b8bc658d91dbd02"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/verified-receipts.json",
+      "sha256": "056cede80167ac0c1d90ad2eabf8145196bace2de7027fb3ebb9059e2387b52c"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/verified-submissions.json",
+      "sha256": "5ea1f86f08da20223a88ababce3297eef8607dd0f3f65de5656ca9a67bf2d775"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/attempt2/work-recover.json",
+      "sha256": "5dc1d0e3382ff8543fab699bcfe92ee0e68d57f347e171b4299688d675c57fda"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/public-trust.json",
+      "sha256": "b51fdc753baeb381520d2203c8f14810ebc6bc1b4e8b1edc3eca74e34b7edf9f"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/contract-before-finish.yaml",
+      "sha256": "b6d1198cce0806d293a41c906ba427bf2d4691cec6907803b63cb6b6fad73c54"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/contract-signed-before-finish.yaml",
+      "sha256": "d6b1aa90e0e66df46898d0b79fe7ae46b0cbb3c51e166eb602b4e6342c11bd72"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/review-finish.json",
+      "sha256": "a4b4b641192229a217b6255e71768e617d6a2da5e3c077b54ba581170a4f55c7"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/review-recover.json",
+      "sha256": "40e6383fabea13b1e09ba6ebffb4c554e3e3f2172313920c6c6a845b6f3ec7e9"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/review-sign.json",
+      "sha256": "42f83142efebaa6eda389f91976f0cdc5c1518b5dc1797cb6f45744be23901d4"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/review-tests.mjs",
+      "sha256": "619cb98715a708a00bf090cefb744201805aeb6180bfaeb61d4106de8a1087c9"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/show-before-finish.json",
+      "sha256": "13aeb08a258f8edd8bbcb8aa652025d79fb1252d6fab2c5d5d775bc17be68838"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/review1/test-results.json",
+      "sha256": "6ba4fc8c5bc431e1dfa8e0a7ea421fd2a882da9d57408463cf61a35c5eb7fd97"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/round1/contract-before-finish.yaml",
+      "sha256": "fc9d2019da8d83309bd3ee689275d7f9cf2bda88c82a7bb36c2f2f1b01518eb9"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.mjs",
+      "sha256": "f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.sha256",
+      "sha256": "31cb3f8ff5e62fea0ed1ebf02dea3519d1b0b56edcc3d60b0967ee9cc38d2b0e"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/round1/work-finish.json",
+      "sha256": "2e257b504b9dda2947164e55a7cc377d4536abc22d019197297cfa071be83086"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/round1/work-show-before-finish.json",
+      "sha256": "cdfc3717c910d0b1a7e0d17f6bf72e0748c499dda266b92b7df2409698662cf8"
+    },
+    {
+      "path": "/tmp/wos-t89-managed-pilot/artifacts/signed-operation-results.json",
+      "sha256": "6a717c92a219bdc468f19e4b9b5838c95ee61a7945f8c3d89c94806310fb0999"
+    }
+  ],
+  "repository_modified_by_pilot": false,
+  "external_messages_sent": false,
+  "release_publication_performed": false,
+  "owned_server_processes_stopped": [
+    640880,
+    641949
+  ],
+  "sanitization_check": "No generated role credential or signing seed occurs in report/README/artifacts"
+}

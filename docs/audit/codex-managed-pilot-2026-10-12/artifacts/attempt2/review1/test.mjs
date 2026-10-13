@@ -1,0 +1,13 @@
+import {normalizeLabel} from '../round1/normalize-label.mjs';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,statSync,writeFileSync} from 'node:fs';
+const path='/tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs';
+const sha256=createHash('sha256').update(readFileSync(path)).digest('hex');
+assert.equal(sha256,'7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc');
+const cases=[['trim',()=>assert.equal(normalizeLabel(' \t label \n'),'label')],['collapse spaces',()=>assert.equal(normalizeLabel(' a   b '),'a b')],['collapse mixed whitespace',()=>assert.equal(normalizeLabel(' a\t\n \rb '),'a b')],['whitespace only',()=>assert.equal(normalizeLabel(' \t\n\r '),'')],...[[null,'null'],[undefined,'undefined'],[42,'number'],[true,'boolean'],[{},'object'],[[],'array']].map(([v,name])=>['TypeError '+name,()=>assert.throws(()=>normalizeLabel(v),TypeError)])];
+const results=cases.map(([name,test])=>{try{test();return {name,passed:true};}catch(e){return {name,passed:false,error:e.message};}});
+const report={path,sha256,mode:(statSync(path).mode&0o777).toString(8),total:results.length,passed:results.filter(x=>x.passed).length,failed:results.filter(x=>!x.passed).length,results};
+writeFileSync('/tmp/wos-t89-managed-pilot/artifacts/attempt2/review1/test-results.json',JSON.stringify(report,null,2)+'\n');
+console.log(JSON.stringify(report,null,2));
+process.exitCode=report.failed?1:0;

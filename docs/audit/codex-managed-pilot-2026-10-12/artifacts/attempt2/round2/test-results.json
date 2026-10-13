@@ -1,0 +1,1 @@
+{"passed":7,"failed":0,"nonstringCases":13,"checks":[{"name":"trim","passed":true},{"name":"internal spaces","passed":true},{"name":"mixed whitespace","passed":true},{"name":"whitespace-only","passed":true},{"name":"empty string","passed":true},{"name":"unchanged text","passed":true},{"name":"nonstrings throw TypeError","passed":true}]}
