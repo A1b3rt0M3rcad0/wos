@@ -1510,6 +1510,10 @@ Unified package verification reached signed independent review/correction succes
 
 Actual offline unified package acceptance passed, including unsigned checkout, signed execution/correction/independent review, native skills/all/generic destinations, shutdown and corruption rejection. Further entrypoint checks cover global flags before commands, matching copied `wos --profile … work/review …` instructions, and the existing doctor client operation.
 
+### C — enrollment boundary assertions (T10)
+
+The shared enrollment test now independently verifies correctly signed wrong-purpose/wrong-Principal proofs, another authenticated Principal attempting the same challenge, and a separate approved challenge with a persisted elapsed deadline while the credential is still valid (PostgreSQL uses authoritative transaction time). Each must fail with forbidden, leave enrollment unconsumed/version unchanged, and leave its key absent. The original approved challenge must still succeed afterward. Local Memory/SQLite/real PostgreSQL execution passed all 22 tests/subtests without skips; exact-source hosted acceptance is still required. The elapsed challenge is a controlled persisted fixture, not a claim that PostgreSQL obeys the injected Go clock.
+
 ### B — public contract candidate freeze
 
 While A awaits hosted/public registry gates, independent contract hardening proceeds without declaring A accepted. MCP serverInfo now receives the actual service build version rather than 0.1.0-dev. Both OpenAPI metadata versions follow product SemVer and release preparation synchronizes them. Exact public API/CLI YAML schema fingerprints and license/one-package checks detect unreviewed drift. Compatibility matrix retains unsigned history, explicit signed cutover, legacy alias and exit semantics. Apache-2.0 is retained; historical service/skill manifests are private. VERSION remains 0.4.0; stable publication and manual validation are not asserted.
