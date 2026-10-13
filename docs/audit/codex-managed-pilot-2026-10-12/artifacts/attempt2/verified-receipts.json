@@ -1,0 +1,50 @@
+[
+  {
+    "command": "ReturnSignedWork",
+    "principal_id": "executor",
+    "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+    "disposition": "delivered_for_review",
+    "accepted": true,
+    "local_obligation_closed": true,
+    "request_digest": "sha256:cf00ef837e10ab5efb024c8b0e6753b5812d40b1a1fad9e2ee40710c8f11610f",
+    "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+    "acceptance_digest": "sha256:31b42eda73cf62094a2171d68834ee8b74f4591687fb53ef9ffedf6eb801099d",
+    "ed25519_verified": true
+  },
+  {
+    "command": "ReturnSignedReview",
+    "principal_id": "reviewer",
+    "contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+    "disposition": "changes_requested",
+    "accepted": true,
+    "local_obligation_closed": true,
+    "request_digest": "sha256:6a68273f6f33d9f8ee2e2e426dd04ff5f454aca1b4ccc93bf5f71abbb00ab016",
+    "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+    "acceptance_digest": "sha256:cc65096f27978bc88b988a16067acabbcc79e391075bd67fcd347cf312ea77e7",
+    "ed25519_verified": true
+  },
+  {
+    "command": "ReturnSignedWork",
+    "principal_id": "executor",
+    "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+    "disposition": "delivered_for_review",
+    "accepted": true,
+    "local_obligation_closed": true,
+    "request_digest": "sha256:a822392908462c1fdd53a9a1e03ebb1612ada3ce7248c7419ac21a4c6eb591b9",
+    "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+    "acceptance_digest": "sha256:047b0b3948aa02759d605d82a64875cfe29d8e59a35d76850d4e132e16559433",
+    "ed25519_verified": true
+  },
+  {
+    "command": "ReturnSignedReview",
+    "principal_id": "reviewer",
+    "contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+    "disposition": "review_approved",
+    "accepted": true,
+    "local_obligation_closed": true,
+    "request_digest": "sha256:40a42e596b7bffd35665f4749db900d86190587366feea64ba46ea439d5ba922",
+    "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+    "acceptance_digest": "sha256:b83e630a1a7fae607c2beab6fecc5f42bd844d087672b3294e4490869c18a14b",
+    "ed25519_verified": true
+  }
+]

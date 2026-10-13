@@ -1,0 +1,69 @@
+[
+  {
+    "id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+    "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+    "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+    "payload_json": {
+      "protocol_version": 2,
+      "id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+      "scope": {
+        "namespace_id": "01a11991-0000-7000-8000-000000000001",
+        "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+      },
+      "material": {
+        "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+        "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+        "spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+        "summary": "Round 1 frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs; SHA256: 7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc; mode: 0444. Exports normalizeLabel(value), trims leading/trailing whitespace, returns empty string for whitespace-only input, and throws TypeError for every nonstring. Controlled omission required by issued instructions: internal whitespace runs are deliberately not collapsed in round 1. Submitted for independent review.",
+        "artifacts": [],
+        "evidence_ids": [],
+        "criterion_evidence": []
+      },
+      "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+      "principal_id": "executor",
+      "actor_ref": {
+        "kind": "agent",
+        "provider": "signed-browser-fixture",
+        "id": "executor"
+      },
+      "submitted_at": "2026-10-12T21:04:23.308276234Z"
+    }
+  },
+  {
+    "id": "01a131f0-98a4-781a-83de-cac19a642b94",
+    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+    "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+    "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+    "payload_json": {
+      "protocol_version": 2,
+      "id": "01a131f0-98a4-781a-83de-cac19a642b94",
+      "scope": {
+        "namespace_id": "01a11991-0000-7000-8000-000000000001",
+        "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+      },
+      "material": {
+        "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+        "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+        "spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+        "summary": "Correction frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs; SHA256: 4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d; mode: 0444. Internal whitespace runs collapse to one ASCII space after trimming. Seven checks pass, including internal spaces, mixed whitespace, trim, whitespace-only, empty string, unchanged text, and TypeError for 13 nonstring cases. Submitted for independent review.",
+        "artifacts": [],
+        "evidence_ids": [],
+        "criterion_evidence": []
+      },
+      "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+      "principal_id": "executor",
+      "actor_ref": {
+        "kind": "agent",
+        "provider": "signed-browser-fixture",
+        "id": "executor"
+      },
+      "submitted_at": "2026-10-12T21:06:53.730575134Z",
+      "supersedes_submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79"
+    }
+  }
+]

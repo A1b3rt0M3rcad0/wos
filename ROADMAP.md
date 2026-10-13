@@ -1523,6 +1523,10 @@ The audit adds 21 separately named, correctly signed return probes across direct
 Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
 
 
+### T89 — actual fresh-context Codex pilot evidence
+
+The authorized managed Codex pilot completed independent execution/review, real changes requested, a fresh correction contract and final approval with public `wosctl@0.4.0` source 347e4a4. The corrected frozen artifact passed 21 independent checks; four acceptance receipts and two submission digests were verified independently, final work is done, contracts empty and recovery clean. The first invalid signed review failed HTTP422 and remains preserved; it is not silently counted as success. Sanitized report and byte-identical artifacts are archived under docs/audit/codex-managed-pilot-2026-10-12. Shared filesystem is not privilege isolation, artifact refs are empty and provider token/cost figures are null. This closes the bounded actual managed-agent pilot evidence on that public source, not the final-source 1.0 acceptance gate or human validation.
+
 ### Browser regression found during release hardening
 
 PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.

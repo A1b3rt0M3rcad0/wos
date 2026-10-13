@@ -1,0 +1,157 @@
+schema_version: 2
+kind: WOSContractFile
+issued:
+  specification:
+    payload:
+      contract_id: 01a131f1-02fd-7dcd-903d-cb4c39aaca6f
+      contract_kind: review
+      namespace_id: 01a11991-0000-7000-8000-000000000001
+      outcome_id: 01a131ed-2727-743a-8a3f-991b1273cd83
+      principal_id: reviewer
+      protocol_version: 2
+      server_id: 01a131ed-26f8-768a-aa5c-464617120140
+      signer_key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+      spec:
+        acceptance_floor: independent_review
+        delivery_acceptance_receipt:
+          payload:
+            accepted: true
+            accepted_at: "2026-10-12T21:06:53.730575134Z"
+            contract_id: 01a131ef-ebbe-7ef5-95d9-9a1af4f160e4
+            contract_status: delivered
+            disposition: delivered_for_review
+            idempotency_key: HsulTc9qPrD4uqzI9VFKAPU8yHG1UD_0
+            local_obligation_closed: true
+            namespace_id: 01a11991-0000-7000-8000-000000000001
+            outcome_id: 01a131ed-2727-743a-8a3f-991b1273cd83
+            outcome_revision: "15"
+            principal_id: executor
+            protocol_version: 2
+            request_digest: sha256:a822392908462c1fdd53a9a1e03ebb1612ada3ce7248c7419ac21a4c6eb591b9
+            request_id: 01a131f0-986b-7556-a1bb-02d36dc34c2a
+            review_case_id: 01a131f0-98a5-784a-957a-c8b318310c6b
+            server_id: 01a131ed-26f8-768a-aa5c-464617120140
+            signer_key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+            submission_digest: sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505
+            submission_id: 01a131f0-98a4-781a-83de-cac19a642b94
+            work_item_id: 01a131ed-276c-7320-b5f4-b71490dce218
+            work_item_lifecycle: in_progress
+          proof:
+            key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+            payload_type: application/vnd.wos.acceptance-receipt.v2+json
+            signature: FgYZrAEGWoxyBB7Ij/YxCmVQMxv5MOLastBwstIKjxHhQkDWoSJxW7HV2YxGWFw38ZJRoriNrVM4gTfpnhcnDA==
+        execution_groups: []
+        execution_principals:
+          - executor
+        issued_work_spec_digest: sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236
+        issued_work_specification:
+          payload:
+            contract_id: 01a131ef-ebbe-7ef5-95d9-9a1af4f160e4
+            contract_kind: execution
+            namespace_id: 01a11991-0000-7000-8000-000000000001
+            outcome_id: 01a131ed-2727-743a-8a3f-991b1273cd83
+            principal_id: executor
+            protocol_version: 2
+            server_id: 01a131ed-26f8-768a-aa5c-464617120140
+            signer_key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+            spec:
+              acceptance_floor: independent_review
+              correction_findings:
+                - description: normalizeLabel only trims; internal space runs and mixed whitespace runs are not collapsed to one ASCII space. Input a   b returns a   b instead of a b; the mixed-whitespace collapse test also fails. Implement internal whitespace collapse while preserving passing trim, empty-input, and nonstring TypeError behavior.
+                  id: 01a11991-0000-7000-8000-000000000002
+                  requirement_ref: execution_spec.instructions[0]
+              criteria:
+                - criterion_revision: "1"
+                  id: 01a131ed-2776-767b-a5e1-dc55197c49fe
+                  owner_ref:
+                    id: 01a131ed-276c-7320-b5f4-b71490dce218
+                    kind: work_item
+                    namespace_id: 01a11991-0000-7000-8000-000000000001
+                    outcome_id: 01a131ed-2727-743a-8a3f-991b1273cd83
+                  required: true
+                  status: active
+                  title: normalizeLabel frozen artifact passes all four requirements
+                  verification_mode: attestation
+              dependencies: []
+              description: ""
+              execution_spec:
+                constraints: []
+                context_refs: []
+                deliverables: []
+                instructions:
+                  - Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding.
+                scope_hints: []
+              objective_id: null
+              outcome_intent: Execução e revisão distintas
+              policy_revision: "2"
+              previous_review_case_id: 01a131ee-4d0f-7407-ac65-18c229cee853
+              previous_submission_id: 01a131ee-4d0e-7440-a11c-df1e91e93a79
+              title: Implement normalizeLabel and independently review frozen code
+            work_item_id: 01a131ed-276c-7320-b5f4-b71490dce218
+          proof:
+            key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+            payload_type: application/vnd.wos.contract-spec.v2+json
+            signature: YsJhw6NYuORyRmFjCwSZdJreeZobJ9GBEnICpWlOj+xQdU2XqWs0xi1p7iiC0Vc1jv5AAF2ibMULCveooMOuDQ==
+        review_case_id: 01a131f0-98a5-784a-957a-c8b318310c6b
+        round: "2"
+        submission:
+          artifacts: []
+          contract_id: 01a131ef-ebbe-7ef5-95d9-9a1af4f160e4
+          criterion_evidence: []
+          evidence_ids: []
+          spec_digest: sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236
+          summary: 'Correction frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs; SHA256: 4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d; mode: 0444. Internal whitespace runs collapse to one ASCII space after trimming. Seven checks pass, including internal spaces, mixed whitespace, trim, whitespace-only, empty string, unchanged text, and TypeError for 13 nonstring cases. Submitted for independent review.'
+          work_item_id: 01a131ed-276c-7320-b5f4-b71490dce218
+        submission_digest: sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505
+        submission_id: 01a131f0-98a4-781a-83de-cac19a642b94
+        work_item_version: "7"
+      work_item_id: 01a131ed-276c-7320-b5f4-b71490dce218
+    proof:
+      payload_type: application/vnd.wos.contract-spec.v2+json
+      key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+      signature: ZfvTBOoF1Yh+6keV+uXiMDeqSXtTJjG4i3W4CYpQ6dTlX1XTATlzjCbtREB1Mkiy5fMMm1JKp5I0wqqa6N/xBw==
+  authority:
+    payload:
+      acceptance_mode: independent_review
+      allowed_signing_key_ids:
+        - 01a131ed-2978-7363-acf5-04baef3a2735
+      contract_id: 01a131f1-02fd-7dcd-903d-cb4c39aaca6f
+      contract_kind: review
+      contract_version: "1"
+      execution_id: 01a131f1-02fd-747a-b33b-dd008b82197c
+      expires_at: "2026-10-12T21:12:20.954423596Z"
+      fencing_token: "1"
+      issued_at: "2026-10-12T21:07:20.954423596Z"
+      lease_version: "1"
+      namespace_id: 01a11991-0000-7000-8000-000000000001
+      outcome_id: 01a131ed-2727-743a-8a3f-991b1273cd83
+      policy_revision: "2"
+      principal_id: reviewer
+      protocol_version: 2
+      review_case_id: 01a131f0-98a5-784a-957a-c8b318310c6b
+      server_id: 01a131ed-26f8-768a-aa5c-464617120140
+      signer_key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+      spec_digest: sha256:0e5adbdf0401645f29315c02627ef9311147faaf7701572cd18c00308d1b562f
+      work_item_id: 01a131ed-276c-7320-b5f4-b71490dce218
+    proof:
+      payload_type: application/vnd.wos.contract-authority.v2+json
+      key_id: 01a131ed-26f8-791d-b876-c4b1857d55ca
+      signature: pV0yHCtLWgxShO/aXxqeOAECAhsxCgZG+CDCJFPsGug/NpTv+/uRjotxe7TjeWp1xdAKluvYRzpkipTO6qLjAw==
+review:
+  decision: approved
+  material:
+    reason: "Independently imported and tested frozen /tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs, SHA256 4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d, mode 0444. Checksum matched issued submission before and after tests. All 21 behavioral checks passed, zero failed; recorded in /tmp/wos-t89-managed-pilot/artifacts/attempt2/review2/test-results.json. Original trim, internal whitespace collapse, whitespace-only empty, and nonstring TypeError requirements met; issued collapse finding corrected."
+    criterion_assessments:
+      - criterion_id: 01a131ed-2776-767b-a5e1-dc55197c49fe
+        criterion_revision: '1'
+        result: met
+        rationale: "Actual import of the exact frozen artifact passed 7 string cases for trim, spaces, mixed whitespace, whitespace-only, empty, unchanged and Unicode whitespace; 14 nonstring cases threw TypeError including null, undefined, numbers, booleans, object and array. All 21 checks passed, zero failed, with unchanged SHA256 4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d."
+  progress:
+    next_action: "Finish approved independent review"
+    summary: "Verified issued corrected frozen artifact and passed 21 independent behavioral checks against original criterion."
+
+_local:
+  schema_version: 1
+  profile: reviewer
+  review_case_version: "2"
+  work_item_version: "7"

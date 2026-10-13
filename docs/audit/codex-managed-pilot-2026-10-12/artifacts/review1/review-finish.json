@@ -1,0 +1,1 @@
+{"operation":"review finish","contract_id":"01a131eb-21c0-7eaa-af94-41a921c2199b","committed":false,"requires_action":"preserve original frozen return; recover it without resigning, renewing or changing CAS","error":"WOS invalid_argument (422): invalid_argument: finding must reference an existing contracted obligation"}
