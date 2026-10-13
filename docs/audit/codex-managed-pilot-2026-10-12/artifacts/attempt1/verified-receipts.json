@@ -1,0 +1,14 @@
+[
+  {
+    "command": "ReturnSignedWork",
+    "principal_id": "executor",
+    "contract_id": "01a131ea-1d3a-7633-83fc-819554bf59e1",
+    "disposition": "delivered_for_review",
+    "accepted": true,
+    "local_obligation_closed": true,
+    "request_digest": "sha256:d5dfa66173eadc0459d3c0626477cbcb5f8775bf0cbbc6606d9596bbe314f761",
+    "submission_digest": "sha256:a7eede63014bbc0b45c0f3d78779a8e27fa30e96d60f523caf977eb934fd621d",
+    "acceptance_digest": "sha256:efc3b3e216264fab72e4286e0521c8b38cee35813e5352872e13300a64f258c0",
+    "ed25519_verified": true
+  }
+]

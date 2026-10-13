@@ -1,0 +1,52 @@
+{
+  "artifactPath": "/tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.mjs",
+  "expectedSha256": "f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1",
+  "actualSha256": "f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1",
+  "checksumMatches": true,
+  "results": [
+    {
+      "name": "trim leading/trailing whitespace",
+      "passed": true
+    },
+    {
+      "name": "collapse internal spaces",
+      "passed": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'alpha   beta'\n- 'alpha beta'\n         ^\n"
+    },
+    {
+      "name": "collapse mixed internal whitespace",
+      "passed": false,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'alpha\\t\\n  beta'\n- 'alpha beta'\n        ^\n"
+    },
+    {
+      "name": "whitespace-only becomes empty",
+      "passed": true
+    },
+    {
+      "name": "nonstring null throws TypeError",
+      "passed": true
+    },
+    {
+      "name": "nonstring undefined throws TypeError",
+      "passed": true
+    },
+    {
+      "name": "nonstring number throws TypeError",
+      "passed": true
+    },
+    {
+      "name": "nonstring boolean throws TypeError",
+      "passed": true
+    },
+    {
+      "name": "nonstring object throws TypeError",
+      "passed": true
+    },
+    {
+      "name": "nonstring array throws TypeError",
+      "passed": true
+    }
+  ],
+  "passed": 8,
+  "failed": 2
+}

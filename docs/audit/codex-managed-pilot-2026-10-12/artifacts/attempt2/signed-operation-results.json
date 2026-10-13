@@ -1,0 +1,1327 @@
+[
+  {
+    "command_name": "SetNamespaceWorkProtocol",
+    "principal_id": "human",
+    "credential_id": "01a131ed-26f6-78fa-898c-1e54531d8a78",
+    "idempotency_key": "8269874f-e4ee-433b-b1cc-a86bf5bb2163",
+    "fingerprint": "06de0ca9515ce7bd1dddce1c7c989569963597cab92d1419802c5f7fb0721fed",
+    "response_json": {
+      "value": {
+        "protocol": {
+          "namespace_id": "01a11991-0000-7000-8000-000000000001",
+          "protocol_version": 4,
+          "phase": "draining_to_signed_v2",
+          "writer_epoch": 1,
+          "lease_policy": {
+            "revision": 1,
+            "default_ttl_seconds": 300,
+            "min_ttl_seconds": 30,
+            "max_ttl_seconds": 3600
+          },
+          "updated_at": "2026-10-12T21:03:08.128799821Z",
+          "updated_by": "human",
+          "reason": "Explicit signed browser fixture drain",
+          "writers_drained": false
+        },
+        "affected_outcomes": [
+          {
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "outcome_revision": 6
+          }
+        ]
+      },
+      "outcome_revision": 6,
+      "command_id": "01a131ed-275f-7e63-8bcf-77609f422951",
+      "idempotent_replay": false
+    }
+  },
+  {
+    "command_name": "SetNamespaceWorkProtocol",
+    "principal_id": "human",
+    "credential_id": "01a131ed-26f6-78fa-898c-1e54531d8a78",
+    "idempotency_key": "b81215d9-edfe-47af-b4aa-69974581e4ef",
+    "fingerprint": "d2ce61dc447b334c73bb290cc7c74ace2af53b7eed10f2ff7b78298cfbe589c1",
+    "response_json": {
+      "value": {
+        "protocol": {
+          "namespace_id": "01a11991-0000-7000-8000-000000000001",
+          "protocol_version": 5,
+          "phase": "signed_contracts_v2",
+          "writer_epoch": 2,
+          "lease_policy": {
+            "revision": 1,
+            "default_ttl_seconds": 300,
+            "min_ttl_seconds": 30,
+            "max_ttl_seconds": 3600
+          },
+          "updated_at": "2026-10-12T21:03:08.134393536Z",
+          "updated_by": "human",
+          "reason": "Explicit signed browser fixture drain",
+          "writers_drained": true
+        },
+        "affected_outcomes": [
+          {
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "outcome_revision": 7
+          }
+        ]
+      },
+      "outcome_revision": 7,
+      "command_id": "01a131ed-2765-7ef3-afbf-3d007f986ea0",
+      "idempotent_replay": false
+    }
+  },
+  {
+    "command_name": "AcquireSignedWorkContract",
+    "principal_id": "executor",
+    "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+    "idempotency_key": "CAd2gHrU798j9-Siz3uzsSEmoaLNnZ_P",
+    "fingerprint": "5ef7e4bfa4c1cea2bb93c849d3269250c525935e2e8ce2986b9c38683914db2b",
+    "response_json": {
+      "command_id": "01a131ed-94b6-7ed2-9684-31c58111325c",
+      "idempotent_replay": false,
+      "outcome_revision": "10",
+      "value": {
+        "contract": {
+          "acquired_at": "2026-10-12T21:03:36.121740387Z",
+          "actor_ref": {
+            "id": "executor",
+            "kind": "agent",
+            "provider": "signed-browser-fixture"
+          },
+          "execution_id": "01a131ed-94bc-70d7-a1b7-defa53033dfa",
+          "expires_at": "2026-10-12T21:08:36.121740387Z",
+          "fencing_token": "1",
+          "holder_principal_id": "executor",
+          "id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+          "issued_specification_id": "01a131ed-94be-7a0c-98a2-f33faddee571",
+          "last_renewed_at": "2026-10-12T21:03:36.121740387Z",
+          "latest_authority_id": "01a131ed-94bf-754c-85c3-71a4b5fe0af4",
+          "lease_policy": {
+            "default_ttl_seconds": 300,
+            "max_ttl_seconds": 3600,
+            "min_ttl_seconds": 30,
+            "revision": "1"
+          },
+          "lease_version": "1",
+          "outcome_revision_at_acquire": "9",
+          "scope": {
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+          },
+          "signed_binding": {
+            "acceptance_floor": "independent_review",
+            "allowed_signing_key_ids": [
+              "01a131ed-27b2-79e5-9b44-924c1e50a2bb"
+            ],
+            "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+            "policy_revision": "2",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-27b2-79e5-9b44-924c1e50a2bb",
+            "specification_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918"
+          },
+          "spec": {
+            "criteria": [
+              {
+                "criterion_revision": "1",
+                "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ],
+            "dependencies": [],
+            "description": "",
+            "execution_spec": {
+              "constraints": [],
+              "context_refs": [],
+              "deliverables": [],
+              "instructions": [
+                "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+              ],
+              "scope_hints": []
+            },
+            "objective_id": null,
+            "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+            "title": "Implement normalizeLabel and independently review frozen code"
+          },
+          "spec_digest": "sha256:400079fb3196d0531f1e8617665b1a3b4fd3f28fd83a20992cdfdc6114bf7639",
+          "status": "active",
+          "version": "1",
+          "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+          "work_item_version_at_acquire": "2"
+        },
+        "evaluated_at": "2026-10-12T21:03:36.121740387Z",
+        "issued_authority": {
+          "payload": {
+            "acceptance_mode": "independent_review",
+            "allowed_signing_key_ids": [
+              "01a131ed-27b2-79e5-9b44-924c1e50a2bb"
+            ],
+            "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+            "contract_kind": "execution",
+            "contract_version": "1",
+            "execution_id": "01a131ed-94bc-70d7-a1b7-defa53033dfa",
+            "expires_at": "2026-10-12T21:08:36.121740387Z",
+            "fencing_token": "1",
+            "issued_at": "2026-10-12T21:03:36.121740387Z",
+            "lease_version": "1",
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "policy_revision": "2",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.contract-authority.v2+json",
+            "signature": "Bfc0Fz4jAaI0OAJZxnyKL6+DuuZzNk+t0fG90EuChnIWl0kCjiXLDGwdTW0ChwR8b2nJSgx1RMaEriup8wzXCA=="
+          }
+        },
+        "issued_specification": {
+          "payload": {
+            "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+            "contract_kind": "execution",
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "spec": {
+              "acceptance_floor": "independent_review",
+              "criteria": [
+                {
+                  "criterion_revision": "1",
+                  "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                  "owner_ref": {
+                    "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                    "kind": "work_item",
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                  },
+                  "required": true,
+                  "status": "active",
+                  "title": "normalizeLabel frozen artifact passes all four requirements",
+                  "verification_mode": "attestation"
+                }
+              ],
+              "dependencies": [],
+              "description": "",
+              "execution_spec": {
+                "constraints": [],
+                "context_refs": [],
+                "deliverables": [],
+                "instructions": [
+                  "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+                ],
+                "scope_hints": []
+              },
+              "objective_id": null,
+              "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+              "policy_revision": "2",
+              "title": "Implement normalizeLabel and independently review frozen code"
+            },
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.contract-spec.v2+json",
+            "signature": "+87TI6eCLirp5CS1OZWy0kT+af0Wta3qV0UIpuTSWwQLLdlzuMl1OTkPBVwyB29YhmjfYtPT9W21nzRB0URFAA=="
+          }
+        },
+        "recovery": false,
+        "work_item": {
+          "contracts_enabled": true,
+          "created_at": "2026-10-12T21:03:08.140205Z",
+          "criteria": {
+            "definition_revisions": [
+              {
+                "criterion_id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "criterion_revision": "1",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ],
+            "items": [
+              {
+                "criterion_revision": "1",
+                "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ]
+          },
+          "current_contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+          "execution_spec": {
+            "constraints": null,
+            "context_refs": null,
+            "deliverables": null,
+            "instructions": [
+              "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+            ],
+            "scope_hints": null
+          },
+          "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+          "last_fencing_token": "1",
+          "lifecycle": "in_progress",
+          "priority": "normal",
+          "scope": {
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+          },
+          "title": "Implement normalizeLabel and independently review frozen code",
+          "updated_at": "2026-10-12T21:03:36.121740387Z",
+          "version": "3"
+        }
+      }
+    }
+  },
+  {
+    "command_name": "ReturnSignedWork",
+    "principal_id": "executor",
+    "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+    "idempotency_key": "nCUcxyWAo0y6VoRYHBRA3HPtU_9Tzmf_",
+    "fingerprint": "a2b008e940de29a7636471254f5ccc03b4d57a004a9290a0c6f69a931e371af5",
+    "response_json": {
+      "command_id": "01a131ee-4cf3-7376-9cd1-7b8c1801d207",
+      "idempotent_replay": false,
+      "outcome_revision": "11",
+      "value": {
+        "acceptance_receipt": {
+          "payload": {
+            "accepted": true,
+            "accepted_at": "2026-10-12T21:04:23.308276234Z",
+            "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+            "contract_status": "delivered",
+            "disposition": "delivered_for_review",
+            "idempotency_key": "nCUcxyWAo0y6VoRYHBRA3HPtU_9Tzmf_",
+            "local_obligation_closed": true,
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "outcome_revision": "11",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "request_digest": "sha256:cf00ef837e10ab5efb024c8b0e6753b5812d40b1a1fad9e2ee40710c8f11610f",
+            "request_id": "01a131ee-4cf3-7376-9cd1-7b8c1801d207",
+            "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+            "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+            "work_item_lifecycle": "in_progress"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+            "signature": "I4/91i92gu1ig6bYAj397t4MilO5A+xIvITJIl88LMAtxJeQ7RSj491XylrzJsa7MaIIV4UKiUce+uaKominDQ=="
+          }
+        }
+      }
+    }
+  },
+  {
+    "command_name": "AcquireNextSignedReviewContract",
+    "principal_id": "reviewer",
+    "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+    "idempotency_key": "mjqTI3p3lAC5HOOUQjRY0tBfIh3D7el7",
+    "fingerprint": "5c2dc5c740f6418e43e84dd66c34c572be2ca51f3f4650f5b055805bb66a31b9",
+    "response_json": {
+      "value": {
+        "acquired": true,
+        "result": {
+          "evaluated_at": "2026-10-12T21:04:53.603203732Z",
+          "issued_authority": {
+            "payload": {
+              "acceptance_mode": "independent_review",
+              "allowed_signing_key_ids": [
+                "01a131ed-2978-7363-acf5-04baef3a2735"
+              ],
+              "contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+              "contract_kind": "review",
+              "contract_version": "1",
+              "execution_id": "01a131ee-c367-778e-ad44-723853ee0518",
+              "expires_at": "2026-10-12T21:09:53.603203732Z",
+              "fencing_token": "1",
+              "issued_at": "2026-10-12T21:04:53.603203732Z",
+              "lease_version": "1",
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+              "policy_revision": "2",
+              "principal_id": "reviewer",
+              "protocol_version": 2,
+              "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "spec_digest": "sha256:438814b1ad4e93f617f304deb4d5ab9dc122ca716ed764960263f2cb5bdae7d7",
+              "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+            },
+            "proof": {
+              "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "payload_type": "application/vnd.wos.contract-authority.v2+json",
+              "signature": "Qxy0kF63IZSIhshviB4rkfFM6kGfTs5FHMozHa65u+Gz21wLNG75cCWI5CVOvi7GydTt8zWUFVcr+lX1WmHBBw=="
+            }
+          },
+          "issued_specification": {
+            "payload": {
+              "contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+              "contract_kind": "review",
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+              "principal_id": "reviewer",
+              "protocol_version": 2,
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "spec": {
+                "acceptance_floor": "independent_review",
+                "delivery_acceptance_receipt": {
+                  "payload": {
+                    "accepted": true,
+                    "accepted_at": "2026-10-12T21:04:23.308276234Z",
+                    "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+                    "contract_status": "delivered",
+                    "disposition": "delivered_for_review",
+                    "idempotency_key": "nCUcxyWAo0y6VoRYHBRA3HPtU_9Tzmf_",
+                    "local_obligation_closed": true,
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+                    "outcome_revision": "11",
+                    "principal_id": "executor",
+                    "protocol_version": 2,
+                    "request_digest": "sha256:cf00ef837e10ab5efb024c8b0e6753b5812d40b1a1fad9e2ee40710c8f11610f",
+                    "request_id": "01a131ee-4cf3-7376-9cd1-7b8c1801d207",
+                    "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+                    "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+                    "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+                    "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+                    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                    "work_item_lifecycle": "in_progress"
+                  },
+                  "proof": {
+                    "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+                    "signature": "I4/91i92gu1ig6bYAj397t4MilO5A+xIvITJIl88LMAtxJeQ7RSj491XylrzJsa7MaIIV4UKiUce+uaKominDQ=="
+                  }
+                },
+                "execution_groups": [],
+                "execution_principals": [
+                  "executor"
+                ],
+                "issued_work_spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+                "issued_work_specification": {
+                  "payload": {
+                    "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+                    "contract_kind": "execution",
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+                    "principal_id": "executor",
+                    "protocol_version": 2,
+                    "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+                    "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "spec": {
+                      "acceptance_floor": "independent_review",
+                      "criteria": [
+                        {
+                          "criterion_revision": "1",
+                          "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                          "owner_ref": {
+                            "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                            "kind": "work_item",
+                            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                          },
+                          "required": true,
+                          "status": "active",
+                          "title": "normalizeLabel frozen artifact passes all four requirements",
+                          "verification_mode": "attestation"
+                        }
+                      ],
+                      "dependencies": [],
+                      "description": "",
+                      "execution_spec": {
+                        "constraints": [],
+                        "context_refs": [],
+                        "deliverables": [],
+                        "instructions": [
+                          "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+                        ],
+                        "scope_hints": []
+                      },
+                      "objective_id": null,
+                      "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+                      "policy_revision": "2",
+                      "title": "Implement normalizeLabel and independently review frozen code"
+                    },
+                    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+                  },
+                  "proof": {
+                    "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "payload_type": "application/vnd.wos.contract-spec.v2+json",
+                    "signature": "+87TI6eCLirp5CS1OZWy0kT+af0Wta3qV0UIpuTSWwQLLdlzuMl1OTkPBVwyB29YhmjfYtPT9W21nzRB0URFAA=="
+                  }
+                },
+                "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+                "round": "1",
+                "submission": {
+                  "artifacts": [],
+                  "contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+                  "criterion_evidence": [],
+                  "evidence_ids": [],
+                  "spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+                  "summary": "Round 1 frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/attempt2/round1/normalize-label.mjs; SHA256: 7659ad5478235d77a5f93e8956bd4c8d0c94167aa2fa4ba26ccba1d2108b6acc; mode: 0444. Exports normalizeLabel(value), trims leading/trailing whitespace, returns empty string for whitespace-only input, and throws TypeError for every nonstring. Controlled omission required by issued instructions: internal whitespace runs are deliberately not collapsed in round 1. Submitted for independent review.",
+                  "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+                },
+                "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+                "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+                "work_item_version": "4"
+              },
+              "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+            },
+            "proof": {
+              "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "payload_type": "application/vnd.wos.contract-spec.v2+json",
+              "signature": "kGXC7KUo8klyu4H4FQGizrABIQEnO2iGU4vftCo2tJemtIM5gFWyZtKETAfcuxjK2s+QD1TzFyxdnLL5ssJTCA=="
+            }
+          },
+          "review_case": {
+            "acceptance_floor": "independent_review",
+            "created_at": "2026-10-12T21:04:23.308276234Z",
+            "current_contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+            "execution_groups": [],
+            "execution_principals": [
+              "executor"
+            ],
+            "id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+            "issued_spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+            "last_fencing_token": "1",
+            "policy_revision": "2",
+            "round": "1",
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "status": "in_review",
+            "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+            "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+            "updated_at": "2026-10-12T21:04:53.603203732Z",
+            "version": "2",
+            "work_contract_id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "review_contract": {
+            "acquired_at": "2026-10-12T21:04:53.603203732Z",
+            "actor_ref": {
+              "id": "reviewer",
+              "kind": "agent",
+              "provider": "signed-browser-fixture"
+            },
+            "binding": {
+              "acceptance_floor": "independent_review",
+              "allowed_signing_key_ids": [
+                "01a131ed-2978-7363-acf5-04baef3a2735"
+              ],
+              "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+              "policy_revision": "2",
+              "protocol_version": 2,
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-2978-7363-acf5-04baef3a2735",
+              "specification_digest": "sha256:438814b1ad4e93f617f304deb4d5ab9dc122ca716ed764960263f2cb5bdae7d7"
+            },
+            "case_version_at_acquire": "1",
+            "execution_id": "01a131ee-c367-778e-ad44-723853ee0518",
+            "expires_at": "2026-10-12T21:09:53.603203732Z",
+            "fencing_token": "1",
+            "holder_principal_id": "reviewer",
+            "id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+            "issued_spec_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918",
+            "issued_specification_id": "01a131ee-c369-7e7c-b76e-fd83585412fc",
+            "last_renewed_at": "2026-10-12T21:04:53.603203732Z",
+            "latest_authority_id": "01a131ee-c369-75df-a5d0-d5993ad882c5",
+            "lease_policy": {
+              "default_ttl_seconds": 300,
+              "max_ttl_seconds": 3600,
+              "min_ttl_seconds": 30,
+              "revision": "1"
+            },
+            "lease_version": "1",
+            "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "status": "active",
+            "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+            "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+            "version": "1",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "work_item_version": "4"
+        },
+        "search_complete": true,
+        "reasons": []
+      },
+      "outcome_revision": 12,
+      "command_id": "01a131ee-c35e-73ca-a6ef-75b82582e7ef",
+      "idempotent_replay": false
+    }
+  },
+  {
+    "command_name": "ReturnSignedReview",
+    "principal_id": "reviewer",
+    "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+    "idempotency_key": "VH3MhedYqhMc02NrZNYEtYLeovAkS4FW",
+    "fingerprint": "73206398a1b2ce09dedad030bb4698d1a69e70773e8c0195954d3d1df1822baf",
+    "response_json": {
+      "command_id": "01a131ef-5af0-7cd3-bfb9-e6a3e844735a",
+      "idempotent_replay": false,
+      "outcome_revision": "13",
+      "value": {
+        "acceptance_receipt": {
+          "payload": {
+            "accepted": true,
+            "accepted_at": "2026-10-12T21:05:32.434369639Z",
+            "contract_id": "01a131ee-c367-7458-b4c5-2625c1df8934",
+            "contract_status": "completed",
+            "decision_id": "01a131ef-5b17-7375-807c-12879e0d1017",
+            "disposition": "changes_requested",
+            "idempotency_key": "VH3MhedYqhMc02NrZNYEtYLeovAkS4FW",
+            "local_obligation_closed": true,
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "outcome_revision": "13",
+            "principal_id": "reviewer",
+            "protocol_version": 2,
+            "request_digest": "sha256:6a68273f6f33d9f8ee2e2e426dd04ff5f454aca1b4ccc93bf5f71abbb00ab016",
+            "request_id": "01a131ef-5af0-7cd3-bfb9-e6a3e844735a",
+            "review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "submission_digest": "sha256:0d4a0f1177819a461e4fe54ea80878a46971060a60b1a508f47b9cc7aa4b98b0",
+            "submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+            "work_item_lifecycle": "in_progress"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+            "signature": "ns4a0HeLXdIDHv1tYORiQygb4hGQBZQukOX0By1LUKd33EbECLRwXnO2JTJuz18oJIrZikUDPkT2i84yG9gIAA=="
+          }
+        }
+      }
+    }
+  },
+  {
+    "command_name": "AcquireSignedWorkContract",
+    "principal_id": "executor",
+    "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+    "idempotency_key": "SleKzTGQf9tQdIXg1bYN9yuQ46w4WqXq",
+    "fingerprint": "51b454308214ecfa17ca901a2fe4fb026d614ea9a273918be1c94a67b54415cb",
+    "response_json": {
+      "command_id": "01a131ef-ebb3-73fb-8125-2727c4b5abe5",
+      "idempotent_replay": false,
+      "outcome_revision": "14",
+      "value": {
+        "contract": {
+          "acquired_at": "2026-10-12T21:06:09.465246057Z",
+          "actor_ref": {
+            "id": "executor",
+            "kind": "agent",
+            "provider": "signed-browser-fixture"
+          },
+          "execution_id": "01a131ef-ebbe-727e-8edf-74fed4b77845",
+          "expires_at": "2026-10-12T21:11:09.465246057Z",
+          "fencing_token": "2",
+          "holder_principal_id": "executor",
+          "id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+          "issued_specification_id": "01a131ef-ebbf-7e45-a3d1-b2a06871268d",
+          "last_renewed_at": "2026-10-12T21:06:09.465246057Z",
+          "latest_authority_id": "01a131ef-ebbf-7e7e-b815-fa3f3e7fe598",
+          "lease_policy": {
+            "default_ttl_seconds": 300,
+            "max_ttl_seconds": 3600,
+            "min_ttl_seconds": 30,
+            "revision": "1"
+          },
+          "lease_version": "1",
+          "outcome_revision_at_acquire": "13",
+          "scope": {
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+          },
+          "signed_binding": {
+            "acceptance_floor": "independent_review",
+            "allowed_signing_key_ids": [
+              "01a131ed-27b2-79e5-9b44-924c1e50a2bb"
+            ],
+            "correction_findings": [
+              {
+                "description": "normalizeLabel only trims; internal space runs and mixed whitespace runs are not collapsed to one ASCII space. Input a   b returns a   b instead of a b; the mixed-whitespace collapse test also fails. Implement internal whitespace collapse while preserving passing trim, empty-input, and nonstring TypeError behavior.",
+                "id": "01a11991-0000-7000-8000-000000000002",
+                "requirement_ref": "execution_spec.instructions[0]"
+              }
+            ],
+            "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+            "policy_revision": "2",
+            "previous_review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+            "previous_submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-27b2-79e5-9b44-924c1e50a2bb",
+            "specification_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236"
+          },
+          "spec": {
+            "criteria": [
+              {
+                "criterion_revision": "1",
+                "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ],
+            "dependencies": [],
+            "description": "",
+            "execution_spec": {
+              "constraints": [],
+              "context_refs": [],
+              "deliverables": [],
+              "instructions": [
+                "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+              ],
+              "scope_hints": []
+            },
+            "objective_id": null,
+            "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+            "title": "Implement normalizeLabel and independently review frozen code"
+          },
+          "spec_digest": "sha256:400079fb3196d0531f1e8617665b1a3b4fd3f28fd83a20992cdfdc6114bf7639",
+          "status": "active",
+          "version": "1",
+          "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+          "work_item_version_at_acquire": "5"
+        },
+        "evaluated_at": "2026-10-12T21:06:09.465246057Z",
+        "issued_authority": {
+          "payload": {
+            "acceptance_mode": "independent_review",
+            "allowed_signing_key_ids": [
+              "01a131ed-27b2-79e5-9b44-924c1e50a2bb"
+            ],
+            "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+            "contract_kind": "execution",
+            "contract_version": "1",
+            "execution_id": "01a131ef-ebbe-727e-8edf-74fed4b77845",
+            "expires_at": "2026-10-12T21:11:09.465246057Z",
+            "fencing_token": "2",
+            "issued_at": "2026-10-12T21:06:09.465246057Z",
+            "lease_version": "1",
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "policy_revision": "2",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.contract-authority.v2+json",
+            "signature": "3ymvUpGJicTXPem0d8ke1vQxNvE+J20sqzgmVx4W/JzjssqTDtbEF/JzYI9SWvOTyZnxnWXFHkjjfL5dn2jMDg=="
+          }
+        },
+        "issued_specification": {
+          "payload": {
+            "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+            "contract_kind": "execution",
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "spec": {
+              "acceptance_floor": "independent_review",
+              "correction_findings": [
+                {
+                  "description": "normalizeLabel only trims; internal space runs and mixed whitespace runs are not collapsed to one ASCII space. Input a   b returns a   b instead of a b; the mixed-whitespace collapse test also fails. Implement internal whitespace collapse while preserving passing trim, empty-input, and nonstring TypeError behavior.",
+                  "id": "01a11991-0000-7000-8000-000000000002",
+                  "requirement_ref": "execution_spec.instructions[0]"
+                }
+              ],
+              "criteria": [
+                {
+                  "criterion_revision": "1",
+                  "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                  "owner_ref": {
+                    "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                    "kind": "work_item",
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                  },
+                  "required": true,
+                  "status": "active",
+                  "title": "normalizeLabel frozen artifact passes all four requirements",
+                  "verification_mode": "attestation"
+                }
+              ],
+              "dependencies": [],
+              "description": "",
+              "execution_spec": {
+                "constraints": [],
+                "context_refs": [],
+                "deliverables": [],
+                "instructions": [
+                  "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+                ],
+                "scope_hints": []
+              },
+              "objective_id": null,
+              "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+              "policy_revision": "2",
+              "previous_review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+              "previous_submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+              "title": "Implement normalizeLabel and independently review frozen code"
+            },
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.contract-spec.v2+json",
+            "signature": "YsJhw6NYuORyRmFjCwSZdJreeZobJ9GBEnICpWlOj+xQdU2XqWs0xi1p7iiC0Vc1jv5AAF2ibMULCveooMOuDQ=="
+          }
+        },
+        "previous_contract": {
+          "acquired_at": "2026-10-12T21:03:36.121740387Z",
+          "actor_ref": {
+            "id": "executor",
+            "kind": "agent",
+            "provider": "signed-browser-fixture"
+          },
+          "close_reason": "accepted for independent review",
+          "closed_at": "2026-10-12T21:04:23.308276234Z",
+          "closed_by": "executor",
+          "execution_id": "01a131ed-94bc-70d7-a1b7-defa53033dfa",
+          "expires_at": "2026-10-12T21:08:36.121740387Z",
+          "fencing_token": "1",
+          "holder_principal_id": "executor",
+          "id": "01a131ed-94bc-72f2-983f-efda03f98c1c",
+          "issued_specification_id": "01a131ed-94be-7a0c-98a2-f33faddee571",
+          "last_renewed_at": "2026-10-12T21:03:36.121740387Z",
+          "latest_authority_id": "01a131ed-94bf-754c-85c3-71a4b5fe0af4",
+          "latest_submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+          "lease_policy": {
+            "default_ttl_seconds": 300,
+            "max_ttl_seconds": 3600,
+            "min_ttl_seconds": 30,
+            "revision": "1"
+          },
+          "lease_version": "1",
+          "outcome_revision_at_acquire": "9",
+          "scope": {
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+          },
+          "signed_binding": {
+            "acceptance_floor": "independent_review",
+            "allowed_signing_key_ids": [
+              "01a131ed-27b2-79e5-9b44-924c1e50a2bb"
+            ],
+            "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+            "policy_revision": "2",
+            "protocol_version": 2,
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-27b2-79e5-9b44-924c1e50a2bb",
+            "specification_digest": "sha256:aa287c8e69f202a7f84bb8de6f9cb4477ac04e9d472e1589d0b315dd03aef918"
+          },
+          "spec": {
+            "criteria": [
+              {
+                "criterion_revision": "1",
+                "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ],
+            "dependencies": [],
+            "description": "",
+            "execution_spec": {
+              "constraints": [],
+              "context_refs": [],
+              "deliverables": [],
+              "instructions": [
+                "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+              ],
+              "scope_hints": []
+            },
+            "objective_id": null,
+            "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+            "title": "Implement normalizeLabel and independently review frozen code"
+          },
+          "spec_digest": "sha256:400079fb3196d0531f1e8617665b1a3b4fd3f28fd83a20992cdfdc6114bf7639",
+          "status": "delivered",
+          "version": "2",
+          "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+          "work_item_version_at_acquire": "2"
+        },
+        "recovery": true,
+        "work_item": {
+          "contracts_enabled": true,
+          "created_at": "2026-10-12T21:03:08.140205Z",
+          "criteria": {
+            "definition_revisions": [
+              {
+                "criterion_id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "criterion_revision": "1",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ],
+            "items": [
+              {
+                "criterion_revision": "1",
+                "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                "owner_ref": {
+                  "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                  "kind": "work_item",
+                  "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                  "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                },
+                "required": true,
+                "status": "active",
+                "title": "normalizeLabel frozen artifact passes all four requirements",
+                "verification_mode": "attestation"
+              }
+            ]
+          },
+          "current_contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+          "execution_spec": {
+            "constraints": null,
+            "context_refs": null,
+            "deliverables": null,
+            "instructions": [
+              "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+            ],
+            "scope_hints": null
+          },
+          "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+          "last_fencing_token": "2",
+          "latest_review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+          "lifecycle": "in_progress",
+          "priority": "normal",
+          "scope": {
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+          },
+          "title": "Implement normalizeLabel and independently review frozen code",
+          "updated_at": "2026-10-12T21:06:09.465246057Z",
+          "version": "6"
+        }
+      }
+    }
+  },
+  {
+    "command_name": "ReturnSignedWork",
+    "principal_id": "executor",
+    "credential_id": "01a131ed-2796-7193-bbb0-42211cfe4faa",
+    "idempotency_key": "HsulTc9qPrD4uqzI9VFKAPU8yHG1UD_0",
+    "fingerprint": "d4829802789709600c00b9833a2d4e15eec8459cc4cf29c181d92749572dcdfc",
+    "response_json": {
+      "command_id": "01a131f0-986b-7556-a1bb-02d36dc34c2a",
+      "idempotent_replay": false,
+      "outcome_revision": "15",
+      "value": {
+        "acceptance_receipt": {
+          "payload": {
+            "accepted": true,
+            "accepted_at": "2026-10-12T21:06:53.730575134Z",
+            "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+            "contract_status": "delivered",
+            "disposition": "delivered_for_review",
+            "idempotency_key": "HsulTc9qPrD4uqzI9VFKAPU8yHG1UD_0",
+            "local_obligation_closed": true,
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "outcome_revision": "15",
+            "principal_id": "executor",
+            "protocol_version": 2,
+            "request_digest": "sha256:a822392908462c1fdd53a9a1e03ebb1612ada3ce7248c7419ac21a4c6eb591b9",
+            "request_id": "01a131f0-986b-7556-a1bb-02d36dc34c2a",
+            "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+            "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+            "work_item_lifecycle": "in_progress"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+            "signature": "FgYZrAEGWoxyBB7Ij/YxCmVQMxv5MOLastBwstIKjxHhQkDWoSJxW7HV2YxGWFw38ZJRoriNrVM4gTfpnhcnDA=="
+          }
+        }
+      }
+    }
+  },
+  {
+    "command_name": "AcquireNextSignedReviewContract",
+    "principal_id": "reviewer",
+    "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+    "idempotency_key": "k0c0zyjCEo7w2wP2wz5OXRKwBdwuhuh4",
+    "fingerprint": "5c2dc5c740f6418e43e84dd66c34c572be2ca51f3f4650f5b055805bb66a31b9",
+    "response_json": {
+      "value": {
+        "acquired": true,
+        "result": {
+          "evaluated_at": "2026-10-12T21:07:20.954423596Z",
+          "issued_authority": {
+            "payload": {
+              "acceptance_mode": "independent_review",
+              "allowed_signing_key_ids": [
+                "01a131ed-2978-7363-acf5-04baef3a2735"
+              ],
+              "contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+              "contract_kind": "review",
+              "contract_version": "1",
+              "execution_id": "01a131f1-02fd-747a-b33b-dd008b82197c",
+              "expires_at": "2026-10-12T21:12:20.954423596Z",
+              "fencing_token": "1",
+              "issued_at": "2026-10-12T21:07:20.954423596Z",
+              "lease_version": "1",
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+              "policy_revision": "2",
+              "principal_id": "reviewer",
+              "protocol_version": 2,
+              "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "spec_digest": "sha256:0e5adbdf0401645f29315c02627ef9311147faaf7701572cd18c00308d1b562f",
+              "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+            },
+            "proof": {
+              "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "payload_type": "application/vnd.wos.contract-authority.v2+json",
+              "signature": "pV0yHCtLWgxShO/aXxqeOAECAhsxCgZG+CDCJFPsGug/NpTv+/uRjotxe7TjeWp1xdAKluvYRzpkipTO6qLjAw=="
+            }
+          },
+          "issued_specification": {
+            "payload": {
+              "contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+              "contract_kind": "review",
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+              "principal_id": "reviewer",
+              "protocol_version": 2,
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "spec": {
+                "acceptance_floor": "independent_review",
+                "delivery_acceptance_receipt": {
+                  "payload": {
+                    "accepted": true,
+                    "accepted_at": "2026-10-12T21:06:53.730575134Z",
+                    "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+                    "contract_status": "delivered",
+                    "disposition": "delivered_for_review",
+                    "idempotency_key": "HsulTc9qPrD4uqzI9VFKAPU8yHG1UD_0",
+                    "local_obligation_closed": true,
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+                    "outcome_revision": "15",
+                    "principal_id": "executor",
+                    "protocol_version": 2,
+                    "request_digest": "sha256:a822392908462c1fdd53a9a1e03ebb1612ada3ce7248c7419ac21a4c6eb591b9",
+                    "request_id": "01a131f0-986b-7556-a1bb-02d36dc34c2a",
+                    "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+                    "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+                    "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+                    "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+                    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                    "work_item_lifecycle": "in_progress"
+                  },
+                  "proof": {
+                    "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+                    "signature": "FgYZrAEGWoxyBB7Ij/YxCmVQMxv5MOLastBwstIKjxHhQkDWoSJxW7HV2YxGWFw38ZJRoriNrVM4gTfpnhcnDA=="
+                  }
+                },
+                "execution_groups": [],
+                "execution_principals": [
+                  "executor"
+                ],
+                "issued_work_spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+                "issued_work_specification": {
+                  "payload": {
+                    "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+                    "contract_kind": "execution",
+                    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                    "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+                    "principal_id": "executor",
+                    "protocol_version": 2,
+                    "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+                    "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "spec": {
+                      "acceptance_floor": "independent_review",
+                      "correction_findings": [
+                        {
+                          "description": "normalizeLabel only trims; internal space runs and mixed whitespace runs are not collapsed to one ASCII space. Input a   b returns a   b instead of a b; the mixed-whitespace collapse test also fails. Implement internal whitespace collapse while preserving passing trim, empty-input, and nonstring TypeError behavior.",
+                          "id": "01a11991-0000-7000-8000-000000000002",
+                          "requirement_ref": "execution_spec.instructions[0]"
+                        }
+                      ],
+                      "criteria": [
+                        {
+                          "criterion_revision": "1",
+                          "id": "01a131ed-2776-767b-a5e1-dc55197c49fe",
+                          "owner_ref": {
+                            "id": "01a131ed-276c-7320-b5f4-b71490dce218",
+                            "kind": "work_item",
+                            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+                            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+                          },
+                          "required": true,
+                          "status": "active",
+                          "title": "normalizeLabel frozen artifact passes all four requirements",
+                          "verification_mode": "attestation"
+                        }
+                      ],
+                      "dependencies": [],
+                      "description": "",
+                      "execution_spec": {
+                        "constraints": [],
+                        "context_refs": [],
+                        "deliverables": [],
+                        "instructions": [
+                          "Export normalizeLabel(value) from normalize-label.mjs; trim leading/trailing whitespace; collapse internal whitespace runs to one ASCII space; whitespace-only returns empty string; every nonstring throws TypeError. Use only owned /tmp/wos-t89-managed-pilot task files. Freeze each submitted artifact and checksum before review. Round 1 deliberately omits collapse only, recorded as a controlled fault to exercise changes requested. Correction must fix the issued finding."
+                        ],
+                        "scope_hints": []
+                      },
+                      "objective_id": null,
+                      "outcome_intent": "Execu\u00e7\u00e3o e revis\u00e3o distintas",
+                      "policy_revision": "2",
+                      "previous_review_case_id": "01a131ee-4d0f-7407-ac65-18c229cee853",
+                      "previous_submission_id": "01a131ee-4d0e-7440-a11c-df1e91e93a79",
+                      "title": "Implement normalizeLabel and independently review frozen code"
+                    },
+                    "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+                  },
+                  "proof": {
+                    "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+                    "payload_type": "application/vnd.wos.contract-spec.v2+json",
+                    "signature": "YsJhw6NYuORyRmFjCwSZdJreeZobJ9GBEnICpWlOj+xQdU2XqWs0xi1p7iiC0Vc1jv5AAF2ibMULCveooMOuDQ=="
+                  }
+                },
+                "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+                "round": "2",
+                "submission": {
+                  "artifacts": [],
+                  "contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+                  "criterion_evidence": [],
+                  "evidence_ids": [],
+                  "spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+                  "summary": "Correction frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/attempt2/round2/normalize-label.mjs; SHA256: 4443b5354ece623cc50a14586685603780d92fddd2cc903813c9177725ab704d; mode: 0444. Internal whitespace runs collapse to one ASCII space after trimming. Seven checks pass, including internal spaces, mixed whitespace, trim, whitespace-only, empty string, unchanged text, and TypeError for 13 nonstring cases. Submitted for independent review.",
+                  "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+                },
+                "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+                "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+                "work_item_version": "7"
+              },
+              "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+            },
+            "proof": {
+              "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+              "payload_type": "application/vnd.wos.contract-spec.v2+json",
+              "signature": "ZfvTBOoF1Yh+6keV+uXiMDeqSXtTJjG4i3W4CYpQ6dTlX1XTATlzjCbtREB1Mkiy5fMMm1JKp5I0wqqa6N/xBw=="
+            }
+          },
+          "review_case": {
+            "acceptance_floor": "independent_review",
+            "created_at": "2026-10-12T21:06:53.730575134Z",
+            "current_contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+            "execution_groups": [],
+            "execution_principals": [
+              "executor"
+            ],
+            "id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+            "issued_spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+            "last_fencing_token": "1",
+            "policy_revision": "2",
+            "round": "2",
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "status": "in_review",
+            "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+            "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+            "updated_at": "2026-10-12T21:07:20.954423596Z",
+            "version": "2",
+            "work_contract_id": "01a131ef-ebbe-7ef5-95d9-9a1af4f160e4",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "review_contract": {
+            "acquired_at": "2026-10-12T21:07:20.954423596Z",
+            "actor_ref": {
+              "id": "reviewer",
+              "kind": "agent",
+              "provider": "signed-browser-fixture"
+            },
+            "binding": {
+              "acceptance_floor": "independent_review",
+              "allowed_signing_key_ids": [
+                "01a131ed-2978-7363-acf5-04baef3a2735"
+              ],
+              "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+              "policy_revision": "2",
+              "protocol_version": 2,
+              "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+              "signer_key_id": "01a131ed-2978-7363-acf5-04baef3a2735",
+              "specification_digest": "sha256:0e5adbdf0401645f29315c02627ef9311147faaf7701572cd18c00308d1b562f"
+            },
+            "case_version_at_acquire": "1",
+            "execution_id": "01a131f1-02fd-747a-b33b-dd008b82197c",
+            "expires_at": "2026-10-12T21:12:20.954423596Z",
+            "fencing_token": "1",
+            "holder_principal_id": "reviewer",
+            "id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+            "issued_spec_digest": "sha256:7aa69d2c96a449a9e1e56bebb5e115bf14e70f18d063be542ad01b90dc625236",
+            "issued_specification_id": "01a131f1-02ff-7048-a2a4-26a8e63063a4",
+            "last_renewed_at": "2026-10-12T21:07:20.954423596Z",
+            "latest_authority_id": "01a131f1-0300-7108-bdbb-c66bae75d6bc",
+            "lease_policy": {
+              "default_ttl_seconds": 300,
+              "max_ttl_seconds": 3600,
+              "min_ttl_seconds": 30,
+              "revision": "1"
+            },
+            "lease_version": "1",
+            "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+            "scope": {
+              "namespace_id": "01a11991-0000-7000-8000-000000000001",
+              "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83"
+            },
+            "status": "active",
+            "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+            "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+            "version": "1",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218"
+          },
+          "work_item_version": "7"
+        },
+        "search_complete": true,
+        "reasons": []
+      },
+      "outcome_revision": 16,
+      "command_id": "01a131f1-02f2-7c0a-8030-674cbdc04932",
+      "idempotent_replay": false
+    }
+  },
+  {
+    "command_name": "ReturnSignedReview",
+    "principal_id": "reviewer",
+    "credential_id": "01a131ed-295d-72e4-a2d0-c09d275031ba",
+    "idempotency_key": "kPF8dxqE9o8g0n67G1gIHQSFEBmdULdd",
+    "fingerprint": "a3bcc4d10d47091fcf228e83c1a8876484b68c92068eb0a13dea1af557d2de45",
+    "response_json": {
+      "command_id": "01a131f1-9f96-7c94-a161-b962198b5cf4",
+      "idempotent_replay": false,
+      "outcome_revision": "17",
+      "value": {
+        "acceptance_receipt": {
+          "payload": {
+            "accepted": true,
+            "accepted_at": "2026-10-12T21:08:01.072373719Z",
+            "contract_id": "01a131f1-02fd-7dcd-903d-cb4c39aaca6f",
+            "contract_status": "completed",
+            "decision_id": "01a131f1-9fb9-798d-9b9e-ceb1339f6a0e",
+            "disposition": "review_approved",
+            "idempotency_key": "kPF8dxqE9o8g0n67G1gIHQSFEBmdULdd",
+            "local_obligation_closed": true,
+            "namespace_id": "01a11991-0000-7000-8000-000000000001",
+            "outcome_id": "01a131ed-2727-743a-8a3f-991b1273cd83",
+            "outcome_revision": "17",
+            "principal_id": "reviewer",
+            "protocol_version": 2,
+            "request_digest": "sha256:40a42e596b7bffd35665f4749db900d86190587366feea64ba46ea439d5ba922",
+            "request_id": "01a131f1-9f96-7c94-a161-b962198b5cf4",
+            "review_case_id": "01a131f0-98a5-784a-957a-c8b318310c6b",
+            "server_id": "01a131ed-26f8-768a-aa5c-464617120140",
+            "signer_key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "submission_digest": "sha256:846117cd120220edfa8b16da81a37c0291206eb0d28f99eb64598079c19f6505",
+            "submission_id": "01a131f0-98a4-781a-83de-cac19a642b94",
+            "work_item_id": "01a131ed-276c-7320-b5f4-b71490dce218",
+            "work_item_lifecycle": "done"
+          },
+          "proof": {
+            "key_id": "01a131ed-26f8-791d-b876-c4b1857d55ca",
+            "payload_type": "application/vnd.wos.acceptance-receipt.v2+json",
+            "signature": "lCFO7ZdAneeWr2FIns4FR5/YuqZDLVlXPHquk26Cnnj4AV29PbI1hr3qCGW24d0TrDllf+KZH3LuVHwyuqUUDg=="
+          }
+        }
+      }
+    }
+  }
+]

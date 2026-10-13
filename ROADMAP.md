@@ -1523,6 +1523,16 @@ The audit adds 21 separately named, correctly signed return probes across direct
 Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
 
 
+### T89 — actual fresh-context Codex pilot evidence
+
+The authorized managed Codex pilot completed independent execution/review, real changes requested, a fresh correction contract and final approval with public `wosctl@0.4.0` source 347e4a4. The corrected frozen artifact passed 21 independent checks; four acceptance receipts and two submission digests were verified independently, final work is done, contracts empty and recovery clean. The first invalid signed review failed HTTP422 and remains preserved; it is not silently counted as success. Sanitized report and byte-identical artifacts are archived under docs/audit/codex-managed-pilot-2026-10-12. Shared filesystem is not privilege isolation, artifact refs are empty and provider token/cost figures are null. This closes the bounded actual managed-agent pilot evidence on that public source, not the final-source 1.0 acceptance gate or human validation.
+
+### Browser regression found during release hardening
+
+PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
+
+Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.
+
 ### D — dense continuity measurements, first operational slice
 
 The shared SQLite/PostgreSQL benchmark now accepts 100/1,000/10,000 WorkItems per Outcome and measures focal work context beside the full continuity projection, with allocation/response size and empirical p50/p95/p99. Local 1,000-item execution passed for SQLite and real PostgreSQL (100 samples per sequential query, GOMAXPROCS=3); each rich WorkItem has an actual criterion and explicit assessment. PostgreSQL rich snapshot mean/p95/p99: 82.48/120.33/136.92 ms; focal context: 15.35/20.91/28.78 ms, 2,225 bytes versus 32,643. Four-reader evidence is not claimed: this run used three readers and measured 24.36 PostgreSQL snapshots/s. SQLite reported 32 SQL statements/rich snapshot and 34/focal context; PostgreSQL SQL count was unavailable and is not invented. This demonstrates response caps do not bound full reconstruction; agents should prefer focal context and expand proof by reference. Larger-history envelopes, production percentiles, CPU profiles, restore/retention and final-source records remain separate acceptance work.
@@ -1534,12 +1544,6 @@ Dense capacity is now an immutable-source CI fixture: 100/1,000 tasks on SQLite/
 Clean-source capacity profiling passed source 09de362daaed7696970f760ba6fa7cdd7ab25e60: 16 real store/history/query cases with 100 samples each, plus CPU/heap profiles. Tracked receipt: docs/stable/capacity-2026-10-12.json. At 1,000 tasks, profiled PostgreSQL rich/focal p95 was 97.32/26.20 ms, SQLite 117.73/21.66 ms; three-reader throughput 26.24/22.83 snapshots/s. The reference focal target is 35 ms; unavailable PostgreSQL SQL counts and observed tail spikes remain explicit. Go/fixture CPU/RSS excludes the independent database process. No 10,000-item, signed-writer-at-1,000 or production-SLA acceptance is inferred.
 
 Public registry wosctl 0.4.0 now matches the original source 347e4a492d50f69a1aeb0a0c0bb3fde255999ad0 tarball SRI. Read-only preflight allowed rerunning the original failed publisher with no duplicate upload. Run 38297440817 completed successfully, including actual public latest installation and native skill management on Linux and Windows. Full public signed-journey acceptance is an additional check in PR #94, separate from those original installer receipts.
-
-### Browser regression found during release hardening
-
-PR #94's browser gate exposed a delayed search firing after explicit Work-status navigation and Load more, resetting the list to its first 25 items. Section rendering now cancels the queued search timer when an explicit render consumes the current filter state. Existing generation/render-ID guards continue rejecting stale in-flight responses. A deterministic queued-search/pagination regression and exact-source browser checks are required; this failure is not waived as a CI transient.
-
-Pagination regression verification: the deterministic queued-timer test fails against the original accepted hosted binary (unexpected stale reference request), and passes against the corrected binary. Three repeats each of the regression and full workspace/pagination journey passed; complete local browser suite passed 32 journeys plus 14 web unit tests. Exact-source hosted gates remain required before integration.
 
 ### Owner correction — use the WKS CI-controlled release model
 
@@ -1560,6 +1564,10 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
+
+### Client operational report — command discovery correction
+
+The 2026-10-12 client report confirmed documentary integration but found that local --help and outcome context did not work. Local root/group help and a version/commit-bound CLI catalog now execute before workspace/credential/server access, through both primary wos and its client alias. Unsupported outcome context returns explicit legacy outcome get and signed work-show alternatives. CLI documentation now reflects the unified wosctl package and bundled native skill installer. Focused offline discovery/root-routing tests passed; signed-client qualification and exact-source hosted integration remain separate evidence.
 
 ### Release preparation respects active master rules
 
