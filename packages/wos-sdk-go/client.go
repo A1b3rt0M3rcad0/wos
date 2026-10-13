@@ -82,6 +82,12 @@ func (c *Client) doBounded(ctx context.Context, method, path, key string, input,
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	// net/http treats Idempotency-Key as permission to retry a request after
+	// a reused connection fails. Mutations remain explicitly reconciled by
+	// callers; remove the replay body so the standard transport cannot resend.
+	if method != http.MethodGet && method != http.MethodHead {
+		req.GetBody = nil
+	}
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}

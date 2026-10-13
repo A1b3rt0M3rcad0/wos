@@ -1,0 +1,53 @@
+WOS — DIAGNÓSTICO GENÉRICO DE API, CLI E EVIDÊNCIA OPERACIONAL
+Data: 12/10/2026. Base: 2b8b6664afc18197c30b192e3c1a59164b7b698b.
+API/UI http://localhost:8092. Nenhum código alterado nesta etapa.
+
+RESULTADO
+Atualização Git e rebuild executados. CLI wosctl inicializada em workspace
+isolado da instalação Docker, com referência de credencial em variável de
+ambiente. auth status e outcome get confirmaram identidade/acesso pela API.
+Criou-se Outcome operacional autorizado através do contrato HTTP público.
+
+PROJEÇÃO DE APLICAÇÃO CLIENTE
+14 eventos únicos registrados como evidence_type source. Leituras públicas
+confirmaram source_ref único e descrição de fato operacional. A fila durável
+do cliente confirmou 14 entregas succeeded. Outcome permanece draft: nenhuma
+regra de achievement ou avaliação de critério foi inventada pelo teste.
+Payloads documentais e respostas privadas não foram enviados ao WOS.
+Recibo JSON e identidade da evidência são necessários para confirmação do cliente.
+
+O QUE NÃO FOI COMPROVADO
+Não se qualificou execução independente de work/review com contratos assinados
+v2, takeover, concorrência ou recuperação após crash. Registrar evidência via
+API não certifica essas capacidades. Não se testou aquisição de uma tarefa
+real por executor humano/agente nem houve assinatura/atestado fictício.
+Nenhum defeito bloqueante foi reproduzido na projeção documental exercitada.
+
+MELHORIAS/QUALIFICAÇÃO RECOMENDADAS PARA QUALQUER CLIENTE
+P1 — Escolher protocolo e perfis explicitamente para trabalho remoto. Preservar
+      contratos emitidos, intenções, recibos, actor/group e independência de
+      reviewer. Signed v2 requer qualificação própria; init não ativa protocolo.
+      Aceite: checkout → sign/send → finish/recover reais, retries e crash,
+      com isolamento de credenciais e sem autoaprovação de evidência.
+P1 — Qualificar disponibilidade, persistência/restore e observabilidade no alvo.
+      Contêiner ativo sozinho não demonstra processamento de trabalho. Incluir
+      probes de API, autoridade, estado de leases e aquisição pendente.
+P2 — Descoberta de comandos CLI: --help e outcome context não são aceitos nesta
+      CLI; README/catalog orientam outcome get. Melhorar erro orientativo e
+      catálogo versionado. Isso não bloqueia os comandos documentados exercitados.
+P2 — Consumidores devem usar chaves determinísticas e recuperar recibo em
+      timeout; não deduzir commit por status HTTP incompleto ou GET de estado.
+      Qualificar redelivery/timeout e rotação da credencial do mesmo principal.
+P2 — Evidência operacional, evidence_links, critério e achievement são objetos
+      distintos. Manter essa separação em SDK/CLI/exemplos e testes genéricos.
+
+EVIDÊNCIAS (reports)
+lipo-wos-projection.json; wos-final-compose.txt;
+integration-2026-10-12/manifest.json. Configuração do Outcome e recibo sem
+segredos estão em tools/integration/wos-state.json do cliente. Workspace
+CLI privado no volume Docker /data/lipo-integration; token nunca versionado.
+
+CONCLUSÃO
+Integração documental operacional funciona no escopo testado. Antes de declarar
+orquestração integral de trabalho, executar matriz dos contratos/leases/review.
+Nenhuma regra específica de aplicação cliente é proposta dentro do WOS.

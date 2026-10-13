@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "original_report": "docs/audit/client-operational-report-2026-10-12.txt",
+  "recorded_at": "2026-10-13T00:01:38.551356+00:00",
+  "qualified_native_image_source": "5fdd6949c433d734816ac709a844e892486644d1",
+  "runtime_file_hashes": {
+    "packages/wos-sdk-go/client.go": "70a5bc9a9bd12d7ef8954ea3dc3fab36b9b3d07b9575b4754bda701e5e8d013b",
+    "packages/wos-sdk-go/work_contracts.go": "7a8c68b8dcc7e233a8d47a7de7c939e5bde8e4e80d9c1228ea4eeff52eee2b02",
+    "packages/wos-cli/help.go": "58b0dbca4421c18f4cf82028d5f22edc7419d19fbd4c6cfb352f72712a499e54",
+    "packages/wos-api/cmd/wos/main.go": "c874a8af4c600f96ea71db868c5f21523b84446dccc53f4bdfc677154705b28b"
+  },
+  "compose": {
+    "project": "wos-client-report-20261012",
+    "target": "owned cloud fixture at port 18092",
+    "env_source": ".env.example copied with only the host port changed",
+    "application_rules_added": false,
+    "scope": "default unsigned documentary flow; signed work is separately exercised"
+  },
+  "checks": {
+    "signed_protocol_and_roles": "Native approved enrollment, protected references, execution, independent review, changes requested, fresh correction, required assessment and final cleanup/recovery passed.",
+    "operation_restore": "Compose API readiness/identity/receipt, restart persistence and backup restored into a new SQLite file passed. Real PostgreSQL pending review/correction/issuer restore and database-clock skew tests passed.",
+    "discovery": "Offline root/group help and product/source-bound JSON CLI catalog; unsupported outcome context gives protocol-specific alternatives.",
+    "consumer_reconciliation": "Genuine committed response loss, explicit identical replay, revoked-token rejection, same-Principal credential rotation, compact receipt distinction and one evidence across Memory/SQLite/PostgreSQL.",
+    "documentary_semantics": "Evidence and supports link do not assess or conclude; explicit met assessment does not auto-achieve; explicit authorized achievement required."
+  },
+  "race": {
+    "scope": "focused local verification before SDK commit; exact-source hosted gates are recorded separately",
+    "passed_tests_subtests": 13,
+    "failed": 0,
+    "skipped": 0,
+    "passed_cases": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+        "test": "TestCommandReceiptObservationPreservesCompactCommitWithoutClaimingFullResult"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+        "test": "TestCommandReceiptObservationRejectsSwappedAndIncompleteReceipts"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestJournalReplaysExactIntentAfterCommittedResponseLoss"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestJournalDiskFailureAfterCommitDoesNotCreateNewAcquisition"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestSDKRefusesRedirectedMutationAndTrustRebinding"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestClientEvidenceCommitLossRotationAndExplicitAchievement/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestClientEvidenceCommitLossRotationAndExplicitAchievement/sqlite"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestClientEvidenceCommitLossRotationAndExplicitAchievement/postgres"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestClientEvidenceCommitLossRotationAndExplicitAchievement"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/sqlite"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/postgres"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead"
+      }
+    ],
+    "raw_log_sha256": "4f6beb399b0a167b811202e048452869a59786c3a72c7d8a7cf1d9aa908de974"
+  },
+  "restore": {
+    "scope": "focused local verification before SDK commit; exact-source hosted gates are recorded separately",
+    "passed_tests_subtests": 13,
+    "failed": 0,
+    "skipped": 0,
+    "passed_cases": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority"
+      }
+    ],
+    "raw_log_sha256": "da8b76e805b6600ee24641d7c7965e83cc465e5377bfaa50c98953eb224a83b1"
+  },
+  "artifacts": [
+    {
+      "path": "docs/audit/client-qualification-2026-10-12/initial.json",
+      "sha256": "7654e1720739d8a76e018c340a9bda427a65f6237b0cefe123fafa6ea0dc7eee"
+    },
+    {
+      "path": "docs/audit/client-qualification-2026-10-12/restart.json",
+      "sha256": "0cbd4958df8a03b078b6b4dbe959f75d904905ae6b502d75e2f0cc4bdcfe7446"
+    },
+    {
+      "path": "docs/audit/client-qualification-2026-10-12/restored.json",
+      "sha256": "9fc01af4311231f88cc777e8554595e32bfe20d71b483b2e251a905850e50d3e"
+    },
+    {
+      "path": "docs/audit/client-qualification-2026-10-12/signed-native.json",
+      "sha256": "7db39c583386ff3b28a4d05ca526dc1eedf7c2fd4c6fbd17766bd6bd9500a180"
+    }
+  ],
+  "public_release_baseline": {
+    "version": "0.4.1",
+    "source": "2b8b6664afc18197c30b192e3c1a59164b7b698b",
+    "workflow": "https://github.com/A1b3rt0M3rcad0/wos/actions/runs/38309700713",
+    "status": "all source, publisher and public Linux/Windows consumers passed; predates these fixes"
+  },
+  "limitations": [
+    "The external client desktop localhost:8092 and unprovided private client reports were not accessed or certified.",
+    "The Compose fixture is unsigned by default; it is not silently promoted to signed v2.",
+    "Role credential references and contexts are separate; the shared cloud OS/filesystem is not privilege isolation.",
+    "Functional fixture results do not establish production SLA, RPO/RTO, capacity or provider billing.",
+    "Pre-commit focused logs are supporting verification; hosted acceptance must bind the integrated source before publication."
+  ]
+}

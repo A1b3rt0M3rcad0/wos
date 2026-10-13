@@ -303,6 +303,8 @@ The intended stable `1.0.0` should only be tagged after all of the following hav
 
 **A prepared `0.3.0` is not evidence that these gates are already complete.** Source-of-truth implementation state is [ROADMAP.md](ROADMAP.md); historical test reports are source-specific, not blanket certification for later commits.
 
+For external clients, follow [client qualification](docs/client-qualification.md): explicit protocols/profiles, receipt-based recovery, operation/restore probes and separate evidence, assessments and conclusions.
+
 ## Repository layout
 
 ```text
