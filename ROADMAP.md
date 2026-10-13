@@ -1493,14 +1493,14 @@ Source plan: `docs/stable/original-plan-2026-10-12.md`, baseline `40d1703` / 0.4
 
 | Gate | Current state |
 | --- | --- |
-| P0-01 CLI name/publication | Accepted: original approved wosctl 0.4.0 SRI verified publicly; actual registry installation and native skills passed Linux/Windows in run 38297440817 |
-| P0-02 stable contracts | Accepted candidate freeze: PR #92 integrated after all source checks; schema/metadata/license and compatibility regressions passed |
-| P0-03 signed assertions | Existing mappings need assertion audit; no fabricated 96-scenario completion |
-| P0-04 license | Accepted: existing Apache-2.0 retained; one-package/native artifact checks passed |
-| P0-05 protection/release | Pending enforced source gates, registry identities and immutable coordinated release |
-| P1-01–04 operational/security | Existing foundation; capacity, retention/restore, diagnostic and negative-authority evidence to consolidate |
+| P0-01 CLI name/publication | Public wosctl 0.4.1 passed source/integrity and installed Linux/Windows consumers; 0.4.2 is prepared for the client-report fixes, not yet claimed published |
+| P0-02 stable contracts | Product metadata/OpenAPI synchronization, public-schema fingerprint freeze and compatibility regression gates integrated; unfinished 1.0 assertion audit is separate |
+| P0-03 signed assertions | Authority/live-policy/enrollment slices and actual Codex pilot integrated; remaining T01–T96 assertion audit still open, with no blanket acceptance claim |
+| P0-04 license | Apache-2.0 retained and release/distribution license consistency checks passed |
+| P0-05 protection/release | CI-gated immutable coordinated 0.4.1 release public; active master rule requires PRs, preparer respects it, publication requires exact-source core/browser/packages/native gates |
+| P1-01–04 operational/security | Bounded capacity/retention/restore reference and negative-authority evidence integrated; client report adds real API/SDK, Compose restart/new-file restore and native signed qualification without production SLA claims |
 | P1-05 human validation | Remains pending under prior owner instruction; no participants or manual screen reader available; automated success is separate |
-| P1-06 independent consumer | Native tarballs tested previously; published clean consumer receipt still required |
+| P1-06 independent consumer | Actual public installed 0.4.1 signed consumers passed Linux/Windows; current fixes also passed source-bound native image qualification, separate from future 0.4.2 public acceptance |
 
 Owner clarification: no scoped replacement and no separate public npm service/skills package. `npm install -g wosctl@latest` supplies `wos`/`wosctl`; skill installation remains native `wos skill install --agent codex`. The active build/publication/version pipeline is being reduced to that one npm identity while retaining native archives and container deployment. Historical unpublished Node package directories are compatibility fixtures, not distribution claims.
 
@@ -1587,3 +1587,7 @@ Run 38308328553 proved that master now requires a PR (GH013); the preceding dire
 ### C — live policy assertion gap closure
 
 The assertion audit found that nominal direct/review floor cases did not independently demonstrate a policy changing after issuance. The shared signed-return matrix now verifies deployment and Outcome floors override a weaker Task policy, current credential hardening is enforced, relaxing current policy cannot weaken the frozen review floor, and another credential of the same Principal cannot replace the original owner. Each mathematically valid probe must fail specifically with forbidden (not parser/stale-policy failure), preserve original authority/task/revision, and permit the original correctly updated request afterward. Local Memory/SQLite/real PostgreSQL acceptance passed 418 tests/subtests, with no skips. This closes explicit T07/T38/T39 authority assertions; exact-source hosted verification remains required.
+
+### Client operational report correction integration
+
+PR #103 (local discovery), #104 (explicit SDK recovery/compact receipts and generic client qualification), #101 (enrollment), #102 (actual Codex pilot archive) and #96 (capacity/operations) are integrated after their source checks. All five recommendations in the generic client report have repository-level corrections/procedures and observable functional evidence. The private client desktop and its unprovided reports remain outside the tested target. The 0.4.2 metadata consumes the reviewed change declarations and passes release/compatibility validation. Public acceptance of 0.4.2 remains pending until the immutable release workflow completes; 1.0/human validation are not asserted.
