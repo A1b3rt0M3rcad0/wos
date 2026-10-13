@@ -1,0 +1,35 @@
+[
+  {
+    "id": "01a131ea-9c2d-7803-a687-09ca7c96eb2a",
+    "namespace_id": "01a11991-0000-7000-8000-000000000001",
+    "outcome_id": "01a131e9-9bf2-74cb-bd26-ca809e85e593",
+    "contract_id": "01a131ea-1d3a-7633-83fc-819554bf59e1",
+    "work_item_id": "01a131e9-9c2f-7d80-98ff-cc2474002ffe",
+    "submission_digest": "sha256:a7eede63014bbc0b45c0f3d78779a8e27fa30e96d60f523caf977eb934fd621d",
+    "payload_json": {
+      "protocol_version": 2,
+      "id": "01a131ea-9c2d-7803-a687-09ca7c96eb2a",
+      "scope": {
+        "namespace_id": "01a11991-0000-7000-8000-000000000001",
+        "outcome_id": "01a131e9-9bf2-74cb-bd26-ca809e85e593"
+      },
+      "material": {
+        "contract_id": "01a131ea-1d3a-7633-83fc-819554bf59e1",
+        "work_item_id": "01a131e9-9c2f-7d80-98ff-cc2474002ffe",
+        "spec_digest": "sha256:915cf715b696fa59e130aad385cd9d50ec7f8b64912510b2536287308f3695e3",
+        "summary": "Round1 frozen artifact: /tmp/wos-t89-managed-pilot/artifacts/round1/normalize-label.mjs; SHA256 f1ccc45307af2b35bcc3e959c1391b6fcbca31fe955ce4733ad883f3f5e1a2f1. Implements string trim, whitespace-only empty result, and TypeError for every nonstring. Controlled omission: internal whitespace collapse is deliberately absent as required by issued round1 instructions; independent review should request correction.",
+        "artifacts": [],
+        "evidence_ids": [],
+        "criterion_evidence": []
+      },
+      "submission_digest": "sha256:a7eede63014bbc0b45c0f3d78779a8e27fa30e96d60f523caf977eb934fd621d",
+      "principal_id": "executor",
+      "actor_ref": {
+        "kind": "agent",
+        "provider": "signed-browser-fixture",
+        "id": "executor"
+      },
+      "submitted_at": "2026-10-12T21:00:21.420267648Z"
+    }
+  }
+]

@@ -1510,6 +1510,10 @@ Unified package verification reached signed independent review/correction succes
 
 Actual offline unified package acceptance passed, including unsigned checkout, signed execution/correction/independent review, native skills/all/generic destinations, shutdown and corruption rejection. Further entrypoint checks cover global flags before commands, matching copied `wos --profile … work/review …` instructions, and the existing doctor client operation.
 
+### C — enrollment boundary assertions (T10)
+
+The shared enrollment test now independently verifies correctly signed wrong-purpose/wrong-Principal proofs, another authenticated Principal attempting the same challenge, and a separate approved challenge with a persisted elapsed deadline while the credential is still valid (PostgreSQL uses authoritative transaction time). Each must fail with forbidden, leave enrollment unconsumed/version unchanged, and leave its key absent. The original approved challenge must still succeed afterward. Local Memory/SQLite/real PostgreSQL execution passed all 22 tests/subtests without skips; exact-source hosted acceptance is still required. The elapsed challenge is a controlled persisted fixture, not a claim that PostgreSQL obeys the injected Go clock.
+
 ### B — public contract candidate freeze
 
 While A awaits hosted/public registry gates, independent contract hardening proceeds without declaring A accepted. MCP serverInfo now receives the actual service build version rather than 0.1.0-dev. Both OpenAPI metadata versions follow product SemVer and release preparation synchronizes them. Exact public API/CLI YAML schema fingerprints and license/one-package checks detect unreviewed drift. Compatibility matrix retains unsigned history, explicit signed cutover, legacy alias and exit semantics. Apache-2.0 is retained; historical service/skill manifests are private. VERSION remains 0.4.0; stable publication and manual validation are not asserted.
@@ -1523,9 +1527,9 @@ The audit adds 21 separately named, correctly signed return probes across direct
 Local Memory/SQLite/real PostgreSQL acceptance passed 354 tests/subtests. Generated PostgreSQL tests remain aligned. This is an explicit assertion-level slice of T04/T18–20/T24/T33–37; it does not mark all T01–T96 assertions accepted or imply the manual human and registry gates passed. Hosted exact-source verification is still required.
 
 
-### C — enrollment boundary assertions (T10)
+### T89 — actual fresh-context Codex pilot evidence
 
-The shared enrollment test now independently verifies correctly signed wrong-purpose/wrong-Principal proofs, another authenticated Principal attempting the same challenge, and a separate approved challenge with a persisted elapsed deadline while the credential is still valid (PostgreSQL uses authoritative transaction time). Each must fail with forbidden, leave enrollment unconsumed/version unchanged, and leave its key absent. The original approved challenge must still succeed afterward. Local Memory/SQLite/real PostgreSQL execution passed all 22 tests/subtests without skips; exact-source hosted acceptance is still required. The elapsed challenge is a controlled persisted fixture, not a claim that PostgreSQL obeys the injected Go clock.
+The authorized managed Codex pilot completed independent execution/review, real changes requested, a fresh correction contract and final approval with public `wosctl@0.4.0` source 347e4a4. The corrected frozen artifact passed 21 independent checks; four acceptance receipts and two submission digests were verified independently, final work is done, contracts empty and recovery clean. The first invalid signed review failed HTTP422 and remains preserved; it is not silently counted as success. Sanitized report and byte-identical artifacts are archived under docs/audit/codex-managed-pilot-2026-10-12. Shared filesystem is not privilege isolation, artifact refs are empty and provider token/cost figures are null. This closes the bounded actual managed-agent pilot evidence on that public source, not the final-source 1.0 acceptance gate or human validation.
 
 ### Browser regression found during release hardening
 
@@ -1552,6 +1556,10 @@ After PR #94 integration, GitHub rejected automatic release PR creation: "GitHub
 
 Read-only reconciliation run 38306230907 passed: original public wosctl 0.4.0 source/SRI/native receipts and actual signed executor/reviewer/correction/recovery consumers on Linux and Windows. The successful Windows fixture does not add production Windows server support.
 
+
+### Client operational report — command discovery correction
+
+The 2026-10-12 client report confirmed documentary integration but found that local --help and outcome context did not work. Local root/group help and a version/commit-bound CLI catalog now execute before workspace/credential/server access, through both primary wos and its client alias. Unsupported outcome context returns explicit legacy outcome get and signed work-show alternatives. CLI documentation now reflects the unified wosctl package and bundled native skill installer. Focused offline discovery/root-routing tests passed; signed-client qualification and exact-source hosted integration remain separate evidence.
 
 ### Release preparation respects active master rules
 

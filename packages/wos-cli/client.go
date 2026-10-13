@@ -118,6 +118,9 @@ func parseOptions(args []string) (options, error) {
 	return o, nil
 }
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if handled, code := HandleHelp(args, stdout, stderr, false); handled {
+		return code
+	}
 	if len(args) == 1 && args[0] == "--version" {
 		args = []string{"version"}
 	}
@@ -209,6 +212,9 @@ func outcomePath(scope domain.Scope) string {
 }
 func run(ctx context.Context, o options) (Output, error) {
 	result := Output{Operation: strings.Join(o.args, " ")}
+	if len(o.args) >= 2 && o.args[0] == "outcome" && o.args[1] == "context" {
+		return result, usage("outcome context is not a CLI command; schema 1: use wos outcome get [ID] --output json; signed schema 2: use wos --profile NAME work show CONTRACT_ID --for-agent; see wos help outcome and wos help work")
+	}
 	if len(o.args) == 1 && o.args[0] == "version" {
 		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "signed_contracts_v2", "workspace_schema": 2, "supported_work_protocols": []string{"contracts_v1", "signed_contracts_v2"}, "supported_workspace_schemas": []int{1, 2}}
 		return result, nil
