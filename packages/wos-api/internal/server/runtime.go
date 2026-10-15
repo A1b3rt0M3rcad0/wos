@@ -191,6 +191,10 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			store.Close()
 			return nil, err
 		}
+		runtime.deliveryWorker.Concurrency = config.Integration.WorkerConcurrency
+		if config.Storage.Driver == StorageDriverSQLite && config.Integration.WorkerConcurrency > 1 {
+			slog.Warn("sqlite_delivery_parallelism", "advisory", "SQLite serializes writes; measure before increasing delivery concurrency")
+		}
 		runtime.deliveryWorker.Observer = observer
 		runtime.deliveryWorker.Diagnostics = deliveryDiagnostics
 	}

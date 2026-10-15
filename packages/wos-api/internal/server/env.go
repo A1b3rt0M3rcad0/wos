@@ -47,6 +47,14 @@ func ConfigFromEnv() Config {
 			cfg.Integration.MaxBacklogAge = parsed
 		}
 	}
+	if value, ok := os.LookupEnv("WOS_DELIVERY_WORKER_CONCURRENCY"); ok {
+		n, e := strconv.Atoi(value)
+		if e != nil {
+			cfg.Integration.ParseError = true
+		} else {
+			cfg.Integration.WorkerConcurrency = n
+		}
+	}
 	cfg.Integration.WorkerEnabled = strings.EqualFold(os.Getenv("WOS_DELIVERY_WORKER_ENABLED"), "true")
 	cfg.Integration.AllowLoopback = strings.EqualFold(os.Getenv("WOS_WEBHOOK_ALLOW_LOOPBACK"), "true")
 	if raw := os.Getenv("WOS_WEBHOOK_ENDPOINTS"); raw != "" {

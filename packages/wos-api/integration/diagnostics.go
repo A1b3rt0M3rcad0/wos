@@ -38,10 +38,11 @@ func (s *Diagnostics) DeliveryWorkerStatus() ports.DeliveryWorkerStatus {
 	}
 	return out
 }
-func (s *Diagnostics) started(now time.Time) {
+func (s *Diagnostics) started(now time.Time, concurrency int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	at := now.UTC()
+	s.status.Concurrency = concurrency
 	s.status.Running = true
 	s.status.Started = true
 	s.status.Starts++

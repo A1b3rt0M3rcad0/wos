@@ -118,3 +118,30 @@ func TestDeliveryFatalWorkerIsVisibleWhileAPIStaysReady(t *testing.T) {
 		t.Fatal("worker death broke Core readiness")
 	}
 }
+
+func TestDeliveryConcurrencyConfigurationBounds(t *testing.T) {
+	if DefaultConfig().Integration.WorkerConcurrency != 1 {
+		t.Fatal("default delivery concurrency changed")
+	}
+	for _, value := range []string{"0", "-1", "65", "invalid", "999999999999999999999"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("WOS_DELIVERY_WORKER_CONCURRENCY", value)
+			if ConfigFromEnv().Validate() == nil {
+				t.Fatal("invalid pool bound accepted")
+			}
+		})
+	}
+	for _, value := range []string{"1", "4", "64"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("WOS_DELIVERY_WORKER_CONCURRENCY", value)
+			if e := ConfigFromEnv().Validate(); e != nil {
+				t.Fatal(e)
+			}
+		})
+	}
+	t.Setenv("WOS_DELIVERY_BACKLOG_MAX_AGE", "not-a-duration")
+	t.Setenv("WOS_WEBHOOK_ENDPOINTS", "[]")
+	if ConfigFromEnv().Validate() == nil {
+		t.Fatal("endpoint parsing cleared invalid diagnostic age")
+	}
+}

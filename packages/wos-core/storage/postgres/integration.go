@@ -208,7 +208,7 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 	if ttl <= 0 {
 		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "delivery lease TTL must be positive")
 	}
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	if err != nil {
 		return nil, mapSQLError("begin delivery claim", err)
 	}
@@ -251,7 +251,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 	} else if v.Attempts >= 6 {
 		status = "exhausted"
 	}
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	if err != nil {
 		return mapSQLError("finish delivery", err)
 	}
@@ -266,7 +266,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 	}
 	_, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=$1,result=$2 WHERE delivery_id=$3 AND fencing_token=$4 AND lease_id=$5`, encodeTime(now), result, v.ID, v.FencingToken, v.LeaseID.String())
 	if err != nil {
-		return err
+		return mapSQLError("record delivery completion", err)
 	}
 	return mapSQLError("commit delivery result", tx.Commit())
 }

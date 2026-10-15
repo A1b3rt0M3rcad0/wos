@@ -36,12 +36,13 @@ type SigningConfig struct {
 }
 
 type IntegrationConfig struct {
-	MaxBacklogAge time.Duration
-	WorkerEnabled bool
-	AllowLoopback bool
-	Endpoints     []ports.WebhookEndpoint
-	Secrets       map[string]string
-	ParseError    bool
+	MaxBacklogAge     time.Duration
+	WorkerConcurrency int
+	WorkerEnabled     bool
+	AllowLoopback     bool
+	Endpoints         []ports.WebhookEndpoint
+	Secrets           map[string]string
+	ParseError        bool
 }
 
 type ServerConfig struct {
@@ -90,7 +91,7 @@ type AuthConfig struct {
 
 func DefaultConfig() Config {
 	return Config{
-		Integration: IntegrationConfig{MaxBacklogAge: 5 * time.Minute},
+		Integration: IntegrationConfig{MaxBacklogAge: 5 * time.Minute, WorkerConcurrency: 1},
 		Server: ServerConfig{
 			Listen:          "127.0.0.1:8080",
 			ShutdownTimeout: 15 * time.Second,
@@ -143,6 +144,9 @@ func (cfg Config) Validate() error {
 	}
 	if cfg.Signing.SeedEnv != "" && cfg.Auth.Mode != AuthModeAPIToken {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "signed issuer requires scoped API credentials")
+	}
+	if cfg.Integration.WorkerConcurrency < 1 || cfg.Integration.WorkerConcurrency > 64 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery concurrency must be 1..64")
 	}
 	if cfg.Integration.MaxBacklogAge <= 0 || cfg.Integration.MaxBacklogAge > 7*24*time.Hour {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery backlog age must be positive and at most seven days")

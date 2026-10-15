@@ -30,6 +30,11 @@ for name in ['delivery_health.go','signed_return_resolutions.go','signed_operati
   return '`'+q+'`'
  s=re.sub(r'`([^`]*)`',transform_sql,s,flags=re.S)
  if name=='integration.go':
+  # The integration queue has row-local invariants: locked SKIP LOCKED claims
+  # and exact lease/fence/deadline ACK predicates. SSI makes independent queue
+  # lanes abort after a receiver side effect. Domain UOWs stay Serializable.
+  start=s.index('func (s *Store) ClaimDelivery(')
+  s=s[:start]+s[start:].replace('sql.LevelSerializable','sql.LevelReadCommitted')
   s=s.replace('ORDER BY next_attempt,id LIMIT 1`','ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`')
  # Query fragments with placeholders need runtime rebinding after composition.
  if name in ['queries.go','references.go','delivery_health.go']:

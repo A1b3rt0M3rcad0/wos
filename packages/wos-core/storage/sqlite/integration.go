@@ -265,7 +265,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 	}
 	_, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result=? WHERE delivery_id=? AND fencing_token=? AND lease_id=?`, encodeTime(now), result, v.ID, v.FencingToken, v.LeaseID.String())
 	if err != nil {
-		return err
+		return mapSQLError("record delivery completion", err)
 	}
 	return mapSQLError("commit delivery result", tx.Commit())
 }
