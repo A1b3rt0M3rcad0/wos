@@ -44,6 +44,7 @@ type ContinuityReadPage struct {
 	Remaining int
 }
 type ContinuityReadRepository interface {
+	Outcome(context.Context, d.Scope) (ContinuitySummary, error)
 	Page(context.Context, d.Scope, string, string, int) (ContinuityReadPage, error)
 }
 type ContinuityReadUnitOfWork interface {

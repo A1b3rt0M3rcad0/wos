@@ -213,3 +213,17 @@ func backfillExternalContinuityKeys(ctx context.Context, tx *sql.Tx) error {
 }
 
 var _ ports.ContinuityReadUnitOfWork = (*unitOfWork)(nil)
+
+func (r continuityReadRepository) Outcome(ctx context.Context, scope d.Scope) (ports.ContinuitySummary, error) {
+	var zero ports.ContinuitySummary
+	if e := scope.Validate(); e != nil {
+		return zero, e
+	}
+	var version d.Version
+	var title, lifecycle, priority string
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority)
+	if e != nil {
+		return zero, mapSQLError("read continuity Outcome metadata", e)
+	}
+	return ports.Summarize(d.EntityRef{Scope: scope, Kind: d.EntityKindOutcome, ID: scope.OutcomeID}, version, title, lifecycle, d.Priority(priority)), nil
+}

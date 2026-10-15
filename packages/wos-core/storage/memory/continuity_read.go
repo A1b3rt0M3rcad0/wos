@@ -2,9 +2,12 @@ package memory
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strings"
 )
 
 type continuityReadRepository struct{ tx *transaction }
@@ -25,6 +28,24 @@ func (r continuityReadRepository) Page(ctx context.Context, scope d.Scope, secti
 	}
 	if !ports.DirectContinuitySection(section) {
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "unknown direct continuity section")
+	}
+	if section == "external_references" && strings.HasPrefix(after, "h:") {
+		found := false
+		for _, v := range r.tx.externalContexts[contextKey(scope)] {
+			raw, e := json.Marshal(v)
+			if e != nil {
+				return zero, e
+			}
+			sum := sha256.Sum256(raw)
+			if "h:"+hex.EncodeToString(sum[:]) == after {
+				after = string(raw)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return zero, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: section key is missing")
+		}
 	}
 	b, e := ports.NewContinuityPageBuilder(after, limit)
 	if e != nil {
@@ -124,3 +145,21 @@ func (r continuityReadRepository) Page(ctx context.Context, scope d.Scope, secti
 }
 
 var _ ports.ContinuityReadUnitOfWork = (*transaction)(nil)
+
+func (r continuityReadRepository) Outcome(ctx context.Context, scope d.Scope) (ports.ContinuitySummary, error) {
+	var zero ports.ContinuitySummary
+	if e := ctx.Err(); e != nil {
+		return zero, e
+	}
+	if e := r.tx.ensureOpen(); e != nil {
+		return zero, e
+	}
+	if e := scope.Validate(); e != nil {
+		return zero, e
+	}
+	v, ok := r.tx.outcomes[outcomeKey(scope.NamespaceID, scope.OutcomeID)]
+	if !ok {
+		return zero, d.NewError(d.ErrorCodeNotFound, "outcome not found")
+	}
+	return ports.Summarize(v.Ref(), v.Version, v.Title, string(v.Lifecycle), v.Priority), nil
+}

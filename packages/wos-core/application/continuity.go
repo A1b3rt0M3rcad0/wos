@@ -28,14 +28,15 @@ func queryLimit(n int) (int, error) {
 }
 
 type queryCursor struct {
-	Namespace   domain.ID              `json:"ns"`
-	Outcome     domain.ID              `json:"outcome,omitempty"`
-	Section     string                 `json:"section"`
-	Filter      string                 `json:"filter,omitempty"`
-	Revision    domain.OutcomeRevision `json:"revision,omitempty"`
-	Index       uint32                 `json:"index,omitempty"`
-	Key         string                 `json:"key,omitempty"`
-	EvaluatedAt time.Time              `json:"evaluated_at,omitempty"`
+	CursorVersion int                    `json:"cursor_version,omitempty"`
+	Namespace     domain.ID              `json:"ns"`
+	Outcome       domain.ID              `json:"outcome,omitempty"`
+	Section       string                 `json:"section"`
+	Filter        string                 `json:"filter,omitempty"`
+	Revision      domain.OutcomeRevision `json:"revision,omitempty"`
+	Index         uint32                 `json:"index,omitempty"`
+	Key           string                 `json:"key,omitempty"`
+	EvaluatedAt   time.Time              `json:"evaluated_at,omitempty"`
 }
 
 func filterHash(v any) string {
@@ -501,6 +502,13 @@ func (s *Service) GetContinuitySection(ctx context.Context, scope domain.Scope, 
 	if err != nil {
 		return SectionPage{}, err
 	}
+	if ports.DirectContinuitySection(section) {
+		page, handled, e := s.directContinuitySection(ctx, scope, section, n, cursor)
+		if handled || e != nil {
+			return page, e
+		}
+	}
+
 	if cursor != "" {
 		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, section, "")
 		if err != nil {
