@@ -187,6 +187,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	work.LastFencingToken = 9007199254740993
 	must(u.WorkItems().Insert(ctx, work))
 	must(u.Commit())
+	deliveryHealthParity(t, ctx, endpoint, operator, worker, scope, store, adminToken, token)
 	signedCLICutoverJourney(t, handler, sec, adminCtx, operator, scope, server, adminToken)
 	oldServer := server
 	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions, func() d.ServerIdentity {

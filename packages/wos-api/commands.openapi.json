@@ -6235,6 +6235,234 @@
         ],
         "type": "object"
       },
+      "DeliveryHealthQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "namespace_id": {
+            "maxLength": 65536,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "outcome_id": {
+            "anyOf": [
+              {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "namespace_id"
+        ],
+        "type": "object"
+      },
+      "DeliveryHealthResult": {
+        "additionalProperties": false,
+        "properties": {
+          "backlog_age_limit_seconds": {
+            "type": "number"
+          },
+          "delivery_guarantee": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "queue": {
+            "additionalProperties": false,
+            "properties": {
+              "attempts_total": {
+                "type": "integer"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "exhausted": {
+                "type": "integer"
+              },
+              "expired_leased": {
+                "type": "integer"
+              },
+              "last_claim": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "last_successful_delivery": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "leased": {
+                "type": "integer"
+              },
+              "namespace_id": {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "next_due": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "oldest_due_age_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "oldest_lease_age_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outcome_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "pending": {
+                "type": "integer"
+              },
+              "persisted_destinations": {
+                "type": "integer"
+              },
+              "succeeded": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "evaluated_at",
+              "pending",
+              "leased",
+              "expired_leased",
+              "succeeded",
+              "exhausted",
+              "attempts_total",
+              "persisted_destinations",
+              "oldest_due_age_seconds",
+              "oldest_lease_age_seconds",
+              "next_due",
+              "last_claim",
+              "last_successful_delivery"
+            ],
+            "type": "object"
+          },
+          "queue_state": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "worker": {
+            "additionalProperties": false,
+            "properties": {
+              "concurrency": {
+                "type": "integer"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "last_failure_class": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "last_tick": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "started_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "starts": {
+                "type": "integer"
+              },
+              "worker_running": {
+                "type": "boolean"
+              },
+              "worker_started": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled",
+              "worker_running",
+              "worker_started",
+              "starts",
+              "started_at",
+              "last_tick",
+              "concurrency"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "state",
+          "queue_state",
+          "queue",
+          "worker",
+          "backlog_age_limit_seconds",
+          "delivery_guarantee"
+        ],
+        "type": "object"
+      },
       "ReferenceCandidate": {
         "additionalProperties": false,
         "properties": {
@@ -16271,6 +16499,46 @@
           },
           "403": {
             "description": "Current authorization denied"
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/operations/delivery-health": {
+      "get": {
+        "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.",
+        "operationId": "getDeliveryHealth",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome_id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryHealthResult"
+                }
+              }
+            },
+            "description": "Scoped queue and worker diagnostic"
+          },
+          "403": {
+            "description": "Current Namespace administrative access denied"
           }
         }
       }

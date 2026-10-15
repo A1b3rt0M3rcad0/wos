@@ -27,14 +27,15 @@ import (
 )
 
 type Runtime struct {
-	observer       *observability.Observer
-	config         Config
-	store          runtimeStore
-	http           *http.Server
-	root           http.Handler
-	mcpServer      *mcp.Server
-	deliveryWorker *integration.Worker
-	issuerIdentity *domain.ServerIdentity
+	observer            *observability.Observer
+	config              Config
+	store               runtimeStore
+	http                *http.Server
+	root                http.Handler
+	mcpServer           *mcp.Server
+	deliveryWorker      *integration.Worker
+	deliveryDiagnostics *integration.Diagnostics
+	issuerIdentity      *domain.ServerIdentity
 }
 
 type runtimeStore interface {
@@ -167,7 +168,13 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer}
+	deliveryDiagnostics := integration.NewDiagnostics(config.Integration.WorkerEnabled)
+	observer.DeliveryDiagnostics = deliveryDiagnostics
+	if err = service.ConfigureDeliveryDiagnostics(deliveryDiagnostics, config.Integration.MaxBacklogAge); err != nil {
+		store.Close()
+		return nil, err
+	}
+	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer, deliveryDiagnostics: deliveryDiagnostics}
 	if config.Integration.WorkerEnabled {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
@@ -185,6 +192,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			return nil, err
 		}
 		runtime.deliveryWorker.Observer = observer
+		runtime.deliveryWorker.Diagnostics = deliveryDiagnostics
 	}
 	root := http.NewServeMux()
 	root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
@@ -293,14 +301,29 @@ func (r *Runtime) Serve(ctx context.Context) error {
 	return r.serve(ctx, listener)
 }
 
-func (r *Runtime) serve(ctx context.Context, listener net.Listener) error {
+func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr error) {
 	defer listener.Close()
 	listener = &admissionListener{Listener: listener, slots: make(chan struct{}, r.config.Server.MaxConnections), observer: r.observer}
 	if r.deliveryWorker != nil {
 		workerCtx, stop := context.WithCancel(ctx)
 		done := make(chan struct{})
-		go func() { defer close(done); _ = r.deliveryWorker.Run(workerCtx) }()
-		defer func() { stop(); <-done }()
+		go func() {
+			defer close(done)
+			if e := r.deliveryWorker.Run(workerCtx); e != nil && workerCtx.Err() == nil {
+				slog.Error("delivery_worker_stopped", "failure_class", r.deliveryDiagnostics.DeliveryWorkerStatus().LastFailureClass)
+			}
+		}()
+		defer func() {
+			stop()
+			timer := time.NewTimer(r.config.Server.ShutdownTimeout)
+			defer timer.Stop()
+			select {
+			case <-done:
+			case <-timer.C:
+				serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "delivery worker shutdown grace expired"))
+				slog.Error("delivery_worker_shutdown_timeout")
+			}
+		}()
 	}
 
 	errCh := make(chan error, 1)

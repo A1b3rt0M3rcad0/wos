@@ -34,6 +34,10 @@ func main() {
 		schemas[name] = commands.SignedSchema(typed)
 	}
 	paths := map[string]any{}
+	schemas["DeliveryHealthQuery"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthQuery]())
+	schemas["DeliveryHealthResult"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthResult]())
+	paths["/api/v1/namespaces/{namespace_id}/operations/delivery-health"] = map[string]any{"get": map[string]any{"operationId": "getDeliveryHealth", "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.", "parameters": []any{map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}}, map[string]any{"name": "outcome_id", "in": "query", "schema": map[string]any{"type": "string", "format": "uuid"}}}, "responses": map[string]any{"200": map[string]any{"description": "Scoped queue and worker diagnostic", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/DeliveryHealthResult"}}}}, "403": map[string]any{"description": "Current Namespace administrative access denied"}}}}
+
 	schemas["ReferenceCandidate"] = commands.Schema(reflect.TypeFor[ports.ReferenceCandidate]())
 	schemas["ReferencePage"] = commands.Schema(reflect.TypeFor[application.ReferencePage]())
 	refsParameters := []any{}

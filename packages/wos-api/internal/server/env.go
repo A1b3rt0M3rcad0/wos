@@ -39,10 +39,18 @@ func ConfigFromEnv() Config {
 		cfg.Auth.LocalNamespaceName = v
 	}
 	cfg.Auth.IndependentReviewer = strings.EqualFold(os.Getenv("WOS_INDEPENDENT_REVIEWER"), "true")
+	if v, ok := os.LookupEnv("WOS_DELIVERY_BACKLOG_MAX_AGE"); ok {
+		parsed, e := time.ParseDuration(v)
+		if e != nil {
+			cfg.Integration.ParseError = true
+		} else {
+			cfg.Integration.MaxBacklogAge = parsed
+		}
+	}
 	cfg.Integration.WorkerEnabled = strings.EqualFold(os.Getenv("WOS_DELIVERY_WORKER_ENABLED"), "true")
 	cfg.Integration.AllowLoopback = strings.EqualFold(os.Getenv("WOS_WEBHOOK_ALLOW_LOOPBACK"), "true")
 	if raw := os.Getenv("WOS_WEBHOOK_ENDPOINTS"); raw != "" {
-		cfg.Integration.ParseError = json.Unmarshal([]byte(raw), &cfg.Integration.Endpoints) != nil
+		cfg.Integration.ParseError = cfg.Integration.ParseError || json.Unmarshal([]byte(raw), &cfg.Integration.Endpoints) != nil
 	}
 	if raw := os.Getenv("WOS_WEBHOOK_SECRETS"); raw != "" {
 		cfg.Integration.ParseError = cfg.Integration.ParseError || json.Unmarshal([]byte(raw), &cfg.Integration.Secrets) != nil

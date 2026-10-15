@@ -19,6 +19,7 @@ type Observer struct {
 	connectionsRejected atomic.Uint64
 	connectionTimeouts  atomic.Uint64
 	Logger              *slog.Logger
+	DeliveryDiagnostics ports.DeliveryDiagnostics
 	mu                  sync.Mutex
 	commands            map[string]uint64
 	commandTiming       map[string]timing
@@ -121,9 +122,14 @@ func (o *Observer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	httpTiming := o.httpTiming
 	o.mu.Unlock()
+	var worker *ports.DeliveryWorkerStatus
+	if o.DeliveryDiagnostics != nil {
+		status := o.DeliveryDiagnostics.DeliveryWorkerStatus()
+		worker = &status
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "http_inflight": o.httpInflight.Load(), "http_admission_rejected": o.httpRejected.Load(), "http_timeouts": o.httpTimeouts.Load(), "http_canceled": o.httpCanceled.Load(), "connections_inflight": o.connectionsInflight.Load(), "connections_rejected": o.connectionsRejected.Load(), "connection_timeouts": o.connectionTimeouts.Load(), "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
+	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "delivery_worker": worker, "http_inflight": o.httpInflight.Load(), "http_admission_rejected": o.httpRejected.Load(), "http_timeouts": o.httpTimeouts.Load(), "http_canceled": o.httpCanceled.Load(), "connections_inflight": o.connectionsInflight.Load(), "connections_rejected": o.connectionsRejected.Load(), "connection_timeouts": o.connectionTimeouts.Load(), "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
 }
 
 // Cumulative nanoseconds/counts allow rates and mean latency to be computed

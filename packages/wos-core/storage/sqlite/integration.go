@@ -255,7 +255,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 		return mapSQLError("finish delivery", err)
 	}
 	defer tx.Rollback()
-	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=? WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
+	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=?,last_successful_at=CASE WHEN ?=1 THEN ? ELSE last_successful_at END WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, boolInt(success), encodeTime(now), v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
 	if err != nil {
 		return mapSQLError("acknowledge delivery", err)
 	}

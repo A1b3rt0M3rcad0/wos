@@ -136,3 +136,11 @@ commit. Keep payload, CAS, fence and idempotency key unchanged; recover the
 original authenticated receipt before deciding what to do next. Existing
 `deadline_exceeded` error semantics remain in place. No SDK mutation retry is
 introduced by these limits.
+
+## Delivery health (operational hardening candidate)
+
+API health and webhook delivery health are separate. A healthy `/readyz` means the Core can serve; poll the administrative `GET /api/v1/namespaces/{namespace_id}/operations/delivery-health` for durable queue facts. Supply `?outcome_id=UUID` for an Outcome-restricted credential. The equivalent MCP tool is `wos_delivery_health`, and the Go SDK method is `GetDeliveryHealth`. Authentication and current Namespace administration are required. A `403` is not evidence of an empty queue.
+
+The response separates `queue_state` from this process's `worker` status. Ages are seconds; unavailable historical timestamps are null. `attempts_total` counts retained attempts across explicit redelivery. `last_successful_delivery` survives redelivery, but does not certify a currently pending delivery as successful. The response excludes destinations' URLs, secret references and event bodies. Worker fatal errors are classified and exposed; restart the deployment after repairing the cause. Another replica may still deliver while this process reports degraded.
+
+Set `WOS_DELIVERY_BACKLOG_MAX_AGE=5m` (default) to choose the due-age alarm threshold. External monitoring should alert on `queue_state=degraded`, any `exhausted`, or a worker expected by the deployment that is disabled, stopped or has no fresh tick. `/metrics` includes the aggregate `delivery_worker` process snapshot and delivery attempt timings. Poll a Namespace/Outcome diagnostic for queue counts, rather than treating a process heartbeat as queue state. External receivers must deduplicate `integration_event_id`; a successful receiver side effect followed by ACK loss can be delivered again.

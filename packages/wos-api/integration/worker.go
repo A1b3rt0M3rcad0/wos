@@ -20,6 +20,7 @@ import (
 )
 
 type Worker struct {
+	Diagnostics   *Diagnostics
 	Store         ports.DeliveryStore
 	Clock         ports.Clock
 	IDs           ports.IDGenerator
@@ -97,6 +98,9 @@ func VerifySignature(secret, timestamp, id, signature string, body []byte, now t
 	return nil
 }
 func (w *Worker) Tick(ctx context.Context) (bool, error) {
+	if w.Diagnostics != nil {
+		w.Diagnostics.tick(w.Clock.Now())
+	}
 	id, err := w.IDs.NewID()
 	if err != nil {
 		return false, err
@@ -154,7 +158,19 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	acknowledged = err == nil
 	return true, err
 }
-func (w *Worker) Run(ctx context.Context) error {
+func (w *Worker) Run(ctx context.Context) (runErr error) {
+	if w.Diagnostics != nil {
+		w.Diagnostics.started(w.Clock.Now())
+	}
+	defer func() {
+		if recover() != nil {
+			runErr = ErrWorkerPanic
+		}
+		if w.Diagnostics != nil {
+			w.Diagnostics.stopped(runErr, ctx.Err() != nil)
+		}
+	}()
+
 	timer := time.NewTicker(time.Second)
 	defer timer.Stop()
 	for {
@@ -167,6 +183,9 @@ func (w *Worker) Run(ctx context.Context) error {
 				if err != nil && ctx.Err() == nil {
 					code, _ := domain.ErrorCodeOf(err)
 					slog.Warn("delivery_worker", "error_code", code)
+					if fatalWorkerError(err) {
+						return err
+					}
 				}
 				if err != nil || !worked {
 					break

@@ -117,6 +117,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) routes() {
+	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/operations/delivery-health", h.deliveryHealth)
 	h.mux.HandleFunc("GET "+h.prefix+"/capabilities", h.executionCapabilities)
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/work-protocol", h.getNamespaceWorkProtocol)
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/commands/{command_id}", h.getCommandReceipt)
