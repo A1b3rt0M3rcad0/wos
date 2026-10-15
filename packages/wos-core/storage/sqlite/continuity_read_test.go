@@ -1,0 +1,235 @@
+package sqlite
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"os"
+	"path/filepath"
+	"reflect"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+)
+
+type portClock struct{ now time.Time }
+
+func (c portClock) Now() time.Time { return c.now }
+
+type portIDs struct{ next int }
+
+func (g *portIDs) NewID() (d.ID, error) { g.next++; return portID(10000 + g.next), nil }
+func portID(n int) d.ID                 { return d.MustParseID(fmt.Sprintf("0199d180-0000-7000-8000-%012x", n)) }
+func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "continuity-port.db"))
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	must := func(e error) {
+		t.Helper()
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+	out, e := d.NewOutcome(portID(2), portID(1), "Port parity", "", "bounded pages", d.PriorityNormal, now)
+	must(e)
+	u, e := store.Begin(ctx)
+	must(e)
+	must(u.Outcomes().Insert(ctx, out))
+	scope := out.Scope()
+	actor := d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "reader"}
+	docs := u.(ports.DocumentaryUnitOfWork)
+	issues := u.(ports.IssueBlockerUnitOfWork)
+	works := []d.WorkItem{}
+	providers := []string{"a\"", "a&", "a<", "a\\", "é", "\u2028x", "0", "z"}
+	for i := 0; i < 8; i++ {
+		title := fmt.Sprintf("%d & %s", i, strings.Repeat("界", 180))
+		base := 100 + i*20
+		work, e := d.NewWorkItem(portID(base), scope, title, "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+		must(e)
+		must(u.WorkItems().Insert(ctx, work))
+		works = append(works, work)
+		objective, e := d.NewObjective(portID(base+1), scope, title, "", d.PriorityNormal, false, now)
+		must(e)
+		must(u.Objectives().Insert(ctx, objective))
+		issue, e := d.NewIssue(portID(base+2), scope, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+		must(e)
+		must(issues.Issues().Insert(ctx, issue))
+		cause := issue.Ref()
+		blocker, e := d.NewBlocker(portID(base+3), work.Ref(), &cause, nil, title, d.BlockerPropagationDirect, now)
+		must(e)
+		must(issues.Blockers().Insert(ctx, blocker))
+		artifact, e := d.NewArtifact(portID(base+4), scope, "report", title, "https://example.test/report", "application/json", "", "v1", actor, nil, now)
+		must(e)
+		must(docs.Artifacts().Insert(ctx, artifact))
+		evidence, e := d.NewEvidence(portID(base+5), scope, d.EvidenceTypeSource, title, d.SourceReference{Provider: "fixture", ID: fmt.Sprint(i)}, actor, now, &artifact.ID, nil, "v1", "", now)
+		must(e)
+		must(docs.Evidence().Insert(ctx, evidence))
+		link, e := d.NewEvidenceLink(portID(base+6), scope, evidence.ID, work.Ref(), nil, d.EvidenceStanceSupports, "observed", now)
+		must(e)
+		must(docs.EvidenceLinks().Insert(ctx, link))
+		decision, e := d.NewDecision(portID(base+7), scope, title, "choose", []string{"A", "B"}, "A", "reason", actor, now)
+		must(e)
+		must(docs.Decisions().Insert(ctx, decision))
+		must(u.(ports.ExternalContextUnitOfWork).ExternalContexts().Add(ctx, scope, d.ExternalReference{Provider: providers[i], Kind: "ticket", ExternalID: fmt.Sprint(i), URL: "https://example.test/?a=1&b=2"}))
+	}
+	for i := 1; i < len(works); i++ {
+		relation, e := d.NewDependencyRelation(portID(1000+i), works[i].Ref(), works[i-1].Ref(), d.DependencyStrengthHard, now)
+		must(e)
+		must(u.Relations().Insert(ctx, relation))
+	}
+	_, e = u.Coordination().AdvanceOutcome(ctx, scope)
+	must(e)
+	must(u.Commit())
+	service, e := a.NewService(store, portClock{now}, &portIDs{})
+	must(e)
+	snapshot, e := service.GetContinuity(ctx, scope, 100)
+	must(e)
+	goldenRaw, e := os.ReadFile(filepath.Join("..", "..", "..", "..", "testdata", "continuity", "v042-snapshot.json"))
+	must(e)
+	actualRaw, e := json.Marshal(snapshot)
+	must(e)
+	var want, actual any
+	must(json.Unmarshal(goldenRaw, &want))
+	must(json.Unmarshal(actualRaw, &actual))
+	normalizeGoldenEvaluation(want)
+	normalizeGoldenEvaluation(actual)
+	if !reflect.DeepEqual(want, actual) {
+		t.Fatal("snapshot differs from immutable v0.4.2 golden")
+	}
+	for _, section := range []string{"work_items", "objectives", "issues", "blockers", "artifacts", "evidence", "decisions", "relations", "evidence_links", "external_references"} {
+		t.Run(section, func(t *testing.T) {
+			after, cursor := "", ""
+			seen := 0
+			for {
+				legacy, e := service.GetContinuitySection(ctx, scope, section, 2, cursor)
+				must(e)
+				u, e := store.Begin(ctx)
+				must(e)
+				page, e := u.(ports.ContinuityReadUnitOfWork).ContinuityReads().Page(ctx, scope, section, after, 2)
+				must(e)
+				must(u.Rollback())
+				values := make([]json.RawMessage, 0, len(page.Items))
+				for _, item := range page.Items {
+					values = append(values, item.Value)
+				}
+				if !reflect.DeepEqual(values, legacy.Items) || page.Count != legacy.Count || page.Remaining != legacy.Omitted {
+					t.Fatalf("legacy mismatch: count=%d/%d remaining=%d/%d", page.Count, legacy.Count, page.Remaining, legacy.Omitted)
+				}
+				seen += len(page.Items)
+				if page.Remaining == 0 {
+					if seen != page.Count {
+						t.Fatal("omitted/duplicate records")
+					}
+					break
+				}
+				after = page.Items[len(page.Items)-1].Key
+				cursor = legacy.NextCursor
+			}
+		})
+	}
+}
+
+func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
+	ctx := context.Background()
+	store, e := Open(filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer store.Close()
+	if _, e = store.db.ExecContext(ctx, `CREATE TABLE schema_migrations(version BIGINT PRIMARY KEY,name TEXT NOT NULL,checksum TEXT NOT NULL,applied_at BIGINT NOT NULL)`); e != nil {
+		t.Fatal(e)
+	}
+	migrations, e := loadMigrations()
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, m := range migrations {
+		if m.version <= 26 {
+			if e = store.applyMigration(ctx, m); e != nil {
+				t.Fatal(e)
+			}
+		}
+	}
+	now := time.Now().UTC()
+	out, e := d.NewOutcome(portID(2), portID(1), "Published 0.4.2", "", "same reference ordering", d.PriorityNormal, now)
+	if e != nil {
+		t.Fatal(e)
+	}
+	u, e := store.Begin(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = u.Outcomes().Insert(ctx, out); e != nil {
+		t.Fatal(e)
+	}
+	if e = u.Commit(); e != nil {
+		t.Fatal(e)
+	}
+	refs := []d.ExternalReference{}
+	for i, provider := range []string{"a\"", "a&", "a\\", "a<", "é", "\u2028x"} {
+		ref := d.ExternalReference{Provider: provider, Kind: "ticket", ExternalID: fmt.Sprint(i), URL: "https://example.test/?a=1&b=2"}
+		if e = ref.Validate(); e != nil {
+			t.Fatal(e)
+		}
+		refs = append(refs, ref)
+		if _, e = store.db.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url) VALUES(?,?,?,?,?,?)`, out.NamespaceID.String(), out.ID.String(), ref.Provider, ref.Kind, ref.ExternalID, ref.URL); e != nil {
+			t.Fatal(e)
+		}
+	}
+	if e = store.Migrate(ctx); e != nil {
+		t.Fatal(e)
+	}
+	keys := []string{}
+	for _, ref := range refs {
+		raw, _ := json.Marshal(ref)
+		keys = append(keys, string(raw))
+	}
+	sort.Strings(keys)
+	u, e = store.Begin(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer u.Rollback()
+	repo := u.(ports.ContinuityReadUnitOfWork).ContinuityReads()
+	page, e := repo.Page(ctx, out.Scope(), "external_references", "", 100)
+	if e != nil || len(page.Items) != len(keys) {
+		t.Fatal(page, e)
+	}
+	for i, item := range page.Items {
+		if item.Key != keys[i] || string(item.Value) != keys[i] {
+			t.Fatal("migration changed legacy JSON order")
+		}
+	}
+	hash := sha256.Sum256([]byte(keys[0]))
+	after := "h:" + hex.EncodeToString(hash[:])
+	next, e := repo.Page(ctx, out.Scope(), "external_references", after, 100)
+	if e != nil || len(next.Items) != len(keys)-1 || next.Items[0].Key != keys[1] {
+		t.Fatal("legacy digest lookup not bounded/indexable", next, e)
+	}
+}
+
+// Evaluation time belongs to each database snapshot. Compare all other bytes
+// semantically against the immutable published-source fixture; lease/cursor
+// time consistency is tested separately rather than replacing persisted dates.
+func normalizeGoldenEvaluation(value any) {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, item := range v {
+			if key == "evaluated_at" {
+				delete(v, key)
+			} else {
+				normalizeGoldenEvaluation(item)
+			}
+		}
+	case []any:
+		for _, item := range v {
+			normalizeGoldenEvaluation(item)
+		}
+	}
+}

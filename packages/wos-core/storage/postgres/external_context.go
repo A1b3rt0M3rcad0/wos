@@ -29,7 +29,11 @@ func (r externalContextRepository) List(ctx context.Context, scope domain.Scope)
 	return values, rows.Err()
 }
 func (r externalContextRepository) Add(ctx context.Context, scope domain.Scope, v domain.ExternalReference) error {
-	_, err := r.uow.tx.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url) VALUES($1,$2,$3,$4,$5,$6)`, scope.NamespaceID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID, v.URL)
+	key, digest, err := externalContinuityKey(v)
+	if err != nil {
+		return err
+	}
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url,continuity_sort_key,continuity_key_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, scope.NamespaceID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID, v.URL, key, digest)
 	return mapSQLError("link external reference", err)
 }
 func (r externalContextRepository) Remove(ctx context.Context, scope domain.Scope, v domain.ExternalReference) error {

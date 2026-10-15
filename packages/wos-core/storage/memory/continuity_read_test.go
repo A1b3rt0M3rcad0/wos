@@ -8,6 +8,8 @@ import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -84,6 +86,20 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 	must(u.Commit())
 	service, e := a.NewService(store, portClock{now}, &portIDs{})
 	must(e)
+	snapshot, e := service.GetContinuity(ctx, scope, 100)
+	must(e)
+	goldenRaw, e := os.ReadFile(filepath.Join("..", "..", "..", "..", "testdata", "continuity", "v042-snapshot.json"))
+	must(e)
+	actualRaw, e := json.Marshal(snapshot)
+	must(e)
+	var want, actual any
+	must(json.Unmarshal(goldenRaw, &want))
+	must(json.Unmarshal(actualRaw, &actual))
+	normalizeGoldenEvaluation(want)
+	normalizeGoldenEvaluation(actual)
+	if !reflect.DeepEqual(want, actual) {
+		t.Fatal("snapshot differs from immutable v0.4.2 golden")
+	}
 	for _, section := range []string{"work_items", "objectives", "issues", "blockers", "artifacts", "evidence", "decisions", "relations", "evidence_links", "external_references"} {
 		t.Run(section, func(t *testing.T) {
 			after, cursor := "", ""
@@ -114,5 +130,25 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 				cursor = legacy.NextCursor
 			}
 		})
+	}
+}
+
+// Evaluation time belongs to each database snapshot. Compare all other bytes
+// semantically against the immutable published-source fixture; lease/cursor
+// time consistency is tested separately rather than replacing persisted dates.
+func normalizeGoldenEvaluation(value any) {
+	switch v := value.(type) {
+	case map[string]any:
+		for key, item := range v {
+			if key == "evaluated_at" {
+				delete(v, key)
+			} else {
+				normalizeGoldenEvaluation(item)
+			}
+		}
+	case []any:
+		for _, item := range v {
+			normalizeGoldenEvaluation(item)
+		}
 	}
 }
