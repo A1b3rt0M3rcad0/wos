@@ -1,0 +1,29 @@
+{
+  "kind": "exploratory_baseline_not_final_acceptance",
+  "production_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "harness": "same domain-validated one-UOW preload at both sources; preload outside read timing; no direct SQL fabricated assessment",
+  "sizes": [
+    100,
+    1000,
+    10000
+  ],
+  "samples": {
+    "100": 80,
+    "1000": 80,
+    "10000": 30
+  },
+  "repetitions": 3,
+  "GOMAXPROCS": 3,
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "host_caveat": "Shared host; some baseline samples overlap F03 fixture/race work in other schemas. Retain raw outliers; final targets require candidate comparison and controlled rerun if uncertainty. These measurements do not establish production capacity.",
+  "sha256": {
+    "baseline-sqlite-100.log": "63d63cd3c5168c25df8cb917bf8dc922d1137ae1b7937f424889fa05c42a6168",
+    "baseline-sqlite-1000.log": "74622508fb24d171e3d583ec35cbb3dc60f9643bf119d818ef952267b0aacff6",
+    "baseline-sqlite-10000.log": "212c755b0d942c1fe7226930038c97cdbc0ce0a33535040e589ca25d5dea6a4d",
+    "baseline-postgres-100.log": "4c59edf71e695f4544c50beef1582bd4a68dd5092e732a02edef4c4c08e3d0ac",
+    "baseline-postgres-1000.log": "c6d6fdcf4770d17c945192adc2631dc13af48d3bcca347155bd874adfc48a6fa",
+    "baseline-postgres-10000.log": "ee536e7f9906f5cb687505a2a94fc399cd6efee18cdc9337b80cfa5cee3011bd",
+    "baseline-harness-postgres.go.txt": "35b767468d847ab176c1fd7cacc5342a5f45c6be5d4fedd74a0c0b112ac1cdae",
+    "baseline-harness-sqlite.go.txt": "60610b0bfffa31633f776ff04c8be2303b069fe8fb8ed590f79f1d317c4b1ca8"
+  }
+}

@@ -1,0 +1,13 @@
+# ADR 032 — Bounded continuity and focal read projections
+
+Status: implementation in progress; final equivalence and capacity gates remain pending.
+
+Paged continuity must not hydrate the full aggregate state. An optional UnitOfWork read port returns scoped metadata pages, exact counts and stable keys in the same snapshot as authorization, revision and evaluation time. SQL owns keyset predicates, COUNT and LIMIT N+1. Domain classification remains in the shared Application/domain projection code, including lease expiry without a write. Memory implements the same functional port; its existing transactional map cloning is not a durable SQL capacity claim.
+
+The metadata summary spelling remains unchanged. Within each direct summary section Scope/kind are constant; the UUID is the first variable field of the legacy serialized JSON, before version/title. Relations and evidence links serialize their unique ID first. UUID ordering therefore preserves legacy order for these sections. External reference ordering depends on exact Go JSON escaping, so raw provider/ID database collation cannot substitute for it. It needs an explicit exact serialized sort key and digest lookup, maintained by a forward-only migration and mutation adapter.
+
+New direct-section cursors will carry cursor_version=2 with a validated key, Scope, section, OutcomeRevision and EvaluatedAt. Legacy digests remain accepted: resolve them against bounded pages under the same transaction, or use an exact digest index where available. Unknown keys, wrong Scope/section, future evaluation time and changed revisions fail explicitly. The compatibility path can scan old pages but must not reconstruct aggregate histories or all sections. New cursors bound size and avoid embedding reference URLs.
+
+Derived projections may scan the minimal set of WorkItem headers, dependency endpoints and blocker ancestry necessary for a correct result. They must not load unrelated immutable histories or documentary bodies. Current proof/progress uses scoped aggregation and relevant proof. The full OutcomeState API remains available for clients that explicitly require all state. Graph traversal batches adjacency queries and resolves only returned node metadata; focal work reads use reference/owner predicates, bounded documentary pages and exact omission counts.
+
+The public response schema, result meaning, revision fencing, proof semantics and 256 KiB response cap remain unchanged. Final acceptance compares fixed fixtures and old cursors against the v0.4.2 archive at 100/1,000/10,000 rich items and checks page-dependent allocations. No production SLA follows from those measurements.
