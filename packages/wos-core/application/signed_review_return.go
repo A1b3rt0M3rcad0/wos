@@ -78,6 +78,9 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 			return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "wrong signed review operation")
 		}
 		digest := signing.Digest(raw)
+		if err = s.rejectClosedReturn(ctx, u, request.RequestBinding, "ReturnSignedReview", "review", digest); err != nil {
+			return zero, 0, err
+		}
 		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
 			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "review", d.ID(request.ContractID)); e != nil {
 				return zero, 0, e

@@ -444,6 +444,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if _, ok := any(value).(SignedReturnResolutionResult); ok {
+		return nil, nil
+	}
 	if r, ok := any(value).(SignedInterventionResult); ok {
 		return signedInterventionEvents(s, commandContext, meta, r, revision)
 	}

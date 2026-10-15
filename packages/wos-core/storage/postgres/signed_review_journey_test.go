@@ -335,7 +335,40 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				payload := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: reviewer.PrincipalID, SignerKeyID: reviewKey.String()}, OperationKind: "review_return", RequestID: rid.String(), IdempotencyKey: key, ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(result.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: result.WorkItemVersion, PolicyRevision: signing.Decimal(reviewPolicy.Version)}, ExpectedReviewCaseVersion: signing.Decimal(result.Case.Version), ReviewCaseID: c.CaseID.String(), SubmissionID: c.SubmissionID.String(), SubmissionDigest: c.SubmissionDigest, Decision: decision, Material: material}
 				signed, e := signing.Sign(signing.ReviewReturn, payload, reviewKey.String(), reviewPrivate)
 				must(e)
-				return service.ReturnSignedReview(reviewCtx, nextCC(reviewer, key), a.ReturnSignedReviewCommand{Envelope: signed})
+				returned, returnErr := service.ReturnSignedReview(reviewCtx, nextCC(reviewer, key), a.ReturnSignedReviewCommand{Envelope: signed})
+				if key == "empty-review-approval" {
+					if returnErr == nil {
+						t.Fatal("review without required assessments accepted")
+					}
+					originalBytes, err := signing.Canonical(signed)
+					must(err)
+					originalRaw, err := base64.StdEncoding.Strict().DecodeString(signed.Payload)
+					must(err)
+					resolutionID, err := ids.NewID()
+					must(err)
+					p := signing.ReturnResolutionPayload{Binding: payload.Binding, OperationKind: "resolve_return_intent", RequestID: resolutionID.String(), IdempotencyKey: "close-empty-review-approval", CredentialID: reviewPolicy.CredentialID.String(), OriginalCommandName: "ReturnSignedReview", OriginalRequestID: payload.RequestID, OriginalIdempotencyKey: key, OriginalRequestDigest: signing.Digest(originalRaw), OriginalEnvelopeDigest: signing.Digest(originalBytes), ContractID: c.ID.String(), PolicyRevision: signing.Decimal(reviewPolicy.Version), Reason: "explicitly close rejected review before a separate corrected intention"}
+					envelope, err := signing.Sign(signing.ReturnResolution, p, reviewKey.String(), reviewPrivate)
+					must(err)
+					resolution, err := service.ResolveSignedReturnIntent(reviewCtx, nextCC(reviewer, p.IdempotencyKey), a.ResolveSignedReturnIntentCommand{Scope: scope, OriginalEnvelope: signed, Envelope: envelope})
+					must(err)
+					if resolution.Value.ResolutionReceipt == nil || resolution.Value.AcceptanceReceipt != nil {
+						t.Fatal("review resolution lacks negative proof")
+					}
+					proof, err := resolution.Value.ResolutionReceipt.Envelope()
+					must(err)
+					_, err = signing.Verify(proof, signing.ReturnResolutionReceipt, server.IssuerKeyID.String(), pub)
+					must(err)
+					_, err = service.ReturnSignedReview(reviewCtx, nextCC(reviewer, key), a.ReturnSignedReviewCommand{Envelope: signed})
+					if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeSignedIntentClosed {
+						t.Fatalf("late rejected review accepted or wrong terminal code: %v", err)
+					}
+					observed, err := service.ReadSignedState(reviewCtx, a.SignedStateQuery{Scope: scope, Resource: "return_resolution", ContractKind: "review", IdempotencyKey: key})
+					must(err)
+					if observed.Envelope == nil {
+						t.Fatal("durable review resolution not recoverable")
+					}
+				}
+				return returned, returnErr
 			}
 			revoked, e := service.RevokeSignedContract(interventionCtx, nextCC(administrator, "administrative-review-revocation"), a.RevokeSignedContractCommand{Scope: scope, ContractKind: "review", ContractID: resumed.Value.Contract.ID, ExpectedContractVersion: resumed.Value.Contract.Version, Reason: "assign a fresh independent review"})
 			must(e)
