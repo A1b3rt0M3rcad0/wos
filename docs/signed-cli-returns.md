@@ -24,3 +24,47 @@ A receipt must verify against pinned issuer keys and match destination, Principa
 Only the matching contract is removed, after the receipt is persisted in bounded profile state. Progress/material edits after signing block deletion and leave the receipt in that file; output reports the existing remote commit and pending local cleanup. Retrying cleanup does not return work again. Another contract, profile, workspace, artifact or source tree is never recursively removed. Process death after unlink is recoverable from authenticated profile state.
 
 Profile/contract locks coordinate cooperating harness processes; profiles do not isolate hostile operating-system writers. Observed content conflicts preserve data. Linux native process-death and actual Memory/SQLite/PostgreSQL HTTP journeys are covered; native Windows acceptance is recorded separately by hosted platform jobs.
+
+## Explicit terminal resolution of a rejected return
+
+After a definitive semantic rejection, preserve the original frozen return.
+Recovery first looks for its accepted receipt and retries the exact original
+intention. A missing receipt, timeout, EOF, 401/403/409 or server failure never
+proves that it is safe to discard the intention.
+
+When the operator explicitly chooses to close a return without acceptance:
+
+```sh
+wos --profile executor work resolution-status CONTRACT_ID
+wos --profile executor work resolve CONTRACT_ID --reason "close the rejected material before a corrected return"
+wos --profile executor work recover --all-pending
+# After terminal proof and local cleanup, edit the retained draft explicitly:
+wos --profile executor work sign CONTRACT_ID
+wos --profile executor work send CONTRACT_ID
+```
+
+Use `review` instead of `work` for an independent review return. `resolve`
+requires advertised server support and the current original credential. It
+freezes a **separate** signed resolution journal under `return_resolution`; the
+parent payload, signature, request ID, idempotency key and CID remain unchanged.
+A previously frozen resolution is recovered unchanged, including its reason.
+The server either returns the original acceptance or commits an immutable
+`closed_without_acceptance` decision. There is no local force/re-sign/delete
+escape hatch.
+
+The CLI verifies the pinned issuer, exact original and resolution bindings and
+persists proof before touching the contract file. Negative closure archives the
+exact original signed intention and current draft bytes under the profile's
+`history/return-REQUEST_ID.yaml` and `.contract.yaml`, then clears only the old
+pending signature. It retains current editable material and human edits. Native
+cooperative locks, confined paths, exclusive creation, fsync and content CAS
+protect publication; profiles are not isolation against a hostile OS writer.
+Corruption or disk-full leaves recovery pending. Normal accepted-return cleanup
+keeps its existing behavior. Output distinguishes original return acceptance
+from a terminal resolution; neither proves external execution was undone.
+
+A new return still needs valid live authority, policy, CAS and fencing. Expired
+leases, revoked credentials, changed signer authority and changed versions use
+existing explicit recovery/acquisition; resolution never renews or rebases them.
+Stable assessment fields and known finding references are checked before freeze,
+but the server always evaluates current authority and state.

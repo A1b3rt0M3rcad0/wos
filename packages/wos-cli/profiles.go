@@ -85,16 +85,17 @@ type ProfilePendingScopeV2 struct {
 	OutcomeID   d.ID `json:"outcome_id,omitempty"`
 }
 type PendingOperationV2 struct {
-	ID                 d.ID                  `json:"id"`
-	Operation          string                `json:"operation"`
-	State              string                `json:"state"`
-	Scope              ProfilePendingScopeV2 `json:"scope"`
-	IdempotencyKey     string                `json:"idempotency_key"`
-	Payload            string                `json:"payload"`
-	PayloadDigest      string                `json:"payload_digest"`
-	RequestFingerprint string                `json:"request_fingerprint,omitempty"`
-	ContractID         *d.ID                 `json:"contract_id,omitempty"`
-	Response           string                `json:"response,omitempty"`
+	Resolution         *PendingReturnResolutionV2 `json:"return_resolution,omitempty"`
+	ID                 d.ID                       `json:"id"`
+	Operation          string                     `json:"operation"`
+	State              string                     `json:"state"`
+	Scope              ProfilePendingScopeV2      `json:"scope"`
+	IdempotencyKey     string                     `json:"idempotency_key"`
+	Payload            string                     `json:"payload"`
+	PayloadDigest      string                     `json:"payload_digest"`
+	RequestFingerprint string                     `json:"request_fingerprint,omitempty"`
+	ContractID         *d.ID                      `json:"contract_id,omitempty"`
+	Response           string                     `json:"response,omitempty"`
 }
 
 func validProfileName(name string) bool {
@@ -215,6 +216,9 @@ func (p ProfileV2) Validate() error {
 		case "prepared", "sent_unknown", "accepted_unmaterialized", "prepared_signed", "accepted_confirmed", "cleanup_pending", "rejected":
 		default:
 			return fmt.Errorf("invalid pending state")
+		}
+		if e := validatePendingResolutionV2(p, pending); e != nil {
+			return e
 		}
 		if pending.Response != "" && !validTechnicalV2Blob(pending.Response) {
 			return fmt.Errorf("invalid pending response")

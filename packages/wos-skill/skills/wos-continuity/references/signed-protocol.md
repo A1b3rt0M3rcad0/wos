@@ -124,3 +124,16 @@ If the accepted delivery has no such artifact, omit complementary records and
 assess the original criteria using the accepted material, actual checks and
 explicit rationales. The CLI checks embedded submission source bindings before
 freezing a return; for explicitly omitted material the server remains authoritative.
+
+### Rejected frozen return
+
+Preserve the exact original return after rejection or ambiguous transport failure.
+Never delete pending files or re-sign to bypass it. Use `wos --profile NAME work
+resolution-status CONTRACT_ID` (`review` for review) for compact local diagnosis.
+After an explicit operator/host decision to close a definitively rejected
+intention, use `wos --profile NAME work resolve CONTRACT_ID --reason REASON`.
+The CLI freezes a separate resolution and verifies a durable server proof before
+releasing the draft. `work recover --all-pending` reconciles that same intention.
+An accepted original wins; a closed return cannot be accepted later. No 401/403/
+409, timeout, EOF or 5xx authorizes automatic abandonment. A new return requires
+unchanged live authority/CAS/fencing; WOS does not execute or undo agent work.

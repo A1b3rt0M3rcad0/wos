@@ -64,6 +64,87 @@
                 "maxLength": 349528,
                 "type": "string"
               },
+              "return_resolution": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "envelope": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "payload": {
+                            "maxLength": 245760,
+                            "type": "string"
+                          },
+                          "payloadType": {
+                            "enum": [
+                              "application/vnd.wos.contract-spec.v2+json",
+                              "application/vnd.wos.contract-authority.v2+json",
+                              "application/vnd.wos.work-return.v2+json",
+                              "application/vnd.wos.review-return.v2+json",
+                              "application/vnd.wos.acceptance-receipt.v2+json",
+                              "application/vnd.wos.key-enrollment.v2+json"
+                            ],
+                            "maxLength": 65536,
+                            "type": "string"
+                          },
+                          "signatures": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "keyid": {
+                                  "maxLength": 65536,
+                                  "type": "string"
+                                },
+                                "sig": {
+                                  "maxLength": 65536,
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "keyid",
+                                "sig"
+                              ],
+                              "type": "object"
+                            },
+                            "maxItems": 1,
+                            "minItems": 1,
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "payloadType",
+                          "payload",
+                          "signatures"
+                        ],
+                        "type": "object"
+                      },
+                      "request_digest": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      },
+                      "response": {
+                        "contentEncoding": "base64",
+                        "maxLength": 349528,
+                        "type": "string"
+                      },
+                      "state": {
+                        "maxLength": 65536,
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "envelope",
+                      "request_digest"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "scope": {
                 "additionalProperties": false,
                 "properties": {
