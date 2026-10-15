@@ -34,6 +34,27 @@ func TestReturnResolutionCleanupRecoversRealFullDisk(t *testing.T) {
 						break
 					}
 				}
+				// A failed 64 KiB write can leave smaller NTFS allocation units
+				// available. Exhaust those too before testing small journal writes.
+				if diskFullFixtureError(full) {
+					for _, size := range []int{4096, 512, 1} {
+						exhausted := false
+						for i := 0; i < 65536/size+1; i++ {
+							if _, e = f.Write(block[:size]); e != nil {
+								if !diskFullFixtureError(e) {
+									f.Close()
+									t.Fatal(e)
+								}
+								exhausted = true
+								break
+							}
+						}
+						if !exhausted {
+							f.Close()
+							t.Fatal("bounded fixture did not exhaust remaining allocation units")
+						}
+					}
+				}
 				if e = f.Close(); e != nil {
 					t.Fatal(e)
 				}
