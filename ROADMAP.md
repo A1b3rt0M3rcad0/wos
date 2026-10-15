@@ -1591,3 +1591,7 @@ The assertion audit found that nominal direct/review floor cases did not indepen
 ### Client operational report correction integration
 
 PR #103 (local discovery), #104 (explicit SDK recovery/compact receipts and generic client qualification), #101 (enrollment), #102 (actual Codex pilot archive) and #96 (capacity/operations) are integrated after their source checks. All five recommendations in the generic client report have repository-level corrections/procedures and observable functional evidence. The private client desktop and its unprovided reports remain outside the tested target. The 0.4.2 metadata consumes the reviewed change declarations and passes release/compatibility validation. Public acceptance of 0.4.2 remains pending until the immutable release workflow completes; 1.0/human validation are not asserted.
+
+### Operational hardening — single PR, owner review required
+
+The owner supplied the operational correction plan on 2026-10-15. The work starts from b572269085494ddd4d6370716ff1cb360b46065f; v0.4.2 was published on 2026-10-13 (the earlier pending-publication entry is historical). F01–F08 are in progress, not accepted. The original plan and baseline evidence are archived in docs/audit/operational-hardening-2026-10-15. All changes belong to one branch and one Draft PR; merge and release publication are not authorized. The HTTP 422 CLI reproduction confirms preservation of the frozen return and refusal to sign again without authoritative resolution. Full new-source acceptance remains pending.

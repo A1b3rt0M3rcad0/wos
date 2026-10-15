@@ -1,0 +1,34 @@
+{
+  "base_sha": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "release": "v0.4.2",
+  "release_published_at": "2026-10-13T00:40:34Z",
+  "owner_plan_sha256": "6f41b8a9fad0a349490c3e14fec0a884599e1d102811ba2876f3fbfa5fb5c808",
+  "delivery": {
+    "one_branch": true,
+    "one_pull_request": true,
+    "draft": true,
+    "merge_authorized": false,
+    "publication_authorized": false
+  },
+  "F01": {
+    "reproduction": "go test ./packages/wos-cli -run ^TestRejectedFrozenReturnPreservesOriginalIntent$ -count=1",
+    "result": "passed: exactly one HTTP POST rejected with 422; frozen payload retained; signing blocked"
+  },
+  "F02": {
+    "observed": "runtime.go configures only ReadHeaderTimeout; saturation not bounded",
+    "traffic_reproduction": "pending"
+  },
+  "F03": {
+    "observed": "optional worker; readyz deliberately certifies API/storage, not third-party delivery",
+    "backlog_diagnostic": "absent"
+  },
+  "F04": {
+    "observed": "GetContinuitySection hydrates GetOutcomeState before paging",
+    "baseline_measurements": "pending; section benchmark added without changing production source"
+  },
+  "F05": {
+    "observed": "PrincipalWork>=3 / PrincipalReview>=1 deliberate ceilings",
+    "configurable_namespace_ceiling": "absent"
+  },
+  "qualification": "in progress; this baseline is not final acceptance"
+}
