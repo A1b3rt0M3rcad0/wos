@@ -46,12 +46,20 @@ type IntegrationConfig struct {
 type ServerConfig struct {
 	Listen          string
 	ShutdownTimeout time.Duration
+	MaxConnections  int
 }
 
 type HTTPConfig struct {
-	Enabled        bool
-	Prefix         string
-	RequestTimeout time.Duration
+	ParseError          bool
+	ReadHeaderTimeout   time.Duration
+	ReadTimeout         time.Duration
+	WriteTimeout        time.Duration
+	IdleTimeout         time.Duration
+	MaxHeaderBytes      int
+	MaxInflightRequests int
+	Enabled             bool
+	Prefix              string
+	RequestTimeout      time.Duration
 }
 
 type MCPConfig struct {
@@ -84,11 +92,18 @@ func DefaultConfig() Config {
 		Server: ServerConfig{
 			Listen:          "127.0.0.1:8080",
 			ShutdownTimeout: 15 * time.Second,
+			MaxConnections:  256,
 		},
 		HTTP: HTTPConfig{
-			Enabled:        true,
-			Prefix:         "/api/v1",
-			RequestTimeout: 15 * time.Second,
+			Enabled:             true,
+			Prefix:              "/api/v1",
+			RequestTimeout:      15 * time.Second,
+			ReadHeaderTimeout:   5 * time.Second,
+			ReadTimeout:         30 * time.Second,
+			WriteTimeout:        45 * time.Second,
+			IdleTimeout:         60 * time.Second,
+			MaxHeaderBytes:      64 << 10,
+			MaxInflightRequests: 128,
 		},
 		MCP: MCPConfig{
 			Enabled:   false,
@@ -111,6 +126,16 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	if cfg.HTTP.ParseError {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid HTTP/server environment value")
+	}
+	if cfg.HTTP.ReadHeaderTimeout <= 0 || cfg.HTTP.ReadTimeout < cfg.HTTP.ReadHeaderTimeout || cfg.HTTP.IdleTimeout <= 0 || cfg.HTTP.WriteTimeout <= cfg.HTTP.RequestTimeout || cfg.HTTP.WriteTimeout < cfg.HTTP.ReadTimeout {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "HTTP deadlines require positive header/idle timeouts, read >= header, and write > request and >= read")
+	}
+	if cfg.HTTP.MaxHeaderBytes < 1024 || cfg.HTTP.MaxHeaderBytes > 1<<20 || cfg.HTTP.MaxInflightRequests < 1 || cfg.HTTP.MaxInflightRequests > 4096 || cfg.Server.MaxConnections < cfg.HTTP.MaxInflightRequests+2 || cfg.Server.MaxConnections > 65536 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "HTTP admission limits require headers 1 KiB..1 MiB, in-flight 1..4096 and connections in-flight+2..65536")
+	}
+
 	if cfg.Signing.AcceptanceFloor != "" && !cfg.Signing.AcceptanceFloor.Valid() {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid signed acceptance floor")
 	}

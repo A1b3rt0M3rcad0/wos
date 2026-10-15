@@ -430,7 +430,12 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	var details any
 
 	var contract *contractError
-	if errors.As(err, &contract) {
+	if errors.Is(r.Context().Err(), context.DeadlineExceeded) {
+		status = http.StatusServiceUnavailable
+		code = "deadline_exceeded"
+		message = "request deadline exceeded; reconcile the original receipt before retrying the exact intention"
+		retryable = true
+	} else if errors.As(err, &contract) {
 		status = contract.status
 		code = contract.code
 		message = contract.message

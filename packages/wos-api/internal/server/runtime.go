@@ -27,6 +27,7 @@ import (
 )
 
 type Runtime struct {
+	observer       *observability.Observer
 	config         Config
 	store          runtimeStore
 	http           *http.Server
@@ -166,7 +167,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity}
+	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer}
 	if config.Integration.WorkerEnabled {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
@@ -250,7 +251,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		}))
 	}
 	root.Handle("/", api)
-	runtime.root = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	business := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.Auth.Mode == AuthModeLocal && !loopbackHost(r.Host) {
 			http.Error(w, "loopback host required", http.StatusForbidden)
 			return
@@ -259,12 +260,17 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			http.Error(w, "origin rejected", http.StatusForbidden)
 			return
 		}
-		observer.HTTP(root).ServeHTTP(w, r)
+		root.ServeHTTP(w, r)
 	})
+	runtime.root = observer.HTTP(admissionHTTP(config, observer, business))
 	runtime.http = &http.Server{
 		Addr:              config.Server.Listen,
 		Handler:           runtime.root,
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: config.HTTP.ReadHeaderTimeout,
+		ReadTimeout:       config.HTTP.ReadTimeout,
+		WriteTimeout:      config.HTTP.WriteTimeout,
+		IdleTimeout:       config.HTTP.IdleTimeout,
+		MaxHeaderBytes:    config.HTTP.MaxHeaderBytes,
 	}
 	return runtime, nil
 }
@@ -284,6 +290,12 @@ func (r *Runtime) Serve(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return r.serve(ctx, listener)
+}
+
+func (r *Runtime) serve(ctx context.Context, listener net.Listener) error {
+	defer listener.Close()
+	listener = &admissionListener{Listener: listener, slots: make(chan struct{}, r.config.Server.MaxConnections), observer: r.observer}
 	if r.deliveryWorker != nil {
 		workerCtx, stop := context.WithCancel(ctx)
 		done := make(chan struct{})
@@ -306,6 +318,8 @@ func (r *Runtime) Serve(ctx context.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), r.config.Server.ShutdownTimeout)
 		defer cancel()
 		if err := r.http.Shutdown(shutdownCtx); err != nil {
+			_ = r.http.Close()
+			<-errCh
 			return err
 		}
 		err := <-errCh
@@ -320,7 +334,7 @@ func (r *Runtime) Close() error {
 	if r == nil || r.store == nil {
 		return nil
 	}
-	return r.store.Close()
+	return errors.Join(r.http.Close(), r.store.Close())
 }
 
 func (r *Runtime) Migrate(ctx context.Context) error { return r.store.Migrate(ctx) }

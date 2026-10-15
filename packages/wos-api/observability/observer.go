@@ -11,18 +11,25 @@ import (
 )
 
 type Observer struct {
-	Logger         *slog.Logger
-	mu             sync.Mutex
-	commands       map[string]uint64
-	commandTiming  map[string]timing
-	queryTiming    map[string]timing
-	deliveryTiming map[string]timing
-	httpTiming     timing
-	replays        atomic.Uint64
-	conflicts      atomic.Uint64
-	requests       atomic.Uint64
-	queries        atomic.Uint64
-	errors         atomic.Uint64
+	httpInflight        atomic.Int64
+	httpRejected        atomic.Uint64
+	httpTimeouts        atomic.Uint64
+	httpCanceled        atomic.Uint64
+	connectionsInflight atomic.Int64
+	connectionsRejected atomic.Uint64
+	connectionTimeouts  atomic.Uint64
+	Logger              *slog.Logger
+	mu                  sync.Mutex
+	commands            map[string]uint64
+	commandTiming       map[string]timing
+	queryTiming         map[string]timing
+	deliveryTiming      map[string]timing
+	httpTiming          timing
+	replays             atomic.Uint64
+	conflicts           atomic.Uint64
+	requests            atomic.Uint64
+	queries             atomic.Uint64
+	errors              atomic.Uint64
 }
 
 func New(logger *slog.Logger) *Observer {
@@ -116,7 +123,7 @@ func (o *Observer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	o.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
+	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "http_inflight": o.httpInflight.Load(), "http_admission_rejected": o.httpRejected.Load(), "http_timeouts": o.httpTimeouts.Load(), "http_canceled": o.httpCanceled.Load(), "connections_inflight": o.connectionsInflight.Load(), "connections_rejected": o.connectionsRejected.Load(), "connection_timeouts": o.connectionTimeouts.Load(), "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
 }
 
 // Cumulative nanoseconds/counts allow rates and mean latency to be computed
@@ -171,3 +178,14 @@ func (o *Observer) ObserveDelivery(result string, duration time.Duration, acknow
 		o.Logger.Info("delivery", "result", result, "duration_ms", float64(duration)/float64(time.Millisecond), "acknowledged", acknowledged)
 	}
 }
+
+func (o *Observer) HTTPAdmitted()       { o.httpInflight.Add(1) }
+func (o *Observer) HTTPReleased()       { o.httpInflight.Add(-1) }
+func (o *Observer) HTTPRejected()       { o.httpRejected.Add(1) }
+func (o *Observer) HTTPDeadline()       { o.httpTimeouts.Add(1) }
+func (o *Observer) HTTPCanceled()       { o.httpCanceled.Add(1) }
+func (o *Observer) ConnectionAdmitted() { o.connectionsInflight.Add(1) }
+func (o *Observer) ConnectionReleased() { o.connectionsInflight.Add(-1) }
+func (o *Observer) ConnectionRejected() { o.connectionsRejected.Add(1) }
+
+func (o *Observer) ConnectionTimeout() { o.connectionTimeouts.Add(1) }

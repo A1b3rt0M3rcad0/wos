@@ -87,3 +87,52 @@ In remote PostgreSQL composition, database time arbitrates leases after guard ac
 The Dockerfile uses the pinned official Go image and copies its standard CA bundle into Alpine. A proxy with a private CA can supply `docker build --secret id=go-ca-bundle,src=/path/to/bundle.pem .`. The temporary mount is used only for verified-TLS Go downloads; it is not copied into the runtime and is unnecessary for ordinary installations. Build proxy and DNS settings belong to the host.
 
 For the stable-plan capacity envelope, data-class retention, hourly backup targets, clean restore checklist and reference diagnostics/alerts, see [the operational reference](stable/operations-reference.md).
+
+## HTTP connection and request bounds
+
+The standalone server uses explicit reference bounds, configurable through the
+same environment in native and Compose deployments:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `WOS_HTTP_READ_HEADER_TIMEOUT` | `5s` | Receive complete request headers |
+| `WOS_HTTP_READ_TIMEOUT` | `30s` | Socket read bound |
+| `WOS_HTTP_REQUEST_TIMEOUT` | `15s` | Request context; body reads are interrupted at this deadline plus a small timer margin |
+| `WOS_HTTP_WRITE_TIMEOUT` | `45s` | Ordinary response socket deadline |
+| `WOS_HTTP_IDLE_TIMEOUT` | `60s` | Keep-alive idle bound and dedicated standalone MCP GET stream lifetime |
+| `WOS_HTTP_MAX_HEADER_BYTES` | `65536` | Header parsing limit (Go also reserves a small parser buffer) |
+| `WOS_HTTP_MAX_INFLIGHT_REQUESTS` | `128` | Nonblocking ordinary request admission |
+| `WOS_MAX_CONNECTIONS` | `256` | TCP connection admission, including incomplete headers and idle clients |
+| `WOS_SHUTDOWN_TIMEOUT` | `15s` | Drain grace, followed by forced connection close |
+
+`wos config validate` rejects invalid/overflowed durations, zero/negative limits,
+read shorter than header, write not greater than request or shorter than read, headers outside
+1 KiB–1 MiB, requests outside 1–4096, and connections outside requests+2–65536.
+Shutdown may deliberately be shorter than a request: the server forces close
+at the end of that grace and the caller must reconcile an uncertain mutation.
+
+Ordinary saturation returns JSON `overloaded`, HTTP 503 and `Retry-After: 1`
+before invoking a command. Two separate request slots remain available for
+`GET /livez` and `GET /readyz`; health still reports actual storage/issuer health.
+Connection saturation closes newly accepted sockets without starting HTTP work.
+Reserved health requests do not defeat a flood that consumes all TCP capacity;
+public ingress must enforce TLS, connection/rate/header/body/time limits and
+capacity appropriate to the deployment. Forwarded client IP is not trusted for
+authorization or built-in identity limits.
+
+Request bodies have a global 272 KiB framing bound; command/MCP/session decoders
+retain narrower limits, including the 256 KiB command contract. Socket body-read
+and context deadlines are distinct. Stateless Streamable HTTP MCP uses JSON
+responses. If a host enables stateful protocol transport, standalone GET SSE
+uses its own bounded idle-timeout lifetime and both socket deadlines; the client
+reconnects without implicitly repeating a mutation. Protocol sessions do not own
+WOS business state. Metrics distinguish in-flight requests/connections,
+admission rejection, request cancellation/deadline and connection timeout, with
+fixed aggregate labels and no token, webhook URL, prompt or documentary content.
+Idle/stream expiry is not by itself a service incident.
+
+A deadline, disconnect or overload never proves that a prior attempt did not
+commit. Keep payload, CAS, fence and idempotency key unchanged; recover the
+original authenticated receipt before deciding what to do next. Existing
+`deadline_exceeded` error semantics remain in place. No SDK mutation retry is
+introduced by these limits.
