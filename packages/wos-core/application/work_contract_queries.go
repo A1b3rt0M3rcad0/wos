@@ -332,17 +332,18 @@ func (s *Service) GetCommandReceipt(ctx context.Context, ns, id d.ID) (d.StoredC
 }
 
 type ExecutionCapabilities struct {
-	Protocols       []string           `json:"protocols"`
-	YAMLVersions    []int              `json:"yaml_schema_versions"`
-	MaxCommandBytes int                `json:"max_command_bytes"`
-	MaxQueryLimit   int                `json:"max_query_limit"`
-	LeasePolicy     d.LeasePolicy      `json:"lease_policy"`
-	TerminalCauses  []d.ContractStatus `json:"terminal_causes"`
-	AgentExecution  bool               `json:"agent_execution"`
+	SignedReturnResolution bool               `json:"signed_return_resolution,omitempty"`
+	Protocols              []string           `json:"protocols"`
+	YAMLVersions           []int              `json:"yaml_schema_versions"`
+	MaxCommandBytes        int                `json:"max_command_bytes"`
+	MaxQueryLimit          int                `json:"max_query_limit"`
+	LeasePolicy            d.LeasePolicy      `json:"lease_policy"`
+	TerminalCauses         []d.ContractStatus `json:"terminal_causes"`
+	AgentExecution         bool               `json:"agent_execution"`
 }
 
 func ContractCapabilities() ExecutionCapabilities {
-	return ExecutionCapabilities{Protocols: []string{"legacy", "contracts_v1"}, YAMLVersions: []int{1}, MaxCommandBytes: MaxSnapshotBytes, MaxQueryLimit: MaxQueryLimit, LeasePolicy: d.DefaultContractLeasePolicy(), TerminalCauses: []d.ContractStatus{d.ContractExpired, d.ContractRevoked, d.ContractCompleted}, AgentExecution: false}
+	return ExecutionCapabilities{SignedReturnResolution: true, Protocols: []string{"legacy", "contracts_v1"}, YAMLVersions: []int{1}, MaxCommandBytes: MaxSnapshotBytes, MaxQueryLimit: MaxQueryLimit, LeasePolicy: d.DefaultContractLeasePolicy(), TerminalCauses: []d.ContractStatus{d.ContractExpired, d.ContractRevoked, d.ContractCompleted}, AgentExecution: false}
 }
 
 func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (ReadResult[d.WorkCheckpoint], error) {

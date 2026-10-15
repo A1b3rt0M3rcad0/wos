@@ -20,14 +20,16 @@ func main() {
 	}
 	schemas := map[string]any{}
 	for name, typed := range map[string]reflect.Type{
-		"SignedEnvelopeV2":            reflect.TypeFor[signing.Envelope](),
-		"SignedWorkSpecificationV2":   reflect.TypeFor[signing.SpecPayload[domain.SignedWorkSpec]](),
-		"SignedReviewSpecificationV2": reflect.TypeFor[signing.SpecPayload[application.SignedReviewSpec]](),
-		"SignedAuthorityV2":           reflect.TypeFor[signing.AuthorityPayload](),
-		"SignedWorkReturnV2":          reflect.TypeFor[signing.WorkReturnPayload[application.SignedReturnMaterial]](),
-		"SignedReviewReturnV2":        reflect.TypeFor[signing.ReviewReturnPayload[application.SignedReviewMaterial]](),
-		"SignedAcceptanceReceiptV2":   reflect.TypeFor[signing.ReceiptPayload](),
-		"SignedKeyEnrollmentV2":       reflect.TypeFor[signing.EnrollmentPayload](),
+		"SignedReturnResolutionV2":        reflect.TypeFor[signing.ReturnResolutionPayload](),
+		"SignedReturnResolutionReceiptV2": reflect.TypeFor[signing.ReturnResolutionReceiptPayload](),
+		"SignedEnvelopeV2":                reflect.TypeFor[signing.Envelope](),
+		"SignedWorkSpecificationV2":       reflect.TypeFor[signing.SpecPayload[domain.SignedWorkSpec]](),
+		"SignedReviewSpecificationV2":     reflect.TypeFor[signing.SpecPayload[application.SignedReviewSpec]](),
+		"SignedAuthorityV2":               reflect.TypeFor[signing.AuthorityPayload](),
+		"SignedWorkReturnV2":              reflect.TypeFor[signing.WorkReturnPayload[application.SignedReturnMaterial]](),
+		"SignedReviewReturnV2":            reflect.TypeFor[signing.ReviewReturnPayload[application.SignedReviewMaterial]](),
+		"SignedAcceptanceReceiptV2":       reflect.TypeFor[signing.ReceiptPayload](),
+		"SignedKeyEnrollmentV2":           reflect.TypeFor[signing.EnrollmentPayload](),
 	} {
 		schemas[name] = commands.SignedSchema(typed)
 	}

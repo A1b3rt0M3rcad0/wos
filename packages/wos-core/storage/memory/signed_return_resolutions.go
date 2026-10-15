@@ -40,6 +40,18 @@ func (r signedReturnResolutionRepository) InsertTerminal(ctx context.Context, re
 	if e := result.Validate(); e != nil {
 		return e
 	}
+	if result.OriginalCommandName == "ReturnSignedWork" {
+		if _, e := r.tx.SignedWorkContracts().Get(ctx, result.Scope, result.ContractID); e != nil {
+			return e
+		}
+	} else {
+		if _, e := r.tx.SignedContracts().ReviewContract(ctx, result.Scope, result.ContractID); e != nil {
+			return e
+		}
+	}
+	if _, e := r.tx.SigningIdentity().Key(ctx, result.Scope.NamespaceID, result.IssuerKeyID); e != nil {
+		return e
+	}
 	k := resolutionKey(result.Scope.NamespaceID, result.PrincipalID, result.CredentialID, result.OriginalCommandName, result.OriginalIdempotencyKey)
 	for key, old := range r.tx.signedReview.Resolutions {
 		if key == k || old.Scope.NamespaceID == result.Scope.NamespaceID && old.PrincipalID == result.PrincipalID && old.OriginalRequestID == result.OriginalRequestID {

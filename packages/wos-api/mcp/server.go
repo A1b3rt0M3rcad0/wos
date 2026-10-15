@@ -73,6 +73,8 @@ func failure(err error) (*mcp.CallToolResult, error) {
 	switch code {
 	case domain.ErrorCodeVersionConflict:
 		recovery = "read current state and reconcile intent before using a new expected_version"
+	case domain.ErrorCodeSignedIntentClosed:
+		recovery = "verify the original terminal resolution receipt; a separate return still requires live authority"
 	case domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution:
 		recovery = "stop using this execution authority; reconcile current contract before explicit recovery"
 	case domain.ErrorCodeContractSpecMismatch:

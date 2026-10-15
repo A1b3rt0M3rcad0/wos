@@ -80,3 +80,31 @@ Principal/history read access alone does not confer another credential's work.
 Historical return replay rechecks the original CredentialID even if both operation
 cache layers have no row; the original CID can recover acceptance after key
 retirement, while another CID sharing Principal/Actor/key permissions cannot.
+
+## Terminal return resolution (additive)
+
+`GET /api/v1/capabilities` advertises `signed_return_resolution=true` when this
+implementation is available; this is feature discovery, not current authority.
+`ResolveSignedReturnIntent` / `resolve_signed_return_intent` /
+`wos_resolve_signed_return_intent` share one Application transaction. The Go SDK
+provides `ResolveSignedReturnIntent` and `ReadSignedReturnResolution`.
+
+The command carries exact `original_envelope` beside a separate DSSE `envelope`
+of purpose `application/vnd.wos.return-resolution.v2+json`. Its signed payload
+binds the original CID, Scope, Principal, issuer, command, request ID, key, payload
+and canonical envelope digests and an explicit reason. Current policies, original
+credential, issued signers, CAS and lease remain mandatory. It is an explicit
+choice; timeout, not-found, 401/403/409 and 5xx never automatically authorize it.
+
+An accepted original returns `decision=accepted` and its original
+`acceptance_receipt`. Otherwise a durable negative decision returns
+`decision=closed_without_acceptance` with `resolution_receipt`, purpose
+`application/vnd.wos.return-resolution-receipt.v2+json`. This proves only that
+this exact return cannot be accepted, not that external execution was undone or
+that a contract was renewed/closed. Task, lease, fence and revision stay intact.
+A different resolution of the same original conflicts; an identical retry
+replays. Late original POSTs return HTTP 409 / `signed_intent_closed` through all
+transports. `signed-state/return_resolution?contract_kind=execution|review&
+idempotency_key=ORIGINAL_KEY` reads the immutable proof under the original CID.
+A missing proof never permits local deletion. Existing v1/DSSE receipts and
+accepted return recovery retain their meaning.

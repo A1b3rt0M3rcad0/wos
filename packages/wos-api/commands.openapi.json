@@ -4038,6 +4038,105 @@
         ],
         "type": "object"
       },
+      "Catalog_resolve_signed_return_intent": {
+        "additionalProperties": false,
+        "properties": {
+          "envelope": {
+            "additionalProperties": false,
+            "properties": {
+              "payload": {
+                "type": "string"
+              },
+              "payloadType": {
+                "type": "string"
+              },
+              "signatures": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyid": {
+                      "type": "string"
+                    },
+                    "sig": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "keyid",
+                    "sig"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "payloadType",
+              "payload"
+            ],
+            "type": "object"
+          },
+          "original_envelope": {
+            "additionalProperties": false,
+            "properties": {
+              "payload": {
+                "type": "string"
+              },
+              "payloadType": {
+                "type": "string"
+              },
+              "signatures": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyid": {
+                      "type": "string"
+                    },
+                    "sig": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "keyid",
+                    "sig"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "payloadType",
+              "payload"
+            ],
+            "type": "object"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "scope",
+          "original_envelope",
+          "envelope"
+        ],
+        "type": "object"
+      },
       "Catalog_resume_signed_review_contract": {
         "additionalProperties": false,
         "properties": {
@@ -6610,6 +6709,210 @@
           "purpose",
           "public_key",
           "expires_at"
+        ],
+        "type": "object"
+      },
+      "SignedReturnResolutionReceiptV2": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "credential_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "decision": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "namespace_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_command_name": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_envelope_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 2,
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "resolved_at": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "server_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "signer_key_id": {
+            "maxLength": 65536,
+            "type": "string"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "server_id",
+          "namespace_id",
+          "principal_id",
+          "signer_key_id",
+          "credential_id",
+          "request_id",
+          "idempotency_key",
+          "request_digest",
+          "original_command_name",
+          "original_request_id",
+          "original_idempotency_key",
+          "original_request_digest",
+          "original_envelope_digest",
+          "contract_id",
+          "decision",
+          "reason",
+          "outcome_revision",
+          "resolved_at"
+        ],
+        "type": "object"
+      },
+      "SignedReturnResolutionV2": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "credential_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "namespace_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "operation_kind": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_command_name": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_envelope_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "policy_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 2,
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "server_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "signer_key_id": {
+            "maxLength": 65536,
+            "type": "string"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "server_id",
+          "namespace_id",
+          "principal_id",
+          "signer_key_id",
+          "operation_kind",
+          "request_id",
+          "idempotency_key",
+          "credential_id",
+          "original_command_name",
+          "original_request_id",
+          "original_idempotency_key",
+          "original_request_digest",
+          "original_envelope_digest",
+          "contract_id",
+          "policy_revision",
+          "reason"
         ],
         "type": "object"
       },
@@ -14162,6 +14465,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_resolve_issue_and_blockers"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/resolve_signed_return_intent": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_resolve_signed_return_intent",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_resolve_signed_return_intent"
                   }
                 },
                 "required": [

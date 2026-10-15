@@ -478,7 +478,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		case domain.ErrorCodeTransactionConflict:
 			status = http.StatusConflict
 			retryable = true
-		case domain.ErrorCodeContractProtocolRequired, domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution, domain.ErrorCodeContractSpecMismatch, domain.ErrorCodeWorkAlreadyClaimed, domain.ErrorCodeSubmissionNotAccepted, domain.ErrorCodeAlreadyExists,
+		case domain.ErrorCodeSignedIntentClosed, domain.ErrorCodeContractProtocolRequired, domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution, domain.ErrorCodeContractSpecMismatch, domain.ErrorCodeWorkAlreadyClaimed, domain.ErrorCodeSubmissionNotAccepted, domain.ErrorCodeAlreadyExists,
 			domain.ErrorCodeInvalidTransition,
 			domain.ErrorCodePreconditionFailed,
 			domain.ErrorCodeLease,

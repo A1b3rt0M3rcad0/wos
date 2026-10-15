@@ -35,7 +35,13 @@ func (r signedReturnResolutionRepository) InsertTerminal(ctx context.Context, re
 	if e != nil {
 		return e
 	}
-	_, e = r.u.tx.ExecContext(ctx, `INSERT INTO signed_return_intent_resolutions(namespace_id,outcome_id,principal_id,original_credential_id,original_command_name,original_idempotency_key,original_request_id,issuer_key_id,state_json) VALUES(?,?,?,?,?,?,?,?,?)`, result.Scope.NamespaceID.String(), result.Scope.OutcomeID.String(), result.PrincipalID, result.CredentialID.String(), result.OriginalCommandName, result.OriginalIdempotencyKey, result.OriginalRequestID.String(), result.IssuerKeyID.String(), string(raw))
+	var execution, review *d.ID
+	if result.OriginalCommandName == "ReturnSignedWork" {
+		execution = &result.ContractID
+	} else {
+		review = &result.ContractID
+	}
+	_, e = r.u.tx.ExecContext(ctx, `INSERT INTO signed_return_intent_resolutions(namespace_id,outcome_id,principal_id,original_credential_id,original_command_name,original_idempotency_key,original_request_id,issuer_key_id,execution_contract_id,review_contract_id,state_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, result.Scope.NamespaceID.String(), result.Scope.OutcomeID.String(), result.PrincipalID, result.CredentialID.String(), result.OriginalCommandName, result.OriginalIdempotencyKey, result.OriginalRequestID.String(), result.IssuerKeyID.String(), nullableID(execution), nullableID(review), string(raw))
 	return mapSQLError("insert immutable terminal resolution", e)
 }
 
