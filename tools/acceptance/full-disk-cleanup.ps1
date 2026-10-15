@@ -38,7 +38,8 @@ assign letter=$drive
         throw 'Refusing to write: the drive is not the newly created bounded fixture'
     }
     $env:WOS_TEST_FULL_DISK_DIRECTORY = "${drive}:\"
-    $output = & $testBinary -test.v -test.run '^TestReturnResolutionCleanupRecoversRealFullDisk$' 2>&1
+    $testArguments = @('-test.v', '-test.run=^TestReturnResolutionCleanupRecoversRealFullDisk$', '-test.timeout=60s')
+    $output = & $testBinary @testArguments 2>&1
     $testExit = $LASTEXITCODE
     $output | ForEach-Object { Write-Output $_ }
     if ($testExit -ne 0 -or -not ($output -match '^--- PASS: TestReturnResolutionCleanupRecoversRealFullDisk')) {
