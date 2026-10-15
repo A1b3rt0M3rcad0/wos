@@ -1,0 +1,2 @@
+WOS precondition_failed (409): precondition_failed: required criterion 01a14190-e931-7480-bd27-89b0de1fa3b5 has no current assessment
+{"terminal_return_resolution":"verified","protocol":"signed_contracts_v2","profiles":["executor","reviewer"],"checks":["approved enrollment","protected profile secret references","signed checkout/show","work finish and cleanup","independent review finish and cleanup","changes requested, fresh correction and explicit finding response","required original criterion assessment","post-cleanup work/review recover"]}

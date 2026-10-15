@@ -1,0 +1,9 @@
+=== RUN   TestSignedReturnResolutionSurvivesCleanRestore
+--- PASS: TestSignedReturnResolutionSurvivesCleanRestore (0.16s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	0.171s
+=== RUN   TestSignedReturnResolutionSurvivesCleanRestore
+    signed_return_resolution_test.go:513: restored 282697 backup bytes into an empty PostgreSQL database; continuing the shared integration contract
+--- PASS: TestSignedReturnResolutionSurvivesCleanRestore (3.62s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	3.636s

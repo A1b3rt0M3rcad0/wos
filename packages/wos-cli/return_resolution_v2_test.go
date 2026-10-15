@@ -20,6 +20,9 @@ import (
 )
 
 func resolutionLocalFixture(t *testing.T) (*Workspace, ProfileV2, []byte, PendingOperationV2, signing.Document) {
+	return resolutionLocalFixtureAt(t, t.TempDir())
+}
+func resolutionLocalFixtureAt(t *testing.T, root string) (*Workspace, ProfileV2, []byte, PendingOperationV2, signing.Document) {
 	t.Helper()
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	t.Setenv("LOCALAPPDATA", t.TempDir())
@@ -29,7 +32,7 @@ func resolutionLocalFixture(t *testing.T) (*Workspace, ProfileV2, []byte, Pendin
 	if e := profile.SealBinding(token); e != nil {
 		t.Fatal(e)
 	}
-	w, e := OpenWorkspace(t.TempDir())
+	w, e := OpenWorkspace(root)
 	if e != nil {
 		t.Fatal(e)
 	}

@@ -124,7 +124,8 @@ jobs:
           go test -json -run '^$' -fuzz '^FuzzCanonical$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-canonical-fuzz.jsonl
           go test -json -run '^$' -fuzz '^FuzzEnvelope$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signing-envelope-fuzz.jsonl
           go test -json -run '^$' -fuzz '^FuzzYAMLJSON$' -fuzztime=10s -parallel=2 ./packages/wos-cli > restricted-yaml-fuzz.jsonl
-          python3 tools/acceptance/fuzz-report.py "$(git rev-parse HEAD)" signing-canonical-fuzz.jsonl signing-envelope-fuzz.jsonl restricted-yaml-fuzz.jsonl signed-fuzz.json
+          go test -json -run '^$' -fuzz '^FuzzReturnResolution$' -fuzztime=10s -parallel=2 ./packages/wos-core/signing > signed-resolution-fuzz.jsonl
+          python3 tools/acceptance/fuzz-report.py "$(git rev-parse HEAD)" signing-canonical-fuzz.jsonl signing-envelope-fuzz.jsonl restricted-yaml-fuzz.jsonl signed-resolution-fuzz.jsonl signed-fuzz.json
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: signed-active-fuzz
@@ -133,12 +134,14 @@ jobs:
             signing-canonical-fuzz.jsonl
             signing-envelope-fuzz.jsonl
             restricted-yaml-fuzz.jsonl
+            signed-resolution-fuzz.jsonl
           if-no-files-found: error
       - name: Real full-disk receipt cleanup
         run: |
           set -o pipefail
           bash tools/acceptance/full-disk-cleanup.sh | tee full-disk-cleanup.log
           test "$(grep -c '^--- PASS: TestReceiptCleanupRecoversRealFullDisk' full-disk-cleanup.log)" = 1
+          test "$(grep -c '^--- PASS: TestReturnResolutionCleanupRecoversRealFullDisk' full-disk-cleanup.log)" = 1
           go tool test2json -t -p github.com/A1b3rt0M3rcad0/wos/packages/wos-cli < full-disk-cleanup.log > full-disk-cleanup.jsonl
 
       - uses: actions/upload-artifact@v7.0.2

@@ -23,17 +23,21 @@ type resolutionFixture struct {
 		ports.SecurityStore
 		ports.TransactionManager
 	}
-	service    *a.Service
-	ctx        context.Context
-	cc         d.CommandContext
-	request    signing.WorkReturnPayload[a.SignedReturnMaterial]
-	envelope   signing.Envelope
-	private    ed25519.PrivateKey
-	credential d.ID
-	server     d.ServerIdentity
+	service       *a.Service
+	ctx           context.Context
+	cc            d.CommandContext
+	request       signing.WorkReturnPayload[a.SignedReturnMaterial]
+	envelope      signing.Envelope
+	private       ed25519.PrivateKey
+	credential    d.ID
+	server        d.ServerIdentity
+	issuerPrivate ed25519.PrivateKey
 }
 
 func newResolutionFixture(t *testing.T, backend string) resolutionFixture {
+	return newResolutionFixtureTTL(t, backend, 300)
+}
+func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFixture {
 	t.Helper()
 	floor := d.AcceptanceDirect
 	hasCriteria := false
@@ -129,7 +133,7 @@ func newResolutionFixture(t *testing.T, backend string) resolutionFixture {
 	cid, e := ids.NewID()
 	must(e)
 	cc := d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: cid, IdempotencyKey: "atomic-return-acquisition"}
-	acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 300})
+	acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: ttl})
 	must(e)
 	c := acquired.Value.Contract
 	work := acquired.Value.WorkItem
@@ -156,7 +160,7 @@ func newResolutionFixture(t *testing.T, backend string) resolutionFixture {
 	returnCC := cc
 	returnCC.CommandID = rid
 	returnCC.IdempotencyKey = request.IdempotencyKey
-	return resolutionFixture{store, service, agentCtx, returnCC, request, envelope, agentPrivate, credential.ID, server}
+	return resolutionFixture{store, service, agentCtx, returnCC, request, envelope, agentPrivate, credential.ID, server, private}
 }
 func TestSignedReturnResolutionRepository(t *testing.T) {
 	requirePostgres(t)
@@ -498,5 +502,115 @@ func TestSignedReturnResolutionRevalidatesAuthority(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestSignedReturnResolutionSurvivesCleanRestore(t *testing.T) {
+	requirePostgres(t)
+	f := newResolutionFixture(t, "sql")
+	cc, cmd := resolutionIntent(t, f, "terminal proof must survive a clean database restore", 1)
+	closed, e := f.service.ResolveSignedReturnIntent(f.ctx, cc, cmd)
+	if e != nil {
+		t.Fatal(e)
+	}
+	source := f.store.(*Store)
+	restored := reopenIntegrationFixture(t, source, source.Path())
+	service, e := a.NewService(restored, sqliteFixedClock{time.Now().UTC()}, &sqliteSequenceIDs{prefix: "0199a557", next: 1})
+	if e != nil {
+		t.Fatal(e)
+	}
+	observed, e := service.ReadSignedState(f.ctx, a.SignedStateQuery{Scope: cmd.Scope, Resource: "return_resolution", ContractKind: "execution", IdempotencyKey: f.request.IdempotencyKey})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if observed.Envelope == nil {
+		t.Fatal("restored terminal proof missing")
+	}
+	doc, e := signing.ToDocument(*observed.Envelope)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if string(doc.Payload) != string(closed.Value.ResolutionReceipt.Payload) || doc.Proof != closed.Value.ResolutionReceipt.Proof {
+		t.Fatal("restore replaced signed proof")
+	}
+	_, e = service.ReturnSignedWork(f.ctx, f.cc, a.ReturnSignedWorkCommand{Envelope: f.envelope})
+	if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeSignedIntentClosed {
+		t.Fatalf("restore resurrected closed return: %v", e)
+	}
+	if e = restored.RevokeCredential(f.ctx, f.credential); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = service.ReadSignedState(f.ctx, a.SignedStateQuery{Scope: cmd.Scope, Resource: "return_resolution", ContractKind: "execution", IdempotencyKey: f.request.IdempotencyKey}); e == nil {
+		t.Fatal("restored terminal proof bypassed current credential revocation")
+	}
+}
+
+type resolutionRealClock struct{}
+
+func (resolutionRealClock) Now() time.Time { return time.Now().UTC() }
+func TestSignedReturnResolutionRejectsActualExpiredLease(t *testing.T) {
+	requirePostgres(t)
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			t.Parallel()
+			f := newResolutionFixtureTTL(t, backend, 30)
+			service, e := a.NewService(f.store, resolutionRealClock{}, &sqliteSequenceIDs{prefix: "0199a558", next: 1})
+			if e != nil {
+				t.Fatal(e)
+			}
+			if e = service.ConfigureSignedIssuer(f.ctx, acquisitionIssuer{f.server, f.issuerPrivate}, d.AcceptanceDirect); e != nil {
+				t.Fatal(e)
+			}
+			cc, cmd := resolutionIntent(t, f, "expired authority is never bypassed by closure", 1)
+			u, e := f.store.Begin(f.ctx)
+			if e != nil {
+				t.Fatal(e)
+			}
+			contract, e := u.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(f.ctx, cmd.Scope, d.ID(f.request.ContractID))
+			if e != nil {
+				u.Rollback()
+				t.Fatal(e)
+			}
+			before, e := u.Coordination().LockOutcome(f.ctx, cmd.Scope)
+			if e != nil {
+				u.Rollback()
+				t.Fatal(e)
+			}
+			u.Rollback()
+			// Wait for the actual persisted deadline. No row, signature or database clock
+			// is modified, including in the generated PostgreSQL test.
+			timer := time.NewTimer(max(0, time.Until(contract.ExpiresAt.Add(50*time.Millisecond))))
+			defer timer.Stop()
+			<-timer.C
+			_, e = service.ResolveSignedReturnIntent(f.ctx, cc, cmd)
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeContractExpired {
+				t.Fatalf("expired authority was bypassed: %v", e)
+			}
+			_, e = service.ReturnSignedWork(f.ctx, f.cc, a.ReturnSignedWorkCommand{Envelope: f.envelope})
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeContractExpired {
+				t.Fatalf("expired return was accepted: %v", e)
+			}
+			u, e = f.store.Begin(f.ctx)
+			if e != nil {
+				t.Fatal(e)
+			}
+			defer u.Rollback()
+			after, e := u.Coordination().LockOutcome(f.ctx, cmd.Scope)
+			if e != nil {
+				t.Fatal(e)
+			}
+			current, e := u.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(f.ctx, cmd.Scope, contract.ID)
+			if e != nil {
+				t.Fatal(e)
+			}
+			b, _ := json.Marshal(contract)
+			ar, _ := json.Marshal(current)
+			if before.Revision != after.Revision || string(b) != string(ar) {
+				t.Fatal("read-time expiry or rejected closure mutated authority/revision")
+			}
+			if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
+				t.Fatal("expired lease created a terminal decision")
+			}
+		})
 	}
 }
