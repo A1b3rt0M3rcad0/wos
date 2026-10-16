@@ -942,7 +942,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
   }
 });
 
-test("WOS uses one on-page mark, editorial lettering and real browser icons", async ({
+test("WOS uses the supplied hand-drawn logo alone and real browser icons", async ({
   page,
   wos,
 }) => {
@@ -952,42 +952,41 @@ test("WOS uses one on-page mark, editorial lettering and real browser icons", as
     page.getByRole("link", { name: "WOS · home", exact: true }),
   ).toBeVisible();
   const logo = page.locator(".brand-logo");
-  const name = page.locator(".brand-name");
+  await expect(page.locator(".brand")).toHaveText("");
+  await expect(page.locator(".brand-name, .brand-caption")).toHaveCount(0);
   await expect(logo).toHaveAttribute(
     "src",
-    "brand/01-marca/wos-symbol-primary.svg",
+    "brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg",
   );
-  await expect(name).toHaveText("WOS");
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect
       .poll(() => logo.evaluate((img) => img.complete && img.naturalWidth > 0))
       .toBe(true);
     const box = await logo.boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(48);
-    expect(box.width / box.height).toBeCloseTo(194 / 82, 1);
-    await expect(name).toBeVisible();
-    await page.evaluate(() => document.fonts.ready);
-    const type = await name.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        family: style.fontFamily,
-        weight: style.fontWeight,
-        heading: getComputedStyle(document.querySelector(".login-story h1"))
-          .fontFamily,
-        loaded: document.fonts.check('36px "Instrument Serif"'),
-      };
-    });
-    expect(type.family).toBe(type.heading);
-    expect(type.family).toContain("Instrument Serif");
-    expect(type.weight).toBe("400");
-    expect(type.loaded).toBe(true);
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.width / box.height).toBeCloseTo(1897 / 632, 2);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
   }
+  await expect(logo).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const openings = await logo.evaluate((image) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0);
+    return [
+      [450, 450],
+      [800, 180],
+      [1150, 450],
+      [1500, 180],
+    ].map(([x, y]) => context.getImageData(x, y, 1, 1).data[3]);
+  });
+  expect(openings).toEqual([0, 0, 0, 0]);
   const icons = await page
     .locator('link[rel~="icon"], link[rel="apple-touch-icon"]')
     .evaluateAll((links) => links.map((link) => link.href));
@@ -1010,7 +1009,7 @@ test("WOS uses one on-page mark, editorial lettering and real browser icons", as
   expect(await favicon.body()).toEqual(
     await readFile(
       new URL(
-        "../../packages/wos-api/web/assets/brand/03-favicon-app/favicon.svg",
+        "../../packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.svg",
         import.meta.url,
       ),
     ),

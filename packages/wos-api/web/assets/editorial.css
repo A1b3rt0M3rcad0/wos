@@ -155,7 +155,7 @@ p {
 }
 .brand-logo {
   display: block;
-  width: calc(60 * var(--wos-unit, 1px));
+  width: calc(120 * var(--wos-unit, 1px));
   height: auto;
   flex-shrink: 0;
 }
@@ -1659,7 +1659,7 @@ noscript p {
     padding-inline: calc(20 * var(--wos-unit, 1px));
   }
   .brand-logo {
-    width: calc(48 * var(--wos-unit, 1px));
+    width: calc(96 * var(--wos-unit, 1px));
   }
   .brand-name {
     font-size: 2.28571rem;
