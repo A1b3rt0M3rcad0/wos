@@ -1,6 +1,6 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-08
+**Last reviewed:** 2026-10-15
 **Active implementation wave:** Signed contracts P07 workspace foundation
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
@@ -84,3 +84,7 @@ The API-only wosctl client uses `go.yaml.in/yaml/v3 v3.0.5` (MIT/Apache-2.0) to 
 P07 OS keyring integration uses `github.com/zalando/go-keyring v0.2.6` (MIT), restricted to `packages/wos-cli`. The standard library does not expose a portable OS credential store. Linux uses Secret Service over D-Bus; Windows uses Credential Manager; macOS uses its system keychain. Errors fail closed and never select an unencrypted file fallback. Transitive platform modules are `github.com/godbus/dbus/v5 v5.1.0` (BSD-2-Clause), `github.com/danieljoos/wincred v1.2.2` (MIT), and `al.essio.dev/pkg/shellescape v1.5.1` (MIT). Existing `golang.org/x/sys v0.48.0` is now a direct CLI dependency for Windows file identity and mounted-secret DACL validation. Distribution notices enumerate both Linux and Windows build graphs. Native credential-store availability and Windows ACL behavior require platform execution; cross-compilation does not satisfy those gates.
 
 The human workspace accessibility gate uses test-only `@axe-core/playwright` 4.10.2 (MPL-2.0) and its locked axe-core dependency (MPL-2.0). They execute against real embedded-server browser pages; they are absent from production embedding, runtime archives and npm service packages. Manual screen-reader and representative-user checks remain separate.
+
+## Embedded workspace typography
+
+The editorial workspace vendors Instrument Serif regular/italic Latin WOFF2 from `@fontsource/instrument-serif@5.3.0` and DM Sans variable-weight normal Latin WOFF2 from `@fontsource-variable/dm-sans@5.3.0`. Both use SIL Open Font License 1.1, with their notices retained next to the font files. These are static web assets, not new Go or npm runtime package dependencies. They are served locally under the existing CSP; no font CDN is required. See [design and provenance](design/editorial/README.md) and its asset hashes.

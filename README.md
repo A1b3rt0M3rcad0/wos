@@ -332,6 +332,7 @@ tools/             generation, benchmarking and release automation
 - [Work contracts](docs/work-contract-operations.md)
 - [Backup, deployment and telemetry](docs/operations.md)
 - [Current UX acceptance](docs/ux/final-acceptance.md)
+- [Editorial workspace design and page screenshots](docs/design/editorial/README.md)
 - [Release and publication](docs/releases.md)
 
 ## License

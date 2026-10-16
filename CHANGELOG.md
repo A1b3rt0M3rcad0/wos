@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Redesign the human workspace with an editorial paper-and-ink visual system, locally served typography, and the supplied robot illustrations across all six areas; include responsive page captures and design documentation.
+
 ## 0.4.2 — prepared for release
 
 - Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation.
