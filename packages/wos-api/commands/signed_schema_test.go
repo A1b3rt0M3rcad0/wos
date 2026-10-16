@@ -5,8 +5,22 @@ import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"reflect"
+	"slices"
 	"testing"
 )
+
+func FuzzSignedPayloadTypeSchemaMatchesCodec(f *testing.F) {
+	for _, typ := range []signing.PayloadType{signing.ContractSpec, signing.ContractAuthority, signing.WorkReturn, signing.ReviewReturn, signing.AcceptanceReceipt, signing.KeyEnrollment, signing.ReturnResolution, signing.ReturnResolutionReceipt} {
+		f.Add(string(typ))
+	}
+	f.Add("application/vnd.wos.unknown.v2+json")
+	f.Fuzz(func(t *testing.T, value string) {
+		allowed := SignedSchema(reflect.TypeFor[signing.PayloadType]())["enum"].([]string)
+		if slices.Contains(allowed, value) != signing.PayloadType(value).Valid() {
+			t.Fatal("public DSSE payload schema and verified codec disagree", value)
+		}
+	})
+}
 
 func TestSignedSchemasUseVerifiedDTOFieldsAndFlattenedBinding(t *testing.T) {
 	schema := SignedSchema(reflect.TypeFor[signing.WorkReturnPayload[a.SignedReturnMaterial]]())

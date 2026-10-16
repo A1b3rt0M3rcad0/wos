@@ -6834,7 +6834,9 @@
               "application/vnd.wos.work-return.v2+json",
               "application/vnd.wos.review-return.v2+json",
               "application/vnd.wos.acceptance-receipt.v2+json",
-              "application/vnd.wos.key-enrollment.v2+json"
+              "application/vnd.wos.key-enrollment.v2+json",
+              "application/vnd.wos.return-resolution.v2+json",
+              "application/vnd.wos.return-resolution-receipt.v2+json"
             ],
             "maxLength": 65536,
             "type": "string"
@@ -7892,7 +7894,9 @@
                           "application/vnd.wos.work-return.v2+json",
                           "application/vnd.wos.review-return.v2+json",
                           "application/vnd.wos.acceptance-receipt.v2+json",
-                          "application/vnd.wos.key-enrollment.v2+json"
+                          "application/vnd.wos.key-enrollment.v2+json",
+                          "application/vnd.wos.return-resolution.v2+json",
+                          "application/vnd.wos.return-resolution-receipt.v2+json"
                         ],
                         "maxLength": 65536,
                         "type": "string"
@@ -7958,7 +7962,9 @@
                               "application/vnd.wos.work-return.v2+json",
                               "application/vnd.wos.review-return.v2+json",
                               "application/vnd.wos.acceptance-receipt.v2+json",
-                              "application/vnd.wos.key-enrollment.v2+json"
+                              "application/vnd.wos.key-enrollment.v2+json",
+                              "application/vnd.wos.return-resolution.v2+json",
+                              "application/vnd.wos.return-resolution-receipt.v2+json"
                             ],
                             "maxLength": 65536,
                             "type": "string"
@@ -8599,7 +8605,9 @@
                       "application/vnd.wos.work-return.v2+json",
                       "application/vnd.wos.review-return.v2+json",
                       "application/vnd.wos.acceptance-receipt.v2+json",
-                      "application/vnd.wos.key-enrollment.v2+json"
+                      "application/vnd.wos.key-enrollment.v2+json",
+                      "application/vnd.wos.return-resolution.v2+json",
+                      "application/vnd.wos.return-resolution-receipt.v2+json"
                     ],
                     "maxLength": 65536,
                     "type": "string"
