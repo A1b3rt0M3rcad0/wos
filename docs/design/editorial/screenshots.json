@@ -1,5 +1,5 @@
 {
-  "implementation_commit": "66f4dde88fd94c9bc6461206c8a709f32560b61c",
+  "implementation_commit": "4c6402613778c62fa49a903967b127a5e7554a4d",
   "capture_test": "tests/web/editorial.spec.mjs",
   "dataset": "Isolated illustrative records created through the public WOS command API",
   "browser": "Chromium 154.0.8037.57 on Linux amd64",
@@ -7,22 +7,23 @@
     "packages/wos-api/web/assets/actions.js": "6502a8025a8d17ac3c653de766e4402074616991ef2b5303a1f43d09899daf5a",
     "packages/wos-api/web/assets/advanced-editors.js": "845345ba35c7d632bc2062cc8912645788aaad51ef69cb983b80b570f17ecebb",
     "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-    "packages/wos-api/web/assets/app.js": "11e7d8041130b712d9da3c08f005fade33bc3256392c58b0717046cf0b562ec9",
+    "packages/wos-api/web/assets/app.js": "a062dfb50eb211d63319730647b3c8856dc50c8db08fbd9757a3bc1ef9a27a76",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
     "packages/wos-api/web/assets/command-exposure.json": "61df462d4242fd0f28a953645019e3d3d34aef1214e8694fd45d6385e16f91c5",
     "packages/wos-api/web/assets/contracts-view.js": "452099bb97a69551b8f3942d7c72f53d518d7b218f08f0483d1df349de96f6bd",
-    "packages/wos-api/web/assets/editorial-grid.svg": "3c9b5f9872961005786a1864488cee6f470b9c18eec71ad143930c21f6e06b82",
-    "packages/wos-api/web/assets/editorial.css": "d031830d3148afcc020919f74df3b6e12d3049e7a5ec3c3ee0b88e0ecc05bdbd",
+    "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
+    "packages/wos-api/web/assets/editorial.css": "63fb9779d914ba4aae4cf9db279108594eb969f1c00a7d2b5ba9eb0f7597253f",
     "packages/wos-api/web/assets/editorial.js": "e1df5d575c54c8a361d64cdfc1cab6ad8b7699994365ad0323c6116a43fffce8",
     "packages/wos-api/web/assets/en-US.js": "5c8684220b02aa146740dae951ca5891f3ba7e309d3325425fa3763bfa0d9a54",
-    "packages/wos-api/web/assets/favicon.svg": "06518485bc52d584e8a068c79ab3d273c133a3ed6832dd2fc65b27490bd2befb",
+    "packages/wos-api/web/assets/favicon.svg": "b10e47a46456bce73f16876e2a47f2d172f5af0b4c4c151cfa4f0add05eef1ca",
     "packages/wos-api/web/assets/human-forms.js": "b631db310cc04ea078ef30abf92815cfa30b0ed2d513120fbe53570b5e4f724b",
-    "packages/wos-api/web/assets/index.html": "875d095b734326b5a18b0819c12eae805b91fd4109499799efc61bf780f37705",
+    "packages/wos-api/web/assets/index.html": "24a44caa88b2791ce9ffbee0c0de11dc763a1902fc407a4cca6bc553446525aa",
     "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
     "packages/wos-api/web/assets/navigation.js": "dd24431bdbe5ec4a5eb5e3b05b6e195584953ba3f57eafb13abd8cce0bcec55c",
-    "packages/wos-api/web/assets/presentation.js": "3657d49967e497b83111d6aaa8f7b2a46cc5668ffb50bbda6c857cf39b4ddba4",
+    "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
     "packages/wos-api/web/assets/reference-picker.js": "51a15f4b84789ecfd5b3f3deb0f84ef318709e2d0539dfffe84108ae72708e14",
     "packages/wos-api/web/assets/roadmap-editor.js": "5d194d7d13c3c64b41b341c2ec4b31b9bb2197cdad9af2097ef686c9ce1970bc",
-    "packages/wos-api/web/assets/style.css": "dd3ea76f91487ac9c3bb4cd1ab671095a88936067dc7548273b9258e781d14eb",
+    "packages/wos-api/web/assets/style.css": "b6d61ed1e583728ee59a5a36988ba78ce9c77a1ad8a00fdbfd08dfb9c743b452",
     "packages/wos-api/web/assets/ui.js": "4f8b558d1274f65b405e4602b065de2699907c97aaf1adab9b18338779853532"
   },
   "screenshots": [
@@ -37,8 +38,8 @@
         "height": 1000
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:31:59.128546+00:00",
-      "sha256": "e7225a6a4ed277fe3f83cd16deaf76e98cd4a108ff859012a9afdf507f273e6b"
+      "captured_at_utc": "2026-10-16T02:06:02.535408+00:00",
+      "sha256": "5839126f9d5367f4de709c7897a050984468dbd8a677724f9831868d0404061a"
     },
     {
       "file": "screenshots/02-overview.png",
@@ -51,8 +52,8 @@
         "height": 1899
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:31:59.668520+00:00",
-      "sha256": "aebb05904e19f4b4b15e3887f7565ddda42ecab06110f1fea821aba898d1599d"
+      "captured_at_utc": "2026-10-16T02:06:03.235376+00:00",
+      "sha256": "097ff0164e5781824c60b48ce3e6f8a29f25f1ef06a3aedb737142fae6e0d96c"
     },
     {
       "file": "screenshots/03-plan.png",
@@ -65,8 +66,8 @@
         "height": 1140
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:31:59.840512+00:00",
-      "sha256": "5452c9caa6ed8d06553cde408aa4d8285ac7ac05172b2a2e3a6b564940da60ee"
+      "captured_at_utc": "2026-10-16T02:06:03.467365+00:00",
+      "sha256": "c9dc5142ac57d349359a425f391902d2d66e132a3d02d71591512bd3d8cc8019"
     },
     {
       "file": "screenshots/04-work.png",
@@ -79,8 +80,8 @@
         "height": 1427
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:00.068501+00:00",
-      "sha256": "62297285b78bc2cab5b5a1c7b4f97d87a2e651942d06c1d924cfabd530155ea5"
+      "captured_at_utc": "2026-10-16T02:06:03.715354+00:00",
+      "sha256": "22a8833bc7e6d802e0e1381f0b8d9df2b66fdc361f9b10ed8b0d9ce73afe42a6"
     },
     {
       "file": "screenshots/05-work-board.png",
@@ -93,8 +94,8 @@
         "height": 1207
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:00.844464+00:00",
-      "sha256": "5b4f8b74d7860a9650c3f7c9a28f53cb5d05f6ac83d059d1b2fc5aae2431fbc4"
+      "captured_at_utc": "2026-10-16T02:06:04.783305+00:00",
+      "sha256": "d5a14dcb60ae05c2595ef99b3ecff57eea46df1143cf2f5c7f8bcdcb65fd2790"
     },
     {
       "file": "screenshots/06-issues.png",
@@ -107,8 +108,8 @@
         "height": 1060
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:00.200495+00:00",
-      "sha256": "d2086f53f4b964cfe2ccbd7c089e47604947720878f4bec435e7d5871dd23848"
+      "captured_at_utc": "2026-10-16T02:06:03.927344+00:00",
+      "sha256": "96c0b204635d220612e7526ae574a4479a337566a0afa7c81b48f541c48f2739"
     },
     {
       "file": "screenshots/07-evidence.png",
@@ -121,8 +122,8 @@
         "height": 1220
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:00.356487+00:00",
-      "sha256": "6f3e1100dc2995008291da7807cb3e0f753c16762a3057f1abeae98295aee1ed"
+      "captured_at_utc": "2026-10-16T02:06:04.143334+00:00",
+      "sha256": "309272dfe32d99e28c86ed7d29a9eafac5c89be8aed25b74bc36ee9c7a440398"
     },
     {
       "file": "screenshots/08-activity.png",
@@ -135,8 +136,8 @@
         "height": 3364
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:00.612475+00:00",
-      "sha256": "85eb7069295efe3043800bdeeb55197e0dc89fb6b382936a543605e7e1ba0717"
+      "captured_at_utc": "2026-10-16T02:06:04.491318+00:00",
+      "sha256": "675681877eb85dfb8bc3d8bc8c1e2e88bd3bcfea88decb79cadcba5729f02bf4"
     },
     {
       "file": "screenshots/09-task-detail.png",
@@ -149,8 +150,8 @@
         "height": 1427
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:01.128450+00:00",
-      "sha256": "d3cf6ddf80c15ad00168206eca947cb2709c73402c49e3c12b7e510ce1f6d1ad"
+      "captured_at_utc": "2026-10-16T02:06:05.131289+00:00",
+      "sha256": "04c08cc1e41bf55d3b550ab5ee539f21f7ca2e647bf395e9f8d0e41baf05b1d5"
     },
     {
       "file": "screenshots/10-task-form.png",
@@ -163,8 +164,8 @@
         "height": 1427
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:01.424436+00:00",
-      "sha256": "f1de3e22e408231e3a76412aa0da19ad648fe1d207feb49a014557bb56970be8"
+      "captured_at_utc": "2026-10-16T02:06:05.443274+00:00",
+      "sha256": "12db732bea876acba7a56e9227a71988d3c1c38d2fbecf34404fe85fc879cd1e"
     },
     {
       "file": "screenshots/11-settings.png",
@@ -177,8 +178,8 @@
         "height": 1427
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:01.664424+00:00",
-      "sha256": "2a1a2c1e2b66a068d52c3babcaf273e1dd5aca703bfd5f6df0848070767f063b"
+      "captured_at_utc": "2026-10-16T02:06:05.755260+00:00",
+      "sha256": "b7c56a87c5237eb90b5a5c7218998d1c0633591c027207dfacd723dc3e8ac660"
     },
     {
       "file": "screenshots/12-mobile-overview.png",
@@ -191,8 +192,8 @@
         "height": 2960
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:04.536287+00:00",
-      "sha256": "1d246322097c7758cf0c5db0d560cc50f4cff4dbc5e2d592bf69001d8b803f1e"
+      "captured_at_utc": "2026-10-16T02:06:09.503088+00:00",
+      "sha256": "f8dd539ba07f243dd8a822bcbcaf5ab037fd1cffdf7a8e8ec3754fa13fba4a76"
     },
     {
       "file": "screenshots/13-mobile-work.png",
@@ -205,8 +206,8 @@
         "height": 1718
       },
       "full_page": true,
-      "captured_at_utc": "2026-10-16T01:32:04.668280+00:00",
-      "sha256": "58531ec2eb027c7346a2cef31b49a017c77e377542a9d9c6e1f50311ebcb882c"
+      "captured_at_utc": "2026-10-16T02:06:09.703079+00:00",
+      "sha256": "b96a930328f75dd0cd15b813060af4be94b76955a7cf67f231e3efb46c4a271b"
     }
   ]
 }

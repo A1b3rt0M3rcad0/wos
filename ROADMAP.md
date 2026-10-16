@@ -54,11 +54,11 @@ The architecture document describes what should exist. This ROADMAP records what
 
 **Scope:** the existing six-area human workspace, sign-in, outcome selection, task list and board, entity details, forms, and settings. This presentation follow-up does not mark an additional backend wave or a stable release complete.
 
-- [x] Apply continuous paper surfaces, restrained green, editorial typography, fine geometry, and supplied monochrome robot vignettes.
+- [x] Apply continuous paper surfaces, editorial typography, fine geometry, and supplied monochrome robot vignettes; follow the owner's approved direction with Woobe's warm neutrals, charcoal, copper, and semantic colors from the supplied palette specification.
 - [x] Preserve existing scoped actions, explicit lifecycle changes, independent review, URL navigation, and API contracts.
 - [x] Serve licensed font assets locally with system fallbacks; preserve the supplied skill packages and robot artwork.
 - [x] Document the visual system, art direction, asset provenance, and page gallery generated from an isolated real-server dataset.
-- [x] Complete final presentation validation: 35 browser tests and 14 browser unit tests passed; targeted Go tests and vet passed. Record the broader suite's existing expired-fixture failure and its 75 skips separately in [validation](docs/design/editorial/validation.md); do not claim an entirely green Go suite.
+- [x] Complete final presentation validation: 36 browser tests and 14 browser unit tests passed after the Woobe palette refinement, including explicit color-role checks; targeted Go tests and vet passed. Regenerate all 13 page captures. Record the earlier broader suite's existing expired-fixture failure and its 75 skips separately in [validation](docs/design/editorial/validation.md); do not claim an entirely green Go suite.
 - [ ] Independent human review, screen-reader validation, and other-browser acceptance; not implied by automated checks or screenshots.
 
 Publication and merging remain separate owner actions. No merge is authorized by this design task.

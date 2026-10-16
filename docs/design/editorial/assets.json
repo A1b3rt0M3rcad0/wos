@@ -285,9 +285,24 @@
   "decoration": [
     {
       "file": "packages/wos-api/web/assets/editorial-grid.svg",
-      "source": "Original WOS geometric grid",
+      "source": "Original WOS geometric grid with the Woobe Light grid color",
       "decorative": true,
-      "sha256": "3c9b5f9872961005786a1864488cee6f470b9c18eec71ad143930c21f6e06b82"
+      "sha256": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26"
+    },
+    {
+      "file": "packages/wos-api/web/assets/favicon.svg",
+      "source": "Existing WOS favicon shape using Woobe brand orange",
+      "decorative": true,
+      "sha256": "b10e47a46456bce73f16876e2a47f2d172f5af0b4c4c151cfa4f0add05eef1ca"
     }
-  ]
+  ],
+  "palette": {
+    "source": "docs/design/editorial/woobe-palette-source.md",
+    "source_sha256": "be18d79a2a637de96b61ff00159da110314ea71524a025dba25fb839b98582b2",
+    "reported_woobe_reference_commit": "3dbcb3e1a7559f4a50ebca320e411933d46e8012",
+    "theme": "Light",
+    "color_tokens": 25,
+    "stylesheet": "packages/wos-api/web/assets/colors.css",
+    "stylesheet_sha256": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6"
+  }
 }

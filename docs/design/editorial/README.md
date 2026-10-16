@@ -1,6 +1,6 @@
 # WOS editorial workspace
 
-This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
+This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
 
 This is a presentation change to the six existing areas, authentication screen, outcome selection, collections, board, forms, settings, and entity details. HTTP/MCP contracts, persisted lifecycle rules, authorization, independent review, and explicit completion remain the source of product behavior.
 
@@ -8,16 +8,26 @@ This is a presentation change to the six existing areas, authentication screen, 
 
 | Element | Meaning and implementation | Small screens |
 | --- | --- | --- |
-| Paper | Continuous `#e9e9e9`; fine, locally served SVG grid on the login and chapter introductions | Same surface; no competing card stacks |
+| Paper | Woobe canvas `#EFEDE8`, workspace `#F5F3EF`, surface `#FFFDF9`, and elevated surface `#FFFEFC`; fine, locally served grid `#C2BCB2` | Same warm neutral hierarchy; no competing card stacks |
 | Display | Instrument Serif, regular and italic; large on the login, restrained inside the operational workspace | Recomposed headlines that wrap; no horizontal type scaling |
 | Utility type | DM Sans variable for controls; system monospace for metadata | Relative font sizes; readable controls and visible focus |
-| Green | `#00846a` for decorative art direction; `#00745d` for functional accent text | Same roles, with explicit selected states |
-| Semantic state | Muted green and gray with a restrained red for blockers/errors; every badge retains a text label | Meaning never relies on color alone |
+| Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
+| Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
+| Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
+| Brand | Orange `#FF5500` on the favicon, distinct from interaction copper | The robot artwork remains monochrome |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
 | Motion | A small decorative arrival; content is visible in its final composition immediately | No parallax or pinned scrolling; reduced motion disables animation |
 
 The application uses the grammar of the style rather than a literal chess theme. Its operational tables and forms keep their practical density. Instrument Serif is a deliberate font selection, not a claim about the unidentified font in the style reference.
+
+### Woobe palette integration
+
+The owner approved the editorial direction and requested the Woobe colors supplied in [this palette specification](woobe-palette-source.md). That attachment is archived unmodified; its original "proposed" status describes the input specification. The implemented Light values are centralized as `--wos-*` tokens in `packages/wos-api/web/assets/colors.css`, with compatibility aliases for existing components. The chart and its legend use the same semantic tokens as the rest of the interface.
+
+The supplied specification cites Woobe commit `3dbcb3e1a7559f4a50ebca320e411933d46e8012`. This is the provenance reported by the attachment, not a claim that this WOS change audited the Woobe repository. Source and stylesheet hashes are recorded in [assets.json](assets.json).
+
+The palette overrides the original gray/green color suggestions in `chess-style`, preserving its typography, geometry, composition, and illustrative language. Copper is an interaction accent, charcoal remains the primary button color, and brand orange is reserved for the mark. Robot originals are not recolored. The workspace uses the Light values; the supplied Dark values remain in the source specification as a separate future theme.
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 
