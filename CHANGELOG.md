@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 — prepared for release
+
+- Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures.
+
 ## 0.4.2 — prepared for release
 
 - Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation.
