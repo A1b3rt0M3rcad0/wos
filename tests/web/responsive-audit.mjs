@@ -43,6 +43,10 @@ export async function dimensions(page, selectors) {
         nativeGutter: scroller
           ? scroller.offsetWidth - scroller.clientWidth
           : 0,
+        lineCount: box.height / parseFloat(style.lineHeight),
+        textFits: element.scrollWidth <= Math.ceil(element.clientWidth),
+        fitsParent:
+          box.right <= element.parentElement.getBoundingClientRect().right + 1,
       };
     }
     return result;
@@ -50,6 +54,17 @@ export async function dimensions(page, selectors) {
 }
 
 export function expectProportional(actual, reference, factor) {
+  const headings = new Set([
+    ".login-story h1",
+    "#title",
+    "#area-title",
+    ".summary-purpose",
+  ]);
+  const intrinsicWidths = new Set([
+    ...headings,
+    ".summary-quick button",
+    "#submit-command",
+  ]);
   for (const [selector, baseline] of Object.entries(reference)) {
     for (const key of [
       "x",
@@ -60,6 +75,10 @@ export function expectProportional(actual, reference, factor) {
       "paddingTop",
       "paddingLeft",
     ]) {
+      // Glyph advances and ch caps are quantized differently by headless font
+      // engines. Compare their type, lines and containment; layout boxes retain
+      // the strict dimensional comparison below.
+      if (intrinsicWidths.has(selector) && key === "width") continue;
       // Native scrollbar gutters stay in browser pixels; account for that only
       // when checking descendant horizontal dimensions.
       const gutter = ["x", "width"].includes(key)
@@ -69,7 +88,11 @@ export function expectProportional(actual, reference, factor) {
         : 0;
       // The main document accumulates rounding across all section rules.
       const rounding =
-        key === "height" && selector === ".workspace-main" ? 10 : 3;
+        key === "fontSize"
+          ? 0.1
+          : key === "height" && selector === ".workspace-main"
+            ? 10
+            : 3;
       expect(
         Math.abs(actual[selector][key] / factor - baseline[key]),
         `${selector} ${key} at ${factor}x (actual ${actual[selector][key]}, reference ${baseline[key]}; font ${actual[selector].fontSize}/${baseline.fontSize})`,
@@ -77,6 +100,13 @@ export function expectProportional(actual, reference, factor) {
     }
     expect(actual[selector].fontFamily, selector).toBe(baseline.fontFamily);
     expect(actual[selector].columns, selector).toBe(baseline.columns);
+    if (headings.has(selector)) {
+      expect(actual[selector].lineCount).toBeCloseTo(baseline.lineCount, 1);
+    }
+    if (intrinsicWidths.has(selector)) {
+      expect(actual[selector].textFits).toBe(true);
+      expect(actual[selector].fitsParent).toBe(true);
+    }
   }
 }
 
