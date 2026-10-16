@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Redesign the human workspace with an editorial paper-and-ink visual system, the Woobe operational palette, locally served typography, and the supplied monochrome robot illustrations across all six areas; include responsive page captures and design documentation.
-- Apply the supplied WOS modular symbol, workspace symbol, real loading mark, and browser/touch icons; render the name WOS in the site's Instrument Serif typography while preserving the editorial layout and Woobe palette.
+- Apply the supplied WOS modular symbol and browser/touch icons; render the name WOS in the site's Instrument Serif typography while preserving the editorial layout and Woobe palette.
+- Refine the workspace from page composition down to controls: continuous grids, connected sections, consistent button rules, one on-page WOS mark, single-scroll forms/details, complete select/focus borders, grouped fields, persistent save actions, and expanded desktop/mobile component captures.
 
 ## 0.4.2 — prepared for release
 

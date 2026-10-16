@@ -8,8 +8,6 @@
   "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316",
   "active_placements": {
     "header": "01-marca/wos-symbol-primary.svg",
-    "workspace": "04-navegacao/wos-sidebar-light.svg",
-    "loading": "01-marca/wos-symbol-primary.svg",
     "favicon": "03-favicon-app/favicon.svg",
     "favicon_ico": "12-png-web/favicon.ico",
     "favicon_png": "12-png-web/favicon-32.png",
@@ -832,10 +830,10 @@
     ],
     "placements": [
       "header",
-      "six chapter labels",
       "no-JavaScript notice",
       "checkpoint local-changes message"
     ],
     "kit_wordmark_lockups": "Preserved unchanged as references; outlined Inter proposals are not active UI wordmarks"
-  }
+  },
+  "on_page_identity": "One original symbol beside the live editorial name in the global header; section labels use their actual area names and pending reads use the supplied observer robot."
 }

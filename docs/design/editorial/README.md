@@ -8,15 +8,17 @@ This is a presentation change to the six existing areas, authentication screen, 
 
 | Element | Meaning and implementation | Small screens |
 | --- | --- | --- |
-| Paper | Woobe canvas `#EFEDE8`, workspace `#F5F3EF`, surface `#FFFDF9`, and elevated surface `#FFFEFC`; fine, locally served grid `#C2BCB2` | Same warm neutral hierarchy; no competing card stacks |
+| Paper and grids | Woobe canvas `#EFEDE8`, workspace `#F5F3EF`, surface `#FFFDF9`, and elevated surface `#FFFEFC`; continuous 160 px graphic grid `#C2BCB2`, independent of structural columns | Continuous paper and grid; connected sections become one ordered column |
 | Display | Instrument Serif, regular and italic; large on the login, restrained inside the operational workspace | Recomposed headlines that wrap; no horizontal type scaling |
 | Utility type | DM Sans variable for controls; system monospace for metadata | Relative font sizes; readable controls and visible focus |
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
 | Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
+| Secondary actions | Transparent buttons with a fine bottom rule; lighter textual actions; ruled serif action-menu rows | Main controls and close actions have room for touch; List/Board stays a framed switch |
 | Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
 | Brand | Supplied modular symbol in `#FF5500` beside the live name WOS in Instrument Serif; official browser icons; distinct from interaction copper | Original symbol proportions and readable editorial lettering; robot artwork remains monochrome |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
+| Forms and details | Gridded heading, small ink vignette, one scrolling body, persistent actions, complete control borders, and inset copper field focus | Related fields stack; close and save stay visible as nested content expands |
 | Motion | A small decorative arrival; content is visible in its final composition immediately | No parallax or pinned scrolling; reduced motion disables animation |
 
 The application uses the grammar of the style rather than a literal chess theme. Its operational tables and forms keep their practical density. Instrument Serif is a deliberate font selection, not a claim about the unidentified font in the style reference.
@@ -31,7 +33,11 @@ The palette overrides the original gray/green color suggestions in `chess-style`
 
 ### WOS brand kit
 
-The supplied WOS identity replaces the temporary letter/circle branding in the header, workspace selector, browser icons, and actual loading state. Following the owner's typography correction, the header combines the original orange symbol with WOS rendered as live Instrument Serif text. Chapter labels, the no-JavaScript notice, and the checkpoint message use the same editorial treatment for the product name. Browser titles and accessible names retain their plain text. All 94 supplied media files remain unchanged in the brand library, including the kit's proposed Inter wordmarks, which are references rather than active UI lockups. See [integration decisions, original kit notes, and asset provenance](brand-kit/README.md).
+The header combines the original orange symbol with WOS rendered as live Instrument Serif text. Following the owner's feedback about repetition, it is the only on-page WOS mark: the workspace selector keeps its label, chapter indices identify their actual area, and pending reads use the observer robot beside the existing loading message. The no-JavaScript notice and checkpoint message retain editorial product-name typography; browser titles and accessible names remain plain text. All 94 supplied media files stay unchanged in the brand library, including the proposed Inter lockups retained as references. See [integration decisions, original kit notes, and asset provenance](brand-kit/README.md).
+
+### Component refinement
+
+The [page-to-control review](component-review.md) records the clipping diagnosis and the revised hierarchy. The grid now spans the actual workspace and outer sign-in margins. Connected overview columns, registration marks, small form/settings vignettes, and ruled disclosures extend the style into working components. Command forms, settings, and detail drawers share a single scrolling content region between their heading and actions. Field labels and help use consistent spacing; related selects and permission checkboxes reflow as groups.
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 
@@ -47,6 +53,9 @@ The canonical art prompt is preserved in [the local art skill](../../../.agents/
 | Issues | `16_blocker_sentinel.svg` | Make an impediment visible |
 | Evidence | `06_researcher_books.svg` | Inspect the basis for a conclusion |
 | Activity | `09_documenter_notes.svg` | Keep a durable thread of changes |
+| Command form | `09_documenter_notes.svg` | Record an explicit change to shared state |
+| Workspace settings | `12_key_signature_guardian.svg` | Access and identity administration |
+| Pending Outcome read | `14_observer_metrics.svg` | Observe shared state while a real request is pending |
 | Outcome selection | `17_outcome_flagbearer.svg` | Choose the result to pursue |
 | Sidebar | `18_workspace_organizer.svg` | Keep the workspace organized |
 
@@ -54,7 +63,7 @@ All these illustrations repeat a meaning already present in adjacent text and ha
 
 ## Main pages
 
-These are captures of a real local server using an isolated illustrative database. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop captures use a 1440 × 1000 CSS px viewport with full-page output; mobile captures use 390 × 844 with full-page output.
+These 18 captures use a real local server and an isolated illustrative database. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. Pages use full-page output; open dialogs use viewport output to show their actual backdrop, scroll region, and persistent actions.
 
 ### Sign in
 
@@ -94,17 +103,25 @@ These are captures of a real local server using an isolated illustrative databas
 
 ![Workspace settings](screenshots/11-settings.png)
 
+![Expanded task instructions with persistent save action](screenshots/15-expanded-task-form.png)
+
+![Editorial action menu](screenshots/16-action-menu.png)
+
 ### Mobile
 
 | Overview | Work |
 | --- | --- |
 | ![Mobile overview](screenshots/12-mobile-overview.png) | ![Mobile task collection](screenshots/13-mobile-work.png) |
 
+| Mobile Task form | Mobile settings |
+| --- | --- |
+| ![Mobile Task form with separate scroll body and actions](screenshots/17-mobile-task-form.png) | ![Mobile settings with persistent save action](screenshots/18-mobile-settings.png) |
+
 ### Actual loading state
 
-The brand symbol follows the existing pending server request. This capture holds that response in the test fixture; the application adds no deliberate waiting period.
+The observer vignette accompanies the existing pending server request. This capture holds that response in the test fixture; the application adds no deliberate waiting period.
 
-![WOS mark during an actual pending Outcome read](screenshots/14-outcome-loading.png)
+![Observer robot during an actual pending Outcome read](screenshots/14-outcome-loading.png)
 
 ## Reproduce and validate
 

@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-15
+**Last reviewed:** 2026-10-16
 **Current target:** Stable 1.0 hardening; public npm package wosctl
 **Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
 
@@ -58,8 +58,9 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Preserve existing scoped actions, explicit lifecycle changes, independent review, URL navigation, and API contracts.
 - [x] Serve licensed font assets locally with system fallbacks; preserve the supplied skill packages and robot artwork.
 - [x] Document the visual system, art direction, asset provenance, and page gallery generated from an isolated real-server dataset.
-- [x] Apply the supplied WOS web identity to the header, workspace selector, browser/touch icons, and actual request-loading state; preserve the 94 original media assets and master silhouette in all 80 SVGs. Follow the owner's typography correction: the original symbol accompanies live WOS lettering in Instrument Serif, also used for product-name mentions across the interface. Retain the approved editorial composition and Woobe operational palette.
-- [x] Complete final presentation validation: 37 browser tests and 14 browser unit tests passed, including palette and brand checks; targeted Go tests and vet passed. Refresh the 14 page/state captures. Record the earlier broader suite's existing expired-fixture failure and its 75 skips separately in [validation](docs/design/editorial/validation.md); do not claim an entirely green Go suite.
+- [x] Apply the supplied WOS web identity to the header and browser/touch icons; preserve the 94 original media assets and master silhouette in all 80 SVGs. The original symbol accompanies live Instrument Serif lettering. Following the repetition feedback, keep one on-page brand mark, functional area/workspace labels, and an observer robot during pending reads.
+- [x] Review page-to-control composition and correct shared button borders, continuous grids, connected overview sections, dialog sizing/scrolling, select/focus clipping, grouped fields, nested editors, and persistent actions; document the [component review](docs/design/editorial/component-review.md). Preserve the approved direction and Woobe palette.
+- [x] Complete final presentation validation: 38 browser tests and 14 browser unit tests passed, including palette, brand, and nested-form geometry/interactions; targeted Go tests and vet passed. Refresh and extend the gallery to 18 page/state captures. Record the earlier broader suite's existing expired-fixture failure and its 75 skips separately in [validation](docs/design/editorial/validation.md); do not claim an entirely green Go suite.
 - [ ] Independent human review, screen-reader validation, and other-browser acceptance; not implied by automated checks or screenshots.
 
 Publication and merging remain separate owner actions. No merge is authorized by this design task.

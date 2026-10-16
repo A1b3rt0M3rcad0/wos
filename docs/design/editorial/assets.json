@@ -109,7 +109,8 @@
       "file": "packages/wos-api/web/assets/robots/09_documenter_notes.svg",
       "source": "User-supplied wos_20_robot_svgs_fixed.zip",
       "role": [
-        "activity"
+        "activity",
+        "command form header"
       ],
       "decorative": true,
       "width": "242",
@@ -148,7 +149,7 @@
       "file": "packages/wos-api/web/assets/robots/12_key_signature_guardian.svg",
       "source": "User-supplied wos_20_robot_svgs_fixed.zip",
       "role": [
-        "available in illustration library"
+        "workspace settings header"
       ],
       "decorative": true,
       "width": "232",
@@ -174,7 +175,8 @@
       "file": "packages/wos-api/web/assets/robots/14_observer_metrics.svg",
       "source": "User-supplied wos_20_robot_svgs_fixed.zip",
       "role": [
-        "overview"
+        "overview",
+        "pending Outcome read"
       ],
       "decorative": true,
       "width": "267",
