@@ -1,0 +1,63 @@
+/* Gerado por scripts/build_tokens.py. Editar DESIGN_TOKENS.json. */
+/* M = pixels da captura; P = proposta, não CSS da referência. */
+:root {
+  --ch-color-paper: #E9E9E9; /* M */
+  --ch-color-ink: #000000; /* M */
+  --ch-color-accent: #00846A; /* M */
+  --ch-color-accent-ui: #00745D; /* P */
+  --ch-color-muted: #686868; /* P */
+  --ch-color-ghost: #ACACAC; /* M */
+  --ch-color-grid: #D1D1D1; /* M */
+  --ch-color-focus: #00745D; /* P */
+  --ch-font-editorial: "Chess Editorial", "Bodoni 72", "Iowan Old Style", "Times New Roman", serif; /* P */
+  --ch-font-utility: Arial, Helvetica, sans-serif; /* P */
+  --ch-font-hand: "Chess Hand", "Segoe Print", "Bradley Hand", cursive; /* P */
+  --ch-size-hero: clamp(3.25rem, 1rem + 12.5vw, 19rem); /* P */
+  --ch-size-manifesto: clamp(2rem, 1rem + 5vw, 6.75rem); /* P */
+  --ch-size-closing: clamp(2.5rem, 1.25rem + 6vw, 8rem); /* P */
+  --ch-size-section: clamp(2rem, 1.1rem + 3vw, 4.25rem); /* P */
+  --ch-size-body: clamp(1.15rem, 0.95rem + 0.7vw, 1.75rem); /* P */
+  --ch-size-nav: clamp(1rem, 0.9rem + 0.25vw, 1.2rem); /* P */
+  --ch-size-caption: 0.875rem; /* P */
+  --ch-size-note: clamp(1rem, 0.75rem + 1vw, 1.75rem); /* P */
+  --ch-leading-display: 0.88; /* P */
+  --ch-leading-manifesto: 1.14; /* P */
+  --ch-leading-body: 1.55; /* P */
+  --ch-leading-caption: 1.45; /* P */
+  --ch-tracking-display: -0.045em; /* P */
+  --ch-tracking-editorial: -0.025em; /* P */
+  --ch-tracking-body: -0.005em; /* P */
+  --ch-space-4: 0.25rem; /* P */
+  --ch-space-8: 0.5rem; /* P */
+  --ch-space-12: 0.75rem; /* P */
+  --ch-space-16: 1rem; /* P */
+  --ch-space-24: 1.5rem; /* P */
+  --ch-space-32: 2rem; /* P */
+  --ch-space-48: 3rem; /* P */
+  --ch-space-64: 4rem; /* P */
+  --ch-space-96: 6rem; /* P */
+  --ch-space-144: 9rem; /* P */
+  --ch-gutter: clamp(1rem, 3.6vw, 4.5rem); /* P */
+  --ch-content-max: 110rem; /* P */
+  --ch-section-space: clamp(4rem, 8vw, 9rem); /* P */
+  --ch-grid-x: clamp(7rem, 12.5vw, 14rem); /* P */
+  --ch-grid-y: clamp(8rem, 12.5vw, 14rem); /* P */
+  --ch-header-offset: 7rem; /* P */
+  --ch-border-thin: 1px; /* P */
+  --ch-border-focus: 2px; /* P */
+  --ch-radius-flat: 0; /* P */
+  --ch-radius-control: 999px; /* P */
+  --ch-duration-micro: 140ms; /* P */
+  --ch-duration-short: 220ms; /* P */
+  --ch-duration-editorial: 600ms; /* P */
+  --ch-duration-scene: 900ms; /* P */
+  --ch-ease-out: cubic-bezier(.22, 1, .36, 1); /* P */
+  --ch-ease-in-out: cubic-bezier(.65, 0, .35, 1); /* P */
+  --ch-z-background: 0; /* P */
+  --ch-z-notes: 1; /* P */
+  --ch-z-text: 10; /* P */
+  --ch-z-art: 20; /* P */
+  --ch-z-controls: 30; /* P */
+  --ch-z-header: 50; /* P */
+  --ch-z-overlay: 100; /* P */
+}

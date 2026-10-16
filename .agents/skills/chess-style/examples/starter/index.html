@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Exemplo estrutural da chess-style: composição editorial, narrativa e leitura progressiva.">
+  <title>Próximo movimento — chess-style</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../tokens/tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body class="chess-page">
+  <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+  <header class="site-header">
+    <a class="wordmark" href="#inicio">chess-style<span>Caderno 01</span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation" hidden>Menu</button>
+    <nav class="site-nav" id="navigation" aria-label="Navegação principal">
+      <a href="#inicio">Abertura</a>
+      <a href="#ideia">A ideia</a>
+      <a href="#metodo">O método</a>
+      <a href="#conclusao">Conclusão</a>
+    </nav>
+    <a class="header-action" href="#metodo">Ver o método <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="conteudo" tabindex="-1">
+    <section class="hero section-shell" id="inicio" aria-labelledby="hero-title">
+      <p class="eyebrow">Uma leitura sobre escolhas e consequências</p>
+      <div class="hero-composition">
+        <h1 class="hero-title" id="hero-title"><span>PRÓXIMO</span><span>MOVIMENTO</span></h1>
+        <div class="hero-art" aria-hidden="true">
+          <div class="paper-object" data-parallax>
+            <div class="paper-face"><span class="paper-micro">ESTUDO Nº</span><span class="paper-mark">01</span><i></i><i></i><i></i><span class="paper-foot">OBSERVAR · RELACIONAR · DECIDIR</span></div>
+          </div>
+        </div>
+        <span class="marginal-note note-a" aria-hidden="true">e4</span>
+        <span class="marginal-note note-b" aria-hidden="true">Nf3</span>
+        <span class="marginal-note note-c" aria-hidden="true">o próximo?</span>
+      </div>
+      <p class="hero-caption">Nem toda escolha precisa ser maior.<br>Algumas precisam ser <em>mais claras.</em></p>
+      <a class="scroll-cue" href="#ideia">Continue a leitura <span aria-hidden="true">↓</span></a>
+    </section>
+
+    <section class="narrative section-shell" id="ideia" aria-labelledby="idea-heading">
+      <div class="section-meta"><span>01 / A ideia</span><span>O detalhe altera o conjunto.</span></div>
+      <h2 class="sr-only" id="idea-heading">Enxergar antes de escolher</h2>
+      <p class="manifesto" data-reveal>Você não precisa de mais movimentos. Precisa enxergar <em>o que cada escolha transforma.</em></p>
+      <div class="sketch-break" aria-hidden="true">
+        <svg viewBox="0 0 210 70" width="210" height="70" fill="none">
+          <path d="M17 39 C50 26 57 27 87 35 M111 36 C132 48 151 39 187 30"/>
+          <path d="M94 26 C99 19 109 22 111 31 C115 41 107 48 97 45 C87 43 86 31 94 26Z"/>
+          <path d="M8 37 C8 29 23 29 26 37 C29 47 12 48 8 37Z M183 24 C188 16 202 20 201 29 C204 39 184 39 183 24Z"/>
+          <path d="M174 20 L187 28 L178 39 M71 59 Q102 63 132 56"/>
+        </svg>
+        <span>uma relação muda tudo</span>
+      </div>
+      <p class="manifesto secondary-manifesto" data-reveal>Quando as relações ficam visíveis, o problema deixa de ser apenas uma lista. Ele começa a fazer <em>sentido.</em></p>
+    </section>
+
+    <section class="method section-shell" id="metodo" aria-labelledby="method-heading">
+      <div class="section-meta"><span>02 / O método</span><span>Três perguntas antes da próxima ação.</span></div>
+      <div class="editorial-spread">
+        <aside class="artifact" aria-label="Anotação visual do método">
+          <div class="artifact-sheet" aria-hidden="true"><span>01</span><hr><span>02</span><hr><span>03</span></div>
+          <p class="caption">Um esquema, não uma receita.<br>O contexto vem primeiro.</p>
+        </aside>
+        <div class="spread-copy">
+          <h2 id="method-heading">Uma decisão<br>não vive <em>sozinha.</em></h2>
+          <p>Ela depende do que veio antes e altera o que pode acontecer depois. Este caderno propõe uma pausa: olhar o contexto antes de escolher o próximo passo.</p>
+          <ol class="method-steps">
+            <li><span class="step-number">01</span><div><h3>Observe o que existe.</h3><p>Separe fatos, hipóteses e lacunas. O ponto de partida precisa estar visível.</p></div></li>
+            <li><span class="step-number">02</span><div><h3>Relacione as partes.</h3><p>Procure dependências, consequências e caminhos que ainda não foram considerados.</p></div></li>
+            <li><span class="step-number">03</span><div><h3>Escolha com contexto.</h3><p>Defina uma ação compreensível e um modo de observar o resultado.</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing section-shell" id="conclusao" aria-labelledby="closing-heading">
+      <span class="marginal-note closing-note" aria-hidden="true">1–0</span>
+      <p class="eyebrow">03 / A próxima posição</p>
+      <h2 id="closing-heading">O detalhe muda<br><em>a leitura do todo.</em></h2>
+      <p class="outline-echo" aria-hidden="true">veja de novo.</p>
+      <a class="editorial-link" href="#inicio">Voltar ao começo <span aria-hidden="true">↗</span></a>
+    </section>
+  </main>
+
+  <footer class="site-footer section-shell">
+    <div class="footer-top">
+      <p>chess-style <em>Exemplo estrutural.</em></p>
+      <div class="motion-controls">
+        <button class="motion-toggle" type="button" aria-pressed="false" aria-describedby="motion-status" hidden>Leitura estática</button>
+        <span id="motion-status" class="caption" role="status">Conteúdo completo, mesmo sem JavaScript.</span>
+      </div>
+    </div>
+    <details class="demo-disclosure">
+      <summary>Sobre este exemplo</summary>
+      <p>Esta é uma base de composição, sem fontes externas ou ilustrações de produção. O objeto de papel e os traços são esquemáticos. Para uma página final, integre a fonte, o conteúdo e os assets próprios definidos no brief.</p>
+      <p><a href="../../SKILL.md">Ler a skill</a> · <a href="../../references/REPRODUCTION_PLAYBOOK.md">Abrir o playbook</a></p>
+    </details>
+  </footer>
+</body>
+</html>

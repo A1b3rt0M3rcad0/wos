@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": null,
+  "notice": "Template: nenhum caminho ou direito de uso deve ser presumido.",
+  "assets": [
+    {
+      "id": "A-HERO-01",
+      "role": "hero-object",
+      "status": "planned",
+      "file": null,
+      "intrinsicWidth": null,
+      "intrinsicHeight": null,
+      "aspectRatio": null,
+      "origin": null,
+      "permission": {
+        "status": "pending",
+        "note": null
+      },
+      "decorative": true,
+      "alt": "",
+      "anchor": {
+        "desktop": "hero-center",
+        "mobile": null
+      },
+      "safeArea": null,
+      "variants": []
+    },
+    {
+      "id": "A-VIN-01",
+      "role": "inline-vignette",
+      "status": "planned",
+      "file": null,
+      "action": null,
+      "orientation": null,
+      "intrinsicWidth": null,
+      "intrinsicHeight": null,
+      "origin": null,
+      "permission": {
+        "status": "pending",
+        "note": null
+      },
+      "decorative": true,
+      "alt": "",
+      "variants": []
+    },
+    {
+      "id": "A-PROOF-01",
+      "role": "evidence",
+      "status": "planned",
+      "file": null,
+      "claimSupported": null,
+      "source": null,
+      "caption": null,
+      "origin": null,
+      "permission": {
+        "status": "pending",
+        "note": null
+      },
+      "decorative": false,
+      "alt": null,
+      "intrinsicWidth": null,
+      "intrinsicHeight": null,
+      "variants": []
+    }
+  ]
+}

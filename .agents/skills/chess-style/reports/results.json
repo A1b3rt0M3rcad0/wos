@@ -1,0 +1,288 @@
+{
+  "timeUtc": "2026-10-15T23:49:33.692409+00:00",
+  "scope": "Chromium local; starter, não referência original",
+  "transport": "inline",
+  "cases": [
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-1920x1080-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-1440x900-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        1280,
+        800
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-1280x800-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        768,
+        1024
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true,
+        "menuOpens": true,
+        "escapeReturnsFocus": true,
+        "anchorClosesMenu": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-768x1024-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true,
+        "menuOpens": true,
+        "escapeReturnsFocus": true,
+        "anchorClosesMenu": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-390x844-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        360,
+        740
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true,
+        "menuOpens": true,
+        "escapeReturnsFocus": true,
+        "anchorClosesMenu": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-360x740-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        320,
+        740
+      ],
+      "mode": "default",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "staticToggle": true,
+        "staticInk": true,
+        "menuOpens": true,
+        "escapeReturnsFocus": true,
+        "anchorClosesMenu": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-320x740-default.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "mode": "no-js",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "navigationWithoutJS": true,
+        "noEmptyReveal": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-390x844-no-js.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "mode": "reduced",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true,
+        "reducedHonored": true,
+        "menuOpens": true,
+        "escapeReturnsFocus": true,
+        "anchorClosesMenu": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-390x844-reduced.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": false
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "mode": "root-text-200",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-390x844-root-text-200.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": true
+      },
+      "passed": true
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "mode": "root-text-200",
+      "checks": {
+        "oneH1": true,
+        "textPresent": true,
+        "noHorizontalOverflow": true,
+        "enhancedInitialized": true
+      },
+      "errors": [],
+      "overflow": [],
+      "screenshot": "screenshots/starter-1440x900-root-text-200.png",
+      "screenshotState": {
+        "scrollY": 0,
+        "motionEnabled": true
+      },
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "browserVersion": "144.0.7559.96",
+  "passed": true,
+  "fontInspection": {
+    "selector": "#hero-title",
+    "viewport": [
+      1440,
+      900
+    ],
+    "method": "Chromium CSS.getPlatformFontsForNode",
+    "fonts": [
+      {
+        "familyName": "Tinos",
+        "postScriptName": "Tinos",
+        "isCustomFont": false,
+        "glyphCount": 16
+      }
+    ]
+  }
+}
