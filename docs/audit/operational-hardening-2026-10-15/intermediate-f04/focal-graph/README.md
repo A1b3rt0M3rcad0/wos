@@ -1,0 +1,9 @@
+# F04 focal and graph intermediate qualification
+
+Current-only work/objective reads retain current criteria, assessments, conclusion references, actor/lease/specification fields and exact omitted-history counts. Indexed owner predicates replace unrelated proof-history reads. A real 1,000-assessment chain and 101 dependencies prove the hidden hard edge remains effective after the 100-item display limit. Memory, SQLite and real PostgreSQL match the legacy Application fallback exactly; optimized paths pass an adapter that panics on aggregate hydration.
+
+Graphs page scoped adjacency for batches of at most 100 frontier references, retain reachability IDs, keep only N+1 induced edge candidates and resolve only returned node summaries. Separate SQL orientations preserve indexable endpoint predicates. Parity covers cycles in relates_to, all directions, depths 0/1/2/8, kind filters, legacy-compatible consecutive cursors, unsupported roots and stale revisions. No public graph field or root/induced-edge meaning changes.
+
+The PostgreSQL materialized progress query from the previous slice caused a SQLite regression: one measured repetition had p95 27.37 seconds. It was interrupted after preserving the result; it is not acceptance evidence. SQLite must use indexed point joins/current-assessment lookup and the evidence assessment index. PostgreSQL keeps its scoped materialized-set variant in an explicit generator SQL template. Python SQLite plans here diagnose the query shape only (indexed variant 48 ms versus partially flattened variant 4.89 s on the same persisted fixture); the actual embedded adapter benchmark remains required. No database setting or acceptance threshold was changed.
+
+Focused race logs are intermediate. Capacity reruns and final exact-source verification remain pending.

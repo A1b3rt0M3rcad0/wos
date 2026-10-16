@@ -1,0 +1,8 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/snapshot_with_proof/10000-3         	      30	17081205398 ns/op	15413360360 p50_ns	27372261259 p95_ns	36950276650 p99_ns	     32339 response_bytes	44507152 B/op	  222718 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3         	signal: terminated
+FAIL	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	567.888s
+FAIL

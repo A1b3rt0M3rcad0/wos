@@ -61,10 +61,6 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 	return workContractView(ctx, uow, scope, c, w, coord.Revision, now)
 }
 func workContractView(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, c d.WorkContract, w d.WorkItem, revision d.OutcomeRevision, now time.Time) (ReadResult[WorkContractView], error) {
-	repo, err := contractRepository(uow)
-	if err != nil {
-		return ReadResult[WorkContractView]{}, err
-	}
 	candidate := w
 	candidate.CurrentLease = nil
 	candidate.Lifecycle = d.WorkItemLifecycleTodo
@@ -72,6 +68,14 @@ func workContractView(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, 
 	if err != nil {
 		return ReadResult[WorkContractView]{}, err
 	}
+	return renderWorkContractView(ctx, uow, scope, c, w, revision, now, ready)
+}
+func renderWorkContractView(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, c d.WorkContract, w d.WorkItem, revision d.OutcomeRevision, now time.Time, ready d.Readiness) (ReadResult[WorkContractView], error) {
+	repo, err := contractRepository(uow)
+	if err != nil {
+		return ReadResult[WorkContractView]{}, err
+	}
+
 	live := w.CurrentContractID != nil && *w.CurrentContractID == c.ID
 	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: live && c.ValidAt(now) && ready.Ready, Recoverable: (live || w.CurrentContractID == nil) && w.Lifecycle == d.WorkItemLifecycleInProgress && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
 	if c.LatestCheckpointID != nil {
