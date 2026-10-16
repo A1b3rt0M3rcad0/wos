@@ -38,8 +38,12 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:47:35.002066+00:00",
-      "sha256": "e88175598aae2def46ee4414a13a32fa89b894facf90482efa6996952b856bbf"
+      "captured_at_utc": "2026-10-16T17:30:41.320326+00:00",
+      "sha256": "e31f4d7bda098b2095f5135e83a0ae61a06385e953f00fc219f04da42f991fc5",
+      "implementation_commit": "c5609598bedb14bee9feb73dc9e1fc34a4f97fc5",
+      "artwork_sha256": {
+        "packages/wos-api/web/assets/robots/01_planner_map.svg": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da"
+      }
     },
     {
       "file": "screenshots/02-overview.png",
@@ -66,8 +70,12 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:47:35.778061+00:00",
-      "sha256": "97560096763bfaa85c720ba71b8e62679e4d79f1bd191509785efd78b8fa7d25"
+      "captured_at_utc": "2026-10-16T17:30:42.700316+00:00",
+      "sha256": "87430a6c8df08d6fbb939ff16ba410f517c3a100c1637d6bf5f20783b5035ffc",
+      "implementation_commit": "c5609598bedb14bee9feb73dc9e1fc34a4f97fc5",
+      "artwork_sha256": {
+        "packages/wos-api/web/assets/robots/01_planner_map.svg": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da"
+      }
     },
     {
       "file": "screenshots/04-work.png",
@@ -551,10 +559,23 @@
     }
   ],
   "capture_test_sha256": "554f5d78a24449f7c4f27b16d9a3c57509b451cbb8effbca3bb498397f85dd69",
-  "capture_profile": "Actual viewport output: 1440x1000 desktop and 390x844 mobile; fonts and visible images loaded, animations disabled. Paired fixed-paper views use normal motion at 0/173 px scroll. Interaction views use reduced motion; mobile focus uses a touch-enabled context. Simulated-press text selections are cleared before interaction captures. Scale comparison: 1440x1000, 1920x1080, 2560x1440 and 3840x2160 CSS px; normal-motion fixed paper and requested scroll 173*(width/1440). Additional 2K Task form (Initial state focused) and Work board use reduced motion. The wide-view pointer is moved to the viewport origin before overview captures. Scale overview captures also clear transient focus; the 2K board is scrolled into view. All 36 captures are regenerated with the owner-supplied hand-drawn chain header logo and matte modal surfaces. The active logo is an unmodified transparent SVG; the home link has no visible WOS wordmark/caption.",
+  "capture_profile": "Actual viewport output: 1440x1000 desktop and 390x844 mobile; fonts and visible images loaded, animations disabled. Paired fixed-paper views use normal motion at 0/173 px scroll. Interaction views use reduced motion; mobile focus uses a touch-enabled context. Simulated-press text selections are cleared before interaction captures. Scale comparison: 1440x1000, 1920x1080, 2560x1440 and 3840x2160 CSS px; normal-motion fixed paper and requested scroll 173*(width/1440). Additional 2K Task form (Initial state focused) and Work board use reduced motion. The wide-view pointer is moved to the viewport origin before overview captures. Scale overview captures also clear transient focus; the 2K board is scrolled into view. The baseline run regenerated all 36 captures with the owner-supplied hand-drawn chain header logo and matte modal surfaces. The active logo is an unmodified transparent SVG; the home link has no visible WOS wordmark/caption. The later blank-map refresh updates login and Plan only; see planner_refresh and per-image revision overrides.",
   "test_support_sha256": {
     "tests/web/interaction-audit.mjs": "11a5cd72ba25b04dbf4f1dd599d364d72ef27cdfb55cc6f15774b7a41d6f03e7",
     "tests/web/ux-fixture.mjs": "1fe9b34eba9e678f2a261bf7adf0c22f1279929d80480f446f67597806923e90",
     "tests/web/responsive-audit.mjs": "4e595ec07a234f2c506758cb67b781c37dfbd0db1c87888835dc2fd7bc499018"
+  },
+  "revision_policy": "implementation_commit identifies the baseline capture source. Individual screenshot implementation_commit fields override that baseline for later refreshes; retained images keep their original capture timestamps and hashes.",
+  "planner_refresh": {
+    "implementation_commit": "c5609598bedb14bee9feb73dc9e1fc34a4f97fc5",
+    "source_archive": "01_planner_map_blank.zip",
+    "artwork_sha256": {
+      "packages/wos-api/web/assets/robots/01_planner_map.svg": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da"
+    },
+    "refreshed_files": [
+      "screenshots/01-login.png",
+      "screenshots/03-plan.png"
+    ],
+    "validation": "Four affected Playwright journeys and 14 unit checks pass; separately inspect login and Plan on desktop and 390px mobile. Other gallery images retain their earlier source revision."
   }
 }
