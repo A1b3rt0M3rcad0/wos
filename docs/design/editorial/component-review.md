@@ -47,6 +47,8 @@ The sidebar acts as the notebook's working margin: serif names distinguish autho
 
 ## Verification
 
+The subsequent [button and hover review](interactions.md) extends the component audit to every button renderer, selected/hover/pressed states, disabled controls, pointer capability, and mobile target spacing. It records the generic dark-hover conflict, zero-inset labels, and the board's retained hover translation. The theme now owns the shared interaction rules; [additional hover/focus captures](README.md#button-interaction-states) show those states directly.
+
 The browser regression traverses the form's nested structure at 1440 × 1000, 390 × 844, 320 × 740, landscape 740 × 390, and 768 × 1024 with a doubled 28 px root font. It selects priority/state, expands instructions and Advanced, adds an instruction, selects an authorized Objective with the keyboard, focuses the native date field, and saves a real Task. The resulting detail must retain the authored instruction.
 
 Focused controls are measured against their **scroll ancestor**, including their visible border/focus clearance, rather than only against the viewport. The test checks occlusion, footer overlap, extra outer-dialog scrolling, minimum control height, and page overflow. Settings checks cover its operation select, a permission checkbox at the end of the list, persistent save action, and the credential form's text field. Existing browser journeys cover checkbox submission, roadmap reordering, external context, conflicts, uncertain-response retries, reference authorization/pagination, signed independent review, and keyboard focus restoration.

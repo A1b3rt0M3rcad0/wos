@@ -14,7 +14,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Utility type | DM Sans variable for controls; system monospace for metadata | Relative font sizes; readable controls and visible focus |
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
 | Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
-| Secondary actions | Transparent buttons with a fine bottom rule; lighter textual actions; ruled serif action-menu rows | Main controls and close actions have room for touch; List/Board stays a framed switch |
+| Secondary actions | Padded utility buttons with a fine rule, lighter textual actions, and ruled serif action-menu rows; hover preserves contrast and selected states | At least 44 px targets; List/Board stays a framed switch; touch does not retain mouse-hover paint |
 | Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
 | Brand | Supplied modular symbol in `#FF5500` beside the live name WOS in Instrument Serif; official browser icons; distinct from interaction copper | Original symbol proportions and readable editorial lettering; robot artwork remains monochrome |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
@@ -42,6 +42,8 @@ The [page-to-control review](component-review.md) records the clipping diagnosis
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 
+The [button and hover review](interactions.md) maps every renderer and control family to the shared interaction rules. Area/category tabs reserve their selected rule for the selected choice; hovering another tab does not make it look selected. Utility controls, text links, primary actions, and data rows retain distinct roles, stable hit areas, legible paint, and independent keyboard focus. Cards no longer move on hover.
+
 ## Illustration direction and provenance
 
 The canonical art prompt is preserved in [the local art skill](../../../.agents/skills/wos-art-style/SKILL.md): minimalist black ink, imperfect organic contours, expressive limbs, hatching, playful proportions, monochrome, and transparent backgrounds. The existing 20 robot files are preserved byte for byte from the user-supplied `wos_20_robot_svgs_fixed.zip`. These SVG containers include embedded raster artwork; they are not presented as editable vector paths.
@@ -64,7 +66,7 @@ All these illustrations repeat a meaning already present in adjacent text and ha
 
 ## Main pages
 
-These 21 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
+These 26 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
 ### Sign in
 
@@ -133,6 +135,18 @@ These two viewport captures show the same workspace before and after scrolling 1
 | ![Workspace at the top with three Outcomes and the editorial sidebar](screenshots/19-fixed-paper-top.png) | ![Workspace scrolled over the same stationary grid](screenshots/20-fixed-paper-scrolled.png) |
 
 ![Expanded mobile Outcome navigation with a long title brought into view](screenshots/21-mobile-outcome-navigation.png)
+
+### Button interaction states
+
+| Hover another area while Work remains selected | Hover Board while List remains selected |
+| --- | --- |
+| ![Padded Issues hover without the selected Work underline](screenshots/22-area-tab-hover.png) | ![Readable unselected Board hover beside selected List](screenshots/23-view-switch-hover.png) |
+
+| Stable board card hover | Expanded form utility hover |
+| --- | --- |
+| ![Board card with a restrained border and no movement](screenshots/24-board-card-hover.png) | ![Padded add-instructions action within the expanded Task form](screenshots/25-form-controls-hover.png) |
+
+![Keyboard focus inside the mobile tab strip with no persistent mouse-hover paint](screenshots/26-mobile-tabs-focus.png)
 
 ## Reproduce and validate
 
