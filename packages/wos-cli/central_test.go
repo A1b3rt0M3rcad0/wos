@@ -490,6 +490,12 @@ func TestCentralMigrationResumePreservesObservedStagingEdits(t *testing.T) {
 	if e = store.writeRawV2(file.StorePath, contents[name+"/"+file.StorePath], signing.Digest(edited), false); e != nil {
 		t.Fatal(e)
 	}
+	// Windows directory handles opened by os.OpenRoot do not share delete
+	// access. Finish inspecting the fixture before migration publishes it by
+	// renaming the staging directory; production closes its own handle too.
+	if e = store.Close(); e != nil {
+		t.Fatal(e)
+	}
 	if code, result := centralRun(t, "init", "--from", source.canonicalPath, "--writers-drained"); code != 0 {
 		t.Fatal("original frozen copy could not resume", result.Error)
 	}

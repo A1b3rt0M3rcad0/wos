@@ -51,3 +51,11 @@ jobs:
             dist/platform-*-amd64.json
             dist/full-disk-windows-amd64.json
           if-no-files-found: error
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: wosctl-native-test-diagnostics-${{ matrix.os }}
+          path: |
+            dist/native-go-tests-*.jsonl
+            dist/native-go-tests-*.stderr.log
+          if-no-files-found: warn
