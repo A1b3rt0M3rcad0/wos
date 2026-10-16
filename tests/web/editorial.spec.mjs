@@ -184,6 +184,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
   ]) {
     await page.locator(`[data-area="${area}"]`).click();
     await expect(page.locator("#area-title")).toHaveText(title);
+    await expect(page.locator("#area-index .product-name")).toHaveText("WOS");
     await expect(page.locator("#area-robot")).toHaveAttribute(
       "src",
       `robots/${image}`,
@@ -310,6 +311,7 @@ test("static sign-in keeps its narrative and explains the no-JavaScript fallback
       await expect(page.locator("noscript p")).toContainText(
         "Enable JavaScript",
       );
+      await expect(page.locator("noscript .product-name")).toHaveText("WOS");
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -373,14 +375,36 @@ test("supplied WOS identity stays legible, serves real browser icons and marks o
     page.getByRole("link", { name: "WOS · home", exact: true }),
   ).toBeVisible();
   const logo = page.locator(".brand-logo");
+  const name = page.locator(".brand-name");
+  await expect(logo).toHaveAttribute(
+    "src",
+    "brand/01-marca/wos-symbol-primary.svg",
+  );
+  await expect(name).toHaveText("WOS");
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect
       .poll(() => logo.evaluate((img) => img.complete && img.naturalWidth > 0))
       .toBe(true);
     const box = await logo.boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(120);
-    expect(box.width / box.height).toBeCloseTo(450 / 112, 1);
+    expect(box.width).toBeGreaterThanOrEqual(48);
+    expect(box.width / box.height).toBeCloseTo(194 / 82, 1);
+    await expect(name).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const type = await name.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        family: style.fontFamily,
+        weight: style.fontWeight,
+        heading: getComputedStyle(document.querySelector(".login-story h1"))
+          .fontFamily,
+        loaded: document.fonts.check('36px "Instrument Serif"'),
+      };
+    });
+    expect(type.family).toBe(type.heading);
+    expect(type.family).toContain("Instrument Serif");
+    expect(type.weight).toBe("400");
+    expect(type.loaded).toBe(true);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -445,4 +469,9 @@ test("supplied WOS identity stays legible, serves real browser icons and marks o
   }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
+  const chapterName = page.locator("#area-index .product-name");
+  await expect(chapterName).toHaveText("WOS");
+  expect(
+    await chapterName.evaluate((element) => getComputedStyle(element).fontFamily),
+  ).toBe(await name.evaluate((element) => getComputedStyle(element).fontFamily));
 });

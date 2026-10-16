@@ -865,13 +865,15 @@ export const copy = Object.freeze({
     criterionNotMet: "Criterion not met",
     inconclusiveAssessment: "Inconclusive assessment",
     criterionRevised: "Criterion revised",
+    wos: "WOS",
     wosWorkspace: "WOS · Workspace",
     humansAndAgentsOneSharedState: "Humans and agents. One shared state.",
     signOut: "Sign out",
     meaningfulOutcomes: "Meaningful outcomes.",
     workTogetherEditorial: "Work together.",
     enableWorkspaceJavaScript:
-      "Enable JavaScript to use the workspace, or use the WOS HTTP API or CLI.",
+      "Enable JavaScript to use the workspace, or use the",
+    httpApiOrCli: "HTTP API or CLI.",
     fromIntentToEvidence: "from intent to evidence",
     wholePicture: "The whole picture.",
     overviewEditorial:

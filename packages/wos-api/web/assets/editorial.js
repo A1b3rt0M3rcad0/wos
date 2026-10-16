@@ -49,7 +49,10 @@ const chapters = Object.freeze({
 
 export function renderEditorial(area) {
   const [index, title, description, note, robot] = chapters[area];
-  document.getElementById("area-index").textContent = `${index} / WOS`;
+  const name = document.createElement("span");
+  name.className = "product-name";
+  name.textContent = copy.text.wos;
+  document.getElementById("area-index").replaceChildren(`${index} / `, name);
   document.getElementById("area-title").textContent = copy.text[title];
   document.getElementById("area-description").textContent =
     copy.text[description];
