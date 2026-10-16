@@ -9,7 +9,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
-| View the current desktop and mobile interface       | [Screenshots and visual system](design/editorial/README.md#main-pages) |
+| View the current desktop and mobile interface       | [Operational canvas and screenshots](design/operational-canvas/README.md#screenshots) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
 | Inspect the README illustration's provenance        | [Original artwork record](images/assets.json)                          |
 

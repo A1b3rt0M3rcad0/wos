@@ -50,9 +50,26 @@ The architecture document describes what should exist. This ROADMAP records what
 
 # Implementation waves
 
+## Visual operational workspace — 2026-10-16
+
+**Status:** automated implementation verified on `feat/visual-operational-canvas`, based on `master` at `14b6708`. The owner requests one new PR with coherent commits, without merging. This is a presentation extension of the existing human workspace and centralized-agent APIs, not a new backend wave or a release qualification.
+
+The implementation brings existing Outcome context into a default canvas with real Objective hierarchy, Task ownership, typed operational connections, optional Roadmap overlays and contextual use of existing detail/forms/actions. Native ES modules retain the approved editorial identity, existing responsive scale and original supplied post-it artwork. Domain models, signed authority, independent review, authorization, CAS and exact-intent recovery remain authoritative. See [architecture, behavior and decisions](docs/design/operational-canvas/README.md), [workspace operation](docs/workspace-ux.md) and [source-asset provenance](docs/design/operational-canvas/postits/README.md).
+
+Automated acceptance is recorded in [verification](docs/design/operational-canvas/validation.md); PR review and independent human acceptance remain separate:
+
+- [x] Default canvas and contextual inspector preserve the existing actions/forms and keep purpose-based areas, Task list/Board and keyboard/mobile list alternatives available.
+- [x] Live scoped graph, continuity pages and selected context are revision-consistent, bounded per request and explicit about partial/depth-limited results; authorized search can find unloaded records.
+- [x] Hierarchy/ownership, hard/advisory/unknown dependencies, Issues/Blockers and Evidence/criterion assessments retain their distinct semantics and permitted mutation paths.
+- [x] Optional Draft and published Roadmap overlays preserve planning hierarchy/order separately from operations; viewing, publication and activation remain distinct.
+- [x] Existing palette, typography, fixed paper grid, original brand/robots, post-it proportions/safe areas and responsive scale remain consistent across desktop and compact layouts.
+- [x] Real-server small/large-scope, permission, stale-read, conflict/recovery, signed-handoff, keyboard/focus and mobile checks complete; integrated screenshots and precise verification limits are recorded.
+
+Earlier workspace and centralized-agent verification records below describe their own baselines. They do not establish acceptance of this new presentation. Independent human usability and screen-reader validation remain separate from automated checks and screenshots.
+
 ## Centralized agent operations — 2026-10-16
 
-**Status:** locally verified on `feat/central-agent-workflow`; no merge or release publication authorized. The owner requests coordinated CLI, five Skills, backend, README and documentation changes. The supplied implementation brief and strategic summary define the scope; the detailed plan is maintained under `docs/central-agent-workflow/`.
+**Status:** merged by the maintainer as [PR #109](https://github.com/A1b3rt0M3rcad0/wos/pull/109) into `master` at `14b6708` on 2026-10-16; release publication remains separate. The owner requests coordinated CLI, five Skills, backend, README and documentation changes. The supplied implementation brief and strategic summary define the scope; the detailed plan is maintained under `docs/central-agent-workflow/`.
 
 - [x] Initialize one local installation data directory, persistent active profiles, explicit per-process profile selection and distinct protected destinations, without project `.wos` discovery.
 - [x] Migrate existing protected material safely with drained writers, preserved source/issued bytes/pending intentions, collision checks and interruption recovery.
