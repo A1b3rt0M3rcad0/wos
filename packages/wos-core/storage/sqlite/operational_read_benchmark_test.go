@@ -89,11 +89,21 @@ func BenchmarkOperationalReads(b *testing.B) {
 	if e = u.Commit(); e != nil {
 		b.Fatal(e)
 	}
+	// v2 controlled harness: identical statistics preparation on both sources,
+	// outside timing. Earlier unanalysed cold-plan failures remain archived.
+	if os.Getenv("WOS_OPERATIONAL_ANALYZE") == "1" {
+		if _, e = store.db.ExecContext(ctx, "ANALYZE"); e != nil {
+			b.Fatal(e)
+		}
+	}
+	statements := traceOperationalSQL(b, store)
 	for _, name := range []string{"section_work_items", "snapshot_with_proof", "focal_with_proof"} {
 		b.Run(fmt.Sprintf("%s/%d", name, n), func(b *testing.B) {
 			b.ReportAllocs()
 			samples := make([]time.Duration, 0, 256)
 			var responseBytes int
+			poolBefore := store.db.Stats()
+			sqlBefore := statements.Load()
 			for b.Loop() {
 				start := time.Now()
 				var value any
@@ -117,6 +127,10 @@ func BenchmarkOperationalReads(b *testing.B) {
 				samples = append(samples, time.Since(start))
 			}
 			b.StopTimer()
+			poolAfter := store.db.Stats()
+			b.ReportMetric(float64(statements.Load()-sqlBefore)/float64(b.N), "sql_statements/op")
+			b.ReportMetric(float64(poolAfter.WaitCount-poolBefore.WaitCount)/float64(b.N), "pool_waits/op")
+			b.ReportMetric(float64(poolAfter.WaitDuration-poolBefore.WaitDuration)/float64(b.N), "pool_wait_ns/op")
 			sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
 			for _, p := range []int{50, 95, 99} {
 				b.ReportMetric(float64(samples[(len(samples)*p+99)/100-1].Nanoseconds()), fmt.Sprintf("p%d_ns", p))
