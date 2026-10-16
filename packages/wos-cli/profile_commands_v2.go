@@ -319,6 +319,11 @@ func createProfileV2(ctx context.Context, w *Workspace, o options, name string, 
 		if e = DecodeV2Document(proposal, &profile); e != nil {
 			return result, e
 		}
+	} else if o.values["private-key-ref"] != "" && o.values["generate-signing-key"] != "true" && o.values["signing-key-stdin"] != "true" {
+		profile, e = prepareReferencedProfileV2(ctx, w, o, name, resolver)
+		if e != nil {
+			return result, e
+		}
 	} else {
 		profile, e = prepareGeneratedProfileV2(ctx, w, o, name, resolver, os.Stdin)
 		if e != nil {

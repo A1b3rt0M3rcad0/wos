@@ -395,7 +395,11 @@ func returnCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 		if receipt.Proof.PayloadType == signing.ReturnResolutionReceipt {
 			result.Data = map[string]any{"contract_id": id, "original_return_accepted": false, "terminal_resolution_confirmed": true, "cleanup_pending": e != nil, "resolution_digest": signing.Digest(receipt.Payload)}
 		} else {
-			result.Data = map[string]any{"contract_id": id, "remote_committed": true, "cleanup_pending": e != nil, "acceptance_digest": signing.Digest(receipt.Payload)}
+			var accepted signing.ReceiptPayload
+			if decode := signing.DecodeStrict(receipt.Payload, &accepted, signing.MaxPayloadBytes); decode != nil {
+				return result, decode
+			}
+			result.Data = map[string]any{"contract_id": id, "remote_committed": true, "cleanup_pending": e != nil, "acceptance_digest": signing.Digest(receipt.Payload), "disposition": accepted.Disposition, "contract_status": accepted.ContractStatus, "work_item_lifecycle": accepted.WorkItemLifecycle, "review_case_id": accepted.ReviewCaseID, "task_completed": accepted.WorkItemLifecycle == "done"}
 		}
 	}
 	if e != nil {

@@ -16,6 +16,11 @@ import (
 // Callers acquire profile first and then one contract; network operations must
 // not hold a profile lock except replay of an already frozen profile intention.
 func (w *Workspace) LockV2(ctx context.Context, profile, contract string) (func(), error) {
+	if !w.migrationAccess {
+		if e := refuseMigratedSource(w); e != nil {
+			return nil, e
+		}
+	}
 	if !validProfileName(profile) {
 		return nil, fmt.Errorf("invalid lock profile")
 	}
@@ -30,7 +35,17 @@ func (w *Workspace) LockV2(ctx context.Context, profile, contract string) (func(
 	// share one lock. Selection still requires the exact existing directory name.
 	raw, _ := json.Marshal([]string{"WOS stable workspace lock v2", root, strings.ToLower(profile), contract})
 	hash := sha256.Sum256(raw)
-	return acquireRuntimeLockV2(ctx, hex.EncodeToString(hash[:]))
+	release, e := acquireRuntimeLockV2(ctx, hex.EncodeToString(hash[:]))
+	if e != nil {
+		return nil, e
+	}
+	if !w.migrationAccess {
+		if e = refuseMigratedSource(w); e != nil {
+			release()
+			return nil, e
+		}
+	}
+	return release, nil
 }
 
 func validContractLockIDV2(value string) bool { return d.ID(value).Validate() == nil }

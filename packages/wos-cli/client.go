@@ -89,7 +89,7 @@ func parseOptions(args []string) (options, error) {
 			continue
 		}
 		key, value, has := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		allowed := map[string]bool{"destination": true, "to": true, "signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true, "phase": true, "writers-drained": true}
+		allowed := map[string]bool{"order": true, "holder": true, "status": true, "source-version": true, "evidence": true, "finding": true, "from": true, "type": true, "description": true, "title": true, "uri": true, "criterion": true, "artifact-type": true, "content-hash": true, "summary": true, "next-action": true, "expected-draft": true, "result": true, "rationale": true, "decision": true, "requirement": true, "destination": true, "to": true, "signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true, "phase": true, "writers-drained": true}
 		if !allowed[key] {
 			return o, usage("unknown flag --" + key)
 		}
@@ -219,6 +219,9 @@ func run(ctx context.Context, o options) (Output, error) {
 		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "signed_contracts_v2", "workspace_schema": 2, "supported_work_protocols": []string{"contracts_v1", "signed_contracts_v2"}, "supported_workspace_schemas": []int{1, 2}}
 		return result, nil
 	}
+	if o.values["workspace"] == "" && os.Getenv("WOS_WORKSPACE") == "" {
+		return runCentral(ctx, o)
+	}
 	root := o.values["workspace"]
 	if root == "" {
 		root = os.Getenv("WOS_WORKSPACE")
@@ -231,6 +234,9 @@ func run(ctx context.Context, o options) (Output, error) {
 		return result, &LocalError{Err: err}
 	}
 	defer w.Close()
+	if e := refuseMigratedSource(w); e != nil {
+		return result, e
+	}
 	if o.args[0] == "workspace" {
 		return workspaceMigrationCommandV2(ctx, w, o)
 	}
