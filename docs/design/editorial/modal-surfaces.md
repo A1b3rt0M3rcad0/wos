@@ -19,7 +19,7 @@ A separate local comparison swaps the current stylesheet for the pre-change `e4a
 
 The existing complete browser suite additionally covers keyboard focus/restoration, real saves, conflict recovery, uncertain retries, permissions, contract and signed-review details, button states, accessibility checks, fixed-paper scrolling, persistent actions, and responsive geometry. Its nested-form matrix includes 320 px, mobile landscape, and doubled root text; its scale matrix includes Full HD, 2K, and 4K. See [validation](validation.md) for executed results and limits.
 
-Affected captures are refreshed in the [gallery](README.md#detail-forms-and-settings), including expanded forms, the 2K form, and mobile settings. The added mobile action/detail and desktop/mobile technical-command captures show the remaining modal families. [Capture provenance](screenshots.json) distinguishes the modal refresh from retained workspace-page captures.
+Affected captures are refreshed in the [gallery](README.md#detail-forms-and-settings), including expanded forms, the 2K form, and mobile settings. The added mobile action/detail and desktop/mobile technical-command captures show the remaining modal families. The subsequent owner-requested hand-drawn brand update regenerates every header-bearing capture. [Capture provenance](screenshots.json) records that current revision; the earlier color-only geometry comparison remains separately identified by its baseline.
 
 To reproduce the modal palette check after building the native server, run from `tests/web`:
 

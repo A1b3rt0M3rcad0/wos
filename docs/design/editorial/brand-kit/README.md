@@ -1,5 +1,7 @@
 # WOS web identity integration
 
+The active header/browser identity is now the [owner-supplied hand-drawn chain](hand-drawn-chain.md), with only the logo visible in the home link. The original 94-file kit below remains preserved; its earlier symbol-plus-text application is historical and is superseded by the owner's latest instruction.
+
 The owner supplied `WOS_Web_Brand_Kit.zip` as the WOS brand and subsequently directed that the name WOS follow the site's existing typography. This integration pairs the supplied modular symbol with live Instrument Serif lettering, retaining the approved editorial composition, robot illustrations, and Woobe operational palette.
 
 ## What the kit establishes
@@ -14,7 +16,7 @@ The [original README](README.source.md) and [original SVG index](ASSET_INDEX.sou
 
 ![Owner-supplied brand kit preview](preview.png)
 
-## Applications in WOS
+## Earlier applications in WOS (historical)
 
 | Placement | Supplied asset | Integration |
 | --- | --- | --- |
@@ -35,7 +37,7 @@ All **94 media files** are available under `packages/wos-api/web/assets/brand/`,
 
 The existing robots and locally served fonts remain unchanged. The kit's catalogue, sample HTML, React component, optional tokens, and manifest were studied as reference material. WOS keeps its existing Go/HTML/JavaScript implementation. PWA icons and social PNGs are available in the library; the sample's placeholder public domain is not copied into production metadata.
 
-## Verification and page captures
+## Earlier verification and page captures (historical)
 
 The brand browser test checks the accessible home link, loaded symbol, original aspect ratio, readable live name, and absence of page overflow at 1440, 390, and 320 px. It verifies that the name uses the loaded Instrument Serif face at weight 400, matching the editorial heading. The test asserts that only one brand image exists on the page, including during a held pending read. The chapter gallery checks the actual area labels. Declared browser/touch icons decode and the compatibility favicon matches the supplied bytes. The pending-read vignette disappears when the real response completes.
 

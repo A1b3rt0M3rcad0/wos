@@ -1,5 +1,5 @@
 {
-  "implementation_commit": "4706de7aac759055da764338b073a48b7a833668",
+  "implementation_commit": "53665c0ada519dcd5a7b16f9b2e0c4936f065999",
   "capture_test": "tests/web/editorial.spec.mjs",
   "dataset": "Isolated illustrative records created through the public WOS command API",
   "browser": "Chromium 154.0.8037.57 on Linux amd64",
@@ -12,12 +12,12 @@
     "packages/wos-api/web/assets/command-exposure.json": "61df462d4242fd0f28a953645019e3d3d34aef1214e8694fd45d6385e16f91c5",
     "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
     "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
-    "packages/wos-api/web/assets/editorial.css": "9a5c10875bec5bf475d48137186d0d8ae9aa8ef2e4f8a1d3d1686a9ee0ce67df",
+    "packages/wos-api/web/assets/editorial.css": "e1c0a804e313b4e6420ad6b88640cc148680e52ed6bc737135b4cc609591fe84",
     "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
     "packages/wos-api/web/assets/en-US.js": "f55588306567404fce241f385307d752e15548d4238996e9f3fde58286c52b86",
-    "packages/wos-api/web/assets/favicon.svg": "cb3f0ca59c6d1ea8b765c72b194defe2135fa2550db2f5dd94013ba5c5e841e4",
+    "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
     "packages/wos-api/web/assets/human-forms.js": "d7ea71942c1532fed78d707488be4822e7837852f7abbd098fc4a695e6177ffc",
-    "packages/wos-api/web/assets/index.html": "477a02d00d4fe9bb3066680de7169ccd6d21f19c69ad621bcc4b313a70e57879",
+    "packages/wos-api/web/assets/index.html": "4d909746dc68d02470f6807fc7c96182560a712f748ade1e7e4b48b49c11cec3",
     "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
     "packages/wos-api/web/assets/navigation.js": "dd24431bdbe5ec4a5eb5e3b05b6e195584953ba3f57eafb13abd8cce0bcec55c",
     "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
@@ -38,10 +38,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:09.933176+00:00",
-      "sha256": "f957bd1a083dbb7cc418d372ee19fbceddb660e329b56410607cdbdee48dc72f",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:35.002066+00:00",
+      "sha256": "e88175598aae2def46ee4414a13a32fa89b894facf90482efa6996952b856bbf"
     },
     {
       "file": "screenshots/02-overview.png",
@@ -54,10 +52,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:11.229167+00:00",
-      "sha256": "e6a97c2312737dd5163d2aab80d15ceb34d797f2ea0ed5fd3c0bd084f9847d6c",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:35.602062+00:00",
+      "sha256": "1312f305abd5a845475b7a00e137dc93ce6328d595d1533ac5fb2a0ebe6eb049"
     },
     {
       "file": "screenshots/03-plan.png",
@@ -70,10 +66,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:11.537165+00:00",
-      "sha256": "e4ba9761bd43926f4fe03ee122d56cd8fcc6298efbae01c18edd026539c01518",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:35.778061+00:00",
+      "sha256": "97560096763bfaa85c720ba71b8e62679e4d79f1bd191509785efd78b8fa7d25"
     },
     {
       "file": "screenshots/04-work.png",
@@ -86,10 +80,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:11.929163+00:00",
-      "sha256": "a6242fb6eac0c030b117e1b8ce0b99b87ef4fa1f497b83a05479dd1b686ba764",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:35.938060+00:00",
+      "sha256": "17043f0ce187898bb3f073b2641199a1f043434ec0b1726018a165bab12a5d03"
     },
     {
       "file": "screenshots/05-work-board.png",
@@ -102,10 +94,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:13.177155+00:00",
-      "sha256": "fb683873a97300658d33cee697e45d36465ce65d5f4ff659f6774bcdba1a7c5d",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:36.690055+00:00",
+      "sha256": "5abbccfe60aca3f7e061ece010ea37c284edb5cf98a3ca9d59928a4470564bab"
     },
     {
       "file": "screenshots/06-issues.png",
@@ -118,10 +108,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:12.305161+00:00",
-      "sha256": "66467d2cfca86a87dea87699257509c2381f8777dfa1b2bc9d2ebb90a5d297ce",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:36.094059+00:00",
+      "sha256": "00a97e06ace7f1581e69a91e6633283444f6745246dae736756c7ba9bc5c9078"
     },
     {
       "file": "screenshots/07-evidence.png",
@@ -134,10 +122,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:12.581159+00:00",
-      "sha256": "d9d2353b08eed905419e5a2cd1718f2db7ec0503699fd0d45083877c42424b32",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:36.266058+00:00",
+      "sha256": "2603e1118636291d8aa40b5a00167695050dacaec1a351ebc2ba6a883a587fa1"
     },
     {
       "file": "screenshots/08-activity.png",
@@ -150,10 +136,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:12.829157+00:00",
-      "sha256": "b54a0d593bff0f1f1c421447dc90fc2409b767854bb38da5d6bbd9add6cfc1b5",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:36.442056+00:00",
+      "sha256": "15663f09a179b6d83bc934b720eacbc31878dd23ae351ee99f7a86c4b4a7bef5"
     },
     {
       "file": "screenshots/09-task-detail.png",
@@ -166,8 +150,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:25.571263+00:00",
-      "sha256": "ef82f39419f102dcf4419d1fa68407bfa8ddf2efdb6c101ce5d75e34f213d1e3"
+      "captured_at_utc": "2026-10-16T16:47:37.014053+00:00",
+      "sha256": "6617f700a81cf0b450d051370b28f5a038e791af431868059ac16b0333a2c999"
     },
     {
       "file": "screenshots/10-task-form.png",
@@ -180,8 +164,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:25.871261+00:00",
-      "sha256": "44b4c54eea283cd85970c0cc26446d50b01815bbc0967b9be3c6ca709fb1d2eb"
+      "captured_at_utc": "2026-10-16T16:47:37.270051+00:00",
+      "sha256": "9d97be193887d77f1ef49d4f7dea8530f41563cbd272174214feba4aec0fa4d3"
     },
     {
       "file": "screenshots/11-settings.png",
@@ -194,8 +178,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:26.563256+00:00",
-      "sha256": "d2237208a6fb7771488099802ebb13ea7acc26dcbb7414375bbde92da0c0d1fe"
+      "captured_at_utc": "2026-10-16T16:47:37.878047+00:00",
+      "sha256": "41a16f3d08fb7a960ddcc451a39000a191c86d6d005b612ebbf9190a37020b58"
     },
     {
       "file": "screenshots/12-mobile-overview.png",
@@ -208,10 +192,8 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:21.289102+00:00",
-      "sha256": "bc787cdc080795e2c35910c84b1ccb855f823da7aa2d6e45a7b206fcc5e2c5ee",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:41.402022+00:00",
+      "sha256": "a132ba667c3c6c2bb2c041af9642912f019bba908eb961af9a27e5cfd8cd5ce2"
     },
     {
       "file": "screenshots/13-mobile-work.png",
@@ -224,10 +206,8 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:21.489101+00:00",
-      "sha256": "a2bc73ab4662c2c53e6303f07475e082c3a30e99380b7dd7376e29376cec96c1",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:41.522021+00:00",
+      "sha256": "3eda841e6235d66deaf66d81232b2ba1fdd323cc7f69b9d3e1aca68a77379b2c"
     },
     {
       "file": "screenshots/14-outcome-loading.png",
@@ -240,10 +220,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:34.273018+00:00",
-      "sha256": "fb7f16e240c52d6da5ef2a2c7c5e4e5ba44efa9a7a20e7da51699a2d5dfef3c6",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:49:23.673322+00:00",
+      "sha256": "c3e203400066b03c48191bf270ee6e1e63c9fbe7d5bf1dabbb6fdd9669d0be1f"
     },
     {
       "file": "screenshots/15-expanded-task-form.png",
@@ -256,8 +234,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:26.139259+00:00",
-      "sha256": "bbb3c548bbc4d191b69c9192808b067c5b2185ed7e3d4ed6d45c5b8d3fdc5fab"
+      "captured_at_utc": "2026-10-16T16:47:37.494049+00:00",
+      "sha256": "928460ce6537e3cc4c06d381b125b455ef03517bcb0912d0c39db82911435ed6"
     },
     {
       "file": "screenshots/16-action-menu.png",
@@ -270,8 +248,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:26.303258+00:00",
-      "sha256": "9320677243c931937b73f8a6a42c3f51832ee070ae432f9eacf24e32d6f96fd0"
+      "captured_at_utc": "2026-10-16T16:47:37.654048+00:00",
+      "sha256": "71d61e9fff0d931c416f455ac62be41b37981a1b485df5bfc542ff520f0f7ccb"
     },
     {
       "file": "screenshots/17-mobile-task-form.png",
@@ -284,7 +262,7 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:31.047225+00:00",
+      "captured_at_utc": "2026-10-16T16:47:41.690020+00:00",
       "sha256": "7502ae7e69a6c6c32f177b2328219391b433dca72d22531045ed4d5935baa9c3"
     },
     {
@@ -298,7 +276,7 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:31.187224+00:00",
+      "captured_at_utc": "2026-10-16T16:47:41.854019+00:00",
       "sha256": "0c6d95b9a92ccd1fa7b3ba36e95a14a48bd0d8cc9713a9cea0d5e938ed7e76bd"
     },
     {
@@ -312,10 +290,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:06.753198+00:00",
-      "sha256": "f70fe3feb2e46e948ed99226f959bf4d604e286b38de4fd236a76ccc69195a25",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:33.038080+00:00",
+      "sha256": "45c15f47b33d14b0d76bbbda8e361d8bef12276352f687a44c98df5bb809209d"
     },
     {
       "file": "screenshots/20-fixed-paper-scrolled.png",
@@ -328,10 +304,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:06.985196+00:00",
-      "sha256": "5fe678e09e0d31e4b2179b47ecfffbf4a354f9d3c7ec8cdc50d588fc2e9e8147",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:33.210078+00:00",
+      "sha256": "eb5a91c545c080076b0c057c7bb943b85984e6172f05d935f86212e6d1ac0344"
     },
     {
       "file": "screenshots/21-mobile-outcome-navigation.png",
@@ -344,10 +318,8 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:07.737191+00:00",
-      "sha256": "4f47adffdfb52bd2b9b6f0351ff86d32610816c1224da5f8aa1783fb61348431",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:33.714075+00:00",
+      "sha256": "9a15853f0d5222763fbd7090866045f71748608c0783e5103181654b828a023c"
     },
     {
       "file": "screenshots/22-area-tab-hover.png",
@@ -360,11 +332,9 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:12:40.969374+00:00",
-      "sha256": "ad56b7ef19cec7a41edd6ac413b40c8bb293a57c8972cb397810d0f856860426",
-      "interaction_state": "Hover Issues; Work remains selected",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:46:57.686327+00:00",
+      "sha256": "e037fb956adf01ac80e5c2070bada60f97099e27042ac1b5a331fddb5aa0fa8c",
+      "interaction_state": "Hover Issues; Work remains selected"
     },
     {
       "file": "screenshots/23-view-switch-hover.png",
@@ -377,11 +347,9 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:12:41.129373+00:00",
-      "sha256": "7d47cec3b76a768bd9d483c01159613686e88f1de06f8d11c491fda6195001fb",
-      "interaction_state": "Hover Board; List remains selected",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:46:58.362322+00:00",
+      "sha256": "f017b7efe5a88147c18adbbd4e553162423c1a7c98404fb44db92d6a3e65898d",
+      "interaction_state": "Hover Board; List remains selected"
     },
     {
       "file": "screenshots/24-board-card-hover.png",
@@ -394,11 +362,9 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:12:43.089360+00:00",
-      "sha256": "e0f8242636e10ae4f7ad71d275790cb0adaef9806f4c8e8eea91d20aa2af5e04",
-      "interaction_state": "Hover a Task board card",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:03.110288+00:00",
+      "sha256": "78373558d4e3793fd606d33b56df488f6fe9ed77641582645dca97ee937cc74e",
+      "interaction_state": "Hover a Task board card"
     },
     {
       "file": "screenshots/25-form-controls-hover.png",
@@ -411,8 +377,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:25:07.375389+00:00",
-      "sha256": "dbfa5b6f2ce4e88edad5654a36b5f148ea2fb437e6d777f29dc02e9cda595c56",
+      "captured_at_utc": "2026-10-16T16:47:18.518181+00:00",
+      "sha256": "713aab2f5daf7d25227559cd0cb0de9184043052ac21b293dcca6cd2a2dda662",
       "interaction_state": "Hover Add instructions item inside the expanded Task form"
     },
     {
@@ -426,11 +392,9 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T15:13:00.777239+00:00",
-      "sha256": "bdb073ee09c8675dd759125e96152fb1c65e9ab28204cdf7096099a2380382e9",
-      "interaction_state": "Keyboard focus on Issues; Work selected; touch-enabled browser context",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:47:28.054115+00:00",
+      "sha256": "9dd56114ce835fe81c5a92fe76a4fc7152c87680d21b237354ec5ef660409c81",
+      "interaction_state": "Keyboard focus on Issues; Work selected; touch-enabled browser context"
     },
     {
       "file": "screenshots/27-scale-reference.png",
@@ -443,12 +407,10 @@
         "width": 1440,
         "height": 1000
       },
-      "captured_at_utc": "2026-10-16T15:42:21.693116+00:00",
-      "sha256": "dceae707d7b8710269cc8913323563958138467bdd44fb2f74a897b1bfd811bd",
+      "captured_at_utc": "2026-10-16T16:46:24.918556+00:00",
+      "sha256": "aa039d6a95c4e59d5de69909c077d939e0a6a63268e4458b8216860b5dcd3070",
       "motion_preference": "no-preference",
-      "requested_document_scroll_css_px": 173.0,
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "requested_document_scroll_css_px": 173.0
     },
     {
       "file": "screenshots/28-scale-full-hd.png",
@@ -461,12 +423,10 @@
         "width": 1920,
         "height": 1080
       },
-      "captured_at_utc": "2026-10-16T15:42:24.597096+00:00",
-      "sha256": "ca75fe36a20cc22b936ddad1cd6f097e4b920fdb0da5f4808e41c3db847292b6",
+      "captured_at_utc": "2026-10-16T16:46:26.078548+00:00",
+      "sha256": "1875c67977a0d69e00a2ce3ebf5590c28a7e07599c482829b9643b01430caed9",
       "motion_preference": "no-preference",
-      "requested_document_scroll_css_px": 230.66666666666666,
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "requested_document_scroll_css_px": 230.66666666666666
     },
     {
       "file": "screenshots/29-scale-2k.png",
@@ -479,12 +439,10 @@
         "width": 2560,
         "height": 1440
       },
-      "captured_at_utc": "2026-10-16T15:42:27.281078+00:00",
-      "sha256": "892db7321f6ff2fd432f36a53b7cabdc11a9b78e9232fa68e8e6906cf3b9e23a",
+      "captured_at_utc": "2026-10-16T16:46:27.466538+00:00",
+      "sha256": "2d2be977f20c377b3b3c7218d30294b428fc29ecf744fa9e8cb01f45e9dbe144",
       "motion_preference": "no-preference",
-      "requested_document_scroll_css_px": 307.55555555555554,
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "requested_document_scroll_css_px": 307.55555555555554
     },
     {
       "file": "screenshots/30-scale-4k.png",
@@ -497,12 +455,10 @@
         "width": 3840,
         "height": 2160
       },
-      "captured_at_utc": "2026-10-16T15:42:30.713054+00:00",
-      "sha256": "5cfbb3d45ce8f3250ce8bb1a2789333b376730613f9219d29802dd03f6b31662",
+      "captured_at_utc": "2026-10-16T16:46:29.790522+00:00",
+      "sha256": "f7c4af4208aebf5f546e1237764f0b01586577e53c30f64865c5bdfbd3527e2f",
       "motion_preference": "no-preference",
-      "requested_document_scroll_css_px": 461.3333333333333,
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "requested_document_scroll_css_px": 461.3333333333333
     },
     {
       "file": "screenshots/31-scale-2k-task-form.png",
@@ -515,8 +471,8 @@
         "width": 2560,
         "height": 1440
       },
-      "captured_at_utc": "2026-10-16T16:24:39.323581+00:00",
-      "sha256": "9b4cac2979f86b916cf87721777bff99ab46907c9fc70dbf7f24ee717de2ab73",
+      "captured_at_utc": "2026-10-16T16:46:28.054534+00:00",
+      "sha256": "c6b767cec12fccedf877dd6b1c354c5486af9b2076715ef0de1ed9efb3f43bc6",
       "motion_preference": "reduce"
     },
     {
@@ -530,11 +486,9 @@
         "width": 2560,
         "height": 1440
       },
-      "captured_at_utc": "2026-10-16T15:42:29.401063+00:00",
-      "sha256": "1817aba624b0423afef3cf8898ef2fb71cae1a3fa84ce71146d9be7aab7c0b35",
-      "motion_preference": "reduce",
-      "implementation_commit": "e288dac1051ce9263bb27c7c0eb89be7a013300c",
-      "capture_test_sha256": "be0f71b9fb565ec7bc2f2e9ded86d0859041133860b49ef8a192e579a918c45f"
+      "captured_at_utc": "2026-10-16T16:46:28.946528+00:00",
+      "sha256": "9bac1be2396fa855f7b996181d3b2c67948e2a467caaac8640fb40ab942033d5",
+      "motion_preference": "reduce"
     },
     {
       "file": "screenshots/33-mobile-action-menu.png",
@@ -547,8 +501,8 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:27:18.922508+00:00",
-      "sha256": "1f4162f2314bd261f6f83f7b7dc83aa70a643e6e032573aea1d8833436926543",
+      "captured_at_utc": "2026-10-16T16:47:48.573972+00:00",
+      "sha256": "eb9f27392acf35025d783e985b638dea92add066b2cbe00e46fe24e5c7ba2d8d",
       "interaction_state": "Action menu with Advanced expanded below the viewport; modal scroll reset to the top and pointer outside"
     },
     {
@@ -562,8 +516,8 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:27:19.646503+00:00",
-      "sha256": "a2f58cb60907d3b592a04b81ff7d65faf89ded3d50b17e790098660647b9d9f7"
+      "captured_at_utc": "2026-10-16T16:47:49.021969+00:00",
+      "sha256": "836f99cfa8803a45b2814361551f178efd4f8a60359f49a7a529286634fc722c"
     },
     {
       "file": "screenshots/35-technical-command.png",
@@ -576,8 +530,8 @@
         "height": 1000
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:27:18.314512+00:00",
-      "sha256": "1119c6115ca69648fa7f221756d35d6d6353f790c0b26496028e1f83187190b7",
+      "captured_at_utc": "2026-10-16T16:47:48.289974+00:00",
+      "sha256": "d1b6cd2f4d0ef1678879ebb394f755cb8578959d960329c9ac455deb4c7cd8ff",
       "interaction_state": "Technical Edit task command, opened from Developer tools"
     },
     {
@@ -591,13 +545,13 @@
         "height": 844
       },
       "full_page": false,
-      "captured_at_utc": "2026-10-16T16:27:20.290499+00:00",
-      "sha256": "f5cdcc636395e8e4d9f0c50b4d36b1514ea984181f27e803b44a2e03f506a8a8",
+      "captured_at_utc": "2026-10-16T16:47:49.341967+00:00",
+      "sha256": "a5d3d40526c26b3c8225138e0a302b521fb149e1f3b3db5140fd24b84bb1ca39",
       "interaction_state": "Technical Edit task command, opened from Developer tools"
     }
   ],
-  "capture_test_sha256": "81ced7ef84cec9bc9b5bd21cc30aae542a45c0352d19de1c0c9e11fce08337fc",
-  "capture_profile": "Actual viewport output: 1440x1000 desktop and 390x844 mobile; fonts and visible images loaded, animations disabled. Paired fixed-paper views use normal motion at 0/173 px scroll. Interaction views use reduced motion; mobile focus uses a touch-enabled context. Simulated-press text selections are cleared before interaction captures. Scale comparison: 1440x1000, 1920x1080, 2560x1440 and 3840x2160 CSS px; normal-motion fixed paper and requested scroll 173*(width/1440). Additional 2K Task form (Initial state focused) and Work board use reduced motion. The wide-view pointer is moved to the viewport origin before overview captures. Scale overview captures also clear transient focus; the 2K board is scrolled into view. Matte-modal refresh: nine prior modal captures regenerated and four new mobile action/detail and desktop/mobile technical-command captures added. Non-modal captures are retained with explicit per-record implementation/test provenance. Modal palette views use normal-motion paper; prior per-record motion states remain unchanged.",
+  "capture_test_sha256": "554f5d78a24449f7c4f27b16d9a3c57509b451cbb8effbca3bb498397f85dd69",
+  "capture_profile": "Actual viewport output: 1440x1000 desktop and 390x844 mobile; fonts and visible images loaded, animations disabled. Paired fixed-paper views use normal motion at 0/173 px scroll. Interaction views use reduced motion; mobile focus uses a touch-enabled context. Simulated-press text selections are cleared before interaction captures. Scale comparison: 1440x1000, 1920x1080, 2560x1440 and 3840x2160 CSS px; normal-motion fixed paper and requested scroll 173*(width/1440). Additional 2K Task form (Initial state focused) and Work board use reduced motion. The wide-view pointer is moved to the viewport origin before overview captures. Scale overview captures also clear transient focus; the 2K board is scrolled into view. All 36 captures are regenerated with the owner-supplied hand-drawn chain header logo and matte modal surfaces. The active logo is an unmodified transparent SVG; the home link has no visible WOS wordmark/caption.",
   "test_support_sha256": {
     "tests/web/interaction-audit.mjs": "11a5cd72ba25b04dbf4f1dd599d364d72ef27cdfb55cc6f15774b7a41d6f03e7",
     "tests/web/ux-fixture.mjs": "1fe9b34eba9e678f2a261bf7adf0c22f1279929d80480f446f67597806923e90",

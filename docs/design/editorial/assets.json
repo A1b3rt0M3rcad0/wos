@@ -293,9 +293,9 @@
     },
     {
       "file": "packages/wos-api/web/assets/favicon.svg",
-      "source": "Exact compatibility copy of WOS_Web_Brand_Kit.zip/03-favicon-app/favicon.svg",
+      "source": "Exact compatibility copy of Hand-Drawn-Orange-Chain-Icon.zip/Hand-Drawn Orange Chain Icon.svg",
       "decorative": true,
-      "sha256": "cb3f0ca59c6d1ea8b765c72b194defe2135fa2550db2f5dd94013ba5c5e841e4"
+      "sha256": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4"
     }
   ],
   "palette": {
@@ -312,6 +312,14 @@
     "source_archive_sha256": "0b2be22d4acca50aa57d31c91b40c89dbeb3e2a1aaef59cacdea3a70669009ae",
     "manifest": "docs/design/editorial/brand-kit/assets.json",
     "media_count": 94,
-    "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316"
+    "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316",
+    "status": "Previous owner-supplied kit; preserved as reference, superseded in the header and browser icons by the hand-drawn chain"
+  },
+  "active_brand": {
+    "source_archive": "Hand-Drawn-Orange-Chain-Icon.zip",
+    "source_archive_sha256": "997ef03b787b554f3d9358ad23e6ea46a7aed928657105f4e9c61aeeba761949",
+    "manifest": "docs/design/editorial/brand-kit/hand-drawn-chain-assets.json",
+    "media_count": 3,
+    "header": "Image-only home link; no visible WOS wordmark"
   }
 }
