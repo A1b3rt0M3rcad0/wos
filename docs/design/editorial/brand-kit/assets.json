@@ -1,0 +1,824 @@
+{
+  "source_archive": "WOS_Web_Brand_Kit.zip",
+  "source_archive_sha256": "0b2be22d4acca50aa57d31c91b40c89dbeb3e2a1aaef59cacdea3a70669009ae",
+  "media_count": 94,
+  "svg_count": 80,
+  "png_count": 13,
+  "ico_count": 1,
+  "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316",
+  "active_placements": {
+    "header": "02-logotipos/wos-horizontal-light.svg",
+    "workspace": "04-navegacao/wos-sidebar-light.svg",
+    "loading": "01-marca/wos-symbol-primary.svg",
+    "favicon": "03-favicon-app/favicon.svg",
+    "favicon_ico": "12-png-web/favicon.ico",
+    "favicon_png": "12-png-web/favicon-32.png",
+    "apple_touch": "12-png-web/apple-touch-icon-180.png"
+  },
+  "files": [
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-currentcolor.svg",
+      "original": "01-marca/wos-symbol-currentcolor.svg",
+      "bytes": 2378,
+      "sha256": "0696961c1826d9333f5e86bd7dade89dcff538759fe6c6b0714de7be54cc4cb5",
+      "viewBox": "0 0 194 82",
+      "width": "194",
+      "height": "82"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-ink.svg",
+      "original": "01-marca/wos-symbol-ink.svg",
+      "bytes": 2355,
+      "sha256": "f6dd82b34b7d1bd27e8b841bb8dbabced92f4a44c72d6e2383a40f0c4b23e7a8",
+      "viewBox": "0 0 194 82",
+      "width": "194",
+      "height": "82"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-muted.svg",
+      "original": "01-marca/wos-symbol-muted.svg",
+      "bytes": 2359,
+      "sha256": "7556478fd8dd48d9af793135b21ec5e87f13090841b202f83270291c5d1b16bf",
+      "viewBox": "0 0 194 82",
+      "width": "194",
+      "height": "82"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-ink.svg",
+      "original": "01-marca/wos-symbol-padded-ink.svg",
+      "bytes": 2299,
+      "sha256": "4fc8bad44bfe0b974e298a78b90fd66596394542ffb6083b827acc6ae0f36b6d",
+      "viewBox": "0 0 256 256",
+      "width": "256",
+      "height": "256"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-primary.svg",
+      "original": "01-marca/wos-symbol-padded-primary.svg",
+      "bytes": 2307,
+      "sha256": "5f515f88b9c81fcabf59bbb7e06db0477d3a20b945094bf65af3de3fe20d10c5",
+      "viewBox": "0 0 256 256",
+      "width": "256",
+      "height": "256"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-white.svg",
+      "original": "01-marca/wos-symbol-padded-white.svg",
+      "bytes": 2303,
+      "sha256": "7d4752f201c6733aaf76c7a473212dee81c8091993775dc97b0f698af6d36663",
+      "viewBox": "0 0 256 256",
+      "width": "256",
+      "height": "256"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-primary.svg",
+      "original": "01-marca/wos-symbol-primary.svg",
+      "bytes": 2363,
+      "sha256": "53e62bcf2fbd3b9b488851f8e81b315bd66ca0afdf270dba812689c832072247",
+      "viewBox": "0 0 194 82",
+      "width": "194",
+      "height": "82"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/01-marca/wos-symbol-white.svg",
+      "original": "01-marca/wos-symbol-white.svg",
+      "bytes": 2359,
+      "sha256": "687391c82f6e7bb109971e425d9900dee9870a8bde4ca4b34e498c406bb2884c",
+      "viewBox": "0 0 194 82",
+      "width": "194",
+      "height": "82"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-compact-dark.svg",
+      "original": "02-logotipos/wos-compact-dark.svg",
+      "bytes": 3371,
+      "sha256": "a25ef039770d0c97d8459405f7d90a4df4b095c28e917ef59ecea95aab942545",
+      "viewBox": "0 0 305 86",
+      "width": "305",
+      "height": "86"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-compact-light.svg",
+      "original": "02-logotipos/wos-compact-light.svg",
+      "bytes": 3373,
+      "sha256": "5424c2a516734580e0dd544d6158ff09ab75128ac6ce224080e2918e420dea2c",
+      "viewBox": "0 0 305 86",
+      "width": "305",
+      "height": "86"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-all-orange.svg",
+      "original": "02-logotipos/wos-horizontal-all-orange.svg",
+      "bytes": 3391,
+      "sha256": "97c6bf976d7c5be76a890fe7cfb6cd3f1c6cb5cdf01e6f2591793d8e99ce0450",
+      "viewBox": "0 0 450 112",
+      "width": "450",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-dark.svg",
+      "original": "02-logotipos/wos-horizontal-dark.svg",
+      "bytes": 3379,
+      "sha256": "f347f503d44dd4767d128aa3fe797d161b3e774f5537d38f4c1ed4ed081afd1f",
+      "viewBox": "0 0 450 112",
+      "width": "450",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-light.svg",
+      "original": "02-logotipos/wos-horizontal-light.svg",
+      "bytes": 3381,
+      "sha256": "feb903ffc7853250fbf0ddef470f3c5d8bb1b6afc44043ab1b54e593d37e04a3",
+      "viewBox": "0 0 450 112",
+      "width": "450",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-mono-ink.svg",
+      "original": "02-logotipos/wos-horizontal-mono-ink.svg",
+      "bytes": 3387,
+      "sha256": "a4e9836e4f0806468ed950638768be6ecf1cc2aba91b9d78b149133549acbd45",
+      "viewBox": "0 0 450 112",
+      "width": "450",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-mono-white.svg",
+      "original": "02-logotipos/wos-horizontal-mono-white.svg",
+      "bytes": 3391,
+      "sha256": "6f615adb97e14fa60a55d1f3aab969a42caad104749251f8830a0eb644176ba8",
+      "viewBox": "0 0 450 112",
+      "width": "450",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-stacked-dark.svg",
+      "original": "02-logotipos/wos-stacked-dark.svg",
+      "bytes": 3377,
+      "sha256": "6fbb821ec5ad7d0dacac0b536af15fbf4daf288d9cc7e6642ddedaee7ad2c6c8",
+      "viewBox": "0 0 360 300",
+      "width": "360",
+      "height": "300"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/02-logotipos/wos-stacked-light.svg",
+      "original": "02-logotipos/wos-stacked-light.svg",
+      "bytes": 3379,
+      "sha256": "58934542fcf59fca218e3e5935c53cca316a7c3ada60fb0d532d0eaea3887b56",
+      "viewBox": "0 0 360 300",
+      "width": "360",
+      "height": "300"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-dark.svg",
+      "original": "03-favicon-app/app-icon-dark.svg",
+      "bytes": 2350,
+      "sha256": "5d7521a425d94362a7a84e987f2264fb16013e68543794f910cdb4f5b6e31f61",
+      "viewBox": "0 0 192 192",
+      "width": "192",
+      "height": "192"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-light.svg",
+      "original": "03-favicon-app/app-icon-light.svg",
+      "bytes": 2352,
+      "sha256": "76c7715d240aad9d128f9041b00a25368155ba8c1a5c79e1a2e2de242f2d75bc",
+      "viewBox": "0 0 192 192",
+      "width": "192",
+      "height": "192"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-orange.svg",
+      "original": "03-favicon-app/app-icon-orange.svg",
+      "bytes": 2354,
+      "sha256": "9b7a04847fe5247b8d9e371c66af5cf29342332b479c0a3a411f0f331f1dcee5",
+      "viewBox": "0 0 192 192",
+      "width": "192",
+      "height": "192"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-transparent.svg",
+      "original": "03-favicon-app/app-icon-transparent.svg",
+      "bytes": 2300,
+      "sha256": "122ec2db5fc9ae40dab7c3f362369a636550286426f0cc47ef7ae24834da81fd",
+      "viewBox": "0 0 512 512",
+      "width": "512",
+      "height": "512"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/apple-touch-icon.svg",
+      "original": "03-favicon-app/apple-touch-icon.svg",
+      "bytes": 2356,
+      "sha256": "4b5c531f94bdf3c9edc85e646febe7e241ca342b91604e3e74a16e1d82883a67",
+      "viewBox": "0 0 180 180",
+      "width": "180",
+      "height": "180"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/favicon-16.svg",
+      "original": "03-favicon-app/favicon-16.svg",
+      "bytes": 2271,
+      "sha256": "b4a5c1d4890e9adf5ba446c1aaf14d07b13b0c875401fa266d3a71d040cda562",
+      "viewBox": "0 0 16 16",
+      "width": "16",
+      "height": "16"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/favicon-32.svg",
+      "original": "03-favicon-app/favicon-32.svg",
+      "bytes": 2271,
+      "sha256": "783c3c9ed12feacc23de841558d260886b8ca6160a99e14f67f63e732ada434e",
+      "viewBox": "0 0 32 32",
+      "width": "32",
+      "height": "32"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/favicon-48.svg",
+      "original": "03-favicon-app/favicon-48.svg",
+      "bytes": 2272,
+      "sha256": "1075e0e2afc6d283c5cdeb7e21655c978fa3e4a08bbacae17a32f91c161474be",
+      "viewBox": "0 0 48 48",
+      "width": "48",
+      "height": "48"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/favicon-64.svg",
+      "original": "03-favicon-app/favicon-64.svg",
+      "bytes": 2272,
+      "sha256": "3b97e8669e01b004a43fa58a764e93cbc79f2181209fc2efcddbcad17a00b431",
+      "viewBox": "0 0 64 64",
+      "width": "64",
+      "height": "64"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/favicon.svg",
+      "original": "03-favicon-app/favicon.svg",
+      "bytes": 2288,
+      "sha256": "cb3f0ca59c6d1ea8b765c72b194defe2135fa2550db2f5dd94013ba5c5e841e4",
+      "viewBox": "0 0 64 64",
+      "width": "64",
+      "height": "64"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/pwa-maskable.svg",
+      "original": "03-favicon-app/pwa-maskable.svg",
+      "bytes": 2349,
+      "sha256": "db75c29594dc07685ac264cfdd5d070d7602b6fcf62dfb1034844774383110bc",
+      "viewBox": "0 0 512 512",
+      "width": "512",
+      "height": "512"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/03-favicon-app/safari-pinned-tab.svg",
+      "original": "03-favicon-app/safari-pinned-tab.svg",
+      "bytes": 2287,
+      "sha256": "4d9e6485b3fab395348e3a65d28980e638b4b3a0a1c14ee03fce3831a2263737",
+      "viewBox": "0 0 256 256",
+      "width": "256",
+      "height": "256"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-ink.svg",
+      "original": "04-navegacao/wos-avatar-ink.svg",
+      "bytes": 2319,
+      "sha256": "91d8adb46e0995504895f3844ff8f380b97ef3ba56d5792fae269d6636d56431",
+      "viewBox": "0 0 96 96",
+      "width": "96",
+      "height": "96"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-orange.svg",
+      "original": "04-navegacao/wos-avatar-orange.svg",
+      "bytes": 2325,
+      "sha256": "8bbdc9a9010160b7110196145016938f75c05218d46f218879813004634efc24",
+      "viewBox": "0 0 96 96",
+      "width": "96",
+      "height": "96"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-soft.svg",
+      "original": "04-navegacao/wos-avatar-soft.svg",
+      "bytes": 2321,
+      "sha256": "8e6070cae4837877731a26cfaf17ce9e63618f34ef587a73e95b5d9ad5afd501",
+      "viewBox": "0 0 96 96",
+      "width": "96",
+      "height": "96"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-brand-card-dark.svg",
+      "original": "04-navegacao/wos-brand-card-dark.svg",
+      "bytes": 3435,
+      "sha256": "64aa707dee0368e1bf0daebec0e1329b15e7c3923aa371aa70bff9945ba95d16",
+      "viewBox": "0 0 264 96",
+      "width": "264",
+      "height": "96"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-brand-card-light.svg",
+      "original": "04-navegacao/wos-brand-card-light.svg",
+      "bytes": 3437,
+      "sha256": "b5af2cc92453d71c4441e2bd9166b6a190e4639f682281c1eebea4bd7a586502",
+      "viewBox": "0 0 264 96",
+      "width": "264",
+      "height": "96"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-footer-dark.svg",
+      "original": "04-navegacao/wos-footer-dark.svg",
+      "bytes": 3367,
+      "sha256": "4d7910a8fbf2a594f6d3fb6d6eec100ad5fa5376d870a74fbc51e8fce4231f5c",
+      "viewBox": "0 0 280 76",
+      "width": "280",
+      "height": "76"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-footer-light.svg",
+      "original": "04-navegacao/wos-footer-light.svg",
+      "bytes": 3369,
+      "sha256": "9060a40ca434e6e251ad5547a82e944d8a49a40f51c3da30b4aa42e3b7e38e44",
+      "viewBox": "0 0 280 76",
+      "width": "280",
+      "height": "76"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-dark.svg",
+      "original": "04-navegacao/wos-icon-button-dark.svg",
+      "bytes": 2359,
+      "sha256": "90471add6b96dcad4614c35e87a540fbb338509cab22682ec5cd44124ac41dde",
+      "viewBox": "0 0 72 72",
+      "width": "72",
+      "height": "72"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-light.svg",
+      "original": "04-navegacao/wos-icon-button-light.svg",
+      "bytes": 2361,
+      "sha256": "d0e89634db725971622cd7260040bf4012be31b1a01dce3c12f789f7fcef9a35",
+      "viewBox": "0 0 72 72",
+      "width": "72",
+      "height": "72"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-orange.svg",
+      "original": "04-navegacao/wos-icon-button-orange.svg",
+      "bytes": 2363,
+      "sha256": "88affc048feef255289fde8a08db8a625fa4f2b78d4f897701ab09d0a7022883",
+      "viewBox": "0 0 72 72",
+      "width": "72",
+      "height": "72"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-navbar-dark.svg",
+      "original": "04-navegacao/wos-navbar-dark.svg",
+      "bytes": 3369,
+      "sha256": "68c23b5d9ca37982a3b9fc0eb7eddfffb4317c8e21c1406e256d92798cae7ebc",
+      "viewBox": "0 0 385 105",
+      "width": "385",
+      "height": "105"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-navbar-light.svg",
+      "original": "04-navegacao/wos-navbar-light.svg",
+      "bytes": 3371,
+      "sha256": "9e12551984728bdb1c47960b353e8098cab7ca1e6e438943dbd0d3262318639c",
+      "viewBox": "0 0 385 105",
+      "width": "385",
+      "height": "105"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-sidebar-dark.svg",
+      "original": "04-navegacao/wos-sidebar-dark.svg",
+      "bytes": 2276,
+      "sha256": "c65ef6edcbc7002f61ad6fa76e25549ca08cd5fd7fcfb1b320ad7b1c53226cba",
+      "viewBox": "0 0 72 72",
+      "width": "72",
+      "height": "72"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/04-navegacao/wos-sidebar-light.svg",
+      "original": "04-navegacao/wos-sidebar-light.svg",
+      "bytes": 2278,
+      "sha256": "f865d23a2e15b230aaaf58c0d3ee68704c7d2785bad006e672706c1c417a2d51",
+      "viewBox": "0 0 72 72",
+      "width": "72",
+      "height": "72"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-outline-pill.svg",
+      "original": "05-badges/wos-outline-pill.svg",
+      "bytes": 3475,
+      "sha256": "7f60d69d678c0091bdcb8567f3a636364a99d445d34c4764e7f2577828e5e7ce",
+      "viewBox": "0 0 230 70",
+      "width": "230",
+      "height": "70"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-pill-dark.svg",
+      "original": "05-badges/wos-pill-dark.svg",
+      "bytes": 3429,
+      "sha256": "c7516775c123264e5af6d1c6bbd8e0dadaf1e1572630d130360e967abaf0da83",
+      "viewBox": "0 0 204 64",
+      "width": "204",
+      "height": "64"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-pill-light.svg",
+      "original": "05-badges/wos-pill-light.svg",
+      "bytes": 3431,
+      "sha256": "4e4bc55ac463d398e7ccc673af732e09a3263c0808c939578fbc94bc71d81ca2",
+      "viewBox": "0 0 204 64",
+      "width": "204",
+      "height": "64"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-round-seal.svg",
+      "original": "05-badges/wos-round-seal.svg",
+      "bytes": 2411,
+      "sha256": "e6b03bbbc07c2f2b48f5344d2fe177257705e6286384346d7bb1cf59470c816d",
+      "viewBox": "0 0 168 168",
+      "width": "168",
+      "height": "168"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-status-dark.svg",
+      "original": "05-badges/wos-status-dark.svg",
+      "bytes": 2416,
+      "sha256": "b718e8ffaa30dd2ff5b26d1b8dbef352eacc00a93fadd16514a54125e7e934ae",
+      "viewBox": "0 0 150 52",
+      "width": "150",
+      "height": "52"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/05-badges/wos-status-light.svg",
+      "original": "05-badges/wos-status-light.svg",
+      "bytes": 2418,
+      "sha256": "126da70178de54195170224c975b4f8f3adfb29e35a074f3f178b13c2dc0fa88",
+      "viewBox": "0 0 150 52",
+      "width": "150",
+      "height": "52"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/06-loading/wos-loader-dash.svg",
+      "original": "06-loading/wos-loader-dash.svg",
+      "bytes": 2652,
+      "sha256": "783d1c610c87b1c71e8c4cf675caa3e5a1be6af1908ae382430cbbfe03b21feb",
+      "viewBox": "0 0 320 110",
+      "width": "320",
+      "height": "110"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/06-loading/wos-loader-orbit.svg",
+      "original": "06-loading/wos-loader-orbit.svg",
+      "bytes": 2705,
+      "sha256": "0ae718cf1b0b57e1a5e67dea64d79b3afec1734a7272a3ad7e03cb8de8f1d080",
+      "viewBox": "0 0 220 220",
+      "width": "220",
+      "height": "220"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/06-loading/wos-loader-pulse.svg",
+      "original": "06-loading/wos-loader-pulse.svg",
+      "bytes": 2478,
+      "sha256": "f97fbddf80a41dc94f1785c0ab6f66f51d48647e0e6f253389753482bb3b55ed",
+      "viewBox": "0 0 280 140",
+      "width": "280",
+      "height": "140"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/06-loading/wos-loader-triple.svg",
+      "original": "06-loading/wos-loader-triple.svg",
+      "bytes": 6814,
+      "sha256": "71befe14e8e7ccd64d1ee18cfdc2f9dc009bc06cc82e17ba30374ada9651555f",
+      "viewBox": "0 0 354 84",
+      "width": "354",
+      "height": "84"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-activity.svg",
+      "original": "07-estados-vazios/wos-empty-activity.svg",
+      "bytes": 2696,
+      "sha256": "df7ad54a0bbddd59891a6d860921c65bd89237e061d05eefbaef1ee17bbfdd19",
+      "viewBox": "0 0 420 335",
+      "width": "420",
+      "height": "335"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-network.svg",
+      "original": "07-estados-vazios/wos-empty-network.svg",
+      "bytes": 3133,
+      "sha256": "0d5dc5d87a5e9e8983e14d66812ff36182e826a5707ead5449fbbcc61437cc75",
+      "viewBox": "0 0 420 340",
+      "width": "420",
+      "height": "340"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-search.svg",
+      "original": "07-estados-vazios/wos-empty-search.svg",
+      "bytes": 2538,
+      "sha256": "130c6493626cd35b49a4ac4014e4dced46247bd43af3602df90664c975774b20",
+      "viewBox": "0 0 420 340",
+      "width": "420",
+      "height": "340"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-tasks.svg",
+      "original": "07-estados-vazios/wos-empty-tasks.svg",
+      "bytes": 3292,
+      "sha256": "de63d5fc977ffc0f9f81be9550aaedeafee1cd6a528a8bc2da2ca1b93aef9d50",
+      "viewBox": "0 0 420 350",
+      "width": "420",
+      "height": "350"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-workspace.svg",
+      "original": "07-estados-vazios/wos-empty-workspace.svg",
+      "bytes": 2913,
+      "sha256": "6b6705dc232acf3ca8165f064ed9218546f4fb85d576ce77844febe3f18c3096",
+      "viewBox": "0 0 420 320",
+      "width": "420",
+      "height": "320"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-feedback-alert.svg",
+      "original": "07-estados-vazios/wos-feedback-alert.svg",
+      "bytes": 2551,
+      "sha256": "be4f47ca62d98e9d48d94c5c5be737205a2e33b9c5f0f597d3df337829665475",
+      "viewBox": "0 0 420 340",
+      "width": "420",
+      "height": "340"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/07-estados-vazios/wos-feedback-success.svg",
+      "original": "07-estados-vazios/wos-feedback-success.svg",
+      "bytes": 2538,
+      "sha256": "00c0e6deb8a36840ac10d5255f76c4c3a9a884fa21b603a32db426e13d6f7203",
+      "viewBox": "0 0 420 340",
+      "width": "420",
+      "height": "340"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-corner-left.svg",
+      "original": "08-hero/wos-hero-corner-left.svg",
+      "bytes": 2419,
+      "sha256": "3a0d5cd7893c3d1c89900e8df3a925cef0c6805fba950d5e00df7af96ef762dc",
+      "viewBox": "0 0 680 540",
+      "width": "680",
+      "height": "540"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-corner-right.svg",
+      "original": "08-hero/wos-hero-corner-right.svg",
+      "bytes": 2415,
+      "sha256": "a2db5858c2f6a8f4dbcd7c092cfdb47021978a9df3fe333045c61b3d316c5d18",
+      "viewBox": "0 0 680 540",
+      "width": "680",
+      "height": "540"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-illustration-dark.svg",
+      "original": "08-hero/wos-hero-illustration-dark.svg",
+      "bytes": 4499,
+      "sha256": "a0b0e117af0cbec70bc53554e7b53fe12551ef534367afe5b67ecf00df7804e2",
+      "viewBox": "0 0 960 560",
+      "width": "960",
+      "height": "560"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-illustration-light.svg",
+      "original": "08-hero/wos-hero-illustration-light.svg",
+      "bytes": 4501,
+      "sha256": "297702e9279b2111c28f18e59a1b4303f51818da917500d330238480d926045c",
+      "viewBox": "0 0 960 560",
+      "width": "960",
+      "height": "560"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-mark.svg",
+      "original": "08-hero/wos-hero-mark.svg",
+      "bytes": 2467,
+      "sha256": "72b74de7b9014dc5b3332f074d3138a1cd4083fad7e7c96751c50f7b65924ba5",
+      "viewBox": "0 0 980 480",
+      "width": "980",
+      "height": "480"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-watermark-dark.svg",
+      "original": "08-hero/wos-hero-watermark-dark.svg",
+      "bytes": 7634,
+      "sha256": "69b03c84121c30275fb5a2a87623ddf7f35a283017ccdd135ed5ef518044acd4",
+      "viewBox": "0 0 940 540",
+      "width": "940",
+      "height": "540"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/08-hero/wos-hero-watermark-light.svg",
+      "original": "08-hero/wos-hero-watermark-light.svg",
+      "bytes": 7636,
+      "sha256": "27602f1267dff8719fd70d3d978c6b4a44ff2913f386063957dcb80c27d95408",
+      "viewBox": "0 0 940 540",
+      "width": "940",
+      "height": "540"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-bg-grid.svg",
+      "original": "09-patterns/wos-bg-grid.svg",
+      "bytes": 21548,
+      "sha256": "f9d2a50ecd29ec99342d4ff546fb764a163bc40990c64b432957ab2d27dd2e31",
+      "viewBox": "0 0 360 300",
+      "width": "360",
+      "height": "300"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-card-corner.svg",
+      "original": "09-patterns/wos-card-corner.svg",
+      "bytes": 2324,
+      "sha256": "d0c06f0fe142bb338d75241d556966d05d910442b6987faa4a1d2d429cdf7a02",
+      "viewBox": "0 0 480 280",
+      "width": "480",
+      "height": "280"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-pattern-tile-dark.svg",
+      "original": "09-patterns/wos-pattern-tile-dark.svg",
+      "bytes": 9946,
+      "sha256": "04fa847750aa048e88c1acfa76d96079f07386b88acceeea4493d693efdc3f5e",
+      "viewBox": "0 0 400 310",
+      "width": "400",
+      "height": "310"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-pattern-tile-light.svg",
+      "original": "09-patterns/wos-pattern-tile-light.svg",
+      "bytes": 9950,
+      "sha256": "48ff0d7df985b8a310f6539dd0b9576934fcdd36f774758da4947e9a9d252d75",
+      "viewBox": "0 0 400 310",
+      "width": "400",
+      "height": "310"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-section-divider.svg",
+      "original": "09-patterns/wos-section-divider.svg",
+      "bytes": 2487,
+      "sha256": "80c86501be41336b48e0675e3740aaa7b8a91e8febf157480fb3ce5b8648166e",
+      "viewBox": "0 0 1440 120",
+      "width": "1440",
+      "height": "120"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-section-wash-dark.svg",
+      "original": "09-patterns/wos-section-wash-dark.svg",
+      "bytes": 4569,
+      "sha256": "894d2da390e7c303179ae94db4414f9de7c55a307199243fa8381070b48b540a",
+      "viewBox": "0 0 1440 560",
+      "width": "1440",
+      "height": "560"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-section-wash-light.svg",
+      "original": "09-patterns/wos-section-wash-light.svg",
+      "bytes": 4573,
+      "sha256": "fb564c9e204cd6c96a352d13ca40d3cfa993253b6a9f121941848e74336a58b9",
+      "viewBox": "0 0 1440 560",
+      "width": "1440",
+      "height": "560"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/09-patterns/wos-top-edge.svg",
+      "original": "09-patterns/wos-top-edge.svg",
+      "bytes": 2420,
+      "sha256": "442c7203b13889eac20b000e1dc4118e70c5db76c6e75cc9ce388bdcc402166b",
+      "viewBox": "0 0 1440 112",
+      "width": "1440",
+      "height": "112"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/10-social/wos-open-graph-dark.svg",
+      "original": "10-social/wos-open-graph-dark.svg",
+      "bytes": 5736,
+      "sha256": "1fa04be35864b7a0ffb04ce6a184e1bf51531d4934ec4e483e994ff8d495aab5",
+      "viewBox": "0 0 1200 630",
+      "width": "1200",
+      "height": "630"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/10-social/wos-open-graph-light.svg",
+      "original": "10-social/wos-open-graph-light.svg",
+      "bytes": 5738,
+      "sha256": "8b8ce6083b4f4c0a3af4de1ded8b54dbe768559989887fd115756469280e867b",
+      "viewBox": "0 0 1200 630",
+      "width": "1200",
+      "height": "630"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/10-social/wos-social-square-dark.svg",
+      "original": "10-social/wos-social-square-dark.svg",
+      "bytes": 3551,
+      "sha256": "d417cfd111730718b31e7557c1b3531cdea1594459a05f4bb143cfe2422ce519",
+      "viewBox": "0 0 800 800",
+      "width": "800",
+      "height": "800"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/10-social/wos-social-square-light.svg",
+      "original": "10-social/wos-social-square-light.svg",
+      "bytes": 3553,
+      "sha256": "7caf08b9fbbcb4edd33221a3e890f66964eda51345d3807c94fbad354ef9daab",
+      "viewBox": "0 0 800 800",
+      "width": "800",
+      "height": "800"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/11-sprites/wos-symbol-sprite.svg",
+      "original": "11-sprites/wos-symbol-sprite.svg",
+      "bytes": 6436,
+      "sha256": "f9fba8486dabcd1cf0e1806a0cbbb656d5254ab97f6e0431ca87c1c1f483e523",
+      "viewBox": "0 0 194 82",
+      "width": null,
+      "height": null
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/app-icon-192.png",
+      "original": "12-png-web/app-icon-192.png",
+      "bytes": 3570,
+      "sha256": "daa3464f9cceda5da6587a02b9ad47bf1a6cbe4902f8db434732b085c19d8e4b"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/apple-touch-icon-180.png",
+      "original": "12-png-web/apple-touch-icon-180.png",
+      "bytes": 3183,
+      "sha256": "aacd7dd4a287795b16e0516ef3ed6641ba1fc7a0cc985b8508590ee6d07cdf89"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/favicon-16.png",
+      "original": "12-png-web/favicon-16.png",
+      "bytes": 311,
+      "sha256": "e295843cb0b4715a661fbf99d5d22f1d5b5b5f1a6c336e6875c3e6b01bfec5dc"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/favicon-32.png",
+      "original": "12-png-web/favicon-32.png",
+      "bytes": 426,
+      "sha256": "1484e497e0260cd5f40b4757fa4bcd38fa0d34651df31e31ad2797aefed59a5e"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/favicon-48.png",
+      "original": "12-png-web/favicon-48.png",
+      "bytes": 558,
+      "sha256": "b92dd550e5ad127259bcd39e658f1177778ffb2229a2bee988f9d1cd6d81da8e"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/favicon-64.png",
+      "original": "12-png-web/favicon-64.png",
+      "bytes": 692,
+      "sha256": "8c3dec7711f476e3b3a919b9fafc85c13c3e49427d712d012791e87a58cdf37f"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/favicon.ico",
+      "original": "12-png-web/favicon.ico",
+      "bytes": 9861,
+      "sha256": "97f42f737543897ab44cc253f4bf13586ba0f05a01364402a44bed9982015f49"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/pwa-maskable-512.png",
+      "original": "12-png-web/pwa-maskable-512.png",
+      "bytes": 4770,
+      "sha256": "3e6e56260f046f2603dda83610d267d81916ae910a4a7adfc027cda976a2f37f"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-open-graph-dark.png",
+      "original": "12-png-web/wos-open-graph-dark.png",
+      "bytes": 38538,
+      "sha256": "6a9ac3fe288114a1b6159a26d809eb8e8412c5483c142a746ebc6b2c3351cbce"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-open-graph-light.png",
+      "original": "12-png-web/wos-open-graph-light.png",
+      "bytes": 37733,
+      "sha256": "b90c7b5536b11c82f9224a7e6cf2b1ef4bee9c439c8b2c4e024dce3330756875"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-social-square-dark.png",
+      "original": "12-png-web/wos-social-square-dark.png",
+      "bytes": 27672,
+      "sha256": "429c8983618a86ee5d9b167609486c53bb51ec487d02f903df07ff2021da9325"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-social-square-light.png",
+      "original": "12-png-web/wos-social-square-light.png",
+      "bytes": 26962,
+      "sha256": "984a1a63966be85349ffb923ab7641bb5f9a7fb2d3cb735f7f5faa316a7a714f"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-symbol-transparent-1024.png",
+      "original": "12-png-web/wos-symbol-transparent-1024.png",
+      "bytes": 12932,
+      "sha256": "861281bf2d408cdd12c067b63266cc145ef9fb5ac49fb216727ca30f91a677cb"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/12-png-web/wos-symbol-transparent-512.png",
+      "original": "12-png-web/wos-symbol-transparent-512.png",
+      "bytes": 5452,
+      "sha256": "18f00ad58f579195f384a71630ca174aca663bed1e4a8df25ef658772a5220a7"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # WOS editorial workspace
 
-This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
+This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette and the owner-supplied WOS web identity. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
 
 This is a presentation change to the six existing areas, authentication screen, outcome selection, collections, board, forms, settings, and entity details. HTTP/MCP contracts, persisted lifecycle rules, authorization, independent review, and explicit completion remain the source of product behavior.
 
@@ -14,7 +14,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
 | Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
 | Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
-| Brand | Orange `#FF5500` on the favicon, distinct from interaction copper | The robot artwork remains monochrome |
+| Brand | Supplied modular symbol and vector wordmark in `#FF5500`, with official browser icons; distinct from interaction copper | Wordmark proportions preserved; robot artwork remains monochrome |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
 | Motion | A small decorative arrival; content is visible in its final composition immediately | No parallax or pinned scrolling; reduced motion disables animation |
@@ -28,6 +28,10 @@ The owner approved the editorial direction and requested the Woobe colors suppli
 The supplied specification cites Woobe commit `3dbcb3e1a7559f4a50ebca320e411933d46e8012`. This is the provenance reported by the attachment, not a claim that this WOS change audited the Woobe repository. Source and stylesheet hashes are recorded in [assets.json](assets.json).
 
 The palette overrides the original gray/green color suggestions in `chess-style`, preserving its typography, geometry, composition, and illustrative language. Copper is an interaction accent, charcoal remains the primary button color, and brand orange is reserved for the mark. Robot originals are not recolored. The workspace uses the Light values; the supplied Dark values remain in the source specification as a separate future theme.
+
+### WOS brand kit
+
+The supplied WOS identity replaces the temporary letter/circle branding in the header, workspace selector, browser icons, and actual loading state. The vector wordmark is self-contained; it does not replace the editorial type system. All 94 supplied media files are retained unchanged in the brand library. See [integration decisions, original kit notes, and asset provenance](brand-kit/README.md).
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 
@@ -95,6 +99,12 @@ These are captures of a real local server using an isolated illustrative databas
 | Overview | Work |
 | --- | --- |
 | ![Mobile overview](screenshots/12-mobile-overview.png) | ![Mobile task collection](screenshots/13-mobile-work.png) |
+
+### Actual loading state
+
+The brand symbol follows the existing pending server request. This capture holds that response in the test fixture; the application adds no deliberate waiting period.
+
+![WOS mark during an actual pending Outcome read](screenshots/14-outcome-loading.png)
 
 ## Reproduce and validate
 

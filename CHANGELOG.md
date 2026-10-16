@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Redesign the human workspace with an editorial paper-and-ink visual system, the Woobe operational palette, locally served typography, and the supplied monochrome robot illustrations across all six areas; include responsive page captures and design documentation.
+- Apply the supplied WOS modular brand, vector wordmark, workspace symbol, real loading mark, and browser/touch icons while preserving the editorial layout and Woobe palette.
 
 ## 0.4.2 — prepared for release
 

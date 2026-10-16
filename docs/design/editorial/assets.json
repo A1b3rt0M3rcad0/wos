@@ -291,9 +291,9 @@
     },
     {
       "file": "packages/wos-api/web/assets/favicon.svg",
-      "source": "Existing WOS favicon shape using Woobe brand orange",
+      "source": "Exact compatibility copy of WOS_Web_Brand_Kit.zip/03-favicon-app/favicon.svg",
       "decorative": true,
-      "sha256": "b10e47a46456bce73f16876e2a47f2d172f5af0b4c4c151cfa4f0add05eef1ca"
+      "sha256": "cb3f0ca59c6d1ea8b765c72b194defe2135fa2550db2f5dd94013ba5c5e841e4"
     }
   ],
   "palette": {
@@ -304,5 +304,12 @@
     "color_tokens": 25,
     "stylesheet": "packages/wos-api/web/assets/colors.css",
     "stylesheet_sha256": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6"
+  },
+  "brand": {
+    "source_archive": "WOS_Web_Brand_Kit.zip",
+    "source_archive_sha256": "0b2be22d4acca50aa57d31c91b40c89dbeb3e2a1aaef59cacdea3a70669009ae",
+    "manifest": "docs/design/editorial/brand-kit/assets.json",
+    "media_count": 94,
+    "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316"
   }
 }
