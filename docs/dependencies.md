@@ -9,9 +9,9 @@ This document records dependencies that are actually present in the repository. 
 
 - Module: `github.com/A1b3rt0M3rcad0/wos`
 - Declared Go language/toolchain baseline: `go 1.27`
-- Local and CI verification baseline: Go `1.27.1`
+- Local, CI, release and Docker build patch: Go `1.27.2` (shared `.go-version` pin)
 
-The `go.mod` directive is the source used by CI.
+The `go.mod` directive defines the language baseline. `.go-version` pins the build patch used by CI/release; the distribution contract checks Docker against that same pin. Older archived measurements retain their original toolchain labels.
 
 ## Go module dependencies
 

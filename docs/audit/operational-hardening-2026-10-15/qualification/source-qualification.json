@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "baseline_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "qualified_code_source": "2a46475193898605aecdc30c5a6cc7b971ee25ed",
+  "ci_reference_source": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+  "complete_ci_reference_runs": {
+    "core": 38840856862,
+    "browser": 38840856701,
+    "packages": 38840856684,
+    "native_linux_windows": 38840856635
+  },
+  "production_equivalence": {
+    "reference": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+    "candidate": "2a46475193898605aecdc30c5a6cc7b971ee25ed",
+    "production_and_validation_inputs_sha256": "534a341421d835d9fa908ca0df09b6c03830953f81f0b64c990c8c7525c7d1ae",
+    "files": 542,
+    "includes": "all tracked packages/tools/deploy/workflows/change queue plus module/toolchain/Docker/Compose/env/license; excludes Go test files and root documentation",
+    "equal": true
+  },
+  "read_measurement_equivalence": {
+    "measured_source": "aa7ccc349c1bdef9ab509ae3cafaadac2368a5d8",
+    "candidate": "2a46475193898605aecdc30c5a6cc7b971ee25ed",
+    "files": 295,
+    "equal": true,
+    "measurement_is_not_a_new_execution_on_another_SHA": true,
+    "core_go_sql_module_toolchain_and_read_harness_sha256": "593e6d5130374447cc6745992d7a229acad53c4629fac5c96d596d50218e42e6"
+  },
+  "review_pr": 106,
+  "branch": "fix/wos-operational-hardening-v042",
+  "merge_performed": false,
+  "release_published": false,
+  "production_sla": false,
+  "final_pr_head_gate": "All mandatory workflows must pass on the exact final PR head; artifacts/checks identify that SHA, independently of this code-equivalence record.",
+  "human_validation": "pending under prior explicit owner instruction; not replaced by automation"
+}

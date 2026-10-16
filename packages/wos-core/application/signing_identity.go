@@ -435,6 +435,7 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 // SigningIdentityView reveals only the current credential's public identity.
 // Private signing material never enters WOS or this response.
 type SigningIdentityView struct {
+	Quotas           SigningQuotaView     `json:"quotas"`
 	Actor            d.ActorRef           `json:"actor_ref"`
 	ServerID         string               `json:"server_id"`
 	NamespaceVersion d.Version            `json:"namespace_version,string"`
@@ -504,6 +505,23 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	} else if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		return result, err
 	}
+	nsPolicy, err := namespaceAcceptancePolicy(ctx, repo, id.NamespaceID)
+	if err != nil {
+		return result, err
+	}
+	now, err := securityTransactionTime(ctx, uow, s.Clock)
+	if err != nil {
+		return result, err
+	}
+	signed, ok := uow.(ports.SignedContractUnitOfWork)
+	if !ok {
+		return result, d.NewError(d.ErrorCodeInvalidConfig, "signed quota diagnostics unavailable")
+	}
+	counts, err := signed.SignedContracts().Counts(ctx, id.NamespaceID, id.PrincipalID, credential.ID, now)
+	if err != nil {
+		return result, err
+	}
+	result.Quotas = signingQuotaView(result.Policy, nsPolicy, counts)
 	result.Keys, err = repo.Keys(ctx, id.NamespaceID, id.PrincipalID, 101)
 	if err != nil {
 		return result, err

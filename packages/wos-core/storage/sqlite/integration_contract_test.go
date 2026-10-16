@@ -211,6 +211,15 @@ func TestDeliveryCrashBudgetRequiresExplicitRedelivery(t *testing.T) {
 	if err != nil || len(page.Items) != 1 || page.Items[0].Status != "exhausted" || page.Items[0].Attempts != 6 {
 		t.Fatal("exhaustion recovery rolled back or restart lost it", err)
 	}
+	u, healthErr := store.Begin(ctx)
+	if healthErr != nil {
+		t.Fatal(healthErr)
+	}
+	health, healthErr := u.(ports.DeliveryHealthUnitOfWork).DeliveryHealth().Health(ctx, scope, now.Add(8*time.Second))
+	_ = u.Rollback()
+	if healthErr != nil || health.Exhausted != 1 || health.AttemptsTotal != 6 || health.LastClaim == nil || health.LastSuccessfulDelivery != nil {
+		t.Fatal("exhaustion health", health, healthErr)
+	}
 	if err = store.FinishDelivery(ctx, *last, now.Add(8*time.Second), "late_200", true, now); err == nil {
 		t.Fatal("expired worker resurrected exhausted delivery")
 	}

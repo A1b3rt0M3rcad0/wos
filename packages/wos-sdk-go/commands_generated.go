@@ -220,6 +220,9 @@ func (c *Client) ResolveIssue(ctx context.Context, key string, cmd application.R
 func (c *Client) ResolveIssueAndBlockers(ctx context.Context, key string, cmd application.ResolveIssueAndBlockersCommand) (CommandResult[application.ResolveIssueAndBlockersResult], error) {
 	return command[application.ResolveIssueAndBlockersResult](ctx, c, "resolve_issue_and_blockers", key, cmd)
 }
+func (c *Client) ResolveSignedReturnIntent(ctx context.Context, key string, cmd application.ResolveSignedReturnIntentCommand) (CommandResult[application.SignedReturnResolutionResult], error) {
+	return command[application.SignedReturnResolutionResult](ctx, c, "resolve_signed_return_intent", key, cmd)
+}
 func (c *Client) ResumeSignedReviewContract(ctx context.Context, key string, cmd application.ResumeSignedReviewContractCommand) (CommandResult[application.SignedReviewContractResult], error) {
 	return command[application.SignedReviewContractResult](ctx, c, "resume_signed_review_contract", key, cmd)
 }

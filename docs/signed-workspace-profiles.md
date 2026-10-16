@@ -152,3 +152,9 @@ cleanup requires action: edited drafts remain intact. Only a verified closed
 signed acceptance permits deletion of its matching unchanged contract document.
 The profile survives, with no operational history directory. Executor delivery
 may close its obligation while review remains pending; it is not Task approval.
+
+## Signed acquisition quotas
+
+A Namespace administrator can set optional `max_active_work_per_principal` and `max_active_review_per_principal` fields in a Namespace `WorkAcceptancePolicy` through the existing authenticated `set_acceptance_policy` security command, with current `expected_namespace_version` and policy `expected_version`. Defaults remain **3 work / 1 review** when fields are absent; explicit values are **1..100**. Outcome/WorkItem policy overrides of these fields are rejected.
+
+Credential and Namespace active-contract ceilings still apply independently. Additional profiles or credentials of the same Principal share its capacity and cannot serve as an independent reviewer. Raising a quota does not add permissions or relax review separation, leases or fencing. Lowering it does not revoke issued contracts automatically; it blocks further acquisition until activity permits it. `wos --profile NAME auth status --output json` and doctor expose `quotas`, including current own activity, Principal/CID/Namespace ceilings and the effective minimum. No other Principal's contracts are listed. Quota rejection leaves the original WorkItem/Outcome revision unchanged; retry only the original intent after an authorized configuration or activity change.

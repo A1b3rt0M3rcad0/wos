@@ -129,6 +129,9 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 			return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "wrong signed operation purpose")
 		}
 		digest := signing.Digest(raw)
+		if err = s.rejectClosedReturn(ctx, u, request.RequestBinding, "ReturnSignedWork", "execution", digest); err != nil {
+			return zero, 0, err
+		}
 		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
 			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "execution", d.ID(request.ContractID)); e != nil {
 				return zero, 0, e

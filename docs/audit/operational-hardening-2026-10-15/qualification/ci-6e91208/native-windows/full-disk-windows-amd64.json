@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "commit": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+  "native_host": "windows",
+  "isolated_vhd_mib": 32,
+  "passed": true,
+  "phases": [
+    "proof_persistence",
+    "draft_archived",
+    "archive_persisted",
+    "draft_unfrozen"
+  ]
+}

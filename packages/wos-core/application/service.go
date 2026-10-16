@@ -10,6 +10,8 @@ import (
 )
 
 type Service struct {
+	deliveryDiagnostics ports.DeliveryDiagnostics
+	deliveryBacklogAge  time.Duration
 	signed              *signedRuntime
 	observer            ports.CommandObserver
 	tx                  ports.TransactionManager

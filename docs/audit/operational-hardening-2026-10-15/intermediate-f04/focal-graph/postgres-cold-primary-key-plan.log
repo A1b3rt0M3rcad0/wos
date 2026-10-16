@@ -1,0 +1,190 @@
+BEGIN
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 10000
+CREATE TABLE
+INSERT 0 10000
+CREATE TABLE
+INSERT 0 10000
+CREATE TABLE
+INSERT 0 0
+CREATE TABLE
+INSERT 0 10000
+CREATE TABLE
+INSERT 0 10000
+CREATE TABLE
+INSERT 0 0
+CREATE TABLE
+INSERT 0 0
+SET
+SET
+                                                                                                                                                                                                                                   QUERY PLAN                                                                                                                                                                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=66.53..66.54 rows=1 width=24)
+   Output: (InitPlan 4).col1, COALESCE(sum(CASE WHEN ((a.result = 'met'::text) AND (ANY ((a.criterion_id = (hashed SubPlan 5).col1) AND (a.criterion_revision = (hashed SubPlan 5).col2))) AND (NOT (ANY (a.id = (hashed SubPlan 6).col1)))) THEN 1 ELSE 0 END), '0'::bigint), COALESCE(sum(CASE WHEN ((a.result = 'waived'::text) AND (ANY ((a.criterion_id = (hashed SubPlan 7).col1) AND (a.criterion_revision = (hashed SubPlan 7).col2)))) THEN 1 ELSE 0 END), '0'::bigint)
+   CTE required_proof
+     ->  Nested Loop Left Join  (cost=1.12..33.28 rows=1 width=40)
+           Output: c.id, c.criterion_revision
+           Join Filter: (c.owner_kind = 'objective'::text)
+           Filter: ((c.owner_kind = 'outcome'::text) OR ((c.owner_kind = 'work_item'::text) AND (w.lifecycle <> 'cancelled'::text)) OR ((c.owner_kind = 'objective'::text) AND (o.lifecycle <> 'cancelled'::text)))
+           ->  Nested Loop Left Join  (cost=0.97..25.08 rows=1 width=200)
+                 Output: c.id, c.criterion_revision, c.owner_id, c.namespace_id, c.outcome_id, c.owner_kind, w.lifecycle
+                 Join Filter: (c.owner_kind = 'work_item'::text)
+                 ->  Nested Loop  (cost=0.69..16.75 rows=1 width=168)
+                       Output: c.id, c.criterion_revision, c.owner_id, c.namespace_id, c.outcome_id, c.owner_kind
+                       Inner Unique: true
+                       ->  Index Scan using criterion_revisions_pkey on wos_diag_cold_20261016.criterion_revisions r  (cost=0.41..8.43 rows=1 width=104)
+                             Output: r.namespace_id, r.outcome_id, r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode, r.created_at, r.created_by_json, r.status
+                             Index Cond: ((r.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (r.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                             Filter: (r.required = 1)
+                       ->  Index Scan using success_criteria_pkey on wos_diag_cold_20261016.success_criteria c  (cost=0.29..8.31 rows=1 width=168)
+                             Output: c.id, c.namespace_id, c.outcome_id, c.owner_id, c.owner_kind, c.criterion_revision, c.status, c.created_at
+                             Index Cond: (c.id = r.criterion_id)
+                             Filter: ((c.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (c.outcome_id = '0199d160-0000-7000-8000-000000000001'::text) AND (c.status = 'active'::text) AND (r.criterion_revision = c.criterion_revision))
+                 ->  Subquery Scan on w  (cost=0.28..8.31 rows=1 width=96)
+                       Output: w.lifecycle, w.namespace_id, w.outcome_id
+                       Filter: ((w.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (w.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       ->  Index Scan using work_items_pkey on wos_diag_cold_20261016.work_items w_1  (cost=0.28..8.30 rows=1 width=96)
+                             Output: w_1.lifecycle, w_1.namespace_id, w_1.outcome_id
+                             Index Cond: (w_1.id = c.owner_id)
+           ->  Subquery Scan on o  (cost=0.14..8.18 rows=1 width=96)
+                 Output: o.lifecycle, o.namespace_id, o.outcome_id
+                 Filter: ((o.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (o.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                 ->  Index Scan using objectives_pkey on wos_diag_cold_20261016.objectives o_1  (cost=0.14..8.16 rows=1 width=96)
+                       Output: o_1.lifecycle, o_1.namespace_id, o_1.outcome_id
+                       Index Cond: (o_1.id = c.owner_id)
+   CTE current_proof
+     ->  Nested Loop  (cost=0.69..16.75 rows=1 width=104)
+           Output: p.criterion_id, a_1.id, a_1.criterion_revision, a_1.result
+           ->  Index Scan using criterion_current_assessments_pkey on wos_diag_cold_20261016.criterion_current_assessments p  (cost=0.41..8.43 rows=1 width=128)
+                 Output: p.namespace_id, p.outcome_id, p.criterion_id, p.assessment_id
+                 Index Cond: ((p.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (p.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+           ->  Index Scan using criterion_assessments_pkey on wos_diag_cold_20261016.criterion_assessments a_1  (cost=0.28..8.31 rows=1 width=72)
+                 Output: a_1.id, a_1.criterion_revision, a_1.result
+                 Index Cond: (a_1.id = p.assessment_id)
+                 Filter: ((a_1.namespace_id = p.namespace_id) AND (a_1.outcome_id = p.outcome_id))
+   CTE invalid_source
+     ->  Unique  (cost=0.29..16.36 rows=1 width=32)
+           Output: p_1.assessment_id
+           ->  Nested Loop Left Join  (cost=0.29..16.36 rows=1 width=32)
+                 Output: p_1.assessment_id
+                 Filter: ((e.id IS NULL) OR (e.lifecycle <> 'registered'::text))
+                 ->  Index Only Scan using criterion_assessment_evidence_pkey on wos_diag_cold_20261016.criterion_assessment_evidence p_1  (cost=0.15..8.17 rows=1 width=128)
+                       Output: p_1.namespace_id, p_1.outcome_id, p_1.assessment_id, p_1.evidence_id
+                       Index Cond: ((p_1.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (p_1.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                 ->  Subquery Scan on e  (cost=0.14..8.18 rows=1 width=128)
+                       Output: e.id, e.lifecycle, e.namespace_id, e.outcome_id
+                       Filter: ((e.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (e.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       ->  Index Scan using evidence_pkey on wos_diag_cold_20261016.evidence e_1  (cost=0.14..8.16 rows=1 width=128)
+                             Output: e_1.id, e_1.lifecycle, e_1.namespace_id, e_1.outcome_id
+                             Index Cond: (e_1.id = p_1.evidence_id)
+   InitPlan 4
+     ->  Aggregate  (cost=0.02..0.03 rows=1 width=8)
+           Output: count(*)
+           ->  CTE Scan on required_proof  (cost=0.00..0.02 rows=1 width=0)
+                 Output: required_proof.id, required_proof.criterion_revision
+   ->  CTE Scan on current_proof a  (cost=0.00..0.02 rows=1 width=104)
+         Output: a.criterion_id, a.id, a.criterion_revision, a.result
+   SubPlan 5
+     ->  CTE Scan on required_proof required_proof_1  (cost=0.00..0.02 rows=1 width=40)
+           Output: required_proof_1.id, required_proof_1.criterion_revision
+   SubPlan 6
+     ->  CTE Scan on invalid_source  (cost=0.00..0.02 rows=1 width=32)
+           Output: invalid_source.assessment_id
+   SubPlan 7
+     ->  CTE Scan on required_proof required_proof_2  (cost=0.00..0.02 rows=1 width=40)
+           Output: required_proof_2.id, required_proof_2.criterion_revision
+ Query Identifier: -7865608272493961594
+(75 rows)
+
+                                                                                                                    QUERY PLAN                                                                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=66.53..66.54 rows=1 width=24) (actual time=438.625..438.640 rows=1.00 loops=1)
+   Buffers: shared hit=110848
+   CTE required_proof
+     ->  Nested Loop Left Join  (cost=1.12..33.28 rows=1 width=40) (actual time=0.168..237.138 rows=10000.00 loops=1)
+           Join Filter: (c.owner_kind = 'objective'::text)
+           Filter: ((c.owner_kind = 'outcome'::text) OR ((c.owner_kind = 'work_item'::text) AND (w.lifecycle <> 'cancelled'::text)) OR ((c.owner_kind = 'objective'::text) AND (o.lifecycle <> 'cancelled'::text)))
+           Buffers: shared hit=80448
+           ->  Nested Loop Left Join  (cost=0.97..25.08 rows=1 width=200) (actual time=0.160..225.664 rows=10000.00 loops=1)
+                 Join Filter: (c.owner_kind = 'work_item'::text)
+                 Buffers: shared hit=60448
+                 ->  Nested Loop  (cost=0.69..16.75 rows=1 width=168) (actual time=0.128..111.567 rows=10000.00 loops=1)
+                       Buffers: shared hit=30448
+                       ->  Index Scan using criterion_revisions_pkey on criterion_revisions r  (cost=0.41..8.43 rows=1 width=104) (actual time=0.082..5.134 rows=10000.00 loops=1)
+                             Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                             Filter: (required = 1)
+                             Index Searches: 1
+                             Buffers: shared hit=448
+                       ->  Index Scan using success_criteria_pkey on success_criteria c  (cost=0.29..8.31 rows=1 width=168) (actual time=0.010..0.010 rows=1.00 loops=10000)
+                             Index Cond: (id = r.criterion_id)
+                             Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text) AND (status = 'active'::text) AND (r.criterion_revision = criterion_revision))
+                             Index Searches: 10000
+                             Buffers: shared hit=30000
+                 ->  Subquery Scan on w  (cost=0.28..8.31 rows=1 width=96) (actual time=0.011..0.011 rows=1.00 loops=10000)
+                       Filter: ((w.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (w.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Buffers: shared hit=30000
+                       ->  Index Scan using work_items_pkey on work_items w_1  (cost=0.28..8.30 rows=1 width=96) (actual time=0.010..0.010 rows=1.00 loops=10000)
+                             Index Cond: (id = c.owner_id)
+                             Index Searches: 10000
+                             Buffers: shared hit=30000
+           ->  Subquery Scan on o  (cost=0.14..8.18 rows=1 width=96) (actual time=0.001..0.001 rows=0.00 loops=10000)
+                 Filter: ((o.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (o.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                 Buffers: shared hit=20000
+                 ->  Index Scan using objectives_pkey on objectives o_1  (cost=0.14..8.16 rows=1 width=96) (actual time=0.000..0.000 rows=0.00 loops=10000)
+                       Index Cond: (id = c.owner_id)
+                       Index Searches: 10000
+                       Buffers: shared hit=20000
+   CTE current_proof
+     ->  Nested Loop  (cost=0.69..16.75 rows=1 width=104) (actual time=0.197..166.386 rows=10000.00 loops=1)
+           Buffers: shared hit=30398
+           ->  Index Scan using criterion_current_assessments_pkey on criterion_current_assessments p  (cost=0.41..8.43 rows=1 width=128) (actual time=0.071..8.225 rows=10000.00 loops=1)
+                 Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                 Index Searches: 1
+                 Buffers: shared hit=398
+           ->  Index Scan using criterion_assessments_pkey on criterion_assessments a_1  (cost=0.28..8.31 rows=1 width=72) (actual time=0.015..0.015 rows=1.00 loops=10000)
+                 Index Cond: (id = p.assessment_id)
+                 Filter: ((namespace_id = p.namespace_id) AND (outcome_id = p.outcome_id))
+                 Index Searches: 10000
+                 Buffers: shared hit=30000
+   CTE invalid_source
+     ->  Unique  (cost=0.29..16.36 rows=1 width=32) (actual time=0.012..0.016 rows=0.00 loops=1)
+           Buffers: shared hit=2
+           ->  Nested Loop Left Join  (cost=0.29..16.36 rows=1 width=32) (actual time=0.011..0.014 rows=0.00 loops=1)
+                 Filter: ((e.id IS NULL) OR (e.lifecycle <> 'registered'::text))
+                 Buffers: shared hit=2
+                 ->  Index Only Scan using criterion_assessment_evidence_pkey on criterion_assessment_evidence p_1  (cost=0.15..8.17 rows=1 width=128) (actual time=0.010..0.010 rows=0.00 loops=1)
+                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Heap Fetches: 0
+                       Index Searches: 1
+                       Buffers: shared hit=2
+                 ->  Subquery Scan on e  (cost=0.14..8.18 rows=1 width=128) (never executed)
+                       Filter: ((e.namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (e.outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       ->  Index Scan using evidence_pkey on evidence e_1  (cost=0.14..8.16 rows=1 width=128) (never executed)
+                             Index Cond: (id = p_1.evidence_id)
+                             Index Searches: 0
+   InitPlan 4
+     ->  Aggregate  (cost=0.02..0.03 rows=1 width=8) (actual time=1.432..1.433 rows=1.00 loops=1)
+           ->  CTE Scan on required_proof  (cost=0.00..0.02 rows=1 width=0) (actual time=0.001..0.604 rows=10000.00 loops=1)
+                 Storage: Memory  Maximum Storage: 832kB
+   ->  CTE Scan on current_proof a  (cost=0.00..0.02 rows=1 width=104) (actual time=0.200..178.426 rows=10000.00 loops=1)
+         Storage: Memory  Maximum Storage: 1300kB
+         Buffers: shared hit=30398
+   SubPlan 5
+     ->  CTE Scan on required_proof required_proof_1  (cost=0.00..0.02 rows=1 width=40) (actual time=0.169..243.079 rows=10000.00 loops=1)
+           Storage: Memory  Maximum Storage: 832kB
+           Buffers: shared hit=80448
+   SubPlan 6
+     ->  CTE Scan on invalid_source  (cost=0.00..0.02 rows=1 width=32) (actual time=0.013..0.013 rows=0.00 loops=1)
+           Storage: Memory  Maximum Storage: 17kB
+           Buffers: shared hit=2
+   SubPlan 7
+     ->  CTE Scan on required_proof required_proof_2  (cost=0.00..0.02 rows=1 width=40) (never executed)
+           Storage: Memory  Maximum Storage: 832kB
+ Planning:
+   Buffers: shared hit=11
+ Planning Time: 1.164 ms
+ Execution Time: 439.276 ms
+(86 rows)
+
+ROLLBACK

@@ -27,13 +27,15 @@ import (
 )
 
 type Runtime struct {
-	config         Config
-	store          runtimeStore
-	http           *http.Server
-	root           http.Handler
-	mcpServer      *mcp.Server
-	deliveryWorker *integration.Worker
-	issuerIdentity *domain.ServerIdentity
+	observer            *observability.Observer
+	config              Config
+	store               runtimeStore
+	http                *http.Server
+	root                http.Handler
+	mcpServer           *mcp.Server
+	deliveryWorker      *integration.Worker
+	deliveryDiagnostics *integration.Diagnostics
+	issuerIdentity      *domain.ServerIdentity
 }
 
 type runtimeStore interface {
@@ -56,7 +58,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	var store runtimeStore
 	var err error
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
+		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart, MaxOpenConnections: config.Storage.PostgresMaxOpenConnections})
 	} else {
 		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
 	}
@@ -166,7 +168,13 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 
-	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity}
+	deliveryDiagnostics := integration.NewDiagnostics(config.Integration.WorkerEnabled)
+	observer.DeliveryDiagnostics = deliveryDiagnostics
+	if err = service.ConfigureDeliveryDiagnostics(deliveryDiagnostics, config.Integration.MaxBacklogAge); err != nil {
+		store.Close()
+		return nil, err
+	}
+	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer, deliveryDiagnostics: deliveryDiagnostics}
 	if config.Integration.WorkerEnabled {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
@@ -183,7 +191,12 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			store.Close()
 			return nil, err
 		}
+		runtime.deliveryWorker.Concurrency = config.Integration.WorkerConcurrency
+		if config.Storage.Driver == StorageDriverSQLite && config.Integration.WorkerConcurrency > 1 {
+			slog.Warn("sqlite_delivery_parallelism", "advisory", "SQLite serializes writes; measure before increasing delivery concurrency")
+		}
 		runtime.deliveryWorker.Observer = observer
+		runtime.deliveryWorker.Diagnostics = deliveryDiagnostics
 	}
 	root := http.NewServeMux()
 	root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
@@ -250,7 +263,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		}))
 	}
 	root.Handle("/", api)
-	runtime.root = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	business := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.Auth.Mode == AuthModeLocal && !loopbackHost(r.Host) {
 			http.Error(w, "loopback host required", http.StatusForbidden)
 			return
@@ -259,12 +272,17 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			http.Error(w, "origin rejected", http.StatusForbidden)
 			return
 		}
-		observer.HTTP(root).ServeHTTP(w, r)
+		root.ServeHTTP(w, r)
 	})
+	runtime.root = observer.HTTP(admissionHTTP(config, observer, business))
 	runtime.http = &http.Server{
 		Addr:              config.Server.Listen,
 		Handler:           runtime.root,
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: config.HTTP.ReadHeaderTimeout,
+		ReadTimeout:       config.HTTP.ReadTimeout,
+		WriteTimeout:      config.HTTP.WriteTimeout,
+		IdleTimeout:       config.HTTP.IdleTimeout,
+		MaxHeaderBytes:    config.HTTP.MaxHeaderBytes,
 	}
 	return runtime, nil
 }
@@ -284,11 +302,32 @@ func (r *Runtime) Serve(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return r.serve(ctx, listener)
+}
+
+func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr error) {
+	defer listener.Close()
+	listener = &admissionListener{Listener: listener, slots: make(chan struct{}, r.config.Server.MaxConnections), observer: r.observer}
 	if r.deliveryWorker != nil {
 		workerCtx, stop := context.WithCancel(ctx)
 		done := make(chan struct{})
-		go func() { defer close(done); _ = r.deliveryWorker.Run(workerCtx) }()
-		defer func() { stop(); <-done }()
+		go func() {
+			defer close(done)
+			if e := r.deliveryWorker.Run(workerCtx); e != nil && workerCtx.Err() == nil {
+				slog.Error("delivery_worker_stopped", "failure_class", r.deliveryDiagnostics.DeliveryWorkerStatus().LastFailureClass)
+			}
+		}()
+		defer func() {
+			stop()
+			timer := time.NewTimer(r.config.Server.ShutdownTimeout)
+			defer timer.Stop()
+			select {
+			case <-done:
+			case <-timer.C:
+				serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "delivery worker shutdown grace expired"))
+				slog.Error("delivery_worker_shutdown_timeout")
+			}
+		}()
 	}
 
 	errCh := make(chan error, 1)
@@ -306,6 +345,8 @@ func (r *Runtime) Serve(ctx context.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), r.config.Server.ShutdownTimeout)
 		defer cancel()
 		if err := r.http.Shutdown(shutdownCtx); err != nil {
+			_ = r.http.Close()
+			<-errCh
 			return err
 		}
 		err := <-errCh
@@ -320,7 +361,7 @@ func (r *Runtime) Close() error {
 	if r == nil || r.store == nil {
 		return nil
 	}
-	return r.store.Close()
+	return errors.Join(r.http.Close(), r.store.Close())
 }
 
 func (r *Runtime) Migrate(ctx context.Context) error { return r.store.Migrate(ctx) }

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "source_commit": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+  "measured_at": "2026-10-16T02:43:23.144376+00:00",
+  "go": "go version go1.27.2 linux/amd64",
+  "parallel_workers": 2,
+  "limitations": [
+    "Bounded active campaigns, not exhaustive proof or coverage percentage",
+    "Counts include actual mutations/baseline cases; no security claim from count alone"
+  ],
+  "campaigns": [
+    {
+      "target": "FuzzCanonical",
+      "executions": 37551,
+      "passed": true
+    },
+    {
+      "target": "FuzzEnvelope",
+      "executions": 189348,
+      "passed": true
+    },
+    {
+      "target": "FuzzYAMLJSON",
+      "executions": 35232,
+      "passed": true
+    },
+    {
+      "target": "FuzzReturnResolution",
+      "executions": 161578,
+      "passed": true
+    }
+  ]
+}

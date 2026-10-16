@@ -167,14 +167,14 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		return result, nil
 	}
 	result.Scope = &q.Scope
-	if q.Resource == "protocol_preflight" {
+	if q.Resource == "protocol_preflight" || q.Resource == "return_resolution" {
 		// Activation takes Namespace before Outcome. Preserve that order for
 		// this advisory query too, rather than introducing an inverted guard.
 		protocol, e := protocolRepository(u)
 		if e != nil {
 			return zero, e
 		}
-		if _, e = protocol.Lock(ctx, q.Scope.NamespaceID, false); e != nil {
+		if _, e = protocol.Lock(ctx, q.Scope.NamespaceID, q.Resource == "return_resolution"); e != nil {
 			return zero, e
 		}
 	}
@@ -199,10 +199,62 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if err != nil {
 		return zero, err
 	}
-	if q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.Resource != "operation" && q.ID.Validate() != nil {
+	if q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.Resource != "operation" && q.Resource != "return_resolution" && q.ID.Validate() != nil {
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "resource identifier required")
 	}
 	switch q.Resource {
+	case "return_resolution":
+		if err = d.ValidateIdempotencyKey(q.IdempotencyKey); err != nil {
+			return zero, err
+		}
+		if q.ContractKind != "execution" && q.ContractKind != "review" {
+			return zero, d.NewError(d.ErrorCodeInvalidArgument, "execution/review kind required")
+		}
+		permission := ports.PermissionWorkContractReturn
+		command := "ReturnSignedWork"
+		if q.ContractKind == "review" {
+			permission = ports.PermissionWorkReviewDecide
+			command = "ReturnSignedReview"
+		}
+		current, _, e := s.signedAccess(ctx, u, q.Scope, permission, "")
+		if e != nil {
+			return zero, e
+		}
+		resolutions, e := resolutionRepository(u)
+		if e != nil {
+			return zero, e
+		}
+		record, e := resolutions.GetByOriginalIntent(ctx, q.Scope.NamespaceID, current.PrincipalID, current.CredentialID, command, q.IdempotencyKey)
+		if e != nil {
+			return zero, e
+		}
+		if record.Scope != q.Scope {
+			return zero, d.NewError(d.ErrorCodeForbidden, "resolution scope differs")
+		}
+		if e = s.requireSignedAcceptedCredential(ctx, u, q.Scope, q.ContractKind, record.ContractID); e != nil {
+			return zero, e
+		}
+		serverRepo, e := serverIdentityRepository(u)
+		if e != nil {
+			return zero, e
+		}
+		server, e := serverRepo.Server(ctx)
+		if e != nil {
+			return zero, e
+		}
+		doc, e := verifyResolutionReceipt(ctx, u, record, server.ID.String())
+		if e != nil {
+			return zero, e
+		}
+		envelope, e := doc.Envelope()
+		if e != nil {
+			return zero, signingError(e)
+		}
+		result.Envelope = &envelope
+		result.PayloadDigest = signing.Digest(doc.Payload)
+		if q.Digest != "" && q.Digest != result.PayloadDigest {
+			return zero, d.NewError(d.ErrorCodeContractSpecMismatch, "resolution receipt digest differs")
+		}
 	case "operation":
 		if err = d.ValidateIdempotencyKey(q.IdempotencyKey); err != nil {
 			return zero, err

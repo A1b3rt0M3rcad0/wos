@@ -9,14 +9,15 @@ import (
 )
 
 type memorySignedReviewState struct {
-	Operations map[string]d.SignedOperationResult
-	Cases      map[string]d.ReviewCase
-	Contracts  map[string]d.ReviewContract
-	Facts      map[string]d.SignedFact
+	Resolutions map[string]d.SignedReturnIntentResolution
+	Operations  map[string]d.SignedOperationResult
+	Cases       map[string]d.ReviewCase
+	Contracts   map[string]d.ReviewContract
+	Facts       map[string]d.SignedFact
 }
 
 func newMemorySignedReviewState() memorySignedReviewState {
-	return memorySignedReviewState{Operations: map[string]d.SignedOperationResult{}, Cases: map[string]d.ReviewCase{}, Contracts: map[string]d.ReviewContract{}, Facts: map[string]d.SignedFact{}}
+	return memorySignedReviewState{Resolutions: map[string]d.SignedReturnIntentResolution{}, Operations: map[string]d.SignedOperationResult{}, Cases: map[string]d.ReviewCase{}, Contracts: map[string]d.ReviewContract{}, Facts: map[string]d.SignedFact{}}
 }
 func cloneSignedReview(s memorySignedReviewState) memorySignedReviewState {
 	out := deepCopy(s)

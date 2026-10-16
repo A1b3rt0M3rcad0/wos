@@ -1,0 +1,109 @@
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/work_items
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/objectives
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/issues
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/blockers
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/artifacts
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/evidence
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/decisions
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/relations
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/evidence_links
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/external_references
+--- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections (3.15s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/work_items (0.07s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/objectives (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/issues (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/blockers (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/artifacts (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/evidence (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/decisions (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/relations (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/evidence_links (0.07s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/external_references (0.07s)
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials/memory
+    principal_quota_test.go:169: 50 consumers, two credentials, two Outcomes: newly acquired=4 conflicts=0 exact retries=0
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials/sql
+    principal_quota_test.go:169: 50 consumers, two credentials, two Outcomes: newly acquired=4 conflicts=0 exact retries=0
+--- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials (10.13s)
+    --- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials/memory (2.01s)
+    --- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials/sql (8.11s)
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/memory
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/sql
+--- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent (4.16s)
+    --- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/memory (0.41s)
+    --- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/sql (3.75s)
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/memory
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/sql
+--- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings (5.66s)
+    --- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/memory (1.23s)
+    --- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/sql (4.43s)
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql
+    signed_review_journey_test.go:140: clean database restore preserved execution authority; continuing the same authenticated journey
+    signed_review_journey_test.go:305: clean database restore preserved review authority; continuing the same authenticated journey
+    signed_review_journey_test.go:436: clean database restore preserved correction authority; continuing the same authenticated journey
+--- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority (18.58s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory (5.88s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql (12.71s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	42.737s
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/work_items
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/objectives
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/issues
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/blockers
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/artifacts
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/evidence
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/decisions
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/relations
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/evidence_links
+=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections/external_references
+--- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections (1.41s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/work_items (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/objectives (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/issues (0.03s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/blockers (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/artifacts (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/evidence (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/decisions (0.04s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/relations (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/evidence_links (0.05s)
+    --- PASS: TestContinuityMetadataPagesMatchLegacySerializedSections/external_references (0.04s)
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials/memory
+    principal_quota_test.go:171: 50 consumers, two credentials, two Outcomes: newly acquired=4 conflicts=0 exact retries=0
+=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials/sql
+    principal_quota_test.go:171: 50 consumers, two credentials, two Outcomes: newly acquired=4 conflicts=106 exact retries=106
+--- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials (10.45s)
+    --- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials/memory (2.41s)
+    --- PASS: TestPrincipalQuotasAdminCASAndConcurrentCredentials/sql (8.05s)
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/memory
+=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/sql
+--- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent (2.63s)
+    --- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/memory (0.55s)
+    --- PASS: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent/sql (2.08s)
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/memory
+=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/sql
+--- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings (4.23s)
+    --- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/memory (1.56s)
+    --- PASS: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings/sql (2.67s)
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql
+    signed_review_journey_test.go:142: restored 284987 backup bytes into an empty PostgreSQL database; continuing the shared integration contract
+    signed_review_journey_test.go:142: clean database restore preserved execution authority; continuing the same authenticated journey
+    signed_review_journey_test.go:307: restored 291497 backup bytes into an empty PostgreSQL database; continuing the shared integration contract
+    signed_review_journey_test.go:307: clean database restore preserved review authority; continuing the same authenticated journey
+    signed_review_journey_test.go:438: restored 304691 backup bytes into an empty PostgreSQL database; continuing the shared integration contract
+    signed_review_journey_test.go:438: clean database restore preserved correction authority; continuing the same authenticated journey
+--- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority (24.93s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory (6.40s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql (18.53s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	44.696s

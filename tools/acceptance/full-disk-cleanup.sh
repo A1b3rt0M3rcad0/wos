@@ -10,4 +10,4 @@ docker run --rm --network none --read-only --cap-drop ALL \
   --tmpfs /tmp:rw,size=64m,mode=1777 --tmpfs /fixture:rw,size=1m,mode=1777 \
   --mount "type=bind,source=$binary,target=/wos-tests,readonly" \
   -e WOS_TEST_FULL_DISK_DIRECTORY=/fixture postgres:18.6 \
-  /wos-tests -test.v -test.run '^TestReceiptCleanupRecoversRealFullDisk$'
+  /wos-tests -test.v -test.run '^Test(ReceiptCleanup|ReturnResolutionCleanup)RecoversRealFullDisk$'

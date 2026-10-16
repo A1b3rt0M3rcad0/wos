@@ -31,17 +31,19 @@ const (
 type PayloadType string
 
 const (
-	ContractSpec      PayloadType = "application/vnd.wos.contract-spec.v2+json"
-	ContractAuthority PayloadType = "application/vnd.wos.contract-authority.v2+json"
-	WorkReturn        PayloadType = "application/vnd.wos.work-return.v2+json"
-	ReviewReturn      PayloadType = "application/vnd.wos.review-return.v2+json"
-	AcceptanceReceipt PayloadType = "application/vnd.wos.acceptance-receipt.v2+json"
-	KeyEnrollment     PayloadType = "application/vnd.wos.key-enrollment.v2+json"
+	ContractSpec            PayloadType = "application/vnd.wos.contract-spec.v2+json"
+	ContractAuthority       PayloadType = "application/vnd.wos.contract-authority.v2+json"
+	WorkReturn              PayloadType = "application/vnd.wos.work-return.v2+json"
+	ReviewReturn            PayloadType = "application/vnd.wos.review-return.v2+json"
+	AcceptanceReceipt       PayloadType = "application/vnd.wos.acceptance-receipt.v2+json"
+	ReturnResolution        PayloadType = "application/vnd.wos.return-resolution.v2+json"
+	ReturnResolutionReceipt PayloadType = "application/vnd.wos.return-resolution-receipt.v2+json"
+	KeyEnrollment           PayloadType = "application/vnd.wos.key-enrollment.v2+json"
 )
 
 func (t PayloadType) Valid() bool {
 	switch t {
-	case ContractSpec, ContractAuthority, WorkReturn, ReviewReturn, AcceptanceReceipt, KeyEnrollment:
+	case ContractSpec, ContractAuthority, WorkReturn, ReviewReturn, AcceptanceReceipt, KeyEnrollment, ReturnResolution, ReturnResolutionReceipt:
 		return true
 	}
 	return false

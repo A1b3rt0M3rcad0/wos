@@ -20,18 +20,24 @@ func main() {
 	}
 	schemas := map[string]any{}
 	for name, typed := range map[string]reflect.Type{
-		"SignedEnvelopeV2":            reflect.TypeFor[signing.Envelope](),
-		"SignedWorkSpecificationV2":   reflect.TypeFor[signing.SpecPayload[domain.SignedWorkSpec]](),
-		"SignedReviewSpecificationV2": reflect.TypeFor[signing.SpecPayload[application.SignedReviewSpec]](),
-		"SignedAuthorityV2":           reflect.TypeFor[signing.AuthorityPayload](),
-		"SignedWorkReturnV2":          reflect.TypeFor[signing.WorkReturnPayload[application.SignedReturnMaterial]](),
-		"SignedReviewReturnV2":        reflect.TypeFor[signing.ReviewReturnPayload[application.SignedReviewMaterial]](),
-		"SignedAcceptanceReceiptV2":   reflect.TypeFor[signing.ReceiptPayload](),
-		"SignedKeyEnrollmentV2":       reflect.TypeFor[signing.EnrollmentPayload](),
+		"SignedReturnResolutionV2":        reflect.TypeFor[signing.ReturnResolutionPayload](),
+		"SignedReturnResolutionReceiptV2": reflect.TypeFor[signing.ReturnResolutionReceiptPayload](),
+		"SignedEnvelopeV2":                reflect.TypeFor[signing.Envelope](),
+		"SignedWorkSpecificationV2":       reflect.TypeFor[signing.SpecPayload[domain.SignedWorkSpec]](),
+		"SignedReviewSpecificationV2":     reflect.TypeFor[signing.SpecPayload[application.SignedReviewSpec]](),
+		"SignedAuthorityV2":               reflect.TypeFor[signing.AuthorityPayload](),
+		"SignedWorkReturnV2":              reflect.TypeFor[signing.WorkReturnPayload[application.SignedReturnMaterial]](),
+		"SignedReviewReturnV2":            reflect.TypeFor[signing.ReviewReturnPayload[application.SignedReviewMaterial]](),
+		"SignedAcceptanceReceiptV2":       reflect.TypeFor[signing.ReceiptPayload](),
+		"SignedKeyEnrollmentV2":           reflect.TypeFor[signing.EnrollmentPayload](),
 	} {
 		schemas[name] = commands.SignedSchema(typed)
 	}
 	paths := map[string]any{}
+	schemas["DeliveryHealthQuery"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthQuery]())
+	schemas["DeliveryHealthResult"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthResult]())
+	paths["/api/v1/namespaces/{namespace_id}/operations/delivery-health"] = map[string]any{"get": map[string]any{"operationId": "getDeliveryHealth", "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.", "parameters": []any{map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}}, map[string]any{"name": "outcome_id", "in": "query", "schema": map[string]any{"type": "string", "format": "uuid"}}}, "responses": map[string]any{"200": map[string]any{"description": "Scoped queue and worker diagnostic", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/DeliveryHealthResult"}}}}, "403": map[string]any{"description": "Current Namespace administrative access denied"}}}}
+
 	schemas["ReferenceCandidate"] = commands.Schema(reflect.TypeFor[ports.ReferenceCandidate]())
 	schemas["ReferencePage"] = commands.Schema(reflect.TypeFor[application.ReferencePage]())
 	refsParameters := []any{}
@@ -45,6 +51,7 @@ func main() {
 	paths["/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/references"] = map[string]any{"get": map[string]any{"operationId": "searchReferences", "description": "Authorized bounded reference metadata. kind is a comma-separated allowlist. Query uses ASCII case-insensitive substring matching, preserving Unicode otherwise. Deterministic kind/ID keysets bind scope, filters and Outcome revision. id resolves a selected candidate independently of paging; cannot combine with query/cursor. Results never grant mutation authority.", "parameters": refsParameters, "responses": map[string]any{"200": map[string]any{"description": "Bounded candidates and revision-bound next cursor", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/ReferencePage"}}}}, "422": map[string]any{"description": "Invalid kind, filter, ID, limit or cursor binding"}, "403": map[string]any{"description": "Current authorization denied"}, "409": map[string]any{"description": "Outcome changed; explicitly reload search while preserving selected IDs"}}}}
 
 	paths["/api/v1/namespaces/{namespace_id}/effective-permissions"] = map[string]any{"get": map[string]any{"operationId": "effectivePermissions", "description": "Current authenticated permission hints for presentation, optionally scoped to outcome_id. Does not grant execution authority. Credentials and grants are rechecked.", "parameters": []any{map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}}, map[string]any{"name": "outcome_id", "in": "query", "schema": map[string]any{"type": "string", "format": "uuid"}}}, "responses": map[string]any{"200": map[string]any{"description": "Bounded permission names; execution_authority=false"}, "403": map[string]any{"description": "Current authorization denied"}}}}
+	schemas["SigningIdentityViewV2"] = commands.Schema(reflect.TypeFor[application.SigningIdentityView]())
 	schemas["SigningSecurityIntentV2"] = commands.Schema(reflect.TypeFor[application.SigningSecurityIntent]())
 	schemas["SignedStateQueryV2"] = commands.SignedSchema(reflect.TypeFor[application.SignedStateQuery]())
 	schemas["SignedStateResultV2"] = commands.SignedSchema(reflect.TypeFor[application.SignedStateResult]())
@@ -65,6 +72,7 @@ func main() {
 		}
 		paths[path] = map[string]any{"get": map[string]any{"description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.", "parameters": parameters, "responses": map[string]any{"200": map[string]any{"description": "Typed result, page or retained receipt; omission metadata remains explicit."}, "403": map[string]any{"description": "Authorization denied."}, "404": map[string]any{"description": "Not found in scope or receipt not retained."}}}}
 	}
+	paths["/api/v1/security/signing-identity"].(map[string]any)["get"].(map[string]any)["responses"].(map[string]any)["200"] = map[string]any{"description": "Current credential public identity, own Principal activity and independent Principal/credential/Namespace quota ceilings; no other Principal contract list.", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/SigningIdentityViewV2"}}}}
 	document := map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "WOS generated command catalog", "version": strings.TrimSpace(string(version))}, "paths": paths, "security": []any{map[string]any{"bearerAuth": []string{}}, map[string]any{"browserSession": []string{}}}, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"bearerAuth": map[string]any{"type": "http", "scheme": "bearer"}, "browserSession": map[string]any{"type": "apiKey", "in": "cookie", "name": "wos_session"}}}}
 	b, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {

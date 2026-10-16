@@ -13,7 +13,7 @@
 
 Keep the plan, the work, and its proof in one shared state. People, AI agents, and applications can pick up the same outcome, see what is authorized, and continue from the last recorded step.
 
-The project provides a standalone Go service, an embedded web workspace, a native CLI, HTTP and MCP interfaces, and an embeddable Go Core. SQLite supports local operation; PostgreSQL supports shared deployments. Execution stays in the participant's own tools and environment.
+The project provides a standalone Go service, an embedded web workspace, a native CLI (`wos`, distributed through the `wosctl` package), HTTP and MCP interfaces, and an embeddable Go Core. SQLite supports local operation; PostgreSQL supports shared deployments. Execution stays in the participant's own tools and environment.
 
 ## Why use it
 
@@ -166,6 +166,6 @@ The service works independently of an AI provider or agent runtime. Integrations
 - [Roadmap](ROADMAP.md): implementation status and remaining acceptance work.
 - [Releases](docs/releases.md): installation, platform scope, and publication requirements.
 
-These instructions and screenshots describe this branch. [VERSION](VERSION) identifies its source version; npm `@latest` follows the published package. Stable 1.0 acceptance is tracked separately in the roadmap.
+These instructions and screenshots describe this branch. [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2) is the published baseline; changes in this branch are unreleased. [VERSION](VERSION) records source metadata, while npm `@latest` follows the published package. The [operational acceptance record](docs/stable/operational-acceptance.md) documents measured limits and source-specific verification. Stable 1.0 acceptance remains tracked separately in the roadmap.
 
 Licensed under [Apache 2.0](LICENSE).

@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	 602837991 ns/op	 582680787 p50_ns	 792708924 p95_ns	 834967778 p99_ns	      7488 response_bytes	125830055 B/op	 1231474 allocs/op
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	 564028052 ns/op	 560410785 p50_ns	 795836360 p95_ns	 834702682 p99_ns	      7488 response_bytes	125829288 B/op	 1231461 allocs/op
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	 578710014 ns/op	 538575347 p50_ns	 789048939 p95_ns	 820898354 p99_ns	      7488 response_bytes	125831165 B/op	 1231464 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 612396578 ns/op	 544962914 p50_ns	1030210512 p95_ns	1078200005 p99_ns	     32361 response_bytes	129594731 B/op	 1231743 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 580497871 ns/op	 513554306 p50_ns	 780465020 p95_ns	1054863708 p99_ns	     32361 response_bytes	129594704 B/op	 1231740 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 494320029 ns/op	 476921039 p50_ns	 601369434 p95_ns	 613825256 p99_ns	     32361 response_bytes	129596337 B/op	 1231740 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	 109601130 ns/op	 103261835 p50_ns	 147143068 p95_ns	 158173232 p99_ns	      2209 response_bytes	   60703 B/op	    1168 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	 126697758 ns/op	 115241533 p50_ns	 198497955 p95_ns	 216495854 p99_ns	      2209 response_bytes	   57896 B/op	    1145 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	 113025865 ns/op	 106649208 p50_ns	 141663729 p95_ns	 147575938 p99_ns	      2209 response_bytes	   57670 B/op	    1143 allocs/op
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	120.955s

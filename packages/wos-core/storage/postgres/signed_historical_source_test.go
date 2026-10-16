@@ -17,12 +17,13 @@ func (m signedHistoricalSource) Begin(ctx context.Context) (ports.UnitOfWork, er
 	if e != nil {
 		return nil, e
 	}
-	return signedHistoricalUnit{UnitOfWork: u, SignedContractUnitOfWork: u.(ports.SignedContractUnitOfWork), WorkProtocolUnitOfWork: u.(ports.WorkProtocolUnitOfWork), SigningIdentityUnitOfWork: u.(ports.SigningIdentityUnitOfWork), AccessSnapshotUnitOfWork: u.(ports.AccessSnapshotUnitOfWork)}, nil
+	return signedHistoricalUnit{UnitOfWork: u, SignedContractUnitOfWork: u.(ports.SignedContractUnitOfWork), SignedReturnResolutionUnitOfWork: u.(ports.SignedReturnResolutionUnitOfWork), WorkProtocolUnitOfWork: u.(ports.WorkProtocolUnitOfWork), SigningIdentityUnitOfWork: u.(ports.SigningIdentityUnitOfWork), AccessSnapshotUnitOfWork: u.(ports.AccessSnapshotUnitOfWork)}, nil
 }
 
 type signedHistoricalUnit struct {
 	ports.UnitOfWork
 	ports.SignedContractUnitOfWork
+	ports.SignedReturnResolutionUnitOfWork
 	ports.WorkProtocolUnitOfWork
 	ports.SigningIdentityUnitOfWork
 	ports.AccessSnapshotUnitOfWork

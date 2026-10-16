@@ -160,14 +160,16 @@ func (p CredentialPolicy) PermitsKey(key ID) bool {
 }
 
 type WorkAcceptancePolicy struct {
-	NamespaceID              ID             `json:"namespace_id"`
-	OutcomeID                *ID            `json:"outcome_id,omitempty"`
-	WorkItemID               *ID            `json:"work_item_id,omitempty"`
-	Version                  Version        `json:"revision,string"`
-	AcceptanceFloor          AcceptanceMode `json:"acceptance_floor"`
-	MaxActiveWorkContracts   int            `json:"max_active_work_contracts"`
-	MaxActiveReviewContracts int            `json:"max_active_review_contracts"`
-	UpdatedAt                time.Time      `json:"updated_at"`
+	NamespaceID                 ID             `json:"namespace_id"`
+	OutcomeID                   *ID            `json:"outcome_id,omitempty"`
+	WorkItemID                  *ID            `json:"work_item_id,omitempty"`
+	Version                     Version        `json:"revision,string"`
+	AcceptanceFloor             AcceptanceMode `json:"acceptance_floor"`
+	MaxActiveWorkContracts      int            `json:"max_active_work_contracts"`
+	MaxActiveReviewContracts    int            `json:"max_active_review_contracts"`
+	MaxActiveWorkPerPrincipal   *int           `json:"max_active_work_per_principal,omitempty"`
+	MaxActiveReviewPerPrincipal *int           `json:"max_active_review_per_principal,omitempty"`
+	UpdatedAt                   time.Time      `json:"updated_at"`
 }
 
 func (p WorkAcceptancePolicy) Validate() error {
@@ -180,5 +182,24 @@ func (p WorkAcceptancePolicy) Validate() error {
 	if p.WorkItemID != nil && (p.OutcomeID == nil || p.WorkItemID.Validate() != nil) {
 		return NewError(ErrorCodeInvalidArgument, "invalid acceptance WorkItem")
 	}
+	for _, limit := range []*int{p.MaxActiveWorkPerPrincipal, p.MaxActiveReviewPerPrincipal} {
+		if limit != nil && (*limit < 1 || *limit > 100 || p.OutcomeID != nil || p.WorkItemID != nil) {
+			return NewError(ErrorCodeInvalidArgument, "Principal quotas require a Namespace policy and limits between 1 and 100")
+		}
+	}
 	return nil
+}
+
+// Absent fields preserve the published 0.4.2 limits. Zero is never unlimited.
+func (p WorkAcceptancePolicy) PrincipalWorkLimit() int {
+	if p.MaxActiveWorkPerPrincipal != nil {
+		return *p.MaxActiveWorkPerPrincipal
+	}
+	return 3
+}
+func (p WorkAcceptancePolicy) PrincipalReviewLimit() int {
+	if p.MaxActiveReviewPerPrincipal != nil {
+		return *p.MaxActiveReviewPerPrincipal
+	}
+	return 1
 }

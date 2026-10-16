@@ -20,6 +20,8 @@ import (
 )
 
 type Worker struct {
+	Diagnostics   *Diagnostics
+	Concurrency   int
 	Store         ports.DeliveryStore
 	Clock         ports.Clock
 	IDs           ports.IDGenerator
@@ -97,11 +99,16 @@ func VerifySignature(secret, timestamp, id, signature string, body []byte, now t
 	return nil
 }
 func (w *Worker) Tick(ctx context.Context) (bool, error) {
+	if w.Diagnostics != nil {
+		w.Diagnostics.tick(w.Clock.Now())
+	}
 	id, err := w.IDs.NewID()
 	if err != nil {
 		return false, err
 	}
-	delivery, err := w.Store.ClaimDelivery(ctx, w.Clock.Now().UTC(), id, 30*time.Second)
+	claimCtx, claimCancel := context.WithTimeout(ctx, 5*time.Second)
+	delivery, err := w.Store.ClaimDelivery(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second)
+	claimCancel()
 	if err != nil || delivery == nil {
 		return false, err
 	}
@@ -154,7 +161,51 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	acknowledged = err == nil
 	return true, err
 }
-func (w *Worker) Run(ctx context.Context) error {
+
+// Run owns a fixed-size pool. Each lane claims at most one delivery and
+// completes its bounded HTTP/ACK before claiming another; there is no prefetch.
+func (w *Worker) Run(ctx context.Context) (runErr error) {
+	concurrency := w.Concurrency
+	if concurrency == 0 {
+		concurrency = 1
+	}
+	if concurrency < 1 || concurrency > 64 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery worker concurrency must be 1..64")
+	}
+	if w.Diagnostics != nil {
+		w.Diagnostics.started(w.Clock.Now(), concurrency)
+	}
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	defer func() {
+		if w.Diagnostics != nil {
+			w.Diagnostics.stopped(runErr, ctx.Err() != nil)
+		}
+	}()
+	results := make(chan error, concurrency)
+	for i := 0; i < concurrency; i++ {
+		go func() { results <- w.runLane(runCtx) }()
+	}
+	// A failed lane stops the pool. The host observes the classified failure while
+	// the API stays available; a deployment supervisor decides when to restart.
+	runErr = <-results
+	cancel()
+	for i := 1; i < concurrency; i++ {
+		if e := <-results; runErr == nil && e != nil {
+			runErr = e
+		}
+	}
+	if ctx.Err() != nil {
+		return nil
+	}
+	return runErr
+}
+func (w *Worker) runLane(ctx context.Context) (runErr error) {
+	defer func() {
+		if recover() != nil {
+			runErr = ErrWorkerPanic
+		}
+	}()
 	timer := time.NewTicker(time.Second)
 	defer timer.Stop()
 	for {
@@ -167,6 +218,23 @@ func (w *Worker) Run(ctx context.Context) error {
 				if err != nil && ctx.Err() == nil {
 					code, _ := domain.ErrorCodeOf(err)
 					slog.Warn("delivery_worker", "error_code", code)
+					if fatalWorkerError(err) {
+						return err
+					}
+					if code == domain.ErrorCodeTransactionConflict {
+						// This internal queue claim/ACK keeps its event identity and fencing.
+						// Yield within the fixed batch; an ordinary conflict must not idle an
+						// entire replica for one second or starve its other delivery lanes.
+						retry := time.NewTimer(20 * time.Millisecond)
+						select {
+						case <-ctx.Done():
+							retry.Stop()
+							return nil
+						case <-retry.C:
+						}
+						continue
+					}
+
 				}
 				if err != nil || !worked {
 					break

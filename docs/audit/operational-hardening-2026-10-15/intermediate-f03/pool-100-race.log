@@ -1,0 +1,56 @@
+=== RUN   TestWorkerSupervisionDistinguishesFatalPanicAndCancellation
+=== RUN   TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/fatal
+2026/10/15 22:49:21 WARN delivery_worker error_code=""
+=== RUN   TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/panic
+=== RUN   TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/cancel
+--- PASS: TestWorkerSupervisionDistinguishesFatalPanicAndCancellation (3.21s)
+    --- PASS: TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/fatal (1.00s)
+    --- PASS: TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/panic (1.00s)
+    --- PASS: TestWorkerSupervisionDistinguishesFatalPanicAndCancellation/cancel (1.20s)
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/1x1/100
+    load_test.go:336: {"backend":"sqlite","lines":["SEARCH integration_deliveries USING COVERING INDEX delivery_scope_health (namespace_id=? AND outcome_id=?)"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"sqlite","lines":["SCAN integration_deliveries"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"sqlite","elapsed_ms":5820,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":1,"max_backlog":100,"max_inflight":1,"messages":100,"queue_to_receiver_p95_ms":5582,"replicas":1,"throughput_per_second":17.18154297542268,"unique_receiver_effects_with_dedupe":100}
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/1x4/100
+    load_test.go:336: {"backend":"sqlite","lines":["SEARCH integration_deliveries USING COVERING INDEX delivery_scope_health (namespace_id=? AND outcome_id=?)"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"sqlite","lines":["SCAN integration_deliveries"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"sqlite","elapsed_ms":2869,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":4,"max_backlog":100,"max_inflight":1,"messages":100,"queue_to_receiver_p95_ms":2788,"replicas":1,"throughput_per_second":34.84587612886343,"unique_receiver_effects_with_dedupe":100}
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/2x2/100
+    load_test.go:336: {"backend":"sqlite","lines":["SEARCH integration_deliveries USING COVERING INDEX delivery_scope_health (namespace_id=? AND outcome_id=?)"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"sqlite","lines":["SCAN integration_deliveries"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"sqlite","elapsed_ms":3256,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":2,"max_backlog":100,"max_inflight":1,"messages":100,"queue_to_receiver_p95_ms":3105,"replicas":2,"throughput_per_second":30.710448768584754,"unique_receiver_effects_with_dedupe":100}
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x1/100
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=49.62..49.63 rows=1 width=16) (actual time=0.052..0.052 rows=1.00 loops=1)","  Buffers: shared hit=48","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..49.50 rows=25 width=8) (actual time=0.017..0.046 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=48","Planning:","  Buffers: shared hit=61","Planning Time: 0.411 ms","Execution Time: 0.084 ms"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=49.62..49.63 rows=1 width=16) (actual time=0.079..0.079 rows=1.00 loops=1)","  Buffers: shared hit=48","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..49.50 rows=25 width=8) (actual time=0.026..0.071 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=48","Planning:","  Buffers: shared hit=6","Planning Time: 0.410 ms","Execution Time: 0.099 ms"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"postgres","elapsed_ms":4347,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":1,"max_backlog":100,"max_inflight":1,"messages":100,"queue_to_receiver_p95_ms":4279,"replicas":1,"throughput_per_second":23.003862639305964,"unique_receiver_effects_with_dedupe":100}
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x4/100
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=50.62..50.63 rows=1 width=16) (actual time=0.407..0.407 rows=1.00 loops=1)","  Buffers: shared hit=49","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..50.50 rows=25 width=8) (actual time=0.371..0.400 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=49","Planning:","  Buffers: shared hit=61","Planning Time: 0.316 ms","Execution Time: 0.435 ms"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=50.62..50.63 rows=1 width=16) (actual time=0.047..0.048 rows=1.00 loops=1)","  Buffers: shared hit=49","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..50.50 rows=25 width=8) (actual time=0.016..0.041 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=49","Planning:","  Buffers: shared hit=6","Planning Time: 0.069 ms","Execution Time: 0.062 ms"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"postgres","elapsed_ms":1565,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":4,"max_backlog":100,"max_inflight":4,"messages":100,"queue_to_receiver_p95_ms":1528,"replicas":1,"throughput_per_second":63.87514679690425,"unique_receiver_effects_with_dedupe":100}
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/100
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=50.62..50.63 rows=1 width=16) (actual time=0.096..0.097 rows=1.00 loops=1)","  Buffers: shared hit=49","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..50.50 rows=25 width=8) (actual time=0.047..0.088 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=49","Planning:","  Buffers: shared hit=61","Planning Time: 0.432 ms","Execution Time: 0.134 ms"],"queue_index_plan":"with_scope_index"}
+    load_test.go:336: {"backend":"postgres","lines":["Aggregate  (cost=50.62..50.63 rows=1 width=16) (actual time=0.068..0.068 rows=1.00 loops=1)","  Buffers: shared hit=49","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..50.50 rows=25 width=8) (actual time=0.019..0.060 rows=25.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 75","        Buffers: shared hit=49","Planning:","  Buffers: shared hit=6","Planning Time: 0.086 ms","Execution Time: 0.086 ms"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"postgres","elapsed_ms":1464,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":2,"max_backlog":100,"max_inflight":3,"messages":100,"queue_to_receiver_p95_ms":1439,"replicas":2,"throughput_per_second":68.30469606356252,"unique_receiver_effects_with_dedupe":100}
+--- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss (47.37s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/1x1/100 (11.25s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/1x4/100 (8.48s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/sqlite/2x2/100 (10.59s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x1/100 (7.80s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x4/100 (4.58s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/100 (4.66s)
+=== RUN   TestDeliveryWorkerCrashChild
+    process_death_test.go:24: owned child process only
+--- SKIP: TestDeliveryWorkerCrashChild (0.00s)
+=== RUN   TestDeliveryWorkerProcessDeathReclaimsPersistedLease
+=== RUN   TestDeliveryWorkerProcessDeathReclaimsPersistedLease/sqlite
+    process_death_test.go:168: backend=sqlite real_process_killed=true attempts=2 authoritative_successes=1 receiver_requests=2 deduplicated_effects=1 fence=1->2
+=== RUN   TestDeliveryWorkerProcessDeathReclaimsPersistedLease/postgres
+    process_death_test.go:168: backend=postgres real_process_killed=true attempts=2 authoritative_successes=1 receiver_requests=2 deduplicated_effects=1 fence=1->2
+--- PASS: TestDeliveryWorkerProcessDeathReclaimsPersistedLease (6.07s)
+    --- PASS: TestDeliveryWorkerProcessDeathReclaimsPersistedLease/sqlite (3.62s)
+    --- PASS: TestDeliveryWorkerProcessDeathReclaimsPersistedLease/postgres (2.45s)
+=== RUN   TestWebhookSignatureAndDestinationPolicy
+--- PASS: TestWebhookSignatureAndDestinationPolicy (0.00s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	57.677s

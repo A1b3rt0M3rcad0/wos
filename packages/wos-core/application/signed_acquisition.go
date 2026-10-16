@@ -72,20 +72,24 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	if counts.PrincipalWork >= 3 || counts.CredentialWork >= credential.MaxActiveWorkContracts {
-		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "active signed execution quota reached")
-	}
 	registry, err := signingRepository(uow)
 	if err != nil {
 		return zero, 0, err
 	}
-	if nsPolicy, e := registry.AcceptancePolicy(ctx, cmd.Scope.NamespaceID, nil, nil); e == nil {
-		if counts.NamespaceWork >= nsPolicy.MaxActiveWorkContracts {
-			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace execution quota reached")
-		}
-	} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
+	if e != nil {
 		return zero, 0, e
 	}
+	if counts.PrincipalWork >= nsPolicy.PrincipalWorkLimit() {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Principal execution quota reached")
+	}
+	if counts.CredentialWork >= credential.MaxActiveWorkContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "credential execution quota reached")
+	}
+	if nsPolicy.MaxActiveWorkContracts > 0 && counts.NamespaceWork >= nsPolicy.MaxActiveWorkContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace execution quota reached")
+	}
+
 	var previous *d.WorkContract
 	previousExpiredNow := false
 	if work.CurrentContractID != nil {

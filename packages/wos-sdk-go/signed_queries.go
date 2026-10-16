@@ -55,3 +55,9 @@ func (c *Client) GetSignedTrust(ctx context.Context, namespace d.ID) (a.SignedSt
 	err := c.do(ctx, http.MethodGet, "/namespaces/"+namespace.String()+"/signed-trust", "", nil, &result)
 	return result, err
 }
+
+// ReadSignedReturnResolution obtains the original credential-bound terminal proof.
+// A not-found response does not authorize discarding a local pending return.
+func (c *Client) ReadSignedReturnResolution(ctx context.Context, scope d.Scope, kind, key string) (a.SignedStateResult, error) {
+	return c.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "return_resolution", ContractKind: kind, IdempotencyKey: key})
+}

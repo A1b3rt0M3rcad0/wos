@@ -1,0 +1,12 @@
+✔ distribution rejects prerelease/untrusted metadata and failed commands (44.549107ms)
+✔ single wosctl package identity/version are synchronized without install hooks or dependencies (7.250429ms)
+✔ publication needs actual matching native hosts and binary checksums (15.497974ms)
+✔ Docker and CI use the reviewed Go patch from the shared version file (5.13699ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.833795

@@ -1,0 +1,60 @@
+{
+  "kind": "intermediate_not_final_acceptance",
+  "base_commit": "d58999711c32a670d42e4e77f4d316e920253e79",
+  "production_files": {
+    "packages/wos-api/integration/worker.go": "f8c92d02569024788b1f64f87c00e6817826d1918bf22f25da8fd3ed5c95d816",
+    "packages/wos-api/integration/diagnostics.go": "9c03898935691cd83b0a4dd68e65e8997066d5b17dac9bba3509067f495621db",
+    "packages/wos-api/internal/server/config.go": "15dd57f3c827afc890e389aa8f1581b871500ed2b855279e06598a5942fb502f",
+    "packages/wos-api/internal/server/env.go": "3785111319ed85681a1eec6a68a8033ba45146a4fcc72436fc0dd696745887e2",
+    "packages/wos-api/internal/server/runtime.go": "5d47c4797935df510845b88dd310c548727a00aed65eac0977934e9fc25097d5",
+    "packages/wos-core/storage/sqlite/integration.go": "a0a99b0a6c3add6fda9ecb6ffd7b6728040c152a100b9ddf99f9afcdaac3ac8b",
+    "packages/wos-core/storage/postgres/integration.go": "39e204aa02c0572e275f464d3830d4f11c776b0f02e8ca1956a07dd11aca2ffd"
+  },
+  "workload": "1000 synthetic HMAC signals; four Outcomes; 2ms loopback receiver; one deliberate ACK loss; shared laboratory host; race enabled; no receiver SLA",
+  "results": [
+    {
+      "backend": "postgres",
+      "elapsed_ms": 40375,
+      "external_duplicates": 1,
+      "guarantee": "at_least_once",
+      "lanes_per_replica": 1,
+      "max_backlog": 1000,
+      "max_inflight": 1,
+      "messages": 1000,
+      "queue_to_receiver_p95_ms": 38355,
+      "replicas": 1,
+      "throughput_per_second": 24.76745553770493,
+      "unique_receiver_effects_with_dedupe": 1000
+    },
+    {
+      "backend": "postgres",
+      "elapsed_ms": 10612,
+      "external_duplicates": 1,
+      "guarantee": "at_least_once",
+      "lanes_per_replica": 4,
+      "max_backlog": 1000,
+      "max_inflight": 4,
+      "messages": 1000,
+      "queue_to_receiver_p95_ms": 10365,
+      "replicas": 1,
+      "throughput_per_second": 94.225284898436,
+      "unique_receiver_effects_with_dedupe": 1000
+    },
+    {
+      "backend": "postgres",
+      "elapsed_ms": 10427,
+      "external_duplicates": 1,
+      "guarantee": "at_least_once",
+      "lanes_per_replica": 2,
+      "max_backlog": 1000,
+      "max_inflight": 4,
+      "messages": 1000,
+      "queue_to_receiver_p95_ms": 10230,
+      "replicas": 2,
+      "throughput_per_second": 95.89982909326078,
+      "unique_receiver_effects_with_dedupe": 1000
+    }
+  ],
+  "index_caveat": "Unvacuumed PostgreSQL fixture chose sequential scan. After ordinary VACUUM ANALYZE, the same 1000-row/250-selected fixture used delivery_scope_health index-only (15 buffers, 0 heap fetches) vs sequential (345 buffers); no forced planner switches. SQLite used a covering scoped index vs full scan.",
+  "test_source_note": "pool-100 and pool-1000 logs precede the final VACUUM-only diagnostic refinement; maintained-index log reruns the final harness and corrected configuration environment name. Exact final PR-source suite remains required."
+}

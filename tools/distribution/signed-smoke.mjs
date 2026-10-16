@@ -8,7 +8,7 @@ import {once} from 'node:events';
 import {randomUUID,randomBytes,createPrivateKey,createPublicKey,createHash} from 'node:crypto';
 
 // Execute installed binaries only, outside the source checkout. No browser or Go test helper.
-export async function verifySignedPackage(serverBinary, clientBinary) {
+export async function verifySignedPackage(serverBinary, clientBinary, {requireTerminalResolution=false}={}) {
  const directory=await mkdtemp(join(tmpdir(),'wos-signed-ui-'));
  const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
  const url=`http://127.0.0.1:${port}`,namespace='01a11991-0000-7000-8000-000000000001',token=randomBytes(32).toString('base64url');
@@ -68,9 +68,30 @@ export async function verifySignedPackage(serverBinary, clientBinary) {
   cli(executor.workspace,executor.name,executor.environment,'work','finish',executionFile.slice(0,-5));
   assert.deepEqual(await readdir(executionDirectory),[],'executor obligation cleanup is separate from Task approval');
   const reviewDirectory=join(reviewer.workspace,'.wos/profiles/reviewer/contract');
+  const capabilities=await api('/capabilities',token);
+  const terminalResolution=capabilities.signed_return_resolution===true;
+  if(requireTerminalResolution)assert.ok(terminalResolution,'candidate must advertise terminal return resolution');
   for (const decision of ['changes_requested','approved']) {
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','checkout','--next');
   const reviewFile=(await readdir(reviewDirectory)).find(p=>p.endsWith('.yaml'));assert.ok(reviewFile);
+  if(terminalResolution && decision==='changes_requested') {
+   await editDraft(join(reviewDirectory,reviewFile),'review',lines=>lines.map(line=>/^\s+decision:/.test(line)?line.replace(/decision:.*/,'decision: approved'):/^\s+reason:/.test(line)?line.replace(/reason:.*/,'reason: "Controlled missing-assessment rejection"'):line));
+   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','sign',reviewFile.slice(0,-5));
+   let rejection;
+   try {cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','send',reviewFile.slice(0,-5))}catch(error){rejection=error}
+   assert.ok(rejection,'approval without required assessments must be rejected');
+   const rejectedOutput=JSON.parse(rejection.stdout.toString());
+   assert.match(rejectedOutput.error,/required criterion.*no current assessment/,'controlled semantic rejection reached the server');
+   const status=cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','resolution-status',reviewFile.slice(0,-5));
+   assert.equal(status.data.server_decision_confirmed,false);
+   const closed=cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','resolve',reviewFile.slice(0,-5),'--reason','Close the rejected approval before a separate valid review');
+   assert.equal(closed.data.server_decision_confirmed,true);
+   assert.equal(closed.data.original_return_accepted,false);
+   assert.ok((await readFile(join(reviewDirectory,reviewFile),'utf8')).includes('Controlled missing-assessment rejection'),'resolution preserves editable draft');
+   const history=await readdir(join(reviewer.workspace,'.wos/profiles/reviewer/history'));
+   assert.equal(history.filter(name=>name.endsWith('.contract.yaml')).length,1,'exact original draft/signature bytes archived');
+   assert.equal(history.filter(name=>name.endsWith('.yaml')&&!name.endsWith('.contract.yaml')).length,1,'separate signed terminal proof archived');
+  }
   await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='approved'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  criterion_assessments:',indent+'    - criterion_id: '+criterion.id,indent+'      criterion_revision: "'+criterion.criterion_revision+'"',indent+'      result: met',indent+'      rationale: "Integration fixture checked original attestation requirement"')}if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','finish',reviewFile.slice(0,-5));assert.deepEqual(await readdir(reviewDirectory),[]);
   if(decision==='changes_requested') {
@@ -94,7 +115,7 @@ export async function verifySignedPackage(serverBinary, clientBinary) {
   assert.deepEqual(await readdir(reviewDirectory),[]);
   const completed=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token);
   assert.equal(completed.value.lifecycle,'done','independent reviewer actually completes Task');
-  return {protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
+  return {terminal_return_resolution:terminalResolution?'verified':'unsupported_by_source',protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
  }finally{
   if(child.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended}await rm(directory,{recursive:true,force:true});
  }

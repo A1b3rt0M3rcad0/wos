@@ -52,6 +52,9 @@ func (s *Service) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q Gra
 	}
 	sort.Strings(q.Kinds)
 	hash := filterHash(q)
+	if page, handled, e := s.boundedOutcomeGraph(ctx, scope, q, n, hash); handled {
+		return page, e
+	}
 	state, err := s.GetOutcomeState(ctx, scope)
 	if err != nil {
 		return GraphPage{}, err
@@ -247,6 +250,12 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 	if err != nil {
 		return WorkContext{}, err
 	}
+	if reads, ok := uow.(ports.ContinuityReadUnitOfWork); ok {
+		if focal, ok := reads.ContinuityReads().(ports.FocalReadRepository); ok {
+			return s.currentFocalWorkContext(ctx, uow, focal, scope, id, coord.Revision)
+		}
+	}
+
 	work, err := uow.WorkItems().Get(ctx, scope, id)
 	if err != nil {
 		return WorkContext{}, err

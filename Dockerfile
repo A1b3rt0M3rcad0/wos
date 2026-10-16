@@ -1,4 +1,4 @@
-FROM golang:1.27.1-alpine AS build
+FROM golang:1.27.2-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 # Optional build-only trust bundle for an HTTPS package proxy.
@@ -31,6 +31,7 @@ LABEL org.opencontainers.image.title="WOS" \
 # The pinned official Go build image already supplies the CA bundle.
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 RUN addgroup -g 10001 wos && adduser -D -u 10001 -G wos wos && mkdir /data && chown wos:wos /data
+COPY --chmod=0555 deploy/shared/entrypoint.sh /usr/local/lib/wos/shared-entrypoint.sh
 COPY --from=build /wos /usr/local/bin/wos
 COPY --from=build /wosctl /usr/local/bin/wosctl
 COPY --from=build /licenses /usr/share/doc/wos/third-party-notices

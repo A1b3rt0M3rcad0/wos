@@ -1,0 +1,17 @@
+{
+  "parent": "53aa031ed1e9463ad5e1cc0536375556c13ed46d",
+  "status": "intermediate focused acceptance, full final-source gates pending",
+  "sha256": {
+    "packages/wos-core/domain/signing_identity.go": "2a3ef152f866faaa08e0fd8068fa5e3e99f55d564611adfc48655335f4153718",
+    "packages/wos-core/application/signed_quotas.go": "3870534f78416a51bf143a7de9c5f8190514fb40977f0f17e0d3b3855e69ad10",
+    "packages/wos-core/application/signed_acquisition.go": "91e93ef0ff243f7fe2bac8b2bc0141205496637fc67b53a1b0877819a4f4cff5",
+    "packages/wos-core/application/signed_review_acquisition.go": "cbf33866eadc0e19b4abd4ce419771d5a0a29f7087cd4a20480a12e2b2c3f362",
+    "packages/wos-core/application/signing_identity.go": "8d07b14751b2c1ae7dafcd43fab6e2f04aa8632d721a6110ab681a9c49ed6d83",
+    "packages/wos-core/storage/sqlite/principal_quota_test.go": "e759021c5b62ec60f929a1d8ecd45373c746feda37631b1576e964d45f205f3a",
+    "packages/wos-core/storage/sqlite/principal_review_quota_test.go": "d95a48df3a637c264b12ae87d4fac3cc07e777403e1d44a1d0595abcf78dd48d",
+    "packages/wos-core/storage/postgres/principal_quota_test.go": "55760b123c32b5bfcb221a426d15013ca6efb30acb1cb47f9c479d4e3b7f6ba7",
+    "packages/wos-core/storage/postgres/principal_review_quota_test.go": "858348e427f76392336da5e39d85cdbd314939cce054713679b86087697d9de8",
+    "packages/wos-cli/profile_commands_v2.go": "7f3d6bb8d22f9e45e91373e1072c2f24a4a50d45ead10b139fdac03ce9c3f629",
+    "packages/wos-api/commands.openapi.json": "2148438b297303346857e5a9f6de3f9d2816f5189f28f9bd0bca898ba2cd3e2e"
+  }
+}

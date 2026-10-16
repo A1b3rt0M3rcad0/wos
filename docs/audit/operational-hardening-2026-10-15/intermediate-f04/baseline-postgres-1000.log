@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	 103967160 ns/op	  67141648 p50_ns	  93342001 p95_ns	1153910156 p99_ns	      7486 response_bytes	12488635 B/op	  151862 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	  70752284 ns/op	  66818369 p50_ns	 106440153 p95_ns	 149671194 p99_ns	      7486 response_bytes	12488468 B/op	  151855 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	  61228156 ns/op	  59581774 p50_ns	  78247784 p95_ns	  91367015 p99_ns	      7486 response_bytes	12487844 B/op	  151853 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	  65238854 ns/op	  62539628 p50_ns	  95522218 p95_ns	 111517849 p99_ns	     32351 response_bytes	12855647 B/op	  152127 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	  65297437 ns/op	  63338719 p50_ns	  88274761 p95_ns	 121164863 p99_ns	     32351 response_bytes	12852743 B/op	  152121 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	  67929524 ns/op	  63481069 p50_ns	  96188794 p95_ns	 110742884 p99_ns	     32351 response_bytes	12853162 B/op	  152123 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  21019505 ns/op	  19185270 p50_ns	  30963995 p95_ns	  79768240 p99_ns	      2209 response_bytes	  108971 B/op	    2123 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  20080534 ns/op	  18341175 p50_ns	  30245297 p95_ns	  36765014 p99_ns	      2209 response_bytes	  107812 B/op	    2113 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  19041494 ns/op	  17624276 p50_ns	  28348757 p95_ns	  42743018 p99_ns	      2209 response_bytes	  107886 B/op	    2113 allocs/op
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	51.388s

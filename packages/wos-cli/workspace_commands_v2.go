@@ -38,7 +38,7 @@ func runWorkspaceV2(ctx context.Context, w *Workspace, o options) (Output, error
 			return result, e
 		}
 		clear(private)
-		result.Data = map[string]any{"profile": compactProfileV2(profile), "destination_verified": true, "issuer_verified": true, "local_signing_key_matches": true, "pending_operations": len(profile.Local.PendingOperations), "authority": "every mutation requires live server authorization"}
+		result.Data = map[string]any{"profile": compactProfileV2(profile), "destination_verified": true, "issuer_verified": true, "local_signing_key_matches": true, "pending_operations": len(profile.Local.PendingOperations), "quotas": identity.Quotas, "authority": "every mutation requires live server authorization"}
 		return result, nil
 	case "capabilities":
 		value, e := client.Capabilities(ctx)

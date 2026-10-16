@@ -1,0 +1,12 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/100-3         	      80	   2993250 ns/op	   2698714 p50_ns	   4570232 p95_ns	   6377611 p99_ns	      7472 response_bytes	   93785 B/op	     837 allocs/op
+BenchmarkOperationalReads/section_work_items/100-3         	      80	   3468309 ns/op	   2961370 p50_ns	   5509944 p95_ns	  13667283 p99_ns	      7472 response_bytes	   93143 B/op	     835 allocs/op
+BenchmarkOperationalReads/section_work_items/100-3         	      80	   3439916 ns/op	   3176508 p50_ns	   6110187 p95_ns	   8070355 p99_ns	      7472 response_bytes	   92744 B/op	     835 allocs/op
+BenchmarkOperationalReads/focal_with_proof/100-3           	      80	  51380507 ns/op	  48889170 p50_ns	  68970419 p95_ns	  77223119 p99_ns	      2209 response_bytes	  109175 B/op	    2125 allocs/op
+BenchmarkOperationalReads/focal_with_proof/100-3           	      80	  51957243 ns/op	  47258505 p50_ns	  81595881 p95_ns	 135987530 p99_ns	      2209 response_bytes	  107917 B/op	    2113 allocs/op
+BenchmarkOperationalReads/focal_with_proof/100-3           	      80	  54027715 ns/op	  46766813 p50_ns	  75808771 p95_ns	 194906684 p99_ns	      2209 response_bytes	  107783 B/op	    2113 allocs/op
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	14.332s

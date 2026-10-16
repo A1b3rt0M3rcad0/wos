@@ -1,0 +1,16 @@
+{
+  "operation": "restore_and_verify",
+  "verified": true,
+  "read_only": false,
+  "manifest_sha256": "b1d6eed9bd50cacca81f60b479a9cb8ff2fd841a047d69defd3ea169b742feef",
+  "approved_pin_checked": true,
+  "schema_version": 29,
+  "server_id": "01a1426d-711d-7174-9145-405c503ed907",
+  "table_count": 68,
+  "verified_at": "2026-10-16T01:58:30.803458+00:00",
+  "new_destination_only": true,
+  "validation_read_only": true,
+  "rto_restore_and_verify_seconds": 1.4604173520347103,
+  "snapshot_at": "2026-10-16T01:57:13.723259+00:00",
+  "production_sla": false
+}

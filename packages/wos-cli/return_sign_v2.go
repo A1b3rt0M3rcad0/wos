@@ -205,6 +205,9 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 			}
 		}
 	}
+	if e = validateReturnDraftV2(profile, file, view); e != nil {
+		return intent, e
+	}
 	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 	if e != nil {

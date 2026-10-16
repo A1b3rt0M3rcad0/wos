@@ -21,10 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ inputs.source_ref || github.sha }}
+          ref: ${{ inputs.source_ref || github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: .go-version
           cache: true
       - uses: actions/setup-node@v7.0.0
         with:
@@ -35,6 +35,10 @@ jobs:
       - name: Execute native Linux client and protected keyring acceptance
         if: runner.os == 'Linux'
         run: sh tools/acceptance/native-keyring.sh
+      - name: Execute real Windows full-disk resolution recovery on an isolated VHD
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/acceptance/full-disk-cleanup.ps1
       - name: Execute native Windows client and protected Credential Manager acceptance
         if: runner.os == 'Windows'
         env:
@@ -43,5 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: wosctl-platform-${{ matrix.os }}
-          path: dist/platform-*-amd64.json
+          path: |
+            dist/platform-*-amd64.json
+            dist/full-disk-windows-amd64.json
           if-no-files-found: error

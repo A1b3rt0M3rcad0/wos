@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "candidate_product": "0.4.0",
+  "scope": "Exact public command/read and CLI YAML JSON schemas; only product metadata version is normalized. Semantic authority requires real tests.",
+  "files": {
+    "packages/wos-api/commands.openapi.json": "f907e9404f50d607381d78bbde9d6210c4e3defbace1a8098bf89a9316a6118d",
+    "packages/wos-cli/schemas/checkpoint.schema.json": "55d197b792573b7b58d4f5e3975fc110bbfececbe76cd8f440030b22fb47a127",
+    "packages/wos-cli/schemas/config.schema.json": "66920721a33a7ecbc7cf8aa4267a30096b764c80db13bf2fb90bfc12009113ec",
+    "packages/wos-cli/schemas/contract-v2.schema.json": "24d7750d0d7bb7791d8e248fa73546410cfe936d44fdf757d0292ee1ec6a6f1f",
+    "packages/wos-cli/schemas/contract.schema.json": "de502fd1436cd2041c19f9d69be42b1f8407d37e84886eccc827c0495e743ccc",
+    "packages/wos-cli/schemas/legacy-unsigned-v2.schema.json": "d72693c3829213303a61e183d054ae69c930a9a6a2f4951add1513bd97e2dd06",
+    "packages/wos-cli/schemas/profile-v2.schema.json": "7e2b83f901d391bafd304e9458f4e02a468022fd1dd842ed278bf14338fce3ba",
+    "packages/wos-cli/schemas/project-v2.schema.json": "f21bfefb25d564f023ab5dce8e22006dbde9b0103efb162634e8ca881ff87bed",
+    "packages/wos-cli/schemas/result.schema.json": "09ba530cd863514956ad407d91c4caca4181af64c0980c218805f1888ae40389"
+  }
+}

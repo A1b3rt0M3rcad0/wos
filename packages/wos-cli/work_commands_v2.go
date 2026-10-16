@@ -5,6 +5,7 @@ import (
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
 	"path/filepath"
 	"sort"
@@ -88,6 +89,8 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 	}
 	result.Operation = prefix + " " + o.args[1]
 	switch o.args[1] {
+	case "resolve", "resolution-status":
+		return returnResolutionCommandV2(ctx, w, profile, client, token, identity, o)
 	case "sign", "send", "finish":
 		return returnCommandV2(ctx, w, profile, client, token, identity, o)
 	case "renew", "resume", "refresh", "keepalive":
@@ -118,14 +121,18 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		result.Data = map[string]any{"items": items}
 		for _, intent := range current.Local.PendingOperations {
 			if returnPendingV2(intent.Operation) && ((kind == "execution" && intent.Operation == "ReturnSignedWork") || (kind == "review" && intent.Operation == "ReturnSignedReview")) {
-				if intent.State == "prepared_signed" {
+				if intent.State == "prepared_signed" && intent.Resolution == nil {
 					items = append(items, map[string]any{"intention_id": intent.ID, "state": "prepared_signed", "requires_action": "send explicitly"})
 					result.Data = map[string]any{"items": items}
 					continue
 				}
-				_, committed, e := recoverReturnV2(ctx, w, profile, client, token, intent, false)
+				receipt, committed, e := recoverReturnV2(ctx, w, profile, client, token, intent, false)
 				result.Committed = result.Committed || committed
-				items = append(items, map[string]any{"intention_id": intent.ID, "remote_committed": committed, "cleanup_pending": committed && e != nil})
+				item := map[string]any{"intention_id": intent.ID, "server_decision_confirmed": committed, "cleanup_pending": committed && e != nil}
+				if committed {
+					item["original_return_accepted"] = receipt.Proof.PayloadType == signing.AcceptanceReceipt
+				}
+				items = append(items, item)
 				result.Data = map[string]any{"items": items}
 				if e != nil {
 					result.RequiresAction = "preserve frozen return and reconcile its original receipt"

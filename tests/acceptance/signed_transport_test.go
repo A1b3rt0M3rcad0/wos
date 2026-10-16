@@ -187,6 +187,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	work.LastFencingToken = 9007199254740993
 	must(u.WorkItems().Insert(ctx, work))
 	must(u.Commit())
+	deliveryHealthParity(t, ctx, endpoint, operator, worker, scope, store, adminToken, token)
 	signedCLICutoverJourney(t, handler, sec, adminCtx, operator, scope, server, adminToken)
 	oldServer := server
 	signedCLIProfileJourney(t, handler, sec, adminCtx, operator, scope, server, permissions, func() d.ServerIdentity {
@@ -232,6 +233,55 @@ func signedTransportJourney(t *testing.T, store interface {
 	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "worker", SignerKeyID: registered.Key.ID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: "transport-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(acquired.Value.WorkItem.Version), PolicyRevision: signing.Decimal(registered.CredentialPolicy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "same signed bytes across transports"}), Reason: "no required criteria in bounded fixture"}}
 	envelope, e := signing.Sign(signing.WorkReturn, request, registered.Key.ID.String(), agentPrivate)
 	must(e)
+	// A definitive semantic rejection stays frozen until the server arbitrates
+	// closure. Exercise HTTP/SDK -> MCP replay -> HTTP proof -> late HTTP/MCP POST.
+	rejected := request
+	rejected.RequestID = "0199ff31-0000-7000-8000-000000000880"
+	rejected.IdempotencyKey = "rejected-return-to-resolve"
+	rejected.CompletionIntent = "invalid-completion"
+	rejectedEnvelope, err := signing.Sign(signing.WorkReturn, rejected, registered.Key.ID.String(), agentPrivate)
+	must(err)
+	_, err = worker.ReturnSignedWork(ctx, rejected.IdempotencyKey, a.ReturnSignedWorkCommand{Envelope: rejectedEnvelope})
+	var remote *sdk.Error
+	if !errors.As(err, &remote) || remote.Status != 422 {
+		t.Fatalf("expected frozen semantic HTTP rejection: %v", err)
+	}
+	originalRaw, err := base64.StdEncoding.Strict().DecodeString(rejectedEnvelope.Payload)
+	must(err)
+	originalEnvelopeBytes, err := signing.Canonical(rejectedEnvelope)
+	must(err)
+	rp := signing.ReturnResolutionPayload{Binding: rejected.Binding, OperationKind: "resolve_return_intent", RequestID: "0199ff31-0000-7000-8000-000000000881", IdempotencyKey: "transport-resolve-rejected", CredentialID: credential.ID.String(), OriginalCommandName: "ReturnSignedWork", OriginalRequestID: rejected.RequestID, OriginalIdempotencyKey: rejected.IdempotencyKey, OriginalRequestDigest: signing.Digest(originalRaw), OriginalEnvelopeDigest: signing.Digest(originalEnvelopeBytes), ContractID: rejected.ContractID, PolicyRevision: rejected.PolicyRevision, Reason: "explicit corrected return after terminal proof"}
+	resolutionEnvelope, err := signing.Sign(signing.ReturnResolution, rp, registered.Key.ID.String(), agentPrivate)
+	must(err)
+	resolutionCommand := a.ResolveSignedReturnIntentCommand{Scope: scope, OriginalEnvelope: rejectedEnvelope, Envelope: resolutionEnvelope}
+	resolution, err := worker.ResolveSignedReturnIntent(ctx, rp.IdempotencyKey, resolutionCommand)
+	must(err)
+	if resolution.Value.ResolutionReceipt == nil || resolution.Value.AcceptanceReceipt != nil {
+		t.Fatal("HTTP resolution did not return terminal proof")
+	}
+	var replayResolution a.MutationResult[a.SignedReturnResolutionResult]
+	call("wos_resolve_signed_return_intent", map[string]any{"idempotency_key": rp.IdempotencyKey, "command": map[string]any{"scope": scope, "original_envelope": rejectedEnvelope, "envelope": resolutionEnvelope}}, &replayResolution)
+	if !replayResolution.IdempotentReplay || replayResolution.Value.ResolutionReceipt == nil || string(replayResolution.Value.ResolutionReceipt.Payload) != string(resolution.Value.ResolutionReceipt.Payload) {
+		t.Fatal("MCP resolution replay changed proof")
+	}
+	proofView, err := worker.ReadSignedReturnResolution(ctx, scope, "execution", rejected.IdempotencyKey)
+	must(err)
+	if proofView.Envelope == nil {
+		t.Fatal("HTTP terminal proof missing")
+	}
+	_, err = signing.Verify(*proofView.Envelope, signing.ReturnResolutionReceipt, server.IssuerKeyID.String(), pub)
+	must(err)
+	_, err = worker.ReturnSignedWork(ctx, rejected.IdempotencyKey, a.ReturnSignedWorkCommand{Envelope: rejectedEnvelope})
+	if !errors.As(err, &remote) || remote.Status != 409 || remote.Code != "signed_intent_closed" {
+		t.Fatalf("late HTTP return not closed: %v", err)
+	}
+	lateMCP, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_return_signed_work", Arguments: map[string]any{"idempotency_key": rejected.IdempotencyKey, "command": map[string]any{"envelope": rejectedEnvelope}}})
+	must(err)
+	lateJSON, err := json.Marshal(lateMCP.StructuredContent)
+	must(err)
+	if !lateMCP.IsError || !strings.Contains(string(lateJSON), "signed_intent_closed") {
+		t.Fatal("late MCP return did not preserve terminal error")
+	}
 	var returned a.MutationResult[a.SignedReturnResult]
 	call("wos_return_signed_work", map[string]any{"idempotency_key": request.IdempotencyKey, "command": map[string]any{"envelope": envelope}}, &returned)
 	receiptEnvelope, e := returned.Value.Receipt.Envelope()

@@ -1,0 +1,29 @@
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss
+=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/1000
+    load_test.go:343: {"backend":"postgres","lines":["Aggregate  (cost=142.65..142.66 rows=1 width=16) (actual time=0.067..0.068 rows=1.00 loops=1)","  Buffers: shared hit=15","  -\u003e  Index Only Scan using delivery_scope_health on integration_deliveries  (cost=0.40..141.40 rows=250 width=8) (actual time=0.012..0.051 rows=250.00 loops=1)","        Index Cond: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Heap Fetches: 0","        Index Searches: 1","        Buffers: shared hit=15","Planning:","  Buffers: shared hit=30","Planning Time: 0.186 ms","Execution Time: 0.101 ms"],"queue_index_plan":"with_scope_index"}
+    load_test.go:343: {"backend":"postgres","lines":["Aggregate  (cost=361.25..361.26 rows=1 width=16) (actual time=0.556..0.557 rows=1.00 loops=1)","  Buffers: shared hit=345","  -\u003e  Seq Scan on integration_deliveries  (cost=0.00..360.00 rows=250 width=8) (actual time=0.008..0.516 rows=250.00 loops=1)","        Filter: ((namespace_id = '0199d171-0000-7000-8000-000000000001'::text) AND (outcome_id = '0199d170-0000-7000-8000-000000000002'::text))","        Rows Removed by Filter: 750","        Buffers: shared hit=345","Planning:","  Buffers: shared hit=6","Planning Time: 0.218 ms","Execution Time: 0.573 ms"],"queue_index_plan":"without_scope_index"}
+    load_test.go:269: {"backend":"postgres","elapsed_ms":10570,"external_duplicates":1,"guarantee":"at_least_once","lanes_per_replica":2,"max_backlog":1000,"max_inflight":4,"messages":1000,"queue_to_receiver_p95_ms":10309,"replicas":2,"throughput_per_second":94.60285635664307,"unique_receiver_effects_with_dedupe":1000}
+--- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss (32.28s)
+    --- PASS: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/1000 (32.27s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration	33.309s
+=== RUN   TestDeliveryConcurrencyConfigurationBounds
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/0
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/-1
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/65
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/invalid
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/999999999999999999999
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/1
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/4
+=== RUN   TestDeliveryConcurrencyConfigurationBounds/64
+--- PASS: TestDeliveryConcurrencyConfigurationBounds (0.01s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/0 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/-1 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/65 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/invalid (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/999999999999999999999 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/1 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/4 (0.00s)
+    --- PASS: TestDeliveryConcurrencyConfigurationBounds/64 (0.00s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	1.071s

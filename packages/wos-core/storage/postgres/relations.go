@@ -14,6 +14,13 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Relation{}, err
 	}
+	return scanRelation(r.uow.tx.QueryRowContext(ctx, `SELECT `+relationReadColumns+` FROM relations WHERE namespace_id=$1 AND outcome_id=$2 AND id=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+}
+
+const relationReadColumns = `id,version, source_id, source_kind, relation_type, target_id, target_kind, strength, satisfaction, lifecycle, reason, created_at, updated_at`
+
+func scanRelation(scanner rowScanner, scope domain.Scope) (domain.Relation, error) {
+	var rawID string
 	var (
 		version                            int64
 		sourceID, sourceKind, relationType string
@@ -21,19 +28,19 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 		strength, satisfaction, reason     sql.NullString
 		createdAt, updatedAt               int64
 	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, source_id, source_kind, relation_type, target_id, target_kind,
-       strength, satisfaction, lifecycle, reason, created_at, updated_at
-FROM relations
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(
+
+	err := scanner.Scan(&rawID,
 		&version, &sourceID, &sourceKind, &relationType, &targetID, &targetKind,
 		&strength, &satisfaction, &lifecycle, &reason, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return domain.Relation{}, mapSQLError("get relation", err)
 	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.Relation{}, err
+	}
+
 	sourceParsed, err := domain.ParseID(sourceID)
 	if err != nil {
 		return domain.Relation{}, domain.WrapError(domain.ErrorCodeInvalidRelation, "persisted relation source id is invalid", err)
