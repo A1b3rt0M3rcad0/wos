@@ -58,7 +58,7 @@ The architecture document describes what should exist. This ROADMAP records what
 - [x] Preserve existing scoped actions, explicit lifecycle changes, independent review, URL navigation, and API contracts.
 - [x] Serve licensed font assets locally with system fallbacks; preserve the supplied skill packages and robot artwork.
 - [x] Document the visual system, art direction, asset provenance, and page gallery generated from an isolated real-server dataset.
-- [x] Apply the supplied WOS web identity to the header, workspace selector, browser/touch icons, and actual request-loading state; preserve the 94 original media assets and master silhouette in all 80 SVGs. Retain the approved editorial composition and Woobe operational palette.
+- [x] Apply the supplied WOS web identity to the header, workspace selector, browser/touch icons, and actual request-loading state; preserve the 94 original media assets and master silhouette in all 80 SVGs. Follow the owner's typography correction: the original symbol accompanies live WOS lettering in Instrument Serif, also used for product-name mentions across the interface. Retain the approved editorial composition and Woobe operational palette.
 - [x] Complete final presentation validation: 37 browser tests and 14 browser unit tests passed, including palette and brand checks; targeted Go tests and vet passed. Refresh the 14 page/state captures. Record the earlier broader suite's existing expired-fixture failure and its 75 skips separately in [validation](docs/design/editorial/validation.md); do not claim an entirely green Go suite.
 - [ ] Independent human review, screen-reader validation, and other-browser acceptance; not implied by automated checks or screenshots.
 

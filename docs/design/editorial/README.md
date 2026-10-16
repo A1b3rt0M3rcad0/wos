@@ -14,7 +14,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
 | Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
 | Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
-| Brand | Supplied modular symbol and vector wordmark in `#FF5500`, with official browser icons; distinct from interaction copper | Wordmark proportions preserved; robot artwork remains monochrome |
+| Brand | Supplied modular symbol in `#FF5500` beside the live name WOS in Instrument Serif; official browser icons; distinct from interaction copper | Original symbol proportions and readable editorial lettering; robot artwork remains monochrome |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
 | Motion | A small decorative arrival; content is visible in its final composition immediately | No parallax or pinned scrolling; reduced motion disables animation |
@@ -31,7 +31,7 @@ The palette overrides the original gray/green color suggestions in `chess-style`
 
 ### WOS brand kit
 
-The supplied WOS identity replaces the temporary letter/circle branding in the header, workspace selector, browser icons, and actual loading state. The vector wordmark is self-contained; it does not replace the editorial type system. All 94 supplied media files are retained unchanged in the brand library. See [integration decisions, original kit notes, and asset provenance](brand-kit/README.md).
+The supplied WOS identity replaces the temporary letter/circle branding in the header, workspace selector, browser icons, and actual loading state. Following the owner's typography correction, the header combines the original orange symbol with WOS rendered as live Instrument Serif text. Chapter labels, the no-JavaScript notice, and the checkpoint message use the same editorial treatment for the product name. Browser titles and accessible names retain their plain text. All 94 supplied media files remain unchanged in the brand library, including the kit's proposed Inter wordmarks, which are references rather than active UI lockups. See [integration decisions, original kit notes, and asset provenance](brand-kit/README.md).
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 

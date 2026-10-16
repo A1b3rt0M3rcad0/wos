@@ -7,7 +7,7 @@
   "ico_count": 1,
   "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316",
   "active_placements": {
-    "header": "02-logotipos/wos-horizontal-light.svg",
+    "header": "01-marca/wos-symbol-primary.svg",
     "workspace": "04-navegacao/wos-sidebar-light.svg",
     "loading": "01-marca/wos-symbol-primary.svg",
     "favicon": "03-favicon-app/favicon.svg",
@@ -820,5 +820,22 @@
       "bytes": 5452,
       "sha256": "18f00ad58f579195f384a71630ca174aca663bed1e4a8df25ef658772a5220a7"
     }
-  ]
+  ],
+  "live_product_name": {
+    "text": "WOS",
+    "font_family": "Instrument Serif",
+    "font_weight": 400,
+    "fallbacks": [
+      "Georgia",
+      "Times New Roman",
+      "serif"
+    ],
+    "placements": [
+      "header",
+      "six chapter labels",
+      "no-JavaScript notice",
+      "checkpoint local-changes message"
+    ],
+    "kit_wordmark_lockups": "Preserved unchanged as references; outlined Inter proposals are not active UI wordmarks"
+  }
 }
