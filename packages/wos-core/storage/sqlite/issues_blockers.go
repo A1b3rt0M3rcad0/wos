@@ -231,9 +231,16 @@ INSERT INTO issue_affected_refs (
 type blockerRepository struct{ uow *unitOfWork }
 
 func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Blocker, error) {
-	if err := r.uow.ensureOpen(); err != nil {
-		return domain.Blocker{}, err
+	if e := r.uow.ensureOpen(); e != nil {
+		return domain.Blocker{}, e
 	}
+	return scanBlocker(r.uow.tx.QueryRowContext(ctx, `SELECT `+blockerReadColumns+` FROM blockers WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+}
+
+const blockerReadColumns = `id,version, blocked_id, blocked_kind, cause_id, cause_kind, external_cause_json, description, lifecycle, propagation, resolved_at, resolution_summary, created_at, updated_at`
+
+func scanBlocker(scanner rowScanner, scope domain.Scope) (domain.Blocker, error) {
+	var rawID string
 	var (
 		version                                                     int64
 		blockedID, blockedKind, description, lifecycle, propagation string
@@ -242,19 +249,19 @@ func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domai
 		resolutionSummary                                           string
 		createdAt, updatedAt                                        int64
 	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, blocked_id, blocked_kind, cause_id, cause_kind, external_cause_json,
-       description, lifecycle, propagation, resolved_at, resolution_summary, created_at, updated_at
-FROM blockers
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(
+
+	err := scanner.Scan(&rawID,
 		&version, &blockedID, &blockedKind, &causeID, &causeKind, &externalJSON,
 		&description, &lifecycle, &propagation, &resolvedAt, &resolutionSummary, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return domain.Blocker{}, mapSQLError("get blocker", err)
 	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.Blocker{}, err
+	}
+
 	blockedParsed, err := domain.ParseID(blockedID)
 	if err != nil {
 		return domain.Blocker{}, err

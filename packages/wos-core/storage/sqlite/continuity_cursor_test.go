@@ -95,6 +95,10 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 		t.Fatal(e)
 	}
 	bounded, _ := a.NewService(noHydrationManager{store}, clock, ids)
+	boundedSnapshot, e := bounded.GetContinuity(ctx, scope, 25)
+	if e != nil || boundedSnapshot.Counts["work_items"] != 7 {
+		t.Fatal("full continuity used aggregate hydration", e)
+	}
 	legacy := legacySectionCursor(scope, "work_items", snapshot.OutcomeRevision, snapshot.EvaluatedAt, snapshot.Sections["work_items"][1])
 	page, e := bounded.GetContinuitySection(ctx, scope, "work_items", 2, legacy)
 	if e != nil || len(page.Items) != 2 || page.Count != 7 || page.Omitted != 3 || !page.EvaluatedAt.Equal(snapshot.EvaluatedAt) {

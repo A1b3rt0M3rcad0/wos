@@ -1,0 +1,7 @@
+--- FAIL: BenchmarkOperationalReads/snapshot_with_proof/10000
+    operational_read_benchmark_test.go:111: aggregate current required proof: ERROR: canceling statement due to statement timeout (SQLSTATE 57014)
+--- FAIL: BenchmarkOperationalReads
+FAIL
+exit status 1
+FAIL	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	108.737s
+FAIL
