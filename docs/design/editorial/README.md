@@ -8,7 +8,8 @@ This is a presentation change to the six existing areas, authentication screen, 
 
 | Element | Meaning and implementation | Small screens |
 | --- | --- | --- |
-| Paper and grids | Woobe canvas `#EFEDE8`, workspace `#F5F3EF`, surface `#FFFDF9`, and elevated surface `#FFFEFC`; continuous 160 px graphic grid `#C2BCB2`, independent of structural columns | Continuous paper and grid; connected sections become one ordered column |
+| Paper and grids | Woobe canvas `#EFEDE8`, workspace `#F5F3EF`, surface `#FFFDF9`, and elevated surface `#FFFEFC`; viewport-fixed 120 px graphic grid `#C2BCB2`, independent of structural columns | The same fixed paper under normal scrolling; connected sections become one ordered column |
+| Sidebar | Serif workspace selector and Outcome titles, decorative numbered entries, ruled selection, registration mark, and organizer robot with an italic note | Compact workspace selector and existing collapsible, horizontally scrolling Outcome navigation; the larger vignette stays on desktop |
 | Display | Instrument Serif, regular and italic; large on the login, restrained inside the operational workspace | Recomposed headlines that wrap; no horizontal type scaling |
 | Utility type | DM Sans variable for controls; system monospace for metadata | Relative font sizes; readable controls and visible focus |
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
@@ -19,7 +20,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
 | Forms and details | Gridded heading, small ink vignette, one scrolling body, persistent actions, complete control borders, and inset copper field focus | Related fields stack; close and save stay visible as nested content expands |
-| Motion | A small decorative arrival; content is visible in its final composition immediately | No parallax or pinned scrolling; reduced motion disables animation |
+| Motion | Content scrolls over a stationary grid; a small decorative arrival | Native scrolling without listeners or pinning; reduced motion makes the grid move with the document and disables animation |
 
 The application uses the grammar of the style rather than a literal chess theme. Its operational tables and forms keep their practical density. Instrument Serif is a deliberate font selection, not a claim about the unidentified font in the style reference.
 
@@ -37,7 +38,7 @@ The header combines the original orange symbol with WOS rendered as live Instrum
 
 ### Component refinement
 
-The [page-to-control review](component-review.md) records the clipping diagnosis and the revised hierarchy. The grid now spans the actual workspace and outer sign-in margins. Connected overview columns, registration marks, small form/settings vignettes, and ruled disclosures extend the style into working components. Command forms, settings, and detail drawers share a single scrolling content region between their heading and actions. Field labels and help use consistent spacing; related selects and permission checkboxes reflow as groups.
+The [page-to-control review](component-review.md) records the clipping diagnosis and the revised hierarchy. One fixed, non-interactive grid layer spans the page behind sign-in, workspace, and the translucent sidebar. Dialog backgrounds keep the same viewport alignment while their bodies scroll. Connected overview columns, registration marks, small form/settings vignettes, and ruled disclosures extend the style into working components. Command forms, settings, and detail drawers share a single scrolling content region between their heading and actions. Field labels and help use consistent spacing; related selects and permission checkboxes reflow as groups.
 
 Typography is served from the WOS binary. Vendored fonts are from `@fontsource/instrument-serif@5.3.0` and `@fontsource-variable/dm-sans@5.3.0`, distributed under the SIL Open Font License with notices in `packages/wos-api/web/assets/fonts/`. No browser request to a font service is required, and no production JavaScript package was added.
 
@@ -63,7 +64,7 @@ All these illustrations repeat a meaning already present in adjacent text and ha
 
 ## Main pages
 
-These 18 captures use a real local server and an isolated illustrative database. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. Pages use full-page output; open dialogs use viewport output to show their actual backdrop, scroll region, and persistent actions.
+These 21 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
 ### Sign in
 
@@ -122,6 +123,16 @@ These 18 captures use a real local server and an isolated illustrative database.
 The observer vignette accompanies the existing pending server request. This capture holds that response in the test fixture; the application adds no deliberate waiting period.
 
 ![Observer robot during an actual pending Outcome read](screenshots/14-outcome-loading.png)
+
+### Fixed paper and editorial navigation
+
+These two viewport captures show the same workspace before and after scrolling 173 px. The content moves while the grid lines and desktop sidebar keep their viewport positions. The extra Outcomes are illustrative records, not invented product features. With reduced motion, the grid follows the document instead.
+
+| Before scrolling | After scrolling |
+| --- | --- |
+| ![Workspace at the top with three Outcomes and the editorial sidebar](screenshots/19-fixed-paper-top.png) | ![Workspace scrolled over the same stationary grid](screenshots/20-fixed-paper-scrolled.png) |
+
+![Expanded mobile Outcome navigation with a long title brought into view](screenshots/21-mobile-outcome-navigation.png)
 
 ## Reproduce and validate
 

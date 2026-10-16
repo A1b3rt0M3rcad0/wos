@@ -22,7 +22,8 @@ At page level, the graphic grid restarted inside the area introduction and disap
 | --- | --- | --- |
 | Global page | One WOS symbol with live Instrument Serif lettering in the header; browser icons retain the supplied brand | Workspace selection remains a labeled native select; it does not repeat the global symbol |
 | Sign-in | Continuous fine grid across the paper, including the outer margins; wider desktop composition | Existing native credential form and static/no-JavaScript narrative remain accessible |
-| Workspace | Continuous 160 px graphic grid under the full article | Structural columns organize content independently; controls retain opaque reading surfaces |
+| Workspace | Continuous viewport-fixed 120 px graphic grid behind the page | Structural columns organize content independently; controls retain opaque reading surfaces |
+| Sidebar | Serif workspace/Outcome names, decorative sequence numbers, ruled states, registration mark, and an organizer vignette with an italic note | Existing native selection/search and pressed-state semantics remain; mobile collapses its navigation and omits the large vignette; long lists retain their own scroll and reachable settings |
 | Area introduction | Number and actual area name, serif headline, relevant robot, italic marginal note, small registration crosses | Decorations remain outside hit areas; a rule connects the introduction to its data |
 | Overview | Connected editorial columns and a prominent desired-state passage; recent work spans the adjacent context/attention sections on desktop | The content uses actual counts and records; it becomes one ordered column at the existing breakpoint |
 | Collections | Ruled rows and a framed List/Board switch | Row focus stays inside the collection; list overflow no longer clips its focus outline |
@@ -36,10 +37,20 @@ At page level, the graphic grid restarted inside the area introduction and disap
 
 The main graphic grid is the existing original SVG, scaled consistently across the operational surface. Registration crosses are local CSS geometry. No new illustration, third-party component package, color system, or backend capability was introduced.
 
+## Fixed paper and sidebar follow-up
+
+The owner subsequently asked for the grid to stay stationary while any content moves over it, and for a more expressive `chess-style` sidebar. The page now has one `body::before` layer with `position: fixed`, isolated behind the content and excluded from pointer events. Transparent article backgrounds and a translucent Woobe workspace wash on the sidebar expose this shared sheet. The original 120 px SVG tile stays unmodified. Dialogs and their scroll bodies use viewport-anchored background images with the same tile origin. Opaque field/control surfaces preserve readability.
+
+This fixed behavior is an owner-requested implementation decision, not an assertion about motion in the skill's static reference images. No scroll listener, animation loop, artificial scrolling, or additional library is required. With `prefers-reduced-motion: reduce`, the page grid becomes document-relative and dialog backgrounds scroll locally; the existing animation/transition suppression remains.
+
+The sidebar acts as the notebook's working margin: serif names distinguish authored work from utility labels; numbered entries and rules establish order; the selected Outcome retains its copper rail, tinted surface, and `aria-pressed` state. Indices are decorative and hidden from assistive technology. The original organizer robot and existing “Plan · execute · verify” note form one reserved composition above real settings actions. Mobile retains the native workspace selector and collapse button, horizontal Outcome navigation, and touch-sized settings controls. It omits the larger drawing/note to keep the working area available.
+
 ## Verification
 
 The browser regression traverses the form's nested structure at 1440 × 1000, 390 × 844, 320 × 740, landscape 740 × 390, and 768 × 1024 with a doubled 28 px root font. It selects priority/state, expands instructions and Advanced, adds an instruction, selects an authorized Objective with the keyboard, focuses the native date field, and saves a real Task. The resulting detail must retain the authored instruction.
 
 Focused controls are measured against their **scroll ancestor**, including their visible border/focus clearance, rather than only against the viewport. The test checks occlusion, footer overlap, extra outer-dialog scrolling, minimum control height, and page overflow. Settings checks cover its operation select, a permission checkbox at the end of the list, persistent save action, and the credential form's text field. Existing browser journeys cover checkbox submission, roadmap reordering, external context, conflicts, uncertain-response retries, reference authorization/pagination, signed independent review, and keyboard focus restoration.
 
-See [the executed validation record](validation.md) and [updated gallery](README.md#main-pages). Dialog captures use the viewport so that the backdrop and action footer represent what the user actually sees; page captures retain full-page output. Automated Chromium checks and visual inspection do not replace manual screen-reader or other-engine acceptance.
+The fixed-paper regression compares actual screenshot pixels in an unobstructed paper margin before and after 173 px of document scrolling at 1440 and 390 px widths. A shifted sample proves the comparison contains visible grid lines; geometry independently confirms that content moved and the desktop sidebar stayed in place. Reduced-motion checks verify that the paper then moves with the document. A dialog-body scroll also preserves the paper sample. The same journey selects a long mobile Outcome title with the keyboard and opens settings after scrolling a 15-Outcome desktop sidebar.
+
+See [the executed validation record](validation.md) and [updated gallery](README.md#main-pages). Every capture now uses the actual viewport so that the fixed grid, sidebar, backdrop, and action footer represent what the user sees at that scroll position. Automated Chromium checks and visual inspection do not replace manual screen-reader or other-engine acceptance.
