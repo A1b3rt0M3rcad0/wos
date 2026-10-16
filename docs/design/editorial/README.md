@@ -20,6 +20,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |
 | Marginal notes | Brief italic annotations attached to the illustrations | Remain decorative and outside control hit areas |
 | Forms and details | Gridded heading, small ink vignette, one scrolling body, persistent actions, complete control borders, and inset copper field focus | Related fields stack; close and save stay visible as nested content expands |
+| Modal paper | Canvas headings/body, workspace secondary sections and footer, surface fields/cards, and shared border tokens; [surface inventory](modal-surfaces.md) | Identical color roles in action menus, forms, details, and settings |
 | Motion | Content scrolls over a stationary grid; a small decorative arrival | Native scrolling without listeners or pinning; reduced motion makes the grid move with the document and disables animation |
 
 The application uses the grammar of the style rather than a literal chess theme. Its operational tables and forms keep their practical density. Instrument Serif is a deliberate font selection, not a claim about the unidentified font in the style reference.
@@ -68,7 +69,7 @@ All these illustrations repeat a meaning already present in adjacent text and ha
 
 ## Main pages
 
-These 32 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Main desktop viewports are 1440 × 1000 CSS px, mobile viewports are 390 × 844, and the scale comparison includes Full HD, 2K, and 4K. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
+These 36 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Main desktop viewports are 1440 × 1000 CSS px, mobile viewports are 390 × 844, and the scale comparison includes Full HD, 2K, and 4K. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
 ### Sign in
 
@@ -112,6 +113,10 @@ These 32 captures use a real local server and isolated illustrative databases. T
 
 ![Editorial action menu](screenshots/16-action-menu.png)
 
+All modal families use the [same matte surface roles](modal-surfaces.md), including the technical command form:
+
+![Technical command form with matte paper and warm field surfaces](screenshots/35-technical-command.png)
+
 ### Mobile
 
 | Overview | Work |
@@ -121,6 +126,12 @@ These 32 captures use a real local server and isolated illustrative databases. T
 | Mobile Task form | Mobile settings |
 | --- | --- |
 | ![Mobile Task form with separate scroll body and actions](screenshots/17-mobile-task-form.png) | ![Mobile settings with persistent save action](screenshots/18-mobile-settings.png) |
+
+| Mobile action menu | Mobile Task detail |
+| --- | --- |
+| ![Matte mobile action menu](screenshots/33-mobile-action-menu.png) | ![Matte mobile Task detail](screenshots/34-mobile-task-detail.png) |
+
+![Mobile technical command form](screenshots/36-mobile-technical-command.png)
 
 ### Actual loading state
 

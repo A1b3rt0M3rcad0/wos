@@ -1,0 +1,101 @@
+{
+  "baseline": "e4a44de6780871358f6b2beff3e9a22be395fc9e",
+  "comparisons": [
+    {
+      "width": 1440,
+      "dialog": "#action-dialog",
+      "elements": 22,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 1440,
+      "dialog": "#command-dialog",
+      "elements": 82,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 1440,
+      "dialog": "#detail-dialog",
+      "elements": 37,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 1440,
+      "dialog": "#admin-dialog",
+      "elements": 158,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 390,
+      "dialog": "#action-dialog",
+      "elements": 22,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 390,
+      "dialog": "#command-dialog",
+      "elements": 82,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 390,
+      "dialog": "#detail-dialog",
+      "elements": 37,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 390,
+      "dialog": "#admin-dialog",
+      "elements": 158,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 320,
+      "dialog": "#action-dialog",
+      "elements": 22,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 320,
+      "dialog": "#command-dialog",
+      "elements": 82,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 320,
+      "dialog": "#detail-dialog",
+      "elements": 37,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 320,
+      "dialog": "#admin-dialog",
+      "elements": 158,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 2560,
+      "dialog": "#action-dialog",
+      "elements": 22,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 2560,
+      "dialog": "#command-dialog",
+      "elements": 82,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 2560,
+      "dialog": "#detail-dialog",
+      "elements": 37,
+      "geometryAndScroll": "identical"
+    },
+    {
+      "width": 2560,
+      "dialog": "#admin-dialog",
+      "elements": 158,
+      "geometryAndScroll": "identical"
+    }
+  ]
+}
