@@ -443,6 +443,19 @@ for (const decision of ["approved", "changes_requested"])
         .getByRole("button")
         .filter({ hasText: outcome.title })
         .click();
+      // The primary Canvas exposes the same signed handoff as the retained
+      // Board. The browser never signs or decides the independent review.
+      await expect(page.locator("#operational-canvas")).toBeVisible();
+      await page.locator(`[data-canvas-node="work_item:${work.id}"] .canvas-node-main`).click();
+      await expect(page.locator("#canvas-details #detail-title")).toHaveText(work.title);
+      await expect(page.locator("#canvas-details")).toContainText("Awaiting independent review");
+      await expect(page.locator("#canvas-details").getByRole("button", { name: "Review submission", exact: true })).toHaveCount(0);
+      await page.locator("#canvas-details").getByText("Execute or review with a profile", { exact: true }).click();
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await page.locator("#canvas-details").getByRole("button", { name: "Copy reviewer commands", exact: true }).click();
+      const canvasHandoff = await page.evaluate(() => navigator.clipboard.readText());
+      assert.ok(canvasHandoff.includes("wos --profile reviewer review checkout"));
+      assert.ok(!canvasHandoff.includes(token));
       await page.getByRole("button", { name: "Work", exact: true }).click();
       await page.getByRole("button", { name: "Board", exact: true }).click();
       await page

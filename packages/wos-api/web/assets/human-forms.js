@@ -399,9 +399,9 @@ export function humanForm(
         { required: true },
       );
       f("stance", copy.text.evidenceStance, {
-        options: ["supports", "contradicts", "neutral"].map((x) => [
+        options: ["supports", "contradicts", "context"].map((x) => [
           x,
-          display(x),
+          x === "context" ? "Context" : display(x),
         ]),
       });
       f("rationale", copy.text.rationale, { required: true, type: "textarea" });
@@ -609,11 +609,33 @@ export function humanForm(
       fixed.source_ref = ref;
       p("target_ref", copy.text.dependsOn, ["work_item", "objective"], {
         required: true,
+        initial: entity._canvasDependencyTarget
+          ? [entity._canvasDependencyTarget]
+          : [],
       });
-      fixed.strength = "hard";
+      f("strength", "Dependency type", {
+        options: [
+          ["hard", "Hard prerequisite"],
+          ["advisory", "Advisory dependency"],
+        ],
+        value: "hard",
+        help: "Hard prerequisites affect readiness and completion. Advisory dependencies provide context without blocking transitions.",
+      });
       reason(copy.text.whyIsThisPrerequisiteRequired);
       help.textContent =
         copy.text.operationalDependenciesAffectReadinessIndependentlyOfVisualRoadmapOrder;
+      break;
+    case "remove_dependency":
+      if (
+        kind !== "relation" ||
+        entity.relation_type !== "depends_on" ||
+        entity.lifecycle !== "active"
+      )
+        throw Error("Only an active dependency can be removed here.");
+      id("relation");
+      reason();
+      help.textContent =
+        "Remove this dependency with an explicit reason. Its source and target remain unchanged. The server checks the relation version and source lifecycle.";
       break;
     case "propose_decision":
       title(copy.text.decisionTitle);

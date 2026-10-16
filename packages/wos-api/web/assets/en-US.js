@@ -2,6 +2,7 @@
 export const copy = Object.freeze({
   locale: "en-US",
   text: Object.freeze({
+    canvas: "Canvas",
     skipToContent: "Skip to content",
     persistedState: "Persisted state",
     workOUTCOMESYSTEM: "WORK OUTCOME SYSTEM",

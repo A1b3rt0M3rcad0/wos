@@ -610,7 +610,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
   await capture(page, "01-login");
   await wos.login(page);
   await openOutcome(page, "Ship a calmer workspace");
-  await expect(page.locator("#area-tabs button")).toHaveCount(6);
+  await expect(page.locator("#area-tabs button")).toHaveCount(7);
   for (const [area, title, image, name] of [
     [
       "overview",
@@ -1043,6 +1043,7 @@ test("WOS uses the supplied hand-drawn logo alone and real browser icons", async
   }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
+  await page.locator('#area-tabs [data-area="overview"]').click();
   await expect(page.locator("#area-index")).toHaveText("01 / Overview");
 });
 

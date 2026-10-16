@@ -12,3 +12,23 @@ test('uncertain intent serializes once; edits cannot mutate its payload or scope
 test('explicit conflict reconciliation preserves local content and changes only observed CAS versions',()=>{const local={title:'my edits',expected_version:1,expected_draft_version:2,nodes:[{title:'local'}]},latest={version:7,draft:{draft_version:9}};const next=reconcileDraft(local,latest);assert.equal(next.title,'my edits');assert.equal(next.expected_version,7);assert.equal(next.expected_draft_version,9);assert.equal(local.expected_version,1);assert.deepEqual(next.nodes,local.nodes);});
 
 test("intent binds an immutable identity independently of mutable form state",()=>{const identity={principal:"first",actor:"human"},intent=createIntent("update_outcome",{}, {},"key",identity);identity.principal="other";assert.equal(intent.identity.principal,"first");assert.ok(Object.isFrozen(intent.identity));});
+
+test("dependency removal is exposed only for an active typed relation with permission", () => {
+  const base = {
+    ...context,
+    context: "relation",
+    entity: { _kind: "relation", relation_type: "depends_on", lifecycle: "active" },
+  };
+  const removable = (value) => availableActions(value).some((action) => action.name === "remove_dependency");
+  assert.ok(removable(base));
+  for (const relation_type of [undefined, "relates_to", "produces", "derived_from"])
+    assert.ok(!removable({ ...base, entity: { ...base.entity, relation_type } }));
+  for (const lifecycle of [undefined, "removed"])
+    assert.ok(!removable({ ...base, entity: { ...base.entity, lifecycle } }));
+  assert.ok(!removable({ ...base, entity: { ...base.entity, _kind: "evidence_link" } }));
+  assert.ok(!removable({ ...base, permissions: ["state:read"] }));
+  assert.ok(!removable({ ...base, context: "work_item" }));
+  assert.equal(inventory.remove_dependency.exposure, "H");
+  assert.equal(inventory.remove_dependency.surface, "human");
+  assert.equal(inventory.remove_dependency.permission, "outcome:write");
+});

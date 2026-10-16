@@ -330,10 +330,10 @@
     "surface": "human"
   },
   "remove_dependency": {
-    "exposure": "C",
+    "exposure": "H",
     "journey": "Dependencies",
     "permission": "outcome:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "remove_external_reference": {
     "exposure": "A",

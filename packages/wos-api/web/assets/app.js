@@ -2,6 +2,10 @@ import { message } from "./en-US.js";
 import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
 import { request as networkRequest } from "./api-client.js";
+import { createCanvasData, canvasRevision } from "./canvas-data.js";
+import { mountWorkspaceCanvas } from "./workspace-canvas.js";
+import { createWorkspaceInspector } from "./workspace-inspector.js";
+import { renderCanvasContext } from "./canvas-context.js";
 import {
   areas,
   areaFor,
@@ -41,8 +45,8 @@ const state = {
   outcome: null,
   snapshot: null,
   section: "work_items",
-  view: "summary",
-  area: "overview",
+  view: "canvas",
+  area: "canvas",
   restoringRoute: false,
   generation: 0,
   renderId: 0,
@@ -57,7 +61,125 @@ const state = {
   catalog: [],
   next: "",
   pending: null,
+  refreshGeneration: 0,
+  canvasEpoch: 0,
+  canvasData: null,
+  canvasView: null,
+  canvasModel: null,
+  canvasSelected: null,
+  canvasPlan: null,
+  formTarget: null,
+  formOriginCanvas: false,
+  formEpoch: 0,
 };
+const canvasInspector = createWorkspaceInspector({
+  host: $("canvas-details"),
+  dialogs: {
+    detail: $("detail-dialog"),
+    command: $("command-dialog"),
+    action: $("action-dialog"),
+  },
+  onClose: (surface, { nextSurface, reason }) => {
+    if (
+      surface === "form" &&
+      (state.pending || state.submitting) &&
+      reason !== "reset"
+    ) {
+      queueMicrotask(presentForm);
+      notice(
+        copy.text.resolveThePreviousUncertainResponseWithRetryTheSame,
+        true,
+      );
+      return;
+    }
+    if (surface === "form" && !state.pending) {
+      state.formEpoch++;
+      state.humanForm?.dispose();
+      if (
+        nextSurface === "detail" &&
+        state.canvasSelected &&
+        reason !== "reset"
+      )
+        showEntity(state.canvasSelected).catch(report);
+    }
+    if (!nextSurface && surface !== "form") {
+      state.detailGeneration++;
+      const selected = state.canvasSelected;
+      state.canvasSelected = null;
+      if (state.canvasModel)
+        state.canvasView?.update(canvasPresentation(), { selectedKey: null });
+      if (selected && reason !== "reset") {
+        const key = `${selected.kind}:${selected.id}`;
+        state.canvasView?.focus(key);
+        if (matchMedia("(max-width: 1100px)").matches)
+          $("operational-canvas")
+            .querySelector(`[data-canvas-list-node="${key}"]`)
+            ?.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+      writeRoute(null);
+    }
+  },
+});
+function canvasActive() {
+  return state.area === "canvas" && Boolean(state.outcome);
+}
+function canvasNavigationLocked() {
+  return (
+    (state.formOriginCanvas && (state.submitting || Boolean(state.pending))) ||
+    (canvasInspector.enabled && canvasInspector.isVisible("form"))
+  );
+}
+function allowCanvasNavigation() {
+  if (!canvasNavigationLocked()) return true;
+  notice(
+    state.pending
+      ? copy.text.resolveThePreviousUncertainResponseWithRetryTheSame
+      : "Finish or close the current change before selecting another item.",
+    true,
+  );
+  return false;
+}
+function presentForm() {
+  if (canvasInspector.enabled && !state.technical) {
+    canvasInspector.showForm();
+    revealCanvasInspector();
+  } else if (!$("command-dialog").open) $("command-dialog").showModal();
+}
+function revealCanvasInspector() {
+  if (matchMedia("(max-width: 1100px)").matches) {
+    const host = $("canvas-details");
+    host.style.scrollMarginTop =
+      "calc(var(--header-height) + 16 * var(--wos-unit, 1px))";
+    host.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+}
+function closeForm() {
+  if (canvasInspector.enabled) canvasInspector.close("form");
+  if ($("command-dialog").open) $("command-dialog").close();
+}
+function closeDetail({ clearSelection = true } = {}) {
+  state.detailGeneration++;
+  if (canvasInspector.enabled) canvasInspector.close("detail");
+  if ($("detail-dialog").open) $("detail-dialog").close();
+  if (clearSelection) state.canvasSelected = null;
+}
+function closeActions() {
+  if (canvasInspector.enabled) canvasInspector.close("actions");
+  if ($("action-dialog").open) $("action-dialog").close();
+}
+function resetCanvas() {
+  state.canvasEpoch++;
+  state.canvasData?.dispose();
+  state.canvasData = null;
+  state.canvasView?.dispose();
+  state.canvasView = null;
+  state.canvasModel = null;
+  state.canvasSelected = null;
+  state.canvasPlan = null;
+  state.canvasPlanLabel = "";
+  canvasInspector.closeAll();
+  canvasInspector.setEnabled(false);
+}
 const labels = {
   contract_id: copy.text.contract,
   execution_id: copy.text.execution,
@@ -280,7 +402,12 @@ async function request(path, options = {}) {
       error.discarded = true;
       error.name = "AbortError";
     } else if ([401, 403].includes(error.status) && state.namespace) {
+      state.generation++;
+      state.detailGeneration++;
+      state.refreshGeneration++;
       state.permissions = [];
+      state.snapshot = null;
+      resetCanvas();
       state.entities.clear();
       state.loaded.clear();
       state.boardLoaded.clear();
@@ -332,6 +459,378 @@ function report(error) {
 }
 const base = () => `${api}/namespaces/${state.namespace}/outcomes`;
 const outcomeBase = () => `${base()}/${state.outcome.id}`;
+// The map is a bounded presentation of persisted state. All changes go through
+// the same permission registry, forms and command intents as the list views.
+function canvasPresentation() {
+  if (!state.canvasModel) return null;
+  return {
+    ...state.canvasModel,
+    nodes: state.canvasModel.nodes.map((item) => {
+      if (!item.ref) return item;
+      const actions = effectiveActions(item.kind, {
+        ...item.sourceSummary,
+        _kind: item.kind,
+      });
+      return {
+        ...item,
+        canCreate: [
+          ...(actions.some((a) => a.name === "create_objective")
+            ? ["objective"]
+            : []),
+          ...(actions.some((a) => a.name === "create_work_item")
+            ? ["work_item"]
+            : []),
+        ],
+        canConnect: actions.some((a) => a.name === "add_dependency"),
+      };
+    }),
+  };
+}
+function renderCanvasSummary() {
+  const root = $("canvas-summary");
+  root.replaceChildren();
+  const purpose = el("div", undefined, "canvas-purpose");
+  purpose.append(
+    el("p", "Desired outcome", "eyebrow"),
+    el(
+      "p",
+      state.outcome.desired_state ||
+        state.outcome.description ||
+        state.outcome.title,
+    ),
+  );
+  const actions = el("div", undefined, "canvas-summary-actions");
+  for (const command of [
+    "create_objective",
+    "create_work_item",
+    "create_issue",
+  ])
+    if (
+      effectiveActions("outcome", state.outcome).some((a) => a.name === command)
+    )
+      actions.append(
+        actionButton(
+          humanActions[command].label,
+          () => createItem(command),
+          "quiet",
+        ),
+      );
+  actions.append(
+    actionButton(
+      "Review outcome",
+      () => showEntity(state.snapshot.outcome.ref).catch(report),
+      "quiet",
+    ),
+  );
+  purpose.append(actions);
+  const metrics = el("dl", undefined, "canvas-summary-metrics");
+  const progress = state.snapshot.progress?.work_completion;
+  const count = state.snapshot.counts || {};
+  for (const [label, value] of [
+    [
+      "Task progress",
+      progress?.denominator
+        ? `${Math.round((progress.numerator / progress.denominator) * 100)}%`
+        : "—",
+    ],
+    ["Objectives", count.objectives ?? 0],
+    ["Ready", count.ready_work ?? 0],
+    ["Blocked", count.blocked_work ?? 0],
+    ["signed_contracts_v2", "contracts_v1", "draining_to_signed_v2"].includes(
+      state.protocol?.phase,
+    )
+      ? ["Tasks", count.work_items ?? 0]
+      : ["Needs attention", count.attention_needed_work ?? 0],
+  ]) {
+    const group = el("div");
+    group.append(el("dt", label), el("dd", String(value)));
+    metrics.append(group);
+  }
+  root.append(purpose, metrics);
+}
+function renderCanvasPlanning() {
+  const root = $("canvas-planning");
+  root.replaceChildren(el("span", "Planning / optional"));
+  root.append(
+    el(
+      "p",
+      state.canvasPlanLabel ||
+        "Work directly with Objectives and Tasks, or choose a Roadmap. Planning order does not create dependencies.",
+    ),
+  );
+  root.append(
+    actionButton("Browse Roadmaps", () => navigateArea("plan"), "quiet"),
+  );
+  if (
+    effectiveActions("outcome", state.outcome).some(
+      (a) => a.name === "create_roadmap",
+    )
+  )
+    root.append(
+      actionButton(
+        humanActions.create_roadmap.label,
+        () => createItem("create_roadmap"),
+        "quiet",
+      ),
+    );
+  if (state.canvasPlan)
+    root.append(
+      actionButton(
+        "Hide plan",
+        () => {
+          if (!allowCanvasNavigation()) return;
+          state.canvasPlan = null;
+          state.canvasPlanLabel = "";
+          loadCanvas({ force: true }).catch(report);
+        },
+        "quiet",
+      ),
+    );
+  for (const plan of state.canvasModel?.plans || []) {
+    const slot = plan.slot;
+    root.append(
+      actionButton(
+        `Active plan · revision ${slot.revision_number}`,
+        () =>
+          viewCanvasPlan({
+            roadmap_id: slot.roadmap_id,
+            revision_number: slot.revision_number,
+          }),
+        "quiet",
+      ),
+    );
+  }
+}
+function acceptCanvas(model) {
+  if (
+    !model ||
+    !canvasActive() ||
+    !state.snapshot ||
+    model.scopeKey !== `${state.namespace}/${state.outcome.id}` ||
+    model.revision !== canvasRevision(state.snapshot.outcome_revision)
+  )
+    return;
+  state.canvasModel = model;
+  const selectedKey = state.canvasSelected
+    ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+    : null;
+  if (state.canvasView)
+    state.canvasView.update(canvasPresentation(), { selectedKey });
+  renderCanvasPlanning();
+}
+async function canvasCreate(kind, parentRef) {
+  if (!allowCanvasNavigation()) return;
+  const entity = await showEntity(parentRef);
+  if (
+    !entity ||
+    state.canvasSelected?.id !== parentRef.id ||
+    !allowCanvasNavigation()
+  )
+    return;
+  openCommands(kind === "objective" ? "create_objective" : "create_work_item");
+}
+async function loadCanvas({ force = false } = {}) {
+  if (!canvasActive() || !state.snapshot) return;
+  renderCanvasSummary();
+  if (
+    !force &&
+    state.canvasData &&
+    state.canvasModel?.revision ===
+      canvasRevision(state.snapshot.outcome_revision)
+  ) {
+    renderCanvasPlanning();
+    return;
+  }
+  state.canvasData?.dispose();
+  const epoch = ++state.canvasEpoch,
+    generation = state.generation,
+    refreshGeneration = state.refreshGeneration,
+    scope = currentScope();
+  const data = createCanvasData({
+    request,
+    scope,
+    limit: 100,
+    protocolMode: state.protocol?.phase,
+    apiPrefix: api,
+    isCurrent: () =>
+      epoch === state.canvasEpoch &&
+      generation === state.generation &&
+      refreshGeneration === state.refreshGeneration &&
+      sameScope(scope, currentScope()),
+  });
+  state.canvasData = data;
+  let model = await data.load(state.snapshot);
+  if (!model || state.canvasData !== data || !canvasActive()) return;
+  if (state.canvasPlan) {
+    const selected = state.canvasPlan;
+    if (selected.draft) {
+      const current = await request(
+        `${outcomeBase()}/roadmaps/${selected.roadmap_id}`,
+      );
+      if (
+        state.canvasData !== data ||
+        state.canvasPlan !== selected ||
+        !canvasActive()
+      )
+        return;
+      if (canvasRevision(current.outcome_revision) !== model.revision)
+        throw Error(
+          copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+        );
+      const draft = current.value?.draft;
+      if (draft?.lifecycle === "open") {
+        model = await data.roadmap({
+          roadmap_id: selected.roadmap_id,
+          draft,
+          outcome_revision: current.outcome_revision,
+        });
+        state.canvasPlanLabel = `Draft · version ${draft.draft_version} · not published or activated`;
+      } else {
+        state.canvasPlan = null;
+        state.canvasPlanLabel =
+          "The Draft is closed. Choose a published revision to view its plan.";
+      }
+    } else model = await data.roadmap(selected);
+    if (
+      !model ||
+      state.canvasData !== data ||
+      (state.canvasPlan && state.canvasPlan !== selected) ||
+      !canvasActive()
+    )
+      return;
+  } else state.canvasPlanLabel = "";
+  state.canvasModel = model;
+  if (!state.canvasView)
+    state.canvasView = mountWorkspaceCanvas($("operational-canvas"), {
+      model: canvasPresentation(),
+      selectedKey: state.canvasSelected
+        ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+        : null,
+      onSelect: (ref, item) => {
+        if (!allowCanvasNavigation()) return;
+        const target = ref || item?.roadmapRef;
+        if (target) return showEntity(target);
+      },
+      onSelectEdge: (edge) => edge.ref && showEntity(edge.ref),
+      onCreate: canvasCreate,
+      onConnect: async ({ sourceRef, targetRef }) => {
+        if (!allowCanvasNavigation()) return;
+        const entity = await showEntity(sourceRef);
+        if (
+          !entity ||
+          state.canvasSelected?.id !== sourceRef.id ||
+          !allowCanvasNavigation()
+        )
+          return;
+        if (targetRef)
+          state.selected = { ...entity, _canvasDependencyTarget: targetRef };
+        openCommands("add_dependency");
+      },
+      onLoadMore: async () => acceptCanvas(await state.canvasData?.more()),
+      onExpand: async (item, expanded) => {
+        if (expanded && item.ref)
+          acceptCanvas(await state.canvasData?.expand(item.ref));
+      },
+      onSearch: async (query, { cursor = "" } = {}) =>
+        state.canvasData?.search(query, {
+          cursor,
+          kinds: [
+            "objective",
+            "work_item",
+            "issue",
+            "blocker",
+            "evidence",
+            "artifact",
+            "decision",
+            "roadmap",
+          ],
+        }),
+    });
+  else
+    state.canvasView.update(canvasPresentation(), {
+      selectedKey: state.canvasSelected
+        ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+        : null,
+    });
+  renderCanvasPlanning();
+}
+async function loadCanvasHistory(host, ref, detailGeneration) {
+  const section = el("section", undefined, "detail-section");
+  section.append(el("h3", "Recorded task activity"));
+  const list = el("ol"),
+    status = el("p", undefined, "field-help");
+  let cursor = "",
+    busy = false,
+    through;
+  const more = actionButton("Load more activity", load, "quiet");
+  section.append(status, list, more);
+  host.querySelector(".canvas-task-history")?.remove();
+  section.classList.add("canvas-task-history");
+  host.append(section);
+  async function load() {
+    if (busy) return;
+    busy = true;
+    more.disabled = true;
+    try {
+      const query = new URLSearchParams({
+        work_item_id: ref.id,
+        limit: "25",
+        descending: "true",
+      });
+      if (cursor) query.set("cursor", cursor);
+      const page = await request(`${outcomeBase()}/work-activity?${query}`);
+      if (detailGeneration !== state.detailGeneration || !section.isConnected)
+        return;
+      const revision = canvasRevision(page.history_through_revision);
+      if (through && through !== revision)
+        throw Error(
+          "Activity changed its historical boundary. Reload this Task.",
+        );
+      through = revision;
+      for (const item of page.items || []) {
+        const row = el("li");
+        row.append(
+          el("strong", display(item.type)),
+          el("p", item.description),
+          el(
+            "small",
+            `${date(item.recorded_at)} · ${item.principal_id || item.actor_ref?.id || "Recorded participant"}`,
+          ),
+        );
+        list.append(row);
+      }
+      cursor = page.next_cursor || "";
+      more.hidden = !cursor;
+      status.textContent = `Recorded activity through revision ${through}. ${cursor ? "More records are available." : list.children.length ? "All records in this traversal are shown." : "No recorded activity in this traversal."} Activity is documentary and does not approve a result.`;
+    } catch (error) {
+      report(error);
+      status.textContent = error.message;
+    } finally {
+      busy = false;
+      more.disabled = false;
+    }
+  }
+  await load();
+}
+async function viewCanvasPlan(value) {
+  if (!allowCanvasNavigation()) return;
+  const selection = value.draft
+    ? { roadmap_id: value.roadmap_id, draft: true }
+    : { roadmap_id: value.roadmap_id, revision_number: value.revision_number };
+  state.canvasPlan = selection;
+  try {
+    const model = await state.canvasData.roadmap(value);
+    if (!model || state.canvasPlan !== selection) return;
+    state.canvasPlanLabel = value.draft
+      ? `Draft · version ${value.draft.draft_version} · not published or activated`
+      : `Published revision ${value.revision_number} · activation is a separate action`;
+    acceptCanvas(model);
+    state.canvasView?.fit();
+  } catch (error) {
+    report(error);
+  }
+}
+
 const {
   contractSection,
   commandAvailableInUI,
@@ -366,6 +865,7 @@ function el(tag, text, className) {
   return node;
 }
 async function connect(namespace) {
+  resetCanvas();
   state.generation++;
   state.detailGeneration++;
   state.namespace = namespace;
@@ -443,6 +943,10 @@ $("logout").onclick = async () => {
   location.reload();
 };
 $("namespace").onchange = () => {
+  if (!allowCanvasNavigation()) {
+    $("namespace").value = state.namespace;
+    return;
+  }
   state.outcome = null;
   state.snapshot = null;
   $("workspace-loading").hidden = true;
@@ -491,6 +995,8 @@ async function discover(append = false) {
 }
 $("more-outcomes").onclick = () => discover(true).catch(report);
 async function openOutcome(outcome) {
+  if (!allowCanvasNavigation()) return;
+  resetCanvas();
   state.generation++;
   document.querySelector(".sidebar").classList.add("navigation-collapsed");
   $("navigation-toggle").setAttribute("aria-expanded", "false");
@@ -500,8 +1006,8 @@ async function openOutcome(outcome) {
   state.outcome = outcome;
   state.selected = outcome;
   state.criterion = null;
-  state.view = "summary";
-  state.area = "overview";
+  state.view = "canvas";
+  state.area = "canvas";
   state.snapshot = null;
   $("item-search").value = "";
   $("item-priority").value = "";
@@ -534,60 +1040,92 @@ async function openOutcome(outcome) {
 }
 async function refresh() {
   if (!state.outcome) return discover();
+  state.detailGeneration++;
   const generation = state.generation;
-  const path = outcomeBase();
-  const [snapshot, live, protocol] = await Promise.all([
-    request(`${path}/continuity?limit=25`),
-    request(path),
-    request(`${api}/namespaces/${state.namespace}/work-protocol`),
-  ]);
-  if (generation !== state.generation) return;
-  if (
-    live.outcome_revision !== undefined &&
-    live.outcome_revision !== snapshot.outcome_revision
-  ) {
-    const changed = new Error(
-      copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
-    );
-    changed.code = "precondition_failed";
-    throw changed;
-  }
-  state.protocol = protocol;
-  renderProtocolBanner();
-  state.snapshot = snapshot;
-  state.outcome = live.value || live;
-  state.loaded.clear();
-  state.boardLoaded.clear();
-  state.entities.clear();
-  for (const section of Object.values(snapshot.sections))
-    for (const item of section) {
-      const e = item?.ref ? item : item?.work_item || item?.current;
-      if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
+  const refreshGeneration = ++state.refreshGeneration;
+  try {
+    const path = outcomeBase();
+    const [snapshot, live, protocol] = await Promise.all([
+      request(`${path}/continuity?limit=25`),
+      request(path),
+      request(`${api}/namespaces/${state.namespace}/work-protocol`),
+    ]);
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    if (
+      live.outcome_revision !== undefined &&
+      canvasRevision(live.outcome_revision) !==
+        canvasRevision(snapshot.outcome_revision)
+    ) {
+      const changed = new Error(
+        copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+      );
+      changed.code = "precondition_failed";
+      throw changed;
     }
-  $("empty").hidden = true;
-  $("outcome").hidden = false;
-  $("title").textContent = snapshot.outcome.title;
-  $("state").textContent = display(snapshot.outcome.lifecycle);
-  $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
-  $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
-  $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
-  $("revision").textContent = message(
-    "revision0c81",
-    snapshot.outcome_revision,
-    date(snapshot.evaluated_at),
-  );
-  await refreshPermissions();
-  if (generation !== state.generation) return;
-  renderMetrics();
-  renderTabs();
-  renderSummary();
-  applyView();
-  await renderSection();
-  notice(
-    snapshot.truncated
-      ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
-      : copy.text.sharedStateRefreshed,
-  );
+    state.protocol = protocol;
+    renderProtocolBanner();
+    state.snapshot = snapshot;
+    state.outcome = live.value || live;
+    state.loaded.clear();
+    state.boardLoaded.clear();
+    state.entities.clear();
+    for (const section of Object.values(snapshot.sections))
+      for (const item of section) {
+        const e = item?.ref ? item : item?.work_item || item?.current;
+        if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
+      }
+    $("empty").hidden = true;
+    $("outcome").hidden = false;
+    $("title").textContent = snapshot.outcome.title;
+    $("state").textContent = display(snapshot.outcome.lifecycle);
+    $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
+    $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
+    $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
+    $("revision").textContent = message(
+      "revision0c81",
+      snapshot.outcome_revision,
+      date(snapshot.evaluated_at),
+    );
+    await refreshPermissions();
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    renderMetrics();
+    renderTabs();
+    renderSummary();
+    applyView();
+    await renderSection();
+    if (canvasActive()) {
+      await loadCanvas({ force: true });
+      if (state.canvasSelected && !canvasNavigationLocked())
+        await showEntity(state.canvasSelected, { preserveCamera: true });
+    }
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    notice(
+      snapshot.truncated
+        ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
+        : copy.text.sharedStateRefreshed,
+    );
+  } catch (error) {
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    ) {
+      error.discarded = true;
+      error.name = "AbortError";
+    }
+    throw error;
+  }
 }
 $("copy-workspace-link").onclick = async () => {
   try {
@@ -665,7 +1203,8 @@ function renderTabs() {
     $("tabs").append(b);
   }
 }
-function writeRoute(item = null, replace = false) {
+function writeRoute(item = undefined, replace = false) {
+  if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
   if (state.restoringRoute || !state.outcome) return;
   const query = routeQuery({
     namespace: state.namespace,
@@ -681,6 +1220,10 @@ function writeRoute(item = null, replace = false) {
 }
 async function restoreRoute(route) {
   if (!route) return;
+  if (!allowCanvasNavigation()) {
+    writeRoute(undefined, true);
+    return;
+  }
   state.restoringRoute = true;
   try {
     if (state.namespace !== route.namespace) {
@@ -704,8 +1247,9 @@ async function restoreRoute(route) {
     renderTabs();
     applyView();
     await renderSection();
+    if (canvasActive() && !state.canvasModel) await loadCanvas();
     if (route.item) await showEntity(route.item);
-    else $("detail-dialog").close();
+    else closeDetail();
   } finally {
     state.restoringRoute = false;
   }
@@ -719,21 +1263,29 @@ window.addEventListener("popstate", () => {
   }
 });
 function navigateArea(area) {
+  if (!allowCanvasNavigation()) return;
+  closeDetail();
   state.area = area;
   state.section = areas[area].sections[0] || "work_items";
-  state.view = area === "overview" ? "summary" : "list";
+  state.view =
+    area === "canvas" ? "canvas" : area === "overview" ? "summary" : "list";
   $("item-search").value = "";
   $("item-priority").value = "";
   $("work-status").value = state.section;
   renderTabs();
   applyView();
   writeRoute();
-  renderSection().catch(report);
+  (canvasActive() ? loadCanvas() : renderSection()).catch(report);
 }
 function applyView() {
-  renderEditorial(state.area);
+  const isCanvas = canvasActive();
+  if (isCanvas) $("outcome").dataset.editorialArea = "canvas";
+  else renderEditorial(state.area);
+  $("area-intro").hidden = isCanvas;
+  $("canvas-view").hidden = !isCanvas;
+  canvasInspector.setEnabled(isCanvas);
   $("summary-view").hidden = state.view !== "summary";
-  $("items-view").hidden = state.view === "summary";
+  $("items-view").hidden = state.view === "summary" || isCanvas;
   for (const button of $("view-tabs").children) {
     button.classList.toggle("selected", button.dataset.view === state.view);
     button.setAttribute(
@@ -745,7 +1297,7 @@ function applyView() {
   $("work-status-label").hidden =
     state.area !== "work" || state.view === "board";
   const board = state.view === "board";
-  $("tabs").hidden = board || state.area === "work";
+  $("tabs").hidden = isCanvas || board || state.area === "work";
   $("add-item").textContent =
     board ||
     ["work_items", "ready_work", "blocked_work", "in_progress_work"].includes(
@@ -760,6 +1312,8 @@ function applyView() {
     );
 }
 function navigateSection(section) {
+  if (!allowCanvasNavigation()) return;
+  closeDetail();
   state.section = section;
   state.area = areaFor(section);
   state.view = "list";
@@ -774,6 +1328,7 @@ function navigateSection(section) {
 for (const button of $("view-tabs").children) {
   button.prepend(icon(button.dataset.view));
   button.onclick = () => {
+    if (!allowCanvasNavigation()) return;
     state.area = "work";
     state.view = button.dataset.view;
     renderTabs();
@@ -806,6 +1361,7 @@ function sectionCommand() {
   return createForSection[state.section] || "";
 }
 function createItem(command) {
+  if (!allowCanvasNavigation()) return;
   state.selected = { ...state.outcome, _kind: "outcome" };
   state.criterion = null;
   openCommands(command);
@@ -1058,7 +1614,12 @@ function renderSummary() {
       color: "var(--wos-error)",
       tone: "red",
     },
-    { title: copy.text.done, count: done, color: "var(--wos-success)", tone: "green" },
+    {
+      title: copy.text.done,
+      count: done,
+      color: "var(--wos-success)",
+      tone: "green",
+    },
     {
       title: copy.text.cancelled,
       count: c.cancelled_work || 0,
@@ -1466,7 +2027,7 @@ async function renderSection(cursor = "", append = false) {
   // Explicit navigation/filter/pagination consumes the current input. A queued
   // search must not later discard the page the user just loaded.
   clearTimeout(searchTimer);
-  if (!state.snapshot || state.view === "summary") return;
+  if (!state.snapshot || state.view === "summary" || canvasActive()) return;
   if (state.view === "board") {
     state.renderId++;
     return renderBoard();
@@ -1742,6 +2303,8 @@ const plurals = {
   evidence: "evidence",
   artifact: "artifacts",
   roadmap: "roadmaps",
+  relation: "relations",
+  evidence_link: "evidence-links",
 };
 function readable(value, key = "", depth = 0, authored = false) {
   authored =
@@ -1871,12 +2434,13 @@ function quickActions(kind, entity) {
   const container = el("div", undefined, "quick-actions");
   const advanced = el("details");
   advanced.append(el("summary", copy.text.advanced));
-  for (const action of effectiveActions(kind, entity)) {
+  for (const action of effectiveActions(kind, { ...entity, _kind: kind })) {
     const destination = action.advanced ? advanced : container;
     destination.append(
       actionButton(
         action.label,
         () => {
+          if (!allowCanvasNavigation()) return;
           state.selected = { ...entity, _kind: kind };
           openCommands(action.name);
         },
@@ -1887,247 +2451,385 @@ function quickActions(kind, entity) {
   if (advanced.children.length > 1) container.append(advanced);
   return container;
 }
-async function showEntity(ref) {
+async function showEntity(
+  ref,
+  { internal = false, preserveCamera = false } = {},
+) {
+  if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
   const generation = state.generation;
-  if (
-    ref.namespace_id !== state.namespace ||
-    ref.outcome_id !== state.outcome.id
-  ) {
-    notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
-    return;
-  }
-  const path =
-    ref.kind === "outcome"
-      ? outcomeBase()
-      : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
-  const result = await request(path);
-  let operationalState;
-  if (ref.kind === "work_item") {
-    const projection = await request(`${path}/operational-state`);
+  const isCanvas = canvasActive();
+  try {
+    if (
+      ref.namespace_id !== state.namespace ||
+      ref.outcome_id !== state.outcome.id
+    ) {
+      notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
+      return;
+    }
+    const path =
+      ref.kind === "outcome"
+        ? outcomeBase()
+        : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
+    const result = await request(path);
     if (
       generation !== state.generation ||
       detailGeneration !== state.detailGeneration
     )
       return;
-    if (result.outcome_revision !== projection.outcome_revision)
-      throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
-    operationalState = projection.state;
-  }
-  if (generation !== state.generation) return;
-  if (detailGeneration !== state.detailGeneration) return;
-  const entity = {
-    ...(result.value || result),
-    ...(operationalState ? { _operational_state: operationalState } : {}),
-  };
-  state.contractView = null;
-  state.submission = null;
-  state.selected = { ...entity, _kind: ref.kind };
-  state.criterion = null;
-  state.entities.set(`${ref.kind}/${ref.id}`, {
-    ref,
-    title: entity.title || entity.name || entity.description,
-    lifecycle: entity.lifecycle,
-  });
-  $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
-  $("detail-title").textContent =
-    entity.title || entity.name || entity.description || human(ref.kind);
-  const detail = $("detail-content");
-  detail.replaceChildren();
-  const status = el("div", undefined, "detail-status");
-  if (entity.lifecycle) status.append(badge(entity.lifecycle));
-  if (entity.priority)
-    status.append(
-      el("span", message("prioritye9f4", display(entity.priority)), "badge"),
-    );
-  if (entity.archived_at)
-    status.append(el("span", copy.text.archived, "badge"));
-  detail.append(status);
-  if (entity._operational_state) {
-    const readiness = el("section", undefined, "detail-section");
-    readiness.append(
-      el("h3", copy.text.operationalReadiness),
-      badge(entity._operational_state.display_state),
-      el(
-        "p",
-        message(
-          "reservationAuthorityEvaluated",
-          display(entity._operational_state.lease_status),
-          date(entity._operational_state.evaluated_at),
-        ),
-      ),
-    );
-    if (entity._operational_state.readiness_reasons?.length)
+    let operationalState, context, attention;
+    if (ref.kind === "work_item") {
+      const projection = isCanvas
+        ? await request(`${path}/attention`)
+        : await request(`${path}/operational-state`);
+      if (isCanvas) {
+        attention = projection;
+        context = await request(`${path}/context`);
+        if (
+          generation !== state.generation ||
+          detailGeneration !== state.detailGeneration
+        )
+          return;
+        if (
+          canvasRevision(context.outcome_revision) !==
+          canvasRevision(result.outcome_revision)
+        )
+          throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
+      }
+      if (
+        generation !== state.generation ||
+        detailGeneration !== state.detailGeneration
+      )
+        return;
+      if (
+        canvasRevision(result.outcome_revision) !==
+        canvasRevision(projection.outcome_revision)
+      )
+        throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
+      operationalState = isCanvas
+        ? attention.operational_state
+        : projection.state;
+    }
+    if (generation !== state.generation) return;
+    if (detailGeneration !== state.detailGeneration) return;
+    if (
+      isCanvas &&
+      state.canvasModel &&
+      canvasRevision(result.outcome_revision) !== state.canvasModel.revision
+    )
+      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
+    state.detailRevision = result.outcome_revision;
+    const entity = {
+      ...(result.value || result),
+      ...(operationalState ? { _operational_state: operationalState } : {}),
+    };
+    state.contractView = null;
+    state.submission = null;
+    state.selected = { ...entity, _kind: ref.kind };
+    if (isCanvas) state.canvasSelected = ref;
+    state.criterion = null;
+    state.entities.set(`${ref.kind}/${ref.id}`, {
+      ref,
+      title: entity.title || entity.name || entity.description,
+      lifecycle: entity.lifecycle,
+    });
+    $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
+    $("detail-title").textContent =
+      entity.title || entity.name || entity.description || human(ref.kind);
+    const detail = $("detail-content");
+    detail.replaceChildren();
+    const status = el("div", undefined, "detail-status");
+    if (entity.lifecycle) status.append(badge(entity.lifecycle));
+    if (entity.priority)
+      status.append(
+        el("span", message("prioritye9f4", display(entity.priority)), "badge"),
+      );
+    if (entity.archived_at)
+      status.append(el("span", copy.text.archived, "badge"));
+    detail.append(status);
+    if (entity._operational_state) {
+      const readiness = el("section", undefined, "detail-section");
       readiness.append(
+        el("h3", copy.text.operationalReadiness),
+        badge(entity._operational_state.display_state),
         el(
           "p",
-          entity._operational_state.readiness_reasons
-            .map(display)
-            .join(copy.text.message),
+          message(
+            "reservationAuthorityEvaluated",
+            display(entity._operational_state.lease_status),
+            date(entity._operational_state.evaluated_at),
+          ),
         ),
       );
-    detail.append(readiness);
-  }
-  const description =
-    entity.desired_state ||
-    entity.description ||
-    entity.proposal ||
-    entity.result_summary;
-  if (description) detail.append(el("p", description, "detail-description"));
-  const props = el("dl", undefined, "detail-properties");
-  for (const key of [
-    "created_at",
-    "updated_at",
-    "captured_at",
-    "required_for_outcome",
-    "not_before",
-    "severity",
-    "blocked_ref",
-    "cause_ref",
-    "resolution_summary",
-    "parent_objective_id",
-    "verification_mode",
-    "uri",
-    "source_ref",
-    "objective_id",
-    "producer_ref",
-    "assignee_refs",
-  ]) {
-    if (entity[key] === undefined || entity[key] === null || entity[key] === "")
-      continue;
-    const dd = el("dd");
-    if (["objective_id", "parent_objective_id"].includes(key))
-      dd.append(
-        referenceButton({ ...ref, kind: "objective", id: entity[key] }),
+      if (entity._operational_state.readiness_reasons?.length)
+        readiness.append(
+          el(
+            "p",
+            entity._operational_state.readiness_reasons
+              .map(display)
+              .join(copy.text.message),
+          ),
+        );
+      detail.append(readiness);
+    }
+    const description =
+      entity.desired_state ||
+      entity.description ||
+      entity.proposal ||
+      entity.result_summary ||
+      entity.reason ||
+      entity.rationale;
+    if (description) detail.append(el("p", description, "detail-description"));
+    const props = el("dl", undefined, "detail-properties");
+    for (const key of [
+      "created_at",
+      "updated_at",
+      "captured_at",
+      "required_for_outcome",
+      "not_before",
+      "severity",
+      "blocked_ref",
+      "cause_ref",
+      "resolution_summary",
+      "parent_objective_id",
+      "verification_mode",
+      "uri",
+      "source_ref",
+      "objective_id",
+      "producer_ref",
+      "assignee_refs",
+      "target_ref",
+      "relation_type",
+      "strength",
+      "evidence_id",
+      "stance",
+      "criterion_id",
+    ]) {
+      if (
+        entity[key] === undefined ||
+        entity[key] === null ||
+        entity[key] === ""
+      )
+        continue;
+      const dd = el("dd");
+      if (["objective_id", "parent_objective_id"].includes(key))
+        dd.append(
+          referenceButton({ ...ref, kind: "objective", id: entity[key] }),
+        );
+      else if (key === "uri") {
+        try {
+          const u = new URL(entity[key]);
+          if (["https:", "http:"].includes(u.protocol)) {
+            const a = el("a", entity[key]);
+            a.href = u.href;
+            a.target = "_blank";
+            a.rel = copy.text.noopenerNoreferrer;
+            dd.append(a);
+          } else dd.append(el("span", entity[key]));
+        } catch {
+          dd.append(el("span", entity[key]));
+        }
+      } else dd.append(readable(entity[key], key));
+      props.append(el("dt", human(key)), dd);
+    }
+    detail.append(props);
+    if (entity.current_lease) {
+      const lease = el("section", undefined, "detail-section");
+      lease.append(
+        el("h3", copy.text.executionReservation),
+        el(
+          "p",
+          message(
+            "expires",
+            entity.current_lease.actor_ref?.id ||
+              entity.current_lease.principal_id,
+            date(entity.current_lease.expires_at),
+          ),
+        ),
       );
-    else if (key === "uri") {
-      try {
-        const u = new URL(entity[key]);
-        if (["https:", "http:"].includes(u.protocol)) {
-          const a = el("a", entity[key]);
-          a.href = u.href;
-          a.target = "_blank";
-          a.rel = copy.text.noopenerNoreferrer;
-          dd.append(a);
-        } else dd.append(el("span", entity[key]));
-      } catch {
-        dd.append(el("span", entity[key]));
+      detail.append(lease);
+    }
+    if (isCanvas && ref.kind === "work_item") {
+      const contextHost = el("div");
+      detail.append(contextHost);
+      renderCanvasContext(contextHost, {
+        entity,
+        context,
+        attention,
+        onReference: (target) => showEntity(target).catch(report),
+        onHistory: (target) =>
+          loadCanvasHistory(contextHost, target, detailGeneration),
+      });
+      const model = state.canvasData?.context(context, { attention });
+      if (model) acceptCanvas(model);
+    }
+    if (ref.kind === "work_item" && entity.contracts_enabled) {
+      await contractSection(detail, entity, detailGeneration);
+      if (detailGeneration !== state.detailGeneration) return;
+    }
+    const criteria = entity.criteria?.items || [];
+    if (criteria.length) {
+      const group = el("section", undefined, "detail-section");
+      group.append(el("h3", copy.text.successCriteria));
+      for (const criterion of criteria) {
+        const button = el("button", undefined, copy.text.itemCriterionItem);
+        button.append(
+          el("strong", criterion.title),
+          el(
+            "small",
+            message(
+              "revision51f7",
+              criterion.required ? copy.text.required : copy.text.optional,
+              display(criterion.verification_mode),
+              criterion.criterion_revision,
+            ),
+          ),
+        );
+        const assessment = entity.criteria.current_assessments?.[criterion.id];
+        if (assessment) button.append(badge(assessment.result));
+        button.append(el("small", copy.text.reviewAssessment));
+        button.onclick = () => {
+          if (!allowCanvasNavigation()) return;
+          state.criterion = criterion;
+          openCommands("record_criterion_assessment");
+        };
+        group.append(button);
       }
-    } else dd.append(readable(entity[key], key));
-    props.append(el("dt", human(key)), dd);
-  }
-  detail.append(props);
-  if (entity.current_lease) {
-    const lease = el("section", undefined, "detail-section");
-    lease.append(
-      el("h3", copy.text.executionReservation),
-      el(
-        "p",
-        message(
-          "expires",
-          entity.current_lease.actor_ref?.id ||
-            entity.current_lease.principal_id,
-          date(entity.current_lease.expires_at),
-        ),
-      ),
-    );
-    detail.append(lease);
-  }
-  if (ref.kind === "work_item" && entity.contracts_enabled) {
-    await contractSection(detail, entity, detailGeneration);
-    if (detailGeneration !== state.detailGeneration) return;
-  }
-  const criteria = entity.criteria?.items || [];
-  if (criteria.length) {
-    const group = el("section", undefined, "detail-section");
-    group.append(el("h3", copy.text.successCriteria));
-    for (const criterion of criteria) {
-      const button = el("button", undefined, copy.text.itemCriterionItem);
-      button.append(
-        el("strong", criterion.title),
-        el(
-          "small",
-          message(
-            "revision51f7",
-            criterion.required ? copy.text.required : copy.text.optional,
-            display(criterion.verification_mode),
-            criterion.criterion_revision,
-          ),
-        ),
-      );
-      const assessment = entity.criteria.current_assessments?.[criterion.id];
-      if (assessment) button.append(badge(assessment.result));
-      button.append(el("small", copy.text.reviewAssessment));
-      button.onclick = () => {
-        state.criterion = criterion;
-        openCommands("record_criterion_assessment");
-      };
-      group.append(button);
+      detail.append(group);
     }
-    detail.append(group);
-  }
-  if (entity.conclusion) {
-    const group = el("section", undefined, "detail-section");
-    group.append(
-      el("h3", copy.text.currentConclusion),
-      conclusionView(entity.conclusion),
-    );
-    detail.append(group);
-  }
-  if (entity.conclusion_history?.length) {
-    const history = el("details");
-    history.append(el("summary", copy.text.previousConclusions));
-    for (const c of entity.conclusion_history)
-      history.append(conclusionView(c));
-    detail.append(history);
-  }
-  if (ref.kind === "roadmap") {
-    if (entity.draft) {
-      const draft = el("details");
-      draft.open = true;
-      draft.append(
-        el("summary", message("draftVersion3d05", entity.draft.draft_version)),
-        planNodes(entity.draft.nodes),
+    if (entity.conclusion) {
+      const group = el("section", undefined, "detail-section");
+      group.append(
+        el("h3", copy.text.currentConclusion),
+        conclusionView(entity.conclusion),
       );
-      detail.append(draft);
+      detail.append(group);
     }
-    for (const revision of entity.revisions || []) {
+    if (entity.conclusion_history?.length) {
       const history = el("details");
-      history.open = revision === entity.revisions.at(-1);
-      history.append(
-        el(
-          "summary",
-          message(
-            "revision0c81",
-            revision.revision_number,
-            revision.reason || copy.text.publishedRoadmap,
-          ),
-        ),
-        planNodes(revision.nodes),
-      );
+      history.append(el("summary", copy.text.previousConclusions));
+      for (const c of entity.conclusion_history)
+        history.append(conclusionView(c));
       detail.append(history);
     }
+    if (ref.kind === "roadmap") {
+      if (entity.draft) {
+        const draft = el("details");
+        draft.open = true;
+        draft.append(
+          el(
+            "summary",
+            message("draftVersion3d05", entity.draft.draft_version),
+          ),
+          planNodes(entity.draft.nodes),
+        );
+        if (isCanvas && entity.draft.lifecycle === "open")
+          draft.append(
+            actionButton(
+              "View draft on canvas",
+              () =>
+                viewCanvasPlan({
+                  roadmap_id: entity.id,
+                  draft: entity.draft,
+                  outcome_revision: result.outcome_revision,
+                }),
+              "quiet",
+            ),
+          );
+        detail.append(draft);
+      }
+      for (const revision of entity.revisions || []) {
+        const history = el("details");
+        history.open = revision === entity.revisions.at(-1);
+        history.append(
+          el(
+            "summary",
+            message(
+              "revision0c81",
+              revision.revision_number,
+              revision.reason || copy.text.publishedRoadmap,
+            ),
+          ),
+          planNodes(revision.nodes),
+        );
+        if (isCanvas)
+          history.append(
+            actionButton(
+              `View revision ${revision.revision_number} on canvas`,
+              () =>
+                viewCanvasPlan({
+                  roadmap_id: entity.id,
+                  revision_number: revision.revision_number,
+                }),
+              "quiet",
+            ),
+          );
+        detail.append(history);
+      }
+    }
+    const tech = el("details", undefined, "technical");
+    tech.append(
+      el("summary", copy.text.technicalDetailsAndAudit),
+      el("pre", JSON.stringify(entity, null, 2)),
+    );
+    detail.append(tech);
+    $("detail-actions").querySelector(".quick-actions")?.remove();
+    $("detail-actions").prepend(quickActions(ref.kind, entity));
+    if (isCanvas) {
+      canvasInspector.showDetails();
+      if (
+        [
+          "outcome",
+          "objective",
+          "work_item",
+          "issue",
+          "blocker",
+          "evidence",
+          "artifact",
+          "decision",
+        ].includes(ref.kind)
+      ) {
+        const model = await state.canvasData?.expand(ref);
+        if (
+          detailGeneration !== state.detailGeneration ||
+          generation !== state.generation
+        )
+          return;
+        if (model) acceptCanvas(model);
+      }
+      state.canvasView?.update(canvasPresentation(), {
+        selectedKey: `${ref.kind}:${ref.id}`,
+      });
+      if (!preserveCamera) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
+      canvasInspector.showDetails();
+      if (!preserveCamera) revealCanvasInspector();
+    } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
+    writeRoute(ref);
+    return state.selected;
+  } catch (error) {
+    if (
+      generation !== state.generation ||
+      detailGeneration !== state.detailGeneration
+    ) {
+      error.discarded = true;
+      error.name = "AbortError";
+    }
+    throw error;
   }
-  const tech = el("details", undefined, "technical");
-  tech.append(
-    el("summary", copy.text.technicalDetailsAndAudit),
-    el("pre", JSON.stringify(entity, null, 2)),
-  );
-  detail.append(tech);
-  $("detail-actions").querySelector(".quick-actions")?.remove();
-  $("detail-actions").prepend(quickActions(ref.kind, entity));
-  if (!$("detail-dialog").open) $("detail-dialog").showModal();
-  writeRoute(ref);
 }
-$("close-detail").onclick = () => $("detail-dialog").close();
-$("detail-dialog").addEventListener("close", () => writeRoute());
+$("close-detail").onclick = () => closeDetail();
+$("detail-dialog").addEventListener("close", () => {
+  if (!canvasActive()) writeRoute(null);
+});
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
+  if (!allowCanvasNavigation()) return;
   state.selected = { ...state.outcome, _kind: "outcome" };
   state.criterion = null;
   openCommands();
 };
 $("create-outcome").onclick = () => {
+  if (!allowCanvasNavigation()) return;
   state.selected = null;
   openCommands("create_outcome");
 };
@@ -2205,8 +2907,13 @@ function openTechnicalCommands(name) {
     );
     return;
   }
+  if (!allowCanvasNavigation()) return;
+  if (canvasActive()) navigateArea("overview");
   state.humanForm?.dispose();
   state.humanForm = null;
+  state.formOriginCanvas = false;
+  state.formEpoch++;
+  state.formTarget = structuredClone(state.selected);
   state.technical = true;
   state.formScope = currentScope();
   state.formGeneration = state.generation;
@@ -2642,8 +3349,21 @@ function buildForm() {
 }
 
 $("command-select").onchange = buildForm;
-$("close-command").onclick = () => $("command-dialog").close();
-$("command-dialog").addEventListener("close", () => state.humanForm?.dispose());
+$("close-command").onclick = () => {
+  if (state.submitting || (state.pending && state.formOriginCanvas)) {
+    notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
+    return;
+  }
+  closeForm();
+};
+$("command-dialog").addEventListener("close", () => {
+  state.formEpoch++;
+  state.humanForm?.dispose();
+});
+$("command-dialog").addEventListener("cancel", (event) => {
+  if (state.submitting || (state.pending && state.formOriginCanvas))
+    event.preventDefault();
+});
 function projectCommand(name, value) {
   // The technical catalog validates transport compatibility; it does not generate human fields.
   const allowed =
@@ -2663,7 +3383,11 @@ function openCommands(name) {
   }
   if (state.pending) {
     notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
-    $("command-dialog").showModal();
+    presentForm();
+    return;
+  }
+  if (canvasInspector.isVisible("form")) {
+    allowCanvasNavigation();
     return;
   }
   if (!name) {
@@ -2676,7 +3400,7 @@ function openCommands(name) {
         actionButton(
           action.label,
           () => {
-            $("action-dialog").close();
+            closeActions();
             openCommands(action.name);
           },
           "quiet",
@@ -2687,7 +3411,8 @@ function openCommands(name) {
       menu.append(
         el("p", copy.text.noChangesAreAvailableForYourCurrentPermissionsAnd),
       );
-    $("action-dialog").showModal();
+    if (canvasInspector.enabled) canvasInspector.showActions();
+    else $("action-dialog").showModal();
     return;
   }
   const context =
@@ -2701,6 +3426,10 @@ function openCommands(name) {
     return;
   }
   if (!commandAvailableInUI(name)) return;
+  state.detailGeneration++;
+  state.formEpoch++;
+  state.formTarget = structuredClone(state.selected);
+  state.formOriginCanvas = canvasActive();
   state.humanForm?.dispose();
   state.technical = false;
   state.formScope = currentScope();
@@ -2722,7 +3451,7 @@ function openCommands(name) {
           : copy.text.saveChanges;
   state.humanForm = humanForm(name, {
     scope: state.formScope,
-    entity: state.selected || {},
+    entity: state.formTarget || {},
     criterion: state.criterion,
     request: (path, options) => request(`${api}${path}`, options),
     permissions: state.permissions,
@@ -2747,10 +3476,10 @@ function openCommands(name) {
   $("conflict-review").replaceChildren();
   $("retry-command").hidden = true;
   $("submit-command").disabled = false;
-  $("detail-dialog").close();
-  $("command-dialog").showModal();
+  if (!canvasInspector.enabled) $("detail-dialog").close();
+  presentForm();
 }
-$("close-actions").onclick = () => $("action-dialog").close();
+$("close-actions").onclick = closeActions;
 $("developer-tools").onclick = () => {
   if (state.pending) {
     openCommands();
@@ -2823,7 +3552,10 @@ async function submit(retry = false, reconciled) {
       state.formGeneration !== state.generation
     )
       return;
-    $("command-dialog").close();
+    const canvasOrigin = state.formOriginCanvas;
+    if (canvasOrigin) {
+      canvasInspector.closeAll();
+    } else $("command-dialog").close();
     state.humanForm?.dispose();
     $("fields").inert = false;
     if (result.value?.desired_state !== undefined) {
@@ -2831,8 +3563,9 @@ async function submit(retry = false, reconciled) {
       state.selected = { ...result.value, _kind: "outcome" };
       if (pending.name === "create_outcome") {
         state.generation++;
-        state.view = "summary";
-        state.area = "overview";
+        resetCanvas();
+        state.view = "canvas";
+        state.area = "canvas";
       }
     }
     const newSection =
@@ -2841,7 +3574,7 @@ async function submit(retry = false, reconciled) {
         : Object.entries(createForSection).find(
             ([, command]) => command === pending.name,
           )?.[0];
-    if (newSection) {
+    if (newSection && !canvasOrigin) {
       state.section = newSection;
       state.area = areaFor(newSection);
       state.view = "list";
@@ -2851,12 +3584,31 @@ async function submit(retry = false, reconciled) {
     await discover();
     if (state.outcome) await refresh();
     writeRoute();
-    if (!state.technical && pending.name === "create_work_item")
-      await showEntity({
-        ...pending.scope,
-        kind: "work_item",
-        id: result.value.id,
-      });
+    const createdKind = {
+      create_objective: "objective",
+      create_work_item: "work_item",
+      create_issue: "issue",
+      register_evidence: "evidence",
+      register_artifact: "artifact",
+      create_roadmap: "roadmap",
+      create_decision: "decision",
+    }[pending.name];
+    const selectedKind = createdKind || state.formTarget?._kind;
+    const selectedID = createdKind ? result.value?.id : state.formTarget?.id;
+    if (canvasOrigin && selectedKind && selectedID) {
+      await showEntity(
+        { ...currentScope(), kind: selectedKind, id: selectedID },
+        { internal: true },
+      );
+    } else if (!state.technical && pending.name === "create_work_item")
+      await showEntity(
+        {
+          ...pending.scope,
+          kind: "work_item",
+          id: result.value.id,
+        },
+        { internal: true },
+      );
     notice(
       pending.name === "create_outcome"
         ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks
@@ -2871,6 +3623,10 @@ async function submit(retry = false, reconciled) {
       : e.code === "version_conflict"
         ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
         : e.message;
+    if (canvasInspector.isVisible("form")) {
+      $("command-error").tabIndex = -1;
+      $("command-error").focus({ preventScroll: true });
+    }
     if (committed) {
       report(e);
       return;
@@ -2908,9 +3664,17 @@ const rebaseEdits = new Set([
   "replace_roadmap_draft",
 ]);
 function offerConflict(pending) {
+  const epoch = state.formEpoch,
+    target = structuredClone(state.formTarget),
+    generation = state.generation;
+  const current = () =>
+    epoch === state.formEpoch &&
+    generation === state.generation &&
+    sameScope(pending.scope, currentScope()) &&
+    $("command-select").value === pending.name;
   const root = $("conflict-review");
   const discard = () => {
-    $("command-dialog").close();
+    closeForm();
     refresh().catch(report);
   };
   root.replaceChildren(
@@ -2929,14 +3693,15 @@ function offerConflict(pending) {
       copy.text.compareWithLatestState,
       async () => {
         try {
-          const entity = state.selected,
+          if (!current()) return;
+          const entity = target,
             kind = entity?._kind || "outcome",
             path =
               kind === "outcome"
                 ? outcomeBase()
                 : `${outcomeBase()}/${plurals[kind]}/${entity.id}`;
           const result = await request(path);
-          if (!sameScope(pending.scope, currentScope())) return;
+          if (!current()) return;
           const latest = result.value || result,
             local = JSON.parse(pending.body).command;
           root.replaceChildren(
@@ -2956,6 +3721,7 @@ function offerConflict(pending) {
             actionButton(
               copy.text.useLatestVersionAndSaveMyEdits,
               () => {
+                if (!current()) return;
                 const next = reconcileDraft(local, latest);
                 state.formScope = pending.scope;
                 state.formGeneration = state.generation;

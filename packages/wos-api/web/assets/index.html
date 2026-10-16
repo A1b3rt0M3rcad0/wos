@@ -6,16 +6,29 @@
     <title data-copy="wosWorkspace">WOS · Workspace</title>
     <meta name="application-name" content="WOS" />
     <meta name="theme-color" content="#FF5500" />
-    <link rel="shortcut icon" href="/app/brand/hand-drawn-chain/Hand-Drawn-Orange-Chain-Icon.ico" />
+    <link
+      rel="shortcut icon"
+      href="/app/brand/hand-drawn-chain/Hand-Drawn-Orange-Chain-Icon.ico"
+    />
     <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" sizes="any" />
-    <link rel="apple-touch-icon" href="/app/brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.png" />
+    <link
+      rel="apple-touch-icon"
+      href="/app/brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.png"
+    />
     <link rel="stylesheet" href="colors.css" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="editorial.css" />
+    <link rel="stylesheet" href="canvas.css" />
   </head>
   <body>
     <noscript>
-      <p><span data-copy="enableWorkspaceJavaScript">Enable JavaScript to use the workspace, or use the</span> <span class="product-name" data-copy="wos">WOS</span> <span data-copy="httpApiOrCli">HTTP API or CLI.</span></p>
+      <p>
+        <span data-copy="enableWorkspaceJavaScript"
+          >Enable JavaScript to use the workspace, or use the</span
+        >
+        <span class="product-name" data-copy="wos">WOS</span>
+        <span data-copy="httpApiOrCli">HTTP API or CLI.</span>
+      </p>
     </noscript>
     <a class="skip-link" href="#main-content" data-copy="skipToContent"
       >Skip to content</a
@@ -26,7 +39,12 @@
         class="brand"
         aria-label="WOS · home"
         data-copy-aria-label="wosHome"
-        ><img class="brand-logo" src="brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg" width="1897" height="632" alt="" /></a
+        ><img
+          class="brand-logo"
+          src="brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg"
+          width="1897"
+          height="632"
+          alt="" /></a
       ><span class="topbar-note" data-copy="humansAndAgentsOneSharedState"
         >Humans and agents. One shared state.</span
       >
@@ -230,8 +248,8 @@
               hidden
               data-copy="developerTools"
             >
-              Developer tools</button
-            >
+              Developer tools
+            </button>
           </div>
         </aside>
         <article id="main-content" tabindex="-1" class="workspace-main">
@@ -249,13 +267,14 @@
               class="signed-protocol-grid"
             ></div>
           </details>
-          <div
-            id="workspace-loading"
-            class="empty"
-            role="status"
-            hidden
-          >
-            <img class="loading-vignette" src="robots/14_observer_metrics.svg" width="120" height="120" alt="" />
+          <div id="workspace-loading" class="empty" role="status" hidden>
+            <img
+              class="loading-vignette"
+              src="robots/14_observer_metrics.svg"
+              width="120"
+              height="120"
+              alt=""
+            />
             <p data-copy="loadingOutcome">Loading outcome…</p>
           </div>
           <div id="empty" class="empty">
@@ -335,6 +354,26 @@
                 Board
               </button>
             </nav>
+            <section
+              id="canvas-view"
+              aria-label="Visual operational workspace"
+              hidden
+            >
+              <div id="canvas-summary" class="canvas-overview"></div>
+              <div id="canvas-planning" class="canvas-planning"></div>
+              <div class="canvas-workspace-shell">
+                <section
+                  id="operational-canvas"
+                  aria-label="Outcome canvas"
+                ></section>
+                <aside
+                  id="canvas-details"
+                  class="canvas-context-panel"
+                  aria-label="Contextual details"
+                  hidden
+                ></aside>
+              </div>
+            </section>
             <section
               id="area-intro"
               class="area-intro"
@@ -446,7 +485,13 @@
               Choose an action
             </h2>
           </div>
-          <img class="dialog-vignette" src="robots/09_documenter_notes.svg" width="80" height="80" alt="" />
+          <img
+            class="dialog-vignette"
+            src="robots/09_documenter_notes.svg"
+            width="80"
+            height="80"
+            alt=""
+          />
           <button
             id="close-command"
             type="button"
@@ -530,7 +575,13 @@
           <h2 id="admin-title" data-copy="workspaceSettings">
             Workspace settings
           </h2>
-          <img class="dialog-vignette" src="robots/12_key_signature_guardian.svg" width="80" height="80" alt="" />
+          <img
+            class="dialog-vignette"
+            src="robots/12_key_signature_guardian.svg"
+            width="80"
+            height="80"
+            alt=""
+          />
           <button
             id="close-admin"
             type="button"
