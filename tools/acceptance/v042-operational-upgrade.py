@@ -12,6 +12,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import secrets
 import socket
 import subprocess
@@ -21,6 +22,27 @@ BASE='b572269085494ddd4d6370716ff1cb360b46065f'
 TEST_HASH={'sqlite':'1fbb8b202fde5ee3d669e72e65ff9a249aefd4afa70104ef93bf0a56186df0c8','postgres':'d596ea648aeac68669aa3c7169197f6491f5357dd2c207c2ec5c9bccb7d86db7'}
 spec=importlib.util.spec_from_file_location('ops',Path(__file__).parents[1]/'operations'/'backup_restore.py')
 ops=importlib.util.module_from_spec(spec);spec.loader.exec_module(ops)
+
+def source_migrations(root):
+    """Read the complete candidate chain; SQL checksums remain dialect-specific."""
+    manifests={}
+    for backend in ('sqlite','postgres'):
+        directory=root/'packages/wos-core/storage'/backend/'migrations'
+        manifest=[]
+        for path in sorted(directory.glob('*.sql')):
+            match=re.fullmatch(r'([0-9]{4})_[a-z0-9_]+\.sql',path.name)
+            assert match,'invalid candidate migration filename: '+str(path)
+            manifest.append({'version':int(match[1]),'name':path.name,'checksum':ops.file_hash(path)})
+        assert manifest,'candidate migration chain is empty: '+backend
+        versions=[item['version'] for item in manifest]
+        assert versions==list(range(1,versions[-1]+1)),'candidate migration chain has missing or duplicate versions: '+backend
+        manifests[backend]=manifest
+    assert [(item['version'],item['name']) for item in manifests['sqlite']]==[(item['version'],item['name']) for item in manifests['postgres']],'candidate adapter migration chains differ'
+    return manifests
+
+def verify_current_migrations(actual,expected):
+    assert actual==expected,'migrated schema does not match the complete candidate source migration manifest'
+    return actual[-1]['version']
 
 def production_hash(root):
     h=hashlib.sha256()
@@ -72,6 +94,7 @@ def main():
     for name in ('archive','old-binary','binary','verifier','source','output'):p.add_argument('--'+name,required=True)
     p.add_argument('--driver',choices=('sqlite','postgres','both'),default='both')
     args=p.parse_args();os.umask(0o077)
+    candidate_migrations=source_migrations(Path(__file__).resolve().parents[2])
     archive=Path(args.archive).resolve();assert not (archive/'.git').exists(),'use a private archive, never the working checkout'
     tree=subprocess.check_output(['git','ls-tree','-rz',BASE],cwd=Path(__file__).parents[2])
     for entry in tree.split(b'\0'):
@@ -138,7 +161,7 @@ def main():
                 parsed=urlsplit(target);options=dict(parse_qsl(parsed.query));options['options']=(options.get('options','')+' -c search_path='+schema).strip()
                 runtime['WOS_POSTGRES_DSN']=urlunsplit((parsed.scheme,parsed.netloc,parsed.path,urlencode(options),parsed.fragment))
             with (directory/'migration.log').open('wb') as log:subprocess.run([binaries['current'],'db','migrate'],env=runtime,stdout=log,stderr=subprocess.STDOUT,check=True)
-            current_schema=rows('SELECT MAX(version) AS version FROM schema_migrations',True)[0]['version'];assert current_schema==29
+            current_schema=verify_current_migrations(rows('SELECT version,name,checksum FROM schema_migrations ORDER BY version',True),candidate_migrations[backend])
             def preserved():
                 for table,names in columns.items():
                     actual=sorted(ops.canonical(row).decode() for row in rows('SELECT '+','.join(ops.identifier(col) for col in names)+' FROM '+ops.identifier(table),True))
@@ -153,7 +176,7 @@ def main():
             with (directory/'missing-seed.log').open('wb') as log:failed=subprocess.run([binaries['current'],'server'],env=missing,stdout=log,stderr=subprocess.STDOUT,timeout=15)
             assert failed.returncode!=0 and 'seed' in (directory/'missing-seed.log').read_text().lower(),'missing issuer seed was not explicit'
             preserved()
-            results.append({'backend':backend,'old_schema':26,'current_schema':29,'old_producer_test_sha256':TEST_HASH[backend],'all_original_tables_preserved':len(originals),'old_migration_rows_preserved':True,'current_codec_historical_dsse':verified,'old_binary_new_schema_refused':True,'missing_private_seed_failed_explicitly':True,'issuer_identity_preserved':True,'backup_restore':restored})
+            results.append({'backend':backend,'old_schema':26,'current_schema':current_schema,'candidate_migration_manifest_sha256':hashlib.sha256(ops.canonical(candidate_migrations[backend])).hexdigest(),'all_candidate_migrations_matched_source':True,'old_producer_test_sha256':TEST_HASH[backend],'all_original_tables_preserved':len(originals),'old_migration_rows_preserved':True,'current_codec_historical_dsse':verified,'old_binary_new_schema_refused':True,'missing_private_seed_failed_explicitly':True,'issuer_identity_preserved':True,'backup_restore':restored})
     finally:
         for name in reversed(owned):subprocess.run(['docker','exec',container,'dropdb','-U',dsn.username,'--force',name],check=True)
         (root/'report.json').write_text(json.dumps({'complete':len(results)==len(backends),'baseline_source':BASE,'baseline_production_sha256':before,'candidate_source':args.source,'old_binary_sha256':ops.file_hash(Path(binaries['old'])),'candidate_binary_sha256':ops.file_hash(Path(binaries['current'])),'historical_test_only_capture':True,'private_seed_separate_from_backup':True,'results':results,'production_sla':False},indent=2)+'\n')

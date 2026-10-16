@@ -99,6 +99,7 @@ jobs:
         run: |
           python3 tools/acceptance/context-cost-report-test.py
           python3 tools/acceptance/scenario-execution-report-test.py
+          python3 tools/acceptance/v042-operational-upgrade-test.py
 
       - name: Unit and contract tests
         env:

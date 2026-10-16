@@ -64,6 +64,8 @@ The architecture document describes what should exist. This ROADMAP records what
 
 Architecture decisions: [central installation](docs/adr/0035-central-cli-installation.md) and [durable execution activity](docs/adr/0036-durable-execution-activity.md). WOS remains passive state and coordination; runtimes execute and schedule agents.
 
+CI follow-up: the released-v0.4.2 upgrade gate compares every installed migration's version, name and checksum with the complete candidate source chain, replacing its stale candidate-schema-29 assertion. The original schema-26 fixture, historical rows, signed proofs, issuer checks and old-binary refusal remain mandatory. The Windows migration fixture closes its inspection handle before directory publication, preserving its assertions; native test diagnostics are retained separately from successful platform acceptance proofs. Exact-head hosted qualification remains reported by the PR checks.
+
 
 ## Editorial workspace presentation — 2026-10-15
 
