@@ -131,10 +131,115 @@ async function capture(page, name) {
     .toBe(true);
   await page.screenshot({
     path: join(directory, name + ".png"),
-    fullPage: (await page.locator("dialog[open]").count()) === 0,
+    fullPage: false,
     animations: "disabled",
   });
 }
+
+test("paper stays fixed behind scrolling content and the editorial sidebar remains usable", async ({
+  page,
+  wos,
+}) => {
+  await seed(wos);
+  for (const title of [
+    "Keep decisions connected to their evidence",
+    "Prepare a shared handoff for people and agents",
+  ])
+    await wos.command("create_outcome", {
+      namespace_id: wos.namespace,
+      title,
+      desired_state: "People can resume the same shared work.",
+      priority: "normal",
+    });
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.evaluate(() => scrollTo(0, 0));
+    const clip = { x: width - 12, y: 700, width: 6, height: 120 };
+    const before = await page.screenshot({ clip, animations: "disabled" });
+    const shifted = await page.screenshot({
+      clip: { ...clip, y: clip.y + 17 },
+      animations: "disabled",
+    });
+    // Prove that this is visible lined paper, not two equal blank margins.
+    expect(before.equals(shifted)).toBe(false);
+    const headingBefore = await page.locator("#title").boundingBox();
+    const sidebarBefore = await page.locator(".sidebar").boundingBox();
+    if (width === 1440) await capture(page, "19-fixed-paper-top");
+    await page.evaluate(() => scrollBy(0, 173));
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(173);
+    const headingAfter = await page.locator("#title").boundingBox();
+    expect(headingBefore.y - headingAfter.y).toBe(173);
+    expect(
+      before.equals(await page.screenshot({ clip, animations: "disabled" })),
+    ).toBe(true);
+    if (width === 1440) {
+      expect((await page.locator(".sidebar").boundingBox()).y).toBe(
+        sidebarBefore.y,
+      );
+      await capture(page, "20-fixed-paper-scrolled");
+    }
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.evaluate(() => scrollTo(0, 0));
+    const staticBefore = await page.screenshot({ clip, animations: "disabled" });
+    await page.evaluate(() => scrollBy(0, 173));
+    expect(
+      staticBefore.equals(await page.screenshot({ clip, animations: "disabled" })),
+    ).toBe(false);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.locator("#navigation-toggle").click();
+  await expect(page.locator("#navigation-toggle")).toHaveAttribute(
+    "aria-expanded", "true",
+  );
+  await expect(page.locator("#outcomes .item")).toHaveCount(3);
+  const next = page.locator("#outcomes .item").filter({
+    hasText: "Prepare a shared handoff",
+  });
+  await next.focus();
+  await capture(page, "21-mobile-outcome-navigation");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#title")).toHaveText(
+    "Prepare a shared handoff for people and agents",
+  );
+  await expect(page.locator("#navigation-toggle")).toHaveAttribute(
+    "aria-expanded", "false",
+  );
+  // More than one sidebar viewport: the final action remains reachable.
+  for (let index = 0; index < 12; index++)
+    await wos.command("create_outcome", {
+      namespace_id: wos.namespace,
+      title: `Shared notebook example ${index + 1}`,
+      desired_state: "People can resume the same shared work.",
+      priority: "normal",
+    });
+  await page.setViewportSize({ width: 1440, height: 700 });
+  await page.locator("#search").evaluate((form) => form.requestSubmit());
+  await expect(page.locator("#outcomes .item")).toHaveCount(15);
+  await page.locator("#administration").focus();
+  await expect(page.locator("#administration")).toBeInViewport();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#admin-dialog")).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.locator("#admin-operation").selectOption("set_grant");
+  const body = page.locator("#admin-dialog .dialog-body");
+  await body.evaluate((element) => element.scrollTo(0, 0));
+  const bounds = await body.boundingBox();
+  const clip = { x: bounds.x + 8, y: bounds.y + 12, width: 6, height: 120 };
+  const dialogPaper = await page.screenshot({ clip, animations: "disabled" });
+  await body.evaluate((element) => element.scrollBy(0, 137));
+  expect(await body.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(
+    dialogPaper.equals(await page.screenshot({ clip, animations: "disabled" })),
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
+});
 
 test("editorial chapters keep all six areas, real records and illustration assets", async ({
   page,

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Anchor the fine paper grid behind scrolling pages and dialog bodies, with a document-relative reduced-motion variant; give the sidebar serif navigation, numbered ruled Outcomes, and a composed organizer vignette, with refreshed viewport screenshots.
 - Make the historical v0.1 migration replay test deterministic after its fixture's receipt expiry, using isolated virtual time while preserving the original backup and production retention behavior.
 - Redesign the human workspace with an editorial paper-and-ink visual system, the Woobe operational palette, locally served typography, and the supplied monochrome robot illustrations across all six areas; include responsive page captures and design documentation.
 - Apply the supplied WOS modular symbol and browser/touch icons; render the name WOS in the site's Instrument Serif typography while preserving the editorial layout and Woobe palette.

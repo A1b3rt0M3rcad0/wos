@@ -478,7 +478,9 @@ async function discover(append = false) {
         `${display(item.lifecycle)}${item.archived_at ? copy.text.archivedc089d2 : ""}`,
       ),
     );
-    button.append(el("span", undefined, "nav-dot"), navCopy);
+    const navIndex = el("span", undefined, "nav-dot");
+    navIndex.setAttribute("aria-hidden", "true");
+    button.append(navIndex, navCopy);
     button.onclick = () => openOutcome(item).catch(report);
     $("outcomes").append(button);
   }

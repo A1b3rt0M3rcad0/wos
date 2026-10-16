@@ -28,10 +28,24 @@
   --control-line: var(--wos-control-border);
   --sidebar: 244px;
   --header-height: 76px;
+  --editorial-grid-size: 120px;
 }
 body {
   background: var(--paper);
   font-family: var(--utility);
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+}
+/* One viewport-anchored sheet: content moves over the paper, not with it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("editorial-grid.svg") 0 0 / var(--editorial-grid-size)
+    var(--editorial-grid-size);
 }
 button {
   border-radius: 0;
@@ -141,23 +155,32 @@ p {
 body:has(#connect:not([hidden])) .topbar-right {
   visibility: hidden;
 }
-body:has(#connect:not([hidden])) {
-  background-image: url("editorial-grid.svg");
-  background-size: 160px 160px;
-}
 #workspace {
   min-height: calc(100dvh - var(--header-height));
 }
 .sidebar {
   top: var(--header-height);
   height: calc(100dvh - var(--header-height));
-  background: var(--paper);
-  padding: 26px 18px 18px;
+  background: color-mix(in srgb, var(--wos-workspace) 65%, transparent);
+  padding: 26px 20px 18px;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 18px;
 }
 .workspace-switch {
   gap: 12px;
-  padding-bottom: 24px;
-  margin-bottom: 24px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom-color: var(--control-line);
+  position: relative;
+}
+.workspace-switch::after {
+  content: "+";
+  position: absolute;
+  right: -4px;
+  bottom: -8px;
+  font: 1rem/1 var(--mono);
+  color: var(--accent);
+  pointer-events: none;
 }
 .workspace-switch label {
   font: 0.64286rem var(--mono);
@@ -165,11 +188,12 @@ body:has(#connect:not([hidden])) {
   letter-spacing: 1px;
 }
 .workspace-switch select {
-  font: 500 0.85714rem var(--utility);
+  font: 400 1.71429rem/1.2 var(--display);
   letter-spacing: 0;
   text-transform: none;
   min-height: 44px;
   padding: 8px 30px 8px 0;
+  text-overflow: ellipsis;
 }
 .sidebar input {
   background: var(--surface);
@@ -178,6 +202,12 @@ body:has(#connect:not([hidden])) {
 }
 .sidebar-heading {
   font: 0.71429rem var(--mono);
+}
+.sidebar-heading .desktop-only::before {
+  content: "↳";
+  color: var(--accent);
+  font-size: 1.28571rem;
+  margin-right: 10px;
 }
 .sidebar-heading .icon-button {
   border: 0;
@@ -191,64 +221,94 @@ body:has(#connect:not([hidden])) {
 }
 .outcome-navigation {
   margin-top: 12px;
+  counter-reset: outcome;
 }
 .outcome-navigation .item {
   border-radius: 0;
   border-width: 0 0 0 2px;
-  padding: 14px 12px;
-  margin-block: 4px;
-  min-height: 65px;
+  padding: 16px 10px;
+  margin-block: 0;
+  min-height: 80px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  counter-increment: outcome;
+  align-items: flex-start;
+  transition: background 140ms, border-color 140ms;
 }
 .outcome-navigation .item:hover {
   background: var(--accent-soft);
 }
 .outcome-navigation .item.selected {
-  border-color: var(--accent);
+  border-left-color: var(--accent);
   background: var(--accent-soft);
 }
+.outcome-navigation .item:focus-visible {
+  outline-offset: -3px;
+}
 .nav-item-text strong {
-  font-size: 0.85714rem;
-  font-weight: 500;
-  line-height: 1.6;
+  font: 400 1.42857rem/1.15 var(--display);
+  overflow-wrap: anywhere;
 }
 .nav-item-text small {
   font: 0.64286rem var(--mono);
   color: var(--muted);
 }
 .nav-dot {
-  width: 5px;
-  height: 5px;
-  margin-top: 8px;
-  background: var(--accent);
+  width: 18px;
+  height: auto;
+  margin-top: 3px;
+  background: transparent;
+  border-radius: 0;
+  color: var(--accent);
+  font: 0.64286rem/1.4 var(--mono);
+}
+.nav-dot::before {
+  content: counter(outcome, decimal-leading-zero);
 }
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 18px;
 }
 .sidebar-bottom button {
-  padding-inline: 0;
+  padding: 10px 0;
   border-color: transparent;
-  min-height: 36px;
+  border-top: 1px solid var(--line);
+  min-height: 44px;
+}
+.sidebar-bottom button::after {
+  content: "";
+  float: right;
+  width: 7px;
+  height: 7px;
+  margin: 5px 3px 0 12px;
+  border-top: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+.sidebar-study {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 148px;
+  padding-block: 18px;
 }
 .sidebar-caption {
-  font-size: 0.64286rem;
+  font: italic 400 1.57143rem/1.15 var(--display);
   text-align: left;
-  margin-top: 12px;
+  color: var(--accent);
+  margin: 0;
+  max-width: 90px;
+  transform: rotate(-5deg);
 }
 .sidebar-vignette {
   display: block;
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 108px;
   object-fit: contain;
-  margin: 18px 0;
+  margin: 0;
   mix-blend-mode: multiply;
 }
 .workspace-main {
-  background: var(--paper);
-  background-image: url("editorial-grid.svg");
-  background-size: 160px 160px;
-  background-origin: content-box;
-  background-position: left top;
+  background: transparent;
   padding: 26px 40px 64px;
 }
 #outcome {
@@ -909,6 +969,9 @@ legend {
 }
 dialog {
   background: var(--wos-elevated);
+  background-image: url("editorial-grid.svg");
+  background-size: var(--editorial-grid-size) var(--editorial-grid-size);
+  background-attachment: fixed;
   border: 1px solid var(--control-line);
   border-radius: 0;
   padding: 32px;
@@ -963,12 +1026,15 @@ dialog::backdrop {
 .detail-drawer > .dialog-heading {
   padding: 24px 28px 20px;
   margin: 0;
-  background: var(--paper) url("editorial-grid.svg");
+  background: transparent;
 }
 .dialog-body {
   padding: 20px 28px 24px;
   scroll-padding-block: 16px;
   scrollbar-gutter: stable;
+  background-image: url("editorial-grid.svg");
+  background-size: var(--editorial-grid-size) var(--editorial-grid-size);
+  background-attachment: fixed;
 }
 .dialog-body :is(input, select, textarea, button, summary) {
   scroll-margin-block: 16px;
@@ -1422,7 +1488,7 @@ noscript p {
     position: static;
     padding: 16px 20px;
   }
-  .sidebar-vignette {
+  .sidebar-study {
     display: none;
   }
   .workspace-switch {
@@ -1430,7 +1496,7 @@ noscript p {
     margin-bottom: 12px;
   }
   .workspace-switch select {
-    font-size: 1rem;
+    font-size: 1.71429rem;
   }
   .sidebar-bottom {
     display: flex;
@@ -1441,8 +1507,11 @@ noscript p {
   }
   .sidebar-bottom button {
     width: auto;
-    min-height: 36px;
+    min-height: 44px;
     margin-right: 12px;
+  }
+  .sidebar-bottom button::after {
+    margin-left: 12px;
   }
   .sidebar-heading .icon-button {
     min-width: 36px;
@@ -1737,6 +1806,13 @@ noscript p {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  body::before {
+    position: absolute;
+  }
+  dialog,
+  .dialog-body {
+    background-attachment: local;
+  }
   *,
   *::before,
   *::after {
