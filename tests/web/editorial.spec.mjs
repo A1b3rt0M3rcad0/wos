@@ -307,7 +307,9 @@ test("static sign-in keeps its narrative and explains the no-JavaScript fallback
         "Meaningful outcomes.",
       );
       await expect(page.locator("noscript p")).toBeVisible();
-      await expect(page.locator("noscript p")).toContainText("Enable JavaScript");
+      await expect(page.locator("noscript p")).toContainText(
+        "Enable JavaScript",
+      );
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -317,4 +319,46 @@ test("static sign-in keeps its narrative and explains the no-JavaScript fallback
   } finally {
     await context.close();
   }
+});
+
+test("Woobe colors distinguish interaction copper, primary charcoal and semantic states", async ({
+  page,
+  wos,
+}) => {
+  await seed(wos);
+  await page.goto(wos.url + "/app/");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(239, 237, 232)",
+  );
+  await expect(page.locator(".login-story h1 em")).toHaveCSS(
+    "color",
+    "rgb(167, 68, 29)",
+  );
+  const primary = page.locator("#login button");
+  await expect(primary).toHaveCSS("background-color", "rgb(41, 38, 32)");
+  await expect(primary).toHaveCSS("color", "rgb(255, 253, 249)");
+  await primary.hover();
+  await expect(primary).toHaveCSS("background-color", "rgb(64, 58, 50)");
+  await page.locator("#token").focus();
+  await page.keyboard.press("Tab");
+  await expect(primary).toBeFocused();
+  await expect(primary).toHaveCSS("outline-color", "rgb(167, 68, 29)");
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+  await expect(page.locator("#outcomes .selected")).toHaveCSS(
+    "background-color",
+    "rgb(241, 223, 208)",
+  );
+  await page.locator('#area-tabs [data-area="work"]').click();
+  await expect(page.locator(".list-row")).toHaveCount(5);
+  await expect(
+    page.locator(".list-row .badge").filter({ hasText: /^Done$/ }),
+  ).toHaveCSS("color", "rgb(36, 104, 70)");
+  await expect(
+    page.locator(".list-row .badge").filter({ hasText: /^In progress$/ }),
+  ).toHaveCSS("color", "rgb(134, 91, 19)");
+  await expect(
+    page.locator(".list-row .badge").filter({ hasText: /^Blocked$/ }),
+  ).toHaveCSS("color", "rgb(178, 56, 52)");
 });

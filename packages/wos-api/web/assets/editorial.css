@@ -24,9 +24,8 @@
   --display: "Instrument Serif", Georgia, "Times New Roman", serif;
   --utility: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  --accent-art: #00846a;
-  --accent-soft: #e0e8e2;
-  --control-line: #7e8982;
+  --accent-soft: var(--wos-selected);
+  --control-line: var(--wos-control-border);
   --sidebar: 244px;
   --header-height: 76px;
 }
@@ -41,13 +40,13 @@ button {
   padding: 10px 16px;
 }
 button:hover {
-  background: #354b3d;
+  background: var(--wos-primary-hover);
 }
 button:disabled {
   cursor: not-allowed;
 }
 .quiet {
-  background: transparent;
+  background: var(--wos-control);
   border-color: var(--control-line);
 }
 .quiet:hover {
@@ -56,6 +55,9 @@ button:disabled {
 }
 .icon-button {
   border-color: transparent;
+}
+.icon-button:hover {
+  background: var(--wos-control);
 }
 .text-button {
   color: var(--accent);
@@ -73,11 +75,11 @@ p {
   color: var(--muted);
 }
 ::selection {
-  background: #c5dbcf;
+  background: var(--wos-selected);
   color: var(--ink);
 }
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--wos-focus);
   outline-offset: 4px;
 }
 .eyebrow {
@@ -116,7 +118,7 @@ p {
   font: 0.71429rem var(--mono);
 }
 .connection i {
-  background: var(--accent);
+  background: var(--wos-success);
 }
 .topbar-right button {
   background: transparent;
@@ -248,7 +250,7 @@ body:has(#connect:not([hidden])) .topbar-right {
 #notice.error {
   border-left-color: var(--danger);
   color: var(--danger);
-  background: #f0e2de;
+  background: var(--wos-panel-band);
 }
 .breadcrumbs {
   font: 0.71429rem/1.6 var(--mono);
@@ -512,19 +514,19 @@ progress::-moz-progress-bar {
   font-size: 0.78571rem;
 }
 .legend-dot {
-  background: #b3b8b5;
+  background: var(--wos-border);
 }
 .legend-dot.orange {
-  background: #56736a;
+  background: var(--wos-warning);
 }
 .legend-dot.green {
-  background: var(--accent);
+  background: var(--wos-success);
 }
 .legend-dot.red {
-  background: #994b45;
+  background: var(--wos-error);
 }
 .legend-dot.violet {
-  background: #747875;
+  background: var(--wos-muted);
 }
 .summary-counts {
   gap: 0;
@@ -679,23 +681,23 @@ progress::-moz-progress-bar {
   letter-spacing: 0.2px;
   padding: 4px 7px;
   color: var(--muted);
-  background: #dfe2de;
+  background: var(--wos-control);
 }
 .badge.orange {
-  color: #405e4f;
-  background: #dde6de;
+  color: var(--wos-warning);
+  background: var(--wos-control);
 }
 .badge.green {
-  color: #00634d;
-  background: #d4e3d8;
+  color: var(--wos-success);
+  background: var(--wos-control);
 }
 .badge.violet {
-  color: #4d5751;
-  background: #dce0dd;
+  color: var(--wos-secondary);
+  background: var(--wos-control);
 }
 .badge.red {
-  color: #883a34;
-  background: #eddbd7;
+  color: var(--wos-error);
+  background: var(--wos-control);
 }
 .item-priority {
   font: 0.71429rem var(--mono);
@@ -705,7 +707,7 @@ progress::-moz-progress-bar {
   padding-bottom: 16px;
 }
 .board-column {
-  background: transparent;
+  background: var(--wos-workspace);
   border: 1px solid var(--line);
   border-radius: 0;
   padding: 12px;
@@ -781,9 +783,9 @@ progress::-moz-progress-bar {
 }
 .section-note,
 .field-context {
-  background: var(--accent-soft);
+  background: var(--wos-panel-band);
   border: 0;
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--wos-info);
   border-radius: 0;
   font-size: 0.78571rem;
   line-height: 1.8;
@@ -843,14 +845,14 @@ legend {
   font: 0.71429rem/1.7 var(--mono);
 }
 dialog {
-  background: var(--paper);
+  background: var(--wos-elevated);
   border: 1px solid var(--control-line);
   border-radius: 3px;
   padding: 32px;
-  box-shadow: 0 12px 60px #18241c18;
+  box-shadow: 0 12px 60px var(--wos-shadow);
 }
 dialog::backdrop {
-  background: #18241c60;
+  background: var(--wos-backdrop);
   backdrop-filter: none;
 }
 .dialog-heading {
@@ -871,6 +873,7 @@ dialog::backdrop {
   border-radius: 50%;
 }
 .detail-drawer {
+  background: var(--wos-surface);
   padding: 32px;
   border-radius: 0;
 }
@@ -892,7 +895,7 @@ dialog::backdrop {
   font: 0.71429rem/1.9 var(--mono);
 }
 .detail-drawer footer {
-  background: var(--paper);
+  background: var(--wos-surface);
   bottom: -32px;
   padding-block: 18px 28px;
 }
@@ -943,7 +946,7 @@ dialog::backdrop {
   font-size: 0.85714rem;
 }
 .reference-results {
-  background: var(--surface);
+  background: var(--wos-elevated);
   border-radius: 2px;
   border-color: var(--control-line);
 }
@@ -993,7 +996,7 @@ summary {
 }
 .danger,
 #command-error:not(:empty) {
-  background: #f0e2de;
+  background: var(--wos-panel-band);
   color: var(--danger);
   border-radius: 2px;
 }
@@ -1079,7 +1082,7 @@ summary {
 }
 .login-panel {
   border: 1px solid var(--control-line);
-  background: var(--paper);
+  background: var(--wos-surface);
   border-radius: 0;
   padding: 32px;
   margin-top: 54px;

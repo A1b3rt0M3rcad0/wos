@@ -24,4 +24,5 @@ Minimalist hand-drawn black ink cartoon illustration, organic slightly imperfect
 - Os SVGs existentes ficam em `packages/wos-api/web/assets/robots/`, a partir da raiz do projeto. Reutilizar quando adequados e preservar seus originais.
 - Esta direção se aplica às ilustrações. Não altera automaticamente cores da interface, tipografia, layout ou comportamento do produto.
 - A skill `chess-style` continua disponível para composição editorial; em trabalhos que combinem ambas, usar esta direção específica para as ilustrações.
+- Por decisão explícita do proprietário, a interface usa a paleta operacional clara da Woobe em `packages/wos-api/web/assets/colors.css`: neutros quentes, carvão e cobre, com laranja reservado à marca e cores semânticas para estados. Essa decisão substitui as sugestões de cinza/verde da `chess-style`, mantendo sua composição editorial. Consultar `docs/design/editorial/woobe-palette-source.md` para a especificação recebida. Não recolorir os robôs.
 - Criar ou modificar assets somente quando solicitado; registrar o estilo não implica redesenhar os assets existentes.
