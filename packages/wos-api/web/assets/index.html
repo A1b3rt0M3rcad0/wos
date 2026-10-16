@@ -6,8 +6,12 @@
     <title data-copy="wosWorkspace">WOS · Workspace</title>
     <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="editorial.css" />
   </head>
   <body>
+    <noscript>
+      <p data-copy="enableWorkspaceJavaScript">Enable JavaScript to use the workspace, or use the WOS HTTP API or CLI.</p>
+    </noscript>
     <a class="skip-link" href="#main-content" data-copy="skipToContent"
       >Skip to content</a
     >
@@ -37,12 +41,24 @@
           <p class="eyebrow" data-copy="workOUTCOMESYSTEM">
             WORK OUTCOME SYSTEM
           </p>
-          <h1 data-copy="meaningfulOutcomes">
-            Meaningful outcomes.<br />Work together.
+          <h1>
+            <span data-copy="meaningfulOutcomes">Meaningful outcomes.</span>
+            <em data-copy="workTogetherEditorial">Work together.</em>
           </h1>
           <p data-copy="planClearlyCollaborateWithAgents">
             Plan clearly. Collaborate with agents.<br />Verify with evidence.
           </p>
+          <figure class="login-vignette" aria-hidden="true">
+            <span class="marginal-note" data-copy="fromIntentToEvidence"
+              >from intent to evidence</span
+            >
+            <img
+              src="robots/01_planner_map.svg"
+              width="240"
+              height="240"
+              alt=""
+            />
+          </figure>
           <div class="login-cards">
             <div>
               <span class="badge orange" data-copy="01Plan">01 · Plan</span
@@ -189,6 +205,14 @@
             More outcomes
           </button>
           <div class="sidebar-bottom">
+            <img
+              class="sidebar-vignette"
+              src="robots/18_workspace_organizer.svg"
+              width="96"
+              height="96"
+              alt=""
+              loading="lazy"
+            />
             <button
               id="administration"
               class="quiet"
@@ -232,7 +256,13 @@
             Loading outcome…
           </div>
           <div id="empty" class="empty">
-            <span class="empty-symbol">↗</span>
+            <img
+              class="empty-vignette"
+              src="robots/17_outcome_flagbearer.svg"
+              width="180"
+              height="180"
+              alt=""
+            />
             <p class="eyebrow" data-copy="yourNextOutcome">YOUR NEXT OUTCOME</p>
             <h2 data-copy="chooseAnOutcome">Choose an outcome</h2>
             <p data-copy="connectObjectivesTasksAndEvidenceInOnePlace">
@@ -302,6 +332,21 @@
                 Board
               </button>
             </nav>
+            <section
+              id="area-intro"
+              class="area-intro"
+              aria-labelledby="area-title"
+            >
+              <div class="area-intro-copy">
+                <p id="area-index" class="eyebrow"></p>
+                <h2 id="area-title"></h2>
+                <p id="area-description"></p>
+              </div>
+              <figure class="area-vignette" aria-hidden="true">
+                <img id="area-robot" width="150" height="150" alt="" />
+                <figcaption id="area-note" class="marginal-note"></figcaption>
+              </figure>
+            </section>
             <section id="summary-view">
               <div id="metrics" class="metrics"></div>
               <div id="summary-content" class="summary-grid"></div>

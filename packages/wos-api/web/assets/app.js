@@ -1,4 +1,5 @@
 import { message } from "./en-US.js";
+import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
 import { request as networkRequest } from "./api-client.js";
 import {
@@ -728,6 +729,7 @@ function navigateArea(area) {
   renderSection().catch(report);
 }
 function applyView() {
+  renderEditorial(state.area);
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary";
   for (const button of $("view-tabs").children) {
@@ -1039,26 +1041,26 @@ function renderSummary() {
         0,
         total - done - active - blocked - (c.cancelled_work || 0),
       ),
-      color: "#d6d2c8",
+      color: "#b3b8b5",
       tone: "",
     },
     {
       title: copy.text.inProgress,
       count: active,
-      color: "#e97335",
+      color: "#56736a",
       tone: "orange",
     },
     {
       title: copy.text.blockedNeedsAttention,
       count: blocked,
-      color: "#c75858",
+      color: "#994b45",
       tone: "red",
     },
-    { title: copy.text.done, count: done, color: "#339d71", tone: "green" },
+    { title: copy.text.done, count: done, color: "#00745d", tone: "green" },
     {
       title: copy.text.cancelled,
       count: c.cancelled_work || 0,
-      color: "#8e82b3",
+      color: "#747875",
       tone: "violet",
     },
   ];
@@ -1373,7 +1375,7 @@ function emptySection(title, command) {
       }[state.section] || title;
   const box = el("div", undefined, "empty-section");
   box.append(
-    icon(sectionIcons[state.section] || "work_item"),
+    sectionIllustration(state.area),
     el("h3", title),
     el("p", copy.text.activityAppearsHereAsWorkProgresses),
   );
