@@ -11,5 +11,62 @@
   },
   "mode": "RGBA",
   "preserved_original": true,
-  "role": "README illustration of shared work state, explicit acquisition, execution and review; conceptual artwork rather than a product screenshot"
+  "role": "README illustration of shared work state, explicit acquisition, execution and review; conceptual artwork rather than a product screenshot",
+  "logo_alias": {
+    "file": "docs/images/logo.svg",
+    "source": "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.svg",
+    "sha256": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+    "preserved_original": true,
+    "readme_width": 240
+  },
+  "readme_illustration_width": 360,
+  "product_screenshots": [
+    {
+      "file": "docs/design/editorial/screenshots/04-work.png",
+      "sha256": "17043f0ce187898bb3f073b2641199a1f043434ec0b1726018a165bab12a5d03",
+      "provenance": "docs/design/editorial/screenshots.json",
+      "role": "Primary product screenshot"
+    },
+    {
+      "file": "docs/design/editorial/screenshots/07-evidence.png",
+      "sha256": "2603e1118636291d8aa40b5a00167695050dacaec1a351ebc2ba6a883a587fa1",
+      "provenance": "docs/design/editorial/screenshots.json",
+      "role": "Expandable Evidence view"
+    },
+    {
+      "file": "docs/design/editorial/screenshots/01-login.png",
+      "sha256": "e31f4d7bda098b2095f5135e83a0ae61a06385e953f00fc219f04da42f991fc5",
+      "provenance": "docs/design/editorial/screenshots.json",
+      "role": "Source branch sign-in preview"
+    }
+  ],
+  "terminal_demo": {
+    "file": "docs/images/quickstart.gif",
+    "sha256": "142b58378dab3b1e266f3cadce2cf005bb4f84892ff2c449924ecd3bd9b923b3",
+    "render_provenance": "docs/images/quickstart.json",
+    "recording_provenance": "examples/quickstart/demo.provenance.json",
+    "scope": "Real unsigned local HTTP lifecycle performed by one trusted operator; no signed independent-review claim."
+  },
+  "static_badges": {
+    "meaning": "Version badges identify the verified published baseline; the Go badge identifies the source build pin. Links point to releases, npm, toolchain and license. CI uses the live master workflow badge with its own label.",
+    "verified_at_utc": "2026-10-16T19:03:32.427205+00:00",
+    "files": [
+      {
+        "file": "docs/images/badges/go.svg",
+        "sha256": "e68921694b928883640ce2ef46d4b5846d930b582fc0099a0a889c635c4a3736"
+      },
+      {
+        "file": "docs/images/badges/license.svg",
+        "sha256": "1972de0e868a04853fd1a66462b94dc2eb94029e4eeb6222bf4f1e4232a20ae2"
+      },
+      {
+        "file": "docs/images/badges/npm.svg",
+        "sha256": "f60af29c80c77c92e9ecd0a2e6b4df5f07903ac018e6eabd4147770f3aa65ef3"
+      },
+      {
+        "file": "docs/images/badges/release.svg",
+        "sha256": "070cbaa15d7086585ce7779a832f452e2158afb3a1dbe61a47a83401d21763f9"
+      }
+    ]
+  }
 }

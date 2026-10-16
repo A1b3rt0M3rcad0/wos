@@ -53,8 +53,11 @@ A reviewer uses their own authorized profile to acquire a review contract:
 ```sh
 wos --profile reviewer review checkout --next --count 1 --output json
 wos --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent --output json
+```
 
-# Inspect the submission and complete the permitted review draft.
+Inspect the exact submission, then complete the permitted review draft before finishing:
+
+```sh
 wos --profile reviewer review finish REVIEW_CONTRACT_UUID --output json
 ```
 

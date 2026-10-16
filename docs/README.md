@@ -4,12 +4,14 @@ Start with the [project README](../README.md) to understand the purpose, run the
 
 ## Use the workspace
 
-| Task                                            | Guide                                                                  |
-| ----------------------------------------------- | ---------------------------------------------------------------------- |
-| Create Outcomes, plan, execute, and assess work | [Workspace guide](workspace-ux.md)                                     |
-| View the current desktop and mobile interface   | [Screenshots and visual system](design/editorial/README.md#main-pages) |
-| Understand the shared human/agent workflow      | [How it works](../README.md#how-it-works)                              |
-| Inspect the README illustration's provenance    | [Original artwork record](images/assets.json)                          |
+| Task                                                | Guide                                                                  |
+| --------------------------------------------------- | ---------------------------------------------------------------------- |
+| Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
+| Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
+| Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
+| View the current desktop and mobile interface       | [Screenshots and visual system](design/editorial/README.md#main-pages) |
+| Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
+| Inspect the README illustration's provenance        | [Original artwork record](images/assets.json)                          |
 
 ## Connect agents and applications
 
@@ -34,6 +36,8 @@ Start with the [project README](../README.md) to understand the purpose, run the
 
 ## Develop and understand the project
 
+- [Contributing](../CONTRIBUTING.md): setup, checks, and pull requests.
+- [Security](../SECURITY.md): deployment boundaries and private-reporting guidance.
 - [AGENTS.md](../AGENTS.md): development contract and required verification.
 - [ROADMAP.md](../ROADMAP.md): implementation state, current work, and pending acceptance.
 - [Architecture overview](architecture.md): domain model, invariants, and package boundaries.
