@@ -1,0 +1,134 @@
+[
+  {
+    "path": "work-load/work-contract-load.json",
+    "original_sha256": "4d8715024392aa54ec61449551a2a8bb5413189bdba7d587e3b2273aa879b283",
+    "original_bytes": 32182,
+    "stored_path": "work-load/work-contract-load.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "signed-load/signed-work-review-load.jsonl",
+    "original_sha256": "662b5b74a793ee09e3ace5333abe6c74acce1331ba57dbc0612526e3f9925846",
+    "original_bytes": 37179,
+    "stored_path": "signed-load/signed-work-review-load.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "signed-load/signed-work-review-load.json",
+    "original_sha256": "a73c46d5609f6b99269405f99e3d934d4b7a0af17e3b8f981d588ac70872abea",
+    "original_bytes": 19475,
+    "stored_path": "signed-load/signed-work-review-load.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "scenarios/race-tests.jsonl",
+    "original_sha256": "adcbd8a1763b2abc7a4042c161aacf1b0268907116fad8dbde567ed1e5efa980",
+    "original_bytes": 2168659,
+    "stored_path": "scenarios/race-tests.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "scenarios/unit-contract-tests.jsonl",
+    "original_sha256": "0b64b5a7fd2a98a1c0096b664afd3161ea3a1bb2b46365fb18552013fb059be2",
+    "original_bytes": 2167080,
+    "stored_path": "scenarios/unit-contract-tests.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "scenarios/scenario-execution.json",
+    "original_sha256": "8a6b87082a050e14ad5ab1b064631f76c1af318c287831ebeef9e54c5e2a90fb",
+    "original_bytes": 1506207,
+    "stored_path": "scenarios/scenario-execution.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "native-windows/platform-windows-amd64.json",
+    "original_sha256": "1b8fbb4b1e37f4bfc63153a5d9031cf00d01fbcbd71adbf05a2c0d0e6165e684",
+    "original_bytes": 1794,
+    "stored_path": "native-windows/platform-windows-amd64.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "native-windows/full-disk-windows-amd64.json",
+    "original_sha256": "e1db8af4c3411bad8c031d3ca3648053a18011b7963acd4d038f6f614fa54829",
+    "original_bytes": 271,
+    "stored_path": "native-windows/full-disk-windows-amd64.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "native-linux/platform-linux-amd64.json",
+    "original_sha256": "b501052c49b8b9127f90d9d971a8244f9e1d5eec30a77a8d89146c73c7eb7252",
+    "original_bytes": 1885,
+    "stored_path": "native-linux/platform-linux-amd64.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "full-disk/full-disk-cleanup.jsonl",
+    "original_sha256": "c9a81c35fc51aef6131edd1d305ae1540deab5fe0400d48fbc5e40bbc6ba9c11",
+    "original_bytes": 6525,
+    "stored_path": "full-disk/full-disk-cleanup.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "full-disk/full-disk-cleanup.log",
+    "original_sha256": "f0918068ae054d85c4055f5ef7116cf8d8d7d377731c978917c2bdd0104c2856",
+    "original_bytes": 1033,
+    "stored_path": "full-disk/full-disk-cleanup.log"
+  },
+  {
+    "path": "fuzz/signed-resolution-fuzz.jsonl",
+    "original_sha256": "0cba178584decd138bb868b8f2087b7d15a97dcfcefe82f80d19add8ca5d8cb6",
+    "original_bytes": 2909,
+    "stored_path": "fuzz/signed-resolution-fuzz.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "fuzz/restricted-yaml-fuzz.jsonl",
+    "original_sha256": "3e9e464e7a7b4b7de89f8652ef2ccae721f3659b707b12434e322a26129cff87",
+    "original_bytes": 2685,
+    "stored_path": "fuzz/restricted-yaml-fuzz.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "fuzz/signing-envelope-fuzz.jsonl",
+    "original_sha256": "bbf4194dfb02d84dee2d9a9786b15f2690cb65a54d6a6edb37532d7a547a1b16",
+    "original_bytes": 2818,
+    "stored_path": "fuzz/signing-envelope-fuzz.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "fuzz/signing-canonical-fuzz.jsonl",
+    "original_sha256": "4e7e93fe27cd86b310123afcdefab5c7723b5bfc4cb9f5f659ea3e4bc45f71e4",
+    "original_bytes": 2819,
+    "stored_path": "fuzz/signing-canonical-fuzz.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  },
+  {
+    "path": "fuzz/signed-fuzz.json",
+    "original_sha256": "d4b699a78d4a78c923fc5c22057bad98246dacf8f3c2710b860f3bf4b1534c5a",
+    "original_bytes": 796,
+    "stored_path": "fuzz/signed-fuzz.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "upgrade/report.json",
+    "original_sha256": "03b5b4e774c5769a36fc621bdc425a1c00935b77c1ec88cbf50f0fe2d9205e36",
+    "original_bytes": 3371,
+    "stored_path": "upgrade/report.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "operator/_temp/wos-operational-pilots/reports.json",
+    "original_sha256": "22fe310be7febc00a55e6efd6c04d584dd16227524fdaf07c2422c47a407c9b3",
+    "original_bytes": 5763,
+    "stored_path": "operator/_temp/wos-operational-pilots/reports.json",
+    "normalization": "JSON indentation/line endings only; source/binary hashes and fields retained"
+  },
+  {
+    "path": "operator/wos/wos/operator-restore-tests.jsonl",
+    "original_sha256": "5c112dd6090eab248894362f360fe501d3c064ba049b55a1ca131f82d68507c6",
+    "original_bytes": 25510,
+    "stored_path": "operator/wos/wos/operator-restore-tests.jsonl.gz",
+    "compression": "gzip (mtime=0); decompress to reproduce original execution-log hash"
+  }
+]

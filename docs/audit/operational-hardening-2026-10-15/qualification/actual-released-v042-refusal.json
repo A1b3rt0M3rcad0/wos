@@ -1,0 +1,14 @@
+{
+  "published_baseline_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "downloaded_actual_released_asset": true,
+  "asset": "wos_0.4.2_linux_amd64.tar.gz",
+  "asset_sha256": "c4bdee14c26f6b8ded8b82446b3bd479eb096e5d884055a698359e81b2f93c9c",
+  "published_sha256sums_verified": true,
+  "binary_sha256": "6475bd2bfbd406bcf98c5ff16628ed83561429d8974f21dd2079064fe8e74e8b",
+  "binary_build": "wos 0.4.2 (commit b572269085494ddd4d6370716ff1cb360b46065f, built 2026-10-13T00:23:11Z)",
+  "old_native_binary_future_schema_refused": true,
+  "error": "invalid_configuration: database schema 29 is newer than this binary supports (26); use a compatible binary",
+  "all_logical_rows_unchanged": true,
+  "current_schema": 29,
+  "native_linux_executed": true
+}

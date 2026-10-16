@@ -1,0 +1,91 @@
+{
+  "complete": true,
+  "baseline_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "baseline_production_sha256": "5eee095166b163c0da44bb84d509fe96eb4f21ebd24db2feebb4c0904864e1f7",
+  "candidate_source": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+  "old_binary_sha256": "7e6c2dc6cef6a1d23ace73b211ca66b31bcf7871ffbd6563b510bc03570b2360",
+  "candidate_binary_sha256": "19585f0305cdd2ce310cc04b4ca1c691947cfb60ce99ad0737d8cd3b38d282cb",
+  "historical_test_only_capture": true,
+  "private_seed_separate_from_backup": true,
+  "results": [
+    {
+      "backend": "sqlite",
+      "old_schema": 26,
+      "current_schema": 29,
+      "old_producer_test_sha256": "1fbb8b202fde5ee3d669e72e65ff9a249aefd4afa70104ef93bf0a56186df0c8",
+      "all_original_tables_preserved": 67,
+      "old_migration_rows_preserved": true,
+      "current_codec_historical_dsse": {
+        "facts": 39,
+        "historical_public_keys_only": true,
+        "kinds": {
+          "acceptance": 7,
+          "authority": 13,
+          "return": 7,
+          "specification": 12
+        },
+        "re_signed": false,
+        "verified": true
+      },
+      "old_binary_new_schema_refused": true,
+      "missing_private_seed_failed_explicitly": true,
+      "issuer_identity_preserved": true,
+      "backup_restore": {
+        "operation": "restore_and_verify",
+        "verified": true,
+        "read_only": false,
+        "manifest_sha256": "e21aea22b2c88188b7d1ec0b9438b3c644c18519c72c4a0a71220f8b553a50a5",
+        "approved_pin_checked": true,
+        "schema_version": 26,
+        "server_id": "0199a555-0000-7000-8000-000000000003",
+        "table_count": 67,
+        "verified_at": "2026-10-16T02:46:03.654739+00:00",
+        "new_destination_only": true,
+        "validation_read_only": true,
+        "rto_restore_and_verify_seconds": 0.016378345999896737,
+        "snapshot_at": "2026-10-16T02:46:03.613417+00:00",
+        "production_sla": false
+      }
+    },
+    {
+      "backend": "postgres",
+      "old_schema": 26,
+      "current_schema": 29,
+      "old_producer_test_sha256": "d596ea648aeac68669aa3c7169197f6491f5357dd2c207c2ec5c9bccb7d86db7",
+      "all_original_tables_preserved": 67,
+      "old_migration_rows_preserved": true,
+      "current_codec_historical_dsse": {
+        "facts": 39,
+        "historical_public_keys_only": true,
+        "kinds": {
+          "acceptance": 7,
+          "authority": 13,
+          "return": 7,
+          "specification": 12
+        },
+        "re_signed": false,
+        "verified": true
+      },
+      "old_binary_new_schema_refused": true,
+      "missing_private_seed_failed_explicitly": true,
+      "issuer_identity_preserved": true,
+      "backup_restore": {
+        "operation": "restore_and_verify",
+        "verified": true,
+        "read_only": false,
+        "manifest_sha256": "6e7421f79d45860c4917d675971472caa92c696c58d450da0e162493cf046641",
+        "approved_pin_checked": true,
+        "schema_version": 26,
+        "server_id": "0199a555-0000-7000-8000-000000000003",
+        "table_count": 67,
+        "verified_at": "2026-10-16T02:46:27.842906+00:00",
+        "new_destination_only": true,
+        "validation_read_only": true,
+        "rto_restore_and_verify_seconds": 0.8287971510000034,
+        "snapshot_at": "2026-10-16T02:46:26.706791+00:00",
+        "production_sla": false
+      }
+    }
+  ],
+  "production_sla": false
+}

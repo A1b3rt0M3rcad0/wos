@@ -6,7 +6,7 @@ The standalone validation candidate supports Linux amd64 with SQLite or PostgreS
 
 [Opt-in operator tools](../tools/operations/README.md) provide consistent SQLite/PostgreSQL snapshots, private manifests/checksums, new-destination-only restore and read-only per-table verification. Signed-state restore requires an independently approved server ID and issuer fingerprint; private signer and CLI workspace recovery are separate. The supplied wrapper and cron/systemd/Kubernetes templates run outside WOS. They do not activate backup schedules or establish a production RPO/RTO.
 
-The source-bound CI includes real execution/review/correction/negative-proof/issuer/outbox restore journeys and two actual API-process crash/restore pilots with a durable external dedupe ledger. See [intermediate evidence](audit/operational-hardening-2026-10-15/intermediate-f07/README.md); final source qualification remains pending. Restore cannot undo receiver effects or automatically recover revocations committed after a stale snapshot. Follow the cutover, security reconciliation, workspace and external alert procedures before reopening writers.
+The source-bound CI includes real execution/review/correction/negative-proof/issuer/outbox restore journeys and two actual API-process crash/restore pilots with a durable external dedupe ledger. See [source-bound qualification and limits](stable/operational-acceptance.md), including permanent operator/CI/Compose/native receipts and the exact-head delivery gate. Restore cannot undo receiver effects or automatically recover revocations committed after a stale snapshot. Follow the cutover, security reconciliation, workspace and external alert procedures before reopening writers.
 
 ## Local installation
 
@@ -71,6 +71,12 @@ For PostgreSQL, use `pg_dump --format=custom` and `pg_restore --single-transacti
 Numbered migrations are checksummed and forward-only. `db migrate` applies pending migrations; opening the service also migrates. Unknown schemas cannot become ready. Destructive SQL downgrade is unsupported. Operational rollback uses the older binary and a pre-upgrade backup in a separate database, explicitly reconciling subsequent facts.
 
 Leases retain absolute UTC times and fencing. Synchronize clocks after restore; expired leases require explicit reclaim. Restore may redeliver an integration event the consumer already received, so deduplicate by `integration_event_id`. Session memory is not authoritative completion state.
+
+### Upgrade cutover for the operational candidate
+
+Pause ingress/agent mutations, preserve pending CLI intentions and stop **all old API and delivery-worker processes** before the forward schema migration. Capture a protected consistent backup and independently approved identity/issuer pin; rehearse restore and migration into a new destination first. Run `wos db migrate` with the intended candidate, then start only replicas of that same qualified source with the preserved issuer. Check readiness, current authorization/revocations, original receipts, pending authority and delivery-health before reopening writers.
+
+The qualified multi-API profile uses one source/version. A mixed old/new server rolling upgrade is outside this qualification: startup refusal of an old binary on a newer schema does not fence a process that was already running. Retire every previous process before enabling terminal-resolution writes or other new-schema behavior. Restore to a separate pre-upgrade database is the rollback procedure; reconcile later security changes, pending intentions and external receiver effects rather than downgrading the live database.
 
 ## Integrations and observability
 
