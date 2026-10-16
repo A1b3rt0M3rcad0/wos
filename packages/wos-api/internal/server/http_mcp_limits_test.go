@@ -72,7 +72,7 @@ func TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if stream.StatusCode != 200 || !strings.HasPrefix(stream.Header.Get("Content-Type"), "text/event-stream") {
+	if !stream.Close || stream.StatusCode != 200 || !strings.HasPrefix(stream.Header.Get("Content-Type"), "text/event-stream") {
 		stream.Body.Close()
 		t.Fatalf("MCP standalone stream unavailable: %d", stream.StatusCode)
 	}

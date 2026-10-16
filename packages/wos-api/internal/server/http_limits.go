@@ -54,6 +54,9 @@ func admissionHTTP(cfg Config, observer *observability.Observer, next http.Handl
 		// carries only protocol state; no domain write is implicitly repeated.
 		if cfg.MCP.Enabled && !cfg.MCP.Stateless && r.Method == http.MethodGet && r.URL.Path == cfg.MCP.Path {
 			timeout = cfg.HTTP.IdleTimeout
+			// This bounded stream ends with an expired socket deadline. Close
+			// its HTTP/1 connection rather than reuse it for a new JSON POST.
+			w = boundedStreamWriter{w}
 			if r.ContentLength != 0 {
 				writeTransportError(w, 400, "invalid_stream_request", "standalone stream GET requires an empty body")
 				return
@@ -62,7 +65,7 @@ func admissionHTTP(cfg Config, observer *observability.Observer, next http.Handl
 				writeTransportError(w, 503, "stream_unavailable", "stream read deadline cannot be established")
 				return
 			}
-			if e := http.NewResponseController(w).SetWriteDeadline(time.Now().Add(timeout)); e != nil && !errors.Is(e, http.ErrNotSupported) {
+			if e := http.NewResponseController(w).SetWriteDeadline(time.Now().Add(timeout + 25*time.Millisecond)); e != nil && !errors.Is(e, http.ErrNotSupported) {
 				writeTransportError(w, 503, "stream_unavailable", "stream deadline cannot be established")
 				return
 			}
@@ -143,4 +146,22 @@ func (c *admissionConn) observeTimeout(e error) {
 	if errors.As(e, &timeout) && timeout.Timeout() {
 		c.timeoutOnce.Do(c.observer.ConnectionTimeout)
 	}
+}
+
+// The SDK normally advertises keep-alive for SSE. Enforce this bounded stream's
+// connection close at the actual header/flush boundary, after SDK headers.
+type boundedStreamWriter struct{ http.ResponseWriter }
+
+func (w boundedStreamWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+func (w boundedStreamWriter) WriteHeader(status int) {
+	w.Header().Set("Connection", "close")
+	w.ResponseWriter.WriteHeader(status)
+}
+func (w boundedStreamWriter) Write(p []byte) (int, error) {
+	w.Header().Set("Connection", "close")
+	return w.ResponseWriter.Write(p)
+}
+func (w boundedStreamWriter) FlushError() error {
+	w.Header().Set("Connection", "close")
+	return http.NewResponseController(w.ResponseWriter).Flush()
 }

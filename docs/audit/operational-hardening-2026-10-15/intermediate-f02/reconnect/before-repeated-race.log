@@ -1,0 +1,184 @@
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:31.114267519Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.004174}
+{"time":"2026-10-16T00:30:31.116597953Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.242044}
+{"time":"2026-10-16T00:30:31.717944015Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.60914}
+{"time":"2026-10-16T00:30:31.723912686Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":3.562929}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.21s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:34.047859132Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.85345}
+{"time":"2026-10-16T00:30:34.048880105Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.188362}
+{"time":"2026-10-16T00:30:34.649662233Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.294322}
+{"time":"2026-10-16T00:30:34.652574921Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.460932}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.92s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:36.957239305Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.640967}
+{"time":"2026-10-16T00:30:36.958984772Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.251961}
+{"time":"2026-10-16T00:30:37.560026909Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.316596}
+{"time":"2026-10-16T00:30:37.563729883Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.180058}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.91s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:39.754524708Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.725128}
+{"time":"2026-10-16T00:30:39.756300371Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.186502}
+{"time":"2026-10-16T00:30:40.357565196Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.263335}
+{"time":"2026-10-16T00:30:40.359915554Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.601392}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.80s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:42.521780683Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.031078}
+{"time":"2026-10-16T00:30:42.523512555Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.289329}
+{"time":"2026-10-16T00:30:43.124551546Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.360883}
+{"time":"2026-10-16T00:30:43.127390476Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.963325}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.76s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:45.832441663Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.888146}
+{"time":"2026-10-16T00:30:45.836154619Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.548837}
+{"time":"2026-10-16T00:30:46.438381012Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.578552}
+{"time":"2026-10-16T00:30:46.44299225Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.701638}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.32s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:49.067547691Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.093883}
+{"time":"2026-10-16T00:30:49.068895107Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.285498}
+{"time":"2026-10-16T00:30:49.670200444Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.675082}
+{"time":"2026-10-16T00:30:49.673701853Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.397761}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.23s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:52.328916673Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.965141}
+{"time":"2026-10-16T00:30:52.330132686Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.200846}
+{"time":"2026-10-16T00:30:52.931410113Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.656986}
+{"time":"2026-10-16T00:30:52.934639954Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.713679}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.26s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:55.158252523Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.105564}
+{"time":"2026-10-16T00:30:55.16008064Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.192824}
+{"time":"2026-10-16T00:30:55.761224613Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.306535}
+{"time":"2026-10-16T00:30:55.763534369Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.493775}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.82s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:30:57.903976659Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.839136}
+{"time":"2026-10-16T00:30:57.905463541Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.276492}
+{"time":"2026-10-16T00:30:58.507569271Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.32945}
+{"time":"2026-10-16T00:30:58.510631307Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.956582}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.75s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:01.588802866Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.906559}
+{"time":"2026-10-16T00:31:01.59081084Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.258427}
+{"time":"2026-10-16T00:31:02.193186987Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.975001}
+{"time":"2026-10-16T00:31:02.19684157Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.591873}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.68s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:04.886806218Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.590413}
+{"time":"2026-10-16T00:31:04.891108004Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.265563}
+{"time":"2026-10-16T00:31:05.493459658Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.896183}
+{"time":"2026-10-16T00:31:05.498654802Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.946727}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.30s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:08.73455725Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.338731}
+{"time":"2026-10-16T00:31:08.736082284Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.251907}
+{"time":"2026-10-16T00:31:09.337807972Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.213866}
+{"time":"2026-10-16T00:31:09.340693041Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.52794}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.84s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:12.065810405Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.19564}
+{"time":"2026-10-16T00:31:12.067706403Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.260831}
+{"time":"2026-10-16T00:31:12.66877127Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.367491}
+{"time":"2026-10-16T00:31:12.670877879Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.877476}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.33s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:14.877694322Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.79715}
+{"time":"2026-10-16T00:31:14.880024395Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.15704}
+{"time":"2026-10-16T00:31:15.482522591Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.56193}
+{"time":"2026-10-16T00:31:15.483990366Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":0,"correlation_id":"","duration_ms":0.290974}
+    http_mcp_limits_test.go:89: MCP JSON failed after bounded stream reconnect: 200  <nil>
+--- FAIL: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.82s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:17.913037569Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.356363}
+{"time":"2026-10-16T00:31:17.914834647Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.312828}
+{"time":"2026-10-16T00:31:18.516960498Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.482322}
+{"time":"2026-10-16T00:31:18.523129928Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.342461}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.04s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:20.613236788Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.440906}
+{"time":"2026-10-16T00:31:20.616579542Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":2.151445}
+{"time":"2026-10-16T00:31:21.218079706Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.700125}
+{"time":"2026-10-16T00:31:21.221058122Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.815339}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.70s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:23.283567624Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.174265}
+{"time":"2026-10-16T00:31:23.286119252Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.281262}
+{"time":"2026-10-16T00:31:23.887774295Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.698246}
+{"time":"2026-10-16T00:31:23.89001688Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.633635}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.67s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:26.049540758Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.64319}
+{"time":"2026-10-16T00:31:26.052690521Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.311874}
+{"time":"2026-10-16T00:31:26.654130333Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.308277}
+{"time":"2026-10-16T00:31:26.656968726Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.707778}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.77s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:28.873428972Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.410801}
+{"time":"2026-10-16T00:31:28.877334273Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.465051}
+{"time":"2026-10-16T00:31:29.479779154Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.509781}
+{"time":"2026-10-16T00:31:29.482561009Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.823051}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.83s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:31.929152247Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.78359}
+{"time":"2026-10-16T00:31:31.932330404Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.863565}
+{"time":"2026-10-16T00:31:32.533447011Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.418418}
+{"time":"2026-10-16T00:31:32.537237183Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.373802}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.05s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:34.952937031Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.353819}
+{"time":"2026-10-16T00:31:34.980010997Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":22.88471}
+{"time":"2026-10-16T00:31:35.583610129Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.586936}
+{"time":"2026-10-16T00:31:35.589738163Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":2.007714}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.07s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:38.610793765Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.71425}
+{"time":"2026-10-16T00:31:38.61295615Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.209007}
+{"time":"2026-10-16T00:31:39.214013755Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.45154}
+{"time":"2026-10-16T00:31:39.216859379Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.562251}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.62s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:42.680738585Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.918398}
+{"time":"2026-10-16T00:31:42.684331458Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.43059}
+{"time":"2026-10-16T00:31:43.285646104Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.374653}
+{"time":"2026-10-16T00:31:43.288768743Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.904474}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (4.06s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:45.600513419Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.979836}
+{"time":"2026-10-16T00:31:45.603646729Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.215517}
+{"time":"2026-10-16T00:31:46.205889652Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.466456}
+{"time":"2026-10-16T00:31:46.208966092Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.757813}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.92s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:49.206789923Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":7.273804}
+{"time":"2026-10-16T00:31:49.210154135Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":1.148112}
+{"time":"2026-10-16T00:31:49.813014546Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.346411}
+{"time":"2026-10-16T00:31:49.819601035Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.22987}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.61s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:53.832497221Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.630901}
+{"time":"2026-10-16T00:31:53.835565663Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.236775}
+{"time":"2026-10-16T00:31:54.437778639Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.456359}
+{"time":"2026-10-16T00:31:54.44071167Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.822754}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (4.62s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:31:56.812526437Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.036161}
+{"time":"2026-10-16T00:31:56.817111533Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.18063}
+{"time":"2026-10-16T00:31:57.419041029Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.16814}
+{"time":"2026-10-16T00:31:57.422428029Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.125651}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.98s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:32:00.288576478Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.283105}
+{"time":"2026-10-16T00:32:00.292360352Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":1.156968}
+{"time":"2026-10-16T00:32:00.89407932Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.559894}
+{"time":"2026-10-16T00:32:00.897098106Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.96468}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.48s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:32:04.296801399Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.529471}
+{"time":"2026-10-16T00:32:04.299600468Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.54644}
+{"time":"2026-10-16T00:32:04.900803401Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.419305}
+{"time":"2026-10-16T00:32:04.90377796Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.961397}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (4.00s)
+FAIL
+FAIL	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	96.515s
+FAIL
