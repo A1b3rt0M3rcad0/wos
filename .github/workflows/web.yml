@@ -31,5 +31,5 @@ jobs:
         working-directory: tests/web
       - run: npx playwright install --with-deps chromium
         working-directory: tests/web
-      - run: npm test
+      - run: npm test -- --reporter=line,github
         working-directory: tests/web
