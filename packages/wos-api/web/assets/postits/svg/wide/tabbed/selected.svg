@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="730" viewBox="0 0 1000 730" role="img" aria-label="Post-it em branco no estilo tabbed e cor selected, WOS">
+<title>WOS blank sticky note — tabbed — selected</title>
+<desc>Nota ilustrada vazia; bordas desenhadas a mao; fundo externo transparente. Para sobrepor titulos, tarefas ou objetivos.</desc>
+<defs><clipPath id="paper-clip"><path d="M 92 120 Q 87 108 112 111 L 123 81 Q 126 75 141 76 C 190 72 245 79 267 78 L 289 110 C 520 106 753.5 118 901 110 Q 914 111 909 131 C 914 303.6 907 481.8 912 638 Q 915 660 890 655 C 628.4 659 336.5 667 98 657 Q 85 657 86 639 C 79 428.3 89 262 89 138 Z"/></clipPath></defs>
+<path d="M 91 657 Q 436.6 675 711.8 661" stroke="#292620" stroke-width="2.6" stroke-opacity=".28" fill="none" stroke-linecap="round"/>
+<path d="M 92 120 Q 87 108 112 111 L 123 81 Q 126 75 141 76 C 190 72 245 79 267 78 L 289 110 C 520 106 753.5 118 901 110 Q 914 111 909 131 C 914 303.6 907 481.8 912 638 Q 915 660 890 655 C 628.4 659 336.5 667 98 657 Q 85 657 86 639 C 79 428.3 89 262 89 138 Z" fill="#F1DFD0" stroke="#292620" stroke-width="7.0" stroke-linecap="round" stroke-linejoin="round"/>
+<g clip-path="url(#paper-clip)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M 95 142 Q 91 273.9 94 380.8" stroke="#292620" stroke-width="1.55" stroke-opacity=".65"/>
+<path d="M 344.9 638 Q 453.3 643 561.7 638" stroke="#292620" stroke-width="1.5" stroke-opacity=".49"/>
+<path d="M 889 297.7 Q 895 351.1 892 404.6" stroke="#292620" stroke-width="1.45" stroke-opacity=".54"/>
+<path d="M 94 143 Q 101.7 132 112 121" stroke="#292620" stroke-width="2.5" stroke-opacity="0.66"/>
+<path d="M 102 143 Q 113.6 132 123 121" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 110 143 Q 120.1 132 128 121" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 118 143 Q 127.2 132 139 121" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 126 143 Q 136.1 132 144 121" stroke="#292620" stroke-width="2.5" stroke-opacity="0.66"/>
+<path d="M 839 137 Q 848.1 127.5 855 118" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 848 137 Q 854.7 127.5 864 118" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 857 137 Q 866.1 127.5 873 118" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 866 137 Q 875.1 127.5 882 118" stroke="#292620" stroke-width="2.5" stroke-opacity="0.66"/>
+<path d="M 96 630 Q 106.7 614 120 598" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 106 636 Q 119.1 620 130 604" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 116 642 Q 129.1 626 140 610" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 126 648 Q 136.7 632 150 616" stroke="#292620" stroke-width="2.5" stroke-opacity="0.66"/>
+<path d="M 136 654 Q 149.1 638 160 622" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 839 628 Q 852.1 612.5 863 597" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 849 633 Q 859.7 617.5 873 602" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 859 638 Q 872.1 622.5 883 607" stroke="#292620" stroke-width="2.5" stroke-opacity="0.66"/>
+<path d="M 869 643 Q 882.1 627.5 893 612" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+<path d="M 879 648 Q 889.7 632.5 903 617" stroke="#292620" stroke-width="2.2" stroke-opacity="0.83"/>
+</g>
+<path d="M 121 111 L 133 82 Q 143 77 161 78 L 262 79 L 282 110 Z" fill="#FFFDF9" stroke="#292620" stroke-width="3.4" stroke-linejoin="round"/>
+<path d="M 143 99 Q 186 94 238 98" stroke="#292620" stroke-width="1.35" stroke-opacity=".45" fill="none"/>
+</svg>
