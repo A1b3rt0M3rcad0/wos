@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 — prepared for release
+
+- Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures.
+
 ## Unreleased
 
 - Make the README concrete and visual: show Work/Evidence/login captures, a smaller robot metaphor, a 24-second real unsigned workflow recording, concepts, platform requirements, troubleshooting, skills, compatibility, and support. Add an isolated runnable example, verified published-container instructions, contributor guidance, and security-reporting boundaries.
