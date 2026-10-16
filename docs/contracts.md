@@ -77,3 +77,7 @@ silently bypass a valid contract. Independent reviewer policy includes contract 
 takeover and submission as execution facts.
 
 Namespace phase/policy is readable through `GET /namespaces/{namespace_id}/work-protocol` and `wos_get_namespace_work_protocol`. `set_namespace_work_protocol` and `reconcile_expired_work_contracts` require Namespace administration. ADR-020 defines guard ordering, auditing, old-writer drain acknowledgement and no downgrade. `get_work_context` retains current proof and declares omitted histories. Oversized latest progress/material expands through work-checkpoints/{id} or work-submissions/{id}; MCP has matching individual tools.
+
+## Durable signed execution activity
+
+The additive `append_work_activity` command and scoped `work-activity` / WorkItem `attention` reads share Application authorization across HTTP, MCP and SDK. Capability versions `work_activity_version: 1` and `work_attention_version: 1` advertise support. Activity is append-only documentary history; attention derives current obligations rather than persisting another checklist. Neither rewrites issued specifications nor assesses a criterion. Signed-state `executions` pages expose historical contract headers after client cleanup. See [exact schemas, bounds, cursors and recovery](work-activity.md).

@@ -1,19 +1,20 @@
 # Signed local returns
 
-Schema-2 workspaces support `work sign`, `work send`, `work finish` and the corresponding `review` commands. Choose an explicit profile when a workspace contains several profiles.
+This source-branch guide targets the central CLI; published `wosctl@0.4.2` lacks the typed preparation commands shown below. Central signed profiles and explicit legacy-compatible schema-2 workspaces support `work sign`, `work send`, `work finish` and the corresponding `review` commands. Pin `--profile` in concurrent agent sessions; otherwise the installation uses its selected active profile. Internal drafts are CLI-owned.
 
 ```sh
 wos --profile executor work show CONTRACT_ID --for-agent
-# Edit execution.progress and execution.material in this contract's YAML.
-# execution.completion_intent is auto, direct or review.
-wos --profile executor work sign CONTRACT_ID
-wos --profile executor work send CONTRACT_ID
-# finish prepares an unsigned draft when needed, then sends and cleans up.
+wos --profile executor work progress set CONTRACT_ID --summary "Implemented the change" --next-action "Inspect the result"
+wos --profile executor work evidence add CONTRACT_ID --description "Inspection notes" --uri https://example.test/review/123
+wos --profile executor work result set CONTRACT_ID --summary "Implementation and inspection recorded" --completion auto
+wos --profile executor work check CONTRACT_ID
 wos --profile executor work finish CONTRACT_ID
 wos --profile executor work recover --all-pending
 ```
 
-The harness reads the signing key from the approved protected reference. Model output does not contain secrets, signatures or frozen envelopes. Sign checks current own key/policy, original CredentialID, exact authority, fencing and Task/case versions. It does not renew a lease or silently change the draft's expected version. `--completion` must match the explicitly edited execution draft. Core always performs decisive live authorization inside its transaction.
+For an explicit preparation/send split, use `work sign CONTRACT_ID` followed by `work send CONTRACT_ID` **instead of** `work finish`. Successful send may already clean up that contract; do not finish it again as a new delivery.
+
+The harness reads the signing key from the approved protected reference. Model output does not contain secrets, signatures or frozen envelopes. Sign checks current own key/policy, original CredentialID, exact authority, fencing and Task/case versions. It does not renew a lease or silently change the draft's expected version. `--completion` must match the intent set through `work result set`. `check` is read-only: technical readiness is separate from quality assessment and server obligations. Core always performs decisive live authorization inside its transaction.
 
 The contract and bounded profile state retain one immutable signed request, idempotency key and draft digest before sending. A missing profile write can be repaired from the original authenticated prepared file, with the same request; copying it to another CredentialID does not produce new authority. Unsigned local hints and issuer receipts alone are insufficient recovery provenance. `recover` reports an unsent prepared signature without sending it; `send` or `finish` explicitly sends that signature.
 
@@ -38,7 +39,8 @@ When the operator explicitly chooses to close a return without acceptance:
 wos --profile executor work resolution-status CONTRACT_ID
 wos --profile executor work resolve CONTRACT_ID --reason "close the rejected material before a corrected return"
 wos --profile executor work recover --all-pending
-# After terminal proof and local cleanup, edit the retained draft explicitly:
+# After terminal proof and local cleanup, correct material with typed commands:
+wos --profile executor work result set CONTRACT_ID --summary "Corrected delivery"
 wos --profile executor work sign CONTRACT_ID
 wos --profile executor work send CONTRACT_ID
 ```
@@ -54,8 +56,7 @@ escape hatch.
 
 The CLI verifies the pinned issuer, exact original and resolution bindings and
 persists proof before touching the contract file. Negative closure archives the
-exact original signed intention and current draft bytes under the profile's
-`history/return-REQUEST_ID.yaml` and `.contract.yaml`, then clears only the old
+exact original signed intention and current draft bytes under the profile's protected internal history, then clears only the old
 pending signature. It retains current editable material and human edits. Native
 cooperative locks, confined paths, exclusive creation, fsync and content CAS
 protect publication; profiles are not isolation against a hostile OS writer.
@@ -68,3 +69,24 @@ leases, revoked credentials, changed signer authority and changed versions use
 existing explicit recovery/acquisition; resolution never renews or rebases them.
 Stable assessment fields and known finding references are checked before freeze,
 but the server always evaluates current authority and state.
+
+## Agent-facing delivery and review
+
+`work finish` reports `disposition`, `contract_status`, `work_item_lifecycle`, `task_completed`, and `cleanup_pending`. A confirmed delivery can close the executor's contract while the Task still awaits independent review. A receipt is acceptance of the operation, not proof of external execution.
+
+The independent reviewer inspects the exact submission before preparing its separate return. Set the approved decision before adding required criterion assessments; adding assessments to the initial inconclusive draft is rejected:
+
+```sh
+wos --profile reviewer review next
+wos --profile reviewer review context
+wos --profile reviewer review decision set --decision approved --reason "The submitted material meets the criterion"
+wos --profile reviewer review assessment add --criterion CRITERION_UUID --result met --rationale "Inspected the required behavior"
+wos --profile reviewer review check
+wos --profile reviewer review finish
+```
+
+Execution `log add`, `evidence add`, and `artifact add` append durable server activity immediately. Review evidence and artifacts are staged locally until the signed review return. Neither registration nor a local readiness check constitutes assessment or approval. Server `work history --work TASK_UUID --outcome OUTCOME_UUID` remains available after local cleanup; page cursors and revision bounds must be respected.
+
+## Unresolved activity rejection
+
+An uncertain activity append retains its exact authenticated pending request and is reconciled with `work recover`. The current protocol has terminal resolution for rejected final returns, not for an already frozen activity append that later becomes unauthorized or expired. Such an append remains pending; do not edit/discard its bytes, substitute a new request, or treat a different profile as resolution. Restore the applicable authorized recovery path when possible and retain the original material for operator diagnosis. This limitation is separate from a confirmed activity receipt and normal accepted-return cleanup.

@@ -1,0 +1,92 @@
+O objetivo central é transformar o WOS em uma infraestrutura de coordenação e continuidade do trabalho de agentes de IA, permitindo que agentes individuais ou múltiplos agentes executem trabalhos complexos com o mínimo de contexto necessário, mantendo rastreabilidade, evidências e controle de execução.
+
+## 1. Para um agente individual
+
+Objetivo: permitir que um agente saiba exatamente o que precisa fazer, o que já foi feito e o que falta, sem depender do histórico da conversa ou de arquivos de controle.
+
+- Receber um WorkItem por meio de um contrato, contendo objetivo, instruções, restrições e critérios de sucesso.
+- Consultar rapidamente o estado atual do trabalho, inclusive em uma nova sessão.
+- Registrar cronologicamente atividades, problemas encontrados, correções e resultados.
+- Associar evidências e artefatos ao trabalho realizado e aos critérios exigidos.
+- Identificar pendências a partir das obrigações e do estado mantido pelo WOS, sem duplicar listas manuais.
+- Entregar o resultado de forma verificável, mantendo o histórico disponível depois da conclusão.
+
+Resultado esperado: o agente recebe apenas o contexto necessário para executar sua responsabilidade e pode retomar o trabalho sem reconstruir todo o histórico anterior.
+
+## 2. Para múltiplos agentes e subagentes
+
+Objetivo: permitir que diversos agentes colaborem e executem trabalhos simultaneamente, com responsabilidades claras, estado compartilhado e continuidade independente.
+
+- Um agente principal pode iniciar subagentes por meio de seu runtime externo.
+- Subagentes auxiliares podem colaborar na execução de um mesmo contrato, enquanto o titular mantém a responsabilidade.
+- Agentes independentes podem adquirir contratos próprios para WorkItems distintos.
+- O WOS organiza dependências, bloqueios, critérios e resultados entre os trabalhos.
+- Cada agente pode consultar o progresso dos demais conforme suas permissões.
+- O histórico e as evidências permanecem acessíveis entre agentes e sessões.
+- A execução concorrente respeita identidades, permissões, leases e contratos assinados.
+
+Resultado esperado: vários agentes conseguem trabalhar em conjunto sem compartilhar toda a conversa, sem duplicar responsabilidades e sem perder o histórico das decisões e execuções.
+
+O WOS coordena o trabalho, mas não precisa executar, criar ou agendar agentes.
+
+## 3. Para o WOS CLI
+
+Objetivo: oferecer uma interface única, simples e eficiente para humanos e agentes operarem o WOS sem conhecer sua estrutura interna.
+
+- Centralizar Profiles e contratos na instalação local do WOS, eliminando `.wos/` por projeto.
+- Inicializar o ambiente com `wos init`.
+- Permitir um Profile ativo persistente, com seleção explícita por processo quando necessário.
+- Priorizar nomes, aliases, referências curtas e seleção automática quando não houver ambiguidade.
+- Disponibilizar comandos simples para listar, adquirir, consultar, registrar atividades, adicionar evidências, verificar e entregar contratos.
+- Ocultar completamente a manipulação de YAML dos agentes.
+- Oferecer respostas compactas e estruturadas, especialmente para consumo por modelos de IA.
+- Gerenciar internamente assinaturas, persistência, concorrência, recuperação e operações interrompidas.
+
+Resultado esperado: o agente consegue operar todo o ciclo de trabalho usando poucos comandos.
+
+```
+wos work next
+wos work context
+
+# Executa o trabalho.
+
+wos work log add ...
+wos work evidence add ...
+
+wos work status
+wos work finish
+```
+
+## 4. Para o WOS Backend
+
+Objetivo: ser a fonte central, autoritativa e durável do trabalho coordenado, mantendo contratos, dependências, evidências, histórico e critérios verificáveis.
+
+- Gerenciar Outcomes, Objectives e WorkItems, incluindo suas relações e dependências.
+- Emitir e validar contratos com especificações imutáveis e autoridade assinada.
+- Controlar permissões, identidade dos agentes, quotas, concorrência e leases.
+- Persistir o histórico cronológico de execução, incluindo atividades, descobertas, correções e resultados relevantes.
+- Armazenar evidências e artefatos vinculados aos trabalhos e critérios.
+- Disponibilizar consultas para determinar o que foi concluído, está bloqueado, aguarda revisão ou ainda precisa ser comprovado.
+- Preservar o histórico após a entrega, independentemente da existência dos arquivos locais do CLI.
+- Oferecer consultas eficientes, paginadas e compactas para agentes individuais e coordenadores.
+- Manter o mesmo comportamento de domínio pelas interfaces HTTP, MCP e SDK.
+- Permitir continuidade entre sessões e diferentes runtimes sem depender da memória de um agente específico.
+
+Resultado esperado: o Backend mantém a representação confiável do trabalho e sua evolução, enquanto os agentes são consumidores e produtores autorizados desse estado.
+
+## Os quatro objetivos em uma visão
+
+| Componente        | Responsabilidade central                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| Agente individual | Entender, executar, documentar e entregar um trabalho                                    |
+| Múltiplos agentes | Colaborar e executar responsabilidades independentes sobre um estado compartilhado       |
+| WOS CLI           | Simplificar completamente a interação dos agentes com o WOS                              |
+| WOS Backend       | Coordenar e preservar o estado autoritativo, as obrigações, a autoridade e as evidências |
+
+## Objetivo estratégico do WOS
+
+Reduzir drasticamente o contexto necessário para os agentes compreenderem, executarem, retomarem e coordenarem trabalhos, sem perder qualidade, rastreabilidade ou controle.
+
+O WOS deve permitir que um agente seja substituído, reiniciado ou dividido em vários subagentes sem que o trabalho precise ser reconstruído do zero.
+
+Essa é a principal capacidade que você está buscando: desacoplar a continuidade do trabalho da continuidade do contexto do agente.

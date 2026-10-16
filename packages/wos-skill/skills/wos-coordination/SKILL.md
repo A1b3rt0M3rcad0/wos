@@ -1,32 +1,21 @@
 ---
 name: wos-coordination
-description: Coordinate bounded WOS contract work with focal snapshots, explicit authority, checkpoints and material-bound delivery. Use for authorized WOS tasks.
+description: Discover, acquire and follow bounded WorkItem obligations through the centralized WOS CLI while preserving authority, proof and independent review.
 ---
 
 # WOS coordination
 
-WOS persists state and coordinates authority. Your host executes work and controls tools. Installing this skill grants no access and launches no agents. Obtain the authorized Namespace/Outcome from the assignment; do not infer authorization from IDs, metadata or ActorRef.
+WOS persists shared work and authority; the external host executes tools and agents. Use the CLI as the only operational interface. An approved Profile is required; Scope IDs, metadata, ActorRef and Skill installation never grant access.
 
-## Signed Namespace coordination
+1. Pin the authorized Profile using `--profile NAME` or process-scoped `WOS_PROFILE`. `profile use` is an interactive default, not a concurrent worker identity switch. Run `wos init` once for installation data; do not create project operational state or manipulate internal documents.
+2. Discover with `wos --profile executor work available --limit 10 --output json`, then acquire `work next` or an explicit `work checkout REF`. Add `--outcome REF` when selection requires it. UUIDs are supported; unique titles/prefixes are conveniences. Ambiguity or incomplete search requires an explicit target, never choosing the first match.
+3. Read `work context --for-agent --output json` and `work status`. The contract belongs to one WorkItem; Outcome/Objective provide context. Preserve immutable issued instructions, constraints, current criterion revisions and acceptance policy. Listing is not acquisition and cached receipt is not current authority.
+4. Execute only the contracted work outside WOS. Before dependent effects consult current blockers/authority. A lease does not lock files or deployments; coordinate shared files in the external host.
+5. Append meaningful events with `work log add --type progress|discovery|problem|correction|validation|result --description TEXT`, selecting one actual type. Record real proof through `work evidence add` and `work artifact add`; use the relevant typed flags and immutable source versions. Activity is a declaration; evidence is an observation; assessment is explicit approval/evaluation.
+6. Set the actual delivery with `work result set --summary TEXT`; inspect derived obligations via `work status`, then run `work check` and explicit `work finish`. Accepted execution may await independent review. WorkItem completion never automatically achieves an Objective/Outcome.
+7. If blocked, stop dependent effects and report the exact impediment; do not fabricate success or a manual redundant pending list. Only explicitly authorized operations can change blockers/review policy. Maintain a valid lease only through explicit renewal/host-supervised foreground keepalive.
+8. After timeout/interruption use `work recover --all-pending` for the same Profile. Never change CAS/fencing/payload, downgrade protocol, or reacquire to repair an uncertain result. Expiry/revocation/stale fencing stops authority; refresh is not takeover.
 
-For `signed_contracts_v2`, use an approved schema-2 profile and the protected
-wosctl harness. Check out one bounded obligation, read `work show ID --for-agent`,
-execute only that obligation, persist durable references in its editable draft,
-and explicitly finish. Independent review is a separate authenticated obligation.
-Use [signed protocol and recovery](references/signed-protocol.md) for exact flow,
-lease behavior and original-CID recovery. The legacy commands below are refused
-for signed execution; never downgrade or fabricate signatures to bypass them.
+Contract arguments can be omitted only when exactly one applicable local contract exists. Use a contract reference for parallel obligations. Keep reads compact, follow bounded cursors only for a question, and report omitted data truthfully.
 
-## Legacy contracts_v1 only
-
-1. Check live capabilities and Namespace protocol. For an assigned task, fetch focal work context; otherwise use bounded available-work pages within one explicit Outcome. Omitted data is not absence. Do not read a whole Outcome on every iteration.
-2. Acquire with `wos_acquire_work_contract` or bounded `wos_acquire_next_work_contract`, exact expected version and a durable idempotency key. Save the returned immutable spec/digest, contract/execution IDs, string fencing token, content/lease versions and server expiry. A candidate listing does not grant execution.
-3. Execute only the contracted obligation outside WOS. Open referenced artifacts only when necessary. Consult live authority and impediments before dependent effects. Renew with `wos_renew_work_contract` before expiry; renewal advances lease_version, not contract.version.
-4. Persist material progress with `wos_sync_work_contract`. Checkpoints do not complete work or release authority. Include durable repository/commit/artifact references and mark dirty/unknown workspace facts truthfully; another agent does not inherit uncommitted files from a checkpoint.
-5. Submit immutable material with `wos_submit_work_result`. Resolve local keys to canonical documentary IDs, identify exact artifact revisions/checksums, and explicitly supersede the latest submission when changing delivery. Evidence or passing tests are observations, not assessments.
-6. Required assessments must bind the exact submission ID/digest and criterion revision. Respect independent reviewer policy. Finalize through `wos_finalize_work_contract`; completion remains separate from Objective/Outcome achievement. Pending review retains authority until completion, expiry or explicit administrative revocation.
-7. Missing input or blockers require an explicit Issue/Blocker and stopping dependent effects. You may explicitly maintain renewal while waiting or stop renewal and allow expiry. There is no holder release/unlock command. Revocation uses authorized `wos_revoke_work_contract` with contract ID and reason.
-
-Stop on expiry, revocation, stale execution or binding conflict. Same-holder takeover requires explicit `wos_resume_work_contract`, CAS and new execution/fencing; never treat refresh as takeover. After timeout replay the identical stored payload/key or recover its receipt. Do not change expected versions to force a retry.
-
-Read [protocol and recovery](references/protocol.md) for envelopes, bounded expansion and uncertain commits. Use wos-workspace for the API-only wosctl/YAML workflow. End with compact persisted IDs, result/proof, authority disposition, remaining obligation and next relevant reference.
+Read [coordination protocol](references/protocol.md) for bounded status and [protected signing and recovery](references/signed-protocol.md) for original-intention safety. Use [correction](references/correction.md) only after an explicit prior-review assignment. Return a compact packet of contract/result/proof references, authority disposition, remaining obligation and next action.

@@ -1,29 +1,19 @@
 ---
 name: wos-continuity
-description: Recover a bounded WOS task using immutable contract specs, latest durable checkpoints and exact receipts instead of previous chat history.
+description: Resume WOS work through pinned CLI context, bounded server history and original-intention recovery instead of prior conversation or internal documents.
 ---
 
 # WOS continuity
 
-Persisted WOS state, not a previous conversation or a local YAML file, determines work and authority. Start a new session with authorized scope/task/contract IDs and the minimum task intention.
+Persisted server state and valid authority determine work. A previous conversation, a local path or a historical receipt does not. Use the CLI as the only operational interface; never open, interpret, edit or delete internal operational documents.
 
-## Signed Namespace continuity
+1. Start with the approved Profile and minimal authorized task/contract intention. Pin `--profile NAME` or process-scoped `WOS_PROFILE`. `wos init` is installation-scoped and commands work from any directory; the interactive active default must not control concurrent worker identity.
+2. Reconcile `wos --profile executor work recover --all-pending` (`review recover` for review) before new effects after uncertainty. A prepared-only return stays unsent. Missing local material is repaired from the original operation, not another acquisition.
+3. Read `work list`, then focal `work context --for-agent --output json` and `work status`. Omit the contract argument only with one applicable local contract; otherwise select an exact/unique reference. Read immutable requirements, live authority/expiry/blockers, exact criteria and current review findings.
+4. Use `work history --limit 10 --output json` only to answer a specific gap. After accepted local cleanup use the authorized server query with exact `--work WORK_ITEM_UUID` and Outcome scope as needed. Honor cursor/omission/truncation information; a missing page is not proof that work never occurred.
+5. Locate actual artifact revisions/checksums, evidence and accepted result. A dirty tree, missing upload or unknown test result stays explicit. Activities report declarations, evidence records observations, and assessments record explicit criterion evaluation; none silently substitutes for another.
+6. Resume the next permitted external action. Record new progress using `work log add`, not a copied transcript or duplicated manual pending list. Derive outstanding obligations from context/status/check and current review findings.
+7. Stop on expiry, revocation or stale execution. Explicit same-holder resume rotates fencing without reviving expiry; refresh never takes over. A new valid acquisition after terminal authority is distinct and cannot repair an uncertain old return.
+8. Finish only with validated actual material and explicit `work finish`. Preserve original request identity, destination, payload, signature and CAS during recovery. Cleanup requires verified signed closed acceptance; server history remains the authoritative durable record.
 
-Select the original schema-2 profile on every call. Reconcile `work recover`
-or `review recover`, then read focal `show ID --for-agent --output json` and the
-minimum necessary durable references. A prepared signature is not sent by
-recovery. Preserve original CID, signature, request ID and edited draft after
-uncertain responses; do not reacquire to repair a missing local file. Read
-[signed protocol and recovery](references/signed-protocol.md) for interruption,
-trust rotation and verified receipt cleanup.
-
-## Legacy contracts_v1 only
-
-1. Read `wos_get_work_contract` and its immutable spec through `wos_get_work_contract_spec` only when not already verified locally. Read the latest checkpoint/submission and live execution_allowed/reasons. Expand history with bounded pages only for a specific unresolved question.
-2. Check evaluated_at, effective status, exact string fencing, execution ID, content/lease versions, truncated/omitted and next_cursor. An omitted record is not absent. Never execute using an expired local timestamp cache.
-3. Locate durable repository/commit/artifact references. A dirty working tree, missing upload or unknown test result must remain explicit; a checkpoint does not transfer files or certify delivery.
-4. Recover uncertain commits by `wos_get_command_receipt` or exact replay of the original key/payload/destination. A missing retained receipt does not prove failure. Reconcile entities/history before creating another intent; never automatically reacquire another task.
-5. Same-holder takeover is explicit and rotates execution/fencing; it does not revive expiry. A new valid contract after expiry preserves the WorkItem ID and in_progress lifecycle but has a new spec/authority. Stop old execution effects.
-6. Return a small resume packet: current obligation, durable progress/proof IDs, authority, blocker, next action and links. Avoid transcript dumps and full Outcome snapshots when a contract suffices.
-
-For local files use wos-workspace and `wos work recover/status/diff`; refresh preserves edited result/checkpoint drafts. Read [protocol and recovery](references/protocol.md) when resolving transport ambiguity. Do not invent a release or a fourth terminal contract cause.
+Use [continuity protocol](references/protocol.md) for read budgets, [protected signing and recovery](references/signed-protocol.md) for interrupted operations/trust rotation, and [correction](references/correction.md) for acknowledged original findings. Return a small resume packet: obligation, selected Profile/contract, durable progress/proof, authority, blocker and next relevant reference. Do not dump the full history or claim token savings without measurement.

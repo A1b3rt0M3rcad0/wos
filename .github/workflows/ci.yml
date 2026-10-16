@@ -29,14 +29,17 @@ jobs:
         env:
           POSTGRES_PASSWORD: wos_ci
           POSTGRES_DB: wos_test
+          POSTGRES_INITDB_ARGS: "--set=max_locks_per_transaction=1024 --set=max_pred_locks_per_transaction=4096"
         ports:
           - 5432:5432
         options: >-
+          --shm-size=512m
           --health-cmd "pg_isready -U postgres -d wos_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
+      GOMAXPROCS: "2"
       WOS_TEST_POSTGRES_DSN: postgres://postgres:wos_ci@localhost:5432/wos_test?sslmode=disable
 
     steps:
@@ -89,6 +92,9 @@ jobs:
           git diff --exit-code -- packages/wos-core/storage/memory/signed_work_contracts.go packages/wos-core/storage/sqlite/signed_work_contracts.go packages/wos-core/storage/postgres packages/wos-api/mcp packages/wos-api/commands packages/wos-sdk-go packages/wos-api/commands.openapi.json
           python3 tools/eventcatalog/check.py
 
+      - name: Implementation-plan archive is current
+        run: python3 tools/documentation/package-central-plan.py --check
+
       - name: Controlled context/cost report validation
         run: |
           python3 tools/acceptance/context-cost-report-test.py
@@ -98,7 +104,7 @@ jobs:
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          if go test -json ./... > unit-contract-tests.jsonl; then
+          if go test -p 1 -json ./... > unit-contract-tests.jsonl; then
             echo 'Unit/contract execution recorded'
           else
             status=$?
@@ -110,7 +116,7 @@ jobs:
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          if go test -json -race ./... > race-tests.jsonl; then
+          if go test -p 1 -json -race ./... > race-tests.jsonl; then
             echo 'Race execution recorded'
           else
             status=$?
@@ -154,6 +160,25 @@ jobs:
 
       - name: Build standalone binary
         run: go build -trimpath -buildvcs=false -ldflags "-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=$(git rev-parse HEAD)" -o ./bin/wos ./packages/wos-api/cmd/wos
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.19.0
+      - name: Native central workflow with independent review
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        shell: bash
+        run: |
+          node tools/acceptance/central-agent-workflow.mjs bin/wos > central-workflow-sqlite.json
+          docker exec "$WOS_TEST_POSTGRES_CONTAINER" createdb -U postgres wos_central_test
+          trap 'docker exec "$WOS_TEST_POSTGRES_CONTAINER" dropdb -U postgres wos_central_test' EXIT
+          WOS_CENTRAL_TEST_POSTGRES_DSN='postgres://postgres:wos_ci@localhost:5432/wos_central_test?sslmode=disable' \
+            node tools/acceptance/central-agent-workflow.mjs bin/wos > central-workflow-postgres.json
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: central-workflow-native-processes
+          path: central-workflow-*.json
+          if-no-files-found: error
 
       - name: Operator backup restore and real API-process recovery
         env:

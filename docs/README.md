@@ -18,6 +18,8 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Task                                               | Guide                                                                                               |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Install skills and operate with an agent           | [Agent guide](agents.md)                                                                            |
+| Record typed activity, evidence, and current obligations | [Durable work activity](work-activity.md) |
+| Review the central workflow implementation and acceptance plan | [Implementation package](central-agent-workflow/README.md) |
 | Look up client commands                            | [Native CLI](../packages/wos-cli/README.md)                                                         |
 | Configure credentials and signed-contract profiles | [Signed profiles](signed-workspace-profiles.md)                                                     |
 | Review deliveries and recover uncertain responses  | [Signed returns](signed-cli-returns.md)                                                             |

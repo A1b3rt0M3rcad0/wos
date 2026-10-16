@@ -1,5 +1,7 @@
 # Migration of a schema-1 workspace
 
+This is the **explicit legacy compatibility** path, selected with `--workspace`. For a signed schema-2 project moving into the new central installation, use [central migration](signed-workspace-profiles.md#migrate-an-existing-schema-2-workspace) instead. The commands below preserve unsigned history; they do not create retrospectively signed authority. Initialize an explicit schema-2 destination with `wos --workspace /absolute/signed-project project init` and the approved destination flags; central `wos init` is a different operation.
+
 Conversion uses a **separate, explicitly approved schema-2 destination**. Initialize
 that destination and enroll its profile using the normal protected onboarding
 procedure in `packages/wos-cli/README.md`. Source and destination must resolve to

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Centralize native CLI state in a private installation with isolated persistent profiles, invocation-pinned selection, protected headless onboarding, and explicit drained-writer migration. Add typed agent commands for context, progress, activity, evidence, artifacts, results and review without editing internal documents.
+- Persist authorized signed-execution activity and documentary references with bounded chronological/recent history, current obligation projections, historical execution discovery and HTTP/MCP/SDK parity. Preserve immutable issued authority, exact-intent recovery and independent review; report delivery separately from Task completion.
+- Rewrite the five official Skills and agent guides around the central CLI, and add a reproducible implementation-plan archive and real-process independent-review acceptance runner.
+
 - Make the README concrete and visual: show Work/Evidence/login captures, a smaller robot metaphor, a 24-second real unsigned workflow recording, concepts, platform requirements, troubleshooting, skills, compatibility, and support. Add an isolated runnable example, verified published-container instructions, contributor guidance, and security-reporting boundaries.
 - Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a compact image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
 - Replace the planner illustration with the owner's supplied blank-map SVG, byte for byte at the existing asset path and dimensions; refresh the affected login and Plan screenshots.

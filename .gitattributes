@@ -8,3 +8,6 @@
 *.zip binary
 *.gz binary
 *.exe binary
+
+# Preserve the owner's original brief bytes, including original line endings.
+docs/central-agent-workflow/source/*.pt-BR.txt -text -eol

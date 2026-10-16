@@ -108,7 +108,7 @@ The example starts its own loopback server and uses separate temporary data. See
 ### Run the workspace shown here
 
 ```sh
-git clone --branch design/editorial-robot-workspace https://github.com/A1b3rt0M3rcad0/wos.git
+git clone --branch feat/central-agent-workflow https://github.com/A1b3rt0M3rcad0/wos.git
 cd wos
 cp .env.example .env
 docker compose up --build -d
@@ -145,14 +145,19 @@ For startup failures, inspect `docker compose logs --tail=100 wos`. [Service lif
 > [!NOTE]
 > npm installs the published release, not this branch. Check [its tagged README](https://github.com/A1b3rt0M3rcad0/wos/blob/v0.4.2/README.md) for that version. Build this source when following a branch-only example.
 
-### Install the CLI
+### Build the current CLI
+
+The central workflow below requires this branch's client **and** server. Build the native executable with stable Go 1.27.2, then put it on your executable search path:
 
 ```sh
-npm install -g wosctl@0.4.2
-wos version
+go build -o bin/wos ./packages/wos-api/cmd/wos
+./bin/wos version
+./bin/wos init
 ```
 
-The `wosctl` package supplies the native `wos` command. `wosctl` remains a compatibility executable alias. You can use a [native archive](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2) instead of npm.
+`init` creates one private OS data directory. It does not create a `.wos` folder in your project, grant authority, or select a server protocol. Commands operate from any directory. [Data paths, protected onboarding, and migration](docs/signed-workspace-profiles.md).
+
+For the earlier published interface, use `npm install -g wosctl@0.4.2` or its native archive and follow the tagged guide above. Installing that version does not provide the commands below.
 
 ### Install skills in your agent
 
@@ -167,57 +172,65 @@ The `wosctl` package supplies the native `wos` command. `wosctl` remains a compa
 
 Installation is offline and preserves local modifications. The five skills cover different jobs:
 
-| Skill        | Guides the agent to                                             |
-| ------------ | --------------------------------------------------------------- |
-| Coordination | Acquire bounded authority and deliver material                  |
-| Delegation   | Delegate through the host's authorized subagents                |
-| Continuity   | Resume using recorded specifications, checkpoints, and receipts |
-| Review       | Evaluate the exact submission and applicable criteria           |
-| Workspace    | Manage local drafts and recover unfinished operations           |
+| Skill        | Guides the agent to                                         |
+| ------------ | ----------------------------------------------------------- |
+| Coordination | Acquire bounded authority and deliver material              |
+| Delegation   | Delegate through the host's authorized subagents            |
+| Continuity   | Resume using issued context, durable activity, and receipts |
+| Review       | Evaluate the exact submission and applicable criteria       |
+| Workspace    | Inspect profiles and recover unfinished CLI operations      |
 
 > [!IMPORTANT]
-> Installing skills adds instruction files. Configure the agent runtime, API/MCP connection, credentials, and Workspace protocol separately; installation grants no authority and starts no agent.
+> Installing skills adds instruction files. Configure the agent runtime, protected CLI profiles, server credentials, and Workspace protocol separately; installation grants no authority and starts no agent.
 
-### Basic workflow
+### One profile, one destination
 
-Start with the [unsigned local example](examples/quickstart/README.md). For your own Workspace, read current context, acquire the authority required by its protocol, execute in your own tools, deliver material, and assess the applicable criteria. Conclude accepted results explicitly.
-
-### Signed execution and recovery
-
-For a provisioned signed Workspace, [the agent guide](docs/agents.md#3-acquire-and-execute-work) separates checkout, context inspection, external execution, delivery, independent review, and exact-intent recovery. [Profile setup](docs/signed-workspace-profiles.md) covers identities and protected keys; it is required before those commands work.
-
-<details>
-<summary>Preview the context an agent receives</summary>
-
-After configured checkout, inspect the returned contract ID:
+After an administrator provisions an executor identity and approved signing enrollment, create a protected profile using the [onboarding guide](docs/signed-workspace-profiles.md#provision-an-approved-identity). Select it once:
 
 ```sh
-wos --profile executor work show CONTRACT_UUID --for-agent --output json
+wos profile use executor
+wos profile list
+wos auth status --output json
+wos work available
+wos work next
+wos work context
 ```
 
-Illustrative excerpt of that response; fields are omitted and values vary:
+Selection is `--profile`, then `WOS_PROFILE`, then the persistent active profile. Concurrent agents should pin `--profile`; an invocation never changes destination halfway through because another session selected a different profile. A profile has its own server, Namespace, credential, signing key, drafts, and pending requests.
 
-```json
-{
-  "operation": "work show",
-  "committed": false,
-  "data": {
-    "specification": {
-      "title": "Write the installation guide",
-      "acceptance_floor": "independent_review",
-      "policy_revision": "1"
-    },
-    "status": {
-      "effective_status": "active",
-      "lease_valid": true
-    }
-  }
-}
+### Record work and deliver
+
+Execute in your own tools, then record the actual material through typed commands. There is no YAML editing step:
+
+```sh
+wos work log add --type discovery --description "Found the missing installation check"
+wos work evidence add --description "Installation check results" --uri https://example.test/check/123
+wos work result set --summary "The guide and verification results are ready"
+wos work check
+wos work finish
 ```
 
-The issued specification states what may be delivered; status reports current authority. A local file does not renew an expired contract. Follow the full [execution and recovery guide](docs/agents.md).
+The example URI is illustrative: register your real material. `check` separates technical readiness from outstanding server obligations. `finish` validates, signs, sends, reconciles the receipt, and cleans up only the matching unchanged local contract. **Delivered does not mean approved or completed.** When independent review is required, another eligible Principal acquires the review and assesses the exact submission.
 
-</details>
+`work context` combines the issued instructions with current status and obligations. `work history --work TASK_UUID --outcome OUTCOME_UUID` reads chronological server activity even after local cleanup. Names and short references work when unique; ambiguous or incomplete discovery fails without guessing. Bounded responses expose their continuation cursor.
+
+### Independent review and recovery
+
+```sh
+wos --profile reviewer review next
+wos --profile reviewer review context
+# Inspect the actual submission before recording an assessment.
+wos --profile reviewer review decision set --decision approved --reason "The submission meets the criterion"
+wos --profile reviewer review assessment add --criterion CRITERION_UUID --result met --rationale "Verified the required behavior"
+wos --profile reviewer review check
+wos --profile reviewer review finish
+```
+
+A second profile alone is not a separate identity. Execution logs and evidence registration append durable activity immediately; review evidence and artifacts are staged until the signed review return. Neither is automatic approval.
+
+After an uncertain response, use `wos --profile executor work recover --all-pending` (or `review recover`). The CLI reconciles the exact original request; do not replace it, re-sign it, or remove internal files. [Complete agent workflow](docs/agents.md) · [Signed return safety](docs/signed-cli-returns.md).
+
+The [native acceptance runner](tools/acceptance/central-agent-workflow.mjs) exercises this flow with two distinct authorized Principals, including cleanup and server restart. The [implementation plan and acceptance matrix](docs/central-agent-workflow/README.md) record scope, dependencies, migration and qualification.
 
 ## When to use it
 

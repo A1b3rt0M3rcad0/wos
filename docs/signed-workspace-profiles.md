@@ -1,48 +1,82 @@
-# Signed workspace profiles (schema 2)
+# Central installation and signed profiles
 
-The administrator supplies the persistent server ID, issuer fingerprint, Namespace, Outcome, credential and authorized enrollment. Agent profiles contain secret references only. Onboarding does not grant permission on the server.
+This guide describes the unreleased central workflow in `feat/central-agent-workflow`. Published `wosctl@0.4.2` does not implement it. Build the current source and use a server from the same source. [Legacy workspace migration](workspace-migration-v2.md) is a separate compatibility path.
+
+## Initialize once, operate anywhere
 
 ```sh
-wos init --workspace-schema 2 --server https://wos.example.test \
-  --server-id SERVER_UUID --namespace NAMESPACE_UUID --outcome OUTCOME_UUID
-wos profile create executor_a --token-stdin --generate-signing-key \
-  --enrollment ENROLLMENT_UUID --server https://wos.example.test \
-  --server-id SERVER_UUID --issuer-fingerprint sha256:APPROVED_DIGEST
-wos --profile executor_a auth status --output json
-wos --profile executor_a profile inspect --output json
+wos init
+wos profile list
 ```
 
-Provide the token through the host's protected standard input. No token or private-key flag accepts a secret value. Generated seeds and imported API credentials go only to the OS keyring. If its native credential service is unavailable, creation fails; configure explicit env or protected mounted references instead. Do not place administrative credentials in an executor profile.
+The CLI stores operational material in a private OS data directory, independently of the current project. Linux uses `$XDG_DATA_HOME/wos` (default `~/.local/share/wos`), Windows uses `%LOCALAPPDATA%/WOS`, and macOS uses `~/Library/Application Support/wos`. The macOS path is implemented; native macOS distribution remains unqualified. `WOS_DATA_DIR` selects an explicit absolute root. No project `.wos` is discovered or created by the central workflow. Internal documents are owned by the CLI; agents do not open or edit them.
 
-A preprovisioned seed can be imported with `--signing-key-stdin --credential-ref env:WOS_TOKEN` instead of `--generate-signing-key`. The dedicated stdin accepts only a canonical base64 Ed25519 seed. Token and signing seed cannot share stdin in one invocation. Existing keyring entries survive interrupted provisioning; a different entry is rejected rather than overwritten.
+## Provision an approved identity
 
-For env/mounted secrets, supply a schema-2 profile proposal with `profile create NAME --file proposal.yaml` and the same explicit server approval flags. The generated [profile schema](../packages/wos-cli/schemas/profile-v2.schema.json) describes its fields. Provide an authorized `--enrollment` to register a new key, or an already registered active key whose fingerprint matches the selected private reference. Proposal references never transmit private key bytes to WOS. Env is provided by the host; mounted files must be outside the workspace, canonical regular files without links, and deny other accounts access. Windows uses a restricted DACL check. Native filesystem/secret fixtures passed on the integrated PR #51 source; actual native keyring execution and final release-source certification remain separate gates.
+An administrator supplies the persistent server ID, issuer fingerprint, Namespace, credential, and authorized enrollment. Onboarding verifies these bindings and grants no server permission. Do not place administrative credentials in an executor profile.
 
-Selection is `--profile`, then process `WOS_PROFILE`, then the single profile. Multiple profiles without a selector fail with `profile_required`. `--workspace` takes precedence over `WOS_WORKSPACE`. No shared active-profile file is written. Profile names require exact case; case collisions and Windows reserved names are rejected.
+For a host with a supported native keyring:
 
-The operational layout is:
-
-```text
-.wos/project.yaml
-.wos/profiles/executor_a/profile.yaml
-.wos/profiles/executor_a/contract/CONTRACT_UUID.yaml
+```sh
+wos profile create executor --token-stdin --generate-signing-key \
+  --server https://wos.example.test --server-id SERVER_UUID \
+  --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
+  --enrollment ENROLLMENT_UUID
 ```
 
-Enrollment recovery is `wos --profile executor_a profile recover`. The frozen intention is authenticated and persisted before a network mutation. An unknown response remains `sent_unknown`; replay uses the original key and command, including original CAS values. Do not edit pending bytes or substitute another challenge. Server receipts make enrollment replay durable. Work acquisition uses its own durable frozen intentions, described below; enrollment is not reused as work authority.
+Provide the token through protected standard input. Generated seeds and imported API credentials go only to the OS keyring. If its native service is unavailable, creation fails; it never falls back to plaintext storage. An existing seed may use `--signing-key-stdin --credential-ref env:WOS_TOKEN`; token and seed cannot share stdin in one invocation.
 
-After an operator explicitly recovers the instance issuer, approve its independently
-verified replacement with `wos --profile executor_a profile trust --issuer-fingerprint sha256:<approved-fingerprint>`.
-This appends public trust atomically without rewriting contracts or frozen returns;
-old pins remain for historical verification. See [issuer recovery](issuer-recovery.md)
-for host access, bounded trust history and interruption handling.
+A host can instead provision protected references without a proposal file or keyring:
 
-`profile inspect` and `auth status` return compact identity, selected public key status and credential restrictions. They are observations; each domain command rechecks current grants, credential policy, scope and authority. `doctor` verifies destination/issuer and local signing-key fingerprint without revealing secret values. It does not acquire or renew work.
+```sh
+wos profile create executor \
+  --server https://wos.example.test --server-id SERVER_UUID \
+  --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
+  --credential-ref env:WOS_TOKEN --private-key-ref env:WOS_SIGNING_SEED \
+  --enrollment ENROLLMENT_UUID
+```
 
-`profile remove` refuses pending intentions and nonempty contract directories. It removes only known local profile files and empty directories, preserves shared secrets, and does not revoke a remote credential or contract. A changed API credential or profile destination needs explicit new onboarding; local integrity tags do not silently rebind existing work.
+The host supplies the named environment variables securely. Flags accept references, never secret values. The CLI derives the public fingerprint and verifies enrollment subject, purpose, and approved destination. Omit `--enrollment` only for a uniquely matching already registered live agent key. Protected mounted references are also supported by the [profile schema](../packages/wos-cli/schemas/profile-v2.schema.json): mounted files must be canonical private regular files outside the operational store, with no links and no other-account access. Windows checks a restricted DACL.
 
-Stable locks live outside the operational workspace. Unix lock files are private, are never unlinked and release on process death. Windows uses global named mutexes across interactive/service sessions and fails closed if unavailable. Hosted native Linux/Windows workspace tests have executed; cross-compilation alone is not native certification. The file writer preserves editor changes observed before replacement. A noncooperating OS writer can race the final comparison/rename; profiles do not isolate hostile processes under the same OS account.
+`--outcome OUTCOME_UUID` optionally pins a default Outcome. Without it, scoped commands can select `--outcome` explicitly or discover a unique match; ambiguity or an incomplete scan fails safely. Server and Namespace remain bound to the profile. A changed destination or credential requires new onboarding.
 
-Schema-2 execution/review checkout, lease maintenance and protected sign/send/finish are implemented with targeted interruption and real SQL acceptance. A schema-2 project rejects legacy substitutions. Comprehensive final failure/platform acceptance and actual native keyring certification remain release gates.
+## Select and inspect profiles
+
+```sh
+wos profile use executor
+wos profile list
+wos profile show executor
+wos auth status --output json
+wos doctor --output json
+wos --profile reviewer auth status --output json
+```
+
+Selection precedence is `--profile`, then `WOS_PROFILE`, then the persistent active profile. A sole profile is a fallback when none is active. Each invocation captures the selection once; another process changing the active profile cannot redirect work already running. Separate profiles keep credentials, signing keys, contracts and frozen intentions isolated. They do not create distinct Principals or bypass review independence and quotas. Profile names are case-sensitive; collisions and reserved names fail.
+
+`profile show` reads nonsecret local configuration. `profile inspect`, `auth status`, and `doctor` check live identity and report compact public key status, restrictions, destination and pending-operation diagnostics without exposing secrets. These observations grant no authority; each mutation rechecks live permissions.
+
+`profile remove NAME` refuses the active profile, pending intentions, and local contracts. Removal retires the selector while preserving fenced historical bytes and shared secret references; it does not revoke anything on the server. Explicit re-provisioning of the same name archives the retired store. Do not delete operational files to bypass these checks.
+
+## Migrate an existing schema-2 workspace
+
+Stop every old writer first, including older CLI binaries, agents, and keepalive processes. Back up the source and preserve its protected references. Then use an explicit source:
+
+```sh
+wos init --from /absolute/old/project --writers-drained --dry-run
+wos init --from /absolute/old/project --writers-drained
+```
+
+The dry run is read-only. Migration validates authenticated profiles/contracts, snapshots bounded exact bytes, coordinates supported locks, fences the source and stages isolated destination stores. It preserves pending payloads, idempotency keys, receipts, grants and local history; it does not send or re-sign them. Interrupted migration resumes only the same frozen copy. Source files remain for diagnosis. Collisions, changed bytes, unsupported schema, or uncertain ownership fail explicitly. Schema 1 is not silently converted.
+
+The retirement fence protects supported new CLI processes, including queued writers. **Old binaries do not recognize it**, so `--writers-drained` is an operator prerequisite, not proof that old processes were stopped. Explicit `--workspace PATH` or `WOS_WORKSPACE` selects legacy compatibility; it never substitutes for central profile selection.
+
+## Enrollment recovery, trust, and locks
+
+Use `wos --profile executor profile recover` after interrupted enrollment. The authenticated frozen intention is persisted before mutation; an unknown response retains the original key, command and CAS. Do not replace a challenge or edit pending bytes. Work acquisition uses separate durable intentions and does not reuse enrollment as work authority.
+
+After an operator explicitly recovers the instance issuer, approve an independently verified replacement with `wos --profile executor profile trust --issuer-fingerprint sha256:APPROVED_DIGEST`. Trust is appended atomically without rewriting historical contracts or returns. See [issuer recovery](issuer-recovery.md).
+
+Stable locks live outside operational material. Unix private lock files are never unlinked and release on process death; Windows uses global named mutexes. Content comparison and atomic publication preserve observed conflicting edits. These controls coordinate cooperating processes and do not isolate hostile processes under the same OS account. Native keyring and platform release qualification remain separate gates.
 
 ## Work acquisition and recovery
 
@@ -54,7 +88,7 @@ wos --profile executor_a work list --output json
 wos --profile executor_a work show CONTRACT_UUID --for-agent --output json
 ```
 
-`--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server still limits a Principal to three active execution contracts across credentials and profiles. A request for five may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
+`--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server enforces the configured Namespace Principal quota across credentials and profiles (default three active execution contracts), together with credential and Namespace ceilings. A request exceeding current capacity may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
 
 A search that found nothing is also durable. Repeating its intention returns the original empty result even after a new Task appears. An incomplete page retains `search_complete: false` and `next_cursor`; it does not declare global absence. Continuing that cursor is an explicit new checkout intention. Corrections and replanned deliveries require explicit Task checkout with `--previous-review REVIEW_CASE_UUID`; generic next search does not silently acknowledge their findings.
 
@@ -62,7 +96,7 @@ Preparation and technical response persistence use short stable profile locks. R
 
 For an unknown response, recovery first reads the original credential-bound durable operation and matches its command/fingerprint and exact response digest. This can reconcile acceptance after the agent signing key was revoked, without issuing another acquisition or extending expiry. Missing acceptance may be retried only with the original frozen command and live authorization. Destination, scope, CredentialID and issuer proof are checked; operation expansion is technical harness data and never current authority. An unknown/rejected unresolved intention is preserved, not rewritten with new CAS values.
 
-`show --for-agent` returns the selected frozen instructions, constraints, criteria, current focal metadata and local progress. It omits issuer proofs, private references and other Outcome history. Read-only show/list/recover with no pending intentions do not acquire or renew work. A stored grant may have expired or lost authorization; final mutations must use their own live protocol checks.
+`context` (or `show --for-agent`) returns the selected frozen instructions, constraints, criteria, current focal metadata and local progress. It omits issuer proofs, private references and other Outcome history. Read-only show/list/recover with no pending intentions do not acquire or renew work. A stored grant may have expired or lost authorization; final mutations must use their own live protocol checks.
 
 Real HTTP fixtures on Memory, SQLite and PostgreSQL cover the second response lost after commit in a five-item batch, two eligible Tasks, preservation of an edited first draft, recovery without duplicate contracts and accepted-state reconciliation after key revocation. Shared storage tests cover durable empty search, pagination, cache-unavailable replay, exact original public response and Principal quota. Final acceptance gates are not inferred from those individual fixtures.
 
@@ -73,11 +107,11 @@ Schema-2 `review checkout <case-id> --version <exact-case-version>` and
 credential and agent key. Each bounded batch item has its own frozen intention;
 review recovery reconciles the original operation before retrying a request.
 The server retains empty search results and enforces historical/current
-Principal and separation-group independence plus one active review per Principal.
+Principal and separation-group independence plus the configured review quota (default one active review per Principal).
 A multi-item request can therefore stop at a quota while retaining its accepted
 file and remaining intentions; it does not evade the quota by switching profiles.
 
-Review YAML starts with `decision: inconclusive` and stores the acquired case CAS.
+A review draft starts with `decision: inconclusive` and retains the acquired case CAS. Use typed `review decision set` and `review assessment add` commands to prepare it.
 `review list`, `review show <contract-id> --for-agent` and `review recover` do not
 acquire, renew or approve work. Agent projection includes frozen instructions,
 exact submitted material, omission references and public receipt fields, while
@@ -132,7 +166,6 @@ stages that never reached publication and unrelated replacement temporaries are
 preserved for diagnosis; they are not automatically attributed to accepted work.
 Cooperative stable locks plus observed content CAS protect replacement writes;
 profiles do not provide isolation against a hostile writer with the same OS user.
-
 
 ### Signed returns and receipt-bound cleanup
 

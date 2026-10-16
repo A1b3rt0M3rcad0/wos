@@ -29,3 +29,8 @@ Initial Wave 01 records:
 The original specification proposed numbers, not immutable file identities. Accepted ADR-011 records package topology; criteria/conclusions are materialized in ADR-013, leases in ADR-016 and the public contracts, triggers and identity in ADR-014/015. These records preserve the implemented decisions rather than renumbering accepted history.
 
 - [ADR-027 — Durable signed operation results](./0027-durable-signed-operation-results.md)
+
+## Centralized agent operations
+
+- [ADR-035 — Central CLI installation and pinned profiles](0035-central-cli-installation.md)
+- [ADR-036 — Durable execution activity and attention projections](0036-durable-execution-activity.md)
