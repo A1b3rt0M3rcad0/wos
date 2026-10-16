@@ -93,18 +93,13 @@ p {
   border-bottom-color: var(--control-line);
 }
 .brand {
-  font: 400 2.28571rem/1 var(--display);
-  letter-spacing: -1px;
   gap: 12px;
 }
-.brand-mark {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--ink);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ink);
-  font: italic 2.14286rem/1 var(--display);
+.brand-logo {
+  display: block;
+  width: 164px;
+  height: auto;
+  flex-shrink: 0;
 }
 .brand-caption {
   font: 500 0.71429rem var(--mono);
@@ -144,10 +139,13 @@ body:has(#connect:not([hidden])) .topbar-right {
   margin-bottom: 24px;
 }
 .workspace-symbol {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
   background: transparent;
-  border: 1px solid var(--control-line);
-  border-radius: 2px;
-  font: 1.85714rem var(--display);
+  border: 0;
+  border-radius: 0;
 }
 .workspace-switch label {
   font: 0.64286rem var(--mono);
@@ -750,6 +748,12 @@ progress::-moz-progress-bar {
   mix-blend-mode: multiply;
   margin-bottom: 24px;
 }
+.loading-symbol {
+  display: block;
+  width: 96px;
+  height: auto;
+  margin: 24px auto;
+}
 .empty h2 {
   font: 400 clamp(2.57143rem, 5vw, 4.57143rem) / 1.1 var(--display);
   margin-block: 14px;
@@ -1202,13 +1206,8 @@ noscript p {
   .topbar {
     padding-inline: 20px;
   }
-  .topbar .brand {
-    font-size: 2rem;
-  }
-  .brand-mark {
-    width: 30px;
-    height: 30px;
-    font-size: 1.92857rem;
+  .brand-logo {
+    width: 132px;
   }
   .topbar-note {
     display: none;
@@ -1229,9 +1228,8 @@ noscript p {
     margin-bottom: 12px;
   }
   .workspace-symbol {
-    width: 30px;
-    height: 30px;
-    font-size: 1.57143rem;
+    width: 36px;
+    height: 36px;
   }
   .workspace-switch select {
     font-size: 1rem;

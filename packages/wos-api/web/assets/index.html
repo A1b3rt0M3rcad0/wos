@@ -4,7 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-copy="wosWorkspace">WOS · Workspace</title>
-    <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" />
+    <meta name="application-name" content="WOS" />
+    <meta name="theme-color" content="#FF5500" />
+    <link rel="shortcut icon" href="/app/brand/12-png-web/favicon.ico" />
+    <link rel="icon" href="/app/brand/12-png-web/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" sizes="any" />
+    <link rel="apple-touch-icon" href="/app/brand/12-png-web/apple-touch-icon-180.png" sizes="180x180" />
     <link rel="stylesheet" href="colors.css" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="editorial.css" />
@@ -22,7 +27,7 @@
         class="brand"
         aria-label="WOS · home"
         data-copy-aria-label="wosHome"
-        ><span class="brand-mark">w</span>WOS<span
+        ><img class="brand-logo" src="brand/02-logotipos/wos-horizontal-light.svg" width="450" height="112" alt="" /><span
           class="brand-caption"
           data-copy="workspace"
           >Workspace</span
@@ -139,8 +144,8 @@
           data-copy-aria-label="workspaceNavigation"
         >
           <div class="workspace-switch">
-            <span class="workspace-symbol" data-copy="w">W</span
-            ><label data-copy="workspace"
+            <img class="workspace-symbol" src="brand/04-navegacao/wos-sidebar-light.svg" width="72" height="72" alt="" />
+            <label data-copy="workspace"
               >Workspace<select id="namespace"></select
             ></label>
           </div>
@@ -252,9 +257,9 @@
             class="empty"
             role="status"
             hidden
-            data-copy="loadingOutcome"
           >
-            Loading outcome…
+            <img class="loading-symbol" src="brand/01-marca/wos-symbol-primary.svg" width="194" height="82" alt="" />
+            <p data-copy="loadingOutcome">Loading outcome…</p>
           </div>
           <div id="empty" class="empty">
             <img

@@ -142,18 +142,6 @@ h3 {
   font-weight: 750;
   text-decoration: none;
 }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: white;
-  width: 29px;
-  height: 29px;
-  border-radius: 7px;
-  font-family: Georgia, serif;
-  font-style: italic;
-  font-size: 1.92857rem;
-}
 .brand-caption {
   font-size: 0.85714rem;
   letter-spacing: 0;

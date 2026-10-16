@@ -1,5 +1,5 @@
 import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 // Documentation captures use an isolated, explicitly illustrative database.
@@ -361,4 +361,88 @@ test("Woobe colors distinguish interaction copper, primary charcoal and semantic
   await expect(
     page.locator(".list-row .badge").filter({ hasText: /^Blocked$/ }),
   ).toHaveCSS("color", "rgb(178, 56, 52)");
+});
+
+test("supplied WOS identity stays legible, serves real browser icons and marks only actual loading", async ({
+  page,
+  wos,
+}) => {
+  await seed(wos);
+  await page.goto(wos.url + "/app/");
+  await expect(
+    page.getByRole("link", { name: "WOS · home", exact: true }),
+  ).toBeVisible();
+  const logo = page.locator(".brand-logo");
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect
+      .poll(() => logo.evaluate((img) => img.complete && img.naturalWidth > 0))
+      .toBe(true);
+    const box = await logo.boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(120);
+    expect(box.width / box.height).toBeCloseTo(450 / 112, 1);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  const icons = await page
+    .locator('link[rel~="icon"], link[rel="apple-touch-icon"]')
+    .evaluateAll((links) => links.map((link) => link.href));
+  expect(icons.length).toBeGreaterThanOrEqual(3);
+  const decoded = await page.evaluate(
+    async (urls) =>
+      Promise.all(
+        urls.map(async (url) => {
+          const image = new Image();
+          image.src = url;
+          await image.decode();
+          return image.naturalWidth > 0;
+        }),
+      ),
+    icons,
+  );
+  expect(decoded.every(Boolean)).toBe(true);
+  const favicon = await page.request.get(wos.url + "/app/favicon.svg");
+  expect(favicon.ok()).toBe(true);
+  expect(await favicon.body()).toEqual(
+    await readFile(
+      new URL(
+        "../../packages/wos-api/web/assets/brand/03-favicon-app/favicon.svg",
+        import.meta.url,
+      ),
+    ),
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await wos.login(page);
+  await expect(page.locator("#workspace-loading")).not.toBeVisible();
+  await expect(page.locator(".workspace-symbol")).toHaveAttribute(
+    "src",
+    "brand/04-navegacao/wos-sidebar-light.svg",
+  );
+  let release;
+  const held = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/continuity?**", async (route) => {
+    await held;
+    await route.continue();
+  });
+  try {
+    await page
+      .locator("#outcomes button")
+      .filter({ hasText: "Ship a calmer workspace" })
+      .click();
+    await expect(page.locator("#workspace-loading")).toBeVisible();
+    await expect(page.locator("#workspace-loading")).toContainText(
+      "Loading outcome",
+    );
+    await expect(page.locator(".loading-symbol")).toBeVisible();
+    await capture(page, "14-outcome-loading");
+  } finally {
+    release();
+  }
+  await expect(page.locator("#workspace-loading")).not.toBeVisible();
+  await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
 });
