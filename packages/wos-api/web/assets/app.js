@@ -825,7 +825,19 @@ async function viewCanvasPlan(value) {
       ? `Draft · version ${value.draft.draft_version} · not published or activated`
       : `Published revision ${value.revision_number} · activation is a separate action`;
     acceptCanvas(model);
-    state.canvasView?.fit();
+    if (!canvasNavigationLocked()) {
+      state.canvasView?.fit(true);
+      const focal =
+        model.nodes.find(
+          (item) =>
+            item.kind === "phase" && item.roadmapRef?.id === value.roadmap_id,
+        ) ||
+        model.nodes.find(
+          (item) => !item.ref && item.roadmapRef?.id === value.roadmap_id,
+        );
+      if (focal) state.canvasView?.focus(focal.key);
+      if (canvasInspector.isVisible("detail")) canvasInspector.showDetails();
+    }
   } catch (error) {
     report(error);
   }

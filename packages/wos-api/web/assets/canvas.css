@@ -992,3 +992,12 @@ dl.canvas-summary-metrics > div {
     stroke: CanvasText;
   }
 }
+/* Nested reference metadata shares the narrow inspector's available column. */
+.canvas-context-panel .detail-properties .detail-properties {
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(4 * var(--wos-unit, 1px));
+}
+.canvas-context-panel .detail-properties .detail-properties > dd {
+  margin-inline-start: 0;
+  padding-bottom: calc(8 * var(--wos-unit, 1px));
+}

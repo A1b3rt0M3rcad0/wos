@@ -163,6 +163,9 @@ test("real connections distinguish hierarchy, dependency strength and Evidence s
   const links = (await wos.api(`${endpoint(data.scope)}/evidence-links`)).items;
   expect(links.some((link) => link.evidence_id === data.evidence[2].id && link.target_ref.id === data.tasks.unscoped.id && link.stance === "context")).toBe(true);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}`)).value.lifecycle).toBe("todo");
+  const provider = panel(page).getByText("canvas-acceptance", { exact: true });
+  await expect(provider).toBeVisible();
+  expect(await provider.evaluate((element) => element.getClientRects().length)).toBeLessThanOrEqual(2);
   await shot(page, "02-canvas-relationships");
 });
 
@@ -346,7 +349,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   await expect(canvas(page).locator('[data-canvas-edge="plan_reference"]')).toHaveCount(2);
-  await expect(canvas(page).locator('[data-kind="phase"]')).toBeAttached();
+  await expect(canvas(page).locator('.canvas-node[data-kind="phase"]')).toBeVisible();
   await choose(page, "roadmap", roadmap);
   await panel(page).getByRole("button", { name: "Review and publish", exact: true }).click();
   await expect(page.locator("#fields")).toContainText("Publish");
@@ -361,6 +364,8 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await panel(page).getByRole("button", { name: "View revision 1 on canvas", exact: true }).click();
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
+  await expect.poll(async () => parseFloat(await canvas(page).getByLabel("Canvas zoom", { exact: true }).textContent())).toBeGreaterThanOrEqual(75);
+  await expect(canvas(page).locator('.canvas-node[data-kind="phase"]')).toBeVisible();
   await shot(page, "06-canvas-roadmap");
   await choose(page, "roadmap", published);
   await panel(page).getByRole("button", { name: "Activate revision", exact: true }).click();
