@@ -1,6 +1,7 @@
 import { test, expect, openOutcome, intent, save } from "./ux-fixture.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { interactionAudit } from "./interaction-audit.mjs";
 
 // Documentation captures use an isolated, explicitly illustrative database.
 // Every displayed record is created through the public command API.
@@ -136,6 +137,155 @@ async function capture(page, name) {
   });
 }
 
+test("buttons keep legible padded states across the workspace, dialogs and touch navigation", async ({
+  page,
+  browser,
+  wos,
+}) => {
+  test.setTimeout(180000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await seed(wos);
+  await page.goto(wos.url + "/app/");
+  const desktop = interactionAudit(page);
+  await desktop.audit();
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+  await page.evaluate(() => document.fonts.ready);
+  for (const area of [
+    "overview",
+    "plan",
+    "work",
+    "issues",
+    "evidence",
+    "activity",
+  ]) {
+    await page.locator(`[data-area="${area}"]`).click();
+    await desktop.audit();
+  }
+  await page.locator('[data-area="work"]').click();
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.locator('[data-area="issues"]').hover();
+  await expect(page.locator('[data-area="work"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.locator('[data-area="issues"]')).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  expect(
+    await page
+      .locator('[data-area="issues"]')
+      .evaluate((element) => getComputedStyle(element).borderBottomColor),
+  ).not.toBe(
+    await page
+      .locator('[data-area="work"]')
+      .evaluate((element) => getComputedStyle(element).borderBottomColor),
+  );
+  await capture(page, "22-area-tab-hover");
+  const board = page.locator('#view-tabs button[data-view="board"]');
+  await board.hover();
+  await capture(page, "23-view-switch-hover");
+  await board.click();
+  await desktop.audit();
+  const card = page.locator(".board .item").first();
+  await card.hover();
+  await capture(page, "24-board-card-hover");
+  await card.click();
+  await expect(page.locator("#detail-dialog")).toBeVisible();
+  await desktop.audit(page.locator("#detail-dialog"));
+  await page.keyboard.press("Escape");
+  await intent(page, "New task");
+  await page.getByText("Execution instructions", { exact: true }).click();
+  const add = page.getByRole("button", {
+    name: "Add instructions item",
+    exact: true,
+  });
+  await add.click();
+  const objective = page.getByRole("combobox", {
+    name: "Objective",
+    exact: true,
+  });
+  await objective.fill("A clear path");
+  await expect(page.locator("#command-dialog [role=option]")).toHaveCount(1);
+  await objective.press("ArrowDown");
+  await objective.press("Enter");
+  await page
+    .locator("#command-dialog")
+    .getByText("Advanced", { exact: true })
+    .click();
+  await desktop.audit(page.locator("#command-dialog"));
+  await add.hover();
+  await capture(page, "25-form-controls-hover");
+  await page.keyboard.press("Escape");
+  await page.locator("#administration").click();
+  for (const operation of ["set_grant", "issue_credential"]) {
+    await page.locator("#admin-operation").selectOption(operation);
+    await desktop.audit(page.locator("#admin-dialog"));
+  }
+  await page.keyboard.press("Escape");
+  await page.locator("#actions").click();
+  await desktop.audit(page.locator("#action-dialog"));
+  await page
+    .locator("#action-dialog")
+    .getByText("Advanced", { exact: true })
+    .click();
+  await desktop.audit(page.locator("#action-dialog"));
+  await page.keyboard.press("Escape");
+  const touch = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: "reduce",
+  });
+  try {
+    const mobile = await touch.newPage();
+    await wos.login(mobile);
+    await openOutcome(mobile, "Ship a calmer workspace");
+    const audit = interactionAudit(mobile);
+    for (const width of [390, 320]) {
+      await mobile.setViewportSize({ width, height: 844 });
+      await mobile.locator('[data-area="work"]').click();
+      await audit.audit();
+      const inactive = mobile.locator('[data-area="issues"]');
+      await mobile.mouse.move(0, 0);
+      const before = await inactive.evaluate(
+        (element) => getComputedStyle(element).backgroundColor,
+      );
+      await inactive.hover();
+      expect(
+        await inactive.evaluate(
+          (element) => getComputedStyle(element).backgroundColor,
+        ),
+      ).toBe(before);
+      await mobile.keyboard.press("Tab");
+      await inactive.focus();
+      expect(
+        await inactive.evaluate(
+          (element) => getComputedStyle(element).outlineWidth,
+        ),
+      ).toBe("3px");
+      if (width === 390) await capture(mobile, "26-mobile-tabs-focus");
+      expect(
+        await mobile.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await test.info().attach("interaction-audit", {
+      body: JSON.stringify(
+        { desktop: desktop.report, touch: audit.report },
+        null,
+        2,
+      ),
+      contentType: "application/json",
+    });
+  } finally {
+    await touch.close();
+  }
+});
+
 test("paper stays fixed behind scrolling content and the editorial sidebar remains usable", async ({
   page,
   wos,
@@ -184,17 +334,23 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
     }
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.evaluate(() => scrollTo(0, 0));
-    const staticBefore = await page.screenshot({ clip, animations: "disabled" });
+    const staticBefore = await page.screenshot({
+      clip,
+      animations: "disabled",
+    });
     await page.evaluate(() => scrollBy(0, 173));
     expect(
-      staticBefore.equals(await page.screenshot({ clip, animations: "disabled" })),
+      staticBefore.equals(
+        await page.screenshot({ clip, animations: "disabled" }),
+      ),
     ).toBe(false);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => scrollTo(0, 0));
   await page.locator("#navigation-toggle").click();
   await expect(page.locator("#navigation-toggle")).toHaveAttribute(
-    "aria-expanded", "true",
+    "aria-expanded",
+    "true",
   );
   await expect(page.locator("#outcomes .item")).toHaveCount(3);
   const next = page.locator("#outcomes .item").filter({
@@ -207,7 +363,8 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
     "Prepare a shared handoff for people and agents",
   );
   await expect(page.locator("#navigation-toggle")).toHaveAttribute(
-    "aria-expanded", "false",
+    "aria-expanded",
+    "false",
   );
   // More than one sidebar viewport: the final action remains reachable.
   for (let index = 0; index < 12; index++)
@@ -232,12 +389,16 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
   const clip = { x: bounds.x + 8, y: bounds.y + 12, width: 6, height: 120 };
   const dialogPaper = await page.screenshot({ clip, animations: "disabled" });
   await body.evaluate((element) => element.scrollBy(0, 137));
-  expect(await body.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(await body.evaluate((element) => element.scrollTop)).toBeGreaterThan(
+    0,
+  );
   expect(
     dialogPaper.equals(await page.screenshot({ clip, animations: "disabled" })),
   ).toBe(true);
   expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
   ).toBe(true);
 });
 
@@ -324,7 +485,9 @@ test("editorial chapters keep all six areas, real records and illustration asset
     .filter({ hasText: "Connect the evidence review" })
     .click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
-  await expect(page.locator("#detail-title")).toHaveText("Connect the evidence review");
+  await expect(page.locator("#detail-title")).toHaveText(
+    "Connect the evidence review",
+  );
   await capture(page, "09-task-detail");
   await page.keyboard.press("Escape");
   await intent(page, "New task");
@@ -333,9 +496,11 @@ test("editorial chapters keep all six areas, real records and illustration asset
   await page
     .getByRole("button", { name: "Add instructions item", exact: true })
     .click();
-  await page.getByLabel("Instructions item", { exact: true }).fill(
-    "Review the shared state, make a bounded change, and attach evidence.",
-  );
+  await page
+    .getByLabel("Instructions item", { exact: true })
+    .fill(
+      "Review the shared state, make a bounded change, and attach evidence.",
+    );
   await capture(page, "15-expanded-task-form");
   await page.keyboard.press("Escape");
   await page.locator("#actions").click();
@@ -609,7 +774,10 @@ async function expectWholeControl(control) {
     const dialog = element.closest("dialog");
     const style = getComputedStyle(element);
     const footer = dialog.querySelector("footer").getBoundingClientRect();
-    const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+    const hit = document.elementFromPoint(
+      b.x + b.width / 2,
+      b.y + b.height / 2,
+    );
     return {
       top: b.top - region.top,
       bottom: region.bottom - b.bottom,
@@ -673,7 +841,10 @@ test("forms preserve whole controls and save actions through nested editors, com
     const instruction = page.getByLabel("Instructions item", { exact: true });
     await instruction.fill("Keep the selected values and attach scoped proof.");
     await expectWholeControl(instruction);
-    const picker = page.getByRole("combobox", { name: "Objective", exact: true });
+    const picker = page.getByRole("combobox", {
+      name: "Objective",
+      exact: true,
+    });
     await picker.fill("A clear path");
     await expect(
       dialog
@@ -682,7 +853,9 @@ test("forms preserve whole controls and save actions through nested editors, com
     ).toHaveCount(1);
     await picker.press("ArrowDown");
     await picker.press("Enter");
-    await expect(dialog.locator(".reference-chip")).toContainText("A clear path");
+    await expect(dialog.locator(".reference-chip")).toContainText(
+      "A clear path",
+    );
     await expectWholeControl(picker);
     await dialog.getByText("Advanced", { exact: true }).click();
     await expectWholeControl(dialog.locator('input[type="datetime-local"]'));

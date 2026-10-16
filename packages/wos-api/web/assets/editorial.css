@@ -48,43 +48,84 @@ body::before {
     var(--editorial-grid-size);
 }
 button {
+  /* State paint is shared even when a component has a more specific selector. */
+  --button-idle-bg: var(--wos-primary);
+  --button-idle-ink: var(--wos-on-primary);
+  --button-hover-bg: var(--wos-primary-hover);
+  --button-hover-ink: var(--wos-on-primary);
+  --button-active-bg: var(--wos-primary-hover);
+  --button-active-ink: var(--wos-on-primary);
+  --button-bg: var(--button-idle-bg, var(--wos-primary));
+  --button-ink: var(--button-idle-ink, var(--wos-on-primary));
+  background: var(--button-bg);
+  color: var(--button-ink);
   border-radius: 0;
   border-color: transparent;
-  min-height: 40px;
+  min-height: 44px;
   font-weight: 500;
+  line-height: 1.4;
   padding: 10px 16px;
+  transition:
+    background-color 140ms,
+    color 140ms,
+    border-color 140ms;
 }
-button:hover {
-  background: var(--wos-primary-hover);
-}
+
 button:disabled {
   cursor: not-allowed;
 }
+.quiet,
+.icon-button,
+.text-button,
+.view-tabs button,
+#tabs button,
+.item,
+.list-row,
+.summary-counts button,
+.action-options button {
+  --button-idle-bg: transparent;
+  --button-idle-ink: var(--ink);
+  --button-hover-bg: var(--accent-soft);
+  --button-hover-ink: var(--ink);
+  --button-active-bg: var(--wos-control);
+  --button-active-ink: var(--ink);
+}
+.item {
+  --button-idle-bg: var(--surface);
+  background: var(--button-bg, var(--surface));
+  color: var(--button-ink, var(--ink));
+  border-radius: 0;
+}
 .quiet {
-  background: transparent;
+  background: var(--button-bg);
+  color: var(--button-ink);
   border-color: transparent;
   border-bottom-color: var(--control-line);
 }
-.quiet:hover {
-  background: var(--accent-soft);
-  border-color: transparent;
-  border-bottom-color: var(--accent);
-}
+
 .icon-button {
+  --button-idle-ink: var(--muted);
+  --button-hover-bg: var(--wos-control);
+  background: var(--button-bg);
+  color: var(--button-ink);
   border-color: transparent;
+  min-width: 44px;
+  min-height: 44px;
 }
-.icon-button:hover {
-  background: var(--wos-control);
-}
+
 .text-button {
-  color: var(--accent);
-  background: transparent;
+  --button-idle-ink: var(--accent);
+  --button-hover-bg: transparent;
+  --button-hover-ink: var(--accent);
+  --button-active-bg: transparent;
+  --button-active-ink: var(--accent);
+  color: var(--button-ink);
+  background: var(--button-bg);
+  min-height: 44px;
+  padding: 10px 12px;
   text-underline-offset: 4px;
 }
-.text-button:hover {
-  background: transparent;
-  text-decoration: underline;
-}
+
 a {
   text-underline-offset: 4px;
 }
@@ -147,7 +188,10 @@ p {
   background: var(--wos-success);
 }
 .topbar-right button {
-  background: transparent;
+  background: var(--button-bg);
+  color: var(--button-ink);
+  min-height: 44px;
+  padding: 10px 12px;
   border-color: transparent;
   text-decoration: underline;
   text-underline-offset: 5px;
@@ -215,15 +259,20 @@ body:has(#connect:not([hidden])) .topbar-right {
   width: 44px;
   height: 44px;
 }
+#navigation-toggle {
+  min-height: 44px;
+}
 .search-submit {
-  min-height: 32px;
-  padding: 4px 12px;
+  min-height: 44px;
+  padding: 10px 12px;
 }
 .outcome-navigation {
   margin-top: 12px;
   counter-reset: outcome;
 }
 .outcome-navigation .item {
+  --button-idle-bg: transparent;
+  background: var(--button-bg);
   border-radius: 0;
   border-width: 0 0 0 2px;
   padding: 16px 10px;
@@ -233,14 +282,15 @@ body:has(#connect:not([hidden])) .topbar-right {
   position: relative;
   counter-increment: outcome;
   align-items: flex-start;
-  transition: background 140ms, border-color 140ms;
+  transition:
+    background 140ms,
+    border-color 140ms;
 }
-.outcome-navigation .item:hover {
-  background: var(--accent-soft);
-}
+
 .outcome-navigation .item.selected {
   border-left-color: var(--accent);
-  background: var(--accent-soft);
+  --button-idle-bg: var(--accent-soft);
+  background: var(--button-bg);
 }
 .outcome-navigation .item:focus-visible {
   outline-offset: -3px;
@@ -270,7 +320,9 @@ body:has(#connect:not([hidden])) .topbar-right {
   padding-top: 18px;
 }
 .sidebar-bottom button {
-  padding: 10px 0;
+  background: var(--button-bg);
+  color: var(--button-ink);
+  padding: 10px 12px;
   border-color: transparent;
   border-top: 1px solid var(--line);
   min-height: 44px;
@@ -366,8 +418,8 @@ body:has(#connect:not([hidden])) .topbar-right {
   flex-wrap: wrap;
 }
 .heading-actions button {
-  font-size: 0.71429rem;
-  min-height: 36px;
+  font-size: 0.85714rem;
+  min-height: 44px;
 }
 #copy-workspace-link,
 #refresh {
@@ -375,17 +427,23 @@ body:has(#connect:not([hidden])) .topbar-right {
 }
 .view-tabs {
   margin-bottom: 0;
-  gap: 30px;
+  gap: 4px;
   border-color: var(--control-line);
 }
 .view-tabs button {
+  --button-idle-ink: var(--muted);
+  background: var(--button-bg);
+  color: var(--button-ink);
   font-size: 0.85714rem;
   min-height: 48px;
-  padding: 14px 0;
+  padding: 12px 16px;
   font-weight: 500;
 }
 .view-tabs button.selected {
-  color: var(--accent);
+  --button-idle-ink: var(--accent);
+  --button-hover-ink: var(--accent);
+  --button-active-ink: var(--accent);
+  color: var(--button-ink);
   border-bottom-color: var(--accent);
 }
 #area-tabs {
@@ -398,19 +456,26 @@ body:has(#connect:not([hidden])) .topbar-right {
 #view-tabs {
   display: inline-flex;
   border: 1px solid var(--line);
-  padding: 3px;
+  padding: 4px;
   margin-top: 18px;
-  gap: 4px;
-  background: var(--wos-control);
+  gap: 2px;
+  background: transparent;
 }
 #view-tabs button {
   border: 0;
-  padding: 8px 18px;
-  min-height: 36px;
+  padding: 10px 16px;
+  min-height: 44px;
+  min-width: 100px;
 }
 #view-tabs button.selected {
-  background: var(--ink);
-  color: var(--surface);
+  --button-idle-bg: var(--wos-primary);
+  --button-idle-ink: var(--wos-on-primary);
+  --button-hover-bg: var(--wos-primary-hover);
+  --button-hover-ink: var(--wos-on-primary);
+  --button-active-bg: var(--wos-primary-hover);
+  --button-active-ink: var(--wos-on-primary);
+  background: var(--button-bg);
+  color: var(--button-ink);
 }
 .area-intro {
   position: relative;
@@ -527,7 +592,7 @@ body:has(#connect:not([hidden])) .topbar-right {
   display: block;
   font-size: 0.64286rem;
   text-align: left;
-  padding: 6px 0 0;
+  padding: 10px 12px;
 }
 progress {
   height: 3px;
@@ -587,7 +652,7 @@ progress::-moz-progress-bar {
 }
 .summary-quick button {
   font-size: 0.78571rem;
-  min-height: 36px;
+  min-height: 44px;
 }
 .summary-card > p {
   font-size: 0.85714rem;
@@ -636,18 +701,14 @@ progress::-moz-progress-bar {
   border: 0;
   border-right: 1px solid var(--line);
   border-radius: 0;
-  padding: 0 16px;
-  background: transparent;
-}
-.summary-counts button:first-child {
-  padding-left: 0;
+  padding: 12px 16px;
+  background: var(--button-bg);
+  color: var(--button-ink);
 }
 .summary-counts button:last-child {
   border-right: 0;
 }
-.summary-counts button:hover {
-  background: var(--accent-soft);
-}
+
 .summary-counts strong {
   font: 400 2.85714rem/1 var(--display);
 }
@@ -663,7 +724,9 @@ progress::-moz-progress-bar {
   grid-row: span 2;
 }
 .summary-recent .item {
-  background: transparent;
+  --button-idle-bg: transparent;
+  background: var(--button-bg);
+  padding: 16px 12px;
 }
 .checklist-row {
   padding-block: 12px;
@@ -685,14 +748,22 @@ progress::-moz-progress-bar {
   flex-wrap: wrap;
 }
 #tabs button {
+  --button-idle-ink: var(--muted);
+  background: var(--button-bg);
+  color: var(--button-ink);
   border-radius: 0;
   border-bottom: 2px solid transparent;
-  min-height: 36px;
+  padding: 10px 14px;
+  min-height: 44px;
   font-size: 0.78571rem;
 }
 #tabs button.selected {
-  background: transparent;
-  color: var(--accent);
+  --button-idle-bg: var(--accent-soft);
+  --button-idle-ink: var(--accent);
+  --button-hover-ink: var(--accent);
+  --button-active-ink: var(--accent);
+  background: var(--button-bg);
+  color: var(--button-ink);
   border-bottom-color: var(--accent);
 }
 .item-filters {
@@ -708,10 +779,17 @@ progress::-moz-progress-bar {
   font-size: 0.71429rem;
 }
 .item-filters #add-item {
-  background: var(--ink);
-  color: var(--surface);
-  border-color: var(--ink);
-  font-size: 0.78571rem;
+  --button-idle-bg: var(--wos-primary);
+  --button-idle-ink: var(--wos-on-primary);
+  --button-hover-bg: var(--wos-primary-hover);
+  --button-hover-ink: var(--wos-on-primary);
+  --button-active-bg: var(--wos-primary-hover);
+  --button-active-ink: var(--wos-on-primary);
+  background: var(--button-bg);
+  color: var(--button-ink);
+  border-color: transparent;
+  font-size: 0.85714rem;
+  min-height: 44px;
 }
 #work-status-label {
   font-size: 0.78571rem;
@@ -749,14 +827,13 @@ progress::-moz-progress-bar {
   letter-spacing: 1px;
 }
 .list-row {
-  background: transparent;
+  --button-idle-bg: transparent;
+  background: var(--button-bg);
+  color: var(--button-ink);
   padding: 20px 12px;
   min-height: 76px;
 }
-.list-row:hover,
-.item:hover {
-  background: var(--accent-soft);
-}
+
 .list-row:focus-visible {
   outline-offset: -3px;
 }
@@ -825,17 +902,18 @@ progress::-moz-progress-bar {
   font: 500 0.78571rem var(--utility);
   padding-block: 8px;
 }
-.board-card {
-  border-radius: 2px;
-  background: var(--surface);
+.board .item {
+  border-radius: 0;
+  background: var(--button-bg);
   border: 1px solid var(--line);
   box-shadow: none;
   padding: 16px;
+  transition:
+    background-color 140ms,
+    color 140ms,
+    border-color 140ms;
 }
-.board-card:hover {
-  border-color: var(--accent);
-  box-shadow: none;
-}
+
 .board-empty {
   border-radius: 0;
   color: var(--muted);
@@ -1094,7 +1172,7 @@ dialog::backdrop {
   font: 0.71429rem/1.9 var(--mono);
 }
 .criterion-item {
-  background: var(--surface);
+  background: var(--button-bg);
   border-color: var(--line);
   padding: 18px;
 }
@@ -1144,7 +1222,6 @@ dialog::backdrop {
   border-radius: 2px;
   border-color: var(--control-line);
 }
-.reference-option:hover,
 .reference-option[aria-selected="true"] {
   background: var(--accent-soft);
 }
@@ -1230,25 +1307,28 @@ dialog::backdrop {
   gap: 8px;
 }
 .action-options button {
-  background: transparent;
-  color: var(--ink);
+  background: var(--button-bg);
+  color: var(--button-ink);
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
-  padding: 16px 8px;
+  padding: 16px 18px;
   min-height: 58px;
   font: 400 1.57143rem/1.2 var(--display);
 }
-.action-options button:hover {
-  background: var(--accent-soft);
-  border-bottom-color: var(--accent);
-}
+
 .action-options > details {
   grid-column: 1 / -1;
   margin-top: 16px;
 }
 summary {
   cursor: pointer;
+  min-height: 44px;
+  padding: 10px 12px;
+  list-style-position: inside;
+  transition:
+    background-color 140ms,
+    color 140ms;
 }
 pre {
   background: var(--surface);
@@ -1259,6 +1339,57 @@ pre {
 summary {
   color: var(--ink);
   line-height: 1.6;
+}
+/* One interaction system for primary actions, utility controls and data choices.
+   Only state paint changes: padding, borders and hit areas keep their geometry. */
+@media (hover: hover) and (pointer: fine) {
+  button:enabled:hover {
+    --button-bg: var(--button-hover-bg, var(--wos-primary-hover));
+    --button-ink: var(--button-hover-ink, var(--wos-on-primary));
+  }
+  .quiet:enabled:hover {
+    border-bottom-color: var(--accent);
+  }
+  .view-tabs button:not(.selected):enabled:hover,
+  #tabs button:not(.selected):enabled:hover {
+    border-bottom-color: transparent;
+  }
+  .text-button:enabled:hover {
+    text-decoration: underline;
+  }
+  .board .item:enabled:hover,
+  .action-options button:enabled:hover {
+    border-color: var(--accent);
+  }
+  summary:hover,
+  .reference-option:hover {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+  a[href]:not(.brand):hover {
+    text-decoration: underline;
+  }
+}
+button:enabled:active {
+  --button-bg: var(--button-active-bg, var(--wos-primary-hover));
+  --button-ink: var(--button-active-ink, var(--wos-on-primary));
+}
+.text-button:enabled:active {
+  text-decoration: underline;
+}
+.view-tabs button:focus-visible,
+#tabs button:focus-visible,
+.item:focus-visible,
+.action-options button:focus-visible,
+summary:focus-visible {
+  outline-offset: -3px;
+}
+.reference-chip button {
+  padding: 8px 12px;
+  min-height: 44px;
+}
+.search-filters summary {
+  min-height: 44px;
 }
 .danger,
 #command-error:not(:empty) {
@@ -1536,11 +1667,11 @@ noscript p {
     gap: 8px;
   }
   .heading-actions button {
-    font-size: 0.71429rem;
-    min-height: 40px;
+    font-size: 0.85714rem;
+    min-height: 44px;
   }
   .view-tabs {
-    gap: 24px;
+    gap: 4px;
   }
   .view-tabs button {
     font-size: 0.85714rem;
@@ -1600,7 +1731,7 @@ noscript p {
   }
   .metric .text-button {
     font-size: 0.71429rem;
-    min-height: 30px;
+    min-height: 44px;
   }
   .summary-purpose {
     font-size: 1.85714rem;
@@ -1624,7 +1755,7 @@ noscript p {
     min-width: min(100%, 160px);
   }
   .item-filters #add-item {
-    min-height: 42px;
+    min-height: 44px;
   }
   #work-status-label {
     gap: 10px;
@@ -1633,10 +1764,10 @@ noscript p {
     min-width: 0;
   }
   .list-row {
-    padding-inline: 0;
+    padding-inline: 12px;
   }
   .list-head {
-    padding-inline: 0;
+    padding-inline: 12px;
   }
   .list-row,
   .list-head {

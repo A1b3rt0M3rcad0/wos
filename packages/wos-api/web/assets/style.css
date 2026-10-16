@@ -49,9 +49,7 @@ button {
     border-color 0.15s,
     box-shadow 0.15s;
 }
-button:hover {
-  background: var(--ink);
-}
+
 button:disabled {
   opacity: 0.55;
   cursor: wait;
@@ -61,10 +59,7 @@ button:disabled {
   color: var(--ink);
   border-color: var(--line);
 }
-.quiet:hover {
-  background: var(--surface);
-  border-color: var(--line);
-}
+
 .icon-button {
   display: inline-grid;
   place-items: center;
@@ -76,10 +71,7 @@ button:disabled {
   border-color: transparent;
   font-size: 1.57143rem;
 }
-.icon-button:hover {
-  color: var(--ink);
-  background: var(--line);
-}
+
 a {
   color: var(--accent);
 }
@@ -286,9 +278,7 @@ h3 {
   display: flex;
   gap: 10px;
 }
-.outcome-navigation .item:hover {
-  background: var(--surface);
-}
+
 .outcome-navigation .item.selected {
   background: var(--surface);
   border-color: var(--line);
@@ -412,9 +402,7 @@ h3 {
   color: var(--ink);
   font-weight: 650;
 }
-.view-tabs button:hover {
-  color: var(--ink);
-}
+
 svg.icon {
   width: 16px;
   height: 16px;
@@ -510,9 +498,7 @@ progress::-moz-progress-bar {
   padding: 4px;
   min-height: 26px;
 }
-.text-button:hover {
-  background: var(--surface);
-}
+
 .summary-purpose {
   font-size: 1.07143rem;
   line-height: 1.6;
@@ -652,9 +638,7 @@ progress::-moz-progress-bar {
   background: var(--surface);
   color: var(--ink);
 }
-#tabs button:hover {
-  background: var(--surface);
-}
+
 .tab-count {
   font:
     0.64286rem ui-monospace,
@@ -737,9 +721,7 @@ progress::-moz-progress-bar {
 .list-row:last-child {
   border-bottom: 0;
 }
-.list-row:hover {
-  background: var(--surface);
-}
+
 .item-main {
   display: flex;
   gap: 12px;
@@ -811,9 +793,7 @@ progress::-moz-progress-bar {
   margin: 8px 0;
   font-size: 0.85714rem;
 }
-.item:hover {
-  background: var(--surface);
-}
+
 .item small {
   display: block;
   font-weight: 400;
@@ -905,11 +885,7 @@ progress::-moz-progress-bar {
     box-shadow 0.15s,
     transform 0.15s;
 }
-.board .item:hover {
-  background: var(--surface);
-  box-shadow: 0 4px 14px var(--wos-shadow);
-  transform: translateY(-1px);
-}
+
 .board-card-title {
   display: block;
   font-size: 0.85714rem;
@@ -1844,7 +1820,7 @@ svg {
 .reference-picker {position:relative;min-width:0;}
 .reference-results {border:1px solid var(--line);border-radius:8px;background:var(--surface);max-height:260px;overflow:auto;margin:8px 0;}
 .reference-option {padding:12px;border-bottom:1px solid var(--line);cursor:pointer;display:grid;gap:4px;overflow-wrap:anywhere;}
-.reference-option:hover,.reference-option[aria-selected="true"] {background:var(--orange);outline:2px solid var(--accent);outline-offset:-2px;}
+.reference-option[aria-selected="true"] {background:var(--orange);outline:2px solid var(--accent);outline-offset:-2px;}
 .reference-selections {display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
 .reference-chip {display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 8px;background:var(--orange);border:1px solid var(--line);border-radius:6px;overflow-wrap:anywhere;}
 .reference-chip button {font-size:0.78571rem;min-height:28px;padding:4px;}
