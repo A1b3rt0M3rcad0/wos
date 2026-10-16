@@ -391,6 +391,7 @@ export function mountWorkspaceCanvas(host, options) {
     }
   }
   function report(error) {
+    if (error?.discarded || error?.name === "AbortError") return;
     if (!disposed) {
       lastError = error?.message || "The work map could not be updated.";
       announce();

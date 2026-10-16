@@ -803,6 +803,8 @@ async function loadCanvasHistory(host, ref, detailGeneration) {
       more.hidden = !cursor;
       status.textContent = `Recorded activity through revision ${through}. ${cursor ? "More records are available." : list.children.length ? "All records in this traversal are shown." : "No recorded activity in this traversal."} Activity is documentary and does not approve a result.`;
     } catch (error) {
+      if (detailGeneration !== state.detailGeneration || !section.isConnected)
+        return;
       report(error);
       status.textContent = error.message;
     } finally {
@@ -839,7 +841,7 @@ async function viewCanvasPlan(value) {
       if (canvasInspector.isVisible("detail")) canvasInspector.showDetails();
     }
   } catch (error) {
-    report(error);
+    if (state.canvasPlan === selection) report(error);
   }
 }
 

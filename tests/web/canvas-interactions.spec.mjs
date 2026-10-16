@@ -159,6 +159,11 @@ async function mount(page) {
         model: window.canvasModel,
         onSelect: (ref, item) => {
           canvasEvents.select.push([ref, item]);
+          if (window.canvasSelectionError) {
+            window.canvasRejectedSelection =
+              Promise.reject(canvasSelectionError);
+            return canvasRejectedSelection;
+          }
           if (window.mirrorPlanningSelection && item.roadmapRef) {
             canvasEvents.inspector = item.roadmapRef;
             canvasHandle.update(canvasModel, {
@@ -532,4 +537,48 @@ test("a planning card remains selected when its inspector opens the real Roadmap
     ),
   );
   await expect(card(page, key)).toHaveAttribute("data-selected", "false");
+});
+
+test("discarded callback failures stay silent while current failures remain announced", async ({
+  page,
+}) => {
+  await mount(page);
+  const status = page.locator(".canvas-status");
+  const select = card(page, "outcome:root").locator(".canvas-node-main");
+  await page.evaluate(() => {
+    window.canvasSelectionError = Object.assign(
+      new Error("Obsolete selection failed"),
+      { discarded: true },
+    );
+  });
+  await select.click();
+  await page.evaluate(() => canvasRejectedSelection.catch(() => {}));
+  await expect(status).not.toContainText("Obsolete selection failed");
+  await page.evaluate(() => {
+    window.canvasSelectionError = new DOMException(
+      "Selection request was cancelled",
+      "AbortError",
+    );
+  });
+  await select.click();
+  await page.evaluate(() => canvasRejectedSelection.catch(() => {}));
+  await expect(status).not.toContainText("Selection request was cancelled");
+  await page.evaluate(() => {
+    window.canvasSelectionError = new Error(
+      "Current selection could not be loaded",
+    );
+  });
+  await select.click();
+  await page.evaluate(() => canvasRejectedSelection.catch(() => {}));
+  await expect(status).toContainText("Current selection could not be loaded");
+  await page.evaluate(() => {
+    window.canvasSelectionError = Object.assign(
+      new Error("Late obsolete failure"),
+      { discarded: true },
+    );
+  });
+  await select.click();
+  await page.evaluate(() => canvasRejectedSelection.catch(() => {}));
+  await expect(status).toContainText("Current selection could not be loaded");
+  await expect(status).not.toContainText("Late obsolete failure");
 });

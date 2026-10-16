@@ -15,9 +15,9 @@ async function select(page, value, { wait = true } = {}) {
   await canvas(page).getByRole("option").filter({ hasText: value.title }).first().click();
   if (wait) await expect(panel(page).locator("#detail-title")).toHaveText(value.title);
 }
-// Capture a genuine server result, then change only its delivery order. No
-// lifecycle, permission or conflict outcome is manufactured by the route.
-async function holdOnce(page, pattern) {
+// Capture a genuine server result and gate its delivery. The optional failure
+// simulates transport loss; lifecycle, permissions and conflicts stay real.
+async function holdOnce(page, pattern, { failureMessage } = {}) {
   let release, seen, failed, finished;
   let started = false;
   const gate = new Promise((resolve) => { release = resolve; });
@@ -29,7 +29,9 @@ async function holdOnce(page, pattern) {
       const response = await route.fetch();
       seen(response.status());
       await gate;
-      await route.fulfill({ response });
+      await route.fulfill(failureMessage
+        ? { status: 500, contentType: "application/json", body: JSON.stringify({ error: { message: failureMessage } }) }
+        : { response });
     } catch (error) {
       failed(error);
       throw error;
@@ -143,6 +145,35 @@ test("an earlier successful refresh cannot restore private Canvas content after 
     await expect(page.locator("#detail-content")).toBeEmpty();
     await expect(canvas(page).locator(".workspace-canvas")).toHaveCount(0);
     await expect(page.locator("#actions")).toBeDisabled();
+  } finally {
+    held.release();
+    if (held.started) await held.done;
+  }
+});
+
+test("an obsolete Task history transport failure cannot replace the current Task or its notice", async ({ page, wos }) => {
+  const data = await seedCanvas(wos);
+  await openCanvas(page, wos, data);
+  await select(page, data.tasks.ready);
+  const failureMessage = "Obsolete Task history transport failure";
+  const held = await holdOnce(page,
+    (url) => url.pathname.endsWith("/work-activity") && url.searchParams.get("work_item_id") === data.tasks.ready.id,
+    { failureMessage },
+  );
+  try {
+    await panel(page).getByRole("button", { name: "Load task history", exact: true }).click();
+    expect(await held.arrived).toBe(200);
+    await panel(page).locator("#close-detail").click();
+    await select(page, data.tasks.unscoped);
+    const currentNotice = await page.locator("#notice").textContent();
+    const currentClass = await page.locator("#notice").getAttribute("class");
+    await settle(page, held);
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.unscoped.title);
+    await expect(panel(page).locator(".canvas-task-history")).toHaveCount(0);
+    await expect(panel(page)).not.toContainText(failureMessage);
+    await expect(page.locator("#notice")).toHaveText(currentNotice);
+    expect(await page.locator("#notice").getAttribute("class")).toBe(currentClass);
+    await expect(page).toHaveURL(new RegExp(data.tasks.unscoped.id));
   } finally {
     held.release();
     if (held.started) await held.done;
