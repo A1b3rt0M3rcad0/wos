@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { root, validVersion, run } from './build.mjs';
 import path from 'node:path';
 
@@ -31,4 +31,21 @@ test('publication needs actual matching native hosts and binary checksums', asyn
   assert.equal(await verifyNativePlatforms(manifest,directory),true);
   const windows=path.join(directory,'platform-windows-amd64.json');const proof=JSON.parse(await fs.readFile(windows,'utf8'));proof.native_keyring_executed=false;await fs.writeFile(windows,JSON.stringify(proof));await assert.rejects(verifyNativePlatforms(manifest,directory),/mismatched/);proof.native_keyring_executed=true;proof.native_host='linux';await fs.writeFile(windows,JSON.stringify(proof));await assert.rejects(verifyNativePlatforms(manifest,directory),/cross-build/);
   proof.native_host='win32';proof.commit='c'.repeat(40);await fs.writeFile(windows,JSON.stringify(proof));await assert.rejects(verifyNativePlatforms(manifest,directory),/mismatched/);
+});
+
+test('Docker and CI use the reviewed Go patch from the shared version file', async () => {
+ const goVersion=(await readFile(path.join(root,'.go-version'),'utf8')).trim();
+ assert.match(goVersion,/^1\.[0-9]+\.[0-9]+$/);
+ const docker=await readFile(path.join(root,'Dockerfile'),'utf8');
+ assert.ok(docker.includes('FROM golang:'+goVersion+'-alpine AS build'),'Docker Go patch drifted from .go-version');
+ const module=await readFile(path.join(root,'go.mod'),'utf8');
+ assert.ok(module.includes('go '+goVersion.split('.').slice(0,2).join('.')),'Go language baseline differs');
+ for(const name of await readdir(path.join(root,'.github','workflows'))) {
+  if(!name.endsWith('.yml'))continue;
+  const source=await readFile(path.join(root,'.github','workflows',name),'utf8');
+  if(source.includes('actions/setup-go@')) {
+   assert.ok(source.includes('go-version-file: .go-version'),name+' does not pin the shared Go version');
+   assert.ok(!source.includes('go-version-file: go.mod'),name+' can drift to another patch');
+  }
+ }
 });

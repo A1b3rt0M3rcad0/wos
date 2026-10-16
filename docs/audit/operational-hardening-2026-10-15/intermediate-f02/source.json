@@ -1,0 +1,19 @@
+{
+  "baseline_source_commit": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "candidate_compiled_committed_base": "09204f04d904fa948d05777e4bdcc4e65dd603e2",
+  "candidate_working_tree": true,
+  "candidate_runtime_file_sha256": {
+    "packages/wos-api/internal/server/config.go": "133fba39c694e91d451e08938baf3896bb4df5d7c78b350fd3be7b1da051dea1",
+    "packages/wos-api/internal/server/env.go": "f17fe5d8d896bf2c485aaf940add8c538605adbcf5ca1dcbceffeef533bb8695",
+    "packages/wos-api/internal/server/runtime.go": "6c48e054c9ab62ef614a43f1465faf535bfe13624f3484bc2adcbf6839bdb04d",
+    "packages/wos-api/internal/server/http_limits.go": "c2dbab076148fde12537abc867b52039808e7db30c98c3035122639fecd244b8",
+    "packages/wos-api/http/handler.go": "6077506d63a4cf3ab420743c48ad0aa14f6940d0319428ac657c91b25b7daf2c",
+    "packages/wos-api/observability/observer.go": "634437bf40293f4d0287e60416932a2e2f3bbfe4839d52a767a0554bbe2df4a8"
+  },
+  "limits": [
+    "Intermediate local source-file-bound evidence; final PR source acceptance pending",
+    "The 17-second probe reports whether a response/close occurred within the observation window, not precise latency or a percentile",
+    "Incomplete JSON body cannot form a valid mutation; only the controlled complete-mutation recovery test commits an Outcome",
+    "TLS/rate limits remain ingress responsibilities; no production DDoS/SLA claim"
+  ]
+}

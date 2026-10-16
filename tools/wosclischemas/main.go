@@ -48,6 +48,8 @@ func main() {
 			pending := local["pending_operations"].(map[string]any)
 			pending["maxItems"] = 10
 			fields := pending["items"].(map[string]any)["properties"].(map[string]any)
+			resolutionFields := fields["return_resolution"].(map[string]any)["anyOf"].([]any)[0].(map[string]any)["properties"].(map[string]any)
+			resolutionFields["response"] = map[string]any{"type": "string", "contentEncoding": "base64", "maxLength": 349528}
 			fields["request_fingerprint"] = map[string]any{"type": "string", "pattern": "^[a-f0-9]{64}$", "minLength": 64, "maxLength": 64}
 			for _, key := range []string{"payload", "response"} {
 				fields[key] = map[string]any{"type": "string", "contentEncoding": "base64", "maxLength": 349528}

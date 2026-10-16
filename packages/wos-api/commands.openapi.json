@@ -4038,6 +4038,105 @@
         ],
         "type": "object"
       },
+      "Catalog_resolve_signed_return_intent": {
+        "additionalProperties": false,
+        "properties": {
+          "envelope": {
+            "additionalProperties": false,
+            "properties": {
+              "payload": {
+                "type": "string"
+              },
+              "payloadType": {
+                "type": "string"
+              },
+              "signatures": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyid": {
+                      "type": "string"
+                    },
+                    "sig": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "keyid",
+                    "sig"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "payloadType",
+              "payload"
+            ],
+            "type": "object"
+          },
+          "original_envelope": {
+            "additionalProperties": false,
+            "properties": {
+              "payload": {
+                "type": "string"
+              },
+              "payloadType": {
+                "type": "string"
+              },
+              "signatures": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "keyid": {
+                      "type": "string"
+                    },
+                    "sig": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "keyid",
+                    "sig"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "payloadType",
+              "payload"
+            ],
+            "type": "object"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "scope",
+          "original_envelope",
+          "envelope"
+        ],
+        "type": "object"
+      },
       "Catalog_resume_signed_review_contract": {
         "additionalProperties": false,
         "properties": {
@@ -6136,6 +6235,234 @@
         ],
         "type": "object"
       },
+      "DeliveryHealthQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "namespace_id": {
+            "maxLength": 65536,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "outcome_id": {
+            "anyOf": [
+              {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "namespace_id"
+        ],
+        "type": "object"
+      },
+      "DeliveryHealthResult": {
+        "additionalProperties": false,
+        "properties": {
+          "backlog_age_limit_seconds": {
+            "type": "number"
+          },
+          "delivery_guarantee": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "queue": {
+            "additionalProperties": false,
+            "properties": {
+              "attempts_total": {
+                "type": "integer"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "exhausted": {
+                "type": "integer"
+              },
+              "expired_leased": {
+                "type": "integer"
+              },
+              "last_claim": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "last_successful_delivery": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "leased": {
+                "type": "integer"
+              },
+              "namespace_id": {
+                "maxLength": 65536,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "next_due": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "oldest_due_age_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "oldest_lease_age_seconds": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outcome_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 65536,
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "pending": {
+                "type": "integer"
+              },
+              "persisted_destinations": {
+                "type": "integer"
+              },
+              "succeeded": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "evaluated_at",
+              "pending",
+              "leased",
+              "expired_leased",
+              "succeeded",
+              "exhausted",
+              "attempts_total",
+              "persisted_destinations",
+              "oldest_due_age_seconds",
+              "oldest_lease_age_seconds",
+              "next_due",
+              "last_claim",
+              "last_successful_delivery"
+            ],
+            "type": "object"
+          },
+          "queue_state": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "worker": {
+            "additionalProperties": false,
+            "properties": {
+              "concurrency": {
+                "type": "integer"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "last_failure_class": {
+                "maxLength": 65536,
+                "type": "string"
+              },
+              "last_tick": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "started_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "starts": {
+                "type": "integer"
+              },
+              "worker_running": {
+                "type": "boolean"
+              },
+              "worker_started": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled",
+              "worker_running",
+              "worker_started",
+              "starts",
+              "started_at",
+              "last_tick",
+              "concurrency"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "state",
+          "queue_state",
+          "queue",
+          "worker",
+          "backlog_age_limit_seconds",
+          "delivery_guarantee"
+        ],
+        "type": "object"
+      },
       "ReferenceCandidate": {
         "additionalProperties": false,
         "properties": {
@@ -6507,7 +6834,9 @@
               "application/vnd.wos.work-return.v2+json",
               "application/vnd.wos.review-return.v2+json",
               "application/vnd.wos.acceptance-receipt.v2+json",
-              "application/vnd.wos.key-enrollment.v2+json"
+              "application/vnd.wos.key-enrollment.v2+json",
+              "application/vnd.wos.return-resolution.v2+json",
+              "application/vnd.wos.return-resolution-receipt.v2+json"
             ],
             "maxLength": 65536,
             "type": "string"
@@ -6610,6 +6939,210 @@
           "purpose",
           "public_key",
           "expires_at"
+        ],
+        "type": "object"
+      },
+      "SignedReturnResolutionReceiptV2": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "credential_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "decision": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "namespace_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_command_name": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_envelope_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 2,
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "resolved_at": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "server_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "signer_key_id": {
+            "maxLength": 65536,
+            "type": "string"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "server_id",
+          "namespace_id",
+          "principal_id",
+          "signer_key_id",
+          "credential_id",
+          "request_id",
+          "idempotency_key",
+          "request_digest",
+          "original_command_name",
+          "original_request_id",
+          "original_idempotency_key",
+          "original_request_digest",
+          "original_envelope_digest",
+          "contract_id",
+          "decision",
+          "reason",
+          "outcome_revision",
+          "resolved_at"
+        ],
+        "type": "object"
+      },
+      "SignedReturnResolutionV2": {
+        "additionalProperties": false,
+        "properties": {
+          "contract_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "credential_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "namespace_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "operation_kind": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_command_name": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_envelope_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_idempotency_key": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_digest": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "original_request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "outcome_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "policy_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "protocol_version": {
+            "const": 2,
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "server_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "signer_key_id": {
+            "maxLength": 65536,
+            "type": "string"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "server_id",
+          "namespace_id",
+          "principal_id",
+          "signer_key_id",
+          "operation_kind",
+          "request_id",
+          "idempotency_key",
+          "credential_id",
+          "original_command_name",
+          "original_request_id",
+          "original_idempotency_key",
+          "original_request_digest",
+          "original_envelope_digest",
+          "contract_id",
+          "policy_revision",
+          "reason"
         ],
         "type": "object"
       },
@@ -7361,7 +7894,9 @@
                           "application/vnd.wos.work-return.v2+json",
                           "application/vnd.wos.review-return.v2+json",
                           "application/vnd.wos.acceptance-receipt.v2+json",
-                          "application/vnd.wos.key-enrollment.v2+json"
+                          "application/vnd.wos.key-enrollment.v2+json",
+                          "application/vnd.wos.return-resolution.v2+json",
+                          "application/vnd.wos.return-resolution-receipt.v2+json"
                         ],
                         "maxLength": 65536,
                         "type": "string"
@@ -7427,7 +7962,9 @@
                               "application/vnd.wos.work-return.v2+json",
                               "application/vnd.wos.review-return.v2+json",
                               "application/vnd.wos.acceptance-receipt.v2+json",
-                              "application/vnd.wos.key-enrollment.v2+json"
+                              "application/vnd.wos.key-enrollment.v2+json",
+                              "application/vnd.wos.return-resolution.v2+json",
+                              "application/vnd.wos.return-resolution-receipt.v2+json"
                             ],
                             "maxLength": 65536,
                             "type": "string"
@@ -8068,7 +8605,9 @@
                       "application/vnd.wos.work-return.v2+json",
                       "application/vnd.wos.review-return.v2+json",
                       "application/vnd.wos.acceptance-receipt.v2+json",
-                      "application/vnd.wos.key-enrollment.v2+json"
+                      "application/vnd.wos.key-enrollment.v2+json",
+                      "application/vnd.wos.return-resolution.v2+json",
+                      "application/vnd.wos.return-resolution-receipt.v2+json"
                     ],
                     "maxLength": 65536,
                     "type": "string"
@@ -9916,6 +10455,324 @@
         ],
         "type": "object"
       },
+      "SigningIdentityViewV2": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ref": {
+            "additionalProperties": false,
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "human",
+                  "agent",
+                  "service",
+                  "automation",
+                  "external_system"
+                ],
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "provider",
+              "id"
+            ],
+            "type": "object"
+          },
+          "credential_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "credential_policy": {
+            "additionalProperties": false,
+            "properties": {
+              "acceptance_floor": {
+                "type": "string"
+              },
+              "allowed_outcome_ids": {
+                "items": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "allowed_signing_key_ids": {
+                "items": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "credential_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "max_active_review_contracts": {
+                "type": "integer"
+              },
+              "max_active_work_contracts": {
+                "type": "integer"
+              },
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "permitted_operations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "principal_id": {
+                "type": "string"
+              },
+              "revision": {
+                "pattern": "^(0|[1-9][0-9]{0,19})$",
+                "type": "string"
+              },
+              "updated_at": {
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "credential_id",
+              "principal_id",
+              "revision",
+              "acceptance_floor",
+              "max_active_work_contracts",
+              "max_active_review_contracts",
+              "updated_at"
+            ],
+            "type": "object"
+          },
+          "enrollment": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted_digest": {
+                "type": "string"
+              },
+              "authorized_by": {
+                "type": "string"
+              },
+              "consumed": {
+                "type": "boolean"
+              },
+              "credential_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "expected_fingerprint": {
+                "type": "string"
+              },
+              "expires_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "key_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "nonce": {
+                "type": "string"
+              },
+              "previous_key_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "principal_id": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "version": {
+                "pattern": "^(0|[1-9][0-9]{0,19})$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "namespace_id",
+              "principal_id",
+              "credential_id",
+              "key_id",
+              "purpose",
+              "nonce",
+              "expires_at",
+              "authorized_by",
+              "version",
+              "consumed"
+            ],
+            "type": "object"
+          },
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "algorithm": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "fingerprint": {
+                  "type": "string"
+                },
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "namespace_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "principal_id": {
+                  "type": "string"
+                },
+                "public_key": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "updated_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "version": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "namespace_id",
+                "principal_id",
+                "purpose",
+                "algorithm",
+                "public_key",
+                "fingerprint",
+                "version",
+                "status",
+                "created_at",
+                "updated_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "keys_truncated": {
+            "type": "boolean"
+          },
+          "namespace_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "namespace_version": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "type": "string"
+          },
+          "quotas": {
+            "additionalProperties": false,
+            "properties": {
+              "active_credential_review": {
+                "type": "integer"
+              },
+              "active_credential_work": {
+                "type": "integer"
+              },
+              "active_principal_review": {
+                "type": "integer"
+              },
+              "active_principal_work": {
+                "type": "integer"
+              },
+              "credential_policy_configured": {
+                "type": "boolean"
+              },
+              "effective_review_ceiling": {
+                "type": "integer"
+              },
+              "effective_work_ceiling": {
+                "type": "integer"
+              },
+              "max_active_review_per_credential": {
+                "type": "integer"
+              },
+              "max_active_review_per_namespace": {
+                "type": "integer"
+              },
+              "max_active_review_per_principal": {
+                "type": "integer"
+              },
+              "max_active_work_per_credential": {
+                "type": "integer"
+              },
+              "max_active_work_per_namespace": {
+                "type": "integer"
+              },
+              "max_active_work_per_principal": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "max_active_work_per_principal",
+              "max_active_review_per_principal",
+              "effective_work_ceiling",
+              "effective_review_ceiling",
+              "credential_policy_configured",
+              "active_principal_work",
+              "active_principal_review",
+              "active_credential_work",
+              "active_credential_review"
+            ],
+            "type": "object"
+          },
+          "server_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quotas",
+          "actor_ref",
+          "server_id",
+          "namespace_version",
+          "keys_truncated",
+          "namespace_id",
+          "principal_id",
+          "credential_id"
+        ],
+        "type": "object"
+      },
       "SigningSecurityIntentV2": {
         "additionalProperties": false,
         "properties": {
@@ -9928,7 +10785,13 @@
               "max_active_review_contracts": {
                 "type": "integer"
               },
+              "max_active_review_per_principal": {
+                "type": "integer"
+              },
               "max_active_work_contracts": {
+                "type": "integer"
+              },
+              "max_active_work_per_principal": {
                 "type": "integer"
               },
               "namespace_id": {
@@ -14195,6 +15058,63 @@
         }
       }
     },
+    "/api/v1/commands/resolve_signed_return_intent": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_resolve_signed_return_intent",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_resolve_signed_return_intent"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
     "/api/v1/commands/resume_signed_review_contract": {
       "post": {
         "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
@@ -15915,6 +16835,46 @@
         }
       }
     },
+    "/api/v1/namespaces/{namespace_id}/operations/delivery-health": {
+      "get": {
+        "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.",
+        "operationId": "getDeliveryHealth",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome_id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryHealthResult"
+                }
+              }
+            },
+            "description": "Scoped queue and worker diagnostic"
+          },
+          "403": {
+            "description": "Current Namespace administrative access denied"
+          }
+        }
+      }
+    },
     "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/available-work": {
       "get": {
         "description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.",
@@ -16460,7 +17420,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SigningIdentityViewV2"
+                }
+              }
+            },
+            "description": "Current credential public identity, own Principal activity and independent Principal/credential/Namespace quota ceilings; no other Principal contract list."
           },
           "403": {
             "description": "Authorization denied."

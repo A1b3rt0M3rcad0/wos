@@ -2,6 +2,12 @@
 
 The standalone validation candidate supports Linux amd64 with SQLite or PostgreSQL 18.6. Shared contracts, race detection, HTTP/MCP and recovery have executable evidence in [backend verification](verification-2026-10-07.md) and [current UX acceptance](ux/final-acceptance.md). The native Windows CLI has separate hosted acceptance; cross-compiling a service does not establish runtime support. Release publication and integration into a consumer such as Woobe are separate actions.
 
+## Verified operator backup and restore
+
+[Opt-in operator tools](../tools/operations/README.md) provide consistent SQLite/PostgreSQL snapshots, private manifests/checksums, new-destination-only restore and read-only per-table verification. Signed-state restore requires an independently approved server ID and issuer fingerprint; private signer and CLI workspace recovery are separate. The supplied wrapper and cron/systemd/Kubernetes templates run outside WOS. They do not activate backup schedules or establish a production RPO/RTO.
+
+The source-bound CI includes real execution/review/correction/negative-proof/issuer/outbox restore journeys and two actual API-process crash/restore pilots with a durable external dedupe ledger. See [source-bound qualification and limits](stable/operational-acceptance.md), including permanent operator/CI/Compose/native receipts and the exact-head delivery gate. Restore cannot undo receiver effects or automatically recover revocations committed after a stale snapshot. Follow the cutover, security reconciliation, workspace and external alert procedures before reopening writers.
+
 ## Local installation
 
 ```sh
@@ -66,6 +72,12 @@ Numbered migrations are checksummed and forward-only. `db migrate` applies pendi
 
 Leases retain absolute UTC times and fencing. Synchronize clocks after restore; expired leases require explicit reclaim. Restore may redeliver an integration event the consumer already received, so deduplicate by `integration_event_id`. Session memory is not authoritative completion state.
 
+### Upgrade cutover for the operational candidate
+
+Pause ingress/agent mutations, preserve pending CLI intentions and stop **all old API and delivery-worker processes** before the forward schema migration. Capture a protected consistent backup and independently approved identity/issuer pin; rehearse restore and migration into a new destination first. Run `wos db migrate` with the intended candidate, then start only replicas of that same qualified source with the preserved issuer. Check readiness, current authorization/revocations, original receipts, pending authority and delivery-health before reopening writers.
+
+The qualified multi-API profile uses one source/version. A mixed old/new server rolling upgrade is outside this qualification: startup refusal of an old binary on a newer schema does not fence a process that was already running. Retire every previous process before enabling terminal-resolution writes or other new-schema behavior. Restore to a separate pre-upgrade database is the rollback procedure; reconcile later security changes, pending intentions and external receiver effects rather than downgrading the live database.
+
 ## Integrations and observability
 
 Configure `WOS_WEBHOOK_ENDPOINTS` as an array of `{id,namespace_id,url,secret_ref,key_id}`. Secrets belong in `WOS_WEBHOOK_SECRETS`, with random values of at least 32 characters. Trigger commands contain no secret values. `WOS_DELIVERY_WORKER_ENABLED=true` starts the service worker; `WOS_WEBHOOK_ALLOW_LOOPBACK=true` explicitly enables local delivery tests.
@@ -87,3 +99,66 @@ In remote PostgreSQL composition, database time arbitrates leases after guard ac
 The Dockerfile uses the pinned official Go image and copies its standard CA bundle into Alpine. A proxy with a private CA can supply `docker build --secret id=go-ca-bundle,src=/path/to/bundle.pem .`. The temporary mount is used only for verified-TLS Go downloads; it is not copied into the runtime and is unnecessary for ordinary installations. Build proxy and DNS settings belong to the host.
 
 For the stable-plan capacity envelope, data-class retention, hourly backup targets, clean restore checklist and reference diagnostics/alerts, see [the operational reference](stable/operations-reference.md).
+
+## HTTP connection and request bounds
+
+The standalone server uses explicit reference bounds, configurable through the
+same environment in native and Compose deployments:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `WOS_HTTP_READ_HEADER_TIMEOUT` | `5s` | Receive complete request headers |
+| `WOS_HTTP_READ_TIMEOUT` | `30s` | Socket read bound |
+| `WOS_HTTP_REQUEST_TIMEOUT` | `15s` | Request context; body reads are interrupted at this deadline plus a small timer margin |
+| `WOS_HTTP_WRITE_TIMEOUT` | `45s` | Ordinary response socket deadline |
+| `WOS_HTTP_IDLE_TIMEOUT` | `60s` | Keep-alive idle bound and dedicated standalone MCP GET stream lifetime |
+| `WOS_HTTP_MAX_HEADER_BYTES` | `65536` | Header parsing limit (Go also reserves a small parser buffer) |
+| `WOS_HTTP_MAX_INFLIGHT_REQUESTS` | `128` | Nonblocking ordinary request admission |
+| `WOS_MAX_CONNECTIONS` | `256` | TCP connection admission, including incomplete headers and idle clients |
+| `WOS_SHUTDOWN_TIMEOUT` | `15s` | Drain grace, followed by forced connection close |
+
+`wos config validate` rejects invalid/overflowed durations, zero/negative limits,
+read shorter than header, write not greater than request or shorter than read, headers outside
+1 KiB–1 MiB, requests outside 1–4096, and connections outside requests+2–65536.
+Shutdown may deliberately be shorter than a request: the server forces close
+at the end of that grace and the caller must reconcile an uncertain mutation.
+
+Ordinary saturation returns JSON `overloaded`, HTTP 503 and `Retry-After: 1`
+before invoking a command. Two separate request slots remain available for
+`GET /livez` and `GET /readyz`; health still reports actual storage/issuer health.
+Connection saturation closes newly accepted sockets without starting HTTP work.
+Reserved health requests do not defeat a flood that consumes all TCP capacity;
+public ingress must enforce TLS, connection/rate/header/body/time limits and
+capacity appropriate to the deployment. Forwarded client IP is not trusted for
+authorization or built-in identity limits.
+
+Request bodies have a global 272 KiB framing bound; command/MCP/session decoders
+retain narrower limits, including the 256 KiB command contract. Socket body-read
+and context deadlines are distinct. Stateless Streamable HTTP MCP uses JSON
+responses. If a host enables stateful protocol transport, standalone GET SSE
+uses its own bounded idle-timeout lifetime and both socket deadlines; the client
+reconnects without implicitly repeating a mutation. Protocol sessions do not own
+WOS business state. Metrics distinguish in-flight requests/connections,
+admission rejection, request cancellation/deadline and connection timeout, with
+fixed aggregate labels and no token, webhook URL, prompt or documentary content.
+Idle/stream expiry is not by itself a service incident.
+
+A deadline, disconnect or overload never proves that a prior attempt did not
+commit. Keep payload, CAS, fence and idempotency key unchanged; recover the
+original authenticated receipt before deciding what to do next. Existing
+`deadline_exceeded` error semantics remain in place. No SDK mutation retry is
+introduced by these limits.
+
+## Delivery health (operational hardening candidate)
+
+API health and webhook delivery health are separate. A healthy `/readyz` means the Core can serve; poll the administrative `GET /api/v1/namespaces/{namespace_id}/operations/delivery-health` for durable queue facts. Supply `?outcome_id=UUID` for an Outcome-restricted credential. The equivalent MCP tool is `wos_delivery_health`, and the Go SDK method is `GetDeliveryHealth`. Authentication and current Namespace administration are required. A `403` is not evidence of an empty queue.
+
+The response separates `queue_state` from this process's `worker` status. Ages are seconds; unavailable historical timestamps are null. `attempts_total` counts retained attempts across explicit redelivery. `last_successful_delivery` survives redelivery, but does not certify a currently pending delivery as successful. The response excludes destinations' URLs, secret references and event bodies. Worker fatal errors are classified and exposed; restart the deployment after repairing the cause. Another replica may still deliver while this process reports degraded.
+
+Set `WOS_DELIVERY_BACKLOG_MAX_AGE=5m` (default) to choose the due-age alarm threshold. External monitoring should alert on `queue_state=degraded`, any `exhausted`, or a worker expected by the deployment that is disabled, stopped or has no fresh tick. `/metrics` includes the aggregate `delivery_worker` process snapshot and delivery attempt timings. Poll a Namespace/Outcome diagnostic for queue counts, rather than treating a process heartbeat as queue state. External receivers must deduplicate `integration_event_id`; a successful receiver side effect followed by ACK loss can be delivered again.
+
+Set `WOS_DELIVERY_WORKER_ENABLED=true` to run delivery in the API process. `WOS_DELIVERY_WORKER_CONCURRENCY` defaults to 1 and accepts 1..64. Start a shared PostgreSQL deployment at four lanes only after checking receiver capacity, database contention and backlog latency. The cap limits simultaneous attempts, not requests per second; monitor the receiver's own rate limits. SQLite still serializes writes and warns when delivery concurrency exceeds one. Multiple API replicas can each run a pool; count the sum of all lanes when setting capacity. A fatal lane stops its pool visibly; the deployment supervisor owns restart. Claims/ACKs remain fenced, and there is no agent execution in these workers.
+
+## Shared deployment diagnostics
+
+The local SQLite quick-start remains unchanged. The opt-in [shared PostgreSQL/TLS reference](../deploy/shared/README.md) includes scoped instance credentials, protected persistent issuer files, volumes, health probes, resource limits and optional bounded webhook lanes. `wos config validate --deployment=shared` produces read-only, actionable advisories; it does not connect, initialize storage, generate identity or certify external controls. SQLite reports one writer. PostgreSQL reports its per-process `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` pool (default 16, explicit 1..256). Account for every replica and maintenance connection. Source `.go-version` pins the reviewed Go patch for CI/release and a distribution check keeps Docker aligned.

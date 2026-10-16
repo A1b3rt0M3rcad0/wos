@@ -28,14 +28,15 @@ func queryLimit(n int) (int, error) {
 }
 
 type queryCursor struct {
-	Namespace   domain.ID              `json:"ns"`
-	Outcome     domain.ID              `json:"outcome,omitempty"`
-	Section     string                 `json:"section"`
-	Filter      string                 `json:"filter,omitempty"`
-	Revision    domain.OutcomeRevision `json:"revision,omitempty"`
-	Index       uint32                 `json:"index,omitempty"`
-	Key         string                 `json:"key,omitempty"`
-	EvaluatedAt time.Time              `json:"evaluated_at,omitempty"`
+	CursorVersion int                    `json:"cursor_version,omitempty"`
+	Namespace     domain.ID              `json:"ns"`
+	Outcome       domain.ID              `json:"outcome,omitempty"`
+	Section       string                 `json:"section"`
+	Filter        string                 `json:"filter,omitempty"`
+	Revision      domain.OutcomeRevision `json:"revision,omitempty"`
+	Index         uint32                 `json:"index,omitempty"`
+	Key           string                 `json:"key,omitempty"`
+	EvaluatedAt   time.Time              `json:"evaluated_at,omitempty"`
 }
 
 func filterHash(v any) string {
@@ -436,6 +437,10 @@ func (s *Service) GetContinuity(ctx context.Context, scope domain.Scope, limit i
 	if err != nil {
 		return ContinuitySnapshot{}, err
 	}
+	if value, handled, e := s.projectedContinuity(ctx, scope, n); handled || e != nil {
+		return value, e
+	}
+
 	state, err := s.GetOutcomeState(ctx, scope)
 	if err != nil {
 		return ContinuitySnapshot{}, err
@@ -501,6 +506,29 @@ func (s *Service) GetContinuitySection(ctx context.Context, scope domain.Scope, 
 	if err != nil {
 		return SectionPage{}, err
 	}
+	if !ports.DirectContinuitySection(section) {
+		if _, known := derivedOptions(section); !known {
+			if e := scope.Validate(); e != nil {
+				return SectionPage{}, e
+			}
+			if e := s.authorizeScopedRead(ctx, scope); e != nil {
+				return SectionPage{}, e
+			}
+			return SectionPage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown continuity section")
+		}
+	}
+
+	if ports.DirectContinuitySection(section) {
+		page, handled, e := s.directContinuitySection(ctx, scope, section, n, cursor)
+		if handled || e != nil {
+			return page, e
+		}
+	}
+
+	if value, handled, e := s.projectedContinuitySection(ctx, scope, section, n, cursor); handled || e != nil {
+		return value, e
+	}
+
 	if cursor != "" {
 		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, section, "")
 		if err != nil {

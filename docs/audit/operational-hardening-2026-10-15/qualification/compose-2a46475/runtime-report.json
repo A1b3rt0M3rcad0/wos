@@ -1,0 +1,35 @@
+{
+  "production_sla": false,
+  "reference_only": true,
+  "results": {
+    "local-sqlite": {
+      "ready": true,
+      "app_served": true,
+      "missing_and_invalid_credentials_denied": true,
+      "cross_namespace_denied": true,
+      "outcome_id": "01a1429a-75db-7fa3-b5c9-a4dd279118d3",
+      "state_preserved_after_restart": true
+    },
+    "shared-postgres-tls": {
+      "ready": true,
+      "app_served": true,
+      "missing_and_invalid_credentials_denied": true,
+      "cross_namespace_denied": true,
+      "outcome_id": "01a1429a-7b81-7803-8136-02729c585752",
+      "state_preserved_after_restart": true,
+      "tls_certificate_verified": true,
+      "server_id": "01a14236-7f5b-7500-89af-900b88b65236",
+      "issuer_fingerprint": "sha256:82c704a9fde8a7d6a68bb3b645fcb665c57e8010b3caf4116506e7b720d0864b",
+      "issuer_identity_preserved_after_restart": true,
+      "browser_cookie_secure": true,
+      "cross_origin_session_denied": true
+    }
+  },
+  "source_commit": "2a46475193898605aecdc30c5a6cc7b971ee25ed",
+  "root_env_exact_example_copy": true,
+  "cloud_build_override": "commit metadata, build-only proxy/CA and image tag; runtime root Compose unchanged except free host port",
+  "shared_identity_preserved_across_image_upgrade": true,
+  "image_id": "sha256:efc25aee94488a24b616f63424e96486c66c4ec5038aae0ad4a0ad0ff5263ec7",
+  "runtime_user": "10001:10001",
+  "image_source_label_checked": true
+}

@@ -104,6 +104,11 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply sqlite migration %d", item.version), err)
 	}
+	if item.version == 29 {
+		if err := backfillExternalContinuityKeys(ctx, tx); err != nil {
+			return err
+		}
+	}
 	if _, err := tx.ExecContext(ctx,
 		"INSERT INTO schema_migrations(version, name, checksum, applied_at) VALUES (?, ?, ?, ?)",
 		item.version,

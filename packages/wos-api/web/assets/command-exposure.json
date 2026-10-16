@@ -425,6 +425,12 @@
     "permission": "work:write",
     "surface": "human"
   },
+  "resolve_signed_return_intent": {
+    "exposure": "S",
+    "journey": "Explicit signed return resolution; current execution/review permission and original CID enforced in Core",
+    "permission": "state:read",
+    "surface": "profile"
+  },
   "resume_signed_review_contract": {
     "exposure": "S",
     "journey": "Signed v2 review",

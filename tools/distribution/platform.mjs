@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {root,run,sha256,validVersion} from './build.mjs';
+import {verifySignedPackage} from './signed-smoke.mjs';
 
 export async function recordNativePlatform(){
  const platform=process.platform==='win32'?'windows':process.platform;
@@ -29,7 +30,8 @@ export async function recordNativePlatform(){
    assert.ok(JSON.parse(run(skillBinary,['skill','doctor','--agent','codex','--project',skillDir])).every(x=>x.action==='installed'));
    assert.equal(JSON.parse(run(skillBinary,['skill','uninstall','--agent','codex','--project',skillDir])).length,5);
  } finally { await fs.rm(skillDir,{recursive:true,force:true}); }
- const proof={schema:1,platform,arch:'amd64',version,commit,built_at:builtAt,binary_sha256:sha256(await fs.readFile(executable)),wos_binary_sha256:sha256(await fs.readFile(skillBinary)),native_host:process.platform,native_keyring_executed:true,go_tests:goTests,go:run('go',['version']),passed:true,checks:['native Go race workspace/SDK/protocol acceptance','native five-skill installer tests','native client source identity plus Go skill install']};
+ const signedSmoke=await verifySignedPackage(skillBinary,skillBinary,{requireTerminalResolution:true});
+ const proof={signed_smoke:signedSmoke,schema:1,platform,arch:'amd64',version,commit,built_at:builtAt,binary_sha256:sha256(await fs.readFile(executable)),wos_binary_sha256:sha256(await fs.readFile(skillBinary)),native_host:process.platform,native_keyring_executed:true,go_tests:goTests,go:run('go',['version']),passed:true,checks:['native Go race workspace/SDK/protocol acceptance','native five-skill installer tests','native client source identity plus Go skill install']};
  await fs.writeFile(path.join(root,'dist',`platform-${platform}-amd64.json`),JSON.stringify(proof,null,2)+'\n');return proof;
 }
 export async function verifyNativePlatforms(manifest,directory=path.join(root,'dist','acceptance')){

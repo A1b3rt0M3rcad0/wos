@@ -36,9 +36,14 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 	if os.Getenv("WOS_SIGNED_LOAD") != "1" {
 		t.Skip("opt-in signed workload; set WOS_SIGNED_LOAD=1")
 	}
+	historySizes, consumerSizes := []int{0, 16}, []int{2, 8}
+	if os.Getenv("WOS_SHARED_LOAD") == "1" {
+		historySizes = []int{0}
+		consumerSizes = []int{2, 8, 50}
+	}
 	for _, outcomes := range []int{1, 4} {
-		for _, history := range []int{0, 16} {
-			for _, consumers := range []int{2, 8} {
+		for _, history := range historySizes {
+			for _, consumers := range consumerSizes {
 				t.Run(fmt.Sprintf("outcomes=%d/history=%d/consumers=%d", outcomes, history, consumers), func(t *testing.T) {
 					ctx := context.Background()
 					now := time.Now().UTC()
@@ -103,7 +108,10 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 						oid := newID()
 						out, e := d.NewOutcome(oid, ns, "Measured signed Outcome", "", "Independent acceptance", d.PriorityNormal, now)
 						must(e)
-						out.Lifecycle = d.OutcomeLifecycleActive
+						completion, e := d.NewSuccessCriterion(newID(), out.Ref(), "Explicit Outcome conclusion remains required", "", true, d.VerificationModeAttestation)
+						must(e)
+						must(out.AddCriterion(completion, now))
+						must(out.Activate(now))
 						must(u.Outcomes().Insert(ctx, out))
 						scopes = append(scopes, d.Scope{NamespaceID: ns, OutcomeID: oid})
 					}
@@ -255,11 +263,57 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 							must(e)
 						}
 					}
+					// Every consumer collides on one exact expected version. Only
+					// transaction conflicts retry the unchanged command; semantic
+					// version conflicts never advance the caller's expectation.
+					collision := createTask(scopes[0])
+					var collisionWinners, versionRejections, collisionConflicts, collisionRetries atomic.Uint64
+					var collisionWG sync.WaitGroup
+					collisionStart := make(chan struct{})
+					collisionErrors := make(chan error, consumers)
+					for i := range consumers {
+						collisionWG.Add(1)
+						go func(i int) {
+							defer collisionWG.Done()
+							ex := executors[i]
+							cc := next(ex)
+							cmd := a.AcquireSignedWorkContractCommand{Scope: collision.Scope, WorkItemID: collision.ID, ExpectedWorkItemVersion: collision.Version, SignerKeyID: ex.key, TTLSeconds: 300}
+							<-collisionStart
+							_, e := retrySignedLoadMutation(func() (a.MutationResult[a.WorkContractResult], error) {
+								return service.AcquireSignedWorkContract(ex.ctx, cc, cmd)
+							}, &collisionConflicts, &collisionRetries)
+							if e == nil {
+								collisionWinners.Add(1)
+							} else if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeVersionConflict {
+								versionRejections.Add(1)
+							} else {
+								collisionErrors <- e
+							}
+						}(i)
+					}
+					close(collisionStart)
+					collisionWG.Wait()
+					close(collisionErrors)
+					for e := range collisionErrors {
+						must(e)
+					}
+					if collisionWinners.Load() != 1 || versionRejections.Load() != uint64(consumers-1) {
+						t.Fatal("version collision did not retain one winner", collisionWinners.Load(), versionRejections.Load())
+					}
 					tasks := make([][]d.WorkItem, consumers)
 					for i := range tasks {
 						for j := 0; j < 2; j++ {
-							tasks[i] = append(tasks[i], createTask(scopes[i%outcomes]))
+							tasks[i] = append(tasks[i], createTask(scopes[(i+j*consumers)%outcomes]))
 						}
+					}
+					activeScopes := map[d.Scope]bool{}
+					for _, group := range tasks {
+						for _, task := range group {
+							activeScopes[task.Scope] = true
+						}
+					}
+					if len(activeScopes) != outcomes {
+						t.Fatal("declared Outcome count was not exercised", len(activeScopes), outcomes)
 					}
 					conflicts.Store(0)
 					retries.Store(0)
@@ -306,14 +360,21 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					deliveryCount := 0
 					stableIDs := map[string]bool{}
 					for _, scope := range scopes {
-						page, e := service.ListDeliveries(adminCtx, scope, 100, "")
-						must(e)
-						for _, delivery := range page.Items {
-							if stableIDs[delivery.ID] {
-								t.Fatal("duplicate stable delivery identity")
+						cursor := ""
+						for {
+							page, e := service.ListDeliveries(adminCtx, scope, 100, cursor)
+							must(e)
+							for _, delivery := range page.Items {
+								if stableIDs[delivery.ID] {
+									t.Fatal("duplicate stable delivery identity")
+								}
+								stableIDs[delivery.ID] = true
+								deliveryCount++
 							}
-							stableIDs[delivery.ID] = true
-							deliveryCount++
+							if page.NextCursor == "" {
+								break
+							}
+							cursor = page.NextCursor
 						}
 					}
 					if deliveryCount != outcomes*history+consumers*2 {
@@ -362,7 +423,7 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 						waits = append(waits, float64(v.TransactionWait.Microseconds())/1000)
 						guards = append(guards, float64(v.GuardDuration.Microseconds())/1000)
 					}
-					report := map[string]any{"outcomes": outcomes, "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment}
+					report := map[string]any{"outcomes": outcomes, "active_outcomes": len(activeScopes), "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment, "version_collision_winners": collisionWinners.Load(), "version_collision_rejections": versionRejections.Load(), "collision_transaction_conflicts": collisionConflicts.Load(), "collision_exact_retries": collisionRetries.Load()}
 					raw, e := json.Marshal(report)
 					must(e)
 					t.Log("SIGNED_LOAD " + string(raw))

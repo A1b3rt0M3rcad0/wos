@@ -154,7 +154,7 @@ func compactProfileStatusV2(profile ProfileV2, identity a.SigningIdentityView) a
 	if selected != nil {
 		omitted--
 	}
-	return map[string]any{"profile": compactProfileV2(profile), "selected_key": selected, "credential_restriction": restriction, "keys_truncated": identity.KeysTruncated, "omitted_other_keys": omitted, "authorization": "each operation rechecks current grant, credential policy, scope and authority on the server"}
+	return map[string]any{"profile": compactProfileV2(profile), "selected_key": selected, "credential_restriction": restriction, "quotas": identity.Quotas, "keys_truncated": identity.KeysTruncated, "omitted_other_keys": omitted, "authorization": "each operation rechecks current grant, credential policy, scope and authority on the server"}
 }
 func projectInitializeV2(w *Workspace, o options) (Output, error) {
 	result := Output{Operation: "project init"}

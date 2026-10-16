@@ -1,0 +1,7 @@
+{
+  "source_commit": "a9914906c9defbac2940232ea8ba120f046b66db",
+  "complete": false,
+  "reason": "Stopped the preliminary run to require all declared Outcomes to receive work even with two consumers; no complete matrix acceptance is claimed.",
+  "completed_case_count": 8,
+  "raw_reports_retained_locally": "/tmp/wos-shared-contention-a991490"
+}

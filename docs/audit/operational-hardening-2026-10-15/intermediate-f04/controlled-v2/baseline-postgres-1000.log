@@ -1,0 +1,14 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	  71905414 ns/op	  64038212 p50_ns	 113706030 p95_ns	 208929725 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      7486 response_bytes	        34.00 sql_statements/op	12488778 B/op	  151857 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	  73418715 ns/op	  68680252 p50_ns	 114563408 p95_ns	 129214939 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      7486 response_bytes	        34.00 sql_statements/op	12488252 B/op	  151852 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	 106068208 ns/op	 101616228 p50_ns	 143993279 p95_ns	 332505214 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      7486 response_bytes	        34.00 sql_statements/op	12487876 B/op	  151852 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	 124765601 ns/op	 109814150 p50_ns	 228488918 p95_ns	 345100095 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	     32351 response_bytes	        34.00 sql_statements/op	12853609 B/op	  152124 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	  94061157 ns/op	  86427801 p50_ns	 143866214 p95_ns	 248591674 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	     32351 response_bytes	        34.00 sql_statements/op	12853202 B/op	  152121 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/1000-3        	      80	  82803953 ns/op	  69468812 p50_ns	 149669722 p95_ns	 231468759 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	     32351 response_bytes	        34.00 sql_statements/op	12852880 B/op	  152122 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  19182345 ns/op	  16200994 p50_ns	  33628069 p95_ns	  61425395 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      2209 response_bytes	        36.00 sql_statements/op	  109078 B/op	    2123 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  28400329 ns/op	  22833003 p50_ns	  47960509 p95_ns	 228239053 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      2209 response_bytes	        36.00 sql_statements/op	  107834 B/op	    2113 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  19222967 ns/op	  17215461 p50_ns	  31575785 p95_ns	  35268714 p99_ns	         0 pool_wait_ns/op	         0 pool_waits/op	      2209 response_bytes	        36.00 sql_statements/op	  107839 B/op	    2113 allocs/op
+PASS

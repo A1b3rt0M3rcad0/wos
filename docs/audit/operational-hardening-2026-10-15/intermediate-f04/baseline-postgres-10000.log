@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	1260823123 ns/op	 445868777 p50_ns	 626007231 p95_ns	24440205370 p99_ns	      7488 response_bytes	129972135 B/op	 1502314 allocs/op
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	 684616718 ns/op	 598777153 p50_ns	1280767646 p95_ns	1288659435 p99_ns	      7488 response_bytes	129970812 B/op	 1502304 allocs/op
+BenchmarkOperationalReads/section_work_items/10000-3         	      30	 632049522 ns/op	 570404429 p50_ns	1158389383 p95_ns	1290726815 p99_ns	      7488 response_bytes	129972619 B/op	 1502311 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 509742561 ns/op	 489051912 p50_ns	 630542719 p95_ns	 649301869 p99_ns	     32361 response_bytes	133736922 B/op	 1502589 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 534047567 ns/op	 528754535 p50_ns	 619187468 p95_ns	 675978320 p99_ns	     32361 response_bytes	133736979 B/op	 1502591 allocs/op
+BenchmarkOperationalReads/snapshot_with_proof/10000-3        	      30	 576347546 ns/op	 565728900 p50_ns	 692790706 p95_ns	 697978756 p99_ns	     32361 response_bytes	133736121 B/op	 1502582 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	  28367919 ns/op	  27947375 p50_ns	  33864985 p95_ns	  35312553 p99_ns	      2209 response_bytes	  111184 B/op	    2140 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	  27765390 ns/op	  25458886 p50_ns	  44518612 p95_ns	  45602150 p99_ns	      2209 response_bytes	  107826 B/op	    2113 allocs/op
+BenchmarkOperationalReads/focal_with_proof/10000-3           	      30	  28367253 ns/op	  28407334 p50_ns	  38194710 p95_ns	  43896926 p99_ns	      2209 response_bytes	  107864 B/op	    2113 allocs/op
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	202.872s

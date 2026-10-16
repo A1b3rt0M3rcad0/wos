@@ -1,0 +1,229 @@
+package sqlite
+
+import (
+	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"encoding/json"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strings"
+)
+
+type continuityReadRepository struct{ u *unitOfWork }
+
+func (u *unitOfWork) ContinuityReads() ports.ContinuityReadRepository {
+	return continuityReadRepository{u}
+}
+func (r continuityReadRepository) row(ctx context.Context, q string, args ...any) *sql.Row {
+	return r.u.tx.QueryRowContext(ctx, q, args...)
+}
+func (r continuityReadRepository) rows(ctx context.Context, q string, args ...any) (*sql.Rows, error) {
+	return r.u.tx.QueryContext(ctx, q, args...)
+}
+func directSectionSQL(section string) (table, title, priority string, kind d.EntityKind) {
+	priority = "''"
+	switch section {
+	case "work_items":
+		return "work_items", "title", "priority", d.EntityKindWorkItem
+	case "objectives":
+		return "objectives", "title", "priority", d.EntityKindObjective
+	case "issues":
+		return "issues", "title", priority, d.EntityKindIssue
+	case "blockers":
+		return "blockers", "description", priority, d.EntityKindBlocker
+	case "artifacts":
+		return "artifacts", "name", priority, d.EntityKindArtifact
+	case "evidence":
+		return "evidence", "description", priority, d.EntityKindEvidence
+	case "decisions":
+		return "decisions", "title", priority, d.EntityKindDecision
+	case "relations", "evidence_links", "external_references":
+		if section == "external_references" {
+			table = "outcome_external_references"
+		} else {
+			table = section
+		}
+		return table, "", priority, ""
+	}
+	return "", "", "", ""
+}
+func (r continuityReadRepository) Page(ctx context.Context, scope d.Scope, section, after string, limit int) (ports.ContinuityReadPage, error) {
+	result := ports.ContinuityReadPage{Items: []ports.ContinuityReadItem{}}
+	if e := scope.Validate(); e != nil {
+		return result, e
+	}
+	if limit < 1 || limit > 101 {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid continuity repository limit")
+	}
+	table, title, priority, kind := directSectionSQL(section)
+	if table == "" {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "unknown direct continuity section")
+	}
+	sortKey := "id"
+	columns := "id,version,substr(" + title + ",1,512),lifecycle," + priority
+	switch section {
+	case "relations":
+		columns = relationReadColumns
+	case "evidence_links":
+		columns = evidenceLinkReadColumns
+	case "external_references":
+		sortKey = "continuity_sort_key"
+		columns = "provider,context_kind,external_id,url,continuity_sort_key"
+	}
+	if after != "" && section != "external_references" {
+		if _, e := d.ParseID(after); e != nil {
+			return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: invalid section key")
+		}
+	}
+	// External reference cursors carry only the digest, never a possibly long URL.
+	if section == "external_references" && strings.HasPrefix(after, "h:") {
+		if len(after) != 66 {
+			return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: reference digest")
+		}
+		var key string
+		e := r.row(ctx, `SELECT continuity_sort_key FROM outcome_external_references WHERE namespace_id=? AND outcome_id=? AND continuity_key_digest=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after[2:]).Scan(&key)
+		if e == sql.ErrNoRows {
+			return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: section key is missing")
+		}
+		if e != nil {
+			return result, mapSQLError("resolve external continuity cursor", e)
+		}
+		after = key
+	}
+	countQuery := "SELECT COUNT(*),COALESCE(SUM(CASE WHEN " + sortKey + ">? THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN " + sortKey + "=? THEN 1 ELSE 0 END),0) FROM " + table + " WHERE namespace_id=? AND outcome_id=?"
+	var afterCount, exists int
+	if e := r.row(ctx, countQuery, after, after, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&result.Count, &afterCount, &exists); e != nil {
+		return result, mapSQLError("count scoped continuity page", e)
+	}
+	if after != "" && exists != 1 {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: section key is missing")
+	}
+	query := "SELECT " + columns + " FROM " + table + " WHERE namespace_id=? AND outcome_id=? AND " + sortKey + ">? ORDER BY " + sortKey + " LIMIT ?"
+	rows, e := r.rows(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	if e != nil {
+		return result, mapSQLError("read scoped continuity page", e)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var value any
+		var key string
+		switch section {
+		case "relations":
+			v, e := scanRelation(rows, scope)
+			if e != nil {
+				return result, e
+			}
+			value = v
+			key = v.ID.String()
+		case "evidence_links":
+			v, e := scanEvidenceLink(rows, scope)
+			if e != nil {
+				return result, e
+			}
+			value = v
+			key = v.ID.String()
+		case "external_references":
+			var v d.ExternalReference
+			if e = rows.Scan(&v.Provider, &v.Kind, &v.ExternalID, &v.URL, &key); e != nil {
+				return result, e
+			}
+			raw, e := json.Marshal(v)
+			if e != nil {
+				return result, e
+			}
+			if string(raw) != key {
+				return result, d.NewError(d.ErrorCodeInvalidConfig, "external continuity key does not match persisted reference")
+			}
+			value = v
+		default:
+			var id, title, lifecycle, priority string
+			var version d.Version
+			if e = rows.Scan(&id, &version, &title, &lifecycle, &priority); e != nil {
+				return result, e
+			}
+			parsed, e := d.ParseID(id)
+			if e != nil {
+				return result, e
+			}
+			key = id
+			value = ports.Summarize(d.EntityRef{Scope: scope, Kind: kind, ID: parsed}, version, title, lifecycle, d.Priority(priority))
+		}
+		raw, e := json.Marshal(value)
+		if e != nil {
+			return result, e
+		}
+		result.Items = append(result.Items, ports.ContinuityReadItem{Key: key, Value: raw})
+	}
+	if e = rows.Err(); e != nil {
+		return result, mapSQLError("read scoped continuity page", e)
+	}
+	result.Remaining = afterCount - len(result.Items)
+	return result, nil
+}
+func externalContinuityKey(v d.ExternalReference) (string, string, error) {
+	raw, e := json.Marshal(v)
+	if e != nil {
+		return "", "", e
+	}
+	sum := sha256.Sum256(raw)
+	return string(raw), hex.EncodeToString(sum[:]), nil
+}
+
+// Every batch is drained before updates, bounding migration memory and avoiding
+// concurrent active result sets on a PostgreSQL transaction connection.
+func backfillExternalContinuityKeys(ctx context.Context, tx *sql.Tx) error {
+	for {
+		rows, e := tx.QueryContext(ctx, `SELECT namespace_id,outcome_id,provider,context_kind,external_id,url FROM outcome_external_references WHERE continuity_sort_key IS NULL ORDER BY namespace_id,outcome_id,provider,context_kind,external_id LIMIT 100`)
+		if e != nil {
+			return mapSQLError("read external continuity backfill", e)
+		}
+		type entry struct {
+			ns, outcome string
+			ref         d.ExternalReference
+		}
+		batch := []entry{}
+		for rows.Next() {
+			var v entry
+			if e = rows.Scan(&v.ns, &v.outcome, &v.ref.Provider, &v.ref.Kind, &v.ref.ExternalID, &v.ref.URL); e != nil {
+				rows.Close()
+				return e
+			}
+			batch = append(batch, v)
+		}
+		e = rows.Err()
+		rows.Close()
+		if e != nil {
+			return e
+		}
+		if len(batch) == 0 {
+			return nil
+		}
+		for _, v := range batch {
+			key, digest, e := externalContinuityKey(v.ref)
+			if e != nil {
+				return e
+			}
+			if _, e = tx.ExecContext(ctx, `UPDATE outcome_external_references SET continuity_sort_key=?,continuity_key_digest=? WHERE namespace_id=? AND outcome_id=? AND provider=? AND context_kind=? AND external_id=? AND continuity_sort_key IS NULL`, key, digest, v.ns, v.outcome, v.ref.Provider, v.ref.Kind, v.ref.ExternalID); e != nil {
+				return mapSQLError("backfill external continuity key", e)
+			}
+		}
+	}
+}
+
+var _ ports.ContinuityReadUnitOfWork = (*unitOfWork)(nil)
+
+func (r continuityReadRepository) Outcome(ctx context.Context, scope d.Scope) (ports.ContinuitySummary, error) {
+	var zero ports.ContinuitySummary
+	if e := scope.Validate(); e != nil {
+		return zero, e
+	}
+	var version d.Version
+	var title, lifecycle, priority string
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority)
+	if e != nil {
+		return zero, mapSQLError("read continuity Outcome metadata", e)
+	}
+	return ports.Summarize(d.EntityRef{Scope: scope, Kind: d.EntityKindOutcome, ID: scope.OutcomeID}, version, title, lifecycle, d.Priority(priority)), nil
+}

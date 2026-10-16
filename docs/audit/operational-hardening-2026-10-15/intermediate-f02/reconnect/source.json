@@ -1,0 +1,8 @@
+{
+  "parent": "28231c3723331482057ae097ad918d29d828b4f5",
+  "qualification": "30 real stateful SSE close/reconnect and JSON POST repetitions under race; intermediate source",
+  "sha256": {
+    "packages/wos-api/internal/server/http_limits.go": "54857d42d469b5aba747f88b779cb40ea9dc9147865bcb413001d7dbfc1b5e74",
+    "packages/wos-api/internal/server/http_mcp_limits_test.go": "b3d474ab82381af39996e68a1b331e52336b23afcb30cf9d83e71eb7cf923140"
+  }
+}

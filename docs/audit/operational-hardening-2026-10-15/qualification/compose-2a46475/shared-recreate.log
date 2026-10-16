@@ -1,0 +1,7 @@
+ Container wos-operational-shared-20261016-postgres-1  Running
+ Container wos-operational-shared-20261016-wos-1  Recreate
+ Container wos-operational-shared-20261016-wos-1  Recreated
+ Container wos-operational-shared-20261016-postgres-1  Waiting
+ Container wos-operational-shared-20261016-postgres-1  Healthy
+ Container wos-operational-shared-20261016-wos-1  Starting
+ Container wos-operational-shared-20261016-wos-1  Started

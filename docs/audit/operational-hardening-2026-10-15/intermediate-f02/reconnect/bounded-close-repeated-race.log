@@ -1,0 +1,604 @@
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:42.493833577Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":8.199329}
+{"time":"2026-10-16T00:38:42.496580272Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.170055}
+{"time":"2026-10-16T00:38:43.101937169Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":604.538261}
+{"time":"2026-10-16T00:38:43.117302204Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":4.232898}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.80s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:45.576374306Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.936921}
+{"time":"2026-10-16T00:38:45.579483278Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.422643}
+{"time":"2026-10-16T00:38:46.181349158Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.890397}
+{"time":"2026-10-16T00:38:46.183374652Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.604649}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.04s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:48.713531883Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":43.444677}
+{"time":"2026-10-16T00:38:48.734060371Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.372532}
+{"time":"2026-10-16T00:38:49.336810281Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.340009}
+{"time":"2026-10-16T00:38:49.339578716Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.568047}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.17s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:51.867741925Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.686833}
+{"time":"2026-10-16T00:38:51.871773212Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":2.032782}
+{"time":"2026-10-16T00:38:52.473288016Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.771866}
+{"time":"2026-10-16T00:38:52.476649743Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.588185}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.12s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:55.087917778Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.607529}
+{"time":"2026-10-16T00:38:55.089974014Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.646395}
+{"time":"2026-10-16T00:38:55.691660136Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.471578}
+{"time":"2026-10-16T00:38:55.695087382Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.781928}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.21s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:38:57.86055279Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.918261}
+{"time":"2026-10-16T00:38:57.862063377Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.20394}
+{"time":"2026-10-16T00:38:58.463220749Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.535402}
+{"time":"2026-10-16T00:38:58.46568271Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.572966}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.77s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:00.715453851Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.91965}
+{"time":"2026-10-16T00:39:00.717209837Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.629145}
+{"time":"2026-10-16T00:39:01.319169352Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.308676}
+{"time":"2026-10-16T00:39:01.327250798Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.913935}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.86s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:04.101412281Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.478696}
+{"time":"2026-10-16T00:39:04.103205169Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.296193}
+{"time":"2026-10-16T00:39:04.705101145Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.068466}
+{"time":"2026-10-16T00:39:04.707798692Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.628315}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.38s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:06.820834019Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.763629}
+{"time":"2026-10-16T00:39:06.826500038Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.379412}
+{"time":"2026-10-16T00:39:07.428255794Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.693072}
+{"time":"2026-10-16T00:39:07.434041265Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.833389}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.73s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:09.651917784Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.892352}
+{"time":"2026-10-16T00:39:09.653490114Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.279268}
+{"time":"2026-10-16T00:39:10.254528558Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.215986}
+{"time":"2026-10-16T00:39:10.256896041Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.838439}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.81s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:12.361021023Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.344834}
+{"time":"2026-10-16T00:39:12.362670654Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.245314}
+{"time":"2026-10-16T00:39:12.963827381Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.375124}
+{"time":"2026-10-16T00:39:12.965833609Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.713586}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.71s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:15.435546695Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.728038}
+{"time":"2026-10-16T00:39:15.438807652Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.64043}
+{"time":"2026-10-16T00:39:16.082728724Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":642.36044}
+{"time":"2026-10-16T00:39:16.087052055Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.344169}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.12s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:18.251052462Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":5.441039}
+{"time":"2026-10-16T00:39:18.254589641Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.656532}
+{"time":"2026-10-16T00:39:18.858989491Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.676191}
+{"time":"2026-10-16T00:39:18.861898365Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.842593}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.77s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:21.022142376Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.71999}
+{"time":"2026-10-16T00:39:21.024494175Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.410846}
+{"time":"2026-10-16T00:39:21.625523208Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.284944}
+{"time":"2026-10-16T00:39:21.628182334Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.810548}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.76s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:24.198190712Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.5557}
+{"time":"2026-10-16T00:39:24.208318888Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":2.975072}
+{"time":"2026-10-16T00:39:24.8128171Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":602.576498}
+{"time":"2026-10-16T00:39:24.823153083Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":2.145609}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.20s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:27.073339785Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":0.984306}
+{"time":"2026-10-16T00:39:27.075017778Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.298713}
+{"time":"2026-10-16T00:39:27.676222431Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.421017}
+{"time":"2026-10-16T00:39:27.679244693Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.605021}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.85s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:29.711877125Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.153957}
+{"time":"2026-10-16T00:39:29.713467194Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.2638}
+{"time":"2026-10-16T00:39:30.31579701Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.118181}
+{"time":"2026-10-16T00:39:30.317840803Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.607087}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.63s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:32.595286134Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":2.046292}
+{"time":"2026-10-16T00:39:32.597217939Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.384558}
+{"time":"2026-10-16T00:39:33.198086004Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.248646}
+{"time":"2026-10-16T00:39:33.201487318Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.70822}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.88s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:35.587577185Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.563115}
+{"time":"2026-10-16T00:39:35.588938249Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.326978}
+{"time":"2026-10-16T00:39:36.189993796Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.461146}
+{"time":"2026-10-16T00:39:36.192637329Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.571285}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.98s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:39.543241924Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.22144}
+{"time":"2026-10-16T00:39:39.545294697Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.234649}
+{"time":"2026-10-16T00:39:40.14654782Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.641852}
+{"time":"2026-10-16T00:39:40.148911806Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.765333}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.95s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:42.702677704Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.056905}
+{"time":"2026-10-16T00:39:42.704565848Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.487386}
+{"time":"2026-10-16T00:39:43.306929848Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.761698}
+{"time":"2026-10-16T00:39:43.310187556Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.057324}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.16s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:46.098772875Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.477966}
+{"time":"2026-10-16T00:39:46.104556175Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.86442}
+{"time":"2026-10-16T00:39:46.708411626Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":602.654905}
+{"time":"2026-10-16T00:39:46.71641818Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":2.051263}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (3.42s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:50.182899119Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.302619}
+{"time":"2026-10-16T00:39:50.184651674Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.265956}
+{"time":"2026-10-16T00:39:50.785840282Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.567205}
+{"time":"2026-10-16T00:39:50.791136157Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.755688}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (4.05s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:54.631702375Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":4.540685}
+{"time":"2026-10-16T00:39:54.635611589Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.965575}
+{"time":"2026-10-16T00:39:55.245367685Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":607.851268}
+{"time":"2026-10-16T00:39:55.255318815Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":3.027963}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (4.46s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:39:57.623939096Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.473258}
+{"time":"2026-10-16T00:39:57.625948136Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.258551}
+{"time":"2026-10-16T00:39:58.228014725Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":601.222953}
+{"time":"2026-10-16T00:39:58.230534746Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.92051}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.97s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:40:00.493944174Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":3.849358}
+{"time":"2026-10-16T00:40:00.496838631Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.460905}
+{"time":"2026-10-16T00:40:01.09887602Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.578138}
+{"time":"2026-10-16T00:40:01.104490082Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":3.875828}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.87s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:40:03.212652834Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.562894}
+{"time":"2026-10-16T00:40:03.213731869Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.194937}
+{"time":"2026-10-16T00:40:03.814947136Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.574681}
+{"time":"2026-10-16T00:40:03.817231379Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.663891}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.71s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:40:06.140893017Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.398773}
+{"time":"2026-10-16T00:40:06.143285172Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.664036}
+{"time":"2026-10-16T00:40:06.745003539Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.785966}
+{"time":"2026-10-16T00:40:06.747517647Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.720976}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.93s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:40:09.091175019Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.265082}
+{"time":"2026-10-16T00:40:09.09423009Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.662367}
+{"time":"2026-10-16T00:40:09.695915131Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.407}
+{"time":"2026-10-16T00:40:09.699544594Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":1.406317}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.95s)
+=== RUN   TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories
+--- PASS: TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories (0.00s)
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257
+=== RUN   TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number
+--- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/0 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/-1 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/257 (0.00s)
+    --- PASS: TestDeploymentPoolEnvironmentAndDeclarationsAreValidated/not-a-number (0.00s)
+=== RUN   TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines
+{"time":"2026-10-16T00:40:11.786396385Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":540,"correlation_id":"","duration_ms":1.324146}
+{"time":"2026-10-16T00:40:11.789233346Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":202,"bytes":0,"correlation_id":"","duration_ms":0.367218}
+{"time":"2026-10-16T00:40:12.391714294Z","level":"INFO","msg":"request","method":"GET","route":"","path":"/mcp","status":200,"bytes":6,"correlation_id":"","duration_ms":600.433689}
+{"time":"2026-10-16T00:40:12.393917653Z","level":"INFO","msg":"request","method":"POST","route":"","path":"/mcp","status":200,"bytes":36,"correlation_id":"","duration_ms":0.58015}
+--- PASS: TestMCPJSONAndStandaloneStreamHaveBoundedDistinctDeadlines (2.69s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server	93.115s
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.00s)
+=== RUN   TestUnifiedSharedConfigValidationDoesNotInitializeStorage
+--- PASS: TestUnifiedSharedConfigValidationDoesNotInitializeStorage (0.01s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos	1.103s

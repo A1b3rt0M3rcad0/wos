@@ -223,6 +223,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ResolveIssueAndBlockersCommand](c, "resolve_issue_and_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveIssueAndBlockersCommand) (any, error) {
 		return service.ResolveIssueAndBlockers(ctx, cc, cmd)
 	})
+	register[application.ResolveSignedReturnIntentCommand](c, "resolve_signed_return_intent", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveSignedReturnIntentCommand) (any, error) {
+		return service.ResolveSignedReturnIntent(ctx, cc, cmd)
+	})
 	register[application.ResumeSignedReviewContractCommand](c, "resume_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeSignedReviewContractCommand) (any, error) {
 		return service.ResumeSignedReviewContract(ctx, cc, cmd)
 	})

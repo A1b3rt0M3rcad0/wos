@@ -97,7 +97,7 @@ func SignedSchema(t reflect.Type) map[string]any {
 			schema["pattern"] = "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 		}
 		if t == reflect.TypeFor[signing.PayloadType]() {
-			schema["enum"] = []string{string(signing.ContractSpec), string(signing.ContractAuthority), string(signing.WorkReturn), string(signing.ReviewReturn), string(signing.AcceptanceReceipt), string(signing.KeyEnrollment)}
+			schema["enum"] = []string{string(signing.ContractSpec), string(signing.ContractAuthority), string(signing.WorkReturn), string(signing.ReviewReturn), string(signing.AcceptanceReceipt), string(signing.KeyEnrollment), string(signing.ReturnResolution), string(signing.ReturnResolutionReceipt)}
 		}
 		return schema
 	case reflect.Bool:

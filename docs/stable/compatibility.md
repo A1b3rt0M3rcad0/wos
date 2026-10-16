@@ -1,6 +1,6 @@
 # Stable public compatibility contract
 
-Candidate baseline: 0.4.0. Product 1.0 is gated by the original plan and actual immutable-source acceptance; this document alone does not publish or certify that release.
+Published baseline: [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), source b572269085494ddd4d6370716ff1cb360b46065f. The operational candidate is unreleased; its additive changes and old-client limits are reviewed in [the operational compatibility record](operational-contract-review.md). Product 1.0 is gated by the original plan and actual immutable-source acceptance; this document alone does not publish or certify that release.
 
 | Identity | Supported compatibility |
 | --- | --- |
@@ -22,3 +22,5 @@ The API schemas and CLI contract/YAML JSON schemas are frozen in `public-contrac
 Existing exit categories remain: 2 usage/validation, 3 authorization, 4 content/version conflict, 5 expired/stale authority, 6 transport/infrastructure, 7 unmet verification, 9 local material/recovery. JSON client output remains operation/committed/data/error/receipt information. Common human copy and command aliases do not rename wire identifiers or on-disk issued/protected schema fields.
 
 Apache-2.0 remains the existing owner-selected license. It applies consistently to the public package, native archives and OCI labels. Historical service/skills npm source manifests are private compatibility fixtures. No Source-Available or proprietary claim replaces the actual license. Hosted managed instances and service sales are separate commercial operations; this stable plan makes no legal license change.
+
+Operational qualification, actual released-binary refusal and the source-bound head gate are recorded in [operational acceptance](operational-acceptance.md). Historical reference manifests remain immutable; a new-schema database is never opened by an old writer as a rollback strategy.

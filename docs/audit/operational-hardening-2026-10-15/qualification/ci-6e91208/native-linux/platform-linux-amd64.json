@@ -1,0 +1,48 @@
+{
+  "signed_smoke": {
+    "terminal_return_resolution": "verified",
+    "protocol": "signed_contracts_v2",
+    "profiles": [
+      "executor",
+      "reviewer"
+    ],
+    "checks": [
+      "approved enrollment",
+      "protected profile secret references",
+      "signed checkout/show",
+      "work finish and cleanup",
+      "independent review finish and cleanup",
+      "changes requested, fresh correction and explicit finding response",
+      "required original criterion assessment",
+      "post-cleanup work/review recover"
+    ]
+  },
+  "schema": 1,
+  "platform": "linux",
+  "arch": "amd64",
+  "version": "0.4.2",
+  "commit": "6e91208598ab50ca7820bb90a3cc5b3846efa696",
+  "built_at": "2026-10-16T02:31:13Z",
+  "binary_sha256": "998b4cc7cfbc18afad4ed16af7d3a64634420d6c2fc38b8e21847f7d4403d141",
+  "wos_binary_sha256": "aa71dfdbe3bd09e9a38d7f14d55437df536ac79ffe437b5390215de6de4e9d46",
+  "native_host": "linux",
+  "native_keyring_executed": true,
+  "go_tests": {
+    "passed": 109,
+    "skipped": [
+      "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+      "github.com/A1b3rt0M3rcad0/wos/tests/acceptance:TestClientEvidenceCommitLossRotationAndExplicitAchievement/postgres",
+      "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+      "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+      "github.com/A1b3rt0M3rcad0/wos/tests/acceptance:TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/postgres",
+      "github.com/A1b3rt0M3rcad0/wos/tests/acceptance:TestHTTPAcquisitionMCPResumeAndSDKReceipts/postgres"
+    ]
+  },
+  "go": "go version go1.27.2 linux/amd64",
+  "passed": true,
+  "checks": [
+    "native Go race workspace/SDK/protocol acceptance",
+    "native five-skill installer tests",
+    "native client source identity plus Go skill install"
+  ]
+}

@@ -1,0 +1,54 @@
+=== RUN   TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing
+    integration_contract_test.go:83: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing (2.33s)
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql
+    issuer_recovery_test.go:68: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore (2.06s)
+    --- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory (0.05s)
+    --- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql (2.01s)
+=== RUN   TestSignedReturnResolutionSurvivesCleanRestore
+    signed_return_resolution_test.go:511: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestSignedReturnResolutionSurvivesCleanRestore (2.55s)
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql
+    signed_review_journey_test.go:140: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:140: clean database restore preserved execution authority; continuing the same authenticated journey
+    signed_review_journey_test.go:305: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:305: clean database restore preserved review authority; continuing the same authenticated journey
+    signed_review_journey_test.go:436: operator tool restored sqlite into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:436: clean database restore preserved correction authority; continuing the same authenticated journey
+--- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority (12.81s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory (4.62s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql (8.20s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	20.832s
+=== RUN   TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing
+    integration_contract_test.go:85: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing (23.79s)
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory
+=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql
+    issuer_recovery_test.go:70: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore (23.31s)
+    --- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/memory (0.05s)
+    --- PASS: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore/sql (23.25s)
+=== RUN   TestSignedReturnResolutionSurvivesCleanRestore
+    signed_return_resolution_test.go:517: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+--- PASS: TestSignedReturnResolutionSurvivesCleanRestore (24.44s)
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory
+=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql
+    signed_review_journey_test.go:142: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:142: clean database restore preserved execution authority; continuing the same authenticated journey
+    signed_review_journey_test.go:307: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:307: clean database restore preserved review authority; continuing the same authenticated journey
+    signed_review_journey_test.go:438: operator tool restored postgres into a new destination; approved public pin and every logical table digest verified; continuing actual authority journey
+    signed_review_journey_test.go:438: clean database restore preserved correction authority; continuing the same authenticated journey
+--- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority (38.29s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/memory (4.48s)
+    --- PASS: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority/sql (33.80s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	110.890s

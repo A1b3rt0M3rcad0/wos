@@ -1,0 +1,12 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	   1136163 ns/op	    994072 p50_ns	   2296503 p95_ns	   3154086 p99_ns	      7474 response_bytes	   85398 B/op	     610 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	   1043324 ns/op	   1003779 p50_ns	   1691508 p95_ns	   2900292 p99_ns	      7474 response_bytes	   85130 B/op	     607 allocs/op
+BenchmarkOperationalReads/section_work_items/1000-3         	      80	    957907 ns/op	    765634 p50_ns	   2001490 p95_ns	   3305631 p99_ns	      7474 response_bytes	   85083 B/op	     606 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  11699631 ns/op	  11527654 p50_ns	  14288307 p95_ns	  26130724 p99_ns	      2209 response_bytes	   58778 B/op	    1154 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  12291923 ns/op	  11762693 p50_ns	  16975292 p95_ns	  22580635 p99_ns	      2209 response_bytes	   57435 B/op	    1141 allocs/op
+BenchmarkOperationalReads/focal_with_proof/1000-3           	      80	  11301456 ns/op	  10619050 p50_ns	  15128024 p95_ns	  25710247 p99_ns	      2209 response_bytes	   57768 B/op	    1142 allocs/op
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	3.736s

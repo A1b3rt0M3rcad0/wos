@@ -1,0 +1,141 @@
+package sqlite
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"testing"
+	"time"
+)
+
+// Identical harness is run on the archived v0.4.2 and candidate sources. Domain
+// constructors validate the rich fixture; one UOW preloads it outside timing.
+// No assessment or aggregate is fabricated by direct SQL insertion.
+func BenchmarkOperationalReads(b *testing.B) {
+	n, e := strconv.Atoi(os.Getenv("WOS_OPERATIONAL_READ_SIZE"))
+	if e != nil || n != 100 && n != 1000 && n != 10000 {
+		b.Fatal("size must be 100, 1000 or 10000")
+	}
+	store, e := Open(filepath.Join(b.TempDir(), "operational.db"), Options{MigrateOnOpen: true})
+	if e != nil {
+		b.Fatal(e)
+	}
+	defer store.Close()
+	ctx := context.Background()
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	ids := &sqliteSequenceIDs{prefix: "0199d160", next: 1}
+	service, e := a.NewService(store, sqliteFixedClock{now}, ids)
+	if e != nil {
+		b.Fatal(e)
+	}
+	cc := sqliteCommandContext("0199d160-0000-7000-8000-000000000001", "")
+	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: d.MustParseID("0199d160-0000-7000-8000-000000000002"), Title: "Rich operational fixture", DesiredState: "verified bounded reads", Priority: d.PriorityNormal})
+	if e != nil {
+		b.Fatal(e)
+	}
+	u, e := store.Begin(ctx)
+	if e != nil {
+		b.Fatal(e)
+	}
+	defer u.Rollback()
+	if _, e = u.Coordination().LockOutcome(ctx, out.Value.Scope()); e != nil {
+		b.Fatal(e)
+	}
+	var focal d.ID
+	for i := 0; i < n; i++ {
+		id, e := ids.NewID()
+		if e != nil {
+			b.Fatal(e)
+		}
+		w, e := d.NewWorkItem(id, out.Value.Scope(), fmt.Sprintf("Reviewed work %05d", i), "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+		if e != nil {
+			b.Fatal(e)
+		}
+		if i == 0 {
+			focal = id
+		}
+		id, e = ids.NewID()
+		if e != nil {
+			b.Fatal(e)
+		}
+		criterion, e := d.NewSuccessCriterion(id, w.Ref(), "Reviewed", "", true, d.VerificationModeAttestation)
+		if e != nil {
+			b.Fatal(e)
+		}
+		if e = w.AddCriterion(criterion, now); e != nil {
+			b.Fatal(e)
+		}
+		id, e = ids.NewID()
+		if e != nil {
+			b.Fatal(e)
+		}
+		assessment := d.CriterionAssessment{ID: id, CriterionID: criterion.ID, CriterionRevision: criterion.Revision, Result: d.AssessmentResultMet, Rationale: "Domain-validated benchmark observed review", PrincipalID: cc.PrincipalID, Actor: cc.Actor, AssessedAt: now}
+		if e = w.RecordCriterionAssessment(assessment, false, now); e != nil {
+			b.Fatal(e)
+		}
+		if e = u.WorkItems().Insert(ctx, w); e != nil {
+			b.Fatal(e)
+		}
+	}
+	if _, e = u.Coordination().AdvanceOutcome(ctx, out.Value.Scope()); e != nil {
+		b.Fatal(e)
+	}
+	if e = u.Commit(); e != nil {
+		b.Fatal(e)
+	}
+	// v2 controlled harness: identical statistics preparation on both sources,
+	// outside timing. Earlier unanalysed cold-plan failures remain archived.
+	if os.Getenv("WOS_OPERATIONAL_ANALYZE") == "1" {
+		if _, e = store.db.ExecContext(ctx, "ANALYZE"); e != nil {
+			b.Fatal(e)
+		}
+	}
+	statements := traceOperationalSQL(b, store)
+	for _, name := range []string{"section_work_items", "snapshot_with_proof", "focal_with_proof"} {
+		b.Run(fmt.Sprintf("%s/%d", name, n), func(b *testing.B) {
+			b.ReportAllocs()
+			samples := make([]time.Duration, 0, 256)
+			var responseBytes int
+			poolBefore := store.db.Stats()
+			sqlBefore := statements.Load()
+			for b.Loop() {
+				start := time.Now()
+				var value any
+				var e error
+				switch name {
+				case "section_work_items":
+					value, e = service.GetContinuitySection(ctx, out.Value.Scope(), "work_items", 25, "")
+				case "snapshot_with_proof":
+					value, e = service.GetContinuity(ctx, out.Value.Scope(), 25)
+				case "focal_with_proof":
+					value, e = service.GetWorkContext(ctx, out.Value.Scope(), focal)
+				}
+				if e != nil {
+					b.Fatal(e)
+				}
+				raw, e := json.Marshal(value)
+				if e != nil || len(raw) > a.MaxSnapshotBytes {
+					b.Fatal("response bound", e)
+				}
+				responseBytes = len(raw)
+				samples = append(samples, time.Since(start))
+			}
+			b.StopTimer()
+			poolAfter := store.db.Stats()
+			b.ReportMetric(float64(statements.Load()-sqlBefore)/float64(b.N), "sql_statements/op")
+			b.ReportMetric(float64(poolAfter.WaitCount-poolBefore.WaitCount)/float64(b.N), "pool_waits/op")
+			b.ReportMetric(float64(poolAfter.WaitDuration-poolBefore.WaitDuration)/float64(b.N), "pool_wait_ns/op")
+			sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
+			for _, p := range []int{50, 95, 99} {
+				b.ReportMetric(float64(samples[(len(samples)*p+99)/100-1].Nanoseconds()), fmt.Sprintf("p%d_ns", p))
+			}
+			b.ReportMetric(float64(responseBytes), "response_bytes")
+		})
+	}
+}

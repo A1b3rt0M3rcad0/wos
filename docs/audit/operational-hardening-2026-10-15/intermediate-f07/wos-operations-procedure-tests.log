@@ -1,0 +1,11 @@
+test_checksum_failure_happens_before_a_destination_is_created (test_backup_restore.BackupProcedure.test_checksum_failure_happens_before_a_destination_is_created) ... ok
+test_existing_destination_and_missing_cutover_confirmation_are_refused (test_backup_restore.BackupProcedure.test_existing_destination_and_missing_cutover_confirmation_are_refused) ... ok
+test_independent_manifest_pin_rejects_rewritten_metadata (test_backup_restore.BackupProcedure.test_independent_manifest_pin_rejects_rewritten_metadata) ... ok
+test_online_snapshot_remains_consistent_across_a_concurrent_commit (test_backup_restore.BackupProcedure.test_online_snapshot_remains_consistent_across_a_concurrent_commit) ... ok
+test_signed_snapshot_requires_an_independently_approved_identity (test_backup_restore.BackupProcedure.test_signed_snapshot_requires_an_independently_approved_identity) ... ok
+test_verify_is_read_only_and_detects_changed_rows (test_backup_restore.BackupProcedure.test_verify_is_read_only_and_detects_changed_rows) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.023s
+
+OK

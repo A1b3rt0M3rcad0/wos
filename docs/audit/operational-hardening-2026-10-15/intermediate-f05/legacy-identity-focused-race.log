@@ -1,0 +1,4 @@
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain	1.033s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	20.533s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	16.856s
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-cli	1.048s [no tests to run]

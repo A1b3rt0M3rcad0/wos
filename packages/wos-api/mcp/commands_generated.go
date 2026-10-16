@@ -223,6 +223,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.ResolveIssueAndBlockersCommand](server, ids, options, "wos_resolve_issue_and_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveIssueAndBlockersCommand) (any, error) {
 		return service.ResolveIssueAndBlockers(ctx, cc, cmd)
 	})
+	registerCommand[application.ResolveSignedReturnIntentCommand](server, ids, options, "wos_resolve_signed_return_intent", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveSignedReturnIntentCommand) (any, error) {
+		return service.ResolveSignedReturnIntent(ctx, cc, cmd)
+	})
 	registerCommand[application.ResumeSignedReviewContractCommand](server, ids, options, "wos_resume_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.ResumeSignedReviewContractCommand) (any, error) {
 		return service.ResumeSignedReviewContract(ctx, cc, cmd)
 	})

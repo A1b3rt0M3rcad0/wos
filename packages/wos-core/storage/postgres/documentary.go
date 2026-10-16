@@ -298,23 +298,30 @@ func (r evidenceLinkRepository) Get(ctx context.Context, scope domain.Scope, id 
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.EvidenceLink{}, err
 	}
+	return scanEvidenceLink(r.uow.tx.QueryRowContext(ctx, `SELECT `+evidenceLinkReadColumns+` FROM evidence_links WHERE namespace_id=$1 AND outcome_id=$2 AND id=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+}
+
+const evidenceLinkReadColumns = `id,version, evidence_id, target_id, target_kind, criterion_id, stance, rationale, lifecycle, retraction_reason, retracted_at, created_at, updated_at`
+
+func scanEvidenceLink(scanner rowScanner, scope domain.Scope) (domain.EvidenceLink, error) {
+	var rawID string
 	var (
 		version, createdAt, updatedAt                                                      int64
 		evidenceRaw, targetRaw, targetKind, stance, rationale, lifecycle, retractionReason string
 		criterionRaw                                                                       sql.NullString
 		retractedAt                                                                        sql.NullInt64
 	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, evidence_id, target_id, target_kind, criterion_id, stance, rationale,
-       lifecycle, retraction_reason, retracted_at, created_at, updated_at
-FROM evidence_links
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(&version, &evidenceRaw, &targetRaw, &targetKind, &criterionRaw, &stance, &rationale,
+
+	err := scanner.Scan(&rawID, &version, &evidenceRaw, &targetRaw, &targetKind, &criterionRaw, &stance, &rationale,
 		&lifecycle, &retractionReason, &retractedAt, &createdAt, &updatedAt)
 	if err != nil {
 		return domain.EvidenceLink{}, mapSQLError("get evidence link", err)
 	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.EvidenceLink{}, err
+	}
+
 	evidenceID, err := domain.ParseID(evidenceRaw)
 	if err != nil {
 		return domain.EvidenceLink{}, err
@@ -429,24 +436,30 @@ func (r decisionRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Decision{}, err
 	}
+	return scanDecision(r.uow.tx.QueryRowContext(ctx, `SELECT `+decisionReadColumns+` FROM decisions WHERE namespace_id=$1 AND outcome_id=$2 AND id=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+}
+
+const decisionReadColumns = `id,version, title, proposal, chosen_alternative, rationale, alternatives_json, lifecycle, proposed_by_json, decided_by_json, decided_at, rejection_reason, supersedes_decision_id, created_at, updated_at`
+
+func scanDecision(scanner rowScanner, scope domain.Scope) (domain.Decision, error) {
+	var rawID string
 	var (
 		version, createdAt, updatedAt                                                                    int64
 		title, proposal, chosen, rationale, alternativesJSON, lifecycle, proposedByJSON, rejectionReason string
 		decidedByJSON, supersedesRaw                                                                     sql.NullString
 		decidedAt                                                                                        sql.NullInt64
 	)
-	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, title, proposal, chosen_alternative, rationale, alternatives_json, lifecycle,
-       proposed_by_json, decided_by_json, decided_at, rejection_reason, supersedes_decision_id,
-       created_at, updated_at
-FROM decisions
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
-	).Scan(&version, &title, &proposal, &chosen, &rationale, &alternativesJSON, &lifecycle,
+
+	err := scanner.Scan(&rawID, &version, &title, &proposal, &chosen, &rationale, &alternativesJSON, &lifecycle,
 		&proposedByJSON, &decidedByJSON, &decidedAt, &rejectionReason, &supersedesRaw, &createdAt, &updatedAt)
 	if err != nil {
 		return domain.Decision{}, mapSQLError("get decision", err)
 	}
+	id, err := domain.ParseID(rawID)
+	if err != nil {
+		return domain.Decision{}, err
+	}
+
 	var proposedBy domain.ActorRef
 	if err := unmarshalJSON(proposedByJSON, &proposedBy); err != nil {
 		return domain.Decision{}, err

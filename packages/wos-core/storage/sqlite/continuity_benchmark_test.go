@@ -88,7 +88,7 @@ func BenchmarkContinuity(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	for _, name := range []string{"discovery_101_outcomes", fmt.Sprintf("snapshot_%d_work_items", historySize), fmt.Sprintf("snapshot_%d_work_items_with_proof", historySize), fmt.Sprintf("work_context_%d_work_items_with_proof", historySize)} {
+	for _, name := range []string{"discovery_101_outcomes", fmt.Sprintf("snapshot_%d_work_items", historySize), fmt.Sprintf("snapshot_%d_work_items_with_proof", historySize), fmt.Sprintf("work_context_%d_work_items_with_proof", historySize), fmt.Sprintf("section_%d_work_items_with_proof", historySize)} {
 		b.Run(name, func(b *testing.B) {
 			b.ReportAllocs()
 			before := sqlCount.Load()
@@ -100,6 +100,8 @@ func BenchmarkContinuity(b *testing.B) {
 				var err error
 				if name == "discovery_101_outcomes" {
 					value, err = service.SearchOutcomes(ctx, ns, ports.OutcomeFilter{}, 25, "")
+				} else if strings.HasPrefix(name, "section_") {
+					value, err = service.GetContinuitySection(ctx, rich.Value.Scope(), "work_items", 25, "")
 				} else if strings.HasPrefix(name, "work_context_") {
 					value, err = service.GetWorkContext(ctx, rich.Value.Scope(), focalWorkID)
 				} else {

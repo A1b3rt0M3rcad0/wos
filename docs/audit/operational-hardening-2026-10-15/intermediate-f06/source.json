@@ -1,0 +1,19 @@
+{
+  "parent": "52fd84f720da3373229d8e760ab5de968f9d2391",
+  "status": "intermediate implementation and real deployment reference; full immutable contention/final-source acceptance pending",
+  "sha256": {
+    "Dockerfile": "aa516416eb1da5d79e8f8de5df243292411f1d9da0c63292dfa9f50d6f12c5a4",
+    ".go-version": "6c075150045fda9bac31bb93cf5a0a0bc91622a75c1f10fb2971e6f994c6d4d6",
+    "packages/wos-api/internal/server/deployment.go": "ccb9077e3aac51f309c804f9591cb9aea44ec4e757d99906eaee8cf0119e5a01",
+    "packages/wos-api/internal/server/config.go": "ae4462e2f3b8003753539d9e0267b3e1187045b9ccf17d5e851006945362eee1",
+    "packages/wos-api/internal/server/env.go": "bd4afba6914f75b08227e0e2f6f2ff80029f1a9bdfe5ee9139046b251acb0534",
+    "packages/wos-api/internal/server/runtime.go": "32c488045a2d919d96ad8fd92e1ad22329a79651eb5302341c59c62789274cce",
+    "packages/wos-api/cmd/wos/main.go": "067f5de60a5093de381e3a5ead5b4fede039e8a3f81a16e2b88f3eb7b4d9e1e2",
+    "packages/wos-cli/workspace_commands_v2.go": "7aea21d12f434f27d04ac63c5a36c2c20f6dceac79b36e440d541bd450d494fc",
+    "packages/wos-core/storage/sqlite/signed_load_test.go": "41e3203dcec8c6a2e9c816da2c8f1682141ce25939c00169f3f69ac968febb5b",
+    "packages/wos-core/storage/postgres/signed_load_test.go": "a68b7d8795453c5993249749d9d7a345a3c94c26b933cdbec2460ea550efa459",
+    "tools/acceptance/shared-contention.py": "94ae96c4f264f68067302910e39276b257bbdae1903bde5b919ad056d8229117",
+    "deploy/shared/compose.yaml": "772efe7720b96da43447560f2620336ab2d212866929d750830272a0a3d12ae4",
+    "deploy/shared/entrypoint.sh": "3f6cb2161a7ea312be4799a347104a2782792f9f0c0186ee9aa25b45305e71cf"
+  }
+}

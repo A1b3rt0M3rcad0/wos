@@ -212,18 +212,33 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 		return nil, mapSQLError("begin delivery claim", err)
 	}
 	defer tx.Rollback()
-	if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result='lease_expired' WHERE finished_at IS NULL AND delivery_id IN(SELECT id FROM integration_deliveries WHERE status='leased' AND lease_until<=?)`, encodeTime(now), encodeTime(now)); err != nil {
-		return nil, mapSQLError("expire delivery attempts", err)
-	}
-	if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE status='leased' AND lease_until<=? AND attempts>=6`, encodeTime(now)); err != nil {
-		return nil, mapSQLError("exhaust crashed delivery", err)
-	}
-	v, err := scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=?) OR (status='leased' AND lease_until<=?) ORDER BY next_attempt,id LIMIT 1`, encodeTime(now), encodeTime(now)))
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, mapSQLError("commit delivery recovery", tx.Commit())
-	}
-	if err != nil {
-		return nil, mapSQLError("claim delivery", err)
+	// Lock one parent delivery before touching its attempts, matching ACK order.
+	// Queue-wide attempt recovery can block unrelated lanes and invert locks
+	// against ACKs. PostgreSQL adds SKIP LOCKED to this same bounded claim.
+	var v ports.Delivery
+	for recovered := 0; ; recovered++ {
+		if recovered == 25 {
+			return nil, mapSQLError("commit delivery recovery", tx.Commit())
+		}
+		v, err = scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=?) OR (status='leased' AND lease_until<=?) ORDER BY next_attempt,id LIMIT 1`, encodeTime(now), encodeTime(now)))
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, mapSQLError("commit delivery recovery", tx.Commit())
+		}
+		if err != nil {
+			return nil, mapSQLError("claim delivery", err)
+		}
+		if v.Status == "leased" {
+			if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result='lease_expired' WHERE delivery_id=? AND fencing_token=? AND finished_at IS NULL`, encodeTime(now), v.ID, v.FencingToken); err != nil {
+				return nil, mapSQLError("expire delivery attempt", err)
+			}
+			if v.Attempts >= 6 {
+				if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE id=?`, v.ID); err != nil {
+					return nil, mapSQLError("exhaust crashed delivery", err)
+				}
+				continue
+			}
+		}
+		break
 	}
 	v.LeaseID = leaseID
 	v.LeaseUntil = now.Add(ttl)
@@ -255,7 +270,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 		return mapSQLError("finish delivery", err)
 	}
 	defer tx.Rollback()
-	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=? WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
+	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=?,last_successful_at=CASE WHEN ?=1 THEN ? ELSE last_successful_at END WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, boolInt(success), encodeTime(now), v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
 	if err != nil {
 		return mapSQLError("acknowledge delivery", err)
 	}
@@ -265,7 +280,7 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 	}
 	_, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=?,result=? WHERE delivery_id=? AND fencing_token=? AND lease_id=?`, encodeTime(now), result, v.ID, v.FencingToken, v.LeaseID.String())
 	if err != nil {
-		return err
+		return mapSQLError("record delivery completion", err)
 	}
 	return mapSQLError("commit delivery result", tx.Commit())
 }

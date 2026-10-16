@@ -1,0 +1,29 @@
+{
+  "committed_base": "f1d7ebfa7a74db6eeabaca8f17541788669a94b7",
+  "working_tree": true,
+  "source_file_sha256": {
+    ".github/workflows/ci.yml": "91d056374a2dd2753be25abee66ad971e3427a910c233c877e2724d5a4590722",
+    ".github/workflows/cli.yml": "3312d8b988e551920eb4d33c34d17c0fff07840be49417ff88f42b395a7d8b7d",
+    "packages/wos-api/web/assets/command-exposure.json": "949b4facccfed631b9a716a7ba74953e89b686d28a2e45185a239e0d665d3769",
+    "packages/wos-cli/disk_full_unix_test.go": "f3af9e7a1750b250e0c107d231435c179bcb3ee1bb8675ef08f093e1e9bf87cf",
+    "packages/wos-cli/disk_full_windows_test.go": "d2b04c9d9f22afbfc54dad8d55c0dbc2d3a456b357fdf75cb5cf5f499b72dd94",
+    "packages/wos-cli/return_resolution_full_disk_test.go": "9dbc7bdc708fe77d5f43b72e47243594a4082d6e195b7b01a7b80fd667769f69",
+    "packages/wos-cli/return_resolution_process_test.go": "7714f19b71ce053016b5bcdbb11bef55b1acb590f1834401704e18f7e40a4c69",
+    "packages/wos-cli/return_resolution_v2_test.go": "7448858fd00548e1efc342a5129d1c48ed6efc0d8ef6913f3f8b380ba1e7c491",
+    "packages/wos-core/signing/resolution_test.go": "125a8ec55f2ee7d96cc2e9275248009633ee52e9cb727751736768469f7466ac",
+    "packages/wos-core/storage/postgres/signed_return_resolution_test.go": "36df9f36a9a812716a64837c45565dc4ffe866ca46603e9e2250555bb33837e5",
+    "packages/wos-core/storage/sqlite/legacy_contract_migration_test.go": "c0b35f55346be3032ee47d6e22bc818ecd5210d2d23f4afccb8795946e287836",
+    "packages/wos-core/storage/sqlite/signed_return_resolution_test.go": "bea691e5a0bdb18dde98dd07a7bfdcbbf2e7f14b0336f562e2fe9e4494c5e65e",
+    "tools/acceptance/full-disk-cleanup.ps1": "29296503698ffe1d1df06ef3064870ee7e64e8e6b301dd1ef7be9bcee717091d",
+    "tools/acceptance/full-disk-cleanup.sh": "946a92d806917351cbd3c633d33bfbf2c9a16f3f2481c309205994a1a56f9abc",
+    "tools/acceptance/fuzz-report.py": "9843b3debbe05e41f681059883a8cf91e4ac19fdcb1d34dfc5b3e803afc9eb83",
+    "tools/distribution/platform.mjs": "1b442820cf759bcdf81081ad24753baa932b7463f6957f6a1743c7eb6c5fe368",
+    "tools/distribution/signed-smoke.mjs": "40abda5a8f5df8b36f70d3b63ffb90c10c36f819cbb7250be7bb7de2451413e9"
+  },
+  "limits": [
+    "Intermediate local evidence, not final PR-SHA acceptance",
+    "Native Linux run; native Windows execution pending hosted workflow",
+    "Controlled laboratory credentials/fixtures only; no production SLA or capacity claim",
+    "Resolution fuzz ran 72082 inputs in a bounded campaign; not exhaustive security proof"
+  ]
+}

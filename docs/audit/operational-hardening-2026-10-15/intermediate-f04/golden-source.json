@@ -1,0 +1,7 @@
+{
+  "production_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "producer_sha256": "f259257fa6065dadd1c725675d442bc36e6cf396bba3b4bd1022bf5a79645659",
+  "snapshot_sha256": "9e06986849ad10166f3a0838dd09a1c78392c4531d041635902c155d192fe8da",
+  "fixture": "eight domain-validated entities per direct summary kind, seven acyclic dependencies, eight evidence links, adversarial Unicode/JSON external-reference ordering; one fixture UOW; frozen time",
+  "comparison": "full snapshot compared semantically; only evaluated_at fields normalized across database clocks; persisted timestamps and every other field compared; separate lease/cursor tests required"
+}

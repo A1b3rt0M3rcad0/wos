@@ -1,0 +1,6 @@
+# External operator-owned cron example; not installed by WOS.
+# wrapper.sh reads protected deployment metadata/DSN and chooses a new timestamped
+# output directory, then invokes backup_restore.py. Keep secrets out of argv/logs.
+0 * * * * /usr/bin/flock -n /private/wos-backups/.backup.lock /opt/wos-backup/wrapper.sh
+# Schedule a separate monthly restore to a newly provisioned destination and
+# retain its verify/signed-pilot report. Retention and alerting are external.

@@ -107,16 +107,20 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	if counts.PrincipalReview >= 1 || counts.CredentialReview >= policy.MaxActiveReviewContracts {
-		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "review quota reached")
-	}
-	if np, e := registry.AcceptancePolicy(ctx, cmd.Scope.NamespaceID, nil, nil); e == nil {
-		if counts.NamespaceReview >= np.MaxActiveReviewContracts {
-			return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace review quota reached")
-		}
-	} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
+	if e != nil {
 		return zero, 0, e
 	}
+	if counts.PrincipalReview >= nsPolicy.PrincipalReviewLimit() {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Principal review quota reached")
+	}
+	if counts.CredentialReview >= policy.MaxActiveReviewContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "credential review quota reached")
+	}
+	if nsPolicy.MaxActiveReviewContracts > 0 && counts.NamespaceReview >= nsPolicy.MaxActiveReviewContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace review quota reached")
+	}
+
 	var expired *d.ReviewContract
 	if review.CurrentContractID != nil {
 		old, e := repo.ReviewContract(ctx, cmd.Scope, *review.CurrentContractID)

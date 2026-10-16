@@ -16,7 +16,7 @@ import (
 
 const MaxLocalDocumentV2 = 1 << 20
 
-var technicalV2Pattern = regexp.MustCompile(`^\$\._local\.(pending_operations\[[0-9]+\]\.(payload|response)|pending\.(envelope\.payload|response))$`)
+var technicalV2Pattern = regexp.MustCompile(`^\$\.(_local\.(pending_operations\[[0-9]+\]\.(payload|response|return_resolution\.(envelope\.payload|response))|pending\.(envelope\.payload|response))|original_intent\.(payload|response|return_resolution\.(envelope\.payload|response)))$`)
 
 func technicalV2Path(path string) bool { return technicalV2Pattern.MatchString(path) }
 func validTechnicalV2Blob(value string) bool {

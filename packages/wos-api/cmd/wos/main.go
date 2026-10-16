@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -107,14 +108,43 @@ func run(args []string) int {
 		fmt.Println(server.CurrentVersion().String())
 		return 0
 	}
-	if len(args) == 2 && args[0] == "config" && args[1] == "validate" {
-		if err := server.ConfigFromEnv().Validate(); err != nil {
-			fmt.Fprintf(os.Stderr, "invalid configuration: %v\n", err)
+	if len(args) >= 2 && args[0] == "config" && args[1] == "validate" {
+		flags := flag.NewFlagSet("config validate", flag.ContinueOnError)
+		flags.SetOutput(os.Stderr)
+		deployment := flags.String("deployment", "", "optional local/shared deployment advisories")
+		if e := flags.Parse(args[2:]); e != nil {
+			return 2
+		}
+		if flags.NArg() != 0 {
+			fmt.Fprintln(os.Stderr, "use wos config validate [--deployment=local|shared]")
+			return 2
+		}
+		cfg := server.ConfigFromEnv()
+		if e := cfg.Validate(); e != nil {
+			fmt.Fprintf(os.Stderr, "invalid configuration: %v\n", e)
 			return 1
 		}
-		fmt.Println("configuration valid")
+		if *deployment == "" {
+			fmt.Println("configuration valid")
+			return 0
+		}
+		decl, e := server.DeploymentDeclarationsFromEnv()
+		if e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			return 1
+		}
+		report, e := cfg.DeploymentDiagnostics(*deployment, decl)
+		if e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			return 1
+		}
+		if e = json.NewEncoder(os.Stdout).Encode(report); e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			return 1
+		}
 		return 0
 	}
+
 	if len(args) == 2 && args[0] == "mcp" && args[1] == "stdio" {
 		cfg := server.ConfigFromEnv()
 		cfg.MCP.Enabled = true

@@ -1,0 +1,54 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkOperationalReads
+    operational_read_benchmark_test.go:95: Aggregate  (cost=66.63..66.64 rows=1 width=24)
+    operational_read_benchmark_test.go:95:   CTE required_proof
+    operational_read_benchmark_test.go:95:     ->  Nested Loop Left Join  (cost=1.12..33.27 rows=1 width=40)
+    operational_read_benchmark_test.go:95:           Join Filter: ((c.owner_kind = 'objective'::text) AND (o.id = c.owner_id))
+    operational_read_benchmark_test.go:95:           Filter: ((c.owner_kind = 'outcome'::text) OR ((c.owner_kind = 'work_item'::text) AND (w.lifecycle <> 'cancelled'::text)) OR ((c.owner_kind = 'objective'::text) AND (o.lifecycle <> 'cancelled'::text)))
+    operational_read_benchmark_test.go:95:           ->  Nested Loop Left Join  (cost=0.97..25.07 rows=1 width=200)
+    operational_read_benchmark_test.go:95:                 Join Filter: ((c.owner_kind = 'work_item'::text) AND (w.id = c.owner_id))
+    operational_read_benchmark_test.go:95:                 ->  Nested Loop  (cost=0.69..16.76 rows=1 width=168)
+    operational_read_benchmark_test.go:95:                       ->  Index Scan using criterion_revisions_pkey on criterion_revisions r  (cost=0.41..8.43 rows=1 width=104)
+    operational_read_benchmark_test.go:95:                             Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:                             Filter: (required = 1)
+    operational_read_benchmark_test.go:95:                       ->  Index Scan using success_criteria_pkey on success_criteria c  (cost=0.29..8.32 rows=1 width=168)
+    operational_read_benchmark_test.go:95:                             Index Cond: (id = r.criterion_id)
+    operational_read_benchmark_test.go:95:                             Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text) AND (status = 'active'::text) AND (r.criterion_revision = criterion_revision) AND ((owner_kind = 'outcome'::text) OR (owner_kind = 'work_item'::text) OR (owner_kind = 'objective'::text)))
+    operational_read_benchmark_test.go:95:                 ->  Index Scan using idx_work_objective on work_items w  (cost=0.28..8.30 rows=1 width=128)
+    operational_read_benchmark_test.go:95:                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:           ->  Index Scan using objectives_namespace_id_outcome_id_id_key on objectives o  (cost=0.14..8.16 rows=1 width=128)
+    operational_read_benchmark_test.go:95:                 Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:   CTE current_proof
+    operational_read_benchmark_test.go:95:     ->  Nested Loop  (cost=0.82..16.87 rows=1 width=104)
+    operational_read_benchmark_test.go:95:           Join Filter: (a_1.id = p.assessment_id)
+    operational_read_benchmark_test.go:95:           ->  Index Scan using criterion_current_assessments_pkey on criterion_current_assessments p  (cost=0.41..8.43 rows=1 width=128)
+    operational_read_benchmark_test.go:95:                 Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:           ->  Index Scan using criterion_assessments_namespace_id_outcome_id_id_key on criterion_assessments a_1  (cost=0.41..8.43 rows=1 width=136)
+    operational_read_benchmark_test.go:95:                 Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:   CTE invalid_source
+    operational_read_benchmark_test.go:95:     ->  Unique  (cost=0.29..16.35 rows=1 width=32)
+    operational_read_benchmark_test.go:95:           ->  Nested Loop Left Join  (cost=0.29..16.35 rows=1 width=32)
+    operational_read_benchmark_test.go:95:                 Join Filter: (e.id = p_1.evidence_id)
+    operational_read_benchmark_test.go:95:                 Filter: ((e.id IS NULL) OR (e.lifecycle <> 'registered'::text))
+    operational_read_benchmark_test.go:95:                 ->  Index Only Scan using criterion_assessment_evidence_pkey on criterion_assessment_evidence p_1  (cost=0.15..8.17 rows=1 width=128)
+    operational_read_benchmark_test.go:95:                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:                 ->  Index Scan using evidence_namespace_id_outcome_id_id_key on evidence e  (cost=0.14..8.16 rows=1 width=128)
+    operational_read_benchmark_test.go:95:                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+    operational_read_benchmark_test.go:95:   InitPlan 4
+    operational_read_benchmark_test.go:95:     ->  Aggregate  (cost=0.02..0.03 rows=1 width=8)
+    operational_read_benchmark_test.go:95:           ->  CTE Scan on required_proof  (cost=0.00..0.02 rows=1 width=0)
+    operational_read_benchmark_test.go:95:   ->  CTE Scan on current_proof a  (cost=0.00..0.02 rows=1 width=104)
+    operational_read_benchmark_test.go:95:   SubPlan 5
+    operational_read_benchmark_test.go:95:     ->  CTE Scan on required_proof required_proof_1  (cost=0.00..0.02 rows=1 width=40)
+    operational_read_benchmark_test.go:95:   SubPlan 6
+    operational_read_benchmark_test.go:95:     ->  CTE Scan on invalid_source  (cost=0.00..0.02 rows=1 width=32)
+    operational_read_benchmark_test.go:95:   SubPlan 7
+    operational_read_benchmark_test.go:95:     ->  CTE Scan on required_proof required_proof_2  (cost=0.00..0.02 rows=1 width=40)
+    operational_read_benchmark_test.go:95: fresh schema wos_test_548fbb4f5f0d695cbf69a211e094eaaaa
+    operational_read_benchmark_test.go:95: diagnostic plan capture only; no acceptance benchmark
+--- SKIP: BenchmarkOperationalReads
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	104.438s

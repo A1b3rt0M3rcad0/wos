@@ -117,6 +117,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) routes() {
+	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/operations/delivery-health", h.deliveryHealth)
 	h.mux.HandleFunc("GET "+h.prefix+"/capabilities", h.executionCapabilities)
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/work-protocol", h.getNamespaceWorkProtocol)
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/commands/{command_id}", h.getCommandReceipt)
@@ -430,7 +431,12 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	var details any
 
 	var contract *contractError
-	if errors.As(err, &contract) {
+	if errors.Is(r.Context().Err(), context.DeadlineExceeded) {
+		status = http.StatusServiceUnavailable
+		code = "deadline_exceeded"
+		message = "request deadline exceeded; reconcile the original receipt before retrying the exact intention"
+		retryable = true
+	} else if errors.As(err, &contract) {
 		status = contract.status
 		code = contract.code
 		message = contract.message
@@ -478,7 +484,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		case domain.ErrorCodeTransactionConflict:
 			status = http.StatusConflict
 			retryable = true
-		case domain.ErrorCodeContractProtocolRequired, domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution, domain.ErrorCodeContractSpecMismatch, domain.ErrorCodeWorkAlreadyClaimed, domain.ErrorCodeSubmissionNotAccepted, domain.ErrorCodeAlreadyExists,
+		case domain.ErrorCodeSignedIntentClosed, domain.ErrorCodeContractProtocolRequired, domain.ErrorCodeContractExpired, domain.ErrorCodeContractRevoked, domain.ErrorCodeStaleExecution, domain.ErrorCodeContractSpecMismatch, domain.ErrorCodeWorkAlreadyClaimed, domain.ErrorCodeSubmissionNotAccepted, domain.ErrorCodeAlreadyExists,
 			domain.ErrorCodeInvalidTransition,
 			domain.ErrorCodePreconditionFailed,
 			domain.ErrorCodeLease,

@@ -1,0 +1,97 @@
+# Opt-in shared reference. The root compose.yaml remains the local quick-start.
+# Set WOS_SHARED_SECRETS_DIR to an absolute directory provisioned externally.
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: wos
+      POSTGRES_USER: wos
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_password
+    secrets: [database_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U wos -d wos"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 2
+    networks: [database]
+  wos:
+    build:
+      context: ../..
+    entrypoint: [/bin/sh, /usr/local/lib/wos/shared-entrypoint.sh]
+    command: [server]
+    environment:
+      NO_PROXY: localhost,127.0.0.1,postgres,wos
+      no_proxy: localhost,127.0.0.1,postgres,wos
+      WOS_LISTEN: 0.0.0.0:8080
+      WOS_AUTH_MODE: api_token
+      WOS_LOCAL_PRINCIPAL_ID: ${WOS_LOCAL_PRINCIPAL_ID:-operator}
+      WOS_BOOTSTRAP_NAMESPACE_ID: ${WOS_BOOTSTRAP_NAMESPACE_ID:?set the instance Namespace UUIDv7}
+      WOS_BOOTSTRAP_NAMESPACE_NAME: ${WOS_BOOTSTRAP_NAMESPACE_NAME:-Shared instance}
+      WOS_STORAGE_DRIVER: postgres
+      WOS_POSTGRES_MAX_OPEN_CONNECTIONS: ${WOS_POSTGRES_MAX_OPEN_CONNECTIONS:-16}
+      WOS_MCP_ENABLED: "true"
+      WOS_SERVER_SIGNING_SEED_ENV: WOS_SERVER_SIGNING_SEED
+      WOS_SIGNED_ACCEPTANCE_FLOOR: independent_review
+      WOS_DELIVERY_WORKER_ENABLED: ${WOS_DELIVERY_WORKER_ENABLED:-false}
+      WOS_DELIVERY_WORKER_CONCURRENCY: ${WOS_DELIVERY_WORKER_CONCURRENCY:-4}
+      WOS_DEPLOYMENT_TLS_AT_INGRESS: "true"
+      WOS_DEPLOYMENT_PERSISTENT_ISSUER: "true"
+      WOS_DEPLOYMENT_INSTANCE_CREDENTIALS: "true"
+      WOS_DEPLOYMENT_MANAGED_BACKUPS: ${WOS_DEPLOYMENT_MANAGED_BACKUPS:-false}
+    secrets: [database_password, bootstrap_token, issuer_seed]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "wget -Y off -q -O /dev/null http://127.0.0.1:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 1.5
+    networks: [database, ingress]
+  ingress:
+    image: caddy:2.10.2-alpine
+    ports:
+      - "127.0.0.1:${WOS_SHARED_HTTPS_PORT:-8443}:443"
+    environment:
+      NO_PROXY: localhost,127.0.0.1,wos
+      no_proxy: localhost,127.0.0.1,wos
+      WOS_PUBLIC_HOST: ${WOS_PUBLIC_HOST:-wos.localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ingress_data:/data
+      - ingress_config:/config
+    depends_on:
+      wos:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "wget -Y off -q -O /dev/null http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1
+    networks: [ingress]
+secrets:
+  database_password:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/database_password
+  bootstrap_token:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/bootstrap_token
+  issuer_seed:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/issuer_seed
+volumes:
+  postgres_data:
+  ingress_data:
+  ingress_config:
+networks:
+  database:
+    internal: true
+  ingress:

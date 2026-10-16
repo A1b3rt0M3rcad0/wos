@@ -89,3 +89,28 @@ func TestUnifiedWOSHelpIncludesBundledSkillsAndServiceWithoutConfiguration(t *te
 		}
 	}
 }
+
+func TestUnifiedSharedConfigValidationDoesNotInitializeStorage(t *testing.T) {
+	root := t.TempDir() + "/absent"
+	t.Setenv("WOS_SQLITE_PATH", root+"/wos.db")
+	t.Setenv("WOS_AUTH_MODE", "local")
+	t.Setenv("WOS_LISTEN", "127.0.0.1:8080")
+	code, output := captureCommand(t, "config", "validate", "--deployment=shared")
+	if code != 0 {
+		t.Fatal(code, string(output))
+	}
+	var report server.DeploymentReport
+	if e := json.Unmarshal(output, &report); e != nil || !report.ReadOnly || !report.ConfigValid || report.DatabasePoolLimit != 1 {
+		t.Fatal("invalid deployment diagnostic", string(output), e)
+	}
+	if _, e := os.Stat(root); !os.IsNotExist(e) {
+		t.Fatal("read-only validation initialized storage", e)
+	}
+	code, output = captureCommand(t, "config", "validate")
+	if code != 0 || strings.TrimSpace(string(output)) != "configuration valid" {
+		t.Fatal("legacy validation changed", code, string(output))
+	}
+	if code, _ = captureCommand(t, "config", "validate", "--deployment=unknown"); code == 0 {
+		t.Fatal("unknown deployment accepted")
+	}
+}

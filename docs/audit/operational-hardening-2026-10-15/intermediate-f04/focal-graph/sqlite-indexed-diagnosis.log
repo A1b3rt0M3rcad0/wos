@@ -1,0 +1,11 @@
+Python SQLite diagnostic engine 3.53.1
+(14, 0, 61, 'SEARCH r USING INDEX sqlite_autoindex_criterion_revisions_1 (namespace_id=? AND outcome_id=?)')
+(24, 0, 47, 'SEARCH c USING INDEX sqlite_autoindex_success_criteria_3 (namespace_id=? AND outcome_id=? AND id=?)')
+(39, 0, 46, 'SEARCH w USING INDEX sqlite_autoindex_work_items_2 (namespace_id=? AND outcome_id=? AND id=?) LEFT-JOIN')
+(51, 0, 47, 'SEARCH o USING INDEX sqlite_autoindex_objectives_2 (namespace_id=? AND outcome_id=? AND id=?) LEFT-JOIN')
+(73, 0, 47, 'SEARCH p USING INDEX sqlite_autoindex_criterion_current_assessments_1 (namespace_id=? AND outcome_id=? AND criterion_id=?) LEFT-JOIN')
+(83, 0, 47, 'SEARCH a USING INDEX sqlite_autoindex_criterion_assessments_3 (namespace_id=? AND outcome_id=? AND id=?) LEFT-JOIN')
+(102, 0, 0, 'CORRELATED SCALAR SUBQUERY 1')
+(108, 102, 55, 'SEARCH p USING COVERING INDEX sqlite_autoindex_criterion_assessment_evidence_1 (namespace_id=? AND outcome_id=? AND assessment_id=?)')
+(117, 102, 46, 'SEARCH e USING INDEX sqlite_autoindex_evidence_2 (namespace_id=? AND outcome_id=? AND id=?) LEFT-JOIN')
+result (10000, 10000, 0) seconds 0.048274201923049986

@@ -1,0 +1,14 @@
+=== RUN   TestSignedWorkReviewLoadMatrix
+=== RUN   TestSignedWorkReviewLoadMatrix/outcomes=4/history=0/consumers=2
+    signed_load_test.go:427: SIGNED_LOAD {"acceptance":"independent_review","accepted_deliveries":4,"accepted_historical_tasks_per_outcome":0,"accepted_per_second":17.00939636475861,"active_outcomes":4,"approval_replay_deduplicated":true,"collision_exact_retries":0,"collision_transaction_conflicts":0,"conflicts":0,"consumers":2,"delivery_p50_ms":115.69,"delivery_p95_ms":118.202,"delivery_p99_ms":118.202,"elapsed_ms":235.164,"guard_wait_p95_ms":0.526,"issuance_max_bytes":5757,"outcomes":4,"pool_wait_ms":211.286,"protocol":"signed_contracts_v2","retries":0,"signed_mutations":20,"sql_count_available":false,"transaction_wait_p95_ms":18.476,"verified_outbox_deliveries":4,"version_collision_rejections":1,"version_collision_winners":1,"worker_recovery_experiment":false}
+--- PASS: TestSignedWorkReviewLoadMatrix (0.39s)
+    --- PASS: TestSignedWorkReviewLoadMatrix/outcomes=4/history=0/consumers=2 (0.39s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	0.394s
+=== RUN   TestSignedWorkReviewLoadMatrix
+=== RUN   TestSignedWorkReviewLoadMatrix/outcomes=4/history=0/consumers=2
+    signed_load_test.go:429: SIGNED_LOAD {"acceptance":"independent_review","accepted_deliveries":4,"accepted_historical_tasks_per_outcome":0,"accepted_per_second":1.86626241307702,"active_outcomes":4,"approval_replay_deduplicated":true,"collision_exact_retries":1,"collision_transaction_conflicts":1,"conflicts":7,"consumers":2,"delivery_p50_ms":577.175,"delivery_p95_ms":819.583,"delivery_p99_ms":819.583,"elapsed_ms":2143.321,"guard_wait_p95_ms":6.703,"issuance_max_bytes":5743,"outcomes":4,"pool_wait_ms":0,"protocol":"signed_contracts_v2","retries":7,"signed_mutations":27,"sql_count_available":false,"transaction_wait_p95_ms":3.02,"verified_outbox_deliveries":4,"version_collision_rejections":1,"version_collision_winners":1,"worker_recovery_experiment":false}
+--- PASS: TestSignedWorkReviewLoadMatrix (3.39s)
+    --- PASS: TestSignedWorkReviewLoadMatrix/outcomes=4/history=0/consumers=2 (3.39s)
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	3.403s

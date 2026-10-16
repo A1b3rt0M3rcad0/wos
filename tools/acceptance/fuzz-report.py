@@ -6,11 +6,12 @@ import re
 import subprocess
 import sys
 
-if len(sys.argv) != 6 or not re.fullmatch(r'[a-f0-9]{40}', sys.argv[1]):
-    raise SystemExit('usage: fuzz-report.py FULL_SOURCE CANONICAL_JSONL ENVELOPE_JSONL YAML_JSONL OUTPUT')
+if len(sys.argv) not in (6, 7) or not re.fullmatch(r'[a-f0-9]{40}', sys.argv[1]):
+    raise SystemExit('usage: fuzz-report.py FULL_SOURCE CANONICAL_JSONL ENVELOPE_JSONL YAML_JSONL [RESOLUTION_JSONL] OUTPUT')
 source, *logs, output = sys.argv[1:]
 rows = []
-for name, filename in zip(('FuzzCanonical', 'FuzzEnvelope', 'FuzzYAMLJSON'), logs):
+targets = ['FuzzCanonical', 'FuzzEnvelope', 'FuzzYAMLJSON'] + (['FuzzReturnResolution'] if len(logs) == 4 else [])
+for name, filename in zip(targets, logs):
     executions = 0
     passed = False
     for line in Path(filename).read_text().splitlines():
@@ -29,4 +30,4 @@ report = dict(schema=1, source_commit=source, measured_at=datetime.datetime.now(
               limitations=['Bounded active campaigns, not exhaustive proof or coverage percentage',
                            'Counts include actual mutations/baseline cases; no security claim from count alone'], campaigns=rows)
 Path(output).write_text(json.dumps(report, indent=2) + '\n')
-print('3 active fuzz campaigns recorded')
+print(f'{len(rows)} active fuzz campaigns recorded')

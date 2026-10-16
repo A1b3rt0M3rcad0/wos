@@ -300,6 +300,9 @@ func cleanupReturnWithHookV2(ctx context.Context, w *Workspace, profile ProfileV
 	})
 }
 func recoverReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, intent PendingOperationV2, allowPrepared bool) (signing.Document, bool, error) {
+	if intent.Resolution != nil {
+		return recoverResolutionV2(ctx, w, profile, client, token, intent)
+	}
 	var receipt signing.Document
 	frozen, binding, e := decodeReturnIntentV2(profile, token, intent)
 	if e != nil {
@@ -389,7 +392,11 @@ func returnCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 	receipt, committed, e := recoverReturnV2(ctx, w, profile, client, token, intent, true)
 	result.Committed = committed
 	if committed {
-		result.Data = map[string]any{"contract_id": id, "remote_committed": true, "cleanup_pending": e != nil, "acceptance_digest": signing.Digest(receipt.Payload)}
+		if receipt.Proof.PayloadType == signing.ReturnResolutionReceipt {
+			result.Data = map[string]any{"contract_id": id, "original_return_accepted": false, "terminal_resolution_confirmed": true, "cleanup_pending": e != nil, "resolution_digest": signing.Digest(receipt.Payload)}
+		} else {
+			result.Data = map[string]any{"contract_id": id, "remote_committed": true, "cleanup_pending": e != nil, "acceptance_digest": signing.Digest(receipt.Payload)}
+		}
 	}
 	if e != nil {
 		result.RequiresAction = "preserve original frozen return; recover it without resigning, renewing or changing CAS"

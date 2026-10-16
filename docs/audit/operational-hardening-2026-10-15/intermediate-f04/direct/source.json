@@ -1,0 +1,15 @@
+{
+  "kind": "intermediate_not_final_acceptance",
+  "base_commit": "5f88e7b2fea253f35688d28c4cf36597eae9c5e0",
+  "files": {
+    "packages/wos-core/application/continuity.go": "ce405942e4c2b27a0631069530361cef767c47cbc1b0a95d13dd1844af279b56",
+    "packages/wos-core/application/continuity_direct.go": "20797746f08a6735311f88cb92e229686d8aebb6adc7df88da1986aae8fdd058",
+    "packages/wos-core/ports/continuity_read.go": "937a50db77fac61c1ba8d2fa858007fcdd7c31d338bddc7280cd211262e5345c",
+    "packages/wos-core/storage/sqlite/continuity_read.go": "c6fdcecbf0d4f98f68d1de3720eec5fd2aa64c136739c937c91d6849795ea285",
+    "packages/wos-core/storage/postgres/continuity_read.go": "e834c1a4f7eaa7ccf86028cd7a6fb2f6c7aa307a2af00fe125583b401fe112b2",
+    "packages/wos-core/storage/memory/continuity_read.go": "d331931ad2a97134718b513f713c0e4c0ac8862d43adea6f08709eea521ca7e7"
+  },
+  "workload": "same domain-validated fixture/harness as archived baseline; 80 samples/repetition, three repetitions; 25-item page; 100/1000/10000 rich items; GOMAXPROCS=3",
+  "allocation_observation": "SQLite direct pages about 85 KB/op and PostgreSQL about 93 KB/op across all three fixture sizes; old 10000-item section used about 126/130 MB per op. This is the direct-section slice, not final full continuity qualification.",
+  "caveat": "Shared host, explicit outliers retained. PostgreSQL focal samples include large initial outliers; focal/current-proof optimization and controlled final-source remeasurement are still required. No production SLA or focal regression waiver is asserted."
+}
