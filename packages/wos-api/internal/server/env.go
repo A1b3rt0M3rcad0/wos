@@ -67,6 +67,14 @@ func ConfigFromEnv() Config {
 		cfg.Storage.Driver = v
 	}
 	cfg.Storage.PostgresDSN = os.Getenv("WOS_POSTGRES_DSN")
+	if raw, ok := os.LookupEnv("WOS_POSTGRES_MAX_OPEN_CONNECTIONS"); ok {
+		n, e := strconv.Atoi(raw)
+		if e != nil || n < 1 || n > 256 {
+			cfg.Storage.ParseError = true
+		} else {
+			cfg.Storage.PostgresMaxOpenConnections = n
+		}
+	}
 	if v := os.Getenv("WOS_MCP_ENABLED"); v != "" {
 		cfg.MCP.Enabled = v == "1" || strings.EqualFold(v, "true")
 	}

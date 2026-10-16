@@ -71,10 +71,12 @@ type MCPConfig struct {
 }
 
 type StorageConfig struct {
-	Driver         string
-	SQLitePath     string
-	PostgresDSN    string
-	MigrateOnStart bool
+	ParseError                 bool
+	PostgresMaxOpenConnections int
+	Driver                     string
+	SQLitePath                 string
+	PostgresDSN                string
+	MigrateOnStart             bool
 }
 
 type AuthConfig struct {
@@ -114,9 +116,10 @@ func DefaultConfig() Config {
 			Stateless: true,
 		},
 		Storage: StorageConfig{
-			Driver:         StorageDriverSQLite,
-			SQLitePath:     "./data/wos.db",
-			MigrateOnStart: true,
+			PostgresMaxOpenConnections: 16,
+			Driver:                     StorageDriverSQLite,
+			SQLitePath:                 "./data/wos.db",
+			MigrateOnStart:             true,
 		},
 		Auth: AuthConfig{
 			LocalNamespaceID:                  "0199d000-0000-7000-8000-000000000001",
@@ -129,6 +132,9 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	if cfg.Storage.ParseError || cfg.Storage.PostgresMaxOpenConnections < 0 || cfg.Storage.PostgresMaxOpenConnections > 256 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "PostgreSQL pool limit must be 1..256 when configured")
+	}
 	if cfg.HTTP.ParseError {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid HTTP/server environment value")
 	}

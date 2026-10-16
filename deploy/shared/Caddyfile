@@ -1,0 +1,9 @@
+# Runnable local TLS reference. Trust the public local CA explicitly for testing.
+# For a public deployment, replace `tls internal` with your managed certificate
+# or Caddy ACME policy, publish through your ingress, and verify DNS/firewall.
+https://{$WOS_PUBLIC_HOST:wos.localhost} {
+    tls internal
+    encode zstd gzip
+    reverse_proxy wos:8080
+    header Strict-Transport-Security "max-age=31536000"
+}

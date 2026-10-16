@@ -45,7 +45,7 @@ func localCatalog(service bool) CommandCatalog {
 		groups = append(groups,
 			CommandGroup{"server", "Standalone WOS service", []string{"wos server"}},
 			CommandGroup{"skill", "Install bundled agent skills through the primary wos executable", []string{"wos skill install --agent codex", "wos skill update --agent codex", "wos skill list", "wos skill doctor --agent codex", "wos skill uninstall --agent codex"}},
-			CommandGroup{"config", "Validate local service configuration", []string{"wos config validate"}},
+			CommandGroup{"config", "Validate local service configuration", []string{"wos config validate", "wos config validate --deployment=shared"}},
 			CommandGroup{"db", "Service-side database operations; restore targets a new SQLite file", []string{"wos db migrate", "wos db backup FILE", "wos db restore SOURCE DESTINATION"}},
 			CommandGroup{"issuer", "Explicit service-side issuer recovery", []string{"wos issuer recover --file FILE"}},
 			CommandGroup{"mcp", "Local-authentication MCP stdio service", []string{"wos mcp stdio"}},

@@ -1,0 +1,56 @@
+import http.client,json,ssl,socket,time,subprocess,os
+from pathlib import Path
+lab=Path('/tmp/wos-operational-shared-lab')
+shared_token=(lab/'secrets/bootstrap_token').read_text().strip()
+local_token='wos-local-development-bootstrap-token-change-for-shared-instances'
+class ReferenceTLS(http.client.HTTPSConnection):
+ def connect(self):
+  raw=socket.create_connection(('127.0.0.1',self.port),self.timeout)
+  self.sock=self._context.wrap_socket(raw,server_hostname='wos.localhost')
+def request(shared,path,method='GET',payload=None,token=None,headers=None):
+ c=ReferenceTLS('wos.localhost',18443,context=ssl.create_default_context(cafile=str(lab/'ingress-ca.crt')),timeout=5) if shared else http.client.HTTPConnection('127.0.0.1',18094,timeout=5)
+ h=dict(headers or {})
+ if token:h['Authorization']='Bearer '+token
+ body=None
+ if payload is not None:body=json.dumps(payload);h['Content-Type']='application/json'
+ c.request(method,path,body=body,headers=h);r=c.getresponse();raw=r.read();result=(r.status,dict(r.getheaders()),json.loads(raw) if raw and r.getheader('Content-Type','').startswith('application/json') else raw.decode());c.close();return result
+def ready(shared):
+ for _ in range(60):
+  try:
+   if request(shared,'/readyz')[0]==200:return
+  except (OSError,http.client.HTTPException):pass
+  time.sleep(.5)
+ raise RuntimeError('owned reference did not become ready')
+results={}
+for shared,ns,token in [(False,'0199ff31-0000-7000-8000-000000000001',local_token),(True,'0199f016-0000-7000-8000-000000000001',shared_token)]:
+ name='shared-postgres-tls' if shared else 'local-sqlite'
+ ready(shared)
+ assert request(shared,'/app/')[0]==200
+ path='/api/v1/namespaces/'+ns+'/outcomes'
+ assert request(shared,path)[0]==401
+ assert request(shared,path,token='invalid-reference-token')[0]==401
+ assert request(shared,'/api/v1/namespaces/0199f016-0000-7000-8000-000000000099/outcomes',token=token)[0]==403
+ status,_,body=request(shared,path,'POST',{'title':'Operational reference '+name,'desired_state':'persistent scoped state','priority':'normal'},token,{'Idempotency-Key':'shared-reference-validation-'+name})
+ assert status==201,(status,body)
+ oid=body['value']['id']
+ trust=None
+ if shared:
+  status,_,trust=request(True,'/api/v1/namespaces/'+ns+'/signed-trust',token=token)
+  assert status==200 and trust['server']['server_id']
+  status,headers,_=request(True,'/session','POST',{'token':token},headers={'Origin':'https://wos.localhost:18443'})
+  assert status==200 and 'Secure' in headers['Set-Cookie'] and 'HttpOnly' in headers['Set-Cookie']
+  assert request(True,'/session','POST',{'token':token},headers={'Origin':'https://outside.invalid'})[0]==403
+ env=os.environ.copy()
+ for key in ['DOCKER_HOST','DOCKER_CONTEXT','DOCKER_TLS','DOCKER_TLS_VERIFY','DOCKER_CERT_PATH']:env.pop(key,None)
+ container='wos-operational-shared-20261016-wos-1' if shared else 'wos-operational-local-20261016-wos-1'
+ subprocess.run(['docker','--host=unix:///var/run/docker.sock','restart',container],env=env,stdout=subprocess.DEVNULL,check=True,timeout=30)
+ ready(shared)
+ status,_,after=request(shared,path+'/'+oid,token=token)
+ assert status==200 and after.get('value',after)['id']==oid,(status,after)
+ row={'ready':True,'app_served':True,'missing_and_invalid_credentials_denied':True,'cross_namespace_denied':True,'outcome_id':oid,'state_preserved_after_restart':True}
+ if shared:
+  _,_,next_trust=request(True,'/api/v1/namespaces/'+ns+'/signed-trust',token=token)
+  assert trust['server']==next_trust['server']
+  row.update(tls_certificate_verified=True,server_id=trust['server']['server_id'],issuer_fingerprint=trust['server']['fingerprint'],issuer_identity_preserved_after_restart=True,browser_cookie_secure=True,cross_origin_session_denied=True)
+ results[name]=row
+print(json.dumps({'production_sla':False,'reference_only':True,'results':results},indent=2))

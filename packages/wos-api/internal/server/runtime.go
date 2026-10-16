@@ -58,7 +58,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	var store runtimeStore
 	var err error
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
+		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart, MaxOpenConnections: config.Storage.PostgresMaxOpenConnections})
 	} else {
 		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
 	}

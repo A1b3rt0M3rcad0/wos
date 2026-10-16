@@ -1,0 +1,28 @@
+{
+  "production_sla": false,
+  "reference_only": true,
+  "results": {
+    "local-sqlite": {
+      "ready": true,
+      "app_served": true,
+      "missing_and_invalid_credentials_denied": true,
+      "cross_namespace_denied": true,
+      "outcome_id": "01a1423a-8557-76ee-9228-07004d93381a",
+      "state_preserved_after_restart": true
+    },
+    "shared-postgres-tls": {
+      "ready": true,
+      "app_served": true,
+      "missing_and_invalid_credentials_denied": true,
+      "cross_namespace_denied": true,
+      "outcome_id": "01a1423b-9501-7900-b8c9-8c26e169e173",
+      "state_preserved_after_restart": true,
+      "tls_certificate_verified": true,
+      "server_id": "01a14236-7f5b-7500-89af-900b88b65236",
+      "issuer_fingerprint": "sha256:82c704a9fde8a7d6a68bb3b645fcb665c57e8010b3caf4116506e7b720d0864b",
+      "issuer_identity_preserved_after_restart": true,
+      "browser_cookie_secure": true,
+      "cross_origin_session_denied": true
+    }
+  }
+}

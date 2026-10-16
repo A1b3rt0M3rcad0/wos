@@ -24,7 +24,7 @@ jobs:
           ref: ${{ inputs.source_ref || github.sha }}
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version-file: go.mod
+          go-version-file: .go-version
           cache: false
       - uses: actions/setup-node@v7.0.0
         with:
