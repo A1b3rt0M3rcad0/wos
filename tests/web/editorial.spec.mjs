@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent, save } from "./ux-fixture.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -131,7 +131,7 @@ async function capture(page, name) {
     .toBe(true);
   await page.screenshot({
     path: join(directory, name + ".png"),
-    fullPage: true,
+    fullPage: (await page.locator("dialog[open]").count()) === 0,
     animations: "disabled",
   });
 }
@@ -184,7 +184,9 @@ test("editorial chapters keep all six areas, real records and illustration asset
   ]) {
     await page.locator(`[data-area="${area}"]`).click();
     await expect(page.locator("#area-title")).toHaveText(title);
-    await expect(page.locator("#area-index .product-name")).toHaveText("WOS");
+    await expect(page.locator("#area-index")).toContainText(
+      area[0].toUpperCase() + area.slice(1),
+    );
     await expect(page.locator("#area-robot")).toHaveAttribute(
       "src",
       `robots/${image}`,
@@ -216,10 +218,24 @@ test("editorial chapters keep all six areas, real records and illustration asset
     .locator(".list-row")
     .filter({ hasText: "Connect the evidence review" })
     .click();
+  await expect(page.locator("#detail-dialog")).toBeVisible();
+  await expect(page.locator("#detail-title")).toHaveText("Connect the evidence review");
   await capture(page, "09-task-detail");
   await page.keyboard.press("Escape");
   await intent(page, "New task");
   await capture(page, "10-task-form");
+  await page.getByText("Execution instructions", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add instructions item", exact: true })
+    .click();
+  await page.getByLabel("Instructions item", { exact: true }).fill(
+    "Review the shared state, make a bounded change, and attach evidence.",
+  );
+  await capture(page, "15-expanded-task-form");
+  await page.keyboard.press("Escape");
+  await page.locator("#actions").click();
+  await expect(page.locator("#action-dialog")).toBeVisible();
+  await capture(page, "16-action-menu");
   await page.keyboard.press("Escape");
   await page.locator("#administration").click();
   await expect(page.locator("#admin-dialog")).toBeVisible();
@@ -268,6 +284,13 @@ test("editorial layout reflows, respects reduced motion and survives missing fon
     if (width === 390) {
       await page.locator('[data-area="work"]').click();
       await capture(page, "13-mobile-work");
+      await intent(page, "New task");
+      await capture(page, "17-mobile-task-form");
+      await page.keyboard.press("Escape");
+      await page.locator("#administration").click();
+      await expect(page.locator("#admin-dialog")).toBeVisible();
+      await capture(page, "18-mobile-settings");
+      await page.keyboard.press("Escape");
       await page.locator('[data-area="overview"]').click();
     }
   }
@@ -365,7 +388,7 @@ test("Woobe colors distinguish interaction copper, primary charcoal and semantic
   ).toHaveCSS("color", "rgb(178, 56, 52)");
 });
 
-test("supplied WOS identity stays legible, serves real browser icons and marks only actual loading", async ({
+test("WOS uses one on-page mark, editorial lettering and real browser icons", async ({
   page,
   wos,
 }) => {
@@ -441,10 +464,7 @@ test("supplied WOS identity stays legible, serves real browser icons and marks o
   await page.setViewportSize({ width: 1440, height: 1000 });
   await wos.login(page);
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
-  await expect(page.locator(".workspace-symbol")).toHaveAttribute(
-    "src",
-    "brand/04-navegacao/wos-sidebar-light.svg",
-  );
+  await expect(page.locator('img[src^="brand/"]')).toHaveCount(1);
   let release;
   const held = new Promise((resolve) => {
     release = resolve;
@@ -462,16 +482,128 @@ test("supplied WOS identity stays legible, serves real browser icons and marks o
     await expect(page.locator("#workspace-loading")).toContainText(
       "Loading outcome",
     );
-    await expect(page.locator(".loading-symbol")).toBeVisible();
+    await expect(page.locator(".loading-vignette")).toBeVisible();
+    await expect(page.locator('img[src^="brand/"]')).toHaveCount(1);
     await capture(page, "14-outcome-loading");
   } finally {
     release();
   }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
-  const chapterName = page.locator("#area-index .product-name");
-  await expect(chapterName).toHaveText("WOS");
-  expect(
-    await chapterName.evaluate((element) => getComputedStyle(element).fontFamily),
-  ).toBe(await name.evaluate((element) => getComputedStyle(element).fontFamily));
+  await expect(page.locator("#area-index")).toHaveText("01 / Overview");
+});
+
+// A focus target must fit inside the scroll region with space for its outline.
+// Checking the viewport alone misses clipping by nested form containers/footers.
+async function expectWholeControl(control) {
+  await control.focus();
+  const box = await control.evaluate((element) => {
+    const b = element.getBoundingClientRect();
+    const body = element.closest(".dialog-body");
+    const region = body.getBoundingClientRect();
+    const dialog = element.closest("dialog");
+    const style = getComputedStyle(element);
+    const footer = dialog.querySelector("footer").getBoundingClientRect();
+    const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+    return {
+      top: b.top - region.top,
+      bottom: region.bottom - b.bottom,
+      left: b.left - region.left,
+      right: region.right - b.right,
+      height: b.height,
+      covered: hit !== element && !element.contains(hit),
+      footerOverlap: region.bottom - footer.top,
+      extraDialogScroll: dialog.scrollHeight - dialog.clientHeight,
+      extraPageWidth: document.documentElement.scrollWidth - innerWidth,
+      focusClearance: Math.max(
+        1,
+        parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset),
+      ),
+    };
+  });
+  for (const edge of ["top", "bottom", "left", "right"])
+    expect(box[edge], `${edge} border/focus clearance`).toBeGreaterThanOrEqual(
+      box.focusClearance - 0.5,
+    );
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  expect(box.covered).toBe(false);
+  expect(box.footerOverlap).toBeLessThanOrEqual(1);
+  expect(box.extraDialogScroll).toBeLessThanOrEqual(1);
+  expect(box.extraPageWidth).toBeLessThanOrEqual(1);
+}
+
+test("forms preserve whole controls and save actions through nested editors, compact screens and larger text", async ({
+  page,
+  wos,
+}) => {
+  await seed(wos);
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+  for (const [width, height, font] of [
+    [1440, 1000, 14],
+    [390, 844, 14],
+    [320, 740, 14],
+    [740, 390, 14],
+    [768, 1024, 28],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate((size) => {
+      document.documentElement.style.fontSize = `${size}px`;
+    }, font);
+    await intent(page, "New task");
+    const dialog = page.locator("#command-dialog");
+    await page
+      .getByLabel("Task title", { exact: true })
+      .fill(`Form review ${width}`);
+    await dialog.getByLabel("Priority", { exact: true }).selectOption("high");
+    const lifecycle = page.getByLabel("Initial state", { exact: true });
+    await lifecycle.selectOption("backlog");
+    await page.keyboard.press("Tab");
+    await expectWholeControl(lifecycle);
+    await expect(page.locator("#submit-command")).toBeInViewport();
+    await page.getByText("Execution instructions", { exact: true }).click();
+    await page
+      .getByRole("button", { name: "Add instructions item", exact: true })
+      .click();
+    const instruction = page.getByLabel("Instructions item", { exact: true });
+    await instruction.fill("Keep the selected values and attach scoped proof.");
+    await expectWholeControl(instruction);
+    const picker = page.getByRole("combobox", { name: "Objective", exact: true });
+    await picker.fill("A clear path");
+    await expect(
+      dialog
+        .getByRole("listbox", { name: "Objective", exact: true })
+        .getByRole("option"),
+    ).toHaveCount(1);
+    await picker.press("ArrowDown");
+    await picker.press("Enter");
+    await expect(dialog.locator(".reference-chip")).toContainText("A clear path");
+    await expectWholeControl(picker);
+    await dialog.getByText("Advanced", { exact: true }).click();
+    await expectWholeControl(dialog.locator('input[type="datetime-local"]'));
+    await expect(lifecycle).toHaveValue("backlog");
+    await save(page);
+    await expect(page.locator("#notice")).not.toHaveClass(/error/);
+    await expect(page.locator("#detail-dialog")).toBeVisible();
+    await expect(page.locator("#detail-content")).toContainText(
+      "Keep the selected values",
+    );
+    await page.keyboard.press("Escape");
+
+    await page.locator("#administration").click();
+    await expect(page.locator("#admin-dialog")).toBeVisible();
+    await page.locator("#admin-operation").selectOption("set_grant");
+    await expect(page.locator("#submit-admin")).toBeInViewport();
+    await expectWholeControl(page.locator("#admin-operation"));
+    const lastPermission = page.locator(".permission-options input").last();
+    await lastPermission.focus();
+    await lastPermission.check();
+    await expect(lastPermission).toBeChecked();
+    await expect(page.locator("#submit-admin")).toBeInViewport();
+    await page.locator("#admin-operation").selectOption("issue_credential");
+    await expectWholeControl(
+      page.locator("#admin-dialog").getByLabel("Principal", { exact: true }),
+    );
+    await page.keyboard.press("Escape");
+  }
 });

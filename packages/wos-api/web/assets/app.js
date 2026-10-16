@@ -2302,7 +2302,7 @@ function field(name, schema, value, required = false) {
   )
     return { node: wrap, get: () => value };
   if (name === "permissions") {
-    const node = el("fieldset");
+    const node = el("fieldset", undefined, "permission-options");
     node.append(el("legend", copy.text.permissions));
     const controls = Object.keys(permissionLabels).map((permission) => {
       const label = el("label", undefined, "check-label"),

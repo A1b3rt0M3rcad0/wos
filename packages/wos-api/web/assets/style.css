@@ -1792,22 +1792,26 @@ svg {
   }
 }
 
-#command-form {
+.dialog-form {
   display: flex;
   flex-direction: column;
-  max-height: calc(90dvh - 52px);
+  min-height: 0;
+  max-height: inherit;
 }
-#command-form > .dialog-heading,
-#command-form > label,
-#command-form > #command-help,
-#command-form > footer {
+.dialog-form > .dialog-heading,
+.dialog-form > footer,
+.detail-drawer > .dialog-heading,
+.detail-drawer > footer {
   flex-shrink: 0;
 }
-#fields {
-  overflow-y: auto;
+.dialog-body {
+  overflow: auto;
+  overscroll-behavior: contain;
   min-height: 0;
   flex: 1;
-  padding: 2px;
+}
+#fields {
+  min-width: 0;
 }
 .plan-node-child {
   margin-left: 16px;
