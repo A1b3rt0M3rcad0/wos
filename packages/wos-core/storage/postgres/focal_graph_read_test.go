@@ -228,6 +228,19 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 					}
 				}
 			}
+			for _, withKnown := range []bool{false, true} {
+				largeKinds := make([]string, 40000)
+				if withKnown {
+					largeKinds = append(largeKinds, "relates_to")
+				}
+				selectedRoot := works[0].Ref()
+				q := a.GraphQuery{Root: &selectedRoot, Direction: "both", Depth: 2, Limit: 100, Kinds: largeKinds}
+				want, e := legacy.GetOutcomeGraph(ctx, scope, q)
+				must(e)
+				got, e := bounded.GetOutcomeGraph(ctx, scope, q)
+				must(e)
+				assertFocalJSON(t, want, got)
+			}
 			unsupported := link.Ref()
 			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Root: &unsupported, Depth: 1}); securityErrorCode(e) != d.ErrorCodeNotFound {
 				t.Fatal("non-node entity became a graph root", e)

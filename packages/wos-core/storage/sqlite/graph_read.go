@@ -29,6 +29,23 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 	if limit < 1 || limit > 101 || (direction != "out" && direction != "in" && direction != "both") {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid graph adjacency page")
 	}
+	// Kinds are an inclusion filter, not authority. Ignore unknown/duplicate
+	// spellings exactly as the legacy edge loop did, without unbounded SQL
+	// bind counts (a valid compact URL can contain thousands of empty kinds).
+	if len(kinds) > 0 {
+		allowed := map[string]bool{"hierarchy": true, "ownership": true, "blocks": true, "causes": true, "artifact_source": true, "supersedes": true, "depends_on": true, "relates_to": true, "produces": true, "derived_from": true, "supports": true, "contradicts": true, "context": true}
+		selected := []string{}
+		for _, kind := range kinds {
+			if allowed[kind] {
+				selected = append(selected, kind)
+				delete(allowed, kind)
+			}
+		}
+		if len(selected) == 0 {
+			return []ports.GraphReadEdge{}, nil
+		}
+		kinds = selected
+	}
 	args := []any{}
 	values := make([]string, len(refs))
 	for i, ref := range refs {
