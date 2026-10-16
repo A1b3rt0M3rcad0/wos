@@ -43,7 +43,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ inputs.source_ref || github.sha }}
+          ref: ${{ inputs.source_ref || github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Go
         uses: actions/setup-go@v7.0.0
@@ -200,6 +200,31 @@ jobs:
         with:
           name: historical-v020-upgrade
           path: historical-upgrade.json
+
+      - name: Actual released v0.4.2 signed-state restore and additive upgrade
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        shell: bash
+        run: |
+          historical_ref=b572269085494ddd4d6370716ff1cb360b46065f
+          git fetch --no-tags --depth=1 origin "$historical_ref"
+          historical_source="$(mktemp -d)"
+          trap 'rm -rf "$historical_source"' EXIT
+          git archive "$historical_ref" | tar -x -C "$historical_source"
+          (cd "$historical_source" && go build -trimpath -buildvcs=false \
+            -ldflags "-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Version=0.4.2 -X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=$historical_ref" \
+            -o "$historical_source/wos-v042" ./packages/wos-api/cmd/wos)
+          go build -trimpath -buildvcs=false -o "$RUNNER_TEMP/wos-verify-historical-dsse" ./tools/acceptance/verify-signed-fixture
+          export PATH="$RUNNER_TEMP/wos-pg-clients:$PATH"
+          python3 tools/acceptance/v042-operational-upgrade.py --archive "$historical_source" \
+            --old-binary "$historical_source/wos-v042" --binary bin/wos \
+            --verifier "$RUNNER_TEMP/wos-verify-historical-dsse" --source "$(git rev-parse HEAD)" \
+            --output "$RUNNER_TEMP/wos-v042-upgrade"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: historical-v042-operational-upgrade
+          path: ${{ runner.temp }}/wos-v042-upgrade/report.json
+          if-no-files-found: error
 
       - name: Smoke version command
         run: ./bin/wos version
