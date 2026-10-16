@@ -12,7 +12,14 @@ func (h *Handler) signedState(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, err)
 		return
 	}
-	query := a.SignedStateQuery{Scope: scope, Resource: r.PathValue("resource"), ContractKind: r.URL.Query().Get("contract_kind"), Digest: r.URL.Query().Get("digest"), IdempotencyKey: r.URL.Query().Get("idempotency_key"), Cursor: r.URL.Query().Get("cursor")}
+	query := a.SignedStateQuery{Scope: scope, Resource: r.PathValue("resource"), ContractKind: r.URL.Query().Get("contract_kind"), Digest: r.URL.Query().Get("digest"), IdempotencyKey: r.URL.Query().Get("idempotency_key"), Cursor: r.URL.Query().Get("cursor"), HolderPrincipalID: r.URL.Query().Get("holder_principal_id"), Status: d.ContractStatus(r.URL.Query().Get("status"))}
+	if value := r.URL.Query().Get("work_item_id"); value != "" {
+		query.WorkItemID, err = d.ParseID(value)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+	}
 	if value := r.PathValue("entity_id"); value != "" {
 		query.ID, err = d.ParseID(value)
 		if err != nil {

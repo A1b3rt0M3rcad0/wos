@@ -101,6 +101,11 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(e)
 				w.ContractsEnabled = true
+				if i == 0 {
+					criterion, e := d.NewSuccessCriterion(activityStorageID(501), w.Ref(), "Review the exact tested revision", "", true, d.VerificationModeEvidenceReview)
+					must(e)
+					must(w.AddCriterion(criterion, now))
+				}
 				must(uow.WorkItems().Insert(ctx, w))
 				works = append(works, w)
 			}
@@ -156,6 +161,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				}
 				if i == 0 {
 					first = result
+					assertSignedWorkActivityApplication(t, service, store, agentCtx, cc, result, agentKey, clock, ids)
 					firstCC = cc
 					firstCmd = cmd
 				}

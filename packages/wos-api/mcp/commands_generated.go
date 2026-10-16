@@ -61,6 +61,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.AdministrativeCompleteWorkItemCommand](server, ids, options, "wos_administrative_complete_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.AdministrativeCompleteWorkItemCommand) (any, error) {
 		return service.AdministrativeCompleteWorkItem(ctx, cc, cmd)
 	})
+	registerCommand[application.AppendWorkActivityCommand](server, ids, options, "wos_append_work_activity", func(ctx context.Context, cc domain.CommandContext, cmd application.AppendWorkActivityCommand) (any, error) {
+		return service.AppendWorkActivity(ctx, cc, cmd)
+	})
 	registerCommand[application.ArchiveOutcomeCommand](server, ids, options, "wos_archive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.ArchiveOutcomeCommand) (any, error) {
 		return service.ArchiveOutcome(ctx, cc, cmd)
 	})

@@ -101,6 +101,12 @@
     "permission": "work:admin_complete",
     "surface": "developer"
   },
+  "append_work_activity": {
+    "exposure": "S",
+    "journey": "Signed v2 execution activity",
+    "permission": "work:write",
+    "surface": "profile"
+  },
   "archive_outcome": {
     "exposure": "C",
     "journey": "Outcome transitions",

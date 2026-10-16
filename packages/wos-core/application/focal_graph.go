@@ -302,7 +302,7 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 		if e != nil {
 			return WorkContext{}, e
 		}
-		c, e := repo.Get(ctx, scope, *work.CurrentContractID)
+		c, e := focalWorkContract(ctx, uow, repo, scope, *work.CurrentContractID)
 		if e != nil {
 			return WorkContext{}, e
 		}

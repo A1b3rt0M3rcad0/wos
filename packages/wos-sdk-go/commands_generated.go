@@ -58,6 +58,9 @@ func (c *Client) AdministrativeCancelWorkItem(ctx context.Context, key string, c
 func (c *Client) AdministrativeCompleteWorkItem(ctx context.Context, key string, cmd application.AdministrativeCompleteWorkItemCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "administrative_complete_work_item", key, cmd)
 }
+func (c *Client) AppendWorkActivity(ctx context.Context, key string, cmd application.AppendWorkActivityCommand) (CommandResult[application.WorkActivityResult], error) {
+	return command[application.WorkActivityResult](ctx, c, "append_work_activity", key, cmd)
+}
 func (c *Client) ArchiveOutcome(ctx context.Context, key string, cmd application.ArchiveOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "archive_outcome", key, cmd)
 }

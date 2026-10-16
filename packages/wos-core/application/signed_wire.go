@@ -72,7 +72,7 @@ func (r MutationResult[T]) MarshalJSON() ([]byte, error) {
 	switch value := any(r.Value).(type) {
 	case WorkContractResult:
 		signed = value.Contract.SignedBinding != nil
-	case SignedReviewContractResult, SignedReturnResult, SignedInterventionResult:
+	case WorkActivityResult, SignedReviewContractResult, SignedReturnResult, SignedInterventionResult:
 		signed = true
 	}
 	if signed {

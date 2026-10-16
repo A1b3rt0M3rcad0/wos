@@ -34,6 +34,7 @@ func main() {
 		schemas[name] = commands.SignedSchema(typed)
 	}
 	paths := map[string]any{}
+	workActivityContracts(paths, schemas)
 	schemas["DeliveryHealthQuery"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthQuery]())
 	schemas["DeliveryHealthResult"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthResult]())
 	paths["/api/v1/namespaces/{namespace_id}/operations/delivery-health"] = map[string]any{"get": map[string]any{"operationId": "getDeliveryHealth", "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.", "parameters": []any{map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}}, map[string]any{"name": "outcome_id", "in": "query", "schema": map[string]any{"type": "string", "format": "uuid"}}}, "responses": map[string]any{"200": map[string]any{"description": "Scoped queue and worker diagnostic", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/DeliveryHealthResult"}}}}, "403": map[string]any{"description": "Current Namespace administrative access denied"}}}}
@@ -69,6 +70,12 @@ func main() {
 			if strings.HasPrefix(segment, "{") {
 				parameters = append(parameters, map[string]any{"name": strings.Trim(segment, "{}"), "in": "path", "required": true, "schema": map[string]any{"type": "string"}})
 			}
+		}
+		if strings.HasSuffix(path, "/signed-state/{resource}") {
+			for _, name := range []string{"holder_principal_id", "work_item_id", "status", "cursor"} {
+				parameters = append(parameters, map[string]any{"name": name, "in": "query", "description": "Optional executions discovery filter or continuation cursor.", "schema": map[string]any{"type": "string"}})
+			}
+			parameters = append(parameters, map[string]any{"name": "limit", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 25}})
 		}
 		paths[path] = map[string]any{"get": map[string]any{"description": "Authorized execution-contract read. Collections accept limit (1..100) and scope-bound cursor. Specs are immutable resources. Effective expiry is read-only; receipt lookup is restricted to authenticated principal.", "parameters": parameters, "responses": map[string]any{"200": map[string]any{"description": "Typed result, page or retained receipt; omission metadata remains explicit."}, "403": map[string]any{"description": "Authorization denied."}, "404": map[string]any{"description": "Not found in scope or receipt not retained."}}}}
 	}

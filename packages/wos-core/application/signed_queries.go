@@ -11,14 +11,30 @@ import (
 )
 
 type SignedStateQuery struct {
-	Scope          d.Scope `json:"scope"`
-	Resource       string  `json:"resource"`
-	ID             d.ID    `json:"id,omitempty"`
-	ContractKind   string  `json:"contract_kind,omitempty"`
-	Digest         string  `json:"digest,omitempty"`
-	IdempotencyKey string  `json:"idempotency_key,omitempty"`
-	Limit          int     `json:"limit,omitempty"`
-	Cursor         string  `json:"cursor,omitempty"`
+	Scope             d.Scope          `json:"scope"`
+	Resource          string           `json:"resource"`
+	ID                d.ID             `json:"id,omitempty"`
+	ContractKind      string           `json:"contract_kind,omitempty"`
+	Digest            string           `json:"digest,omitempty"`
+	IdempotencyKey    string           `json:"idempotency_key,omitempty"`
+	Limit             int              `json:"limit,omitempty"`
+	Cursor            string           `json:"cursor,omitempty"`
+	HolderPrincipalID string           `json:"holder_principal_id,omitempty"`
+	WorkItemID        d.ID             `json:"work_item_id,omitempty"`
+	Status            d.ContractStatus `json:"status,omitempty"`
+}
+
+// SignedExecutionHeader is current discovery metadata, never an authority grant.
+// Work/criterion/specification history expands through explicit scoped resources.
+type SignedExecutionHeader struct {
+	ID                 d.ID             `json:"contract_id"`
+	WorkItemID         d.ID             `json:"work_item_id"`
+	HolderPrincipalID  string           `json:"holder_principal_id"`
+	CredentialID       d.ID             `json:"credential_id"`
+	Status             d.ContractStatus `json:"status"`
+	EffectiveStatus    d.ContractStatus `json:"effective_status"`
+	ExpiresAt          time.Time        `json:"expires_at"`
+	LatestSubmissionID *d.ID            `json:"latest_submission_id,omitempty"`
 }
 type SignedContractMetadata struct {
 	CredentialID          d.ID                `json:"credential_id"`
@@ -48,6 +64,7 @@ type SignedContractMetadata struct {
 // avoids HTML-escape expansion; its digest is linked by the issuer acceptance.
 // No query supplies execution authority or claims an evaluation of quality.
 type SignedStateResult struct {
+	Executions           []SignedExecutionHeader  `json:"executions,omitempty"`
 	Readiness            *SignedProtocolReadiness `json:"signed_protocol_readiness,omitempty"`
 	OperationFingerprint string                   `json:"operation_fingerprint,omitempty"`
 	OperationCommandID   *d.ID                    `json:"operation_command_id,omitempty"`
@@ -199,7 +216,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if err != nil {
 		return zero, err
 	}
-	if q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.Resource != "operation" && q.Resource != "return_resolution" && q.ID.Validate() != nil {
+	if q.Resource != "executions" && q.Resource != "review_queue" && q.Resource != "cases" && q.Resource != "receipt" && q.Resource != "operation" && q.Resource != "return_resolution" && q.ID.Validate() != nil {
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "resource identifier required")
 	}
 	switch q.Resource {
@@ -254,6 +271,47 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		result.PayloadDigest = signing.Digest(doc.Payload)
 		if q.Digest != "" && q.Digest != result.PayloadDigest {
 			return zero, d.NewError(d.ErrorCodeContractSpecMismatch, "resolution receipt digest differs")
+		}
+	case "executions":
+		limit, err := queryLimit(q.Limit)
+		if err != nil {
+			return zero, err
+		}
+		if len(q.HolderPrincipalID) > 256 || !q.WorkItemID.IsZero() && q.WorkItemID.Validate() != nil {
+			return zero, d.NewError(d.ErrorCodeInvalidArgument, "invalid execution discovery filter")
+		}
+		if q.Status != "" && q.Status != d.ContractActive && q.Status != d.ContractCompleted && q.Status != d.ContractRevoked && q.Status != d.ContractExpired && q.Status != d.ContractDelivered {
+			return zero, d.NewError(d.ErrorCodeInvalidArgument, "invalid execution status filter")
+		}
+		f := ports.ContractFilter{HolderPrincipalID: q.HolderPrincipalID, WorkItemID: q.WorkItemID, Status: q.Status}
+		fingerprint := filterHash(f)
+		if q.Cursor != "" {
+			cursor, err := decodeCursor(q.Cursor, q.Scope.NamespaceID, q.Scope.OutcomeID, "executions", fingerprint)
+			if err != nil {
+				return zero, err
+			}
+			f.After, err = d.ParseID(cursor.Key)
+			if err != nil {
+				return zero, err
+			}
+		}
+		f.Limit = limit + 1
+		contracts, err := workRepo.List(ctx, q.Scope, f)
+		if err != nil {
+			return zero, err
+		}
+		result.SearchComplete = len(contracts) <= limit
+		if len(contracts) > limit {
+			contracts = contracts[:limit]
+			result.NextCursor = encodeCursor(queryCursor{Namespace: q.Scope.NamespaceID, Outcome: q.Scope.OutcomeID, Section: "executions", Filter: fingerprint, Key: contracts[len(contracts)-1].ID.String()})
+		}
+		result.Scanned = len(contracts)
+		result.Executions = []SignedExecutionHeader{}
+		for _, contract := range contracts {
+			if contract.SignedBinding == nil {
+				return zero, d.NewError(d.ErrorCodeSignedProtocolRequired, "signed discovery contains unsigned contract")
+			}
+			result.Executions = append(result.Executions, SignedExecutionHeader{ID: contract.ID, WorkItemID: contract.WorkItemID, HolderPrincipalID: contract.HolderPrincipalID, CredentialID: contract.SignedBinding.CredentialID, Status: contract.Status, EffectiveStatus: contract.EffectiveStatus(now), ExpiresAt: contract.ExpiresAt, LatestSubmissionID: contract.LatestSubmissionID})
 		}
 	case "operation":
 		if err = d.ValidateIdempotencyKey(q.IdempotencyKey); err != nil {

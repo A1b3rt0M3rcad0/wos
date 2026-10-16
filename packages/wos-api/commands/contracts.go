@@ -65,6 +65,7 @@ func typeSchema(t reflect.Type) map[string]any {
 		reflect.TypeFor[domain.VerificationMode]():   {string(domain.VerificationModeAttestation), string(domain.VerificationModeEvidenceReview), string(domain.VerificationModeExternalEvaluation)},
 		reflect.TypeFor[domain.AssessmentResult]():   {string(domain.AssessmentResultMet), string(domain.AssessmentResultNotMet), string(domain.AssessmentResultInconclusive), string(domain.AssessmentResultWaived)},
 		reflect.TypeFor[domain.EvidenceType]():       {string(domain.EvidenceTypeMeasurement), string(domain.EvidenceTypeTestResult), string(domain.EvidenceTypeInspection), string(domain.EvidenceTypeAttestation), string(domain.EvidenceTypeSource), string(domain.EvidenceTypeExternalEvaluation)},
+		reflect.TypeFor[domain.WorkActivityType]():   {string(domain.WorkActivityProgress), string(domain.WorkActivityDiscovery), string(domain.WorkActivityProblem), string(domain.WorkActivityCorrection), string(domain.WorkActivityValidation), string(domain.WorkActivityResult)},
 	}
 	if values, ok := enumValues[t]; ok {
 		return map[string]any{"type": "string", "enum": values}
@@ -122,7 +123,7 @@ func typeSchema(t reflect.Type) map[string]any {
 			if strings.Contains(f.Tag.Get("json"), ",string") {
 				p[name] = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
 			}
-			if f.Tag.Get("wos") != "optional" && f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice {
+			if f.Tag.Get("wos") == "required" || (f.Tag.Get("wos") != "optional" && f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice) {
 				required = append(required, name)
 			}
 		}

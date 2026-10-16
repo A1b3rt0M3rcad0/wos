@@ -16,6 +16,18 @@ func (c *Client) ReadSignedState(ctx context.Context, query a.SignedStateQuery) 
 		return result, err
 	}
 	parameters := url.Values{}
+	if query.HolderPrincipalID != "" {
+		parameters.Set("holder_principal_id", query.HolderPrincipalID)
+	}
+	if !query.WorkItemID.IsZero() {
+		if err := query.WorkItemID.Validate(); err != nil {
+			return result, err
+		}
+		parameters.Set("work_item_id", query.WorkItemID.String())
+	}
+	if query.Status != "" {
+		parameters.Set("status", string(query.Status))
+	}
 	if query.ContractKind != "" {
 		parameters.Set("contract_kind", query.ContractKind)
 	}

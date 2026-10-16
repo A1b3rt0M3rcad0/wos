@@ -773,6 +773,433 @@
         ],
         "type": "object"
       },
+      "Catalog_append_work_activity": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_refs": {
+            "items": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "artifacts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "artifact": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "artifact_type": {
+                      "type": "string"
+                    },
+                    "checksum": {
+                      "type": "string"
+                    },
+                    "media_type": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "produced_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "scope": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "namespace_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id"
+                      ],
+                      "type": "object"
+                    },
+                    "source_version": {
+                      "type": "string"
+                    },
+                    "uri": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "artifact_type",
+                    "name",
+                    "uri",
+                    "media_type",
+                    "checksum",
+                    "source_version"
+                  ],
+                  "type": "object"
+                },
+                "local_key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "local_key",
+                "artifact"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "authority": {
+            "additionalProperties": false,
+            "properties": {
+              "execution_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "fencing_token": {
+                "pattern": "^[1-9][0-9]{0,19}$",
+                "type": "string"
+              },
+              "spec_digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "execution_id",
+              "fencing_token",
+              "spec_digest"
+            ],
+            "type": "object"
+          },
+          "authority_digest": {
+            "type": "string"
+          },
+          "contract_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "criterion_refs": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "criterion_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "criterion_revision": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "criterion_id",
+                "criterion_revision"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "artifact_local_key": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "additionalProperties": false,
+                  "else": {
+                    "properties": {
+                      "measurement": {
+                        "type": "null"
+                      }
+                    }
+                  },
+                  "if": {
+                    "properties": {
+                      "evidence_type": {
+                        "const": "measurement"
+                      }
+                    },
+                    "required": [
+                      "evidence_type"
+                    ]
+                  },
+                  "properties": {
+                    "artifact_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "captured_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "checksum": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "evidence_type": {
+                      "enum": [
+                        "measurement",
+                        "test_result",
+                        "inspection",
+                        "attestation",
+                        "source",
+                        "external_evaluation"
+                      ],
+                      "type": "string"
+                    },
+                    "measurement": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "conditions": {
+                          "type": "string"
+                        },
+                        "method": {
+                          "type": "string"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "scope": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "namespace_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id"
+                      ],
+                      "type": "object"
+                    },
+                    "source_ref": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "display_name": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string"
+                        },
+                        "uri": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "provider"
+                      ],
+                      "type": "object"
+                    },
+                    "source_version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "evidence_type",
+                    "source_ref",
+                    "captured_at"
+                  ],
+                  "then": {
+                    "properties": {
+                      "measurement": {
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "measurement"
+                    ]
+                  },
+                  "type": "object"
+                },
+                "local_key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "local_key",
+                "evidence"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "evidence_links": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "evidence_local_key": {
+                  "type": "string"
+                },
+                "link": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "criterion_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "evidence_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "rationale": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "namespace_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id"
+                      ],
+                      "type": "object"
+                    },
+                    "stance": {
+                      "type": "string"
+                    },
+                    "target_ref": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "namespace_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id",
+                        "kind",
+                        "id"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "scope",
+                    "target_ref",
+                    "stance",
+                    "rationale"
+                  ],
+                  "type": "object"
+                },
+                "local_key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "local_key",
+                "link"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "evidence_refs": {
+            "items": {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expected_contract_version": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "outcome_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "outcome_id"
+            ],
+            "type": "object"
+          },
+          "signer_key_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "progress",
+              "discovery",
+              "problem",
+              "correction",
+              "validation",
+              "result"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "contract_id",
+          "signer_key_id",
+          "authority",
+          "authority_digest",
+          "expected_contract_version",
+          "type",
+          "description"
+        ],
+        "type": "object"
+      },
       "Catalog_archive_outcome": {
         "additionalProperties": false,
         "properties": {
@@ -8213,6 +8640,10 @@
             "maxLength": 65536,
             "type": "string"
           },
+          "holder_principal_id": {
+            "maxLength": 65536,
+            "type": "string"
+          },
           "id": {
             "maxLength": 65536,
             "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
@@ -8248,6 +8679,15 @@
               "outcome_id"
             ],
             "type": "object"
+          },
+          "status": {
+            "maxLength": 65536,
+            "type": "string"
+          },
+          "work_item_id": {
+            "maxLength": 65536,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
           }
         },
         "required": [
@@ -8651,6 +9091,68 @@
           "evaluated_at": {
             "format": "date-time",
             "type": "string"
+          },
+          "executions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "contract_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "credential_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "effective_status": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "expires_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "holder_principal_id": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "latest_submission_id": {
+                  "anyOf": [
+                    {
+                      "maxLength": 65536,
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "status": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
+                "work_item_id": {
+                  "maxLength": 65536,
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "contract_id",
+                "work_item_id",
+                "holder_principal_id",
+                "credential_id",
+                "status",
+                "effective_status",
+                "expires_at"
+              ],
+              "type": "object"
+            },
+            "maxItems": 10000,
+            "type": "array"
           },
           "fact_id": {
             "anyOf": [
@@ -10974,6 +11476,425 @@
           "expected_version"
         ],
         "type": "object"
+      },
+      "WorkActivityPage": {
+        "additionalProperties": false,
+        "properties": {
+          "history_through_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "actor_ref": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "display_name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "human",
+                        "agent",
+                        "service",
+                        "automation",
+                        "external_system"
+                      ],
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "provider",
+                    "id"
+                  ],
+                  "type": "object"
+                },
+                "artifact_refs": {
+                  "items": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "artifact_versions": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "artifact_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "checksum": {
+                        "type": "string"
+                      },
+                      "source_version": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "artifact_id",
+                      "source_version",
+                      "checksum"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "contract_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "criterion_refs": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "criterion_id": {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      "criterion_revision": {
+                        "pattern": "^(0|[1-9][0-9]{0,19})$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "criterion_id",
+                      "criterion_revision"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "evidence_refs": {
+                  "items": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "principal_id": {
+                  "type": "string"
+                },
+                "recorded_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "scope": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "namespace_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    },
+                    "outcome_id": {
+                      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "namespace_id",
+                    "outcome_id"
+                  ],
+                  "type": "object"
+                },
+                "sequence": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "progress",
+                    "discovery",
+                    "problem",
+                    "correction",
+                    "validation",
+                    "result"
+                  ],
+                  "type": "string"
+                },
+                "work_item_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "scope",
+                "contract_id",
+                "work_item_id",
+                "sequence",
+                "type",
+                "principal_id",
+                "actor_ref",
+                "recorded_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next_cursor": {
+            "type": "string"
+          },
+          "order": {
+            "type": "string"
+          },
+          "outcome_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order",
+          "outcome_revision",
+          "history_through_revision"
+        ],
+        "type": "object"
+      },
+      "WorkAttention": {
+        "additionalProperties": false,
+        "properties": {
+          "awaiting_review": {
+            "type": "boolean"
+          },
+          "correction_findings": {
+            "items": {
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "criterion_id": {
+                      "type": "string"
+                    },
+                    "requirement_ref": {
+                      "enum": [
+                        "",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "criterion_id"
+                  ]
+                },
+                {
+                  "properties": {
+                    "criterion_id": {
+                      "type": "null"
+                    },
+                    "requirement_ref": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "requirement_ref"
+                  ]
+                }
+              ],
+              "properties": {
+                "criterion_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "requirement_ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "correction_required": {
+            "type": "boolean"
+          },
+          "correction_review_case_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "current_contract_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "evidence_search_complete": {
+            "type": "boolean"
+          },
+          "execution_allowed": {
+            "type": "boolean"
+          },
+          "obligations": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "assessment_result": {
+                  "enum": [
+                    "met",
+                    "not_met",
+                    "inconclusive",
+                    "waived"
+                  ],
+                  "type": "string"
+                },
+                "criterion_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "criterion_revision": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "evidence_linked": {
+                  "type": "boolean"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "status",
+                "evidence_linked"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "omitted": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "operational_state": {
+            "additionalProperties": false,
+            "properties": {
+              "display_state": {
+                "type": "string"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "is_blocked": {
+                "type": "boolean"
+              },
+              "lease_status": {
+                "type": "string"
+              },
+              "lifecycle": {
+                "type": "string"
+              },
+              "readiness_reasons": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "ref": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "namespace_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  },
+                  "outcome_id": {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "namespace_id",
+                  "outcome_id",
+                  "kind",
+                  "id"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ref",
+              "lifecycle",
+              "display_state",
+              "lease_status",
+              "is_blocked",
+              "evaluated_at"
+            ],
+            "type": "object"
+          },
+          "outcome_revision": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "review_case_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "work_item_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "work_item_id",
+          "status",
+          "operational_state",
+          "execution_allowed",
+          "awaiting_review",
+          "correction_required",
+          "evidence_search_complete",
+          "truncated",
+          "outcome_revision",
+          "evaluated_at"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -11947,6 +12868,63 @@
                 "properties": {
                   "command": {
                     "$ref": "#/components/schemas/Catalog_administrative_complete_work_item"
+                  }
+                },
+                "required": [
+                  "command"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."
+          },
+          "400": {
+            "description": "Invalid intent or key."
+          },
+          "401": {
+            "description": "Credential absent, revoked or expired."
+          },
+          "403": {
+            "description": "Namespace or permission denied."
+          },
+          "409": {
+            "description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."
+          },
+          "413": {
+            "description": "Payload exceeds byte limit."
+          }
+        }
+      }
+    },
+    "/api/v1/commands/append_work_activity": {
+      "post": {
+        "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.",
+        "operationId": "command_append_work_activity",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 16,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "command": {
+                    "$ref": "#/components/schemas/Catalog_append_work_activity"
                   }
                 },
                 "required": [
@@ -17041,6 +18019,48 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Optional executions discovery filter or continuation cursor.",
+            "in": "query",
+            "name": "holder_principal_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional executions discovery filter or continuation cursor.",
+            "in": "query",
+            "name": "work_item_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional executions discovery filter or continuation cursor.",
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional executions discovery filter or continuation cursor.",
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -17102,6 +18122,98 @@
           },
           "404": {
             "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity": {
+      "get": {
+        "description": "Immutable authorized Outcome work activity. Optional WorkItem/contract filters and opaque scope/filter-bound cursors. Observations never complete work, assess criteria or grant execution authority. Cache-Control: no-store.",
+        "operationId": "listWorkActivity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "work_item_id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Read newest activity first; its cursor continues toward older records.",
+            "in": "query",
+            "name": "descending",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkActivityPage"
+                }
+              }
+            },
+            "description": "Bounded activity history and continuation cursor."
+          },
+          "400": {
+            "description": "Malformed identifier or query format."
+          },
+          "403": {
+            "description": "Current Outcome authorization denied."
+          },
+          "404": {
+            "description": "Referenced work not found in scope."
+          },
+          "422": {
+            "description": "Invalid ID, limit, filter or cursor."
           }
         }
       }
@@ -17304,6 +18416,65 @@
           },
           "404": {
             "description": "Not found in scope or receipt not retained."
+          }
+        }
+      }
+    },
+    "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention": {
+      "get": {
+        "description": "Current authorized WorkItem attention projection. Reading never changes lifecycle, renews authority or completes work. Cache-Control: no-store.",
+        "operationId": "getWorkAttention",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outcome_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "work_item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkAttention"
+                }
+              }
+            },
+            "description": "Current attention signals and Outcome revision."
+          },
+          "400": {
+            "description": "Malformed identifier or query format."
+          },
+          "403": {
+            "description": "Current Outcome authorization denied."
+          },
+          "404": {
+            "description": "Referenced work not found in scope."
+          },
+          "422": {
+            "description": "Invalid ID, limit, filter or cursor."
           }
         }
       }

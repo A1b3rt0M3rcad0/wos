@@ -8,7 +8,7 @@ import (
 
 func signedCommand(name string) bool {
 	switch name {
-	case "ResolveSignedReturnIntent", "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
+	case "AppendWorkActivity", "ResolveSignedReturnIntent", "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
 		return true
 	}
 	return false

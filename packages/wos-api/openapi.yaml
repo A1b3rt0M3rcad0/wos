@@ -23,6 +23,12 @@ tags:
 - name: Criteria
 - name: Roadmaps
 paths:
+  /api/v1/commands/append_work_activity:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_work_activity
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1work-activity
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1work-items~1{work_item_id}~1attention
   /livez:
     get:
       tags:
