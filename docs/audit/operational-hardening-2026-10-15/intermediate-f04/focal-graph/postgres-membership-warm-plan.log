@@ -1,0 +1,92 @@
+SET
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=3927.85..3927.86 rows=1 width=24) (actual time=81.983..81.999 rows=1.00 loops=1)
+   Buffers: shared hit=1476
+   CTE required_proof
+     ->  Hash Left Join  (cost=1176.18..1720.20 rows=10000 width=45) (actual time=19.810..37.513 rows=10000.00 loops=1)
+           Hash Cond: (c.owner_id = o.id)
+           Join Filter: (c.owner_kind = 'objective'::text)
+           Filter: ((c.owner_kind = 'outcome'::text) OR ((c.owner_kind = 'work_item'::text) AND (w.lifecycle <> 'cancelled'::text)) OR ((c.owner_kind = 'objective'::text) AND (o.lifecycle <> 'cancelled'::text)))
+           Buffers: shared hit=834
+           ->  Hash Left Join  (cost=1168.00..1685.78 rows=10000 width=171) (actual time=19.745..35.646 rows=10000.00 loops=1)
+                 Hash Cond: (c.owner_id = w.id)
+                 Join Filter: (c.owner_kind = 'work_item'::text)
+                 Buffers: shared hit=832
+                 ->  Hash Join  (cost=589.00..1080.51 rows=10000 width=166) (actual time=9.508..20.511 rows=10000.00 loops=1)
+                       Hash Cond: ((c.id = r.criterion_id) AND (c.criterion_revision = r.criterion_revision))
+                       Buffers: shared hit=528
+                       ->  Seq Scan on success_criteria c  (cost=0.00..439.00 rows=10000 width=166) (actual time=0.028..6.172 rows=10000.00 loops=1)
+                             Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text) AND (status = 'active'::text))
+                             Buffers: shared hit=264
+                       ->  Hash  (cost=439.00..439.00 rows=10000 width=119) (actual time=9.147..9.149 rows=10000.00 loops=1)
+                             Buckets: 16384  Batches: 1  Memory Usage: 1613kB
+                             Buffers: shared hit=264
+                             ->  Seq Scan on criterion_revisions r  (cost=0.00..439.00 rows=10000 width=119) (actual time=0.035..4.667 rows=10000.00 loops=1)
+                                   Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text) AND (required = 1))
+                                   Buffers: shared hit=264
+                 ->  Hash  (cost=454.00..454.00 rows=10000 width=116) (actual time=10.005..10.005 rows=10000.00 loops=1)
+                       Buckets: 16384  Batches: 1  Memory Usage: 1574kB
+                       Buffers: shared hit=304
+                       ->  Seq Scan on work_items w  (cost=0.00..454.00 rows=10000 width=116) (actual time=0.020..5.055 rows=10000.00 loops=1)
+                             Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                             Buffers: shared hit=304
+           ->  Hash  (cost=8.16..8.16 rows=1 width=128) (actual time=0.014..0.014 rows=0.00 loops=1)
+                 Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                 Buffers: shared hit=2
+                 ->  Index Scan using objectives_namespace_id_outcome_id_id_key on objectives o  (cost=0.14..8.16 rows=1 width=128) (actual time=0.013..0.013 rows=0.00 loops=1)
+                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Index Searches: 1
+                       Buffers: shared hit=2
+   CTE current_proof
+     ->  Hash Join  (cost=692.00..1091.26 rows=10000 width=86) (actual time=15.396..23.681 rows=10000.00 loops=1)
+           Hash Cond: (p.assessment_id = a_1.id)
+           Buffers: shared hit=640
+           ->  Seq Scan on criterion_current_assessments p  (cost=0.00..373.00 rows=10000 width=148) (actual time=0.048..3.705 rows=10000.00 loops=1)
+                 Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                 Buffers: shared hit=223
+           ->  Hash  (cost=567.00..567.00 rows=10000 width=123) (actual time=15.151..15.152 rows=10000.00 loops=1)
+                 Buckets: 16384  Batches: 1  Memory Usage: 1671kB
+                 Buffers: shared hit=417
+                 ->  Seq Scan on criterion_assessments a_1  (cost=0.00..567.00 rows=10000 width=123) (actual time=0.016..9.323 rows=10000.00 loops=1)
+                       Filter: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Buffers: shared hit=417
+   CTE invalid_source
+     ->  Unique  (cost=0.29..16.35 rows=1 width=32) (actual time=0.057..0.060 rows=0.00 loops=1)
+           Buffers: shared hit=2
+           ->  Nested Loop Left Join  (cost=0.29..16.35 rows=1 width=32) (actual time=0.038..0.040 rows=0.00 loops=1)
+                 Join Filter: (e.id = p_1.evidence_id)
+                 Filter: ((e.id IS NULL) OR (e.lifecycle <> 'registered'::text))
+                 Buffers: shared hit=2
+                 ->  Index Only Scan using criterion_assessment_evidence_pkey on criterion_assessment_evidence p_1  (cost=0.15..8.17 rows=1 width=128) (actual time=0.037..0.038 rows=0.00 loops=1)
+                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Heap Fetches: 0
+                       Index Searches: 1
+                       Buffers: shared hit=2
+                 ->  Index Scan using evidence_namespace_id_outcome_id_id_key on evidence e  (cost=0.14..8.16 rows=1 width=128) (never executed)
+                       Index Cond: ((namespace_id = '0199d160-0000-7000-8000-000000000002'::text) AND (outcome_id = '0199d160-0000-7000-8000-000000000001'::text))
+                       Index Searches: 0
+   InitPlan 4
+     ->  Aggregate  (cost=225.00..225.01 rows=1 width=8) (actual time=1.689..1.689 rows=1.00 loops=1)
+           ->  CTE Scan on required_proof  (cost=0.00..200.00 rows=10000 width=0) (actual time=0.001..0.924 rows=10000.00 loops=1)
+                 Storage: Memory  Maximum Storage: 832kB
+   ->  CTE Scan on current_proof a  (cost=0.00..200.00 rows=10000 width=104) (actual time=15.400..28.812 rows=10000.00 loops=1)
+         Storage: Memory  Maximum Storage: 1300kB
+         Buffers: shared hit=640
+   SubPlan 5
+     ->  CTE Scan on required_proof required_proof_1  (cost=0.00..200.00 rows=10000 width=40) (actual time=19.814..41.235 rows=10000.00 loops=1)
+           Storage: Memory  Maximum Storage: 832kB
+           Buffers: shared hit=834
+   SubPlan 6
+     ->  CTE Scan on invalid_source  (cost=0.00..0.02 rows=1 width=32) (actual time=0.058..0.059 rows=0.00 loops=1)
+           Storage: Memory  Maximum Storage: 17kB
+           Buffers: shared hit=2
+   SubPlan 7
+     ->  CTE Scan on required_proof required_proof_2  (cost=0.00..200.00 rows=10000 width=40) (never executed)
+           Storage: Memory  Maximum Storage: 832kB
+ Planning:
+   Buffers: shared hit=1103
+ Planning Time: 7.251 ms
+ Execution Time: 83.317 ms
+(87 rows)
+

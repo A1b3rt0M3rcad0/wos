@@ -14,6 +14,7 @@ WITH required_proof AS MATERIALIZED (
  LEFT JOIN evidence e ON e.namespace_id=p.namespace_id AND e.outcome_id=p.outcome_id AND e.id=p.evidence_id
  WHERE p.namespace_id=? AND p.outcome_id=? AND (e.id IS NULL OR e.lifecycle!='registered')
 )
-SELECT COUNT(*),COALESCE(SUM(CASE WHEN a.result='met' AND a.criterion_revision=c.criterion_revision AND b.assessment_id IS NULL THEN 1 ELSE 0 END),0),
-COALESCE(SUM(CASE WHEN a.result='waived' AND a.criterion_revision=c.criterion_revision THEN 1 ELSE 0 END),0)
-FROM required_proof c LEFT JOIN current_proof a ON a.criterion_id=c.id LEFT JOIN invalid_source b ON b.assessment_id=a.id
+SELECT (SELECT COUNT(*) FROM required_proof),
+COALESCE(SUM(CASE WHEN a.result='met' AND (a.criterion_id,a.criterion_revision) IN (SELECT id,criterion_revision FROM required_proof) AND a.id NOT IN (SELECT assessment_id FROM invalid_source) THEN 1 ELSE 0 END),0),
+COALESCE(SUM(CASE WHEN a.result='waived' AND (a.criterion_id,a.criterion_revision) IN (SELECT id,criterion_revision FROM required_proof) THEN 1 ELSE 0 END),0)
+FROM current_proof a
