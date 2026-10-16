@@ -37,7 +37,7 @@ F01–F08 are covered by creation, Objective/Task preparation, visual planning, 
 | Distribution | Offline install of actual service/skill tarballs; Linux/Windows archive metadata/hashes; unsigned checkout/recovery, signed protected profiles and independent review; four skill destinations; HTTP/MCP/UI; graceful shutdown; corruption rejection; [execution log](final-distribution.log) |
 | Reproducibility | All five native/npm archives and manifest/checksums byte-identical across two source paths; [execution log](final-reproducible.log) |
 | Docker Compose | Real Dockerfile build, UID/GID 10001:10001, copied `.env.example` unchanged, HTTP/MCP and authorized query readiness, English shell/all embedded assets, CSP and Draft/Task persistence across restart; [exact scope](final-compose.json) |
-| Screenshots | Ten actual isolated-server captures, public API demonstration data, no credentials; [gallery](../ui-workspace/README.md) |
+| Screenshots | Ten actual isolated-server captures, public API demonstration data, no credentials; [source-bound historical gallery](https://github.com/A1b3rt0M3rcad0/wos/blob/ec9aa1ecc836aa7b239f489cd70f8c6ad75930f1/docs/ui-workspace/README.md) |
 
 The normal/race skips include the separately executed full-disk fixture, native OS-keyring tests requiring a desktop session, and opt-in throughput matrices. They are not quietly counted as passes. Native Windows CLI checks passed in hosted CI; the headless local sandbox does not claim native desktop keyring validation. Historical load/fuzz reports remain separate acceptance records; no new throughput claim is made by this UX program.
 
