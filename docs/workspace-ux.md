@@ -64,7 +64,7 @@ An uncertain response freezes the original payload and idempotency key. Retry se
 
 ## Verification and limits
 
-See [the final acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [current screenshots](ui-workspace/README.md).
+See [the final acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [current screenshots](design/editorial/README.md#main-pages).
 
 The real-server browser suite covers 31 journeys, including keyboard controls, 390px layouts, conflict/replay, large reference searches and legacy/unsigned/signed regressions. Automated axe scans cover login, Overview, Task creation and the reference combobox. Equivalent 200%/400% viewport reflow is distinct from native browser zoom.
 

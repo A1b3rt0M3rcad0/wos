@@ -1,0 +1,30 @@
+{
+  "source_archive": "Hand-Drawn-Orange-Chain-Icon.zip",
+  "source_archive_sha256": "997ef03b787b554f3d9358ad23e6ea46a7aed928657105f4e9c61aeeba761949",
+  "media_count": 3,
+  "files": [
+    {
+      "file": "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.png",
+      "sha256": "f87acddd29bb85d89c2438346e779466aa371f7a2f2a9b89dd378e79b91e06fd",
+      "preserved_original": true,
+      "width": 2172,
+      "height": 724,
+      "mode": "RGBA"
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.svg",
+      "sha256": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+      "preserved_original": true,
+      "viewBox": "0 0 1897 632",
+      "vector_paths": 2
+    },
+    {
+      "file": "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn-Orange-Chain-Icon.ico",
+      "sha256": "3ffcd18c6210504dd0b4125f28b641d1549d253ab2dc362708ca506e7f834862",
+      "preserved_original": true,
+      "width": 256,
+      "height": 85,
+      "mode": "RGBA"
+    }
+  ]
+}

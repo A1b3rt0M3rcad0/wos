@@ -1,4 +1,5 @@
 import { message } from "./en-US.js";
+import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
 import { request as networkRequest } from "./api-client.js";
 import {
@@ -477,7 +478,9 @@ async function discover(append = false) {
         `${display(item.lifecycle)}${item.archived_at ? copy.text.archivedc089d2 : ""}`,
       ),
     );
-    button.append(el("span", undefined, "nav-dot"), navCopy);
+    const navIndex = el("span", undefined, "nav-dot");
+    navIndex.setAttribute("aria-hidden", "true");
+    button.append(navIndex, navCopy);
     button.onclick = () => openOutcome(item).catch(report);
     $("outcomes").append(button);
   }
@@ -728,6 +731,7 @@ function navigateArea(area) {
   renderSection().catch(report);
 }
 function applyView() {
+  renderEditorial(state.area);
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary";
   for (const button of $("view-tabs").children) {
@@ -1039,26 +1043,26 @@ function renderSummary() {
         0,
         total - done - active - blocked - (c.cancelled_work || 0),
       ),
-      color: "#d6d2c8",
+      color: "var(--wos-border)",
       tone: "",
     },
     {
       title: copy.text.inProgress,
       count: active,
-      color: "#e97335",
+      color: "var(--wos-warning)",
       tone: "orange",
     },
     {
       title: copy.text.blockedNeedsAttention,
       count: blocked,
-      color: "#c75858",
+      color: "var(--wos-error)",
       tone: "red",
     },
-    { title: copy.text.done, count: done, color: "#339d71", tone: "green" },
+    { title: copy.text.done, count: done, color: "var(--wos-success)", tone: "green" },
     {
       title: copy.text.cancelled,
       count: c.cancelled_work || 0,
-      color: "#8e82b3",
+      color: "var(--wos-muted)",
       tone: "violet",
     },
   ];
@@ -1373,7 +1377,7 @@ function emptySection(title, command) {
       }[state.section] || title;
   const box = el("div", undefined, "empty-section");
   box.append(
-    icon(sectionIcons[state.section] || "work_item"),
+    sectionIllustration(state.area),
     el("h3", title),
     el("p", copy.text.activityAppearsHereAsWorkProgresses),
   );
@@ -2300,7 +2304,7 @@ function field(name, schema, value, required = false) {
   )
     return { node: wrap, get: () => value };
   if (name === "permissions") {
-    const node = el("fieldset");
+    const node = el("fieldset", undefined, "permission-options");
     node.append(el("legend", copy.text.permissions));
     const controls = Object.keys(permissionLabels).map((permission) => {
       const label = el("label", undefined, "check-label"),

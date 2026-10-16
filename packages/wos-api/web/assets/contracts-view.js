@@ -113,10 +113,15 @@ export function contractViews({
               message("pending", checkpoint.pending.join(copy.text.message)),
             ),
           );
-        if (checkpoint.dirty)
-          progress.append(
-            el("small", copy.text.localChangesHaveNotYetBeenTransferredToWos),
-          );
+        if (checkpoint.dirty) {
+          const pending = el("small");
+          const [before, after] =
+            copy.text.localChangesHaveNotYetBeenTransferredToWos.split(
+              copy.text.wos,
+            );
+          pending.append(before, el("span", copy.text.wos, "product-name"), after);
+          progress.append(pending);
+        }
         if (checkpoint.working_commit)
           progress.append(
             el("small", message("codeReference", checkpoint.working_commit)),

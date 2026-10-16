@@ -13,10 +13,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
 func TestActualV010DatasetMigrationsPreserveProofAndCommandFingerprints(t *testing.T) {
+	synctest.Test(t, testActualV010DatasetMigrations)
+}
+
+func testActualV010DatasetMigrations(t *testing.T) {
 	var fixture struct {
 		NamespaceID  d.ID      `json:"namespace_id"`
 		OutcomeID    d.ID      `json:"outcome_id"`
@@ -56,16 +61,22 @@ func TestActualV010DatasetMigrationsPreserveProofAndCommandFingerprints(t *testi
 	}
 	store := openTestStore(t, path)
 	ctx := context.Background()
-	// This test proves migration and wire fingerprint compatibility, within an
-	// eligible cache window. The immutable compressed 0.1 database is checksum
-	// verified above. Only expiry in this disposable copy is relocated: its
-	// original wall-clock TTL has now elapsed. Payloads, hashes, receipts,
-	// command IDs and timestamps remain untouched; production TTL is unchanged.
-	if _, err = store.db.ExecContext(ctx, `UPDATE idempotency_records SET expires_at=? WHERE namespace_id=? AND principal_id='legacy-fixture' AND idempotency_key IN ('legacy-fixture-claim_work_item','legacy-fixture-attest_criterion')`, encodeTime(time.Now().UTC().Add(time.Hour)), fixture.NamespaceID.String()); err != nil {
+	scope := d.Scope{NamespaceID: fixture.NamespaceID, OutcomeID: fixture.OutcomeID}
+	// Replay at the backup's last command, while its original receipts are retained.
+	// The bubble also controls SQLite's internal retention clock. Application Clock
+	// injection alone cannot isolate that wall-clock check from the current date.
+	var lastCommandAt, firstExpiry int64
+	if err = store.db.QueryRowContext(ctx, `
+SELECT MAX(created_at), MIN(expires_at) FROM idempotency_records
+WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &firstExpiry); err != nil {
 		t.Fatal(err)
 	}
-	scope := d.Scope{NamespaceID: fixture.NamespaceID, OutcomeID: fixture.OutcomeID}
-	service, err := a.NewService(store, sqliteFixedClock{time.Now().UTC()}, &sqliteSequenceIDs{prefix: "0199ff91", next: 1})
+	if lastCommandAt >= firstExpiry {
+		t.Fatal("historical receipts have no shared retention window")
+	}
+	// synctest advances this virtual interval immediately, without a real sleep.
+	time.Sleep(time.UnixMicro(lastCommandAt).Sub(time.Now()))
+	service, err := a.NewService(store, sqliteFixedClock{time.UnixMicro(lastCommandAt).UTC()}, &sqliteSequenceIDs{prefix: "0199ff91", next: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

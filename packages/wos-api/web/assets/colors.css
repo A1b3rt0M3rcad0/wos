@@ -1,0 +1,35 @@
+/* Woobe operational light palette, mapped to WOS.
+ * Source: docs/design/editorial/woobe-palette-source.md.
+ * Keep brand orange distinct from interaction copper and semantic state colors.
+ */
+:root {
+  color-scheme: light;
+  --wos-canvas: #efede8;
+  --wos-workspace: #f5f3ef;
+  --wos-surface: #fffdf9;
+  --wos-elevated: #fffefc;
+  --wos-panel-band: #f6f3ee;
+  --wos-control: #eae6df;
+  --wos-border: #d4cec4;
+  --wos-control-border: #857a6c;
+  --wos-foreground: #292620;
+  --wos-secondary: #4b463f;
+  --wos-muted: #615b52;
+  --wos-primary: #292620;
+  --wos-primary-hover: #403a32;
+  --wos-on-primary: #fffdf9;
+  --wos-copper: #a7441d;
+  --wos-selected: #f1dfd0;
+  --wos-focus: #a7441d;
+  --wos-grid: #c2bcb2;
+  --wos-edge: #857a6c;
+  --wos-success: #246846;
+  --wos-warning: #865b13;
+  --wos-error: #b23834;
+  --wos-info: #365f85;
+  --wos-network: #6d41a8;
+  --wos-brand-orange: #ff5500;
+  /* Transparent effects derive from the same foreground, not a separate hue. */
+  --wos-shadow: rgb(41 38 32 / 9%);
+  --wos-backdrop: rgb(41 38 32 / 38%);
+}

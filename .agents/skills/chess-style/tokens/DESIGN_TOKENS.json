@@ -1,0 +1,574 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "chess-style",
+  "version": "1.0.0",
+  "format": "Formato próprio, sem alegação de conformidade com um schema externo de tokens.",
+  "evidenceLegend": {
+    "O": "observação",
+    "M": "medição no raster",
+    "I": "inferência",
+    "P": "prescrição",
+    "N": "não verificado"
+  },
+  "source": "Sete capturas fornecidas; nenhuma família tipográfica ou duração de origem confirmada.",
+  "tokens": [
+    {
+      "name": "color.paper",
+      "css": "--ch-color-paper",
+      "type": "color",
+      "value": "#E9E9E9",
+      "evidence": "M",
+      "confidence": "high-pixel-sample",
+      "note": "Cor sólida dominante nas sete capturas."
+    },
+    {
+      "name": "color.ink",
+      "css": "--ch-color-ink",
+      "type": "color",
+      "value": "#000000",
+      "evidence": "M",
+      "confidence": "high-pixel-sample",
+      "note": "Cor sólida recorrente no texto das capturas S04–S07."
+    },
+    {
+      "name": "color.accent",
+      "css": "--ch-color-accent",
+      "type": "color",
+      "value": "#00846A",
+      "evidence": "M",
+      "confidence": "high-pixel-sample",
+      "note": "Cor sólida extensa em S02/S03; não medida no CSS."
+    },
+    {
+      "name": "color.accent-ui",
+      "css": "--ch-color-accent-ui",
+      "type": "color",
+      "value": "#00745D",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Variante funcional; contraste aproximado 4.73:1 sobre papel."
+    },
+    {
+      "name": "color.muted",
+      "css": "--ch-color-muted",
+      "type": "color",
+      "value": "#686868",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Texto secundário e reveal legível; aproximadamente 4.59:1."
+    },
+    {
+      "name": "color.ghost",
+      "css": "--ch-color-ghost",
+      "type": "color",
+      "value": "#ACACAC",
+      "evidence": "M",
+      "confidence": "high-pixel-sample",
+      "note": "Estado tonal de S04/S05; apenas uso decorativo na implementação."
+    },
+    {
+      "name": "color.grid",
+      "css": "--ch-color-grid",
+      "type": "color",
+      "value": "#D1D1D1",
+      "evidence": "M",
+      "confidence": "high-pixel-sample",
+      "note": "Amostra recorrente em S03–S06; há antialiasing e variação."
+    },
+    {
+      "name": "color.focus",
+      "css": "--ch-color-focus",
+      "type": "color",
+      "value": "#00745D",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Foco funcional, combinado com contorno e offset."
+    },
+    {
+      "name": "font.editorial",
+      "css": "--ch-font-editorial",
+      "type": "fontFamily",
+      "value": "\"Chess Editorial\", \"Bodoni 72\", \"Iowan Old Style\", \"Times New Roman\", serif",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Aliases e fallback; nenhum arquivo de fonte incluído."
+    },
+    {
+      "name": "font.utility",
+      "css": "--ch-font-utility",
+      "type": "fontFamily",
+      "value": "Arial, Helvetica, sans-serif",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Aliases e fallback; nenhum arquivo de fonte incluído."
+    },
+    {
+      "name": "font.hand",
+      "css": "--ch-font-hand",
+      "type": "fontFamily",
+      "value": "\"Chess Hand\", \"Segoe Print\", \"Bradley Hand\", cursive",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Aliases e fallback; nenhum arquivo de fonte incluído."
+    },
+    {
+      "name": "type.size.hero",
+      "css": "--ch-size-hero",
+      "type": "length",
+      "value": "clamp(3.25rem, 1rem + 12.5vw, 19rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.manifesto",
+      "css": "--ch-size-manifesto",
+      "type": "length",
+      "value": "clamp(2rem, 1rem + 5vw, 6.75rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.closing",
+      "css": "--ch-size-closing",
+      "type": "length",
+      "value": "clamp(2.5rem, 1.25rem + 6vw, 8rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.section",
+      "css": "--ch-size-section",
+      "type": "length",
+      "value": "clamp(2rem, 1.1rem + 3vw, 4.25rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.body",
+      "css": "--ch-size-body",
+      "type": "length",
+      "value": "clamp(1.15rem, 0.95rem + 0.7vw, 1.75rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.nav",
+      "css": "--ch-size-nav",
+      "type": "length",
+      "value": "clamp(1rem, 0.9rem + 0.25vw, 1.2rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.caption",
+      "css": "--ch-size-caption",
+      "type": "length",
+      "value": "0.875rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.size.note",
+      "css": "--ch-size-note",
+      "type": "length",
+      "value": "clamp(1rem, 0.75rem + 1vw, 1.75rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Proposta; calibrar com a fonte e o texto reais."
+    },
+    {
+      "name": "type.leading.display",
+      "css": "--ch-leading-display",
+      "type": "number",
+      "value": "0.88",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.leading.manifesto",
+      "css": "--ch-leading-manifesto",
+      "type": "number",
+      "value": "1.14",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.leading.body",
+      "css": "--ch-leading-body",
+      "type": "number",
+      "value": "1.55",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.leading.caption",
+      "css": "--ch-leading-caption",
+      "type": "number",
+      "value": "1.45",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.tracking.display",
+      "css": "--ch-tracking-display",
+      "type": "length",
+      "value": "-0.045em",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.tracking.editorial",
+      "css": "--ch-tracking-editorial",
+      "type": "length",
+      "value": "-0.025em",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "type.tracking.body",
+      "css": "--ch-tracking-body",
+      "type": "length",
+      "value": "-0.005em",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.4",
+      "css": "--ch-space-4",
+      "type": "length",
+      "value": "0.25rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.8",
+      "css": "--ch-space-8",
+      "type": "length",
+      "value": "0.5rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.12",
+      "css": "--ch-space-12",
+      "type": "length",
+      "value": "0.75rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.16",
+      "css": "--ch-space-16",
+      "type": "length",
+      "value": "1rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.24",
+      "css": "--ch-space-24",
+      "type": "length",
+      "value": "1.5rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.32",
+      "css": "--ch-space-32",
+      "type": "length",
+      "value": "2rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.48",
+      "css": "--ch-space-48",
+      "type": "length",
+      "value": "3rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.64",
+      "css": "--ch-space-64",
+      "type": "length",
+      "value": "4rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.96",
+      "css": "--ch-space-96",
+      "type": "length",
+      "value": "6rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "space.144",
+      "css": "--ch-space-144",
+      "type": "length",
+      "value": "9rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.gutter",
+      "css": "--ch-gutter",
+      "type": "length",
+      "value": "clamp(1rem, 3.6vw, 4.5rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.content-max",
+      "css": "--ch-content-max",
+      "type": "length",
+      "value": "110rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.section-space",
+      "css": "--ch-section-space",
+      "type": "length",
+      "value": "clamp(4rem, 8vw, 9rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.grid-x",
+      "css": "--ch-grid-x",
+      "type": "length",
+      "value": "clamp(7rem, 12.5vw, 14rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.grid-y",
+      "css": "--ch-grid-y",
+      "type": "length",
+      "value": "clamp(8rem, 12.5vw, 14rem)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layout.header-offset",
+      "css": "--ch-header-offset",
+      "type": "length",
+      "value": "7rem",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "border.thin",
+      "css": "--ch-border-thin",
+      "type": "length",
+      "value": "1px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "border.focus",
+      "css": "--ch-border-focus",
+      "type": "length",
+      "value": "2px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "radius.flat",
+      "css": "--ch-radius-flat",
+      "type": "length",
+      "value": "0",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "radius.control",
+      "css": "--ch-radius-control",
+      "type": "length",
+      "value": "999px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.duration.micro",
+      "css": "--ch-duration-micro",
+      "type": "duration",
+      "value": "140ms",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.duration.short",
+      "css": "--ch-duration-short",
+      "type": "duration",
+      "value": "220ms",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.duration.editorial",
+      "css": "--ch-duration-editorial",
+      "type": "duration",
+      "value": "600ms",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.duration.scene",
+      "css": "--ch-duration-scene",
+      "type": "duration",
+      "value": "900ms",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.easing.out",
+      "css": "--ch-ease-out",
+      "type": "cubicBezier",
+      "value": "cubic-bezier(.22, 1, .36, 1)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "motion.easing.in-out",
+      "css": "--ch-ease-in-out",
+      "type": "cubicBezier",
+      "value": "cubic-bezier(.65, 0, .35, 1)",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.background",
+      "css": "--ch-z-background",
+      "type": "number",
+      "value": "0",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.notes",
+      "css": "--ch-z-notes",
+      "type": "number",
+      "value": "1",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.text",
+      "css": "--ch-z-text",
+      "type": "number",
+      "value": "10",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.art",
+      "css": "--ch-z-art",
+      "type": "number",
+      "value": "20",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.controls",
+      "css": "--ch-z-controls",
+      "type": "number",
+      "value": "30",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.header",
+      "css": "--ch-z-header",
+      "type": "number",
+      "value": "50",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "layer.overlay",
+      "css": "--ch-z-overlay",
+      "type": "number",
+      "value": "100",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": ""
+    },
+    {
+      "name": "breakpoint.small",
+      "css": null,
+      "type": "length",
+      "value": "640px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Documental: custom properties não são usadas em media queries do starter."
+    },
+    {
+      "name": "breakpoint.medium",
+      "css": null,
+      "type": "length",
+      "value": "900px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Documental: custom properties não são usadas em media queries do starter."
+    },
+    {
+      "name": "breakpoint.large",
+      "css": null,
+      "type": "length",
+      "value": "1200px",
+      "evidence": "P",
+      "confidence": "proposed",
+      "note": "Documental: custom properties não são usadas em media queries do starter."
+    }
+  ]
+}

@@ -1,46 +1,82 @@
-# Continuidade para agentes
+# Operate with agents
 
-O WOS mantém estado e coordenação. O agente ou produto consumidor escolhe a ação e executa o trabalho fora do WOS. O caminho de referência independente é `tests/acceptance/journey.py`; o cliente Go executável é `examples/remote-client`.
+People, agents, and applications share the state persisted by the service. Agents execute in their own environment; the server records Tasks, authority, deliveries, and assessments. Start with the [illustrated workflow](../README.md#how-it-works) before configuring an integration.
 
-## Ambiente local
+## 1. Install agent instructions
 
-Use Go 1.27.1 e o checkout existente:
-
-```sh
-go mod download
-go build -trimpath -buildvcs=false -o bin/wos ./packages/wos-api/cmd/wos
-WOS_MCP_ENABLED=true ./bin/wos server
-```
-
-O bind local padrão é loopback. A interface humana está em `/app/`, HTTP em `/api/v1` e Streamable HTTP MCP em `/mcp`. O Namespace local padrão é `0199d000-0000-7000-8000-000000000001`. O modo local usa uma identidade confiável configurada; para agentes com identidades distintas, use o perfil `api_token` e emita uma credencial vinculada a cada Principal/ActorRef conforme [operations.md](operations.md). O processo `wos mcp stdio` oferece stdio local. Leia [contracts.md](contracts.md) para os perfis MCP e os limites. Prefira o SDK oficial: o perfil 2026-07-28 usa `server/discover`, metadados por request e headers de método; o perfil 2025-06-18 usado pela referência mantém `initialize`. Não misture envelopes de perfis diferentes.
-
-## Retomar um Outcome
-
-1. Autentique e descubra Outcomes no Namespace autorizado (`wos_search_outcomes` ou `GET /api/v1/namespaces/{id}/outcomes`). Não deduza permissão de `tenant_id`, contexto externo ou ActorRef no payload.
-2. Leia continuidade com `wos_get_continuity` ou `GET .../outcomes/{id}/continuity`. Guarde `outcome_revision`, `evaluated_at`, contagens e omissões. Expanda as seções pelos cursores quando necessário; `snapshot_changed` exige nova leitura.
-3. Consulte trabalho pronto e o contexto focal, critérios, dependências, impedimentos, decisões e referências do plano ativo. Disponibilidade é uma projeção; não transforme `blocked` ou `ready` em status livre.
-4. Escolha um WorkItem e adquira claim com sua `expected_version`, TTL explícito e uma chave idempotente. Guarde `claim_id` e `fencing_token`; renove enquanto estiver executando. Um reclaim incrementa fencing. O executor antigo deve parar ao perder o claim.
-5. Registre Artifact/Evidence como referências com proveniência, não como substitutos de avaliação. Conclua WorkItem explicitamente com versão, claim e fencing atuais. Trabalho concluído não conclui automaticamente Objective/Outcome.
-6. O participante autorizado avalia cada revisão de critério com resultado, justificativa e prova exigida. Conclusões registram as avaliações e obrigações usadas. Fatos posteriores podem contestar uma conclusão; nunca apague ou reabra automaticamente seu histórico.
-
-O catálogo de comandos é `GET /api/v1/commands` e `tools/list`; MCP usa nomes `wos_{command_name}`. Argumentos incluem `idempotency_key` e `command`. Scope é explícito; Principal/ActorRef autenticados são resolvidos pelo servidor. Nunca invente IDs de entidades já existentes: descubra ou consulte o estado persistido.
-
-## Falhas e recuperação
-
-Uma resposta perdida pode esconder um commit bem-sucedido. Repita exatamente a intenção e a chave para reconciliar; HTTP e MCP compartilham os recibos. `version_conflict` exige leitura/revisão da intenção. `transaction_conflict` permite retry explícito da mesma intenção/versão/chave. WOS não altera a versão esperada para fazer um retry passar. Após expirar a retenção de recibos, confirme o estado antes de uma nova mutação.
-
-Use IDs estáveis de Integration Event para deduplicar webhooks. WOS oferece entrega pelo menos uma vez, não exactly-once em efeitos externos. O receptor valida assinatura/timestamp e aplica sua própria transação/fencing/idempotência.
-
-## Validar a integração
+With the `wos` executable available:
 
 ```sh
-go test ./...
-go test -race ./...
-python3 tests/acceptance/journey.py --binary bin/wos --client http
+wos skill install --agent codex
+wos skill list --agent codex
+wos skill doctor --agent codex
 ```
 
-Para o aceite PostgreSQL configure `WOS_TEST_POSTGRES_DSN` e, para clean restore, `WOS_TEST_POSTGRES_CONTAINER` com PostgreSQL 18.6 descartável. Os testes isolam schemas e restauram em banco vazio; nunca aponte essas variáveis para uma base de produção. Sem DSN os casos PostgreSQL são explicitamente ignorados. O navegador usa `npm ci`, `npx playwright install --with-deps chromium` e `npm test` em `tests/web`; `WOS_TEST_CHROMIUM_PATH` permite usar Chromium já instalado. Veja [verification-2026-10-07.md](verification-2026-10-07.md) para a evidência do candidato atual.
+Use `claude`, `hermes`, or `openclaw` for another discovery layout. `--agent all` installs into all four; `--agent generic --dir /absolute/path/to/skills` selects an explicit directory. `--project /path/to/project`, `--global`, and `--dry-run` control the destination and preview.
 
-## Participação pela interface humana
+The binary includes five skills: coordination, delegation, continuity, review, and workspace operation. Installation is offline and preserves user-modified files. Configure agent execution, MCP, credentials, keys, and protocol activation separately. An agent runtime may need to reload its discovery directories.
 
-O cliente oficial oferece Resumo, Lista e Quadro, navegação contextual, detalhes laterais e ações humanas sobre o mesmo estado dos agentes. Veja [o guia do workspace](workspace-ux.md) e [as telas reais](ui-workspace/README.md). Reserve/conclua trabalho por comandos; depois avalie os critérios e certifique explicitamente o resultado. Filtros de itens se aplicam aos registros carregados; use paginação e atualização de snapshot quando necessário.
+## 2. Connect an authorized identity
+
+The server must be running. Each executor or reviewer needs an identity with access to the Namespace and the required operations. A Namespace is the authorization boundary shown as a Workspace in the browser. Follow [shared-service operations](operations.md#shared-service) to configure authentication and permissions.
+
+For signed contracts, an administrator prepares the persistent server identity, Namespace protocol, permissions, and agent-key enrollment. Configure the project and profiles using [signed workspace profiles](signed-workspace-profiles.md). Check the server identity and issuer fingerprint through a trusted channel, and use protected secret references.
+
+An executor and independent reviewer need distinct eligible Principals. Changing only a profile name or key does not establish independence. Skill installation and profile creation do not change the Namespace protocol.
+
+## 3. Acquire and execute work
+
+With an authorized `executor` profile configured:
+
+```sh
+wos --profile executor auth status --output json
+wos --profile executor doctor --output json
+wos --profile executor work checkout --next --count 1 --output json
+wos --profile executor work list --output json
+wos --profile executor work show CONTRACT_UUID --for-agent --output json
+```
+
+Replace `CONTRACT_UUID` with the identifier returned by acquisition. Contract context contains instructions, constraints, criteria, and references. An empty bounded page does not establish that the entire Outcome has no eligible work; respect the scope and cursors in the response.
+
+Execute externally and edit only the permitted execution draft in `.wos/profiles/executor/contract/CONTRACT_UUID.yaml`. Preserve the issued specification and signed intent. Observe the authority's validity; a local copy does not renew an expired acquisition.
+
+```sh
+wos --profile executor work finish CONTRACT_UUID --output json
+```
+
+The delivery may remain pending review. Successful submission or a passing test does not approve the Task, its criteria, or its Outcome.
+
+## 4. Review a delivery
+
+A reviewer uses their own authorized profile to acquire a review contract:
+
+```sh
+wos --profile reviewer review checkout --next --count 1 --output json
+wos --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent --output json
+
+# Inspect the submission and complete the permitted review draft.
+wos --profile reviewer review finish REVIEW_CONTRACT_UUID --output json
+```
+
+Review targets the exact submission and bound criterion revisions. `changes_requested` records a correction request; correction requires a new explicit acquisition and preserves the historical delivery. See [signed returns and review](signed-cli-returns.md).
+
+## 5. Recover an interrupted session or response
+
+```sh
+wos --profile executor work recover --all-pending --output json
+wos --profile reviewer review recover --all-pending --output json
+```
+
+Recovery reconciles original intents and receipts. Keep the original key, destination, payload, and expected version. Preserve drafts and unconfirmed local material. If authority expired or was revoked, follow the current server result and documented recovery; do not substitute another identity to bypass its binding.
+
+When resuming an Outcome, reread current state and outstanding obligations. Task completion does not automatically conclude an Objective or Outcome; evidence and assessments remain distinct records.
+
+## Other integration paths
+
+- [MCP profiles](contracts.md): Streamable HTTP or stdio connections, with execution remaining in the agent's host.
+- [HTTP](http.md) and the [Go client](../examples/remote-client): explicit commands, queries, and recovery.
+- [Client qualification](client-qualification.md): limits, pagination, idempotency, and receipts.
+- [Legacy protocols](../packages/wos-cli/README.md): schema-1 and `contracts_v1` recovery; these do not replace a signed Namespace's authority.
+- [Human workspace](workspace-ux.md) and [current screenshots](design/editorial/README.md#main-pages): browser access to the same state.
+
+For development and integration validation, consult [AGENTS.md](../AGENTS.md), the [technical index](README.md#develop-and-understand-the-project), and implementation status in [ROADMAP.md](../ROADMAP.md).

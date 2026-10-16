@@ -291,6 +291,8 @@ An in-memory adapter does not replace storage contract tests.
 
 ## 12. Documentation discipline
 
+Maintained product copy, READMEs, user guides, and new documentation must be written in English. Preserve official identifiers and command syntax. Owner-supplied source documents, original skill packages, historical evidence, and authored user content retain their original language.
+
 Keep these artifacts aligned:
 
 - `README.md`: public product/architecture overview.
@@ -410,3 +412,18 @@ A planned item is done only when all applicable conditions hold:
 - the implementation can be resumed by another agent from repository state alone.
 
 The repository must remain understandable without relying on the previous agent's chat history.
+
+---
+
+## 18. Local visual-art contract
+
+For any work that **creates, selects, edits, replaces, or integrates** WOS robots, illustrated empty states, character scenes, or other figurative editorial artwork:
+
+1. Read `.agents/skills/wos-art-style/SKILL.md` **before** making an art decision. Its exact owner-provided prompt is canonical; use it for new generated illustrations, together with the requested subject and action.
+2. Inspect and reuse existing illustrations under `packages/wos-api/web/assets/robots/` when appropriate. Preserve original files unless the owner explicitly requests an edit or replacement.
+3. Keep illustrations hand-drawn, black-ink, monochrome, organically outlined, subtly hatched and actually transparent. Review the full silhouette at desktop and mobile sizes; do not ship cropped heads, hands, feet, props, or shadows.
+4. Keep concerns distinct: `wos-art-style` governs character/illustration artwork; `chess-style` governs editorial composition; `packages/wos-api/web/assets/colors.css` governs UI color roles; the supplied WOS symbol and branding under `packages/wos-api/web/assets/brand/` are not illustrations to recolor or redesign.
+5. If the deliverable requires a genuine vector SVG, use vector geometry. A PNG embedded inside SVG is a raster wrapper, not vector artwork. Never silently make that substitution.
+6. Integrate only authorized artwork changes. Maintain accessibility semantics, existing web behavior, API/domain contracts, and established layout. Verify affected screens and record relevant art provenance.
+
+In local Cursor development, `.cursor/rules/wos-art-style.mdc` also applies this direction to relevant artwork files. The repository art instructions themselves require no external image-generation dependency.

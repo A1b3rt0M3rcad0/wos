@@ -1,0 +1,563 @@
+{
+  "purpose": "Evidência de estudo; não usar como assets de produção.",
+  "sourceNote": "IDs locais, sem nomes, créditos ou URLs da referência.",
+  "sources": [
+    {
+      "id": "S01",
+      "size": [
+        1409,
+        833
+      ],
+      "sha256": "762fe3a3a63614c059bcbc23344db2e9514d4f19a25db74734e2bdc4772e792f",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1131822
+        },
+        {
+          "rgb": [
+            221,
+            221,
+            221
+          ],
+          "hex": "#DDDDDD",
+          "pixels": 4469
+        },
+        {
+          "rgb": [
+            212,
+            212,
+            212
+          ],
+          "hex": "#D4D4D4",
+          "pixels": 4398
+        },
+        {
+          "rgb": [
+            230,
+            230,
+            230
+          ],
+          "hex": "#E6E6E6",
+          "pixels": 3523
+        },
+        {
+          "rgb": [
+            216,
+            216,
+            216
+          ],
+          "hex": "#D8D8D8",
+          "pixels": 3073
+        }
+      ]
+    },
+    {
+      "id": "S02",
+      "size": [
+        2048,
+        1040
+      ],
+      "sha256": "7bdfd77a4325df9497f24111bea1081d830f03b9d50b60b072ae0fc4410c3c88",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1714715
+        },
+        {
+          "rgb": [
+            0,
+            132,
+            106
+          ],
+          "hex": "#00846A",
+          "pixels": 156255
+        },
+        {
+          "rgb": [
+            222,
+            222,
+            222
+          ],
+          "hex": "#DEDEDE",
+          "pixels": 5338
+        },
+        {
+          "rgb": [
+            232,
+            232,
+            232
+          ],
+          "hex": "#E8E8E8",
+          "pixels": 4105
+        },
+        {
+          "rgb": [
+            229,
+            229,
+            229
+          ],
+          "hex": "#E5E5E5",
+          "pixels": 3835
+        }
+      ]
+    },
+    {
+      "id": "S03",
+      "size": [
+        740,
+        769
+      ],
+      "sha256": "63ed67dde1833cc529ca721384d48f1f498aef4dac6d626c9680250319b8bdf9",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 432185
+        },
+        {
+          "rgb": [
+            0,
+            132,
+            106
+          ],
+          "hex": "#00846A",
+          "pixels": 91825
+        },
+        {
+          "rgb": [
+            209,
+            209,
+            209
+          ],
+          "hex": "#D1D1D1",
+          "pixels": 4370
+        },
+        {
+          "rgb": [
+            234,
+            234,
+            234
+          ],
+          "hex": "#EAEAEA",
+          "pixels": 3699
+        },
+        {
+          "rgb": [
+            232,
+            232,
+            232
+          ],
+          "hex": "#E8E8E8",
+          "pixels": 2046
+        }
+      ]
+    },
+    {
+      "id": "S04",
+      "size": [
+        1865,
+        1106
+      ],
+      "sha256": "d2e021df7431a93a0f3acb2a4cac54c9a1101814fd42c7ebcff30cab42edcd3e",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1755336
+        },
+        {
+          "rgb": [
+            0,
+            0,
+            0
+          ],
+          "hex": "#000000",
+          "pixels": 71513
+        },
+        {
+          "rgb": [
+            172,
+            172,
+            172
+          ],
+          "hex": "#ACACAC",
+          "pixels": 22887
+        },
+        {
+          "rgb": [
+            209,
+            209,
+            209
+          ],
+          "hex": "#D1D1D1",
+          "pixels": 16809
+        },
+        {
+          "rgb": [
+            234,
+            234,
+            234
+          ],
+          "hex": "#EAEAEA",
+          "pixels": 8349
+        }
+      ]
+    },
+    {
+      "id": "S05",
+      "size": [
+        1839,
+        991
+      ],
+      "sha256": "c8c5145d87e30ddc969d876a183eec3ff91b7aa1e975cecdce36286c13e1879c",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1491608
+        },
+        {
+          "rgb": [
+            0,
+            0,
+            0
+          ],
+          "hex": "#000000",
+          "pixels": 67895
+        },
+        {
+          "rgb": [
+            172,
+            172,
+            172
+          ],
+          "hex": "#ACACAC",
+          "pixels": 32650
+        },
+        {
+          "rgb": [
+            209,
+            209,
+            209
+          ],
+          "hex": "#D1D1D1",
+          "pixels": 14942
+        },
+        {
+          "rgb": [
+            232,
+            232,
+            232
+          ],
+          "hex": "#E8E8E8",
+          "pixels": 6423
+        }
+      ]
+    },
+    {
+      "id": "S06",
+      "size": [
+        1679,
+        1011
+      ],
+      "sha256": "fe1b5f5e2fe68c0152bd7cf2a036f4a9c2c0d4ab9ec2ee8dcdc858130246d45d",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1513610
+        },
+        {
+          "rgb": [
+            0,
+            0,
+            0
+          ],
+          "hex": "#000000",
+          "pixels": 25541
+        },
+        {
+          "rgb": [
+            209,
+            209,
+            209
+          ],
+          "hex": "#D1D1D1",
+          "pixels": 12737
+        },
+        {
+          "rgb": [
+            228,
+            228,
+            228
+          ],
+          "hex": "#E4E4E4",
+          "pixels": 5022
+        },
+        {
+          "rgb": [
+            229,
+            229,
+            229
+          ],
+          "hex": "#E5E5E5",
+          "pixels": 4526
+        }
+      ]
+    },
+    {
+      "id": "S07",
+      "size": [
+        2048,
+        1104
+      ],
+      "sha256": "3db0b4c76732e88c8a4cff1a9237a330a00f353d384562151ce0cc650fe668e5",
+      "topColors": [
+        {
+          "rgb": [
+            233,
+            233,
+            233
+          ],
+          "hex": "#E9E9E9",
+          "pixels": 1955465
+        },
+        {
+          "rgb": [
+            0,
+            0,
+            0
+          ],
+          "hex": "#000000",
+          "pixels": 35988
+        },
+        {
+          "rgb": [
+            232,
+            232,
+            232
+          ],
+          "hex": "#E8E8E8",
+          "pixels": 13007
+        },
+        {
+          "rgb": [
+            100,
+            100,
+            100
+          ],
+          "hex": "#646464",
+          "pixels": 12467
+        },
+        {
+          "rgb": [
+            234,
+            234,
+            234
+          ],
+          "hex": "#EAEAEA",
+          "pixels": 7837
+        }
+      ]
+    }
+  ],
+  "crops": [
+    {
+      "id": "E01",
+      "source": "S01",
+      "cropBoxPixels": [
+        0,
+        0,
+        1409,
+        833
+      ],
+      "file": "evidence/E01-opening-space.png",
+      "size": [
+        1409,
+        833
+      ],
+      "description": "Personagem isolado, grid e espaço negativo.",
+      "use": "study-only"
+    },
+    {
+      "id": "E02",
+      "source": "S02",
+      "cropBoxPixels": [
+        760,
+        190,
+        1125,
+        797
+      ],
+      "file": "evidence/E02-material-object.png",
+      "size": [
+        365,
+        607
+      ],
+      "description": "Objeto monocromático de aparência material.",
+      "use": "study-only"
+    },
+    {
+      "id": "E03",
+      "source": "S03",
+      "cropBoxPixels": [
+        0,
+        0,
+        740,
+        769
+      ],
+      "file": "evidence/E03-type-and-microfigure.png",
+      "size": [
+        740,
+        769
+      ],
+      "description": "Capitais, serifas, escala e pequeno desenho na baseline.",
+      "use": "study-only"
+    },
+    {
+      "id": "E04",
+      "source": "S04",
+      "cropBoxPixels": [
+        55,
+        340,
+        1790,
+        1045
+      ],
+      "file": "evidence/E04-narrative-tones.png",
+      "size": [
+        1735,
+        705
+      ],
+      "description": "Narrativa, vinhetas e diferentes estados de tinta.",
+      "use": "study-only"
+    },
+    {
+      "id": "E05",
+      "source": "S05",
+      "cropBoxPixels": [
+        1500,
+        75,
+        1725,
+        245
+      ],
+      "file": "evidence/E05-gesture.png",
+      "size": [
+        225,
+        170
+      ],
+      "description": "Pequena cena em traço preto, com gesto e massa.",
+      "use": "study-only"
+    },
+    {
+      "id": "E06",
+      "source": "S05",
+      "cropBoxPixels": [
+        1350,
+        240,
+        1760,
+        650
+      ],
+      "file": "evidence/E06-paper-object.png",
+      "size": [
+        410,
+        410
+      ],
+      "description": "Recorte com dobras e aparência volumétrica.",
+      "use": "study-only"
+    },
+    {
+      "id": "E07",
+      "source": "S06",
+      "cropBoxPixels": [
+        1135,
+        542,
+        1495,
+        610
+      ],
+      "file": "evidence/E07-italic-detail.png",
+      "size": [
+        360,
+        68
+      ],
+      "description": "Inflexão itálica no texto editorial.",
+      "use": "study-only"
+    },
+    {
+      "id": "E08",
+      "source": "S07",
+      "cropBoxPixels": [
+        565,
+        342,
+        1155,
+        540
+      ],
+      "file": "evidence/E08-outline-detail.png",
+      "size": [
+        590,
+        198
+      ],
+      "description": "Letras de contorno no encerramento.",
+      "use": "study-only"
+    },
+    {
+      "id": "E09",
+      "source": "S07",
+      "cropBoxPixels": [
+        275,
+        609,
+        1585,
+        865
+      ],
+      "file": "evidence/E09-character-lineup.png",
+      "size": [
+        1310,
+        256
+      ],
+      "description": "Variação de personagens em uma baseline comum.",
+      "use": "study-only"
+    },
+    {
+      "id": "E10",
+      "source": "S03",
+      "cropBoxPixels": [
+        425,
+        338,
+        525,
+        425
+      ],
+      "file": "evidence/E10-handwritten-note.png",
+      "size": [
+        100,
+        87
+      ],
+      "description": "Notação manuscrita de baixa intensidade.",
+      "use": "study-only"
+    }
+  ]
+}

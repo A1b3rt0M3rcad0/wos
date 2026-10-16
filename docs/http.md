@@ -33,7 +33,7 @@ export WOS_LOCAL_ADMIN_OVERRIDES=true
 go run ./packages/wos-api/cmd/wos server
 ```
 
-MCP is disabled in the standalone default until its own implementation wave.
+MCP is disabled in the standalone default. Set `WOS_MCP_ENABLED=true` to enable its configured transport; see [public contracts](contracts.md).
 
 ## Health
 
@@ -96,9 +96,9 @@ curl -i -X POST "$BASE/outcomes" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-create-outcome-0001' \
   -d '{
-    "title": "Validar a fatia HTTP do WOS",
-    "desired_state": "Estado M1 pode ser criado e retomado via HTTP",
-    "description": "Fluxo local sem dependência de Agent",
+    "title": "Validate the HTTP workflow",
+    "desired_state": "M1 state can be created and resumed through HTTP",
+    "description": "Local workflow without an agent dependency",
     "priority": "normal"
   }'
 ```
@@ -115,7 +115,7 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/criteria" \
   -H 'Idempotency-Key: docs-add-criterion-0001' \
   -H "If-Match: $OUTCOME_ETAG" \
   -d '{
-    "title": "Validação humana",
+    "title": "Human validation",
     "required": true,
     "verification_mode": "attestation"
   }'
@@ -139,7 +139,7 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items" \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-create-work-0001' \
   -d '{
-    "title": "Executar prova HTTP",
+    "title": "Run HTTP verification",
     "priority": "normal",
     "lifecycle": "todo"
   }'
@@ -198,8 +198,8 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/complete
   -d '{
     "claim_id": "<claim-id>",
     "fencing_token": 1,
-    "result_summary": "Prova concluída",
-    "reason": "Execução confirmada pelo consumidor HTTP"
+    "result_summary": "Evidence completed",
+    "reason": "Execution confirmed by the HTTP consumer"
   }'
 ```
 
@@ -216,7 +216,7 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/relations" \
     "target_ref": {"kind": "work_item", "id": "<prerequisite-work-id>"},
     "strength": "hard",
     "satisfaction": "target_completed",
-    "reason": "O trabalho dependente exige o pré-requisito"
+    "reason": "The dependent task requires the prerequisite"
   }'
 ```
 
@@ -250,7 +250,7 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/relations/$RELATION_ID/actions/remov
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-remove-dependency-0001' \
   -H "If-Match: $RELATION_ETAG" \
-  -d '{"reason":"O pré-requisito não é mais necessário"}'
+  -d '{"reason":"The prerequisite is no longer required"}'
 ```
 
 Read the current state projection:
@@ -264,7 +264,6 @@ Outcome, Objectives, WorkItems, Relations, Issues and Blockers plus derived
 `blocking_states`, `work_item_operational_states`, one `evaluated_at` instant
 and the current `outcome_revision`. Lease expiration can therefore change the
 projection without changing persisted lifecycle or `outcome_revision`.
-
 
 ## Administrative WorkItem overrides
 
@@ -289,7 +288,7 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/admin-ca
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: docs-admin-cancel-work-0001' \
   -H "If-Match: $WORK_ETAG" \
-  -d '{"reason":"Operador encerrou execução abandonada"}'
+  -d '{"reason":"The operator ended an abandoned execution"}'
 ```
 
 Administrative completion is restricted to `in_progress` leased work. It
@@ -302,8 +301,8 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/work-items/$WORK_ID/actions/admin-co
   -H 'Idempotency-Key: docs-admin-complete-work-0001' \
   -H "If-Match: $WORK_ETAG" \
   -d '{
-    "result_summary":"Resultado externo verificado pelo operador",
-    "reason":"Executor original ficou indisponível após produzir o resultado"
+    "result_summary":"External result verified by the operator",
+    "reason":"The original executor became unavailable after producing the result"
   }'
 ```
 
@@ -328,13 +327,13 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/issues/actions/report-with-blocker" 
   -H 'Idempotency-Key: docs-report-issue-blocker-0001' \
   -d '{
     "issue": {
-      "title": "Dependência externa indisponível",
+      "title": "External dependency unavailable",
       "severity": "major",
       "affected_refs": [{"kind": "work_item", "id": "<work-id>"}]
     },
     "blocker": {
       "blocked_ref": {"kind": "work_item", "id": "<work-id>"},
-      "description": "O trabalho não pode prosseguir"
+      "description": "The work cannot proceed"
     }
   }'
 ```
@@ -370,11 +369,11 @@ curl -i -X POST "$BASE/outcomes/$OUTCOME_ID/issues/$ISSUE_ID/actions/resolve-wit
   -H 'Idempotency-Key: docs-resolve-issue-blockers-0001' \
   -d '{
     "expected_issue_version": 3,
-    "issue_resolution_summary": "Causa corrigida e verificada",
+    "issue_resolution_summary": "Cause corrected and verified",
     "blockers": [{
       "blocker_id": "<blocker-id>",
       "expected_version": 2,
-      "resolution_summary": "Liberação confirmada",
+      "resolution_summary": "Release confirmed",
       "release_confirmed": true
     }]
   }'
@@ -390,7 +389,7 @@ an explicit external cause:
 
 ```json
 {
-  "blocked_ref": {"kind": "work_item", "id": "<work-id>"},
+  "blocked_ref": { "kind": "work_item", "id": "<work-id>" },
   "external_cause": {
     "provider": "vendor",
     "id": "incident-42",
@@ -407,7 +406,6 @@ validated in the same Namespace/Outcome scope before the Blocker is committed.
 blocked, which active Blockers apply and whether each one is direct or inherited.
 The ready-work query applies the same projection, so blocked WorkItems are not
 returned as ready.
-
 
 ## Documentary records and Decisions
 
@@ -652,18 +650,18 @@ Errors use a stable envelope:
 
 Current mappings are:
 
-| HTTP | Meaning |
-| --- | --- |
-| 400 | malformed JSON, invalid identifiers/format or invalid idempotency key |
-| 403 | authenticated principal lacks a required privileged permission |
-| 404 | entity absent from the explicit Namespace/Outcome scope |
-| 409 | lifecycle, dependency cycle/graph limit, precondition, lease or idempotency conflict |
-| 412 | stale or mismatched `If-Match` / `expected_version` |
-| 413 | request body exceeds the supported limit |
-| 422 | syntactically valid request violates a domain field constraint |
-| 428 | required aggregate version precondition is absent |
-| 503 | request deadline or transient infrastructure timeout |
-| 408 | caller/request cancellation |
+| HTTP | Meaning                                                                              |
+| ---- | ------------------------------------------------------------------------------------ |
+| 400  | malformed JSON, invalid identifiers/format or invalid idempotency key                |
+| 403  | authenticated principal lacks a required privileged permission                       |
+| 404  | entity absent from the explicit Namespace/Outcome scope                              |
+| 409  | lifecycle, dependency cycle/graph limit, precondition, lease or idempotency conflict |
+| 412  | stale or mismatched `If-Match` / `expected_version`                                  |
+| 413  | request body exceeds the supported limit                                             |
+| 422  | syntactically valid request violates a domain field constraint                       |
+| 428  | required aggregate version precondition is absent                                    |
+| 503  | request deadline or transient infrastructure timeout                                 |
+| 408  | caller/request cancellation                                                          |
 
 Local auth intentionally uses the configured local Principal and does not
 pretend to provide multi-user authentication. Token/OAuth authorization remains

@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a larger image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
+- Replace the planner illustration with the owner's supplied blank-map SVG, byte for byte at the existing asset path and dimensions; refresh the affected login and Plan screenshots.
+- Install the owner's hand-drawn chain SVG/PNG/ICO originals, use the symbol alone in the header with an accessible home-link name, and align browser icons; preserve the former brand library, editorial typography, operational palette, and matte modals.
+- Match all workspace modals to the matte canvas, workspace bands, warm control/card surfaces, and shared border tokens; preserve geometry, scrolling, backdrop, focus, and responsive behavior, with desktop/mobile captures.
+- Scale the existing editorial composition proportionally above its 1440 CSS px reference, coordinating typography, controls, sidebar, spacing, artwork, and paper through one bounded fluid unit; preserve reference/smaller viewports and add Full HD/2K/4K comparisons.
+- Unify button hover/pressed states across the workspace, preserve text contrast and selected-tab distinction, add label insets and touch-sized targets, and remove card movement; document the component review and hover/focus screenshots.
+- Anchor the fine paper grid behind scrolling pages and dialog bodies, with a document-relative reduced-motion variant; give the sidebar serif navigation, numbered ruled Outcomes, and a composed organizer vignette, with refreshed viewport screenshots.
+- Make the historical v0.1 migration replay test deterministic after its fixture's receipt expiry, using isolated virtual time while preserving the original backup and production retention behavior.
+- Redesign the human workspace with an editorial paper-and-ink visual system, the Woobe operational palette, locally served typography, and the supplied monochrome robot illustrations across all six areas; include responsive page captures and design documentation.
+- Apply the supplied WOS modular symbol and browser/touch icons; render the name WOS in the site's Instrument Serif typography while preserving the editorial layout and Woobe palette.
+- Refine the workspace from page composition down to controls: continuous grids, connected sections, consistent button rules, one on-page WOS mark, single-scroll forms/details, complete select/focus borders, grouped fields, persistent save actions, and expanded desktop/mobile component captures.
+
 ## 0.4.2 — prepared for release
 
 - Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation.

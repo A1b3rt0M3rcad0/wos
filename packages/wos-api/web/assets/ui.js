@@ -30,7 +30,12 @@ export function inputField(
   input.id = `human-field-${++fieldSequence}`;
   l.htmlFor = input.id;
   wrap.append(l, input);
-  if (help) wrap.append(el("small", help, "field-help"));
+  if (help) {
+    const note = el("small", help, "field-help");
+    note.id = `${input.id}-help`;
+    input.setAttribute("aria-describedby", note.id);
+    wrap.append(note);
+  }
   return {
     node: wrap,
     input,

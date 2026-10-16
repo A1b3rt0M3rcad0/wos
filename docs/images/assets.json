@@ -1,0 +1,15 @@
+{
+  "source_archive": "Robots Queuing for Paperwork.zip",
+  "source_archive_sha256": "27ba4c88ab210caada30cad4464e96e34bfff706c667fce8b0c1611496281ce6",
+  "owner_supplied": true,
+  "original_filename": "Robots Queuing for Paperwork.png",
+  "file": "docs/images/robots-queuing-for-paperwork.png",
+  "sha256": "0868fdcb62cd5749cd1a59825607a01f9136a0ddaaef3df85633bdc374e273b0",
+  "pixel_size": {
+    "width": 1448,
+    "height": 1086
+  },
+  "mode": "RGBA",
+  "preserved_original": true,
+  "role": "README illustration of shared work state, explicit acquisition, execution and review; conceptual artwork rather than a product screenshot"
+}

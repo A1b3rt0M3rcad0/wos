@@ -1,0 +1,17 @@
+---
+description: "WOS art direction for robots, characters, editorial illustrations, and empty states in local development."
+globs: "packages/wos-api/web/assets/robots/**,packages/wos-api/web/assets/editorial.js,docs/design/editorial/**"
+alwaysApply: false
+---
+
+# WOS art style — local rule
+
+Before creating, selecting, editing, or integrating WOS illustrations, read `.agents/skills/wos-art-style/SKILL.md` and follow `AGENTS.md`. The skill governs art production and validation.
+
+**Literal canonical prompt:**
+
+Minimalist hand-drawn black ink cartoon illustration, organic slightly imperfect outlines, expressive pen-and-ink linework, subtle cross-hatching and diagonal hatching for shadows, playful character proportions, oversized rounded head, thin expressive limbs, sketchbook aesthetic, monochrome black and white, editorial illustration style, clean silhouette, isolated character, transparent background, no gradients, no colors, no photorealism.
+
+Append only the subject, action, and composition specific to the task. Preserve the existing robot's identity, imperfect organic outlines, black ink, subtle hatching, rounded head, thin limbs, readable silhouette, and real transparency. Do not introduce colors, gradients, 3D, photorealism, or clipped drawings.
+
+**Scope:** this direction governs illustrations, not the owner-supplied brand, brand orange, the `colors.css` palette, or `chess-style` composition. Reuse existing assets; do not redesign them without a request. Distinguish vector SVGs from SVGs with an embedded PNG.

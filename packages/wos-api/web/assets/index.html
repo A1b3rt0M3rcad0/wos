@@ -4,10 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title data-copy="wosWorkspace">WOS · Workspace</title>
-    <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" />
+    <meta name="application-name" content="WOS" />
+    <meta name="theme-color" content="#FF5500" />
+    <link rel="shortcut icon" href="/app/brand/hand-drawn-chain/Hand-Drawn-Orange-Chain-Icon.ico" />
+    <link rel="icon" href="/app/favicon.svg" type="image/svg+xml" sizes="any" />
+    <link rel="apple-touch-icon" href="/app/brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.png" />
+    <link rel="stylesheet" href="colors.css" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="editorial.css" />
   </head>
   <body>
+    <noscript>
+      <p><span data-copy="enableWorkspaceJavaScript">Enable JavaScript to use the workspace, or use the</span> <span class="product-name" data-copy="wos">WOS</span> <span data-copy="httpApiOrCli">HTTP API or CLI.</span></p>
+    </noscript>
     <a class="skip-link" href="#main-content" data-copy="skipToContent"
       >Skip to content</a
     >
@@ -17,11 +26,7 @@
         class="brand"
         aria-label="WOS · home"
         data-copy-aria-label="wosHome"
-        ><span class="brand-mark">w</span>WOS<span
-          class="brand-caption"
-          data-copy="workspace"
-          >Workspace</span
-        ></a
+        ><img class="brand-logo" src="brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg" width="1897" height="632" alt="" /></a
       ><span class="topbar-note" data-copy="humansAndAgentsOneSharedState"
         >Humans and agents. One shared state.</span
       >
@@ -37,12 +42,24 @@
           <p class="eyebrow" data-copy="workOUTCOMESYSTEM">
             WORK OUTCOME SYSTEM
           </p>
-          <h1 data-copy="meaningfulOutcomes">
-            Meaningful outcomes.<br />Work together.
+          <h1>
+            <span data-copy="meaningfulOutcomes">Meaningful outcomes.</span>
+            <em data-copy="workTogetherEditorial">Work together.</em>
           </h1>
           <p data-copy="planClearlyCollaborateWithAgents">
             Plan clearly. Collaborate with agents.<br />Verify with evidence.
           </p>
+          <figure class="login-vignette" aria-hidden="true">
+            <span class="marginal-note" data-copy="fromIntentToEvidence"
+              >from intent to evidence</span
+            >
+            <img
+              src="robots/01_planner_map.svg"
+              width="240"
+              height="240"
+              alt=""
+            />
+          </figure>
           <div class="login-cards">
             <div>
               <span class="badge orange" data-copy="01Plan">01 · Plan</span
@@ -122,8 +139,7 @@
           data-copy-aria-label="workspaceNavigation"
         >
           <div class="workspace-switch">
-            <span class="workspace-symbol" data-copy="w">W</span
-            ><label data-copy="workspace"
+            <label data-copy="workspace"
               >Workspace<select id="namespace"></select
             ></label>
           </div>
@@ -189,6 +205,19 @@
             More outcomes
           </button>
           <div class="sidebar-bottom">
+            <div class="sidebar-study" aria-hidden="true">
+              <img
+                class="sidebar-vignette"
+                src="robots/18_workspace_organizer.svg"
+                width="96"
+                height="108"
+                alt=""
+                loading="lazy"
+              />
+              <span class="sidebar-caption" data-copy="planExecuteVerify"
+                >Plan · execute · verify</span
+              >
+            </div>
             <button
               id="administration"
               class="quiet"
@@ -202,8 +231,6 @@
               data-copy="developerTools"
             >
               Developer tools</button
-            ><span class="sidebar-caption" data-copy="planExecuteVerify"
-              >Plan · execute · verify</span
             >
           </div>
         </aside>
@@ -227,12 +254,18 @@
             class="empty"
             role="status"
             hidden
-            data-copy="loadingOutcome"
           >
-            Loading outcome…
+            <img class="loading-vignette" src="robots/14_observer_metrics.svg" width="120" height="120" alt="" />
+            <p data-copy="loadingOutcome">Loading outcome…</p>
           </div>
           <div id="empty" class="empty">
-            <span class="empty-symbol">↗</span>
+            <img
+              class="empty-vignette"
+              src="robots/17_outcome_flagbearer.svg"
+              width="180"
+              height="180"
+              alt=""
+            />
             <p class="eyebrow" data-copy="yourNextOutcome">YOUR NEXT OUTCOME</p>
             <h2 data-copy="chooseAnOutcome">Choose an outcome</h2>
             <p data-copy="connectObjectivesTasksAndEvidenceInOnePlace">
@@ -302,6 +335,21 @@
                 Board
               </button>
             </nav>
+            <section
+              id="area-intro"
+              class="area-intro"
+              aria-labelledby="area-title"
+            >
+              <div class="area-intro-copy">
+                <p id="area-index" class="eyebrow"></p>
+                <h2 id="area-title"></h2>
+                <p id="area-description"></p>
+              </div>
+              <figure class="area-vignette" aria-hidden="true">
+                <img id="area-robot" width="150" height="150" alt="" />
+                <figcaption id="area-note" class="marginal-note"></figcaption>
+              </figure>
+            </section>
             <section id="summary-view">
               <div id="metrics" class="metrics"></div>
               <div id="summary-content" class="summary-grid"></div>
@@ -388,7 +436,7 @@
       </section>
     </main>
     <dialog id="command-dialog" aria-labelledby="command-title">
-      <form id="command-form">
+      <form id="command-form" class="dialog-form">
         <div class="dialog-heading">
           <div>
             <p class="eyebrow" data-copy="updateSharedState">
@@ -398,6 +446,7 @@
               Choose an action
             </h2>
           </div>
+          <img class="dialog-vignette" src="robots/09_documenter_notes.svg" width="80" height="80" alt="" />
           <button
             id="close-command"
             type="button"
@@ -408,15 +457,17 @@
             ×
           </button>
         </div>
-        <label data-copy="action"
-          >Action<select id="command-select"></select
-        ></label>
-        <p id="command-help" data-copy="reviewTheInformationBeforeSaving">
-          Review the information before saving.
-        </p>
-        <div id="fields"></div>
-        <div id="command-error" role="alert" tabindex="-1"></div>
-        <section id="conflict-review" aria-live="polite"></section>
+        <div class="dialog-body">
+          <label data-copy="action"
+            >Action<select id="command-select"></select
+          ></label>
+          <p id="command-help" data-copy="reviewTheInformationBeforeSaving">
+            Review the information before saving.
+          </p>
+          <div id="fields"></div>
+          <div id="command-error" role="alert" tabindex="-1"></div>
+          <section id="conflict-review" aria-live="polite"></section>
+        </div>
         <footer>
           <button id="submit-command" data-copy="record">Record</button
           ><button
@@ -466,7 +517,7 @@
           ×
         </button>
       </div>
-      <div id="detail-content"></div>
+      <div id="detail-content" class="dialog-body"></div>
       <footer id="detail-actions">
         <button id="entity-actions" data-copy="itemActions">
           Item actions
@@ -474,11 +525,12 @@
       </footer>
     </dialog>
     <dialog id="admin-dialog" aria-labelledby="admin-title">
-      <form id="admin-form">
+      <form id="admin-form" class="dialog-form">
         <div class="dialog-heading">
           <h2 id="admin-title" data-copy="workspaceSettings">
             Workspace settings
           </h2>
+          <img class="dialog-vignette" src="robots/12_key_signature_guardian.svg" width="80" height="80" alt="" />
           <button
             id="close-admin"
             type="button"
@@ -489,52 +541,56 @@
             ×
           </button>
         </div>
-        <p id="admin-version"></p>
-        <label data-copy="action"
-          >Action<select id="admin-operation">
-            <option value="set_grant" data-copy="setPermissions">
-              Set permissions
-            </option>
-            <option value="issue_credential" data-copy="issueCredential">
-              Issue credential
-            </option>
-            <option value="revoke_credential" data-copy="revokeCredential">
-              Revoke credential
-            </option>
-            <option value="create_namespace" data-copy="createWorkspace">
-              Create workspace
-            </option>
-          </select></label
-        >
-        <div id="admin-fields"></div>
-        <p id="admin-error" role="alert"></p>
-        <div id="admin-secret" hidden>
-          <p data-copy="saveTheCredentialNowTheServerCannotShowIt">
-            Save the credential now. The server cannot show it again.
-          </p>
-          <textarea
-            id="admin-token"
-            readonly
-            aria-label="Issued credential"
-            data-copy-aria-label="issuedCredential"
-          ></textarea>
+        <div class="dialog-body">
+          <p id="admin-version"></p>
+          <label data-copy="action"
+            >Action<select id="admin-operation">
+              <option value="set_grant" data-copy="setPermissions">
+                Set permissions
+              </option>
+              <option value="issue_credential" data-copy="issueCredential">
+                Issue credential
+              </option>
+              <option value="revoke_credential" data-copy="revokeCredential">
+                Revoke credential
+              </option>
+              <option value="create_namespace" data-copy="createWorkspace">
+                Create workspace
+              </option>
+            </select></label
+          >
+          <div id="admin-fields"></div>
+          <p id="admin-error" role="alert"></p>
+          <div id="admin-secret" hidden>
+            <p data-copy="saveTheCredentialNowTheServerCannotShowIt">
+              Save the credential now. The server cannot show it again.
+            </p>
+            <textarea
+              id="admin-token"
+              readonly
+              aria-label="Issued credential"
+              data-copy-aria-label="issuedCredential"
+            ></textarea>
+          </div>
+          <details>
+            <summary data-copy="permissionsAndHistory">
+              Permissions and history
+            </summary>
+            <div id="admin-snapshot"></div>
+          </details>
         </div>
-        <button id="submit-admin" data-copy="record">Record</button
-        ><button
-          id="retry-admin"
-          type="button"
-          class="quiet"
-          hidden
-          data-copy="retryTheSameIntent"
-        >
-          Retry the same intent
-        </button>
-        <details>
-          <summary data-copy="permissionsAndHistory">
-            Permissions and history
-          </summary>
-          <div id="admin-snapshot"></div>
-        </details>
+        <footer>
+          <button id="submit-admin" data-copy="record">Record</button
+          ><button
+            id="retry-admin"
+            type="button"
+            class="quiet"
+            hidden
+            data-copy="retryTheSameIntent"
+          >
+            Retry the same intent
+          </button>
+        </footer>
       </form>
     </dialog>
     <script type="module" src="app.js"></script>

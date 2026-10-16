@@ -2,11 +2,13 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-12
+**Last reviewed:** 2026-10-16
 **Current target:** Stable 1.0 hardening; public npm package wosctl
 **Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
+
+**Workspace presentation follow-up:** owner-requested editorial redesign using the supplied `chess-style`, robot illustrations, `wos-art-style`, Woobe operational palette, and WOS web brand kit. This extends the existing human workspace UX program without changing domain semantics or the release target. Design, page captures, and reproducible checks are recorded in [the design guide](docs/design/editorial/README.md) and [validation](docs/design/editorial/validation.md). Automated validation and independent human acceptance are tracked separately below.
 
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
@@ -47,6 +49,30 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Editorial workspace presentation — 2026-10-15
+
+**Scope:** the existing six-area human workspace, sign-in, outcome selection, task list and board, entity details, forms, and settings. This presentation follow-up does not mark an additional backend wave or a stable release complete.
+
+- [x] Apply continuous paper surfaces, editorial typography, fine geometry, and supplied monochrome robot vignettes; follow the owner's approved direction with Woobe's warm neutrals, charcoal, copper, and semantic colors from the supplied palette specification.
+- [x] Preserve existing scoped actions, explicit lifecycle changes, independent review, URL navigation, and API contracts.
+- [x] Serve licensed font assets locally with system fallbacks; preserve the supplied skill packages and robot artwork.
+- [x] Document the visual system, art direction, asset provenance, and page gallery generated from an isolated real-server dataset.
+- [x] Apply the supplied WOS web identity to the header and browser/touch icons; preserve the 94 original media assets and master silhouette in all 80 SVGs. The original symbol accompanies live Instrument Serif lettering. Following the repetition feedback, keep one on-page brand mark, functional area/workspace labels, and an observer robot during pending reads.
+- [x] Review page-to-control composition and correct shared button borders, continuous grids, connected overview sections, dialog sizing/scrolling, select/focus clipping, grouped fields, nested editors, and persistent actions; document the [component review](docs/design/editorial/component-review.md). Preserve the approved direction and Woobe palette.
+- [x] Anchor the shared 120 px paper grid to the viewport behind scrolling content and dialogs, with a document-relative reduced-motion fallback. Refine the sidebar with serif workspace/Outcome names, decorative numbering, ruled states, and an organizer vignette; retain mobile collapse, keyboard selection, native controls, and long-list access to settings.
+- [x] Review all button renderers and interaction families: unify idle/hover/pressed paint, preserve selected-tab distinction and text contrast, add label insets and touch-sized targets, prevent disabled hover and persistent touch-hover paint, and remove board-card movement. Record the [interaction inventory and verification scope](docs/design/editorial/interactions.md).
+- [x] Complete final presentation validation: 40 browser tests and 14 browser unit tests passed, including button/hover contrast and geometry, touch navigation, fixed-paper pixel comparisons, sidebar navigation, palette, brand, and nested-form geometry/interactions; targeted Go tests and vet passed. Refresh and extend the gallery to 26 viewport captures. Preserve the original Go baseline and its service/platform skips in [validation](docs/design/editorial/validation.md).
+- [x] Repair the historical migration test's wall-clock dependency using an isolated virtual clock and the fixture's original receipt timestamps; preserve fixture bytes, fingerprint/proof assertions, and production retention semantics. The complete local Go suite now passes with 746 passing test/subtest outcomes and 75 explicit skips; hosted verification is tracked in [the CI repair record](docs/verification-2026-10-16-ci.md).
+- [x] Preserve the approved 1440 CSS px composition and smaller-screen behavior while scaling dimensions continuously above the reference, capped at the 3840/1440 ratio. Verify pixel identity locally for reference/smaller pages and forms, proportional login/overview/form geometry, unchanged board columns, all-area overflow, and the cap; add Full HD/2K/4K captures and [scale documentation](docs/design/editorial/responsive-scale.md).
+- [x] Unify all four native modal families with matte canvas, workspace secondary areas/footers, surface fields/cards, and existing border tokens. Preserve layout, scrolling, focus, backdrop, and editorial grid; verify 16 same-DOM geometry comparisons, desktop/mobile modal states, the complete 42-browser/14-unit suite, and targeted Go tests/vet. Refresh nine modal captures and add four views in the [surface inventory](docs/design/editorial/modal-surfaces.md).
+- [x] Apply the subsequently supplied hand-drawn chain SVG/PNG/ICO identity and show only its symbol in the header home link, preserving its accessible name. Verify original proportions, zero-alpha internal openings, desktop/mobile reflow, and browser-icon decoding; preserve the previous 94-file library and refresh all 36 header-bearing captures. Record the [current brand and provenance](docs/design/editorial/brand-kit/hand-drawn-chain.md).
+- [x] Rewrite the public README in English around purpose, shared state, setup, and the actual human/agent workflow, with a larger image-only brand introduction, the owner's original queue illustration, and a task-oriented documentation index. Translate maintained guides and local art instructions; preserve original specifications and historical evidence. Remove two superseded October 5 reports and 19 old UI captures while preserving historical proof through pinned Git links. Verify local Markdown references and the GFM preview at desktop/mobile widths; the earlier setup run also checked native CLI help/dry-run and Compose configuration.
+- [x] Replace only the planner illustration with the owner's supplied blank-map SVG at its existing path and 247 × 275 dimensions. Preserve the supplied bytes, document the authorized exception in the asset manifest, and refresh login/Plan captures. Repeat the build, Go web tests, 14 browser unit checks, and four affected desktop/mobile/responsive browser journeys without changing layout or behavior.
+- [x] Synchronize the presentation branch with current master and reconcile the README installation/release updates while retaining the English illustrated guide and image-only introduction. Keep the deterministic virtual-clock migration regression: upstream expiry relocation conflicts with that historical window, so preserve original fixture rows and use the existing isolated clock. Verify local documentation links, browser unit checks, the focused migration regression, and the native build; PR integration remains a separate owner action.
+- [ ] Independent human review, screen-reader validation, and other-browser acceptance; not implied by automated checks or screenshots.
+
+Publication and merging remain separate owner actions. No merge is authorized by this design task.
 
 ## Wave 01 — Public Core Foundation
 
@@ -847,7 +873,7 @@ Wave 11 was merged through [PR #13](https://github.com/A1b3rt0M3rcad0/wos/pull/1
 - In-flight HTTP shutdown and interrupted webhook retry preserve committed state and delivery identity. Query/guard/delivery metadata metrics exclude documentary payloads and credentials.
 - Graph reachability, cursor scope and public command serialization fuzzing passed; measured query counts, pool wait and concurrent read throughput are in [benchmarks](docs/benchmarks.md).
 
-The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification](docs/verification-2026-10-05.md) remain dated historical evidence. Its broader product checklist includes complete deployed Woobe acceptance and consumer distribution work. These remain explicit consumer obligations; they are not claims that WOS runs a deployed Woobe product. Current WOS release-gate acceptance is the October 7 matrix.
+The October 5 [audit](https://github.com/A1b3rt0M3rcad0/wos/blob/ec9aa1ecc836aa7b239f489cd70f8c6ad75930f1/docs/auditoria-conclusao-2026-10-05.md) and [verification](https://github.com/A1b3rt0M3rcad0/wos/blob/ec9aa1ecc836aa7b239f489cd70f8c6ad75930f1/docs/verification-2026-10-05.md) remain dated historical evidence in Git history; they have been removed from the active documentation. Its broader product checklist includes complete deployed Woobe acceptance and consumer distribution work. These remain explicit consumer obligations; they are not claims that WOS runs a deployed Woobe product. Current WOS release-gate acceptance is the October 7 matrix.
 
 ## Human workspace redesign — Jira UX / Guild.ai visual reference
 
@@ -855,7 +881,7 @@ The October 5 [audit](docs/auditoria-conclusao-2026-10-05.md) and [verification]
 
 Acceptance: persistent contextual navigation; Outcome summary, item list and operational board; readable entity/history/plan details; scoped human actions without exposing internal payloads by default; search/filter and pagination preserving snapshot semantics; keyboard/mobile behavior; existing human/agent journeys plus board/list regressions; real screenshots and PR integration. This is a presentation extension to Waves 12/17/18 and keeps WOS domain transitions, authorization and transport contracts intact.
 
-Verified against the resulting repository: three Playwright journeys pass, including the real 32-item workspace, paginated board/list, proof selectors, cancellation, delayed Outcome responses, keyboard and mobile. API/server/boundary tests pass with real PostgreSQL enabled, plus vet/build/module syntax. The frontend is embedded with no new dependency or Domain/HTTP/MCP change. [UX guide and limits](docs/workspace-ux.md), [actual screenshots](docs/ui-workspace/README.md) and audit logs make the result reviewable. Hosted CI remains blocked before steps by GitHub account billing; it is not claimed green. PR integration is established by its merged state.
+Verified against the resulting repository: three Playwright journeys pass, including the real 32-item workspace, paginated board/list, proof selectors, cancellation, delayed Outcome responses, keyboard and mobile. API/server/boundary tests pass with real PostgreSQL enabled, plus vet/build/module syntax. The frontend is embedded with no new dependency or Domain/HTTP/MCP change. [UX guide and limits](docs/workspace-ux.md), [actual screenshots](https://github.com/A1b3rt0M3rcad0/wos/blob/ec9aa1ecc836aa7b239f489cd70f8c6ad75930f1/docs/ui-workspace/README.md) and audit logs make the result reviewable. Hosted CI remains blocked before steps by GitHub account billing; it is not claimed green. PR integration is established by its merged state.
 
 ## Execution contracts and API-only client — C01–C12
 
@@ -1449,7 +1475,7 @@ UX operation/accessibility slice: 31 real-server browser tests and 14 unit check
 
 PRs #79–85 are integrated. All executable correction lots are implemented and the final documentation/capture slice records 31 real-server browser passes, 14 web unit passes, 17 package/release contract passes and full Go normal/race acceptance (712 test/subtest passes each, 18 passing packages, explicit opt-in/environment skips). Memory/SQLite/real PostgreSQL, permission/query parity, cursor/revocation/CAS and signed independent review passed. Vet, module hygiene, generated contract drift, event catalog, actionlint and report checks passed. Actual full-disk recovery passed separately. All five distribution archives were byte-identical across separate source paths; offline npm installation exercised service/client/skills and signed host profiles. The real Dockerfile/Compose default SQLite path passed startup, English embedded assets/CSP, authorization/HTTP/MCP and persistence across restart after copying `.env.example` unchanged (port 18109 and build-only cloud CA override). No runtime/schema/release version change or publication is implied.
 
-Accepted executable source: `315fcadbcb4a6acc614cf908e04b5d55d54e9db9`; final documentation adds no application behavior. Source-bound reports and English current screenshots are in `docs/ux/final-acceptance.md` and `docs/ui-workspace/README.md`. Hosted browser/packages/Ubuntu/native-Windows passed for #83–85; core jobs were refused by Docker Hub anonymous-pull rate limiting, not treated as green. Owner permitted continuing despite refused jobs; local required gates passed before integration.
+Accepted executable source: `315fcadbcb4a6acc614cf908e04b5d55d54e9db9`; final documentation adds no application behavior. Source-bound reports and English current screenshots are in `docs/ux/final-acceptance.md` and the historical gallery at `ec9aa1ecc836aa7b239f489cd70f8c6ad75930f1`; current screenshots are in `docs/design/editorial/README.md`. Hosted browser/packages/Ubuntu/native-Windows passed for #83–85; core jobs were refused by Docker Hub anonymous-pull rate limiting, not treated as green. Owner permitted continuing despite refused jobs; local required gates passed before integration.
 
 **Pending human validation:** representative-user comprehension/unaided creation and baseline timing, manual screen-reader use and native browser 200%/400% zoom. Owner explicitly confirmed no representative users or screen-reader testers are available and requested this be recorded as pending. Automated axe/keyboard/reflow and screenshots do not certify WCAG or human usability percentages. Implementation is ready for that validation and human/agent operation; the pending validation is not marked complete.
 

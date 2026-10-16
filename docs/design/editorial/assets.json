@@ -1,0 +1,329 @@
+{
+  "illustrations": [
+    {
+      "file": "packages/wos-api/web/assets/robots/01_planner_map.svg",
+      "source": "Owner-supplied 01_planner_map_blank.zip",
+      "role": [
+        "login",
+        "plan"
+      ],
+      "decorative": true,
+      "width": "247",
+      "height": "275",
+      "viewBox": "0 0 247 275",
+      "contains_embedded_raster": true,
+      "sha256": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da",
+      "source_archive_sha256": "ff25046cd6070e8967e64fea3936cb5b3ebd0337378fcee35913d8c2b0550352",
+      "source_filename": "01_planner_map_blank.svg",
+      "replaces_sha256": "dda2a883e9d568909610e8bc1c0a1de31239c6450afbeeb131ac790d34841b5c",
+      "preserved_original": true
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/02_decomposer_tasks.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "259",
+      "height": "271",
+      "viewBox": "0 0 259 271",
+      "contains_embedded_raster": true,
+      "sha256": "5b50434935ed02a99854c76d116c4b858c3875e9bda1736a1bfc6a5866221ef6"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/03_executor_package.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "238",
+      "height": "272",
+      "viewBox": "0 0 238 272",
+      "contains_embedded_raster": true,
+      "sha256": "235adfb2ae66094ec3274ba4883ae02a562165778c88bddf6c85b58b52b06bef"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/04_reviewer_clipboard.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "258",
+      "height": "249",
+      "viewBox": "0 0 258 249",
+      "contains_embedded_raster": true,
+      "sha256": "77005b68ec7e4ce57c3b28672d2346852be49b24635cc552e3f0281f3ac905f6"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/05_coordinator_kanban.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "work"
+      ],
+      "decorative": true,
+      "width": "268",
+      "height": "268",
+      "viewBox": "0 0 268 268",
+      "contains_embedded_raster": true,
+      "sha256": "9f769573405e9be556df006f8fd3240f70338992e32e9beaeb00880371dbe7a9"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/06_researcher_books.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "evidence"
+      ],
+      "decorative": true,
+      "width": "250",
+      "height": "274",
+      "viewBox": "0 0 250 274",
+      "contains_embedded_raster": true,
+      "sha256": "fb117864f7c0742ece853e33aa8dd85b8508197917c326a4926953283c9bfc1c"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/07_coder_laptop.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "269",
+      "height": "246",
+      "viewBox": "0 0 269 246",
+      "contains_embedded_raster": true,
+      "sha256": "1d8ab6bd204299d304cee7c63cb67d7074b59c0209e8a5c6fde2da43a6c3f290"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/08_tester_bug.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "253",
+      "height": "243",
+      "viewBox": "0 0 253 243",
+      "contains_embedded_raster": true,
+      "sha256": "5ff6ffe238cec3c6785554bd1eaa5243cdaeb263724465c524a63ceea472fd78"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/09_documenter_notes.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "activity",
+        "command form header"
+      ],
+      "decorative": true,
+      "width": "242",
+      "height": "258",
+      "viewBox": "0 0 242 258",
+      "contains_embedded_raster": true,
+      "sha256": "4dfa5102c76912ad59e9d2675596fb92dabe32166f7f0b80ea71faf2c68625e1"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/10_operator_servers.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "275",
+      "height": "273",
+      "viewBox": "0 0 275 273",
+      "contains_embedded_raster": true,
+      "sha256": "cfdbad08a48533718e2040f5a16011a5e8d727a81caa51a3b74146373ce395c2"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/11_contract_keeper.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "202",
+      "height": "277",
+      "viewBox": "0 0 202 277",
+      "contains_embedded_raster": true,
+      "sha256": "7b801a1d3184e7de0b2b518294cad51683249499b7d8efe4165e457eaf892f55"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/12_key_signature_guardian.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "workspace settings header"
+      ],
+      "decorative": true,
+      "width": "232",
+      "height": "275",
+      "viewBox": "0 0 232 275",
+      "contains_embedded_raster": true,
+      "sha256": "6449b83a19812aa8179afba3cf38ec152ebecd177e2f073f82f8df4739c45132"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/13_dependency_mechanic.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "268",
+      "height": "256",
+      "viewBox": "0 0 268 256",
+      "contains_embedded_raster": true,
+      "sha256": "ea265d0a01a4c534faa17d75fb978c976f020cb745ee105a593a6531c22a0f99"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/14_observer_metrics.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "overview",
+        "pending Outcome read"
+      ],
+      "decorative": true,
+      "width": "267",
+      "height": "276",
+      "viewBox": "0 0 267 276",
+      "contains_embedded_raster": true,
+      "sha256": "c0aa2ef9294d5a57e70aca94f842632b417242bbe08805d8a8706ff314a4e410"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/15_archivist_box.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "223",
+      "height": "279",
+      "viewBox": "0 0 223 279",
+      "contains_embedded_raster": true,
+      "sha256": "b5ea3533ea8a148f406f5fdb0a97359c2beae095b93f58df0664cafaad4dc687"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/16_blocker_sentinel.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "issues"
+      ],
+      "decorative": true,
+      "width": "256",
+      "height": "263",
+      "viewBox": "0 0 256 263",
+      "contains_embedded_raster": true,
+      "sha256": "eff8e068a74a63cb174745b0e127fb778911da07aa44b4dd69ee21049b128055"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/17_outcome_flagbearer.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "outcome selection"
+      ],
+      "decorative": true,
+      "width": "270",
+      "height": "262",
+      "viewBox": "0 0 270 262",
+      "contains_embedded_raster": true,
+      "sha256": "b923e9c96df0ebbf168ad88944fb9b968df1545744ea499ae6bec4d469dddd3a"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/18_workspace_organizer.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "sidebar"
+      ],
+      "decorative": true,
+      "width": "280",
+      "height": "247",
+      "viewBox": "0 0 280 247",
+      "contains_embedded_raster": true,
+      "sha256": "6cd715be2f8f8f5795c1fbf3a85d62cfe5aad2a56a4015b6b1c5dd5349d2dc6a"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/19_integration_connector.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "281",
+      "height": "259",
+      "viewBox": "0 0 281 259",
+      "contains_embedded_raster": true,
+      "sha256": "7c892bc604a60056e2c4cf3b557a8a56730cb3b8ce040070e378a9e204869076"
+    },
+    {
+      "file": "packages/wos-api/web/assets/robots/20_scientist_inventor.svg",
+      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "role": [
+        "available in illustration library"
+      ],
+      "decorative": true,
+      "width": "246",
+      "height": "270",
+      "viewBox": "0 0 246 270",
+      "contains_embedded_raster": true,
+      "sha256": "2170de2e7e0197e253ac332f20496e326d38a66c5dbfe3bdfad7c1305613f631"
+    }
+  ],
+  "fonts": [
+    {
+      "file": "packages/wos-api/web/assets/fonts/dm-sans-latin-wght-normal.woff2",
+      "source_package": "@fontsource-variable/dm-sans@5.3.0",
+      "license": "OFL-1.1",
+      "sha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543"
+    },
+    {
+      "file": "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-italic.woff2",
+      "source_package": "@fontsource/instrument-serif@5.3.0",
+      "license": "OFL-1.1",
+      "sha256": "5a51946dfffa82972bc98745359c46761515641fda557c25116459a9f83da4a7"
+    },
+    {
+      "file": "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-normal.woff2",
+      "source_package": "@fontsource/instrument-serif@5.3.0",
+      "license": "OFL-1.1",
+      "sha256": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31"
+    }
+  ],
+  "decoration": [
+    {
+      "file": "packages/wos-api/web/assets/editorial-grid.svg",
+      "source": "Original WOS geometric grid with the Woobe Light grid color",
+      "decorative": true,
+      "sha256": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26"
+    },
+    {
+      "file": "packages/wos-api/web/assets/favicon.svg",
+      "source": "Exact compatibility copy of Hand-Drawn-Orange-Chain-Icon.zip/Hand-Drawn Orange Chain Icon.svg",
+      "decorative": true,
+      "sha256": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4"
+    }
+  ],
+  "palette": {
+    "source": "docs/design/editorial/woobe-palette-source.md",
+    "source_sha256": "be18d79a2a637de96b61ff00159da110314ea71524a025dba25fb839b98582b2",
+    "reported_woobe_reference_commit": "3dbcb3e1a7559f4a50ebca320e411933d46e8012",
+    "theme": "Light",
+    "color_tokens": 25,
+    "stylesheet": "packages/wos-api/web/assets/colors.css",
+    "stylesheet_sha256": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6"
+  },
+  "brand": {
+    "source_archive": "WOS_Web_Brand_Kit.zip",
+    "source_archive_sha256": "0b2be22d4acca50aa57d31c91b40c89dbeb3e2a1aaef59cacdea3a70669009ae",
+    "manifest": "docs/design/editorial/brand-kit/assets.json",
+    "media_count": 94,
+    "master_path_sha256": "2a980c87ce9579499c6e325ec2f3cdb0d179902bf786ad46ae18e9c33267c316",
+    "status": "Previous owner-supplied kit; preserved as reference, superseded in the header and browser icons by the hand-drawn chain"
+  },
+  "active_brand": {
+    "source_archive": "Hand-Drawn-Orange-Chain-Icon.zip",
+    "source_archive_sha256": "997ef03b787b554f3d9358ad23e6ea46a7aed928657105f4e9c61aeeba761949",
+    "manifest": "docs/design/editorial/brand-kit/hand-drawn-chain-assets.json",
+    "media_count": 3,
+    "header": "Image-only home link; no visible WOS wordmark"
+  }
+}

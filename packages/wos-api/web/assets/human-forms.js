@@ -151,8 +151,12 @@ export function humanForm(
         ids: true,
         initial: kind === "objective" ? [ref] : [],
       });
-      f("priority", copy.text.priority, { options: priority, value: "normal" });
-      f("lifecycle", copy.text.initialState, {
+      const settings = el("div", undefined, "field-row");
+      const taskPriority = f("priority", copy.text.priority, {
+        options: priority,
+        value: "normal",
+      });
+      const lifecycle = f("lifecycle", copy.text.initialState, {
         options: [
           ["todo", copy.text.toDo],
           ["backlog", copy.text.backlog],
@@ -160,6 +164,8 @@ export function humanForm(
         value: "todo",
         help: copy.text.toDoCanBecomeReadyWhenTheOutcomeDependencies,
       });
+      settings.append(taskPriority.node, lifecycle.node);
+      node.append(settings);
       const spec = details(copy.text.executionInstructions);
       const lists = {};
       for (const [key, label] of Object.entries({

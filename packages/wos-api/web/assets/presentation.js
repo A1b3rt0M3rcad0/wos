@@ -230,7 +230,7 @@ export function donut(parts, total) {
     svg.append(c);
     offset += length;
   };
-  circle("#eeece5", 358.14);
+  circle("var(--wos-control)", 358.14);
   offset = 0;
   for (const p of parts)
     if (total && p.count) circle(p.color, (358.14 * p.count) / total);
