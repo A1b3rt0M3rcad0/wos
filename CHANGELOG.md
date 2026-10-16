@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a larger image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
+- Make the README concrete and visual: show Work/Evidence/login captures, a smaller robot metaphor, a 24-second real unsigned workflow recording, concepts, platform requirements, troubleshooting, skills, compatibility, and support. Add an isolated runnable example, verified published-container instructions, contributor guidance, and security-reporting boundaries.
+- Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a compact image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
 - Replace the planner illustration with the owner's supplied blank-map SVG, byte for byte at the existing asset path and dimensions; refresh the affected login and Plan screenshots.
 - Install the owner's hand-drawn chain SVG/PNG/ICO originals, use the symbol alone in the header with an accessible home-link name, and align browser icons; preserve the former brand library, editorial typography, operational palette, and matte modals.
 - Match all workspace modals to the matte canvas, workspace bands, warm control/card surfaces, and shared border tokens; preserve geometry, scrolling, backdrop, focus, and responsive behavior, with desktop/mobile captures.
