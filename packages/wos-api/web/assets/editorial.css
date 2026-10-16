@@ -1058,7 +1058,8 @@ legend {
   font: 0.71429rem/1.7 var(--mono);
 }
 dialog {
-  background: var(--wos-elevated);
+  --control-line: var(--wos-border);
+  background: var(--wos-canvas);
   background-image: url("editorial-grid.svg");
   background-size: var(--editorial-grid-size) var(--editorial-grid-size);
   background-attachment: fixed;
@@ -1140,7 +1141,7 @@ dialog::backdrop {
   position: static;
   padding: calc(16 * var(--wos-unit, 1px)) calc(28 * var(--wos-unit, 1px));
   margin: 0;
-  background: var(--wos-panel-band);
+  background: var(--wos-workspace);
   border-top: calc(1 * var(--wos-unit, 1px)) solid var(--control-line);
 }
 #command-error:empty,
@@ -1160,7 +1161,7 @@ dialog::backdrop {
   align-items: flex-start;
 }
 .detail-drawer {
-  background: var(--wos-surface);
+  background: var(--wos-canvas);
   padding: 0;
   border-radius: 0;
   overflow: hidden;
@@ -1411,6 +1412,30 @@ summary:focus-visible {
   background: var(--wos-panel-band);
   color: var(--danger);
   border-radius: calc(2 * var(--wos-unit, 1px));
+}
+/* Modal paper continues the workspace; selection, focus and semantic ink
+   keep their shared state tokens. Only surface paint is scoped here. */
+dialog
+  :is(
+    fieldset,
+    details,
+    .human-advanced,
+    .field-context,
+    .detail-section,
+    .signed-protocol-panel,
+    .contract-notice,
+    .conflict-columns section,
+    .danger,
+    #command-error:not(:empty)
+  ) {
+  background-color: var(--wos-workspace);
+}
+dialog :is(.conclusion-card, .relation-card) {
+  background-color: var(--wos-surface);
+  border-color: var(--wos-border);
+}
+dialog :is(input:read-only, .reference-results) {
+  background-color: var(--wos-surface);
 }
 .login-layout {
   max-width: calc(1600 * var(--wos-unit, 1px));

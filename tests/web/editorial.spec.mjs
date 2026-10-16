@@ -844,6 +844,104 @@ test("Woobe colors distinguish interaction copper, primary charcoal and semantic
   ).toHaveCSS("color", "rgb(178, 56, 52)");
 });
 
+test("all modal families share matte workspace paper on desktop and mobile", async ({
+  page,
+  wos,
+}) => {
+  await seed(wos);
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+
+  async function paper(id) {
+    const dialog = page.locator(id);
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveCSS("background-color", "rgb(239, 237, 232)");
+    await expect(dialog).toHaveCSS("border-top-color", "rgb(212, 206, 196)");
+    const surfaces = await dialog.evaluate((root) => {
+      const color = (element) => getComputedStyle(element).backgroundColor;
+      const colors = (selector) =>
+        [...root.querySelectorAll(selector)].map(color);
+      return {
+        secondary: colors(
+          "footer, fieldset, details, .field-context, .detail-section, .signed-protocol-panel, .contract-notice, .conflict-columns section",
+        ),
+        surface: colors(
+          'input:not([type="checkbox"]), select, textarea, pre, .reference-results, .conclusion-card, .relation-card, .roadmap-edit-row, .contract-progress, .contract-delivery, .signed-review-card',
+        ),
+        white: [...root.querySelectorAll("*")]
+          .filter((element) => color(element) === "rgb(255, 255, 255)")
+          .map((element) => element.tagName + "." + element.className),
+        backdrop: getComputedStyle(root, "::backdrop").backgroundColor,
+        focusedInside: root.contains(document.activeElement),
+      };
+    });
+    expect(
+      surfaces.secondary.every((color) => color === "rgb(245, 243, 239)"),
+    ).toBe(true);
+    expect(
+      surfaces.surface.every((color) => color === "rgb(255, 253, 249)"),
+    ).toBe(true);
+    expect(surfaces.white).toEqual([]);
+    expect(surfaces.backdrop).toBe("rgba(41, 38, 32, 0.38)");
+    expect(surfaces.focusedInside).toBe(true);
+  }
+
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
+    await page.locator('#area-tabs [data-area="work"]').click();
+    await page.locator("#actions").click();
+    await paper("#action-dialog");
+    await page.locator("#action-dialog summary").click();
+    await paper("#action-dialog");
+    if (width === 390) {
+      await page.locator("#action-dialog").evaluate((dialog) => {
+        dialog.scrollTop = 0;
+      });
+      await page.mouse.move(0, 0);
+      await capture(page, "33-mobile-action-menu");
+    }
+    await page.keyboard.press("Escape");
+
+    await intent(page, "New task");
+    await page.getByText("Execution instructions", { exact: true }).click();
+    await page
+      .getByRole("button", { name: "Add instructions item", exact: true })
+      .click();
+    await paper("#command-dialog");
+    await expectWholeControl(
+      page.getByLabel("Instructions item", { exact: true }),
+    );
+    await page.keyboard.press("Escape");
+
+    await page
+      .locator(".list-row")
+      .filter({ hasText: "Connect the evidence review" })
+      .click();
+    await paper("#detail-dialog");
+    if (width === 390) await capture(page, "34-mobile-task-detail");
+    await page.keyboard.press("Escape");
+
+    await page.locator("#administration").click();
+    for (const operation of [
+      "set_grant",
+      "issue_credential",
+      "revoke_credential",
+      "create_namespace",
+    ]) {
+      await page.locator("#admin-operation").selectOption(operation);
+      await paper("#admin-dialog");
+    }
+    await page.keyboard.press("Escape");
+    await page.locator("#developer-tools").click();
+    await paper("#command-dialog");
+    await capture(
+      page,
+      width === 1440 ? "35-technical-command" : "36-mobile-technical-command",
+    );
+    await page.keyboard.press("Escape");
+  }
+});
+
 test("WOS uses one on-page mark, editorial lettering and real browser icons", async ({
   page,
   wos,

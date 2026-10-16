@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Match all workspace modals to the matte canvas, workspace bands, warm control/card surfaces, and shared border tokens; preserve geometry, scrolling, backdrop, focus, and responsive behavior, with desktop/mobile captures.
 - Scale the existing editorial composition proportionally above its 1440 CSS px reference, coordinating typography, controls, sidebar, spacing, artwork, and paper through one bounded fluid unit; preserve reference/smaller viewports and add Full HD/2K/4K comparisons.
 - Unify button hover/pressed states across the workspace, preserve text contrast and selected-tab distinction, add label insets and touch-sized targets, and remove card movement; document the component review and hover/focus screenshots.
 - Anchor the fine paper grid behind scrolling pages and dialog bodies, with a document-relative reduced-motion variant; give the sidebar serif navigation, numbered ruled Outcomes, and a composed organizer vignette, with refreshed viewport screenshots.
