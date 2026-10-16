@@ -1,4 +1,4 @@
-# ADR-030: Durable terminal resolution of a signed return
+# ADR-034: Durable terminal resolution of a signed return
 
 Status: accepted for implementation in the single operational hardening PR; merge requires owner approval.
 

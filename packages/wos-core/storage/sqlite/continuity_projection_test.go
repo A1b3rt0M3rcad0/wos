@@ -20,9 +20,10 @@ func (c *advancingContinuityClock) Now() time.Time { return c.now }
 func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "expiry.db")
 			var store ports.TransactionManager = memory.New()
 			if backend == "sql" {
-				store = openTestStore(t, filepath.Join(t.TempDir(), "expiry.db"))
+				store = openTestStore(t, path)
 			}
 			clock := &advancingContinuityClock{time.Now().UTC()}
 			ids := &sqliteSequenceIDs{prefix: "0199d211", next: 1}
@@ -53,6 +54,10 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 			must(e)
 			if first.Count != 2 || first.NextCursor == "" {
 				t.Fatal("active leases not projected", first)
+			}
+			if sqlStore, ok := store.(*Store); ok {
+				store = reopenIntegrationFixture(t, sqlStore, path)
+				service, _ = a.NewService(store, clock, ids)
 			}
 			clock.now = clock.now.Add(31 * time.Second)
 			frozen, e := service.GetContinuitySection(ctx, out.Value.Scope(), "in_progress_work", 1, first.NextCursor)

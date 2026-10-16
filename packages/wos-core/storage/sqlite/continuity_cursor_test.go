@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -59,7 +60,8 @@ func legacySectionCursor(scope d.Scope, section string, revision d.OutcomeRevisi
 }
 func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 	ctx := context.Background()
-	store := openTestStore(t, filepath.Join(t.TempDir(), "direct.db"))
+	path := filepath.Join(t.TempDir(), "direct.db")
+	store := openTestStore(t, path)
 	clock := sqliteFixedClock{time.Now().UTC()}
 	ids := &sqliteSequenceIDs{prefix: "0199d191", next: 1}
 	service, _ := a.NewService(store, clock, ids)
@@ -111,6 +113,33 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 	var cursor map[string]any
 	if e = json.Unmarshal(raw, &cursor); e != nil || cursor["cursor_version"] != float64(2) {
 		t.Fatal("new keyset cursor not emitted", e)
+	}
+	// Continue both old digest and new keyset cursors after a real clean-file
+	// or new-database restore, preserving the original revision/evaluation time.
+	expectedNew, e := bounded.GetContinuitySection(ctx, scope, "work_items", 2, page.NextCursor)
+	if e != nil {
+		t.Fatal(e)
+	}
+	store = reopenIntegrationFixture(t, store, path)
+	service, _ = a.NewService(store, clock, ids)
+	bounded, _ = a.NewService(noHydrationManager{store}, clock, ids)
+	restoredLegacy, e := bounded.GetContinuitySection(ctx, scope, "work_items", 2, legacy)
+	if e != nil {
+		t.Fatal(e)
+	}
+	expectedBytes, _ := json.Marshal(page)
+	restoredBytes, _ := json.Marshal(restoredLegacy)
+	if !bytes.Equal(expectedBytes, restoredBytes) {
+		t.Fatal("restore changed legacy continuation or its frozen frame")
+	}
+	restoredNew, e := bounded.GetContinuitySection(ctx, scope, "work_items", 2, page.NextCursor)
+	if e != nil {
+		t.Fatal(e)
+	}
+	expectedBytes, _ = json.Marshal(expectedNew)
+	restoredBytes, _ = json.Marshal(restoredNew)
+	if !bytes.Equal(expectedBytes, restoredBytes) {
+		t.Fatal("restore changed v2 keyset continuation")
 	}
 	count := 4
 	seen := map[string]bool{}
