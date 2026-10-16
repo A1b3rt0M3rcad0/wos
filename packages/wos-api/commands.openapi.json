@@ -10447,6 +10447,324 @@
         ],
         "type": "object"
       },
+      "SigningIdentityViewV2": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ref": {
+            "additionalProperties": false,
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "human",
+                  "agent",
+                  "service",
+                  "automation",
+                  "external_system"
+                ],
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "provider",
+              "id"
+            ],
+            "type": "object"
+          },
+          "credential_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "credential_policy": {
+            "additionalProperties": false,
+            "properties": {
+              "acceptance_floor": {
+                "type": "string"
+              },
+              "allowed_outcome_ids": {
+                "items": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "allowed_signing_key_ids": {
+                "items": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "credential_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "max_active_review_contracts": {
+                "type": "integer"
+              },
+              "max_active_work_contracts": {
+                "type": "integer"
+              },
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "permitted_operations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "principal_id": {
+                "type": "string"
+              },
+              "revision": {
+                "pattern": "^(0|[1-9][0-9]{0,19})$",
+                "type": "string"
+              },
+              "updated_at": {
+                "format": "date-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespace_id",
+              "credential_id",
+              "principal_id",
+              "revision",
+              "acceptance_floor",
+              "max_active_work_contracts",
+              "max_active_review_contracts",
+              "updated_at"
+            ],
+            "type": "object"
+          },
+          "enrollment": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted_digest": {
+                "type": "string"
+              },
+              "authorized_by": {
+                "type": "string"
+              },
+              "consumed": {
+                "type": "boolean"
+              },
+              "credential_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "expected_fingerprint": {
+                "type": "string"
+              },
+              "expires_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "key_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "namespace_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "nonce": {
+                "type": "string"
+              },
+              "previous_key_id": {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              "principal_id": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "version": {
+                "pattern": "^(0|[1-9][0-9]{0,19})$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "namespace_id",
+              "principal_id",
+              "credential_id",
+              "key_id",
+              "purpose",
+              "nonce",
+              "expires_at",
+              "authorized_by",
+              "version",
+              "consumed"
+            ],
+            "type": "object"
+          },
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "algorithm": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "fingerprint": {
+                  "type": "string"
+                },
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "namespace_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "principal_id": {
+                  "type": "string"
+                },
+                "public_key": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "updated_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "version": {
+                  "pattern": "^(0|[1-9][0-9]{0,19})$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "namespace_id",
+                "principal_id",
+                "purpose",
+                "algorithm",
+                "public_key",
+                "fingerprint",
+                "version",
+                "status",
+                "created_at",
+                "updated_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "keys_truncated": {
+            "type": "boolean"
+          },
+          "namespace_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
+          "namespace_version": {
+            "pattern": "^(0|[1-9][0-9]{0,19})$",
+            "type": "string"
+          },
+          "principal_id": {
+            "type": "string"
+          },
+          "quotas": {
+            "additionalProperties": false,
+            "properties": {
+              "active_credential_review": {
+                "type": "integer"
+              },
+              "active_credential_work": {
+                "type": "integer"
+              },
+              "active_principal_review": {
+                "type": "integer"
+              },
+              "active_principal_work": {
+                "type": "integer"
+              },
+              "credential_policy_configured": {
+                "type": "boolean"
+              },
+              "effective_review_ceiling": {
+                "type": "integer"
+              },
+              "effective_work_ceiling": {
+                "type": "integer"
+              },
+              "max_active_review_per_credential": {
+                "type": "integer"
+              },
+              "max_active_review_per_namespace": {
+                "type": "integer"
+              },
+              "max_active_review_per_principal": {
+                "type": "integer"
+              },
+              "max_active_work_per_credential": {
+                "type": "integer"
+              },
+              "max_active_work_per_namespace": {
+                "type": "integer"
+              },
+              "max_active_work_per_principal": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "max_active_work_per_principal",
+              "max_active_review_per_principal",
+              "effective_work_ceiling",
+              "effective_review_ceiling",
+              "credential_policy_configured",
+              "active_principal_work",
+              "active_principal_review",
+              "active_credential_work",
+              "active_credential_review"
+            ],
+            "type": "object"
+          },
+          "server_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quotas",
+          "actor_ref",
+          "server_id",
+          "namespace_version",
+          "keys_truncated",
+          "namespace_id",
+          "principal_id",
+          "credential_id"
+        ],
+        "type": "object"
+      },
       "SigningSecurityIntentV2": {
         "additionalProperties": false,
         "properties": {
@@ -10459,7 +10777,13 @@
               "max_active_review_contracts": {
                 "type": "integer"
               },
+              "max_active_review_per_principal": {
+                "type": "integer"
+              },
               "max_active_work_contracts": {
+                "type": "integer"
+              },
+              "max_active_work_per_principal": {
                 "type": "integer"
               },
               "namespace_id": {
@@ -17088,7 +17412,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Typed result, page or retained receipt; omission metadata remains explicit."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SigningIdentityViewV2"
+                }
+              }
+            },
+            "description": "Current credential public identity, own Principal activity and independent Principal/credential/Namespace quota ceilings; no other Principal contract list."
           },
           "403": {
             "description": "Authorization denied."
