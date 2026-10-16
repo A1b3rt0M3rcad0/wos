@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Rewrite the README as an illustrated Portuguese operating guide, organize current documentation by task, refresh agent instructions, and remove superseded reports/screenshots while preserving historical evidence links.
+- Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a larger image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
+- Replace the planner illustration with the owner's supplied blank-map SVG, byte for byte at the existing asset path and dimensions; refresh the affected login and Plan screenshots.
 - Install the owner's hand-drawn chain SVG/PNG/ICO originals, use the symbol alone in the header with an accessible home-link name, and align browser icons; preserve the former brand library, editorial typography, operational palette, and matte modals.
 - Match all workspace modals to the matte canvas, workspace bands, warm control/card surfaces, and shared border tokens; preserve geometry, scrolling, backdrop, focus, and responsive behavior, with desktop/mobile captures.
 - Scale the existing editorial composition proportionally above its 1440 CSS px reference, coordinating typography, controls, sidebar, spacing, artwork, and paper through one bounded fluid unit; preserve reference/smaller viewports and add Full HD/2K/4K comparisons.

@@ -291,6 +291,8 @@ An in-memory adapter does not replace storage contract tests.
 
 ## 12. Documentation discipline
 
+Maintained product copy, READMEs, user guides, and new documentation must be written in English. Preserve official identifiers and command syntax. Owner-supplied source documents, original skill packages, historical evidence, and authored user content retain their original language.
+
 Keep these artifacts aligned:
 
 - `README.md`: public product/architecture overview.

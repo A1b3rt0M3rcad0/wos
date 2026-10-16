@@ -1,35 +1,54 @@
 <p align="center">
-  <img src="packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg" width="144" alt="WOS" />
+  <img src="packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn%20Orange%20Chain%20Icon.svg" width="320" alt="Hand-drawn chain logo" />
 </p>
 
-# WOS
+<p align="center"><strong>Shared state for people and agents. Verifiable outcomes.</strong></p>
 
-**Organize o trabalho de pessoas e agentes em torno de um resultado que possa ser verificado.**
+<p align="center">
+  <a href="#why-use-it">Why use it</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="docs/README.md">Documentation</a>
+</p>
 
-O WOS guarda o que precisa ser feito, quem pode trabalhar em cada tarefa, o que foi entregue e como essa entrega foi avaliada. Pessoas, agentes de IA e aplicações consultam o mesmo estado e podem continuar o trabalho em outra sessão.
+Keep the plan, the work, and its proof in one shared state. People, AI agents, and applications can pick up the same outcome, see what is authorized, and continue from the last recorded step.
 
-[Começar pelo navegador](#começar-pelo-navegador) · [Trabalhar com agentes](#trabalhar-com-agentes) · [Documentação](docs/README.md)
+The project provides a standalone Go service, an embedded web workspace, a native CLI, HTTP and MCP interfaces, and an embeddable Go Core. SQLite supports local operation; PostgreSQL supports shared deployments. Execution stays in the participant's own tools and environment.
 
-![Robô no balcão entregando uma tarefa a outro robô, com três participantes aguardando diante de um quadro.](docs/images/robots-queuing-for-paperwork.png)
+## Why use it
 
-## Como o WOS opera
+Work often spans several people, agent sessions, and tools. Its context, ownership, delivery, and acceptance need to survive those handoffs.
 
-Pense no quadro da ilustração como o estado compartilhado do trabalho. Cada papel representa uma tarefa com instruções e condições de entrega. Um participante solicita trabalho, recebe a autorização correspondente, executa fora do WOS e registra o resultado para revisão.
+| Need                                     | What the system provides                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| Continue after a session or process ends | Persisted outcomes, plans, task context, progress, and history               |
+| Coordinate concurrent participants       | Explicit acquisition, scoped authority, expiry, and concurrency checks       |
+| Know whether a delivery meets the goal   | Revisioned success criteria, evidence, assessments, and explicit conclusions |
+| Recover after an uncertain response      | Durable receipts and reconciliation of the original intent                   |
+| Use different tools over the same work   | Web, CLI, HTTP, MCP, and Go interfaces over shared application rules         |
 
-1. **Defina o resultado.** Crie um **Outcome** com o estado que você quer alcançar e os critérios que demonstram sucesso.
-2. **Organize o trabalho.** Adicione **Objectives** para condições intermediárias e **Tasks** para ações concretas. Use um Roadmap quando precisar organizar o plano em revisões.
-3. **Execute uma tarefa.** A pessoa ou agente consulta o contexto e adquire a autorização exigida pelo protocolo do workspace. O WOS registra essa aquisição e sua validade.
-4. **Registre a entrega.** Associe evidências, artefatos e o que foi realizado à tarefa. Em contratos assinados, a entrega fica vinculada ao contrato e à submissão correspondente.
-5. **Revise e conclua.** Um participante autorizado avalia a entrega e os critérios. Se houver pedido de correção, o trabalho continua por uma nova aquisição explícita.
-6. **Retome quando precisar.** O próximo participante consulta o estado persistido, as pendências e o histórico antes de continuar.
+Use it when the state of the work must remain available beyond the conversation or process that started it. Your application or agent chooses and performs actions; the server records state and enforces coordination rules.
 
-O WOS mantém esse registro e aplica suas regras de coordenação. A execução dos agentes acontece no seu ambiente: **o servidor não inicia agentes nem executa suas ferramentas**.
+## How it works
 
-**Uma tarefa concluída não conclui automaticamente um Objective ou Outcome. Evidência registrada também não significa aprovação.** Cada resultado tem sua própria avaliação e conclusão explícita.
+![A robot handing a task to another participant at a desk, with three robots waiting beside a shared work board.](docs/images/robots-queuing-for-paperwork.png)
 
-## Começar pelo navegador
+The board represents shared state. Each paper represents a bounded task with instructions and delivery conditions. Participants explicitly request work, execute in their own environment, and return material for review.
 
-Você precisa de Git e Docker com Compose. A configuração abaixo inicia um ambiente local com SQLite persistente:
+1. **Define an Outcome:** describe the desired result and the criteria that make it verifiable.
+2. **Plan the work:** create Objectives for intermediate conditions and Tasks for concrete actions. An optional Roadmap organizes versioned plans.
+3. **Acquire authority:** a participant reads the context and acquires the authorization required by the workspace protocol.
+4. **Execute and deliver:** perform the task outside the server and register evidence, artifacts, and the execution result.
+5. **Review the material:** an authorized reviewer assesses the exact delivery and applicable criteria. A correction request leads to a new explicit acquisition.
+6. **Conclude and continue:** explicitly conclude accepted results; the next participant reads persisted state and remaining obligations before continuing.
+
+**Completing a Task does not automatically achieve an Objective or Outcome. Registering evidence does not approve a result.** Delivery, assessment, and conclusion are distinct records.
+
+In the browser, a **Workspace** corresponds to the API's **Namespace**, the boundary for access and permissions. Each Outcome belongs to that space.
+
+## Quick start
+
+With Git and Docker Compose installed:
 
 ```sh
 git clone https://github.com/A1b3rt0M3rcad0/wos.git
@@ -38,41 +57,31 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-Abra **http://127.0.0.1:8080/app/**. Em **Access credential**, informe o valor de `WOS_BOOTSTRAP_TOKEN` do arquivo `.env` e clique em **Sign in**.
+Open **http://127.0.0.1:8080/app/**. Enter the `WOS_BOOTSTRAP_TOKEN` value from `.env` in **Access credential**, then choose **Sign in**. The example uses persistent SQLite and a development credential for local demonstration. Configure individual credentials and permissions before sharing an instance; see [server operations](docs/operations.md#shared-service).
 
-O token de exemplo serve para essa demonstração local. Para compartilhar uma instância, configure credenciais próprias e permissões por participante conforme o [guia de operação](docs/operations.md#shared-service).
+### Operate your first Outcome
 
-### Seu primeiro resultado
+1. Choose **+** beside **Outcomes**, enter a name and desired state, and select **Save draft**.
+2. Add success criteria describing what must be checked before accepting the result.
+3. Add Objectives in **Plan** and Tasks in **Work**, with instructions and references.
+4. Activate the Outcome explicitly when preparation is ready; saving a draft does not activate it.
+5. Open a Task to inspect context, dependencies, blockers, and permitted actions. For signed work, follow the execution command through an authorized local profile.
+6. Register delivery material in **Evidence**, assess the applicable criteria, and explicitly conclude accepted results.
 
-Exemplo: criar um fluxo de login que permita entrar no workspace e retomar um resultado salvo.
+| Workspace area | Purpose                                              |
+| -------------- | ---------------------------------------------------- |
+| **Overview**   | Desired outcome, progress, and remaining preparation |
+| **Plan**       | Objectives, Roadmaps, and published revisions        |
+| **Work**       | Task list, board, readiness, and execution details   |
+| **Issues**     | Problems and their separate blocking impacts         |
+| **Evidence**   | Observations, deliverables, and assessment material  |
+| **Activity**   | Events and the history of the Outcome                |
 
-1. Na sidebar, clique no **+** ao lado de **Outcomes**. Preencha o nome e o estado desejado; **Save draft** salva um rascunho.
-2. Adicione critérios de sucesso: o que uma pessoa precisa verificar para aceitar esse resultado. A checklist de preparação ajuda a encontrar as ações.
-3. Em **Plan**, adicione os Objectives necessários. Em **Work**, crie as tarefas, suas instruções e os vínculos com Objectives.
-4. Quando a preparação estiver pronta, use a ação de ativar o Outcome. Salvar o rascunho não o ativa.
-5. Abra uma tarefa para consultar contexto, dependências, impedimentos e ações permitidas. Execute com a autorização mostrada; em um workspace assinado, siga o comando de execução pelo perfil local do agente.
-6. Registre a entrega em **Evidence**, avalie os critérios aplicáveis e conclua explicitamente os resultados aceitos.
+**Choose an action** and item details expose actions allowed by your permissions and the current state. See the [workspace guide](docs/workspace-ux.md) and [current screenshots](docs/design/editorial/README.md#main-pages).
 
-### Onde encontrar cada coisa
+## Operate with agents
 
-| Área         | Use para                                                          |
-| ------------ | ----------------------------------------------------------------- |
-| **Overview** | Entender o resultado desejado, o progresso e as pendências        |
-| **Plan**     | Organizar Objectives e revisões do Roadmap                        |
-| **Work**     | Consultar tarefas na lista ou no quadro e acompanhar sua execução |
-| **Issues**   | Registrar problemas e os impedimentos que afetam o trabalho       |
-| **Evidence** | Reunir observações, entregáveis e material para avaliação         |
-| **Activity** | Consultar os acontecimentos e o histórico do Outcome              |
-
-Em **Choose an action** e nos detalhes dos itens, as ações disponíveis seguem suas permissões e o estado atual. A interface usa nomes em inglês; títulos e descrições podem ser escritos no seu idioma.
-
-No navegador, **Workspace** é o espaço de acesso e permissões chamado **Namespace** na API. Cada Outcome pertence a esse espaço.
-
-Veja o [guia completo do workspace](docs/workspace-ux.md) e as [telas atuais](docs/design/editorial/README.md#main-pages).
-
-## Trabalhar com agentes
-
-O pacote público `wosctl` instala o comando nativo `wos`. O instalador npm exige Node.js 22 ou superior e oferece os clientes Linux e Windows x64:
+The public npm package `wosctl` installs the native `wos` command. The npm launcher requires Node.js 22 or later and supports Linux/Windows x64 clients:
 
 ```sh
 npm install -g wosctl@latest
@@ -80,59 +89,49 @@ wos version
 wos skill install --agent codex
 ```
 
-Troque `codex` por `claude`, `hermes` ou `openclaw` conforme seu ambiente. Use `--agent all` para os quatro, ou `--agent generic --dir /caminho/skills` para indicar outro diretório. Você também pode baixar os binários nas [releases](https://github.com/A1b3rt0M3rcad0/wos/releases/latest), sem npm, ou [compilar o código Go](docs/operations.md#local-installation).
+Use `claude`, `hermes`, or `openclaw` for another discovery layout, `--agent all` for all four, or `--agent generic --dir /absolute/path/to/skills` for an explicit destination. Native archives are also available from [releases](https://github.com/A1b3rt0M3rcad0/wos/releases/latest).
 
-O comando `wos skill` copia instruções que já vêm dentro do binário. Essa operação funciona offline, preserva alterações locais e não precisa de um servidor WOS em execução.
+The binary includes five skills: coordination, delegation, continuity, review, and workspace operation. Skill installation is offline and preserves local modifications. Configure the agent runtime, MCP connection, credentials, and protocol separately.
 
-| Skill              | Papel                                                        |
-| ------------------ | ------------------------------------------------------------ |
-| `wos-coordination` | Consultar contexto, coordenar trabalho e registrar progresso |
-| `wos-delegation`   | Decompor e delegar usando os recursos do ambiente do agente  |
-| `wos-continuity`   | Retomar uma sessão ou recuperar uma intenção interrompida    |
-| `wos-review`       | Avaliar material e fazer revisão independente                |
-| `wos-workspace`    | Operar contratos assinados e sua recuperação pelo CLI        |
+### Signed execution and review
 
-**As skills são instruções para o seu agente.** Configure o ambiente de execução, a conexão MCP, as credenciais e o protocolo separadamente.
-
-### Executar um contrato assinado
-
-Primeiro, um administrador configura o protocolo do Namespace, as credenciais, a confiança no servidor e o perfil do executor. Siga [a preparação de perfis assinados](docs/signed-workspace-profiles.md); o nome `executor` abaixo pressupõe um perfil já autorizado.
+An administrator first configures the Namespace protocol, server identity, credentials, key enrollment, and authorized profiles. Follow [signed workspace profiles](docs/signed-workspace-profiles.md) before using this example:
 
 ```sh
 wos --profile executor work checkout --next --count 1 --output json
 wos --profile executor work show CONTRACT_UUID --for-agent --output json
 
-# Execute fora do WOS e preencha o rascunho de execução autorizado.
+# Execute externally and complete the permitted local execution draft.
 wos --profile executor work finish CONTRACT_UUID --output json
 ```
 
-`CONTRACT_UUID` é o identificador retornado pela aquisição. O contexto mostra instruções, limites e critérios do trabalho. A entrega pode exigir revisão independente; enviá-la não equivale a aprová-la. Cada executor e revisor deve usar sua própria identidade autorizada.
+Use the contract ID returned by acquisition. Its context contains instructions, constraints, and criteria. Each executor and independent reviewer uses their own authorized identity. Sending a delivery may leave it pending review; it does not approve the work.
 
-Se uma resposta se perder, reconcilie a intenção original:
+Reconcile an interrupted or uncertain operation using its original intent:
 
 ```sh
 wos --profile executor work recover --all-pending --output json
 ```
 
-Não recrie a mesma operação com outra chave ou uma versão alterada para forçar sua conclusão. Leia o [guia para agentes](docs/agents.md) para o fluxo e as referências de recuperação.
+Keep the original key, destination, payload, and expected version during recovery. The [agent guide](docs/agents.md) covers execution, independent review, and continuation.
 
-## Retomar e operar o ambiente
+## Run and maintain the service
 
 ```sh
-docker compose logs -f wos   # acompanhar o serviço
-docker compose stop         # parar
-docker compose start        # retomar os mesmos dados
-docker compose down         # remover containers, mantendo os volumes
+docker compose logs -f wos   # Follow service logs.
+docker compose stop         # Stop the service.
+docker compose start        # Resume with the same data.
+docker compose down         # Remove containers; keep volumes.
 ```
 
-O volume `wos_data` guarda o SQLite. Não use `down -v` se quiser preservar os dados. Ao voltar, entre no mesmo workspace e consulte o Outcome; o histórico e as pendências continuam no servidor. Um link compartilhado ajuda a abrir o contexto, mas não concede acesso.
+The `wos_data` volume stores SQLite data. `down -v` removes volumes, so avoid it when preserving state. Sign in to the same Workspace to resume an Outcome. A shared link opens context but does not grant access.
 
-Para um serviço compartilhado, consulte [autenticação, PostgreSQL, backup e restore](docs/operations.md). O servidor é validado para Linux amd64; o suporte do cliente Windows não implica suporte ao servidor Windows.
+See [operations](docs/operations.md) for authentication, PostgreSQL, backup, and restore. The server's validated runtime target is Linux amd64; Windows support applies to the client.
 
 <details>
-<summary>Executar diretamente a partir do código Go</summary>
+<summary>Build and run from Go source</summary>
 
-Use a versão de Go indicada em [go.mod](go.mod), atualmente 1.27:
+Use the Go version declared in [go.mod](go.mod), currently 1.27:
 
 ```sh
 go build -trimpath -o bin/wos ./packages/wos-api/cmd/wos
@@ -140,34 +139,33 @@ go build -trimpath -o bin/wos ./packages/wos-api/cmd/wos
 ./bin/wos server
 ```
 
-Nesse modo local padrão, abra `http://127.0.0.1:8080/app/`, expanda **Local development server**, informe o Namespace `0199d000-0000-7000-8000-000000000001` e escolha **Open local workspace**. A identidade é local e confiável; para múltiplos usuários, use a configuração autenticada do guia de operação.
+For this default trusted-local mode, open `http://127.0.0.1:8080/app/`, expand **Local development server**, enter Namespace `0199d000-0000-7000-8000-000000000001`, and choose **Open local workspace**. Use authenticated service configuration for multiple users.
 
-O binário inclui o servidor, a aplicação web e as cinco skills. `wosctl` permanece como alias de compatibilidade do cliente.
+The binary includes the server, web application, and skills. `wosctl` remains a compatibility client alias.
 
 </details>
 
-## Integrar com sua aplicação
+## Integrate and extend
 
-O mesmo estado pode ser usado por estas interfaces:
+| Interface           | Reference                                                                      |
+| ------------------- | ------------------------------------------------------------------------------ |
+| Web workspace       | [Human workflows](docs/workspace-ux.md)                                        |
+| Native CLI          | [Commands and protocols](packages/wos-cli/README.md)                           |
+| HTTP API            | [HTTP guide](docs/http.md) and [OpenAPI](packages/wos-api/openapi.yaml)        |
+| MCP                 | [Protocol profiles and transports](docs/contracts.md) — `/mcp` when enabled    |
+| Go                  | [Embedded Core](examples/embedded) and [remote client](examples/remote-client) |
+| Events and webhooks | [Consumer integration](docs/integration-events.md)                             |
 
-| Interface          | Referência                                                                    |
-| ------------------ | ----------------------------------------------------------------------------- |
-| Workspace web      | [Uso pelo navegador](docs/workspace-ux.md)                                    |
-| CLI                | [Comandos e protocolos](packages/wos-cli/README.md)                           |
-| HTTP               | [API](docs/http.md) e [OpenAPI](packages/wos-api/openapi.yaml)                |
-| MCP                | [Perfis e transportes](docs/contracts.md) — `/mcp` quando habilitado          |
-| Go                 | [Core embutido](examples/embedded) e [cliente remoto](examples/remote-client) |
-| Eventos e webhooks | [Integração com consumidores](docs/integration-events.md)                     |
+The service works independently of an AI provider or agent runtime. Integrations choose and execute their own actions while sharing the same persisted coordination state.
 
-O WOS funciona sem depender da Woobe ou de um provedor de IA. Agentes, aplicações e ambientes de execução continuam responsáveis por decidir e realizar as ações.
+## Documentation and project status
 
-## Documentação e estado do projeto
+- [Documentation index](docs/README.md): guides organized by task.
+- [Architecture](docs/architecture.md): state model, boundaries, and execution rules.
+- [Development contract](AGENTS.md): repository rules and required checks.
+- [Roadmap](ROADMAP.md): implementation status and remaining acceptance work.
+- [Releases](docs/releases.md): installation, platform scope, and publication requirements.
 
-O código desta branch é a referência para as instruções e telas apresentadas aqui. A versão do código está em [VERSION](VERSION); o pacote `@latest` acompanha a versão publicada no npm. O trabalho para a versão estável 1.0 e os aceites pendentes estão no [ROADMAP](ROADMAP.md).
+These instructions and screenshots describe this branch. [VERSION](VERSION) identifies its source version; npm `@latest` follows the published package. Stable 1.0 acceptance is tracked separately in the roadmap.
 
-- [Índice da documentação](docs/README.md): escolha um guia pelo que precisa fazer.
-- [Operação do servidor](docs/operations.md): configuração, permissões, persistência e recuperação.
-- [Desenvolvimento](docs/README.md#desenvolver-e-entender-o-projeto): arquitetura, contratos e regras do repositório.
-- [Release e distribuição](docs/releases.md): plataformas e critérios de publicação.
-
-Licença [Apache 2.0](LICENSE).
+Licensed under [Apache 2.0](LICENSE).

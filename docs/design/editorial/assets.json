@@ -2,7 +2,7 @@
   "illustrations": [
     {
       "file": "packages/wos-api/web/assets/robots/01_planner_map.svg",
-      "source": "User-supplied wos_20_robot_svgs_fixed.zip",
+      "source": "Owner-supplied 01_planner_map_blank.zip",
       "role": [
         "login",
         "plan"
@@ -12,7 +12,11 @@
       "height": "275",
       "viewBox": "0 0 247 275",
       "contains_embedded_raster": true,
-      "sha256": "dda2a883e9d568909610e8bc1c0a1de31239c6450afbeeb131ac790d34841b5c"
+      "sha256": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da",
+      "source_archive_sha256": "ff25046cd6070e8967e64fea3936cb5b3ebd0337378fcee35913d8c2b0550352",
+      "source_filename": "01_planner_map_blank.svg",
+      "replaces_sha256": "dda2a883e9d568909610e8bc1c0a1de31239c6450afbeeb131ac790d34841b5c",
+      "preserved_original": true
     },
     {
       "file": "packages/wos-api/web/assets/robots/02_decomposer_tasks.svg",

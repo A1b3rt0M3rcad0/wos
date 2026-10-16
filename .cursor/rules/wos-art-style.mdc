@@ -1,17 +1,17 @@
 ---
-description: "Direção de arte WOS para robôs, personagens, ilustrações editoriais e estados vazios no desenvolvimento local."
+description: "WOS art direction for robots, characters, editorial illustrations, and empty states in local development."
 globs: "packages/wos-api/web/assets/robots/**,packages/wos-api/web/assets/editorial.js,docs/design/editorial/**"
 alwaysApply: false
 ---
 
-# WOS art style — regra local
+# WOS art style — local rule
 
-Antes de criar, selecionar, editar ou integrar ilustrações WOS, leia `.agents/skills/wos-art-style/SKILL.md` e siga `AGENTS.md`. A skill governa o fluxo de produção e validação de arte.
+Before creating, selecting, editing, or integrating WOS illustrations, read `.agents/skills/wos-art-style/SKILL.md` and follow `AGENTS.md`. The skill governs art production and validation.
 
-**Prompt canônico literal:**
+**Literal canonical prompt:**
 
 Minimalist hand-drawn black ink cartoon illustration, organic slightly imperfect outlines, expressive pen-and-ink linework, subtle cross-hatching and diagonal hatching for shadows, playful character proportions, oversized rounded head, thin expressive limbs, sketchbook aesthetic, monochrome black and white, editorial illustration style, clean silhouette, isolated character, transparent background, no gradients, no colors, no photorealism.
 
-Acrescente somente sujeito, ação e composição específicos da tarefa. Preserve a identidade do robô existente, contornos orgânicos imperfeitos, tinta preta, hachuras sutis, cabeça arredondada, membros finos, silhueta legível e transparência real. Não crie cores, gradientes, 3D, fotorrealismo ou desenhos cortados.
+Append only the subject, action, and composition specific to the task. Preserve the existing robot's identity, imperfect organic outlines, black ink, subtle hatching, rounded head, thin limbs, readable silhouette, and real transparency. Do not introduce colors, gradients, 3D, photorealism, or clipped drawings.
 
-**Escopo:** esta direção aplica-se às ilustrações, não à marca fornecida pelo proprietário, ao laranja da marca, à paleta de `colors.css` ou à composição de `chess-style`. Reutilize assets existentes; não redesenhe sem solicitação. Diferencie SVG vetorial de SVG com PNG encapsulado.
+**Scope:** this direction governs illustrations, not the owner-supplied brand, brand orange, the `colors.css` palette, or `chess-style` composition. Reuse existing assets; do not redesign them without a request. Distinguish vector SVGs from SVGs with an embedded PNG.

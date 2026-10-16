@@ -1,48 +1,50 @@
-# Documentação do WOS
+# Documentation
 
-Comece pelo [README do projeto](../README.md) para instalar o WOS e percorrer seu primeiro resultado. Escolha abaixo o guia correspondente à sua tarefa.
+Start with the [project README](../README.md) to understand the purpose, run the service, and operate your first Outcome. Choose a guide for the task you need to complete.
 
-## Usar o workspace
+## Use the workspace
 
-| Quero…                                                | Leia                                                              |
-| ----------------------------------------------------- | ----------------------------------------------------------------- |
-| Criar Outcomes, planejar, executar e avaliar trabalho | [Guia do workspace](workspace-ux.md)                              |
-| Ver a interface atual em desktop e mobile             | [Galeria e sistema visual](design/editorial/README.md#main-pages) |
-| Entender o fluxo de pessoas e agentes                 | [Como o WOS opera](../README.md#como-o-wos-opera)                 |
-| Entender a ilustração utilizada no README             | [Origem do arquivo](images/assets.json)                           |
+| Task                                            | Guide                                                                  |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| Create Outcomes, plan, execute, and assess work | [Workspace guide](workspace-ux.md)                                     |
+| View the current desktop and mobile interface   | [Screenshots and visual system](design/editorial/README.md#main-pages) |
+| Understand the shared human/agent workflow      | [How it works](../README.md#how-it-works)                              |
+| Inspect the README illustration's provenance    | [Original artwork record](images/assets.json)                          |
 
-## Conectar agentes e aplicações
+## Connect agents and applications
 
-| Quero…                                                   | Leia                                                                                         |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Instalar skills e operar com um agente                   | [Guia para agentes](agents.md)                                                               |
-| Consultar comandos do cliente                            | [CLI nativo](../packages/wos-cli/README.md)                                                  |
-| Configurar credenciais e perfis para contratos assinados | [Perfis assinados](signed-workspace-profiles.md)                                             |
-| Revisar entregas e recuperar respostas incertas          | [Retornos assinados](signed-cli-returns.md)                                                  |
-| Preparar ou migrar um workspace/protocolo                | [Cutover](signed-protocol-cutover.md) e [migração](workspace-migration-v2.md)                |
-| Usar a API ou conectar MCP                               | [HTTP](http.md), [contratos MCP](contracts.md) e [OpenAPI](../packages/wos-api/openapi.yaml) |
-| Integrar um consumidor e tratar recibos                  | [Qualificação de clientes](client-qualification.md)                                          |
-| Consumir eventos e webhooks                              | [Eventos de integração](integration-events.md)                                               |
+| Task                                               | Guide                                                                                               |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Install skills and operate with an agent           | [Agent guide](agents.md)                                                                            |
+| Look up client commands                            | [Native CLI](../packages/wos-cli/README.md)                                                         |
+| Configure credentials and signed-contract profiles | [Signed profiles](signed-workspace-profiles.md)                                                     |
+| Review deliveries and recover uncertain responses  | [Signed returns](signed-cli-returns.md)                                                             |
+| Prepare or migrate a workspace/protocol            | [Protocol cutover](signed-protocol-cutover.md) and [workspace migration](workspace-migration-v2.md) |
+| Use HTTP or connect MCP                            | [HTTP](http.md), [MCP contracts](contracts.md), and [OpenAPI](../packages/wos-api/openapi.yaml)     |
+| Integrate a consumer and reconcile receipts        | [Client qualification](client-qualification.md)                                                     |
+| Consume events and webhooks                        | [Integration events](integration-events.md)                                                         |
 
-## Operar o servidor
+## Operate the server
 
-- [Operação](operations.md): ambiente local, serviço autenticado, bancos, backup e restore.
-- [Recuperação do emissor](issuer-recovery.md): identidade e confiança em contratos assinados.
-- [Release e distribuição](releases.md): instalação pública, plataformas e processo de publicação.
-- [Referência operacional](stable/operations-reference.md): limites de capacidade, retenção e diagnóstico.
-- [Medições](benchmarks.md): escopo e limites dos benchmarks; evidência técnica não equivale a uma garantia de produção.
+- [Operations](operations.md): local setup, authenticated services, databases, backup, and restore.
+- [Issuer recovery](issuer-recovery.md): identity and trust for signed contracts.
+- [Releases and distribution](releases.md): public installation, platforms, and publication.
+- [Operational reference](stable/operations-reference.md): capacity limits, retention, and diagnostics.
+- [Measurements](benchmarks.md): benchmark scope and limits; technical evidence is separate from production guarantees.
 
-## Desenvolver e entender o projeto
+## Develop and understand the project
 
-- [AGENTS.md](../AGENTS.md): contrato de desenvolvimento e verificações obrigatórias.
-- [ROADMAP.md](../ROADMAP.md): estado real da implementação, trabalho atual e aceites pendentes.
-- [Arquitetura canônica](WOS_Design_Arquitetura_Planejamento_Atualizado.md): modelo, invariantes e plano original.
-- [Decisões de arquitetura](adr/): escolhas aceitas e sua justificativa.
-- [Dependências](dependencies.md): toolchain e bibliotecas.
-- [Validação da interface atual](design/editorial/validation.md): verificações automatizadas e limites.
+- [AGENTS.md](../AGENTS.md): development contract and required verification.
+- [ROADMAP.md](../ROADMAP.md): implementation state, current work, and pending acceptance.
+- [Architecture overview](architecture.md): domain model, invariants, and package boundaries.
+- [Architecture decisions](adr/): accepted choices and rationale.
+- [Dependencies](dependencies.md): toolchain and libraries.
+- [Current interface validation](design/editorial/validation.md): automated checks and limitations.
 
-## Registros históricos
+Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.
 
-Os relatórios datados, planos de implementação, ADRs e evidências em `audit/`, `ux/` e `stable/` documentam revisões específicas. Eles não substituem os guias atuais nem representam aprovação automática de uma versão posterior.
+## Historical records
 
-A antiga galeria foi substituída pela [galeria editorial](design/editorial/README.md#main-pages). As imagens anteriores e os dois relatórios de 5 de outubro removidos da documentação ativa continuam disponíveis no histórico Git; as referências de aceite apontam para o commit que os preserva.
+Dated reports, original implementation plans, ADRs, and evidence under `audit/`, `ux/`, and `stable/` describe specific revisions. They do not replace current guides or automatically establish acceptance of later versions. The [original canonical specification](WOS_Design_Arquitetura_Planejamento_Atualizado.md) is preserved as a source document; the English architecture overview explains the implemented boundaries.
+
+The former gallery is superseded by the [editorial gallery](design/editorial/README.md#main-pages). Earlier captures and the two October 5 reports removed from active documentation remain in Git history; acceptance references point to the preserving commit.

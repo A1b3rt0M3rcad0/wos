@@ -49,7 +49,7 @@ Above the 1440 CSS px reference width, [responsive scaling](responsive-scale.md)
 
 ## Illustration direction and provenance
 
-The canonical art prompt is preserved in [the local art skill](../../../.agents/skills/wos-art-style/SKILL.md): minimalist black ink, imperfect organic contours, expressive limbs, hatching, playful proportions, monochrome, and transparent backgrounds. The existing 20 robot files are preserved byte for byte from the user-supplied `wos_20_robot_svgs_fixed.zip`. These SVG containers include embedded raster artwork; they are not presented as editable vector paths.
+The canonical art prompt is preserved in [the local art skill](../../../.agents/skills/wos-art-style/SKILL.md): minimalist black ink, imperfect organic contours, expressive limbs, hatching, playful proportions, monochrome, and transparent backgrounds. Nineteen robot files retain their original bytes from the supplied `wos_20_robot_svgs_fixed.zip`. At the owner's explicit request, `01_planner_map.svg` is replaced byte for byte with `01_planner_map_blank.svg` from `01_planner_map_blank.zip`, showing the planner holding a blank map at the original 247 × 275 proportions. These SVG containers include embedded raster artwork; they are not presented as editable vector paths.
 
 | Placement | Robot | Narrative role |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ The canonical art prompt is preserved in [the local art skill](../../../.agents/
 | Outcome selection | `17_outcome_flagbearer.svg` | Choose the result to pursue |
 | Sidebar | `18_workspace_organizer.svg` | Keep the workspace organized |
 
-All these illustrations repeat a meaning already present in adjacent text and have empty alternatives. They do not convey status, permissions, or instructions. The other robots remain available as a library. The supplied study images in the `chess-style` skill are development references and are not embedded or reused as product artwork. [assets.json](assets.json) records the supplied artwork, font versions, dimensions, roles, and SHA-256 hashes; it does not imply an independent license grant for the supplied robot art.
+The planner replacement preserves the existing image path, dimensions, and layout in both Login and Plan. All these illustrations repeat a meaning already present in adjacent text and have empty alternatives. They do not convey status, permissions, or instructions. The other robots remain available as a library. The supplied study images in the `chess-style` skill are development references and are not embedded or reused as product artwork. [assets.json](assets.json) records the supplied artwork, font versions, dimensions, roles, and SHA-256 hashes; it does not imply an independent license grant for the supplied robot art.
 
 ## Main pages
 
