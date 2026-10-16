@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"github.com/A1b3rt0M3rcad0/wos/tools/operations/testsupport"
 	"net/url"
 	"os"
 	"os/exec"
@@ -33,12 +34,15 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 	// Catalog scans in a long-lived test database may choose parallel workers
 	// exceeding Docker's small /dev/shm. Bound only this test client session;
 	// do not change production or server settings.
-	dump := exec.CommandContext(ctx, "docker", "exec", "-e", "PGOPTIONS=-c max_parallel_workers_per_gather=0", container, "pg_dump", "-U", user, "-d", sourceDatabase, "--schema="+source.Path(), "--format=custom", "--no-owner", "--no-acl")
-	var dumpErrors bytes.Buffer
-	dump.Stderr = &dumpErrors
-	backup, err := dump.Output()
-	if err != nil {
-		t.Fatalf("pg_dump: %v: %s", err, dumpErrors.String())
+	var backup []byte
+	if os.Getenv("WOS_TEST_OPERATIONS_TOOL") != "1" {
+		dump := exec.CommandContext(ctx, "docker", "exec", "-e", "PGOPTIONS=-c max_parallel_workers_per_gather=0", container, "pg_dump", "-U", user, "-d", sourceDatabase, "--schema="+source.Path(), "--format=custom", "--no-owner", "--no-acl")
+		var dumpErrors bytes.Buffer
+		dump.Stderr = &dumpErrors
+		backup, err = dump.Output()
+		if err != nil {
+			t.Fatalf("pg_dump: %v: %s", err, dumpErrors.String())
+		}
 	}
 	if _, err := source.db.ExecContext(ctx, "CREATE DATABASE "+targetDatabase); err != nil {
 		t.Fatal(err)
@@ -56,10 +60,18 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 			t.Errorf("drop restored database: %v", err)
 		}
 	})
-	restore := exec.CommandContext(ctx, "docker", "exec", "-i", container, "pg_restore", "-U", user, "-d", targetDatabase, "--single-transaction", "--no-owner", "--no-acl")
-	restore.Stdin = bytes.NewReader(backup)
-	if output, err := restore.CombinedOutput(); err != nil {
-		t.Fatalf("pg_restore: %v: %s", err, output)
+	targetDSN := *dsn
+	targetDSN.Path = "/" + targetDatabase
+	if os.Getenv("WOS_TEST_OPERATIONS_TOOL") == "1" {
+		sourceDSN := *dsn
+		sourceDSN.Path = "/" + sourceDatabase
+		testsupport.Restore(t, source.db, "postgres", sourceDSN.String(), targetDSN.String(), source.Path(), source.Close)
+	} else {
+		restore := exec.CommandContext(ctx, "docker", "exec", "-i", container, "pg_restore", "-U", user, "-d", targetDatabase, "--single-transaction", "--no-owner", "--no-acl")
+		restore.Stdin = bytes.NewReader(backup)
+		if output, err := restore.CombinedOutput(); err != nil {
+			t.Fatalf("pg_restore: %v: %s", err, output)
+		}
 	}
 	dsn.Path = "/" + targetDatabase
 	schema := source.Path()
@@ -71,6 +83,8 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { restored.Close() })
-	t.Logf("restored %d backup bytes into an empty PostgreSQL database; continuing the shared integration contract", len(backup))
+	if os.Getenv("WOS_TEST_OPERATIONS_TOOL") != "1" {
+		t.Logf("restored %d backup bytes into an empty PostgreSQL database; continuing the shared integration contract", len(backup))
+	}
 	return restored
 }

@@ -1,0 +1,15 @@
+[Unit]
+Description=Opt-in external WOS database backup
+[Service]
+Type=oneshot
+User=wos-backup
+Group=wos-backup
+UMask=0077
+EnvironmentFile=/etc/wos-backup/protected.env
+ExecStart=/opt/wos-backup/wrapper.sh
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/private/wos-backups
+# Grant only required read access to the SQLite path/WAL or database client tools.
+# The wrapper supplies a new output directory and records the deployed source.

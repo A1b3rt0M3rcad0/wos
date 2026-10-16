@@ -153,7 +153,28 @@ jobs:
           if-no-files-found: error
 
       - name: Build standalone binary
-        run: go build -o ./bin/wos ./packages/wos-api/cmd/wos
+        run: go build -trimpath -buildvcs=false -ldflags "-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=$(git rev-parse HEAD)" -o ./bin/wos ./packages/wos-api/cmd/wos
+
+      - name: Operator backup restore and real API-process recovery
+        env:
+          WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          WOS_TEST_OPERATIONS_TOOL: '1'
+        shell: bash
+        run: |
+          python3 -m unittest discover -s tools/operations -p 'test_*.py' -v
+          sh -n tools/operations/wrapper.sh
+          python3 tools/acceptance/postgres-container-client.py install "$RUNNER_TEMP/wos-pg-clients"
+          export PATH="$RUNNER_TEMP/wos-pg-clients:$PATH"
+          export WOS_OPERATIONS_SOURCE_COMMIT="$(git rev-parse HEAD)"
+          go test -json -race -count=1 -run 'TestSignedReviewCorrectionJourneyWithoutExecutorAuthority|TestSignedReturnResolutionSurvivesCleanRestore|TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore|TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing' ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres > operator-restore-tests.jsonl
+          python3 tools/acceptance/operational-pilots.py --binary bin/wos --source "$WOS_OPERATIONS_SOURCE_COMMIT" --output "$RUNNER_TEMP/wos-operational-pilots"
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: operational-backup-restore-pilots
+          path: |
+            operator-restore-tests.jsonl
+            ${{ runner.temp }}/wos-operational-pilots/reports.json
+          if-no-files-found: error
 
       - name: Actual v0.2 database upgrade, clean restore and old writer refusal
         env:

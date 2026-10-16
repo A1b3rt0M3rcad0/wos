@@ -2,6 +2,12 @@
 
 The standalone validation candidate supports Linux amd64 with SQLite or PostgreSQL 18.6. Shared contracts, race detection, HTTP/MCP and recovery have executable evidence in [backend verification](verification-2026-10-07.md) and [current UX acceptance](ux/final-acceptance.md). The native Windows CLI has separate hosted acceptance; cross-compiling a service does not establish runtime support. Release publication and integration into a consumer such as Woobe are separate actions.
 
+## Verified operator backup and restore
+
+[Opt-in operator tools](../tools/operations/README.md) provide consistent SQLite/PostgreSQL snapshots, private manifests/checksums, new-destination-only restore and read-only per-table verification. Signed-state restore requires an independently approved server ID and issuer fingerprint; private signer and CLI workspace recovery are separate. The supplied wrapper and cron/systemd/Kubernetes templates run outside WOS. They do not activate backup schedules or establish a production RPO/RTO.
+
+The source-bound CI includes real execution/review/correction/negative-proof/issuer/outbox restore journeys and two actual API-process crash/restore pilots with a durable external dedupe ledger. See [intermediate evidence](audit/operational-hardening-2026-10-15/intermediate-f07/README.md); final source qualification remains pending. Restore cannot undo receiver effects or automatically recover revocations committed after a stale snapshot. Follow the cutover, security reconciliation, workspace and external alert procedures before reopening writers.
+
 ## Local installation
 
 ```sh

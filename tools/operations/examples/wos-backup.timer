@@ -1,0 +1,8 @@
+[Unit]
+Description=Optional hourly external WOS backup schedule
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=wos-backup.service
+[Install]
+WantedBy=timers.target
