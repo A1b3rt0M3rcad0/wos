@@ -213,18 +213,33 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 		return nil, mapSQLError("begin delivery claim", err)
 	}
 	defer tx.Rollback()
-	if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=$1,result='lease_expired' WHERE finished_at IS NULL AND delivery_id IN(SELECT id FROM integration_deliveries WHERE status='leased' AND lease_until<=$2)`, encodeTime(now), encodeTime(now)); err != nil {
-		return nil, mapSQLError("expire delivery attempts", err)
-	}
-	if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE status='leased' AND lease_until<=$1 AND attempts>=6`, encodeTime(now)); err != nil {
-		return nil, mapSQLError("exhaust crashed delivery", err)
-	}
-	v, err := scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=$1) OR (status='leased' AND lease_until<=$2) ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`, encodeTime(now), encodeTime(now)))
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, mapSQLError("commit delivery recovery", tx.Commit())
-	}
-	if err != nil {
-		return nil, mapSQLError("claim delivery", err)
+	// Lock one parent delivery before touching its attempts, matching ACK order.
+	// Queue-wide attempt recovery can block unrelated lanes and invert locks
+	// against ACKs. PostgreSQL adds SKIP LOCKED to this same bounded claim.
+	var v ports.Delivery
+	for recovered := 0; ; recovered++ {
+		if recovered == 25 {
+			return nil, mapSQLError("commit delivery recovery", tx.Commit())
+		}
+		v, err = scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=$1) OR (status='leased' AND lease_until<=$2) ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`, encodeTime(now), encodeTime(now)))
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, mapSQLError("commit delivery recovery", tx.Commit())
+		}
+		if err != nil {
+			return nil, mapSQLError("claim delivery", err)
+		}
+		if v.Status == "leased" {
+			if _, err = tx.ExecContext(ctx, `UPDATE delivery_attempts SET finished_at=$1,result='lease_expired' WHERE delivery_id=$2 AND fencing_token=$3 AND finished_at IS NULL`, encodeTime(now), v.ID, v.FencingToken); err != nil {
+				return nil, mapSQLError("expire delivery attempt", err)
+			}
+			if v.Attempts >= 6 {
+				if _, err = tx.ExecContext(ctx, `UPDATE integration_deliveries SET status='exhausted',lease_id=NULL,lease_until=NULL,last_result='retry_budget_exhausted' WHERE id=$1`, v.ID); err != nil {
+					return nil, mapSQLError("exhaust crashed delivery", err)
+				}
+				continue
+			}
+		}
+		break
 	}
 	v.LeaseID = leaseID
 	v.LeaseUntil = now.Add(ttl)

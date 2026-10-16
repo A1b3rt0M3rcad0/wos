@@ -1,0 +1,5 @@
+--- FAIL: TestDeliveryRecoverySkipsLockedExpiredDelivery (1.21s)
+    delivery_recovery_lock_test.go:65: unrelated locked lease stalled recovery: <nil> transaction_conflict: transaction conflict; retry the same intent and idempotency key
+FAIL
+FAIL	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	1.229s
+FAIL
