@@ -16,14 +16,44 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 2.5;
 let sequence = 0;
 
+// The supplied paper is the card itself. Keep its original geometry and put
+// live HTML inside the source safe area; paper style never grants authority.
+const NOTE_PAPERS = {
+  outcome: ["wide", "pinned", "surface"],
+  objective: ["square", "tabbed", "workspace"],
+  work_item: ["wide", "curled", "surface"],
+  issue: ["wide", "taped", "workspace"],
+  blocker: ["wide", "torn", "workspace"],
+  evidence: ["wide", "notebook", "surface"],
+  artifact: ["wide", "stacked", "surface"],
+  decision: ["wide", "dogear", "workspace"],
+  phase: ["wide", "rounded", "workspace"],
+  milestone: ["wide", "pinned", "surface"],
+  plan_reference: ["wide", "classic", "workspace"],
+};
+const DEFAULT_PAPER = ["wide", "rounded", "workspace"];
+const paperFor = (kind) =>
+  Object.hasOwn(NOTE_PAPERS, kind) ? NOTE_PAPERS[kind] : DEFAULT_PAPER;
+function paperSource(kind, selected) {
+  const [format, style, tone] = paperFor(kind);
+  return new URL(
+    `./postits/svg/${format}/${style}/${selected ? "selected" : tone}.svg`,
+    import.meta.url,
+  ).href;
+}
+
 export function canvasNodeSize(kind) {
-  if (kind === "objective") return { width: 252, height: 252 };
-  if (kind === "work_item" || kind === "issue")
-    return { width: 284, height: 207.32 };
-  if (kind === "outcome") return { width: 280, height: 190 };
-  if (["phase", "milestone", "plan_reference"].includes(kind))
-    return { width: 252, height: 136 };
-  return { width: 252, height: 174 };
+  const width =
+    kind === "outcome"
+      ? 336
+      : kind === "objective" ||
+          ["phase", "milestone", "plan_reference"].includes(kind)
+        ? 252
+        : 284;
+  return {
+    width,
+    height: paperFor(kind)[0] === "square" ? width : (width * 730) / 1000,
+  };
 }
 
 const compare = (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
@@ -486,10 +516,13 @@ export function mountWorkspaceCanvas(host, options) {
     invoke(options.onSelect, item.ref || null, item);
   }
   function paintSelection() {
-    for (const article of world.querySelectorAll("[data-canvas-node]"))
-      article.dataset.selected = String(
-        article.dataset.canvasNode === selectedKey,
-      );
+    for (const article of world.querySelectorAll("[data-canvas-node]")) {
+      const selected = article.dataset.canvasNode === selectedKey;
+      article.dataset.selected = String(selected);
+      const paper = article.querySelector(".canvas-node-paper");
+      const source = paperSource(article.dataset.kind, selected);
+      if (paper && paper.src !== source) paper.src = source;
+    }
     for (const button of root.querySelectorAll(
       ".canvas-node-main, .canvas-list-main",
     ))
@@ -653,6 +686,7 @@ export function mountWorkspaceCanvas(host, options) {
       const article = node("article", undefined, "canvas-node");
       article.dataset.canvasNode = item.key;
       article.dataset.kind = item.kind;
+      article.dataset.paper = paperFor(item.kind)[1];
       article.dataset.state = item.displayState || item.lifecycle || "";
       article.dataset.selected = String(item.key === selectedKey);
       article.setAttribute("role", "group");
@@ -666,6 +700,13 @@ export function mountWorkspaceCanvas(host, options) {
         width: unit(item.width),
         height: unit(item.height),
       });
+      const paper = node("img", undefined, "canvas-node-paper");
+      paper.alt = "";
+      paper.setAttribute("aria-hidden", "true");
+      paper.draggable = false;
+      paper.width = paperFor(item.kind)[0] === "square" ? 800 : 1000;
+      paper.height = paperFor(item.kind)[0] === "square" ? 800 : 730;
+      paper.src = paperSource(item.kind, item.key === selectedKey);
       const content = node("div", undefined, "canvas-node-content");
       const main = control(
         "",
@@ -697,7 +738,7 @@ export function mountWorkspaceCanvas(host, options) {
         main.append(node("span", item.summary, "canvas-node-summary"));
       main.onkeydown = (event) => nodeKey(event, item);
       content.append(main, nodeActions(item));
-      article.append(content);
+      article.append(paper, content);
       world.append(article);
       nodeButtons.set(item.key, main);
       const row = node("li", undefined, "canvas-list-row");

@@ -63,6 +63,7 @@ Automated acceptance is recorded in [verification](docs/design/operational-canva
 - [x] Hierarchy/ownership, hard/advisory/unknown dependencies, Issues/Blockers and Evidence/criterion assessments retain their distinct semantics and permitted mutation paths.
 - [x] Optional Draft and published Roadmap overlays preserve planning hierarchy/order separately from operations; viewing, publication and activation remain distinct.
 - [x] Existing palette, typography, fixed paper grid, original brand/robots, post-it proportions/safe areas and responsive scale remain consistent across desktop and compact layouts.
+- [x] Every Map card uses an original supplied post-it image with live accessible content; paper shapes cover operational and planning records, selected silhouettes have no extra rectangular frame, and compact Map remains available beside the readable List alternative.
 - [x] Real-server small/large-scope, permission, stale-read, conflict/recovery, signed-handoff, keyboard/focus and mobile checks complete; integrated screenshots and precise verification limits are recorded.
 
 Earlier workspace and centralized-agent verification records below describe their own baselines. They do not establish acceptance of this new presentation. Independent human usability and screen-reader validation remain separate from automated checks and screenshots.

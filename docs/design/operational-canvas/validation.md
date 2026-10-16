@@ -4,17 +4,18 @@ Verified on 2026-10-16 against the implementation on `feat/visual-operational-ca
 
 ## Automated evidence
 
-| Check | Observed result |
-| --- | --- |
-| Native Go web tests | Passed: embedded assets and command-exposure contracts |
-| Web unit suite | 38 passed: exact revision/scope boundaries, pagination, typed relationships, immutable models, deterministic non-overlapping layout, independent camera scaling, registry and navigation |
-| Existing browser journeys | 41 passed, including signed approved/changes-requested handoffs, independent review, specialist views, long collections, modal families and responsive scale |
-| Integrated Canvas journeys | 8 passed against the real server: default/no-Roadmap, deep links, contextual create/edit, real dependency/cycle/removal commands, Issue/Blocker separation, Evidence context linkage, partial-map pagination, off-page search, viewer behavior, conflict reconciliation, exact uncertain replay and Draft/publication/activation |
-| Renderer interaction tests | 6 passed: local drag/pan/layout, keyboard edges, pagination/search cancellation, retained query on coherent refresh, synthetic plan selection, low-zoom axe checks and suppression of discarded callback failures |
-| Context, inspector and reference picker | Passed: safe authored text, bounded omissions, original live form nodes and pending intent, focused/nested Escape ownership, cancellation of queued and late search results, multiple selection |
-| Real authorization/concurrency ordering | 4 passed: closed detail cannot reopen, obsolete Task A comparison cannot replace Task B's form, an earlier successful refresh cannot restore private content after a genuine revoked-grant 403, and a dismissed Task's delayed history error cannot overwrite the current context or notice |
-| Final visual regressions | 2 affected journeys rechecked: nested Evidence provenance stays readable; a plan opens with its actual phase visible at a readable zoom |
-| Source integrity and release queue | 160 SVG hashes match the supplied archive; local documentation targets resolve; diff checks and the read-only release plan pass |
+| Check                                   | Observed result                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native Go web tests                     | Passed: embedded assets and command-exposure contracts                                                                                                                                                                                                                                                                           |
+| Web unit suite                          | 38 passed: exact revision/scope boundaries, pagination, typed relationships, immutable models, deterministic non-overlapping layout, independent camera scaling, registry and navigation                                                                                                                                         |
+| Existing browser journeys               | 41 passed, including signed approved/changes-requested handoffs, independent review, specialist views, long collections, modal families and responsive scale                                                                                                                                                                     |
+| Integrated Canvas journeys              | 8 passed against the real server: default/no-Roadmap, deep links, contextual create/edit, real dependency/cycle/removal commands, Issue/Blocker separation, Evidence context linkage, partial-map pagination, off-page search, viewer behavior, conflict reconciliation, exact uncertain replay and Draft/publication/activation |
+| Renderer interaction tests              | 7 passed: local drag/pan/layout, keyboard edges, pagination/search cancellation, retained query on coherent refresh, synthetic plan selection, low-zoom axe checks, suppression of discarded callback failures and loaded original paper images for every card kind                                                              |
+| Context, inspector and reference picker | Passed: safe authored text, bounded omissions, original live form nodes and pending intent, focused/nested Escape ownership, cancellation of queued and late search results, multiple selection                                                                                                                                  |
+| Real authorization/concurrency ordering | 4 passed: closed detail cannot reopen, obsolete Task A comparison cannot replace Task B's form, an earlier successful refresh cannot restore private content after a genuine revoked-grant 403, and a dismissed Task's delayed history error cannot overwrite the current context or notice                                      |
+| Final visual regressions                | 2 affected journeys rechecked: nested Evidence provenance stays readable; a plan opens with its actual phase visible at a readable zoom                                                                                                                                                                                          |
+| Original paper-card follow-up           | All 8 integrated Canvas journeys rechecked; all 11 mapped kinds plus the fallback decode their original SVGs in the renderer, source hashes and safe areas match, transparent HTML preserves the art, keyboard selection changes to original selected paper, and explicit mobile Map coexists with List                          |
+| Source integrity and release queue      | 160 SVG hashes match the supplied archive; local documentation targets resolve; diff checks and the read-only release plan pass                                                                                                                                                                                                  |
 
 The Canvas viewer journey checks 1440 × 1000, 1920 × 1080, 2560 × 1440, 3840 × 2160 and 390 × 844 CSS px, including an open contextual panel and absence of outer horizontal overflow. UI typography grows above the reference width without changing the internal camera zoom. Isolated composition checks also cover 320 px. Large-scope integration seeds 135 Tasks; pure layout tests cover 301 nodes; inherited authorized collection searches use 1,001 records. These are specific test sizes, not a benchmark for arbitrary workloads.
 
@@ -35,13 +36,13 @@ npm test
 
 `npm test` runs the web unit suite and all Playwright files against isolated local server processes. A prepared Chromium executable can be supplied with `WOS_TEST_CHROMIUM_PATH`. When the environment has a read-only home, set `XDG_CACHE_HOME` to a private writable directory for the CLI runtime locks.
 
-To regenerate the nine gallery images from the real Canvas journeys:
+To regenerate the ten gallery images from the real Canvas journeys:
 
 ```sh
 WOS_CAPTURE_CANVAS="$(pwd)/../../docs/design/operational-canvas" npx playwright test canvas.spec.mjs
 ```
 
-Captures wait for fonts and preserve the actual application rendering. Board images use the canvas shell's bounds. The mobile image shows the contextual inspector after an explicit selection. No screenshot is a mockup or composite.
+Captures wait for fonts and paper images to decode, preserving the actual application rendering. Board images use the canvas shell's bounds. Mobile captures show the contextual List inspector and an explicitly opened Map. No screenshot is a mockup or composite.
 
 ## Scope and remaining acceptance
 

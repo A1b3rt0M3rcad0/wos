@@ -30,12 +30,22 @@ async function finishInline(page) {
   await expect(page.locator("#notice")).not.toHaveClass(/error/);
   await expect(canvas(page)).toBeVisible();
 }
-async function shot(page, name) {
+async function originalPapers(page) {
+  const papers = canvas(page).locator(".canvas-node > .canvas-node-paper");
+  await expect(papers).toHaveCount(await canvas(page).locator(".canvas-node").count());
+  await expect.poll(() => papers.evaluateAll((images) => images.every((image) =>
+    image.complete && image.naturalWidth > 0 &&
+    new URL(image.src).origin === location.origin && image.src.includes("/postits/svg/") && image.src.endsWith(".svg") &&
+    image.alt === "" && image.getAttribute("aria-hidden") === "true" && !image.draggable,
+  ))).toBe(true);
+}
+async function shot(page, name, { preserveScroll = false } = {}) {
   if (!process.env.WOS_CAPTURE_CANVAS) return;
   const directory = join(process.env.WOS_CAPTURE_CANVAS, "screenshots");
   await mkdir(directory, { recursive: true });
   await page.evaluate(() => document.fonts.ready);
-  if (name !== "04-canvas-mobile") await page.evaluate(() => scrollTo(0, 0));
+  await canvas(page).locator(".canvas-node-paper").evaluateAll((images) => Promise.all(images.map((image) => image.decode())));
+  if (!preserveScroll && !name.startsWith("04-canvas-mobile")) await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({ path: join(directory, `${name}.png`), fullPage: false, animations: "disabled" });
   if (["01-canvas-workspace", "02-canvas-relationships", "06-canvas-roadmap"].includes(name))
     await page.locator(".canvas-workspace-shell").screenshot({ path: join(directory, `${name}-board.png`), animations: "disabled" });
@@ -49,6 +59,7 @@ test("Canvas is the default operational view without a Roadmap and keeps context
   await openCanvas(page, wos, data);
   for (const [kind, value] of [["outcome", data.outcome], ["objective", data.objective], ["objective", data.child], ["work_item", data.tasks.unscoped]])
     await expect(node(page, kind, value)).toBeVisible();
+  await originalPapers(page);
   expect((await wos.api(`${endpoint(data.scope)}/roadmaps`)).items).toEqual([]);
   await node(page, "outcome", data.outcome).click();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.outcome.title);
@@ -287,10 +298,29 @@ test("read-only Canvas has usable keyboard and mobile views while zoom and layou
     await choose(page, "work_item", data.tasks.ready);
     await expect(panel(page)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    if (width === 390 || width === 2560)
-      await shot(page, width === 390 ? "04-canvas-mobile" : "05-canvas-2k");
+    if (width === 390) await shot(page, "04-canvas-mobile");
     await page.keyboard.press("Escape");
+    if (width === 390) {
+      await canvas(page).getByRole("button", { name: "Map view", exact: true }).click();
+      // The viewport checks above preserve the intentional fitted camera.
+      // Use explicit controls for a readable Map demonstration afterwards.
+      for (let step = 0; step < 12 && parseFloat(await zoom.textContent()) < 75; step++)
+        await canvas(page).getByRole("button", { name: "Zoom in", exact: true }).click();
+      expect(parseFloat(await zoom.textContent())).toBeGreaterThanOrEqual(75);
+      await choose(page, "work_item", data.tasks.ready);
+      await page.keyboard.press("Escape");
+      await canvas(page).locator(".canvas-viewport").scrollIntoViewIfNeeded();
+      await expect(canvas(page).getByRole("button", { name: "Map view", exact: true })).toHaveAttribute("aria-pressed", "true");
+      await expect(canvas(page).locator(`[data-canvas-node="work_item:${data.tasks.ready.id}"]`)).toBeInViewport({ ratio: 0.9 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await shot(page, "04-canvas-mobile-map");
+    }
   }
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await choose(page, "work_item", data.tasks.ready);
+  await canvas(page).locator(".canvas-viewport").scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await shot(page, "05-canvas-2k", { preserveScroll: true });
   expect(mutations).toEqual([]);
 });
 
@@ -366,6 +396,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   await expect.poll(async () => parseFloat(await canvas(page).getByLabel("Canvas zoom", { exact: true }).textContent())).toBeGreaterThanOrEqual(75);
   await expect(canvas(page).locator('.canvas-node[data-kind="phase"]')).toBeVisible();
+  await originalPapers(page);
   await shot(page, "06-canvas-roadmap");
   await choose(page, "roadmap", published);
   await panel(page).getByRole("button", { name: "Activate revision", exact: true }).click();

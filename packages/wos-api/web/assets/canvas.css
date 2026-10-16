@@ -389,77 +389,46 @@ dl.canvas-summary-metrics > div {
   pointer-events: none;
 }
 .canvas-node {
-  --canvas-paper: none;
-  --canvas-safe-top: calc(16 * var(--wos-unit, 1px));
-  --canvas-safe-right: calc(16 * var(--wos-unit, 1px));
-  --canvas-safe-bottom: calc(14 * var(--wos-unit, 1px));
-  --canvas-safe-left: calc(16 * var(--wos-unit, 1px));
+  --canvas-safe-top: 16%;
+  --canvas-safe-right: 14%;
+  --canvas-safe-bottom: 14%;
+  --canvas-safe-left: 14%;
   position: absolute;
   z-index: 1;
   isolation: isolate;
-  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  border: 0;
   border-radius: 0;
-  background: var(--wos-workspace) var(--canvas-paper) center / 100% 100%
-    no-repeat;
+  background: transparent;
   color: var(--wos-foreground);
   text-align: start;
 }
 .canvas-node:is(
-  [data-kind="objective"],
-  [data-kind="work_item"],
-  [data-kind="issue"]
+  [data-paper="pinned"],
+  [data-paper="tabbed"],
+  [data-paper="taped"],
+  [data-paper="notebook"]
 ) {
-  --canvas-safe-right: 14%;
-  --canvas-safe-bottom: 14%;
-  --canvas-safe-left: 14%;
-  border: 0;
-  background-color: transparent;
-}
-.canvas-node[data-kind="objective"] {
-  --canvas-paper: url("postits/svg/square/tabbed/workspace.svg");
   --canvas-safe-top: 22%;
-  aspect-ratio: 1;
 }
-.canvas-node[data-kind="work_item"] {
-  --canvas-paper: url("postits/svg/wide/classic/surface.svg");
-  --canvas-safe-top: 16%;
-  aspect-ratio: 1000 / 730;
+.canvas-node[data-paper="curled"] {
+  --canvas-safe-bottom: 17%;
 }
-.canvas-node[data-kind="issue"] {
-  --canvas-paper: url("postits/svg/wide/taped/workspace.svg");
-  --canvas-safe-top: 22%;
-  aspect-ratio: 1000 / 730;
-}
-.canvas-node[data-kind="objective"][data-selected="true"] {
-  --canvas-paper: url("postits/svg/square/tabbed/selected.svg");
-}
-.canvas-node[data-kind="work_item"][data-selected="true"] {
-  --canvas-paper: url("postits/svg/wide/classic/selected.svg");
-}
-.canvas-node[data-kind="issue"][data-selected="true"] {
-  --canvas-paper: url("postits/svg/wide/taped/selected.svg");
-}
-.canvas-node[data-kind="outcome"] {
-  border-top: calc(2 * var(--wos-unit, 1px)) solid var(--wos-copper);
-  background-color: var(--wos-canvas);
-  --canvas-safe-top: calc(12 * var(--wos-unit, 1px));
-  --canvas-safe-bottom: calc(12 * var(--wos-unit, 1px));
-}
-.canvas-node:is(
-  [data-kind="phase"],
-  [data-kind="milestone"],
-  [data-kind="plan_reference"]
-) {
-  border-inline: 0;
-  border-top-color: var(--wos-control-border);
-  background-color: var(--wos-canvas);
-  --canvas-safe-top: calc(12 * var(--wos-unit, 1px));
-  --canvas-safe-bottom: calc(12 * var(--wos-unit, 1px));
+.canvas-node-paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 .canvas-node[data-selected="true"] {
   z-index: 2;
-  outline: calc(1 * var(--wos-unit, 1px)) solid var(--wos-copper);
-  outline-offset: calc(3 * var(--wos-unit, 1px));
+}
+.canvas-node[data-selected="true"] .canvas-node-title {
+  text-decoration: underline;
+  text-decoration-thickness: calc(1 * var(--wos-unit, 1px));
+  text-underline-offset: calc(3 * var(--wos-unit, 1px));
 }
 .canvas-node:focus-within {
   z-index: 3;
@@ -986,7 +955,11 @@ dl.canvas-summary-metrics > div {
     background-color: Canvas;
   }
   .canvas-node[data-selected="true"] {
-    outline-color: Highlight;
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+  }
+  .canvas-node-paper {
+    display: none;
   }
   .canvas-edge-line {
     stroke: CanvasText;

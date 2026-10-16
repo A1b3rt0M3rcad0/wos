@@ -15,21 +15,29 @@ The source [README](source/README.pt-BR.md), [manifest](source/manifest.json), a
 
 ## Deliberate use in the workspace
 
-Paper notes represent functional Objectives, Tasks, and Issues on the canvas. They do not replace every surface. Outcome context, Roadmap bands, Evidence, history, toolbars, details, forms, and alternative lists keep the existing warm, ruled editorial surfaces.
+Every Map card uses the supplied paper itself as its surface, with live content above it. History, toolbars, contextual details, forms and the accessible List alternative keep their warm editorial surfaces. The mapping covers all rendered Map cards.
 
 | Entity             | Default source asset below `assets/postits/svg/` | Proportion | Content insets: top / right / bottom / left |
 | ------------------ | ------------------------------------------------ | ---------- | ------------------------------------------- |
+| Outcome            | `wide/pinned/surface.svg`                        | 1000:730   | 22% / 14% / 14% / 14%                       |
 | Objective          | `square/tabbed/workspace.svg`                    | 1:1        | 22% / 14% / 14% / 14%                       |
-| Task (`work_item`) | `wide/classic/surface.svg`                       | 1000:730   | 16% / 14% / 14% / 14%                       |
+| Task (`work_item`) | `wide/curled/surface.svg`                        | 1000:730   | 16% / 14% / 17% / 14%                       |
 | Issue              | `wide/taped/workspace.svg`                       | 1000:730   | 22% / 14% / 14% / 14%                       |
+| Blocker            | `wide/torn/workspace.svg`                        | 1000:730   | 16% / 14% / 14% / 14%                       |
+| Evidence           | `wide/notebook/surface.svg`                      | 1000:730   | 22% / 14% / 14% / 14%                       |
+| Artifact           | `wide/stacked/surface.svg`                       | 1000:730   | 16% / 14% / 14% / 14%                       |
+| Decision           | `wide/dogear/workspace.svg`                      | 1000:730   | 16% / 14% / 14% / 14%                       |
+| Phase / fallback   | `wide/rounded/workspace.svg`                     | 1000:730   | 16% / 14% / 14% / 14%                       |
+| Milestone          | `wide/pinned/surface.svg`                        | 1000:730   | 22% / 14% / 14% / 14%                       |
+| Plan reference     | `wide/classic/workspace.svg`                     | 1000:730   | 16% / 14% / 14% / 14%                       |
 
-Selection uses the same format/style's original `selected.svg`, accompanied by a visible focus/selection treatment and programmatic state. Paper hue is not operational state. Readiness, blockage, priority, review, and lifecycle remain explicit text/badges derived from persisted state. A red-looking note cannot establish a Blocker, and a taped note cannot confer authority.
+Selection uses the same format/style's original `selected.svg`, an underlined title and programmatic pressed state. Keyboard focus stays on the semantic controls inside the paper. An outer rectangular frame no longer competes with the original silhouette. Forced-colors mode uses system surfaces and a system selection outline. Paper hue is not operational state. Readiness, blockage, priority, review, and lifecycle remain explicit text/badges derived from persisted state. A red-looking note cannot establish a Blocker, and a taped note cannot confer authority.
 
-The square Objective is a larger organizational note; the wider Task is a compact executable unit. The restrained tape treatment makes an Issue recognizable without changing its distinction from a real Blocker. Tab, pin, tape, folds and hatching stay outside live content. Shapes are not controls and do not imply new domain relations.
+The square Objective is an organizational note; the wider Task is a compact executable unit with a visible curled corner. The taped Issue remains distinct from the torn Blocker. Planning notes retain explicit Draft/publication/activation labels; their paper does not imply an operational dependency. Tab, pin, tape, folds and hatching stay outside live content. Shapes do not imply new domain relations.
 
 ## Rendering contract
 
-Use the original SVG as a decorative image/background with live semantic HTML above it. Keep `alt=""` and/or `aria-hidden="true"` for the artwork; the supplied SVG contains original descriptive metadata, including Portuguese, which must not become a repeated accessible label. Titles, status, actions and selection names come from the application.
+The renderer uses an original SVG in a `.canvas-node-paper` image beneath live semantic HTML. Its `alt=""`, `aria-hidden="true"` and disabled dragging keep the art decorative: the supplied SVG contains original descriptive metadata, including Portuguese, which must not become a repeated accessible label. Titles, status, actions and selection names come from the application.
 
 Reserve the source aspect ratio and apply the manifest's safe areas. Never stretch a square paper into a wide card, crop it with `cover`, rotate the content to imitate a sketch, or put labels inside the SVG. Use `contain` or a ratio-preserving wrapper. Decorative art receives no pointer events. Keep focus outlines and contextual action targets clear of folds and clip boundaries. Long content opens in the accessible contextual panel rather than overflowing the note.
 
@@ -56,8 +64,8 @@ These ratios describe flat source colors, not complete accessibility certificati
 
 ## Review evidence and limits
 
-The three supplied previews and the three selected source counterparts were visually inspected. XML inspection covered all 160 SVGs and SHA-256 comparisons verified byte identity after copying. Source safe areas are the owner's recommendations, not measurements of arbitrary application content. Final node content, keyboard/touch targets, hover/focus, long titles, reduced motion, mobile alternatives and 1440/1920/2560/3840 viewport behavior must be verified in the integrated canvas.
+The supplied previews were visually inspected. XML inspection covered all 160 SVGs and SHA-256 comparisons verified byte identity after copying. A browser regression decodes the original image for every mapped card kind and the fallback, compares served bytes with the provenance hashes, and checks source proportions, safe areas, transparent live content, selected variants, keyboard focus and compact Map/List operation. Source safe areas are the owner's recommendations, not measurements of arbitrary authored content.
 
 The existing `chess-style` composition guidance and local `wos-art-style` were consulted. Paper materiality complements the fine grid and typography; the robot illustrations and hand-drawn orange identity remain separate, unchanged assets.
 
-The new [canvas stylesheet](../../../../packages/wos-api/web/assets/canvas.css) uses this mapping and the existing typography/palette. An isolated Chromium review mounted the actual canvas renderer with illustrative records at 1440, 390, 320 and 2560 CSS px: no page errors or outer horizontal overflow occurred, and visible note content stayed within its safe area. A separate inspector styling fixture verified a 360-unit desktop panel with body scrolling and a full-width document-flow mobile panel, including long note titles. Those are component composition checks; they do not establish the integrated application's mutation, permission or recovery behavior. Product screenshots and end-to-end acceptance remain the integrating branch's responsibility.
+The [canvas stylesheet](../../../../packages/wos-api/web/assets/canvas.css) uses this mapping and the existing typography/palette. Isolated Chromium composition checks cover 1440, 390, 320 and 2560 CSS px, including body scrolling in the desktop inspector and document-flow mobile details. Integrated application captures and real-server workflows are recorded separately in the [gallery](../README.md#screenshots) and [verification record](../validation.md), with their measured scope and remaining manual limits.

@@ -75,7 +75,7 @@ The browser remains native ES modules served by the Go application, without a fr
 | `canvas-data.js`         | Scoped reads, revision validation, pagination and immutable presentation models                                               |
 | `workspace-canvas.js`    | HTML note/list rendering, SVG connections, local layout/camera, keyboard and selection callbacks                              |
 | `workspace-inspector.js` | Mounting the existing detail/form/action content inline and restoring its original surfaces outside canvas mode               |
-| `canvas-context.js`     | Bounded readable focal instructions, typed relationships, attention and explicit omission disclosure                          |
+| `canvas-context.js`      | Bounded readable focal instructions, typed relationships, attention and explicit omission disclosure                          |
 | `canvas.css`             | Existing tokens, ratio-preserving note surfaces, inspector and responsive presentation                                        |
 
 The adapter receives the existing authenticated request function. It has no independent credential store. A model carries stable scoped entity keys, an exact decimal Outcome revision, typed edges, source metadata, loaded counts, omission counts and cursors. Aggregate versions remain available for contextual actions, but callers still load current entity detail before constructing a command.
@@ -105,7 +105,9 @@ The loaded model is always scope- and depth-limited. `partial` records known omi
 
 The owner supplied `WOS_Postits_Canvas_Collection.zip`. The [original UI brief](source/ui-ux-brief.pt-BR.txt) is archived unchanged as scope provenance; it is separate from product documentation and executable instructions. All 160 SVGs are copied unchanged into `assets/postits/svg/`; the raster counterparts remain outside the application bundle. The [asset guide and hash manifest](postits/README.md) record the archive, original file hashes, inspected vector format, safe areas and source documentation. Preserved Portuguese source documents are provenance, not application copy or additional instructions.
 
-Objectives use the square tabbed workspace paper; Tasks use wide classic surface paper; Issues use wide taped workspace paper. Selection uses the matching original selected paper. Live HTML supplies titles, status and actions inside the source safe areas. Decorative SVG metadata is hidden from assistive technology. Paper shape, color and tape never replace explicit lifecycle, priority, blockage or review labels. Outcome context, planning, Evidence, controls and forms retain ruled editorial surfaces.
+Every card in Map view uses an original post-it as its visible surface. Objectives use square tabbed paper; Tasks use wide curled paper; Issues use taped paper. Outcomes, Blockers, Evidence, Artifacts, Decisions and planning cards also use distinct supplied formats, documented in the [asset mapping](postits/README.md#deliberate-use-in-the-workspace).
+
+The original SVG is a decorative image beneath live HTML titles, states and actions inside its safe area. Source proportions, folds, hatching, tabs and transparency are preserved. Selection uses the matching original selected paper and an underlined title; there is no extra rectangular frame around the silhouette. Native keyboard focus remains visible on the controls. Paper shape and color never replace explicit lifecycle, priority, blockage or review labels. Toolbars, the contextual panel, forms and the accessible List alternative retain their editorial surfaces. Compact screens start in List view and can explicitly switch to Map.
 
 The post-its complement the [existing art direction](../../../.agents/skills/wos-art-style/SKILL.md); the original logo and robots remain separate and unchanged. No new artwork, recoloring or embedded text is needed for the canvas.
 
@@ -113,14 +115,15 @@ The post-its complement the [existing art direction](../../../.agents/skills/wos
 
 The captures use illustrative records created through real commands on an isolated SQLite instance. Desktop captures use 1440 × 1000 CSS px, the large-screen capture uses 2560 × 1440, and mobile uses 390 × 844. Board images crop the application's actual canvas shell; artwork and UI have not been composited or edited.
 
-| View | Capture |
-| --- | --- |
-| Outcome workspace | [Full workspace](screenshots/01-canvas-workspace.png) · [Board and contextual Task actions](screenshots/01-canvas-workspace-board.png) |
-| Typed operational and documentary connections | [Workspace](screenshots/02-canvas-relationships.png) · [Board](screenshots/02-canvas-relationships-board.png) |
-| Large, explicitly partial Outcome | [Incremental map and off-page search](screenshots/03-canvas-large-outcome.png) |
-| Compact list and contextual operation | [Mobile workspace](screenshots/04-canvas-mobile.png) |
-| Existing proportional viewport scale | [2K workspace](screenshots/05-canvas-2k.png) |
-| Optional published planning | [Roadmap workspace](screenshots/06-canvas-roadmap.png) · [Planning board](screenshots/06-canvas-roadmap-board.png) |
+| View                                          | Capture                                                                                                                                |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Outcome workspace                             | [Full workspace](screenshots/01-canvas-workspace.png) · [Board and contextual Task actions](screenshots/01-canvas-workspace-board.png) |
+| Typed operational and documentary connections | [Workspace](screenshots/02-canvas-relationships.png) · [Board](screenshots/02-canvas-relationships-board.png)                          |
+| Large, explicitly partial Outcome             | [Incremental map and off-page search](screenshots/03-canvas-large-outcome.png)                                                         |
+| Compact list and contextual operation         | [Mobile workspace](screenshots/04-canvas-mobile.png)                                                                                   |
+| Original post-it cards on compact screens     | [Mobile Map view](screenshots/04-canvas-mobile-map.png)                                                                                |
+| Existing proportional viewport scale          | [2K workspace](screenshots/05-canvas-2k.png)                                                                                           |
+| Optional published planning                   | [Roadmap workspace](screenshots/06-canvas-roadmap.png) · [Planning board](screenshots/06-canvas-roadmap-board.png)                     |
 
 ![Operational board and Task context](screenshots/01-canvas-workspace-board.png)
 

@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 
 // These are renderer tests, independent of transport/domain integration in
@@ -581,4 +582,288 @@ test("discarded callback failures stay silent while current failures remain anno
   await page.evaluate(() => canvasRejectedSelection.catch(() => {}));
   await expect(status).toContainText("Current selection could not be loaded");
   await expect(status).not.toContainText("Late obsolete failure");
+});
+
+test("all map cards display the original supplied paper behind live accessible content", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  const papers = [
+    {
+      kind: "outcome",
+      format: "wide",
+      style: "pinned",
+      color: "surface",
+      width: 336,
+      top: 22,
+    },
+    {
+      kind: "objective",
+      format: "square",
+      style: "tabbed",
+      color: "workspace",
+      width: 252,
+      top: 22,
+    },
+    {
+      kind: "work_item",
+      format: "wide",
+      style: "curled",
+      color: "surface",
+      width: 284,
+      top: 16,
+      bottom: 17,
+    },
+    {
+      kind: "issue",
+      format: "wide",
+      style: "taped",
+      color: "workspace",
+      width: 284,
+      top: 22,
+    },
+    {
+      kind: "blocker",
+      format: "wide",
+      style: "torn",
+      color: "workspace",
+      width: 284,
+      top: 16,
+    },
+    {
+      kind: "evidence",
+      format: "wide",
+      style: "notebook",
+      color: "surface",
+      width: 284,
+      top: 22,
+    },
+    {
+      kind: "artifact",
+      format: "wide",
+      style: "stacked",
+      color: "surface",
+      width: 284,
+      top: 16,
+    },
+    {
+      kind: "decision",
+      format: "wide",
+      style: "dogear",
+      color: "workspace",
+      width: 284,
+      top: 16,
+    },
+    {
+      kind: "phase",
+      format: "wide",
+      style: "rounded",
+      color: "workspace",
+      width: 252,
+      top: 16,
+    },
+    {
+      kind: "milestone",
+      format: "wide",
+      style: "pinned",
+      color: "surface",
+      width: 252,
+      top: 22,
+    },
+    {
+      kind: "plan_reference",
+      format: "wide",
+      style: "classic",
+      color: "workspace",
+      width: 252,
+      top: 16,
+    },
+    {
+      kind: "annotation",
+      format: "wide",
+      style: "rounded",
+      color: "workspace",
+      width: 284,
+      top: 16,
+    },
+  ];
+  const provenance = JSON.parse(
+    await readFile(
+      resolve(
+        assets,
+        "../../../../docs/design/operational-canvas/postits/assets.json",
+      ),
+      "utf8",
+    ),
+  );
+  const originalHashes = new Map(
+    provenance.assets.map((entry) => [entry.source_path, entry.sha256]),
+  );
+  await mount(page);
+  await page.evaluate((papers) => {
+    canvasModel = {
+      ...canvasModel,
+      nodes: papers.map(({ kind }) => ({
+        key: `${kind}:paper`,
+        kind,
+        title: `${kind.replaceAll("_", " ")} on original paper`,
+        lifecycle: kind === "outcome" ? "active" : "draft",
+        ref: ["phase", "milestone", "plan_reference", "annotation"].includes(
+          kind,
+        )
+          ? null
+          : { kind, id: "paper" },
+        ...(kind === "outcome"
+          ? {
+              summary: "A result people and agents can verify",
+              canCreate: ["objective", "work_item"],
+            }
+          : {}),
+      })),
+      edges: [],
+      rootKey: "outcome:paper",
+    };
+    canvasHandle.update(canvasModel, { selectedKey: null });
+  }, papers);
+  await expect(page.locator(".canvas-world .canvas-node-paper")).toHaveCount(
+    papers.length,
+  );
+  const checked = new Set();
+  async function originalImage(image, sourcePath) {
+    await expect(image).toHaveAttribute(
+      "src",
+      `${origin}/app/postits/${sourcePath}`,
+    );
+    const decoded = await image.evaluate(async (element) => {
+      await element.decode();
+      return {
+        complete: element.complete,
+        width: element.naturalWidth,
+        height: element.naturalHeight,
+      };
+    });
+    expect(decoded.complete).toBe(true);
+    expect(decoded.width / decoded.height).toBeCloseTo(
+      sourcePath.startsWith("svg/square/") ? 1 : 1000 / 730,
+      5,
+    );
+    if (!checked.has(sourcePath)) {
+      const response = await page.request.get(
+        `${origin}/app/postits/${sourcePath}`,
+      );
+      expect(response.status()).toBe(200);
+      expect(response.headers()["content-type"]).toContain("image/svg+xml");
+      expect(
+        createHash("sha256")
+          .update(await response.body())
+          .digest("hex"),
+      ).toBe(originalHashes.get(sourcePath));
+      checked.add(sourcePath);
+    }
+  }
+  for (const paper of papers) {
+    const key = `${paper.kind}:paper`,
+      current = card(page, key),
+      image = current.locator("img.canvas-node-paper");
+    await page.evaluate((key) => canvasHandle.focus(key), key);
+    await expect(current).toBeVisible();
+    await expect(current).toHaveAttribute("data-paper", paper.style);
+    await expect(image).toHaveAttribute("alt", "");
+    await expect(image).toHaveAttribute("aria-hidden", "true");
+    await expect(image).toHaveAttribute("draggable", "false");
+    await expect(current.getByRole("img")).toHaveCount(0);
+    await expect(image).toHaveCSS("pointer-events", "none");
+    await expect(image).toHaveCSS("object-fit", "contain");
+    await originalImage(
+      image,
+      `svg/${paper.format}/${paper.style}/${paper.color}.svg`,
+    );
+    const geometry = await current.evaluate((element) => {
+      const bounds = element.getBoundingClientRect(),
+        content = element
+          .querySelector(".canvas-node-content")
+          .getBoundingClientRect(),
+        image = element
+          .querySelector(".canvas-node-paper")
+          .getBoundingClientRect();
+      return {
+        width: bounds.width,
+        height: bounds.height,
+        imageWidth: image.width,
+        imageHeight: image.height,
+        top: (100 * (content.top - bounds.top)) / bounds.height,
+        right: (100 * (bounds.right - content.right)) / bounds.width,
+        bottom: (100 * (bounds.bottom - content.bottom)) / bounds.height,
+        left: (100 * (content.left - bounds.left)) / bounds.width,
+        backgrounds: [
+          element,
+          element.querySelector(".canvas-node-content"),
+          element.querySelector(".canvas-node-main"),
+        ].map((item) => getComputedStyle(item).backgroundColor),
+      };
+    });
+    const camera = Number(
+      await page.locator(".canvas-viewport").getAttribute("data-scale"),
+    );
+    expect(geometry.width / camera).toBeCloseTo(paper.width, 1);
+    expect(geometry.width / geometry.height).toBeCloseTo(
+      paper.format === "square" ? 1 : 1000 / 730,
+      3,
+    );
+    expect(geometry.imageWidth).toBeCloseTo(geometry.width, 1);
+    expect(geometry.imageHeight).toBeCloseTo(geometry.height, 1);
+    expect(geometry.top).toBeCloseTo(paper.top, 1);
+    expect(geometry.right).toBeCloseTo(14, 1);
+    expect(geometry.bottom).toBeCloseTo(paper.bottom || 14, 1);
+    expect(geometry.left).toBeCloseTo(14, 1);
+    expect(geometry.backgrounds).toEqual([
+      "rgba(0, 0, 0, 0)",
+      "rgba(0, 0, 0, 0)",
+      "rgba(0, 0, 0, 0)",
+    ]);
+    const main = current.locator(".canvas-node-main");
+    await expect(main).toBeFocused();
+    await main.press("Enter");
+    await expect(main).toBeFocused();
+    await expect(main).toHaveAttribute("aria-pressed", "true");
+    await expect(current).toHaveAttribute("data-selected", "true");
+    await expect(current).toHaveCSS("outline-style", "none");
+    await originalImage(
+      image,
+      `svg/${paper.format}/${paper.style}/selected.svg`,
+    );
+  }
+  expect(await page.evaluate(() => canvasEvents.select.length)).toBe(
+    papers.length,
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".workspace-canvas")).toHaveAttribute(
+    "data-view",
+    "list",
+  );
+  await expect(page.locator(".canvas-list img.canvas-node-paper")).toHaveCount(
+    0,
+  );
+  await page.getByRole("button", { name: "Map view", exact: true }).click();
+  await page.evaluate(() => canvasHandle.focus("work_item:paper"));
+  const task = card(page, "work_item:paper");
+  await expect(task.locator(".canvas-node-paper")).toBeVisible();
+  await task.locator(".canvas-node-main").press("Enter");
+  await originalImage(
+    task.locator(".canvas-node-paper"),
+    "svg/wide/curled/selected.svg",
+  );
+  await page.getByRole("button", { name: "List view", exact: true }).click();
+  const listTask = page.locator(
+    '[data-canvas-list-node="work_item:paper"] .canvas-list-main',
+  );
+  await expect(listTask).toBeVisible();
+  await listTask.focus();
+  await listTask.press("Enter");
+  await expect(listTask).toHaveAttribute("aria-pressed", "true");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });
