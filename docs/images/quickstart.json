@@ -1,0 +1,16 @@
+{
+  "source": "examples/quickstart/demo.cast",
+  "source_sha256": "b6dbd8121d6b28c2c46a528ddd63b02dc760e6f9ae9b30b2155f2728779dbd21",
+  "renderer": "tools/documentation/render-quickstart.mjs",
+  "renderer_sha256": "3cd79ad37aa25845abbe04053acd4b1e29b4ca2b82d47d89519040a978fab7fd",
+  "file": "docs/images/quickstart.gif",
+  "sha256": "142b58378dab3b1e266f3cadce2cf005bb4f84892ff2c449924ecd3bd9b923b3",
+  "recorded_duration_seconds": 24.202077,
+  "rendered_duration_seconds": 27,
+  "fps": 2,
+  "pixel_size": {
+    "width": 960,
+    "height": 540
+  },
+  "method": "Render real asciicast stdout chronologically; 2fps sampling at the end of each frame interval and a final hold. No invented output. See the source recording provenance for execution scope."
+}

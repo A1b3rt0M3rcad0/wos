@@ -1,0 +1,21 @@
+{
+  "recording": "demo.cast",
+  "format": "asciicast v2",
+  "captured_at_utc": "2026-10-16T18:59:45+00:00",
+  "duration_seconds": 24.202077,
+  "source_revision": "a463297fc5b481e0ba33aa296f32b70ca8c50d00",
+  "source_scope": "Repository HEAD at capture; no server/core source modifications. The existing local binary reports commit unknown, so its exact SHA-256 is recorded rather than claiming embedded VCS provenance. demo.py is the accompanying documentation example identified by its hash below.",
+  "binary_sha256": "c96b3a9cacecd23424535022621e66bf901b0368a0e315fc895773a30a726315",
+  "script_sha256": "9662735971a700ca5f879a70f36a31455a32af3d0a92393e60317af5aa1eb63e",
+  "recording_sha256": "b6dbd8121d6b28c2c46a528ddd63b02dc760e6f9ae9b30b2155f2728779dbd21",
+  "command": "python3 examples/quickstart/demo.py --binary ./bin/wos --record /tmp/wos-quickstart-final.cast --pace 4",
+  "environment": "Linux amd64; Python 3.12.14",
+  "scope": "One trusted local operator; api_token authentication; unsigned direct HTTP lifecycle. This is not signed independent review.",
+  "content": "Actual elapsed stdout, HTTP statuses and selected values of real server responses. Generated sample IDs only; no token or Authorization headers.",
+  "result": {
+    "task": "done",
+    "outcome": "achieved",
+    "assessment_count": 1
+  },
+  "recording_note": "Captured at the command path above, then copied byte-for-byte to demo.cast. Output newlines use terminal CRLF encoding."
+}
