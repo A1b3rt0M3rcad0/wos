@@ -101,7 +101,7 @@ def main():
                     if code:
                         raise RuntimeError(name+' failed; see retained JSONL')
                     row=parse_load(log)
-                    if row['outcomes']!=outcomes or row['consumers']!=consumers or row['accepted_deliveries']!=consumers*2 or row.get('version_collision_winners')!=1 or row.get('version_collision_rejections')!=consumers-1:
+                    if row['outcomes']!=outcomes or row.get('active_outcomes')!=outcomes or row['consumers']!=consumers or row['accepted_deliveries']!=consumers*2 or row.get('version_collision_winners')!=1 or row.get('version_collision_rejections')!=consumers-1:
                         raise ValueError('fixture dimensions or accepted result count differ')
                     row.update(backend=backend,wall_seconds_including_setup=elapsed,
                                process_tree_user_cpu_seconds=usage.ru_utime,

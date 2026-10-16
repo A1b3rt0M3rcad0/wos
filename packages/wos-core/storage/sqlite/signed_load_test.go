@@ -301,8 +301,17 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					tasks := make([][]d.WorkItem, consumers)
 					for i := range tasks {
 						for j := 0; j < 2; j++ {
-							tasks[i] = append(tasks[i], createTask(scopes[i%outcomes]))
+							tasks[i] = append(tasks[i], createTask(scopes[(i+j*consumers)%outcomes]))
 						}
+					}
+					activeScopes := map[d.Scope]bool{}
+					for _, group := range tasks {
+						for _, task := range group {
+							activeScopes[task.Scope] = true
+						}
+					}
+					if len(activeScopes) != outcomes {
+						t.Fatal("declared Outcome count was not exercised", len(activeScopes), outcomes)
 					}
 					conflicts.Store(0)
 					retries.Store(0)
@@ -412,7 +421,7 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 						waits = append(waits, float64(v.TransactionWait.Microseconds())/1000)
 						guards = append(guards, float64(v.GuardDuration.Microseconds())/1000)
 					}
-					report := map[string]any{"outcomes": outcomes, "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment, "version_collision_winners": collisionWinners.Load(), "version_collision_rejections": versionRejections.Load(), "collision_transaction_conflicts": collisionConflicts.Load(), "collision_exact_retries": collisionRetries.Load()}
+					report := map[string]any{"outcomes": outcomes, "active_outcomes": len(activeScopes), "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment, "version_collision_winners": collisionWinners.Load(), "version_collision_rejections": versionRejections.Load(), "collision_transaction_conflicts": collisionConflicts.Load(), "collision_exact_retries": collisionRetries.Load()}
 					raw, e := json.Marshal(report)
 					must(e)
 					t.Log("SIGNED_LOAD " + string(raw))
