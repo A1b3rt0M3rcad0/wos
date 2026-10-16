@@ -17,6 +17,8 @@ Different aspect ratios expose different amounts of the same document. The 16:9 
 
 ## Verification
 
+After each viewport change, the geometry helper explicitly loads the resolved font faces before sampling ch-based headings and other dimensions. This provides the same font readiness as the viewport captures.
+
 The `large viewports` browser journey measures rendered positions, dimensions, padding, fonts, and grid column counts for sign-in, overview, metrics, illustration, SVG chart, and Task form. It checks all six areas for page overflow at the four requested resolutions, preserves the five-column Work board and persistent form actions, and verifies the cap at 5120 px. Geometry comparisons allow less than 3 reference pixels for browser border and line-layout rounding, with a 10 px allowance for the whole main document's accumulated height and the measured native scrollbar-gutter difference for horizontal dimensions inside a dialog body.
 
 An optional local comparison loads the original declarations after the current styles in the same DOM, keeping the same font faces, records, focus, scroll position, and browser. It requires byte-identical viewport PNGs for sign-in and for overview/Task forms at 1440, 1280, 768, 390, and 320 px, including a 28 px root at 768 px. Prepare the two baseline CSS files from pre-change commit `314f71ce4b786ed397286dd854193d79ab884bcb` in a temporary directory, then run:

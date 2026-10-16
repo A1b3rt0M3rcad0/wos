@@ -4,6 +4,22 @@ import { test, expect } from "playwright/test";
 
 // Measure actual rendered geometry, including relative type and fixed lengths.
 export async function dimensions(page, selectors) {
+  await page.evaluate(async (selectors) => {
+    // A viewport change can request a font that was not used by the previous
+    // layout. Wait for the resolved faces before measuring ch-based headings.
+    await Promise.all(
+      selectors.map((selector) => {
+        const element = document.querySelector(selector);
+        if (!element) throw Error(`Missing scale audit target: ${selector}`);
+        const style = getComputedStyle(element);
+        return document.fonts.load(
+          `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`,
+          element.textContent || "0",
+        );
+      }),
+    );
+    await document.fonts.ready;
+  }, selectors);
   return page.evaluate((selectors) => {
     const result = {};
     for (const selector of selectors) {
@@ -56,7 +72,7 @@ export function expectProportional(actual, reference, factor) {
         key === "height" && selector === ".workspace-main" ? 10 : 3;
       expect(
         Math.abs(actual[selector][key] / factor - baseline[key]),
-        `${selector} ${key} at ${factor}x`,
+        `${selector} ${key} at ${factor}x (actual ${actual[selector][key]}, reference ${baseline[key]}; font ${actual[selector].fontSize}/${baseline.fontSize})`,
       ).toBeLessThan(rounding + gutter);
     }
     expect(actual[selector].fontFamily, selector).toBe(baseline.fontFamily);
