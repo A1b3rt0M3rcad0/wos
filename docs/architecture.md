@@ -37,6 +37,12 @@ Namespace, authenticated Principal, declared ActorRef, and external addressing c
 
 Domain mutations validate scope, coordinate the transaction, validate current authority and invariants, persist state/events/outbox changes, and commit the idempotent result atomically. External HTTP calls, agent execution, and artifact retrieval do not occur inside that transaction.
 
+## Central CLI and durable execution activity
+
+The CLI keeps a private installation independent of the project directory, with isolated destination/identity profiles and one selector captured per invocation. Explicit legacy workspaces remain a compatibility path; migration preserves authenticated bytes and original pending requests. See [ADR 035](adr/0035-central-cli-installation.md).
+
+Authorized signed execution holders can append typed activity and documentary records atomically. The server assigns chronology and keeps history after local cleanup; this does not change issued instructions, authorize more work, or prove external execution. Current attention is a read projection of criteria, dependencies, blockers and correction requirements, not a second mutable pending checklist. HTTP, MCP and SDK use the same application service and bounded revision-aware reads. See [ADR 036](adr/0036-durable-execution-activity.md) and [activity contracts](work-activity.md).
+
 ## Continuation and integration
 
 Continuity reads, graph projections, and cursors declare scope, revision, and omissions. A bounded response is not a promise of bounded work over every possible history. Interrupted mutations are reconciled using their original intent and receipts; retries do not silently change expected versions.

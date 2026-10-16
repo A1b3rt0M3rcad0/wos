@@ -57,6 +57,15 @@ test('released v0.4.2 requests and workspace schemas retain old accepted shapes'
   if(route==='/api/v1/security/signing-identity'){
    assert.deepEqual(after.paths[route].get.parameters,operations.get.parameters);
    assert.deepEqual(Object.keys(after.paths[route].get.responses),Object.keys(operations.get.responses));
+  }else if(route==='/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}'){
+   // Reviewed central-workflow addition: only these optional query filters.
+   // Preserve every old path parameter, response and operation annotation.
+   const current=structuredClone(after.paths[route]);
+   assert.deepEqual(current.get.parameters.slice(0,operations.get.parameters.length),operations.get.parameters);
+   const additions=current.get.parameters.splice(operations.get.parameters.length);
+   const optionalStrings=['holder_principal_id','work_item_id','status','cursor'].map(name=>({description:'Optional executions discovery filter or continuation cursor.',in:'query',name,schema:{type:'string'}}));
+   assert.deepEqual(additions,[...optionalStrings,{in:'query',name:'limit',schema:{default:25,maximum:100,minimum:1,type:'integer'}}]);
+   assert.deepEqual(current,operations,route+' changed an existing wire property');
   }else assert.deepEqual(after.paths[route],operations,route+' changed existing wire operation');
  }
 });

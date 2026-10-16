@@ -73,12 +73,21 @@ test('portable skill frontmatter, bounded metadata and progressive references ar
   }
 });
 
-test('skill tool names exist in the real MCP catalog', async () => {
-  const repository=path.resolve(packageRoot,'../..');
-  const catalog=(await fs.readFile(path.join(repository,'packages/wos-api/mcp/commands_generated.go'),'utf8'))+(await fs.readFile(path.join(repository,'packages/wos-api/mcp/queries.go'),'utf8'));
-  const known=new Set([...catalog.matchAll(/"(wos_[a-z_]+)"/g)].map(m=>m[1]));
+test('official agent instructions use the centralized CLI without internal document operations', async () => {
   for(const name of names) {
-    const text=await fs.readFile(path.join(packageRoot,'skills',name,'SKILL.md'),'utf8');
-    for(const m of text.matchAll(/\b(wos_[a-z_]+)\b/g))assert.ok(known.has(m[1]),`Unknown skill tool ${m[1]}`);
+    const directory=path.join(packageRoot,'skills',name);
+    const main=await fs.readFile(path.join(directory,'SKILL.md'),'utf8');
+    const files=[main];
+    for(const file of await fs.readdir(path.join(directory,'references'))) {
+      files.push(await fs.readFile(path.join(directory,'references',file),'utf8'));
+    }
+    const text=files.join('\n');
+    assert.doesNotMatch(text,/\bwos_(?:acquire|return|sync|submit|finalize|record|get)_[a-z_]+\b/,`${name}: agent operations bypass the CLI`);
+    assert.doesNotMatch(text,/```ya?ml\b|\.wos\/(?:project|config)\.ya?ml|(?:contract|checkpoint|result)\.ya?ml/i,`${name}: internal files became an agent interface`);
+    assert.match(main,/only (?:WOS )?operational interface/i,`${name}: operational boundary missing`);
+    assert.match(main,/WOS_PROFILE/,`${name}: process pinning missing`);
+    assert.match(text,/prepared-only/,`${name}: recovery may silently send prepared material`);
+    assert.match(text,/independent/i,`${name}: independent review guidance missing`);
+    assert.match(text,/bounded/i,`${name}: unbounded reads encouraged`);
   }
 });

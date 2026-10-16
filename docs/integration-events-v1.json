@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalogue_revision": "2026-10-08",
+  "catalogue_revision": "2026-10-16",
   "envelope": "IntegrationFact",
   "delivery": "at_least_once",
   "events": [
@@ -199,6 +199,9 @@
     },
     {
       "event_type": "trigger.updated"
+    },
+    {
+      "event_type": "work_activity.recorded"
     },
     {
       "event_type": "work_contract.acquired"

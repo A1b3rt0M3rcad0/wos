@@ -17,6 +17,14 @@ Keep tokens, private keys, database connection strings, and documentary payloads
 
 A timeout or disconnected client does not prove a write failed. Recover the original intent and receipt with the same destination, authenticated scope, payload, idempotency key, and expected version. Do not replace an uncertain operation with a new key or different identity. Back up before forward migrations; rollback uses a separate restored database and must reconcile later security changes and external effects. See [operations](docs/operations.md#backup-restore-and-upgrade) and [agent recovery](docs/agents.md).
 
+## Local agent material
+
+Central profiles use a private OS data directory or an explicit absolute `WOS_DATA_DIR`, independently of the project directory. Secrets remain protected references; internal drafts, pending requests, receipts and activity descriptions can still contain sensitive work. Protect and back up this directory. CLI locks coordinate cooperating processes; they do not isolate hostile processes under the same OS account.
+
+Profile selection is pinned per invocation, but an interactive active profile is shared by later invocations. Concurrent agents should use `--profile` explicitly. Removing a profile retires its selector and preserves historical bytes; it does not revoke remote credentials. Migration requires all old writers stopped: older binaries cannot recognize the new retirement fence.
+
+Typed activity is an authenticated actor declaration. A referenced URI, checksum, or recorded test claim is not independent proof that external execution occurred. Reviewers must inspect the exact material. See [profile migration](docs/signed-workspace-profiles.md) and [activity limits](docs/work-activity.md).
+
 ## Report a vulnerability
 
 GitHub private vulnerability reporting is not currently enabled for this repository, and no dedicated security email is published. Open a general [issue](https://github.com/A1b3rt0M3rcad0/wos/issues/new) asking the maintainer to establish a private reporting channel. Keep the issue limited to that request: do not include exploit steps, affected private data, credentials, keys, or other sensitive details. Share those details only after a private channel is agreed.

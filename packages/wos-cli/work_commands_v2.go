@@ -7,8 +7,8 @@ import (
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	sdk "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go"
+	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 )
 
@@ -69,7 +69,6 @@ func compactAcquisitionV2(profile ProfileV2, value acquisitionAcceptedV2) any {
 			item["contract_id"] = view.Authority.ContractID
 			item["work_item_id"] = view.Authority.WorkItemID
 			item["outcome_id"] = view.Authority.OutcomeID
-			item["path"] = contractPathV2(profile.Name, d.ID(view.Authority.ContractID))
 			item["expires_at"] = view.Authority.ExpiresAt
 			item["acceptance_mode"] = view.Authority.AcceptanceMode
 		}
@@ -88,6 +87,62 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		return result, usage("work checkout|recover|list|show <contract-id>")
 	}
 	result.Operation = prefix + " " + o.args[1]
+	// New conveniences resolve only an unambiguous target, then delegate to the
+	// same exact signed lifecycle and recovery operations used by explicit IDs.
+	switch o.args[1] {
+	case "next":
+		if len(o.args) != 2 {
+			return result, usage(prefix + " next [--outcome reference]")
+		}
+		o.args[1], o.values["next"] = "checkout", "true"
+	case "available":
+		if kind != "execution" || len(o.args) != 2 {
+			return result, usage("work available [--outcome reference]")
+		}
+		scope, e := resolveOutcomeV2(ctx, w, profile, client, o)
+		if e != nil {
+			return result, e
+		}
+		limit, e := operationLimitV2(o)
+		if e != nil {
+			return result, e
+		}
+		page, e := client.ListAvailableWork(ctx, scope, limit, o.values["cursor"])
+		items := []any{}
+		for _, item := range page.Items {
+			items = append(items, map[string]any{"work_item_id": item.Candidate.ID, "title": item.Title, "version": strconv.FormatUint(uint64(item.Candidate.Version), 10), "recovery": item.Recovery})
+		}
+		result.OutcomeID, result.Data = scope.OutcomeID, map[string]any{"items": items, "next_cursor": page.NextCursor, "search_complete": page.SearchComplete, "outcome_revision": strconv.FormatUint(uint64(page.OutcomeRevision), 10), "authority": "discovery only; acquisition rechecks readiness and policy"}
+		return result, e
+	case "status", "context", "check":
+		return queryWorkV2(ctx, w, profile, client, identity, kind, o)
+	case "history":
+		return historyWorkV2(ctx, w, profile, client, kind, o)
+	case "log", "evidence", "artifact":
+		if len(o.args) >= 3 && o.args[2] == "list" {
+			if kind == "review" {
+				return reviewDocumentCommandV2(ctx, w, profile, client, token, o)
+			}
+			return historyWorkV2(ctx, w, profile, client, kind, o)
+		}
+		if kind == "review" {
+			return reviewDocumentCommandV2(ctx, w, profile, client, token, o)
+		}
+		if e := requireActivityCapabilityV2(ctx, client, false); e != nil {
+			return result, e
+		}
+		return activityCommandV2(ctx, w, profile, client, token, identity.Actor, o)
+	case "result", "progress", "decision", "assessment", "finding", "correction":
+		return materialCommandV2(ctx, w, profile, client, token, kind, o)
+	}
+	switch o.args[1] {
+	case "show", "sign", "send", "finish", "renew", "resume", "refresh":
+		id, e := contractOptionV2(w, profile, kind, o, 2)
+		if e != nil {
+			return result, e
+		}
+		o.args = []string{prefix, o.args[1], id.String()}
+	}
 	switch o.args[1] {
 	case "resolve", "resolution-status":
 		return returnResolutionCommandV2(ctx, w, profile, client, token, identity, o)
@@ -120,6 +175,18 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		items := []any{}
 		result.Data = map[string]any{"items": items}
 		for _, intent := range current.Local.PendingOperations {
+			if kind == "execution" && intent.Operation == "AppendWorkActivity" {
+				accepted, e := recoverActivityV2(ctx, w, profile, client, token, intent)
+				committed := !accepted.CommandID.IsZero()
+				result.Committed = result.Committed || committed
+				items = append(items, map[string]any{"intention_id": intent.ID, "remote_committed": committed, "local_saved": e == nil, "activity": accepted.Value.Activity})
+				result.Data = map[string]any{"items": items}
+				if e != nil {
+					result.RequiresAction = "preserve and reconcile the original activity intention"
+					return result, e
+				}
+				continue
+			}
 			if returnPendingV2(intent.Operation) && ((kind == "execution" && intent.Operation == "ReturnSignedWork") || (kind == "review" && intent.Operation == "ReturnSignedReview")) {
 				if intent.State == "prepared_signed" && intent.Resolution == nil {
 					items = append(items, map[string]any{"intention_id": intent.ID, "state": "prepared_signed", "requires_action": "send explicitly"})
@@ -179,31 +246,22 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		}
 		return result, nil
 	case "list":
+		if kind == "execution" {
+			return listWorkV2(ctx, w, profile, client, o)
+		}
 		ids, e := contractIDsV2(w, profile.Name)
 		if e != nil {
 			return result, e
 		}
-		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 		items := []any{}
 		for _, id := range ids {
-			legacy, isLegacy, e := readLegacyUnsignedV2(w, profile, id)
-			if e != nil {
-				return result, e
-			}
-			if isLegacy {
-				if kind == "execution" {
-					items = append(items, legacyUnsignedSummaryV2(legacy))
-				}
-				continue
-			}
 			_, view, _, _, e := loadContractV2(w, profile, id)
 			if e != nil {
 				return result, e
 			}
-			if view.Authority.ContractKind != kind {
-				continue
+			if view.Authority.ContractKind == kind {
+				items = append(items, map[string]any{"contract_id": id, "work_item_id": view.Authority.WorkItemID, "outcome_id": view.Authority.OutcomeID, "expires_at": view.Authority.ExpiresAt})
 			}
-			items = append(items, map[string]any{"contract_id": id, "work_item_id": view.Authority.WorkItemID, "outcome_id": view.Authority.OutcomeID, "expires_at": view.Authority.ExpiresAt})
 		}
 		result.Data = map[string]any{"profile": profile.Name, "items": items, "authority": "obtain fresh focal state before mutation"}
 		return result, nil
@@ -230,8 +288,11 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 			result.RequiresAction = "read-only historical record; use the original v1 workspace for supported legacy recovery; never fabricate signed authority"
 			return result, nil
 		}
-		file, view, path, _, e := loadContractV2(w, profile, id)
+		file, view, _, _, e := loadContractV2(w, profile, id)
 		if e != nil {
+			if os.IsNotExist(e) {
+				return queryWorkV2(ctx, w, profile, client, identity, kind, o)
+			}
 			return result, e
 		}
 		if view.Authority.ContractKind != kind {
@@ -254,14 +315,18 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 			}
 		}
 		if kind == "review" {
+			view, e = expandReviewSpecificationV2(ctx, profile, client, view)
+			if e != nil {
+				return result, e
+			}
 			specification, e := reviewAgentSpecificationV2(profile, view)
 			if e != nil {
 				return result, e
 			}
-			result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": specification, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Review.Progress, "decision": file.Review.Decision, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
+			result.Data = map[string]any{"profile": profile.Name, "specification": specification, "spec_digest": view.Authority.SpecDigest, "status": compactSignedStatusV2(state.Contract), "progress": compactProgressV2(file.Review.Progress), "decision": file.Review.Decision, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
 			return result, nil
 		}
-		result.Data = map[string]any{"profile": profile.Name, "path": path, "specification": view.WorkSpecification.Spec, "spec_digest": view.Authority.SpecDigest, "status": state.Contract, "progress": file.Execution.Progress, "completion_intent": file.Execution.CompletionIntent, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
+		result.Data = map[string]any{"profile": profile.Name, "specification": view.WorkSpecification.Spec, "spec_digest": view.Authority.SpecDigest, "status": compactSignedStatusV2(state.Contract), "progress": compactProgressV2(file.Execution.Progress), "completion_intent": file.Execution.CompletionIntent, "pending_final_return": file.Local.Pending != nil, "pending_lease_operation": pendingLease}
 		return result, nil
 	default:
 		return result, usage("signed work operation is not implemented; preserve its contract")
@@ -269,7 +334,7 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 }
 func checkoutWorkV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, identity a.SigningIdentityView, o options) (Output, error) {
 	result := Output{Operation: "work checkout"}
-	scope, e := scopeV2(w, profile, o)
+	scope, e := resolveOutcomeV2(ctx, w, profile, client, o)
 	if e != nil {
 		return result, e
 	}
@@ -307,9 +372,25 @@ func checkoutWorkV2(ctx context.Context, w *Workspace, profile ProfileV2, client
 		if count != 1 || len(o.args) != 3 {
 			return result, usage("work checkout <work-item-id> --version V, or --next --count N")
 		}
-		work, e := d.ParseID(o.args[2])
-		if e != nil {
-			return result, e
+		work, parse := d.ParseID(o.args[2])
+		if parse != nil {
+			var observed d.Version
+			work, observed, e = resolveAvailableWorkV2(ctx, client, scope, o.args[2])
+			if e != nil {
+				return result, e
+			}
+			if o.values["version"] == "" {
+				o.values["version"] = strconv.FormatUint(uint64(observed), 10)
+			}
+		} else if o.values["version"] == "" {
+			context, e := client.GetWorkContext(ctx, scope, work)
+			if e != nil {
+				return result, e
+			}
+			if context.Work.ID != work || context.Work.Scope != scope {
+				return result, fmt.Errorf("work discovery target differs")
+			}
+			o.values["version"] = strconv.FormatUint(uint64(context.Work.Version), 10)
 		}
 		version, e := strconv.ParseUint(o.values["version"], 10, 64)
 		if e != nil || version == 0 {

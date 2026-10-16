@@ -12,37 +12,15 @@ or inferred assessment is added to the Core.
 
 ## Select the protocol and identities
 
-Install `npm install -g wosctl@latest`; all public calls use `wos <command>`.
-Use `wos --help`, `wos help work`, and `wos catalog --output json` before supplying
-credentials. The local catalog reports its schema version and executable
-version/commit. `wos version --output json` identifies the binary used for a run.
+Build the current source for the central workflow; published `wosctl@0.4.2` implements the earlier interface. Use `wos --help`, `wos help work`, and `wos catalog --output json` before supplying credentials. The local catalog reports its schema version and executable version/commit. `wos version --output json` identifies the binary used for a run.
 
-For legacy schema 1, `wos init ... --credential-env WOS_TOKEN` initializes a
-client binding. `wos outcome get [ID] --output json` reads an Outcome. It does not
-activate a work protocol or constitute a commit receipt.
+Follow [central installation and protected profiles](signed-workspace-profiles.md). Initialize once, verify ServerID/issuer pins through an independent channel, and enroll named identities with protected token/private-key references. Pin `--profile NAME` for each worker; no current project directory is needed. `init`, `profile create`, and `skill install` never activate a Namespace protocol or grant permission. Protocol activation and preflight require an authorized administrator; do not grant administration to an executor just to make diagnostics pass.
 
-For signed schema 2, follow [profiles and workspace provisioning](signed-workspace-profiles.md).
-Initialize the project with an independently verified ServerID, create named
-profiles through administrator-authorized enrollment, and keep token/private-key
-references protected. Every operational call selects `--workspace PATH` and
-`--profile NAME`. Obtain the current Namespace protocol with `protocol get`;
-`project init`, `profile create`, and `skill install` never activate it.
-Activation and `protocol preflight` require the operator's Namespace-admin
-permission. Do not give that permission to an executor to make diagnostics pass.
+Execution is `work next → work context → external execution → typed log/evidence/artifact/result commands → work check → work finish`. Independent review uses a separate eligible Principal and the corresponding typed `review` commands. A different profile, credential or key alone creates no independence. Findings reference the exact issued requirements; corrections need an explicitly acknowledged original review and new authority. Preserve issued specs, frozen intentions and receipts. Never edit internal documents, silently change CAS/fences, or replace an uncertain request.
 
-Execution is `work checkout → show --for-agent → edit the permitted draft →
-sign → send/finish → recover`. Independent review uses the corresponding
-`review` commands. A reviewer needs a different eligible Principal/group;
-changing profile, credential or key does not create independence. Findings
-reference the exact requirement identities/paths accepted by the issued review
-specification. Preserve issued specs, signatures, frozen intentions and receipts.
-Never rewrite a frozen request or silently change its expected version/fence.
-`changes_requested` preserves the review findings and requires a new correction
-contract; approving it targets the exact corrected submission.
+`work history --work TASK_ID --outcome OUTCOME_ID` survives local cleanup. History is bounded with revision/order-bound cursors. `outcome context` is not a CLI verb; use the issued focal `work context` and expand relevant references. The server's current attention projection is separate from the issued specification and local draft readiness.
 
-`outcome context` is not a CLI verb. For signed work, use the issued contract's
-`work show CONTRACT_ID --for-agent` projection and expand references only as
-needed. The CLI's local unsupported-command error explains both alternatives.
+For historical schema-1 bindings, explicitly use `wos --workspace PATH init ... --credential-env WOS_TOKEN` and the matching released guide. That compatibility mode does not create central profiles or signed authority. See [legacy conversion](workspace-migration-v2.md) before moving old material.
 
 ## Confirm commits, then redeliver safely
 

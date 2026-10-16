@@ -3,14 +3,14 @@
   "candidate_product": "unreleased next minor after 0.4.2",
   "scope": "Exact public command/read and CLI YAML JSON schemas; only product metadata version is normalized. Semantic authority requires real tests.",
   "files": {
-    "packages/wos-api/commands.openapi.json": "b63ffe7723d07a236c06608855e44cd9bf9800fec0223754e2ab03615cebc18e",
+    "packages/wos-api/commands.openapi.json": "71e5244613f2a2aaea9c05aec8fc512b3ba0180e2c478ab48a91132d84aa9344",
     "packages/wos-cli/schemas/checkpoint.schema.json": "55d197b792573b7b58d4f5e3975fc110bbfececbe76cd8f440030b22fb47a127",
     "packages/wos-cli/schemas/config.schema.json": "66920721a33a7ecbc7cf8aa4267a30096b764c80db13bf2fb90bfc12009113ec",
     "packages/wos-cli/schemas/contract-v2.schema.json": "c9403076e9721e25b0593ad454b5a237d19c9c17b341ecd02260e109ffb23303",
     "packages/wos-cli/schemas/contract.schema.json": "de502fd1436cd2041c19f9d69be42b1f8407d37e84886eccc827c0495e743ccc",
     "packages/wos-cli/schemas/legacy-unsigned-v2.schema.json": "d72693c3829213303a61e183d054ae69c930a9a6a2f4951add1513bd97e2dd06",
     "packages/wos-cli/schemas/profile-v2.schema.json": "560d4958d5551ba8f8f9ea747d04687396f102b29bbe1d0973a551d8c4a2ed48",
-    "packages/wos-cli/schemas/project-v2.schema.json": "f21bfefb25d564f023ab5dce8e22006dbde9b0103efb162634e8ca881ff87bed",
+    "packages/wos-cli/schemas/project-v2.schema.json": "d55ad0a984a94d790e51a6d99d0282e6a0eb2e5944725956441a2d56cd992401",
     "packages/wos-cli/schemas/result.schema.json": "09ba530cd863514956ad407d91c4caca4181af64c0980c218805f1888ae40389"
   },
   "compatibility_review": "docs/stable/operational-contract-review.md",

@@ -27,7 +27,15 @@ go vet ./...
 go test -race ./...
 ```
 
-Format changed Go files with `gofmt`. The race detector requires a supported platform and C toolchain. PostgreSQL tests require a disposable PostgreSQL instance and `WOS_TEST_POSTGRES_DSN`; restore checks also need the matching database tools. Environment-dependent skips do not establish PostgreSQL, recovery, or native-platform acceptance. Never point tests at a database containing real work. [CI](.github/workflows/ci.yml) documents the complete verification environment and generated-contract checks.
+Format changed Go files with `gofmt`. The race detector requires a supported platform and C toolchain. PostgreSQL tests require a disposable PostgreSQL instance and `WOS_TEST_POSTGRES_DSN`; restore checks also need the matching database tools. Environment-dependent skips do not establish PostgreSQL, recovery, or native-platform acceptance. Never point tests at a database containing real work. For the complete dense serializable qualification, the CI PostgreSQL fixture uses 512 MiB shared memory and initdb settings `max_locks_per_transaction=1024` / `max_pred_locks_per_transaction=4096`. Use independent instances for concurrent full normal/race runs. These are fixture capacities, not relaxed isolation or product defaults. [CI](.github/workflows/ci.yml) documents the complete verification environment and generated-contract checks.
+
+For central CLI/backend changes, also run the real-process workflow after building the current binary:
+
+```sh
+node tools/acceptance/central-agent-workflow.mjs bin/wos
+```
+
+It provisions two independent identities, exercises typed CLI material and review, and verifies history after cleanup/restart. `WOS_CENTRAL_TEST_POSTGRES_DSN` opts into a **fresh disposable database**; the runner initializes it and must not target an existing deployment. Lower-level tests separately cover uncertain responses, competing writers and migration faults. The [implementation package](docs/central-agent-workflow/README.md) maps requirements to checks.
 
 For workspace changes, build both binaries above, then run:
 

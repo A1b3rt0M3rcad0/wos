@@ -14,8 +14,9 @@ import (
 )
 
 type Workspace struct {
-	root          *os.Root
-	canonicalPath string
+	root            *os.Root
+	canonicalPath   string
+	migrationAccess bool // Explicit central migration may inspect its fenced source.
 }
 
 func OpenWorkspace(path string) (*Workspace, error) {

@@ -663,9 +663,18 @@ Current mappings are:
 | 503  | request deadline or transient infrastructure timeout                                 |
 | 408  | caller/request cancellation                                                          |
 
-Local auth intentionally uses the configured local Principal and does not
-pretend to provide multi-user authentication. Token/OAuth authorization remains
-a later wave.
+Local auth uses the configured local Principal. Shared services use the existing
+token or OAuth resource-server configuration; see [service operation](operations.md).
+
+## Work activity and attention
+
+Signed Contract holders can append immutable observations through
+`POST /api/v1/commands/append_work_activity`. Authorized readers can page through
+`GET /namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity` and inspect
+`GET /namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention`,
+under the `/api/v1` prefix. These adapters share application services with MCP and
+the Go client. Activity never approves criteria or completes work. See the
+[work activity contract](work-activity.md) for authority, pagination, and retry rules.
 
 ## OpenAPI
 

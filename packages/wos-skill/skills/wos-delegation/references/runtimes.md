@@ -1,13 +1,15 @@
-# Native runtime delegation
+# External runtime delegation
 
-Claude Code: use the native Agent/subagent mechanism available in that client/version; configure instructions, permitted tools and model there. Install project skills in .claude/skills or user skills in ~/.claude/skills. Instructions alone do not configure permissions.
+WOS does not spawn or execute agents. Use only native delegation exposed by the actual host and authorized by the user/repository. Runtime permissions, model choice, history inheritance, filesystem separation and tool execution belong to that host.
 
-Codex: use native delegation tools when available and authorized. If the tool supports history selection, explicitly choose no inherited conversation for a fresh worker and supply sufficient task constraints. This environment's shared workspace is not a separate filesystem per worker. Install in .agents/skills or ~/.agents/skills. Do not assume every Codex client exposes the same spawn interface.
+- **Codex:** use its available native delegation mechanism. Where supported, choose fresh/minimal history explicitly and supply necessary intent, permitted paths/tools and stop conditions. A shared workspace is not an isolated filesystem. Skills are discovered in `.agents/skills` or the configured user root.
+- **Claude Code:** use the native Agent/subagent mechanism supported by the installed client. Configure permissions and models in the runtime. Skills can be installed into its `.claude/skills` discovery root.
+- **Hermes:** delegate only if the actual runtime/tool catalog enables it; a model name alone is not an agent host. Discovery may use `.hermes/skills` or the configured user/profile root.
+- **OpenClaw:** use the installed version's exposed sessions/subagent tools under its policy. Workspace/user skill discovery and profile overrides do not prove history or file isolation.
+- **Other hosts:** use `wos skill install --agent generic --dir PATH` for an explicit Skill discovery directory. Execute sequentially if no authorized delegation mechanism exists.
 
-Hermes: use native delegation only if enabled in the actual runtime/tool catalog. Discover skills in .hermes/skills for supported project-aware versions, ~/.hermes/skills for user scope, or the configured external/profile directory. Do not mistake a Hermes model alone for an agent runtime. An agent's context management and tool authority belong to its host.
+Skill discovery roots are unrelated to installation-scoped WOS operational data. Install/update/doctor verify instruction files; they do not provision server access or certify host integration.
 
-OpenClaw: use the configured sessions/subagents tools only if the installed version and agent policy expose them. Workspace skills live in <workspace>/skills, with managed user skills normally ~/.openclaw/skills; profiles may override paths. Session creation does not by itself prove separate worktrees, tool permissions or lack of inherited context.
+Auxiliary helpers share one holder's responsibility; they receive bounded instructions and return checked results. Independent workers acquire different WorkItems under their own pinned approved Profiles/Principals and record progress/proof through the CLI. The holder never silently transfers its contract to another authenticated identity. An independent reviewer must be a distinct Principal under server policy.
 
-Other agents: choose --agent generic --dir for the Agent Skills discovery root, or supply a reader adapter for SKILL.md. Delegate sequentially if no native spawn mechanism exists. Never claim all-runtime certification based on successful file installation.
-
-Every worker receives only scope/task IDs plus necessary intent/constraints, fetches current WOS context, acquires its own authorized WorkContract, persists evidence/result, and returns a compact receipt. Separate model contexts can reduce supervisor context but may increase total tokens. Measure both.
+Use `--profile NAME` or process-scoped `WOS_PROFILE` in every worker; do not change the global active Profile as concurrent coordination. Return compact IDs/proof/remaining action rather than full transcripts. Measure total usage before claiming token savings.

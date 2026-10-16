@@ -12,7 +12,7 @@ import (
 
 func checkoutReviewV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, identity a.SigningIdentityView, o options) (Output, error) {
 	result := Output{Operation: "review checkout"}
-	scope, e := scopeV2(w, profile, o)
+	scope, e := resolveOutcomeV2(ctx, w, profile, client, o)
 	if e != nil {
 		return result, e
 	}

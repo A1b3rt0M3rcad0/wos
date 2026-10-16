@@ -24,7 +24,7 @@ type ConnectionConfig struct {
 }
 type WorkspaceScope struct {
 	NamespaceID      domain.ID `json:"namespace_id"`
-	DefaultOutcomeID domain.ID `json:"default_outcome_id"`
+	DefaultOutcomeID domain.ID `json:"default_outcome_id,omitempty"`
 }
 type WorkspaceConfig struct {
 	Root   string `json:"root"`

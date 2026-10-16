@@ -130,7 +130,7 @@ func (p ProjectV2) Validate() error {
 	if e != nil || origin != p.Connection.ServerURL {
 		return fmt.Errorf("project origin must be canonical")
 	}
-	if p.Connection.ExpectedServerID.Validate() != nil || p.Scope.NamespaceID.Validate() != nil || p.Scope.DefaultOutcomeID.Validate() != nil {
+	if p.Connection.ExpectedServerID.Validate() != nil || p.Scope.NamespaceID.Validate() != nil || (!p.Scope.DefaultOutcomeID.IsZero() && p.Scope.DefaultOutcomeID.Validate() != nil) {
 		return fmt.Errorf("invalid project scope or persistent server ID")
 	}
 	return nil

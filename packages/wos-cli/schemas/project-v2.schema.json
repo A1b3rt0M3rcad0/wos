@@ -50,8 +50,7 @@
         }
       },
       "required": [
-        "namespace_id",
-        "default_outcome_id"
+        "namespace_id"
       ],
       "type": "object"
     },

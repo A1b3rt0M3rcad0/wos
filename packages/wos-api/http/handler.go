@@ -155,6 +155,8 @@ func (h *Handler) routes() {
 	})
 	outcome := base + "/{outcome_id}"
 	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
+	h.mux.HandleFunc("GET "+outcome+"/work-activity", h.listWorkActivity)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/attention", h.getWorkAttention)
 	h.mux.HandleFunc("GET "+outcome+"/work-checkpoints/{checkpoint_id}", h.getWorkCheckpoint)
 	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/signed-trust", h.signedTrust)
 	h.mux.HandleFunc("GET "+outcome+"/signed-state/{resource}", h.signedState)

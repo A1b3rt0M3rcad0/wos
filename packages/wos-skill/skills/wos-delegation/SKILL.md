@@ -1,27 +1,28 @@
 ---
 name: wos-delegation
-description: Delegate authorized bounded WOS contract tasks through native host subagents while keeping supervisor context small. Use only when delegation is authorized and available.
+description: Coordinate auxiliary subagents and independent WOS workers through pinned CLI Profiles and bounded WorkItem contracts in an authorized external runtime.
 ---
 
 # WOS delegation
 
-WOS does not spawn, schedule or run agents. Verify the user's/repository's delegation authorization and the host's native tools before launching workers. If unavailable, execute sequentially or report that limitation.
+WOS does not create, run or schedule agents. Verify delegation is authorized and the external runtime exposes the needed tools. Skill installation configures instructions only; it grants no server identity or host permissions.
 
-For `signed_contracts_v2`, provision a distinct approved schema-2 profile and
-credential for each independent holder. Pass the explicit profile, workspace,
-scope/task IDs, permitted files/tools, acceptance and stop conditions. Workers
-use focal `work show ID --for-agent`, edit only their execution draft, explicitly
-finish and return compact durable IDs. The independent reviewer has its own
-Principal/profile and `review checkout/show/finish` obligation. Private references,
-issued proof blobs and frozen technical intentions stay outside model context.
-Use [signed protocol and recovery](references/signed-protocol.md) for exact flow.
+## Choose the authority mode
 
-1. Define independent WorkItems and acceptance obligations within the authorized Outcome. Plan order and parent grouping do not create execution dependencies; explicit depends_on does.
-2. Send each worker only authorized scope/task IDs, essential intent, permitted files/tools, acceptance and stop conditions. It acquires its own WorkContract and reads its immutable focal snapshot and latest checkpoint from WOS. Do not send the full supervisor conversation by default.
-3. Explicitly select fresh/minimal history if the host supports it. Separate windows can inherit history by default. Neither context nor filesystem isolation is guaranteed by WOS. Do not claim token savings without measurements.
-4. Use distinct provisioned Principal credentials for independent holders. Actor aliases and two keys belonging to one Principal do not distinguish holders. A supervisor cannot silently transfer its contract to a worker with another authenticated identity.
-5. Coordinate shared files outside WOS. Contracts protect WorkItems, not branches, files or deployments. Use isolated checkouts only when authorized; inspect combined edits before certification.
-6. Workers renew only their valid authority, sync checkpoints, submit material and return concise IDs, changed files, test evidence, unresolved facts and next references. The host retains detailed logs outside the supervisor context.
-7. On crash, read the last durable checkpoint. Before expiry, explicit same-holder takeover rotates execution/fencing without extending TTL. After expiry or revocation, acquire a new contract when eligible; the old generation cannot finalize. Review the new exact material and do not re-execute done work.
+- **Auxiliary subagents:** collaborate on one holder's existing WorkItem obligation. The holder retains responsibility, checks results and records/returns through its own authorized CLI. A helper label does not transfer the contract or establish independent review.
+- **Independent workers:** each acquires its own authorized contract for a distinct WorkItem. Each process pins an approved Profile/Principal with `--profile NAME` or process-scoped `WOS_PROFILE`. Credentials/keys under one Principal remain subject to that Principal's shared quotas and independence policy.
 
-Read [runtime differences](references/runtimes.md) only when configuring delegation. Use wos-coordination for the authority protocol, wos-workspace for local recovery, and wos-review for independent proof. WOS never executes a YAML instruction or grants host tool permissions.
+## Delegate bounded work
+
+1. Define responsibilities and actual `depends_on` relationships within the authorized Outcome. Parent grouping and plan order do not create operational dependencies.
+2. Supply only necessary intent, Outcome/WorkItem/contract reference, permitted files/tools, acceptance and stop conditions. Prefer fresh/minimal history where the host supports it; do not send the entire supervisor conversation by default.
+3. Independent workers use `wos --profile worker-a work next --outcome REF` or explicit checkout, then `work context --for-agent --output json`. Auxiliary helpers receive the bounded instructions necessary to help; they do not acquire a second authority for the same WorkItem.
+4. Use the CLI as the only WOS operational interface. Workers never open/interpret/edit internal contracts or Profile documents. They use typed activity/material commands, current context/status and explicit check/finish; UUIDs are optional exact references, not access grants.
+5. Do not switch the global active Profile during concurrent work. `profile use` is interactive; pin each worker process and use an explicit contract reference when it holds more than one obligation.
+6. Coordinate files/branches/deployments in the external host. WOS contracts protect work authority, not filesystem isolation. Native subagent history/worktree/tool isolation must be checked in that runtime.
+7. Collect compact durable outputs: contract/result IDs, actual changed paths, evidence/artifact revisions, unresolved facts and next action. Read authorized bounded status pages rather than full transcripts or history dumps.
+8. On interruption reconcile the original pinned Profile via `work recover --all-pending`; do not reacquire to repair uncertainty. Expired/revoked/stale authority stops effects. Preserve CAS/fencing and original signed bytes.
+
+Independent review uses a genuinely distinct authorized Principal and a separate exact-material review obligation. Different names, keys, windows or subagents for one Principal do not count. A valid signature or executor return is not proof of quality or WorkItem completion.
+
+Read [runtime differences](references/runtimes.md) only for host setup and [protected signing/recovery](references/signed-protocol.md) for authority safety. Use [correction](references/correction.md) only for an explicit original review finding. Measure total usage before claiming context/token savings; successful installation does not certify every agent runtime.

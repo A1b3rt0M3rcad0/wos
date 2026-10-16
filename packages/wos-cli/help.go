@@ -26,20 +26,20 @@ func localCatalog(service bool) CommandCatalog {
 	groups := []CommandGroup{
 		{"help", "Local help and versioned CLI discovery; no credentials required", []string{"wos --help", "wos <group> --help", "wos help <group>", "wos catalog --output json"}},
 		{"version", "Product identity", []string{"wos version --output json"}},
-		{"init", "Initialize legacy schema 1; schema 2 uses project init", []string{"wos init --server URL --namespace ID --outcome ID --credential-env NAME"}},
-		{"project", "Initialize an explicit signed schema-2 workspace", []string{"wos project init --server URL --server-id ID --namespace ID --outcome ID"}},
-		{"profile", "Named schema-2 identity and protected credential references", []string{"wos profile create NAME --file FILE --server URL --server-id ID --issuer-fingerprint SHA256 --enrollment ID", "wos profile list", "wos profile inspect NAME", "wos profile trust NAME --issuer-fingerprint SHA256"}},
+		{"init", "Initialize a private, CWD-independent installation", []string{"wos init", "wos init --from PATH --writers-drained --dry-run", "wos init --from PATH --writers-drained"}},
+		{"project", "Legacy explicit-workspace initialization; select --workspace PATH", []string{"wos --workspace PATH project init --server URL --server-id ID --namespace ID --outcome ID"}},
+		{"profile", "Isolated destinations and protected identities; selection is pinned per invocation", []string{"wos profile create NAME --server URL --server-id ID --namespace ID --issuer-fingerprint SHA256 --credential-ref env:TOKEN --private-key-ref env:KEY --enrollment ID", "wos profile create NAME --server URL --server-id ID --namespace ID --issuer-fingerprint SHA256 --token-stdin --generate-signing-key --enrollment ID", "wos profile list", "wos profile show NAME", "wos profile use NAME", "wos profile remove NAME", "wos --profile NAME profile recover", "wos --profile NAME profile trust --issuer-fingerprint SHA256"}},
 		{"auth", "Authenticate the selected destination and Principal", []string{"wos --profile NAME auth status --output json"}},
 		{"capabilities", "Read supported server contracts", []string{"wos --profile NAME capabilities --output json"}},
 		{"doctor", "Schema-2 destination, issuer, local key and pending-intent diagnostics", []string{"wos --profile NAME doctor --output json"}},
-		{"work", "Execution; use the explicitly selected workspace protocol", []string{"wos --profile NAME work checkout --next", "wos --profile NAME work show ID --for-agent", "wos --profile NAME work sign ID", "wos --profile NAME work send ID", "wos --profile NAME work finish ID", "wos --profile NAME work recover --all-pending", "wos --profile NAME work resolution-status ID", "wos --profile NAME work resolve ID --reason REASON", "wos --profile NAME work renew ID", "wos --profile NAME work resume ID --takeover", "wos --profile NAME work keepalive ID --foreground"}},
-		{"review", "Independent signed review; a different profile alone is not a different Principal", []string{"wos --profile NAME review checkout --next", "wos --profile NAME review show ID --for-agent", "wos --profile NAME review sign ID", "wos --profile NAME review send ID", "wos --profile NAME review finish ID", "wos --profile NAME review recover --all-pending", "wos --profile NAME review resolution-status ID", "wos --profile NAME review resolve ID --reason REASON"}},
+		{"work", "Acquire Tasks, inspect bounded context, record durable material, and deliver", []string{"wos work available --limit 25", "wos work next", "wos work checkout TASK_REF", "wos work list", "wos work context [CONTRACT_REF]", "wos work status [CONTRACT_REF]", "wos work history --work TASK_ID --outcome OUTCOME_ID --order desc", "wos work evidence list", "wos work artifact list", "wos work log add --type progress --description TEXT", "wos work evidence add --description TEXT --uri URI --criterion CRITERION_REF", "wos work artifact add --name NAME --uri URI --artifact-type TYPE", "wos work progress set --summary TEXT --next-action TEXT", "wos work result set --summary TEXT --completion auto", "wos work correction add --finding FINDING_ID --summary TEXT", "wos work check [CONTRACT_REF]", "wos work finish [CONTRACT_REF]", "wos work recover --all-pending", "wos work resolution-status CONTRACT_ID", "wos work resolve CONTRACT_ID --reason REASON", "wos work renew CONTRACT_REF", "wos work resume CONTRACT_REF", "wos work keepalive --all-active --foreground"}},
+		{"review", "Independent review; another profile alone is not another Principal", []string{"wos review next", "wos review checkout CASE_ID --version VERSION", "wos review list", "wos review context [CONTRACT_REF]", "wos review status [CONTRACT_REF]", "wos review evidence add --description TEXT --uri URI --criterion CRITERION_REF", "wos review decision set --decision approved --reason TEXT", "wos review assessment add --criterion CRITERION_REF --result met --rationale TEXT", "wos review assessment list", "wos review assessment set --criterion CRITERION_REF --result met --rationale TEXT", "wos review assessment remove --criterion CRITERION_REF", "wos review decision set --decision changes_requested --reason TEXT", "wos review finding add --criterion CRITERION_REF --description TEXT", "wos review finding add --requirement ORIGINAL_REQUIREMENT_REF --description TEXT", "wos review check [CONTRACT_REF]", "wos review finish [CONTRACT_REF]", "wos review recover --all-pending", "wos review resolution-status CONTRACT_ID", "wos review resolve CONTRACT_ID --reason REASON"}},
 		{"protocol", "Explicit Namespace protocol selection; activation requires an authorized operator", []string{"wos --profile NAME protocol get", "wos --profile NAME protocol preflight", "wos --profile NAME protocol set --phase signed_contracts_v2 --version VERSION --writers-drained --reason REASON", "wos --profile NAME protocol recover"}},
-		{"outcome", "Legacy schema-1 Outcome queries and creation; context is not a CLI verb", []string{"wos outcome get [ID] --output json", "wos outcome list --output json", "wos outcome create --file FILE"}},
-		{"objective", "Legacy schema-1 typed planning commands", []string{"wos objective get ID", "wos objective list", "wos objective create --file FILE"}},
-		{"roadmap", "Legacy schema-1 typed roadmap commands", []string{"wos roadmap get ID", "wos roadmap create --file FILE", "wos roadmap publish --file FILE", "wos roadmap activate --file FILE"}},
-		{"contract", "Legacy schema-1 contract queries; signed contracts use work/review show", []string{"wos contract list", "wos contract get ID", "wos contract history ID", "wos contract revoke ID --version VERSION --reason REASON"}},
-		{"workspace", "Explicit migration; preserve pending intentions", []string{"wos workspace migrate --to 2 --profile NAME --dry-run"}},
+		{"outcome", "Current scoped Outcome discovery; creation remains an explicit legacy operation", []string{"wos outcome get [REF] --output json", "wos outcome list --output json", "wos --workspace PATH outcome create --file FILE"}},
+		{"objective", "Legacy schema-1 typed planning commands", []string{"wos --workspace PATH objective get ID", "wos --workspace PATH objective list", "wos --workspace PATH objective create --file FILE"}},
+		{"roadmap", "Legacy schema-1 typed roadmap commands", []string{"wos --workspace PATH roadmap get ID", "wos --workspace PATH roadmap create --file FILE", "wos --workspace PATH roadmap publish --file FILE", "wos --workspace PATH roadmap activate --file FILE"}},
+		{"contract", "Legacy schema-1 contract queries; signed contracts use work/review show", []string{"wos --workspace PATH contract list", "wos --workspace PATH contract get ID", "wos --workspace PATH contract history --work WORK_ID", "wos --workspace PATH contract revoke ID --version VERSION --reason REASON"}},
+		{"workspace", "Explicit migration; preserve pending intentions", []string{"wos --workspace PATH workspace migrate --to 2 --profile NAME --dry-run"}},
 	}
 	if service {
 		groups = append(groups,
@@ -52,11 +52,17 @@ func localCatalog(service bool) CommandCatalog {
 		)
 	}
 	return CommandCatalog{1, Version, Commit, groups, []string{
-		"Install: npm install -g wosctl@latest; public operations use wos <command>.",
-		"Select --workspace PATH and --profile NAME explicitly for signed schema-2 calls.",
-		"init, project init and skill installation never activate signed_contracts_v2.",
+		"This catalog describes the current binary; published wosctl@0.4.2 lacks the central workflow.",
+		"Profile selection: --profile, WOS_PROFILE, persistent active profile; one invocation stays on its original destination.",
+		"WOS_DATA_DIR overrides the private installation root; --workspace PATH explicitly selects legacy compatibility.",
+		"init, profile creation and skill installation never activate signed_contracts_v2 or grant authority.",
+		"Omit a contract reference only when exactly one local contract matches; ambiguity fails without mutation.",
+		"Use typed commands for material; never edit internal operational documents.",
+		"Execution log/evidence/artifact additions are durable; result/progress and review material are local preparation until return.",
+		"finish reports delivery disposition separately from Task completion and local cleanup.",
 		"Preserve the original payload, idempotency key, expected versions and receipts on timeout.",
 		"Evidence and evidence links do not evaluate criteria or achieve Outcomes.",
+		"Set an approved review decision before adding its criterion assessments; terminal resolution requires an exact contract ID.",
 		"Detailed flags and legacy operations: docs/signed-workspace-profiles.md and packages/wos-cli/README.md.",
 	}}
 }

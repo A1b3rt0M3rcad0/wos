@@ -57,3 +57,44 @@ func TestEvidenceOptionalMetadataPreservesCoreSerialization(t *testing.T) {
 		t.Fatal("legacy Core fingerprint shape changed")
 	}
 }
+
+func TestWorkActivitySchemaPreservesRequiredDescriptionAndDecimalPrecision(t *testing.T) {
+	schema := Schema(reflect.TypeFor[application.AppendWorkActivityCommand]())
+	properties := schema["properties"].(map[string]any)
+	foundDescription := false
+	for _, name := range schema["required"].([]string) {
+		foundDescription = foundDescription || name == "description"
+	}
+	if !foundDescription || properties["expected_contract_version"].(map[string]any)["type"] != "string" {
+		t.Fatal("activity contract must require description and quoted version")
+	}
+	if types := properties["type"].(map[string]any)["enum"].([]string); len(types) != 6 || types[0] != "progress" || types[5] != "result" {
+		t.Fatalf("activity type contract: %+v", types)
+	}
+	command := application.AppendWorkActivityCommand{
+		Scope:      domain.Scope{NamespaceID: domain.MustParseID("0199d094-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("0199d094-0000-7000-8000-000000000002")},
+		ContractID: domain.MustParseID("0199d094-0000-7000-8000-000000000003"), SignerKeyID: domain.MustParseID("0199d094-0000-7000-8000-000000000004"),
+		Authority:       application.ContractAuthority{ExecutionID: domain.MustParseID("0199d094-0000-7000-8000-000000000005"), FencingToken: 9007199254740993, SpecDigest: "issued-specification"},
+		AuthorityDigest: "issued-authority", ExpectedContractVersion: 9007199254740993, Type: domain.WorkActivityProgress, Description: "A bounded observation",
+		CriterionRefs: []domain.WorkActivityCriterionRef{{CriterionID: domain.MustParseID("0199d094-0000-7000-8000-000000000006"), CriterionRevision: 9007199254740993}},
+	}
+	raw, err := Encode(command)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wire map[string]any
+	if err = json.Unmarshal(raw, &wire); err != nil {
+		t.Fatal(err)
+	}
+	if wire["expected_contract_version"] != "9007199254740993" || wire["authority"].(map[string]any)["fencing_token"] != "9007199254740993" || wire["criterion_refs"].([]any)[0].(map[string]any)["criterion_revision"] != "9007199254740993" {
+		t.Fatalf("activity command lost decimal precision: %s", raw)
+	}
+	normalized, err := Normalize(raw, reflect.TypeFor[application.AppendWorkActivityCommand]())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded application.AppendWorkActivityCommand
+	if err = json.Unmarshal(normalized, &decoded); err != nil || !reflect.DeepEqual(command, decoded) {
+		t.Fatalf("activity command round trip: %+v %v", decoded, err)
+	}
+}

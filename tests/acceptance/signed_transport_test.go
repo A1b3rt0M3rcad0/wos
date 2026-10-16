@@ -228,6 +228,7 @@ func signedTransportJourney(t *testing.T, store interface {
 		t.Fatal("HTTP durable acquisition expansion changed original response")
 	}
 	c := acquired.Value.Contract
+	activityCommand := workActivityTransportJourney(t, ctx, worker, session, acquired.Value, registered.Key.ID)
 	requestID, e := generator.NewID()
 	must(e)
 	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "worker", SignerKeyID: registered.Key.ID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: "transport-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(acquired.Value.WorkItem.Version), PolicyRevision: signing.Decimal(registered.CredentialPolicy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "same signed bytes across transports"}), Reason: "no required criteria in bounded fixture"}}
@@ -291,6 +292,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	if !receipt.LocalObligationClosed || receipt.WorkItemLifecycle != "in_progress" {
 		t.Fatal("MCP return did not atomically close executor obligation")
 	}
+	workActivityClosedAuthorityJourney(t, ctx, worker, session, activityCommand)
 	state, e := worker.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "execution", ID: c.ID})
 	must(e)
 	if state.Contract == nil || state.Contract.LeaseValid || uint64(state.Contract.FencingToken) != 9007199254740994 {

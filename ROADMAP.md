@@ -50,6 +50,23 @@ The architecture document describes what should exist. This ROADMAP records what
 
 # Implementation waves
 
+## Centralized agent operations — 2026-10-16
+
+**Status:** locally verified on `feat/central-agent-workflow`; no merge or release publication authorized. The owner requests coordinated CLI, five Skills, backend, README and documentation changes. The supplied implementation brief and strategic summary define the scope; the detailed plan is maintained under `docs/central-agent-workflow/`.
+
+- [x] Initialize one local installation data directory, persistent active profiles, explicit per-process profile selection and distinct protected destinations, without project `.wos` discovery.
+- [x] Migrate existing protected material safely with drained writers, preserved source/issued bytes/pending intentions, collision checks and interruption recovery.
+- [x] Provide bounded discovery, unambiguous short references, optional unique-contract selection, CLI-managed progress/results/evidence/artifacts and preflight/finish without agent YAML editing.
+- [x] Persist authorized chronological activity and documentary references independently of local files; expose scoped paged history and compact known-obligation projections through HTTP, MCP and SDK.
+- [x] Update all five Skills for CLI-only execution, bounded continuation, multiagent roles, true independent review and exact-intent recovery.
+- [x] Update public and operational guides, source/release boundaries, executable examples and a detailed implementation-plan ZIP.
+- [x] Complete local migration, authority, concurrency, recovery, Memory/SQLite/real PostgreSQL, transport/client parity and end-to-end validation; record native/platform and optional-load limits separately in [validation](docs/central-agent-workflow/validation.md). Full normal/race suites each passed 1,501 test/subtest entries; browser checks passed 42 journeys and 14 unit checks. Hosted exact-PR checks remain reported by CI.
+
+Architecture decisions: [central installation](docs/adr/0035-central-cli-installation.md) and [durable execution activity](docs/adr/0036-durable-execution-activity.md). WOS remains passive state and coordination; runtimes execute and schedule agents.
+
+CI follow-up: the released-v0.4.2 upgrade gate compares every installed migration's version, name and checksum with the complete candidate source chain, replacing its stale candidate-schema-29 assertion. The original schema-26 fixture, historical rows, signed proofs, issuer checks and old-binary refusal remain mandatory. The Windows migration fixture closes its inspection handle before directory publication, preserving its assertions; native test diagnostics are retained separately from successful platform acceptance proofs. Exact-head hosted qualification remains reported by the PR checks.
+
+
 ## Editorial workspace presentation — 2026-10-15
 
 **Scope:** the existing six-area human workspace, sign-in, outcome selection, task list and board, entity details, forms, and settings. This presentation follow-up does not mark an additional backend wave or a stable release complete.

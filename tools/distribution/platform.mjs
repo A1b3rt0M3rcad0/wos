@@ -4,13 +4,14 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {root,run,sha256,validVersion} from './build.mjs';
 import {verifySignedPackage} from './signed-smoke.mjs';
+import {nativeGoTestEvents} from './native-go-tests.mjs';
 
 export async function recordNativePlatform(){
  const platform=process.platform==='win32'?'windows':process.platform;
  if(process.env.WOS_TEST_NATIVE_KEYRING!=='1')throw new Error('Native release gate requires the actual OS credential service fixture');
  if(!['linux','windows'].includes(platform)||process.arch!=='x64')throw new Error('Native acceptance requires Linux/Windows amd64 host');
  const version=validVersion((await fs.readFile(path.join(root,'VERSION'),'utf8')).trim());const commit=run('git',['rev-parse','HEAD']);const epoch=run('git',['show','-s','--format=%ct',commit]);const builtAt=new Date(Number(epoch)*1000).toISOString().replace('.000Z','Z');
- const events=run('go',['test','-race','-count=1','-json','./packages/wos-api/cmd/wos','./packages/wos-skill','./packages/wos-cli/...','./packages/wos-sdk-go/...','./tests/acceptance']).split('\n').filter(Boolean).map(line=>JSON.parse(line));
+ const events=await nativeGoTestEvents({root,platform});
  const goTests={passed:events.filter(event=>event.Action==='pass'&&event.Test).length,skipped:events.filter(event=>event.Action==='skip'&&event.Test).map(event=>`${event.Package}:${event.Test}`)};
  if(!goTests.passed)throw new Error('Native gate executed no passing tests');
  run(process.execPath,['--test','packages/wos-skill/test/*.test.mjs']);

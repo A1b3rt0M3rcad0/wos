@@ -26,6 +26,8 @@ func runWorkspaceV2(ctx context.Context, w *Workspace, o options) (Output, error
 		return protocolCommandV2(ctx, w, profile, client, token, identity, o)
 	case "work", "review":
 		return workCommandV2(ctx, w, profile, client, token, identity, o)
+	case "outcome":
+		return outcomeCommandV2(ctx, w, profile, client, o)
 	case "auth":
 		if len(o.args) != 2 || o.args[1] != "status" {
 			return result, usage("auth status")

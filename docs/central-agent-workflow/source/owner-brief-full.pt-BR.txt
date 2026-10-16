@@ -1,0 +1,283 @@
+# Resumo completo do que você quer para o WOS
+
+O objetivo é transformar o WOS em um sistema centralizado de gerenciamento de trabalho para agentes de IA, com um CLI simples, contratos estruturados, histórico verificável de execução e suporte a múltiplos agentes e subagentes.
+
+## 1. Centralização completa do WOS
+
+- Eliminar a necessidade de pastas `.wos/` dentro de cada projeto.
+- Centralizar profiles, contratos e estado operacional no diretório de dados da instalação do WOS.
+- Utilizar `wos init` para inicializar o ambiente local.
+- Não criar uma abstração adicional chamada `home` na interface do CLI.
+- Permitir executar o CLI de qualquer diretório.
+- Substituir definitivamente a arquitetura baseada em workspaces por projeto, preservando uma migração segura dos dados existentes.
+
+## 2. Gerenciamento de Profiles
+
+- Criar, listar, visualizar, ativar e remover Profiles pelo CLI.
+- Permitir um Profile ativo persistente, utilizado automaticamente pelas operações seguintes.
+- Trocar o Profile ativo com `wos profile use <nome>`.
+- Permitir sobrescrever temporariamente o Profile com `--profile` ou `WOS_PROFILE`.
+- Cada Profile mantém sua identidade, credencial, chave de assinatura, Namespace e contratos.
+- Profiles podem pertencer a diferentes Namespaces e servidores WOS.
+- Manter autenticação, permissões e assinatura controladas pelo servidor.
+
+## 3. Simplificação radical do CLI
+
+O CLI deve ser intuitivo, com poucos comandos e sem exigir conhecimento dos detalhes internos do WOS.
+
+Exemplo da interface desejada:
+
+```
+wos init
+wos profile list
+wos profile use executor
+
+wos outcome list
+wos work available
+wos work next
+wos work show
+wos work status
+wos work finish
+```
+
+- Priorizar nomes, aliases e referências curtas.
+- UUIDs continuam suportados, mas como alternativa técnica.
+- Quando houver apenas um contrato aplicável, selecioná-lo automaticamente.
+- Quando houver ambiguidade, exigir seleção explícita.
+- Oferecer saídas legíveis para humanos e JSON compacto para agentes.
+- Encapsular versões, fencing, assinaturas e operações de recuperação.
+
+## 4. Agentes nunca manipulam YAML diretamente
+
+O CLI será a única interface operacional do agente com o WOS.
+
+- Agentes não devem abrir, interpretar ou editar arquivos YAML.
+- O CLI gerencia toda a leitura e escrita dos contratos.
+- Os YAMLs permanecem como persistência interna, se forem mantidos.
+- Toda alteração deve passar por validação e controle de concorrência.
+- Os contratos continuam assinados e protegidos contra modificações indevidas.
+
+## 5. Aquisição de trabalho
+
+- O agente consulta os trabalhos disponíveis.
+- Seleciona um WorkItem ou solicita o próximo elegível.
+- O WOS emite um WorkContract para esse WorkItem.
+- O CLI armazena o contrato automaticamente.
+- O contrato apresenta o contexto do Outcome e do Objective, quando aplicável.
+- O agente recebe somente as informações necessárias à execução.
+
+O contrato é adquirido para um WorkItem, não diretamente para um Objective.
+
+## 6. Estrutura completa dos contratos
+
+O contrato deve reunir:
+
+- Identidade e autoridade assinada.
+- Objetivo e contexto do trabalho.
+- Instruções e restrições.
+- Entregáveis esperados.
+- Critérios de sucesso.
+- Dependências e impedimentos relevantes.
+- Histórico de execução do agente.
+- Artefatos e evidências.
+- Resultado produzido.
+- Estado da entrega e informações de recuperação.
+
+As especificações emitidas pelo servidor permanecem imutáveis. O agente altera somente seu material operacional por meio do CLI.
+
+## 7. Histórico cronológico de execução
+
+Você quer registrar toda a evolução relevante do trabalho.
+
+Exemplo:
+
+```
+1. Módulo de autenticação criado
+2. Bug de expiração identificado
+3. Bug corrigido
+4. Testes executados
+5. Integração concluída
+6. Pronto para entrega
+```
+
+- Cada registro possui tipo, descrição e ordem cronológica.
+- Pode incluir timestamp, responsável e referências de evidência.
+- O histórico não deve ser sobrescrito.
+- Problemas identificados e posteriormente corrigidos permanecem rastreáveis.
+- O histórico precisa sobreviver à finalização e à exclusão do contrato local.
+
+## 8. Gerenciamento de evidências e artefatos
+
+O agente registra suas evidências exclusivamente pelo CLI.
+
+```
+wos work log add ...
+wos work evidence add ...
+wos work artifact add ...
+wos work evidence list
+```
+
+O WOS deve permitir associar evidências:
+
+- À atividade que as originou.
+- Ao WorkItem executado.
+- Aos critérios de sucesso correspondentes.
+- Aos artefatos e versões exatas produzidos.
+
+Também deve distinguir claramente atividade declarada, evidência registrada e critério efetivamente aprovado.
+
+## 9. Pendências e próximas ações
+
+Você não quer que o agente tenha de preencher manualmente uma lista redundante de `pending[]`.
+
+O WOS deve fornecer o que já conhece:
+
+- Obrigações ainda não atendidas.
+- Critérios sem evidências suficientes.
+- Dependências não satisfeitas.
+- Bloqueios ativos.
+- Correções exigidas por revisores.
+- Condições necessárias para entregar o trabalho.
+
+O CLI combina essas informações com o progresso informado pelo agente e apresenta o que ainda precisa de atenção.
+
+As intenções técnicas pendentes de envio ou recuperação continuam sendo gerenciadas internamente pelo CLI.
+
+## 10. Consulta de contratos e progresso
+
+O usuário e os agentes devem conseguir:
+
+```
+wos work list
+wos work status
+wos work show
+wos work history
+wos work context
+wos work check
+```
+
+Visualizar contratos ativos, entregues, concluídos, expirados, revogados ou aguardando revisão.
+
+Também consultar histórico, evidências, critérios, estado da autoridade e próximas ações.
+
+O servidor deve ser a fonte definitiva do histórico, porque os arquivos locais podem ser removidos depois de uma entrega confirmada.
+
+## 11. Entrega e revisão
+
+O fluxo desejado:
+
+```
+wos work check
+wos work finish
+```
+
+O CLI deve:
+
+- Verificar a integridade do contrato e do material.
+- Validar as condições técnicas da entrega.
+- Preparar e assinar o resultado.
+- Enviar ao servidor.
+- Recuperar respostas incertas sem duplicar operações.
+- Confirmar a aceitação por recibo assinado.
+- Limpar o arquivo local quando permitido.
+
+Uma entrega que exige revisão independente não pode ser apresentada como um WorkItem já concluído.
+
+## 12. Suporte a múltiplos agentes e subagentes
+
+O WOS deve permitir que um agente principal trabalhe com vários agentes ou subagentes simultaneamente, inclusive em múltiplos níveis.
+
+Dois modos:
+
+Subagentes auxiliares: colaboram na execução de um único contrato, cuja autoridade permanece com o titular.
+
+Agentes independentes: trabalham em WorkItems distintos, cada um com seu próprio contrato e autoridade autorizada.
+
+O WOS coordena os trabalhos e suas dependências, mas não executa nem inicia os agentes.
+
+## 13. Isolamento e concorrência multiagente
+
+- Suportar vários contratos ativos simultaneamente, respeitando as quotas.
+- Evitar que dois agentes adquiram autoridade concorrente sobre o mesmo WorkItem.
+- Permitir Profiles e credenciais independentes.
+- Fixar o Profile de cada processo para impedir interferência do Profile ativo global.
+- Preservar locks, CAS, leases e fencing.
+- Permitir que um agente coordenador consulte o progresso dos demais quando autorizado.
+- Não confundir subagentes do mesmo Principal com revisores independentes.
+
+## 14. Atualização do WOS Server
+
+O servidor também precisa evoluir, especialmente para:
+
+- Persistir o histórico estruturado de atividades.
+- Expor consultas eficientes desse histórico.
+- Preservar evidências e resultados após a finalização.
+- Oferecer projeções de obrigações e pendências.
+- Facilitar descoberta e resolução de referências curtas.
+- Suportar consultas agregadas para coordenação multiagente.
+- Manter paridade entre API HTTP, MCP e SDK.
+- Preservar o modelo de autorização, os contratos assinados e a revisão independente.
+
+A ideia é ampliar o que já existe, sem reconstruir o domínio do WOS desnecessariamente.
+
+## 15. Atualização das Skills oficiais do WOS
+
+Atualizar as cinco Skills atuais:
+
+| Skill              | Evolução                                             |
+| ------------------ | ---------------------------------------------------- |
+| `wos-workspace`    | Operação exclusivamente pelo CLI centralizado        |
+| `wos-coordination` | Descoberta, aquisição e acompanhamento de trabalho   |
+| `wos-delegation`   | Uso correto com múltiplos agentes e subagentes       |
+| `wos-continuity`   | Recuperação de contexto e continuidade entre sessões |
+| `wos-review`       | Revisão independente, critérios e evidências         |
+
+Todas devem:
+
+- Ensinar o novo fluxo do CLI.
+- Abandonar instruções para editar YAML diretamente.
+- Priorizar consultas compactas.
+- Evitar carregar o histórico inteiro desnecessariamente.
+- Preservar regras de autoridade, autorização, revisão e recuperação.
+
+## 16. Entrega do plano de implementação
+
+Você quer receber um arquivo `.zip` contendo um plano executável completo e detalhado, não apenas uma descrição arquitetural.
+
+O ZIP deve conter:
+
+- Um `README.md` central com a visão geral, decisões, ordem de execução e critérios finais de aceitação.
+- Documentos `.md` separados para arquitetura, CLI, Profiles, contratos, atividades, evidências, servidor, multiagentes e Skills.
+- Identificação dos arquivos e componentes existentes que precisam de mudanças.
+- Etapas de implementação com dependências explícitas.
+- Contratos e exemplos de comandos antes/depois.
+- Estratégia de migração e compatibilidade.
+- Casos de teste, concorrência, integração e recuperação.
+- Critérios objetivos de conclusão.
+- Organização em commits para implementação e revisão.
+
+A implementação deve contemplar as três frentes: CLI, WOS Server e Skills, de maneira coordenada.
+
+## Resultado final esperado
+
+O fluxo completo deveria ser tão simples quanto:
+
+```
+wos profile use executor
+
+wos work next
+wos work context
+
+# O agente executa o trabalho.
+
+wos work log add ...
+wos work evidence add ...
+
+wos work status
+wos work check
+wos work finish
+```
+
+E para múltiplos agentes, cada processo trabalha com sua identidade e seu contrato, enquanto o WOS centraliza o estado, as dependências, as evidências e os resultados.
+
+Em uma frase: você quer que o WOS seja a infraestrutura central de coordenação, continuidade e comprovação do trabalho dos agentes de IA, escondendo toda a complexidade operacional atrás de um CLI simples, sem exigir que os agentes conheçam YAML, UUIDs, mecanismos de assinatura ou detalhes de armazenamento.

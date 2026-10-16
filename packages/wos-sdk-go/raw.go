@@ -19,7 +19,11 @@ func (c *Client) ExecuteCommand(ctx context.Context, name, key string, payload j
 		return nil, fmt.Errorf("invalid command payload")
 	}
 	var out json.RawMessage
-	err := c.do(ctx, "POST", "/commands/"+url.PathEscape(name), key, map[string]any{"command": payload}, &out)
+	maximum := int64(256 << 10)
+	if name == "append_work_activity" {
+		maximum = domain.MaxSignedOperationResultBytes + (64 << 10)
+	}
+	err := c.doBounded(ctx, "POST", "/commands/"+url.PathEscape(name), key, map[string]any{"command": payload}, &out, maximum)
 	return out, err
 }
 func (c *Client) QueryJSON(ctx context.Context, path string) (json.RawMessage, error) {
