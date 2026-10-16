@@ -1,0 +1,1686 @@
+{
+  "schema": 1,
+  "complete": true,
+  "production_sla": false,
+  "baseline_source": "b572269085494ddd4d6370716ff1cb360b46065f",
+  "candidate_source": "aa7ccc349c1bdef9ab509ae3cafaadac2368a5d8",
+  "harness": "v2: same ANALYZE outside timing; SQL tracing and pool deltas on both sources",
+  "aggregation": "median of all three or more equal-sample p95 repetitions; raw repetitions retained",
+  "targets_declared_before_run": {
+    "simple_10000_p95_ratio": 0.7,
+    "simple_10000_bytes_ratio": 0.5,
+    "full_10000_p95_ratio": 0.7,
+    "full_10000_bytes_ratio": 0.5,
+    "focal_1000_p95_ratio": 1.1
+  },
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "go": "go version go1.27.2 linux/amd64",
+    "gomaxprocs": "3"
+  },
+  "sources": {
+    "baseline": {
+      "production_go_sql_sha256": "5eee095166b163c0da44bb84d509fe96eb4f21ebd24db2feebb4c0904864e1f7",
+      "read_harness_sha256": "ab331ba77b4846fadbd3ff2c72815bc32819dc2e70a25fe70f5efca4041834d8"
+    },
+    "candidate": {
+      "production_go_sql_sha256": "c5b34d15d0fd30b7de2131d7df41b4e2027d90791924f4cb88ef26873db66b93",
+      "read_harness_sha256": "ab331ba77b4846fadbd3ff2c72815bc32819dc2e70a25fe70f5efca4041834d8"
+    }
+  },
+  "runs": [
+    {
+      "source": "baseline",
+      "backend": "sqlite",
+      "items": 100,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 7695372.0,
+            "p50_ns": 7383868.0,
+            "p95_ns": 11164985.0,
+            "p99_ns": 19469606.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1221178.0,
+            "allocs/op": 13278.0
+          },
+          {
+            "ns/op": 7517847.0,
+            "p50_ns": 6845150.0,
+            "p95_ns": 12558263.0,
+            "p99_ns": 19152697.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1220606.0,
+            "allocs/op": 13274.0
+          },
+          {
+            "ns/op": 6447379.0,
+            "p50_ns": 6235624.0,
+            "p95_ns": 8882837.0,
+            "p99_ns": 12601826.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1220731.0,
+            "allocs/op": 13273.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 7355343.0,
+            "p50_ns": 7168658.0,
+            "p95_ns": 10175808.0,
+            "p99_ns": 13495611.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1429575.0,
+            "allocs/op": 13538.0
+          },
+          {
+            "ns/op": 7455814.0,
+            "p50_ns": 7173826.0,
+            "p95_ns": 9998179.0,
+            "p99_ns": 18120632.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1429549.0,
+            "allocs/op": 13536.0
+          },
+          {
+            "ns/op": 8407407.0,
+            "p50_ns": 8026178.0,
+            "p95_ns": 11386136.0,
+            "p99_ns": 23429084.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 32.0,
+            "B/op": 1435655.0,
+            "allocs/op": 13538.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 3919969.0,
+            "p50_ns": 3864554.0,
+            "p95_ns": 5508760.0,
+            "p99_ns": 7158956.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 59239.0,
+            "allocs/op": 1186.0
+          },
+          {
+            "ns/op": 4277587.0,
+            "p50_ns": 4165101.0,
+            "p95_ns": 5763141.0,
+            "p99_ns": 8318395.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58390.0,
+            "allocs/op": 1177.0
+          },
+          {
+            "ns/op": 4298074.0,
+            "p50_ns": 4040981.0,
+            "p95_ns": 7127264.0,
+            "p99_ns": 17110507.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58104.0,
+            "allocs/op": 1176.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 4.762307993951254,
+        "user_cpu_seconds": 5.198355,
+        "system_cpu_seconds": 0.6763199999999999,
+        "peak_rss_bytes": 24055808,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "sqlite",
+      "items": 100,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 758368.0,
+            "p50_ns": 666100.0,
+            "p95_ns": 1224322.0,
+            "p99_ns": 1647794.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85504.0,
+            "allocs/op": 616.0
+          },
+          {
+            "ns/op": 656426.0,
+            "p50_ns": 605758.0,
+            "p95_ns": 1197636.0,
+            "p99_ns": 1495903.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85209.0,
+            "allocs/op": 612.0
+          },
+          {
+            "ns/op": 460478.0,
+            "p50_ns": 401029.0,
+            "p95_ns": 811671.0,
+            "p99_ns": 1144588.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85143.0,
+            "allocs/op": 612.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 6192048.0,
+            "p50_ns": 5284404.0,
+            "p95_ns": 10497960.0,
+            "p99_ns": 26948246.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 33.0,
+            "B/op": 912304.0,
+            "allocs/op": 4721.0
+          },
+          {
+            "ns/op": 5430049.0,
+            "p50_ns": 4961087.0,
+            "p95_ns": 8083587.0,
+            "p99_ns": 12430627.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 33.0,
+            "B/op": 912065.0,
+            "allocs/op": 4717.0
+          },
+          {
+            "ns/op": 6186225.0,
+            "p50_ns": 6004913.0,
+            "p95_ns": 8804139.0,
+            "p99_ns": 15896070.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 33.0,
+            "B/op": 912204.0,
+            "allocs/op": 4718.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 2971196.0,
+            "p50_ns": 2896606.0,
+            "p95_ns": 4441500.0,
+            "p99_ns": 5222424.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 44855.0,
+            "allocs/op": 785.0
+          },
+          {
+            "ns/op": 2614549.0,
+            "p50_ns": 2258759.0,
+            "p95_ns": 4161969.0,
+            "p99_ns": 10490728.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 43897.0,
+            "allocs/op": 775.0
+          },
+          {
+            "ns/op": 3005225.0,
+            "p50_ns": 2798545.0,
+            "p95_ns": 4661437.0,
+            "p99_ns": 6410597.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 44100.0,
+            "allocs/op": 777.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 2.447008685907349,
+        "user_cpu_seconds": 2.680989,
+        "system_cpu_seconds": 0.34657099999999996,
+        "peak_rss_bytes": 24461312,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "baseline",
+      "backend": "sqlite",
+      "items": 1000,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 59797462.0,
+            "p50_ns": 47115834.0,
+            "p95_ns": 90008412.0,
+            "p99_ns": 411945959.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12024623.0,
+            "allocs/op": 124081.0
+          },
+          {
+            "ns/op": 56141388.0,
+            "p50_ns": 51422528.0,
+            "p95_ns": 80974554.0,
+            "p99_ns": 118629384.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12024029.0,
+            "allocs/op": 124077.0
+          },
+          {
+            "ns/op": 58497267.0,
+            "p50_ns": 54019406.0,
+            "p95_ns": 85755274.0,
+            "p99_ns": 163091295.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12024360.0,
+            "allocs/op": 124076.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 64616696.0,
+            "p50_ns": 58720634.0,
+            "p95_ns": 99877475.0,
+            "p99_ns": 130018676.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12389854.0,
+            "allocs/op": 124348.0
+          },
+          {
+            "ns/op": 80444531.0,
+            "p50_ns": 59073644.0,
+            "p95_ns": 213873490.0,
+            "p99_ns": 433956597.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12388453.0,
+            "allocs/op": 124343.0
+          },
+          {
+            "ns/op": 53129409.0,
+            "p50_ns": 50059557.0,
+            "p95_ns": 76532002.0,
+            "p99_ns": 83594935.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 32.0,
+            "B/op": 12390056.0,
+            "allocs/op": 124345.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 4004599.0,
+            "p50_ns": 3745311.0,
+            "p95_ns": 5401471.0,
+            "p99_ns": 6251307.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 59244.0,
+            "allocs/op": 1186.0
+          },
+          {
+            "ns/op": 4078175.0,
+            "p50_ns": 3853119.0,
+            "p95_ns": 5910549.0,
+            "p99_ns": 8075010.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58338.0,
+            "allocs/op": 1177.0
+          },
+          {
+            "ns/op": 4722090.0,
+            "p50_ns": 4204290.0,
+            "p95_ns": 6947860.0,
+            "p99_ns": 15522088.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58556.0,
+            "allocs/op": 1177.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 31.541814706055447,
+        "user_cpu_seconds": 32.829751,
+        "system_cpu_seconds": 7.028153,
+        "peak_rss_bytes": 31555584,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "sqlite",
+      "items": 1000,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 1460712.0,
+            "p50_ns": 1079066.0,
+            "p95_ns": 3903818.0,
+            "p99_ns": 5586907.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85437.0,
+            "allocs/op": 615.0
+          },
+          {
+            "ns/op": 1138100.0,
+            "p50_ns": 949566.0,
+            "p95_ns": 2180611.0,
+            "p99_ns": 5803033.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85244.0,
+            "allocs/op": 613.0
+          },
+          {
+            "ns/op": 1352378.0,
+            "p50_ns": 1145678.0,
+            "p95_ns": 2345300.0,
+            "p99_ns": 6106838.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85257.0,
+            "allocs/op": 613.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 24304843.0,
+            "p50_ns": 20349679.0,
+            "p95_ns": 36632626.0,
+            "p99_ns": 164682718.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 33.0,
+            "B/op": 4416421.0,
+            "allocs/op": 24568.0
+          },
+          {
+            "ns/op": 25569105.0,
+            "p50_ns": 23274567.0,
+            "p95_ns": 40738938.0,
+            "p99_ns": 102257365.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 33.0,
+            "B/op": 4415730.0,
+            "allocs/op": 24561.0
+          },
+          {
+            "ns/op": 24312350.0,
+            "p50_ns": 20522185.0,
+            "p95_ns": 50479937.0,
+            "p99_ns": 75923253.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 33.0,
+            "B/op": 4417985.0,
+            "allocs/op": 24563.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 1988364.0,
+            "p50_ns": 1746717.0,
+            "p95_ns": 3015649.0,
+            "p99_ns": 6744769.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 44148.0,
+            "allocs/op": 782.0
+          },
+          {
+            "ns/op": 2210031.0,
+            "p50_ns": 2061544.0,
+            "p95_ns": 3366302.0,
+            "p99_ns": 4850030.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 43821.0,
+            "allocs/op": 775.0
+          },
+          {
+            "ns/op": 2337125.0,
+            "p50_ns": 1935496.0,
+            "p95_ns": 4180592.0,
+            "p99_ns": 5414797.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 43669.0,
+            "allocs/op": 774.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 7.5627291679847986,
+        "user_cpu_seconds": 7.7355149999999995,
+        "system_cpu_seconds": 1.548718,
+        "peak_rss_bytes": 25657344,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "baseline",
+      "backend": "sqlite",
+      "items": 10000,
+      "samples_per_repetition": 40,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 467947331.0,
+            "p50_ns": 450782413.0,
+            "p95_ns": 568156278.0,
+            "p99_ns": 723635938.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 32.0,
+            "B/op": 125831545.0,
+            "allocs/op": 1231503.0
+          },
+          {
+            "ns/op": 486233451.0,
+            "p50_ns": 485041236.0,
+            "p95_ns": 554556877.0,
+            "p99_ns": 767007250.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 32.0,
+            "B/op": 125829719.0,
+            "allocs/op": 1231495.0
+          },
+          {
+            "ns/op": 493967154.0,
+            "p50_ns": 477602640.0,
+            "p95_ns": 651303281.0,
+            "p99_ns": 686327507.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 32.0,
+            "B/op": 125831540.0,
+            "allocs/op": 1231495.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 480220644.0,
+            "p50_ns": 461937729.0,
+            "p95_ns": 642858612.0,
+            "p99_ns": 665701980.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 32.0,
+            "B/op": 129596125.0,
+            "allocs/op": 1231776.0
+          },
+          {
+            "ns/op": 534427387.0,
+            "p50_ns": 495841396.0,
+            "p95_ns": 890340381.0,
+            "p99_ns": 934785726.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 32.0,
+            "B/op": 129596272.0,
+            "allocs/op": 1231774.0
+          },
+          {
+            "ns/op": 486193011.0,
+            "p50_ns": 463659730.0,
+            "p95_ns": 661237591.0,
+            "p99_ns": 740733166.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 32.0,
+            "B/op": 129595673.0,
+            "allocs/op": 1231772.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 14255345.0,
+            "p50_ns": 13070834.0,
+            "p95_ns": 20036979.0,
+            "p99_ns": 25928703.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 60522.0,
+            "allocs/op": 1196.0
+          },
+          {
+            "ns/op": 14535613.0,
+            "p50_ns": 13651477.0,
+            "p95_ns": 20204818.0,
+            "p99_ns": 27459055.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58182.0,
+            "allocs/op": 1177.0
+          },
+          {
+            "ns/op": 13319680.0,
+            "p50_ns": 12744299.0,
+            "p95_ns": 18697112.0,
+            "p99_ns": 19595707.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 34.0,
+            "B/op": 58205.0,
+            "allocs/op": 1177.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 126.1729482440278,
+        "user_cpu_seconds": 137.15532,
+        "system_cpu_seconds": 18.00223,
+        "peak_rss_bytes": 107393024,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "sqlite",
+      "items": 10000,
+      "samples_per_repetition": 40,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 4817008.0,
+            "p50_ns": 4406689.0,
+            "p95_ns": 6761390.0,
+            "p99_ns": 9257544.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85674.0,
+            "allocs/op": 618.0
+          },
+          {
+            "ns/op": 5284649.0,
+            "p50_ns": 4410884.0,
+            "p95_ns": 9378701.0,
+            "p99_ns": 12053087.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85297.0,
+            "allocs/op": 613.0
+          },
+          {
+            "ns/op": 6686870.0,
+            "p50_ns": 5534574.0,
+            "p95_ns": 12218176.0,
+            "p99_ns": 13284109.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 6.0,
+            "B/op": 85299.0,
+            "allocs/op": 613.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 183364857.0,
+            "p50_ns": 175840921.0,
+            "p95_ns": 247322261.0,
+            "p99_ns": 284174199.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 33.0,
+            "B/op": 44509780.0,
+            "allocs/op": 222731.0
+          },
+          {
+            "ns/op": 186855064.0,
+            "p50_ns": 181267620.0,
+            "p95_ns": 225589514.0,
+            "p99_ns": 241520074.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 33.0,
+            "B/op": 44505289.0,
+            "allocs/op": 222720.0
+          },
+          {
+            "ns/op": 204510332.0,
+            "p50_ns": 183473209.0,
+            "p95_ns": 311101235.0,
+            "p99_ns": 454957702.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 33.0,
+            "B/op": 44505348.0,
+            "allocs/op": 222721.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 4265972.0,
+            "p50_ns": 2507359.0,
+            "p95_ns": 7222317.0,
+            "p99_ns": 39249036.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 45244.0,
+            "allocs/op": 794.0
+          },
+          {
+            "ns/op": 2989629.0,
+            "p50_ns": 2541775.0,
+            "p95_ns": 5836186.0,
+            "p99_ns": 7429673.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 43604.0,
+            "allocs/op": 776.0
+          },
+          {
+            "ns/op": 2949364.0,
+            "p50_ns": 2153281.0,
+            "p95_ns": 3515620.0,
+            "p99_ns": 28210637.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 22.0,
+            "B/op": 44354.0,
+            "allocs/op": 777.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 30.572380695026368,
+        "user_cpu_seconds": 30.110642,
+        "system_cpu_seconds": 6.889436,
+        "peak_rss_bytes": 56426496,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "baseline",
+      "backend": "postgres",
+      "items": 100,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 22744018.0,
+            "p50_ns": 18930977.0,
+            "p95_ns": 41334357.0,
+            "p99_ns": 91615277.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1302740.0,
+            "allocs/op": 16683.0
+          },
+          {
+            "ns/op": 19321867.0,
+            "p50_ns": 18213871.0,
+            "p95_ns": 28062324.0,
+            "p99_ns": 35145984.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1301505.0,
+            "allocs/op": 16677.0
+          },
+          {
+            "ns/op": 23704828.0,
+            "p50_ns": 20152878.0,
+            "p95_ns": 47205321.0,
+            "p99_ns": 59943934.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7484.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1300997.0,
+            "allocs/op": 16676.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 36104822.0,
+            "p50_ns": 22923494.0,
+            "p95_ns": 98065208.0,
+            "p99_ns": 242887613.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1513183.0,
+            "allocs/op": 16945.0
+          },
+          {
+            "ns/op": 25226770.0,
+            "p50_ns": 20487507.0,
+            "p95_ns": 49349085.0,
+            "p99_ns": 97115719.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1512563.0,
+            "allocs/op": 16944.0
+          },
+          {
+            "ns/op": 32326800.0,
+            "p50_ns": 24344182.0,
+            "p95_ns": 61210885.0,
+            "p99_ns": 184412956.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32341.0,
+            "sql_statements/op": 34.0,
+            "B/op": 1511301.0,
+            "allocs/op": 16943.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 16995882.0,
+            "p50_ns": 15163864.0,
+            "p95_ns": 26909636.0,
+            "p99_ns": 34188884.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 109128.0,
+            "allocs/op": 2124.0
+          },
+          {
+            "ns/op": 17171681.0,
+            "p50_ns": 16003579.0,
+            "p95_ns": 28245352.0,
+            "p99_ns": 32599332.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107984.0,
+            "allocs/op": 2114.0
+          },
+          {
+            "ns/op": 27310720.0,
+            "p50_ns": 17543250.0,
+            "p95_ns": 60830733.0,
+            "p99_ns": 106920048.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107987.0,
+            "allocs/op": 2114.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 18.86890465999022,
+        "user_cpu_seconds": 5.628733,
+        "system_cpu_seconds": 3.040094,
+        "peak_rss_bytes": 22736896,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "postgres",
+      "items": 100,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 12362334.0,
+            "p50_ns": 10939495.0,
+            "p95_ns": 25324873.0,
+            "p99_ns": 70475975.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 8.0,
+            "B/op": 93827.0,
+            "allocs/op": 839.0
+          },
+          {
+            "ns/op": 10251192.0,
+            "p50_ns": 9926888.0,
+            "p95_ns": 21041127.0,
+            "p99_ns": 25773600.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 8.0,
+            "B/op": 92738.0,
+            "allocs/op": 835.0
+          },
+          {
+            "ns/op": 5814090.0,
+            "p50_ns": 4752524.0,
+            "p95_ns": 14241343.0,
+            "p99_ns": 27305542.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7472.0,
+            "sql_statements/op": 8.0,
+            "B/op": 93623.0,
+            "allocs/op": 835.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 22515877.0,
+            "p50_ns": 19060071.0,
+            "p95_ns": 34388531.0,
+            "p99_ns": 61485513.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 35.0,
+            "B/op": 1085768.0,
+            "allocs/op": 6175.0
+          },
+          {
+            "ns/op": 19055976.0,
+            "p50_ns": 18181430.0,
+            "p95_ns": 26775401.0,
+            "p99_ns": 36844299.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 35.0,
+            "B/op": 1075690.0,
+            "allocs/op": 6170.0
+          },
+          {
+            "ns/op": 20388018.0,
+            "p50_ns": 19514066.0,
+            "p95_ns": 26751206.0,
+            "p99_ns": 39286544.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32319.0,
+            "sql_statements/op": 35.0,
+            "B/op": 1078327.0,
+            "allocs/op": 6170.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 12878938.0,
+            "p50_ns": 12104704.0,
+            "p95_ns": 19900085.0,
+            "p99_ns": 37435403.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 96138.0,
+            "allocs/op": 1556.0
+          },
+          {
+            "ns/op": 11211423.0,
+            "p50_ns": 10263469.0,
+            "p95_ns": 16149205.0,
+            "p99_ns": 26007799.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95079.0,
+            "allocs/op": 1547.0
+          },
+          {
+            "ns/op": 10830743.0,
+            "p50_ns": 10359527.0,
+            "p95_ns": 14172599.0,
+            "p99_ns": 22881613.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95072.0,
+            "allocs/op": 1546.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 11.746982675045729,
+        "user_cpu_seconds": 2.48422,
+        "system_cpu_seconds": 2.045624,
+        "peak_rss_bytes": 23019520,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "baseline",
+      "backend": "postgres",
+      "items": 1000,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 71905414.0,
+            "p50_ns": 64038212.0,
+            "p95_ns": 113706030.0,
+            "p99_ns": 208929725.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12488778.0,
+            "allocs/op": 151857.0
+          },
+          {
+            "ns/op": 73418715.0,
+            "p50_ns": 68680252.0,
+            "p95_ns": 114563408.0,
+            "p99_ns": 129214939.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12488252.0,
+            "allocs/op": 151852.0
+          },
+          {
+            "ns/op": 106068208.0,
+            "p50_ns": 101616228.0,
+            "p95_ns": 143993279.0,
+            "p99_ns": 332505214.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7486.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12487876.0,
+            "allocs/op": 151852.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 124765601.0,
+            "p50_ns": 109814150.0,
+            "p95_ns": 228488918.0,
+            "p99_ns": 345100095.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12853609.0,
+            "allocs/op": 152124.0
+          },
+          {
+            "ns/op": 94061157.0,
+            "p50_ns": 86427801.0,
+            "p95_ns": 143866214.0,
+            "p99_ns": 248591674.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12853202.0,
+            "allocs/op": 152121.0
+          },
+          {
+            "ns/op": 82803953.0,
+            "p50_ns": 69468812.0,
+            "p95_ns": 149669722.0,
+            "p99_ns": 231468759.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32351.0,
+            "sql_statements/op": 34.0,
+            "B/op": 12852880.0,
+            "allocs/op": 152122.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 19182345.0,
+            "p50_ns": 16200994.0,
+            "p95_ns": 33628069.0,
+            "p99_ns": 61425395.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 109078.0,
+            "allocs/op": 2123.0
+          },
+          {
+            "ns/op": 28400329.0,
+            "p50_ns": 22833003.0,
+            "p95_ns": 47960509.0,
+            "p99_ns": 228239053.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107834.0,
+            "allocs/op": 2113.0
+          },
+          {
+            "ns/op": 19222967.0,
+            "p50_ns": 17215461.0,
+            "p95_ns": 31575785.0,
+            "p99_ns": 35268714.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107839.0,
+            "allocs/op": 2113.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 55.98552310501691,
+        "user_cpu_seconds": 33.28646,
+        "system_cpu_seconds": 12.990396,
+        "peak_rss_bytes": 29863936,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "postgres",
+      "items": 1000,
+      "samples_per_repetition": 80,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 3482064.0,
+            "p50_ns": 3114418.0,
+            "p95_ns": 5250178.0,
+            "p99_ns": 18106373.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 8.0,
+            "B/op": 93909.0,
+            "allocs/op": 842.0
+          },
+          {
+            "ns/op": 3296907.0,
+            "p50_ns": 2989453.0,
+            "p95_ns": 5948112.0,
+            "p99_ns": 8931473.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 8.0,
+            "B/op": 92688.0,
+            "allocs/op": 837.0
+          },
+          {
+            "ns/op": 3461868.0,
+            "p50_ns": 3214133.0,
+            "p95_ns": 4953795.0,
+            "p99_ns": 10561976.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7474.0,
+            "sql_statements/op": 8.0,
+            "B/op": 92675.0,
+            "allocs/op": 837.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 50907049.0,
+            "p50_ns": 47207221.0,
+            "p95_ns": 81815476.0,
+            "p99_ns": 108853431.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 35.0,
+            "B/op": 4673099.0,
+            "allocs/op": 29669.0
+          },
+          {
+            "ns/op": 52619166.0,
+            "p50_ns": 47157822.0,
+            "p95_ns": 67811011.0,
+            "p99_ns": 225577795.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 35.0,
+            "B/op": 4679722.0,
+            "allocs/op": 29663.0
+          },
+          {
+            "ns/op": 46035762.0,
+            "p50_ns": 45741447.0,
+            "p95_ns": 55036708.0,
+            "p99_ns": 64281078.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32329.0,
+            "sql_statements/op": 35.0,
+            "B/op": 4667479.0,
+            "allocs/op": 29662.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 12286599.0,
+            "p50_ns": 11028669.0,
+            "p95_ns": 21553263.0,
+            "p99_ns": 28495909.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 96335.0,
+            "allocs/op": 1556.0
+          },
+          {
+            "ns/op": 12966032.0,
+            "p50_ns": 11675333.0,
+            "p95_ns": 18578169.0,
+            "p99_ns": 23418464.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95114.0,
+            "allocs/op": 1547.0
+          },
+          {
+            "ns/op": 12415212.0,
+            "p50_ns": 11233357.0,
+            "p95_ns": 19241865.0,
+            "p99_ns": 23549482.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95117.0,
+            "allocs/op": 1547.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 22.201316224993207,
+        "user_cpu_seconds": 5.338878,
+        "system_cpu_seconds": 3.933225,
+        "peak_rss_bytes": 23613440,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "baseline",
+      "backend": "postgres",
+      "items": 10000,
+      "samples_per_repetition": 40,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 445984004.0,
+            "p50_ns": 426015554.0,
+            "p95_ns": 566464056.0,
+            "p99_ns": 634020609.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 34.0,
+            "B/op": 129972337.0,
+            "allocs/op": 1502312.0
+          },
+          {
+            "ns/op": 446256443.0,
+            "p50_ns": 438613520.0,
+            "p95_ns": 507186404.0,
+            "p99_ns": 519994165.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 34.0,
+            "B/op": 129970178.0,
+            "allocs/op": 1502304.0
+          },
+          {
+            "ns/op": 531555799.0,
+            "p50_ns": 457413985.0,
+            "p95_ns": 881742009.0,
+            "p99_ns": 1031334252.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7488.0,
+            "sql_statements/op": 34.0,
+            "B/op": 129970168.0,
+            "allocs/op": 1502303.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 484438519.0,
+            "p50_ns": 472295089.0,
+            "p95_ns": 615378190.0,
+            "p99_ns": 739536902.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 34.0,
+            "B/op": 133738133.0,
+            "allocs/op": 1502591.0
+          },
+          {
+            "ns/op": 479542054.0,
+            "p50_ns": 463650613.0,
+            "p95_ns": 599417786.0,
+            "p99_ns": 722538841.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 34.0,
+            "B/op": 133736674.0,
+            "allocs/op": 1502585.0
+          },
+          {
+            "ns/op": 485108855.0,
+            "p50_ns": 466230564.0,
+            "p95_ns": 627475186.0,
+            "p99_ns": 828812975.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32361.0,
+            "sql_statements/op": 34.0,
+            "B/op": 133735687.0,
+            "allocs/op": 1502583.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 21573092.0,
+            "p50_ns": 21102653.0,
+            "p95_ns": 26484743.0,
+            "p99_ns": 35662022.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 110060.0,
+            "allocs/op": 2132.0
+          },
+          {
+            "ns/op": 20320837.0,
+            "p50_ns": 19634415.0,
+            "p95_ns": 25934536.0,
+            "p99_ns": 27424188.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107772.0,
+            "allocs/op": 2113.0
+          },
+          {
+            "ns/op": 20449157.0,
+            "p50_ns": 20179218.0,
+            "p95_ns": 24706074.0,
+            "p99_ns": 25369709.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 36.0,
+            "B/op": 107903.0,
+            "allocs/op": 2113.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 218.7335957440082,
+        "user_cpu_seconds": 121.23622399999999,
+        "system_cpu_seconds": 28.374473,
+        "peak_rss_bytes": 104267776,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    },
+    {
+      "source": "candidate",
+      "backend": "postgres",
+      "items": 10000,
+      "samples_per_repetition": 40,
+      "repetitions": 3,
+      "metrics": {
+        "section_work_items": [
+          {
+            "ns/op": 6540007.0,
+            "p50_ns": 5120906.0,
+            "p95_ns": 12219749.0,
+            "p99_ns": 28576830.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 8.0,
+            "B/op": 96733.0,
+            "allocs/op": 846.0
+          },
+          {
+            "ns/op": 5867267.0,
+            "p50_ns": 5113188.0,
+            "p95_ns": 8358311.0,
+            "p99_ns": 20069989.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 8.0,
+            "B/op": 94430.0,
+            "allocs/op": 838.0
+          },
+          {
+            "ns/op": 5698776.0,
+            "p50_ns": 5303257.0,
+            "p95_ns": 8202383.0,
+            "p99_ns": 13784641.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 7476.0,
+            "sql_statements/op": 8.0,
+            "B/op": 92685.0,
+            "allocs/op": 837.0
+          }
+        ],
+        "snapshot_with_proof": [
+          {
+            "ns/op": 374684518.0,
+            "p50_ns": 358905554.0,
+            "p95_ns": 427087951.0,
+            "p99_ns": 571770078.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 35.0,
+            "B/op": 45370638.0,
+            "allocs/op": 263856.0
+          },
+          {
+            "ns/op": 370078232.0,
+            "p50_ns": 361511786.0,
+            "p95_ns": 411558230.0,
+            "p99_ns": 563684747.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 35.0,
+            "B/op": 45370548.0,
+            "allocs/op": 263852.0
+          },
+          {
+            "ns/op": 364032183.0,
+            "p50_ns": 354180819.0,
+            "p95_ns": 424592725.0,
+            "p99_ns": 512383843.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 32339.0,
+            "sql_statements/op": 35.0,
+            "B/op": 45354184.0,
+            "allocs/op": 263844.0
+          }
+        ],
+        "focal_with_proof": [
+          {
+            "ns/op": 12356139.0,
+            "p50_ns": 11428141.0,
+            "p95_ns": 18961543.0,
+            "p99_ns": 26011637.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 97251.0,
+            "allocs/op": 1565.0
+          },
+          {
+            "ns/op": 11289602.0,
+            "p50_ns": 10764967.0,
+            "p95_ns": 15205460.0,
+            "p99_ns": 20577358.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95105.0,
+            "allocs/op": 1547.0
+          },
+          {
+            "ns/op": 12160503.0,
+            "p50_ns": 11336115.0,
+            "p95_ns": 17287676.0,
+            "p99_ns": 26416529.0,
+            "pool_wait_ns/op": 0.0,
+            "pool_waits/op": 0.0,
+            "response_bytes": 2209.0,
+            "sql_statements/op": 24.0,
+            "B/op": 95093.0,
+            "allocs/op": 1547.0
+          }
+        ]
+      },
+      "resource": {
+        "wall_seconds": 129.15756047598552,
+        "user_cpu_seconds": 19.680211,
+        "system_cpu_seconds": 14.976389,
+        "peak_rss_bytes": 54546432,
+        "boundary": "whole precompiled Go test child, including domain fixture/setup/ANALYZE and all timed reads; excludes database process"
+      }
+    }
+  ],
+  "targets": [
+    {
+      "backend": "sqlite",
+      "items": 10000,
+      "case": "section_work_items",
+      "metric": "p95_ns",
+      "ratio": 0.016507255773032223,
+      "maximum": 0.7,
+      "passed": true
+    },
+    {
+      "backend": "sqlite",
+      "items": 10000,
+      "case": "section_work_items",
+      "metric": "B/op",
+      "ratio": 0.0006778825086301892,
+      "maximum": 0.5,
+      "passed": true
+    },
+    {
+      "backend": "sqlite",
+      "items": 10000,
+      "case": "snapshot_with_proof",
+      "metric": "p95_ns",
+      "ratio": 0.3740293418980773,
+      "maximum": 0.7,
+      "passed": true
+    },
+    {
+      "backend": "sqlite",
+      "items": 10000,
+      "case": "snapshot_with_proof",
+      "metric": "B/op",
+      "ratio": 0.343415730987327,
+      "maximum": 0.5,
+      "passed": true
+    },
+    {
+      "backend": "sqlite",
+      "items": 1000,
+      "case": "focal_with_proof",
+      "metric": "p95_ns",
+      "ratio": 0.5695413404067879,
+      "maximum": 1.1,
+      "passed": true
+    },
+    {
+      "backend": "postgres",
+      "items": 10000,
+      "case": "section_work_items",
+      "metric": "p95_ns",
+      "ratio": 0.01475523629693461,
+      "maximum": 0.7,
+      "passed": true
+    },
+    {
+      "backend": "postgres",
+      "items": 10000,
+      "case": "section_work_items",
+      "metric": "B/op",
+      "ratio": 0.000726551286249681,
+      "maximum": 0.5,
+      "passed": true
+    },
+    {
+      "backend": "postgres",
+      "items": 10000,
+      "case": "snapshot_with_proof",
+      "metric": "p95_ns",
+      "ratio": 0.6899703822782539,
+      "maximum": 0.7,
+      "passed": true
+    },
+    {
+      "backend": "postgres",
+      "items": 10000,
+      "case": "snapshot_with_proof",
+      "metric": "B/op",
+      "ratio": 0.3392528514654103,
+      "maximum": 0.5,
+      "passed": true
+    },
+    {
+      "backend": "postgres",
+      "items": 1000,
+      "case": "focal_with_proof",
+      "metric": "p95_ns",
+      "ratio": 0.5721965480682224,
+      "maximum": 1.1,
+      "passed": true
+    }
+  ],
+  "targets_passed": true
+}
