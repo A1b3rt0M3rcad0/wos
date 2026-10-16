@@ -2,6 +2,11 @@ import { test, expect, openOutcome, intent, save } from "./ux-fixture.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { interactionAudit } from "./interaction-audit.mjs";
+import {
+  dimensions,
+  expectProportional,
+  expectOriginalPixels,
+} from "./responsive-audit.mjs";
 
 // Documentation captures use an isolated, explicitly illustrative database.
 // Every displayed record is created through the public command API.
@@ -136,6 +141,187 @@ async function capture(page, name) {
     animations: "disabled",
   });
 }
+
+test("large viewports scale the reference composition without rearranging it", async ({
+  page,
+  wos,
+}) => {
+  test.setTimeout(180000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await seed(wos);
+  for (const title of [
+    "Keep decisions connected to their evidence",
+    "Prepare a shared handoff for people and agents",
+  ])
+    await wos.command("create_outcome", {
+      namespace_id: wos.namespace,
+      title,
+      desired_state: "People can resume the same shared work.",
+      priority: "normal",
+    });
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(wos.url + "/app/");
+  await page.evaluate(() => document.fonts.ready);
+  await expectOriginalPixels(page);
+  const loginTargets = [
+    ".topbar",
+    ".brand-logo",
+    ".login-layout",
+    ".login-story h1",
+    ".login-panel",
+    "#token",
+    "#login button",
+  ];
+  await page.setViewportSize({ width: 1440, height: 810 });
+  const loginReference = await dimensions(page, loginTargets);
+  for (const [width, height] of [
+    [1920, 1080],
+    [2560, 1440],
+    [3840, 2160],
+  ]) {
+    await page.setViewportSize({ width, height });
+    expectProportional(
+      await dimensions(page, loginTargets),
+      loginReference,
+      width / 1440,
+    );
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await wos.login(page);
+  await openOutcome(page, "Ship a calmer workspace");
+  await page.evaluate(() => document.fonts.ready);
+  for (const [width, height, font] of [
+    [1440, 1000, ""],
+    [1280, 800, ""],
+    [768, 1024, "28px"],
+    [390, 844, ""],
+    [320, 740, ""],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate((font) => {
+      document.documentElement.style.fontSize = font;
+    }, font);
+    await expectOriginalPixels(page);
+    await intent(page, "New task");
+    await expectOriginalPixels(page);
+    await page.keyboard.press("Escape");
+  }
+
+  await page.setViewportSize({ width: 1440, height: 810 });
+  await page.evaluate(() => scrollTo(0, 0));
+  const targets = [
+    ".topbar",
+    ".brand-logo",
+    ".sidebar",
+    ".workspace-main",
+    "#title",
+    "#area-tabs",
+    ".area-intro",
+    "#area-title",
+    ".area-vignette img",
+    "#metrics",
+    ".metric",
+    ".metric-label",
+    ".summary-grid",
+    ".summary-purpose-card",
+    ".summary-purpose",
+    ".summary-quick button",
+    ".status-chart",
+    ".chart-total",
+  ];
+  const reference = await dimensions(page, targets);
+  await intent(page, "New task");
+  const formTargets = [
+    "#command-dialog",
+    "#command-dialog .dialog-heading",
+    "#command-dialog .dialog-body",
+    "#command-dialog footer",
+    '#command-dialog input[type="text"]',
+    "#fields select",
+    "#submit-command",
+  ];
+  const formReference = await dimensions(page, formTargets);
+  await page.keyboard.press("Escape");
+
+  for (const [width, height, name] of [
+    [1440, 1000, "27-scale-reference"],
+    [1920, 1080, "28-scale-full-hd"],
+    [2560, 1440, "29-scale-2k"],
+    [3840, 2160, "30-scale-4k"],
+  ]) {
+    const factor = width / 1440;
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => scrollTo(0, 0));
+    // Sidebar height follows the actual viewport; compare the 16:9 matrix.
+    if (width > 1440)
+      expectProportional(await dimensions(page, targets), reference, factor);
+    await page.evaluate((factor) => scrollTo(0, 173 * factor), factor);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => document.activeElement?.blur());
+    await capture(page, name);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.evaluate(() => scrollTo(0, 0));
+    await intent(page, "New task");
+    if (width > 1440)
+      expectProportional(
+        await dimensions(page, formTargets),
+        formReference,
+        factor,
+      );
+    await expectWholeControl(page.getByLabel("Initial state", { exact: true }));
+    await expect(page.locator("#submit-command")).toBeInViewport();
+    if (width === 2560) await capture(page, "31-scale-2k-task-form");
+    await page.keyboard.press("Escape");
+    for (const area of [
+      "overview",
+      "plan",
+      "work",
+      "issues",
+      "evidence",
+      "activity",
+    ]) {
+      await page.locator(`[data-area="${area}"]`).click();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${area} at ${width}px`,
+      ).toBe(true);
+    }
+    await page.locator('[data-area="work"]').click();
+    await page.locator('[data-view="board"]').click();
+    expect(
+      await page
+        .locator(".board")
+        .evaluate(
+          (element) =>
+            getComputedStyle(element).gridTemplateColumns.split(" ").length,
+        ),
+    ).toBe(5);
+    if (width === 2560) {
+      await page.locator(".board").scrollIntoViewIfNeeded();
+      await page.mouse.move(0, 0);
+      await page.evaluate(() => document.activeElement?.blur());
+      await capture(page, "32-scale-2k-work-board");
+    }
+    await page.locator('[data-area="overview"]').click();
+  }
+  // The upper bound stops component growth even beyond a 4K-wide viewport.
+  await page.setViewportSize({ width: 5120, height: 2880 });
+  expect(
+    await page
+      .locator(".sidebar")
+      .evaluate((element) => element.getBoundingClientRect().width),
+  ).toBeCloseTo((244 * 3840) / 1440, 0);
+  expect(
+    await page
+      .locator("html")
+      .evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+  ).toBeCloseTo((14 * 3840) / 1440, 1);
+});
 
 test("buttons keep legible padded states across the workspace, dialogs and touch navigation", async ({
   page,
