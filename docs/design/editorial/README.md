@@ -44,6 +44,8 @@ Typography is served from the WOS binary. Vendored fonts are from `@fontsource/i
 
 The [button and hover review](interactions.md) maps every renderer and control family to the shared interaction rules. Area/category tabs reserve their selected rule for the selected choice; hovering another tab does not make it look selected. Utility controls, text links, primary actions, and data rows retain distinct roles, stable hit areas, legible paint, and independent keyboard focus. Cards no longer move on hover.
 
+Above the 1440 CSS px reference width, [responsive scaling](responsive-scale.md) grows the existing composition continuously, including typography, controls, sidebar, artwork, and spacing, with a cap at 3840 px. Reference and smaller viewports retain their existing dimensions and responsive rules.
+
 ## Illustration direction and provenance
 
 The canonical art prompt is preserved in [the local art skill](../../../.agents/skills/wos-art-style/SKILL.md): minimalist black ink, imperfect organic contours, expressive limbs, hatching, playful proportions, monochrome, and transparent backgrounds. The existing 20 robot files are preserved byte for byte from the user-supplied `wos_20_robot_svgs_fixed.zip`. These SVG containers include embedded raster artwork; they are not presented as editable vector paths.
@@ -66,7 +68,7 @@ All these illustrations repeat a meaning already present in adjacent text and ha
 
 ## Main pages
 
-These 26 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Desktop viewports are 1440 × 1000 CSS px and mobile viewports are 390 × 844. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
+These 32 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Main desktop viewports are 1440 × 1000 CSS px, mobile viewports are 390 × 844, and the scale comparison includes Full HD, 2K, and 4K. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
 ### Sign in
 
@@ -147,6 +149,22 @@ These two viewport captures show the same workspace before and after scrolling 1
 | ![Board card with a restrained border and no movement](screenshots/24-board-card-hover.png) | ![Padded add-instructions action within the expanded Task form](screenshots/25-form-controls-hover.png) |
 
 ![Keyboard focus inside the mobile tab strip with no persistent mouse-hover paint](screenshots/26-mobile-tabs-focus.png)
+
+### Responsive scale
+
+The same composition at the reference width and the three requested desktop sizes; [sizing rules and verification](responsive-scale.md). The 16:9 captures expose the same document region at larger dimensions, with less vertical content than the taller reference.
+
+| Reference · 1440 × 1000 | Full HD · 1920 × 1080 |
+| --- | --- |
+| ![Unchanged reference composition](screenshots/27-scale-reference.png) | ![Proportional Full HD composition](screenshots/28-scale-full-hd.png) |
+
+| 2K · 2560 × 1440 | 4K · 3840 × 2160 |
+| --- | --- |
+| ![Proportional 2K composition](screenshots/29-scale-2k.png) | ![Controlled 4K composition](screenshots/30-scale-4k.png) |
+
+| 2K Task form | 2K Work board |
+| --- | --- |
+| ![Scaled fields and persistent form actions](screenshots/31-scale-2k-task-form.png) | ![Scaled Work columns and cards](screenshots/32-scale-2k-work-board.png) |
 
 ## Reproduce and validate
 
