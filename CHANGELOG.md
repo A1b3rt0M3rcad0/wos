@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 — prepared for release
+
+- Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures.
+
 ## Unreleased
 
 - Rewrite the README as a professional English operating guide covering purpose, shared state, human/agent workflows, setup, and service operation; use a larger image-only brand introduction and the supplied queue illustration. Translate maintained guides and local art instructions, organize documentation by task, and preserve original specifications and historical evidence.
