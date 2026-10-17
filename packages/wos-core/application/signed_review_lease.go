@@ -28,7 +28,7 @@ type ResumeSignedReviewContractCommand struct {
 
 func requireIssuedReviewAuthority(ctx context.Context, u ports.UnitOfWork, c d.ReviewContract, authority ContractAuthority, digest string) (signing.AuthorityPayload, error) {
 	var zero signing.AuthorityPayload
-	if c.LatestAuthorityID == nil || c.IssuedSpecificationID == nil || !d.ValidSignedDigest(digest) {
+	if c.Binding.ProtocolVersion != 3 || c.LatestAuthorityID == nil || c.IssuedSpecificationID == nil || !d.ValidSignedDigest(digest) {
 		return zero, d.NewError(d.ErrorCodeSignedProtocolRequired, "persisted review grant/specification required")
 	}
 	repo, _, err := signedRepository(u)
@@ -82,7 +82,7 @@ func (s *Service) changeSignedReviewLease(ctx context.Context, u ports.UnitOfWor
 	if err != nil {
 		return zero, 0, err
 	}
-	server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID)
+	server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -117,7 +117,7 @@ func (s *Service) changeSignedReviewLease(ctx context.Context, u ports.UnitOfWor
 	if err != nil {
 		return zero, 0, err
 	}
-	group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
+	group, err := registry.PrincipalGroup(ctx, cmd.Scope.TenantID, identity.PrincipalID)
 	if err != nil {
 		return zero, 0, err
 	}

@@ -84,7 +84,7 @@ func releaseConnect(t *testing.T, url, kind string) *releaseTransport {
 func TestReleaseVerificationModesTransportStorageMatrix(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.MCP.Enabled = true
-		r, err := OpenRuntime(cfg)
+		r, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -94,7 +94,7 @@ func TestReleaseVerificationModesTransportStorageMatrix(t *testing.T) {
 		for _, kind := range []string{"http", "mcp"} {
 			t.Run(kind, func(t *testing.T) {
 				c := releaseConnect(t, server.URL, kind)
-				outcome := releaseValue[domain.Outcome](c, "create_outcome", application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("01a11750-0000-7000-8000-000000000001"), Title: "Verification " + kind, DesiredState: "same proof semantics", Priority: domain.PriorityNormal})
+				outcome := releaseValue[domain.Outcome](c, "create_outcome", application.CreateOutcomeCommand{TenantID: domain.MustParseID(cfg.Auth.LocalTenantID), Title: "Verification " + kind, DesiredState: "same proof semantics", Priority: domain.PriorityNormal})
 				for _, mode := range []domain.VerificationMode{domain.VerificationModeAttestation, domain.VerificationModeEvidenceReview, domain.VerificationModeExternalEvaluation} {
 					live := releaseValue[domain.SuccessCriterion](c, "add_criterion", application.AddCriterionCommand{Owner: outcome.Ref(), ExpectedVersion: outcome.Version, Title: string(mode), Required: true, VerificationMode: mode})
 					outcome.Version++
@@ -131,7 +131,7 @@ func TestReleaseVerificationModesTransportStorageMatrix(t *testing.T) {
 func TestReleaseLostHTTPResponseReconcilesThroughMCP(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.MCP.Enabled = true
-		r, err := OpenRuntime(cfg)
+		r, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -148,7 +148,7 @@ func TestReleaseLostHTTPResponseReconcilesThroughMCP(t *testing.T) {
 			}
 		}))
 		defer lost.Close()
-		cmd := application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("01a11751-0000-7000-8000-000000000001"), Title: "Lost response", DesiredState: "one durable intent", Priority: domain.PriorityNormal}
+		cmd := application.CreateOutcomeCommand{TenantID: domain.MustParseID(cfg.Auth.LocalTenantID), Title: "Lost response", DesiredState: "one durable intent", Priority: domain.PriorityNormal}
 		raw, _ := commands.Encode(cmd)
 		body, _ := json.Marshal(map[string]any{"command": json.RawMessage(raw)})
 		req, _ := http.NewRequest("POST", lost.URL+"/api/v1/commands/create_outcome", bytes.NewReader(body))
@@ -189,7 +189,7 @@ func TestReleaseLostHTTPResponseReconcilesThroughMCP(t *testing.T) {
 func TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.MCP.Enabled = true
-		r, err := OpenRuntime(cfg)
+		r, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -255,7 +255,7 @@ func TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema(t *testin
 func TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.MCP.Enabled = true
-		r, err := OpenRuntime(cfg)
+		r, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}

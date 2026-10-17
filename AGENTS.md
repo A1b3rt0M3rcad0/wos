@@ -233,17 +233,17 @@ Never implement an automatic retry that changes the caller's expected version or
 
 ---
 
-## 9. Namespace, Principal and ActorRef
+## 9. Tenant, Principal and ActorRef
 
 Keep these separate:
 
-- Namespace = internal isolation/authorization boundary.
+- Tenant = internal isolation/authorization identity; PostgreSQL stores each Tenant's complete state in an independently bound schema (ADR 044).
 - ExternalContext = consumer-provided addressing context.
 - ExecutionContext = request/run/session correlation context.
 - Principal = authenticated identity.
 - ActorRef = authorized declared actor/authorship.
 
-Never derive authorization merely from `tenant_id`, `user_id`, metadata, ExternalContext, or ActorRef supplied by a payload.
+Never derive authorization merely from `tenant_id`, a hostname, schema name, `user_id`, metadata, ExternalContext, or ActorRef supplied by a payload. Historical Namespace identifiers inside signed protocol-v2 artifacts remain immutable compatibility data.
 
 ---
 

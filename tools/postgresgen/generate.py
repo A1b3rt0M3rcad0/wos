@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 source=Path('packages/wos-core/storage/sqlite')
 target=Path('packages/wos-core/storage/postgres')
-for name in ['work_activity.go','graph_read.go','focal_current.go','focal_records.go','continuity_projection.go','continuity_read.go','delivery_health.go','signed_return_resolutions.go','signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','owned_delta.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','references.go','external_context.go','integration.go','codec.go','migrations.go']:
+for name in ['tenant_migration.go','work_activity.go','graph_read.go','focal_current.go','focal_records.go','continuity_projection.go','continuity_read.go','delivery_health.go','signed_return_resolutions.go','signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','owned_delta.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','context_index.go','access.go','queries.go','references.go','external_context.go','integration.go','codec.go','migrations.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqlite migration','postgres migration')
  def transform_sql(m):
   q=m[1]
@@ -16,8 +16,8 @@ for name in ['work_activity.go','graph_read.go','focal_current.go','focal_record
   if 'INSERT OR IGNORE' in q:q=q.replace('INSERT OR IGNORE','INSERT')+' ON CONFLICT DO NOTHING'
   q=q.replace('instr(lower(title),lower(?))>0','strpos(lower(title),lower(?))>0').replace('instr(lower(description),lower(?))>0','strpos(lower(description),lower(?))>0')
   q=q.replace("json_extract(state_json,'$.signed_binding.separation_group')","state_json::jsonb #>> '{signed_binding,separation_group}'")
-  if 'SELECT version FROM namespaces WHERE' in q:q+=' FOR UPDATE'
-  if 'SELECT lifecycle FROM namespaces WHERE' in q:q+=' FOR SHARE'
+  if 'SELECT version FROM tenants WHERE' in q:q+=' FOR UPDATE'
+  if 'SELECT lifecycle FROM tenants WHERE' in q:q+=' FOR SHARE'
   if name=='server_identity.go' and 'SELECT state_json FROM server_protocol_identity WHERE singleton=1' in q:
    q+= ' FOR UPDATE' if '/* issuer recovery */' in q else ' FOR SHARE'
   if name=='access.go'  and ' FROM credentials WHERE digest=' in q:q+=' FOR SHARE'
@@ -48,16 +48,16 @@ for name in ['work_activity.go','graph_read.go','focal_current.go','focal_record
   start=s.index('func (r continuityReadRepository) projectionProofCounts')
   prefix=s[:start]; tail=s[start:]
   tail=re.sub(r'query := `[^`]+`',lambda _: 'query := `'+Path('tools/postgresgen/projection_proof_counts.sql').read_text().strip()+'`',tail,count=1)
-  tail=tail.replace('scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)','scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)')
+  tail=tail.replace('scope.TenantID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)','scope.TenantID.String(), scope.OutcomeID.String(), scope.TenantID.String(), scope.OutcomeID.String(), scope.TenantID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)')
   s=prefix+tail
  if name=='continuity_read.go':
   s=s.replace('QueryContext(ctx, q, args...)','QueryContext(ctx, rebind(q), args...)').replace('QueryContext(ctx,q,args...)','QueryContext(ctx,rebind(q),args...)').replace('QueryRowContext(ctx, q, args...)','QueryRowContext(ctx, rebind(q), args...)').replace('QueryRowContext(ctx,q,args...)','QueryRowContext(ctx,rebind(q),args...)')
  if name=='references.go':
   s=s.replace('instr(lower(t." + title + "),lower(?))>0',"strpos(translate(t.\" + title + \",'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),translate(?,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))>0")
  # SQL queries composed by fmt.Sprintf, and single-line quoted migration statements.
- s=s.replace('"SELECT id FROM " + table + " WHERE namespace_id = ? AND outcome_id = ? ORDER BY id"','"SELECT id FROM " + table + " WHERE namespace_id = $1 AND outcome_id = $2 ORDER BY id"')
+ s=s.replace('"SELECT id FROM " + table + " WHERE tenant_id = ? AND outcome_id = ? ORDER BY id"','"SELECT id FROM " + table + " WHERE tenant_id = $1 AND outcome_id = $2 ORDER BY id"')
  s=s.replace('encodeTime(c.ExpiresAt), c.Revoked)','encodeTime(c.ExpiresAt), boolInt(c.Revoked))')
- s=s.replace('"SELECT version FROM %s WHERE namespace_id = ? AND outcome_id = ? AND id = ?"','"SELECT version FROM %s WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3"')
+ s=s.replace('"SELECT version FROM %s WHERE tenant_id = ? AND outcome_id = ? AND id = ?"','"SELECT version FROM %s WHERE tenant_id = $1 AND outcome_id = $2 AND id = $3"')
  s=s.replace('"SELECT checksum FROM schema_migrations WHERE version = ?"','"SELECT checksum FROM schema_migrations WHERE version = $1"').replace('"INSERT INTO schema_migrations(version, name, checksum, applied_at) VALUES (?, ?, ?, ?)"','"INSERT INTO schema_migrations(version, name, checksum, applied_at) VALUES ($1, $2, $3, $4)"')
  if name=='migrations.go':
   s=s.replace('defer tx.Rollback()', 'defer tx.Rollback()\n if _,err:=tx.ExecContext(ctx,"SELECT pg_advisory_xact_lock(846239010)");err!=nil{return err}',1)
@@ -74,7 +74,7 @@ for p in (source/'migrations').glob('*.sql'):
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['fair_delivery_test.go','persistence_scaling_test.go','read_snapshot_test.go','work_activity_application_test.go','work_activity_test.go','assessment_plan_fixture_test.go','principal_review_quota_test.go','principal_quota_test.go','focal_graph_read_test.go','continuity_projection_test.go','continuity_cursor_test.go','continuity_read_test.go','delivery_health_test.go','signed_return_resolution_test.go','signed_load_test.go','migration_compatibility_test.go','issuer_recovery_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
+for name in ['tenant_migration_test.go','fair_delivery_test.go','persistence_scaling_test.go','read_snapshot_test.go','work_activity_application_test.go','work_activity_test.go','assessment_plan_fixture_test.go','principal_review_quota_test.go','principal_quota_test.go','focal_graph_read_test.go','continuity_projection_test.go','continuity_cursor_test.go','continuity_read_test.go','delivery_health_test.go','signed_return_resolution_test.go','signed_load_test.go','migration_compatibility_test.go','issuer_recovery_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1)
  s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)

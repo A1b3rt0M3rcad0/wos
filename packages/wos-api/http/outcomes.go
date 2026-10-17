@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) createOutcome(w http.ResponseWriter, r *http.Request) {
-	namespaceID, err := domain.ParseID(r.PathValue("namespace_id"))
+	tenantID, err := domain.ParseID(r.PathValue("tenant_id"))
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -24,7 +24,7 @@ func (h *Handler) createOutcome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.service.CreateOutcome(r.Context(), commandContext, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        request.Title,
 		Description:  request.Description,
 		DesiredState: request.DesiredState,
@@ -35,7 +35,7 @@ func (h *Handler) createOutcome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setETag(w, domain.EntityKindOutcome, result.Value.ID, result.Value.Version)
-	w.Header().Set("Location", h.prefix+"/namespaces/"+namespaceID.String()+"/outcomes/"+result.Value.ID.String())
+	w.Header().Set("Location", h.prefix+"/tenants/"+tenantID.String()+"/outcomes/"+result.Value.ID.String())
 	writeJSON(w, http.StatusCreated, result)
 }
 

@@ -7,11 +7,11 @@ import (
 )
 
 type WorkProtocolRepository interface {
-	Lock(context.Context, domain.ID, bool) (domain.NamespaceWorkProtocol, error)
+	Lock(context.Context, domain.ID, bool) (domain.TenantWorkProtocol, error)
 	Scopes(context.Context, domain.ID) ([]domain.Scope, error)
 	ValidLegacyLeases(context.Context, domain.ID, time.Time) (int, error)
 	ValidUnsignedContracts(context.Context, domain.ID, time.Time) (int, error)
 	EnableContracts(context.Context, domain.ID, time.Time) error
-	Save(context.Context, domain.NamespaceWorkProtocol, domain.Version) error
+	Save(context.Context, domain.TenantWorkProtocol, domain.Version) error
 }
 type WorkProtocolUnitOfWork interface{ WorkProtocol() WorkProtocolRepository }

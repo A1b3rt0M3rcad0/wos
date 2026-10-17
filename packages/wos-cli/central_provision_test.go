@@ -17,7 +17,7 @@ import (
 func TestCentralProtectedReferencesProvisionWithoutKeyringOrPlaintext(t *testing.T) {
 	project, template, token := profileFixtureV2(t, "executor")
 	enrollment := d.MustParseID("0199ac10-0000-7000-8000-000000000007")
-	challenge := d.SigningEnrollment{ID: enrollment, NamespaceID: template.Binding.NamespaceID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, KeyID: template.Signing.KeyID, Purpose: "agent", Nonce: "authorized-reference-fixture", ExpiresAt: time.Now().Add(time.Minute), ExpectedFingerprint: template.Signing.PublicKeyFingerprint}
+	challenge := d.SigningEnrollment{ID: enrollment, TenantID: template.Binding.TenantID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, KeyID: template.Signing.KeyID, Purpose: "agent", Nonce: "authorized-reference-fixture", ExpiresAt: time.Now().Add(time.Minute), ExpectedFingerprint: template.Signing.PublicKeyFingerprint}
 	calls := 0
 	endpoint := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		calls++
@@ -26,9 +26,9 @@ func TestCentralProtectedReferencesProvisionWithoutKeyringOrPlaintext(t *testing
 		}
 		switch r.URL.Path {
 		case "/api/v1/security/signing-identity":
-			json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: project.Connection.ExpectedServerID.String(), NamespaceID: project.Scope.NamespaceID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, Enrollment: &challenge})
+			json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: project.Connection.ExpectedServerID.String(), TenantID: project.Scope.TenantID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID, Enrollment: &challenge})
 		default:
-			json.NewEncoder(rw).Encode(a.SignedStateResult{NamespaceID: project.Scope.NamespaceID, Resource: "trust", ProtocolVersion: 2, Server: &d.ServerIdentity{ID: project.Connection.ExpectedServerID, IssuerKeyID: template.Binding.IssuerKeys[0].KeyID, PublicKey: template.Binding.IssuerKeys[0].PublicKey, Fingerprint: template.Binding.IssuerKeys[0].Fingerprint}})
+			json.NewEncoder(rw).Encode(a.SignedStateResult{TenantID: project.Scope.TenantID, Resource: "trust", ProtocolVersion: 3, Server: &d.ServerIdentity{ID: project.Connection.ExpectedServerID, IssuerKeyID: template.Binding.IssuerKeys[0].KeyID, PublicKey: template.Binding.IssuerKeys[0].PublicKey, Fingerprint: template.Binding.IssuerKeys[0].Fingerprint}})
 		}
 	}))
 	defer endpoint.Close()

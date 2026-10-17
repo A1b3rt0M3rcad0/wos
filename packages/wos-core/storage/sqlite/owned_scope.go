@@ -24,7 +24,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		}
 		return states[id]
 	}
-	ns, outcome := scope.NamespaceID.String(), scope.OutcomeID.String()
+	ns, outcome := scope.TenantID.String(), scope.OutcomeID.String()
 	read := func(query string, consume func(*sql.Rows) error) error {
 		rows, err := tx.QueryContext(ctx, query, ns, outcome)
 		if err != nil {
@@ -38,7 +38,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		}
 		return mapSQLError("iterate aggregate owned collections", rows.Err())
 	}
-	if err := read(`SELECT l.entity_id,l.actor_json FROM entity_actor_links l JOIN entity_refs e ON e.namespace_id=l.namespace_id AND e.outcome_id=l.outcome_id AND e.id=l.entity_id WHERE l.namespace_id=? AND l.outcome_id=? AND ((e.kind='work_item' AND l.role='assignee') OR (e.kind IN ('outcome','objective') AND l.role='owner')) ORDER BY l.entity_id,l.actor_kind,l.actor_provider,l.actor_id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT l.entity_id,l.actor_json FROM entity_actor_links l JOIN entity_refs e ON e.tenant_id=l.tenant_id AND e.outcome_id=l.outcome_id AND e.id=l.entity_id WHERE l.tenant_id=? AND l.outcome_id=? AND ((e.kind='work_item' AND l.role='assignee') OR (e.kind IN ('outcome','objective') AND l.role='owner')) ORDER BY l.entity_id,l.actor_kind,l.actor_provider,l.actor_id`, func(rows *sql.Rows) error {
 		var id, encoded string
 		if err := rows.Scan(&id, &encoded); err != nil {
 			return mapSQLError("scan aggregate owned collections", err)
@@ -60,7 +60,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	owners := map[domain.ID]domain.EntityRef{}
-	if err := read(`SELECT c.owner_id,c.owner_kind,c.id,c.criterion_revision,c.status,r.definition_json,r.required,r.verification_mode FROM success_criteria c JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.namespace_id=? AND c.outcome_id=? ORDER BY c.created_at,c.id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT c.owner_id,c.owner_kind,c.id,c.criterion_revision,c.status,r.definition_json,r.required,r.verification_mode FROM success_criteria c JOIN criterion_revisions r ON r.tenant_id=c.tenant_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.tenant_id=? AND c.outcome_id=? ORDER BY c.created_at,c.id`, func(rows *sql.Rows) error {
 		var oid, kind, cid, status, encoded, mode string
 		var revision int64
 		var required int
@@ -87,7 +87,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	}); err != nil {
 		return nil, err
 	}
-	if err := read(`SELECT r.criterion_id,r.criterion_revision,r.definition_json,r.required,r.verification_mode,r.status FROM criterion_revisions r WHERE r.namespace_id=? AND r.outcome_id=? ORDER BY r.criterion_id,r.criterion_revision`, func(rows *sql.Rows) error {
+	if err := read(`SELECT r.criterion_id,r.criterion_revision,r.definition_json,r.required,r.verification_mode,r.status FROM criterion_revisions r WHERE r.tenant_id=? AND r.outcome_id=? ORDER BY r.criterion_id,r.criterion_revision`, func(rows *sql.Rows) error {
 		var cid, encoded, mode, status string
 		var revision int64
 		var required int
@@ -117,7 +117,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	evidence := map[domain.ID][]domain.ID{}
-	if err := read(`SELECT assessment_id,evidence_id FROM criterion_assessment_evidence WHERE namespace_id=? AND outcome_id=? ORDER BY assessment_id,evidence_id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT assessment_id,evidence_id FROM criterion_assessment_evidence WHERE tenant_id=? AND outcome_id=? ORDER BY assessment_id,evidence_id`, func(rows *sql.Rows) error {
 		var aid, eid string
 		if err := rows.Scan(&aid, &eid); err != nil {
 			return mapSQLError("scan aggregate owned collections", err)
@@ -136,7 +136,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	assessments := map[domain.ID]domain.CriterionAssessment{}
-	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id,submission_id,submission_digest FROM criterion_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id,submission_id,submission_digest FROM criterion_assessments WHERE tenant_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
 		v, err := scanAssessment(rows)
 		if err != nil {
 			return err
@@ -159,7 +159,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	}); err != nil {
 		return nil, err
 	}
-	if err := read(`SELECT criterion_id,assessment_id FROM criterion_current_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY criterion_id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT criterion_id,assessment_id FROM criterion_current_assessments WHERE tenant_id=? AND outcome_id=? ORDER BY criterion_id`, func(rows *sql.Rows) error {
 		var cid, aid string
 		if err := rows.Scan(&cid, &aid); err != nil {
 			return mapSQLError("scan aggregate owned collections", err)
@@ -183,7 +183,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	refs := map[string][]domain.CriterionAssessmentRef{}
-	if err := read(`SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN criterion_assessments a ON a.namespace_id=ca.namespace_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE ca.namespace_id=? AND ca.outcome_id=? ORDER BY a.criterion_id,a.id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN criterion_assessments a ON a.tenant_id=ca.tenant_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE ca.tenant_id=? AND ca.outcome_id=? ORDER BY a.criterion_id,a.id`, func(rows *sql.Rows) error {
 		var conclusion, aid, cid, result string
 		var revision int64
 		if err := rows.Scan(&conclusion, &aid, &cid, &revision, &result); err != nil {
@@ -203,7 +203,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	current := map[domain.ID]string{}
-	if err := read(`SELECT owner_id,conclusion_id FROM aggregate_current_conclusions WHERE namespace_id=? AND outcome_id=?`, func(rows *sql.Rows) error {
+	if err := read(`SELECT owner_id,conclusion_id FROM aggregate_current_conclusions WHERE tenant_id=? AND outcome_id=?`, func(rows *sql.Rows) error {
 		var oid, cid string
 		if err := rows.Scan(&oid, &cid); err != nil {
 			return mapSQLError("scan aggregate owned collections", err)
@@ -217,7 +217,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	}); err != nil {
 		return nil, err
 	}
-	if err := read(`SELECT e.id,e.kind,c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json,c.submission_id,c.submission_digest FROM conclusions c JOIN entity_refs e ON e.namespace_id=c.namespace_id AND e.outcome_id=c.outcome_id AND e.id=c.owner_id WHERE c.namespace_id=? AND c.outcome_id=? ORDER BY c.owner_id,c.ordinal`, func(rows *sql.Rows) error {
+	if err := read(`SELECT e.id,e.kind,c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json,c.submission_id,c.submission_digest FROM conclusions c JOIN entity_refs e ON e.tenant_id=c.tenant_id AND e.outcome_id=c.outcome_id AND e.id=c.owner_id WHERE c.tenant_id=? AND c.outcome_id=? ORDER BY c.owner_id,c.ordinal`, func(rows *sql.Rows) error {
 		var oid, kind string
 		// Owner identity is needed by the shared codec, so buffer the fixed row first.
 		var sid, lifecycle, principal, actor, rationale, obligations string

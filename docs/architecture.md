@@ -8,7 +8,7 @@ This English overview describes established boundaries. [ROADMAP.md](../ROADMAP.
 
 | Concept               | Responsibility                                                              |
 | --------------------- | --------------------------------------------------------------------------- |
-| Namespace             | Isolation and authorization boundary; shown as a Workspace in the browser   |
+| Tenant             | Isolation and authorization boundary; shown as a Workspace in the browser   |
 | Outcome               | A desired, verifiable result with explicit lifecycle and conclusion         |
 | Objective             | An intermediate condition, optionally organized in a parent/child hierarchy |
 | WorkItem              | Bounded operational work; exposed as a Task in the workspace                |
@@ -29,11 +29,21 @@ SQLite and PostgreSQL implement the same functional storage contracts. The syste
 
 HTTP and MCP invoke the same application services, authorization, idempotency, and domain rules. The browser and native client provide different interaction flows over that state.
 
+## Tenant placement and state ownership
+
+A Tenant is the complete customer data and authorization boundary. PostgreSQL stores each Tenant in its own schema, including domain state, identities, credentials, public issuer history, immutable signed documents, receipts and delivery queues. A runtime and its connection pool bind to one catalog-resolved schema for their lifetime. Requests never choose a SQL schema through a payload or change `search_path` on a shared connection.
+
+A small installation can serve one Tenant. A shared installation can route approved hostnames to independent Tenant runtimes; replicas of a Tenant use the same schema and issuer identity. A dedicated installation uses the same implementation against a dedicated database. Schemas share database CPU, memory and I/O; resource isolation requires appropriate infrastructure and capacity budgets.
+
+The PostgreSQL catalog records Tenant placement and lifecycle outside the data schemas. Administrative storage operations provision, suspend, resume and delete Tenants with explicit version checks and audit records. Suspension preserves data. Deletion requires stopped runtimes and a suspended or incomplete provisioning state; the catalog retains a tombstone. External object storage, backup retention and billing remain operator responsibilities.
+
+Live contracts use `tenant_id` and signed protocol 3. The ID records provenance and authenticates scope within the selected Tenant; it does not partition multiple customers' rows in a shared domain schema. Historical protocol-2 signed bytes retain their original fields and signatures for verification. See [Tenant operation and cutover](scaling/tenants.md).
+
 ## Authority and concurrency
 
 Mutable aggregates use expected versions. Cross-entity invariants are coordinated through the owning Outcome. Operational dependency graphs remain acyclic. Work acquisition is explicit, bounded by its protocol, and subject to expiry and fencing; a stale holder cannot conclude current work.
 
-Namespace, authenticated Principal, declared ActorRef, and external addressing context have distinct roles. Metadata supplied by a caller does not grant authority. Signed execution and independent review bind authorization to the applicable identities, contract, submission, and criterion revisions.
+Tenant, authenticated Principal, declared ActorRef, and external addressing context have distinct roles. Metadata supplied by a caller does not grant authority. Signed execution and independent review bind authorization to the applicable identities, contract, submission, and criterion revisions.
 
 Domain mutations validate scope, coordinate the transaction, validate current authority and invariants, persist state/events/outbox changes, and commit the idempotent result atomically. External HTTP calls, agent execution, and artifact retrieval do not occur inside that transaction.
 

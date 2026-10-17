@@ -32,7 +32,7 @@ func TestHistoryGrowthDoesNotMultiplyCurrentUpdateStatements(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		loaded, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+		loaded, err := u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -10,7 +10,7 @@ import (
 func TestContractPermissionsRespectLocalPrincipalAndAdministrativeOptIn(t *testing.T) {
 	for _, admin := range []bool{false, true} {
 		auth, _ := NewAuthorizer("local-owner", admin)
-		request := ports.AuthorizationRequest{NamespaceID: domain.MustParseID("0199ff01-0000-7000-8000-000000000001"), PrincipalID: "local-owner", Permission: ports.PermissionWorkContractAcquire}
+		request := ports.AuthorizationRequest{TenantID: domain.MustParseID("0199ff01-0000-7000-8000-000000000001"), PrincipalID: "local-owner", Permission: ports.PermissionWorkContractAcquire}
 		if err := auth.Authorize(context.Background(), request); err != nil {
 			t.Fatal("local acquisition should follow ordinary work permission", err)
 		}
@@ -18,9 +18,9 @@ func TestContractPermissionsRespectLocalPrincipalAndAdministrativeOptIn(t *testi
 		if err := auth.Authorize(context.Background(), request); (err == nil) != admin {
 			t.Fatal("revocation requires administrative opt-in", admin, err)
 		}
-		request.Permission = ports.PermissionNamespaceAdmin
+		request.Permission = ports.PermissionTenantAdmin
 		if auth.Authorize(context.Background(), request) == nil {
-			t.Fatal("local contract permissions must not grant Namespace administration")
+			t.Fatal("local contract permissions must not grant Tenant administration")
 		}
 		request.PrincipalID = "another-principal"
 		request.Permission = ports.PermissionWorkContractAcquire

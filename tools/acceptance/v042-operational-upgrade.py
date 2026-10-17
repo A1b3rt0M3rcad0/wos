@@ -156,7 +156,7 @@ def main():
             with socket.socket() as listener:
                 listener.bind(('127.0.0.1',0));port=listener.getsockname()[1]
             runtime.update(WOS_STORAGE_DRIVER=backend,WOS_SQLITE_PATH=target,WOS_AUTH_MODE='api_token',WOS_SERVER_SIGNING_SEED_ENV='WOS_UPGRADE_ISSUER',WOS_UPGRADE_ISSUER=(directory/'issuer.seed').read_text(),WOS_DELIVERY_WORKER_ENABLED='false',WOS_LISTEN=f'127.0.0.1:{port}',
-                WOS_LOCAL_PRINCIPAL_ID='admin',WOS_BOOTSTRAP_NAMESPACE_ID='0199a555-0000-7000-8000-000000000001',WOS_BOOTSTRAP_NAMESPACE_NAME='signed-acquisition',WOS_BOOTSTRAP_TOKEN='signed-acquisition-bootstrap-token-at-least-32')
+                WOS_LOCAL_PRINCIPAL_ID='admin',WOS_BOOTSTRAP_TENANT_ID='0199a555-0000-7000-8000-000000000001',WOS_BOOTSTRAP_TENANT_NAME='signed-acquisition',WOS_BOOTSTRAP_TOKEN='signed-acquisition-bootstrap-token-at-least-32')
             if backend=='postgres':
                 parsed=urlsplit(target);options=dict(parse_qsl(parsed.query));options['options']=(options.get('options','')+' -c search_path='+schema).strip()
                 runtime['WOS_POSTGRES_DSN']=urlunsplit((parsed.scheme,parsed.netloc,parsed.path,urlencode(options),parsed.fragment))

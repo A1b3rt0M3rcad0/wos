@@ -16,7 +16,7 @@ type objectiveRepository struct{ uow *unitOfWork }
 type workItemRepository struct{ uow *unitOfWork }
 type coordinationStore struct{ uow *unitOfWork }
 
-func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domain.ID) (domain.Outcome, error) {
+func (r outcomeRepository) Get(ctx context.Context, tenantID, outcomeID domain.ID) (domain.Outcome, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Outcome{}, err
 	}
@@ -32,8 +32,8 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 SELECT version, title, description, desired_state, lifecycle, priority,
        archived_at, created_at, updated_at,external_context_json
 FROM outcomes
-WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
-		namespaceID.String(), outcomeID.String(), outcomeID.String(),
+WHERE tenant_id = ? AND id = ? AND outcome_id = ?`,
+		tenantID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
 		&archivedAt, &createdAt, &updatedAt, &externalContext,
@@ -44,7 +44,7 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
 
 	value := domain.Outcome{
 		ID:           outcomeID,
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Version:      domain.Version(version),
 		Title:        title,
 		Description:  description,
@@ -84,7 +84,7 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	if err := outcome.Validate(); err != nil {
 		return err
 	}
-	if err := ensureNamespace(ctx, r.uow.tx, outcome.NamespaceID); err != nil {
+	if err := ensureTenant(ctx, r.uow.tx, outcome.TenantID); err != nil {
 		return err
 	}
 	if err := ensureCoordinationRow(ctx, r.uow.tx, outcome.Scope()); err != nil {
@@ -99,11 +99,11 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
-    id, namespace_id, outcome_id, kind, version, created_at, updated_at,
+    id, tenant_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, desired_state, lifecycle, archived_at,external_context_json
 ) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		outcome.ID.String(),
-		outcome.NamespaceID.String(),
+		outcome.TenantID.String(),
 		outcome.ID.String(),
 		int64(outcome.Version),
 		encodeTime(outcome.CreatedAt),
@@ -147,7 +147,7 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 UPDATE outcomes
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?
-WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
+WHERE tenant_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
 		outcome.Title,
@@ -157,7 +157,7 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
-		outcome.NamespaceID.String(),
+		outcome.TenantID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),
 		int64(expected),
@@ -166,7 +166,7 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		return mapSQLError("save outcome", err)
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "outcomes",
-		outcome.NamespaceID, outcome.ID, outcome.ID, expected); err != nil {
+		outcome.TenantID, outcome.ID, outcome.ID, expected); err != nil {
 		return err
 	}
 	if err := syncExternalContextIndex(ctx, r.uow.tx, outcome); err != nil {
@@ -187,7 +187,7 @@ func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id dom
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
        required_for_outcome, created_at, updated_at
 FROM objectives
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+WHERE tenant_id = ? AND outcome_id = ? AND id = ?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanObjective(row, scope)
 	if err != nil {
 		return domain.Objective{}, err
@@ -260,8 +260,8 @@ func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Sco
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
        required_for_outcome, created_at, updated_at
 FROM objectives
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+WHERE tenant_id = ? AND outcome_id = ?
+ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list objective aggregates", err)
 	}
@@ -326,11 +326,11 @@ func (r objectiveRepository) Insert(ctx context.Context, objective domain.Object
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO objectives (
-    id, namespace_id, outcome_id, kind, version, created_at, updated_at,
+    id, tenant_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, parent_objective_id, lifecycle, required_for_outcome
 ) VALUES (?, ?, ?, 'objective', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		objective.ID.String(),
-		objective.Scope.NamespaceID.String(),
+		objective.Scope.TenantID.String(),
 		objective.Scope.OutcomeID.String(),
 		int64(objective.Version),
 		encodeTime(objective.CreatedAt),
@@ -366,7 +366,7 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 UPDATE objectives
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     parent_objective_id = ?, lifecycle = ?, required_for_outcome = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(objective.Version),
 		encodeTime(objective.UpdatedAt),
 		objective.Title,
@@ -375,7 +375,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		nullableID(objective.ParentObjectiveID),
 		string(objective.Lifecycle),
 		boolInt(objective.RequiredForOutcome),
-		objective.Scope.NamespaceID.String(),
+		objective.Scope.TenantID.String(),
 		objective.Scope.OutcomeID.String(),
 		objective.ID.String(),
 		int64(expected),
@@ -384,7 +384,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		return mapSQLError("save objective", err)
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "objectives",
-		objective.Scope.NamespaceID, objective.Scope.OutcomeID, objective.ID, expected); err != nil {
+		objective.Scope.TenantID, objective.Scope.OutcomeID, objective.ID, expected); err != nil {
 		return err
 	}
 	return syncOwnedState(
@@ -403,7 +403,7 @@ SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
        lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
 FROM work_items
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+WHERE tenant_id = ? AND outcome_id = ? AND id = ?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
 	if err != nil {
 		return domain.WorkItem{}, err
@@ -541,8 +541,8 @@ SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
        lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
 FROM work_items
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+WHERE tenant_id = ? AND outcome_id = ?
+ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list work item aggregates", err)
 	}
@@ -616,13 +616,13 @@ func (r workItemRepository) Insert(ctx context.Context, item domain.WorkItem) er
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO work_items (
-    id, namespace_id, outcome_id, kind, version, created_at, updated_at,
+    id, tenant_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
     lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id
 ) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ID.String(),
-		item.Scope.NamespaceID.String(),
+		item.Scope.TenantID.String(),
 		item.Scope.OutcomeID.String(),
 		int64(item.Version),
 		encodeTime(item.CreatedAt),
@@ -677,7 +677,7 @@ SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     objective_id = ?, lifecycle = ?, not_before = ?, result_summary = ?, last_fencing_token = ?,
     lease_claim_id = ?, lease_principal_id = ?, lease_actor_json = ?,
     lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?, pending_review_case_id = ?, latest_review_case_id = ?, correction_review_case_id = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(item.Version),
 		encodeTime(item.UpdatedAt),
 		item.Title,
@@ -694,7 +694,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		lease.acquiredAt,
 		lease.expiresAt,
 		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
-		item.Scope.NamespaceID.String(),
+		item.Scope.TenantID.String(),
 		item.Scope.OutcomeID.String(),
 		item.ID.String(),
 		int64(expected),
@@ -703,7 +703,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		return mapSQLError("save work item", err)
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "work_items",
-		item.Scope.NamespaceID, item.Scope.OutcomeID, item.ID, expected); err != nil {
+		item.Scope.TenantID, item.Scope.OutcomeID, item.ID, expected); err != nil {
 		return err
 	}
 	return syncOwnedState(
@@ -725,7 +725,7 @@ func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) 
 	if err := scope.Validate(); err != nil {
 		return ports.OutcomeCoordination{}, err
 	}
-	if err := ensureNamespace(ctx, s.uow.tx, scope.NamespaceID); err != nil {
+	if err := ensureTenant(ctx, s.uow.tx, scope.TenantID); err != nil {
 		return ports.OutcomeCoordination{}, err
 	}
 	if err := ensureCoordinationRow(ctx, s.uow.tx, scope); err != nil {
@@ -735,8 +735,8 @@ func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) 
 	if err := s.uow.tx.QueryRowContext(ctx, `
 SELECT state_revision
 FROM outcome_coordination
-WHERE namespace_id = ? AND outcome_id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+WHERE tenant_id = ? AND outcome_id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	).Scan(&revision); err != nil {
 		return ports.OutcomeCoordination{}, mapSQLError("lock outcome coordination", err)
 	}
@@ -753,8 +753,8 @@ func (s coordinationStore) AdvanceOutcome(ctx context.Context, scope domain.Scop
 	result, err := s.uow.tx.ExecContext(ctx, `
 UPDATE outcome_coordination
 SET state_revision = state_revision + 1
-WHERE namespace_id = ? AND outcome_id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+WHERE tenant_id = ? AND outcome_id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	)
 	if err != nil {
 		return 0, mapSQLError("advance outcome revision", err)
@@ -770,29 +770,29 @@ WHERE namespace_id = ? AND outcome_id = ?`,
 	if err := s.uow.tx.QueryRowContext(ctx, `
 SELECT state_revision
 FROM outcome_coordination
-WHERE namespace_id = ? AND outcome_id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+WHERE tenant_id = ? AND outcome_id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	).Scan(&revision); err != nil {
 		return 0, mapSQLError("read advanced outcome revision", err)
 	}
 	return domain.OutcomeRevision(revision), nil
 }
 
-func ensureNamespace(ctx context.Context, tx *sql.Tx, namespaceID domain.ID) error {
-	if err := namespaceID.Validate(); err != nil {
+func ensureTenant(ctx context.Context, tx *sql.Tx, tenantID domain.ID) error {
+	if err := tenantID.Validate(); err != nil {
 		return err
 	}
 	now := encodeTime(nowUTC())
 	_, err := tx.ExecContext(ctx, `
-INSERT OR IGNORE INTO namespaces (
+INSERT OR IGNORE INTO tenants (
     id, name, lifecycle, version, created_at, updated_at
 ) VALUES (?, ?, 'active', 1, ?, ?)`,
-		namespaceID.String(),
-		"namespace:"+namespaceID.String(),
+		tenantID.String(),
+		"tenant:"+tenantID.String(),
 		now,
 		now,
 	)
-	return mapSQLError("ensure namespace", err)
+	return mapSQLError("ensure tenant", err)
 }
 
 func ensurePrincipal(ctx context.Context, tx *sql.Tx, principalID string) error {
@@ -813,9 +813,9 @@ INSERT OR IGNORE INTO principals (
 func ensureCoordinationRow(ctx context.Context, tx *sql.Tx, scope domain.Scope) error {
 	_, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO outcome_coordination (
-    namespace_id, outcome_id, state_revision
+    tenant_id, outcome_id, state_revision
 ) VALUES (?, ?, 0)`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	)
 	return mapSQLError("ensure outcome coordination", err)
 }
@@ -825,10 +825,10 @@ func insertEntityRef(ctx context.Context, tx *sql.Tx, ref domain.EntityRef) erro
 		return err
 	}
 	_, err := tx.ExecContext(ctx, `
-INSERT INTO entity_refs (id, namespace_id, outcome_id, kind)
+INSERT INTO entity_refs (id, tenant_id, outcome_id, kind)
 VALUES (?, ?, ?, ?)`,
 		ref.ID.String(),
-		ref.NamespaceID.String(),
+		ref.TenantID.String(),
 		ref.OutcomeID.String(),
 		ref.Kind.String(),
 	)
@@ -840,7 +840,7 @@ func requireVersionedUpdate(
 	tx *sql.Tx,
 	result sql.Result,
 	table string,
-	namespaceID, outcomeID, entityID domain.ID,
+	tenantID, outcomeID, entityID domain.ID,
 	expected domain.Version,
 ) error {
 	affected, err := result.RowsAffected()
@@ -855,11 +855,11 @@ func requireVersionedUpdate(
 	}
 	var current int64
 	query := fmt.Sprintf(
-		"SELECT version FROM %s WHERE namespace_id = ? AND outcome_id = ? AND id = ?",
+		"SELECT version FROM %s WHERE tenant_id = ? AND outcome_id = ? AND id = ?",
 		table,
 	)
 	err = tx.QueryRowContext(ctx, query,
-		namespaceID.String(), outcomeID.String(), entityID.String(),
+		tenantID.String(), outcomeID.String(), entityID.String(),
 	).Scan(&current)
 	if err == sql.ErrNoRows {
 		return domain.NewError(domain.ErrorCodeNotFound, "aggregate not found")
@@ -915,9 +915,9 @@ func nowUTC() time.Time {
 // A bounded set read avoids seven empty owned-state queries per aggregate.
 // Owners with criteria, assignments or conclusions keep the full history codec.
 func ownedAggregateIDs(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[domain.ID]bool, error) {
-	rows, err := tx.QueryContext(ctx, `SELECT entity_id FROM entity_actor_links WHERE namespace_id=? AND outcome_id=?
- UNION SELECT owner_id FROM success_criteria WHERE namespace_id=? AND outcome_id=?
- UNION SELECT owner_id FROM conclusions WHERE namespace_id=? AND outcome_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, err := tx.QueryContext(ctx, `SELECT entity_id FROM entity_actor_links WHERE tenant_id=? AND outcome_id=?
+ UNION SELECT owner_id FROM success_criteria WHERE tenant_id=? AND outcome_id=?
+ UNION SELECT owner_id FROM conclusions WHERE tenant_id=? AND outcome_id=?`, scope.TenantID.String(), scope.OutcomeID.String(), scope.TenantID.String(), scope.OutcomeID.String(), scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list aggregate owned state", err)
 	}

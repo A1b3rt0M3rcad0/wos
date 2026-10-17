@@ -1,8 +1,8 @@
 # Public integration event catalogue v1
 
-The machine-readable catalogue is [integration-events-v1.json](integration-events-v1.json). It enumerates every event type projected into `IntegrationFact` by the current Application command mapping. The envelope uses `schema_version: 1`; a Trigger produces a separate `TriggerFiring` with the configured product `signal_type` and the source fact. Administrative credential/grant/session audit is a separate Namespace contract.
+The machine-readable catalogue is [integration-events-v1.json](integration-events-v1.json). It enumerates every event type projected into `IntegrationFact` by the current Application command mapping. The envelope uses `schema_version: 1`; a Trigger produces a separate `TriggerFiring` with the configured product `signal_type` and the source fact. Administrative credential/grant/session audit is a separate Tenant contract.
 
-Each fact carries a stable source ID, Namespace, Outcome, Outcome revision, event index, entity reference, Principal, declared Actor, command ID, timestamp and optional correlation ID. It has no internal DomainEvent payload. Consumers use authorized continuity queries to obtain the current details. Facts describe committed changes, not instructions to execute work.
+Each fact carries a stable source ID, Tenant, Outcome, Outcome revision, event index, entity reference, Principal, declared Actor, command ID, timestamp and optional correlation ID. It has no internal DomainEvent payload. Consumers use authorized continuity queries to obtain the current details. Facts describe committed changes, not instructions to execute work.
 
 | Event family | Public meaning |
 | --- | --- |

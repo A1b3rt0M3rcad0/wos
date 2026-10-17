@@ -65,8 +65,8 @@ func (r endpointRepository) Get(ctx context.Context, ns, id domain.ID) (ports.We
 		return ports.WebhookEndpoint{}, err
 	}
 	v, ok := r.tx.endpoints[id.String()]
-	if !ok || v.NamespaceID != ns {
-		return ports.WebhookEndpoint{}, domain.NewError(domain.ErrorCodeNotFound, "endpoint not configured in namespace")
+	if !ok || v.TenantID != ns {
+		return ports.WebhookEndpoint{}, domain.NewError(domain.ErrorCodeNotFound, "endpoint not configured in tenant")
 	}
 	return v, nil
 }
@@ -80,11 +80,11 @@ func (s *Store) InstallEndpoints(ctx context.Context, values []ports.WebhookEndp
 		if err := v.ID.Validate(); err != nil {
 			return err
 		}
-		if err := v.NamespaceID.Validate(); err != nil {
+		if err := v.TenantID.Validate(); err != nil {
 			return err
 		}
-		if existing, ok := s.endpoints[v.ID.String()]; ok && existing.NamespaceID != v.NamespaceID {
-			return domain.NewError(domain.ErrorCodeForbidden, "endpoint namespace immutable")
+		if existing, ok := s.endpoints[v.ID.String()]; ok && existing.TenantID != v.TenantID {
+			return domain.NewError(domain.ErrorCodeForbidden, "endpoint tenant immutable")
 		}
 		s.endpoints[v.ID.String()] = v
 	}
@@ -106,7 +106,7 @@ func (l eventLog) appendIntegration(e domain.DomainEvent) error {
 			return err
 		}
 		for _, endpointID := range t.TargetEndpointIDs {
-			ep, err := l.tx.Endpoints().Get(context.Background(), e.NamespaceID, endpointID)
+			ep, err := l.tx.Endpoints().Get(context.Background(), e.TenantID, endpointID)
 			if err != nil {
 				return err
 			}
@@ -156,7 +156,7 @@ func (r deliveryRepository) ListFirings(ctx context.Context, scope domain.Scope,
 	}
 	values := []ports.TriggerFiring{}
 	for _, v := range r.tx.firings {
-		if v.Source.NamespaceID == scope.NamespaceID && v.Source.OutcomeID == scope.OutcomeID && v.ID.String() > after {
+		if v.Source.TenantID == scope.TenantID && v.Source.OutcomeID == scope.OutcomeID && v.ID.String() > after {
 			values = append(values, v)
 		}
 	}

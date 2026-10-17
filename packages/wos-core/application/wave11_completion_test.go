@@ -84,7 +84,7 @@ func TestWave11ConcurrentPublicationHasSingleWinner(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave11ConcurrentService(t)
 	created, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f331-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f331-0000-7000-8000-000000000001"),
 		Title:        "Concurrent publication",
 		DesiredState: "one immutable revision is published",
 		Priority:     domain.PriorityNormal,
@@ -164,7 +164,7 @@ func TestWave11ConcurrentActivationPreservesUniqueSlot(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave11ConcurrentService(t)
 	created, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f332-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f332-0000-7000-8000-000000000001"),
 		Title:        "Concurrent activation",
 		DesiredState: "one active revision per planning scope",
 		Priority:     domain.PriorityNormal,
@@ -242,7 +242,7 @@ func TestWave11ReplanningAndLiveCancellationDoNotRewriteHistory(t *testing.T) {
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f333-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f333-0000-7000-8000-000000000001"),
 		Title:        "Historical planning",
 		DesiredState: "published revisions stay immutable",
 		Priority:     domain.PriorityNormal,
@@ -365,7 +365,7 @@ func TestWave11StaleRoadmapAndDraftVersionsFailExplicitly(t *testing.T) {
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f334-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f334-0000-7000-8000-000000000001"),
 		Title:        "Stale planning writes",
 		DesiredState: "stale versions fail explicitly",
 		Priority:     domain.PriorityNormal,

@@ -2,7 +2,7 @@
 [0.13666, "o", "One trusted local operator; unsigned HTTP, not independent signed review.\r\n"]
 [0.136721, "o", "A real server, isolated SQLite, no agent runtime or external service.\r\n"]
 [4.136926, "o", "\r\n1. Define the Outcome and one required criterion\r\n"]
-[4.137592, "o", "> POST /api/v1/namespaces/0199d000-0000-7000-8000-000000000001/outcomes\r\n"]
+[4.137592, "o", "> POST /api/v1/tenants/0199d000-0000-7000-8000-000000000001/outcomes\r\n"]
 [4.14326, "o", "< HTTP 201\r\n"]
 [4.143296, "o", "Outcome: 01a14615-b4e9-7321-86e5-b942832e11ac\r\n"]
 [4.143305, "o", "Following request paths are relative to this Outcome.\r\n"]

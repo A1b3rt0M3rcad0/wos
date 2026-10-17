@@ -1,10 +1,10 @@
 # Signed v2 focal API
 
-This API reads persisted state. It does not run agents, certify quality, select a reviewer or grant execution authority. Namespace activation remains an explicit operation; configuring an issuer alone never activates v2.
+This API reads persisted state. It does not run agents, certify quality, select a reviewer or grant execution authority. Tenant activation remains an explicit operation; configuring an issuer alone never activates v2.
 
 ## Public identity and enrollment
 
-HTTP `GET /api/v1/security/signing-identity` and MCP `wos_get_signing_identity` return the authenticated credential's public identity, Namespace CAS version, current policy and at most 100 public key records. `keys_truncated` explicitly reports a bounded list. An optional `enrollment_id` expands only a challenge bound to the authenticated Principal and credential. Private signing material and bearer tokens are absent.
+HTTP `GET /api/v1/security/signing-identity` and MCP `wos_get_signing_identity` return the authenticated credential's public identity, Tenant CAS version, current policy and at most 100 public key records. `keys_truncated` explicitly reports a bounded list. An optional `enrollment_id` expands only a challenge bound to the authenticated Principal and credential. Private signing material and bearer tokens are absent.
 
 HTTP `POST /api/v1/security/signing-commands`, MCP `wos_manage_signing_identity` and SDK `SigningMutation` use the same transactional SecurityService. HTTP accepts the command itself and the `Idempotency-Key` header; MCP accepts `{idempotency_key, command}`. New versions use decimal strings, including zero for an unused CAS field. The caller cannot choose another authenticated identity.
 
@@ -12,16 +12,16 @@ Operations are `set_credential_policy`, `set_acceptance_policy`, `set_review_gro
 
 ## Trust
 
-HTTP `GET /api/v1/namespaces/{namespace_id}/signed-trust`, MCP `wos_get_signed_trust` and SDK `GetSignedTrust` return the persistent public server identity and Namespace protocol metadata. Consumers must establish and persist trust during explicit onboarding. Public metadata does not authorize sending secrets to an origin taken from an unknown repository.
+HTTP `GET /api/v1/tenants/{tenant_id}/signed-trust`, MCP `wos_get_signed_trust` and SDK `GetSignedTrust` return the persistent public server identity and Tenant protocol metadata. Consumers must establish and persist trust during explicit onboarding. Public metadata does not authorize sending secrets to an origin taken from an unknown repository.
 
 ## Scoped resources
 
 HTTP GET paths are:
 
-- `/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}`
-- `/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}`
+- `/api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/signed-state/{resource}`
+- `/api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}`
 
-MCP `wos_read_signed_state` and SDK `ReadSignedState` accept `scope`, `resource`, optional `id`, `contract_kind`, expected `digest`, `idempotency_key`, `limit` and `cursor`. MCP also exposes `wos://namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}` resource templates, with optional digest/contract_kind query parameters. Collections use the tool for pagination.
+MCP `wos_read_signed_state` and SDK `ReadSignedState` accept `scope`, `resource`, optional `id`, `contract_kind`, expected `digest`, `idempotency_key`, `limit` and `cursor`. MCP also exposes `wos://tenants/{tenant_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}` resource templates, with optional digest/contract_kind query parameters. Collections use the tool for pagination.
 
 | Resource | Identifier | Result |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ Collections scan at most `limit` records (1–100, default 25); `next_cursor`, `
 
 ## Authorization and compatibility
 
-Reads check the actual live bearer, grant and policy in the transaction at authoritative database time. Permitted-Outcome restrictions apply to old focal reads and SearchOutcomes too. Search filtering happens in storage before pagination; clients cannot widen it. A scope-policy change invalidates an old restricted search cursor. Namespace-wide state reads/command receipts are rejected for an Outcome-restricted credential; public identity/protocol metadata remains separately bounded.
+Reads check the actual live bearer, grant and policy in the transaction at authoritative database time. Permitted-Outcome restrictions apply to old focal reads and SearchOutcomes too. Search filtering happens in storage before pagination; clients cannot widen it. A scope-policy change invalidates an old restricted search cursor. Tenant-wide state reads/command receipts are rejected for an Outcome-restricted credential; public identity/protocol metadata remains separately bounded.
 
 New signed metadata counters are decimal strings. Signed envelope payloads remain exact opaque base64; metadata formatting never rewrites signed bytes. Historic v1 numeric encoding and fingerprints remain unchanged.
 

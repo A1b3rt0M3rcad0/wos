@@ -17,15 +17,15 @@ import (
 
 func TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
-		cfg.Auth.BootstrapNamespaceID = "0199d129-0000-7000-8000-000000000010"
-		cfg.Auth.BootstrapNamespaceName = "delivery health"
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "delivery health"
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("d", 40)
-		ns := d.MustParseID(cfg.Auth.BootstrapNamespaceID)
-		endpoint := ports.WebhookEndpoint{ID: d.MustParseID("0199d129-0000-7000-8000-000000000001"), NamespaceID: ns, URL: "https://unavailable.example.test/hook", SecretRef: "not-returned", KeyID: "key"}
+		ns := d.MustParseID(cfg.Auth.BootstrapTenantID)
+		endpoint := ports.WebhookEndpoint{ID: d.MustParseID("0199d129-0000-7000-8000-000000000001"), TenantID: ns, URL: "https://unavailable.example.test/hook", SecretRef: "not-returned", KeyID: "key"}
 		cfg.Integration.Endpoints = []ports.WebhookEndpoint{endpoint}
 		cfg.Integration.WorkerEnabled = false
-		runtime, e := OpenRuntime(cfg)
+		runtime, e := openRuntimeFixture(t, &cfg)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -33,7 +33,7 @@ func TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness(t *testing.T) {
 		ctx := context.Background()
 		seed, _ := a.NewService(runtime.store, systemClock{}, uuidV7Generator{})
 		cc := d.CommandContext{CommandID: d.MustParseID("0199d129-0000-7000-8000-000000000002"), PrincipalID: "test", Actor: d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "seed"}}
-		out, e := seed.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: ns, Title: "Delivery health", DesiredState: "observable backlog", Priority: d.PriorityNormal})
+		out, e := seed.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: ns, Title: "Delivery health", DesiredState: "observable backlog", Priority: d.PriorityNormal})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -48,7 +48,7 @@ func TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness(t *testing.T) {
 		host := httptest.NewServer(runtime.Handler())
 		defer host.Close()
 		client, _ := sdk.New(host.URL, cfg.Auth.BootstrapToken, host.Client())
-		health, e := client.GetDeliveryHealth(ctx, a.DeliveryHealthQuery{NamespaceID: ns})
+		health, e := client.GetDeliveryHealth(ctx, a.DeliveryHealthQuery{TenantID: ns})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -76,7 +76,7 @@ func (fatalDeliveryStore) ClaimDelivery(context.Context, time.Time, d.ID, time.D
 func TestDeliveryFatalWorkerIsVisibleWhileAPIStaysReady(t *testing.T) {
 	cfg := transportConfig(t)
 	cfg.Integration.WorkerEnabled = true
-	runtime, e := OpenRuntime(cfg)
+	runtime, e := openRuntimeFixture(t, &cfg)
 	if e != nil {
 		t.Fatal(e)
 	}

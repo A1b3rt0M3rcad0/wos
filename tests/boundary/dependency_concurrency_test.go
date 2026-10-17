@@ -82,10 +82,10 @@ func assertConcurrentOppositeEdges(
 		t.Fatal(err)
 	}
 	commands := &readinessCommands{}
-	namespaceID := domain.MustParseID("0199ed10-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ed10-0000-7000-8000-000000000001")
 
 	created, err := setup.CreateOutcome(ctx, commands.Context(), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Concurrent graph",
 		DesiredState: "Opposite edges never commit together",
 		Priority:     domain.PriorityNormal,

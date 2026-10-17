@@ -16,10 +16,10 @@ type memoryReceipt struct {
 	Payload     json.RawMessage
 }
 type memorySecurityState struct {
-	Namespaces  map[d.ID]ports.Namespace
+	Tenants     map[d.ID]ports.Tenant
 	Versions    map[d.ID]d.Version
 	Credentials map[string]ports.Credential
-	Grants      map[string]ports.NamespaceGrant
+	Grants      map[string]ports.TenantGrant
 	Keys        map[string]d.SigningKey
 	Enrollments map[string]d.SigningEnrollment
 	Policies    map[string]d.CredentialPolicy
@@ -30,7 +30,7 @@ type memorySecurityState struct {
 }
 
 func newMemorySecurityState() memorySecurityState {
-	return memorySecurityState{Namespaces: map[d.ID]ports.Namespace{}, Versions: map[d.ID]d.Version{}, Credentials: map[string]ports.Credential{}, Grants: map[string]ports.NamespaceGrant{}, Keys: map[string]d.SigningKey{}, Enrollments: map[string]d.SigningEnrollment{}, Policies: map[string]d.CredentialPolicy{}, Acceptance: map[string]d.WorkAcceptancePolicy{}, Groups: map[string]string{}, Receipts: map[string]memoryReceipt{}, Audit: map[d.ID][]ports.SecurityAudit{}}
+	return memorySecurityState{Tenants: map[d.ID]ports.Tenant{}, Versions: map[d.ID]d.Version{}, Credentials: map[string]ports.Credential{}, Grants: map[string]ports.TenantGrant{}, Keys: map[string]d.SigningKey{}, Enrollments: map[string]d.SigningEnrollment{}, Policies: map[string]d.CredentialPolicy{}, Acceptance: map[string]d.WorkAcceptancePolicy{}, Groups: map[string]string{}, Receipts: map[string]memoryReceipt{}, Audit: map[d.ID][]ports.SecurityAudit{}}
 }
 func deepCopy[T any](v T) T {
 	raw, _ := json.Marshal(v)
@@ -57,7 +57,7 @@ type signingIdentityRepository struct{ tx *transaction }
 func (tx *transaction) SigningIdentity() ports.SigningIdentityRepository {
 	return signingIdentityRepository{tx}
 }
-func (r signingIdentityRepository) LockNamespace(ctx context.Context, ns d.ID) (d.Version, error) {
+func (r signingIdentityRepository) LockTenant(ctx context.Context, ns d.ID) (d.Version, error) {
 	if err := ctx.Err(); err != nil {
 		return 0, err
 	}
@@ -69,7 +69,7 @@ func (r signingIdentityRepository) LockNamespace(ctx context.Context, ns d.ID) (
 }
 func (r signingIdentityRepository) Credential(ctx context.Context, ns, id d.ID) (ports.Credential, error) {
 	for _, c := range r.tx.security.Credentials {
-		if c.NamespaceID == ns && c.ID == id {
+		if c.TenantID == ns && c.ID == id {
 			return c, ctx.Err()
 		}
 	}
@@ -95,7 +95,7 @@ func (r signingIdentityRepository) Keys(ctx context.Context, ns d.ID, principal 
 	}
 	out := []d.SigningKey{}
 	for _, k := range r.tx.security.Keys {
-		if k.NamespaceID == ns && k.PrincipalID == principal {
+		if k.TenantID == ns && k.PrincipalID == principal {
 			out = append(out, deepCopy(k))
 		}
 	}
@@ -109,7 +109,7 @@ func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, 
 	if err := k.Validate(); err != nil {
 		return err
 	}
-	key := securityKey(k.NamespaceID, k.ID.String())
+	key := securityKey(k.TenantID, k.ID.String())
 	old, exists := r.tx.security.Keys[key]
 	if (exists && expected == 0) || (!exists && expected > 0) || k.Version != expected+1 || (exists && old.Version != expected) {
 		return d.NewError(d.ErrorCodeVersionConflict, "key version changed")
@@ -125,7 +125,7 @@ func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, 
 		}
 	}
 	for id, other := range r.tx.security.Keys {
-		if id != key && other.NamespaceID == k.NamespaceID && other.Fingerprint == k.Fingerprint {
+		if id != key && other.TenantID == k.TenantID && other.Fingerprint == k.Fingerprint {
 			return d.NewError(d.ErrorCodeAlreadyExists, "key fingerprint already registered")
 		}
 	}
@@ -143,7 +143,7 @@ func (r signingIdentityRepository) SaveEnrollment(ctx context.Context, e d.Signi
 	if err := e.Validate(); err != nil {
 		return err
 	}
-	key := securityKey(e.NamespaceID, e.ID.String())
+	key := securityKey(e.TenantID, e.ID.String())
 	old, exists := r.tx.security.Enrollments[key]
 	if (exists && expected == 0) || (!exists && expected > 0) || e.Version != expected+1 || (exists && old.Version != expected) {
 		return d.NewError(d.ErrorCodeVersionConflict, "enrollment version changed")
@@ -157,7 +157,7 @@ func (r signingIdentityRepository) SaveEnrollment(ctx context.Context, e d.Signi
 			return d.NewError(d.ErrorCodeInvalidTransition, "enrollment challenge immutable/one-use")
 		}
 	}
-	c, err := r.Credential(ctx, e.NamespaceID, e.CredentialID)
+	c, err := r.Credential(ctx, e.TenantID, e.CredentialID)
 	if err != nil || c.PrincipalID != e.PrincipalID {
 		return d.NewError(d.ErrorCodeInvalidScope, "enrollment credential differs")
 	}
@@ -175,11 +175,11 @@ func (r signingIdentityRepository) SaveCredentialPolicy(ctx context.Context, p d
 	if err := p.Validate(); err != nil {
 		return err
 	}
-	c, err := r.Credential(ctx, p.NamespaceID, p.CredentialID)
+	c, err := r.Credential(ctx, p.TenantID, p.CredentialID)
 	if err != nil || c.PrincipalID != p.PrincipalID {
 		return d.NewError(d.ErrorCodeInvalidScope, "policy credential differs")
 	}
-	key := securityKey(p.NamespaceID, p.CredentialID.String())
+	key := securityKey(p.TenantID, p.CredentialID.String())
 	old, exists := r.tx.security.Policies[key]
 	if (exists && expected == 0) || (!exists && expected > 0) || p.Version != expected+1 || (exists && old.Version != expected) {
 		return d.NewError(d.ErrorCodeVersionConflict, "policy version changed")
@@ -210,16 +210,16 @@ func (r signingIdentityRepository) SaveAcceptancePolicy(ctx context.Context, p d
 		return err
 	}
 	if p.OutcomeID != nil {
-		if _, err := r.tx.Outcomes().Get(ctx, p.NamespaceID, *p.OutcomeID); err != nil {
+		if _, err := r.tx.Outcomes().Get(ctx, p.TenantID, *p.OutcomeID); err != nil {
 			return err
 		}
 		if p.WorkItemID != nil {
-			if _, err := r.tx.WorkItems().Get(ctx, d.Scope{NamespaceID: p.NamespaceID, OutcomeID: *p.OutcomeID}, *p.WorkItemID); err != nil {
+			if _, err := r.tx.WorkItems().Get(ctx, d.Scope{TenantID: p.TenantID, OutcomeID: *p.OutcomeID}, *p.WorkItemID); err != nil {
 				return err
 			}
 		}
 	}
-	key := acceptanceKey(p.NamespaceID, p.OutcomeID, p.WorkItemID)
+	key := acceptanceKey(p.TenantID, p.OutcomeID, p.WorkItemID)
 	old, exists := r.tx.security.Acceptance[key]
 	if (exists && expected == 0) || (!exists && expected > 0) || p.Version != expected+1 || (exists && old.Version != expected) {
 		return d.NewError(d.ErrorCodeVersionConflict, "acceptance policy version changed")
@@ -256,7 +256,7 @@ func (r signingIdentityRepository) SaveReceipt(ctx context.Context, ns d.ID, pri
 	return ctx.Err()
 }
 func (r signingIdentityRepository) Audit(ctx context.Context, ns d.ID, principal string, actor d.ActorRef, op, target string, now time.Time) (d.Version, error) {
-	v, err := r.LockNamespace(ctx, ns)
+	v, err := r.LockTenant(ctx, ns)
 	if err != nil {
 		return 0, err
 	}
@@ -265,7 +265,7 @@ func (r signingIdentityRepository) Audit(ctx context.Context, ns d.ID, principal
 		return 0, err
 	}
 	r.tx.security.Versions[ns] = next
-	r.tx.security.Audit[ns] = append(r.tx.security.Audit[ns], ports.SecurityAudit{NamespaceVersion: next, PrincipalID: principal, Actor: actor, Operation: op, Target: target, RecordedAt: now})
+	r.tx.security.Audit[ns] = append(r.tx.security.Audit[ns], ports.SecurityAudit{TenantVersion: next, PrincipalID: principal, Actor: actor, Operation: op, Target: target, RecordedAt: now})
 	return next, ctx.Err()
 }
 

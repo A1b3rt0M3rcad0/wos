@@ -37,7 +37,10 @@ func (r SignedOperationResult) Validate() error {
 		return NewError(ErrorCodeInvalidArgument, "invalid durable signed operation binding")
 	}
 	switch r.CommandName {
-	case "AppendWorkActivity", "ResolveSignedReturnIntent", "SetNamespaceWorkProtocol", "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
+	case "SetNamespaceWorkProtocol":
+		// Historical receipts retain their authenticated command name. No
+		// current command dispatcher accepts this retired operation alias.
+	case "AppendWorkActivity", "ResolveSignedReturnIntent", "SetTenantWorkProtocol", "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract", "ReturnSignedWork", "AcquireSignedReviewContract", "AcquireNextSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract", "ReturnSignedReview", "InterveneSignedReviewCase", "RevokeSignedContract", "ReconcileSignedContracts":
 	default:
 		return NewError(ErrorCodeInvalidArgument, "unknown durable signed operation")
 	}

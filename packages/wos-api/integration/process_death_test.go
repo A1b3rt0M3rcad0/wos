@@ -109,7 +109,7 @@ func TestDeliveryWorkerProcessDeathReclaimsPersistedLease(t *testing.T) {
 			case <-time.After(10 * time.Second):
 				t.Fatal("child did not persist lease and reach receiver", output.String())
 			}
-			scope := d.Scope{NamespaceID: signal.Source.NamespaceID, OutcomeID: signal.Source.OutcomeID}
+			scope := d.Scope{TenantID: signal.Source.TenantID, OutcomeID: signal.Source.OutcomeID}
 			u, e := one.Begin(context.Background())
 			if e != nil {
 				t.Fatal(e)

@@ -22,7 +22,7 @@ func queryLimit(r *http.Request) (int, error) {
 	return n, nil
 }
 func (h *Handler) searchOutcomes(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return

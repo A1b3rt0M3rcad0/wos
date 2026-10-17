@@ -21,9 +21,9 @@ import (
 // InstallationOperatorIntent is an offline, host-authorized upgrade intent. It
 // never issues a secret, restores revoked credentials or starts the HTTP runtime.
 type InstallationOperatorIntent struct {
-	NamespaceID     d.ID      `json:"namespace_id"`
+	TenantID        d.ID      `json:"tenant_id"`
 	PrincipalID     string    `json:"principal_id"`
-	ExpectedVersion d.Version `json:"expected_namespace_version"`
+	ExpectedVersion d.Version `json:"expected_tenant_version"`
 	IdempotencyKey  string    `json:"idempotency_key"`
 	Reason          string    `json:"reason"`
 	DrainedWriters  bool      `json:"drained_writers"`
@@ -44,11 +44,12 @@ func DecodeInstallationOperatorIntent(reader io.Reader) (InstallationOperatorInt
 // Existing grants are never promoted by a schema migration or normal restart.
 func AuthorizeInstallationOperator(ctx context.Context, config Config, intent InstallationOperatorIntent) (ports.SecurityAdminResult, error) {
 	var zero ports.SecurityAdminResult
+	config = config.withTenantBindingDefaults()
 	if err := config.Validate(); err != nil {
 		return zero, err
 	}
-	if !intent.DrainedWriters || intent.NamespaceID.Validate() != nil || intent.ExpectedVersion < 1 || strings.TrimSpace(intent.PrincipalID) == "" || len(intent.PrincipalID) > 256 || len(strings.TrimSpace(intent.Reason)) < 8 || len(intent.Reason) > 1024 {
-		return zero, d.NewError(d.ErrorCodeInvalidArgument, "explicit Namespace, existing administrator, expected version, reason and drained_writers=true are required")
+	if !intent.DrainedWriters || intent.TenantID.Validate() != nil || intent.ExpectedVersion < 1 || strings.TrimSpace(intent.PrincipalID) == "" || len(intent.PrincipalID) > 256 || len(strings.TrimSpace(intent.Reason)) < 8 || len(intent.Reason) > 1024 {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "explicit Tenant, existing administrator, expected version, reason and drained_writers=true are required")
 	}
 	if err := d.ValidateIdempotencyKey(intent.IdempotencyKey); err != nil {
 		return zero, err
@@ -58,10 +59,15 @@ func AuthorizeInstallationOperator(ctx context.Context, config Config, intent In
 	var supported int64
 	var schemaErr error
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{})
+		binding, openErr := openTenantStorage(ctx, config, false, nil)
+		if openErr != nil {
+			return zero, openErr
+		}
+		defer binding.Close()
+		store = binding.Store
 		supported, schemaErr = postgres.LatestSchemaVersion()
 	} else {
-		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{})
+		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{TenantID: d.MustParseID(config.Storage.TenantID), TenantName: config.Auth.BootstrapTenantName})
 		supported, schemaErr = sqlite.LatestSchemaVersion()
 	}
 	if err != nil {
@@ -82,7 +88,7 @@ func AuthorizeInstallationOperator(ctx context.Context, config Config, intent In
 		return zero, d.NewError(d.ErrorCodeInvalidConfig, "transactional operator authorization unavailable")
 	}
 	return admin.ApplySecurityAdmin(ctx, ports.SecurityAdminRequest{
-		Command:     ports.SecurityAdminCommand{NamespaceID: intent.NamespaceID, ExpectedVersion: intent.ExpectedVersion, Operation: "authorize_installation_operator"},
+		Command:     ports.SecurityAdminCommand{TenantID: intent.TenantID, ExpectedVersion: intent.ExpectedVersion, Operation: "authorize_installation_operator"},
 		PrincipalID: intent.PrincipalID, Actor: d.ActorRef{Kind: d.ActorKindService, Provider: "wos", ID: "host-operator"},
 		IdempotencyKey: intent.IdempotencyKey, Fingerprint: hex.EncodeToString(fingerprint[:]), Now: systemClock{}.Now().UTC(),
 		HostOperator: true, OperatorReason: intent.Reason,

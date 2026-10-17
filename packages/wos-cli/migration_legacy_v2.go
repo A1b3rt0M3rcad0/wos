@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 func (file LegacyUnsignedFileV2) MarshalJSON() ([]byte, error) {
@@ -75,11 +76,13 @@ func decodeLegacyUnsignedV2(raw []byte, profile ProfileV2, id d.ID) (LegacyUnsig
 	if header.Kind != "WOSLegacyUnsignedContract" {
 		return file, false, nil
 	}
-	if e = DecodeV2Document(raw, &file); e != nil {
+	var projected legacyTenantReadV2
+	if e = signing.DecodeStoredJSON(js, &projected, MaxLocalDocumentV2); e != nil {
 		return file, true, e
 	}
+	file = LegacyUnsignedFileV2(projected)
 	c := file.Contract.Contract
-	if file.SchemaVersion != 2 || file.Protocol != "legacy_unsigned" || file.SourceOrigin != profile.Binding.ServerOrigin || file.SourceNamespaceID != profile.Binding.NamespaceID || c.ID != id || c.Scope.NamespaceID != profile.Binding.NamespaceID || c.SignedBinding != nil || c.Validate() != nil {
+	if file.SchemaVersion != 2 || file.Protocol != "legacy_unsigned" || file.SourceOrigin != profile.Binding.ServerOrigin || file.SourceTenantID != profile.Binding.TenantID || c.ID != id || c.Scope.TenantID != profile.Binding.TenantID || c.SignedBinding != nil || c.Validate() != nil {
 		return file, true, fmt.Errorf("legacy unsigned record binding differs")
 	}
 	return file, true, nil
@@ -87,4 +90,15 @@ func decodeLegacyUnsignedV2(raw []byte, profile ProfileV2, id d.ID) (LegacyUnsig
 func legacyUnsignedSummaryV2(file LegacyUnsignedFileV2) any {
 	c := file.Contract.Contract
 	return map[string]any{"contract_id": c.ID, "work_item_id": c.WorkItemID, "outcome_id": c.Scope.OutcomeID, "title": c.Spec.Title, "protocol": "legacy_unsigned", "snapshot_status": c.Status, "signed_authority": false}
+}
+
+// This read-only local format predates signed authority. The stored-field
+// projection is bounded and then receives the same strict field/counter checks
+// as a current document; original file bytes and embedded backup chunks remain
+// untouched. It is never used for a pending operation or server command.
+type legacyTenantReadV2 LegacyUnsignedFileV2
+
+func (v *legacyTenantReadV2) UnmarshalJSON(raw []byte) error {
+	type plain legacyTenantReadV2
+	return DecodeV2Document(raw, (*plain)(v))
 }

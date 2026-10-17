@@ -25,7 +25,7 @@ type Store struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
-	protocols                map[domain.ID]domain.NamespaceWorkProtocol
+	protocols                map[domain.ID]domain.TenantWorkProtocol
 	contracts                map[string]domain.WorkContract
 	checkpoints              map[string]domain.WorkCheckpoint
 	submissions              map[string]domain.WorkSubmission
@@ -64,7 +64,7 @@ func New() *Store {
 		outcomes:                 make(map[string]domain.Outcome),
 		objectives:               make(map[string]domain.Objective),
 		workItems:                make(map[string]domain.WorkItem),
-		protocols:                make(map[domain.ID]domain.NamespaceWorkProtocol),
+		protocols:                make(map[domain.ID]domain.TenantWorkProtocol),
 		contracts:                make(map[string]domain.WorkContract),
 		checkpoints:              make(map[string]domain.WorkCheckpoint),
 		submissions:              make(map[string]domain.WorkSubmission),
@@ -163,7 +163,7 @@ type transaction struct {
 	outcomes                 map[string]domain.Outcome
 	objectives               map[string]domain.Objective
 	workItems                map[string]domain.WorkItem
-	protocols                map[domain.ID]domain.NamespaceWorkProtocol
+	protocols                map[domain.ID]domain.TenantWorkProtocol
 	contracts                map[string]domain.WorkContract
 	checkpoints              map[string]domain.WorkCheckpoint
 	submissions              map[string]domain.WorkSubmission
@@ -470,14 +470,14 @@ func (r roadmapRepository) Save(ctx context.Context, roadmap domain.Roadmap, exp
 
 type outcomeRepository struct{ tx *transaction }
 
-func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domain.ID) (domain.Outcome, error) {
+func (r outcomeRepository) Get(ctx context.Context, tenantID, outcomeID domain.ID) (domain.Outcome, error) {
 	if err := ctx.Err(); err != nil {
 		return domain.Outcome{}, err
 	}
 	if err := r.tx.ensureOpen(); err != nil {
 		return domain.Outcome{}, err
 	}
-	value, ok := r.tx.outcomes[outcomeKey(namespaceID, outcomeID)]
+	value, ok := r.tx.outcomes[outcomeKey(tenantID, outcomeID)]
 	if !ok {
 		return domain.Outcome{}, domain.NewError(domain.ErrorCodeNotFound, "outcome not found")
 	}
@@ -494,7 +494,7 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	if err := outcome.Validate(); err != nil {
 		return err
 	}
-	key := outcomeKey(outcome.NamespaceID, outcome.ID)
+	key := outcomeKey(outcome.TenantID, outcome.ID)
 	if _, exists := r.tx.outcomes[key]; exists {
 		return domain.NewError(domain.ErrorCodeAlreadyExists, "outcome already exists")
 	}
@@ -512,7 +512,7 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if err := outcome.Validate(); err != nil {
 		return err
 	}
-	key := outcomeKey(outcome.NamespaceID, outcome.ID)
+	key := outcomeKey(outcome.TenantID, outcome.ID)
 	current, ok := r.tx.outcomes[key]
 	if !ok {
 		return domain.NewError(domain.ErrorCodeNotFound, "outcome not found")
@@ -1434,15 +1434,15 @@ func (s *Store) IdempotencyRecordCount() int {
 }
 
 func idempotencyKey(identity domain.IdempotencyIdentity) string {
-	return identity.NamespaceID.String() + "/" + identity.PrincipalID + "/" + identity.CommandName + "/" + identity.IdempotencyKey
+	return identity.TenantID.String() + "/" + identity.PrincipalID + "/" + identity.CommandName + "/" + identity.IdempotencyKey
 }
 
-func outcomeKey(namespaceID, outcomeID domain.ID) string {
-	return namespaceID.String() + "/" + outcomeID.String()
+func outcomeKey(tenantID, outcomeID domain.ID) string {
+	return tenantID.String() + "/" + outcomeID.String()
 }
 
 func scopeKey(scope domain.Scope) string {
-	return outcomeKey(scope.NamespaceID, scope.OutcomeID)
+	return outcomeKey(scope.TenantID, scope.OutcomeID)
 }
 
 func entityKey(scope domain.Scope, id domain.ID) string {

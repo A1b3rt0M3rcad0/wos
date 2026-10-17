@@ -12,7 +12,7 @@ func (u *unitOfWork) ExternalContexts() ports.ExternalContextRepository {
 	return externalContextRepository{uow: u}
 }
 func (r externalContextRepository) List(ctx context.Context, scope domain.Scope) ([]domain.ExternalReference, error) {
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT provider,context_kind,external_id,url FROM outcome_external_references WHERE namespace_id=? AND outcome_id=? ORDER BY provider,context_kind,external_id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT provider,context_kind,external_id,url FROM outcome_external_references WHERE tenant_id=? AND outcome_id=? ORDER BY provider,context_kind,external_id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list external context", err)
 	}
@@ -32,10 +32,10 @@ func (r externalContextRepository) Add(ctx context.Context, scope domain.Scope, 
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url,continuity_sort_key,continuity_key_digest) VALUES(?,?,?,?,?,?,?,?)`, scope.NamespaceID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID, v.URL, key, digest)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO outcome_external_references(tenant_id,outcome_id,provider,context_kind,external_id,url,continuity_sort_key,continuity_key_digest) VALUES(?,?,?,?,?,?,?,?)`, scope.TenantID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID, v.URL, key, digest)
 	return mapSQLError("link external reference", err)
 }
 func (r externalContextRepository) Remove(ctx context.Context, scope domain.Scope, v domain.ExternalReference) error {
-	_, err := r.uow.tx.ExecContext(ctx, `DELETE FROM outcome_external_references WHERE namespace_id=? AND outcome_id=? AND provider=? AND context_kind=? AND external_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID)
+	_, err := r.uow.tx.ExecContext(ctx, `DELETE FROM outcome_external_references WHERE tenant_id=? AND outcome_id=? AND provider=? AND context_kind=? AND external_id=?`, scope.TenantID.String(), scope.OutcomeID.String(), v.Provider, v.Kind, v.ExternalID)
 	return mapSQLError("remove external reference", err)
 }

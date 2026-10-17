@@ -36,21 +36,21 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 			t.Fatalf("%s:%d: %v", file, line, e)
 		}
 	}
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", Permissions: permissions}))
-	credential, token, e := security.IssueCredential(adminCtx, scope.NamespaceID, "cli-worker", d.ActorRef{Kind: d.ActorKindAgent, Provider: "cli-harness", ID: "cli-worker"}, time.Now().Add(time.Hour))
+	must(security.SetGrant(adminCtx, ports.TenantGrant{TenantID: scope.TenantID, PrincipalID: "cli-worker", Permissions: permissions}))
+	credential, token, e := security.IssueCredential(adminCtx, scope.TenantID, "cli-worker", d.ActorRef{Kind: d.ActorKindAgent, Provider: "cli-harness", ID: "cli-worker"}, time.Now().Add(time.Hour))
 	must(e)
 	identity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: credential.ID, PrincipalID: "cli-worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+	policy := d.CredentialPolicy{TenantID: scope.TenantID, CredentialID: credential.ID, PrincipalID: "cli-worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, p := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 	}
-	configured, e := operator.SigningMutation(ctx, "cli-profile-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := operator.SigningMutation(ctx, "cli-profile-policy", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: identity.TenantVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
 	public, private, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	fingerprint := signing.Digest(public)
-	enrollment, e := operator.SigningMutation(ctx, "cli-profile-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "cli-worker", ExpectedFingerprint: fingerprint})
+	enrollment, e := operator.SigningMutation(ctx, "cli-profile-enrollment", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: configured.TenantVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "cli-worker", ExpectedFingerprint: fingerprint})
 	must(e)
 	root := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
@@ -179,8 +179,8 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 		}
 		return result
 	}
-	execute(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String())
-	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "executor_cli", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_PROFILE_TEST_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: enrollment.Enrollment.KeyID, PrivateKeyRef: "env:WOS_CLI_PROFILE_TEST_KEY", PublicKeyFingerprint: fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	execute(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--tenant", scope.TenantID.String(), "--outcome", scope.OutcomeID.String())
+	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "executor_cli", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, TenantID: scope.TenantID, PrincipalID: "cli-worker", CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_PROFILE_TEST_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: enrollment.Enrollment.KeyID, PrivateKeyRef: "env:WOS_CLI_PROFILE_TEST_KEY", PublicKeyFingerprint: fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
 	useNativeKeyringProfile(t, &profile, token, private)
 	proposal, e := cli.EncodeV2Document(profile)
 	must(e)
@@ -229,9 +229,9 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 
 	// Isolate the CLI tasks from the transport review fixture, using the actual
 	// public creation path after signed activation rather than SQL-only fixtures.
-	created, e := operator.CreateOutcome(ctx, "cli-batch-outcome", a.CreateOutcomeCommand{NamespaceID: scope.NamespaceID, Title: "CLI recovery", DesiredState: "two original grants materialized", Priority: d.PriorityNormal})
+	created, e := operator.CreateOutcome(ctx, "cli-batch-outcome", a.CreateOutcomeCommand{TenantID: scope.TenantID, Title: "CLI recovery", DesiredState: "two original grants materialized", Priority: d.PriorityNormal})
 	must(e)
-	batchScope := d.Scope{NamespaceID: scope.NamespaceID, OutcomeID: created.Value.ID}
+	batchScope := d.Scope{TenantID: scope.TenantID, OutcomeID: created.Value.ID}
 	_, e = operator.AddCriterion(ctx, "cli-batch-outcome-criterion", a.AddCriterionCommand{Owner: created.Value.Ref(), ExpectedVersion: created.Value.Version, Title: "Both original contracts materialized", Required: true, VerificationMode: d.VerificationModeAttestation})
 	must(e)
 	_, e = operator.ActivateOutcome(ctx, "cli-batch-outcome-active", a.ActivateOutcomeCommand{Scope: batchScope, ExpectedVersion: created.Value.Version + 1})
@@ -240,7 +240,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 		work, e := operator.CreateWorkItem(ctx, fmt.Sprintf("cli-batch-task-%d", i), a.CreateWorkItemCommand{Scope: batchScope, Title: fmt.Sprintf("bounded CLI task %d", i), Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 		must(e)
 		if !work.Value.ContractsEnabled {
-			t.Fatal("new Task in signed Namespace was not contract-enabled")
+			t.Fatal("new Task in signed Tenant was not contract-enabled")
 		}
 	}
 	dropCheckout.Store(true)
@@ -376,7 +376,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	// continue renewing the other contract and preserve both local drafts.
 	adminIdentity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: adminIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: adminIdentity.TenantVersion, ExpectedVersion: adminIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{TenantID: scope.TenantID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionTenantAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 	must(e)
 	activeState, e := operator.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "execution", ID: d.ID(view.Authority.ContractID)})
 	must(e)
@@ -512,7 +512,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	must(workspace.WriteV2(".wos/profiles/executor_cli/profile.yaml", currentProfile, signing.Digest(currentRaw)))
 	operatorIdentity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	_, e = operator.SigningMutation(ctx, "cli-revoke-original-key", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: operatorIdentity.NamespaceVersion, Operation: "revoke_signing_key", KeyID: currentProfile.Signing.KeyID, ExpectedVersion: 1, Reason: "exercise recovery of accepted state after key revocation"})
+	_, e = operator.SigningMutation(ctx, "cli-revoke-original-key", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: operatorIdentity.TenantVersion, Operation: "revoke_signing_key", KeyID: currentProfile.Signing.KeyID, ExpectedVersion: 1, Reason: "exercise recovery of accepted state after key revocation"})
 	must(e)
 	execute(0, "--profile", "executor_cli", "work", "recover", "--all-pending")
 	if acquisitionCalls.Load() != beforeCalls {
@@ -589,11 +589,11 @@ func signedCLIReviewCheckout(t *testing.T, handler http.Handler, scope d.Scope, 
 		must(json.Unmarshal(out.Bytes(), &result))
 		return result
 	}
-	execute(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String())
+	execute(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--tenant", scope.TenantID.String(), "--outcome", scope.OutcomeID.String())
 	w, e := cli.OpenWorkspace(root)
 	must(e)
 	defer w.Close()
-	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "reviewer", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: credential.PrincipalID, CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_REVIEW_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: key.ID, PrivateKeyRef: "env:WOS_CLI_REVIEW_KEY", PublicKeyFingerprint: key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "reviewer", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, TenantID: scope.TenantID, PrincipalID: credential.PrincipalID, CredentialID: credential.ID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_REVIEW_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: key.ID, PrivateKeyRef: "env:WOS_CLI_REVIEW_KEY", PublicKeyFingerprint: key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
 	useNativeKeyringProfile(t, &profile, token, private)
 	for _, historical := range historicalIssuers {
 		if historical.IssuerKeyID != server.IssuerKeyID {

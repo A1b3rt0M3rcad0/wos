@@ -164,7 +164,7 @@ func centralMigrationInventory(source *Workspace, destination string) (centralMi
 		if e = profile.Validate(); e != nil {
 			return manifest, contents, e
 		}
-		if profile.Name != name || profile.Binding.ServerID != project.Connection.ExpectedServerID || profile.Binding.ServerOrigin != project.Connection.ServerURL || profile.Binding.NamespaceID != project.Scope.NamespaceID {
+		if profile.Name != name || profile.Binding.ServerID != project.Connection.ExpectedServerID || profile.Binding.ServerOrigin != project.Connection.ServerURL || profile.Binding.TenantID != project.Scope.TenantID {
 			return manifest, contents, fmt.Errorf("source profile/project immutable binding differs")
 		}
 		resolver := defaultSecretResolverV2(source)

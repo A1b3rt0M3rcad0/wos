@@ -63,7 +63,7 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 		return ReadResult[domain.Outcome]{}, err
 	}
 
-	value, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	value, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
@@ -287,7 +287,7 @@ func validationStateForOwner(
 ) (domain.CriterionSet, *domain.Conclusion, []domain.Conclusion, error) {
 	switch owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.TenantID, owner.Scope.OutcomeID)
 		if err != nil {
 			return domain.CriterionSet{}, nil, nil, err
 		}
@@ -392,7 +392,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (resu
 		return OutcomeState{}, err
 	}
 
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return OutcomeState{}, err
 	}

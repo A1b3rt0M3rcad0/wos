@@ -36,7 +36,7 @@ BEGIN
 END
 $fault$;
 CREATE VIEW principal_review_groups AS SELECT
- '0199f391-0000-7000-8000-000000000001'::TEXT AS namespace_id,
+ '0199f391-0000-7000-8000-000000000001'::TEXT AS tenant_id,
  'executor'::TEXT AS principal_id,
  wos_principal_group_fault() AS separation_group;
 `)

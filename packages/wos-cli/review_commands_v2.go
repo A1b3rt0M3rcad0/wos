@@ -93,7 +93,7 @@ func reviewAgentSpecificationV2(profile ProfileV2, view ContractViewV2) (any, er
 		return nil, e
 	}
 	var receipt signing.ReceiptPayload
-	if e = signing.DecodeStrict(receiptRaw, &receipt, signing.MaxPayloadBytes); e != nil {
+	if e = signing.DecodeHistoricalPayload(receiptRaw, &receipt, signing.MaxPayloadBytes); e != nil {
 		return nil, e
 	}
 	if receipt.SubmissionID != spec.SubmissionID.String() || receipt.SubmissionDigest != spec.SubmissionDigest || receipt.ReviewCaseID != spec.ReviewCaseID.String() {
@@ -109,7 +109,7 @@ func reviewAgentSpecificationV2(profile ProfileV2, view ContractViewV2) (any, er
 			return nil, fmt.Errorf("original work specification digest differs")
 		}
 		var work signing.SpecPayload[d.SignedWorkSpec]
-		if e = signing.DecodeStrict(raw, &work, 128<<10); e != nil {
+		if e = signing.DecodeHistoricalPayload(raw, &work, 128<<10); e != nil {
 			return nil, e
 		}
 		result["work_specification"] = work.Spec

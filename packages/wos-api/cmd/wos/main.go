@@ -12,6 +12,7 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/mobility"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/tenants"
 	cli "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 	wosskill "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill"
@@ -29,6 +30,9 @@ func run(args []string) int {
 	if len(args) > 0 && args[0] == "storage" {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
+		if len(args) > 1 && args[1] == "tenant" {
+			return tenants.Run(ctx, args[2:], os.Stdout, os.Stderr)
+		}
 		return mobility.Run(ctx, args[1:], os.Stdout, os.Stderr)
 	}
 	if handled, code := cli.HandleHelp(args, os.Stdout, os.Stderr, true); handled {
@@ -94,6 +98,10 @@ func run(args []string) int {
 	}
 	if len(args) >= 2 && args[0] == "db" && (args[1] == "migrate" || (args[1] == "backup" && len(args) == 3)) {
 		cfg := server.ConfigFromEnv()
+		if len(cfg.TenantHosts) > 0 || cfg.TenantHostsParseError {
+			fmt.Fprintln(os.Stderr, "database commands require a single explicit Tenant configuration; stop its processes and use storage tenant migrate for catalog migrations")
+			return 2
+		}
 		cfg.Storage.MigrateOnStart = args[1] == "migrate"
 		runtime, err := server.OpenRuntime(cfg)
 		if err != nil {
@@ -156,6 +164,10 @@ func run(args []string) int {
 
 	if len(args) == 2 && args[0] == "mcp" && args[1] == "stdio" {
 		cfg := server.ConfigFromEnv()
+		if len(cfg.TenantHosts) > 0 || cfg.TenantHostsParseError {
+			fmt.Fprintln(os.Stderr, "MCP stdio requires one explicit Tenant configuration")
+			return 2
+		}
 		cfg.MCP.Enabled = true
 		if cfg.Auth.Mode != server.AuthModeLocal {
 			fmt.Fprintln(os.Stderr, "stdio requires local authentication; use Streamable HTTP for remote tokens")
@@ -208,6 +220,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <init|project|profile|workspace|auth|capabilities|work|contract|outcome|objective|roadmap|review|protocol|server [--role=complete|api|worker]|installation authorize --file FILE|storage migrate-sqlite|storage namespace-preflight|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
+	fmt.Fprintln(os.Stderr, "usage: wos <init|project|profile|workspace|auth|capabilities|work|contract|outcome|objective|roadmap|review|protocol|server [--role=complete|api|worker]|installation authorize --file FILE|storage migrate-sqlite|storage tenant-preflight|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
 	return 2
 }

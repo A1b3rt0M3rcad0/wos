@@ -20,7 +20,7 @@ func TestTenantAdmissionIsolationAuthenticationAndRelease(t *testing.T) {
 		if r.Header.Get("Authorization") == "other" {
 			id = domain.MustParseID("0199df20-0000-7000-8000-000000000002")
 		}
-		return application.Identity{NamespaceID: id}, nil
+		return application.Identity{TenantID: id}, nil
 	}
 	h := tenantAdmissionHTTP(1, resolve, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := application.IdentityFromContext(r.Context()); !ok {

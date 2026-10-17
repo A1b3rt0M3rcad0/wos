@@ -12,7 +12,7 @@ import (
 
 func TestSignedCommandVersionsAreExactStrings(t *testing.T) {
 	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
-	cmd := a.AcquireSignedWorkContractCommand{Scope: d.Scope{NamespaceID: id, OutcomeID: id}, WorkItemID: id, SignerKeyID: id, ExpectedWorkItemVersion: d.Version(math.MaxUint64)}
+	cmd := a.AcquireSignedWorkContractCommand{Scope: d.Scope{TenantID: id, OutcomeID: id}, WorkItemID: id, SignerKeyID: id, ExpectedWorkItemVersion: d.Version(math.MaxUint64)}
 	raw, err := Encode(cmd)
 	if err != nil {
 		t.Fatal(err)

@@ -8,7 +8,7 @@ func (w *WorkItem) CompleteReviewedSubmission(r ReviewCase, p WorkSubmission, ex
 	if w.Version != expected {
 		return NewError(ErrorCodeVersionConflict, "reviewed Task CAS differs")
 	}
-	if r.Status != ReviewApproved || r.Scope != w.Scope || r.WorkItemID != w.ID || r.SubmissionID != p.ID || r.SubmissionDigest != p.Digest || p.ProtocolVersion != 2 || p.Material.WorkItemID != w.ID || p.Material.ContractID != r.WorkContractID || p.Material.SpecDigest != r.IssuedSpecDigest || w.Lifecycle != WorkItemLifecycleInProgress || w.PendingReviewCaseID == nil || *w.PendingReviewCaseID != r.ID || w.CurrentContractID == nil || *w.CurrentContractID != r.WorkContractID {
+	if r.Status != ReviewApproved || r.Scope != w.Scope || r.WorkItemID != w.ID || r.SubmissionID != p.ID || r.SubmissionDigest != p.Digest || p.ProtocolVersion != 3 || p.Material.WorkItemID != w.ID || p.Material.ContractID != r.WorkContractID || p.Material.SpecDigest != r.IssuedSpecDigest || w.Lifecycle != WorkItemLifecycleInProgress || w.PendingReviewCaseID == nil || *w.PendingReviewCaseID != r.ID || w.CurrentContractID == nil || *w.CurrentContractID != r.WorkContractID {
 		return NewError(ErrorCodeSubmissionNotAccepted, "review does not approve this pending exact submission")
 	}
 	if err := p.Validate(); err != nil {

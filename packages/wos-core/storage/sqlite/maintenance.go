@@ -19,7 +19,7 @@ func (s *Store) PruneExpiredIdempotency(ctx context.Context, limit int) (int64, 
 		return 0, mapSQLError("begin idempotency cleanup", err)
 	}
 	defer tx.Rollback()
-	result, err := tx.ExecContext(ctx, `DELETE FROM idempotency_records WHERE (namespace_id,principal_id,command_name,idempotency_key) IN (SELECT namespace_id,principal_id,command_name,idempotency_key FROM idempotency_records WHERE status='completed' AND expires_at<=? ORDER BY expires_at,namespace_id,principal_id,command_name,idempotency_key LIMIT ?)`, encodeTime(time.Now().UTC()), limit)
+	result, err := tx.ExecContext(ctx, `DELETE FROM idempotency_records WHERE (tenant_id,principal_id,command_name,idempotency_key) IN (SELECT tenant_id,principal_id,command_name,idempotency_key FROM idempotency_records WHERE status='completed' AND expires_at<=? ORDER BY expires_at,tenant_id,principal_id,command_name,idempotency_key LIMIT ?)`, encodeTime(time.Now().UTC()), limit)
 	if err != nil {
 		return 0, mapSQLError("prune expired idempotency cache", err)
 	}

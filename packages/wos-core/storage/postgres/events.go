@@ -47,14 +47,14 @@ func (l eventLog) Append(ctx context.Context, events []domain.DomainEvent) error
 		}
 		_, err = l.uow.tx.ExecContext(ctx, `
 INSERT INTO domain_events (
-    id, namespace_id, outcome_id, event_type, schema_version,
+    id, tenant_id, outcome_id, event_type, schema_version,
     outcome_revision, event_index, aggregate_id, aggregate_kind,
     aggregate_version_before, aggregate_version_after, command_id,
     principal_id, actor_json, recorded_at, correlation_id, causation_id,
     execution_context_json, payload_json
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
 			event.EventID.String(),
-			event.NamespaceID.String(),
+			event.TenantID.String(),
 			event.OutcomeID.String(),
 			event.EventType,
 			int64(event.SchemaVersion),
@@ -100,7 +100,7 @@ func (s idempotencyStore) Reserve(
 			"fingerprint is required",
 		)
 	}
-	if err := ensureNamespace(ctx, s.uow.tx, identity.NamespaceID); err != nil {
+	if err := ensureTenant(ctx, s.uow.tx, identity.TenantID); err != nil {
 		return domain.IdempotencyReservation{}, err
 	}
 	if err := ensurePrincipal(ctx, s.uow.tx, identity.PrincipalID); err != nil {
@@ -118,8 +118,8 @@ func (s idempotencyStore) Reserve(
 	err := s.uow.tx.QueryRowContext(ctx, `
 SELECT request_hash, status, command_id, outcome_revision, response_json, expires_at
 FROM idempotency_records
-WHERE namespace_id = $1 AND principal_id = $2 AND command_name = $3 AND idempotency_key = $4`,
-		identity.NamespaceID.String(),
+WHERE tenant_id = $1 AND principal_id = $2 AND command_name = $3 AND idempotency_key = $4`,
+		identity.TenantID.String(),
 		identity.PrincipalID,
 		identity.CommandName,
 		identity.IdempotencyKey,
@@ -128,8 +128,8 @@ WHERE namespace_id = $1 AND principal_id = $2 AND command_name = $3 AND idempote
 	if err == nil && expiresAt <= encodeTime(now) {
 		if _, deleteErr := s.uow.tx.ExecContext(ctx, `
 DELETE FROM idempotency_records
-WHERE namespace_id = $1 AND principal_id = $2 AND command_name = $3 AND idempotency_key = $4`,
-			identity.NamespaceID.String(),
+WHERE tenant_id = $1 AND principal_id = $2 AND command_name = $3 AND idempotency_key = $4`,
+			identity.TenantID.String(),
 			identity.PrincipalID,
 			identity.CommandName,
 			identity.IdempotencyKey,
@@ -182,10 +182,10 @@ WHERE namespace_id = $1 AND principal_id = $2 AND command_name = $3 AND idempote
 
 	if _, err := s.uow.tx.ExecContext(ctx, `
 INSERT INTO idempotency_records (
-    namespace_id, principal_id, command_name, idempotency_key,
+    tenant_id, principal_id, command_name, idempotency_key,
     request_hash, status, created_at, expires_at
 ) VALUES ($1, $2, $3, $4, $5, 'processing', $6, $7)`,
-		identity.NamespaceID.String(),
+		identity.TenantID.String(),
 		identity.PrincipalID,
 		identity.CommandName,
 		identity.IdempotencyKey,
@@ -221,12 +221,12 @@ func (s idempotencyStore) Complete(
 	update, err := s.uow.tx.ExecContext(ctx, `
 UPDATE idempotency_records
 SET status = 'completed', command_id = $1, outcome_revision = $2, response_json = $3
-WHERE namespace_id = $4 AND principal_id = $5 AND command_name = $6
+WHERE tenant_id = $4 AND principal_id = $5 AND command_name = $6
   AND idempotency_key = $7 AND request_hash = $8 AND status = 'processing'`,
 		result.CommandID.String(),
 		int64(result.OutcomeRevision),
 		string(result.ResponseJSON),
-		reservation.Identity.NamespaceID.String(),
+		reservation.Identity.TenantID.String(),
 		reservation.Identity.PrincipalID,
 		reservation.Identity.CommandName,
 		reservation.Identity.IdempotencyKey,
@@ -256,9 +256,9 @@ SELECT id, event_type, schema_version, outcome_revision, event_index,
        recorded_at, correlation_id, causation_id, execution_context_json,
        payload_json
 FROM domain_events
-WHERE namespace_id = $1 AND outcome_id = $2
+WHERE tenant_id = $1 AND outcome_id = $2
 ORDER BY outcome_revision, event_index`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	)
 	if err != nil {
 		return nil, mapSQLError("read domain event timeline", err)
@@ -327,7 +327,7 @@ func scanEvent(scanner rowScanner, scope domain.Scope) (domain.DomainEvent, erro
 		EventID:         eventID,
 		EventType:       eventType,
 		SchemaVersion:   uint32(schemaVersion),
-		NamespaceID:     scope.NamespaceID,
+		TenantID:        scope.TenantID,
 		OutcomeID:       scope.OutcomeID,
 		OutcomeRevision: domain.OutcomeRevision(revision),
 		EventIndex:      uint32(eventIndex),

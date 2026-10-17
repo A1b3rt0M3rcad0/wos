@@ -35,7 +35,7 @@ func releaseServices(t *testing.T) (*application.Service, *application.Service, 
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := first.CreateOutcome(context.Background(), releaseCC(1, ""), application.CreateOutcomeCommand{NamespaceID: testID("01a11742-0000-7000-8000-000000000001"), Title: "Release concurrency", DesiredState: "separate connections preserve invariants", Priority: domain.PriorityNormal})
+	result, err := first.CreateOutcome(context.Background(), releaseCC(1, ""), application.CreateOutcomeCommand{TenantID: testID("01a11742-0000-7000-8000-000000000001"), Title: "Release concurrency", DesiredState: "separate connections preserve invariants", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

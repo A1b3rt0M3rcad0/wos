@@ -25,9 +25,9 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199f101-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199f101-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext("0199f101-0000-7000-8000-000000000101", ""), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Issue blocker durability",
+		TenantID: tenantID, Title: "Issue blocker durability",
 		DesiredState: "Blocking state survives restart", Priority: domain.PriorityNormal,
 	})
 	if err != nil {

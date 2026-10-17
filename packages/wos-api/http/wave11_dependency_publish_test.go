@@ -9,8 +9,8 @@ import (
 
 func TestWave11RoadmapDependencyChangeRequestMapping(t *testing.T) {
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f321-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199f321-0000-7000-8000-000000000010"),
+		TenantID:  domain.MustParseID("0199f321-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199f321-0000-7000-8000-000000000010"),
 	}
 	expected := uint64(3)
 	changes, err := roadmapDependencyChanges(scope, []roadmapDependencyChangeRequest{

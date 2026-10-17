@@ -46,10 +46,13 @@ func prepareLeaseV2(ctx context.Context, w *Workspace, profile ProfileV2, token 
 		if e != nil {
 			return e
 		}
+		if view.Authority.ProtocolVersion != signing.ProtocolVersion {
+			return fmt.Errorf("historical protocol-2 contract cannot renew or resume under protocol 3")
+		}
 		if view.Authority.ContractKind != kind || file.Local.Pending != nil || file.Local.AcceptanceReceipt != nil {
 			return fmt.Errorf("lease mutation paused for kind mismatch or pending/accepted final return")
 		}
-		scope := d.Scope{NamespaceID: current.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+		scope := d.Scope{TenantID: current.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 		authority := a.ContractAuthority{ExecutionID: d.ID(view.Authority.ExecutionID), FencingToken: d.FencingToken(view.Authority.FencingToken), SpecDigest: view.Authority.SpecDigest}
 		digest := signing.Digest(file.Issued.Authority.Payload)
 		var command any
@@ -86,7 +89,7 @@ func prepareLeaseV2(ctx context.Context, w *Workspace, profile ProfileV2, token 
 		if e != nil {
 			return e
 		}
-		intent = PendingOperationV2{ID: localID, Operation: operation, State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID}, ContractID: &id, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}
+		intent = PendingOperationV2{ID: localID, Operation: operation, State: "prepared", Scope: ProfilePendingScopeV2{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID}, ContractID: &id, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}
 		current.Local.PendingOperations = append(current.Local.PendingOperations, intent)
 		return nil
 	})
@@ -94,14 +97,14 @@ func prepareLeaseV2(ctx context.Context, w *Workspace, profile ProfileV2, token 
 }
 func leaseWorkResultV2(profile ProfileV2, intent PendingOperationV2, id d.ID, result a.WorkContractResult) (leaseAcceptedV2, error) {
 	c := result.Contract
-	if intent.ContractID == nil || c.ID != *intent.ContractID || c.Scope.NamespaceID != intent.Scope.NamespaceID || c.Scope.OutcomeID != intent.Scope.OutcomeID || c.HolderPrincipalID != profile.Binding.PrincipalID || c.SignedBinding == nil || c.SignedBinding.CredentialID != profile.Binding.CredentialID || result.IssuedAuthority == nil {
+	if intent.ContractID == nil || c.ID != *intent.ContractID || c.Scope.TenantID != intent.Scope.TenantID || c.Scope.OutcomeID != intent.Scope.OutcomeID || c.HolderPrincipalID != profile.Binding.PrincipalID || c.SignedBinding == nil || c.SignedBinding.CredentialID != profile.Binding.CredentialID || result.IssuedAuthority == nil {
 		return leaseAcceptedV2{}, fmt.Errorf("accepted lease binding differs")
 	}
 	return leaseAcceptedV2{CommandID: id, ContractID: c.ID, Authority: *result.IssuedAuthority, WorkItemVersion: signing.Decimal(result.WorkItem.Version)}, nil
 }
 func leaseReviewResultV2(profile ProfileV2, intent PendingOperationV2, id d.ID, result a.SignedReviewContractResult) (leaseAcceptedV2, error) {
 	c := result.Contract
-	if intent.ContractID == nil || c.ID != *intent.ContractID || c.Scope.NamespaceID != intent.Scope.NamespaceID || c.Scope.OutcomeID != intent.Scope.OutcomeID || c.HolderPrincipalID != profile.Binding.PrincipalID || c.Binding.CredentialID != profile.Binding.CredentialID {
+	if intent.ContractID == nil || c.ID != *intent.ContractID || c.Scope.TenantID != intent.Scope.TenantID || c.Scope.OutcomeID != intent.Scope.OutcomeID || c.HolderPrincipalID != profile.Binding.PrincipalID || c.Binding.CredentialID != profile.Binding.CredentialID {
 		return leaseAcceptedV2{}, fmt.Errorf("accepted review lease binding differs")
 	}
 	return leaseAcceptedV2{CommandID: id, ContractID: c.ID, Authority: result.IssuedAuthority, WorkItemVersion: result.WorkItemVersion, ReviewCaseVersion: signing.Decimal(result.Case.Version)}, nil
@@ -113,7 +116,7 @@ func callLeaseV2(ctx context.Context, client *sdk.Client, profile ProfileV2, int
 		return zero, fmt.Errorf("frozen lease bytes differ")
 	}
 	validate := func(scope d.Scope, id, key d.ID) error {
-		if intent.ContractID == nil || *intent.ContractID != id || scope.NamespaceID != intent.Scope.NamespaceID || scope.OutcomeID != intent.Scope.OutcomeID || key != profile.Signing.KeyID {
+		if intent.ContractID == nil || *intent.ContractID != id || scope.TenantID != intent.Scope.TenantID || scope.OutcomeID != intent.Scope.OutcomeID || key != profile.Signing.KeyID {
 			return fmt.Errorf("frozen lease target/key differs")
 		}
 		return nil
@@ -188,11 +191,11 @@ func callLeaseV2(ctx context.Context, client *sdk.Client, profile ProfileV2, int
 }
 func reconcileLeaseV2(ctx context.Context, client *sdk.Client, profile ProfileV2, intent PendingOperationV2) (leaseAcceptedV2, error) {
 	var zero leaseAcceptedV2
-	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}, Resource: "operation", IdempotencyKey: intent.IdempotencyKey})
+	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}, Resource: "operation", IdempotencyKey: intent.IdempotencyKey})
 	if e != nil {
 		return zero, e
 	}
-	if state.OperationName != intent.Operation || state.OperationCommandID == nil || intent.RequestFingerprint == "" || state.OperationFingerprint != intent.RequestFingerprint || state.Scope == nil || state.Scope.NamespaceID != intent.Scope.NamespaceID || state.Scope.OutcomeID != intent.Scope.OutcomeID {
+	if state.OperationName != intent.Operation || state.OperationCommandID == nil || intent.RequestFingerprint == "" || state.OperationFingerprint != intent.RequestFingerprint || state.Scope == nil || state.Scope.TenantID != intent.Scope.TenantID || state.Scope.OutcomeID != intent.Scope.OutcomeID {
 		return zero, fmt.Errorf("durable lease result differs from original intention")
 	}
 	raw, e := base64.StdEncoding.Strict().DecodeString(state.OperationPayload)

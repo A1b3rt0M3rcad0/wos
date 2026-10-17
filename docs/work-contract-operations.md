@@ -1,5 +1,13 @@
 # Contract operations
 
+> [!NOTE]
+> This document retains the earlier Namespace/protocol contract for historical
+> context and legacy recovery. Current source uses Tenant contracts and signed
+> protocol 3. Follow [Tenant cutover](scaling/tenants.md) and the [current agent
+> workflow](agents.md); do not rename fields inside old signed material or use
+> these historical mutation examples against the current service.
+
+
 WOS coordinates durable state and work authority. Agents and humans choose work;
 their host executes it. WOS never launches subagents, interprets YAML as a program,
 runs an LLM or locks a Git branch/filesystem.

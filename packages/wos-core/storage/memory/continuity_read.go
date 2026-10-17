@@ -157,7 +157,7 @@ func (r continuityReadRepository) Outcome(ctx context.Context, scope d.Scope) (p
 	if e := scope.Validate(); e != nil {
 		return zero, e
 	}
-	v, ok := r.tx.outcomes[outcomeKey(scope.NamespaceID, scope.OutcomeID)]
+	v, ok := r.tx.outcomes[outcomeKey(scope.TenantID, scope.OutcomeID)]
 	if !ok {
 		return zero, d.NewError(d.ErrorCodeNotFound, "outcome not found")
 	}

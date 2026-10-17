@@ -28,8 +28,8 @@ func TestIDJSONRoundTripNormalizesUUIDv7(t *testing.T) {
 func TestEntityRefUsesCanonicalFlatAddressingJSON(t *testing.T) {
 	ref := domain.EntityRef{
 		Scope: domain.Scope{
-			NamespaceID: domain.MustParseID("0199e100-0000-7000-8000-000000000001"),
-			OutcomeID:   domain.MustParseID("0199e100-0000-7000-8000-000000000010"),
+			TenantID:  domain.MustParseID("0199e100-0000-7000-8000-000000000001"),
+			OutcomeID: domain.MustParseID("0199e100-0000-7000-8000-000000000010"),
 		},
 		Kind: domain.EntityKindObjective,
 		ID:   domain.MustParseID("0199e100-0000-7000-8000-000000000020"),
@@ -44,7 +44,7 @@ func TestEntityRefUsesCanonicalFlatAddressingJSON(t *testing.T) {
 	if err := json.Unmarshal(payload, &got); err != nil {
 		t.Fatalf("decode EntityRef JSON: %v", err)
 	}
-	for _, key := range []string{"namespace_id", "outcome_id", "kind", "id"} {
+	for _, key := range []string{"tenant_id", "outcome_id", "kind", "id"} {
 		if _, ok := got[key]; !ok {
 			t.Fatalf("EntityRef JSON missing %q: %s", key, payload)
 		}

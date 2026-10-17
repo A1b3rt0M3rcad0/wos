@@ -11,11 +11,11 @@
     "service": "0.4.0",
     "httpApi": "v1",
     "snapshotSchema": 1,
-    "workProtocol": "signed_contracts_v2",
+    "workProtocol": "signed_contracts_v3",
     "workspaceSchema": 2,
     "supportedWorkProtocols": [
       "contracts_v1",
-      "signed_contracts_v2"
+      "signed_contracts_v3"
     ],
     "supportedWorkspaceSchemas": [
       1,

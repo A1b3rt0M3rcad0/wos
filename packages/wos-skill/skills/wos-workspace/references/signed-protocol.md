@@ -4,11 +4,22 @@ These instructions target the centralized CLI on this source branch. Verify the 
 
 ## Setup and identity
 
-Run `wos init` once. Operational data belongs to the installation, not a project. An operator provisions an approved Profile with an exact ServerID/origin, Namespace, authenticated Principal/credential, registered signing key and independently approved issuer fingerprint. Use `wos profile list` and `wos profile show NAME` to inspect nonsecret configuration. Never print credential values/private seeds or put them in arguments, model context, source files or logs.
+Run `wos init` once. Operational data belongs to the installation, not a project. An operator provisions an approved Profile with an exact ServerID/origin, Tenant, authenticated Principal/credential, registered signing key and independently approved issuer fingerprint. Use `wos profile list` and `wos profile show NAME` to inspect nonsecret configuration. Never print credential values/private seeds or put them in arguments, model context, source files or logs.
 
-Selection is explicit `--profile`, then `WOS_PROFILE`, then persisted active selection, with a sole-Profile fallback. `wos profile use NAME` changes the interactive default. Every concurrent worker pins `--profile NAME` or a process-scoped `WOS_PROFILE`; a Profile name is not authority or an independent Principal. Each invocation freezes its selection. Different Profiles can bind different servers/Namespaces.
+Selection is explicit `--profile`, then `WOS_PROFILE`, then persisted active selection, with a sole-Profile fallback. `wos profile use NAME` changes the interactive default. Every concurrent worker pins `--profile NAME` or a process-scoped `WOS_PROFILE`; a Profile name is not authority or an independent Principal. Each invocation freezes its selection. Different Profiles can bind different servers/Tenants.
 
 The CLI is the agent's only operational interface. Never open, interpret, edit or delete internal contract/Profile documents. The CLI owns serialization, protected paths, locking, local CAS, signatures and technical recovery state. Do not bypass it with a direct HTTP/MCP mutation, manual file changes, or a protocol downgrade.
+
+## Tenant and protocol transition
+
+Current commands bind `tenant_id` and use signed protocol 3. A Profile selects one
+approved Tenant runtime; hostname routing does not grant access. Do not supply a
+schema name, edit a Profile to switch Tenants, or infer authority from customer
+metadata. Historical protocol-2 proofs preserve their original bytes for reading
+and verification; they cannot authorize new mutations. An operator must resolve
+old pending requests and active authority before storage cutover, then explicitly
+migrate eligible local Profiles. Never rename fields inside signed material or
+re-sign an uncertain old request as a new intention.
 
 ## Authority and material
 

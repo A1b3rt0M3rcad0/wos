@@ -35,39 +35,39 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	own, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, Permissions: permissions}))
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
+	must(security.SetGrant(adminCtx, ports.TenantGrant{TenantID: scope.TenantID, PrincipalID: own.PrincipalID, Permissions: permissions}))
 	own, e = operator.SigningIdentity(ctx, nil)
 	must(e)
-	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+	policy := d.CredentialPolicy{TenantID: scope.TenantID, CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, permission := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(permission))
 	}
-	configured, e := operator.SigningMutation(ctx, "cutover-cli-admin-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: own.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := operator.SigningMutation(ctx, "cutover-cli-admin-policy", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: own.TenantVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
 	public, private, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
-	enrolled, e := operator.SigningMutation(ctx, "cutover-cli-admin-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
+	enrolled, e := operator.SigningMutation(ctx, "cutover-cli-admin-enrollment", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: configured.TenantVersion, Operation: "create_enrollment", CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
 	must(e)
 	challenge := enrolled.Enrollment
-	proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: scope.NamespaceID.String(), PrincipalID: own.PrincipalID, SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), private)
+	proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: scope.TenantID.String(), PrincipalID: own.PrincipalID, SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), private)
 	must(e)
-	registered, e := operator.SigningMutation(ctx, "cutover-cli-admin-registration", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof})
+	registered, e := operator.SigningMutation(ctx, "cutover-cli-admin-registration", a.SigningSecurityIntent{TenantID: scope.TenantID, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof})
 	must(e)
 	own, e = operator.SigningIdentity(ctx, nil)
 	must(e)
-	_, e = operator.SigningMutation(ctx, "cutover-cli-namespace-floor", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: own.NamespaceVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{NamespaceID: scope.NamespaceID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	_, e = operator.SigningMutation(ctx, "cutover-cli-tenant-floor", a.SigningSecurityIntent{TenantID: scope.TenantID, ExpectedTenantVersion: own.TenantVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{TenantID: scope.TenantID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 	must(e)
-	old, e := operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+	old, e := operator.GetTenantWorkProtocol(ctx, scope.TenantID)
 	must(e)
-	drain, e := operator.SetNamespaceWorkProtocol(ctx, "cutover-cli-drain-legacy", a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: old.Version, Phase: d.WorkProtocolDraining, Reason: "retire legacy fixture writers"})
+	drain, e := operator.SetTenantWorkProtocol(ctx, "cutover-cli-drain-legacy", a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: old.Version, Phase: d.WorkProtocolDraining, Reason: "retire legacy fixture writers"})
 	must(e)
-	_, e = operator.SetNamespaceWorkProtocol(ctx, "cutover-cli-activate-v1", a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: drain.Value.Protocol.Version, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "legacy writers explicitly drained"})
+	_, e = operator.SetTenantWorkProtocol(ctx, "cutover-cli-activate-v1", a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: drain.Value.Protocol.Version, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "legacy writers explicitly drained"})
 	must(e)
 	var loseActivation atomic.Bool
 	var activationCalls atomic.Int32
 	endpoint := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/set_namespace_work_protocol") {
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/commands/set_tenant_work_protocol") {
 			activationCalls.Add(1)
 			recorded := httptest.NewRecorder()
 			handler.ServeHTTP(recorded, r)
@@ -107,23 +107,23 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 		}
 		return result
 	}
-	run(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String())
+	run(0, "init", "--workspace-schema", "2", "--server", endpoint.URL, "--server-id", server.ID.String(), "--tenant", scope.TenantID.String(), "--outcome", scope.OutcomeID.String())
 	w, e := cli.OpenWorkspace(root)
 	must(e)
 	defer w.Close()
-	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "operator", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, CredentialID: own.CredentialID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_CUTOVER_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: registered.Key.ID, PrivateKeyRef: "env:WOS_CLI_CUTOVER_KEY", PublicKeyFingerprint: registered.Key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
+	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "operator", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, TenantID: scope.TenantID, PrincipalID: own.PrincipalID, CredentialID: own.CredentialID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_CUTOVER_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: registered.Key.ID, PrivateKeyRef: "env:WOS_CLI_CUTOVER_KEY", PublicKeyFingerprint: registered.Key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
 	must(profile.SealBinding([]byte(adminToken)))
 	must(w.CreateV2(".wos/profiles/operator/profile.yaml", profile))
 	signedCLILegacyMigrationJourney(t, root, endpoint.URL, scope, adminToken)
-	phase, e := operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+	phase, e := operator.GetTenantWorkProtocol(ctx, scope.TenantID)
 	must(e)
 	version := func(v d.Version) string { return strconv.FormatUint(uint64(v), 10) }
-	run(0, "protocol", "set", "--version", version(phase.Version), "--phase", "draining_to_signed_v2", "--reason", "retire v1 fixture writers")
+	run(0, "protocol", "set", "--version", version(phase.Version), "--phase", "draining_to_signed_v3", "--reason", "retire v1 fixture writers")
 	run(0, "protocol", "preflight")
-	phase, e = operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+	phase, e = operator.GetTenantWorkProtocol(ctx, scope.TenantID)
 	must(e)
 	loseActivation.Store(true)
-	run(6, "protocol", "set", "--version", version(phase.Version), "--phase", "signed_contracts_v2", "--writers-drained", "--reason", "v1 fixture writers and SQL credentials retired")
+	run(6, "protocol", "set", "--version", version(phase.Version), "--phase", "signed_contracts_v3", "--writers-drained", "--reason", "v1 fixture writers and SQL credentials retired")
 	pending, e := w.LoadProfileV2("operator")
 	must(e)
 	if len(pending.Local.PendingOperations) != 1 || pending.Local.PendingOperations[0].State != "sent_unknown" {
@@ -135,9 +135,9 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	if !recovered.Committed || activationCalls.Load() != before {
 		t.Fatal("activation recovery executed another protocol change")
 	}
-	final, e := operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+	final, e := operator.GetTenantWorkProtocol(ctx, scope.TenantID)
 	must(e)
-	if final.Phase != d.WorkProtocolSigned || final.WriterEpoch != 2 || final.Version != phase.Version+1 {
+	if final.Phase != d.WorkProtocolSigned || final.WriterEpoch != 3 || final.Version != phase.Version+1 {
 		t.Fatal("cutover recovery advanced wrong protocol state")
 	}
 	cleared, e := w.LoadProfileV2("operator")

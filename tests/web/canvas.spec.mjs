@@ -9,7 +9,7 @@ const panel = (page) => page.locator("#canvas-details");
 const node = (page, kind, value) => canvas(page).locator(
   `.workspace-canvas[data-view="map"] [data-canvas-node="${kind}:${value.id}"] .canvas-node-main, .workspace-canvas[data-view="list"] [data-canvas-list-node="${kind}:${value.id}"] .canvas-list-main`,
 );
-const endpoint = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+const endpoint = (scope) => `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`;
 async function openCanvas(page, wos, data, credential) {
   await wos.login(page, credential);
   await openOutcome(page, data.outcome.title, { area: null });

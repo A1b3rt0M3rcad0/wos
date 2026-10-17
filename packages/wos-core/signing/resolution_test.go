@@ -8,7 +8,7 @@ import (
 )
 
 func FuzzReturnResolution(f *testing.F) {
-	f.Add([]byte(`{"protocol_version":2,"server_id":"fixture-server","namespace_id":"fixture-namespace","principal_id":"fixture-principal","signer_key_id":"resolution-test-key","original_request_digest":"sha256:0000000000000000000000000000000000000000000000000000000000000000"}`))
+	f.Add([]byte(`{"protocol_version":3,"server_id":"fixture-server","tenant_id":"fixture-tenant","principal_id":"fixture-principal","signer_key_id":"resolution-test-key","original_request_digest":"sha256:0000000000000000000000000000000000000000000000000000000000000000"}`))
 	private := ed25519.NewKeyFromSeed(make([]byte, 32))
 	public := private.Public().(ed25519.PublicKey)
 	f.Fuzz(func(t *testing.T, raw []byte) {

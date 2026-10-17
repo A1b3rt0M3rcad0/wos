@@ -11,9 +11,9 @@ import {randomUUID,randomBytes,createPrivateKey,createPublicKey,createHash} from
 export async function verifySignedPackage(serverBinary, clientBinary, {requireTerminalResolution=false}={}) {
  const directory=await mkdtemp(join(tmpdir(),'wos-signed-ui-'));
  const socket=createServer();socket.listen(0,'127.0.0.1');await once(socket,'listening');const port=socket.address().port;await new Promise(done=>socket.close(done));
- const url=`http://127.0.0.1:${port}`,namespace='01a11991-0000-7000-8000-000000000001',token=randomBytes(32).toString('base64url');
+ const url=`http://127.0.0.1:${port}`,tenant='01a11991-0000-7000-8000-000000000001',token=randomBytes(32).toString('base64url');
  const issuerSeed=randomBytes(32).toString('base64');
- let logs='';const child=spawn(serverBinary,['server'],{env:{...process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:token,WOS_BOOTSTRAP_NAMESPACE_ID:namespace,WOS_BOOTSTRAP_NAMESPACE_NAME:'Signed workspace',WOS_LOCAL_PRINCIPAL_ID:'human',WOS_SERVER_SIGNING_SEED_ENV:'WOS_UI_ISSUER_SEED',WOS_UI_ISSUER_SEED:issuerSeed,WOS_SIGNED_ACCEPTANCE_FLOOR:'independent_review'},stdio:['ignore','ignore','pipe']});
+ let logs='';const child=spawn(serverBinary,['server'],{env:{...process.env,WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:join(directory,'wos.db'),WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:token,WOS_BOOTSTRAP_TENANT_ID:tenant,WOS_BOOTSTRAP_TENANT_NAME:'Signed workspace',WOS_LOCAL_PRINCIPAL_ID:'human',WOS_SERVER_SIGNING_SEED_ENV:'WOS_UI_ISSUER_SEED',WOS_UI_ISSUER_SEED:issuerSeed,WOS_SIGNED_ACCEPTANCE_FLOOR:'independent_review'},stdio:['ignore','ignore','pipe']});
  child.stderr.on('data',b=>logs=(logs+b.toString()).slice(-8000));
  async function api(path,credential,body){const response=await fetch(url+'/api/v1'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${credential}`,'Content-Type':'application/json',...(body?{'Idempotency-Key':randomUUID()}: {})},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json();assert.ok(response.ok,JSON.stringify(data));return data}
  const command=async(name,value)=>(await api('/commands/'+name,token,{command:value})).value;
@@ -27,32 +27,32 @@ export async function verifySignedPackage(serverBinary, clientBinary, {requireTe
  }
  try{
   let ready=false;for(let i=0;i<100;i++){try{if((await fetch(url+'/readyz')).ok){ready=true;break}}catch{}await new Promise(done=>setTimeout(done,50))}assert.ok(ready,logs);
-  const outcome=await command('create_outcome',{namespace_id:namespace,title:'Entrega assinada e revisada',desired_state:'Execução e revisão distintas',priority:'normal'}),scope={namespace_id:namespace,outcome_id:outcome.id};
+  const outcome=await command('create_outcome',{tenant_id:tenant,title:'Entrega assinada e revisada',desired_state:'Execução e revisão distintas',priority:'normal'}),scope={tenant_id:tenant,outcome_id:outcome.id};
   await command('add_criterion',{owner:{...scope,kind:'outcome',id:outcome.id},expected_version:outcome.version,title:'Resultado validado',required:true,verification_mode:'attestation'});
   await command('activate_outcome',{scope,expected_version:outcome.version+1});
   let identity=await api('/security/signing-identity',token);
-  const adminOperations=['state:read','namespace:admin','work:write','outcome:write','planning:write','assessment:write','identity.signing_key.enroll','actor:delegate'];
-  await signing({namespace_id:namespace,expected_namespace_version:identity.namespace_version,operation:'set_credential_policy',credential_policy:{namespace_id:namespace,credential_id:identity.credential_id,principal_id:identity.principal_id,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:adminOperations}});
+  const adminOperations=['state:read','tenant:admin','work:write','outcome:write','planning:write','assessment:write','identity.signing_key.enroll','actor:delegate'];
+  await signing({tenant_id:tenant,expected_tenant_version:identity.tenant_version,operation:'set_credential_policy',credential_policy:{tenant_id:tenant,credential_id:identity.credential_id,principal_id:identity.principal_id,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:adminOperations}});
   identity=await api('/security/signing-identity',token);
-  await signing({namespace_id:namespace,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:namespace,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
-  for(const [index,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:index+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit signed browser fixture drain'});
+  await signing({tenant_id:tenant,expected_tenant_version:identity.tenant_version,operation:'set_acceptance_policy',acceptance_policy:{tenant_id:tenant,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
+  for(const [index,phase] of ['draining','contracts_v1','draining_to_signed_v3','signed_contracts_v3'].entries())await command('set_tenant_work_protocol',{scope,expected_protocol_version:index+1,phase,writers_drained:['contracts_v1','signed_contracts_v3'].includes(phase),reason:'Explicit signed browser fixture drain'});
   const createdWork=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
   const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:createdWork.id},expected_version:createdWork.version,title:'Original installed-package obligation checked',required:true,verification_mode:'attestation'});
   assert.ok(criterion.id);assert.match(String(criterion.criterion_revision),/^[1-9][0-9]*$/);
-  const work=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${createdWork.id}`,token)).value;
-  const trust=await api(`/namespaces/${namespace}/signed-trust`,token);
+  const work=(await api(`/tenants/${tenant}/outcomes/${outcome.id}/work-items/${createdWork.id}`,token)).value;
+  const trust=await api(`/tenants/${tenant}/signed-trust`,token);
   async function provision(name,permissions){
    const own=await api('/security/signing-identity',token);
-   const granted=await api('/security/commands',token,{namespace_id:namespace,expected_namespace_version:own.namespace_version,operation:'set_grant',principal_id:name,permissions});
-   const issued=await api('/security/commands',token,{namespace_id:namespace,expected_namespace_version:granted.result.namespace_version,operation:'issue_credential',principal_id:name,actor_ref:{kind:'agent',provider:'signed-browser-fixture',id:name},expires_at:new Date(Date.now()+3600000).toISOString()});
+   const granted=await api('/security/commands',token,{tenant_id:tenant,expected_tenant_version:own.tenant_version,operation:'set_grant',principal_id:name,permissions});
+   const issued=await api('/security/commands',token,{tenant_id:tenant,expected_tenant_version:granted.result.tenant_version,operation:'issue_credential',principal_id:name,actor_ref:{kind:'agent',provider:'signed-browser-fixture',id:name},expires_at:new Date(Date.now()+3600000).toISOString()});
    const self=await api('/security/signing-identity',issued.token),admin=await api('/security/signing-identity',token);
-   const configured=await signing({namespace_id:namespace,expected_namespace_version:admin.namespace_version,operation:'set_credential_policy',credential_policy:{namespace_id:namespace,credential_id:self.credential_id,principal_id:name,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:permissions}});
+   const configured=await signing({tenant_id:tenant,expected_tenant_version:admin.tenant_version,operation:'set_credential_policy',credential_policy:{tenant_id:tenant,credential_id:self.credential_id,principal_id:name,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:permissions}});
    const seed=randomBytes(32),privateKey=createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),seed]),format:'der',type:'pkcs8'}),publicKey=createPublicKey(privateKey).export({format:'der',type:'spki'}).subarray(-32),fingerprint='sha256:'+createHash('sha256').update(publicKey).digest('hex');
-   const enrollment=await signing({namespace_id:namespace,expected_namespace_version:configured.namespace_version,operation:'create_enrollment',credential_id:self.credential_id,principal_id:name,expected_fingerprint:fingerprint});
+   const enrollment=await signing({tenant_id:tenant,expected_tenant_version:configured.tenant_version,operation:'create_enrollment',credential_id:self.credential_id,principal_id:name,expected_fingerprint:fingerprint});
    const workspace=join(directory,name);await mkdir(workspace);
    const environment={WOS_UI_PROFILE_TOKEN:issued.token,WOS_UI_PROFILE_KEY:seed.toString('base64')};
-   cli(workspace,name,environment,'init','--workspace-schema','2','--server',url,'--server-id',trust.server.server_id,'--namespace',namespace,'--outcome',outcome.id);
-   await writeFile(join(workspace,'proposal.yaml'),JSON.stringify({schema_version:2,kind:'WOSProfile',name,binding:{server_id:trust.server.server_id,server_origin:url,namespace_id:namespace,principal_id:name,credential_id:self.credential_id,issuer_keys:[{key_id:trust.server.issuer_key_id,public_key:trust.server.public_key,fingerprint:trust.server.fingerprint}]},authentication:{credential_ref:'env:WOS_UI_PROFILE_TOKEN'},signing:{key_id:enrollment.enrollment.key_id,private_key_ref:'env:WOS_UI_PROFILE_KEY',public_key_fingerprint:fingerprint},lease:{requested_ttl_seconds:300},output:{default_format:'json'},_local:{schema_version:1,pending_mac:'',binding_mac:'',pending_operations:[]}}));
+   cli(workspace,name,environment,'init','--workspace-schema','2','--server',url,'--server-id',trust.server.server_id,'--tenant',tenant,'--outcome',outcome.id);
+   await writeFile(join(workspace,'proposal.yaml'),JSON.stringify({schema_version:2,kind:'WOSProfile',name,binding:{server_id:trust.server.server_id,server_origin:url,tenant_id:tenant,principal_id:name,credential_id:self.credential_id,issuer_keys:[{key_id:trust.server.issuer_key_id,public_key:trust.server.public_key,fingerprint:trust.server.fingerprint}]},authentication:{credential_ref:'env:WOS_UI_PROFILE_TOKEN'},signing:{key_id:enrollment.enrollment.key_id,private_key_ref:'env:WOS_UI_PROFILE_KEY',public_key_fingerprint:fingerprint},lease:{requested_ttl_seconds:300},output:{default_format:'json'},_local:{schema_version:1,pending_mac:'',binding_mac:'',pending_operations:[]}}));
    cli(workspace,name,environment,'profile','create',name,'--file','proposal.yaml','--server',url,'--server-id',trust.server.server_id,'--issuer-fingerprint',trust.server.fingerprint,'--enrollment',enrollment.enrollment.id);
    return {workspace,environment,name};
   }
@@ -95,7 +95,7 @@ export async function verifySignedPackage(serverBinary, clientBinary, {requireTe
   await editDraft(join(reviewDirectory,reviewFile),'review',lines=>{let decisions=0,reason=0;const changed=lines.map(line=>{if(/^\s+decision:/.test(line)){decisions++;return line.replace(/decision:.*/,'decision: '+decision)}if(/^\s+reason:/.test(line)){reason++;return line.replace(/reason:.*/,'reason: "Avaliação independente do material exato"')}return line});assert.equal(decisions,1);assert.equal(reason,1);if(decision==='approved'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  criterion_assessments:',indent+'    - criterion_id: '+criterion.id,indent+'      criterion_revision: "'+criterion.criterion_revision+'"',indent+'      result: met',indent+'      rationale: "Integration fixture checked original attestation requirement"')}if(decision==='changes_requested'){const material=changed.findIndex(line=>/^\s+material:$/.test(line));assert.ok(material>=0);const indent=changed[material].match(/^\s*/)[0];changed.splice(material+1,0,indent+'  findings:',indent+'    - id: 01a11991-0000-7000-8000-000000000002',indent+'      requirement_ref: task.title',indent+'      description: "Confirmar cumprimento da tarefa original"')}return changed});
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','finish',reviewFile.slice(0,-5));assert.deepEqual(await readdir(reviewDirectory),[]);
   if(decision==='changes_requested') {
-   const pending=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token)).value;
+   const pending=(await api(`/tenants/${tenant}/outcomes/${outcome.id}/work-items/${work.id}`,token)).value;
    assert.notEqual(pending.lifecycle,'done','changes requested is not Task completion');
    assert.ok(pending.correction_review_case_id,'correction names the original prior review');
    cli(executor.workspace,executor.name,executor.environment,'work','checkout',work.id,'--version',String(pending.version),'--previous-review',pending.correction_review_case_id);
@@ -113,9 +113,9 @@ export async function verifySignedPackage(serverBinary, clientBinary, {requireTe
   cli(reviewer.workspace,reviewer.name,reviewer.environment,'review','recover');
   assert.deepEqual(await readdir(executionDirectory),[]);
   assert.deepEqual(await readdir(reviewDirectory),[]);
-  const completed=await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,token);
+  const completed=await api(`/tenants/${tenant}/outcomes/${outcome.id}/work-items/${work.id}`,token);
   assert.equal(completed.value.lifecycle,'done','independent reviewer actually completes Task');
-  return {terminal_return_resolution:terminalResolution?'verified':'unsupported_by_source',protocol:'signed_contracts_v2', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
+  return {terminal_return_resolution:terminalResolution?'verified':'unsupported_by_source',protocol:'signed_contracts_v3', profiles:['executor','reviewer'], checks:['approved enrollment','protected profile secret references','signed checkout/show','work finish and cleanup','independent review finish and cleanup','changes requested, fresh correction and explicit finding response','required original criterion assessment','post-cleanup work/review recover']};
  }finally{
   if(child.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended}await rm(directory,{recursive:true,force:true});
  }

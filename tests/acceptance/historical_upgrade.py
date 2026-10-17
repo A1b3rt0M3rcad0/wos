@@ -44,11 +44,11 @@ def exercise(args, driver):
     with tempfile.TemporaryDirectory(prefix="wos-v020-upgrade-") as temporary:
         directory = Path(temporary)
         token = secrets.token_urlsafe(32)
-        namespace = "01a11a00-0000-7000-8000-000000000001"
+        tenant = "01a11a00-0000-7000-8000-000000000001"
         port = free_port()
         origin = f"http://127.0.0.1:{port}"
         database = directory / "wos.db"
-        base = {**os.environ, "WOS_LISTEN": f"127.0.0.1:{port}", "WOS_AUTH_MODE": "api_token", "WOS_LOCAL_PRINCIPAL_ID": "historical-operator", "WOS_BOOTSTRAP_TOKEN": token, "WOS_BOOTSTRAP_NAMESPACE_ID": namespace, "WOS_BOOTSTRAP_NAMESPACE_NAME": "Actual v0.2 upgrade", "WOS_STORAGE_DRIVER": driver, "WOS_SQLITE_PATH": str(database), "WOS_MCP_ENABLED": "false", "WOS_SERVER_SIGNING_SEED_ENV": "", "WOS_DELIVERY_WORKER_ENABLED": "false"}
+        base = {**os.environ, "WOS_LISTEN": f"127.0.0.1:{port}", "WOS_AUTH_MODE": "api_token", "WOS_LOCAL_PRINCIPAL_ID": "historical-operator", "WOS_BOOTSTRAP_TOKEN": token, "WOS_BOOTSTRAP_TENANT_ID": tenant, "WOS_BOOTSTRAP_TENANT_NAME": "Actual v0.2 upgrade", "WOS_STORAGE_DRIVER": driver, "WOS_SQLITE_PATH": str(database), "WOS_MCP_ENABLED": "false", "WOS_SERVER_SIGNING_SEED_ENV": "", "WOS_DELIVERY_WORKER_ENABLED": "false"}
         owned_databases = []
         process = None
         log = open(directory / "server.log", "ab")
@@ -148,20 +148,20 @@ def exercise(args, driver):
                 assert container and parsed.scheme in ("postgres", "postgresql"), "actual PostgreSQL fixture configuration required"
                 choose_database(create_database())
             start(args.old_binary)
-            outcome = command("create_outcome", {"namespace_id": namespace, "title": "Historic v0.2 obligation", "desired_state": "Original unsigned material and receipts remain readable", "priority": "normal"}, True)
-            scope = {"namespace_id": namespace, "outcome_id": outcome["id"]}
+            outcome = command("create_outcome", {"tenant_id": tenant, "title": "Historic v0.2 obligation", "desired_state": "Original unsigned material and receipts remain readable", "priority": "normal"}, True)
+            scope = {"tenant_id": tenant, "outcome_id": outcome["id"]}
             owner = {**scope, "kind": "outcome", "id": outcome["id"]}
             command("add_criterion", {"owner": owner, "expected_version": outcome["version"], "title": "Historic criterion", "required": True, "verification_mode": "attestation"}, True)
             command("activate_outcome", {"scope": scope, "expected_version": outcome["version"] + 1}, True)
-            command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 1, "phase": "draining", "reason": "Actual v0.2 fixture drains legacy"})
-            command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 2, "phase": "contracts_v1", "writers_drained": True, "reason": "Actual v0.2 fixture activates unsigned contracts"})
+            command("set_tenant_work_protocol", {"scope": scope, "expected_protocol_version": 1, "phase": "draining", "reason": "Actual v0.2 fixture drains legacy"})
+            command("set_tenant_work_protocol", {"scope": scope, "expected_protocol_version": 2, "phase": "contracts_v1", "writers_drained": True, "reason": "Actual v0.2 fixture activates unsigned contracts"})
             work = command("create_work_item", {"scope": scope, "title": "Original v0.2 Task", "priority": "normal", "lifecycle": "todo", "execution_spec": {"instructions": ["Existing obligation only"]}}, True)
             command("add_criterion", {"owner": {**scope, "kind": "work_item", "id": work["id"]}, "expected_version": work["version"], "title": "Original Task criterion", "required": True, "verification_mode": "attestation"}, True)
             acquired = command("acquire_work_contract", {"scope": scope, "work_item_id": work["id"], "expected_work_item_version": work["version"] + 1, "ttl_seconds": 900}, True)
             contract = acquired["contract"]
             authority = {name: contract[name] for name in ("execution_id", "fencing_token", "spec_digest")}
             submitted = command("submit_work_result", {"scope": scope, "contract_id": contract["id"], "authority": authority, "expected_contract_version": contract["version"], "material": {"contract_id": contract["id"], "work_item_id": work["id"], "spec_digest": contract["spec_digest"], "summary": "Actual original unsigned v0.2 material", "artifacts": [], "evidence_ids": [], "criterion_evidence": []}}, True)
-            path = f"/namespaces/{namespace}/outcomes/{outcome['id']}"
+            path = f"/tenants/{tenant}/outcomes/{outcome['id']}"
             historic_work = request(path + "/work-items/" + work["id"])["value"]
             old_history = history()
             assert old_history["contracts"] and old_history["submissions"] and len(old_history["criteria"]) == 2
@@ -189,11 +189,11 @@ def exercise(args, driver):
             assert request(path + "/work-items/" + work["id"])["value"] == historic_work
             replays()
             identity = request("/security/signing-identity")
-            request("/security/signing-commands", {"namespace_id": namespace, "expected_namespace_version": identity["namespace_version"], "operation": "set_acceptance_policy", "acceptance_policy": {"namespace_id": namespace, "acceptance_floor": "independent_review", "max_active_work_contracts": 3, "max_active_review_contracts": 1}})
-            command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 3, "phase": "draining_to_signed_v2", "reason": "Actual upgrade drains old contract"})
-            command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 4, "phase": "signed_contracts_v2", "writers_drained": True, "reason": "Premature activation must fail"}, expected=409)
+            request("/security/signing-commands", {"tenant_id": tenant, "expected_tenant_version": identity["tenant_version"], "operation": "set_acceptance_policy", "acceptance_policy": {"tenant_id": tenant, "acceptance_floor": "independent_review", "max_active_work_contracts": 3, "max_active_review_contracts": 1}})
+            command("set_tenant_work_protocol", {"scope": scope, "expected_protocol_version": 3, "phase": "draining_to_signed_v3", "reason": "Actual upgrade drains old contract"})
+            command("set_tenant_work_protocol", {"scope": scope, "expected_protocol_version": 4, "phase": "signed_contracts_v3", "writers_drained": True, "reason": "Premature activation must fail"}, expected=409)
             command("revoke_work_contract", {"scope": scope, "contract_id": contract["id"], "expected_contract_version": submitted["contract"]["version"], "reason": "Explicitly retire original v0.2 authority"})
-            command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 4, "phase": "signed_contracts_v2", "writers_drained": True, "reason": "Validated historical restore and retired old writer"})
+            command("set_tenant_work_protocol", {"scope": scope, "expected_protocol_version": 4, "phase": "signed_contracts_v3", "writers_drained": True, "reason": "Validated historical restore and retired old writer"})
             preserves(old_history)
             replays()
             final_history = history()

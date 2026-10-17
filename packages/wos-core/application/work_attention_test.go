@@ -10,7 +10,7 @@ import (
 func TestAttentionKeepsDeclaredEvidenceSeparateFromCriterionApproval(t *testing.T) {
 	now := time.Now().UTC()
 	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
-	scope := d.Scope{NamespaceID: id, OutcomeID: id}
+	scope := d.Scope{TenantID: id, OutcomeID: id}
 	work, err := d.NewWorkItem(id, scope, "independently verify a delivery", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	if err != nil {
 		t.Fatal(err)

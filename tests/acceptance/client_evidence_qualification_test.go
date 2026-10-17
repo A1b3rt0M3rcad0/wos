@@ -74,18 +74,18 @@ func qualifyClientEvidence(t *testing.T, store interface {
 		}
 	}
 	generator := &ids{}
-	namespace := d.MustParseID("0199ff41-0000-7000-8000-000000000001")
+	tenant := d.MustParseID("0199ff41-0000-7000-8000-000000000001")
 	security := &a.SecurityService{Store: store, Clock: clock{}, IDs: generator}
 	const adminToken = "client-qualification-admin-token-at-least-32"
-	must(security.Bootstrap(ctx, ports.Namespace{ID: namespace, Name: "generic client"}, "operator", adminToken))
+	must(security.Bootstrap(ctx, ports.Tenant{ID: tenant, Name: "generic client"}, "operator", adminToken))
 	admin, err := security.Authenticate(ctx, adminToken)
 	must(err)
 	adminCtx := a.WithIdentity(ctx, admin)
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: "source-client", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionRecordsWrite}}))
+	must(security.SetGrant(adminCtx, ports.TenantGrant{TenantID: tenant, PrincipalID: "source-client", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionRecordsWrite}}))
 	actor := d.ActorRef{Kind: d.ActorKindService, Provider: "generic-client", ID: "source-projector"}
-	oldCredential, oldToken, err := security.IssueCredential(adminCtx, namespace, "source-client", actor, time.Now().Add(time.Hour))
+	oldCredential, oldToken, err := security.IssueCredential(adminCtx, tenant, "source-client", actor, time.Now().Add(time.Hour))
 	must(err)
-	_, newToken, err := security.IssueCredential(adminCtx, namespace, "source-client", actor, time.Now().Add(time.Hour))
+	_, newToken, err := security.IssueCredential(adminCtx, tenant, "source-client", actor, time.Now().Add(time.Hour))
 	must(err)
 	service, err := a.NewAuthorizedService(store, clock{}, generator, security)
 	must(err)
@@ -123,14 +123,14 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	must(err)
 	rotated, err := sdk.New(endpoint.URL, newToken, endpoint.Client())
 	must(err)
-	outcome, err := operator.CreateOutcome(ctx, "client-outcome-0001", a.CreateOutcomeCommand{NamespaceID: namespace, Title: "Verifiable client result", DesiredState: "Explicitly evaluated result", Priority: d.PriorityNormal})
+	outcome, err := operator.CreateOutcome(ctx, "client-outcome-0001", a.CreateOutcomeCommand{TenantID: tenant, Title: "Verifiable client result", DesiredState: "Explicitly evaluated result", Priority: d.PriorityNormal})
 	must(err)
 	scope := outcome.Value.Scope()
 	criterion, err := operator.AddCriterion(ctx, "client-criterion-0001", a.AddCriterionCommand{Owner: outcome.Value.Ref(), ExpectedVersion: outcome.Value.Version, Title: "Independent check", Required: true, VerificationMode: d.VerificationModeEvidenceReview})
 	must(err)
 	getOutcome := func() d.Outcome {
 		t.Helper()
-		raw, readErr := operator.QueryJSON(ctx, "/namespaces/"+namespace.String()+"/outcomes/"+scope.OutcomeID.String())
+		raw, readErr := operator.QueryJSON(ctx, "/tenants/"+tenant.String()+"/outcomes/"+scope.OutcomeID.String())
 		must(readErr)
 		var result a.ReadResult[d.Outcome]
 		must(json.Unmarshal(raw, &result))
@@ -139,7 +139,7 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	current := getOutcome()
 	_, err = operator.ActivateOutcome(ctx, "client-activate-0001", a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: current.Version})
 	must(err)
-	identityBytes, err := json.Marshal([]string{namespace.String(), scope.OutcomeID.String(), "generic-client", "event-0001", "register_evidence"})
+	identityBytes, err := json.Marshal([]string{tenant.String(), scope.OutcomeID.String(), "generic-client", "event-0001", "register_evidence"})
 	must(err)
 	digest := sha256.Sum256(identityBytes)
 	key := "source-event-v1-" + hex.EncodeToString(digest[:])
@@ -151,7 +151,7 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	if registrationCalls.Load() != 1 {
 		t.Fatal("SDK transport silently retried the lost mutation")
 	}
-	must(security.RevokeCredential(adminCtx, namespace, oldCredential.ID))
+	must(security.RevokeCredential(adminCtx, tenant, oldCredential.ID))
 	if _, err = oldClient.RegisterEvidence(ctx, key, command); err == nil {
 		t.Fatal("revoked token recovered protected evidence")
 	}
@@ -165,7 +165,7 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	if repeated.Value.ID != replayed.Value.ID || repeated.CommandID != replayed.CommandID || repeated.OutcomeRevision != replayed.OutcomeRevision {
 		t.Fatal("redelivery created another evidence or commit")
 	}
-	receipt, err := rotated.GetCommandReceiptObservation(ctx, namespace, replayed.CommandID)
+	receipt, err := rotated.GetCommandReceiptObservation(ctx, tenant, replayed.CommandID)
 	must(err)
 	var accepted sdk.CommandResult[d.Evidence]
 	must(json.Unmarshal(receipt.ResponseJSON, &accepted))

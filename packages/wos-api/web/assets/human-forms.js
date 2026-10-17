@@ -91,7 +91,7 @@ export function humanForm(
 
     case "create_outcome":
       delete fixed.scope;
-      fixed.namespace_id = scope.namespace_id;
+      fixed.tenant_id = scope.tenant_id;
       title(copy.text.outcomeName);
       f("desired_state", copy.text.whatDoesSuccessLookLike, {
         type: "textarea",
@@ -694,7 +694,7 @@ export function humanForm(
       if (result.blockers)
         for (const b of result.blockers) {
           const current = await request(
-            `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/blockers/${b.blocker_id}`,
+            `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/blockers/${b.blocker_id}`,
           );
           if (current.value?.cause_ref?.id !== entity.id)
             throw Error(copy.text.selectOnlyBlockersCausedByThisIssue);

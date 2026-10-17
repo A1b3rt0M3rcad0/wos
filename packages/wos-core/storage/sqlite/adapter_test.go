@@ -81,7 +81,7 @@ func TestSQLiteExpectedVersionRejectsStaleMutation(t *testing.T) {
 
 	cc := sqliteCommandContext("0199e941-0000-7000-8000-000000000001", "")
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  testID("0199e941-0000-7000-8000-000000000010"),
+		TenantID:     testID("0199e941-0000-7000-8000-000000000010"),
 		Title:        "Optimistic lock",
 		DesiredState: "Only one stale write can succeed",
 		Priority:     domain.PriorityNormal,
@@ -130,7 +130,7 @@ func TestSQLiteCompoundRollbackDiscardsStateEventsAndIdempotency(t *testing.T) {
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "wos.db"))
 
-	namespaceID := testID("0199e942-0000-7000-8000-000000000001")
+	tenantID := testID("0199e942-0000-7000-8000-000000000001")
 	outcomeID := testID("0199e942-0000-7000-8000-000000000010")
 	commandID := testID("0199e942-0000-7000-8000-000000000020")
 	eventID := testID("0199e942-0000-7000-8000-000000000030")
@@ -142,7 +142,7 @@ func TestSQLiteCompoundRollbackDiscardsStateEventsAndIdempotency(t *testing.T) {
 		t.Fatal(err)
 	}
 	identity := domain.IdempotencyIdentity{
-		NamespaceID:    namespaceID,
+		TenantID:       tenantID,
 		PrincipalID:    "rollback-human",
 		CommandName:    "CreateOutcome",
 		IdempotencyKey: "sqlite-rollback-key-0001",
@@ -152,8 +152,8 @@ func TestSQLiteCompoundRollbackDiscardsStateEventsAndIdempotency(t *testing.T) {
 		t.Fatal(err)
 	}
 	coord, err := tx.Coordination().LockOutcome(ctx, domain.Scope{
-		NamespaceID: namespaceID,
-		OutcomeID:   outcomeID,
+		TenantID:  tenantID,
+		OutcomeID: outcomeID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -163,7 +163,7 @@ func TestSQLiteCompoundRollbackDiscardsStateEventsAndIdempotency(t *testing.T) {
 	}
 	outcome, err := domain.NewOutcome(
 		outcomeID,
-		namespaceID,
+		tenantID,
 		"Rollback",
 		"",
 		"Nothing survives rollback",
@@ -185,7 +185,7 @@ func TestSQLiteCompoundRollbackDiscardsStateEventsAndIdempotency(t *testing.T) {
 		EventID:               eventID,
 		EventType:             "outcome.created",
 		SchemaVersion:         domain.DomainEventSchemaVersion,
-		NamespaceID:           namespaceID,
+		TenantID:              tenantID,
 		OutcomeID:             outcomeID,
 		OutcomeRevision:       revision,
 		EventIndex:            0,
@@ -233,11 +233,11 @@ func TestSQLiteCrossScopeForeignKeyIsRejected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := testID("0199e943-0000-7000-8000-000000000001")
+	tenantID := testID("0199e943-0000-7000-8000-000000000001")
 	a, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e943-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "A", DesiredState: "A", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "A", DesiredState: "A", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -245,7 +245,7 @@ func TestSQLiteCrossScopeForeignKeyIsRejected(t *testing.T) {
 	b, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e943-0000-7000-8000-000000000102", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "B", DesiredState: "B", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "B", DesiredState: "B", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -266,19 +266,19 @@ func TestSQLiteCrossScopeForeignKeyIsRejected(t *testing.T) {
 	}
 	defer tx.Rollback()
 	if _, err := tx.ExecContext(ctx, `
-INSERT INTO entity_refs (id, namespace_id, outcome_id, kind)
+INSERT INTO entity_refs (id, tenant_id, outcome_id, kind)
 VALUES (?, ?, ?, 'work_item')`,
-		workID.String(), namespaceID.String(), b.Value.ID.String(),
+		workID.String(), tenantID.String(), b.Value.ID.String(),
 	); err != nil {
 		t.Fatal(err)
 	}
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO work_items (
-    id, namespace_id, outcome_id, kind, version, created_at, updated_at,
+    id, tenant_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, result_summary
 ) VALUES (?, ?, ?, 'work_item', 1, ?, ?, 'cross scope', '', 'normal', ?, 'todo', '')`,
 		workID.String(),
-		namespaceID.String(),
+		tenantID.String(),
 		b.Value.ID.String(),
 		encodeTime(time.Date(2026, 10, 2, 4, 20, 0, 0, time.UTC)),
 		encodeTime(time.Date(2026, 10, 2, 4, 20, 0, 0, time.UTC)),
@@ -305,11 +305,11 @@ func TestSQLiteBackupAndRestore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := testID("0199e944-0000-7000-8000-000000000001")
+	tenantID := testID("0199e944-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e944-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Backup outcome",
 		DesiredState: "Survive backup and restore",
 		Priority:     domain.PriorityNormal,
@@ -333,7 +333,7 @@ func TestSQLiteBackupAndRestore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	persisted, err := uow.Outcomes().Get(ctx, namespaceID, created.Value.ID)
+	persisted, err := uow.Outcomes().Get(ctx, tenantID, created.Value.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -384,8 +384,8 @@ func TestSQLiteCancelledTransactionStopsRepositoryWork(t *testing.T) {
 	cancel()
 
 	_, err = uow.Coordination().LockOutcome(ctx, domain.Scope{
-		NamespaceID: testID("0199e945-0000-7000-8000-000000000001"),
-		OutcomeID:   testID("0199e945-0000-7000-8000-000000000010"),
+		TenantID:  testID("0199e945-0000-7000-8000-000000000001"),
+		OutcomeID: testID("0199e945-0000-7000-8000-000000000010"),
 	})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("LockOutcome error = %v, want context.Canceled", err)
@@ -406,11 +406,11 @@ func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := testID("0199e946-0000-7000-8000-000000000001")
+	tenantID := testID("0199e946-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e946-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Principal FK",
 		DesiredState: "A new principal can claim persisted work",
 		Priority:     domain.PriorityNormal,

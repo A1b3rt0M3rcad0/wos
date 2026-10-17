@@ -9,7 +9,7 @@ import (
 )
 
 // A fixed switch is the only source of SQL identifiers. Existing per-aggregate
-// UNIQUE(namespace_id,outcome_id,id) indexes bound scope and keyset scans. Text
+// UNIQUE(tenant_id,outcome_id,id) indexes bound scope and keyset scans. Text
 // matching scans scoped metadata, never hydrates aggregate/documentary bodies.
 func (r outcomeRepository) SearchReferences(ctx context.Context, scope domain.Scope, f ports.ReferenceFilter) ([]ports.ReferenceCandidate, error) {
 	if f.Limit < 1 || f.Limit > 101 {
@@ -27,11 +27,11 @@ func (r outcomeRepository) SearchReferences(ctx context.Context, scope domain.Sc
 		case "objective":
 			table = "objectives"
 			title = "title"
-			contextSQL = `COALESCE((SELECT substr(o.title,1,128) FROM objectives o WHERE o.namespace_id=t.namespace_id AND o.outcome_id=t.outcome_id AND o.id=t.parent_objective_id), '')`
+			contextSQL = `COALESCE((SELECT substr(o.title,1,128) FROM objectives o WHERE o.tenant_id=t.tenant_id AND o.outcome_id=t.outcome_id AND o.id=t.parent_objective_id), '')`
 		case "work_item":
 			table = "work_items"
 			title = "title"
-			contextSQL = `COALESCE((SELECT substr(o.title,1,128) FROM objectives o WHERE o.namespace_id=t.namespace_id AND o.outcome_id=t.outcome_id AND o.id=t.objective_id), '')`
+			contextSQL = `COALESCE((SELECT substr(o.title,1,128) FROM objectives o WHERE o.tenant_id=t.tenant_id AND o.outcome_id=t.outcome_id AND o.id=t.objective_id), '')`
 		case "issue":
 			table = "issues"
 			title = "title"
@@ -67,8 +67,8 @@ func (r outcomeRepository) SearchReferences(ctx context.Context, scope domain.Sc
 		default:
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid reference kind")
 		}
-		q := "SELECT t.id,t.version,'" + string(kind) + "' AS kind,substr(t." + title + ",1,128) AS title,t.lifecycle," + contextSQL + " AS display_context FROM " + table + " t WHERE t.namespace_id=? AND t.outcome_id=?"
-		args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
+		q := "SELECT t.id,t.version,'" + string(kind) + "' AS kind,substr(t." + title + ",1,128) AS title,t.lifecycle," + contextSQL + " AS display_context FROM " + table + " t WHERE t.tenant_id=? AND t.outcome_id=?"
+		args = append(args, scope.TenantID.String(), scope.OutcomeID.String())
 		if !f.ID.IsZero() {
 			q += " AND t.id=?"
 			args = append(args, f.ID.String())

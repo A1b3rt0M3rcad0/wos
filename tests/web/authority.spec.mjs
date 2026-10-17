@@ -1,35 +1,35 @@
 import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
 async function provision(wos, principal, permissions) {
-  const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
+  const snapshot = await wos.api(`/tenants/${wos.tenant}/administration`);
   const grant = await wos.api("/security/commands", {
-    namespace_id: wos.namespace,
-    expected_namespace_version: snapshot.namespace_version,
+    tenant_id: wos.tenant,
+    expected_tenant_version: snapshot.tenant_version,
     operation: "set_grant",
     principal_id: principal,
     permissions,
   });
   return wos.api("/security/commands", {
-    namespace_id: wos.namespace,
-    expected_namespace_version: grant.result.namespace_version,
+    tenant_id: wos.tenant,
+    expected_tenant_version: grant.result.tenant_version,
     operation: "issue_credential",
     principal_id: principal,
     actor_ref: { kind: "human", provider: "ux-test", id: principal },
     expires_at: new Date(Date.now() + 3600000).toISOString(),
   });
 }
-test("Namespace administration preserves settings without installation authority", async ({
+test("Tenant administration preserves settings without installation authority", async ({
   page,
   wos,
 }) => {
   await wos.outcome();
-  const issued = await provision(wos, "namespace-administrator", [
+  const issued = await provision(wos, "tenant-administrator", [
     "state:read",
-    "namespace:admin",
+    "tenant:admin",
   ]);
   await wos.login(page, issued.token);
   await page.locator("#administration").click();
   await expect(page.locator("#admin-dialog")).toBeVisible();
-  const provisionOption = page.locator('#admin-operation option[value="create_namespace"]');
+  const provisionOption = page.locator('#admin-operation option[value="create_tenant"]');
   await expect(provisionOption).toHaveJSProperty("disabled", true);
   await expect(provisionOption).toHaveJSProperty("hidden", true);
   await expect(page.locator('#admin-operation option[value="set_grant"]')).toHaveJSProperty("disabled", false);
@@ -72,13 +72,13 @@ test("revoked credential cannot retrieve references or dispatch edits", async ({
     dispatched++;
     return route.continue();
   });
-  const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
+  const snapshot = await wos.api(`/tenants/${wos.tenant}/administration`);
   const credential = snapshot.credentials.find(
     (c) => c.principal_id === "planner",
   );
   await wos.api("/security/commands", {
-    namespace_id: wos.namespace,
-    expected_namespace_version: snapshot.namespace_version,
+    tenant_id: wos.tenant,
+    expected_tenant_version: snapshot.tenant_version,
     operation: "revoke_credential",
     credential_id: credential.id,
   });
@@ -87,7 +87,7 @@ test("revoked credential cannot retrieve references or dispatch edits", async ({
       const r = await fetch(path);
       return { status: r.status, body: await r.json() };
     },
-    `/api/v1/namespaces/${wos.namespace}/outcomes/${(await wos.api(`/namespaces/${wos.namespace}/outcomes`)).items[0].id}/references?kind=work_item`,
+    `/api/v1/tenants/${wos.tenant}/outcomes/${(await wos.api(`/tenants/${wos.tenant}/outcomes`)).items[0].id}/references?kind=work_item`,
   );
   expect([401, 403]).toContain(denied.status);
   expect(denied.body.items).toBeUndefined();
@@ -158,10 +158,10 @@ test("revocation prevents replay dispatch of an already frozen uncertain intent"
   });
   await page.locator("#submit-command").click();
   await expect(page.locator("#retry-command")).toBeVisible();
-  const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
+  const snapshot = await wos.api(`/tenants/${wos.tenant}/administration`);
   await wos.api("/security/commands", {
-    namespace_id: wos.namespace,
-    expected_namespace_version: snapshot.namespace_version,
+    tenant_id: wos.tenant,
+    expected_tenant_version: snapshot.tenant_version,
     operation: "revoke_credential",
     credential_id: issued.result.credential.id,
   });

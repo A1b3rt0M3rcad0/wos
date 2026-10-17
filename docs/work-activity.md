@@ -42,11 +42,11 @@ new intention and must pass current authority checks.
 ## Read activity history
 
 ```text
-GET /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity
+GET /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-activity
   ?work_item_id={optional_task_id}&contract_id={optional_contract_id}&limit=25
 ```
 
-MCP: `wos_list_work_activity` accepts `namespace_id`, `outcome_id`, optional
+MCP: `wos_list_work_activity` accepts `tenant_id`, `outcome_id`, optional
 `work_item_id`, optional `contract_id`, `descending`, `limit`, and `cursor`.
 
 The result contains `items`, optional `next_cursor`, `order`, `outcome_revision`,
@@ -56,7 +56,7 @@ Set `descending=true` for `order: "desc"` and newest records first; that cursor
 continues toward older records. HTTP accepts only `true` or `false` for this flag.
 Activity is immutable, so the first page freezes an upper revision for that
 traversal. Subsequent writes appear in a fresh traversal, without shifting the
-remaining pages. Cursors bind the Namespace, Outcome, identity filters, and order.
+remaining pages. Cursors bind the Tenant, Outcome, identity filters, and order.
 
 The default page size is 25; supported limits are 1–100. Responses remain bounded
 by the shared snapshot byte limit and may contain fewer records. Follow
@@ -67,10 +67,10 @@ page; possession of a cursor does not grant access. HTTP responses use
 ## Read remaining obligations
 
 ```text
-GET /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention
+GET /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention
 ```
 
-MCP: `wos_get_work_attention` accepts `namespace_id`, `outcome_id`, and
+MCP: `wos_get_work_attention` accepts `tenant_id`, `outcome_id`, and
 `work_item_id`.
 
 Attention is computed from current Task, Contract, readiness, required criteria,
@@ -86,7 +86,7 @@ must still acquire or resume current authority before acting.
 
 ## Discover current execution headers
 
-`GET /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/executions`
+`GET /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/signed-state/executions`
 and `wos_read_signed_state` with `resource: "executions"` expose bounded Contract
 headers for rediscovery after local files are removed. Optional filters are
 `holder_principal_id`, `work_item_id`, and persisted `status` (`active`, `delivered`,

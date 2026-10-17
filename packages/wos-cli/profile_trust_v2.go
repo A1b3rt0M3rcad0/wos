@@ -29,10 +29,10 @@ func approveCurrentIssuerV2(ctx context.Context, w *Workspace, name string, o op
 	if e != nil {
 		return result, e
 	}
-	if identity.ServerID != profile.Binding.ServerID.String() || identity.NamespaceID != profile.Binding.NamespaceID || identity.PrincipalID != profile.Binding.PrincipalID || identity.CredentialID != profile.Binding.CredentialID {
+	if identity.ServerID != profile.Binding.ServerID.String() || identity.TenantID != profile.Binding.TenantID || identity.PrincipalID != profile.Binding.PrincipalID || identity.CredentialID != profile.Binding.CredentialID {
 		return result, fmt.Errorf("remote identity differs from approved profile")
 	}
-	trust, e := client.GetSignedTrust(ctx, profile.Binding.NamespaceID)
+	trust, e := client.GetSignedTrust(ctx, profile.Binding.TenantID)
 	if e != nil {
 		return result, e
 	}

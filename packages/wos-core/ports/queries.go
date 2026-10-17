@@ -29,7 +29,7 @@ type OutcomeDiscoveryRepository interface {
 // OutcomeIndexEntry is discovery metadata, never a hydrated domain aggregate.
 type OutcomeIndexEntry struct {
 	ID            domain.ID               `json:"id"`
-	NamespaceID   domain.ID               `json:"namespace_id"`
+	TenantID      domain.ID               `json:"tenant_id"`
 	Version       domain.Version          `json:"version"`
 	Title         string                  `json:"title"`
 	Description   string                  `json:"description,omitempty"`
@@ -42,7 +42,7 @@ type OutcomeIndexEntry struct {
 }
 
 func (v OutcomeIndexEntry) Scope() domain.Scope {
-	return domain.Scope{NamespaceID: v.NamespaceID, OutcomeID: v.ID}
+	return domain.Scope{TenantID: v.TenantID, OutcomeID: v.ID}
 }
 
 type EventFilter struct {

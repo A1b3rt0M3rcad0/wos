@@ -60,12 +60,12 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				}
 			}
 			ns := testID("0199a555-0000-7000-8000-000000000001")
-			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+			scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -87,8 +87,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			uow, err := store.Begin(ctx)
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, TenantID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+			policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			must(registry.SaveCredentialPolicy(ctx, policy, 0))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
@@ -111,7 +111,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			state, err := protocol.Lock(ctx, ns, true)
 			must(err)
 			state.Phase = d.WorkProtocolSigned
-			state.WriterEpoch = 2
+			state.WriterEpoch = 3
 			state.WritersDrained = true
 			state.Version++
 			state.UpdatedAt = now
@@ -211,7 +211,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			if sqlStore, ok := store.(*Store); ok {
 				// Simulate an accepted pre-migration signed response whose short
 				// cache still exists but whose new durable operation row is absent.
-				_, err = sqlStore.db.ExecContext(ctx, `DELETE FROM signed_operation_results WHERE namespace_id=? AND principal_id=? AND idempotency_key=?`, ns.String(), identity.PrincipalID, firstCC.IdempotencyKey)
+				_, err = sqlStore.db.ExecContext(ctx, `DELETE FROM signed_operation_results WHERE tenant_id=? AND principal_id=? AND idempotency_key=?`, ns.String(), identity.PrincipalID, firstCC.IdempotencyKey)
 				must(err)
 				_, err = sqlStore.db.ExecContext(ctx, `UPDATE idempotency_records SET expires_at=0 WHERE command_name='AcquireSignedWorkContract' AND idempotency_key=?`, firstCC.IdempotencyKey)
 				must(err)

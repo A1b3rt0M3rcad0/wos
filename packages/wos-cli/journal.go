@@ -16,11 +16,11 @@ import (
 type Destination struct {
 	ServerURL     string    `json:"server_url"`
 	CredentialRef string    `json:"credential_ref"`
-	NamespaceID   domain.ID `json:"namespace_id"`
+	TenantID      domain.ID `json:"tenant_id"`
 }
 
 func (c Config) Destination() Destination {
-	return Destination{strings.TrimRight(c.Connection.ServerURL, "/"), c.Connection.CredentialRef, c.Scope.NamespaceID}
+	return Destination{strings.TrimRight(c.Connection.ServerURL, "/"), c.Connection.CredentialRef, c.Scope.TenantID}
 }
 
 type FrozenPayload string
@@ -111,7 +111,7 @@ func (w *Workspace) Replay(ctx context.Context, client *sdk.Client, config Confi
 	if err = json.Unmarshal(raw, &intent); err != nil {
 		return nil, "", &LocalError{Err: err}
 	}
-	if intent.SchemaVersion != 1 || intent.Destination != config.Destination() || intent.Scope.NamespaceID != config.Scope.NamespaceID {
+	if intent.SchemaVersion != 1 || intent.Destination != config.Destination() || intent.Scope.TenantID != config.Scope.TenantID {
 		return nil, "", fmt.Errorf("journal destination differs from trusted workspace")
 	}
 	digest, err := domain.SemanticDigest(json.RawMessage(intent.Payload))

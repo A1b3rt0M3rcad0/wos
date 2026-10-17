@@ -7,9 +7,9 @@ import (
 
 func TestWaivedRequiredCriterionCanSatisfyGateWhenAlreadyAuthorized(t *testing.T) {
 	now := time.Date(2026, 10, 2, 23, 30, 0, 0, time.UTC)
-	namespaceID := MustParseID("0199ef40-0000-7000-8000-000000000001")
+	tenantID := MustParseID("0199ef40-0000-7000-8000-000000000001")
 	outcomeID := MustParseID("0199ef40-0000-7000-8000-000000000010")
-	outcome, err := NewOutcome(outcomeID, namespaceID, "Waived gate", "", "authorized exception is explicit", PriorityNormal, now)
+	outcome, err := NewOutcome(outcomeID, tenantID, "Waived gate", "", "authorized exception is explicit", PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,9 +68,9 @@ func TestWaivedRequiredCriterionCanSatisfyGateWhenAlreadyAuthorized(t *testing.T
 
 func TestOutcomeConclusionSnapshotsRequiredObjectives(t *testing.T) {
 	now := time.Date(2026, 10, 2, 23, 40, 0, 0, time.UTC)
-	namespaceID := MustParseID("0199ef41-0000-7000-8000-000000000001")
+	tenantID := MustParseID("0199ef41-0000-7000-8000-000000000001")
 	outcomeID := MustParseID("0199ef41-0000-7000-8000-000000000010")
-	outcome, err := NewOutcome(outcomeID, namespaceID, "Structural obligations", "", "snapshot objectives", PriorityNormal, now)
+	outcome, err := NewOutcome(outcomeID, tenantID, "Structural obligations", "", "snapshot objectives", PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}

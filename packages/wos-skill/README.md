@@ -19,6 +19,19 @@ help. Skill installation neither provisions credentials nor grants server access
 configures an agent runtime, or starts agents. WOS Server remains separate from
 the client that runs these commands.
 
+## Tenant contracts on this branch
+
+Use one coordinated source build for the service, CLI and these Skills. Current
+Profiles and commands use `tenant_id` and signed protocol 3. Each Profile binds an
+approved Tenant endpoint, server identity and authenticated Principal. Hostname
+routing chooses the Tenant runtime but never authenticates an agent. A different
+Tenant requires its own approved Profile and credentials.
+
+The earlier `namespace_id` signed protocol is historical verification only. Do
+not rename old signed documents, reinterpret pending requests or downgrade to
+bypass a denied operation. An operator must complete the explicit storage and
+Profile cutover before agents resume; see [Tenant operations](../../docs/scaling/tenants.md).
+
 ## Install directly using the WOS Go binary (recommended)
 
 The native server/operator executable contains all five skills and installs them

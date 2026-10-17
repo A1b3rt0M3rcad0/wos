@@ -33,12 +33,12 @@ An absolute `WOS_DATA_DIR` overrides the data directory for an explicit installa
 
 ## Profiles and protected onboarding
 
-Each Profile owns its immutable server/Namespace/Principal binding, protected credential/key references, contracts and recovery state. Profiles can use different servers or Namespaces. An optional default Outcome is convenience scope, not new authority.
+Each Profile owns its immutable server/Tenant/Principal binding, protected credential/key references, contracts and recovery state. Profiles can use different servers or Tenants. An optional default Outcome is convenience scope, not new authority.
 
 An operator supplies an exact trusted origin, persistent ServerID, independently approved issuer fingerprint, and authorized key enrollment:
 
 ```sh
-wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST --enrollment ENROLLMENT_UUID --generate-signing-key --credential-ref env:WOS_EXECUTOR_TOKEN
+wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --tenant TENANT_UUID --issuer-fingerprint sha256:APPROVED_DIGEST --enrollment ENROLLMENT_UUID --generate-signing-key --credential-ref env:WOS_EXECUTOR_TOKEN
 wos profile show executor
 wos --profile executor profile inspect
 wos --profile executor auth status --output json
@@ -47,7 +47,7 @@ wos --profile executor doctor --output json
 
 `--outcome UUID` is optional. Generated keys use the supported protected key mechanism. A headless host can instead use `--private-key-ref env:WOS_EXECUTOR_KEY` with `--credential-ref env:WOS_EXECUTOR_TOKEN`; the external key is a canonical base64 Ed25519 seed/private key. Do not combine reference mode with generation/stdin flags. Explicit stdin alternatives exist, but token and key cannot share stdin. Never pass secret values in arguments, source files, model context or logs.
 
-An administrator must provision current grants, registered signing identity and the Namespace's protocol. Neither `init`, Profile creation nor Skill installation grants permission or activates signed contracts. An executor and independent reviewer need distinct eligible Principals; different labels/keys for one Principal do not establish independence.
+An administrator must provision current grants, registered signing identity and the Tenant's protocol. Neither `init`, Profile creation nor Skill installation grants permission or activates signed contracts. An executor and independent reviewer need distinct eligible Principals; different labels/keys for one Principal do not establish independence.
 
 | Command                                                     | Purpose                                                                                                     |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -204,7 +204,7 @@ wos init --from /absolute/legacy-project --writers-drained
 
 Initial central import targets signed schema-2 state. Drain all old writers first: supported new clients retire the original source against further writes, but older binaries cannot honor a new marker. Import preserves original source, issued proofs, signatures, MACs, pending intentions, receipts and identity/destination binding. Unknown content, name collision or secret-reference confinement failures block unsafe import. External secret values are never copied merely to make an import succeed.
 
-Schema-1 state requires its explicit original recovery/conversion first. `--workspace`/`WOS_WORKSPACE` remain explicit compatibility/recovery mechanisms; they are not automatic per-directory discovery. Imported legacy records remain `legacy_unsigned` and cannot authorize signed mutations or acquire retroactive signatures. No local migration activates or downgrades Namespace protocol.
+Schema-1 state requires its explicit original recovery/conversion first. `--workspace`/`WOS_WORKSPACE` remain explicit compatibility/recovery mechanisms; they are not automatic per-directory discovery. Imported legacy records remain `legacy_unsigned` and cannot authorize signed mutations or acquire retroactive signatures. No local migration activates or downgrades Tenant protocol.
 
 See [migration plan](../../docs/central-agent-workflow/migration.md), [schema-1 conversion](../../docs/workspace-migration-v2.md), and [historical contract operations](../../docs/work-contract-operations.md). Those low-level compatibility references do not replace the central agent workflow.
 
@@ -219,3 +219,26 @@ node --test packages/wos-skill/test/installer.test.mjs
 Real PostgreSQL, native Windows, crash/full-disk recovery, protocol parity and final-source package checks are distinct qualification gates. File installation/cross-compilation alone does not certify a platform or agent runtime. Standalone native clients do not require Node; the published npm launcher requires its documented Node version.
 
 Read [agent operation](../../docs/agents.md), [central implementation plan](../../docs/central-agent-workflow/README.md), [ROADMAP](../../ROADMAP.md), and [client qualification](../../docs/client-qualification.md) for verified status and remaining limits. Merge, release and registry publication are separate owner actions.
+
+## Tenant schema operations and protocol transition
+
+Current Profiles bind `tenant_id`; use `--tenant TENANT_UUID` when onboarding.
+New signed work uses protocol 3. Resolve old pending requests and active authority
+before a coordinated service cutover. `wos profile migrate-tenant NAME` explicitly
+converts eligible legacy Profile configuration; it does not rewrite signed
+history or turn an unresolved protocol-2 intention into a current mutation.
+
+On the protected PostgreSQL server host, `wos storage tenant` provides `list`,
+`show`, `provision`, `retry-provision`, `suspend`, `migrate`, `resume`, `delete` and
+`import-shared`. Provision
+with a `{tenant_id, name, reason}` JSON file. Other lifecycle mutations use
+`{tenant_id, expected_version, reason}` and `--writers-stopped`. Stop all affected
+API/worker runtimes first; a live schema guard refuses lifecycle changes.
+`migrate` requires a suspended Tenant, advances its catalog version and leaves it
+suspended for verification before resume. Suspension preserves data, deletion
+retains a catalog tombstone, and startup
+resolves the schema from the approved catalog. `import-shared --file REQUEST.json --writers-stopped` accepts
+`{source_schema, reason}` and partitions a stopped legacy source into suspended
+Tenant schemas in the same database, retaining signed bytes and fencing source
+writes. It does not move customers between databases. These are operator
+capabilities, not agent work commands. See [Tenant lifecycle and cutover](../../docs/scaling/tenants.md).

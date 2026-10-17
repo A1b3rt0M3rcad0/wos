@@ -79,13 +79,13 @@ export async function seedCanvas(wos, { title = "Ship a connected workspace", ex
 }
 
 export async function provisionCanvasViewer(wos) {
-  const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
+  const snapshot = await wos.api(`/tenants/${wos.tenant}/administration`);
   const grant = await wos.api("/security/commands", {
-    namespace_id: wos.namespace, expected_namespace_version: snapshot.namespace_version,
+    tenant_id: wos.tenant, expected_tenant_version: snapshot.tenant_version,
     operation: "set_grant", principal_id: "canvas-viewer", permissions: ["state:read"],
   });
   return wos.api("/security/commands", {
-    namespace_id: wos.namespace, expected_namespace_version: grant.result.namespace_version,
+    tenant_id: wos.tenant, expected_tenant_version: grant.result.tenant_version,
     operation: "issue_credential", principal_id: "canvas-viewer",
     actor_ref: { kind: "human", provider: "canvas-acceptance", id: "canvas-viewer" },
     expires_at: new Date(Date.now() + 3600000).toISOString(),
@@ -99,7 +99,7 @@ export async function seedCanvasRoadmap(wos, canvas, { published = false, active
     scope, plan_scope: { kind: "outcome", id: outcome.id },
     title: "A deliberate path to a verified delivery",
   });
-  const path = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/roadmaps/${created.id}`;
+  const path = `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/roadmaps/${created.id}`;
   const read = async () => (await wos.api(path)).value;
   await wos.command("open_roadmap_draft", { scope, roadmap_id: created.id, expected_version: created.version });
   let roadmap = await read();

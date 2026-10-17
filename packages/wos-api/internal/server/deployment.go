@@ -24,6 +24,10 @@ type DeploymentAdvisory struct {
 	Action   string `json:"action"`
 }
 type DeploymentReport struct {
+	HostedTenants            int                    `json:"hosted_tenants,omitempty"`
+	CatalogPoolLimit         int                    `json:"catalog_pool_limit,omitempty"`
+	LeaseConnections         int                    `json:"lease_connections,omitempty"`
+	ProcessConnectionLimit   int                    `json:"process_connection_limit,omitempty"`
 	ProcessRole              string                 `json:"process_role"`
 	ConfigValid              bool                   `json:"config_valid"`
 	ReadOnly                 bool                   `json:"read_only"`
@@ -73,11 +77,19 @@ func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarati
 	}
 	r.ConfigValid = true
 	if cfg.Storage.Driver == StorageDriverPostgres {
-		r.WriterModel = "PostgreSQL Serializable domain transactions with Outcome and Namespace guards"
+		r.WriterModel = "PostgreSQL Serializable domain transactions with Outcome and Tenant guards"
 		r.DatabasePoolLimit = cfg.Storage.PostgresMaxOpenConnections
 		if r.DatabasePoolLimit == 0 {
 			r.DatabasePoolLimit = 16
 		}
+		r.HostedTenants = len(cfg.TenantHosts)
+		r.CatalogPoolLimit = 4
+		if r.HostedTenants == 0 {
+			r.HostedTenants = 1
+			r.CatalogPoolLimit = 2
+		}
+		r.LeaseConnections = r.HostedTenants
+		r.ProcessConnectionLimit = r.HostedTenants*r.DatabasePoolLimit + r.LeaseConnections + r.CatalogPoolLimit
 	}
 	add := func(code, severity, message, action string) {
 		r.Advisories = append(r.Advisories, DeploymentAdvisory{code, severity, message, action})
@@ -85,9 +97,9 @@ func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarati
 	if cfg.Storage.Driver == StorageDriverPostgres && decl.ExpectedProcesses > 0 {
 		// This is an operator-declared upper bound, not an observation of a
 		// fleet. Mixed pools should use their highest pool for this estimate.
-		r.ExpectedConnectionDemand = decl.ExpectedProcesses*r.DatabasePoolLimit + decl.ReservedConnections
+		r.ExpectedConnectionDemand = decl.ExpectedProcesses*r.ProcessConnectionLimit + decl.ReservedConnections
 		if r.ExpectedConnectionDemand > decl.DatabaseConnectionBudget {
-			add("database_connection_budget", "warning", "Declared process pools and reserved connections exceed the database connection budget.", "Lower pools or replica counts, or increase the measured database budget. Count APIs, workers, maintenance and other clients together; use the largest pool for a conservative mixed-process estimate.")
+			add("database_connection_budget", "warning", "Declared Tenant data pools, lifecycle leases, catalog pools and reserved connections exceed the database connection budget.", "Lower pools or replica counts, or increase the measured database budget. Count APIs, workers, maintenance and other clients together; use the largest pool for a conservative mixed-process estimate.")
 		}
 	}
 	if profile == "local" {
@@ -105,8 +117,17 @@ func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarati
 	if !decl.TLSAtIngress {
 		add("ingress_tls", "warning", "TLS termination at the ingress is not declared.", "Terminate TLS at an ingress, verify the public certificate and block direct external access to the HTTP service.")
 	}
-	if cfg.Signing.SeedEnv == "" {
-		add("issuer_unconfigured", "info", "No signed issuer seed source is configured.", "For signed work, provision one persistent seed per server identity, protect it separately and verify the approved public pin before activating the Namespace protocol.")
+	issuerConfigured := cfg.Signing.SeedEnv != ""
+	if len(cfg.TenantHosts) > 0 {
+		issuerConfigured = true
+		for _, entry := range cfg.TenantHosts {
+			if entry.SigningSeedEnv == "" {
+				issuerConfigured = false
+			}
+		}
+	}
+	if !issuerConfigured {
+		add("issuer_unconfigured", "info", "At least one Tenant runtime has no signed issuer seed source configured.", "For signed work, provision one persistent seed per server identity, protect it separately and verify the approved public pin before activating the Tenant protocol.")
 	} else if !decl.PersistentIssuer {
 		add("issuer_persistence", "warning", "The issuer seed source is configured but persistence/recovery is not declared.", "Persist the same protected issuer across restarts/replicas and keep a separate tested recovery copy; never generate a replacement silently.")
 	}

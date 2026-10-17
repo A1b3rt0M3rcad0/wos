@@ -30,8 +30,8 @@ func (r roadmapRepository) Get(
 SELECT version, plan_scope_kind, plan_scope_id, title, lifecycle,
        created_at, updated_at, archived_at
 FROM roadmaps
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
 		&version, &scopeKind, &rawScopeID, &title, &life,
 		&createdAt, &updatedAt, &archivedAt,
@@ -83,9 +83,9 @@ func (r roadmapRepository) ListByOutcome(
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id
 FROM roadmaps
-WHERE namespace_id = ? AND outcome_id = ?
+WHERE tenant_id = ? AND outcome_id = ?
 ORDER BY created_at, id`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(),
 	)
 	if err != nil {
 		return nil, mapSQLError("list roadmaps", err)
@@ -129,11 +129,11 @@ func (r roadmapRepository) Insert(ctx context.Context, roadmap domain.Roadmap) e
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO roadmaps (
-    id, namespace_id, outcome_id, kind, version, plan_scope_kind, plan_scope_id,
+    id, tenant_id, outcome_id, kind, version, plan_scope_kind, plan_scope_id,
     title, lifecycle, created_at, updated_at, archived_at
 ) VALUES (?, ?, ?, 'roadmap', ?, ?, ?, ?, ?, ?, ?, ?)`,
 		roadmap.ID.String(),
-		roadmap.Scope.NamespaceID.String(),
+		roadmap.Scope.TenantID.String(),
 		roadmap.Scope.OutcomeID.String(),
 		int64(roadmap.Version),
 		string(roadmap.PlanScope.Kind),
@@ -184,13 +184,13 @@ func (r roadmapRepository) Save(
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE roadmaps
 SET version = ?, title = ?, lifecycle = ?, updated_at = ?, archived_at = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(roadmap.Version),
 		roadmap.Title,
 		string(roadmap.Lifecycle),
 		encodeTime(roadmap.UpdatedAt),
 		encodeOptionalTime(roadmap.ArchivedAt),
-		roadmap.Scope.NamespaceID.String(),
+		roadmap.Scope.TenantID.String(),
 		roadmap.Scope.OutcomeID.String(),
 		roadmap.ID.String(),
 		int64(expected),
@@ -200,7 +200,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 	}
 	if err := requireVersionedUpdate(
 		ctx, r.uow.tx, result, "roadmaps",
-		roadmap.Scope.NamespaceID, roadmap.Scope.OutcomeID, roadmap.ID, expected,
+		roadmap.Scope.TenantID, roadmap.Scope.OutcomeID, roadmap.ID, expected,
 	); err != nil {
 		return err
 	}
@@ -211,8 +211,8 @@ func syncRoadmapNested(ctx context.Context, tx *sql.Tx, roadmap domain.Roadmap) 
 	if roadmap.Draft == nil {
 		if _, err := tx.ExecContext(ctx, `
 DELETE FROM roadmap_drafts
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
-			roadmap.Scope.NamespaceID.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ?`,
+			roadmap.Scope.TenantID.String(),
 			roadmap.Scope.OutcomeID.String(),
 			roadmap.ID.String(),
 		); err != nil {
@@ -233,10 +233,10 @@ WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO roadmap_drafts (
-    namespace_id, outcome_id, roadmap_id, draft_version, base_revision_number,
+    tenant_id, outcome_id, roadmap_id, draft_version, base_revision_number,
     lifecycle, reason, nodes_json, after_links_json, created_at, updated_at, discarded_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT(namespace_id, outcome_id, roadmap_id)
+ON CONFLICT(tenant_id, outcome_id, roadmap_id)
 DO UPDATE SET
     draft_version = excluded.draft_version,
     base_revision_number = excluded.base_revision_number,
@@ -247,7 +247,7 @@ DO UPDATE SET
     created_at = excluded.created_at,
     updated_at = excluded.updated_at,
     discarded_at = excluded.discarded_at`,
-			roadmap.Scope.NamespaceID.String(),
+			roadmap.Scope.TenantID.String(),
 			roadmap.Scope.OutcomeID.String(),
 			roadmap.ID.String(),
 			int64(roadmap.Draft.DraftVersion),
@@ -285,10 +285,10 @@ func insertRoadmapRevision(
 	}
 	result, err := tx.ExecContext(ctx, `
 INSERT OR IGNORE INTO roadmap_revisions (
-    namespace_id, outcome_id, roadmap_id, revision_number,
+    tenant_id, outcome_id, roadmap_id, revision_number,
     content_hash, reason, published_by_json, published_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		scope.NamespaceID.String(),
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revision.RevisionNumber),
@@ -334,12 +334,12 @@ INSERT OR IGNORE INTO roadmap_revisions (
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO roadmap_revision_nodes (
-    namespace_id, outcome_id, roadmap_id, revision_number,
+    tenant_id, outcome_id, roadmap_id, revision_number,
     node_key, node_type, parent_node_key, target_ref_json, title, position,
     criterion_refs_json, criterion_snapshots_json,
     planned_start, planned_end, reference_snapshot_json
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			scope.NamespaceID.String(),
+			scope.TenantID.String(),
 			scope.OutcomeID.String(),
 			roadmapID.String(),
 			int64(revision.RevisionNumber),
@@ -361,10 +361,10 @@ INSERT INTO roadmap_revision_nodes (
 	for _, link := range revision.AfterLinks {
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO roadmap_revision_after_links (
-    namespace_id, outcome_id, roadmap_id, revision_number,
+    tenant_id, outcome_id, roadmap_id, revision_number,
     node_key, after_node_key
 ) VALUES (?, ?, ?, ?, ?, ?)`,
-			scope.NamespaceID.String(),
+			scope.TenantID.String(),
 			scope.OutcomeID.String(),
 			roadmapID.String(),
 			int64(revision.RevisionNumber),
@@ -385,10 +385,10 @@ INSERT INTO roadmap_revision_after_links (
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO roadmap_revision_dependencies (
-    namespace_id, outcome_id, roadmap_id, revision_number,
+    tenant_id, outcome_id, roadmap_id, revision_number,
     dependent_ref_json, prerequisite_ref_json, strength, satisfaction
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			scope.NamespaceID.String(),
+			scope.TenantID.String(),
 			scope.OutcomeID.String(),
 			roadmapID.String(),
 			int64(revision.RevisionNumber),
@@ -420,8 +420,8 @@ func loadRoadmapDraft(
 SELECT draft_version, base_revision_number, lifecycle, reason, nodes_json, after_links_json,
        created_at, updated_at, discarded_at
 FROM roadmap_drafts
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?`,
-		scope.NamespaceID.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ?`,
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 	).Scan(
@@ -467,9 +467,9 @@ func loadRoadmapRevisions(
 	rows, err := tx.QueryContext(ctx, `
 SELECT revision_number
 FROM roadmap_revisions
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ?
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ?
 ORDER BY revision_number`,
-		scope.NamespaceID.String(),
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 	)
@@ -511,8 +511,8 @@ func loadOneRoadmapRevision(
 	err := tx.QueryRowContext(ctx, `
 SELECT content_hash, reason, published_by_json, published_at
 FROM roadmap_revisions
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?`,
-		scope.NamespaceID.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?`,
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revisionNumber),
@@ -537,9 +537,9 @@ SELECT node_key, node_type, parent_node_key, target_ref_json, title, position,
        criterion_refs_json, criterion_snapshots_json,
        planned_start, planned_end, reference_snapshot_json
 FROM roadmap_revision_nodes
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
 ORDER BY node_key`,
-		scope.NamespaceID.String(),
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revisionNumber),
@@ -610,9 +610,9 @@ ORDER BY node_key`,
 	linkRows, err := tx.QueryContext(ctx, `
 SELECT node_key, after_node_key
 FROM roadmap_revision_after_links
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
 ORDER BY node_key, after_node_key`,
-		scope.NamespaceID.String(),
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revisionNumber),
@@ -635,9 +635,9 @@ ORDER BY node_key, after_node_key`,
 	depRows, err := tx.QueryContext(ctx, `
 SELECT dependent_ref_json, prerequisite_ref_json, strength, satisfaction
 FROM roadmap_revision_dependencies
-WHERE namespace_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
+WHERE tenant_id = ? AND outcome_id = ? AND roadmap_id = ? AND revision_number = ?
 ORDER BY dependent_ref_json, prerequisite_ref_json`,
-		scope.NamespaceID.String(),
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		roadmapID.String(),
 		int64(revisionNumber),
@@ -688,8 +688,8 @@ func (s roadmapActivationStore) GetActive(
 	err := s.uow.tx.QueryRowContext(ctx, `
 SELECT roadmap_id, revision_number, activated_by_json, activated_at
 FROM roadmap_active_slots
-WHERE namespace_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(),
 		string(planScope.Kind), planScope.ID.String(),
 	).Scan(&rawRoadmapID, &revisionNumber, &actorJSON, &activatedAt)
 	if err == sql.ErrNoRows {
@@ -731,16 +731,16 @@ func (s roadmapActivationStore) SetActive(
 	}
 	if _, err := s.uow.tx.ExecContext(ctx, `
 INSERT INTO roadmap_active_slots (
-    namespace_id, outcome_id, plan_scope_kind, plan_scope_id,
+    tenant_id, outcome_id, plan_scope_kind, plan_scope_id,
     roadmap_id, revision_number, activated_by_json, activated_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT(namespace_id, outcome_id, plan_scope_kind, plan_scope_id)
+ON CONFLICT(tenant_id, outcome_id, plan_scope_kind, plan_scope_id)
 DO UPDATE SET
     roadmap_id = excluded.roadmap_id,
     revision_number = excluded.revision_number,
     activated_by_json = excluded.activated_by_json,
     activated_at = excluded.activated_at`,
-		slot.Scope.NamespaceID.String(),
+		slot.Scope.TenantID.String(),
 		slot.Scope.OutcomeID.String(),
 		string(slot.PlanScope.Kind),
 		slot.PlanScope.ID.String(),
@@ -769,9 +769,9 @@ func (s roadmapActivationStore) ClearActive(
 	}
 	result, err := s.uow.tx.ExecContext(ctx, `
 DELETE FROM roadmap_active_slots
-WHERE namespace_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?
+WHERE tenant_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?
   AND roadmap_id = ? AND revision_number = ?`,
-		expected.Scope.NamespaceID.String(),
+		expected.Scope.TenantID.String(),
 		expected.Scope.OutcomeID.String(),
 		string(expected.PlanScope.Kind),
 		expected.PlanScope.ID.String(),
@@ -804,9 +804,9 @@ SELECT id, action, roadmap_id, revision_number,
        replacement_roadmap_id, replacement_revision_number,
        actor_json, recorded_at
 FROM roadmap_activation_history
-WHERE namespace_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?
+WHERE tenant_id = ? AND outcome_id = ? AND plan_scope_kind = ? AND plan_scope_id = ?
 ORDER BY recorded_at, id`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(),
 		string(planScope.Kind), planScope.ID.String(),
 	)
 	if err != nil {
@@ -880,13 +880,13 @@ func insertRoadmapActivationRecord(
 	}
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO roadmap_activation_history (
-    id, namespace_id, outcome_id, plan_scope_kind, plan_scope_id,
+    id, tenant_id, outcome_id, plan_scope_kind, plan_scope_id,
     action, roadmap_id, revision_number,
     replacement_roadmap_id, replacement_revision_number,
     actor_json, recorded_at
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		record.ID.String(),
-		record.Scope.NamespaceID.String(),
+		record.Scope.TenantID.String(),
 		record.Scope.OutcomeID.String(),
 		string(record.PlanScope.Kind),
 		record.PlanScope.ID.String(),

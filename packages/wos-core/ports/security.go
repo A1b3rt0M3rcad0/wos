@@ -7,7 +7,7 @@ import (
 )
 
 type Credential struct {
-	NamespaceID  domain.ID       `json:"namespace_id"`
+	TenantID     domain.ID       `json:"tenant_id"`
 	ID           domain.ID       `json:"id"`
 	PrincipalID  string          `json:"principal_id"`
 	Actor        domain.ActorRef `json:"actor_ref"`
@@ -16,12 +16,12 @@ type Credential struct {
 	ExpiresAt    time.Time       `json:"expires_at"`
 	Revoked      bool            `json:"revoked"`
 }
-type NamespaceGrant struct {
-	NamespaceID domain.ID    `json:"namespace_id"`
+type TenantGrant struct {
+	TenantID    domain.ID    `json:"tenant_id"`
 	PrincipalID string       `json:"principal_id"`
 	Permissions []Permission `json:"permissions"`
 }
-type Namespace struct {
+type Tenant struct {
 	ID   domain.ID `json:"id"`
 	Name string    `json:"name"`
 }
@@ -29,10 +29,10 @@ type SecurityStore interface {
 	GetCredential(context.Context, string) (Credential, error)
 	PutCredential(context.Context, Credential) error
 	RevokeCredential(context.Context, domain.ID) error
-	PutGrant(context.Context, NamespaceGrant) error
-	GetGrant(context.Context, domain.ID, string) (NamespaceGrant, error)
-	ListNamespaces(context.Context, string) ([]Namespace, error)
-	PutNamespace(context.Context, Namespace) error
+	PutGrant(context.Context, TenantGrant) error
+	GetGrant(context.Context, domain.ID, string) (TenantGrant, error)
+	ListTenants(context.Context, string) ([]Tenant, error)
+	PutTenant(context.Context, Tenant) error
 }
 
 // ScopedCredentialPrincipalReader exposes only the identity needed to protect

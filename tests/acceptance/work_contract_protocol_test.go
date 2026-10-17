@@ -72,9 +72,9 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 	if err != nil {
 		t.Fatal(err)
 	}
-	scope := d.Scope{NamespaceID: d.MustParseID("0199ff21-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199ff21-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.MustParseID("0199ff21-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199ff21-0000-7000-8000-000000000002")}
 	now := time.Now().UTC()
-	o, err := d.NewOutcome(scope.OutcomeID, scope.NamespaceID, "Protocol parity", "", "Independent client", d.PriorityNormal, now)
+	o, err := d.NewOutcome(scope.OutcomeID, scope.TenantID, "Protocol parity", "", "Independent client", d.PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 		t.Fatal(err)
 	}
 	auth, _ := local.New("contract-holder")
-	identity := a.Identity{PrincipalID: auth.Principal(), Actor: auth.Actor(), NamespaceID: scope.NamespaceID}
+	identity := a.Identity{PrincipalID: auth.Principal(), Actor: auth.Actor(), TenantID: scope.TenantID}
 	handler, err := ht.New(ht.Options{Prefix: "/api/v1", RequestTimeout: 10 * time.Second, Service: service, IDs: generator, LocalAuth: auth})
 	if err != nil {
 		t.Fatal(err)
@@ -150,7 +150,7 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 	if _, err := client.RenewWorkContract(ctx, "protocol-stale-renew-0001", a.RenewWorkContractCommand{Scope: scope, ContractID: c.ID, Authority: a.ContractAuthority{ExecutionID: c.ExecutionID, FencingToken: c.FencingToken, SpecDigest: c.SpecDigest}, ExpectedLeaseVersion: resumed.Value.Contract.LeaseVersion, TTLSeconds: 60}); err == nil {
 		t.Fatal("stale HTTP execution accepted after MCP takeover")
 	}
-	receipt, err := client.GetCommandReceipt(ctx, scope.NamespaceID, got.CommandID)
+	receipt, err := client.GetCommandReceipt(ctx, scope.TenantID, got.CommandID)
 	if err != nil || receipt.CommandID != got.CommandID {
 		t.Fatalf("receipt %v %v", receipt, err)
 	}
@@ -246,7 +246,7 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 	}
 	workspace := t.TempDir()
 	var out, diagnostics bytes.Buffer
-	if code := cli.Run(ctx, []string{"init", "--server", server.URL, "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
+	if code := cli.Run(ctx, []string{"init", "--server", server.URL, "--tenant", scope.TenantID.String(), "--outcome", scope.OutcomeID.String(), "--workspace", workspace, "--output", "json"}, &out, &diagnostics); code != 0 {
 		t.Fatalf("CLI init %d %s %s", code, out.String(), diagnostics.String())
 	}
 	out.Reset()

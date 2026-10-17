@@ -16,7 +16,7 @@ export function createIntent(
   });
 }
 export function sameScope(a, b) {
-  return a.namespace_id === b.namespace_id && a.outcome_id === b.outcome_id;
+  return a.tenant_id === b.tenant_id && a.outcome_id === b.outcome_id;
 }
 export function reconcileDraft(local, latest) {
   const next = structuredClone(local);

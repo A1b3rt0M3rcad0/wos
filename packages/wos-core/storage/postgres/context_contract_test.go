@@ -23,7 +23,7 @@ func TestIndexedExternalContextPreservesTypeAndRestart(t *testing.T) {
 	cc := sqliteCommandContext("0199d098-0000-7000-8000-000000000011", "")
 	var outcomes []domain.Outcome
 	for _, value := range []any{42, "42", true, nil} {
-		created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Context", DesiredState: "continues", Priority: domain.PriorityNormal, ExternalContext: domain.ExternalContext{"product": "reference", "user_id": value}})
+		created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "Context", DesiredState: "continues", Priority: domain.PriorityNormal, ExternalContext: domain.ExternalContext{"product": "reference", "user_id": value}})
 		if err != nil {
 			t.Fatal(err)
 		}

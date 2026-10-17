@@ -10,8 +10,8 @@ import (
 func TestDeclarativeOwnershipDoesNotAffectLeasePrincipal(t *testing.T) {
 	now := time.Date(2026, 10, 1, 22, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199e300-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199e300-0000-7000-8000-000000000010"),
+		TenantID:  domain.MustParseID("0199e300-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199e300-0000-7000-8000-000000000010"),
 	}
 	work, err := domain.NewWorkItem(
 		domain.MustParseID("0199e300-0000-7000-8000-000000000020"),

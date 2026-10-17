@@ -58,12 +58,12 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199e951-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199e951-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e951-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Durable local capability",
 		DesiredState: "Capability is available and verified after restart",
 		Priority:     domain.PriorityHigh,
@@ -262,7 +262,7 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	persistedOutcome, err := uow.Outcomes().Get(ctx, namespaceID, outcome.ID)
+	persistedOutcome, err := uow.Outcomes().Get(ctx, tenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -333,11 +333,11 @@ func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199e961-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199e961-0000-7000-8000-000000000001")
 	outcomeResult, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199e961-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Replay",
 		DesiredState: "Replay survives process restart",
 		Priority:     domain.PriorityNormal,

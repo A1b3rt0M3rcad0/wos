@@ -12,24 +12,24 @@ import (
 type workProtocolRepository struct{ uow *unitOfWork }
 
 func (u *unitOfWork) WorkProtocol() ports.WorkProtocolRepository { return workProtocolRepository{u} }
-func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, exclusive bool) (d.NamespaceWorkProtocol, error) {
+func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, exclusive bool) (d.TenantWorkProtocol, error) {
 	if err := r.uow.ensureOpen(); err != nil {
-		return d.NamespaceWorkProtocol{}, err
+		return d.TenantWorkProtocol{}, err
 	}
 	var err error
 	if exclusive {
 		var version int64
-		err = r.uow.tx.QueryRowContext(ctx, `SELECT version FROM namespaces WHERE id=$1 FOR UPDATE`, ns.String()).Scan(&version)
+		err = r.uow.tx.QueryRowContext(ctx, `SELECT version FROM tenants WHERE id=$1 FOR UPDATE`, ns.String()).Scan(&version)
 	} else {
 		var lifecycle string
-		err = r.uow.tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=$1 FOR SHARE`, ns.String()).Scan(&lifecycle)
+		err = r.uow.tx.QueryRowContext(ctx, `SELECT lifecycle FROM tenants WHERE id=$1 FOR SHARE`, ns.String()).Scan(&lifecycle)
 	}
 	if err != nil && err != sql.ErrNoRows {
-		return d.NamespaceWorkProtocol{}, mapSQLError("namespace protocol guard", err)
+		return d.TenantWorkProtocol{}, mapSQLError("tenant protocol guard", err)
 	}
 	p := d.DefaultWorkProtocol(ns)
 	var raw string
-	err = r.uow.tx.QueryRowContext(ctx, `SELECT state_json FROM namespace_work_protocol WHERE namespace_id=$1`, ns.String()).Scan(&raw)
+	err = r.uow.tx.QueryRowContext(ctx, `SELECT state_json FROM tenant_work_protocol WHERE tenant_id=$1`, ns.String()).Scan(&raw)
 	if err == sql.ErrNoRows {
 		return p, nil
 	}
@@ -42,7 +42,7 @@ func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, exclusive boo
 	return p, p.Validate()
 }
 func (r workProtocolRepository) Scopes(ctx context.Context, ns d.ID) ([]d.Scope, error) {
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT id FROM outcomes WHERE namespace_id=$1 ORDER BY id`, ns.String())
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT id FROM outcomes WHERE tenant_id=$1 ORDER BY id`, ns.String())
 	if err != nil {
 		return nil, err
 	}
@@ -57,18 +57,18 @@ func (r workProtocolRepository) Scopes(ctx context.Context, ns d.ID) ([]d.Scope,
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, d.Scope{NamespaceID: ns, OutcomeID: id})
+		out = append(out, d.Scope{TenantID: ns, OutcomeID: id})
 	}
 	return out, rows.Err()
 }
 func (r workProtocolRepository) ValidLegacyLeases(ctx context.Context, ns d.ID, now time.Time) (int, error) {
 	var count int
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_items WHERE namespace_id=$1 AND lease_claim_id IS NOT NULL AND lease_expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_items WHERE tenant_id=$1 AND lease_claim_id IS NOT NULL AND lease_expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
 	return count, err
 }
 func (r workProtocolRepository) ValidUnsignedContracts(ctx context.Context, ns d.ID, now time.Time) (int, error) {
 	var count int
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_contracts WHERE namespace_id=$1 AND status='active' AND expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT count(*) FROM work_contracts WHERE tenant_id=$1 AND status='active' AND expires_at>$2`, ns.String(), encodeTime(now)).Scan(&count)
 	return count, mapSQLError("count valid unsigned authority", err)
 }
 func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, now time.Time) error {
@@ -79,14 +79,14 @@ func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, no
 	if count > 0 {
 		return d.NewError(d.ErrorCodePreconditionFailed, "valid legacy leases remain")
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `UPDATE work_items SET contracts_enabled=1,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE namespace_id=$1`, ns.String())
+	_, err = r.uow.tx.ExecContext(ctx, `UPDATE work_items SET contracts_enabled=1,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE tenant_id=$1`, ns.String())
 	return mapSQLError("enable work contracts", err)
 }
-func (r workProtocolRepository) Save(ctx context.Context, p d.NamespaceWorkProtocol, expected d.Version) error {
+func (r workProtocolRepository) Save(ctx context.Context, p d.TenantWorkProtocol, expected d.Version) error {
 	if err := p.Validate(); err != nil {
 		return err
 	}
-	old, err := r.Lock(ctx, p.NamespaceID, true)
+	old, err := r.Lock(ctx, p.TenantID, true)
 	if err != nil {
 		return err
 	}
@@ -97,6 +97,6 @@ func (r workProtocolRepository) Save(ctx context.Context, p d.NamespaceWorkProto
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO namespace_work_protocol(namespace_id,version,phase,writer_epoch,state_json) VALUES($1,$2,$3,$4,$5) ON CONFLICT(namespace_id) DO UPDATE SET version=excluded.version,phase=excluded.phase,writer_epoch=excluded.writer_epoch,state_json=excluded.state_json`, p.NamespaceID.String(), int64(p.Version), string(p.Phase), p.WriterEpoch, raw)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO tenant_work_protocol(tenant_id,version,phase,writer_epoch,state_json) VALUES($1,$2,$3,$4,$5) ON CONFLICT(tenant_id) DO UPDATE SET version=excluded.version,phase=excluded.phase,writer_epoch=excluded.writer_epoch,state_json=excluded.state_json`, p.TenantID.String(), int64(p.Version), string(p.Phase), p.WriterEpoch, raw)
 	return mapSQLError("save work protocol", err)
 }

@@ -13,7 +13,7 @@ func TestWave10LaterContradictionContestsConclusionWithoutReopening(t *testing.T
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199ef60-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199ef60-0000-7000-8000-000000000001"),
 		Title:        "Contested conclusion",
 		DesiredState: "preserve achieved state while surfacing contradiction",
 		Priority:     domain.PriorityNormal,

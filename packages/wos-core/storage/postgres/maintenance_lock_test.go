@@ -18,14 +18,14 @@ func TestCacheMaintenanceSkipsLockedRowsAcrossWorkers(t *testing.T) {
 		t.Fatal(err)
 	}
 	tu := u.(*unitOfWork)
-	if err := ensureNamespace(ctx, tu.tx, ns); err != nil {
+	if err := ensureTenant(ctx, tu.tx, ns); err != nil {
 		t.Fatal(err)
 	}
 	if err := ensurePrincipal(ctx, tu.tx, "maintenance"); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		_, err := tu.tx.ExecContext(ctx, `INSERT INTO idempotency_records(namespace_id,principal_id,command_name,idempotency_key,request_hash,status,command_id,outcome_revision,response_json,created_at,expires_at) VALUES($1,'maintenance','cleanup',$2,'fingerprint','completed',$3,1,'{}',0,1)`, ns.String(), fmt.Sprintf("cleanup-worker-%d", i), testID("0199a999-0000-7000-8000-000000009999").String())
+		_, err := tu.tx.ExecContext(ctx, `INSERT INTO idempotency_records(tenant_id,principal_id,command_name,idempotency_key,request_hash,status,command_id,outcome_revision,response_json,created_at,expires_at) VALUES($1,'maintenance','cleanup',$2,'fingerprint','completed',$3,1,'{}',0,1)`, ns.String(), fmt.Sprintf("cleanup-worker-%d", i), testID("0199a999-0000-7000-8000-000000009999").String())
 		if err != nil {
 			t.Fatal(err)
 		}

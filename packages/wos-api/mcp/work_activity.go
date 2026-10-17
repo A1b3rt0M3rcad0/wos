@@ -10,19 +10,19 @@ import (
 )
 
 type workActivityArgs struct {
-	NamespaceID domain.ID `json:"namespace_id"`
-	OutcomeID   domain.ID `json:"outcome_id"`
-	WorkItemID  domain.ID `json:"work_item_id,omitempty"`
-	ContractID  domain.ID `json:"contract_id,omitempty"`
-	Limit       int       `json:"limit,omitempty"`
-	Cursor      string    `json:"cursor,omitempty"`
-	Descending  bool      `json:"descending,omitempty"`
+	TenantID   domain.ID `json:"tenant_id"`
+	OutcomeID  domain.ID `json:"outcome_id"`
+	WorkItemID domain.ID `json:"work_item_id,omitempty"`
+	ContractID domain.ID `json:"contract_id,omitempty"`
+	Limit      int       `json:"limit,omitempty"`
+	Cursor     string    `json:"cursor,omitempty"`
+	Descending bool      `json:"descending,omitempty"`
 }
 
 type workAttentionArgs struct {
-	NamespaceID domain.ID `json:"namespace_id"`
-	OutcomeID   domain.ID `json:"outcome_id"`
-	WorkItemID  domain.ID `json:"work_item_id"`
+	TenantID   domain.ID `json:"tenant_id"`
+	OutcomeID  domain.ID `json:"outcome_id"`
+	WorkItemID domain.ID `json:"work_item_id"`
 }
 
 func registerWorkActivityQueries(server *mcp.Server, service *application.Service, options Options) {
@@ -33,7 +33,7 @@ func registerWorkActivityQueries(server *mcp.Server, service *application.Servic
 			result, e := failure(err)
 			return result, nil, e
 		}
-		value, err := service.ListWorkActivity(ctx, domain.Scope{NamespaceID: query.NamespaceID, OutcomeID: query.OutcomeID}, ports.WorkActivityFilter{WorkItemID: query.WorkItemID, ContractID: query.ContractID, Descending: query.Descending}, query.Limit, query.Cursor)
+		value, err := service.ListWorkActivity(ctx, domain.Scope{TenantID: query.TenantID, OutcomeID: query.OutcomeID}, ports.WorkActivityFilter{WorkItemID: query.WorkItemID, ContractID: query.ContractID, Descending: query.Descending}, query.Limit, query.Cursor)
 		if err != nil {
 			result, e := failure(err)
 			return result, nil, e
@@ -48,7 +48,7 @@ func registerWorkActivityQueries(server *mcp.Server, service *application.Servic
 			result, e := failure(err)
 			return result, nil, e
 		}
-		value, err := service.GetWorkAttention(ctx, domain.Scope{NamespaceID: query.NamespaceID, OutcomeID: query.OutcomeID}, query.WorkItemID)
+		value, err := service.GetWorkAttention(ctx, domain.Scope{TenantID: query.TenantID, OutcomeID: query.OutcomeID}, query.WorkItemID)
 		if err != nil {
 			result, e := failure(err)
 			return result, nil, e

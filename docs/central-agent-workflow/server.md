@@ -30,7 +30,7 @@ The Server authorizes and persists shared coordination state. It does not launch
 
 ## Transaction and security contract
 
-Authenticate scope, reserve idempotency, acquire the Outcome guard, verify current grants/CAS/authority, mutate/append, persist events/outbox/result, then commit. Authenticated Principal controls access; supplied ActorRef, Profile name, Namespace UUID and external metadata do not grant it. Fencing and database-authoritative lease time remain intact.
+Authenticate scope, reserve idempotency, acquire the Outcome guard, verify current grants/CAS/authority, mutate/append, persist events/outbox/result, then commit. Authenticated Principal controls access; supplied ActorRef, Profile name, Tenant UUID and external metadata do not grant it. Fencing and database-authoritative lease time remain intact.
 
 Never retry by changing the caller's expected version, resolved target or payload. An accepted historical receipt does not prove current execution authority. Reviewer independence uses distinct authenticated Principals under policy, not display labels.
 

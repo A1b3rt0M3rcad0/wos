@@ -18,7 +18,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
   const port = socket.address().port;
   await new Promise((done) => socket.close(done));
   const url = `http://127.0.0.1:${port}`,
-    namespace = "01a11990-0000-7000-8000-000000000001",
+    tenant = "01a11990-0000-7000-8000-000000000001",
     token = randomBytes(32).toString("base64url");
   let logs = "";
   const child = spawn(resolve("../../bin/wos"), ["server"], {
@@ -28,8 +28,8 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       WOS_SQLITE_PATH: join(directory, "wos.db"),
       WOS_AUTH_MODE: "api_token",
       WOS_BOOTSTRAP_TOKEN: token,
-      WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-      WOS_BOOTSTRAP_NAMESPACE_NAME: "Contract UI",
+      WOS_BOOTSTRAP_TENANT_ID: tenant,
+      WOS_BOOTSTRAP_TENANT_NAME: "Contract UI",
       WOS_LOCAL_PRINCIPAL_ID: "human",
     },
     stdio: ["ignore", "ignore", "pipe"],
@@ -66,12 +66,12 @@ test("explicit cutover, contract progress, human review and privileged revocatio
     }
     assert.ok(ready, logs);
     const outcome = await command("create_outcome", {
-        namespace_id: namespace,
+        tenant_id: tenant,
         title: "Contratos verificados",
         desired_state: "Entrega revisada",
         priority: "normal",
       }),
-      scope = { namespace_id: namespace, outcome_id: outcome.id };
+      scope = { tenant_id: tenant, outcome_id: outcome.id };
     await command("add_criterion", {
       owner: { ...scope, kind: "outcome", id: outcome.id },
       expected_version: outcome.version,
@@ -83,13 +83,13 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       scope,
       expected_version: outcome.version + 1,
     });
-    await command("set_namespace_work_protocol", {
+    await command("set_tenant_work_protocol", {
       scope,
       expected_protocol_version: 1,
       phase: "draining",
       reason: "Parar os servidores antigos",
     });
-    await command("set_namespace_work_protocol", {
+    await command("set_tenant_work_protocol", {
       scope,
       expected_protocol_version: 2,
       phase: "contracts_v1",

@@ -23,9 +23,9 @@ func TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement(t *testing.T
 		cfg.Signing.SeedEnv = "WOS_TEST_SIGNER_SEED"
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("a", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199a444-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "signed-runtime"
-		runtime, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "signed-runtime"
+		runtime, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -39,7 +39,7 @@ func TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement(t *testing.T
 		}
 		_ = uow.Rollback()
 		_ = runtime.Close()
-		runtime, err = OpenRuntime(cfg)
+		runtime, err = openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -58,7 +58,7 @@ func TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement(t *testing.T
 		}
 		private := ed25519.NewKeyFromSeed(seed)
 		local := localIssuer{identity: identity, private: private}
-		payload := signing.Binding{ProtocolVersion: 2, ServerID: identity.ID.String(), NamespaceID: cfg.Auth.BootstrapNamespaceID, PrincipalID: "executor", SignerKeyID: identity.IssuerKeyID.String()}
+		payload := signing.Binding{ProtocolVersion: 3, ServerID: identity.ID.String(), TenantID: cfg.Auth.BootstrapTenantID, PrincipalID: "executor", SignerKeyID: identity.IssuerKeyID.String()}
 		raw, err := signing.Canonical(payload)
 		if err != nil {
 			t.Fatal(err)
@@ -87,12 +87,12 @@ func TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement(t *testing.T
 			t.Fatal(err)
 		}
 		t.Setenv("WOS_TEST_SIGNER_SEED", base64.StdEncoding.EncodeToString(replacement))
-		if runtime, err = OpenRuntime(cfg); err == nil {
+		if runtime, err = openRuntimeFixture(t, &cfg); err == nil {
 			runtime.Close()
 			t.Fatal("silent replacement of pinned issuer accepted")
 		}
 		t.Setenv("WOS_TEST_SIGNER_SEED", "")
-		if runtime, err = OpenRuntime(cfg); err == nil {
+		if runtime, err = openRuntimeFixture(t, &cfg); err == nil {
 			runtime.Close()
 			t.Fatal("missing referenced seed silently downgraded")
 		}

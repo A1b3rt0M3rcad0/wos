@@ -19,7 +19,7 @@ export function contractViews({
   shortId,
 }) {
   async function contractSection(detail, entity, generation) {
-    if (state.protocol?.phase === "signed_contracts_v2") {
+    if (state.protocol?.phase === "signed_contracts_v3") {
       return signedContractSection(detail, entity, generation);
     }
 
@@ -279,7 +279,7 @@ export function contractViews({
     // Browser forms never hold an agent private key or manufacture a proof.
     if (inventory[name]?.exposure === "S") return false;
     if (
-      state.protocol?.phase === "signed_contracts_v2" &&
+      state.protocol?.phase === "signed_contracts_v3" &&
       state.selected?._kind === "work_item" &&
       [
         "attest_criterion",
@@ -289,17 +289,17 @@ export function contractViews({
     )
       return false;
     return (
-      state.protocol?.phase !== "signed_contracts_v2" ||
+      state.protocol?.phase !== "signed_contracts_v3" ||
       !unsignedExecutionActions.has(name)
     );
   }
-  async function refreshNamespaceProtocol() {
-    const namespace = state.namespace,
+  async function refreshTenantProtocol() {
+    const tenant = state.tenant,
       generation = state.generation;
     const protocol = await request(
-      `${api}/namespaces/${namespace}/work-protocol`,
+      `${api}/tenants/${tenant}/work-protocol`,
     );
-    if (generation !== state.generation || namespace !== state.namespace)
+    if (generation !== state.generation || tenant !== state.tenant)
       return;
     state.protocol = protocol;
     renderProtocolBanner();
@@ -307,11 +307,11 @@ export function contractViews({
   function renderProtocolBanner() {
     const panel = $("signed-protocol-info");
     const phase = state.protocol?.phase;
-    panel.hidden = !["signed_contracts_v2", "draining_to_signed_v2"].includes(
+    panel.hidden = !["signed_contracts_v3", "draining_to_signed_v3"].includes(
       phase,
     );
     $("signed-protocol-label").textContent =
-      phase === "signed_contracts_v2"
+      phase === "signed_contracts_v3"
         ? copy.text.signedContractsIndependentExecutionAndReview
         : copy.text.preparingSignedContractsNewLegacyReservationsSuspended;
   }
@@ -322,15 +322,15 @@ export function contractViews({
   }
 
   async function loadSignedIdentity() {
-    const namespace = state.namespace,
+    const tenant = state.tenant,
       generation = state.generation;
     const target = $("signed-protocol-content");
     target.replaceChildren(el("p", copy.text.loadingIdentityAndPolicies));
     const [trust, identity] = await Promise.all([
-      request(`${api}/namespaces/${namespace}/signed-trust`),
+      request(`${api}/tenants/${tenant}/signed-trust`),
       request(`${api}/security/signing-identity`),
     ]);
-    if (generation !== state.generation || namespace !== state.namespace)
+    if (generation !== state.generation || tenant !== state.tenant)
       return;
     const identityCard = el("section", undefined, "signed-identity-card");
     identityCard.append(el("h3", copy.text.workspaceIdentity));
@@ -383,7 +383,7 @@ export function contractViews({
           .askAnAdministratorForACredentialAndEnrollmentForYourRoleVeri4e28b08c,
       ),
     );
-    const example = `wos init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --namespace ${namespace} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
+    const example = `wos init --workspace-schema 2 --server ${location.origin} --server-id ${trust.server?.server_id || "SERVER_UUID"} --tenant ${tenant} --outcome ${state.outcome?.id || "OUTCOME_UUID"}`;
     onboarding.append(
       el("pre", example),
       el(
@@ -715,7 +715,7 @@ wos --profile reviewer review finish REVIEW_CONTRACT_UUID`,
   return {
     contractSection,
     commandAvailableInUI,
-    refreshNamespaceProtocol,
+    refreshTenantProtocol,
     renderProtocolBanner,
     bindProtocolEvents,
   };

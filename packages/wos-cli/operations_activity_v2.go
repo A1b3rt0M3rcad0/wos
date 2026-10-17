@@ -42,7 +42,7 @@ func prepareActivityV2(ctx context.Context, w *Workspace, profile ProfileV2, tok
 			return fmt.Errorf("final return is frozen or accepted; preserve the original intention")
 		}
 		g := view.Authority
-		scope := d.Scope{NamespaceID: current.Binding.NamespaceID, OutcomeID: d.ID(g.OutcomeID)}
+		scope := d.Scope{TenantID: current.Binding.TenantID, OutcomeID: d.ID(g.OutcomeID)}
 		cmd := a.AppendWorkActivityCommand{Scope: scope, ContractID: id, SignerKeyID: current.Signing.KeyID, Authority: a.ContractAuthority{ExecutionID: d.ID(g.ExecutionID), FencingToken: d.FencingToken(g.FencingToken), SpecDigest: g.SpecDigest}, AuthorityDigest: signing.Digest(file.Issued.Authority.Payload), ExpectedContractVersion: d.Version(g.ContractVersion), Description: o.values["description"], Type: d.WorkActivityProgress}
 		if len(o.args) < 3 || o.args[2] != "add" {
 			return usage("work log/evidence/artifact add [reference]")
@@ -117,7 +117,7 @@ func prepareActivityV2(ctx context.Context, w *Workspace, profile ProfileV2, tok
 		if e != nil {
 			return e
 		}
-		intent = PendingOperationV2{ID: key, Operation: "AppendWorkActivity", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID}, ContractID: &id, IdempotencyKey: idempotency, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fingerprint}
+		intent = PendingOperationV2{ID: key, Operation: "AppendWorkActivity", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID}, ContractID: &id, IdempotencyKey: idempotency, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fingerprint}
 		current.Local.PendingOperations = append(current.Local.PendingOperations, intent)
 		return nil
 	})
@@ -133,7 +133,7 @@ func decodeActivityIntentV2(profile ProfileV2, intent PendingOperationV2) (a.App
 	if e = signing.DecodeStrict(raw, &cmd, signing.MaxPayloadBytes); e != nil {
 		return cmd, e
 	}
-	if intent.ContractID == nil || cmd.ContractID != *intent.ContractID || cmd.Scope != (d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}) || cmd.Scope.NamespaceID != profile.Binding.NamespaceID || cmd.SignerKeyID != profile.Signing.KeyID {
+	if intent.ContractID == nil || cmd.ContractID != *intent.ContractID || cmd.Scope != (d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}) || cmd.Scope.TenantID != profile.Binding.TenantID || cmd.SignerKeyID != profile.Signing.KeyID {
 		return cmd, fmt.Errorf("frozen activity destination/contract differs")
 	}
 	return cmd, nil
@@ -141,7 +141,7 @@ func decodeActivityIntentV2(profile ProfileV2, intent PendingOperationV2) (a.App
 
 func reconcileActivityV2(ctx context.Context, client *sdk.Client, intent PendingOperationV2) (sdk.CommandResult[a.WorkActivityResult], error) {
 	var accepted sdk.CommandResult[a.WorkActivityResult]
-	scope := d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}
+	scope := d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}
 	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: intent.IdempotencyKey})
 	if e != nil {
 		return accepted, e

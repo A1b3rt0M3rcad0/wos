@@ -15,8 +15,8 @@ func TestWave11HTTPPublishesAndActivatesRoadmapRevision(t *testing.T) {
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199f500-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199f500-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	created := doJSON[application.MutationResult[domain.Outcome]](
 		t, client, http.MethodPost, base,
 		[]byte(`{"title":"Wave 11 HTTP","desired_state":"published plan","priority":"normal"}`),

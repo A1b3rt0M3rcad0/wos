@@ -14,7 +14,7 @@ import (
 func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.MCP.Enabled = true
-		runtime, err := OpenRuntime(cfg)
+		runtime, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -39,8 +39,8 @@ func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 		if len(tools.Tools) < 76 {
 			t.Fatalf("only %d tools advertised", len(tools.Tools))
 		}
-		ns := "0199d020-0000-7000-8000-000000000001"
-		arguments := map[string]any{"idempotency_key": "mcp-create-outcome-0001", "command": map[string]any{"namespace_id": ns, "title": "MCP shared outcome", "description": "independent client", "desired_state": "human and agent can continue", "priority": "normal"}}
+		ns := cfg.Auth.LocalTenantID
+		arguments := map[string]any{"idempotency_key": "mcp-create-outcome-0001", "command": map[string]any{"tenant_id": ns, "title": "MCP shared outcome", "description": "independent client", "desired_state": "human and agent can continue", "priority": "normal"}}
 		created, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_outcome", Arguments: arguments})
 		if err != nil {
 			t.Fatal(err)
@@ -69,7 +69,7 @@ func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 		if !replayed.IdempotentReplay || replayed.Value.ID != result.Value.ID {
 			t.Fatal("MCP replay changed identity")
 		}
-		discovered, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_outcomes", Arguments: map[string]any{"namespace_id": ns, "text": "shared"}})
+		discovered, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_outcomes", Arguments: map[string]any{"tenant_id": ns, "text": "shared"}})
 		if err != nil || discovered.IsError {
 			t.Fatalf("discover error %v", err)
 		}
@@ -77,7 +77,7 @@ func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 		if string(raw) == "null" {
 			t.Fatal("query lacks structured data")
 		}
-		resp, err := httpServer.Client().Get(httpServer.URL + cfg.HTTP.Prefix + "/namespaces/" + ns + "/outcomes/" + result.Value.ID.String())
+		resp, err := httpServer.Client().Get(httpServer.URL + cfg.HTTP.Prefix + "/tenants/" + ns + "/outcomes/" + result.Value.ID.String())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -92,7 +92,7 @@ func TestRealMCPClientSharesDurableStateWithHTTP(t *testing.T) {
 		if read.Value.ID != result.Value.ID || read.Value.Title != result.Value.Title {
 			t.Fatal("HTTP/MCP state diverged")
 		}
-		invalid, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_activate_outcome", Arguments: map[string]any{"idempotency_key": "mcp-stale-outcome-0001", "command": map[string]any{"scope": map[string]any{"namespace_id": ns, "outcome_id": result.Value.ID}, "expected_version": 99}}})
+		invalid, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_activate_outcome", Arguments: map[string]any{"idempotency_key": "mcp-stale-outcome-0001", "command": map[string]any{"scope": map[string]any{"tenant_id": ns, "outcome_id": result.Value.ID}, "expected_version": 99}}})
 		if err != nil {
 			t.Fatal(err)
 		}

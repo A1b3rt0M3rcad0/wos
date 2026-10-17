@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	namespaceID = "0199e100-0000-7000-8000-000000000001"
+	tenantID    = "0199e100-0000-7000-8000-000000000001"
 	outcomeID   = "0199e100-0000-7000-8000-000000000010"
 	objectiveID = "0199e100-0000-7000-8000-000000000020"
 )
@@ -18,8 +18,8 @@ func TestParseIDAcceptsAndNormalizesUUIDv7(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseID() error = %v", err)
 	}
-	if got.String() != namespaceID {
-		t.Fatalf("ParseID() = %q, want %q", got, namespaceID)
+	if got.String() != tenantID {
+		t.Fatalf("ParseID() = %q, want %q", got, tenantID)
 	}
 }
 
@@ -39,12 +39,12 @@ func TestParseIDRejectsNonV7AndWrongVariant(t *testing.T) {
 }
 
 func TestScopeAndEntityRefValidation(t *testing.T) {
-	namespace := domain.MustParseID(namespaceID)
+	tenant := domain.MustParseID(tenantID)
 	outcome := domain.MustParseID(outcomeID)
 	objective := domain.MustParseID(objectiveID)
 
 	ref := domain.EntityRef{
-		Scope: domain.Scope{NamespaceID: namespace, OutcomeID: outcome},
+		Scope: domain.Scope{TenantID: tenant, OutcomeID: outcome},
 		Kind:  domain.EntityKindObjective,
 		ID:    objective,
 	}

@@ -26,6 +26,8 @@ for backend in ['sqlite','memory']:
   tail=source[source.index('func (r signedWorkContractRepository) GetCheckpoint'):]
   source=source[:source.index('func contractCopy')]+source[start:end]+tail
   source=source.replace('\n\t"encoding/json"','').replace('r.tx.contracts','r.tx.signedContracts').replace('r.tx.checkpoints','r.tx.signedCheckpoints').replace('r.tx.submissions','r.tx.signedSubmissions')
+ if 'json.' not in source:
+  source=source.replace('\n\t"encoding/json"','')
  guard='func (r signedWorkContractRepository) Insert(ctx context.Context, c d.WorkContract) error {'
  assert guard in source
  source=source.replace(guard,guard+'\n if c.SignedBinding==nil {return d.NewError(d.ErrorCodeSignedProtocolRequired,"signed execution binding required")}')

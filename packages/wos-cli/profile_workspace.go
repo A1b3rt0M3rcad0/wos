@@ -79,7 +79,11 @@ func (w *Workspace) LoadProjectV2() (ProjectV2, error) {
 	if e != nil {
 		return project, e
 	}
-	if e = DecodeV2Document(raw, &project); e != nil {
+	projected, _, e := projectTenantProjection(raw)
+	if e != nil {
+		return project, e
+	}
+	if e = DecodeV2Document(projected, &project); e != nil {
 		return project, e
 	}
 	return project, project.Validate()
@@ -102,7 +106,7 @@ func (w *Workspace) readProfileSnapshotV2(name string) (ProfileV2, []byte, error
 		return profile, nil, e
 	}
 	if e = DecodeV2Document(raw, &profile); e != nil {
-		return profile, nil, e
+		return profile, nil, fmt.Errorf("profile requires current tenant_id fields; for a legacy profile use profile migrate-tenant after reconciling pending operations: %w", e)
 	}
 	if profile.Name != name {
 		return profile, nil, fmt.Errorf("profile directory/header binding differs")
@@ -114,7 +118,7 @@ func (w *Workspace) readProfileSnapshotV2(name string) (ProfileV2, []byte, error
 	if e != nil {
 		return profile, nil, e
 	}
-	if project.Connection.ServerURL != profile.Binding.ServerOrigin || project.Connection.ExpectedServerID != profile.Binding.ServerID || project.Scope.NamespaceID != profile.Binding.NamespaceID {
+	if project.Connection.ServerURL != profile.Binding.ServerOrigin || project.Connection.ExpectedServerID != profile.Binding.ServerID || project.Scope.TenantID != profile.Binding.TenantID {
 		return profile, nil, fmt.Errorf("project/profile destination binding differs")
 	}
 	return profile, raw, nil

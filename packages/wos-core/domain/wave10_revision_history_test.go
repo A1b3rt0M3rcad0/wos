@@ -7,8 +7,8 @@ import (
 
 func TestCriterionDefinitionRevisionHistoryIsCompleteAndImmutable(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199ef70-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199ef70-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199ef70-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199ef70-0000-7000-8000-000000000010"),
 	}
 	owner := EntityRef{Scope: scope, Kind: EntityKindOutcome, ID: scope.OutcomeID}
 	criterion, err := NewSuccessCriterion(

@@ -58,7 +58,7 @@ func verifiedReviewDecision(ctx context.Context, u ports.UnitOfWork, f d.SignedF
 	if err != nil {
 		return zero, err
 	}
-	key, err := registry.Key(ctx, f.Scope.NamespaceID, f.KeyID)
+	key, err := registry.Key(ctx, f.Scope.TenantID, f.KeyID)
 	if err != nil {
 		return zero, err
 	}
@@ -77,21 +77,21 @@ func verifiedReviewDecision(ctx context.Context, u ports.UnitOfWork, f d.SignedF
 	if err != nil {
 		return zero, err
 	}
-	raw, err := signing.Verify(envelope, signing.ReviewReturn, key.ID.String(), pub)
+	raw, err := signing.VerifyHistorical(envelope, signing.ReviewReturn, key.ID.String(), pub)
 	if err != nil {
 		return zero, signingError(err)
 	}
-	if err = signing.DecodeStrict(raw, &zero, 180*1024); err != nil {
+	if err = signing.DecodeHistoricalPayload(raw, &zero, 180*1024); err != nil {
 		return zero, signingError(err)
 	}
-	if zero.ServerID != serverID || zero.NamespaceID != f.Scope.NamespaceID.String() || zero.OutcomeID != f.Scope.OutcomeID.String() || zero.PrincipalID != f.PrincipalID || zero.ContractID != f.ContractID.String() || zero.OperationKind != "review_return" || f.RequestID == nil || zero.RequestID != f.RequestID.String() || zero.IdempotencyKey != f.IdempotencyKey || signing.Digest(raw) != f.RequestDigest {
+	if zero.ServerID != serverID || zero.TenantID != f.Scope.TenantID.String() || zero.OutcomeID != f.Scope.OutcomeID.String() || zero.PrincipalID != f.PrincipalID || zero.ContractID != f.ContractID.String() || zero.OperationKind != "review_return" || f.RequestID == nil || zero.RequestID != f.RequestID.String() || zero.IdempotencyKey != f.IdempotencyKey || signing.Digest(raw) != f.RequestDigest {
 		return zero, d.NewError(d.ErrorCodeContractSpecMismatch, "authenticated historical review decision binding differs")
 	}
 	repo, _, err := signedRepository(u)
 	if err != nil {
 		return zero, err
 	}
-	acceptance, err := repo.Acceptance(ctx, f.Scope.NamespaceID, f.PrincipalID, f.IdempotencyKey)
+	acceptance, err := repo.Acceptance(ctx, f.Scope.TenantID, f.PrincipalID, f.IdempotencyKey)
 	if err != nil {
 		return zero, err
 	}
@@ -100,7 +100,7 @@ func verifiedReviewDecision(ctx context.Context, u ports.UnitOfWork, f d.SignedF
 		return zero, err
 	}
 	var receipt signing.ReceiptPayload
-	if err = signing.DecodeStrict(receiptDoc.Payload, &receipt, 180*1024); err != nil {
+	if err = signing.DecodeHistoricalPayload(receiptDoc.Payload, &receipt, 180*1024); err != nil {
 		return zero, signingError(err)
 	}
 	disposition := map[string]string{"approved": "review_approved", "changes_requested": "changes_requested", "inconclusive": "review_inconclusive"}[zero.Decision]

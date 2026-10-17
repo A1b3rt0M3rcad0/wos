@@ -12,7 +12,7 @@ are filters, not top-level entity collections. Task lifecycle, readiness, and
 execution authority have separate labels. A board presents state; it does not
 authorize a transition by dragging a card.
 
-Workspace is the human name for Namespace. Outcome is a desired verifiable
+Workspace is the human name for Tenant. Outcome is a desired verifiable
 result; Objective is an intermediate verifiable condition; Task is operational
 work. Roadmap references those entities and does not own them. Evidence records
 observations; an assessment evaluates a particular criterion revision. Waived
@@ -32,7 +32,7 @@ impedes a target. A signed work contract needs an external authorized profile.
 | F07 | Task detail: execution, expiry, submission, review, findings | Legacy commands only in compatible protocol; signed v2 is read-only status and copyable profile/CLI guidance |
 | F08 | Editing: server conflict comparison / uncertain response | Retain local fields; conflict requires explicit renewed intent and current version; uncertainty retries identical frozen payload/key |
 
-Each mutation uses an immutable intent: operation, payload, namespace/outcome,
+Each mutation uses an immutable intent: operation, payload, tenant/outcome,
 expected version, idempotency key. Recoverable errors retain fields. Changing
 scope never changes the scope of an in-flight intent. Query generations discard
 late responses. Reconfirmation after a conflict creates a new intent; retrying
@@ -43,7 +43,7 @@ an uncertain response does not.
 The additive bounded reference query returns typed EntityRefs, title, lifecycle,
 short ID, and optional context. It searches storage, not a loaded UI page. The
 allowlist covers all reference-bearing public collections. Deterministic keyset
-cursors bind namespace, outcome, query, kinds, ordering and Outcome revision;
+cursors bind tenant, outcome, query, kinds, ordering and Outcome revision;
 stale revisions are explicit errors. Authorized resolution by ID preserves
 selected values outside a result page. Typed multi-selection is independent of
 pagination. Search query/evidence contents are excluded from default telemetry.

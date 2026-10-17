@@ -209,11 +209,11 @@ test("standalone details, contextual forms and Roadmap revisions preserve their 
     if (device === "desktop") await capture(page, `02-${device}-criteria`);
     await page.keyboard.press("Escape");
     await page.locator("#administration").click();
-    for (const operation of ["set_grant", "issue_credential", "revoke_credential", "create_namespace"]) {
+    for (const operation of ["set_grant", "issue_credential", "revoke_credential", "create_tenant"]) {
       await page.locator("#admin-operation").focus();
       await page.locator("#admin-operation").selectOption(operation);
       await dialogAccess(page, "#admin-dialog");
-      if (device === "desktop" && operation === "issue_credential" || device === "mobile" && operation === "create_namespace")
+      if (device === "desktop" && operation === "issue_credential" || device === "mobile" && operation === "create_tenant")
         await capture(page, `02-${device}-settings-${operation.replaceAll("_", "-")}`);
     }
     await page.keyboard.press("Escape");
@@ -332,7 +332,7 @@ test("native conflict review and uncertain response preserve the exact recoverab
   await expect(page.locator("#command-dialog")).not.toBeVisible();
   expect(dispatched).toHaveLength(2);
   expect(dispatched[0]).toEqual(dispatched[1]);
-  const persisted = (await wos.api(`/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`)).value;
+  const persisted = (await wos.api(`/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`)).value;
   expect(persisted.title).toBe("A single persisted handoff update");
   expect(persisted.version).toBe(value.version + 3);
 });
@@ -351,7 +351,7 @@ test("native Artifact and Decision creation use canonical commands and return to
   const sent = (await request).postDataJSON().command;
   expect(sent).not.toHaveProperty("description");
   expect(sent).not.toHaveProperty("producer_ref");
-  const base = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+  const base = `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`;
   const artifact = (await wos.api(`${base}/artifacts`)).items.find((item) => item.name === "An independently reviewable report");
   expect(artifact).toBeTruthy();
   expect(artifact.lifecycle).toBe("registered");

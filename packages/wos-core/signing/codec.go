@@ -25,20 +25,20 @@ const (
 	MaxDepth         = 16
 	MaxNodes         = 10000
 	MaxScalarBytes   = 64 * 1024
-	ProtocolVersion  = 2
+	ProtocolVersion  = 3
 )
 
 type PayloadType string
 
 const (
-	ContractSpec            PayloadType = "application/vnd.wos.contract-spec.v2+json"
-	ContractAuthority       PayloadType = "application/vnd.wos.contract-authority.v2+json"
-	WorkReturn              PayloadType = "application/vnd.wos.work-return.v2+json"
-	ReviewReturn            PayloadType = "application/vnd.wos.review-return.v2+json"
-	AcceptanceReceipt       PayloadType = "application/vnd.wos.acceptance-receipt.v2+json"
-	ReturnResolution        PayloadType = "application/vnd.wos.return-resolution.v2+json"
-	ReturnResolutionReceipt PayloadType = "application/vnd.wos.return-resolution-receipt.v2+json"
-	KeyEnrollment           PayloadType = "application/vnd.wos.key-enrollment.v2+json"
+	ContractSpec            PayloadType = "application/vnd.wos.contract-spec.v3+json"
+	ContractAuthority       PayloadType = "application/vnd.wos.contract-authority.v3+json"
+	WorkReturn              PayloadType = "application/vnd.wos.work-return.v3+json"
+	ReviewReturn            PayloadType = "application/vnd.wos.review-return.v3+json"
+	AcceptanceReceipt       PayloadType = "application/vnd.wos.acceptance-receipt.v3+json"
+	ReturnResolution        PayloadType = "application/vnd.wos.return-resolution.v3+json"
+	ReturnResolutionReceipt PayloadType = "application/vnd.wos.return-resolution-receipt.v3+json"
+	KeyEnrollment           PayloadType = "application/vnd.wos.key-enrollment.v3+json"
 )
 
 func (t PayloadType) Valid() bool {
@@ -124,13 +124,24 @@ func strictBase64(s string, max int) ([]byte, error) {
 	}
 	return b, nil
 }
-func identity(raw []byte, key string) error {
+func identity(raw []byte, key string, version int) error {
 	var h struct {
 		Version int    `json:"protocol_version"`
 		Key     string `json:"signer_key_id"`
 	}
-	if json.Unmarshal(raw, &h) != nil || h.Version != ProtocolVersion || h.Key != key || key == "" || len(key) > 256 {
+	if json.Unmarshal(raw, &h) != nil || h.Version != version || h.Key != key || key == "" || len(key) > 256 {
 		return invalid("signature_payload_mismatch", "signed protocol/key identity differs")
+	}
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(raw, &fields) != nil {
+		return invalid("invalid_payload", "signed payload must be an object")
+	}
+	forbidden := "namespace_id"
+	if version == legacyProtocolVersion {
+		forbidden = "tenant_id"
+	}
+	if _, present := fields[forbidden]; present {
+		return invalid("signature_payload_mismatch", "scope field differs from the signed protocol version")
 	}
 	return nil
 }
@@ -152,7 +163,7 @@ func SignCanonical(t PayloadType, raw []byte, keyID string, private ed25519.Priv
 	if !bytes.Equal(raw, canonical) {
 		return Envelope{}, invalid("invalid_payload", "signed payload must be canonical")
 	}
-	if err := identity(raw, keyID); err != nil {
+	if err := identity(raw, keyID, ProtocolVersion); err != nil {
 		return Envelope{}, err
 	}
 	if len(private) != ed25519.PrivateKeySize {
@@ -176,6 +187,10 @@ func Verify(env Envelope, purpose PayloadType, keyID string, public ed25519.Publ
 	if !purpose.Valid() || env.PayloadType != purpose {
 		return nil, invalid("signature_payload_mismatch", "wrong payload purpose")
 	}
+	return verifyVersion(env, purpose, keyID, public, ProtocolVersion)
+}
+
+func verifyVersion(env Envelope, purpose PayloadType, keyID string, public ed25519.PublicKey, version int) ([]byte, error) {
 	if len(public) != ed25519.PublicKeySize {
 		return nil, invalid("invalid_signing_key", "invalid public key length")
 	}
@@ -196,7 +211,7 @@ func Verify(env Envelope, purpose PayloadType, keyID string, public ed25519.Publ
 	if !bytes.Equal(raw, canonical) {
 		return nil, invalid("invalid_payload", "noncanonical signed payload")
 	}
-	if err = identity(raw, keyID); err != nil {
+	if err = identity(raw, keyID, version); err != nil {
 		return nil, err
 	}
 	sig, err := strictBase64(env.Signatures[0].Sig, ed25519.SignatureSize)
@@ -248,7 +263,7 @@ func decodeStrict(raw []byte, destination any, maxBytes, maxScalar int) error {
 	return nil
 }
 func ToDocument(env Envelope) (Document, error) {
-	if !env.PayloadType.Valid() || len(env.Signatures) != 1 {
+	if !readablePurpose(env.PayloadType) || len(env.Signatures) != 1 {
 		return Document{}, invalid("invalid_payload", "invalid envelope structure")
 	}
 	raw, err := strictBase64(env.Payload, MaxPayloadBytes)
@@ -266,7 +281,7 @@ func (d Document) Envelope() (Envelope, error) {
 	if err != nil {
 		return Envelope{}, err
 	}
-	if !d.Proof.PayloadType.Valid() {
+	if !readablePurpose(d.Proof.PayloadType) {
 		return Envelope{}, invalid("signature_payload_mismatch", "invalid document purpose")
 	}
 	return Envelope{d.Proof.PayloadType, base64.StdEncoding.EncodeToString(raw), []Signature{{d.Proof.KeyID, d.Proof.Signature}}}, nil

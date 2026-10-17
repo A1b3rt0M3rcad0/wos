@@ -139,11 +139,11 @@ func (p WorkSubmission) Validate() error {
 			}
 		}
 	}
-	if p.ProtocolVersion != 0 && p.ProtocolVersion != 2 {
+	if p.ProtocolVersion != 0 && p.ProtocolVersion != 2 && p.ProtocolVersion != 3 {
 		return NewError(ErrorCodeInvalidArgument, "unsupported submission protocol")
 	}
 	digest, err := SemanticDigest(NormalizeResultMaterial(p.Material))
-	if p.ProtocolVersion == 2 {
+	if p.ProtocolVersion == 2 || p.ProtocolVersion == 3 {
 		digest, err = SignedResultDigest(p.Material)
 	}
 	if err != nil {
@@ -224,7 +224,7 @@ func (c *WorkContract) Finalize(w *WorkItem, p WorkSubmission, principal string,
 
 // CompleteSignedDirect is domain composition; Application must verify exact signed request/spec and live policy first.
 func (c *WorkContract) CompleteSignedDirect(w *WorkItem, p WorkSubmission, principal string, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
-	if c.SignedBinding == nil || c.SignedBinding.AcceptanceFloor != AcceptanceDirect || p.ProtocolVersion != 2 {
+	if c.SignedBinding == nil || c.SignedBinding.ProtocolVersion != 3 || c.SignedBinding.AcceptanceFloor != AcceptanceDirect || p.ProtocolVersion != 3 {
 		return NewError(ErrorCodeSignedProtocolRequired, "direct signed completion is not permitted")
 	}
 	if c.LatestSubmissionID != nil {

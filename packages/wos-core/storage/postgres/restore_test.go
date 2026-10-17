@@ -54,7 +54,9 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 			return
 		}
 		defer admin.Close()
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// Parallel package suites can leave PostgreSQL flushing several restored
+		// fixture databases. Give cleanup the adapter's full statement budget.
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if _, err := admin.db.ExecContext(ctx, "DROP DATABASE "+targetDatabase+" WITH (FORCE)"); err != nil {
 			t.Errorf("drop restored database: %v", err)

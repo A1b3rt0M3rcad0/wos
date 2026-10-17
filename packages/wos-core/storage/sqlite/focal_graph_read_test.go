@@ -86,7 +86,7 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			service, e := a.NewService(store, clock, ids)
 			must(e)
 			cc := sqliteCommandContext(portID(1).String(), "")
-			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: portID(2), Title: "Dense focal", DesiredState: "current proof only", Priority: d.PriorityNormal})
+			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: portID(2), Title: "Dense focal", DesiredState: "current proof only", Priority: d.PriorityNormal})
 			must(e)
 			scope := out.Value.Scope()
 			_, e = service.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: out.Value.Ref(), ExpectedVersion: 1, Title: "Completion", Required: true, VerificationMode: d.VerificationModeAttestation})
@@ -133,8 +133,8 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			if got.Operational.DisplayState != d.WorkItemDisplayStateWaitingDependencies || len(got.Dependencies) != 100 || got.Omitted["dependencies"] != 1 || got.Omitted["assessment_history"] != 1000 || len(got.Work.Criteria.Assessments) != 0 || got.Work.Criteria.CurrentAssessments[criterion.ID].ID != portID(1999) {
 				t.Fatal("current proof, counts or hidden hard dependency lost", got.Operational, got.Omitted)
 			}
-			if _, e = bounded.GetWorkContext(ctx, d.Scope{NamespaceID: portID(99), OutcomeID: scope.OutcomeID}, work.ID); e == nil {
-				t.Fatal("cross-namespace focal read succeeded")
+			if _, e = bounded.GetWorkContext(ctx, d.Scope{TenantID: portID(99), OutcomeID: scope.OutcomeID}, work.ID); e == nil {
+				t.Fatal("cross-tenant focal read succeeded")
 			}
 		})
 	}
@@ -159,7 +159,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			service, e := a.NewService(store, clock, ids)
 			must(e)
 			cc := sqliteCommandContext(portID(1).String(), "")
-			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: portID(2), Title: "Graph parity", DesiredState: "bounded adjacency", Priority: d.PriorityNormal})
+			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: portID(2), Title: "Graph parity", DesiredState: "bounded adjacency", Priority: d.PriorityNormal})
 			must(e)
 			scope := out.Value.Scope()
 			u, e := store.Begin(ctx)

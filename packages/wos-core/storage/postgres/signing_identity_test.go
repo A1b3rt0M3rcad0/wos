@@ -41,33 +41,33 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed"}, "admin", "signed-identity-admin-token-at-least-32"))
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed"}, "admin", "signed-identity-admin-token-at-least-32"))
 			admin, err := sec.Authenticate(ctx, "signed-identity-admin-token-at-least-32")
 			must(err)
 			adminCtx := application.WithIdentity(ctx, admin)
 			permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionWorkContractAcquire}
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: permissions}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: permissions}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, clock.Now().Add(time.Hour))
 			must(err)
 			agent, err := sec.Authenticate(ctx, token)
 			must(err)
 			agentCtx := application.WithIdentity(ctx, agent)
 			// A bearer token cannot create its own administrator-authorized enrollment.
-			_, err = sec.SigningMutation(agentCtx, "unauthorized-enrollment-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedNamespaceVersion: 1})
+			_, err = sec.SigningMutation(agentCtx, "unauthorized-enrollment-1", application.SigningSecurityIntent{TenantID: ns, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedTenantVersion: 1})
 			if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeForbidden {
 				t.Fatalf("token authorized its own enrollment: %v", err)
 			}
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: agent.PrincipalID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+			policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: agent.PrincipalID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 			for _, p := range permissions {
 				policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 			}
-			configured, err := sec.SigningMutation(adminCtx, "configure-signing-policy-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: 1, CredentialPolicy: &policy})
+			configured, err := sec.SigningMutation(adminCtx, "configure-signing-policy-1", application.SigningSecurityIntent{TenantID: ns, Operation: "set_credential_policy", ExpectedTenantVersion: 1, CredentialPolicy: &policy})
 			must(err)
 			pub, private, err := ed25519.GenerateKey(rand.Reader)
 			must(err)
 			fp, err := signing.Fingerprint(pub)
 			must(err)
-			enrolled, err := sec.SigningMutation(adminCtx, "authorize-enrollment-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_enrollment", ExpectedNamespaceVersion: configured.NamespaceVersion, CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedFingerprint: fp})
+			enrolled, err := sec.SigningMutation(adminCtx, "authorize-enrollment-1", application.SigningSecurityIntent{TenantID: ns, Operation: "create_enrollment", ExpectedTenantVersion: configured.TenantVersion, CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedFingerprint: fp})
 			must(err)
 			proofFor := func(e d.SigningEnrollment, public ed25519.PublicKey, secret ed25519.PrivateKey) signing.Envelope {
 				t.Helper()
@@ -75,13 +75,13 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 				if e.PreviousKeyID != nil {
 					previous = e.PreviousKeyID.String()
 				}
-				p := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: sec.ServerID, NamespaceID: ns.String(), PrincipalID: agent.PrincipalID, SignerKeyID: e.KeyID.String()}, EnrollmentID: e.ID.String(), Nonce: e.Nonce, Purpose: e.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), PreviousKeyID: previous, ExpiresAt: e.ExpiresAt.UTC().Format(time.RFC3339Nano)}
+				p := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: sec.ServerID, TenantID: ns.String(), PrincipalID: agent.PrincipalID, SignerKeyID: e.KeyID.String()}, EnrollmentID: e.ID.String(), Nonce: e.Nonce, Purpose: e.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), PreviousKeyID: previous, ExpiresAt: e.ExpiresAt.UTC().Format(time.RFC3339Nano)}
 				envelope, err := signing.Sign(signing.KeyEnrollment, p, e.KeyID.String(), secret)
 				must(err)
 				return envelope
 			}
 			proof := proofFor(*enrolled.Enrollment, pub, private)
-			register := application.SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: enrolled.Enrollment.ID, Proof: &proof}
+			register := application.SigningSecurityIntent{TenantID: ns, Operation: "register_signing_key", EnrollmentID: enrolled.Enrollment.ID, Proof: &proof}
 			// Changing untrusted signature metadata cannot change the accepted identity.
 			forged := proof
 			forged.Signatures = append([]signing.Signature(nil), proof.Signatures...)
@@ -186,18 +186,18 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 				t.Fatal("one-use challenge reused")
 			}
 			// Credential policy is an intersection with grants, including unsigned v1 access.
-			if err = sec.Require(agentCtx, ns, ports.PermissionNamespaceAdmin); err == nil {
+			if err = sec.Require(agentCtx, ns, ports.PermissionTenantAdmin); err == nil {
 				t.Fatal("key possession granted administrator access")
 			}
 			pub2, private2, err := ed25519.GenerateKey(rand.Reader)
 			must(err)
-			rotation := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: sec.ServerID, NamespaceID: ns.String(), PrincipalID: agent.PrincipalID, SignerKeyID: registered.Key.ID.String()}, EnrollmentID: testID("0199a221-0000-7000-8000-000000000020").String(), NewKeyID: testID("0199a221-0000-7000-8000-000000000021").String(), Nonce: "rotation-authorization-bound-to-unique-enrollment", Purpose: "rotation_authorization", PublicKey: base64.StdEncoding.EncodeToString(pub2), PreviousKeyID: registered.Key.ID.String(), ExpiresAt: time.Now().UTC().Add(5 * time.Minute).Format(time.RFC3339Nano)}
+			rotation := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: sec.ServerID, TenantID: ns.String(), PrincipalID: agent.PrincipalID, SignerKeyID: registered.Key.ID.String()}, EnrollmentID: testID("0199a221-0000-7000-8000-000000000020").String(), NewKeyID: testID("0199a221-0000-7000-8000-000000000021").String(), Nonce: "rotation-authorization-bound-to-unique-enrollment", Purpose: "rotation_authorization", PublicKey: base64.StdEncoding.EncodeToString(pub2), PreviousKeyID: registered.Key.ID.String(), ExpiresAt: time.Now().UTC().Add(5 * time.Minute).Format(time.RFC3339Nano)}
 			rotationProof, err := signing.Sign(signing.KeyEnrollment, rotation, registered.Key.ID.String(), private)
 			must(err)
-			rotating, err := sec.SigningMutation(agentCtx, "authorize-key-rotation-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_rotation_enrollment", Proof: &rotationProof})
+			rotating, err := sec.SigningMutation(agentCtx, "authorize-key-rotation-1", application.SigningSecurityIntent{TenantID: ns, Operation: "create_rotation_enrollment", Proof: &rotationProof})
 			must(err)
 			proof2 := proofFor(*rotating.Enrollment, pub2, private2)
-			rotated, err := sec.SigningMutation(agentCtx, "register-key-rotation-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: rotating.Enrollment.ID, Proof: &proof2})
+			rotated, err := sec.SigningMutation(agentCtx, "register-key-rotation-1", application.SigningSecurityIntent{TenantID: ns, Operation: "register_signing_key", EnrollmentID: rotating.Enrollment.ID, Proof: &proof2})
 			must(err)
 			if rotated.Key.ID == registered.Key.ID || rotated.CredentialPolicy.AcceptanceFloor != d.AcceptanceIndependentReview || rotated.Key.PrincipalID != registered.Key.PrincipalID {
 				t.Fatal("rotation changed stable subject/floor")
@@ -216,10 +216,10 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 				t.Fatal("historical signature lost", err)
 			}
 			must(uow.Rollback())
-			if _, err = sec.SigningMutation(agentCtx, "rotate-with-retired-key-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_rotation_enrollment", Proof: &rotationProof}); err == nil {
+			if _, err = sec.SigningMutation(agentCtx, "rotate-with-retired-key-1", application.SigningSecurityIntent{TenantID: ns, Operation: "create_rotation_enrollment", Proof: &rotationProof}); err == nil {
 				t.Fatal("retired key authorized new rotation")
 			}
-			revoked, err := sec.SigningMutation(adminCtx, "revoke-registered-key-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "revoke_signing_key", ExpectedNamespaceVersion: rotated.NamespaceVersion, KeyID: rotated.Key.ID, ExpectedVersion: 1, Reason: "compromised"})
+			revoked, err := sec.SigningMutation(adminCtx, "revoke-registered-key-1", application.SigningSecurityIntent{TenantID: ns, Operation: "revoke_signing_key", ExpectedTenantVersion: rotated.TenantVersion, KeyID: rotated.Key.ID, ExpectedVersion: 1, Reason: "compromised"})
 			must(err)
 			if revoked.Key.Status != "revoked" {
 				t.Fatal("revocation not persisted")
@@ -233,17 +233,17 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 			// Grant alone cannot restore a permission removed by credential policy.
 			restricted := *rotated.CredentialPolicy
 			restricted.PermittedOperations = []string{string(ports.PermissionStateRead), string(ports.PermissionSigningKeyEnroll), string(ports.PermissionSigningKeyRotate)}
-			tightened, err := sec.SigningMutation(adminCtx, "tighten-current-policy-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: revoked.NamespaceVersion, ExpectedVersion: restricted.Version, CredentialPolicy: &restricted})
+			tightened, err := sec.SigningMutation(adminCtx, "tighten-current-policy-1", application.SigningSecurityIntent{TenantID: ns, Operation: "set_credential_policy", ExpectedTenantVersion: revoked.TenantVersion, ExpectedVersion: restricted.Version, CredentialPolicy: &restricted})
 			must(err)
 			if err = sec.Require(agentCtx, ns, ports.PermissionWorkContractAcquire); err == nil {
 				t.Fatal("grant bypassed current credential restriction")
 			}
 			pub3, private3, err := ed25519.GenerateKey(rand.Reader)
 			must(err)
-			fresh, err := sec.SigningMutation(adminCtx, "authorize-concurrent-enrollment-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_enrollment", ExpectedNamespaceVersion: tightened.NamespaceVersion, CredentialID: credential.ID, PrincipalID: agent.PrincipalID})
+			fresh, err := sec.SigningMutation(adminCtx, "authorize-concurrent-enrollment-1", application.SigningSecurityIntent{TenantID: ns, Operation: "create_enrollment", ExpectedTenantVersion: tightened.TenantVersion, CredentialID: credential.ID, PrincipalID: agent.PrincipalID})
 			must(err)
 			proof3 := proofFor(*fresh.Enrollment, pub3, private3)
-			concurrentIntent := application.SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: fresh.Enrollment.ID, Proof: &proof3}
+			concurrentIntent := application.SigningSecurityIntent{TenantID: ns, Operation: "register_signing_key", EnrollmentID: fresh.Enrollment.ID, Proof: &proof3}
 			results := make(chan error, 2)
 			var wait sync.WaitGroup
 			for _, key := range []string{"competing-registration-one", "competing-registration-two"} {

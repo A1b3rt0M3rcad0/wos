@@ -1,5 +1,13 @@
 # WOS — Plano de evolução para contratos assinados, profiles independentes e workspace mínimo
 
+> [!NOTE]
+> This document retains the earlier Namespace/protocol contract for historical
+> context and legacy recovery. Current source uses Tenant contracts and signed
+> protocol 3. Follow [Tenant cutover](scaling/tenants.md) and the [current agent
+> workflow](agents.md); do not rename fields inside old signed material or use
+> these historical mutation examples against the current service.
+
+
 **Produto:** WOS — Woobe Outcome Server  
 **Natureza:** planejamento de implementação; não é uma declaração de funcionalidades já entregues.  
 **Data da análise:** 8 de outubro de 2026  

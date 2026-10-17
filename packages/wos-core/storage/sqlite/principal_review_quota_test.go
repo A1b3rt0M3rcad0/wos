@@ -25,8 +25,8 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 			}
 			clock := sqliteFixedClock{time.Now().UTC()}
 			sec := a.SecurityService{Store: f.store, Clock: clock, IDs: &loadIDs{}}
-			ns := d.ID(f.request.NamespaceID)
-			scope := d.Scope{NamespaceID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
+			ns := d.ID(f.request.TenantID)
+			scope := d.Scope{TenantID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
 			admin, e := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(e)
 			adminCtx := a.WithIdentity(ctx, admin)
@@ -73,7 +73,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				must(u.Rollback())
 			}
 			perms := []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire}
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: perms}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "another-executor", Permissions: perms}))
 			key := testID("0199a555-0000-7000-8000-000000000099")
 			participants := []a.Identity{}
 			contexts := []context.Context{}
@@ -83,7 +83,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				must(e)
 				id, e := sec.Authenticate(ctx, token)
 				must(e)
-				cp := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
+				cp := d.CredentialPolicy{TenantID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
 				u, e := f.store.Begin(ctx)
 				must(e)
 				must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, cp, 0))
@@ -103,10 +103,10 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				t.Fatal("second review CID bypassed default 1", e)
 			}
 			two := 2
-			policy := d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 10, MaxActiveReviewPerPrincipal: &two}
+			policy := d.WorkAcceptancePolicy{TenantID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 10, MaxActiveReviewPerPrincipal: &two}
 			v, e := sec.SigningIdentity(adminCtx, nil)
 			must(e)
-			changed, e := sec.SigningMutation(adminCtx, "review-quota-admin-raise", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_acceptance_policy", ExpectedNamespaceVersion: v.NamespaceVersion, AcceptancePolicy: &policy})
+			changed, e := sec.SigningMutation(adminCtx, "review-quota-admin-raise", a.SigningSecurityIntent{TenantID: ns, Operation: "set_acceptance_policy", ExpectedTenantVersion: v.TenantVersion, AcceptancePolicy: &policy})
 			must(e)
 			_, e = acquire(1, 1)
 			must(e)
@@ -116,16 +116,16 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 			five := 5
 			policy.MaxActiveReviewPerPrincipal = &five
 			policy.MaxActiveReviewContracts = 2
-			_, e = sec.SigningMutation(adminCtx, "review-quota-namespace-cap", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_acceptance_policy", ExpectedNamespaceVersion: changed.NamespaceVersion, ExpectedVersion: 1, AcceptancePolicy: &policy})
+			_, e = sec.SigningMutation(adminCtx, "review-quota-tenant-cap", a.SigningSecurityIntent{TenantID: ns, Operation: "set_acceptance_policy", ExpectedTenantVersion: changed.TenantVersion, ExpectedVersion: 1, AcceptancePolicy: &policy})
 			must(e)
-			if _, e = acquire(0, 2); e == nil || !strings.Contains(e.Error(), "Namespace") {
-				t.Fatal("Principal increase bypassed Namespace review quota", e)
+			if _, e = acquire(0, 2); e == nil || !strings.Contains(e.Error(), "Tenant") {
+				t.Fatal("Principal increase bypassed Tenant review quota", e)
 			}
 			cp := policies[1]
 			cp.MaxActiveReviewContracts = 1
 			v, e = sec.SigningIdentity(adminCtx, nil)
 			must(e)
-			_, e = sec.SigningMutation(adminCtx, "review-quota-credential-cap", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: v.NamespaceVersion, ExpectedVersion: 1, CredentialPolicy: &cp})
+			_, e = sec.SigningMutation(adminCtx, "review-quota-credential-cap", a.SigningSecurityIntent{TenantID: ns, Operation: "set_credential_policy", ExpectedTenantVersion: v.TenantVersion, ExpectedVersion: 1, CredentialPolicy: &cp})
 			must(e)
 			if _, e = acquire(1, 2); e == nil || !strings.Contains(e.Error(), "credential") {
 				t.Fatal("Principal increase bypassed credential review quota", e)

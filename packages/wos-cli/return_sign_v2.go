@@ -47,6 +47,9 @@ func sealFrozenV2(profile ProfileV2, token []byte, frozen *FrozenReturnV2) error
 }
 func verifyFrozenV2(profile ProfileV2, token []byte, frozen FrozenReturnV2) (signing.RequestBinding, error) {
 	var binding signing.RequestBinding
+	if frozen.Envelope.PayloadType == signing.LegacyWorkReturn || frozen.Envelope.PayloadType == signing.LegacyReviewReturn {
+		return binding, fmt.Errorf("protocol-2 frozen intention is historical; reconcile it with the original client before Tenant migration; its bytes must not be rewritten or resubmitted as protocol 3")
+	}
 	if frozen.CredentialID != profile.Binding.CredentialID || !d.ValidSignedDigest(frozen.DraftDigest) || !d.ValidSignedDigest(frozen.RequestDigest) {
 		return binding, fmt.Errorf("frozen return provenance differs")
 	}
@@ -98,7 +101,7 @@ func verifyFrozenV2(profile ProfileV2, token []byte, frozen FrozenReturnV2) (sig
 	if e != nil {
 		return binding, e
 	}
-	if binding.ProtocolVersion != 2 || binding.ServerID != profile.Binding.ServerID.String() || binding.NamespaceID != profile.Binding.NamespaceID.String() || binding.PrincipalID != profile.Binding.PrincipalID || binding.SignerKeyID != profile.Signing.KeyID.String() || d.ID(binding.RequestID).Validate() != nil || d.ID(binding.ContractID).Validate() != nil || d.ID(binding.OutcomeID).Validate() != nil || d.ValidateIdempotencyKey(binding.IdempotencyKey) != nil {
+	if binding.ProtocolVersion != 3 || binding.ServerID != profile.Binding.ServerID.String() || binding.TenantID != profile.Binding.TenantID.String() || binding.PrincipalID != profile.Binding.PrincipalID || binding.SignerKeyID != profile.Signing.KeyID.String() || d.ID(binding.RequestID).Validate() != nil || d.ID(binding.ContractID).Validate() != nil || d.ID(binding.OutcomeID).Validate() != nil || d.ValidateIdempotencyKey(binding.IdempotencyKey) != nil {
 		return binding, fmt.Errorf("frozen return targets differ")
 	}
 	switch frozen.State {
@@ -134,7 +137,7 @@ func returnIntentV2(profile ProfileV2, frozen FrozenReturnV2, b signing.RequestB
 			return "review"
 		}
 		return "execution"
-	}()), State: "prepared_signed", Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(b.OutcomeID)}, ContractID: &id, IdempotencyKey: b.IdempotencyKey, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}, nil
+	}()), State: "prepared_signed", Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(b.OutcomeID)}, ContractID: &id, IdempotencyKey: b.IdempotencyKey, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}, nil
 }
 func liveReturnPreflightV2(profile ProfileV2, file ContractFileV2, view ContractViewV2, identity a.SigningIdentityView, state a.SignedStateResult, grant a.SignedStateResult, review a.SignedStateResult) error {
 	c := state.Contract
@@ -166,7 +169,7 @@ func liveReturnPreflightV2(profile ProfileV2, file ContractFileV2, view Contract
 	}
 	active := false
 	for _, key := range identity.Keys {
-		if key.ID == profile.Signing.KeyID && key.PrincipalID == profile.Binding.PrincipalID && key.NamespaceID == profile.Binding.NamespaceID && key.Status == "active" && key.Fingerprint == profile.Signing.PublicKeyFingerprint {
+		if key.ID == profile.Signing.KeyID && key.PrincipalID == profile.Binding.PrincipalID && key.TenantID == profile.Binding.TenantID && key.Status == "active" && key.Fingerprint == profile.Signing.PublicKeyFingerprint {
 			active = true
 		}
 	}
@@ -183,6 +186,9 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 	file, view, _, observed, e := loadContractV2(w, profile, id)
 	if e != nil {
 		return intent, e
+	}
+	if view.Authority.ProtocolVersion != signing.ProtocolVersion {
+		return intent, fmt.Errorf("historical protocol-2 contract is read-only; acquire a new protocol-3 contract")
 	}
 	if view.Authority.ContractKind != kind {
 		return intent, fmt.Errorf("contract kind differs")
@@ -208,7 +214,7 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 	if e = validateReturnDraftV2(profile, file, view); e != nil {
 		return intent, e
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 	if e != nil {
 		return intent, e
@@ -241,7 +247,7 @@ func prepareReturnV2(ctx context.Context, w *Workspace, profile ProfileV2, clien
 		return intent, e
 	}
 	g := view.Authority
-	binding := signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: g.ServerID, NamespaceID: g.NamespaceID, OutcomeID: g.OutcomeID, PrincipalID: g.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: key, ContractID: g.ContractID, WorkItemID: g.WorkItemID, ExecutionID: g.ExecutionID, FencingToken: g.FencingToken, SpecDigest: g.SpecDigest, AuthorityDigest: signing.Digest(file.Issued.Authority.Payload), ExpectedContractVersion: g.ContractVersion, ExpectedLeaseVersion: g.LeaseVersion, ExpectedWorkItemVersion: file.Local.WorkItemVersion, PolicyRevision: signing.Decimal(identity.Policy.Version)}
+	binding := signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: g.ServerID, TenantID: g.TenantID, OutcomeID: g.OutcomeID, PrincipalID: g.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: key, ContractID: g.ContractID, WorkItemID: g.WorkItemID, ExecutionID: g.ExecutionID, FencingToken: g.FencingToken, SpecDigest: g.SpecDigest, AuthorityDigest: signing.Digest(file.Issued.Authority.Payload), ExpectedContractVersion: g.ContractVersion, ExpectedLeaseVersion: g.LeaseVersion, ExpectedWorkItemVersion: file.Local.WorkItemVersion, PolicyRevision: signing.Decimal(identity.Policy.Version)}
 	var payload any
 	purpose := signing.WorkReturn
 	if kind == "execution" {

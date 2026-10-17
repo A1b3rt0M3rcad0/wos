@@ -166,7 +166,7 @@ test("compound Issue resolution explicitly releases selected impacts atomically"
   expect(
     (
       await wos.api(
-        `/namespaces/${wos.namespace}/outcomes/${scope.outcome_id}/blockers`,
+        `/tenants/${wos.tenant}/outcomes/${scope.outcome_id}/blockers`,
       )
     ).items[0].lifecycle,
   ).toBe("resolved");
@@ -192,7 +192,7 @@ test("typed external context preserves scalar types without changing permission"
     .fill("customer-address");
   await save(page);
   expect(
-    (await wos.api(`/namespaces/${wos.namespace}/outcomes/${scope.outcome_id}`))
+    (await wos.api(`/tenants/${wos.tenant}/outcomes/${scope.outcome_id}`))
       .value.external_context.tenant_id,
   ).toBe("customer-address");
 });
@@ -221,7 +221,7 @@ test("typed participants are documentary and never acquire execution authority",
   await save(page);
   const saved = (
     await wos.api(
-      `/namespaces/${wos.namespace}/outcomes/${scope.outcome_id}/work-items/${task.id}`,
+      `/tenants/${wos.tenant}/outcomes/${scope.outcome_id}/work-items/${task.id}`,
     )
   ).value;
   expect(saved.assignee_refs).toEqual([

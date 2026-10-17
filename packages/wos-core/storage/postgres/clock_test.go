@@ -22,7 +22,7 @@ func TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("01a11743-0000-7000-8000-00000000003c", "")
-	outcome, err := trusted.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: testID("01a11760-0000-7000-8000-000000000001"), Title: "Shared authority", DesiredState: "replica skew cannot alter leases", Priority: domain.PriorityNormal})
+	outcome, err := trusted.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: testID("01a11760-0000-7000-8000-000000000001"), Title: "Shared authority", DesiredState: "replica skew cannot alter leases", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -19,14 +19,14 @@ func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, conf
 	entity, verb := o.args[0], o.args[1]
 	base := outcomePath(scope)
 	if entity == "protocol" && verb == "get" {
-		v, e := client.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+		v, e := client.GetTenantWorkProtocol(ctx, scope.TenantID)
 		result.Data = v
 		return result, e
 	}
 	if verb == "list" {
 		switch entity {
 		case "outcome":
-			page, err := client.SearchOutcomes(ctx, scope.NamespaceID, "", 25, o.values["cursor"])
+			page, err := client.SearchOutcomes(ctx, scope.TenantID, "", 25, o.values["cursor"])
 			result.Data = page
 			return result, err
 		case "work", "objective":
@@ -58,7 +58,7 @@ func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, conf
 				if err != nil {
 					return result, usage(err.Error())
 				}
-				base = outcomePath(domain.Scope{NamespaceID: scope.NamespaceID, OutcomeID: id})
+				base = outcomePath(domain.Scope{TenantID: scope.TenantID, OutcomeID: id})
 			}
 			raw, err := client.QueryJSON(ctx, base)
 			result.Data = raw
@@ -96,7 +96,7 @@ func planningCommand(ctx context.Context, w *Workspace, client *sdk.Client, conf
 	switch entity {
 	case "protocol":
 		if verb == "set" {
-			name = "set_namespace_work_protocol"
+			name = "set_tenant_work_protocol"
 		}
 		if verb == "reconcile" {
 			name = "reconcile_expired_work_contracts"
@@ -183,8 +183,8 @@ func checkPlanningBinding(v any, scope domain.Scope, creatingOutcome bool) error
 	switch x := v.(type) {
 	case map[string]any:
 		for key, value := range x {
-			if key == "namespace_id" && value != scope.NamespaceID.String() {
-				return usage("planning Namespace differs from trusted binding")
+			if key == "tenant_id" && value != scope.TenantID.String() {
+				return usage("planning Tenant differs from trusted binding")
 			}
 			if key == "outcome_id" && !creatingOutcome && value != scope.OutcomeID.String() {
 				return usage("planning Outcome differs from explicit scope")

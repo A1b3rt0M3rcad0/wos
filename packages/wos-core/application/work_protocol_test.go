@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing.T) {
+func TestTenantCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing.T) {
 	s, store, clock, w := contractServiceFixture(t)
 	ctx := context.Background()
 	tx, _ := store.Begin(ctx)
@@ -28,10 +28,10 @@ func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	change := a.SetNamespaceWorkProtocolCommand{Scope: w.Scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "retiring legacy writers"}
+	change := a.SetTenantWorkProtocolCommand{Scope: w.Scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "retiring legacy writers"}
 	admin := commandContext()
 	admin.IdempotencyKey = "protocol-drain-1"
-	draining, err := s.SetNamespaceWorkProtocol(ctx, admin, change)
+	draining, err := s.SetTenantWorkProtocol(ctx, admin, change)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,15 +46,15 @@ func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing
 	change.ExpectedProtocolVersion = draining.Value.Protocol.Version
 	change.Phase = d.WorkProtocolContracts
 	admin.IdempotencyKey = "protocol-cutover-1"
-	if _, err = s.SetNamespaceWorkProtocol(ctx, admin, change); err == nil {
+	if _, err = s.SetTenantWorkProtocol(ctx, admin, change); err == nil {
 		t.Fatal("cutover without old writer acknowledgement")
 	}
 	change.WritersDrained = true
-	if _, err = s.SetNamespaceWorkProtocol(ctx, admin, change); err == nil {
+	if _, err = s.SetTenantWorkProtocol(ctx, admin, change); err == nil {
 		t.Fatal("cutover with valid legacy lease")
 	}
 	clock.set(clock.Now().Add(time.Minute))
-	cutover, err := s.SetNamespaceWorkProtocol(ctx, admin, change)
+	cutover, err := s.SetTenantWorkProtocol(ctx, admin, change)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing
 	admin.IdempotencyKey = "protocol-downgrade"
 	change.Phase = d.WorkProtocolLegacy
 	change.ExpectedProtocolVersion = cutover.Value.Protocol.Version
-	if _, err = s.SetNamespaceWorkProtocol(ctx, admin, change); err == nil {
+	if _, err = s.SetTenantWorkProtocol(ctx, admin, change); err == nil {
 		t.Fatal("silent downgrade accepted")
 	}
 	cc.IdempotencyKey = "contract-post-cutover"

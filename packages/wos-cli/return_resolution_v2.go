@@ -76,7 +76,7 @@ func decodeResolutionV2(profile ProfileV2, token []byte, intent PendingOperation
 	if e != nil {
 		return frozen, b, request, e
 	}
-	if request.ProtocolVersion != 2 || request.OperationKind != "resolve_return_intent" || request.ServerID != b.ServerID || request.NamespaceID != b.NamespaceID || request.OutcomeID != b.OutcomeID || request.PrincipalID != b.PrincipalID || request.SignerKeyID != b.SignerKeyID || request.CredentialID != frozen.CredentialID.String() || request.ContractID != b.ContractID || request.OriginalCommandName != intent.Operation || request.OriginalRequestID != b.RequestID || request.OriginalIdempotencyKey != b.IdempotencyKey || request.OriginalRequestDigest != frozen.RequestDigest || request.OriginalEnvelopeDigest != signing.Digest(envBytes) || request.RequestID == b.RequestID || request.IdempotencyKey == b.IdempotencyKey || d.ID(request.RequestID).Validate() != nil || d.ValidateIdempotencyKey(request.IdempotencyKey) != nil || strings.TrimSpace(request.Reason) == "" || len(request.Reason) > 4096 || request.PolicyRevision == 0 {
+	if request.ProtocolVersion != 3 || request.OperationKind != "resolve_return_intent" || request.ServerID != b.ServerID || request.TenantID != b.TenantID || request.OutcomeID != b.OutcomeID || request.PrincipalID != b.PrincipalID || request.SignerKeyID != b.SignerKeyID || request.CredentialID != frozen.CredentialID.String() || request.ContractID != b.ContractID || request.OriginalCommandName != intent.Operation || request.OriginalRequestID != b.RequestID || request.OriginalIdempotencyKey != b.IdempotencyKey || request.OriginalRequestDigest != frozen.RequestDigest || request.OriginalEnvelopeDigest != signing.Digest(envBytes) || request.RequestID == b.RequestID || request.IdempotencyKey == b.IdempotencyKey || d.ID(request.RequestID).Validate() != nil || d.ValidateIdempotencyKey(request.IdempotencyKey) != nil || strings.TrimSpace(request.Reason) == "" || len(request.Reason) > 4096 || request.PolicyRevision == 0 {
 		return frozen, b, request, fmt.Errorf("resolution differs from the exact original frozen intention")
 	}
 	return frozen, b, request, nil
@@ -95,7 +95,7 @@ func verifyResolutionReceiptV2(profile ProfileV2, token []byte, intent PendingOp
 	if e = signing.DecodeStrict(raw, &proof, 32<<10); e != nil {
 		return e
 	}
-	if proof.ProtocolVersion != 2 || proof.ServerID != request.ServerID || proof.NamespaceID != request.NamespaceID || proof.OutcomeID != request.OutcomeID || proof.PrincipalID != request.PrincipalID || proof.CredentialID != request.CredentialID || proof.ContractID != request.ContractID || proof.RequestID != request.RequestID || proof.IdempotencyKey != request.IdempotencyKey || proof.RequestDigest != intent.Resolution.RequestDigest || proof.OriginalCommandName != request.OriginalCommandName || proof.OriginalRequestID != request.OriginalRequestID || proof.OriginalIdempotencyKey != request.OriginalIdempotencyKey || proof.OriginalRequestDigest != request.OriginalRequestDigest || proof.OriginalEnvelopeDigest != request.OriginalEnvelopeDigest || proof.Decision != "closed_without_acceptance" || proof.Reason != request.Reason || proof.OutcomeRevision == 0 || proof.ResolvedAt == "" {
+	if proof.ProtocolVersion != 3 || proof.ServerID != request.ServerID || proof.TenantID != request.TenantID || proof.OutcomeID != request.OutcomeID || proof.PrincipalID != request.PrincipalID || proof.CredentialID != request.CredentialID || proof.ContractID != request.ContractID || proof.RequestID != request.RequestID || proof.IdempotencyKey != request.IdempotencyKey || proof.RequestDigest != intent.Resolution.RequestDigest || proof.OriginalCommandName != request.OriginalCommandName || proof.OriginalRequestID != request.OriginalRequestID || proof.OriginalIdempotencyKey != request.OriginalIdempotencyKey || proof.OriginalRequestDigest != request.OriginalRequestDigest || proof.OriginalEnvelopeDigest != request.OriginalEnvelopeDigest || proof.Decision != "closed_without_acceptance" || proof.Reason != request.Reason || proof.OutcomeRevision == 0 || proof.ResolvedAt == "" {
 		return fmt.Errorf("terminal receipt does not close this exact original intention")
 	}
 	return nil
@@ -371,7 +371,7 @@ func recoverResolutionV2(ctx context.Context, w *Workspace, profile ProfileV2, c
 		if intent.Operation == "ReturnSignedReview" {
 			kind = "review"
 		}
-		state, err := client.ReadSignedReturnResolution(ctx, d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}, kind, intent.IdempotencyKey)
+		state, err := client.ReadSignedReturnResolution(ctx, d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}, kind, intent.IdempotencyKey)
 		if err == nil && state.Envelope != nil {
 			doc, err = signing.ToDocument(*state.Envelope)
 			if err == nil {
@@ -384,7 +384,7 @@ func recoverResolutionV2(ctx context.Context, w *Workspace, profile ProfileV2, c
 			return doc, false, err
 		}
 		if err != nil {
-			result, err := client.ResolveSignedReturnIntent(ctx, request.IdempotencyKey, a.ResolveSignedReturnIntentCommand{Scope: d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}, OriginalEnvelope: frozen.Envelope, Envelope: intent.Resolution.Envelope})
+			result, err := client.ResolveSignedReturnIntent(ctx, request.IdempotencyKey, a.ResolveSignedReturnIntentCommand{Scope: d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}, OriginalEnvelope: frozen.Envelope, Envelope: intent.Resolution.Envelope})
 			if err != nil {
 				return doc, false, err
 			}

@@ -35,7 +35,7 @@ func (s *Service) boundedOutcomeGraph(ctx context.Context, scope d.Scope, q Grap
 	}
 	after := ""
 	if q.Cursor != "" {
-		c, e := decodeCursor(q.Cursor, scope.NamespaceID, scope.OutcomeID, "graph", hash)
+		c, e := decodeCursor(q.Cursor, scope.TenantID, scope.OutcomeID, "graph", hash)
 		if e != nil {
 			return zero, true, e
 		}
@@ -129,7 +129,7 @@ func (s *Service) boundedOutcomeGraph(ctx context.Context, scope d.Scope, q Grap
 	page := GraphPage{Root: root, Nodes: []EntitySummary{}, Edges: edges[:min(n, len(edges))], OutcomeRevision: frame.revision, EvaluatedAt: frame.at, Limit: n, Depth: q.Depth}
 	if len(edges) > n {
 		page.Truncated = true
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "graph", Filter: hash, Revision: frame.revision, Key: edges[n-1].ID})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "graph", Filter: hash, Revision: frame.revision, Key: edges[n-1].ID})
 	}
 	nodeSet := map[d.EntityRef]bool{root: true}
 	for _, edge := range page.Edges {

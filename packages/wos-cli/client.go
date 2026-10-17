@@ -89,7 +89,7 @@ func parseOptions(args []string) (options, error) {
 			continue
 		}
 		key, value, has := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		allowed := map[string]bool{"order": true, "holder": true, "status": true, "source-version": true, "evidence": true, "finding": true, "from": true, "type": true, "description": true, "title": true, "uri": true, "criterion": true, "artifact-type": true, "content-hash": true, "summary": true, "next-action": true, "expected-draft": true, "result": true, "rationale": true, "decision": true, "requirement": true, "destination": true, "to": true, "signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "namespace": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true, "phase": true, "writers-drained": true}
+		allowed := map[string]bool{"order": true, "holder": true, "status": true, "source-version": true, "evidence": true, "finding": true, "from": true, "type": true, "description": true, "title": true, "uri": true, "criterion": true, "artifact-type": true, "content-hash": true, "summary": true, "next-action": true, "expected-draft": true, "result": true, "rationale": true, "decision": true, "requirement": true, "destination": true, "to": true, "signing-key-stdin": true, "workspace-schema": true, "token-stdin": true, "generate-signing-key": true, "credential-ref": true, "private-key-ref": true, "profile": true, "server-id": true, "issuer-fingerprint": true, "enrollment": true, "name": true, "workspace": true, "output": true, "server": true, "tenant": true, "outcome": true, "credential-env": true, "version": true, "all-pending": true, "all-active": true, "once": true, "for-agent": true, "next": true, "dry-run": true, "takeover": true, "foreground": true, "break-lock": true, "limit": true, "cursor": true, "work": true, "contract": true, "reason": true, "submission": true, "file": true, "ttl": true, "interval": true, "count": true, "previous-review": true, "command": true, "completion": true, "phase": true, "writers-drained": true}
 		if !allowed[key] {
 			return o, usage("unknown flag --" + key)
 		}
@@ -190,7 +190,7 @@ func loadClient(w *Workspace) (Config, *sdk.Client, error) {
 		return config, nil, usage("invalid trust binding")
 	}
 	if binding != config.Destination() {
-		return config, nil, usage("configuration destination changed; restore trusted server/namespace/credential reference")
+		return config, nil, usage("configuration destination changed; restore trusted server/tenant/credential reference")
 	}
 	token := os.Getenv(strings.TrimPrefix(config.Connection.CredentialRef, "env:"))
 	client, err := sdk.New(config.Connection.ServerURL, token, nil)
@@ -208,7 +208,7 @@ func scopeFor(config Config, o options) (domain.Scope, error) {
 	return scope, nil
 }
 func outcomePath(scope domain.Scope) string {
-	return "/namespaces/" + scope.NamespaceID.String() + "/outcomes/" + scope.OutcomeID.String()
+	return "/tenants/" + scope.TenantID.String() + "/outcomes/" + scope.OutcomeID.String()
 }
 func run(ctx context.Context, o options) (Output, error) {
 	result := Output{Operation: strings.Join(o.args, " ")}
@@ -216,7 +216,7 @@ func run(ctx context.Context, o options) (Output, error) {
 		return result, usage("outcome context is not a CLI command; schema 1: use wos outcome get [ID] --output json; signed schema 2: use wos --profile NAME work show CONTRACT_ID --for-agent; see wos help outcome and wos help work")
 	}
 	if len(o.args) == 1 && o.args[0] == "version" {
-		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "signed_contracts_v2", "workspace_schema": 2, "supported_work_protocols": []string{"contracts_v1", "signed_contracts_v2"}, "supported_workspace_schemas": []int{1, 2}}
+		result.Data = map[string]any{"version": Version, "commit": Commit, "built_at": BuiltAt, "work_protocol": "signed_contracts_v3", "workspace_schema": 2, "supported_work_protocols": []string{"contracts_v1", "signed_contracts_v3"}, "supported_workspace_schemas": []int{1, 2}}
 		return result, nil
 	}
 	if o.values["workspace"] == "" && os.Getenv("WOS_WORKSPACE") == "" {
@@ -347,9 +347,9 @@ func run(ctx context.Context, o options) (Output, error) {
 }
 func initialize(ctx context.Context, w *Workspace, o options) (Output, error) {
 	result := Output{Operation: "init"}
-	ns, err := domain.ParseID(o.values["namespace"])
+	ns, err := domain.ParseID(o.values["tenant"])
 	if err != nil {
-		return result, usage("init requires --namespace UUIDv7")
+		return result, usage("init requires --tenant UUIDv7")
 	}
 	outcome, err := domain.ParseID(o.values["outcome"])
 	if err != nil {
@@ -389,6 +389,6 @@ func initialize(ctx context.Context, w *Workspace, o options) (Output, error) {
 	if err = w.AtomicWrite(".wos/.gitignore", []byte("work/\ncheckout/\nplanning/\nadmin/\ntrust.json\n")); err != nil {
 		return result, &LocalError{Err: err}
 	}
-	result.Data = map[string]any{"server_url": config.Connection.ServerURL, "namespace_id": ns, "outcome_id": outcome, "credential_ref": config.Connection.CredentialRef}
+	result.Data = map[string]any{"server_url": config.Connection.ServerURL, "tenant_id": ns, "outcome_id": outcome, "credential_ref": config.Connection.CredentialRef}
 	return result, nil
 }

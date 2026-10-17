@@ -38,8 +38,8 @@ func TestRuntimeHTTPPersistsAcrossRestart(t *testing.T) {
 		}
 	}
 
-	namespaceID := "0199ed00-0000-7000-8000-000000000001"
-	createURL := firstServer.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := cfg.Auth.LocalTenantID
+	createURL := firstServer.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	request, err := http.NewRequest(
 		http.MethodPost,
 		createURL,
@@ -68,7 +68,7 @@ func TestRuntimeHTTPPersistsAcrossRestart(t *testing.T) {
 
 	patchRequest, err := http.NewRequest(
 		http.MethodPatch,
-		firstServer.URL+"/api/v1/namespaces/"+namespaceID+"/outcomes/"+created.Value.ID.String(),
+		firstServer.URL+"/api/v1/tenants/"+tenantID+"/outcomes/"+created.Value.ID.String(),
 		bytes.NewBufferString(`{"title":"restart updated"}`),
 	)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestRuntimeHTTPPersistsAcrossRestart(t *testing.T) {
 	secondServer := httptest.NewServer(second.Handler())
 	defer secondServer.Close()
 
-	getURL := secondServer.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes/" + created.Value.ID.String()
+	getURL := secondServer.URL + "/api/v1/tenants/" + tenantID + "/outcomes/" + created.Value.ID.String()
 	getResponse, err := secondServer.Client().Get(getURL)
 	if err != nil {
 		t.Fatal(err)

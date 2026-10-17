@@ -1,5 +1,5 @@
 // Package mobility provides explicit operator-controlled installation moves.
-// It never runs in the server, manages private keys, or transfers a Namespace.
+// It never runs in the server, manages private keys, or transfers a Tenant.
 package mobility
 
 import (
@@ -423,7 +423,7 @@ func validateInstallationIdentity(ctx context.Context, db queryer) error {
 	err := db.QueryRowContext(ctx, "SELECT state_json FROM server_protocol_identity WHERE singleton=1").Scan(&raw)
 	if errors.Is(err, sql.ErrNoRows) {
 		var required bool
-		err = db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM namespace_work_protocol WHERE phase='signed_contracts_v2') OR EXISTS(SELECT 1 FROM signed_work_contracts) OR EXISTS(SELECT 1 FROM signed_protocol_facts) OR EXISTS(SELECT 1 FROM signed_operation_results)`).Scan(&required)
+		err = db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM tenant_work_protocol WHERE phase IN ('signed_contracts_v2','signed_contracts_v3')) OR EXISTS(SELECT 1 FROM signed_work_contracts) OR EXISTS(SELECT 1 FROM signed_protocol_facts) OR EXISTS(SELECT 1 FROM signed_operation_results)`).Scan(&required)
 		if err != nil {
 			return err
 		}
@@ -728,17 +728,17 @@ func migrate(ctx context.Context, opts migrateOptions) (map[string]any, error) {
 
 // preflight intentionally cannot authorize or perform tenant relocation. It
 // reports a coherent structural inventory and explicit missing trust contracts.
-func preflight(ctx context.Context, db queryer, backend, namespace string) (map[string]any, error) {
-	if namespace == "" {
-		return nil, refuse("--namespace is required")
+func preflight(ctx context.Context, db queryer, backend, tenant string) (map[string]any, error) {
+	if tenant == "" {
+		return nil, refuse("--tenant is required")
 	}
 	placeholder := "?"
 	if backend == "postgres" {
 		placeholder = "$1"
 	}
 	var exists int
-	if err := db.QueryRowContext(ctx, "SELECT 1 FROM namespaces WHERE id="+placeholder, namespace).Scan(&exists); err != nil {
-		return nil, refuse("Namespace is absent from this database snapshot")
+	if err := db.QueryRowContext(ctx, "SELECT 1 FROM tenants WHERE id="+placeholder, tenant).Scan(&exists); err != nil {
+		return nil, refuse("Tenant is absent from this database snapshot")
 	}
 	tables, err := catalog(ctx, db, backend)
 	if err != nil {
@@ -753,7 +753,7 @@ func preflight(ctx context.Context, db queryer, backend, namespace string) (map[
 	for _, t := range tables {
 		scoped := false
 		for _, c := range t.Columns {
-			if c.Name == "namespace_id" {
+			if c.Name == "tenant_id" {
 				scoped = true
 				break
 			}
@@ -763,17 +763,17 @@ func preflight(ctx context.Context, db queryer, backend, namespace string) (map[
 			continue
 		}
 		var count int64
-		if err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+quoted(t.Name)+" WHERE namespace_id="+placeholder, namespace).Scan(&count); err != nil {
+		if err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+quoted(t.Name)+" WHERE tenant_id="+placeholder, tenant).Scan(&count); err != nil {
 			return nil, err
 		}
 		counts[t.Name] = count
 	}
 	sort.Strings(indirect)
-	inspection, err := namespaceInspection(ctx, db, tables, backend, namespace)
+	inspection, err := tenantInspection(ctx, db, tables, backend, tenant)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"operation": "namespace_transfer_preflight", "read_only": true, "ready_for_transfer": false, "namespace_id": namespace, "server_id": id.ServerID, "issuer_fingerprint": id.Fingerprint, "scoped_table_rows": counts, "tables_requiring_global_or_indirect_reference_closure": indirect, "inspection": inspection, "issuer_seed_collected": false, "blockers": []string{"namespace_transfer_protocol_not_implemented", "source_write_fence_and_cutover_not_implemented", "historical_issuer_trust_and_destination_enrollment_required", "global_principal_and_indirect_reference_closure_required", "durable_receipt_and_pending_delivery_reconciliation_required"}}, nil
+	return map[string]any{"operation": "tenant_transfer_preflight", "read_only": true, "ready_for_transfer": false, "tenant_id": tenant, "server_id": id.ServerID, "issuer_fingerprint": id.Fingerprint, "scoped_table_rows": counts, "tables_requiring_global_or_indirect_reference_closure": indirect, "inspection": inspection, "issuer_seed_collected": false, "blockers": []string{"tenant_transfer_protocol_not_implemented", "source_write_fence_and_cutover_not_implemented", "historical_issuer_trust_and_destination_enrollment_required", "global_principal_and_indirect_reference_closure_required", "durable_receipt_and_pending_delivery_reconciliation_required"}}, nil
 }
 
 func run(ctx context.Context, args []string, out io.Writer) error {
@@ -782,10 +782,10 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 
 func runCommand(ctx context.Context, args []string, out io.Writer, checkHost func() error) error {
 	if len(args) == 0 {
-		return refuse("use migrate-sqlite or namespace-preflight")
+		return refuse("use migrate-sqlite or tenant-preflight")
 	}
 	if args[0] == "--help" || args[0] == "-h" || args[0] == "help" {
-		_, err := fmt.Fprintln(out, "Usage: wos storage migrate-sqlite [flags]\n       wos storage namespace-preflight [flags]\nUse COMMAND --help for flags. All database URIs come from named environment variables.")
+		_, err := fmt.Fprintln(out, "Usage: wos storage migrate-sqlite [flags]\n       wos storage tenant-preflight [flags]\nUse COMMAND --help for flags. All database URIs come from named environment variables.")
 		return err
 	}
 	p := flag.NewFlagSet(args[0], flag.ContinueOnError)
@@ -822,9 +822,9 @@ func runCommand(ctx context.Context, args []string, out io.Writer, checkHost fun
 			return refuse("named destination PostgreSQL DSN environment variable is required")
 		}
 		result, err = migrate(ctx, opts)
-	case "namespace-preflight":
+	case "tenant-preflight":
 		path := p.String("sqlite", "", "existing SQLite source file; omit for PostgreSQL")
-		namespace := p.String("namespace", "", "Namespace UUID")
+		tenant := p.String("tenant", "", "Tenant UUID")
 		if err = p.Parse(args[1:]); err != nil {
 			if errors.Is(err, flag.ErrHelp) {
 				p.SetOutput(out)
@@ -866,9 +866,9 @@ func runCommand(ctx context.Context, args []string, out io.Writer, checkHost fun
 			return e
 		}
 		defer tx.Rollback()
-		result, err = preflight(ctx, tx, backend, *namespace)
+		result, err = preflight(ctx, tx, backend, *tenant)
 	default:
-		return refuse("unknown operation; use migrate-sqlite or namespace-preflight")
+		return refuse("unknown operation; use migrate-sqlite or tenant-preflight")
 	}
 	if err != nil {
 		return err

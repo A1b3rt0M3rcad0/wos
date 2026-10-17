@@ -10,8 +10,8 @@ import (
 func TestRenewWorkItemLeasePreservesClaimAndFencingToken(t *testing.T) {
 	now := time.Date(2026, 10, 2, 15, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f200-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199f200-0000-7000-8000-000000000002"),
+		TenantID:  domain.MustParseID("0199f200-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199f200-0000-7000-8000-000000000002"),
 	}
 	workID := domain.MustParseID("0199f200-0000-7000-8000-000000000003")
 	claimID := domain.MustParseID("0199f200-0000-7000-8000-000000000004")
@@ -48,8 +48,8 @@ func TestRenewWorkItemLeasePreservesClaimAndFencingToken(t *testing.T) {
 func TestExpiredLeaseMustBeReclaimedAndFencesStaleClaimant(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f200-0000-7000-8000-000000000011"),
-		OutcomeID:   domain.MustParseID("0199f200-0000-7000-8000-000000000012"),
+		TenantID:  domain.MustParseID("0199f200-0000-7000-8000-000000000011"),
+		OutcomeID: domain.MustParseID("0199f200-0000-7000-8000-000000000012"),
 	}
 	workID := domain.MustParseID("0199f200-0000-7000-8000-000000000013")
 	oldClaimID := domain.MustParseID("0199f200-0000-7000-8000-000000000014")
@@ -90,8 +90,8 @@ func TestExpiredLeaseMustBeReclaimedAndFencesStaleClaimant(t *testing.T) {
 func TestReclaimRejectsLiveLease(t *testing.T) {
 	now := time.Date(2026, 10, 2, 17, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f200-0000-7000-8000-000000000021"),
-		OutcomeID:   domain.MustParseID("0199f200-0000-7000-8000-000000000022"),
+		TenantID:  domain.MustParseID("0199f200-0000-7000-8000-000000000021"),
+		OutcomeID: domain.MustParseID("0199f200-0000-7000-8000-000000000022"),
 	}
 	workID := domain.MustParseID("0199f200-0000-7000-8000-000000000023")
 	oldClaimID := domain.MustParseID("0199f200-0000-7000-8000-000000000024")

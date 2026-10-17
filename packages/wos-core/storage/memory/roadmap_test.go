@@ -22,8 +22,8 @@ func TestRoadmapRepositoryPreservesPublishedRevisionImmutability(t *testing.T) {
 	}
 
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f200-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199f200-0000-7000-8000-000000000010"),
+		TenantID:  domain.MustParseID("0199f200-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199f200-0000-7000-8000-000000000010"),
 	}
 	now := time.Date(2026, 10, 2, 22, 0, 0, 0, time.UTC)
 	roadmap, err := domain.NewRoadmap(

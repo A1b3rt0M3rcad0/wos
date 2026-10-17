@@ -667,7 +667,7 @@ func validateRoadmapDraftReferences(
 	roadmap domain.Roadmap,
 	nodes []domain.RoadmapNode,
 ) error {
-	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.NamespaceID, roadmap.Scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.TenantID, roadmap.Scope.OutcomeID)
 	if err != nil {
 		return err
 	}
@@ -956,7 +956,7 @@ func buildRoadmapPublicationSnapshot(
 		return nil, nil, err
 	}
 
-	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.NamespaceID, roadmap.Scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, roadmap.Scope.TenantID, roadmap.Scope.OutcomeID)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -20,10 +20,10 @@ func TestOutcomeStateProjectsExpiredLeaseWithoutMutatingWorkItem(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := commandContext()
-	namespaceID := id("0199f230-0000-7000-8000-000000000001")
+	tenantID := id("0199f230-0000-7000-8000-000000000001")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Continuity state",
 		DesiredState: "expired leases are visible",
 		Priority:     domain.PriorityNormal,

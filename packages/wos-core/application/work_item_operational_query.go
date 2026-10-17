@@ -36,7 +36,7 @@ func (s *Service) GetWorkItemOperationalState(
 		return WorkItemOperationalReadResult{}, err
 	}
 
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return WorkItemOperationalReadResult{}, err
 	}

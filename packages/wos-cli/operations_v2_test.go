@@ -193,7 +193,7 @@ func TestActivityLostResponseRecoversDurablyWithoutSecondWrite(t *testing.T) {
 		if request.URL.Query().Get("idempotency_key") != intent.IdempotencyKey {
 			t.Error("reconciliation selected another key")
 		}
-		value := a.SignedStateResult{NamespaceID: cmd.Scope.NamespaceID, Scope: &cmd.Scope, OperationName: intent.Operation, OperationCommandID: &commandID, OperationFingerprint: intent.RequestFingerprint, OperationPayload: base64.StdEncoding.EncodeToString(response), PayloadDigest: signing.Digest(response)}
+		value := a.SignedStateResult{TenantID: cmd.Scope.TenantID, Scope: &cmd.Scope, OperationName: intent.Operation, OperationCommandID: &commandID, OperationFingerprint: intent.RequestFingerprint, OperationPayload: base64.StdEncoding.EncodeToString(response), PayloadDigest: signing.Digest(response)}
 		if e := json.NewEncoder(rw).Encode(value); e != nil {
 			t.Errorf("JSON at %s: %v", request.URL.Path, e)
 		}
@@ -265,7 +265,7 @@ func TestUnsupportedActivityServerFailsBeforePreparingIntent(t *testing.T) {
 		if request.Method != "GET" {
 			writes.Add(1)
 		}
-		fmt.Fprint(rw, `{"protocols":["signed_contracts_v2"]}`)
+		fmt.Fprint(rw, `{"protocols":["signed_contracts_v3"]}`)
 	}))
 	defer server.Close()
 	client, _ := sdk.New(server.URL, string(token), server.Client())
@@ -286,7 +286,7 @@ func TestWorkContextIsBoundedReadOnlyAndCarriesRecentHistoryCursor(t *testing.T)
 		t.Fatal(e)
 	}
 	g := view.Authority
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(g.OutcomeID)}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(g.OutcomeID)}
 	work, e := d.NewWorkItem(d.ID(g.WorkItemID), scope, "Current title", strings.Repeat("context ", 600), d.PriorityNormal, d.WorkItemLifecycleTodo, time.Now().UTC())
 	if e != nil {
 		t.Fatal(e)
@@ -307,7 +307,7 @@ func TestWorkContextIsBoundedReadOnlyAndCarriesRecentHistoryCursor(t *testing.T)
 		case strings.HasSuffix(request.URL.Path, "/capabilities"):
 			value = a.ContractCapabilities()
 		case strings.Contains(request.URL.Path, "/signed-state/execution/"):
-			value = a.SignedStateResult{NamespaceID: scope.NamespaceID, Scope: &scope, Contract: &a.SignedContractMetadata{ID: id, CredentialID: profile.Binding.CredentialID, Kind: "execution", WorkItemID: work.ID, ExecutionID: d.ID(g.ExecutionID), Current: true, LeaseValid: true, Status: d.ContractActive, EffectiveStatus: d.ContractActive}}
+			value = a.SignedStateResult{TenantID: scope.TenantID, Scope: &scope, Contract: &a.SignedContractMetadata{ID: id, CredentialID: profile.Binding.CredentialID, Kind: "execution", WorkItemID: work.ID, ExecutionID: d.ID(g.ExecutionID), Current: true, LeaseValid: true, Status: d.ContractActive, EffectiveStatus: d.ContractActive}}
 		case strings.HasSuffix(request.URL.Path, "/attention"):
 			value = a.WorkAttention{WorkItemID: work.ID, OperationalState: d.WorkItemOperationalState{Ref: work.Ref()}, Obligations: []a.WorkObligation{}}
 		case strings.HasSuffix(request.URL.Path, "/context"):
@@ -377,7 +377,7 @@ func TestReviewDraftCanBeCorrectedThroughTypedCommandsWithoutEditingDocuments(t 
 		return document
 	}
 	workSpec := *view.WorkSpecification
-	criterion := d.SignedCriterion{ID: d.ID("0199ac10-0000-7000-8000-000000000030"), OwnerRef: d.EntityRef{Scope: d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}, Kind: d.EntityKindWorkItem, ID: d.ID(view.Authority.WorkItemID)}, Title: "The change was checked", Required: true, Revision: 1, VerificationMode: d.VerificationModeAttestation, Status: d.CriterionStatusActive}
+	criterion := d.SignedCriterion{ID: d.ID("0199ac10-0000-7000-8000-000000000030"), OwnerRef: d.EntityRef{Scope: d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}, Kind: d.EntityKindWorkItem, ID: d.ID(view.Authority.WorkItemID)}, Title: "The change was checked", Required: true, Revision: 1, VerificationMode: d.VerificationModeAttestation, Status: d.CriterionStatusActive}
 	workSpec.Spec.Criteria = []d.SignedCriterion{criterion}
 	workDocument := sign(signing.ContractSpec, workSpec)
 	reviewID := d.ID("0199ac10-0000-7000-8000-000000000031")
@@ -542,7 +542,7 @@ func TestActivityCompactHTTPReceiptRecoversLargeOriginalAndLocalConflict(t *test
 			t.Error(e)
 			return
 		}
-		state := a.SignedStateResult{NamespaceID: cmd.Scope.NamespaceID, Scope: &cmd.Scope, OperationName: intent.Operation, OperationCommandID: &commandID, OperationFingerprint: intent.RequestFingerprint, OperationPayload: base64.StdEncoding.EncodeToString(response), PayloadDigest: signing.Digest(response)}
+		state := a.SignedStateResult{TenantID: cmd.Scope.TenantID, Scope: &cmd.Scope, OperationName: intent.Operation, OperationCommandID: &commandID, OperationFingerprint: intent.RequestFingerprint, OperationPayload: base64.StdEncoding.EncodeToString(response), PayloadDigest: signing.Digest(response)}
 		if e = json.NewEncoder(rw).Encode(state); e != nil {
 			t.Error(e)
 		}
@@ -641,7 +641,7 @@ func TestHistoricalAcceptedResultVerifiesIssuerAndExactMaterial(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	submissionID := d.ID("0199ac10-0000-7000-8000-000000000050")
 	factID := d.ID("0199ac10-0000-7000-8000-000000000051")
 	material, e := signing.Canonical(file.Execution.Material.Result)
@@ -649,10 +649,10 @@ func TestHistoricalAcceptedResultVerifiesIssuerAndExactMaterial(t *testing.T) {
 		t.Fatal(e)
 	}
 	digest := signing.Digest(material)
-	receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: profile.Binding.ServerID.String(), NamespaceID: scope.NamespaceID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}, ContractID: id.String(), WorkItemID: view.Authority.WorkItemID, SubmissionID: submissionID.String(), SubmissionDigest: digest, Accepted: true, LocalObligationClosed: true}
+	receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: profile.Binding.ServerID.String(), TenantID: scope.TenantID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}, ContractID: id.String(), WorkItemID: view.Authority.WorkItemID, SubmissionID: submissionID.String(), SubmissionDigest: digest, Accepted: true, LocalObligationClosed: true}
 	var corrupt atomic.Bool
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, request *http.Request) {
-		state := a.SignedStateResult{NamespaceID: scope.NamespaceID, Scope: &scope}
+		state := a.SignedStateResult{TenantID: scope.TenantID, Scope: &scope}
 		if strings.Contains(request.URL.Path, "/submission/") {
 			state.SubmissionID, state.SubmissionDigest, state.MaterialPayload, state.AcceptanceFactID = &submissionID, digest, base64.StdEncoding.EncodeToString(material), &factID
 		} else {

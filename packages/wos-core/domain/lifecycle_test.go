@@ -106,7 +106,7 @@ func TestOutcomeArchivePreservesLifecycle(t *testing.T) {
 }
 
 func TestObjectiveCancelAndReopenPreservesConclusionHistory(t *testing.T) {
-	scope := domain.Scope{NamespaceID: nsID, OutcomeID: outID}
+	scope := domain.Scope{TenantID: nsID, OutcomeID: outID}
 	obj, err := domain.NewObjective(objID, scope, "Investigate", "", domain.PriorityNormal, false, t0)
 	if err != nil {
 		t.Fatal(err)
@@ -160,7 +160,7 @@ func TestCriterionRevisionInvalidatesCurrentAssessment(t *testing.T) {
 }
 
 func TestWorkItemClaimAndCompleteRequiresCurrentLease(t *testing.T) {
-	scope := domain.Scope{NamespaceID: nsID, OutcomeID: outID}
+	scope := domain.Scope{TenantID: nsID, OutcomeID: outID}
 	work, err := domain.NewWorkItem(workID, scope, "Do work", "", domain.PriorityNormal, domain.WorkItemLifecycleTodo, t0)
 	if err != nil {
 		t.Fatal(err)
@@ -188,7 +188,7 @@ func TestWorkItemClaimAndCompleteRequiresCurrentLease(t *testing.T) {
 }
 
 func TestWorkItemWithoutCriteriaRequiresResultSummary(t *testing.T) {
-	scope := domain.Scope{NamespaceID: nsID, OutcomeID: outID}
+	scope := domain.Scope{TenantID: nsID, OutcomeID: outID}
 	work, err := domain.NewWorkItem(workID, scope, "Do work", "", domain.PriorityNormal, domain.WorkItemLifecycleTodo, t0)
 	if err != nil {
 		t.Fatal(err)

@@ -51,11 +51,11 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 				}
 			}
 			ns := testID("0199a557-0000-7000-8000-000000000001")
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "query-scope"}, "admin", "read-scope-bootstrap-token-at-least-32"))
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "query-scope"}, "admin", "read-scope-bootstrap-token-at-least-32"))
 			admin, err := sec.Authenticate(ctx, "read-scope-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "reader", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "reader"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -64,7 +64,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			first := testID("0199a557-0000-7000-8000-000000000020")
 			hidden := testID("0199a557-0000-7000-8000-000000000021")
 			last := testID("0199a557-0000-7000-8000-000000000022")
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			u, err := store.Begin(ctx)
 			must(err)
 			for _, id := range []d.ID{first, hidden, last} {
@@ -76,12 +76,12 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			must(u.Commit())
 			service, err := a.NewAuthorizedService(store, clock, ids, &sec)
 			must(err)
-			_, err = service.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: first})
+			_, err = service.GetOutcome(readerCtx, d.Scope{TenantID: ns, OutcomeID: first})
 			must(err)
-			if _, err = service.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: hidden}); err == nil {
+			if _, err = service.GetOutcome(readerCtx, d.Scope{TenantID: ns, OutcomeID: hidden}); err == nil {
 				t.Fatal("Outcome restriction bypassed through legacy entity query")
 			}
-			if _, err = service.GetContinuity(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: hidden}, 10); err == nil {
+			if _, err = service.GetContinuity(readerCtx, d.Scope{TenantID: ns, OutcomeID: hidden}, 10); err == nil {
 				t.Fatal("Outcome restriction bypassed through continuity")
 			}
 			page, err := service.SearchOutcomes(readerCtx, ns, ports.OutcomeFilter{AllowedOutcomeIDs: []d.ID{hidden}}, 1, "")
@@ -118,13 +118,13 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 				t.Fatal("discovery used stale credential policy")
 			}
 			if _, err = service.GetCommandReceipt(readerCtx, ns, first); err == nil {
-				t.Fatal("restricted reader accessed Namespace-wide receipt path")
+				t.Fatal("restricted reader accessed Tenant-wide receipt path")
 			}
 			// Narrow after preflight authorization but before the read snapshot opens.
 			guarded := &beforeReadTransaction{base: store, before: func() error { return update([]d.ID{first}) }}
 			racing, err := a.NewAuthorizedService(guarded, clock, ids, &sec)
 			must(err)
-			if _, err = racing.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: hidden}); err == nil {
+			if _, err = racing.GetOutcome(readerCtx, d.Scope{TenantID: ns, OutcomeID: hidden}); err == nil {
 				t.Fatal("policy hardening between preflight and snapshot leaked state")
 			}
 			must(update(nil))
@@ -133,12 +133,12 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 				return nil
 			}
 			if _, e := racing.GetCommandReceipt(readerCtx, ns, first); e == nil {
-				t.Fatal("Namespace receipt ignored policy change before its own snapshot")
+				t.Fatal("Tenant receipt ignored policy change before its own snapshot")
 			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
 				t.Fatalf("receipt snapshot did not enforce restriction: %v", e)
 			}
 			guarded.before = func() error { return sec.RevokeCredential(adminCtx, ns, credential.ID) }
-			if _, err = racing.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: first}); err == nil {
+			if _, err = racing.GetOutcome(readerCtx, d.Scope{TenantID: ns, OutcomeID: first}); err == nil {
 				t.Fatal("revocation between preflight and snapshot leaked state")
 			}
 		})

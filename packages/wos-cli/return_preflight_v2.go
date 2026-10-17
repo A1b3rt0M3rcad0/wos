@@ -33,10 +33,10 @@ func validateReturnDraftV2(profile ProfileV2, file ContractFileV2, view Contract
 				return e
 			}
 			var work signing.SpecPayload[d.SignedWorkSpec]
-			if e = signing.DecodeStrict(raw, &work, 128<<10); e != nil {
+			if e = signing.DecodeHistoricalPayload(raw, &work, 128<<10); e != nil {
 				return e
 			}
-			if work.ProtocolVersion != 2 || work.ServerID != view.Authority.ServerID || work.NamespaceID != view.Authority.NamespaceID || work.OutcomeID != view.Authority.OutcomeID || work.WorkItemID != view.Authority.WorkItemID || signing.Digest(raw) != view.ReviewSpecification.Spec.IssuedWorkSpecDigest {
+			if (work.ProtocolVersion != 3 && work.ProtocolVersion != 2) || work.ServerID != view.Authority.ServerID || work.TenantID != view.Authority.TenantID || work.OutcomeID != view.Authority.OutcomeID || work.WorkItemID != view.Authority.WorkItemID || signing.Digest(raw) != view.ReviewSpecification.Spec.IssuedWorkSpecDigest {
 				return fmt.Errorf("reviewed specification binding differs")
 			}
 			for _, finding := range file.Review.Material.Findings {

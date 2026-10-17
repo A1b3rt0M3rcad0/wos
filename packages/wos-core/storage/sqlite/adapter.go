@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	DefaultBusyTimeout          = 5 * time.Second
-	DefaultStartupTimeout       = 30 * time.Second
+	DefaultBusyTimeout = 5 * time.Second
+	// Full schema transitions can outlast ordinary writer contention on slower
+	// hosts. This startup budget never changes the per-transaction busy timeout.
+	DefaultStartupTimeout       = 2 * time.Minute
 	DefaultIdempotencyRetention = 7 * 24 * time.Hour
 )
 
@@ -31,12 +33,17 @@ type Options struct {
 	BusyTimeout          time.Duration
 	IdempotencyRetention time.Duration
 	MigrateOnOpen        bool
+	// TenantID binds a standalone SQLite file to one Tenant. A zero ID keeps a
+	// new embedded store unbound; an existing durable binding is always honored.
+	TenantID   domain.ID
+	TenantName string
 }
 
 type Store struct {
 	readDB               *sql.DB
 	db                   *sql.DB
 	path                 string
+	tenantID             domain.ID
 	busyTimeout          time.Duration
 	idempotencyRetention time.Duration
 }
@@ -48,6 +55,11 @@ type ConnectionSettings struct {
 }
 
 func Open(path string, opts Options) (*Store, error) {
+	if !opts.TenantID.IsZero() {
+		if err := opts.TenantID.Validate(); err != nil {
+			return nil, domain.WrapError(domain.ErrorCodeInvalidConfig, "invalid SQLite Tenant binding", err)
+		}
+	}
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "sqlite path is required")
@@ -121,6 +133,10 @@ func Open(path string, opts Options) (*Store, error) {
 			_ = db.Close()
 			return nil, err
 		}
+	}
+	if err := store.configureTenantBinding(ctx, opts.TenantID, opts.TenantName); err != nil {
+		_ = db.Close()
+		return nil, err
 	}
 	// A separate bounded pool lets WAL snapshots coexist with the single
 	// immediate writer. ReadOnly BeginTx uses deferred/query-only transactions.

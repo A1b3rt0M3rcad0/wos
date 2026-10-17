@@ -236,7 +236,7 @@
   "intervene_signed_review_case": {
     "exposure": "S",
     "journey": "Signed v2 intervention",
-    "permission": "namespace:admin",
+    "permission": "tenant:admin",
     "surface": "profile"
   },
   "investigate_issue": {
@@ -290,7 +290,7 @@
   "reconcile_expired_work_contracts": {
     "exposure": "A",
     "journey": "Legacy v1 contracts",
-    "permission": "namespace:admin",
+    "permission": "tenant:admin",
     "surface": "developer"
   },
   "record_criterion_assessment": {
@@ -503,10 +503,10 @@
     "permission": "work.contract.revoke",
     "surface": "human"
   },
-  "set_namespace_work_protocol": {
+  "set_tenant_work_protocol": {
     "exposure": "I",
     "journey": "Protocol and integrations",
-    "permission": "namespace:admin",
+    "permission": "tenant:admin",
     "surface": "developer"
   },
   "set_objective_owners": {

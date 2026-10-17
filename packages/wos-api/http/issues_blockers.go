@@ -557,9 +557,9 @@ func requiredBodyVersion(raw *uint64, field string) (domain.Version, error) {
 }
 
 func issueLocation(h *Handler, scope domain.Scope, id domain.ID) string {
-	return h.prefix + "/namespaces/" + scope.NamespaceID.String() + "/outcomes/" + scope.OutcomeID.String() + "/issues/" + id.String()
+	return h.prefix + "/tenants/" + scope.TenantID.String() + "/outcomes/" + scope.OutcomeID.String() + "/issues/" + id.String()
 }
 
 func blockerLocation(h *Handler, scope domain.Scope, id domain.ID) string {
-	return h.prefix + "/namespaces/" + scope.NamespaceID.String() + "/outcomes/" + scope.OutcomeID.String() + "/blockers/" + id.String()
+	return h.prefix + "/tenants/" + scope.TenantID.String() + "/outcomes/" + scope.OutcomeID.String() + "/blockers/" + id.String()
 }

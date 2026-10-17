@@ -105,8 +105,18 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("read migration checksum", err)
 	}
 
+	if item.version == 33 {
+		if err := preflightTenantIdentityCutover(ctx, tx); err != nil {
+			return err
+		}
+	}
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply postgres migration %d", item.version), err)
+	}
+	if item.version == 33 {
+		if err := migrateTenantProtocolMetadata(ctx, tx); err != nil {
+			return err
+		}
 	}
 	if item.version == 29 {
 		if err := backfillExternalContinuityKeys(ctx, tx); err != nil {

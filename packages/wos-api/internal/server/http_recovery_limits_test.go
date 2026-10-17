@@ -66,7 +66,7 @@ func TestHTTPDeadlineAfterCommitPreservesReceiptAndExactReplay(t *testing.T) {
 	if _, e = client.Capabilities(context.Background()); e != nil {
 		t.Fatal(e)
 	}
-	cmd := a.CreateOutcomeCommand{NamespaceID: d.ID(cfg.Auth.LocalNamespaceID), Title: "deadline after commit", DesiredState: "one durable outcome", Priority: d.PriorityNormal}
+	cmd := a.CreateOutcomeCommand{TenantID: d.ID(cfg.Auth.LocalTenantID), Title: "deadline after commit", DesiredState: "one durable outcome", Priority: d.PriorityNormal}
 	key := "http-deadline-original-intention"
 	if _, e = client.CreateOutcome(context.Background(), key, cmd); e == nil {
 		t.Fatal("lost response was falsely reported as confirmed")
@@ -80,7 +80,7 @@ func TestHTTPDeadlineAfterCommitPreservesReceiptAndExactReplay(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("no committed result was captured")
 	}
-	receipt, e := client.GetCommandReceiptObservation(context.Background(), cmd.NamespaceID, first.CommandID)
+	receipt, e := client.GetCommandReceiptObservation(context.Background(), cmd.TenantID, first.CommandID)
 	if e != nil {
 		t.Fatal(e)
 	}

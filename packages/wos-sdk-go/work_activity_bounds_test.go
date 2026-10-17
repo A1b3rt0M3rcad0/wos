@@ -16,11 +16,11 @@ import (
 )
 
 func TestWorkActivityOriginalResponseBoundAllowsInlineRecordExpansion(t *testing.T) {
-	scope := d.Scope{NamespaceID: d.MustParseID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199a555-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.MustParseID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199a555-0000-7000-8000-000000000002")}
 	now := time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC)
 	actor := d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "worker"}
 	activity := d.WorkActivity{ID: d.MustParseID("0199a555-0000-7000-8000-000000000003"), Scope: scope, ContractID: d.MustParseID("0199a555-0000-7000-8000-000000000004"), WorkItemID: d.MustParseID("0199a555-0000-7000-8000-000000000005"), Sequence: 1, Type: d.WorkActivityProgress, Description: "Registered bounded artifact observations", PrincipalID: "worker", Actor: actor, RecordedAt: now}
-	command := a.AppendWorkActivityCommand{Scope: scope, ContractID: activity.ContractID, SignerKeyID: scope.NamespaceID, ExpectedContractVersion: 1, Type: activity.Type, Description: activity.Description, Authority: a.ContractAuthority{ExecutionID: scope.OutcomeID, FencingToken: 1, SpecDigest: "sha256:" + strings.Repeat("a", 64)}, AuthorityDigest: "sha256:" + strings.Repeat("b", 64)}
+	command := a.AppendWorkActivityCommand{Scope: scope, ContractID: activity.ContractID, SignerKeyID: scope.TenantID, ExpectedContractVersion: 1, Type: activity.Type, Description: activity.Description, Authority: a.ContractAuthority{ExecutionID: scope.OutcomeID, FencingToken: 1, SpecDigest: "sha256:" + strings.Repeat("a", 64)}, AuthorityDigest: "sha256:" + strings.Repeat("b", 64)}
 	result := a.WorkActivityResult{Activity: activity}
 	for i := 0; i < 10; i++ {
 		id := d.MustParseID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", i+10))

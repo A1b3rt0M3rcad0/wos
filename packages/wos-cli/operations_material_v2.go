@@ -47,6 +47,9 @@ func mutateMaterialV2(ctx context.Context, w *Workspace, profile ProfileV2, toke
 	if e != nil {
 		return "", e
 	}
+	if view.Authority.ProtocolVersion != signing.ProtocolVersion {
+		return "", fmt.Errorf("historical protocol-2 contract is read-only; acquire a new protocol-3 contract")
+	}
 	if view.Authority.ContractKind != kind {
 		return "", usage("contract kind differs from command")
 	}
@@ -114,10 +117,10 @@ func draftCriteriaV2(profile ProfileV2, view ContractViewV2) ([]d.SignedCriterio
 		return nil, fmt.Errorf("reviewed specification digest differs")
 	}
 	var spec signing.SpecPayload[d.SignedWorkSpec]
-	if e = signing.DecodeStrict(raw, &spec, 128<<10); e != nil {
+	if e = signing.DecodeHistoricalPayload(raw, &spec, 128<<10); e != nil {
 		return nil, e
 	}
-	if spec.ContractKind != "execution" || spec.ServerID != view.Authority.ServerID || spec.NamespaceID != view.Authority.NamespaceID || spec.OutcomeID != view.Authority.OutcomeID || spec.WorkItemID != view.Authority.WorkItemID {
+	if spec.ContractKind != "execution" || spec.ServerID != view.Authority.ServerID || spec.TenantID != view.Authority.TenantID || spec.OutcomeID != view.Authority.OutcomeID || spec.WorkItemID != view.Authority.WorkItemID {
 		return nil, fmt.Errorf("reviewed specification target differs")
 	}
 	return spec.Spec.Criteria, nil
@@ -604,7 +607,7 @@ func reviewDocumentCommandV2(ctx context.Context, w *Workspace, profile ProfileV
 		if strings.TrimSpace(o.values["uri"]) == "" {
 			return usage("--uri is required")
 		}
-		scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+		scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 		if o.args[1] == "artifact" {
 			if strings.TrimSpace(o.values["name"]) == "" || strings.TrimSpace(o.values["artifact-type"]) == "" {
 				return usage("artifact add requires --name and --artifact-type")
@@ -748,7 +751,7 @@ func expandReviewSpecificationV2(ctx context.Context, profile ProfileV2, client 
 		if ref.Digest != view.ReviewSpecification.Spec.IssuedWorkSpecDigest || ref.ContractID.Validate() != nil {
 			return view, fmt.Errorf("reviewed specification reference differs")
 		}
-		scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+		scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 		state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "specification", ContractKind: "execution", ID: ref.ContractID, Digest: ref.Digest})
 		if e != nil {
 			return view, e
@@ -765,10 +768,10 @@ func expandReviewSpecificationV2(ctx context.Context, profile ProfileV2, client 
 			return view, e
 		}
 		var spec signing.SpecPayload[d.SignedWorkSpec]
-		if e = signing.DecodeStrict(raw, &spec, 128<<10); e != nil {
+		if e = signing.DecodeHistoricalPayload(raw, &spec, 128<<10); e != nil {
 			return view, e
 		}
-		if signing.Digest(raw) != ref.Digest || spec.ContractID != ref.ContractID.String() || spec.ServerID != view.Authority.ServerID || spec.NamespaceID != view.Authority.NamespaceID || spec.OutcomeID != view.Authority.OutcomeID || spec.WorkItemID != view.Authority.WorkItemID || spec.ContractKind != "execution" {
+		if signing.Digest(raw) != ref.Digest || spec.ContractID != ref.ContractID.String() || spec.ServerID != view.Authority.ServerID || spec.TenantID != view.Authority.TenantID || spec.OutcomeID != view.Authority.OutcomeID || spec.WorkItemID != view.Authority.WorkItemID || spec.ContractKind != "execution" {
 			return view, fmt.Errorf("referenced reviewed specification target/digest differs")
 		}
 		copy := *view.ReviewSpecification

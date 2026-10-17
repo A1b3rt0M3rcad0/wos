@@ -8,7 +8,7 @@ import (
 )
 
 func registerSignedQueries(server *mcp.Server, service *a.Service, options Options) {
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_read_signed_state", Description: "Read one authorized signed-v2 resource: execution, executions, review, specification, authority, case, correction, fact, submission, receipt, return_resolution, operation, cases, review_queue or protocol_preflight. Protocol preflight requires Namespace administration and does not activate or attest operator drain. Operation is a credential-bound durable original-response expansion for harness recovery, at most 1 MiB decoded; do not put its technical blob in agent context. Exact Outcome scope required. Metadata is compact; proof/material expansions are digest-bound. Receipt and return_resolution lookup require the original credential and current authorization. A resolution never reverses accepted work. Collections scan at most limit (1–100, default 25); follow next_cursor. Executions is a bounded current header discovery page; optional holder_principal_id, work_item_id and status filters apply, without full specifications or authority grants. Queue expiry is read-only and never grants authority."}, func(ctx context.Context, request *mcp.CallToolRequest, query a.SignedStateQuery) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_read_signed_state", Description: "Read one authorized signed-v2 resource: execution, executions, review, specification, authority, case, correction, fact, submission, receipt, return_resolution, operation, cases, review_queue or protocol_preflight. Protocol preflight requires Tenant administration and does not activate or attest operator drain. Operation is a credential-bound durable original-response expansion for harness recovery, at most 1 MiB decoded; do not put its technical blob in agent context. Exact Outcome scope required. Metadata is compact; proof/material expansions are digest-bound. Receipt and return_resolution lookup require the original credential and current authorization. A resolution never reverses accepted work. Collections scan at most limit (1–100, default 25); follow next_cursor. Executions is a bounded current header discovery page; optional holder_principal_id, work_item_id and status filters apply, without full specifications or authority grants. Queue expiry is read-only and never grants authority."}, func(ctx context.Context, request *mcp.CallToolRequest, query a.SignedStateQuery) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, request, options)
 		defer cancel()
 		if err != nil {
@@ -23,14 +23,14 @@ func registerSignedQueries(server *mcp.Server, service *a.Service, options Optio
 		result, e := success(value)
 		return result, nil, e
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_signed_trust", Description: "Read persistent public server identity and Namespace protocol metadata; no signing secret or another Outcome's state is returned."}, func(ctx context.Context, request *mcp.CallToolRequest, query queryArgs) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_signed_trust", Description: "Read persistent public server identity and Tenant protocol metadata; no signing secret or another Outcome's state is returned."}, func(ctx context.Context, request *mcp.CallToolRequest, query queryArgs) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, request, options)
 		defer cancel()
 		if err != nil {
 			result, e := failure(err)
 			return result, nil, e
 		}
-		value, err := service.ReadSignedState(ctx, a.SignedStateQuery{Scope: domain.Scope{NamespaceID: query.NamespaceID}, Resource: "trust"})
+		value, err := service.ReadSignedState(ctx, a.SignedStateQuery{Scope: domain.Scope{TenantID: query.TenantID}, Resource: "trust"})
 		if err != nil {
 			result, e := failure(err)
 			return result, nil, e

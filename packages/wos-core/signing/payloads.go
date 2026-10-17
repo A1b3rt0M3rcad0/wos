@@ -31,7 +31,7 @@ func (v *Decimal) UnmarshalJSON(raw []byte) error {
 type Binding struct {
 	ProtocolVersion int    `json:"protocol_version"`
 	ServerID        string `json:"server_id"`
-	NamespaceID     string `json:"namespace_id"`
+	TenantID        string `json:"tenant_id"`
 	OutcomeID       string `json:"outcome_id,omitempty"`
 	PrincipalID     string `json:"principal_id"`
 	SignerKeyID     string `json:"signer_key_id"`

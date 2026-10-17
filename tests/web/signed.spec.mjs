@@ -32,7 +32,7 @@ for (const decision of ["approved", "changes_requested"])
     const port = socket.address().port;
     await new Promise((done) => socket.close(done));
     const url = `http://127.0.0.1:${port}`,
-      namespace = "01a11991-0000-7000-8000-000000000001",
+      tenant = "01a11991-0000-7000-8000-000000000001",
       token = randomBytes(32).toString("base64url");
     const issuerSeed = randomBytes(32).toString("base64");
     let logs = "";
@@ -43,8 +43,8 @@ for (const decision of ["approved", "changes_requested"])
         WOS_SQLITE_PATH: join(directory, "wos.db"),
         WOS_AUTH_MODE: "api_token",
         WOS_BOOTSTRAP_TOKEN: token,
-        WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-        WOS_BOOTSTRAP_NAMESPACE_NAME: "Signed workspace",
+        WOS_BOOTSTRAP_TENANT_ID: tenant,
+        WOS_BOOTSTRAP_TENANT_NAME: "Signed workspace",
         WOS_LOCAL_PRINCIPAL_ID: "human",
         WOS_SERVER_SIGNING_SEED_ENV: "WOS_UI_ISSUER_SEED",
         WOS_UI_ISSUER_SEED: issuerSeed,
@@ -134,12 +134,12 @@ for (const decision of ["approved", "changes_requested"])
       }
       assert.ok(ready, logs);
       const outcome = await command("create_outcome", {
-          namespace_id: namespace,
+          tenant_id: tenant,
           title: "Entrega assinada e revisada",
           desired_state: "Execução e revisão distintas",
           priority: "normal",
         }),
-        scope = { namespace_id: namespace, outcome_id: outcome.id };
+        scope = { tenant_id: tenant, outcome_id: outcome.id };
       await command("add_criterion", {
         owner: { ...scope, kind: "outcome", id: outcome.id },
         expected_version: outcome.version,
@@ -154,7 +154,7 @@ for (const decision of ["approved", "changes_requested"])
       let identity = await api("/security/signing-identity", token);
       const adminOperations = [
         "state:read",
-        "namespace:admin",
+        "tenant:admin",
         "work:write",
         "outcome:write",
         "planning:write",
@@ -163,11 +163,11 @@ for (const decision of ["approved", "changes_requested"])
         "actor:delegate",
       ];
       await signing({
-        namespace_id: namespace,
-        expected_namespace_version: identity.namespace_version,
+        tenant_id: tenant,
+        expected_tenant_version: identity.tenant_version,
         operation: "set_credential_policy",
         credential_policy: {
-          namespace_id: namespace,
+          tenant_id: tenant,
           credential_id: identity.credential_id,
           principal_id: identity.principal_id,
           acceptance_floor: "independent_review",
@@ -178,11 +178,11 @@ for (const decision of ["approved", "changes_requested"])
       });
       identity = await api("/security/signing-identity", token);
       await signing({
-        namespace_id: namespace,
-        expected_namespace_version: identity.namespace_version,
+        tenant_id: tenant,
+        expected_tenant_version: identity.tenant_version,
         operation: "set_acceptance_policy",
         acceptance_policy: {
-          namespace_id: namespace,
+          tenant_id: tenant,
           acceptance_floor: "independent_review",
           max_active_work_contracts: 3,
           max_active_review_contracts: 1,
@@ -191,14 +191,14 @@ for (const decision of ["approved", "changes_requested"])
       for (const [index, phase] of [
         "draining",
         "contracts_v1",
-        "draining_to_signed_v2",
-        "signed_contracts_v2",
+        "draining_to_signed_v3",
+        "signed_contracts_v3",
       ].entries())
-        await command("set_namespace_work_protocol", {
+        await command("set_tenant_work_protocol", {
           scope,
           expected_protocol_version: index + 1,
           phase,
-          writers_drained: ["contracts_v1", "signed_contracts_v2"].includes(
+          writers_drained: ["contracts_v1", "signed_contracts_v3"].includes(
             phase,
           ),
           reason: "Explicit signed browser fixture drain",
@@ -210,19 +210,19 @@ for (const decision of ["approved", "changes_requested"])
         lifecycle: "todo",
         execution_spec: { instructions: ["Executar somente esta obrigação"] },
       });
-      const trust = await api(`/namespaces/${namespace}/signed-trust`, token);
+      const trust = await api(`/tenants/${tenant}/signed-trust`, token);
       async function provision(name, permissions) {
         const own = await api("/security/signing-identity", token);
         const granted = await api("/security/commands", token, {
-          namespace_id: namespace,
-          expected_namespace_version: own.namespace_version,
+          tenant_id: tenant,
+          expected_tenant_version: own.tenant_version,
           operation: "set_grant",
           principal_id: name,
           permissions,
         });
         const issued = await api("/security/commands", token, {
-          namespace_id: namespace,
-          expected_namespace_version: granted.result.namespace_version,
+          tenant_id: tenant,
+          expected_tenant_version: granted.result.tenant_version,
           operation: "issue_credential",
           principal_id: name,
           actor_ref: {
@@ -235,11 +235,11 @@ for (const decision of ["approved", "changes_requested"])
         const self = await api("/security/signing-identity", issued.token),
           admin = await api("/security/signing-identity", token);
         const configured = await signing({
-          namespace_id: namespace,
-          expected_namespace_version: admin.namespace_version,
+          tenant_id: tenant,
+          expected_tenant_version: admin.tenant_version,
           operation: "set_credential_policy",
           credential_policy: {
-            namespace_id: namespace,
+            tenant_id: tenant,
             credential_id: self.credential_id,
             principal_id: name,
             acceptance_floor: "independent_review",
@@ -263,8 +263,8 @@ for (const decision of ["approved", "changes_requested"])
           fingerprint =
             "sha256:" + createHash("sha256").update(publicKey).digest("hex");
         const enrollment = await signing({
-          namespace_id: namespace,
-          expected_namespace_version: configured.namespace_version,
+          tenant_id: tenant,
+          expected_tenant_version: configured.tenant_version,
           operation: "create_enrollment",
           credential_id: self.credential_id,
           principal_id: name,
@@ -287,8 +287,8 @@ for (const decision of ["approved", "changes_requested"])
           url,
           "--server-id",
           trust.server.server_id,
-          "--namespace",
-          namespace,
+          "--tenant",
+          tenant,
           "--outcome",
           outcome.id,
         );
@@ -301,7 +301,7 @@ for (const decision of ["approved", "changes_requested"])
             binding: {
               server_id: trust.server.server_id,
               server_origin: url,
-              namespace_id: namespace,
+              tenant_id: tenant,
               principal_id: name,
               credential_id: self.credential_id,
               issuer_keys: [
@@ -378,11 +378,11 @@ for (const decision of ["approved", "changes_requested"])
       // The live signed contract has authority independently of the legacy
       // WorkLease projection. Specialist views must not call it expired or
       // imply that opening a browser acquires execution authority.
-      const activePath = `/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,
+      const activePath = `/tenants/${tenant}/outcomes/${outcome.id}/work-items/${work.id}`,
         activeWork = (await api(activePath, token)).value,
         activeAttention = await api(`${activePath}/attention`, token),
         activeContract = await api(
-          `/namespaces/${namespace}/outcomes/${outcome.id}/signed-state/execution/${activeWork.current_contract_id}`,
+          `/tenants/${tenant}/outcomes/${outcome.id}/signed-state/execution/${activeWork.current_contract_id}`,
           token,
         );
       assert.equal(activeWork.lifecycle, "in_progress");

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	cli "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"os"
 	"reflect"
 )
@@ -65,6 +66,7 @@ func main() {
 			pending := local["pending"].(map[string]any)["anyOf"].([]any)[0].(map[string]any)["properties"].(map[string]any)
 			pending["response"] = map[string]any{"type": "string", "contentEncoding": "base64", "maxLength": 349528}
 		}
+		allowHistoricalLocalProofs(schema)
 		data, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
 			panic(err)
@@ -100,6 +102,44 @@ func quoteLegacySchemaCounters(schema map[string]any) {
 		for _, item := range alternatives {
 			if child, ok := item.(map[string]any); ok {
 				quoteLegacySchemaCounters(child)
+			}
+		}
+	}
+}
+
+// Stored issuer proofs are read-only history. Incoming command envelopes retain
+// the current-only schema supplied by commands.SignedSchema.
+func allowHistoricalLocalProofs(node map[string]any) {
+	if properties, ok := node["properties"].(map[string]any); ok {
+		for name, value := range properties {
+			child, ok := value.(map[string]any)
+			if !ok {
+				continue
+			}
+			if name == "proof" {
+				if fields, ok := child["properties"].(map[string]any); ok {
+					if payload, ok := fields["payload_type"].(map[string]any); ok {
+						payload["enum"] = []signing.PayloadType{
+							signing.ContractSpec, signing.ContractAuthority, signing.WorkReturn, signing.ReviewReturn, signing.AcceptanceReceipt, signing.KeyEnrollment, signing.ReturnResolution, signing.ReturnResolutionReceipt,
+							signing.LegacyContractSpec, signing.LegacyContractAuthority, signing.LegacyWorkReturn, signing.LegacyReviewReturn, signing.LegacyAcceptanceReceipt, signing.LegacyKeyEnrollment, signing.LegacyReturnResolution, signing.LegacyReturnResolutionReceipt,
+						}
+					}
+				}
+			}
+			allowHistoricalLocalProofs(child)
+		}
+	}
+	for _, key := range []string{"items", "additionalProperties"} {
+		if child, ok := node[key].(map[string]any); ok {
+			allowHistoricalLocalProofs(child)
+		}
+	}
+	for _, key := range []string{"anyOf", "oneOf", "allOf"} {
+		if children, ok := node[key].([]any); ok {
+			for _, item := range children {
+				if child, ok := item.(map[string]any); ok {
+					allowHistoricalLocalProofs(child)
+				}
 			}
 		}
 	}

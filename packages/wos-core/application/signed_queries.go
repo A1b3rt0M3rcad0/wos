@@ -71,14 +71,14 @@ type SignedStateResult struct {
 	OperationName        string                   `json:"operation_name,omitempty"`
 	OperationPayload     string                   `json:"operation_result_payload,omitempty"`
 	ProtocolVersion      int                      `json:"protocol_version"`
-	NamespaceID          d.ID                     `json:"namespace_id"`
+	TenantID             d.ID                     `json:"tenant_id"`
 	Scope                *d.Scope                 `json:"scope,omitempty"`
 	Resource             string                   `json:"resource"`
 	OutcomeRevision      signing.Decimal          `json:"outcome_revision"`
 	EvaluatedAt          time.Time                `json:"evaluated_at"`
 	IssuerHistory        []d.ServerIdentity       `json:"issuer_history,omitempty"`
 	Server               *d.ServerIdentity        `json:"server,omitempty"`
-	Protocol             *d.NamespaceWorkProtocol `json:"namespace_protocol,omitempty"`
+	Protocol             *d.TenantWorkProtocol    `json:"tenant_protocol,omitempty"`
 	Contract             *SignedContractMetadata  `json:"contract,omitempty"`
 	ReviewCase           *d.ReviewCase            `json:"review_case,omitempty"`
 	Cases                []d.ReviewCase           `json:"cases,omitempty"`
@@ -102,8 +102,8 @@ func (r SignedStateResult) MarshalJSON() ([]byte, error) {
 
 func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (SignedStateResult, error) {
 	var zero SignedStateResult
-	if q.Scope.NamespaceID.Validate() != nil {
-		return zero, d.NewError(d.ErrorCodeInvalidArgument, "Namespace required")
+	if q.Scope.TenantID.Validate() != nil {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "Tenant required")
 	}
 	if q.Resource != "trust" && q.Scope.Validate() != nil {
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "exact Outcome scope required")
@@ -112,7 +112,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		return zero, d.NewError(d.ErrorCodeInvalidArgument, "invalid expected digest")
 	}
 	identity, ok := IdentityFromContext(ctx)
-	if !ok || identity.CredentialDigest == "" || identity.NamespaceID != q.Scope.NamespaceID {
+	if !ok || identity.CredentialDigest == "" || identity.TenantID != q.Scope.TenantID {
 		return zero, d.NewError(d.ErrorCodeForbidden, "authenticated scoped credential required")
 	}
 	if err := s.authorizeScopedRead(ctx, q.Scope); err != nil {
@@ -131,10 +131,10 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if !ok {
 		return zero, d.NewError(d.ErrorCodeInvalidConfig, "signed query access snapshot unavailable")
 	}
-	if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: q.Scope.NamespaceID, OutcomeID: q.Scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionStateRead}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+	if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: q.Scope.TenantID, OutcomeID: q.Scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionStateRead}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
 		return zero, err
 	}
-	result := SignedStateResult{ProtocolVersion: 2, NamespaceID: q.Scope.NamespaceID, Resource: q.Resource, EvaluatedAt: now}
+	result := SignedStateResult{ProtocolVersion: 3, TenantID: q.Scope.TenantID, Resource: q.Resource, EvaluatedAt: now}
 	if q.Resource == "trust" {
 		serverRepo, ok := u.(ports.ServerIdentityUnitOfWork)
 		if !ok {
@@ -148,7 +148,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if err != nil {
 			return zero, err
 		}
-		protocol, err := protocolRepo.Lock(ctx, q.Scope.NamespaceID, false)
+		protocol, err := protocolRepo.Lock(ctx, q.Scope.TenantID, false)
 		if err != nil {
 			return zero, err
 		}
@@ -185,13 +185,13 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	}
 	result.Scope = &q.Scope
 	if q.Resource == "protocol_preflight" || q.Resource == "return_resolution" {
-		// Activation takes Namespace before Outcome. Preserve that order for
+		// Activation takes Tenant before Outcome. Preserve that order for
 		// this advisory query too, rather than introducing an inverted guard.
 		protocol, e := protocolRepository(u)
 		if e != nil {
 			return zero, e
 		}
-		if _, e = protocol.Lock(ctx, q.Scope.NamespaceID, q.Resource == "return_resolution"); e != nil {
+		if _, e = protocol.Lock(ctx, q.Scope.TenantID, q.Resource == "return_resolution"); e != nil {
 			return zero, e
 		}
 	}
@@ -201,10 +201,10 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	}
 	result.OutcomeRevision = signing.Decimal(coordination.Revision)
 	if q.Resource == "protocol_preflight" {
-		if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: q.Scope.NamespaceID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionNamespaceAdmin}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+		if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: q.Scope.TenantID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionTenantAdmin}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
 			return zero, err
 		}
-		readiness, e := s.signedProtocolReadiness(ctx, u, q.Scope.NamespaceID, now)
+		readiness, e := s.signedProtocolReadiness(ctx, u, q.Scope.TenantID, now)
 		if e != nil {
 			return zero, e
 		}
@@ -241,7 +241,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if e != nil {
 			return zero, e
 		}
-		record, e := resolutions.GetByOriginalIntent(ctx, q.Scope.NamespaceID, current.PrincipalID, current.CredentialID, command, q.IdempotencyKey)
+		record, e := resolutions.GetByOriginalIntent(ctx, q.Scope.TenantID, current.PrincipalID, current.CredentialID, command, q.IdempotencyKey)
 		if e != nil {
 			return zero, e
 		}
@@ -286,7 +286,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		f := ports.ContractFilter{HolderPrincipalID: q.HolderPrincipalID, WorkItemID: q.WorkItemID, Status: q.Status}
 		fingerprint := filterHash(f)
 		if q.Cursor != "" {
-			cursor, err := decodeCursor(q.Cursor, q.Scope.NamespaceID, q.Scope.OutcomeID, "executions", fingerprint)
+			cursor, err := decodeCursor(q.Cursor, q.Scope.TenantID, q.Scope.OutcomeID, "executions", fingerprint)
 			if err != nil {
 				return zero, err
 			}
@@ -303,7 +303,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		result.SearchComplete = len(contracts) <= limit
 		if len(contracts) > limit {
 			contracts = contracts[:limit]
-			result.NextCursor = encodeCursor(queryCursor{Namespace: q.Scope.NamespaceID, Outcome: q.Scope.OutcomeID, Section: "executions", Filter: fingerprint, Key: contracts[len(contracts)-1].ID.String()})
+			result.NextCursor = encodeCursor(queryCursor{Tenant: q.Scope.TenantID, Outcome: q.Scope.OutcomeID, Section: "executions", Filter: fingerprint, Key: contracts[len(contracts)-1].ID.String()})
 		}
 		result.Scanned = len(contracts)
 		result.Executions = []SignedExecutionHeader{}
@@ -321,9 +321,9 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if !ok {
 			return zero, d.NewError(d.ErrorCodeInvalidConfig, "durable signed operation repository required")
 		}
-		accepted, err := durable.SignedOperations().Get(ctx, q.Scope.NamespaceID, identity.PrincipalID, q.IdempotencyKey)
+		accepted, err := durable.SignedOperations().Get(ctx, q.Scope.TenantID, identity.PrincipalID, q.IdempotencyKey)
 		if code, _ := d.ErrorCodeOf(err); code == d.ErrorCodeNotFound {
-			legacy, e := durable.SignedOperations().FindLegacy(ctx, q.Scope.NamespaceID, identity.PrincipalID, q.IdempotencyKey)
+			legacy, e := durable.SignedOperations().FindLegacy(ctx, q.Scope.TenantID, identity.PrincipalID, q.IdempotencyKey)
 			if e != nil {
 				return zero, e
 			}
@@ -416,7 +416,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 			if decision.Decision != "changes_requested" || decision.SubmissionID != review.SubmissionID.String() || decision.SubmissionDigest != review.SubmissionDigest {
 				return zero, d.NewError(d.ErrorCodeSubmissionNotAccepted, "accepted correction target differs")
 			}
-			acceptance, err := repo.Acceptance(ctx, q.Scope.NamespaceID, fact.PrincipalID, fact.IdempotencyKey)
+			acceptance, err := repo.Acceptance(ctx, q.Scope.TenantID, fact.PrincipalID, fact.IdempotencyKey)
 			if err != nil {
 				return zero, err
 			}
@@ -434,7 +434,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if err = d.ValidateIdempotencyKey(q.IdempotencyKey); err != nil {
 			return zero, err
 		}
-		fact, err := repo.Acceptance(ctx, q.Scope.NamespaceID, identity.PrincipalID, q.IdempotencyKey)
+		fact, err := repo.Acceptance(ctx, q.Scope.TenantID, identity.PrincipalID, q.IdempotencyKey)
 		if err != nil {
 			return zero, err
 		}
@@ -449,7 +449,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if err != nil {
 			return zero, err
 		}
-		if submission.ProtocolVersion != 2 || q.Digest != "" && q.Digest != submission.Digest {
+		if (submission.ProtocolVersion != 2 && submission.ProtocolVersion != 3) || q.Digest != "" && q.Digest != submission.Digest {
 			return zero, d.NewError(d.ErrorCodeContractSpecMismatch, "accepted material protocol/digest differs")
 		}
 		contract, err := workRepo.Get(ctx, q.Scope, submission.Material.ContractID)
@@ -475,11 +475,11 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if err != nil {
 			return zero, err
 		}
-		raw, err := signing.Verify(*verified.Envelope, signing.AcceptanceReceipt, verified.SignerKey.ID.String(), public)
+		raw, err := signing.VerifyHistorical(*verified.Envelope, signing.AcceptanceReceipt, verified.SignerKey.ID.String(), public)
 		if err != nil {
 			return zero, signingError(err)
 		}
-		if err = signing.DecodeStrict(raw, &receipt, signing.MaxPayloadBytes); err != nil {
+		if err = signing.DecodeHistoricalPayload(raw, &receipt, signing.MaxPayloadBytes); err != nil {
 			return zero, signingError(err)
 		}
 		if !receipt.Accepted || !receipt.LocalObligationClosed || receipt.ContractID != contract.ID.String() || receipt.WorkItemID != submission.Material.WorkItemID.String() || receipt.PrincipalID != submission.PrincipalID || receipt.SubmissionID != submission.ID.String() || receipt.SubmissionDigest != submission.Digest {
@@ -500,7 +500,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		}
 		filter := ports.ReviewFilter{Limit: limit + 1, OpenOnly: q.Resource == "review_queue"}
 		if q.Cursor != "" {
-			cursor, err := decodeCursor(q.Cursor, q.Scope.NamespaceID, q.Scope.OutcomeID, q.Resource, "")
+			cursor, err := decodeCursor(q.Cursor, q.Scope.TenantID, q.Scope.OutcomeID, q.Resource, "")
 			if err != nil {
 				return zero, err
 			}
@@ -517,7 +517,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 		if len(cases) > limit {
 			cases = cases[:limit]
 			last := cases[len(cases)-1].ID
-			result.NextCursor = encodeCursor(queryCursor{Namespace: q.Scope.NamespaceID, Outcome: q.Scope.OutcomeID, Section: q.Resource, Key: last.String()})
+			result.NextCursor = encodeCursor(queryCursor{Tenant: q.Scope.TenantID, Outcome: q.Scope.OutcomeID, Section: q.Resource, Key: last.String()})
 		}
 		result.Scanned = len(cases)
 		result.Cases = []d.ReviewCase{}
@@ -605,7 +605,7 @@ func fillSignedFactView(ctx context.Context, u ports.UnitOfWork, q SignedStateQu
 	if err != nil {
 		return err
 	}
-	key, err := registry.Key(ctx, q.Scope.NamespaceID, f.KeyID)
+	key, err := registry.Key(ctx, q.Scope.TenantID, f.KeyID)
 	if err != nil {
 		return err
 	}
@@ -658,14 +658,14 @@ func fillSignedFactView(ctx context.Context, u ports.UnitOfWork, q SignedStateQu
 	if err != nil {
 		return signingError(err)
 	}
-	raw, err := signing.Verify(envelope, purpose, key.ID.String(), public)
+	raw, err := signing.VerifyHistorical(envelope, purpose, key.ID.String(), public)
 	if err != nil {
 		return signingError(err)
 	}
 	if signing.Digest(raw) != f.PayloadDigest {
 		return d.NewError(d.ErrorCodeContractSpecMismatch, "stored authenticated bytes differ")
 	}
-	if err = signing.DecodeStrict(raw, schema, signing.MaxPayloadBytes); err != nil {
+	if err = signing.DecodeHistoricalPayload(raw, schema, signing.MaxPayloadBytes); err != nil {
 		return signingError(err)
 	}
 	var target struct {
@@ -679,7 +679,11 @@ func fillSignedFactView(ctx context.Context, u ports.UnitOfWork, q SignedStateQu
 	if err = json.Unmarshal(raw, &target); err != nil {
 		return err
 	}
-	if target.ServerID != server.ID.String() || target.NamespaceID != q.Scope.NamespaceID.String() || target.OutcomeID != q.Scope.OutcomeID.String() || target.PrincipalID != f.PrincipalID || target.ContractID != f.ContractID.String() {
+	target.Binding, err = signing.ReadHistoricalBinding(raw)
+	if err != nil {
+		return signingError(err)
+	}
+	if target.ServerID != server.ID.String() || target.TenantID != q.Scope.TenantID.String() || target.OutcomeID != q.Scope.OutcomeID.String() || target.PrincipalID != f.PrincipalID || target.ContractID != f.ContractID.String() {
 		return d.NewError(d.ErrorCodeInvalidScope, "authenticated resource bindings differ")
 	}
 	if f.RequestID != nil && (target.RequestID != f.RequestID.String() || target.IdempotencyKey != f.IdempotencyKey) {

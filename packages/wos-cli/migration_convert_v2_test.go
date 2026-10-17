@@ -61,7 +61,7 @@ func TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits
 	project.Connection.ServerURL = config.Connection.ServerURL
 	project.Scope = config.Scope
 	profile.Binding.ServerOrigin = config.Connection.ServerURL
-	profile.Binding.NamespaceID = config.Scope.NamespaceID
+	profile.Binding.TenantID = config.Scope.TenantID
 	manifest := FrozenMigrationV2{Source: source.canonicalPath, InventoryDigest: inventory.InventoryDigest, Targets: []MigrationTargetV2{}}
 	raw, e := EncodeV2Document(files[0])
 	must(e)
@@ -70,7 +70,7 @@ func TestMigrationPartialPublicationReconcilesOriginalDocumentsAndPreservesEdits
 	must(e)
 	id, e := newLocalIDV2()
 	must(e)
-	intent := PendingOperationV2{ID: id, Operation: "WorkspaceMigration", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID}, IdempotencyKey: "migration-original-intent-0001", Payload: base64.StdEncoding.EncodeToString(frozen), PayloadDigest: signing.Digest(frozen)}
+	intent := PendingOperationV2{ID: id, Operation: "WorkspaceMigration", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID}, IdempotencyKey: "migration-original-intent-0001", Payload: base64.StdEncoding.EncodeToString(frozen), PayloadDigest: signing.Digest(frozen)}
 	profile.Local.PendingOperations = append(profile.Local.PendingOperations, intent)
 	must(profile.SealBinding(token))
 	must(destination.CreateV2(".wos/project.yaml", project))

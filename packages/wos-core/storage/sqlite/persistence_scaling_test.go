@@ -54,7 +54,7 @@ func TestPersistenceDeltasPreserveHistoryAndNewAssessment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	loaded, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	loaded, err := u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestPersistenceDeltasPreserveHistoryAndNewAssessment(t *testing.T) {
 		t.Fatal(err)
 	}
 	// A second read/save within the same UOW must update its baseline as well.
-	loaded, err = u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	loaded, err = u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestPersistenceDeltasPreserveHistoryAndNewAssessment(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer u.Rollback()
-	got, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	got, err := u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestPersistenceDeltaRejectsAliasedHistoricalEdits(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer u.Rollback()
-			loaded, err := u.Outcomes().Get(context.Background(), outcome.NamespaceID, outcome.ID)
+			loaded, err := u.Outcomes().Get(context.Background(), outcome.TenantID, outcome.ID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -138,7 +138,7 @@ func TestBoundedCacheCleanupPreservesDurableSignedReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ns := f.request.NamespaceID
+	ns := f.request.TenantID
 	for i := 0; i < 9; i++ {
 		status := "completed"
 		expiry := time.Now().Add(-time.Hour)
@@ -148,7 +148,7 @@ func TestBoundedCacheCleanupPreservesDurableSignedReplay(t *testing.T) {
 		if i == 8 {
 			status = "processing"
 		}
-		_, err := store.db.ExecContext(ctx, `INSERT INTO idempotency_records(namespace_id,principal_id,command_name,idempotency_key,request_hash,status,command_id,outcome_revision,response_json,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ns, f.cc.PrincipalID, "cleanup_fixture", fmt.Sprintf("cleanup-fixture-%d", i), "fingerprint", status, f.cc.CommandID.String(), int64(1), `{}`, encodeTime(time.Now().Add(-2*time.Hour)), encodeTime(expiry))
+		_, err := store.db.ExecContext(ctx, `INSERT INTO idempotency_records(tenant_id,principal_id,command_name,idempotency_key,request_hash,status,command_id,outcome_revision,response_json,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ns, f.cc.PrincipalID, "cleanup_fixture", fmt.Sprintf("cleanup-fixture-%d", i), "fingerprint", status, f.cc.CommandID.String(), int64(1), `{}`, encodeTime(time.Now().Add(-2*time.Hour)), encodeTime(expiry))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -196,7 +196,7 @@ func TestPersistenceDeltaPreservesAndProtectsConclusionProof(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer u.Rollback()
-	loaded, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	loaded, err := u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestPersistenceDeltaPreservesAndProtectsConclusionProof(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer u.Rollback()
-	loaded, err = u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	loaded, err = u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +233,7 @@ func TestPersistenceDeltaPreservesAndProtectsConclusionProof(t *testing.T) {
 	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
 		t.Fatal(err)
 	}
-	readback, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	readback, err := u.Outcomes().Get(ctx, outcome.TenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

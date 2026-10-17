@@ -13,24 +13,24 @@ import (
 )
 
 type SigningSecurityIntent struct {
-	NamespaceID              d.ID                    `json:"namespace_id"`
-	ExpectedNamespaceVersion d.Version               `json:"expected_namespace_version,string"`
-	Operation                string                  `json:"operation"`
-	PrincipalID              string                  `json:"principal_id,omitempty"`
-	CredentialID             d.ID                    `json:"credential_id,omitempty"`
-	KeyID                    d.ID                    `json:"key_id,omitempty"`
-	ExpectedVersion          d.Version               `json:"expected_version,string"`
-	EnrollmentID             d.ID                    `json:"enrollment_id,omitempty"`
-	TTLSeconds               int                     `json:"ttl_seconds,omitempty"`
-	ExpectedFingerprint      string                  `json:"expected_fingerprint,omitempty"`
-	CredentialPolicy         *d.CredentialPolicy     `json:"credential_policy,omitempty"`
-	AcceptancePolicy         *d.WorkAcceptancePolicy `json:"acceptance_policy,omitempty"`
-	SeparationGroup          string                  `json:"separation_group,omitempty"`
-	Reason                   string                  `json:"reason,omitempty"`
-	Proof                    *signing.Envelope       `json:"proof,omitempty"`
+	TenantID              d.ID                    `json:"tenant_id"`
+	ExpectedTenantVersion d.Version               `json:"expected_tenant_version,string"`
+	Operation             string                  `json:"operation"`
+	PrincipalID           string                  `json:"principal_id,omitempty"`
+	CredentialID          d.ID                    `json:"credential_id,omitempty"`
+	KeyID                 d.ID                    `json:"key_id,omitempty"`
+	ExpectedVersion       d.Version               `json:"expected_version,string"`
+	EnrollmentID          d.ID                    `json:"enrollment_id,omitempty"`
+	TTLSeconds            int                     `json:"ttl_seconds,omitempty"`
+	ExpectedFingerprint   string                  `json:"expected_fingerprint,omitempty"`
+	CredentialPolicy      *d.CredentialPolicy     `json:"credential_policy,omitempty"`
+	AcceptancePolicy      *d.WorkAcceptancePolicy `json:"acceptance_policy,omitempty"`
+	SeparationGroup       string                  `json:"separation_group,omitempty"`
+	Reason                string                  `json:"reason,omitempty"`
+	Proof                 *signing.Envelope       `json:"proof,omitempty"`
 }
 type SigningSecurityResult struct {
-	NamespaceVersion d.Version               `json:"namespace_version,string"`
+	TenantVersion    d.Version               `json:"tenant_version,string"`
 	Enrollment       *d.SigningEnrollment    `json:"enrollment,omitempty"`
 	Key              *d.SigningKey           `json:"key,omitempty"`
 	CredentialPolicy *d.CredentialPolicy     `json:"credential_policy,omitempty"`
@@ -59,14 +59,14 @@ func securityTransactionTime(ctx context.Context, uow ports.UnitOfWork, clock po
 }
 func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd SigningSecurityIntent) (SigningSecurityResult, error) {
 	var result SigningSecurityResult
-	if cmd.NamespaceID.Validate() != nil || d.ValidateIdempotencyKey(key) != nil {
-		return result, d.NewError(d.ErrorCodeInvalidArgument, "namespace and idempotency key required")
+	if cmd.TenantID.Validate() != nil || d.ValidateIdempotencyKey(key) != nil {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "tenant and idempotency key required")
 	}
 	id, ok := IdentityFromContext(ctx)
-	if !ok || id.NamespaceID != cmd.NamespaceID || id.CredentialDigest == "" {
+	if !ok || id.TenantID != cmd.TenantID || id.CredentialDigest == "" {
 		return result, d.NewError(d.ErrorCodeForbidden, "authenticated scoped credential required")
 	}
-	permission := ports.PermissionNamespaceAdmin
+	permission := ports.PermissionTenantAdmin
 	switch cmd.Operation {
 	case "register_signing_key":
 		permission = ports.PermissionSigningKeyEnroll
@@ -76,7 +76,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	default:
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "unknown signing security operation")
 	}
-	if err := s.Require(ctx, cmd.NamespaceID, permission); err != nil {
+	if err := s.Require(ctx, cmd.TenantID, permission); err != nil {
 		return result, err
 	}
 	manager, ok := s.Store.(ports.TransactionManager)
@@ -92,23 +92,23 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	if err != nil {
 		return result, err
 	}
-	version, err := repo.LockNamespace(ctx, cmd.NamespaceID)
+	version, err := repo.LockTenant(ctx, cmd.TenantID)
 	if err != nil {
 		return result, err
 	}
-	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{NamespaceID: cmd.NamespaceID, PrincipalID: id.PrincipalID, Permission: permission}); err != nil {
+	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{TenantID: cmd.TenantID, PrincipalID: id.PrincipalID, Permission: permission}); err != nil {
 		return result, err
 	}
 	fingerprint, err := d.SemanticDigest(cmd)
 	if err != nil {
 		return result, err
 	}
-	previous, raw, err := repo.Receipt(ctx, cmd.NamespaceID, id.PrincipalID, key)
+	previous, raw, err := repo.Receipt(ctx, cmd.TenantID, id.PrincipalID, key)
 	if err == nil {
 		if previous != fingerprint {
 			return result, d.NewError(d.ErrorCodeIdempotencyConflict, "security key represents another intent")
 		}
-		if err = json.Unmarshal(raw, &result); err != nil {
+		if err = signing.DecodeStoredJSON(raw, &result, 0); err != nil {
 			return result, err
 		}
 		result.IdempotentReplay = true
@@ -117,8 +117,8 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		return result, err
 	}
-	if permission == ports.PermissionNamespaceAdmin && (cmd.ExpectedNamespaceVersion != version || cmd.ExpectedNamespaceVersion < 1) {
-		return result, d.NewError(d.ErrorCodeVersionConflict, "namespace security version changed")
+	if permission == ports.PermissionTenantAdmin && (cmd.ExpectedTenantVersion != version || cmd.ExpectedTenantVersion < 1) {
+		return result, d.NewError(d.ErrorCodeVersionConflict, "tenant security version changed")
 	}
 	now, err := securityTransactionTime(ctx, uow, s.Clock)
 	if err != nil {
@@ -131,8 +131,8 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "credential policy required")
 		}
 		policy := *cmd.CredentialPolicy
-		if policy.NamespaceID != cmd.NamespaceID {
-			return result, d.NewError(d.ErrorCodeInvalidScope, "policy namespace differs")
+		if policy.TenantID != cmd.TenantID {
+			return result, d.NewError(d.ErrorCodeInvalidScope, "policy tenant differs")
 		}
 		policy.Version = cmd.ExpectedVersion + 1
 		policy.UpdatedAt = now
@@ -151,8 +151,8 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "acceptance policy required")
 		}
 		policy := *cmd.AcceptancePolicy
-		if policy.NamespaceID != cmd.NamespaceID {
-			return result, d.NewError(d.ErrorCodeInvalidScope, "policy namespace differs")
+		if policy.TenantID != cmd.TenantID {
+			return result, d.NewError(d.ErrorCodeInvalidScope, "policy tenant differs")
 		}
 		policy.Version = cmd.ExpectedVersion + 1
 		policy.UpdatedAt = now
@@ -162,7 +162,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		result.AcceptancePolicy = &policy
 		target = "acceptance_policy"
 	case "set_review_group":
-		if err = repo.SetPrincipalGroup(ctx, cmd.NamespaceID, cmd.PrincipalID, cmd.SeparationGroup); err != nil {
+		if err = repo.SetPrincipalGroup(ctx, cmd.TenantID, cmd.PrincipalID, cmd.SeparationGroup); err != nil {
 			return result, err
 		}
 		target = cmd.PrincipalID
@@ -170,7 +170,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if s.ServerID == "" {
 			return result, d.NewError(d.ErrorCodeInvalidConfig, "persistent server identity required")
 		}
-		credential, e := repo.Credential(ctx, cmd.NamespaceID, cmd.CredentialID)
+		credential, e := repo.Credential(ctx, cmd.TenantID, cmd.CredentialID)
 		if e != nil {
 			return result, e
 		}
@@ -196,7 +196,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if _, e = rand.Read(nonce); e != nil {
 			return result, e
 		}
-		enrollment := d.SigningEnrollment{ID: enrollmentID, NamespaceID: cmd.NamespaceID, PrincipalID: cmd.PrincipalID, CredentialID: credential.ID, KeyID: keyID, Purpose: "agent", Nonce: base64.RawURLEncoding.EncodeToString(nonce), ExpiresAt: now.Add(time.Duration(ttl) * time.Second), AuthorizedBy: id.PrincipalID, ExpectedFingerprint: cmd.ExpectedFingerprint, Version: 1}
+		enrollment := d.SigningEnrollment{ID: enrollmentID, TenantID: cmd.TenantID, PrincipalID: cmd.PrincipalID, CredentialID: credential.ID, KeyID: keyID, Purpose: "agent", Nonce: base64.RawURLEncoding.EncodeToString(nonce), ExpiresAt: now.Add(time.Duration(ttl) * time.Second), AuthorizedBy: id.PrincipalID, ExpectedFingerprint: cmd.ExpectedFingerprint, Version: 1}
 		if err = repo.SaveEnrollment(ctx, enrollment, 0); err != nil {
 			return result, err
 		}
@@ -210,7 +210,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if e != nil {
 			return result, e
 		}
-		old, e := repo.Key(ctx, cmd.NamespaceID, keyID)
+		old, e := repo.Key(ctx, cmd.TenantID, keyID)
 		if e != nil {
 			return result, e
 		}
@@ -229,7 +229,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if e != nil || !expires.After(now) || expires.After(now.Add(10*time.Minute)) {
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "rotation authorization expired/unbounded")
 		}
-		if payload.ServerID != s.ServerID || payload.NamespaceID != cmd.NamespaceID.String() || payload.PrincipalID != id.PrincipalID || payload.Purpose != "rotation_authorization" || payload.PreviousKeyID != keyID.String() || payload.OutcomeID != "" {
+		if payload.ServerID != s.ServerID || payload.TenantID != cmd.TenantID.String() || payload.PrincipalID != id.PrincipalID || payload.Purpose != "rotation_authorization" || payload.PreviousKeyID != keyID.String() || payload.OutcomeID != "" {
 			return result, d.NewError(d.ErrorCodeForbidden, "rotation proof binding differs")
 		}
 		enrollmentID, e := d.ParseID(payload.EnrollmentID)
@@ -255,7 +255,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if credential.ParentDigest != "" {
 			return result, d.NewError(d.ErrorCodeForbidden, "session cannot enroll signing identity")
 		}
-		policy, e := repo.CredentialPolicy(ctx, cmd.NamespaceID, credential.ID)
+		policy, e := repo.CredentialPolicy(ctx, cmd.TenantID, credential.ID)
 		if e != nil {
 			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
 				return result, e
@@ -269,7 +269,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if _, err = rand.Read(nonce); err != nil {
 			return result, err
 		}
-		enrollment := d.SigningEnrollment{ID: enrollmentID, NamespaceID: cmd.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID, KeyID: newID, PreviousKeyID: &keyID, Purpose: "agent", Nonce: base64.RawURLEncoding.EncodeToString(nonce), ExpiresAt: expires, AuthorizedBy: id.PrincipalID, ExpectedFingerprint: fp, Version: 1}
+		enrollment := d.SigningEnrollment{ID: enrollmentID, TenantID: cmd.TenantID, PrincipalID: id.PrincipalID, CredentialID: credential.ID, KeyID: newID, PreviousKeyID: &keyID, Purpose: "agent", Nonce: base64.RawURLEncoding.EncodeToString(nonce), ExpiresAt: expires, AuthorizedBy: id.PrincipalID, ExpectedFingerprint: fp, Version: 1}
 		if err = repo.SaveEnrollment(ctx, enrollment, 0); err != nil {
 			return result, err
 		}
@@ -279,7 +279,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if cmd.Proof == nil || s.ServerID == "" {
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "signed possession proof required")
 		}
-		enrollment, e := repo.Enrollment(ctx, cmd.NamespaceID, cmd.EnrollmentID)
+		enrollment, e := repo.Enrollment(ctx, cmd.TenantID, cmd.EnrollmentID)
 		if e != nil {
 			return result, e
 		}
@@ -310,7 +310,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if enrollment.PreviousKeyID != nil {
 			previousID = enrollment.PreviousKeyID.String()
 		}
-		if payload.ServerID != s.ServerID || payload.NamespaceID != cmd.NamespaceID.String() || payload.PrincipalID != id.PrincipalID || payload.EnrollmentID != enrollment.ID.String() || payload.Nonce != enrollment.Nonce || payload.Purpose != enrollment.Purpose || payload.PreviousKeyID != previousID || payload.ExpiresAt != enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano) || payload.OutcomeID != "" || payload.NewKeyID != "" {
+		if payload.ServerID != s.ServerID || payload.TenantID != cmd.TenantID.String() || payload.PrincipalID != id.PrincipalID || payload.EnrollmentID != enrollment.ID.String() || payload.Nonce != enrollment.Nonce || payload.Purpose != enrollment.Purpose || payload.PreviousKeyID != previousID || payload.ExpiresAt != enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano) || payload.OutcomeID != "" || payload.NewKeyID != "" {
 			return result, d.NewError(d.ErrorCodeForbidden, "possession proof challenge/binding differs")
 		}
 		fp, e := signing.Fingerprint(public)
@@ -320,7 +320,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if enrollment.ExpectedFingerprint != "" && enrollment.ExpectedFingerprint != fp {
 			return result, d.NewError(d.ErrorCodeForbidden, "enrollment fingerprint differs")
 		}
-		policy, e := repo.CredentialPolicy(ctx, cmd.NamespaceID, credential.ID)
+		policy, e := repo.CredentialPolicy(ctx, cmd.TenantID, credential.ID)
 		if e != nil {
 			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
 				return result, e
@@ -330,12 +330,12 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if !policy.Permits(string(ports.PermissionSigningKeyEnroll), "") {
 			return result, d.NewError(d.ErrorCodeForbidden, "explicit enrollment credential policy required")
 		}
-		registered := d.SigningKey{ID: enrollment.KeyID, NamespaceID: cmd.NamespaceID, PrincipalID: id.PrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, Status: "active", Version: 1, CreatedAt: now, UpdatedAt: now}
+		registered := d.SigningKey{ID: enrollment.KeyID, TenantID: cmd.TenantID, PrincipalID: id.PrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, Status: "active", Version: 1, CreatedAt: now, UpdatedAt: now}
 		if err = repo.SaveKey(ctx, registered, 0); err != nil {
 			return result, err
 		}
 		if enrollment.PreviousKeyID != nil {
-			old, e := repo.Key(ctx, cmd.NamespaceID, *enrollment.PreviousKeyID)
+			old, e := repo.Key(ctx, cmd.TenantID, *enrollment.PreviousKeyID)
 			if e != nil {
 				return result, e
 			}
@@ -375,7 +375,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		if strings.TrimSpace(cmd.Reason) == "" || len(cmd.Reason) > 4096 {
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "key revocation reason required")
 		}
-		registered, e := repo.Key(ctx, cmd.NamespaceID, cmd.KeyID)
+		registered, e := repo.Key(ctx, cmd.TenantID, cmd.KeyID)
 		if e != nil {
 			return result, e
 		}
@@ -392,7 +392,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		result.Key = &registered
 		target = registered.ID.String()
 	}
-	result.NamespaceVersion, err = repo.Audit(ctx, cmd.NamespaceID, id.PrincipalID, id.Actor, cmd.Operation, target, now)
+	result.TenantVersion, err = repo.Audit(ctx, cmd.TenantID, id.PrincipalID, id.Actor, cmd.Operation, target, now)
 	if err != nil {
 		return result, err
 	}
@@ -400,7 +400,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	if err != nil {
 		return result, err
 	}
-	if err = repo.SaveReceipt(ctx, cmd.NamespaceID, id.PrincipalID, key, fingerprint, raw); err != nil {
+	if err = repo.SaveReceipt(ctx, cmd.TenantID, id.PrincipalID, key, fingerprint, raw); err != nil {
 		return result, err
 	}
 	if err = uow.Commit(); err != nil {
@@ -417,7 +417,7 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 	if !ok {
 		return result, d.NewError(d.ErrorCodeForbidden, "identity required")
 	}
-	if err := s.Require(ctx, id.NamespaceID, ports.PermissionStateRead); err != nil {
+	if err := s.Require(ctx, id.TenantID, ports.PermissionStateRead); err != nil {
 		return result, err
 	}
 	manager, ok := s.Store.(ports.TransactionManager)
@@ -429,35 +429,35 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 		return result, err
 	}
 	defer uow.Rollback()
-	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead}); err != nil {
+	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{TenantID: id.TenantID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead}); err != nil {
 		return result, err
 	}
 	repo, err := signingRepository(uow)
 	if err != nil {
 		return result, err
 	}
-	_, raw, err := repo.Receipt(ctx, id.NamespaceID, id.PrincipalID, key)
+	_, raw, err := repo.Receipt(ctx, id.TenantID, id.PrincipalID, key)
 	if err != nil {
 		return result, err
 	}
-	err = json.Unmarshal(raw, &result)
+	err = signing.DecodeStoredJSON(raw, &result, 0)
 	return result, err
 }
 
 // SigningIdentityView reveals only the current credential's public identity.
 // Private signing material never enters WOS or this response.
 type SigningIdentityView struct {
-	Quotas           SigningQuotaView     `json:"quotas"`
-	Actor            d.ActorRef           `json:"actor_ref"`
-	ServerID         string               `json:"server_id"`
-	NamespaceVersion d.Version            `json:"namespace_version,string"`
-	KeysTruncated    bool                 `json:"keys_truncated"`
-	NamespaceID      d.ID                 `json:"namespace_id"`
-	PrincipalID      string               `json:"principal_id"`
-	CredentialID     d.ID                 `json:"credential_id"`
-	Policy           *d.CredentialPolicy  `json:"credential_policy,omitempty"`
-	Keys             []d.SigningKey       `json:"keys"`
-	Enrollment       *d.SigningEnrollment `json:"enrollment,omitempty"`
+	Quotas        SigningQuotaView     `json:"quotas"`
+	Actor         d.ActorRef           `json:"actor_ref"`
+	ServerID      string               `json:"server_id"`
+	TenantVersion d.Version            `json:"tenant_version,string"`
+	KeysTruncated bool                 `json:"keys_truncated"`
+	TenantID      d.ID                 `json:"tenant_id"`
+	PrincipalID   string               `json:"principal_id"`
+	CredentialID  d.ID                 `json:"credential_id"`
+	Policy        *d.CredentialPolicy  `json:"credential_policy,omitempty"`
+	Keys          []d.SigningKey       `json:"keys"`
+	Enrollment    *d.SigningEnrollment `json:"enrollment,omitempty"`
 }
 
 func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID) (SigningIdentityView, error) {
@@ -469,7 +469,7 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	if enrollmentID != nil && enrollmentID.Validate() != nil {
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid enrollment identifier")
 	}
-	if err := s.Require(ctx, id.NamespaceID, ports.PermissionStateRead); err != nil {
+	if err := s.Require(ctx, id.TenantID, ports.PermissionStateRead); err != nil {
 		return result, err
 	}
 	manager, ok := s.Store.(ports.TransactionManager)
@@ -481,7 +481,7 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 		return result, err
 	}
 	defer uow.Rollback()
-	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead}); err != nil {
+	if err = s.authorizeSigningInUnitOfWork(ctx, uow, ports.AuthorizationRequest{TenantID: id.TenantID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead}); err != nil {
 		return result, err
 	}
 	repo, err := signingRepository(uow)
@@ -498,16 +498,16 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 			return result, err
 		}
 	}
-	var namespaceVersion d.Version
-	if reader, ok := repo.(ports.SigningNamespaceVersionReader); ok {
-		namespaceVersion, err = reader.NamespaceVersion(ctx, id.NamespaceID)
+	var tenantVersion d.Version
+	if reader, ok := repo.(ports.SigningTenantVersionReader); ok {
+		tenantVersion, err = reader.TenantVersion(ctx, id.TenantID)
 	} else {
-		namespaceVersion, err = repo.LockNamespace(ctx, id.NamespaceID)
+		tenantVersion, err = repo.LockTenant(ctx, id.TenantID)
 	}
 	if err != nil {
 		return result, err
 	}
-	result = SigningIdentityView{Actor: credential.Actor, ServerID: s.ServerID, NamespaceVersion: namespaceVersion, NamespaceID: id.NamespaceID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
+	result = SigningIdentityView{Actor: credential.Actor, ServerID: s.ServerID, TenantVersion: tenantVersion, TenantID: id.TenantID, PrincipalID: id.PrincipalID, CredentialID: credential.ID}
 	if persistent, ok := uow.(ports.ServerIdentityUnitOfWork); ok {
 		server, e := persistent.ServerIdentity().Server(ctx)
 		if e == nil {
@@ -516,13 +516,13 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 			return result, e
 		}
 	}
-	policy, err := repo.CredentialPolicy(ctx, id.NamespaceID, credential.ID)
+	policy, err := repo.CredentialPolicy(ctx, id.TenantID, credential.ID)
 	if err == nil {
 		result.Policy = &policy
 	} else if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		return result, err
 	}
-	nsPolicy, err := namespaceAcceptancePolicy(ctx, repo, id.NamespaceID)
+	nsPolicy, err := tenantAcceptancePolicy(ctx, repo, id.TenantID)
 	if err != nil {
 		return result, err
 	}
@@ -534,12 +534,12 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	if !ok {
 		return result, d.NewError(d.ErrorCodeInvalidConfig, "signed quota diagnostics unavailable")
 	}
-	counts, err := signed.SignedContracts().Counts(ctx, id.NamespaceID, id.PrincipalID, credential.ID, now)
+	counts, err := signed.SignedContracts().Counts(ctx, id.TenantID, id.PrincipalID, credential.ID, now)
 	if err != nil {
 		return result, err
 	}
 	result.Quotas = signingQuotaView(result.Policy, nsPolicy, counts)
-	result.Keys, err = repo.Keys(ctx, id.NamespaceID, id.PrincipalID, 101)
+	result.Keys, err = repo.Keys(ctx, id.TenantID, id.PrincipalID, 101)
 	if err != nil {
 		return result, err
 	}
@@ -548,7 +548,7 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 		result.Keys = result.Keys[:100]
 	}
 	if enrollmentID != nil {
-		enrollment, e := repo.Enrollment(ctx, id.NamespaceID, *enrollmentID)
+		enrollment, e := repo.Enrollment(ctx, id.TenantID, *enrollmentID)
 		if e != nil {
 			return result, e
 		}
@@ -567,7 +567,7 @@ func (s SecurityService) authorizeSigningInUnitOfWork(ctx context.Context, uow p
 		return err
 	}
 	id, ok := IdentityFromContext(ctx)
-	if !ok || id.NamespaceID != request.NamespaceID || id.PrincipalID != request.PrincipalID {
+	if !ok || id.TenantID != request.TenantID || id.PrincipalID != request.PrincipalID {
 		return d.NewError(d.ErrorCodeForbidden, "credential scope differs")
 	}
 	access, ok := uow.(ports.AccessSnapshotUnitOfWork)

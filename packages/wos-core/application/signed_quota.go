@@ -20,13 +20,13 @@ func lockAcquisitionQuota(ctx context.Context, u ports.UnitOfWork, identity Iden
 	}
 	guard, ok := u.(ports.SignedQuotaUnitOfWork)
 	if !ok {
-		return nil // legacy adapters retain the exclusive Namespace barrier
+		return nil // legacy adapters retain the exclusive Tenant barrier
 	}
 	registry, err := signingRepository(u)
 	if err != nil {
 		return err
 	}
-	policy, err := namespaceAcceptancePolicy(ctx, registry, identity.NamespaceID)
+	policy, err := tenantAcceptancePolicy(ctx, registry, identity.TenantID)
 	if err != nil {
 		return err
 	}
@@ -34,12 +34,12 @@ func lockAcquisitionQuota(ctx context.Context, u ports.UnitOfWork, identity Iden
 	if kind == "review" {
 		shared = policy.MaxActiveReviewContracts > 0
 	}
-	return guard.LockSignedQuota(ctx, identity.NamespaceID, identity.PrincipalID, kind, shared)
+	return guard.LockSignedQuota(ctx, identity.TenantID, identity.PrincipalID, kind, shared)
 }
 
-func countAcquisitionQuota(ctx context.Context, repo ports.SignedContractRepository, ns d.ID, principal string, credential d.ID, now time.Time, includeNamespace bool) (ports.SignedActiveCounts, error) {
+func countAcquisitionQuota(ctx context.Context, repo ports.SignedContractRepository, ns d.ID, principal string, credential d.ID, now time.Time, includeTenant bool) (ports.SignedActiveCounts, error) {
 	if indexed, ok := repo.(ports.SignedQuotaCountsRepository); ok {
-		return indexed.CountQuota(ctx, ns, principal, credential, now, includeNamespace)
+		return indexed.CountQuota(ctx, ns, principal, credential, now, includeTenant)
 	}
 	return repo.Counts(ctx, ns, principal, credential, now)
 }

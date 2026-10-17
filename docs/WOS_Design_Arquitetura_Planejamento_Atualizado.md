@@ -1,5 +1,11 @@
 # WOS — Woobe Outcome Server
 
+> **Current architecture amendment (2026-10-17):** [ADR 044](adr/0044-tenant-schemas-and-protocol-cutover.md)
+> replaces this original plan's Namespace terminology and shared-row PostgreSQL
+> isolation with Tenant identity and complete per-Tenant schemas. The original
+> specification below is retained as design history. Current implementation and
+> qualification status are tracked in [ROADMAP.md](../ROADMAP.md).
+
 **Design técnico e planejamento de implementação — revisão 2**  
 **Data:** 1 de outubro de 2026  
 **Situação:** arquitetura proposta para implementação; não representa funcionalidades já desenvolvidas.

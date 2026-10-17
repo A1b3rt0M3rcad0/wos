@@ -17,7 +17,7 @@ func (r continuityReadRepository) CurrentWork(ctx context.Context, scope d.Scope
 	if e := id.Validate(); e != nil {
 		return result, e
 	}
-	work, e := scanWorkItem(r.row(ctx, "SELECT "+focalWorkColumns+" FROM work_items WHERE namespace_id=? AND outcome_id=? AND id=?", scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	work, e := scanWorkItem(r.row(ctx, "SELECT "+focalWorkColumns+" FROM work_items WHERE tenant_id=? AND outcome_id=? AND id=?", scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 	if e != nil {
 		return result, e
 	}
@@ -43,7 +43,7 @@ func (r continuityReadRepository) CurrentObjective(ctx context.Context, scope d.
 	if e := id.Validate(); e != nil {
 		return result, e
 	}
-	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at FROM objectives WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 	if e != nil {
 		return result, e
 	}
@@ -69,11 +69,11 @@ func (r continuityReadRepository) FocalOutcome(ctx context.Context, scope d.Scop
 	var version d.Version
 	var title, life, priority string
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at FROM outcomes WHERE tenant_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived)
 	if e != nil {
 		return result, mapSQLError("read focal Outcome metadata", e)
 	}
-	result = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
+	result = d.Outcome{ID: scope.OutcomeID, TenantID: scope.TenantID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
 	if archived.Valid {
 		at := decodeTime(archived.Int64)
 		result.ArchivedAt = &at
@@ -84,8 +84,8 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 	set := d.NewCriterionSet()
 	counts := ports.FocalHistoryCounts{}
 	var current *d.Conclusion
-	args := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
-	rows, e := r.rows(ctx, `SELECT c.id,c.criterion_revision,c.status,r.definition_json,r.required,r.verification_mode FROM success_criteria c JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=? ORDER BY c.created_at,c.id`, args...)
+	args := []any{owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
+	rows, e := r.rows(ctx, `SELECT c.id,c.criterion_revision,c.status,r.definition_json,r.required,r.verification_mode FROM success_criteria c JOIN criterion_revisions r ON r.tenant_id=c.tenant_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.tenant_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=? ORDER BY c.created_at,c.id`, args...)
 	if e != nil {
 		return set, nil, counts, e
 	}
@@ -121,8 +121,8 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 	}
 	// Owner selection is resolved before touching assessment history. IN uses the
 	// indexed criterion/current-assessment IDs even before planner statistics warm.
-	scopedArgs := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
-	rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result,a.rationale,a.principal_id,a.actor_json,a.assessed_at,a.evaluator_ref_json,a.supersedes_assessment_id,a.submission_id,a.submission_digest FROM criterion_assessments a WHERE a.namespace_id=? AND a.outcome_id=? AND a.id IN(SELECT p.assessment_id FROM criterion_current_assessments p WHERE p.namespace_id=? AND p.outcome_id=? AND p.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY a.assessed_at,a.id`, scopedArgs...)
+	scopedArgs := []any{owner.TenantID.String(), owner.OutcomeID.String(), owner.TenantID.String(), owner.OutcomeID.String(), owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
+	rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result,a.rationale,a.principal_id,a.actor_json,a.assessed_at,a.evaluator_ref_json,a.supersedes_assessment_id,a.submission_id,a.submission_digest FROM criterion_assessments a WHERE a.tenant_id=? AND a.outcome_id=? AND a.id IN(SELECT p.assessment_id FROM criterion_current_assessments p WHERE p.tenant_id=? AND p.outcome_id=? AND p.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.tenant_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY a.assessed_at,a.id`, scopedArgs...)
 	if e != nil {
 		return set, nil, counts, e
 	}
@@ -140,7 +140,7 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 	if e != nil {
 		return set, nil, counts, e
 	}
-	rows, e = r.rows(ctx, `SELECT p.assessment_id,p.evidence_id FROM criterion_assessment_evidence p WHERE p.namespace_id=? AND p.outcome_id=? AND p.assessment_id IN(SELECT a.assessment_id FROM criterion_current_assessments a WHERE a.namespace_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY p.assessment_id,p.evidence_id`, scopedArgs...)
+	rows, e = r.rows(ctx, `SELECT p.assessment_id,p.evidence_id FROM criterion_assessment_evidence p WHERE p.tenant_id=? AND p.outcome_id=? AND p.assessment_id IN(SELECT a.assessment_id FROM criterion_current_assessments a WHERE a.tenant_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.tenant_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY p.assessment_id,p.evidence_id`, scopedArgs...)
 	if e != nil {
 		return set, nil, counts, e
 	}
@@ -176,15 +176,15 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 	for _, a := range currentByID {
 		set.CurrentAssessments[a.CriterionID] = a
 	}
-	ownerArgs := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String()}
-	storageID, conclusion, e := scanConclusion(r.row(ctx, `SELECT c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json,c.submission_id,c.submission_digest FROM aggregate_current_conclusions p JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id WHERE p.namespace_id=? AND p.outcome_id=? AND p.owner_id=?`, ownerArgs...), owner)
+	ownerArgs := []any{owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String()}
+	storageID, conclusion, e := scanConclusion(r.row(ctx, `SELECT c.id,c.public_id,c.owner_version,c.lifecycle_result,c.principal_id,c.actor_json,c.recorded_at,c.rationale,c.obligations_snapshot_json,c.submission_id,c.submission_digest FROM aggregate_current_conclusions p JOIN conclusions c ON c.tenant_id=p.tenant_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id WHERE p.tenant_id=? AND p.outcome_id=? AND p.owner_id=?`, ownerArgs...), owner)
 	if e != nil {
 		if code, _ := d.ErrorCodeOf(e); e != sql.ErrNoRows && code != d.ErrorCodeNotFound {
 			return set, nil, counts, e
 		}
 	} else {
 		current = &conclusion
-		rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments p JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE p.namespace_id=? AND p.outcome_id=? AND p.conclusion_id=? ORDER BY a.criterion_id,a.id`, owner.NamespaceID.String(), owner.OutcomeID.String(), storageID)
+		rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments p JOIN criterion_assessments a ON a.tenant_id=p.tenant_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE p.tenant_id=? AND p.outcome_id=? AND p.conclusion_id=? ORDER BY a.criterion_id,a.id`, owner.TenantID.String(), owner.OutcomeID.String(), storageID)
 		if e != nil {
 			return set, nil, counts, e
 		}
@@ -218,14 +218,14 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 		}
 	}
 	// Exact omission counts are scalar owner-indexed reads, not loaded histories.
-	queryArgs := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
-	if e = r.row(ctx, `SELECT COUNT(*) FROM criterion_assessments a WHERE a.namespace_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)`, queryArgs...).Scan(&counts.Assessments); e != nil {
+	queryArgs := []any{owner.TenantID.String(), owner.OutcomeID.String(), owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
+	if e = r.row(ctx, `SELECT COUNT(*) FROM criterion_assessments a WHERE a.tenant_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.tenant_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)`, queryArgs...).Scan(&counts.Assessments); e != nil {
 		return set, nil, counts, e
 	}
-	if e = r.row(ctx, `SELECT COUNT(*) FROM criterion_revisions a WHERE a.namespace_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)`, queryArgs...).Scan(&counts.Definitions); e != nil {
+	if e = r.row(ctx, `SELECT COUNT(*) FROM criterion_revisions a WHERE a.tenant_id=? AND a.outcome_id=? AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.tenant_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)`, queryArgs...).Scan(&counts.Definitions); e != nil {
 		return set, nil, counts, e
 	}
-	if e = r.row(ctx, `SELECT COUNT(*) FROM conclusions WHERE namespace_id=? AND outcome_id=? AND owner_id=?`, ownerArgs...).Scan(&counts.Conclusions); e != nil {
+	if e = r.row(ctx, `SELECT COUNT(*) FROM conclusions WHERE tenant_id=? AND outcome_id=? AND owner_id=?`, ownerArgs...).Scan(&counts.Conclusions); e != nil {
 		return set, nil, counts, e
 	}
 	if current != nil {

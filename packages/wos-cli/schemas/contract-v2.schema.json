@@ -46,6 +46,14 @@
                     },
                     "payload_type": {
                       "enum": [
+                        "application/vnd.wos.contract-spec.v3+json",
+                        "application/vnd.wos.contract-authority.v3+json",
+                        "application/vnd.wos.work-return.v3+json",
+                        "application/vnd.wos.review-return.v3+json",
+                        "application/vnd.wos.acceptance-receipt.v3+json",
+                        "application/vnd.wos.key-enrollment.v3+json",
+                        "application/vnd.wos.return-resolution.v3+json",
+                        "application/vnd.wos.return-resolution-receipt.v3+json",
                         "application/vnd.wos.contract-spec.v2+json",
                         "application/vnd.wos.contract-authority.v2+json",
                         "application/vnd.wos.work-return.v2+json",
@@ -105,14 +113,14 @@
                     },
                     "payloadType": {
                       "enum": [
-                        "application/vnd.wos.contract-spec.v2+json",
-                        "application/vnd.wos.contract-authority.v2+json",
-                        "application/vnd.wos.work-return.v2+json",
-                        "application/vnd.wos.review-return.v2+json",
-                        "application/vnd.wos.acceptance-receipt.v2+json",
-                        "application/vnd.wos.key-enrollment.v2+json",
-                        "application/vnd.wos.return-resolution.v2+json",
-                        "application/vnd.wos.return-resolution-receipt.v2+json"
+                        "application/vnd.wos.contract-spec.v3+json",
+                        "application/vnd.wos.contract-authority.v3+json",
+                        "application/vnd.wos.work-return.v3+json",
+                        "application/vnd.wos.review-return.v3+json",
+                        "application/vnd.wos.acceptance-receipt.v3+json",
+                        "application/vnd.wos.key-enrollment.v3+json",
+                        "application/vnd.wos.return-resolution.v3+json",
+                        "application/vnd.wos.return-resolution-receipt.v3+json"
                       ],
                       "maxLength": 65536,
                       "type": "string"
@@ -252,17 +260,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -501,17 +509,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -595,17 +603,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -623,17 +631,17 @@
                               "kind": {
                                 "type": "string"
                               },
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id",
                               "kind",
                               "id"
@@ -820,6 +828,14 @@
                 },
                 "payload_type": {
                   "enum": [
+                    "application/vnd.wos.contract-spec.v3+json",
+                    "application/vnd.wos.contract-authority.v3+json",
+                    "application/vnd.wos.work-return.v3+json",
+                    "application/vnd.wos.review-return.v3+json",
+                    "application/vnd.wos.acceptance-receipt.v3+json",
+                    "application/vnd.wos.key-enrollment.v3+json",
+                    "application/vnd.wos.return-resolution.v3+json",
+                    "application/vnd.wos.return-resolution-receipt.v3+json",
                     "application/vnd.wos.contract-spec.v2+json",
                     "application/vnd.wos.contract-authority.v2+json",
                     "application/vnd.wos.work-return.v2+json",
@@ -866,6 +882,14 @@
                 },
                 "payload_type": {
                   "enum": [
+                    "application/vnd.wos.contract-spec.v3+json",
+                    "application/vnd.wos.contract-authority.v3+json",
+                    "application/vnd.wos.work-return.v3+json",
+                    "application/vnd.wos.review-return.v3+json",
+                    "application/vnd.wos.acceptance-receipt.v3+json",
+                    "application/vnd.wos.key-enrollment.v3+json",
+                    "application/vnd.wos.return-resolution.v3+json",
+                    "application/vnd.wos.return-resolution-receipt.v3+json",
                     "application/vnd.wos.contract-spec.v2+json",
                     "application/vnd.wos.contract-authority.v2+json",
                     "application/vnd.wos.work-return.v2+json",
@@ -945,17 +969,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -1161,17 +1185,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -1255,17 +1279,17 @@
                           "scope": {
                             "additionalProperties": false,
                             "properties": {
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id"
                             ],
                             "type": "object"
@@ -1283,17 +1307,17 @@
                               "kind": {
                                 "type": "string"
                               },
-                              "namespace_id": {
+                              "outcome_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               },
-                              "outcome_id": {
+                              "tenant_id": {
                                 "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                                 "type": "string"
                               }
                             },
                             "required": [
-                              "namespace_id",
+                              "tenant_id",
                               "outcome_id",
                               "kind",
                               "id"

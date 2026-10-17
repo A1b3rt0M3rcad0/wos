@@ -25,7 +25,7 @@ func TestAcquisitionBatchSnapshotPreservesEditorAndIndependentIntents(t *testing
 		t.Fatal(e)
 	}
 	actor := d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}
 	cmd := a.AcquireNextSignedWorkContractCommand{Scope: scope, SignerKeyID: profile.Signing.KeyID, Limit: 25, TTLSeconds: 300}
 	intents, e := prepareAcquisitionBatchV2(context.Background(), w, profile, token, "AcquireNextSignedWorkContract", scope, actor, cmd, 5)
 	if e != nil {

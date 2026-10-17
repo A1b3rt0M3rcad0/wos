@@ -12,7 +12,7 @@ func TestTerminalOutcomeRequiresExplicitReopenBeforeChangingObligations(t *testi
 	ctx := context.Background()
 	s, _ := newWave09Service(t)
 	cc := commandContext()
-	created, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("0199d060-0000-7000-8000-000000000001"), Title: "Structural proof", DesiredState: "Evidence remains reproducible", Priority: domain.PriorityNormal})
+	created, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: domain.MustParseID("0199d060-0000-7000-8000-000000000001"), Title: "Structural proof", DesiredState: "Evidence remains reproducible", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

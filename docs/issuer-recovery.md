@@ -2,13 +2,13 @@
 
 This command is implemented in source; coordinated packaging and final release
 acceptance remain P13. It is a host/deployment operation with direct database
-access, never a tenant HTTP/MCP command. A Namespace administrator cannot replace
+access, never a tenant HTTP/MCP command. A Tenant administrator cannot replace
 the issuer shared by other tenants.
 
 Stop or drain serving replicas and retain a verified database backup. Provision
 the new Ed25519 seed through the supported protected environment reference. Do
 not put seeds in the public intention, project/profile YAML, arguments or logs.
-Keep the existing Namespace policies and deployment acceptance floor.
+Keep the existing Tenant policies and deployment acceptance floor.
 
 Prepare `issuer-recovery.json` with the exact existing `server_id`,
 `previous_issuer_id`, `previous_fingerprint`, a new UUIDv7 `new_issuer_id`, the
@@ -35,7 +35,7 @@ continues to reject silent seed replacement. Shared issuer reads and exclusive
 replacement serialize current issuance; stale signer configuration fails closed.
 Readiness compares each replica's configured public signer with the current
 persistent issuer. A stale replica reports HTTP 503 after replacement. A restored
-runtime without a configured signer also reports 503 if any Namespace has active
+runtime without a configured signer also reports 503 if any Tenant has active
 signed protocol, while liveness and authorized historical reads remain available.
 No ephemeral replacement key is created; provision the approved signer before
 routing new work to that replica.
@@ -51,7 +51,7 @@ wos --profile executor profile trust --issuer-fingerprint sha256:<approved-new-f
 ```
 
 Use the actual profile name and complete independently approved fingerprint.
-The command verifies the same origin, persistent ServerID, Namespace, Principal
+The command verifies the same origin, persistent ServerID, Tenant, Principal
 and original CredentialID before one atomic profile update. It appends only the
 new public pin and authenticated bounded binding lineage. Contract files,
 original signatures, request IDs, idempotency keys and pending intentions remain

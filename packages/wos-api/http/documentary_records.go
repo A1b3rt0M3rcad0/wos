@@ -546,5 +546,5 @@ func documentaryRequestScope(w http.ResponseWriter, r *http.Request, pathName st
 }
 
 func documentaryLocation(h *Handler, scope domain.Scope, collection string, id domain.ID) string {
-	return h.prefix + "/namespaces/" + scope.NamespaceID.String() + "/outcomes/" + scope.OutcomeID.String() + "/" + collection + "/" + id.String()
+	return h.prefix + "/tenants/" + scope.TenantID.String() + "/outcomes/" + scope.OutcomeID.String() + "/" + collection + "/" + id.String()
 }

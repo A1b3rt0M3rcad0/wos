@@ -40,8 +40,8 @@ func TestSQLiteAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
 	}
 
 	claimedAt := time.Date(2026, 10, 3, 5, 0, 0, 0, time.UTC)
-	namespaceID := domain.MustParseID("0199eb20-0000-7000-8000-000000000001")
-	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb21", namespaceID)
+	tenantID := domain.MustParseID("0199eb20-0000-7000-8000-000000000001")
+	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb21", tenantID)
 	oldLease := *work.CurrentLease
 
 	adminService, err := application.NewServiceWithAuthorizer(

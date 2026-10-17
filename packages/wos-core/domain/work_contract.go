@@ -216,7 +216,7 @@ func (c WorkContract) ValidateHeader() error {
 		}
 	}
 	if c.Status == ContractDelivered && c.SignedBinding == nil {
-		return NewError(ErrorCodeSignedProtocolRequired, "delivered is signed-v2 only")
+		return NewError(ErrorCodeSignedProtocolRequired, "delivered is signed-v3 only")
 	}
 	if len(c.SpecDigest) != 71 || !strings.HasPrefix(c.SpecDigest, "sha256:") {
 		return NewError(ErrorCodeContractSpecMismatch, "contract header requires semantic digest")
@@ -293,6 +293,11 @@ func (c WorkContract) Validate() error {
 		}
 	}
 	digest, err := SemanticDigest(NormalizeContractSpec(c.Spec))
+	if c.SignedBinding != nil && c.SignedBinding.ProtocolVersion == 2 || c.SignedBinding == nil && digest != c.SpecDigest {
+		// Historical immutable specifications retain their original field names
+		// in the digest. New signed contracts always use protocol 3.
+		digest, err = historicalContractSpecDigest(c.Spec)
+	}
 	if err != nil {
 		return err
 	}
@@ -312,6 +317,9 @@ func (c WorkContract) ValidAt(now time.Time) bool {
 	return c.Status == ContractActive && !now.Before(c.AcquiredAt) && now.Before(c.ExpiresAt)
 }
 func (c WorkContract) Authorize(principal string, execution ID, token FencingToken, now time.Time) error {
+	if c.SignedBinding != nil && c.SignedBinding.ProtocolVersion != 3 {
+		return NewError(ErrorCodeSignedProtocolRequired, "historical signed authority cannot authorize current operations")
+	}
 	if c.EffectiveStatus(now) == ContractExpired {
 		return NewError(ErrorCodeContractExpired, "contract has expired")
 	}

@@ -12,7 +12,7 @@ import (
 func contractFixture(t *testing.T) (d.WorkItem, d.WorkContract, time.Time) {
 	t.Helper()
 	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
-	scope := d.Scope{NamespaceID: d.MustParseID("0199f200-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199f200-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.MustParseID("0199f200-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199f200-0000-7000-8000-000000000002")}
 	w, err := d.NewWorkItem(d.MustParseID("0199f200-0000-7000-8000-000000000003"), scope, "Contract task", "Independent context", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	if err != nil {
 		t.Fatal(err)

@@ -25,7 +25,7 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 	result.OutcomeID = scope.OutcomeID
 	switch o.args[1] {
 	case "get":
-		value, e := client.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
+		value, e := client.GetTenantWorkProtocol(ctx, scope.TenantID)
 		if e == nil {
 			result.Data = value
 		}
@@ -41,7 +41,7 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 		}
 		phase := d.WorkProtocolPhase(o.values["phase"])
 		if phase != d.WorkProtocolSignedDraining && phase != d.WorkProtocolSigned {
-			return result, usage("schema-2 protocol set accepts explicit draining_to_signed_v2 or signed_contracts_v2")
+			return result, usage("schema-2 protocol set accepts explicit draining_to_signed_v3 or signed_contracts_v3")
 		}
 		if o.values["reason"] == "" {
 			return result, usage("explicit operator --reason required")
@@ -49,7 +49,7 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 		if phase == d.WorkProtocolSigned && o.values["writers-drained"] != "true" {
 			return result, usage("signed activation requires --writers-drained after actually retiring v1 writers and SQL credentials")
 		}
-		command := a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: d.Version(version), Phase: phase, WritersDrained: o.values["writers-drained"] == "true", Reason: o.values["reason"]}
+		command := a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: d.Version(version), Phase: phase, WritersDrained: o.values["writers-drained"] == "true", Reason: o.values["reason"]}
 		raw, e := freezeProtocolV2(command)
 		if e != nil {
 			return result, e
@@ -66,7 +66,7 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 		if e != nil {
 			return result, e
 		}
-		intent := PendingOperationV2{ID: id, Operation: "SetNamespaceWorkProtocol", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}
+		intent := PendingOperationV2{ID: id, Operation: "SetTenantWorkProtocol", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fp}
 		e = mutateProfileV2(ctx, w, profile, token, func(current *ProfileV2) error {
 			if len(current.Local.PendingOperations) >= 10 {
 				return fmt.Errorf("pending limit reached")
@@ -101,7 +101,7 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 		}
 		items := []any{}
 		for _, intent := range current.Local.PendingOperations {
-			if intent.Operation != "SetNamespaceWorkProtocol" {
+			if intent.Operation != "SetTenantWorkProtocol" {
 				continue
 			}
 			accepted, e := recoverProtocolV2(ctx, w, profile, client, token, intent)
@@ -124,8 +124,8 @@ func protocolCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 		return result, usage("protocol get|preflight|set|recover")
 	}
 }
-func recoverProtocolV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, intent PendingOperationV2) (sdk.CommandResult[a.NamespaceWorkProtocolResult], error) {
-	var accepted sdk.CommandResult[a.NamespaceWorkProtocolResult]
+func recoverProtocolV2(ctx context.Context, w *Workspace, profile ProfileV2, client *sdk.Client, token []byte, intent PendingOperationV2) (sdk.CommandResult[a.TenantWorkProtocolResult], error) {
+	var accepted sdk.CommandResult[a.TenantWorkProtocolResult]
 	raw, e := base64.StdEncoding.Strict().DecodeString(intent.Payload)
 	if e != nil || signing.Digest(raw) != intent.PayloadDigest {
 		return accepted, fmt.Errorf("frozen protocol intention differs")
@@ -134,7 +134,7 @@ func recoverProtocolV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 	if e != nil {
 		return accepted, e
 	}
-	if intent.Operation != "SetNamespaceWorkProtocol" || command.Scope.NamespaceID != intent.Scope.NamespaceID || command.Scope.OutcomeID != intent.Scope.OutcomeID || (command.Phase != d.WorkProtocolSignedDraining && command.Phase != d.WorkProtocolSigned) {
+	if intent.Operation != "SetTenantWorkProtocol" || command.Scope.TenantID != intent.Scope.TenantID || command.Scope.OutcomeID != intent.Scope.OutcomeID || (command.Phase != d.WorkProtocolSignedDraining && command.Phase != d.WorkProtocolSigned) {
 		return accepted, fmt.Errorf("protocol intention target/phase differs")
 	}
 	var snapshot PendingOperationV2
@@ -186,7 +186,7 @@ func recoverProtocolV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 			}
 		}
 		if accepted.CommandID.IsZero() {
-			accepted, e = client.SetNamespaceWorkProtocol(ctx, intent.IdempotencyKey, command)
+			accepted, e = client.SetTenantWorkProtocol(ctx, intent.IdempotencyKey, command)
 			if e != nil {
 				return accepted, e
 			}
@@ -235,22 +235,22 @@ type frozenProtocolV2 struct {
 	Reason                  string              `json:"reason"`
 }
 
-func freezeProtocolV2(command a.SetNamespaceWorkProtocolCommand) ([]byte, error) {
+func freezeProtocolV2(command a.SetTenantWorkProtocolCommand) ([]byte, error) {
 	if command.LeasePolicy != nil {
 		return nil, fmt.Errorf("v2 cutover intent does not alter lease policy")
 	}
 	return signing.Canonical(frozenProtocolV2{command.Scope, signing.Decimal(command.ExpectedProtocolVersion), command.Phase, command.WritersDrained, command.Reason})
 }
-func decodeProtocolV2(raw []byte) (a.SetNamespaceWorkProtocolCommand, error) {
+func decodeProtocolV2(raw []byte) (a.SetTenantWorkProtocolCommand, error) {
 	var value frozenProtocolV2
 	if e := signing.DecodeStrict(raw, &value, 256<<10); e != nil {
-		return a.SetNamespaceWorkProtocolCommand{}, e
+		return a.SetTenantWorkProtocolCommand{}, e
 	}
-	return a.SetNamespaceWorkProtocolCommand{Scope: value.Scope, ExpectedProtocolVersion: d.Version(value.ExpectedProtocolVersion), Phase: value.Phase, WritersDrained: value.WritersDrained, Reason: value.Reason}, nil
+	return a.SetTenantWorkProtocolCommand{Scope: value.Scope, ExpectedProtocolVersion: d.Version(value.ExpectedProtocolVersion), Phase: value.Phase, WritersDrained: value.WritersDrained, Reason: value.Reason}, nil
 }
 
-func validateProtocolAcceptanceV2(command a.SetNamespaceWorkProtocolCommand, accepted sdk.CommandResult[a.NamespaceWorkProtocolResult]) error {
-	if accepted.CommandID.Validate() != nil || accepted.ResultOmitted || accepted.Value.Protocol.NamespaceID != command.Scope.NamespaceID || accepted.Value.Protocol.Phase != command.Phase || accepted.Value.Protocol.Version != command.ExpectedProtocolVersion+1 {
+func validateProtocolAcceptanceV2(command a.SetTenantWorkProtocolCommand, accepted sdk.CommandResult[a.TenantWorkProtocolResult]) error {
+	if accepted.CommandID.Validate() != nil || accepted.ResultOmitted || accepted.Value.Protocol.TenantID != command.Scope.TenantID || accepted.Value.Protocol.Phase != command.Phase || accepted.Value.Protocol.Version != command.ExpectedProtocolVersion+1 {
 		return fmt.Errorf("accepted protocol result target/version differs")
 	}
 	return nil

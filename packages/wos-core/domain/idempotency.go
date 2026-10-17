@@ -11,15 +11,15 @@ const (
 )
 
 type IdempotencyIdentity struct {
-	NamespaceID    ID     `json:"namespace_id"`
+	TenantID       ID     `json:"tenant_id"`
 	PrincipalID    string `json:"principal_id"`
 	CommandName    string `json:"command_name"`
 	IdempotencyKey string `json:"idempotency_key"`
 }
 
 func (i IdempotencyIdentity) Validate() error {
-	if err := i.NamespaceID.Validate(); err != nil {
-		return WrapError(ErrorCodeInvalidIdempotencyKey, "namespace_id is invalid", err)
+	if err := i.TenantID.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidIdempotencyKey, "tenant_id is invalid", err)
 	}
 	if strings.TrimSpace(i.PrincipalID) == "" {
 		return NewError(ErrorCodeInvalidIdempotencyKey, "principal_id is required")

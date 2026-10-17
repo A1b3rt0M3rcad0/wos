@@ -43,8 +43,8 @@ func TestWave09DocumentaryHTTPContract(t *testing.T) {
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199eda2-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199eda2-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	created := doJSON[application.MutationResult[domain.Outcome]](
 		t, client, http.MethodPost, base,
 		[]byte(`{"title":"Wave 09 HTTP","desired_state":"documentary continuity","priority":"normal"}`),

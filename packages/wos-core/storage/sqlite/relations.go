@@ -13,7 +13,7 @@ func (r relationRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Relation{}, err
 	}
-	return scanRelation(r.uow.tx.QueryRowContext(ctx, `SELECT `+relationReadColumns+` FROM relations WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	return scanRelation(r.uow.tx.QueryRowContext(ctx, `SELECT `+relationReadColumns+` FROM relations WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 }
 
 const relationReadColumns = `id,version, source_id, source_kind, relation_type, target_id, target_kind, strength, satisfaction, lifecycle, reason, created_at, updated_at`
@@ -82,8 +82,8 @@ func (r relationRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id FROM relations
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+WHERE tenant_id = ? AND outcome_id = ?
+ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list relations", err)
 	}
@@ -127,12 +127,12 @@ func (r relationRepository) Insert(ctx context.Context, relation domain.Relation
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO relations (
-    id, namespace_id, outcome_id, kind, version,
+    id, tenant_id, outcome_id, kind, version,
     source_id, source_kind, relation_type, target_id, target_kind,
     strength, satisfaction, lifecycle, reason, created_at, updated_at
 ) VALUES (?, ?, ?, 'relation', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		relation.ID.String(),
-		relation.Scope.NamespaceID.String(),
+		relation.Scope.TenantID.String(),
 		relation.Scope.OutcomeID.String(),
 		int64(relation.Version),
 		relation.SourceRef.ID.String(),
@@ -163,12 +163,12 @@ func (r relationRepository) Save(ctx context.Context, relation domain.Relation, 
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE relations
 SET version = ?, lifecycle = ?, reason = ?, updated_at = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(relation.Version),
 		string(relation.Lifecycle),
 		relation.Reason,
 		encodeTime(relation.UpdatedAt),
-		relation.Scope.NamespaceID.String(),
+		relation.Scope.TenantID.String(),
 		relation.Scope.OutcomeID.String(),
 		relation.ID.String(),
 		int64(expected),
@@ -178,7 +178,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 	}
 	return requireVersionedUpdate(
 		ctx, r.uow.tx, result, "relations",
-		relation.Scope.NamespaceID, relation.Scope.OutcomeID, relation.ID, expected,
+		relation.Scope.TenantID, relation.Scope.OutcomeID, relation.ID, expected,
 	)
 }
 

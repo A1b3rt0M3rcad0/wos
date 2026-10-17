@@ -3,7 +3,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -39,8 +38,8 @@ func (r workActivityRepository) Insert(ctx context.Context, activity d.WorkActiv
 	if err != nil {
 		return err
 	}
-	query := `INSERT INTO work_activities (id,namespace_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`
-	_, err = r.uow.tx.ExecContext(ctx, rebind(query), activity.ID.String(), activity.Scope.NamespaceID.String(), activity.Scope.OutcomeID.String(), activity.ContractID.String(), activity.WorkItemID.String(), activitySequenceKey(activity.Sequence), raw)
+	query := `INSERT INTO work_activities (id,tenant_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`
+	_, err = r.uow.tx.ExecContext(ctx, rebind(query), activity.ID.String(), activity.Scope.TenantID.String(), activity.Scope.OutcomeID.String(), activity.ContractID.String(), activity.WorkItemID.String(), activitySequenceKey(activity.Sequence), raw)
 	return mapSQLError("insert work activity", err)
 }
 
@@ -57,8 +56,8 @@ func (r workActivityRepository) List(ctx context.Context, scope d.Scope, filter 
 	if filter.ThroughSequence == 0 || filter.AfterSequence > filter.ThroughSequence {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid activity sequence range")
 	}
-	q := `SELECT id,contract_id,work_item_id,sequence,payload_json FROM work_activities WHERE namespace_id=? AND outcome_id=?`
-	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+	q := `SELECT id,contract_id,work_item_id,sequence,payload_json FROM work_activities WHERE tenant_id=? AND outcome_id=?`
+	args := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 	if filter.WorkItemID != "" {
 		q += ` AND work_item_id=?`
 		args = append(args, filter.WorkItemID.String())
@@ -90,7 +89,7 @@ func (r workActivityRepository) List(ctx context.Context, scope d.Scope, filter 
 			return nil, err
 		}
 		var activity d.WorkActivity
-		if err := json.Unmarshal([]byte(raw), &activity); err != nil {
+		if err := unmarshalJSON(raw, &activity); err != nil {
 			return nil, err
 		}
 		parsedSequence, err := strconv.ParseUint(sequence, 10, 64)

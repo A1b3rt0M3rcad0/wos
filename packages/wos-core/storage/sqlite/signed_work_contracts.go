@@ -4,7 +4,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"reflect"
@@ -18,15 +17,15 @@ func (u *unitOfWork) SignedWorkContracts() ports.WorkContractRepository {
 }
 func (r signedWorkContractRepository) Get(ctx context.Context, scope d.Scope, id d.ID) (d.WorkContract, error) {
 	var state, spec string
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT state_json,spec_json FROM signed_work_contracts WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&state, &spec)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT state_json,spec_json FROM signed_work_contracts WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()).Scan(&state, &spec)
 	if err != nil {
 		return d.WorkContract{}, mapSQLError("get contract", err)
 	}
 	var c d.WorkContract
-	if err := json.Unmarshal([]byte(state), &c); err != nil {
+	if err := unmarshalJSON(state, &c); err != nil {
 		return c, err
 	}
-	if err := json.Unmarshal([]byte(spec), &c.Spec); err != nil {
+	if err := unmarshalJSON(spec, &c.Spec); err != nil {
 		return c, err
 	}
 	if c.Scope != scope || c.ID != id {
@@ -36,7 +35,7 @@ func (r signedWorkContractRepository) Get(ctx context.Context, scope d.Scope, id
 }
 func (r signedWorkContractRepository) Current(ctx context.Context, scope d.Scope, work d.ID) (*d.WorkContract, error) {
 	var id string
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT id FROM signed_work_contracts WHERE namespace_id=? AND outcome_id=? AND work_item_id=? AND status='active'`, scope.NamespaceID.String(), scope.OutcomeID.String(), work.String()).Scan(&id)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT id FROM signed_work_contracts WHERE tenant_id=? AND outcome_id=? AND work_item_id=? AND status='active'`, scope.TenantID.String(), scope.OutcomeID.String(), work.String()).Scan(&id)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -54,7 +53,7 @@ func (r signedWorkContractRepository) List(ctx context.Context, scope d.Scope, f
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "contract limit outside 1..101")
 	}
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json FROM signed_work_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json FROM signed_work_contracts WHERE tenant_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
 	if err != nil {
 		return nil, mapSQLError("list contracts", err)
 	}
@@ -66,7 +65,7 @@ func (r signedWorkContractRepository) List(ctx context.Context, scope d.Scope, f
 			return nil, mapSQLError("scan signed state", err)
 		}
 		var c d.WorkContract
-		if err := json.Unmarshal([]byte(state), &c); err != nil {
+		if err := unmarshalJSON(state, &c); err != nil {
 			return nil, err
 		}
 		if err := c.ValidateHeader(); err != nil {
@@ -98,7 +97,7 @@ func (r signedWorkContractRepository) Insert(ctx context.Context, c d.WorkContra
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contracts (id,namespace_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.SignedBinding.CredentialID.String(), c.HolderPrincipalID, string(c.Status), strconv.FormatUint(uint64(c.Version), 10), strconv.FormatUint(uint64(c.LeaseVersion), 10), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, spec, c.SpecDigest)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contracts (id,tenant_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.SignedBinding.CredentialID.String(), c.HolderPrincipalID, string(c.Status), strconv.FormatUint(uint64(c.Version), 10), strconv.FormatUint(uint64(c.LeaseVersion), 10), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, spec, c.SpecDigest)
 	return mapSQLError("insert contract", err)
 }
 func (r signedWorkContractRepository) Save(ctx context.Context, c d.WorkContract, version, lease d.Version) error {
@@ -116,7 +115,7 @@ func (r signedWorkContractRepository) Save(ctx context.Context, c d.WorkContract
 	if err != nil {
 		return err
 	}
-	result, err := r.uow.tx.ExecContext(ctx, `UPDATE signed_work_contracts SET status=?,version=?,lease_version=?,fencing_token=?,expires_at=?,state_json=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), strconv.FormatUint(uint64(c.Version), 10), strconv.FormatUint(uint64(c.LeaseVersion), 10), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.ID.String(), strconv.FormatUint(uint64(version), 10), strconv.FormatUint(uint64(lease), 10))
+	result, err := r.uow.tx.ExecContext(ctx, `UPDATE signed_work_contracts SET status=?,version=?,lease_version=?,fencing_token=?,expires_at=?,state_json=? WHERE tenant_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), strconv.FormatUint(uint64(c.Version), 10), strconv.FormatUint(uint64(c.LeaseVersion), 10), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.ID.String(), strconv.FormatUint(uint64(version), 10), strconv.FormatUint(uint64(lease), 10))
 	if err != nil {
 		return mapSQLError("save contract", err)
 	}
@@ -144,7 +143,7 @@ func (r signedWorkContractRepository) InsertCheckpoint(ctx context.Context, p d.
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contract_checkpoints (id,namespace_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`, p.ID.String(), p.Scope.NamespaceID.String(), p.Scope.OutcomeID.String(), p.ContractID.String(), p.WorkItemID.String(), int64(p.Sequence), raw)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contract_checkpoints (id,tenant_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`, p.ID.String(), p.Scope.TenantID.String(), p.Scope.OutcomeID.String(), p.ContractID.String(), p.WorkItemID.String(), int64(p.Sequence), raw)
 	return mapSQLError("insert checkpoint", err)
 }
 func (r signedWorkContractRepository) ListCheckpoints(ctx context.Context, scope d.Scope, contract, after d.ID, limit int) ([]d.WorkCheckpoint, error) {
@@ -154,7 +153,7 @@ func (r signedWorkContractRepository) ListCheckpoints(ctx context.Context, scope
 	if limit < 1 || limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "checkpoint limit outside 1..101")
 	}
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_checkpoints WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_checkpoints WHERE tenant_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
 	if err != nil {
 		return nil, mapSQLError("query signed state", err)
 	}
@@ -166,7 +165,7 @@ func (r signedWorkContractRepository) ListCheckpoints(ctx context.Context, scope
 			return nil, mapSQLError("scan signed state", err)
 		}
 		var v d.WorkCheckpoint
-		if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		if err := unmarshalJSON(raw, &v); err != nil {
 			return nil, err
 		}
 		if err := v.Validate(); err != nil {
@@ -200,17 +199,17 @@ func (r signedWorkContractRepository) InsertSubmission(ctx context.Context, p d.
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contract_submissions (id,namespace_id,outcome_id,contract_id,work_item_id,submission_digest,payload_json) VALUES (?,?,?,?,?,?,?)`, p.ID.String(), p.Scope.NamespaceID.String(), p.Scope.OutcomeID.String(), p.Material.ContractID.String(), p.Material.WorkItemID.String(), p.Digest, raw)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO signed_work_contract_submissions (id,tenant_id,outcome_id,contract_id,work_item_id,submission_digest,payload_json) VALUES (?,?,?,?,?,?,?)`, p.ID.String(), p.Scope.TenantID.String(), p.Scope.OutcomeID.String(), p.Material.ContractID.String(), p.Material.WorkItemID.String(), p.Digest, raw)
 	return mapSQLError("insert submission", err)
 }
 func (r signedWorkContractRepository) GetSubmission(ctx context.Context, scope d.Scope, id d.ID) (d.WorkSubmission, error) {
 	var raw string
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT payload_json FROM signed_work_contract_submissions WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT payload_json FROM signed_work_contract_submissions WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
 	if err != nil {
 		return d.WorkSubmission{}, mapSQLError("get submission", err)
 	}
 	var v d.WorkSubmission
-	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+	if err := unmarshalJSON(raw, &v); err != nil {
 		return v, err
 	}
 	if v.ID != id || v.Scope != scope {
@@ -225,7 +224,7 @@ func (r signedWorkContractRepository) ListSubmissions(ctx context.Context, scope
 	if limit < 1 || limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "submission limit outside 1..101")
 	}
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_submissions WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT payload_json FROM signed_work_contract_submissions WHERE tenant_id=? AND outcome_id=? AND contract_id=? AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), contract.String(), after.String(), limit)
 	if err != nil {
 		return nil, mapSQLError("query signed state", err)
 	}
@@ -237,7 +236,7 @@ func (r signedWorkContractRepository) ListSubmissions(ctx context.Context, scope
 			return nil, mapSQLError("scan signed state", err)
 		}
 		var v d.WorkSubmission
-		if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		if err := unmarshalJSON(raw, &v); err != nil {
 			return nil, err
 		}
 		if err := v.Validate(); err != nil {
@@ -250,12 +249,12 @@ func (r signedWorkContractRepository) ListSubmissions(ctx context.Context, scope
 
 func (r signedWorkContractRepository) GetCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (d.WorkCheckpoint, error) {
 	var raw string
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT payload_json FROM signed_work_contract_checkpoints WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT payload_json FROM signed_work_contract_checkpoints WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
 	if err != nil {
 		return d.WorkCheckpoint{}, mapSQLError("get checkpoint", err)
 	}
 	var v d.WorkCheckpoint
-	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+	if err := unmarshalJSON(raw, &v); err != nil {
 		return v, err
 	}
 	if v.ID != id || v.Scope != scope {

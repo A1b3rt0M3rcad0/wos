@@ -93,7 +93,7 @@ func prepareAcquisitionBatchV2(ctx context.Context, w *Workspace, profile Profil
 		if e != nil {
 			return nil, e
 		}
-		intents = append(intents, PendingOperationV2{ID: id, Operation: operation, State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fingerprint})
+		intents = append(intents, PendingOperationV2{ID: id, Operation: operation, State: "prepared", Scope: ProfilePendingScopeV2{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw), RequestFingerprint: fingerprint})
 	}
 	e = mutateProfileV2(ctx, w, profile, token, func(current *ProfileV2) error {
 		if len(current.Local.PendingOperations)+count > 10 {
@@ -226,7 +226,7 @@ func callAcquisitionV2(ctx context.Context, client *sdk.Client, profile ProfileV
 	if e != nil || signing.Digest(raw) != pending.PayloadDigest {
 		return zero, fmt.Errorf("pending payload differs")
 	}
-	scope := d.Scope{NamespaceID: pending.Scope.NamespaceID, OutcomeID: pending.Scope.OutcomeID}
+	scope := d.Scope{TenantID: pending.Scope.TenantID, OutcomeID: pending.Scope.OutcomeID}
 	switch pending.Operation {
 	case "AcquireSignedWorkContract":
 		var cmd a.AcquireSignedWorkContractCommand
@@ -454,7 +454,7 @@ func recoverAcquisitionV2(ctx context.Context, w *Workspace, profile ProfileV2, 
 
 func reconcileAcquisitionV2(ctx context.Context, client *sdk.Client, profile ProfileV2, intent PendingOperationV2) (acquisitionAcceptedV2, error) {
 	var zero acquisitionAcceptedV2
-	scope := d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}
+	scope := d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}
 	result, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: intent.IdempotencyKey})
 	if e != nil {
 		return zero, e

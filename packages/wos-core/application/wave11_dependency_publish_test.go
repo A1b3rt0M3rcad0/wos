@@ -15,7 +15,7 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 	cc := commandContext()
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f320-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f320-0000-7000-8000-000000000001"),
 		Title:        "Atomic planning publication",
 		DesiredState: "plan publication and dependency mutations commit together",
 		Priority:     domain.PriorityNormal,

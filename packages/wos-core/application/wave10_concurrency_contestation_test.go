@@ -38,7 +38,7 @@ func TestWave10ConcurrentAssessmentsHaveSingleCurrentWinner(t *testing.T) {
 	}
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199efb1-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199efb1-0000-7000-8000-000000000001"),
 		Title:        "Concurrent assessments",
 		DesiredState: "one current assessment wins",
 		Priority:     domain.PriorityNormal,
@@ -139,7 +139,7 @@ func TestWave10RetractedEvidenceContestsConclusionWithoutReopening(t *testing.T)
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199efb3-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199efb3-0000-7000-8000-000000000001"),
 		Title:        "Evidence contestation",
 		DesiredState: "later retraction remains visible",
 		Priority:     domain.PriorityNormal,

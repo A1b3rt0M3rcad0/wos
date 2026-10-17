@@ -123,17 +123,17 @@
         "scope": {
           "additionalProperties": false,
           "properties": {
-            "namespace_id": {
+            "outcome_id": {
               "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
               "type": "string"
             },
-            "outcome_id": {
+            "tenant_id": {
               "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
               "type": "string"
             }
           },
           "required": [
-            "namespace_id",
+            "tenant_id",
             "outcome_id"
           ],
           "type": "object"
@@ -279,17 +279,17 @@
                       "kind": {
                         "type": "string"
                       },
-                      "namespace_id": {
+                      "outcome_id": {
                         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                         "type": "string"
                       },
-                      "outcome_id": {
+                      "tenant_id": {
                         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                         "type": "string"
                       }
                     },
                     "required": [
-                      "namespace_id",
+                      "tenant_id",
                       "outcome_id",
                       "kind",
                       "id"
@@ -338,17 +338,17 @@
                   "kind": {
                     "type": "string"
                   },
-                  "namespace_id": {
+                  "outcome_id": {
                     "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                     "type": "string"
                   },
-                  "outcome_id": {
+                  "tenant_id": {
                     "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                     "type": "string"
                   }
                 },
                 "required": [
-                  "namespace_id",
+                  "tenant_id",
                   "outcome_id",
                   "kind",
                   "id"
@@ -380,17 +380,17 @@
                       "kind": {
                         "type": "string"
                       },
-                      "namespace_id": {
+                      "outcome_id": {
                         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                         "type": "string"
                       },
-                      "outcome_id": {
+                      "tenant_id": {
                         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                         "type": "string"
                       }
                     },
                     "required": [
-                      "namespace_id",
+                      "tenant_id",
                       "outcome_id",
                       "kind",
                       "id"

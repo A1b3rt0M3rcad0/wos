@@ -7,7 +7,7 @@ import (
 )
 
 func registerDeliveryHealth(server *mcp.Server, service *a.Service, options Options) {
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_delivery_health", Description: "Read scoped durable webhook queue counts/ages and this process worker status. Requires current Namespace administration; optional Outcome restriction is enforced. No event body, receiver URL or secret is returned. API readiness is independent; no delivery/receiver SLA is certified."}, func(ctx context.Context, request *mcp.CallToolRequest, q a.DeliveryHealthQuery) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_delivery_health", Description: "Read scoped durable webhook queue counts/ages and this process worker status. Requires current Tenant administration; optional Outcome restriction is enforced. No event body, receiver URL or secret is returned. API readiness is independent; no delivery/receiver SLA is certified."}, func(ctx context.Context, request *mcp.CallToolRequest, q a.DeliveryHealthQuery) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, e := requestContext(ctx, request, options)
 		defer cancel()
 		if e != nil {

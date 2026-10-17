@@ -64,7 +64,7 @@ func resolveWorkTargetV2(ctx context.Context, w *Workspace, profile ProfileV2, c
 		if view.Authority.ContractKind != kind {
 			return target, usage("contract kind differs from selected command")
 		}
-		target.Scope = d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+		target.Scope = d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 		target.File, target.View = &file, view
 	} else {
 		// Missing accepted local material is normal after receipt-confirmed
@@ -136,10 +136,10 @@ func historicalSpecificationV2(ctx context.Context, profile ProfileV2, client *s
 		return nil, e
 	}
 	var binding signing.SpecPayload[json.RawMessage]
-	if e = signing.DecodeStrict(raw, &binding, 128<<10); e != nil {
+	if e = signing.DecodeHistoricalPayload(raw, &binding, 128<<10); e != nil {
 		return nil, e
 	}
-	if binding.ProtocolVersion != 2 || binding.ServerID != profile.Binding.ServerID.String() || binding.NamespaceID != target.Scope.NamespaceID.String() || binding.OutcomeID != target.Scope.OutcomeID.String() || binding.ContractKind != kind || binding.ContractID != target.ID.String() || binding.WorkItemID != target.WorkID.String() {
+	if (binding.ProtocolVersion != 3 && binding.ProtocolVersion != 2) || binding.ServerID != profile.Binding.ServerID.String() || binding.TenantID != target.Scope.TenantID.String() || binding.OutcomeID != target.Scope.OutcomeID.String() || binding.ContractKind != kind || binding.ContractID != target.ID.String() || binding.WorkItemID != target.WorkID.String() {
 		return nil, fmt.Errorf("historical specification target differs")
 	}
 	if target.State.Contract == nil || signing.Digest(raw) != target.State.Contract.SpecDigest {
@@ -147,13 +147,13 @@ func historicalSpecificationV2(ctx context.Context, profile ProfileV2, client *s
 	}
 	if kind == "execution" {
 		var spec signing.SpecPayload[d.SignedWorkSpec]
-		if e = signing.DecodeStrict(raw, &spec, 128<<10); e != nil {
+		if e = signing.DecodeHistoricalPayload(raw, &spec, 128<<10); e != nil {
 			return nil, e
 		}
 		return spec.Spec, nil
 	}
 	var spec signing.SpecPayload[a.SignedReviewSpec]
-	if e = signing.DecodeStrict(raw, &spec, 128<<10); e != nil {
+	if e = signing.DecodeHistoricalPayload(raw, &spec, 128<<10); e != nil {
 		return nil, e
 	}
 	return reviewAgentSpecificationV2(profile, ContractViewV2{ReviewSpecification: &spec})
@@ -516,10 +516,10 @@ func acceptedWorkResultV2(ctx context.Context, profile ProfileV2, client *sdk.Cl
 		return nil, e
 	}
 	var receipt signing.ReceiptPayload
-	if e = signing.DecodeStrict(payload, &receipt, signing.MaxPayloadBytes); e != nil {
+	if e = signing.DecodeHistoricalPayload(payload, &receipt, signing.MaxPayloadBytes); e != nil {
 		return nil, e
 	}
-	if !receipt.Accepted || !receipt.LocalObligationClosed || receipt.ProtocolVersion != 2 || receipt.ServerID != profile.Binding.ServerID.String() || receipt.NamespaceID != target.Scope.NamespaceID.String() || receipt.OutcomeID != target.Scope.OutcomeID.String() || receipt.ContractID != target.ID.String() || receipt.WorkItemID != target.WorkID.String() || receipt.PrincipalID != target.State.Contract.HolderPrincipalID || receipt.SubmissionID != submissionID.String() || receipt.SubmissionDigest != state.SubmissionDigest || receipt.SignerKeyID != document.Proof.KeyID {
+	if !receipt.Accepted || !receipt.LocalObligationClosed || (receipt.ProtocolVersion != 3 && receipt.ProtocolVersion != 2) || receipt.ServerID != profile.Binding.ServerID.String() || receipt.TenantID != target.Scope.TenantID.String() || receipt.OutcomeID != target.Scope.OutcomeID.String() || receipt.ContractID != target.ID.String() || receipt.WorkItemID != target.WorkID.String() || receipt.PrincipalID != target.State.Contract.HolderPrincipalID || receipt.SubmissionID != submissionID.String() || receipt.SubmissionDigest != state.SubmissionDigest || receipt.SignerKeyID != document.Proof.KeyID {
 		return nil, fmt.Errorf("accepted result issuer receipt target/digest differs")
 	}
 	view := compactDraftV2(ContractFileV2{Execution: &ExecutionDraftV2{Material: a.SignedReturnMaterial{Result: material}}, Local: ContractLocalV2{AcceptanceReceipt: &document}})

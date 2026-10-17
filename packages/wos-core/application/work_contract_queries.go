@@ -157,7 +157,7 @@ func (s *Service) WorkContractHistory(ctx context.Context, scope d.Scope, f port
 	f.After = ""
 	fingerprint := filterHash(f)
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "work_contracts", fingerprint)
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "work_contracts", fingerprint)
 		if err != nil {
 			return ContractPage{}, err
 		}
@@ -176,7 +176,7 @@ func (s *Service) WorkContractHistory(ctx context.Context, scope d.Scope, f port
 	if len(page.Items) > limit {
 		page.Items = page.Items[:limit]
 		page.Truncated = true
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "work_contracts", Filter: fingerprint, Key: string(page.Items[len(page.Items)-1].ID)})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "work_contracts", Filter: fingerprint, Key: string(page.Items[len(page.Items)-1].ID)})
 	}
 	// History is a small header projection: specifications expand through their immutable resource.
 	for i := range page.Items {
@@ -187,7 +187,7 @@ func (s *Service) WorkContractHistory(ctx context.Context, scope d.Scope, f port
 	for len(raw) > MaxSnapshotBytes && len(page.Items) > 1 {
 		page.Items = page.Items[:len(page.Items)-1]
 		page.Truncated = true
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "work_contracts", Filter: fingerprint, Key: string(page.Items[len(page.Items)-1].ID)})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "work_contracts", Filter: fingerprint, Key: string(page.Items[len(page.Items)-1].ID)})
 		raw, _ = json.Marshal(page)
 	}
 	if len(raw) > MaxSnapshotBytes {
@@ -252,7 +252,7 @@ func (s *Service) ContractRecords(ctx context.Context, scope d.Scope, id d.ID, s
 	fingerprint := filterHash(id)
 	after := d.ID("")
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "contract_"+section, fingerprint)
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "contract_"+section, fingerprint)
 		if err != nil {
 			return ContractRecordPage{}, err
 		}
@@ -293,7 +293,7 @@ func (s *Service) ContractRecords(ctx context.Context, scope d.Scope, id d.ID, s
 		}
 	}
 	if last != "" {
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "contract_" + section, Filter: fingerprint, Key: string(last)})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "contract_" + section, Filter: fingerprint, Key: string(last)})
 	}
 	raw, marshalErr := json.Marshal(page)
 	if marshalErr != nil {

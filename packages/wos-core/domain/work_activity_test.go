@@ -10,7 +10,7 @@ import (
 
 func TestWorkActivityValidatesBoundedDeclarationAndExactChronology(t *testing.T) {
 	id := MustParseID("0199a555-0000-7000-8000-000000000001")
-	activity := WorkActivity{ID: id, Scope: Scope{NamespaceID: id, OutcomeID: id}, ContractID: id, WorkItemID: id, Sequence: math.MaxUint64, Type: WorkActivityProblem, Description: "A failed check remains in history after a later correction.", PrincipalID: "executor", Actor: ActorRef{Kind: ActorKindAgent, Provider: "test", ID: "executor"}, RecordedAt: time.Now().UTC(), CriterionRefs: []WorkActivityCriterionRef{{CriterionID: id, CriterionRevision: CriterionRevision(math.MaxUint64)}}}
+	activity := WorkActivity{ID: id, Scope: Scope{TenantID: id, OutcomeID: id}, ContractID: id, WorkItemID: id, Sequence: math.MaxUint64, Type: WorkActivityProblem, Description: "A failed check remains in history after a later correction.", PrincipalID: "executor", Actor: ActorRef{Kind: ActorKindAgent, Provider: "test", ID: "executor"}, RecordedAt: time.Now().UTC(), CriterionRefs: []WorkActivityCriterionRef{{CriterionID: id, CriterionRevision: CriterionRevision(math.MaxUint64)}}}
 	if err := activity.Validate(); err != nil {
 		t.Fatal(err)
 	}

@@ -141,8 +141,8 @@
             <!-- prettier-ignore -->
             <p class="entry-field-help" data-copy="localServerGuidance">For a trusted local server configured for local access. Use its workspace ID.</p>
             <form id="local">
-              <label data-copy="namespace"
-                >Namespace<input
+              <label data-copy="tenant"
+                >Tenant<input
                   id="local-ns"
                   aria-describedby="local-workspace-help"
                   required
@@ -153,7 +153,7 @@
               </button>
             </form>
             <!-- prettier-ignore -->
-            <p id="local-workspace-help" class="entry-field-help" data-copy="localWorkspaceIdentifierGuidance" >This is the Namespace UUID from your server configuration. Shared servers require an access credential.</p>
+            <p id="local-workspace-help" class="entry-field-help" data-copy="localWorkspaceIdentifierGuidance" >This is the Tenant UUID from your server configuration. Shared servers require an access credential.</p>
           </details>
           <div class="entry-panel-footer">
             <!-- prettier-ignore -->
@@ -171,7 +171,7 @@
         >
           <div class="workspace-switch">
             <label data-copy="workspace"
-              >Workspace<select id="namespace"></select
+              >Workspace<select id="tenant"></select
             ></label>
           </div>
           <div class="sidebar-heading">
@@ -653,7 +653,7 @@
               <option value="revoke_credential" data-copy="revokeCredential">
                 Revoke credential
               </option>
-              <option value="create_namespace" data-copy="createWorkspace">
+              <option value="create_tenant" data-copy="createWorkspace">
                 Create workspace
               </option>
             </select></label

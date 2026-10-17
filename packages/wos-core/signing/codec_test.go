@@ -23,10 +23,10 @@ func vectorKey() ed25519.PrivateKey {
 	return ed25519.NewKeyFromSeed(seed)
 }
 func fixturePayload() testPayload {
-	return testPayload{2, "vector-key", "18446744073709551615", "ação ☃"}
+	return testPayload{ProtocolVersion, "vector-key", "18446744073709551615", "ação ☃"}
 }
 func TestIndependentEd25519DSSEVector(t *testing.T) {
-	raw, err := os.ReadFile("testdata/dsse-vector.json")
+	raw, err := os.ReadFile("testdata/dsse-vector-v3.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestSignedDocumentPresentationRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc.Payload = json.RawMessage("{ \"summary\":\"ação ☃\",\"signer_key_id\":\"vector-key\",\"protocol_version\":2,\"fencing_token\":\"18446744073709551615\" }")
+	doc.Payload = json.RawMessage("{ \"summary\":\"ação ☃\",\"signer_key_id\":\"vector-key\",\"protocol_version\":3,\"fencing_token\":\"18446744073709551615\" }")
 	rebuilt, err := doc.Envelope()
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +104,7 @@ func TestPurposeIdentityAndTampering(t *testing.T) {
 		func(e *Envelope) { e.Signatures = append(e.Signatures, e.Signatures[0]) },
 		func(e *Envelope) { e.Signatures[0].Sig = base64.StdEncoding.EncodeToString(make([]byte, 64)) },
 		func(e *Envelope) {
-			e.Payload = base64.StdEncoding.EncodeToString([]byte(`{"protocol_version":2,"signer_key_id":"vector-key","summary":"changed"}`))
+			e.Payload = base64.StdEncoding.EncodeToString([]byte(`{"protocol_version":3,"signer_key_id":"vector-key","summary":"changed"}`))
 		},
 		func(e *Envelope) { e.Payload = "\n" + e.Payload },
 	} {
@@ -134,7 +134,7 @@ func TestPurposeIdentityAndTampering(t *testing.T) {
 	}
 }
 func TestStrictVerifiedDTOAndLargeTechnicalEnvelope(t *testing.T) {
-	p := map[string]any{"protocol_version": 2, "signer_key_id": "vector-key", "surprise": "unsigned companion must not execute"}
+	p := map[string]any{"protocol_version": 3, "signer_key_id": "vector-key", "surprise": "unsigned companion must not execute"}
 	env, err := Sign(WorkReturn, p, "vector-key", vectorKey())
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func TestStrictVerifiedDTOAndLargeTechnicalEnvelope(t *testing.T) {
 	if _, _, err := Decode[testPayload](env, WorkReturn, "vector-key", vectorKey().Public().(ed25519.PublicKey)); err == nil {
 		t.Fatal("unknown field accepted by strict verified DTO")
 	}
-	p = map[string]any{"protocol_version": 2, "signer_key_id": "vector-key", "values": []string{strings.Repeat("x", 60000), strings.Repeat("y", 60000)}}
+	p = map[string]any{"protocol_version": 3, "signer_key_id": "vector-key", "values": []string{strings.Repeat("x", 60000), strings.Repeat("y", 60000)}}
 	env, err = Sign(WorkReturn, p, "vector-key", vectorKey())
 	if err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestStrictVerifiedDTOAndLargeTechnicalEnvelope(t *testing.T) {
 	}
 }
 func FuzzCanonical(f *testing.F) {
-	for _, s := range []string{`{"x":1}`, `{"x":"\ud800"}`, `{"x":1,"x":2}`, `{"protocol_version":2,"signer_key_id":"key"}`} {
+	for _, s := range []string{`{"x":1}`, `{"x":"\ud800"}`, `{"x":1,"x":2}`, `{"protocol_version":3,"signer_key_id":"key"}`} {
 		f.Add([]byte(s))
 	}
 	f.Fuzz(func(t *testing.T, raw []byte) {

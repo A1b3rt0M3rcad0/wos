@@ -31,7 +31,7 @@ func decodeReturnIntentV2(profile ProfileV2, token []byte, intent PendingOperati
 	if e != nil {
 		return frozen, binding, e
 	}
-	if intent.ID.String() != binding.RequestID || intent.ContractID == nil || intent.ContractID.String() != binding.ContractID || intent.Scope.NamespaceID.String() != binding.NamespaceID || intent.Scope.OutcomeID.String() != binding.OutcomeID || intent.IdempotencyKey != binding.IdempotencyKey || !returnPendingV2(intent.Operation) || (intent.Operation == "ReturnSignedReview") != (frozen.Envelope.PayloadType == signing.ReviewReturn) {
+	if intent.ID.String() != binding.RequestID || intent.ContractID == nil || intent.ContractID.String() != binding.ContractID || intent.Scope.TenantID.String() != binding.TenantID || intent.Scope.OutcomeID.String() != binding.OutcomeID || intent.IdempotencyKey != binding.IdempotencyKey || !returnPendingV2(intent.Operation) || (intent.Operation == "ReturnSignedReview") != (frozen.Envelope.PayloadType == signing.ReviewReturn) {
 		return frozen, binding, fmt.Errorf("profile return intention binding differs")
 	}
 	return frozen, binding, nil
@@ -45,7 +45,7 @@ func verifyReturnReceiptV2(profile ProfileV2, frozen FrozenReturnV2, binding sig
 	if e = signing.DecodeStrict(raw, &receipt, signing.MaxPayloadBytes); e != nil {
 		return receipt, e
 	}
-	if receipt.ProtocolVersion != 2 || receipt.ServerID != binding.ServerID || receipt.NamespaceID != binding.NamespaceID || receipt.OutcomeID != binding.OutcomeID || receipt.PrincipalID != binding.PrincipalID || receipt.ContractID != binding.ContractID || receipt.WorkItemID != binding.WorkItemID || receipt.RequestID != binding.RequestID || receipt.IdempotencyKey != binding.IdempotencyKey || receipt.RequestDigest != frozen.RequestDigest || !receipt.Accepted || !receipt.LocalObligationClosed {
+	if receipt.ProtocolVersion != 3 || receipt.ServerID != binding.ServerID || receipt.TenantID != binding.TenantID || receipt.OutcomeID != binding.OutcomeID || receipt.PrincipalID != binding.PrincipalID || receipt.ContractID != binding.ContractID || receipt.WorkItemID != binding.WorkItemID || receipt.RequestID != binding.RequestID || receipt.IdempotencyKey != binding.IdempotencyKey || receipt.RequestDigest != frozen.RequestDigest || !receipt.Accepted || !receipt.LocalObligationClosed {
 		return receipt, fmt.Errorf("acceptance receipt does not close this exact intention")
 	}
 	if frozen.Envelope.PayloadType == signing.WorkReturn {
@@ -81,7 +81,7 @@ func verifyReturnReceiptV2(profile ProfileV2, frozen FrozenReturnV2, binding sig
 }
 func lookupReturnReceiptV2(ctx context.Context, client *sdk.Client, profile ProfileV2, intent PendingOperationV2, frozen FrozenReturnV2, binding signing.RequestBinding) (signing.Document, error) {
 	var document signing.Document
-	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{NamespaceID: intent.Scope.NamespaceID, OutcomeID: intent.Scope.OutcomeID}, Resource: "receipt", IdempotencyKey: intent.IdempotencyKey})
+	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{TenantID: intent.Scope.TenantID, OutcomeID: intent.Scope.OutcomeID}, Resource: "receipt", IdempotencyKey: intent.IdempotencyKey})
 	if e != nil {
 		return document, e
 	}

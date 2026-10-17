@@ -17,10 +17,10 @@ type signingIdentityRepository struct{ u *unitOfWork }
 func (u *unitOfWork) SigningIdentity() ports.SigningIdentityRepository {
 	return signingIdentityRepository{u}
 }
-func (r signingIdentityRepository) LockNamespace(ctx context.Context, ns d.ID) (d.Version, error) {
+func (r signingIdentityRepository) LockTenant(ctx context.Context, ns d.ID) (d.Version, error) {
 	var v d.Version
-	err := r.u.tx.QueryRowContext(ctx, `SELECT version FROM namespaces WHERE id=$1 AND lifecycle='active' FOR UPDATE`, ns.String()).Scan(&v)
-	return v, mapSQLError("lock signing namespace", err)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT version FROM tenants WHERE id=$1 AND lifecycle='active' FOR UPDATE`, ns.String()).Scan(&v)
+	return v, mapSQLError("lock signing tenant", err)
 }
 func signingRead[T any](ctx context.Context, u *unitOfWork, q string, args ...any) (T, error) {
 	var v T
@@ -29,14 +29,14 @@ func signingRead[T any](ctx context.Context, u *unitOfWork, q string, args ...an
 	if err != nil {
 		return v, mapSQLError("read signing state", err)
 	}
-	err = json.Unmarshal([]byte(raw), &v)
+	err = unmarshalJSON(raw, &v)
 	return v, err
 }
 func (r signingIdentityRepository) Credential(ctx context.Context, ns, id d.ID) (ports.Credential, error) {
-	return r.credential(ctx, `SELECT id,namespace_id,principal_id,actor_json,expires_at,revoked,COALESCE(parent_digest,''),digest FROM credentials WHERE namespace_id=$1 AND id=$2`, ns.String(), id.String())
+	return r.credential(ctx, `SELECT id,tenant_id,principal_id,actor_json,expires_at,revoked,COALESCE(parent_digest,''),digest FROM credentials WHERE tenant_id=$1 AND id=$2`, ns.String(), id.String())
 }
 func (r signingIdentityRepository) CredentialByDigest(ctx context.Context, digest string) (ports.Credential, error) {
-	return r.credential(ctx, `SELECT id,namespace_id,principal_id,actor_json,expires_at,revoked,COALESCE(parent_digest,''),digest FROM credentials WHERE digest=$1`, digest)
+	return r.credential(ctx, `SELECT id,tenant_id,principal_id,actor_json,expires_at,revoked,COALESCE(parent_digest,''),digest FROM credentials WHERE digest=$1`, digest)
 }
 func (r signingIdentityRepository) credential(ctx context.Context, q string, args ...any) (ports.Credential, error) {
 	var c ports.Credential
@@ -50,19 +50,19 @@ func (r signingIdentityRepository) credential(ctx context.Context, q string, arg
 	if err != nil {
 		return c, err
 	}
-	c.NamespaceID, err = d.ParseID(ns)
+	c.TenantID, err = d.ParseID(ns)
 	if err != nil {
 		return c, err
 	}
 	c.ExpiresAt = decodeTime(expiry)
-	err = json.Unmarshal([]byte(actor), &c.Actor)
+	err = unmarshalJSON(actor, &c.Actor)
 	return c, err
 }
 func (r signingIdentityRepository) Key(ctx context.Context, ns, id d.ID) (d.SigningKey, error) {
-	k, err := signingRead[d.SigningKey](ctx, r.u, `SELECT state_json FROM signing_keys WHERE namespace_id=$1 AND id=$2`, ns.String(), id.String())
+	k, err := signingRead[d.SigningKey](ctx, r.u, `SELECT state_json FROM signing_keys WHERE tenant_id=$1 AND id=$2`, ns.String(), id.String())
 	if err == nil {
 		err = k.Validate()
-		if k.NamespaceID != ns || k.ID != id {
+		if k.TenantID != ns || k.ID != id {
 			err = d.NewError(d.ErrorCodeInvalidScope, "key scope mismatch")
 		}
 	}
@@ -72,7 +72,7 @@ func (r signingIdentityRepository) Keys(ctx context.Context, ns d.ID, principal 
 	if limit < 1 || limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "key list limit outside 1..101")
 	}
-	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signing_keys WHERE namespace_id=$1 AND principal_id=$2 ORDER BY id LIMIT $3`, ns.String(), principal, limit)
+	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signing_keys WHERE tenant_id=$1 AND principal_id=$2 ORDER BY id LIMIT $3`, ns.String(), principal, limit)
 	if err != nil {
 		return nil, mapSQLError("read signing keys", err)
 	}
@@ -84,7 +84,7 @@ func (r signingIdentityRepository) Keys(ctx context.Context, ns d.ID, principal 
 			return nil, mapSQLError("scan signing key", err)
 		}
 		var k d.SigningKey
-		if err = json.Unmarshal([]byte(raw), &k); err != nil {
+		if err = unmarshalJSON(raw, &k); err != nil {
 			return nil, err
 		}
 		if err = k.Validate(); err != nil {
@@ -102,7 +102,7 @@ func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, 
 		return d.NewError(d.ErrorCodeVersionConflict, "key version must advance once")
 	}
 	if expected > 0 {
-		old, err := r.Key(ctx, k.NamespaceID, k.ID)
+		old, err := r.Key(ctx, k.TenantID, k.ID)
 		if err != nil {
 			return err
 		}
@@ -128,14 +128,14 @@ func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, 
 				return err
 			}
 		}
-		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signing_keys(namespace_id,id,principal_id,purpose,fingerprint,status,version,state_json) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, k.NamespaceID.String(), k.ID.String(), k.PrincipalID, k.Purpose, k.Fingerprint, k.Status, k.Version, raw)
+		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signing_keys(tenant_id,id,principal_id,purpose,fingerprint,status,version,state_json) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, k.TenantID.String(), k.ID.String(), k.PrincipalID, k.Purpose, k.Fingerprint, k.Status, k.Version, raw)
 		return mapSQLError("create signing key", err)
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE signing_keys SET status=$1,version=$2,state_json=$3 WHERE namespace_id=$4 AND id=$5 AND version=$6`, k.Status, k.Version, raw, k.NamespaceID.String(), k.ID.String(), expected)
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE signing_keys SET status=$1,version=$2,state_json=$3 WHERE tenant_id=$4 AND id=$5 AND version=$6`, k.Status, k.Version, raw, k.TenantID.String(), k.ID.String(), expected)
 	return signingCAS(result, err)
 }
 func (r signingIdentityRepository) Enrollment(ctx context.Context, ns, id d.ID) (d.SigningEnrollment, error) {
-	e, err := signingRead[d.SigningEnrollment](ctx, r.u, `SELECT state_json FROM signing_key_enrollments WHERE namespace_id=$1 AND id=$2`, ns.String(), id.String())
+	e, err := signingRead[d.SigningEnrollment](ctx, r.u, `SELECT state_json FROM signing_key_enrollments WHERE tenant_id=$1 AND id=$2`, ns.String(), id.String())
 	if err == nil {
 		err = e.Validate()
 	}
@@ -149,7 +149,7 @@ func (r signingIdentityRepository) SaveEnrollment(ctx context.Context, e d.Signi
 		return d.NewError(d.ErrorCodeVersionConflict, "enrollment version changed")
 	}
 	if expected > 0 {
-		old, err := r.Enrollment(ctx, e.NamespaceID, e.ID)
+		old, err := r.Enrollment(ctx, e.TenantID, e.ID)
 		if err != nil {
 			return err
 		}
@@ -166,14 +166,14 @@ func (r signingIdentityRepository) SaveEnrollment(ctx context.Context, e d.Signi
 		return err
 	}
 	if expected == 0 {
-		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signing_key_enrollments(namespace_id,id,principal_id,credential_id,version,expires_at,consumed,state_json) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, e.NamespaceID.String(), e.ID.String(), e.PrincipalID, e.CredentialID.String(), e.Version, encodeTime(e.ExpiresAt), boolInt(e.Consumed), raw)
+		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signing_key_enrollments(tenant_id,id,principal_id,credential_id,version,expires_at,consumed,state_json) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, e.TenantID.String(), e.ID.String(), e.PrincipalID, e.CredentialID.String(), e.Version, encodeTime(e.ExpiresAt), boolInt(e.Consumed), raw)
 		return mapSQLError("create signing enrollment", err)
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE signing_key_enrollments SET version=$1,consumed=$2,state_json=$3 WHERE namespace_id=$4 AND id=$5 AND version=$6 AND consumed=0`, e.Version, boolInt(e.Consumed), raw, e.NamespaceID.String(), e.ID.String(), expected)
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE signing_key_enrollments SET version=$1,consumed=$2,state_json=$3 WHERE tenant_id=$4 AND id=$5 AND version=$6 AND consumed=0`, e.Version, boolInt(e.Consumed), raw, e.TenantID.String(), e.ID.String(), expected)
 	return signingCAS(result, err)
 }
 func (r signingIdentityRepository) CredentialPolicy(ctx context.Context, ns, id d.ID) (d.CredentialPolicy, error) {
-	p, err := signingRead[d.CredentialPolicy](ctx, r.u, `SELECT state_json FROM credential_policies WHERE namespace_id=$1 AND credential_id=$2`, ns.String(), id.String())
+	p, err := signingRead[d.CredentialPolicy](ctx, r.u, `SELECT state_json FROM credential_policies WHERE tenant_id=$1 AND credential_id=$2`, ns.String(), id.String())
 	if err == nil {
 		err = p.Validate()
 	}
@@ -186,7 +186,7 @@ func (r signingIdentityRepository) SaveCredentialPolicy(ctx context.Context, p d
 	if p.Version != expected+1 {
 		return d.NewError(d.ErrorCodeVersionConflict, "policy version changed")
 	}
-	c, err := r.Credential(ctx, p.NamespaceID, p.CredentialID)
+	c, err := r.Credential(ctx, p.TenantID, p.CredentialID)
 	if err != nil {
 		return err
 	}
@@ -198,10 +198,10 @@ func (r signingIdentityRepository) SaveCredentialPolicy(ctx context.Context, p d
 		return err
 	}
 	if expected == 0 {
-		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO credential_policies(namespace_id,credential_id,principal_id,version,state_json) VALUES($1,$2,$3,$4,$5)`, p.NamespaceID.String(), p.CredentialID.String(), p.PrincipalID, p.Version, raw)
+		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO credential_policies(tenant_id,credential_id,principal_id,version,state_json) VALUES($1,$2,$3,$4,$5)`, p.TenantID.String(), p.CredentialID.String(), p.PrincipalID, p.Version, raw)
 		return mapSQLError("create credential policy", err)
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE credential_policies SET version=$1,state_json=$2 WHERE namespace_id=$3 AND credential_id=$4 AND principal_id=$5 AND version=$6`, p.Version, raw, p.NamespaceID.String(), p.CredentialID.String(), p.PrincipalID, expected)
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE credential_policies SET version=$1,state_json=$2 WHERE tenant_id=$3 AND credential_id=$4 AND principal_id=$5 AND version=$6`, p.Version, raw, p.TenantID.String(), p.CredentialID.String(), p.PrincipalID, expected)
 	return signingCAS(result, err)
 }
 func policyKeys(outcome, work *d.ID) (string, string) {
@@ -216,7 +216,7 @@ func policyKeys(outcome, work *d.ID) (string, string) {
 }
 func (r signingIdentityRepository) AcceptancePolicy(ctx context.Context, ns d.ID, outcome, work *d.ID) (d.WorkAcceptancePolicy, error) {
 	o, w := policyKeys(outcome, work)
-	p, err := signingRead[d.WorkAcceptancePolicy](ctx, r.u, `SELECT state_json FROM work_acceptance_policies WHERE namespace_id=$1 AND outcome_key=$2 AND work_key=$3`, ns.String(), o, w)
+	p, err := signingRead[d.WorkAcceptancePolicy](ctx, r.u, `SELECT state_json FROM work_acceptance_policies WHERE tenant_id=$1 AND outcome_key=$2 AND work_key=$3`, ns.String(), o, w)
 	if err == nil {
 		err = p.Validate()
 	}
@@ -230,11 +230,11 @@ func (r signingIdentityRepository) SaveAcceptancePolicy(ctx context.Context, p d
 		return d.NewError(d.ErrorCodeVersionConflict, "acceptance policy version changed")
 	}
 	if p.OutcomeID != nil {
-		if _, err := r.u.Outcomes().Get(ctx, p.NamespaceID, *p.OutcomeID); err != nil {
+		if _, err := r.u.Outcomes().Get(ctx, p.TenantID, *p.OutcomeID); err != nil {
 			return err
 		}
 		if p.WorkItemID != nil {
-			if _, err := r.u.WorkItems().Get(ctx, d.Scope{NamespaceID: p.NamespaceID, OutcomeID: *p.OutcomeID}, *p.WorkItemID); err != nil {
+			if _, err := r.u.WorkItems().Get(ctx, d.Scope{TenantID: p.TenantID, OutcomeID: *p.OutcomeID}, *p.WorkItemID); err != nil {
 				return err
 			}
 		}
@@ -245,15 +245,15 @@ func (r signingIdentityRepository) SaveAcceptancePolicy(ctx context.Context, p d
 		return err
 	}
 	if expected == 0 {
-		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_acceptance_policies(namespace_id,outcome_key,work_key,version,state_json) VALUES($1,$2,$3,$4,$5)`, p.NamespaceID.String(), o, w, p.Version, raw)
+		_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_acceptance_policies(tenant_id,outcome_key,work_key,version,state_json) VALUES($1,$2,$3,$4,$5)`, p.TenantID.String(), o, w, p.Version, raw)
 		return mapSQLError("create acceptance policy", err)
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_acceptance_policies SET version=$1,state_json=$2 WHERE namespace_id=$3 AND outcome_key=$4 AND work_key=$5 AND version=$6`, p.Version, raw, p.NamespaceID.String(), o, w, expected)
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_acceptance_policies SET version=$1,state_json=$2 WHERE tenant_id=$3 AND outcome_key=$4 AND work_key=$5 AND version=$6`, p.Version, raw, p.TenantID.String(), o, w, expected)
 	return signingCAS(result, err)
 }
 func (r signingIdentityRepository) PrincipalGroup(ctx context.Context, ns d.ID, principal string) (string, error) {
 	var group string
-	err := r.u.tx.QueryRowContext(ctx, `SELECT separation_group FROM principal_review_groups WHERE namespace_id=$1 AND principal_id=$2`, ns.String(), principal).Scan(&group)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT separation_group FROM principal_review_groups WHERE tenant_id=$1 AND principal_id=$2`, ns.String(), principal).Scan(&group)
 	if err == sql.ErrNoRows {
 		return "", nil
 	}
@@ -264,23 +264,23 @@ func (r signingIdentityRepository) SetPrincipalGroup(ctx context.Context, ns d.I
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid Principal separation group")
 	}
 	var granted int
-	if err := r.u.tx.QueryRowContext(ctx, `SELECT 1 FROM namespace_grants WHERE namespace_id=$1 AND principal_id=$2`, ns.String(), principal).Scan(&granted); err != nil {
+	if err := r.u.tx.QueryRowContext(ctx, `SELECT 1 FROM tenant_grants WHERE tenant_id=$1 AND principal_id=$2`, ns.String(), principal).Scan(&granted); err != nil {
 		return mapSQLError("review group Principal scope", err)
 	}
-	_, err := r.u.tx.ExecContext(ctx, `INSERT INTO principal_review_groups(namespace_id,principal_id,separation_group) VALUES($1,$2,$3) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET separation_group=excluded.separation_group`, ns.String(), principal, group)
+	_, err := r.u.tx.ExecContext(ctx, `INSERT INTO principal_review_groups(tenant_id,principal_id,separation_group) VALUES($1,$2,$3) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET separation_group=excluded.separation_group`, ns.String(), principal, group)
 	return mapSQLError("set Principal review group", err)
 }
 func (r signingIdentityRepository) Receipt(ctx context.Context, ns d.ID, principal, key string) (string, json.RawMessage, error) {
 	var fingerprint, payload string
-	err := r.u.tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM signing_security_results WHERE namespace_id=$1 AND principal_id=$2 AND idempotency_key=$3`, ns.String(), principal, key).Scan(&fingerprint, &payload)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM signing_security_results WHERE tenant_id=$1 AND principal_id=$2 AND idempotency_key=$3`, ns.String(), principal, key).Scan(&fingerprint, &payload)
 	return fingerprint, json.RawMessage(payload), mapSQLError("read signing security receipt", err)
 }
 func (r signingIdentityRepository) SaveReceipt(ctx context.Context, ns d.ID, principal, key, fingerprint string, payload json.RawMessage) error {
-	_, err := r.u.tx.ExecContext(ctx, `INSERT INTO signing_security_results(namespace_id,principal_id,idempotency_key,fingerprint,result_json) VALUES($1,$2,$3,$4,$5)`, ns.String(), principal, key, fingerprint, string(payload))
+	_, err := r.u.tx.ExecContext(ctx, `INSERT INTO signing_security_results(tenant_id,principal_id,idempotency_key,fingerprint,result_json) VALUES($1,$2,$3,$4,$5)`, ns.String(), principal, key, fingerprint, string(payload))
 	return mapSQLError("save signing security receipt", err)
 }
 func (r signingIdentityRepository) Audit(ctx context.Context, ns d.ID, principal string, actor d.ActorRef, op, target string, now time.Time) (d.Version, error) {
-	version, err := r.LockNamespace(ctx, ns)
+	version, err := r.LockTenant(ctx, ns)
 	if err != nil {
 		return 0, err
 	}
@@ -288,7 +288,7 @@ func (r signingIdentityRepository) Audit(ctx context.Context, ns d.ID, principal
 	if err != nil {
 		return 0, err
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE namespaces SET version=$1,updated_at=$2 WHERE id=$3 AND version=$4`, next, encodeTime(now), ns.String(), version)
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE tenants SET version=$1,updated_at=$2 WHERE id=$3 AND version=$4`, next, encodeTime(now), ns.String(), version)
 	if err = signingCAS(result, err); err != nil {
 		return 0, err
 	}
@@ -296,7 +296,7 @@ func (r signingIdentityRepository) Audit(ctx context.Context, ns d.ID, principal
 	if err != nil {
 		return 0, err
 	}
-	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO security_audit(namespace_id,namespace_version,principal_id,actor_json,operation,target,recorded_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, ns.String(), next, principal, a, op, target, encodeTime(now))
+	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO security_audit(tenant_id,tenant_version,principal_id,actor_json,operation,target,recorded_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, ns.String(), next, principal, a, op, target, encodeTime(now))
 	return next, mapSQLError("record signing security audit", err)
 }
 func signingCAS(result sql.Result, err error) error {
@@ -318,11 +318,11 @@ var _ ports.SigningIdentityUnitOfWork = (*unitOfWork)(nil)
 func (s *Store) CredentialPolicy(ctx context.Context, ns, id d.ID) (d.CredentialPolicy, error) {
 	var p d.CredentialPolicy
 	var raw string
-	err := s.db.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE namespace_id=$1 AND credential_id=$2`, ns.String(), id.String()).Scan(&raw)
+	err := s.db.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE tenant_id=$1 AND credential_id=$2`, ns.String(), id.String()).Scan(&raw)
 	if err != nil {
 		return p, mapSQLError("read credential policy", err)
 	}
-	err = json.Unmarshal([]byte(raw), &p)
+	err = unmarshalJSON(raw, &p)
 	if err == nil {
 		err = p.Validate()
 	}

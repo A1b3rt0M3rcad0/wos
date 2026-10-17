@@ -66,7 +66,7 @@ Report an Issue to record a problem. Mark an item blocked to record its blocking
 
 Task detail shows readiness, current execution state, accepted/submitted material, expiry, review state and permitted next actions. Suggestions are presentation hints from persisted state; WOS does not plan or execute work autonomously.
 
-Legacy reservations are available only under the matching protocol and current lease rules. Unsigned contract actions require their actual permission and accepted material. Under `signed_contracts_v2`, contextual copy controls hand execution or independent review commands to an authorized `wosctl` host profile. A pending review offers reviewer handoff. The browser stores no signing keys and cannot sign, accept or decide a review on the host's behalf. Use [signed host profiles](signed-workspace-profiles.md) for provisioning and operational recovery.
+Legacy reservations are available only under the matching protocol and current lease rules. Unsigned contract actions require their actual permission and accepted material. Under `signed_contracts_v3`, contextual copy controls hand execution or independent review commands to an authorized `wosctl` host profile. A pending review offers reviewer handoff. The browser stores no signing keys and cannot sign, accept or decide a review on the host's behalf. Use [signed host profiles](signed-workspace-profiles.md) for provisioning and operational recovery.
 
 Workspace settings expose only authorized operations, including typed permissions. Advanced participant assignment and external key/value context grant no lease, authentication or execution authority. The technical schema/command console is confined to permission-gated Developer tools.
 

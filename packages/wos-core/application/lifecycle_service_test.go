@@ -12,10 +12,10 @@ func TestOutcomeLifecycleCommandsPreserveArchiveAndConclusionSemantics(t *testin
 	ctx := context.Background()
 	service, _ := newService(t)
 	cc := commandContext()
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Lifecycle",
 		DesiredState: "State",
 		Priority:     domain.PriorityNormal,
@@ -109,10 +109,10 @@ func TestObjectiveAndWorkItemRemainingLifecycleCommands(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
 	cc := commandContext()
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Coordinate",
 		DesiredState: "State",
 		Priority:     domain.PriorityNormal,
@@ -261,10 +261,10 @@ func TestRetireCriterionUsesAggregateVersioning(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
 	cc := commandContext()
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Retire criterion", DesiredState: "State", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "Retire criterion", DesiredState: "State", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)

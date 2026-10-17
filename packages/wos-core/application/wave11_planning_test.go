@@ -14,7 +14,7 @@ func TestWave11ObjectiveScopedRoadmapValidatesOperationalReferences(t *testing.T
 	cc := commandContext()
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f300-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f300-0000-7000-8000-000000000001"),
 		Title:        "Planning scope",
 		DesiredState: "Roadmap references live work without owning it",
 		Priority:     domain.PriorityNormal,
@@ -128,7 +128,7 @@ func TestWave11OutcomeRoadmapAcceptsOutcomeCriterionMilestone(t *testing.T) {
 	cc := commandContext()
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f301-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f301-0000-7000-8000-000000000001"),
 		Title:        "Outcome milestone",
 		DesiredState: "milestone can reference Outcome criterion",
 		Priority:     domain.PriorityNormal,
@@ -194,7 +194,7 @@ func TestWave11PublicationSnapshotsLiveReferencesAndCriteria(t *testing.T) {
 	cc := commandContext()
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f302-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f302-0000-7000-8000-000000000001"),
 		Title:        "Published plan",
 		DesiredState: "historical planning remains intelligible",
 		Priority:     domain.PriorityNormal,
@@ -288,7 +288,7 @@ func TestWave11RejectsCrossOutcomeRoadmapReference(t *testing.T) {
 	cc := commandContext()
 
 	first, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f303-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f303-0000-7000-8000-000000000001"),
 		Title:        "First outcome",
 		DesiredState: "plan remains local",
 		Priority:     domain.PriorityNormal,
@@ -297,7 +297,7 @@ func TestWave11RejectsCrossOutcomeRoadmapReference(t *testing.T) {
 		t.Fatal(err)
 	}
 	second, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  first.Value.NamespaceID,
+		TenantID:     first.Value.TenantID,
 		Title:        "Second outcome",
 		DesiredState: "foreign work",
 		Priority:     domain.PriorityNormal,
@@ -355,7 +355,7 @@ func TestWave11DraftMetadataPublishesWithRevision(t *testing.T) {
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199f304-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199f304-0000-7000-8000-000000000001"),
 		Title:        "Draft metadata",
 		DesiredState: "publication reason is historical",
 		Priority:     domain.PriorityNormal,

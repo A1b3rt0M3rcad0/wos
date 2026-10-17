@@ -53,7 +53,7 @@ func SignedSchema(t reflect.Type) map[string]any {
 				field = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
 			}
 			if t == reflect.TypeFor[signing.Binding]() && name == "protocol_version" {
-				field["const"] = 2
+				field["const"] = signing.ProtocolVersion
 			}
 			if t == reflect.TypeFor[signing.Envelope]() {
 				if name == "payload" {

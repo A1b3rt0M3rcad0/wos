@@ -505,6 +505,6 @@ func parseRoadmapPlanScope(r *http.Request, scope domain.Scope) (domain.RoadmapP
 }
 
 func roadmapURL(prefix string, scope domain.Scope, id domain.ID) string {
-	return prefix + "/namespaces/" + scope.NamespaceID.String() +
+	return prefix + "/tenants/" + scope.TenantID.String() +
 		"/outcomes/" + scope.OutcomeID.String() + "/roadmaps/" + id.String()
 }

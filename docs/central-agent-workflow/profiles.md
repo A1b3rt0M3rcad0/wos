@@ -32,7 +32,7 @@ Only the temporary selection commands above change one invocation's Profile. `pr
 The CLI owns Profile creation; agents do not write a proposal document. A trusted operator supplies exact approved bindings and an authorized enrollment:
 
 ```sh
-wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST --enrollment ENROLLMENT_UUID --generate-signing-key --credential-ref env:WOS_EXECUTOR_TOKEN
+wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --tenant TENANT_UUID --issuer-fingerprint sha256:APPROVED_DIGEST --enrollment ENROLLMENT_UUID --generate-signing-key --credential-ref env:WOS_EXECUTOR_TOKEN
 ```
 
 `--outcome UUID` is an optional default. `--signing-key-stdin` is an explicit alternative to generation, and `--token-stdin` an alternative to a protected credential reference; token and key cannot share stdin. For headless hosts without a native keyring, use protected external references: replace key generation with `--private-key-ref env:WOS_EXECUTOR_KEY` alongside `--credential-ref env:WOS_EXECUTOR_TOKEN`; do not combine this reference mode with stdin/generation flags. The external key value is a canonical base64 Ed25519 seed/private key. Actual secret values never belong in an argument. `profile inspect/recover/trust` retain live identity/enrollment/issuer checks.
@@ -41,7 +41,7 @@ wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --n
 
 1. Resolve one absolute installation data root before opening operational state. Create owned private directories atomically; reject symlink traversal/unmanaged conflicting content.
 2. Add idempotent `init`, persistent active selection, and Profile list/use operations. Serialize updates and use atomic publication; never overwrite a concurrently changed selection.
-3. Preserve each Profile's own ServerID/origin, Namespace, credential reference, key reference and contract namespace. Profiles for two servers must not share a mutable installation-level destination.
+3. Preserve each Profile's own ServerID/origin, Tenant, credential reference, key reference and contract tenant. Profiles for two servers must not share a mutable installation-level destination.
 4. Resolve selection once. Pass the selected value through nested calls, recovery and foreground keepalive. A different process running `profile use` must not redirect an active operation.
 5. Keep credential values/private seeds outside command arguments, source files, JSON output and model context. Native keyring/protected external references retain existing permission and enrollment checks.
 6. Refuse removal while local contracts, pending enrollment, ambiguous returns, or unknown content remain. Removing a local Profile does not revoke its remote identity or delete external secrets.
@@ -50,7 +50,7 @@ wos profile create executor --server APPROVED_ORIGIN --server-id SERVER_UUID --n
 ## Acceptance and concurrency cases
 
 - Initialize in directory A, operate in unrelated directory B; B receives no operational files.
-- Two named Profiles can bind different servers/Namespaces without rewriting one another.
+- Two named Profiles can bind different servers/Tenants without rewriting one another.
 - All selection precedence cases are deterministic; invalid named selection fails rather than falling back.
 - A process pinned to executor stays executor while another process changes the active default to reviewer.
 - Concurrent selection/creation/removal cannot corrupt index or lose an existing Profile.

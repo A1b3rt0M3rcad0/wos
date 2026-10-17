@@ -10,8 +10,8 @@ import (
 func TestWorkItemOperationalStateMarksExpiredLeaseAttentionNeeded(t *testing.T) {
 	now := time.Date(2026, 10, 2, 19, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f220-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199f220-0000-7000-8000-000000000002"),
+		TenantID:  domain.MustParseID("0199f220-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199f220-0000-7000-8000-000000000002"),
 	}
 	work, err := domain.NewWorkItem(
 		domain.MustParseID("0199f220-0000-7000-8000-000000000003"),
@@ -53,8 +53,8 @@ func TestWorkItemOperationalStateMarksExpiredLeaseAttentionNeeded(t *testing.T) 
 func TestWorkItemOperationalStatePreservesBlockedPrecedence(t *testing.T) {
 	now := time.Date(2026, 10, 2, 20, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f220-0000-7000-8000-000000000011"),
-		OutcomeID:   domain.MustParseID("0199f220-0000-7000-8000-000000000012"),
+		TenantID:  domain.MustParseID("0199f220-0000-7000-8000-000000000011"),
+		OutcomeID: domain.MustParseID("0199f220-0000-7000-8000-000000000012"),
 	}
 	work, err := domain.NewWorkItem(
 		domain.MustParseID("0199f220-0000-7000-8000-000000000013"),
@@ -92,8 +92,8 @@ func TestWorkItemOperationalStatePreservesBlockedPrecedence(t *testing.T) {
 func TestTodoOperationalStateUsesDeterministicPrecedence(t *testing.T) {
 	now := time.Date(2026, 10, 2, 21, 0, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199f220-0000-7000-8000-000000000021"),
-		OutcomeID:   domain.MustParseID("0199f220-0000-7000-8000-000000000022"),
+		TenantID:  domain.MustParseID("0199f220-0000-7000-8000-000000000021"),
+		OutcomeID: domain.MustParseID("0199f220-0000-7000-8000-000000000022"),
 	}
 	work, err := domain.NewWorkItem(
 		domain.MustParseID("0199f220-0000-7000-8000-000000000023"),

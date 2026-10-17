@@ -89,7 +89,7 @@ func leaseCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client
 				items = append(items, map[string]any{"contract_id": id, "skipped": "final_return_pending_or_accepted"})
 				continue
 			}
-			state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}, Resource: kind, ID: id})
+			state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}, Resource: kind, ID: id})
 			if e != nil {
 				failed = true
 				items = append(items, map[string]any{"contract_id": id, "error": "live state unavailable"})
@@ -155,7 +155,7 @@ func refreshContractV2(ctx context.Context, w *Workspace, profile ProfileV2, cli
 	if file.Local.Pending != nil || file.Local.AcceptanceReceipt != nil {
 		return result, fmt.Errorf("pending final return pauses refresh")
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 	if e != nil {
 		return result, e

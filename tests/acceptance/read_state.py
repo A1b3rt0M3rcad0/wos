@@ -1,4 +1,4 @@
-"""A fresh process discovers the Outcome using only endpoint, Namespace and token."""
+"""A fresh process discovers the Outcome using only endpoint, Tenant and token."""
 import json
 import os
 from urllib.parse import urlencode
@@ -11,8 +11,8 @@ def get(path):
         return json.load(response)
 
 
-namespace = os.environ["WOS_READER_NAMESPACE"]
-page = get(f"/namespaces/{namespace}/outcomes?" + urlencode({"text": "Full shared acceptance"}))
+tenant = os.environ["WOS_READER_TENANT"]
+page = get(f"/tenants/{tenant}/outcomes?" + urlencode({"text": "Full shared acceptance"}))
 assert len(page["items"]) == 1, "new consumer did not discover the fixture Outcome"
-state = get(f"/namespaces/{namespace}/outcomes/{page['items'][0]['id']}/state")
+state = get(f"/tenants/{tenant}/outcomes/{page['items'][0]['id']}/state")
 print(json.dumps(state))

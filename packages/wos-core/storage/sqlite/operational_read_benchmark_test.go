@@ -35,7 +35,7 @@ func BenchmarkOperationalReads(b *testing.B) {
 		b.Fatal(e)
 	}
 	cc := sqliteCommandContext("0199d160-0000-7000-8000-000000000001", "")
-	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: d.MustParseID("0199d160-0000-7000-8000-000000000002"), Title: "Rich operational fixture", DesiredState: "verified bounded reads", Priority: d.PriorityNormal})
+	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: d.MustParseID("0199d160-0000-7000-8000-000000000002"), Title: "Rich operational fixture", DesiredState: "verified bounded reads", Priority: d.PriorityNormal})
 	if e != nil {
 		b.Fatal(e)
 	}

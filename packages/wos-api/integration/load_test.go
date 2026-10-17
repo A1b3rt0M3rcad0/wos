@@ -102,7 +102,7 @@ func seedDeliveryLoad(t *testing.T, store deliveryFixtureStore, url string, n in
 		t.Fatal(e)
 	}
 	ns := d.MustParseID("0199d171-0000-7000-8000-000000000001")
-	endpoint := ports.WebhookEndpoint{ID: d.MustParseID("0199d171-0000-7000-8000-000000000002"), NamespaceID: ns, URL: url, SecretRef: "load", KeyID: "hmac-load"}
+	endpoint := ports.WebhookEndpoint{ID: d.MustParseID("0199d171-0000-7000-8000-000000000002"), TenantID: ns, URL: url, SecretRef: "load", KeyID: "hmac-load"}
 	if e = store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}); e != nil {
 		t.Fatal(e)
 	}
@@ -110,7 +110,7 @@ func seedDeliveryLoad(t *testing.T, store deliveryFixtureStore, url string, n in
 	scopes := []d.Scope{}
 	for i := 0; i < 4; i++ {
 		cc.CommandID, _ = ids.NewID()
-		out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: ns, Title: fmt.Sprint("Outcome ", i), DesiredState: "signals delivered", Priority: d.PriorityNormal})
+		out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: ns, Title: fmt.Sprint("Outcome ", i), DesiredState: "signals delivered", Priority: d.PriorityNormal})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -221,7 +221,7 @@ func TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss(t *testing.T) {
 					if e != nil {
 						t.Fatal(e)
 					}
-					health, e := u.(ports.DeliveryHealthUnitOfWork).DeliveryHealth().Health(ctx, d.Scope{NamespaceID: scopes[0].NamespaceID}, time.Now())
+					health, e := u.(ports.DeliveryHealthUnitOfWork).DeliveryHealth().Health(ctx, d.Scope{TenantID: scopes[0].TenantID}, time.Now())
 					u.Rollback()
 					if e != nil {
 						t.Fatal(e)
@@ -278,7 +278,7 @@ func explainDeliveryQueue(t *testing.T, backend string, store deliveryFixtureSto
 	t.Helper()
 	var db *sql.DB
 	var e error
-	query := "SELECT COUNT(*),MIN(next_attempt) FROM integration_deliveries WHERE namespace_id=? AND outcome_id=?"
+	query := "SELECT COUNT(*),MIN(next_attempt) FROM integration_deliveries WHERE tenant_id=? AND outcome_id=?"
 	if backend == "sqlite" {
 		db, e = sql.Open("sqlite3", store.(*sqlite.Store).Path())
 	} else {
@@ -317,7 +317,7 @@ func explainDeliveryQueue(t *testing.T, backend string, store deliveryFixtureSto
 		if backend == "postgres" {
 			prefix = "EXPLAIN (ANALYZE,BUFFERS,FORMAT TEXT) "
 		}
-		rows, e := tx.Query(prefix+query, scope.NamespaceID.String(), scope.OutcomeID.String())
+		rows, e := tx.Query(prefix+query, scope.TenantID.String(), scope.OutcomeID.String())
 		if e != nil {
 			t.Fatal(e)
 		}

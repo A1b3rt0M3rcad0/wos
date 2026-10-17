@@ -33,7 +33,7 @@ type ProjectLayoutV2 struct {
 type ProfileBindingV2 struct {
 	ServerID     d.ID              `json:"server_id"`
 	ServerOrigin string            `json:"server_origin"`
-	NamespaceID  d.ID              `json:"namespace_id"`
+	TenantID     d.ID              `json:"tenant_id"`
 	PrincipalID  string            `json:"principal_id"`
 	CredentialID d.ID              `json:"credential_id"`
 	IssuerKeys   []ProfileIssuerV2 `json:"issuer_keys"`
@@ -81,8 +81,8 @@ type ProfileV2 struct {
 // Pending operations are bounded technical state, never an append-only history.
 // Their payload is frozen canonical bytes, not a shell instruction.
 type ProfilePendingScopeV2 struct {
-	NamespaceID d.ID `json:"namespace_id"`
-	OutcomeID   d.ID `json:"outcome_id,omitempty"`
+	TenantID  d.ID `json:"tenant_id"`
+	OutcomeID d.ID `json:"outcome_id,omitempty"`
 }
 type PendingOperationV2 struct {
 	Resolution         *PendingReturnResolutionV2 `json:"return_resolution,omitempty"`
@@ -130,7 +130,7 @@ func (p ProjectV2) Validate() error {
 	if e != nil || origin != p.Connection.ServerURL {
 		return fmt.Errorf("project origin must be canonical")
 	}
-	if p.Connection.ExpectedServerID.Validate() != nil || p.Scope.NamespaceID.Validate() != nil || (!p.Scope.DefaultOutcomeID.IsZero() && p.Scope.DefaultOutcomeID.Validate() != nil) {
+	if p.Connection.ExpectedServerID.Validate() != nil || p.Scope.TenantID.Validate() != nil || (!p.Scope.DefaultOutcomeID.IsZero() && p.Scope.DefaultOutcomeID.Validate() != nil) {
 		return fmt.Errorf("invalid project scope or persistent server ID")
 	}
 	return nil
@@ -158,7 +158,7 @@ func (p ProfileV2) Validate() error {
 	if e != nil || origin != p.Binding.ServerOrigin {
 		return fmt.Errorf("invalid profile origin")
 	}
-	if p.Binding.ServerID.Validate() != nil || p.Binding.NamespaceID.Validate() != nil || p.Binding.CredentialID.Validate() != nil || p.Signing.KeyID.Validate() != nil || p.Binding.PrincipalID == "" || len(p.Binding.PrincipalID) > 256 {
+	if p.Binding.ServerID.Validate() != nil || p.Binding.TenantID.Validate() != nil || p.Binding.CredentialID.Validate() != nil || p.Signing.KeyID.Validate() != nil || p.Binding.PrincipalID == "" || len(p.Binding.PrincipalID) > 256 {
 		return fmt.Errorf("invalid profile identity")
 	}
 	if !validSecretReference(p.Authentication.CredentialRef) || !validSecretReference(p.Signing.PrivateKeyRef) || !d.ValidSignedDigest(p.Signing.PublicKeyFingerprint) {
@@ -196,7 +196,7 @@ func (p ProfileV2) Validate() error {
 				return fmt.Errorf("invalid pending request fingerprint")
 			}
 		}
-		if pending.ID.Validate() != nil || pending.Scope.NamespaceID != p.Binding.NamespaceID || pending.Scope.NamespaceID.Validate() != nil || !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,99}$`).MatchString(pending.Operation) {
+		if pending.ID.Validate() != nil || pending.Scope.TenantID != p.Binding.TenantID || pending.Scope.TenantID.Validate() != nil || !regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,99}$`).MatchString(pending.Operation) {
 			return fmt.Errorf("invalid pending operation binding")
 		}
 		if pending.ContractID != nil && pending.ContractID.Validate() != nil {

@@ -7,9 +7,9 @@ import (
 )
 
 // Queue facts come from one database snapshot, without reading webhook bodies,
-// URLs or secret references. A zero OutcomeID selects the authorized Namespace.
+// URLs or secret references. A zero OutcomeID selects the authorized Tenant.
 type DeliveryQueueHealth struct {
-	NamespaceID            d.ID       `json:"namespace_id"`
+	TenantID               d.ID       `json:"tenant_id"`
 	OutcomeID              *d.ID      `json:"outcome_id,omitempty"`
 	EvaluatedAt            time.Time  `json:"evaluated_at"`
 	Pending                int64      `json:"pending"`

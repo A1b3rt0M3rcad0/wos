@@ -13,7 +13,7 @@ func TestWave10ValidationHistoryReadSurface(t *testing.T) {
 	service, _ := newWave09Service(t)
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  domain.MustParseID("0199ef90-0000-7000-8000-000000000001"),
+		TenantID:     domain.MustParseID("0199ef90-0000-7000-8000-000000000001"),
 		Title:        "Validation history",
 		DesiredState: "history can be read explicitly",
 		Priority:     domain.PriorityNormal,

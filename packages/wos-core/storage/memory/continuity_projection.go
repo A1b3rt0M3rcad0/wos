@@ -13,8 +13,8 @@ func (r continuityReadRepository) Projection(ctx context.Context, scope d.Scope,
 	if _, e := r.Outcome(ctx, scope); e != nil {
 		return data, e
 	}
-	original := r.tx.outcomes[outcomeKey(scope.NamespaceID, scope.OutcomeID)]
-	data.Outcome = d.Outcome{ID: original.ID, NamespaceID: original.NamespaceID, Version: original.Version, Title: ports.Summarize(original.Ref(), original.Version, original.Title, "", "").Title, Lifecycle: original.Lifecycle, Priority: original.Priority, ExternalContext: original.ExternalContext.Clone(), Criteria: d.NewCriterionSet()}
+	original := r.tx.outcomes[outcomeKey(scope.TenantID, scope.OutcomeID)]
+	data.Outcome = d.Outcome{ID: original.ID, TenantID: original.TenantID, Version: original.Version, Title: ports.Summarize(original.Ref(), original.Version, original.Title, "", "").Title, Lifecycle: original.Lifecycle, Priority: original.Priority, ExternalContext: original.ExternalContext.Clone(), Criteria: d.NewCriterionSet()}
 	if original.ArchivedAt != nil {
 		at := *original.ArchivedAt
 		data.Outcome.ArchivedAt = &at

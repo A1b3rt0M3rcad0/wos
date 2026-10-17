@@ -46,12 +46,12 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				}
 			}
 			ns := testID("0199a555-0000-7000-8000-000000000001")
-			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+			scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -73,8 +73,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			uow, err := store.Begin(ctx)
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, TenantID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+			policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			must(registry.SaveCredentialPolicy(ctx, policy, 0))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
@@ -97,7 +97,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			state, err := protocol.Lock(ctx, ns, true)
 			must(err)
 			state.Phase = d.WorkProtocolSigned
-			state.WriterEpoch = 2
+			state.WriterEpoch = 3
 			state.WritersDrained = true
 			state.Version++
 			state.UpdatedAt = now
@@ -142,7 +142,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			restorePending("execution", "execution", c.ID, agentCtx)
 			rid, e := ids.NewID()
 			must(e)
-			request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
+			request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
 			criterion := d.SuccessCriterion{}
 			if hasCriteria {
 				criterion = work.Criteria.Items[0]
@@ -172,7 +172,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				must(e)
 				return value
 			}
-			trust := read(agentCtx, a.SignedStateQuery{Scope: d.Scope{NamespaceID: ns}, Resource: "trust"})
+			trust := read(agentCtx, a.SignedStateQuery{Scope: d.Scope{TenantID: ns}, Resource: "trust"})
 			if trust.Server == nil || trust.Server.ID != server.ID || trust.Protocol == nil || trust.Protocol.Phase != d.WorkProtocolSigned {
 				t.Fatal("public trust lost persistent identity/protocol")
 			}
@@ -245,7 +245,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			}
 			// Grant review acquisition to the original Principal expressly: rejection must
 			// come from independence, not merely a missing permission.
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
 			u, e = store.Begin(ctx)
 			must(e)
 			reg := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
@@ -270,7 +270,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				t.Fatal("self review search acquired its own execution")
 			}
 			participant := func(principal string, permissions []ports.Permission) (a.Identity, context.Context, d.ID, ed25519.PrivateKey, d.CredentialPolicy) {
-				must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal, Permissions: permissions}))
+				must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: principal, Permissions: permissions}))
 				cred, token, e := sec.IssueCredential(adminCtx, ns, principal, d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: principal}, now.Add(time.Hour))
 				must(e)
 				id, e := sec.Authenticate(ctx, token)
@@ -284,18 +284,18 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				u, e := store.Begin(ctx)
 				must(e)
 				registry := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-				must(registry.SaveKey(ctx, d.SigningKey{ID: kid, NamespaceID: ns, PrincipalID: principal, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+				must(registry.SaveKey(ctx, d.SigningKey{ID: kid, TenantID: ns, PrincipalID: principal, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
 				ops := []string{}
 				for _, op := range permissions {
 					ops = append(ops, string(op))
 				}
-				p := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: principal, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+				p := d.CredentialPolicy{TenantID: ns, CredentialID: cred.ID, PrincipalID: principal, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 				must(registry.SaveCredentialPolicy(ctx, p, 0))
 				must(u.Commit())
 				return id, a.WithIdentity(ctx, id), kid, private, p
 			}
 			reviewer, reviewCtx, reviewKey, reviewPrivate, reviewPolicy := participant("reviewer", []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite})
-			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractRevoke})
+			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin, ports.PermissionWorkContractRevoke})
 			searchCC := nextCC(reviewer, "review-round-one-acquisition")
 			searchCmd := a.AcquireNextSignedReviewContractCommand{Scope: scope, SignerKeyID: reviewKey, TTLSeconds: 300, Limit: 1}
 			searched, e := service.AcquireNextSignedReviewContract(reviewCtx, searchCC, searchCmd)
@@ -332,7 +332,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				c := result.Contract
 				rid, e := ids.NewID()
 				must(e)
-				payload := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: reviewer.PrincipalID, SignerKeyID: reviewKey.String()}, OperationKind: "review_return", RequestID: rid.String(), IdempotencyKey: key, ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(result.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: result.WorkItemVersion, PolicyRevision: signing.Decimal(reviewPolicy.Version)}, ExpectedReviewCaseVersion: signing.Decimal(result.Case.Version), ReviewCaseID: c.CaseID.String(), SubmissionID: c.SubmissionID.String(), SubmissionDigest: c.SubmissionDigest, Decision: decision, Material: material}
+				payload := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: reviewer.PrincipalID, SignerKeyID: reviewKey.String()}, OperationKind: "review_return", RequestID: rid.String(), IdempotencyKey: key, ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(result.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: result.WorkItemVersion, PolicyRevision: signing.Decimal(reviewPolicy.Version)}, ExpectedReviewCaseVersion: signing.Decimal(result.Case.Version), ReviewCaseID: c.CaseID.String(), SubmissionID: c.SubmissionID.String(), SubmissionDigest: c.SubmissionDigest, Decision: decision, Material: material}
 				signed, e := signing.Sign(signing.ReviewReturn, payload, reviewKey.String(), reviewPrivate)
 				must(e)
 				returned, returnErr := service.ReturnSignedReview(reviewCtx, nextCC(reviewer, key), a.ReturnSignedReviewCommand{Envelope: signed})
@@ -381,7 +381,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			reacquired, e := service.AcquireSignedReviewContract(reviewCtx, nextCC(reviewer, "reacquired-after-revocation"), a.AcquireSignedReviewContractCommand{Scope: scope, ReviewCaseID: revoked.Value.ReviewCase.ID, ExpectedReviewCaseVersion: revoked.Value.ReviewCase.Version, SignerKeyID: reviewKey})
 			must(e)
 			resumed.Value = reacquired.Value
-			if _, e = service.InterveneSignedReviewCase(reviewCtx, nextCC(reviewer, "unauthorized-case-cancellation"), a.InterveneSignedReviewCaseCommand{Scope: scope, ReviewCaseID: resumed.Value.Case.ID, ExpectedReviewCaseVersion: resumed.Value.Case.Version, Status: d.ReviewCancelled, Reason: "reviewer cannot grant itself Namespace administration"}); e == nil {
+			if _, e = service.InterveneSignedReviewCase(reviewCtx, nextCC(reviewer, "unauthorized-case-cancellation"), a.InterveneSignedReviewCaseCommand{Scope: scope, ReviewCaseID: resumed.Value.Case.ID, ExpectedReviewCaseVersion: resumed.Value.Case.Version, Status: d.ReviewCancelled, Reason: "reviewer cannot grant itself Tenant administration"}); e == nil {
 				t.Fatal("reviewer cancelled a case without administration permission")
 			}
 			if _, e = sendReview(resumed.Value, "approved", "empty-review-approval", a.SignedReviewMaterial{Reason: "approval without assessments"}); e == nil {

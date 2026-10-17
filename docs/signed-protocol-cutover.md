@@ -2,23 +2,23 @@
 
 Schema-2 hosts use an explicitly approved operator profile. Provision the server
 issuer outside the repository, enroll each agent's own key, and configure a
-Namespace acceptance policy before activation. Namespace administration remains
-required; agent execution permission cannot activate a Namespace.
+Tenant acceptance policy before activation. Tenant administration remains
+required; agent execution permission cannot activate a Tenant.
 
 ```sh
 wos protocol get --profile operator
-wos protocol set --profile operator --phase draining_to_signed_v2 --version <exact-version> --reason 'retire v1 writers'
+wos protocol set --profile operator --phase draining_to_signed_v3 --version <exact-version> --reason 'retire v1 writers'
 wos protocol preflight --profile operator
 # Stop every old server replica and direct SQL writer; retire their DB credentials.
 # Finish or explicitly revoke remaining valid unsigned execution authority.
-wos protocol set --profile operator --phase signed_contracts_v2 --version <exact-version> --writers-drained --reason 'writers and SQL credentials retired'
+wos protocol set --profile operator --phase signed_contracts_v3 --version <exact-version> --writers-drained --reason 'writers and SQL credentials retired'
 wos protocol recover --profile operator
 ```
 
 The preflight is a bounded advisory snapshot. Activation checks the live state
-again in the same transaction as the transition, while holding the Namespace
+again in the same transaction as the transition, while holding the Tenant
 protocol and affected Outcome guards. It requires no valid legacy claim or
-unsigned execution contract, a matching persistent issuer and explicit Namespace
+unsigned execution contract, a matching persistent issuer and explicit Tenant
 acceptance policy. Entering signed drain clears the previous writer attestation.
 The operator must make a fresh acknowledgement. WOS cannot remotely certify
 that unrelated SQL clients have been retired.
@@ -31,8 +31,18 @@ An accepted operation is saved locally before clearing its pending marker.
 
 Legacy history and accepted receipts retain their original encoding. New
 unsigned acquisition is refused during signed drain. Signed activation advances
-writer epoch to 2 and forbids downgrades. Historical authorized replay does not
+writer epoch to 3 and forbids downgrades. Historical authorized replay does not
 create new authority. Mixed old/new database writers are unsupported.
+
+New signed mutations use protocol 3 and bind `tenant_id`. Schema-2 refers to the
+local CLI document format, not permission to send signed protocol 2. Historical
+protocol-2 envelopes retain their original `namespace_id` fields and bytes for
+read-only verification; never edit or re-sign them to imitate protocol 3.
+
+For a previously signed service, first settle execution/review authority, open
+review cases and pending client intentions on the old version. Then follow the
+[explicit storage and Tenant cutover](scaling/tenants.md#upgrade-an-existing-installation).
+This activation sequence is not a live migration of pending protocol-2 work.
 
 This document covers server activation and recoverable schema-2 operator changes.
 Workspace schema-1 conversion, issuer replacement and final release acceptance
@@ -46,7 +56,11 @@ subsequent binaries that contain the guard. It cannot add a guard to already
 released binaries: retire old processes and their database credentials before
 cutover, and verify the actual historical binary separately.
 
-## Actual v0.2 upgrade and old writer acceptance
+## Historical v0.2 upgrade and old writer acceptance
+
+The following fixture and original results cover the earlier protocol-2 branch.
+They preserve its original identifiers and do not qualify schema-per-Tenant or
+protocol-3 cutover.
 
 CI builds the original `b75aa3e0ca6d649cafadf8450d9b5d606367dda4` source,
 creates an unsigned contract, immutable submission, criteria and seven original

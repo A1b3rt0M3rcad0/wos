@@ -15,7 +15,7 @@ type EventPredicate struct {
 	Any   []EventPredicate `json:"any,omitempty"`
 }
 
-var predicateFields = map[string]bool{"event_type": true, "namespace_id": true, "outcome_id": true, "aggregate.kind": true, "aggregate.id": true, "principal_id": true, "actor.kind": true, "actor.provider": true, "actor.id": true}
+var predicateFields = map[string]bool{"event_type": true, "tenant_id": true, "outcome_id": true, "aggregate.kind": true, "aggregate.id": true, "principal_id": true, "actor.kind": true, "actor.provider": true, "actor.id": true}
 
 func (p EventPredicate) Validate() error { count := 0; return p.validate(1, &count) }
 func (p EventPredicate) validate(depth int, count *int) error {
@@ -91,7 +91,7 @@ func (p EventPredicate) Matches(e DomainEvent) bool {
 	if p.Field == "" {
 		return true
 	}
-	values := map[string]string{"event_type": e.EventType, "namespace_id": e.NamespaceID.String(), "outcome_id": e.OutcomeID.String(), "aggregate.kind": e.AggregateRef.Kind.String(), "aggregate.id": e.AggregateRef.ID.String(), "principal_id": e.PrincipalID, "actor.kind": string(e.Actor.Kind), "actor.provider": e.Actor.Provider, "actor.id": e.Actor.ID}
+	values := map[string]string{"event_type": e.EventType, "tenant_id": e.TenantID.String(), "outcome_id": e.OutcomeID.String(), "aggregate.kind": e.AggregateRef.Kind.String(), "aggregate.id": e.AggregateRef.ID.String(), "principal_id": e.PrincipalID, "actor.kind": string(e.Actor.Kind), "actor.provider": e.Actor.Provider, "actor.id": e.Actor.ID}
 	value, exists := values[p.Field]
 	switch p.Op {
 	case "exists":

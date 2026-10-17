@@ -12,7 +12,7 @@ spec.loader.exec_module(module)
 
 class EvidenceContract(unittest.TestCase):
     def setUp(self):
-        self.expected = {'namespaces': 1, 'outcomes': 4, 'active_outcomes': 4,
+        self.expected = {'tenants': 1, 'outcomes': 4, 'active_outcomes': 4,
                          'service_replicas': 2, 'consumers': 4,
                          'accepted_historical_tasks_per_outcome': 16,
                          'accepted_deliveries': 8, 'verified_outbox_deliveries': 72}
@@ -26,7 +26,7 @@ class EvidenceContract(unittest.TestCase):
 
     def log(self, row=None, extra=()):
         events = [{'Action': 'output', 'Output': 'SIGNED_LOAD '+json.dumps(row or self.row)},
-                  {'Action': 'pass', 'Test': 'TestScalableSignedWorkMatrix/namespaces=1/replicas=2'}]
+                  {'Action': 'pass', 'Test': 'TestScalableSignedWorkMatrix/tenants=1/replicas=2'}]
         return '\n'.join(json.dumps(item) for item in events+list(extra))
 
     def test_actual_complete_result(self):

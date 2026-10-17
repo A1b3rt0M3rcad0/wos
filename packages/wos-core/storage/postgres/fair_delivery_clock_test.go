@@ -12,7 +12,7 @@ func TestDeliveryFleetAuthorityUsesDatabaseTimeDespiteHostSkew(t *testing.T) {
 	requirePostgres(t)
 	store, _, _ := fairDeliveryFixture(t)
 	ctx := context.Background()
-	policy := ports.DeliveryClaimPolicy{DatabaseTime: true, MaxInflightPerNamespace: 1, SecretRefs: []string{"tenant-1"}}
+	policy := ports.DeliveryClaimPolicy{DatabaseTime: true, MaxInflightPerTenant: 1, SecretRefs: []string{"tenant-1"}}
 	before := time.Now()
 	v, err := store.ClaimDeliveryWithPolicy(ctx, before.Add(24*time.Hour), testID("0199df10-0000-7000-8000-000000000001"), time.Minute, policy)
 	if err != nil || v == nil {

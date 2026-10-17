@@ -51,8 +51,8 @@ func assertSignedWorkActivityApplication(t *testing.T, service *a.Service, store
 		cc.IdempotencyKey = key
 		return cc
 	}
-	foreignScope := d.Scope{NamespaceID: scope.NamespaceID, OutcomeID: id(1)}
-	foreignOutcome, err := d.NewOutcome(foreignScope.OutcomeID, scope.NamespaceID, "Isolated activity records", "", "Scope isolation", d.PriorityNormal, clock.now)
+	foreignScope := d.Scope{TenantID: scope.TenantID, OutcomeID: id(1)}
+	foreignOutcome, err := d.NewOutcome(foreignScope.OutcomeID, scope.TenantID, "Isolated activity records", "", "Scope isolation", d.PriorityNormal, clock.now)
 	must(err)
 	foreignArtifact, err := d.NewArtifact(id(2), foreignScope, "source", "Foreign source", "git:foreign-commit", "", "", "foreign-commit", contract.Actor, nil, clock.now)
 	must(err)
@@ -79,8 +79,8 @@ func assertSignedWorkActivityApplication(t *testing.T, service *a.Service, store
 	must(err)
 	foreignSigner := id(6)
 	registry := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-	must(registry.SaveKey(ctx, d.SigningKey{ID: foreignSigner, NamespaceID: scope.NamespaceID, PrincipalID: contract.HolderPrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: clock.now, UpdatedAt: clock.now}, 0))
-	policy, err := registry.CredentialPolicy(ctx, scope.NamespaceID, contract.SignedBinding.CredentialID)
+	must(registry.SaveKey(ctx, d.SigningKey{ID: foreignSigner, TenantID: scope.TenantID, PrincipalID: contract.HolderPrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: clock.now, UpdatedAt: clock.now}, 0))
+	policy, err := registry.CredentialPolicy(ctx, scope.TenantID, contract.SignedBinding.CredentialID)
 	must(err)
 	oldPolicyVersion := policy.Version
 	policy.Version++
@@ -223,7 +223,7 @@ func assertSignedWorkActivityApplication(t *testing.T, service *a.Service, store
 				t.Fatalf("rejected %s activity changed records, revision, events or authority", probe.name)
 			}
 			u := begin()
-			_, err = u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(ctx, scope.NamespaceID, contract.HolderPrincipalID, failedCC.IdempotencyKey)
+			_, err = u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(ctx, scope.TenantID, contract.HolderPrincipalID, failedCC.IdempotencyKey)
 			must(u.Rollback())
 			if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 				t.Fatalf("rejected activity persisted a durable operation: %v", err)
@@ -258,7 +258,7 @@ func assertSignedWorkActivityApplication(t *testing.T, service *a.Service, store
 		t.Fatal("oversized expanded metadata changed activity records, revision, events or authority")
 	}
 	u = begin()
-	_, err = u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(ctx, scope.NamespaceID, contract.HolderPrincipalID, oversizedCC.IdempotencyKey)
+	_, err = u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(ctx, scope.TenantID, contract.HolderPrincipalID, oversizedCC.IdempotencyKey)
 	must(u.Rollback())
 	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		t.Fatalf("oversized activity persisted an operation result: %v", err)

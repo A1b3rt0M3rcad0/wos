@@ -25,11 +25,11 @@ func TestSQLiteWave09DocumentaryHistorySurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199ed92-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ed92-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199ed92-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Documentary durability",
+		TenantID: tenantID, Title: "Documentary durability",
 		DesiredState: "documentary state survives restart", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
@@ -187,11 +187,11 @@ func TestSQLiteConcurrentDecisionSupersessionHasSingleWinner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199ed95-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ed95-0000-7000-8000-000000000001")
 	outcome, err := setup.CreateOutcome(ctx, sqliteCommandContext(
 		"0199ed95-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Supersession race",
+		TenantID: tenantID, Title: "Supersession race",
 		DesiredState: "one accepted successor", Priority: domain.PriorityNormal,
 	})
 	if err != nil {

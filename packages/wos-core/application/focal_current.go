@@ -7,7 +7,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-// The focal context spans the public legacy and signed-v2 work protocols while
+// The focal context spans the public legacy and signed-v3 work protocols while
 // keeping their authoritative repositories and immutable records separate.
 func focalWorkContract(ctx context.Context, u ports.UnitOfWork, legacy ports.WorkContractRepository, scope d.Scope, id d.ID) (d.WorkContract, error) {
 	c, err := legacy.Get(ctx, scope, id)

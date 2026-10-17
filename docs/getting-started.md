@@ -7,7 +7,7 @@ Choose the source branch for the interface shown in the project README, or the p
 With Git and Docker Compose v2 installed:
 
 ```sh
-git clone --branch master https://github.com/A1b3rt0M3rcad0/wos.git
+git clone --branch feat/scalable-wos-operation https://github.com/A1b3rt0M3rcad0/wos.git
 cd wos
 cp .env.example .env
 docker compose up --build -d
@@ -19,6 +19,8 @@ Open `http://127.0.0.1:8080/app/`. Use the `WOS_BOOTSTRAP_TOKEN` value from your
 > `.env.example` contains a public development credential. The Compose port is bound to localhost. Before sharing an instance, configure unique private credentials, permissions, and HTTPS using [shared-service operations](operations.md#shared-service). Keep credentials out of logs, URLs, screenshots, and Git.
 
 ## Published container
+
+This pinned historical release uses the old `NAMESPACE` environment variables below. They are retained only for this released image; current source uses Tenant contracts and requires the [breaking cutover](scaling/tenants.md#upgrade-an-existing-installation).
 
 The public Linux amd64 image `ghcr.io/a1b3rt0m3rcad0/wos:0.4.2` runs without cloning this repository. This command starts the released service with a persistent SQLite volume and a localhost-only port:
 
@@ -61,7 +63,7 @@ go build -trimpath -o bin/wos ./packages/wos-api/cmd/wos
 ./bin/wos server
 ```
 
-The default source server is trusted-local mode. It binds loopback and uses SQLite. Open `http://127.0.0.1:8080/app/`, expand **Local development server**, enter Namespace `0199d000-0000-7000-8000-000000000001`, and choose **Open local workspace**. Local identity is a development composition, not multiuser authentication. Configure a [shared service](operations.md#shared-service) for multiple participants.
+The default source server is trusted-local mode. It binds loopback and uses SQLite. Open `http://127.0.0.1:8080/app/`, expand **Local development server**, enter Tenant `0199d000-0000-7000-8000-000000000001`, and choose **Open local workspace**. Local identity is a development composition, not multiuser authentication. Configure a [shared service](operations.md#shared-service) for multiple participants.
 
 The binary embeds the web workspace and five skills. It also provides API-only client commands; those commands do not open the server database. The [isolated unsigned example](../examples/quickstart/README.md) uses this binary to run the complete first-contact workflow.
 

@@ -86,7 +86,7 @@ function checkedRef(ref, scope) {
     !supportedKinds.has(ref.kind) ||
     typeof ref.id !== "string" ||
     !ref.id ||
-    ref.namespace_id !== scope.namespace_id ||
+    ref.tenant_id !== scope.tenant_id ||
     ref.outcome_id !== scope.outcome_id
   ) {
     throw failure(
@@ -99,8 +99,8 @@ function checkedRef(ref, scope) {
 function checkScope(scope) {
   if (
     !scope ||
-    typeof scope.namespace_id !== "string" ||
-    !scope.namespace_id ||
+    typeof scope.tenant_id !== "string" ||
+    !scope.tenant_id ||
     typeof scope.outcome_id !== "string" ||
     !scope.outcome_id
   ) {
@@ -231,7 +231,7 @@ function buildModel(
   for (const relation of sections.get("relations")?.items || []) {
     if (relation.lifecycle !== "active") continue;
     if (
-      relation.scope?.namespace_id !== scope.namespace_id ||
+      relation.scope?.tenant_id !== scope.tenant_id ||
       relation.scope?.outcome_id !== scope.outcome_id
     )
       throw failure("Relation data belongs to another Outcome.");
@@ -258,7 +258,7 @@ function buildModel(
   for (const link of sections.get("evidence_links")?.items || []) {
     if (link.lifecycle !== "active") continue;
     if (
-      link.scope?.namespace_id !== scope.namespace_id ||
+      link.scope?.tenant_id !== scope.tenant_id ||
       link.scope?.outcome_id !== scope.outcome_id
     )
       throw failure("Evidence link data belongs to another Outcome.");
@@ -299,9 +299,9 @@ function buildModel(
     if (!node) continue;
     node.reportedOperationalState = clone(state);
     const contractSummary = [
-      "signed_contracts_v2",
+      "signed_contracts_v3",
       "contracts_v1",
-      "draining_to_signed_v2",
+      "draining_to_signed_v3",
     ].includes(protocolMode);
     if (
       contractSummary &&
@@ -445,7 +445,7 @@ function buildModel(
     missingParents > 0 ||
     [...nodes.values()].some((node) => node.contextMissing);
   return deepFreeze({
-    scopeKey: `${scope.namespace_id}/${scope.outcome_id}`,
+    scopeKey: `${scope.tenant_id}/${scope.outcome_id}`,
     rootKey,
     revision,
     nodes: [...nodes.values()].sort((a, b) =>
@@ -511,7 +511,7 @@ export function createCanvasData({
   )
     throw failure("The map API prefix must be a local path.");
   scope = clone(scope);
-  const base = `${apiPrefix.replace(/\/+$/, "")}/namespaces/${encodeURIComponent(scope.namespace_id)}/outcomes/${encodeURIComponent(scope.outcome_id)}`;
+  const base = `${apiPrefix.replace(/\/+$/, "")}/tenants/${encodeURIComponent(scope.tenant_id)}/outcomes/${encodeURIComponent(scope.outcome_id)}`;
   let epoch = 0,
     disposed = false,
     snapshot = null,

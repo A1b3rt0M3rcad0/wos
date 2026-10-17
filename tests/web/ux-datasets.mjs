@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 
 // Public commands only. A fresh server/database owns each seed; no existing
 // user's data is reset. Secrets are passed by the caller and never logged.
-export async function seedWorkspace({url, token, namespace, size = 4, label = 'UX acceptance'}) {
+export async function seedWorkspace({url, token, tenant, size = 4, label = 'UX acceptance'}) {
   if (![0, 4, 32, 1001].includes(size)) throw Error('Use an explicit acceptance dataset size');
   async function command(name, command) {
     const response = await fetch(`${url}/api/v1/commands/${name}`, {
@@ -14,8 +14,8 @@ export async function seedWorkspace({url, token, namespace, size = 4, label = 'U
     return result.value;
   }
   if (!size) return {outcome:null, objectives:[], tasks:[], evidence:[]};
-  const outcome = await command('create_outcome', {namespace_id:namespace, title:label, desired_state:'Humans coordinate verifiable work without internal command knowledge', description:'Repeatable public-command UX dataset', priority:'normal'});
-  const scope = {namespace_id:namespace, outcome_id:outcome.id};
+  const outcome = await command('create_outcome', {tenant_id:tenant, title:label, desired_state:'Humans coordinate verifiable work without internal command knowledge', description:'Repeatable public-command UX dataset', priority:'normal'});
+  const scope = {tenant_id:tenant, outcome_id:outcome.id};
   const objectives=[];
   for (let i=0;i<2;i++) objectives.push(await command('create_objective', {scope,title:'Validation objective',description:`Duplicate title, distinct objective ${i+1}`,priority:'normal',required_for_outcome:false}));
   const tasks=[], evidence=[];

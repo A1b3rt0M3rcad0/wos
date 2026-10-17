@@ -30,11 +30,11 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := testID("0199ef01-0000-7000-8000-000000000001")
+	tenantID := testID("0199ef01-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199ef01-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Durable dependencies",
 		DesiredState: "Relations and schedule survive restart",
 		Priority:     domain.PriorityNormal,

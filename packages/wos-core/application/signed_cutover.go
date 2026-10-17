@@ -10,18 +10,18 @@ import (
 )
 
 // Readiness is advisory. Activation repeats every check while holding the
-// Namespace protocol guard and all affected Outcome coordination guards.
+// Tenant protocol guard and all affected Outcome coordination guards.
 // WOS cannot attest that an operator has retired unrelated SQL processes.
 type SignedProtocolReadiness struct {
-	Protocol                d.NamespaceWorkProtocol `json:"protocol"`
-	ValidLegacyClaims       int                     `json:"valid_legacy_claims"`
-	ValidUnsignedContracts  int                     `json:"valid_unsigned_contracts"`
-	IssuerReady             bool                    `json:"issuer_ready"`
-	NamespacePolicyReady    bool                    `json:"namespace_policy_ready"`
-	NamespacePolicyRevision signing.Decimal         `json:"namespace_policy_revision"`
-	ReadyWithOperatorDrain  bool                    `json:"ready_with_operator_drain"`
-	RequiresOperatorDrain   bool                    `json:"requires_operator_drain"`
-	EvaluatedAt             time.Time               `json:"evaluated_at"`
+	Protocol               d.TenantWorkProtocol `json:"protocol"`
+	ValidLegacyClaims      int                  `json:"valid_legacy_claims"`
+	ValidUnsignedContracts int                  `json:"valid_unsigned_contracts"`
+	IssuerReady            bool                 `json:"issuer_ready"`
+	TenantPolicyReady      bool                 `json:"tenant_policy_ready"`
+	TenantPolicyRevision   signing.Decimal      `json:"tenant_policy_revision"`
+	ReadyWithOperatorDrain bool                 `json:"ready_with_operator_drain"`
+	RequiresOperatorDrain  bool                 `json:"requires_operator_drain"`
+	EvaluatedAt            time.Time            `json:"evaluated_at"`
 }
 
 func (s *Service) signedProtocolReadiness(ctx context.Context, u ports.UnitOfWork, ns d.ID, now time.Time) (SignedProtocolReadiness, error) {
@@ -48,8 +48,8 @@ func (s *Service) signedProtocolReadiness(ctx context.Context, u ports.UnitOfWor
 	}
 	policy, e := registry.AcceptancePolicy(ctx, ns, nil, nil)
 	if e == nil {
-		r.NamespacePolicyReady = policy.Validate() == nil
-		r.NamespacePolicyRevision = signing.Decimal(policy.Version)
+		r.TenantPolicyReady = policy.Validate() == nil
+		r.TenantPolicyRevision = signing.Decimal(policy.Version)
 	} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
 		return r, e
 	}
@@ -73,6 +73,6 @@ func (s *Service) signedProtocolReadiness(ctx context.Context, u ports.UnitOfWor
 			}
 		}
 	}
-	r.ReadyWithOperatorDrain = r.Protocol.Phase == d.WorkProtocolSignedDraining && r.ValidLegacyClaims == 0 && r.ValidUnsignedContracts == 0 && r.IssuerReady && r.NamespacePolicyReady
+	r.ReadyWithOperatorDrain = r.Protocol.Phase == d.WorkProtocolSignedDraining && r.ValidLegacyClaims == 0 && r.ValidUnsignedContracts == 0 && r.IssuerReady && r.TenantPolicyReady
 	return r, nil
 }

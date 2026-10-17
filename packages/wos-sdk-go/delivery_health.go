@@ -9,10 +9,10 @@ import (
 
 func (c *Client) GetDeliveryHealth(ctx context.Context, q a.DeliveryHealthQuery) (a.DeliveryHealthResult, error) {
 	var result a.DeliveryHealthResult
-	if e := q.NamespaceID.Validate(); e != nil {
+	if e := q.TenantID.Validate(); e != nil {
 		return result, e
 	}
-	path := "/namespaces/" + q.NamespaceID.String() + "/operations/delivery-health"
+	path := "/tenants/" + q.TenantID.String() + "/operations/delivery-health"
 	if q.OutcomeID != nil {
 		if e := q.OutcomeID.Validate(); e != nil {
 			return result, e

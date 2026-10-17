@@ -68,7 +68,7 @@ func workActivityTransportJourney(t *testing.T, ctx context.Context, worker *sdk
 		t.Fatalf("first activity page: %+v %v", page, err)
 	}
 	var mcpPage a.WorkActivityPage
-	call("wos_list_work_activity", map[string]any{"namespace_id": scope.NamespaceID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID, "contract_id": contract.ID, "limit": 1}, &mcpPage)
+	call("wos_list_work_activity", map[string]any{"tenant_id": scope.TenantID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID, "contract_id": contract.ID, "limit": 1}, &mcpPage)
 	if !reflect.DeepEqual(page, mcpPage) {
 		t.Fatalf("HTTP/MCP activity mismatch: %+v %+v", page, mcpPage)
 	}
@@ -93,7 +93,7 @@ func workActivityTransportJourney(t *testing.T, ctx context.Context, worker *sdk
 		t.Fatalf("latest activity page: %+v %v", newest, err)
 	}
 	var newestMCP a.WorkActivityPage
-	call("wos_list_work_activity", map[string]any{"namespace_id": scope.NamespaceID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID, "contract_id": contract.ID, "limit": 1, "descending": true}, &newestMCP)
+	call("wos_list_work_activity", map[string]any{"tenant_id": scope.TenantID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID, "contract_id": contract.ID, "limit": 1, "descending": true}, &newestMCP)
 	if !reflect.DeepEqual(newest, newestMCP) {
 		t.Fatal("descending HTTP/MCP activity differs")
 	}
@@ -118,7 +118,7 @@ func workActivityTransportJourney(t *testing.T, ctx context.Context, worker *sdk
 		t.Fatal(err)
 	}
 	var mcpAttention a.WorkAttention
-	call("wos_get_work_attention", map[string]any{"namespace_id": scope.NamespaceID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID}, &mcpAttention)
+	call("wos_get_work_attention", map[string]any{"tenant_id": scope.TenantID, "outcome_id": scope.OutcomeID, "work_item_id": contract.WorkItemID}, &mcpAttention)
 	// Time of observation may differ; the persisted work, signals and revision must agree.
 	mcpAttention.EvaluatedAt = attention.EvaluatedAt
 	mcpAttention.OperationalState.EvaluatedAt = attention.OperationalState.EvaluatedAt

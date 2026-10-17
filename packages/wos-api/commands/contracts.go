@@ -90,7 +90,7 @@ func typeSchema(t reflect.Type) map[string]any {
 		return map[string]any{"type": "string", "format": "date-time"}
 	}
 	if t == reflect.TypeFor[domain.EntityRef]() {
-		return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"namespace_id", "outcome_id", "kind", "id"}, "properties": map[string]any{"namespace_id": typeSchema(reflect.TypeFor[domain.ID]()), "outcome_id": typeSchema(reflect.TypeFor[domain.ID]()), "id": typeSchema(reflect.TypeFor[domain.ID]()), "kind": map[string]any{"type": "string"}}}
+		return map[string]any{"type": "object", "additionalProperties": false, "required": []string{"tenant_id", "outcome_id", "kind", "id"}, "properties": map[string]any{"tenant_id": typeSchema(reflect.TypeFor[domain.ID]()), "outcome_id": typeSchema(reflect.TypeFor[domain.ID]()), "id": typeSchema(reflect.TypeFor[domain.ID]()), "kind": map[string]any{"type": "string"}}}
 	}
 	switch t.Kind() {
 	case reflect.String:

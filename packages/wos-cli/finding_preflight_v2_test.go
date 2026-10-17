@@ -110,7 +110,7 @@ func TestReviewRecordsWithoutDeliveredSourceRejectedBeforeFreeze(t *testing.T) {
 	authority.SpecDigest = signing.Digest(file.Issued.Specification.Payload)
 	file.Issued.Authority = doc(signing.ContractAuthority, authority)
 	file.Execution = nil
-	file.Review = &ReviewDraftV2{Decision: "approved", Material: a.SignedReviewMaterial{ReviewedSourceVersion: "actual-commit", Evidence: []a.SyncEvidenceInput{{LocalKey: "review-tests", Evidence: a.RegisterEvidenceCommand{Scope: d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}, EvidenceType: d.EvidenceTypeTestResult, SourceVersion: "actual-commit"}}}}}
+	file.Review = &ReviewDraftV2{Decision: "approved", Material: a.SignedReviewMaterial{ReviewedSourceVersion: "actual-commit", Evidence: []a.SyncEvidenceInput{{LocalKey: "review-tests", Evidence: a.RegisterEvidenceCommand{Scope: d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}, EvidenceType: d.EvidenceTypeTestResult, SourceVersion: "actual-commit"}}}}}
 	if _, err := file.VerifyIssued(profile); err != nil {
 		t.Fatal("fixture must have valid issued review proofs", err)
 	}

@@ -52,7 +52,7 @@ func TestNativeStorageCommandsDoNotBootstrapServerOrClientConfiguration(t *testi
 		}
 	}
 	if runtime.GOOS != "linux" {
-		for _, args := range [][]string{{"storage", "migrate-sqlite", "--backup", "absent"}, {"storage", "namespace-preflight", "--sqlite", "absent", "--namespace", "0199a221-0000-7000-8000-000000000001"}} {
+		for _, args := range [][]string{{"storage", "migrate-sqlite", "--backup", "absent"}, {"storage", "tenant-preflight", "--sqlite", "absent", "--tenant", "0199a221-0000-7000-8000-000000000001"}} {
 			code, output := captureCommand(t, args...)
 			if code == 0 || !strings.Contains(string(output), "supported only on Linux") {
 				t.Fatal("unsupported host was not refused before storage access", args, code, string(output))
@@ -75,8 +75,8 @@ func TestNativeStorageCommandsDoNotBootstrapServerOrClientConfiguration(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespace := "0199a221-0000-7000-8000-000000000001"
-	_, err = db.Exec("INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES(?,'native-preflight','active',1,1,1)", namespace)
+	tenant := "0199a221-0000-7000-8000-000000000001"
+	_, err = db.Exec("INSERT INTO tenants(id,name,lifecycle,version,created_at,updated_at) VALUES(?,'native-preflight','active',1,1,1)", tenant)
 	if err != nil {
 		db.Close()
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func TestNativeStorageCommandsDoNotBootstrapServerOrClientConfiguration(t *testi
 	if err = db.Close(); err != nil {
 		t.Fatal(err)
 	}
-	code, output := captureCommand(t, "storage", "namespace-preflight", "--sqlite", source, "--namespace", namespace)
+	code, output := captureCommand(t, "storage", "tenant-preflight", "--sqlite", source, "--tenant", tenant)
 	if code != 0 {
 		t.Fatal(code, string(output))
 	}
@@ -92,9 +92,9 @@ func TestNativeStorageCommandsDoNotBootstrapServerOrClientConfiguration(t *testi
 		Operation string `json:"operation"`
 		Ready     bool   `json:"ready_for_transfer"`
 		ReadOnly  bool   `json:"read_only"`
-		Namespace string `json:"namespace_id"`
+		Tenant    string `json:"tenant_id"`
 	}
-	if err = json.Unmarshal(output, &inspection); err != nil || inspection.Operation != "namespace_transfer_preflight" || inspection.Ready || !inspection.ReadOnly || inspection.Namespace != namespace {
+	if err = json.Unmarshal(output, &inspection); err != nil || inspection.Operation != "tenant_transfer_preflight" || inspection.Ready || !inspection.ReadOnly || inspection.Tenant != tenant {
 		t.Fatal("native dispatch changed preflight semantics", string(output), err)
 	}
 	t.Setenv("WOS_MOBILITY_POSTGRES_DSN", "postgres://private-user:private-password@unused.invalid/unused")
@@ -132,7 +132,7 @@ func TestUnifiedWOSClientUsesServiceReleaseIdentity(t *testing.T) {
 
 func TestUnifiedWOSCreatesAndReadsNativeProject(t *testing.T) {
 	root := t.TempDir()
-	code, output := captureCommand(t, "project", "init", "--workspace", root, "--server", "http://127.0.0.1:18099", "--server-id", "01a12288-0000-7000-8000-000000000001", "--namespace", "01a12288-0000-7000-8000-000000000002", "--outcome", "01a12288-0000-7000-8000-000000000003", "--output", "json")
+	code, output := captureCommand(t, "project", "init", "--workspace", root, "--server", "http://127.0.0.1:18099", "--server-id", "01a12288-0000-7000-8000-000000000001", "--tenant", "01a12288-0000-7000-8000-000000000002", "--outcome", "01a12288-0000-7000-8000-000000000003", "--output", "json")
 	if code != 0 {
 		t.Fatalf("project init failed: %s", output)
 	}
@@ -196,5 +196,39 @@ func TestServerRoleFlagRejectsInvalidOrUnsafeRoleBeforeOpeningStorage(t *testing
 	}
 	if _, err := os.Stat(os.Getenv("WOS_SQLITE_PATH")); !os.IsNotExist(err) {
 		t.Fatal("invalid role opened storage", err)
+	}
+}
+
+func TestNativeTenantCatalogCommandsUseOperatorDispatch(t *testing.T) {
+	absent := filepath.Join(t.TempDir(), "unused-server", "wos.db")
+	t.Setenv("WOS_SQLITE_PATH", absent)
+	t.Setenv("WOS_AUTH_MODE", "invalid-unused-configuration")
+	t.Setenv("WOS_POSTGRES_DSN", "postgres://operator:private-native-dispatch@127.0.0.1:1/absent")
+	code, output := captureCommand(t, "storage", "tenant", "--help")
+	if code != 0 || !strings.Contains(string(output), "import-shared") || !strings.Contains(string(output), "--from-env") {
+		t.Fatal("Tenant operator help dispatched incorrectly", code, string(output))
+	}
+	code, output = captureCommand(t, "storage", "tenant", "show", "--tenant", "invalid")
+	if code == 0 || !strings.Contains(string(output), "valid --tenant") || strings.Contains(string(output), "private-native-dispatch") {
+		t.Fatal("Tenant validation or redaction failed", code, string(output))
+	}
+	if _, err := os.Stat(absent); !os.IsNotExist(err) {
+		t.Fatal("Tenant command initialized unrelated server storage", err)
+	}
+}
+
+func TestNativeSingleTenantOperationsRejectHostFleetBeforeOpeningStorage(t *testing.T) {
+	absent := filepath.Join(t.TempDir(), "unused-server", "wos.db")
+	t.Setenv("WOS_SQLITE_PATH", absent)
+	t.Setenv("WOS_AUTH_MODE", "local")
+	t.Setenv("WOS_TENANT_HOSTS", `[{"host":"first.example.test","tenant_id":"0199ac10-0000-7000-8000-000000000002"}]`)
+	for _, args := range [][]string{{"db", "migrate"}, {"db", "backup", "unused"}, {"mcp", "stdio"}} {
+		code, output := captureCommand(t, args...)
+		if code != 2 || !strings.Contains(string(output), "Tenant configuration") {
+			t.Fatal("fleet operation reached runtime initialization", args, code, string(output))
+		}
+	}
+	if _, err := os.Stat(absent); !os.IsNotExist(err) {
+		t.Fatal("unsupported fleet operation initialized storage", err)
 	}
 }

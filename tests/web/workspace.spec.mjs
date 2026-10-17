@@ -19,7 +19,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
   const port = socket.address().port;
   await new Promise((done) => socket.close(done));
   const url = `http://127.0.0.1:${port}`;
-  const namespace = "01a11820-0000-7000-8000-000000000001";
+  const tenant = "01a11820-0000-7000-8000-000000000001";
   const bootstrap = randomBytes(32).toString("base64url");
   let logs = "";
   const child = spawn(resolve("../../bin/wos"), ["server"], {
@@ -29,8 +29,8 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       WOS_SQLITE_PATH: join(directory, "wos.db"),
       WOS_AUTH_MODE: "api_token",
       WOS_BOOTSTRAP_TOKEN: bootstrap,
-      WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-      WOS_BOOTSTRAP_NAMESPACE_NAME: "Produto & Engenharia",
+      WOS_BOOTSTRAP_TENANT_ID: tenant,
+      WOS_BOOTSTRAP_TENANT_NAME: "Produto & Engenharia",
       WOS_LOCAL_PRINCIPAL_ID: "marina",
       WOS_MCP_ENABLED: "true",
     },
@@ -98,13 +98,13 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     }
     assert.ok(ready, logs);
     const outcome = await command("create_outcome", {
-      namespace_id: namespace,
+      tenant_id: tenant,
       title: "Lançar o portal de colaboração",
       desired_state:
         "Clientes e agentes acompanham cada entrega, com evidências revisadas e uma experiência clara.",
       priority: "high",
     });
-    const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    const scope = { tenant_id: tenant, outcome_id: outcome.id };
     await command("add_criterion", {
       owner: { ...scope, kind: "outcome", id: outcome.id },
       expected_version: outcome.version,
@@ -288,7 +288,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       revision_number: 1,
     });
     const other = await command("create_outcome", {
-      namespace_id: namespace,
+      tenant_id: tenant,
       title: "Melhorar a operação de suporte",
       desired_state: "Menos tempo de resposta e resolução com evidências.",
       priority: "normal",
@@ -369,7 +369,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     await page.locator("#submit-command").click();
     await expect(page.locator("#command-dialog")).not.toBeVisible();
     const result = await read(
-      `/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${readyItems[0].id}`,
+      `/tenants/${tenant}/outcomes/${outcome.id}/work-items/${readyItems[0].id}`,
     );
     assert.equal(result.value.lifecycle, "in_progress");
     await page.getByRole("button", { name: "Work", exact: true }).click();

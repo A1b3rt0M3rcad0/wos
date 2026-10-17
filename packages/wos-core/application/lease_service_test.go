@@ -25,10 +25,10 @@ func TestLeaseRenewAndReclaimAreAuditedAndFenceStaleClaimant(t *testing.T) {
 		Actor:       domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-old"},
 		CommandID:   id("0199f210-0000-7000-8000-000000000001"),
 	}
-	namespaceID := id("0199f210-0000-7000-8000-000000000002")
+	tenantID := id("0199f210-0000-7000-8000-000000000002")
 
 	created, err := service.CreateOutcome(ctx, ccOld, application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Lease coordination", DesiredState: "work fenced", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "Lease coordination", DesiredState: "work fenced", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)

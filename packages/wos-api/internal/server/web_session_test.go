@@ -17,9 +17,9 @@ func TestBrowserSessionCatalogAndRevocation(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("a", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199d030-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "Shared"
-		runtime, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Shared"
+		runtime, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -59,11 +59,11 @@ func TestBrowserSessionCatalogAndRevocation(t *testing.T) {
 		if status != 200 {
 			t.Fatal("login", status)
 		}
-		status, raw := call("GET", "/api/v1/namespaces", nil, "", "")
+		status, raw := call("GET", "/api/v1/tenants", nil, "", "")
 		if status != 200 || !bytes.Contains(raw, []byte("Shared")) {
 			t.Fatalf("discovery: %d %s", status, raw)
 		}
-		payload := map[string]any{"command": map[string]any{"namespace_id": cfg.Auth.BootstrapNamespaceID, "title": "Human web result", "desired_state": "Continued by independent client", "priority": "normal"}}
+		payload := map[string]any{"command": map[string]any{"tenant_id": cfg.Auth.BootstrapTenantID, "title": "Human web result", "desired_state": "Continued by independent client", "priority": "normal"}}
 		status, _ = call("POST", "/api/v1/commands/create_outcome", payload, "https://foreign.example", "web-create-00000001")
 		if status != 403 {
 			t.Fatalf("accepted CSRF: %d", status)
@@ -92,7 +92,7 @@ func TestBrowserSessionCatalogAndRevocation(t *testing.T) {
 		if status != 204 {
 			t.Fatal(status)
 		}
-		req := httptest.NewRequest("GET", "/api/v1/namespaces", nil)
+		req := httptest.NewRequest("GET", "/api/v1/tenants", nil)
 		req.AddCookie(&http.Cookie{Name: sessionCookie, Value: sessionToken})
 		rec := httptest.NewRecorder()
 		runtime.Handler().ServeHTTP(rec, req)

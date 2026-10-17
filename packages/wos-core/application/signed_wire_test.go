@@ -13,7 +13,7 @@ import (
 
 func TestSignedMutationWirePreservesPrecisionAndIssuedProof(t *testing.T) {
 	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
-	scope := d.Scope{NamespaceID: id, OutcomeID: id}
+	scope := d.Scope{TenantID: id, OutcomeID: id}
 	work, err := d.NewWorkItem(id, scope, "exact Task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, time.Now().UTC())
 	if err != nil {
 		t.Fatal(err)
@@ -28,13 +28,13 @@ func TestSignedMutationWirePreservesPrecisionAndIssuedProof(t *testing.T) {
 	}
 	contract.Version = d.Version(math.MaxUint64)
 	contract.LeaseVersion = 9007199254740993
-	contract.SignedBinding = &d.SignedContractBinding{ProtocolVersion: 2, ServerID: id.String(), CredentialID: id, SignerKeyID: id, PolicyRevision: d.Version(math.MaxUint64), AcceptanceFloor: d.AcceptanceDirect, AllowedSigningKeyIDs: []d.ID{id}}
+	contract.SignedBinding = &d.SignedContractBinding{ProtocolVersion: 3, ServerID: id.String(), CredentialID: id, SignerKeyID: id, PolicyRevision: d.Version(math.MaxUint64), AcceptanceFloor: d.AcceptanceDirect, AllowedSigningKeyIDs: []d.ID{id}}
 
 	public, private, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	envelope, err := signing.Sign(signing.ContractSpec, signing.SpecPayload[map[string]any]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: id.String(), NamespaceID: id.String(), OutcomeID: id.String(), PrincipalID: "issuer", SignerKeyID: id.String()}, ContractKind: "execution", ContractID: id.String(), WorkItemID: id.String(), Spec: map[string]any{"version": uint64(5)}}, id.String(), private)
+	envelope, err := signing.Sign(signing.ContractSpec, signing.SpecPayload[map[string]any]{Binding: signing.Binding{ProtocolVersion: 3, ServerID: id.String(), TenantID: id.String(), OutcomeID: id.String(), PrincipalID: "issuer", SignerKeyID: id.String()}, ContractKind: "execution", ContractID: id.String(), WorkItemID: id.String(), Spec: map[string]any{"version": uint64(5)}}, id.String(), private)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,30 +88,30 @@ func TestSignedMutationWirePreservesPrecisionAndIssuedProof(t *testing.T) {
 	}
 }
 
-func TestSignedTrustQuotesNamespaceCASWithoutChangingProtocolMarkerOrLegacyEncoding(t *testing.T) {
+func TestSignedTrustQuotesTenantCASWithoutChangingProtocolMarkerOrLegacyEncoding(t *testing.T) {
 	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
 	protocol := d.DefaultWorkProtocol(id)
 	protocol.Version = d.Version(math.MaxUint64)
 	protocol.Phase = d.WorkProtocolSigned
-	protocol.WriterEpoch = 2
-	result := SignedStateResult{ProtocolVersion: 2, NamespaceID: id, Protocol: &protocol}
+	protocol.WriterEpoch = 3
+	result := SignedStateResult{ProtocolVersion: 3, TenantID: id, Protocol: &protocol}
 	raw, err := json.Marshal(result)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var wire struct {
-		Marker    int `json:"protocol_version"`
-		Namespace struct {
+		Marker int `json:"protocol_version"`
+		Tenant struct {
 			Version string `json:"protocol_version"`
 			Epoch   int    `json:"writer_epoch"`
-		} `json:"namespace_protocol"`
+		} `json:"tenant_protocol"`
 	}
-	if err = json.Unmarshal(raw, &wire); err != nil || wire.Marker != 2 || wire.Namespace.Epoch != 2 || wire.Namespace.Version != "18446744073709551615" {
+	if err = json.Unmarshal(raw, &wire); err != nil || wire.Marker != 3 || wire.Tenant.Epoch != 3 || wire.Tenant.Version != "18446744073709551615" {
 		t.Fatalf("signed trust changed literal marker or rounded CAS: %s, %v", raw, err)
 	}
 	var typed SignedStateResult
 	if err = json.Unmarshal(raw, &typed); err != nil || typed.Protocol.Version != protocol.Version {
-		t.Fatal("typed client lost exact Namespace CAS", err)
+		t.Fatal("typed client lost exact Tenant CAS", err)
 	}
 	legacy, err := json.Marshal(protocol)
 	var historical struct {
@@ -121,6 +121,6 @@ func TestSignedTrustQuotesNamespaceCASWithoutChangingProtocolMarkerOrLegacyEncod
 		t.Fatal(err)
 	}
 	if err = json.Unmarshal(legacy, &historical); err != nil || historical.Version != math.MaxUint64 {
-		t.Fatal("unsigned Namespace encoding changed", err)
+		t.Fatal("unsigned Tenant encoding changed", err)
 	}
 }

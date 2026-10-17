@@ -1,5 +1,13 @@
 # Migration of a schema-1 workspace
 
+> [!NOTE]
+> This document retains the earlier Namespace/protocol contract for historical
+> context and legacy recovery. Current source uses Tenant contracts and signed
+> protocol 3. Follow [Tenant cutover](scaling/tenants.md) and the [current agent
+> workflow](agents.md); do not rename fields inside old signed material or use
+> these historical mutation examples against the current service.
+
+
 This is the **explicit legacy compatibility** path, selected with `--workspace`. For a signed schema-2 project moving into the new central installation, use [central migration](signed-workspace-profiles.md#migrate-an-existing-schema-2-workspace) instead. The commands below preserve unsigned history; they do not create retrospectively signed authority. Initialize an explicit schema-2 destination with `wos --workspace /absolute/signed-project project init` and the approved destination flags; central `wos init` is a different operation.
 
 Conversion uses a **separate, explicitly approved schema-2 destination**. Initialize

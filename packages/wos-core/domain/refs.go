@@ -92,16 +92,16 @@ func isRFC4122Variant(ch byte) bool {
 	return ch == '8' || ch == '9' || ch == 'a' || ch == 'b'
 }
 
-// Scope identifies the namespace and Outcome boundary in which a local entity
+// Scope identifies the tenant and Outcome boundary in which a local entity
 // is authorized and addressed.
 type Scope struct {
-	NamespaceID ID `json:"namespace_id"`
-	OutcomeID   ID `json:"outcome_id"`
+	TenantID  ID `json:"tenant_id"`
+	OutcomeID ID `json:"outcome_id"`
 }
 
 func (s Scope) Validate() error {
-	if err := s.NamespaceID.Validate(); err != nil {
-		return WrapError(ErrorCodeInvalidScope, "namespace_id is invalid", err)
+	if err := s.TenantID.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidScope, "tenant_id is invalid", err)
 	}
 	if err := s.OutcomeID.Validate(); err != nil {
 		return WrapError(ErrorCodeInvalidScope, "outcome_id is invalid", err)
@@ -179,7 +179,7 @@ func (kind *EntityKind) UnmarshalText(text []byte) error {
 
 // EntityRef is an explicit local reference. Scope is embedded so its JSON
 // representation follows the canonical flat addressing contract:
-// namespace_id, outcome_id, kind, id.
+// tenant_id, outcome_id, kind, id.
 type EntityRef struct {
 	Scope
 	Kind EntityKind `json:"kind"`

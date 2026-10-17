@@ -59,7 +59,7 @@ func (s *Service) AppendWorkActivity(ctx context.Context, cc d.CommandContext, c
 		if err != nil {
 			return zero, 0, err
 		}
-		if _, err = s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID); err != nil {
+		if _, err = s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID); err != nil {
 			return zero, 0, err
 		}
 		if _, err = u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
@@ -284,7 +284,7 @@ func (s *Service) ListWorkActivity(ctx context.Context, scope d.Scope, filter po
 	fingerprint := filterHash(filter)
 	var decoded queryCursor
 	if cursor != "" {
-		decoded, err = decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "work_activity", fingerprint)
+		decoded, err = decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "work_activity", fingerprint)
 		if err != nil {
 			return zero, err
 		}
@@ -348,7 +348,7 @@ func (s *Service) ListWorkActivity(ctx context.Context, scope d.Scope, filter po
 	}
 	for {
 		if more && len(page.Items) > 0 {
-			page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "work_activity", Filter: fingerprint, Revision: page.HistoryThroughRevision, Key: strconv.FormatUint(page.Items[len(page.Items)-1].Sequence, 10)})
+			page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "work_activity", Filter: fingerprint, Revision: page.HistoryThroughRevision, Key: strconv.FormatUint(page.Items[len(page.Items)-1].Sequence, 10)})
 		}
 		raw, err := json.Marshal(page)
 		if err != nil {

@@ -8,7 +8,7 @@ import (
 )
 
 func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f ports.OutcomeFilter) ([]ports.OutcomeIndexEntry, error) {
-	q := `SELECT id,version,title,description,lifecycle,priority,archived_at,created_at,updated_at FROM outcomes WHERE namespace_id=?`
+	q := `SELECT id,version,title,description,lifecycle,priority,archived_at,created_at,updated_at FROM outcomes WHERE tenant_id=?`
 	args := []any{ns.String()}
 	if len(f.AllowedOutcomeIDs) > 0 {
 		if len(f.AllowedOutcomeIDs) > 100 {
@@ -33,15 +33,15 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 		if err != nil {
 			return nil, err
 		}
-		q += ` AND EXISTS(SELECT 1 FROM outcome_context_entries c WHERE c.namespace_id=outcomes.namespace_id AND c.outcome_id=outcomes.id AND c.context_key=? AND c.canonical_value=?)`
+		q += ` AND EXISTS(SELECT 1 FROM outcome_context_entries c WHERE c.tenant_id=outcomes.tenant_id AND c.outcome_id=outcomes.id AND c.context_key=? AND c.canonical_value=?)`
 		args = append(args, key, canonical)
 	}
 	if f.CreatorPrincipalID != "" {
-		q += ` AND EXISTS(SELECT 1 FROM domain_events e WHERE e.namespace_id=outcomes.namespace_id AND e.outcome_id=outcomes.id AND e.event_type='outcome.created' AND e.principal_id=?)`
+		q += ` AND EXISTS(SELECT 1 FROM domain_events e WHERE e.tenant_id=outcomes.tenant_id AND e.outcome_id=outcomes.id AND e.event_type='outcome.created' AND e.principal_id=?)`
 		args = append(args, f.CreatorPrincipalID)
 	}
 	if f.ExternalProvider != "" || f.ExternalKind != "" || f.ExternalID != "" {
-		q += ` AND EXISTS(SELECT 1 FROM outcome_external_references e WHERE e.namespace_id=outcomes.namespace_id AND e.outcome_id=outcomes.id AND e.provider=? AND e.context_kind=? AND e.external_id=?)`
+		q += ` AND EXISTS(SELECT 1 FROM outcome_external_references e WHERE e.tenant_id=outcomes.tenant_id AND e.outcome_id=outcomes.id AND e.provider=? AND e.context_kind=? AND e.external_id=?)`
 		args = append(args, f.ExternalProvider, f.ExternalKind, f.ExternalID)
 	}
 	if f.Text != "" {
@@ -64,7 +64,7 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 		}
 	}
 	if f.Owner != nil {
-		q += ` AND EXISTS(SELECT 1 FROM entity_actor_links a WHERE a.namespace_id=outcomes.namespace_id AND a.outcome_id=outcomes.id AND a.entity_id=outcomes.id AND a.role='owner' AND a.actor_kind=? AND a.actor_provider=? AND a.actor_id=?)`
+		q += ` AND EXISTS(SELECT 1 FROM entity_actor_links a WHERE a.tenant_id=outcomes.tenant_id AND a.outcome_id=outcomes.id AND a.entity_id=outcomes.id AND a.role='owner' AND a.actor_kind=? AND a.actor_provider=? AND a.actor_id=?)`
 		args = append(args, string(f.Owner.Kind), f.Owner.Provider, f.Owner.ID)
 	}
 	if !f.AfterID.IsZero() {
@@ -92,7 +92,7 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 		if err != nil {
 			return nil, err
 		}
-		v.NamespaceID = ns
+		v.TenantID = ns
 		v.Lifecycle = domain.OutcomeLifecycle(lifecycle)
 		v.Priority = domain.Priority(priority)
 		if archived.Valid {
@@ -108,8 +108,8 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 }
 
 func (l eventLog) ListEvents(ctx context.Context, scope domain.Scope, f ports.EventFilter) ([]domain.DomainEvent, error) {
-	q := `SELECT id,event_type,schema_version,outcome_revision,event_index,aggregate_id,aggregate_kind,aggregate_version_before,aggregate_version_after,command_id,principal_id,actor_json,recorded_at,correlation_id,causation_id,execution_context_json,payload_json FROM domain_events WHERE namespace_id=? AND outcome_id=? AND (outcome_revision>? OR (outcome_revision=? AND event_index>?))`
-	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String(), int64(f.AfterRevision), int64(f.AfterRevision), int64(f.AfterIndex)}
+	q := `SELECT id,event_type,schema_version,outcome_revision,event_index,aggregate_id,aggregate_kind,aggregate_version_before,aggregate_version_after,command_id,principal_id,actor_json,recorded_at,correlation_id,causation_id,execution_context_json,payload_json FROM domain_events WHERE tenant_id=? AND outcome_id=? AND (outcome_revision>? OR (outcome_revision=? AND event_index>?))`
+	args := []any{scope.TenantID.String(), scope.OutcomeID.String(), int64(f.AfterRevision), int64(f.AfterRevision), int64(f.AfterIndex)}
 	for _, v := range []struct{ column, value string }{{"principal_id", f.PrincipalID}, {"command_id", string(f.CommandID)}, {"aggregate_id", string(f.EntityID)}, {"event_type", f.EventType}} {
 		if v.value != "" {
 			q += ` AND ` + v.column + `=?`

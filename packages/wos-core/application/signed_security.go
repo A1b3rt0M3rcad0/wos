@@ -14,25 +14,25 @@ func signedCommand(name string) bool {
 	return false
 }
 func signedCutoverCommand(command any) bool {
-	cmd, ok := command.(SetNamespaceWorkProtocolCommand)
+	cmd, ok := command.(SetTenantWorkProtocolCommand)
 	return ok && (cmd.Phase == d.WorkProtocolSignedDraining || cmd.Phase == d.WorkProtocolSigned)
 }
 func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, permission ports.Permission, keyID d.ID) (Identity, d.CredentialPolicy, error) {
 	var policy d.CredentialPolicy
 	identity, ok := IdentityFromContext(ctx)
-	if !ok || identity.NamespaceID != scope.NamespaceID || identity.CredentialDigest == "" {
+	if !ok || identity.TenantID != scope.TenantID || identity.CredentialDigest == "" {
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "authenticated signed identity required")
 	}
 	protocol, err := protocolRepository(uow)
 	if err != nil {
 		return identity, policy, err
 	}
-	p, err := protocol.Lock(ctx, scope.NamespaceID, exclusiveProtocolGuard(uow, "signed"))
+	p, err := protocol.Lock(ctx, scope.TenantID, exclusiveProtocolGuard(uow, "signed"))
 	if err != nil {
 		return identity, policy, err
 	}
 	if p.Phase != d.WorkProtocolSigned {
-		return identity, policy, d.NewError(d.ErrorCodeSignedProtocolRequired, "Namespace has not activated signed-v2 protocol")
+		return identity, policy, d.NewError(d.ErrorCodeSignedProtocolRequired, "Tenant has not activated signed-v3 protocol")
 	}
 	now, err := securityTransactionTime(ctx, uow, s.clock)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 	if !ok {
 		return identity, policy, d.NewError(d.ErrorCodeInvalidConfig, "transactional signed access unavailable")
 	}
-	if err = access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+	if err = access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
 		return identity, policy, err
 	}
 	registry, err := signingRepository(uow)
@@ -56,7 +56,7 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 	if credential.ParentDigest != "" {
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "browser sessions cannot exercise signed authority")
 	}
-	policy, err = registry.CredentialPolicy(ctx, scope.NamespaceID, credential.ID)
+	policy, err = registry.CredentialPolicy(ctx, scope.TenantID, credential.ID)
 	if err != nil {
 		if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 			return identity, policy, err
@@ -69,7 +69,7 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 	identity.CredentialID = credential.ID
 	identity.CredentialPolicyRevision = policy.Version
 	if !keyID.IsZero() {
-		key, e := registry.Key(ctx, scope.NamespaceID, keyID)
+		key, e := registry.Key(ctx, scope.TenantID, keyID)
 		if e != nil {
 			return identity, policy, e
 		}
@@ -92,7 +92,7 @@ func (s *Service) signedAcceptanceFloor(ctx context.Context, uow ports.UnitOfWor
 		return "", err
 	}
 	for _, target := range []struct{ o, w *d.ID }{{nil, nil}, {&scope.OutcomeID, nil}, {&scope.OutcomeID, &work}} {
-		p, e := registry.AcceptancePolicy(ctx, scope.NamespaceID, target.o, target.w)
+		p, e := registry.AcceptancePolicy(ctx, scope.TenantID, target.o, target.w)
 		if e != nil {
 			if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
 				continue
@@ -107,7 +107,7 @@ func (s *Service) signedAcceptanceFloor(ctx context.Context, uow ports.UnitOfWor
 // Official adapters coordinate acquisition quotas separately. Third-party
 // adapters keep the legacy exclusive barrier until they implement that contract.
 func exclusiveProtocolGuard(u ports.UnitOfWork, command string) bool {
-	if command == "SetNamespaceWorkProtocol" {
+	if command == "SetTenantWorkProtocol" {
 		return true
 	}
 	if command == "signed" || signedCommand(command) {

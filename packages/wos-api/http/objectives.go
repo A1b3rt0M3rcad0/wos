@@ -41,7 +41,7 @@ func (h *Handler) createObjective(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setETag(w, domain.EntityKindObjective, result.Value.ID, result.Value.Version)
-	w.Header().Set("Location", h.prefix+"/namespaces/"+scope.NamespaceID.String()+"/outcomes/"+scope.OutcomeID.String()+"/objectives/"+result.Value.ID.String())
+	w.Header().Set("Location", h.prefix+"/tenants/"+scope.TenantID.String()+"/outcomes/"+scope.OutcomeID.String()+"/objectives/"+result.Value.ID.String())
 	writeJSON(w, http.StatusCreated, result)
 }
 

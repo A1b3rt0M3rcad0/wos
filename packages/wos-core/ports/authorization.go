@@ -26,7 +26,7 @@ const (
 	PermissionRecordsWrite          Permission = "records:write"
 	PermissionAssessmentWrite       Permission = "assessment:write"
 	PermissionConclusionWrite       Permission = "conclusion:write"
-	PermissionNamespaceAdmin        Permission = "namespace:admin"
+	PermissionTenantAdmin           Permission = "tenant:admin"
 	PermissionInstallationProvision Permission = "installation:provision"
 	PermissionInstallationObserve   Permission = "installation:observe"
 	PermissionInstallationAdmin     Permission = "installation:admin"
@@ -42,14 +42,14 @@ func (p Permission) Valid() bool {
 		return true
 	}
 	switch p {
-	case PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
+	case PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionTenantAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
 		return true
 	default:
 		return false
 	}
 }
 
-// InstallationScoped identifies explicit operator capabilities. Namespace
+// InstallationScoped identifies explicit operator capabilities. Tenant
 // administration alone never grants or delegates installation authority.
 func (p Permission) InstallationScoped() bool {
 	return p == PermissionInstallationProvision || p == PermissionInstallationObserve || p == PermissionInstallationAdmin
@@ -64,8 +64,8 @@ func HasInstallationPermissions(permissions []Permission) bool {
 	return false
 }
 
-// NamespacePermissions copies only tenant-local capabilities.
-func NamespacePermissions(permissions []Permission) []Permission {
+// TenantPermissions copies only tenant-local capabilities.
+func TenantPermissions(permissions []Permission) []Permission {
 	result := make([]Permission, 0, len(permissions))
 	for _, p := range permissions {
 		if !p.InstallationScoped() {
@@ -76,15 +76,15 @@ func NamespacePermissions(permissions []Permission) []Permission {
 }
 
 type AuthorizationRequest struct {
-	NamespaceID domain.ID
+	TenantID    domain.ID
 	OutcomeID   domain.ID
 	PrincipalID string
 	Permission  Permission
 }
 
 func (r AuthorizationRequest) Validate() error {
-	if err := r.NamespaceID.Validate(); err != nil {
-		return domain.WrapError(domain.ErrorCodeInvalidArgument, "authorization namespace is invalid", err)
+	if err := r.TenantID.Validate(); err != nil {
+		return domain.WrapError(domain.ErrorCodeInvalidArgument, "authorization tenant is invalid", err)
 	}
 	if r.PrincipalID == "" {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "authorization principal is required")
@@ -127,5 +127,5 @@ type AccessSnapshotUnitOfWork interface {
 
 // AllPermissions returns a fresh, bounded list of supported grant values.
 func AllPermissions() []Permission {
-	return []Permission{PermissionInstallationProvision, PermissionInstallationObserve, PermissionInstallationAdmin, PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive}
+	return []Permission{PermissionInstallationProvision, PermissionInstallationObserve, PermissionInstallationAdmin, PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionTenantAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive}
 }

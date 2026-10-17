@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 func encodeTime(value time.Time) int64 {
@@ -62,10 +63,7 @@ func marshalJSON(value any) (string, error) {
 }
 
 func unmarshalJSON(value string, target any) error {
-	if err := json.Unmarshal([]byte(value), target); err != nil {
-		return err
-	}
-	return nil
+	return signing.DecodeStoredJSON([]byte(value), target, 0)
 }
 
 func conclusionStorageID(owner domain.EntityRef, ordinal int, conclusion domain.Conclusion) (string, error) {
@@ -79,7 +77,7 @@ func conclusionStorageID(owner domain.EntityRef, ordinal int, conclusion domain.
 	}
 	sum := sha256.Sum256([]byte(fmt.Sprintf(
 		"%s\x00%s\x00%s\x00%d\x00%s\x00%s\x00%s\x00%d\x00%s",
-		owner.NamespaceID,
+		owner.TenantID,
 		owner.OutcomeID,
 		owner.ID,
 		ordinal,

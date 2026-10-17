@@ -41,9 +41,9 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 				}
 			}
 			ns := testID("0199a333-0000-7000-8000-000000000001")
-			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a333-0000-7000-8000-000000000002")}
+			scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a333-0000-7000-8000-000000000002")}
 			sec := a.SecurityService{Store: store, Clock: sqliteFixedClock{now}, IDs: &sqliteSequenceIDs{prefix: "0199a334", next: 1}}
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-storage"}, "issuer", "signed-storage-bootstrap-at-least-32-characters"))
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-storage"}, "issuer", "signed-storage-bootstrap-at-least-32-characters"))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "Signed storage", "", "Verified", d.PriorityNormal, now)
 			must(err)
 			outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -55,7 +55,7 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			fp, err := signing.Fingerprint(pub)
 			must(err)
 			keyID := testID("0199a333-0000-7000-8000-000000000004")
-			binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: "persisted-server", CredentialID: testID("0199a333-0000-7000-8000-000000000005"), SignerKeyID: keyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: 1, AllowedSigningKeyIDs: []d.ID{keyID}}
+			binding := d.SignedContractBinding{ProtocolVersion: 3, ServerID: "persisted-server", CredentialID: testID("0199a333-0000-7000-8000-000000000005"), SignerKeyID: keyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: 1, AllowedSigningKeyIDs: []d.ID{keyID}}
 			contract, err := d.NewWorkContract(testID("0199a333-0000-7000-8000-000000000006"), testID("0199a333-0000-7000-8000-000000000007"), work, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, d.DefaultContractLeasePolicy(), 30, d.WorkContractSpec{Title: work.Title}, 0, now)
 			must(err)
 			contract.SignedBinding = &binding
@@ -69,9 +69,9 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			must(uow.Outcomes().Insert(ctx, outcome))
 			must(uow.WorkItems().Insert(ctx, work))
 			must(signed.SignedWorkContracts().Insert(ctx, contract))
-			issuerKey := d.SigningKey{ID: keyID, NamespaceID: ns, PrincipalID: "issuer", Purpose: "issuer", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}
+			issuerKey := d.SigningKey{ID: keyID, TenantID: ns, PrincipalID: "issuer", Purpose: "issuer", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}
 			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveKey(ctx, issuerKey, 0))
-			payload := signing.SpecPayload[d.WorkContractSpec]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: binding.ServerID, NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "executor", SignerKeyID: keyID.String()}, ContractKind: "execution", ContractID: contract.ID.String(), WorkItemID: work.ID.String(), Spec: contract.Spec}
+			payload := signing.SpecPayload[d.WorkContractSpec]{Binding: signing.Binding{ProtocolVersion: 3, ServerID: binding.ServerID, TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "executor", SignerKeyID: keyID.String()}, ContractKind: "execution", ContractID: contract.ID.String(), WorkItemID: work.ID.String(), Spec: contract.Spec}
 			envelope, err := signing.Sign(signing.ContractSpec, payload, keyID.String(), private)
 			must(err)
 			doc, err := signing.ToDocument(envelope)
@@ -91,9 +91,9 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 				t.Fatal("counter precision lost")
 			}
 			material := d.NormalizeResultMaterial(d.WorkResultMaterial{ContractID: contract.ID, WorkItemID: work.ID, SpecDigest: contract.SpecDigest, Summary: "exact immutable submission"})
-			digest, err := d.SemanticDigest(material)
+			digest, err := d.SignedResultDigest(material)
 			must(err)
-			submission := d.WorkSubmission{ID: testID("0199a333-0000-7000-8000-000000000009"), Scope: scope, Material: material, Digest: digest, PrincipalID: "executor", Actor: contract.Actor, SubmittedAt: now}
+			submission := d.WorkSubmission{ProtocolVersion: 3, ID: testID("0199a333-0000-7000-8000-000000000009"), Scope: scope, Material: material, Digest: digest, PrincipalID: "executor", Actor: contract.Actor, SubmittedAt: now}
 			must(signed.SignedWorkContracts().InsertSubmission(ctx, submission))
 			oldVersion := stored.Version
 			must(stored.Deliver(submission, "executor", stored.ExecutionID, stored.FencingToken, stored.Version, now))
@@ -185,7 +185,7 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			}
 			counts, err := signed.SignedContracts().Counts(ctx, ns, "reviewer", binding.CredentialID, now)
 			must(err)
-			if counts.NamespaceWork != 0 || counts.PrincipalReview != 1 || counts.CredentialReview != 1 {
+			if counts.TenantWork != 0 || counts.PrincipalReview != 1 || counts.CredentialReview != 1 {
 				t.Fatalf("active quotas count wrong authority: %+v", counts)
 			}
 			reviewer, err = signed.SignedContracts().ReviewContract(ctx, scope, reviewer.ID)

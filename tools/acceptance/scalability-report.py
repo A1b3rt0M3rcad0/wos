@@ -17,7 +17,7 @@ import signal
 import subprocess
 import time
 
-TOPOLOGIES = {'same-outcome': (1, 1), 'separate-outcomes': (1, 4), 'separate-namespaces': (4, 4)}
+TOPOLOGIES = {'same-outcome': (1, 1), 'separate-outcomes': (1, 4), 'separate-tenants': (4, 4)}
 
 
 def source_hashes(root):
@@ -36,7 +36,7 @@ def parse_result(log, expected):
             continue
         if item.get('Action') in ('skip', 'fail'):
             failed = True
-        if item.get('Action') == 'pass' and '/namespaces=' in item.get('Test', ''):
+        if item.get('Action') == 'pass' and '/tenants=' in item.get('Test', ''):
             passed = True
         if 'SIGNED_LOAD ' in item.get('Output', ''):
             rows.append(json.loads(item['Output'].split('SIGNED_LOAD ', 1)[1]))
@@ -141,21 +141,21 @@ def main():
             subprocess.run(['go', 'test', '-c', '-o', str(binary), './packages/wos-core/storage/'+args.backend],
                            cwd=root, stdout=stream, stderr=subprocess.STDOUT, check=True)
         for topology in args.topology:
-            namespaces, outcomes = TOPOLOGIES[topology]
+            tenants, outcomes = TOPOLOGIES[topology]
             for replicas in args.replicas:
                 for history in args.history:
                     for repetition in range(1, args.repetitions+1):
                         name = f'{topology}-replicas-{replicas}-history-{history}-run-{repetition}'
                         env = os.environ.copy()
                         env.update(WOS_SCALE_QUALIFICATION='1', WOS_SCALE_OUTCOMES=str(outcomes),
-                                   WOS_SCALE_NAMESPACES=str(namespaces), WOS_SCALE_REPLICAS=str(replicas),
+                                   WOS_SCALE_TENANTS=str(tenants), WOS_SCALE_REPLICAS=str(replicas),
                                    WOS_SCALE_HISTORY=str(history), WOS_SCALE_CONSUMERS=str(args.consumers))
                         log = output/(name+'.jsonl')
                         # test2json preserves exact executed/skipped/pass provenance for the precompiled binary.
                         command = ['go', 'tool', 'test2json', '-t', str(binary), '-test.v',
                                    '-test.run=^TestScalableSignedWorkMatrix$', '-test.count=1', '-test.timeout='+str(args.timeout)+'s']
                         resources = run_child(command, root, env, log, args.timeout+15)
-                        expected = {'namespaces': namespaces, 'outcomes': outcomes, 'active_outcomes': outcomes,
+                        expected = {'tenants': tenants, 'outcomes': outcomes, 'active_outcomes': outcomes,
                                     'service_replicas': replicas, 'consumers': args.consumers,
                                     'accepted_historical_tasks_per_outcome': history, 'accepted_deliveries': args.consumers*2,
                                     'verified_outbox_deliveries': outcomes*history+args.consumers*2}

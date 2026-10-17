@@ -87,9 +87,9 @@ The board represents shared state; each paper represents a bounded piece of work
 | Contract | Bounded authority issued at checkout in a contract-enabled Workspace | Permission to deliver one Task under the issued constraints |
 | Artifact / Evidence | A deliverable reference, and an observation or source used to check it | An exact commit, and the recorded validation test report |
 | Assessment / Conclusion | Evaluation of a criterion, and the basis for accepting the result | The amount check passed; accept the Outcome after all requirements are satisfied |
-| Tenant (Workspace / Namespace) | One data and authorization boundary: Workspace in the UI, `Namespace` in current API/CLI contracts | A customer's authorized space |
+| Tenant / Workspace | One customer's isolated state and authorization boundary; Workspace in the UI | A customer's authorized space, stored in its own PostgreSQL schema |
 
-Your application can map one customer Account or organization to one Tenant, with explicit access for its people and agents. An individual login can belong to several Accounts; shared hosting, dedicated infrastructure and self-hosting preserve the same isolation model.
+Your application can map one customer Account or organization to one Tenant, with explicit access for its people and agents. Each PostgreSQL Tenant owns a schema containing its work, identities, credentials, signed history and delivery state. Tenants can share a database or use dedicated databases; both use the same WOS product. Account membership and billing belong to your application or hosting service.
 
 A Roadmap is an optional versioned plan referencing existing Objectives and Tasks. Publishing it does not execute work or create dependencies automatically.
 
@@ -110,7 +110,7 @@ For example, a finance SaaS could accept "prepare this month's reconciliation re
 | Customer intake and agreement on the requested result | Outcomes, success criteria, Objectives and Tasks |
 | Agent selection, scheduling, tools and execution | Explicit work acquisition, scoped authority and current obligations |
 | Producing deliverables and inspecting their contents | Artifact references, Evidence, assessments and explicit conclusions |
-| Customer access, provisioning, pricing and billing | Namespace authorization boundaries, recorded state, history and integration events |
+| Customer access, provisioning, pricing and billing | Tenant authorization boundaries, recorded state, history and integration events |
 
 Provision credentials and grants for each integration; a customer ID in metadata does not grant access. Webhooks report recorded changes with at-least-once delivery. Your consumer verifies and deduplicates them before deciding what to do next. See [security boundaries](SECURITY.md) and [events and webhooks](docs/integration-events.md).
 
@@ -132,10 +132,10 @@ Official agent Skills operate through the CLI. MCP and HTTP are additional integ
 
 ### Run the current workspace
 
-You need Git, Docker and Docker Compose v2. The server path below builds the current `master` source, including the interface shown in the tour.
+You need Git, Docker and Docker Compose v2. The server path below builds this PR branch. The published release and `master` may have different contracts; use one matching source for the server, CLI and Skills.
 
 ```sh
-git clone --branch master https://github.com/A1b3rt0M3rcad0/wos.git
+git clone --branch feat/scalable-wos-operation https://github.com/A1b3rt0M3rcad0/wos.git
 cd wos
 cp .env.example .env
 docker compose up --build -d
@@ -175,9 +175,9 @@ Want an executable example before configuring agents? The [isolated local lifecy
 
 ## Self-host and grow
 
-Start with one complete process. For production growth, the [PostgreSQL deployment profiles](deploy/scaling/README.md) provide a small installation and a replica overlay that separates API and delivery-worker capacity. The same WOS product serves shared Namespaces or dedicated infrastructure; your own runtime continues to execute agents.
+Start with one complete process. For production growth, the [PostgreSQL deployment profiles](deploy/scaling/README.md) provide a small installation and a replica overlay that separates API and delivery-worker capacity. The same WOS product serves a Tenant in its own PostgreSQL schema, several Tenants in separate schemas of one database, or a dedicated database and infrastructure. Your own runtime continues to execute agents.
 
-The [scaling guide](docs/scaling/README.md) explains persistent-state coordination, shared-resource budgets, operator permissions, connection sizing and recovery. A verified offline [SQLite-to-PostgreSQL migration](docs/scaling/mobility.md) supports whole-installation growth. Capacity measurements, database HA and Namespace relocation have explicit [qualification boundaries](docs/scaling/qualification.md).
+The [scaling guide](docs/scaling/README.md) explains persistent-state coordination, shared-resource budgets, operator permissions, connection sizing and recovery. The [Tenant operations guide](docs/scaling/tenants.md) covers provisioning, suspension, reactivation, deletion and the breaking upgrade from the previous row-partitioned model. Existing capacity and migration evidence is source-bound; see the [qualification boundaries](docs/scaling/qualification.md) before treating historical results as evidence for the schema transition.
 
 ## Operate with agents
 

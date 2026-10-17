@@ -54,7 +54,7 @@ func (s *Service) AcquireNextSignedWorkContract(ctx context.Context, cc d.Comman
 	}{cmd.WorkItemIDs, cmd.ObjectiveID, cmd.Priorities})
 	query := ports.ContractCandidateQuery{Limit: limit + 1}
 	if cmd.Cursor != "" {
-		cursor, e := decodeCursor(cmd.Cursor, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID, "signed_contract_candidates", fingerprint)
+		cursor, e := decodeCursor(cmd.Cursor, cmd.Scope.TenantID, cmd.Scope.OutcomeID, "signed_contract_candidates", fingerprint)
 		if e != nil {
 			return zero, e
 		}
@@ -71,7 +71,7 @@ func (s *Service) AcquireNextSignedWorkContract(ctx context.Context, cc d.Comman
 		if _, _, e := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionWorkContractAcquire, cmd.SignerKeyID); e != nil {
 			return result, 0, e
 		}
-		if _, e := s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID); e != nil {
+		if _, e := s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID); e != nil {
 			return result, 0, e
 		}
 		if e := requireActiveOutcome(ctx, u, cmd.Scope); e != nil {
@@ -81,7 +81,7 @@ func (s *Service) AcquireNextSignedWorkContract(ctx context.Context, cc d.Comman
 		if e != nil {
 			return result, 0, e
 		}
-		state, e := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(u, "signed"))
+		state, e := protocol.Lock(ctx, cmd.Scope.TenantID, exclusiveProtocolGuard(u, "signed"))
 		if e != nil {
 			return result, 0, e
 		}
@@ -104,7 +104,7 @@ func (s *Service) AcquireNextSignedWorkContract(ctx context.Context, cc d.Comman
 		if len(candidates) > limit {
 			candidates = candidates[:limit]
 			last, _ := json.Marshal(candidates[len(candidates)-1])
-			result.NextCursor = encodeCursor(queryCursor{Namespace: cmd.Scope.NamespaceID, Outcome: cmd.Scope.OutcomeID, Section: "signed_contract_candidates", Filter: fingerprint, Key: string(last)})
+			result.NextCursor = encodeCursor(queryCursor{Tenant: cmd.Scope.TenantID, Outcome: cmd.Scope.OutcomeID, Section: "signed_contract_candidates", Filter: fingerprint, Key: string(last)})
 		}
 		reviews, contracts, e := signedRepository(u)
 		if e != nil {

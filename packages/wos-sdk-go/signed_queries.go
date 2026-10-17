@@ -43,7 +43,7 @@ func (c *Client) ReadSignedState(ctx context.Context, query a.SignedStateQuery) 
 	if query.Limit != 0 {
 		parameters.Set("limit", strconv.Itoa(query.Limit))
 	}
-	path := "/namespaces/" + query.Scope.NamespaceID.String() + "/outcomes/" + query.Scope.OutcomeID.String() + "/signed-state/" + url.PathEscape(query.Resource)
+	path := "/tenants/" + query.Scope.TenantID.String() + "/outcomes/" + query.Scope.OutcomeID.String() + "/signed-state/" + url.PathEscape(query.Resource)
 	if !query.ID.IsZero() {
 		path += "/" + query.ID.String()
 	}
@@ -59,12 +59,12 @@ func (c *Client) ReadSignedState(ctx context.Context, query a.SignedStateQuery) 
 	err := c.doBounded(ctx, http.MethodGet, path, "", nil, &result, maximum)
 	return result, err
 }
-func (c *Client) GetSignedTrust(ctx context.Context, namespace d.ID) (a.SignedStateResult, error) {
+func (c *Client) GetSignedTrust(ctx context.Context, tenant d.ID) (a.SignedStateResult, error) {
 	var result a.SignedStateResult
-	if err := namespace.Validate(); err != nil {
+	if err := tenant.Validate(); err != nil {
 		return result, err
 	}
-	err := c.do(ctx, http.MethodGet, "/namespaces/"+namespace.String()+"/signed-trust", "", nil, &result)
+	err := c.do(ctx, http.MethodGet, "/tenants/"+tenant.String()+"/signed-trust", "", nil, &result)
 	return result, err
 }
 

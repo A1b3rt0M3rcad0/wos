@@ -14,7 +14,7 @@ func (s *Service) authorizeScopedRead(ctx context.Context, scope d.Scope) error 
 	if !ok || id.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeForbidden, "authenticated identity required")
 	}
-	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead})
+	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead})
 }
 func (s *Service) authorizeScopedReadInUnitOfWork(ctx context.Context, u ports.UnitOfWork, scope d.Scope) error {
 	return s.authorizeReadPermissionInUnitOfWork(ctx, u, scope, ports.PermissionStateRead)
@@ -28,7 +28,7 @@ func (s *Service) authorizeReadPermissionInUnitOfWork(ctx context.Context, u por
 	if !ok || id.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeForbidden, "authenticated identity required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: permission}
+	request := ports.AuthorizationRequest{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: permission}
 	if id.CredentialDigest != "" {
 		snapshot, ok := u.(ports.AccessSnapshotUnitOfWork)
 		if !ok {
@@ -46,16 +46,16 @@ func (s *Service) authorizeReadPermissionInUnitOfWork(ctx context.Context, u por
 	return nil // Static local authorization was already checked before opening.
 }
 
-// Namespace metadata (instance trust/protocol and one's own identity) carries
+// Tenant metadata (instance trust/protocol and one's own identity) carries
 // no other Outcome's state. Collections must instead apply these restrictions.
-func (s *Service) authorizeNamespaceMetadataRead(ctx context.Context, ns d.ID) error {
+func (s *Service) authorizeTenantMetadataRead(ctx context.Context, ns d.ID) error {
 	if !s.requireIdentity {
 		return nil
 	}
 	return s.Authorize(ctx, ns, ports.PermissionStateRead)
 }
 func (s *Service) readOutcomeRestrictions(ctx context.Context, u ports.UnitOfWork, ns d.ID) ([]d.ID, error) {
-	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, d.Scope{NamespaceID: ns}); err != nil {
+	if err := s.authorizeScopedReadInUnitOfWork(ctx, u, d.Scope{TenantID: ns}); err != nil {
 		return nil, err
 	}
 	id, ok := IdentityFromContext(ctx)

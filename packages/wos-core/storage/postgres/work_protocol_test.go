@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
+func TestTenantProtocolCutoverAndRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "protocol.db")
@@ -32,15 +32,15 @@ func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199ff10-0000-7000-8000-000000000070", "protocol-drain-sql")
-	cmd := a.SetNamespaceWorkProtocolCommand{Scope: w.Scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "stop old writers"}
-	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, cmd); err != nil {
+	cmd := a.SetTenantWorkProtocolCommand{Scope: w.Scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "stop old writers"}
+	if _, err = service.SetTenantWorkProtocol(ctx, cc, cmd); err != nil {
 		t.Fatal(err)
 	}
 	cc.IdempotencyKey = "protocol-enable-sql"
 	cmd.ExpectedProtocolVersion = 2
 	cmd.Phase = d.WorkProtocolContracts
 	cmd.WritersDrained = true
-	got, err := service.SetNamespaceWorkProtocol(ctx, cc, cmd)
+	got, err := service.SetTenantWorkProtocol(ctx, cc, cmd)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,11 +49,11 @@ func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err := service.GetNamespaceWorkProtocol(ctx, w.Scope.NamespaceID)
+	p, err := service.GetTenantWorkProtocol(ctx, w.Scope.TenantID)
 	if err != nil || p.Version != 3 || p.WriterEpoch != 1 {
 		t.Fatal("protocol restart", p, err)
 	}
-	replay, err := service.SetNamespaceWorkProtocol(ctx, cc, cmd)
+	replay, err := service.SetTenantWorkProtocol(ctx, cc, cmd)
 	if err != nil || !replay.IdempotentReplay || replay.OutcomeRevision != got.OutcomeRevision {
 		t.Fatal("cutover receipt", err)
 	}

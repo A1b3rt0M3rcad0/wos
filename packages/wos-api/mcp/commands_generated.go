@@ -262,14 +262,14 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.RevokeWorkContractCommand](server, ids, options, "wos_revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
 		return service.RevokeWorkContract(ctx, cc, cmd)
 	})
-	registerCommand[application.SetNamespaceWorkProtocolCommand](server, ids, options, "wos_set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
-		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
-	})
 	registerCommand[application.SetObjectiveOwnersCommand](server, ids, options, "wos_set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)
 	})
 	registerCommand[application.SetOutcomeOwnersCommand](server, ids, options, "wos_set_outcome_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetOutcomeOwnersCommand) (any, error) {
 		return service.SetOutcomeOwners(ctx, cc, cmd)
+	})
+	registerCommand[application.SetTenantWorkProtocolCommand](server, ids, options, "wos_set_tenant_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetTenantWorkProtocolCommand) (any, error) {
+		return service.SetTenantWorkProtocol(ctx, cc, cmd)
 	})
 	registerCommand[application.SetTriggerEnabledCommand](server, ids, options, "wos_set_trigger_enabled", func(ctx context.Context, cc domain.CommandContext, cmd application.SetTriggerEnabledCommand) (any, error) {
 		return service.SetTriggerEnabled(ctx, cc, cmd)

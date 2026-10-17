@@ -14,7 +14,7 @@ async function fixture(page, { multiple = false } = {}) {
   await page.goto("http://reference-picker.test/");
   await page.evaluate(async ({ multiple }) => {
     const { referencePicker } = await import("/assets/reference-picker.js");
-    const scope = { namespace_id: "namespace", outcome_id: "outcome" };
+    const scope = { tenant_id: "tenant", outcome_id: "outcome" };
     const candidate = (id, title) => ({ ref: { ...scope, kind: "work_item", id }, title, lifecycle: "todo" });
     const choices = [candidate("first", "First task"), candidate("second", "Second task")];
     window.queries = [];

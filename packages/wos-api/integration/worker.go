@@ -145,7 +145,7 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 		}
 		policy.DatabaseTime = databaseTime
 		delivery, err = fair.ClaimDeliveryWithPolicy(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second, policy)
-	} else if w.ClaimPolicy.MaxInflightPerNamespace != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0 {
+	} else if w.ClaimPolicy.MaxInflightPerTenant != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0 {
 		err = domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store does not support shared capacity limits")
 	} else {
 		delivery, err = w.Store.ClaimDelivery(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second)
@@ -221,7 +221,7 @@ func (w *Worker) Run(ctx context.Context) (runErr error) {
 	if err := ValidateWorkerPolicy(w.Secrets, w.ClaimPolicy); err != nil {
 		return err
 	}
-	if _, ok := w.Store.(ports.FairDeliveryStore); !ok && (w.ClaimPolicy.MaxInflightPerNamespace != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0) {
+	if _, ok := w.Store.(ports.FairDeliveryStore); !ok && (w.ClaimPolicy.MaxInflightPerTenant != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0) {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store does not support shared capacity limits")
 	}
 	if w.Diagnostics != nil {

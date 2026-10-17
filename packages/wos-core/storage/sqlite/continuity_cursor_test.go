@@ -55,7 +55,7 @@ func (noHydrationWork) ListByOutcome(context.Context, d.Scope) ([]d.WorkItem, er
 }
 func legacySectionCursor(scope d.Scope, section string, revision d.OutcomeRevision, at time.Time, last json.RawMessage) string {
 	hash := sha256.Sum256(last)
-	raw, _ := json.Marshal(map[string]any{"ns": scope.NamespaceID, "outcome": scope.OutcomeID, "section": section, "revision": revision, "key": hex.EncodeToString(hash[:]), "evaluated_at": at})
+	raw, _ := json.Marshal(map[string]any{"ns": scope.TenantID, "outcome": scope.OutcomeID, "section": section, "revision": revision, "key": hex.EncodeToString(hash[:]), "evaluated_at": at})
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
@@ -66,7 +66,7 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 	ids := &sqliteSequenceIDs{prefix: "0199d191", next: 1}
 	service, _ := a.NewService(store, clock, ids)
 	cc := sqliteCommandContext("0199d190-0000-7000-8000-000000000001", "")
-	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199d190-0000-7000-8000-000000000002"), Title: "No hydration", DesiredState: "one page is one page", Priority: d.PriorityNormal})
+	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199d190-0000-7000-8000-000000000002"), Title: "No hydration", DesiredState: "one page is one page", Priority: d.PriorityNormal})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -173,7 +173,7 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 		t.Fatal("legacy external digest did not resolve", e)
 	}
 	missing := testID("0199d190-0000-7000-8000-000000000099")
-	if _, e = bounded.GetContinuitySection(ctx, d.Scope{NamespaceID: scope.NamespaceID, OutcomeID: missing}, "work_items", 2, ""); securityErrorCode(e) != d.ErrorCodeNotFound {
+	if _, e = bounded.GetContinuitySection(ctx, d.Scope{TenantID: scope.TenantID, OutcomeID: missing}, "work_items", 2, ""); securityErrorCode(e) != d.ErrorCodeNotFound {
 		t.Fatal("missing Outcome became empty page", e)
 	}
 	future := legacySectionCursor(scope, "work_items", snapshot.OutcomeRevision, clock.Now().Add(time.Hour), snapshot.Sections["work_items"][1])

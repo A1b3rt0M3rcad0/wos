@@ -9,12 +9,12 @@ import (
 // EffectivePermissions is presentation metadata, never execution authority.
 // Revocation and scoped credential restrictions are checked on each query.
 func (s *Service) EffectivePermissions(ctx context.Context, scope domain.Scope) ([]ports.Permission, error) {
-	if err := scope.NamespaceID.Validate(); err != nil {
+	if err := scope.TenantID.Validate(); err != nil {
 		return nil, err
 	}
 	var err error
 	if scope.OutcomeID.IsZero() {
-		err = s.authorizeNamespaceMetadataRead(ctx, scope.NamespaceID)
+		err = s.authorizeTenantMetadataRead(ctx, scope.TenantID)
 	} else {
 		if err = scope.Validate(); err == nil {
 			err = s.authorizeScopedRead(ctx, scope)
@@ -33,7 +33,7 @@ func (s *Service) EffectivePermissions(ctx context.Context, scope domain.Scope) 
 		if !ok {
 			continue
 		}
-		err = s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission})
+		err = s.authorizer.Authorize(ctx, ports.AuthorizationRequest{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission})
 		if err == nil {
 			result = append(result, permission)
 			continue
@@ -44,7 +44,7 @@ func (s *Service) EffectivePermissions(ctx context.Context, scope domain.Scope) 
 	}
 	// A revoked session cannot succeed just because each candidate permission was denied.
 	if scope.OutcomeID.IsZero() {
-		err = s.authorizeNamespaceMetadataRead(ctx, scope.NamespaceID)
+		err = s.authorizeTenantMetadataRead(ctx, scope.TenantID)
 	} else {
 		err = s.authorizeScopedRead(ctx, scope)
 	}
@@ -58,7 +58,7 @@ func privilegedPresentationPermission(p ports.Permission) bool {
 		return true
 	}
 	switch p {
-	case ports.PermissionNamespaceAdmin, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionSigningKeyRevoke:
+	case ports.PermissionTenantAdmin, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionSigningKeyRevoke:
 		return true
 	}
 	return false

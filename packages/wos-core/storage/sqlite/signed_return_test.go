@@ -45,13 +45,13 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						}
 					}
 					ns := testID("0199a555-0000-7000-8000-000000000001")
-					scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
-					must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+					scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+					must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
 					admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 					must(err)
 					adminCtx := a.WithIdentity(ctx, admin)
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+					must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+					must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 					credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 					must(err)
 					identity, err := sec.Authenticate(ctx, token)
@@ -73,14 +73,14 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					uow, err := store.Begin(ctx)
 					must(err)
 					registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-					must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+					must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, TenantID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
 					foreignPub, foreignPrivate, err := ed25519.GenerateKey(rand.Reader)
 					must(err)
 					foreignFP, err := signing.Fingerprint(foreignPub)
 					must(err)
 					foreignKey := testID("0199a555-0000-7000-8000-000000000099")
-					must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+					must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, TenantID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+					policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 					must(registry.SaveCredentialPolicy(ctx, policy, 0))
 					outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 					must(err)
@@ -103,7 +103,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					state, err := protocol.Lock(ctx, ns, true)
 					must(err)
 					state.Phase = d.WorkProtocolSigned
-					state.WriterEpoch = 2
+					state.WriterEpoch = 3
 					state.WritersDrained = true
 					state.Version++
 					state.UpdatedAt = now
@@ -122,7 +122,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					work := acquired.Value.WorkItem
 					rid, e := ids.NewID()
 					must(e)
-					request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
+					request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
 					criterion := d.SuccessCriterion{}
 					if hasCriteria {
 						criterion = work.Criteria.Items[0]
@@ -159,7 +159,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						mutate func(*signing.WorkReturnPayload[a.SignedReturnMaterial])
 					}{
 						{"server", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.ServerID = otherID }},
-						{"namespace", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.NamespaceID = otherID }},
+						{"tenant", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.TenantID = otherID }},
 						{"outcome", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.OutcomeID = otherID }},
 						{"principal", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.PrincipalID = "another-executor" }},
 						{"signer", func(p *signing.WorkReturnPayload[a.SignedReturnMaterial]) { p.SignerKeyID = otherID }},
@@ -270,7 +270,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						u, err := store.Begin(ctx)
 						must(err)
 						r := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-						outcomePolicy := d.WorkAcceptancePolicy{NamespaceID: ns, OutcomeID: &scope.OutcomeID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+						outcomePolicy := d.WorkAcceptancePolicy{TenantID: ns, OutcomeID: &scope.OutcomeID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 						taskPolicy := outcomePolicy
 						taskPolicy.WorkItemID, taskPolicy.AcceptanceFloor = &work.ID, d.AcceptanceDirect
 						must(r.SaveAcceptancePolicy(ctx, outcomePolicy, 0))
@@ -441,7 +441,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					}
 					submission, e := check.(ports.SignedContractUnitOfWork).SignedWorkContracts().GetSubmission(ctx, scope, d.ID(receipt.SubmissionID))
 					must(e)
-					if submission.ProtocolVersion != 2 || submission.Material.SpecDigest != c.SignedBinding.SpecificationDigest {
+					if submission.ProtocolVersion != 3 || submission.Material.SpecDigest != c.SignedBinding.SpecificationDigest {
 						t.Fatal("submission lost signed protocol identity")
 					}
 					// Historical accepted receipts survive key retirement. Bearer authorization is still live.

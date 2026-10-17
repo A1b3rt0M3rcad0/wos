@@ -62,7 +62,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 		id          domain.ID
 		name, token string
 	}{{ns, "readiness-human", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, {otherNS, "other", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}} {
-		if err := security.Bootstrap(ctx, ports.Namespace{ID: x.id, Name: x.name}, x.name, x.token); err != nil {
+		if err := security.Bootstrap(ctx, ports.Tenant{ID: x.id, Name: x.name}, x.name, x.token); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -81,7 +81,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out, err := s.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{NamespaceID: ns, Title: "Search scope", DesiredState: "Find every authorized reference", Priority: domain.PriorityNormal})
+	out, err := s.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{TenantID: ns, Title: "Search scope", DesiredState: "Find every authorized reference", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,8 +200,8 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			t.Fatalf("invalid query accepted: %+v", bad)
 		}
 	}
-	if _, e := s.SearchReferences(ctx, domain.Scope{NamespaceID: otherNS, OutcomeID: scope.OutcomeID}, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindEvidence}, Cursor: p.NextCursor}); e == nil {
-		t.Fatal("cross namespace cursor/read accepted")
+	if _, e := s.SearchReferences(ctx, domain.Scope{TenantID: otherNS, OutcomeID: scope.OutcomeID}, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindEvidence}, Cursor: p.NextCursor}); e == nil {
+		t.Fatal("cross tenant cursor/read accepted")
 	}
 	if _, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, Title: "Revision change", Priority: domain.PriorityNormal}); e != nil {
 		t.Fatal(e)
@@ -249,7 +249,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			t.Fatalf("reference kind %s missing: %+v %v", kind, v, e)
 		}
 	}
-	if e = security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "viewer", Permissions: []ports.Permission{ports.PermissionStateRead}}); e != nil {
+	if e = security.SetGrant(ctx, ports.TenantGrant{TenantID: ns, PrincipalID: "viewer", Permissions: []ports.Permission{ports.PermissionStateRead}}); e != nil {
 		t.Fatal(e)
 	}
 	cred, token, e := security.IssueCredential(ctx, ns, "viewer", domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "viewer"}, clock.Now().Add(time.Hour))
@@ -286,7 +286,7 @@ func TestReferencePageEscapedLabelsRemainBounded(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmds := &readinessCommands{}
-	out, err := s.CreateOutcome(ctx, cmds.Context(), application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("0199ed02-0000-7000-8000-000000000001"), Title: "Bounded labels", DesiredState: "Metadata is bounded", Priority: domain.PriorityNormal})
+	out, err := s.CreateOutcome(ctx, cmds.Context(), application.CreateOutcomeCommand{TenantID: domain.MustParseID("0199ed02-0000-7000-8000-000000000001"), Title: "Bounded labels", DesiredState: "Metadata is bounded", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

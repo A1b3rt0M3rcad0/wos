@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-17
 **Current target:** Owner-requested scalable WOS installations; existing release/human acceptance remains separately tracked
-**Current wave:** Scalable persistent coordination, independent API/workers and generic operator capabilities; branch only, no merge authorized
+**Current wave:** Tenant schema isolation and protocol-v3 cutover on the scalable-installation branch; no merge authorized
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,23 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Tenant schemas and lifecycle — 2026-10-17
+
+**Status: In progress.** The owner authorized replacing Namespace/`namespace_id`
+with Tenant addressing and complete schema isolation in the existing PR #114.
+[ADR 044](docs/adr/0044-tenant-schemas-and-protocol-cutover.md) supersedes the
+earlier row-isolation recommendation and defines the breaking protocol transition.
+
+- [ ] Single-Tenant PostgreSQL schema binding, catalog and complete state ownership.
+- [ ] Host-routed shared installations and dedicated database configuration.
+- [ ] Drain-first provision/suspend/resume/delete with replica exclusion and audit.
+- [ ] Tenant API/CLI/SDK/skills and strict signed protocol-v3 mutation contracts.
+- [ ] Historical proof preservation, explicit profile/data migration and cutover gates.
+- [ ] Real PostgreSQL isolation/lifecycle, migration, normal/race and browser checks.
+
+Earlier qualification below describes source `aaa4475` and does not validate this
+new change. The branch will be committed and PR #114 updated without merging.
 
 ## Scalable WOS installations — 2026-10-17
 

@@ -18,8 +18,8 @@ func profileFixtureV2(t *testing.T, name string) (ProjectV2, ProfileV2, []byte) 
 	id := func(n string) d.ID { return d.MustParseID("0199ac10-0000-7000-8000-00000000000" + n) }
 	public := ed25519.NewKeyFromSeed(make([]byte, 32)).Public().(ed25519.PublicKey)
 	token := []byte("test-profile-authentication-credential-at-least-32")
-	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: "profile test", Connection: ProjectConnectionV2{ServerURL: "http://127.0.0.1:8080", ExpectedServerID: id("1")}, Scope: WorkspaceScope{NamespaceID: id("2"), DefaultOutcomeID: id("3")}, Workspace: ProjectLayoutV2{ProfilesDirectory: "profiles"}}
-	profile := ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: name, Binding: ProfileBindingV2{ServerID: id("1"), ServerOrigin: project.Connection.ServerURL, NamespaceID: id("2"), PrincipalID: "executor", CredentialID: id("4"), IssuerKeys: []ProfileIssuerV2{{KeyID: id("5"), PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: signing.Digest(public)}}}, Authentication: ProfileAuthenticationV2{CredentialRef: "env:TEST_WOS_TOKEN"}, Signing: ProfileSigningV2{KeyID: id("6"), PrivateKeyRef: "env:TEST_WOS_SIGNING", PublicKeyFingerprint: signing.Digest(public)}, Lease: LeaseConfig{RequestedTTLSeconds: 300}, Output: OutputConfig{DefaultFormat: "json"}, Local: ProfileLocalV2{SchemaVersion: 1, PendingOperations: []PendingOperationV2{}}}
+	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: "profile test", Connection: ProjectConnectionV2{ServerURL: "http://127.0.0.1:8080", ExpectedServerID: id("1")}, Scope: WorkspaceScope{TenantID: id("2"), DefaultOutcomeID: id("3")}, Workspace: ProjectLayoutV2{ProfilesDirectory: "profiles"}}
+	profile := ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: name, Binding: ProfileBindingV2{ServerID: id("1"), ServerOrigin: project.Connection.ServerURL, TenantID: id("2"), PrincipalID: "executor", CredentialID: id("4"), IssuerKeys: []ProfileIssuerV2{{KeyID: id("5"), PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: signing.Digest(public)}}}, Authentication: ProfileAuthenticationV2{CredentialRef: "env:TEST_WOS_TOKEN"}, Signing: ProfileSigningV2{KeyID: id("6"), PrivateKeyRef: "env:TEST_WOS_SIGNING", PublicKeyFingerprint: signing.Digest(public)}, Lease: LeaseConfig{RequestedTTLSeconds: 300}, Output: OutputConfig{DefaultFormat: "json"}, Local: ProfileLocalV2{SchemaVersion: 1, PendingOperations: []PendingOperationV2{}}}
 	if e := profile.SealBinding(token); e != nil {
 		t.Fatal(e)
 	}
@@ -139,7 +139,7 @@ func TestProfileSelectionCaseSafetyAndObservedEditorCAS(t *testing.T) {
 func TestV2PresentationLimitsAndExactFieldNames(t *testing.T) {
 	_, profile, token := profileFixtureV2(t, "executor_a")
 	body := []byte(`{"a":"` + strings.Repeat("x", 40000) + `","b":"` + strings.Repeat("y", 30000) + `"}`)
-	profile.Local.PendingOperations = []PendingOperationV2{{ID: d.MustParseID("0199ac10-0000-7000-8000-000000000007"), Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.MustParseID("0199ac10-0000-7000-8000-000000000003")}, Operation: "AcquireSignedWorkContract", State: "prepared", IdempotencyKey: "bounded-frozen-acquisition", Payload: base64.StdEncoding.EncodeToString(body), PayloadDigest: signing.Digest(body)}}
+	profile.Local.PendingOperations = []PendingOperationV2{{ID: d.MustParseID("0199ac10-0000-7000-8000-000000000007"), Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID, OutcomeID: d.MustParseID("0199ac10-0000-7000-8000-000000000003")}, Operation: "AcquireSignedWorkContract", State: "prepared", IdempotencyKey: "bounded-frozen-acquisition", Payload: base64.StdEncoding.EncodeToString(body), PayloadDigest: signing.Digest(body)}}
 	if e := profile.SealBinding(token); e != nil {
 		t.Fatal(e)
 	}

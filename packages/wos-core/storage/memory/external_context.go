@@ -14,7 +14,7 @@ func (t *transaction) ExternalContexts() ports.ExternalContextRepository {
 	return externalContextRepository{tx: t}
 }
 func contextKey(scope domain.Scope) string {
-	return scope.NamespaceID.String() + "/" + scope.OutcomeID.String()
+	return scope.TenantID.String() + "/" + scope.OutcomeID.String()
 }
 func (r externalContextRepository) List(ctx context.Context, scope domain.Scope) ([]domain.ExternalReference, error) {
 	if err := ctx.Err(); err != nil {
@@ -35,7 +35,7 @@ func (r externalContextRepository) Add(ctx context.Context, scope domain.Scope, 
 	}
 	k := contextKey(scope)
 	for key, refs := range r.tx.externalContexts {
-		if !strings.HasPrefix(key, scope.NamespaceID.String()+"/") {
+		if !strings.HasPrefix(key, scope.TenantID.String()+"/") {
 			continue
 		}
 		for _, ref := range refs {

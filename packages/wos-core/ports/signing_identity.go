@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// Signing identities belong to Namespace security, not a fabricated Outcome.
+// Signing identities belong to Tenant security, not a fabricated Outcome.
 type SigningIdentityRepository interface {
-	LockNamespace(context.Context, d.ID) (d.Version, error)
+	LockTenant(context.Context, d.ID) (d.Version, error)
 	Credential(context.Context, d.ID, d.ID) (Credential, error)
 	CredentialByDigest(context.Context, string) (Credential, error)
 	Key(context.Context, d.ID, d.ID) (d.SigningKey, error)

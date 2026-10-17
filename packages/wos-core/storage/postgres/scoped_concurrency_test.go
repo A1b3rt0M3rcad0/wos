@@ -17,7 +17,7 @@ func TestSignedCoordinationHasIndependentPrincipalLanes(t *testing.T) {
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "quota-lanes.db"))
 	ns := testID("0199f383-0000-7000-8000-000000000001")
-	if err := store.PutNamespace(ctx, ports.Namespace{ID: ns, Name: "Lanes"}); err != nil {
+	if err := store.PutTenant(ctx, ports.Tenant{ID: ns, Name: "Lanes"}); err != nil {
 		t.Fatal(err)
 	}
 	first, err := store.Begin(ctx)
@@ -60,7 +60,7 @@ func TestSignedAcquisitionProgressesBesideIndependentOutcomeGuard(t *testing.T) 
 	requirePostgres(t)
 	f := newResolutionFixture(t, "sql")
 	ctx := context.Background()
-	ns := d.ID(f.request.NamespaceID)
+	ns := d.ID(f.request.TenantID)
 	now := time.Now().UTC()
 	u, err := f.store.Begin(ctx)
 	if err != nil {
@@ -98,7 +98,7 @@ func TestSignedAcquisitionProgressesBesideIndependentOutcomeGuard(t *testing.T) 
 	if err := held.(ports.SignedQuotaUnitOfWork).LockSignedQuota(ctx, ns, "independent-principal", "work", false); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := held.Coordination().LockOutcome(ctx, d.Scope{NamespaceID: ns, OutcomeID: d.ID(f.request.OutcomeID)}); err != nil {
+	if _, err := held.Coordination().LockOutcome(ctx, d.Scope{TenantID: ns, OutcomeID: d.ID(f.request.OutcomeID)}); err != nil {
 		t.Fatal(err)
 	}
 	bounded, cancel := context.WithTimeout(f.ctx, 2*time.Second)
@@ -115,7 +115,7 @@ func TestSignedAcquisitionProgressesBesideIndependentOutcomeGuard(t *testing.T) 
 	}
 	security := a.SecurityService{Store: f.store, Clock: sqliteFixedClock{time.Now().UTC()}, IDs: &loadIDs{}}
 	if _, err := security.SigningIdentity(bounded, nil); err != nil {
-		t.Fatal("identity diagnostic upgraded shared Namespace barrier", err)
+		t.Fatal("identity diagnostic upgraded shared Tenant barrier", err)
 	}
 }
 
@@ -126,8 +126,8 @@ func TestReadSnapshotSecurityBarrierOrdersCredentialRevocation(t *testing.T) {
 	now := time.Now().UTC()
 	ns := testID("0199f384-0000-7000-8000-000000000001")
 	actor := d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "reader"}
-	credential := ports.Credential{NamespaceID: ns, ID: testID("0199f384-0000-7000-8000-000000000002"), PrincipalID: "reader", Actor: actor, Digest: a.TokenDigest("snapshot-reader-token-at-least-32-bytes"), ExpiresAt: now.Add(time.Hour)}
-	if err := store.BootstrapSecurity(ctx, ports.Namespace{ID: ns, Name: "Revocation"}, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}, credential); err != nil {
+	credential := ports.Credential{TenantID: ns, ID: testID("0199f384-0000-7000-8000-000000000002"), PrincipalID: "reader", Actor: actor, Digest: a.TokenDigest("snapshot-reader-token-at-least-32-bytes"), ExpiresAt: now.Add(time.Hour)}
+	if err := store.BootstrapSecurity(ctx, ports.Tenant{ID: ns, Name: "Revocation"}, ports.TenantGrant{TenantID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}, credential); err != nil {
 		t.Fatal(err)
 	}
 	reader, err := store.BeginReadSnapshot(ctx)
@@ -135,7 +135,7 @@ func TestReadSnapshotSecurityBarrierOrdersCredentialRevocation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reader.Rollback()
-	request := ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: "reader", Permission: ports.PermissionStateRead}, CredentialDigest: credential.Digest, Actor: actor, Now: now}
+	request := ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: ns, PrincipalID: "reader", Permission: ports.PermissionStateRead}, CredentialDigest: credential.Digest, Actor: actor, Now: now}
 	if err := reader.(ports.AccessSnapshotUnitOfWork).AuthorizeAccessSnapshot(ctx, request); err != nil {
 		t.Fatal(err)
 	}
@@ -172,8 +172,8 @@ func TestReadSnapshotCannotAuthorizeFromSnapshotPredatingRevocation(t *testing.T
 	now := time.Now().UTC()
 	ns := testID("0199f385-0000-7000-8000-000000000001")
 	actor := d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "reader"}
-	credential := ports.Credential{NamespaceID: ns, ID: testID("0199f385-0000-7000-8000-000000000002"), PrincipalID: "reader", Actor: actor, Digest: a.TokenDigest("stale-snapshot-reader-token-at-least-32"), ExpiresAt: now.Add(time.Hour)}
-	if err := store.BootstrapSecurity(ctx, ports.Namespace{ID: ns, Name: "Revocation"}, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}, credential); err != nil {
+	credential := ports.Credential{TenantID: ns, ID: testID("0199f385-0000-7000-8000-000000000002"), PrincipalID: "reader", Actor: actor, Digest: a.TokenDigest("stale-snapshot-reader-token-at-least-32"), ExpiresAt: now.Add(time.Hour)}
+	if err := store.BootstrapSecurity(ctx, ports.Tenant{ID: ns, Name: "Revocation"}, ports.TenantGrant{TenantID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}, credential); err != nil {
 		t.Fatal(err)
 	}
 	reader, err := store.BeginReadSnapshot(ctx)
@@ -189,7 +189,7 @@ func TestReadSnapshotCannotAuthorizeFromSnapshotPredatingRevocation(t *testing.T
 	if err := store.RevokeCredential(ctx, credential.ID); err != nil {
 		t.Fatal(err)
 	}
-	request := ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: "reader", Permission: ports.PermissionStateRead}, CredentialDigest: credential.Digest, Actor: actor, Now: now}
+	request := ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: ns, PrincipalID: "reader", Permission: ports.PermissionStateRead}, CredentialDigest: credential.Digest, Actor: actor, Now: now}
 	if err := reader.(ports.AccessSnapshotUnitOfWork).AuthorizeAccessSnapshot(ctx, request); err == nil {
 		t.Fatal("stale MVCC snapshot authorized a credential revoked before its security barrier")
 	} else if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeTransactionConflict {

@@ -36,7 +36,7 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 					t.Fatal(e)
 				}
 			}
-			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199d210-0000-7000-8000-000000000002"), Title: "Projection expiry", DesiredState: "time changes presentation only", Priority: d.PriorityNormal})
+			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199d210-0000-7000-8000-000000000002"), Title: "Projection expiry", DesiredState: "time changes presentation only", Priority: d.PriorityNormal})
 			must(e)
 			_, e = service.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: out.Value.Ref(), ExpectedVersion: 1, Title: "Configured completion contract", Required: true, VerificationMode: d.VerificationModeAttestation})
 			must(e)
@@ -103,7 +103,7 @@ func TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction(t 
 					t.Fatal(e)
 				}
 			}
-			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199d220-0000-7000-8000-000000000002"), Title: "Current proof", DesiredState: "retraction remains visible", Priority: d.PriorityNormal})
+			out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199d220-0000-7000-8000-000000000002"), Title: "Current proof", DesiredState: "retraction remains visible", Priority: d.PriorityNormal})
 			must(e)
 			scope := out.Value.Scope()
 			owner := out.Value.Ref()
@@ -171,8 +171,8 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 					t.Fatal(e)
 				}
 			}
-			scope := d.Scope{NamespaceID: portID(5000), OutcomeID: portID(5001)}
-			out, e := d.NewOutcome(scope.OutcomeID, scope.NamespaceID, "Blocking pages", "", "bounded inherited details", d.PriorityNormal, now)
+			scope := d.Scope{TenantID: portID(5000), OutcomeID: portID(5001)}
+			out, e := d.NewOutcome(scope.OutcomeID, scope.TenantID, "Blocking pages", "", "bounded inherited details", d.PriorityNormal, now)
 			must(e)
 			u, e := store.Begin(ctx)
 			must(e)

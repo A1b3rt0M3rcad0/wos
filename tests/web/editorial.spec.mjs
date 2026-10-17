@@ -12,13 +12,13 @@ import {
 // Every displayed record is created through the public command API.
 async function seed(wos) {
   const outcome = await wos.command("create_outcome", {
-    namespace_id: wos.namespace,
+    tenant_id: wos.tenant,
     title: "Ship a calmer workspace",
     desired_state:
       "People and agents can pick up the same work, understand what matters, and verify the result.",
     priority: "normal",
   });
-  const scope = { namespace_id: wos.namespace, outcome_id: outcome.id };
+  const scope = { tenant_id: wos.tenant, outcome_id: outcome.id };
   await wos.command("add_criterion", {
     owner: { ...scope, kind: "outcome", id: outcome.id },
     expected_version: outcome.version,
@@ -154,7 +154,7 @@ test("large viewports scale the reference composition without rearranging it", a
     "Prepare a shared handoff for people and agents",
   ])
     await wos.command("create_outcome", {
-      namespace_id: wos.namespace,
+      tenant_id: wos.tenant,
       title,
       desired_state: "People can resume the same shared work.",
       priority: "normal",
@@ -486,7 +486,7 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
     "Prepare a shared handoff for people and agents",
   ])
     await wos.command("create_outcome", {
-      namespace_id: wos.namespace,
+      tenant_id: wos.tenant,
       title,
       desired_state: "People can resume the same shared work.",
       priority: "normal",
@@ -559,7 +559,7 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
   // More than one sidebar viewport: the final action remains reachable.
   for (let index = 0; index < 12; index++)
     await wos.command("create_outcome", {
-      namespace_id: wos.namespace,
+      tenant_id: wos.tenant,
       title: `Shared notebook example ${index + 1}`,
       desired_state: "People can resume the same shared work.",
       priority: "normal",
@@ -600,8 +600,8 @@ test("editorial chapters keep all six areas, real records and illustration asset
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
-    // A signed-out namespace discovery is expected to return 401 before login.
-    const discovery = message.location().url?.endsWith("/api/v1/namespaces");
+    // A signed-out tenant discovery is expected to return 401 before login.
+    const discovery = message.location().url?.endsWith("/api/v1/tenants");
     if (
       message.type() === "error" &&
       !(discovery && message.text().includes("401"))
@@ -930,7 +930,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
       "set_grant",
       "issue_credential",
       "revoke_credential",
-      "create_namespace",
+      "create_tenant",
     ]) {
       await page.locator("#admin-operation").selectOption(operation);
       await paper("#admin-dialog");

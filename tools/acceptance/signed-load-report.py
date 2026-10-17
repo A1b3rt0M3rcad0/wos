@@ -41,7 +41,7 @@ for row in rows:
         raise SystemExit('incomplete independent accepted deliveries')
     if row['verified_outbox_deliveries'] != row['outcomes'] * row['accepted_historical_tasks_per_outcome'] + row['accepted_deliveries']:
         raise SystemExit('incomplete committed DONE outbox evidence')
-    if row['protocol'] != 'signed_contracts_v2' or row['acceptance'] != 'independent_review' or row['approval_replay_deduplicated'] is not True:
+    if row['protocol'] != 'signed_contracts_v3' or row['acceptance'] != 'independent_review' or row['approval_replay_deduplicated'] is not True:
         raise SystemExit('incorrect protocol, review or replay evidence')
     for field in ('elapsed_ms', 'accepted_per_second', 'delivery_p50_ms', 'delivery_p95_ms', 'delivery_p99_ms'):
         if not isinstance(row[field], (int, float)) or not math.isfinite(row[field]) or row[field] <= 0:

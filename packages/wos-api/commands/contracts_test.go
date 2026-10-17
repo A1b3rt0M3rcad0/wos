@@ -11,7 +11,7 @@ import (
 
 func FuzzPublicCommandRoundTrip(f *testing.F) {
 	f.Add("public title", int64(900))
-	scope := domain.Scope{NamespaceID: domain.MustParseID("0199d094-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("0199d094-0000-7000-8000-000000000002")}
+	scope := domain.Scope{TenantID: domain.MustParseID("0199d094-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("0199d094-0000-7000-8000-000000000002")}
 	f.Fuzz(func(t *testing.T, title string, seconds int64) {
 		if seconds < 0 || seconds > 86400 || len(title) > 4096 {
 			return
@@ -45,7 +45,7 @@ func TestEvidenceOptionalMetadataPreservesCoreSerialization(t *testing.T) {
 	}
 	// Existing Core receipts fingerprint this representation. Schema metadata must
 	// not rename/omit Go JSON fields and invalidate an old idempotency receipt.
-	raw, err := json.Marshal(application.RegisterEvidenceCommand{Scope: domain.Scope{NamespaceID: domain.MustParseID("01a11790-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("01a11790-0000-7000-8000-000000000002")}})
+	raw, err := json.Marshal(application.RegisterEvidenceCommand{Scope: domain.Scope{TenantID: domain.MustParseID("01a11790-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("01a11790-0000-7000-8000-000000000002")}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestWorkActivitySchemaPreservesRequiredDescriptionAndDecimalPrecision(t *te
 		t.Fatalf("activity type contract: %+v", types)
 	}
 	command := application.AppendWorkActivityCommand{
-		Scope:      domain.Scope{NamespaceID: domain.MustParseID("0199d094-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("0199d094-0000-7000-8000-000000000002")},
+		Scope:      domain.Scope{TenantID: domain.MustParseID("0199d094-0000-7000-8000-000000000001"), OutcomeID: domain.MustParseID("0199d094-0000-7000-8000-000000000002")},
 		ContractID: domain.MustParseID("0199d094-0000-7000-8000-000000000003"), SignerKeyID: domain.MustParseID("0199d094-0000-7000-8000-000000000004"),
 		Authority:       application.ContractAuthority{ExecutionID: domain.MustParseID("0199d094-0000-7000-8000-000000000005"), FencingToken: 9007199254740993, SpecDigest: "issued-specification"},
 		AuthorityDigest: "issued-authority", ExpectedContractVersion: 9007199254740993, Type: domain.WorkActivityProgress, Description: "A bounded observation",

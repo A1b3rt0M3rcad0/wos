@@ -47,7 +47,7 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 	now := s.clock.Now().UTC()
-	outcome, err := domain.NewOutcome(id, cmd.NamespaceID, cmd.Title, cmd.Description, cmd.DesiredState, cmd.Priority, now)
+	outcome, err := domain.NewOutcome(id, cmd.TenantID, cmd.Title, cmd.Description, cmd.DesiredState, cmd.Priority, now)
 	if err != nil {
 		return MutationResult[domain.Outcome]{}, err
 	}
@@ -120,7 +120,7 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 	waiverAuthorized := false
 	if cmd.Result == domain.AssessmentResultWaived {
 		if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-			NamespaceID: cmd.Owner.Scope.NamespaceID,
+			TenantID:    cmd.Owner.Scope.TenantID,
 			PrincipalID: commandContext.PrincipalID,
 			Permission:  ports.PermissionAssessmentWaive,
 		}); err != nil {
@@ -215,7 +215,7 @@ func (s *Service) ActivateOutcome(ctx context.Context, commandContext domain.Com
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -251,7 +251,7 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -302,7 +302,7 @@ func (s *Service) CreateObjective(ctx context.Context, commandContext domain.Com
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
@@ -407,7 +407,7 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
@@ -424,7 +424,7 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 			}
 		}
 		if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-			p, e := repo.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+			p, e := repo.WorkProtocol().Lock(ctx, cmd.Scope.TenantID, false)
 			if e != nil {
 				return domain.WorkItem{}, 0, e
 			}
@@ -569,7 +569,7 @@ func requireActiveOutcome(ctx context.Context, uow ports.UnitOfWork, scope domai
 	if _, err := uow.Coordination().LockOutcome(ctx, scope); err != nil {
 		return err
 	}
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return err
 	}
@@ -582,7 +582,7 @@ func requireActiveOutcome(ctx context.Context, uow ports.UnitOfWork, scope domai
 func addCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.EntityRef, expected domain.Version, criterion domain.SuccessCriterion, now time.Time) error {
 	switch owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.TenantID, owner.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}
@@ -616,7 +616,7 @@ func addCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.Entity
 func reviseCriterion(ctx context.Context, uow ports.UnitOfWork, cmd ReviseCriterionCommand, now time.Time) (domain.SuccessCriterion, error) {
 	switch cmd.Owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, cmd.Owner.Scope.NamespaceID, cmd.Owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, cmd.Owner.Scope.TenantID, cmd.Owner.Scope.OutcomeID)
 		if err != nil {
 			return domain.SuccessCriterion{}, err
 		}
@@ -704,7 +704,7 @@ func recordCriterionAssessment(
 ) error {
 	switch owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.TenantID, owner.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}
@@ -746,7 +746,7 @@ func cloneEvaluatorRef(value *domain.EvaluatorRef) *domain.EvaluatorRef {
 func assessCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.EntityRef, expected domain.Version, assessment domain.CriterionAssessment, now time.Time) error {
 	switch owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.TenantID, owner.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}

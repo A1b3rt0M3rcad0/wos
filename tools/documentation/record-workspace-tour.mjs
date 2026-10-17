@@ -37,7 +37,7 @@ await once(socket, "listening");
 const port = socket.address().port;
 await new Promise((done) => socket.close(done));
 const origin = `http://127.0.0.1:${port}`;
-const namespace = "0199d000-0000-7000-8000-000000000001";
+const tenant = "0199d000-0000-7000-8000-000000000001";
 const token = randomBytes(32).toString("base64url");
 const environment = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith("WOS_")),
@@ -48,8 +48,8 @@ Object.assign(environment, {
   WOS_SQLITE_PATH: join(directory, "wos.db"),
   WOS_AUTH_MODE: "api_token",
   WOS_BOOTSTRAP_TOKEN: token,
-  WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-  WOS_BOOTSTRAP_NAMESPACE_NAME: "Refund delivery team",
+  WOS_BOOTSTRAP_TENANT_ID: tenant,
+  WOS_BOOTSTRAP_TENANT_NAME: "Refund delivery team",
   WOS_LOCAL_PRINCIPAL_ID: "illustrative-operator",
   WOS_MCP_ENABLED: "false",
   WOS_DELIVERY_WORKER_ENABLED: "false",
@@ -122,15 +122,15 @@ try {
     webInputs[path] = sha256(expected);
   }
   let outcome = await command("create_outcome", {
-    namespace_id: namespace,
+    tenant_id: tenant,
     title: "Ship verified partial refunds",
     priority: "high",
     desired_state:
       "Developers and agents can resume the same delivery, and a reviewer can verify the result against agreed criteria.",
   });
-  const scope = { namespace_id: namespace, outcome_id: outcome.id };
+  const scope = { tenant_id: tenant, outcome_id: outcome.id };
   const ref = (kind, value) => ({ ...scope, kind, id: value.id });
-  const base = `/namespaces/${namespace}/outcomes/${outcome.id}`;
+  const base = `/tenants/${tenant}/outcomes/${outcome.id}`;
   const criterion = await command("add_criterion", {
     owner: ref("outcome", outcome),
     expected_version: outcome.version,

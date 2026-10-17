@@ -32,7 +32,7 @@ import {
 } from "./presentation.js";
 const $ = (id) => document.getElementById(id);
 const state = {
-  namespace: "",
+  tenant: "",
   permissions: [],
   principal: "",
   actorKey: "",
@@ -248,7 +248,7 @@ const labels = {
   ttl_seconds: copy.text.reservationDurationSeconds,
   owner: copy.text.assessedItem,
   scope: copy.text.workspace,
-  namespace_id: "Namespace",
+  tenant_id: "Tenant",
   outcome_id: copy.text.outcome,
   objective_id: copy.text.objective,
   work_item_id: copy.text.task4bc74b,
@@ -406,7 +406,7 @@ async function request(path, options = {}) {
     if (generation !== state.generation) {
       error.discarded = true;
       error.name = "AbortError";
-    } else if ([401, 403].includes(error.status) && state.namespace) {
+    } else if ([401, 403].includes(error.status) && state.tenant) {
       state.generation++;
       state.detailGeneration++;
       state.refreshGeneration++;
@@ -427,24 +427,24 @@ async function request(path, options = {}) {
     throw error;
   }
 }
-const { api_prefix: api } = await request("/app/config");
+const { api_prefix: api, tenant_bound: tenantBound = false } = await request("/app/config");
 const inventory = await request("/app/command-exposure.json");
 const currentScope = () => ({
-  namespace_id: state.namespace,
+  tenant_id: state.tenant,
   outcome_id: state.outcome?.id,
 });
 async function refreshPermissions() {
-  const namespace = state.namespace,
+  const tenant = state.tenant,
     generation = state.generation,
     scope = currentScope();
   const value = await request(
-    `${api}/namespaces/${namespace}/effective-permissions${scope.outcome_id ? `?outcome_id=${scope.outcome_id}` : ""}`,
+    `${api}/tenants/${tenant}/effective-permissions${scope.outcome_id ? `?outcome_id=${scope.outcome_id}` : ""}`,
   );
-  if (generation !== state.generation || namespace !== state.namespace) return;
+  if (generation !== state.generation || tenant !== state.tenant) return;
   state.permissions = value.permissions;
   $("actions").disabled = false;
-  $("developer-tools").hidden = !state.permissions.includes("namespace:admin");
-  $("administration").hidden = !state.permissions.includes("namespace:admin");
+  $("developer-tools").hidden = !state.permissions.includes("tenant:admin");
+  $("administration").hidden = !state.permissions.includes("tenant:admin");
   for (const id of ["create-outcome", "empty-create"]) {
     $(id).disabled = !state.permissions.includes("outcome:write");
   }
@@ -462,7 +462,7 @@ function report(error) {
     true,
   );
 }
-const base = () => `${api}/namespaces/${state.namespace}/outcomes`;
+const base = () => `${api}/tenants/${state.tenant}/outcomes`;
 const outcomeBase = () => `${base()}/${state.outcome.id}`;
 // The map is a bounded presentation of persisted state. All changes go through
 // the same permission registry, forms and command intents as the list views.
@@ -541,7 +541,7 @@ function renderCanvasSummary() {
     ["Objectives", count.objectives ?? 0],
     ["Ready", count.ready_work ?? 0],
     ["Blocked", count.blocked_work ?? 0],
-    ["signed_contracts_v2", "contracts_v1", "draining_to_signed_v2"].includes(
+    ["signed_contracts_v3", "contracts_v1", "draining_to_signed_v3"].includes(
       state.protocol?.phase,
     )
       ? ["Tasks", count.work_items ?? 0]
@@ -611,7 +611,7 @@ function acceptCanvas(model) {
     !model ||
     !canvasActive() ||
     !state.snapshot ||
-    model.scopeKey !== `${state.namespace}/${state.outcome.id}` ||
+    model.scopeKey !== `${state.tenant}/${state.outcome.id}` ||
     model.revision !== canvasRevision(state.snapshot.outcome_revision)
   )
     return;
@@ -853,7 +853,7 @@ async function viewCanvasPlan(value) {
 const {
   contractSection,
   commandAvailableInUI,
-  refreshNamespaceProtocol,
+  refreshTenantProtocol,
   renderProtocolBanner,
   bindProtocolEvents,
 } = contractViews({
@@ -883,11 +883,11 @@ function el(tag, text, className) {
   if (className) node.className = className;
   return node;
 }
-async function connect(namespace) {
+async function connect(tenant) {
   resetCanvas();
   state.generation++;
   state.detailGeneration++;
-  state.namespace = namespace;
+  state.tenant = tenant;
   state.permissions = [];
   state.principal = "";
   state.actorKey = "";
@@ -896,7 +896,7 @@ async function connect(namespace) {
   $("connect").hidden = true;
   $("workspace").hidden = false;
   state.catalog = (await request(`${api}/commands`)).commands;
-  await refreshNamespaceProtocol();
+  await refreshTenantProtocol();
   await refreshPermissions();
   const identity = await request(`${api}/identity`).catch(() => ({}));
   state.principal = identity.principal_id || "";
@@ -907,24 +907,24 @@ async function connect(namespace) {
   ]);
   await discover();
   $("context-name").textContent =
-    $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
+    $("tenant").selectedOptions[0]?.textContent || copy.text.workspace;
 }
-async function namespaces() {
-  const result = await request(`${api}/namespaces`);
-  $("namespace").replaceChildren();
+async function tenants() {
+  const result = await request(`${api}/tenants`);
+  $("tenant").replaceChildren();
   for (const n of result.items) {
     const option = el("option", n.name);
     option.value = n.id;
-    $("namespace").append(option);
+    $("tenant").append(option);
   }
   if (result.items.length) {
     const route = readRoute(location.search);
     const target = route
-      ? result.items.find((n) => n.id === route.namespace)
+      ? result.items.find((n) => n.id === route.tenant)
       : result.items[0];
     if (!target)
       throw Error(copy.text.theLinkedWorkspaceIsNotAvailableToThisAccount);
-    $("namespace").value = target.id;
+    $("tenant").value = target.id;
     await connect(target.id);
     if (route) await restoreRoute(route);
   }
@@ -937,7 +937,7 @@ $("login").onsubmit = async (event) => {
       body: JSON.stringify({ token: $("token").value }),
     });
     $("token").value = "";
-    await namespaces();
+    await tenants();
   } catch (e) {
     $("token").setCustomValidity(e.message);
     $("token").reportValidity();
@@ -950,7 +950,7 @@ $("local").onsubmit = async (event) => {
     const id = $("local-ns").value.trim();
     const option = el("option", id);
     option.value = id;
-    $("namespace").replaceChildren(option);
+    $("tenant").replaceChildren(option);
     await connect(id);
   } catch (e) {
     report(e);
@@ -961,9 +961,9 @@ $("logout").onclick = async () => {
   await request("/session", { method: "DELETE" }).catch(() => {});
   location.reload();
 };
-$("namespace").onchange = () => {
+$("tenant").onchange = () => {
   if (!allowCanvasNavigation()) {
-    $("namespace").value = state.namespace;
+    $("tenant").value = state.tenant;
     return;
   }
   state.outcome = null;
@@ -973,7 +973,7 @@ $("namespace").onchange = () => {
   state.selected = null;
   $("outcome").hidden = true;
   $("empty").hidden = false;
-  connect($("namespace").value).catch(report);
+  connect($("tenant").value).catch(report);
 };
 $("search").onsubmit = (event) => {
   event.preventDefault();
@@ -1067,7 +1067,7 @@ async function refresh() {
     const [snapshot, live, protocol] = await Promise.all([
       request(`${path}/continuity?limit=25`),
       request(path),
-      request(`${api}/namespaces/${state.namespace}/work-protocol`),
+      request(`${api}/tenants/${state.tenant}/work-protocol`),
     ]);
     if (
       generation !== state.generation ||
@@ -1152,7 +1152,7 @@ $("copy-workspace-link").onclick = async () => {
       location.origin +
         location.pathname +
         routeQuery({
-          namespace: state.namespace,
+          tenant: state.tenant,
           outcome: state.outcome.id,
           area: state.area,
           section: state.section,
@@ -1241,7 +1241,7 @@ function writeRoute(item = undefined, replace = false, { allowDuringRestore = fa
   if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
   if ((state.restoringRoute && !allowDuringRestore) || !state.outcome) return;
   const query = routeQuery({
-    namespace: state.namespace,
+    tenant: state.tenant,
     outcome: state.outcome.id,
     area: state.area,
     section: state.section,
@@ -1260,16 +1260,16 @@ async function restoreRoute(route) {
   }
   state.restoringRoute = true;
   try {
-    if (state.namespace !== route.namespace) {
-      const option = [...$("namespace").options].find(
-        (n) => n.value === route.namespace,
+    if (state.tenant !== route.tenant) {
+      const option = [...$("tenant").options].find(
+        (n) => n.value === route.tenant,
       );
       if (!option)
         throw Error(copy.text.theLinkedWorkspaceIsNotAvailableToThisAccount);
-      $("namespace").value = route.namespace;
+      $("tenant").value = route.tenant;
       state.outcome = null;
       state.snapshot = null;
-      await connect(route.namespace);
+      await connect(route.tenant);
     }
     if (state.outcome?.id !== route.outcome) {
       const value = await request(`${base()}/${route.outcome}`);
@@ -1803,8 +1803,8 @@ function operational(item) {
 function usesWorkContracts() {
   return [
     "contracts_v1",
-    "signed_contracts_v2",
-    "draining_to_signed_v2",
+    "signed_contracts_v3",
+    "draining_to_signed_v3",
   ].includes(state.protocol?.phase);
 }
 function collectionHasPriority() {
@@ -1868,7 +1868,7 @@ function itemView(item, mode = "card") {
   if (item.slot) {
     const card = el("div", undefined, "item");
     const ref = {
-      namespace_id: state.namespace,
+      tenant_id: state.tenant,
       outcome_id: state.outcome.id,
       kind: "roadmap",
       id: item.slot.roadmap_id,
@@ -1895,7 +1895,7 @@ function itemView(item, mode = "card") {
     if (evidence)
       card.append(
         referenceButton({
-          namespace_id: state.namespace,
+          tenant_id: state.tenant,
           outcome_id: state.outcome.id,
           kind: "evidence",
           id: evidence,
@@ -2733,7 +2733,7 @@ function readable(value, key = "", depth = 0, authored = false) {
     return el("span", authored ? String(value) : formatValue(value, key));
   if (depth > 4)
     return el("span", copy.text.openTechnicalDetailsForMoreInformation);
-  if (value.kind && value.id && value.namespace_id)
+  if (value.kind && value.id && value.tenant_id)
     return referenceButton(value);
   if (Array.isArray(value)) {
     const list = el("div");
@@ -2751,7 +2751,7 @@ function readable(value, key = "", depth = 0, authored = false) {
       v === null ||
       v === undefined ||
       [
-        "namespace_id",
+        "tenant_id",
         "outcome_id",
         "id",
         "scope",
@@ -2879,7 +2879,7 @@ async function showEntity(
   const isCanvas = canvasActive();
   try {
     if (
-      ref.namespace_id !== state.namespace ||
+      ref.tenant_id !== state.tenant ||
       ref.outcome_id !== state.outcome.id
     ) {
       notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
@@ -3268,7 +3268,7 @@ function defaults() {
   const e = state.selected || {},
     kind = e._kind || "outcome";
   const scope = {
-    namespace_id: state.namespace,
+    tenant_id: state.tenant,
     outcome_id: state.outcome?.id,
   };
   const ref = { ...scope, kind, id: e.id || state.outcome?.id };
@@ -3331,7 +3331,7 @@ function openTechnicalCommands(name) {
     openCommands();
     return;
   }
-  if (!state.permissions.includes("namespace:admin")) {
+  if (!state.permissions.includes("tenant:admin")) {
     notice(
       copy.text.developerToolsRequireWorkspaceAdministrationPermission,
       true,
@@ -3410,7 +3410,7 @@ function field(name, schema, value, required = false) {
     value !== undefined &&
     value !== null &&
     ([
-      "namespace_id",
+      "tenant_id",
       "outcome_id",
       "expected_version",
       "expected_roadmap_version",
@@ -3495,7 +3495,7 @@ function field(name, schema, value, required = false) {
   }
 
   if (
-    schema.properties?.namespace_id &&
+    schema.properties?.tenant_id &&
     schema.properties?.outcome_id &&
     schema.properties?.kind &&
     schema.properties?.id
@@ -3532,7 +3532,7 @@ function field(name, schema, value, required = false) {
     getter = () => (select.value ? items.get(select.value).ref : undefined);
     return { node: wrap, get: getter };
   }
-  if (name === "scope" && value?.namespace_id && value?.outcome_id) {
+  if (name === "scope" && value?.tenant_id && value?.outcome_id) {
     return { node: wrap, get: () => value };
   }
 
@@ -3708,7 +3708,7 @@ function field(name, schema, value, required = false) {
     }
     if (
       name.startsWith("expected_") ||
-      ["namespace_id", "outcome_id"].includes(name)
+      ["tenant_id", "outcome_id"].includes(name)
     )
       input.readOnly = true;
     if (name === "position" && value === undefined) value = 0;
@@ -3961,7 +3961,7 @@ async function submit(retry = false, reconciled) {
       throw Error(
         copy.text.thisIntentBelongsToTheOriginalAuthenticatedIdentityReconnect,
       );
-    await refreshNamespaceProtocol();
+    await refreshTenantProtocol();
     await refreshPermissions();
     if (
       !sameScope(pending.scope, currentScope()) ||
@@ -4177,22 +4177,22 @@ $("command-form").onsubmit = (event) => {
   submit().catch(report);
 };
 $("retry-command").onclick = () => submit(true).catch(report);
-namespaces().catch(() => {});
+tenants().catch(() => {});
 
 let administration, adminGetter, adminPending;
 $("administration").onclick = async () => {
   const generation = state.generation,
-    namespace = state.namespace;
+    tenant = state.tenant;
   try {
     const result = await request(
-      `${api}/namespaces/${state.namespace}/administration`,
+      `${api}/tenants/${state.tenant}/administration`,
     );
-    if (generation !== state.generation || namespace !== state.namespace)
+    if (generation !== state.generation || tenant !== state.tenant)
       return;
     administration = result;
     $("admin-version").textContent = message(
       "administrationVersion",
-      administration.namespace_version,
+      administration.tenant_version,
     );
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = "";
@@ -4208,15 +4208,15 @@ function buildAdmin() {
   $("retry-admin").hidden = true;
   $("submit-admin").disabled = false;
   const provisionOption = $("admin-operation").querySelector(
-    'option[value="create_namespace"]',
+    'option[value="create_tenant"]',
   );
   provisionOption.hidden = provisionOption.disabled =
-    !state.permissions.includes("installation:provision");
-  if (provisionOption.disabled && $("admin-operation").value === "create_namespace")
+    tenantBound || !state.permissions.includes("installation:provision");
+  if (provisionOption.disabled && $("admin-operation").value === "create_tenant")
     $("admin-operation").value = "set_grant";
   const op = $("admin-operation").value;
   const props = {};
-  if (op === "create_namespace") props.namespace_name = { type: "string" };
+  if (op === "create_tenant") props.tenant_name = { type: "string" };
   if (op === "set_grant") {
     props.principal_id = { type: "string" };
     props.permissions = { type: "array", items: { type: "string" } };
@@ -4253,8 +4253,8 @@ async function submitAdmin(retry = false) {
     adminPending = {
       key: crypto.randomUUID(),
       intent: {
-        namespace_id: state.namespace,
-        expected_namespace_version: administration.namespace_version,
+        tenant_id: state.tenant,
+        expected_tenant_version: administration.tenant_version,
         operation: $("admin-operation").value,
         ...adminGetter(),
       },
@@ -4270,11 +4270,11 @@ async function submitAdmin(retry = false) {
     });
     adminPending = null;
     administration = await request(
-      `${api}/namespaces/${state.namespace}/administration`,
+      `${api}/tenants/${state.tenant}/administration`,
     );
     $("admin-version").textContent = message(
       "administrationVersion",
-      administration.namespace_version,
+      administration.tenant_version,
     );
     $("admin-snapshot").replaceChildren(readable(administration));
     $("admin-error").textContent = response.result?.token_omitted

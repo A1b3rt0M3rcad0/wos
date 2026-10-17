@@ -165,7 +165,7 @@ func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = u.Outcomes().Insert(ctx, out); e != nil {
+	if e = insertPublishedOutcomeFixture(ctx, u.(*unitOfWork).tx, out); e != nil {
 		t.Fatal(e)
 	}
 	if e = u.Commit(); e != nil {
@@ -178,7 +178,7 @@ func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 			t.Fatal(e)
 		}
 		refs = append(refs, ref)
-		if _, e = store.db.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url) VALUES(?,?,?,?,?,?)`, out.NamespaceID.String(), out.ID.String(), ref.Provider, ref.Kind, ref.ExternalID, ref.URL); e != nil {
+		if _, e = store.db.ExecContext(ctx, `INSERT INTO outcome_external_references(namespace_id,outcome_id,provider,context_kind,external_id,url) VALUES(?,?,?,?,?,?)`, out.TenantID.String(), out.ID.String(), ref.Provider, ref.Kind, ref.ExternalID, ref.URL); e != nil {
 			t.Fatal(e)
 		}
 	}
@@ -220,6 +220,15 @@ func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 func normalizeGoldenEvaluation(value any) {
 	switch v := value.(type) {
 	case map[string]any:
+		// The owner-authorized Tenant contract changes only the scope spelling.
+		// Keep the published v0.4.2 fixture immutable; compare its known Scope
+		// and EntityRef shapes after that explicit field projection.
+		if _, scope := v["outcome_id"]; scope && (len(v) == 2 || len(v) == 4) {
+			if id, old := v["namespace_id"]; old {
+				v["tenant_id"] = id
+				delete(v, "namespace_id")
+			}
+		}
 		for key, item := range v {
 			if key == "evaluated_at" {
 				delete(v, key)

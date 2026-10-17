@@ -118,7 +118,7 @@ func migrationInventoryV2(w *Workspace) (MigrationInventoryV2, Config, error) {
 					return fmt.Errorf("invalid legacy intention")
 				}
 				digest, e := d.SemanticDigest(json.RawMessage(intent.Payload))
-				if e != nil || digest != intent.PayloadDigest || intent.Destination != config.Destination() || intent.Scope.NamespaceID != config.Scope.NamespaceID || intent.SchemaVersion != 1 || d.ValidateIdempotencyKey(intent.IdempotencyKey) != nil {
+				if e != nil || digest != intent.PayloadDigest || intent.Destination != config.Destination() || intent.Scope.TenantID != config.Scope.TenantID || intent.SchemaVersion != 1 || d.ValidateIdempotencyKey(intent.IdempotencyKey) != nil {
 					return fmt.Errorf("legacy intention binding/digest differs")
 				}
 				switch intent.State {

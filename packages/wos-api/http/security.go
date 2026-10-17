@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-func (h *Handler) listNamespaces(w http.ResponseWriter, r *http.Request) {
-	v, err := h.security.Namespaces(r.Context())
+func (h *Handler) listTenants(w http.ResponseWriter, r *http.Request) {
+	v, err := h.security.Tenants(r.Context())
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -17,20 +17,20 @@ func (h *Handler) listNamespaces(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": v})
 }
 func (h *Handler) setGrant(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
 	var b struct {
 		Permissions     []ports.Permission `json:"permissions"`
-		ExpectedVersion domain.Version     `json:"expected_namespace_version"`
+		ExpectedVersion domain.Version     `json:"expected_tenant_version"`
 	}
 	if err = decodeJSON(w, r, &b); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: r.PathValue("principal_id"), Permissions: b.Permissions}})
+	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{TenantID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "set_grant", Grant: &ports.TenantGrant{TenantID: ns, PrincipalID: r.PathValue("principal_id"), Permissions: b.Permissions}})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -38,7 +38,7 @@ func (h *Handler) setGrant(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 func (h *Handler) issueCredential(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -47,13 +47,13 @@ func (h *Handler) issueCredential(w http.ResponseWriter, r *http.Request) {
 		PrincipalID     string          `json:"principal_id"`
 		Actor           domain.ActorRef `json:"actor_ref"`
 		ExpiresAt       time.Time       `json:"expires_at"`
-		ExpectedVersion domain.Version  `json:"expected_namespace_version"`
+		ExpectedVersion domain.Version  `json:"expected_tenant_version"`
 	}
 	if err = decodeJSON(w, r, &b); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}})
+	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{TenantID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{TenantID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -62,7 +62,7 @@ func (h *Handler) issueCredential(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]any{"result": result, "token": token})
 }
 func (h *Handler) revokeCredential(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -73,13 +73,13 @@ func (h *Handler) revokeCredential(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		ExpectedVersion domain.Version `json:"expected_namespace_version"`
+		ExpectedVersion domain.Version `json:"expected_tenant_version"`
 	}
 	if err = decodeJSON(w, r, &body); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: body.ExpectedVersion, Operation: "revoke_credential", CredentialID: id})
+	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{TenantID: ns, ExpectedVersion: body.ExpectedVersion, Operation: "revoke_credential", CredentialID: id})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -88,7 +88,7 @@ func (h *Handler) revokeCredential(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) securityAdministration(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return

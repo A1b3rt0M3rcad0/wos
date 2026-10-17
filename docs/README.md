@@ -34,7 +34,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 ## Operate the server
 
 - [Start small and scale](scaling/README.md): PostgreSQL growth, independent API/workers, resource budgets and self-hosted/Cloud boundaries.
-- [Verified storage migration](scaling/mobility.md): whole-installation SQLite-to-PostgreSQL movement and read-only Namespace preflight.
+- [Verified storage migration](scaling/mobility.md): whole-installation SQLite-to-PostgreSQL movement and read-only Tenant preflight.
 - [Operations](operations.md): local setup, authenticated services, databases, backup, and restore.
 - [Issuer recovery](issuer-recovery.md): identity and trust for signed contracts.
 - [Releases and distribution](releases.md): public installation, platforms, and publication.
@@ -60,3 +60,7 @@ Maintained product copy and user guides use English. Original owner-supplied spe
 Dated reports, original implementation plans, ADRs, and evidence under `audit/`, `ux/`, and `stable/` describe specific revisions. They do not replace current guides or automatically establish acceptance of later versions. The [original canonical specification](WOS_Design_Arquitetura_Planejamento_Atualizado.md) is preserved as a source document; the English architecture overview explains the implemented boundaries.
 
 The former gallery is superseded by the [editorial gallery](design/editorial/README.md#main-pages). Earlier captures and the two October 5 reports removed from active documentation remain in Git history; acceptance references point to the preserving commit.
+
+## Tenant storage and lifecycle
+
+[Schema-per-Tenant operations](scaling/tenants.md) explains shared and dedicated placement, provisioning, suspension, deletion and the breaking migration from `namespace_id` contracts. [Scaling](scaling/README.md) covers replica and database budgets. Historical evidence retains its original source and terminology.

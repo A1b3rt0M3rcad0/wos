@@ -43,7 +43,7 @@ func TestSignedMaterialExactCountersAndIndependentFingerprints(t *testing.T) {
 	if first == second {
 		t.Fatal("signed material collapsed adjacent uint64 revisions")
 	}
-	submission := d.WorkSubmission{ProtocolVersion: 2, ID: d.MustParseID("0199f202-0000-7000-8000-000000000002"), Scope: w.Scope, Material: material, Digest: second, PrincipalID: "holder", Actor: c.Actor, SubmittedAt: now}
+	submission := d.WorkSubmission{ProtocolVersion: 3, ID: d.MustParseID("0199f202-0000-7000-8000-000000000002"), Scope: w.Scope, Material: material, Digest: second, PrincipalID: "holder", Actor: c.Actor, SubmittedAt: now}
 	if err = submission.Validate(); err != nil {
 		t.Fatal(err)
 	}

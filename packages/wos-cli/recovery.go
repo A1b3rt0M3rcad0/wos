@@ -55,8 +55,8 @@ func recoveryResult(ctx context.Context, client *sdk.Client, config Config, raw 
 		if err := thin.ContractID.Validate(); err != nil {
 			return response.Value, response.CommandID, fmt.Errorf("receipt lacks recoverable contract identity")
 		}
-		if thin.Scope.NamespaceID != config.Scope.NamespaceID {
-			return response.Value, response.CommandID, fmt.Errorf("receipt namespace mismatch")
+		if thin.Scope.TenantID != config.Scope.TenantID {
+			return response.Value, response.CommandID, fmt.Errorf("receipt tenant mismatch")
 		}
 		view, err := client.GetWorkContract(ctx, thin.Scope, thin.ContractID)
 		if err != nil {

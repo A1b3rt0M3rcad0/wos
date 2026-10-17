@@ -66,8 +66,8 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199ec00-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199ec00-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 
 	createOutcomeBody := []byte(`{
 		"title":"HTTP outcome",
@@ -88,14 +88,14 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		http.StatusCreated,
 	)
 	outcome := createOutcomeResponse.Value.Value
-	if outcome.NamespaceID.String() != namespaceID {
-		t.Fatalf("outcome namespace = %s, want %s", outcome.NamespaceID, namespaceID)
+	if outcome.TenantID.String() != tenantID {
+		t.Fatalf("outcome tenant = %s, want %s", outcome.TenantID, tenantID)
 	}
 	if createOutcomeResponse.Header.Get("X-Correlation-ID") != "http-test-correlation" {
 		t.Fatal("correlation id was not preserved")
 	}
 	outcomeURL := base + "/" + outcome.ID.String()
-	expectedLocation := "/api/v1/namespaces/" + namespaceID + "/outcomes/" + outcome.ID.String()
+	expectedLocation := "/api/v1/tenants/" + tenantID + "/outcomes/" + outcome.ID.String()
 	if createOutcomeResponse.Header.Get("Location") != expectedLocation {
 		t.Fatalf("Location = %q, want %q", createOutcomeResponse.Header.Get("Location"), expectedLocation)
 	}
@@ -443,17 +443,17 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	}
 	missingVersion.Body.Close()
 
-	otherNamespace := "0199ec00-0000-7000-8000-000000000002"
+	otherTenant := "0199ec00-0000-7000-8000-000000000002"
 	wrongScope := doRequest(
 		t,
 		client,
 		http.MethodGet,
-		server.URL+"/api/v1/namespaces/"+otherNamespace+"/outcomes/"+outcome.ID.String(),
+		server.URL+"/api/v1/tenants/"+otherTenant+"/outcomes/"+outcome.ID.String(),
 		nil,
 		nil,
 	)
 	if wrongScope.StatusCode != http.StatusNotFound {
-		t.Fatalf("cross-namespace read status = %d, want 404", wrongScope.StatusCode)
+		t.Fatalf("cross-tenant read status = %d, want 404", wrongScope.StatusCode)
 	}
 	wrongScope.Body.Close()
 }

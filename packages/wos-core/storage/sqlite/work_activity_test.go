@@ -53,17 +53,17 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				must(err)
 				return got
 			}
-			scope := d.Scope{NamespaceID: activityStorageID(1), OutcomeID: activityStorageID(2)}
-			otherOutcome := d.Scope{NamespaceID: scope.NamespaceID, OutcomeID: activityStorageID(3)}
-			otherNamespace := d.Scope{NamespaceID: activityStorageID(4), OutcomeID: activityStorageID(5)}
+			scope := d.Scope{TenantID: activityStorageID(1), OutcomeID: activityStorageID(2)}
+			otherOutcome := d.Scope{TenantID: scope.TenantID, OutcomeID: activityStorageID(3)}
+			otherTenant := d.Scope{TenantID: activityStorageID(4), OutcomeID: activityStorageID(5)}
 			tx := begin()
-			for _, boundary := range []d.Scope{scope, otherOutcome, otherNamespace} {
-				outcome, err := d.NewOutcome(boundary.OutcomeID, boundary.NamespaceID, "Activity history", "", "Auditable delivery", d.PriorityNormal, now)
+			for _, boundary := range []d.Scope{scope, otherOutcome, otherTenant} {
+				outcome, err := d.NewOutcome(boundary.OutcomeID, boundary.TenantID, "Activity history", "", "Auditable delivery", d.PriorityNormal, now)
 				must(err)
 				must(tx.Outcomes().Insert(ctx, outcome))
 			}
 			var contracts []d.WorkContract
-			for i, boundary := range []d.Scope{scope, scope, otherOutcome, otherNamespace} {
+			for i, boundary := range []d.Scope{scope, scope, otherOutcome, otherTenant} {
 				work, err := d.NewWorkItem(activityStorageID(10+i), boundary, "External implementation", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(err)
 				work.ContractsEnabled = true
@@ -71,7 +71,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				contract, err := d.NewWorkContract(activityStorageID(20+i), activityStorageID(30+i), work, "activity-executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, d.DefaultContractLeasePolicy(), 30, d.WorkContractSpec{Title: work.Title}, 0, now)
 				must(err)
 				keyID := activityStorageID(40)
-				contract.SignedBinding = &d.SignedContractBinding{ProtocolVersion: 2, ServerID: "activity-server", CredentialID: activityStorageID(41), SignerKeyID: keyID, PolicyRevision: 1, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{keyID}}
+				contract.SignedBinding = &d.SignedContractBinding{ProtocolVersion: 3, ServerID: "activity-server", CredentialID: activityStorageID(41), SignerKeyID: keyID, PolicyRevision: 1, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{keyID}}
 				must(tx.(ports.SignedContractUnitOfWork).SignedWorkContracts().Insert(ctx, contract))
 				contracts = append(contracts, contract)
 			}
@@ -178,9 +178,9 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 					t.Fatalf("task/contract scope filter failed: %#v", got)
 				}
 			}
-			for _, boundary := range []d.Scope{otherOutcome, otherNamespace} {
+			for _, boundary := range []d.Scope{otherOutcome, otherTenant} {
 				if got := list(boundary, ports.WorkActivityFilter{ThroughSequence: 10, Limit: 101}); len(got) != 1 || got[0].Scope != boundary {
-					t.Fatal("activity crossed Outcome/Namespace boundaries")
+					t.Fatal("activity crossed Outcome/Tenant boundaries")
 				}
 			}
 			for name, invalid := range map[string]ports.WorkActivityFilter{
@@ -210,7 +210,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				"unsigned contract":     func(a *d.WorkActivity) { a.ContractID = unsigned.ID },
 				"wrong task":            func(a *d.WorkActivity) { a.WorkItemID = contracts[1].WorkItemID },
 				"wrong Outcome":         func(a *d.WorkActivity) { a.Scope = otherOutcome },
-				"wrong Namespace":       func(a *d.WorkActivity) { a.Scope = otherNamespace },
+				"wrong Tenant":          func(a *d.WorkActivity) { a.Scope = otherTenant },
 			} {
 				activity := newActivity(201, contracts[0], 4)
 				mutate(&activity)
@@ -221,7 +221,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				switch name {
 				case "wrong task":
 					expectedCode = d.ErrorCodeInvalidScope
-				case "wrong Outcome", "wrong Namespace", "unsigned contract":
+				case "wrong Outcome", "wrong Tenant", "unsigned contract":
 					expectedCode = d.ErrorCodeNotFound
 				}
 				if code, _ := d.ErrorCodeOf(err); code != expectedCode {
@@ -235,7 +235,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				for name, mutate := range map[string]func(*d.WorkActivity){
 					"task":              func(a *d.WorkActivity) { a.WorkItemID = contracts[1].WorkItemID },
 					"Outcome":           func(a *d.WorkActivity) { a.Scope = otherOutcome },
-					"Namespace":         func(a *d.WorkActivity) { a.Scope = otherNamespace },
+					"Tenant":            func(a *d.WorkActivity) { a.Scope = otherTenant },
 					"unsigned contract": func(a *d.WorkActivity) { a.ContractID = unsigned.ID },
 				} {
 					activity := newActivity(201, contracts[0], 4)
@@ -243,7 +243,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 					raw, err := json.Marshal(activity)
 					must(err)
 					tx = begin()
-					_, err = tx.(*unitOfWork).tx.ExecContext(ctx, `INSERT INTO work_activities (id,namespace_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`, activity.ID.String(), activity.Scope.NamespaceID.String(), activity.Scope.OutcomeID.String(), activity.ContractID.String(), activity.WorkItemID.String(), activitySequenceKey(activity.Sequence), string(raw))
+					_, err = tx.(*unitOfWork).tx.ExecContext(ctx, `INSERT INTO work_activities (id,tenant_id,outcome_id,contract_id,work_item_id,sequence,payload_json) VALUES (?,?,?,?,?,?,?)`, activity.ID.String(), activity.Scope.TenantID.String(), activity.Scope.OutcomeID.String(), activity.ContractID.String(), activity.WorkItemID.String(), activitySequenceKey(activity.Sequence), string(raw))
 					must(tx.Rollback())
 					if code, _ := d.ErrorCodeOf(mapSQLError("foreign-key test", err)); code != d.ErrorCodeInvalidArgument {
 						t.Fatalf("database accepted wrong %s binding: %v", name, err)

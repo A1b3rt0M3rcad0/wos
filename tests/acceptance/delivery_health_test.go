@@ -16,7 +16,7 @@ import (
 // Called by the real signed transport journey for memory, SQLite and PostgreSQL.
 func deliveryHealthParity(t *testing.T, ctx context.Context, server *httptest.Server, operator, reader *sdk.Client, scope d.Scope, store ports.TransactionManager, adminToken, readerToken string) {
 	t.Helper()
-	q := a.DeliveryHealthQuery{NamespaceID: scope.NamespaceID, OutcomeID: &scope.OutcomeID}
+	q := a.DeliveryHealthQuery{TenantID: scope.TenantID, OutcomeID: &scope.OutcomeID}
 	value, e := operator.GetDeliveryHealth(ctx, q)
 	if _, supported := store.(ports.DeliveryStore); supported {
 		if e != nil || value.State != "unknown" || value.Queue.Pending != 0 || value.Queue.AttemptsTotal != 0 {
@@ -56,12 +56,12 @@ func deliveryHealthParity(t *testing.T, ctx context.Context, server *httptest.Se
 			if e = json.Unmarshal(raw, &got); e != nil {
 				t.Fatal(e)
 			}
-			if got.State != value.State || got.Queue.Pending != value.Queue.Pending || got.Queue.NamespaceID != scope.NamespaceID {
+			if got.State != value.State || got.Queue.Pending != value.Queue.Pending || got.Queue.TenantID != scope.TenantID {
 				t.Fatal("HTTP/MCP mismatch")
 			}
 		}
 	}
-	req, _ := http.NewRequestWithContext(ctx, "GET", server.URL+"/api/v1/namespaces/"+scope.NamespaceID.String()+"/operations/delivery-health", nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", server.URL+"/api/v1/tenants/"+scope.TenantID.String()+"/operations/delivery-health", nil)
 	response, e := server.Client().Do(req)
 	if e != nil {
 		t.Fatal(e)

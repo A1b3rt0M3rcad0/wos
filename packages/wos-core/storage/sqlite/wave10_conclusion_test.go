@@ -23,9 +23,9 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199ef51-0000-7000-8000-000000000101", "")
-	namespaceID := domain.MustParseID("0199ef51-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ef51-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Conclusion restart",
 		DesiredState: "preserve proof snapshot",
 		Priority:     domain.PriorityNormal,
@@ -134,11 +134,11 @@ func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199efc2-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199efc2-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199efc2-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Immutable history restart",
 		DesiredState: "validation history survives restart",
 		Priority:     domain.PriorityNormal,

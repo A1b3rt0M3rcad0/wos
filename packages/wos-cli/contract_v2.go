@@ -115,9 +115,6 @@ type ContractViewV2 struct {
 }
 
 func verifyProfileDocumentV2(profile ProfileV2, document signing.Document, purpose signing.PayloadType) ([]byte, error) {
-	if document.Proof.PayloadType != purpose {
-		return nil, fmt.Errorf("issued document purpose differs")
-	}
 	for _, key := range profile.Binding.IssuerKeys {
 		if key.KeyID.String() != document.Proof.KeyID {
 			continue
@@ -130,7 +127,7 @@ func verifyProfileDocumentV2(profile ProfileV2, document signing.Document, purpo
 		if e != nil {
 			return nil, e
 		}
-		return signing.Verify(envelope, purpose, key.KeyID.String(), public)
+		return signing.VerifyHistorical(envelope, purpose, key.KeyID.String(), public)
 	}
 	return nil, fmt.Errorf("issued signing key is outside the pinned trust set")
 }
@@ -143,11 +140,11 @@ func (file ContractFileV2) VerifyIssued(profile ProfileV2) (ContractViewV2, erro
 	if e != nil {
 		return view, e
 	}
-	if e = signing.DecodeStrict(authority, &view.Authority, signing.MaxPayloadBytes); e != nil {
+	if e = signing.DecodeHistoricalPayload(authority, &view.Authority, signing.MaxPayloadBytes); e != nil {
 		return view, e
 	}
 	grant := view.Authority
-	if grant.ServerID != profile.Binding.ServerID.String() || grant.NamespaceID != profile.Binding.NamespaceID.String() || grant.PrincipalID != profile.Binding.PrincipalID || d.ID(grant.ContractID).Validate() != nil || d.ID(grant.WorkItemID).Validate() != nil || d.ID(grant.OutcomeID).Validate() != nil {
+	if grant.ServerID != profile.Binding.ServerID.String() || grant.TenantID != profile.Binding.TenantID.String() || grant.PrincipalID != profile.Binding.PrincipalID || d.ID(grant.ContractID).Validate() != nil || d.ID(grant.WorkItemID).Validate() != nil || d.ID(grant.OutcomeID).Validate() != nil {
 		return view, fmt.Errorf("issuer authority destination/identity binding differs")
 	}
 	specification, e := verifyProfileDocumentV2(profile, file.Issued.Specification, signing.ContractSpec)
@@ -158,10 +155,10 @@ func (file ContractFileV2) VerifyIssued(profile ProfileV2) (ContractViewV2, erro
 		return view, fmt.Errorf("issued specification/grant digest differs")
 	}
 	var binding signing.SpecPayload[json.RawMessage]
-	if e = signing.DecodeStrict(specification, &binding, 128<<10); e != nil {
+	if e = signing.DecodeHistoricalPayload(specification, &binding, 128<<10); e != nil {
 		return view, e
 	}
-	if binding.ServerID != grant.ServerID || binding.NamespaceID != grant.NamespaceID || binding.OutcomeID != grant.OutcomeID || binding.PrincipalID != grant.PrincipalID || binding.ContractID != grant.ContractID || binding.WorkItemID != grant.WorkItemID || binding.ContractKind != grant.ContractKind {
+	if binding.ProtocolVersion != grant.ProtocolVersion || binding.ServerID != grant.ServerID || binding.TenantID != grant.TenantID || binding.OutcomeID != grant.OutcomeID || binding.PrincipalID != grant.PrincipalID || binding.ContractID != grant.ContractID || binding.WorkItemID != grant.WorkItemID || binding.ContractKind != grant.ContractKind {
 		return view, fmt.Errorf("issued specification/authority targets differ")
 	}
 	switch grant.ContractKind {
@@ -170,7 +167,7 @@ func (file ContractFileV2) VerifyIssued(profile ProfileV2) (ContractViewV2, erro
 			return view, fmt.Errorf("execution draft required")
 		}
 		var spec signing.SpecPayload[d.SignedWorkSpec]
-		if e = signing.DecodeStrict(specification, &spec, 128<<10); e != nil {
+		if e = signing.DecodeHistoricalPayload(specification, &spec, 128<<10); e != nil {
 			return view, e
 		}
 		view.WorkSpecification = &spec
@@ -179,7 +176,7 @@ func (file ContractFileV2) VerifyIssued(profile ProfileV2) (ContractViewV2, erro
 			return view, fmt.Errorf("review draft required")
 		}
 		var spec signing.SpecPayload[a.SignedReviewSpec]
-		if e = signing.DecodeStrict(specification, &spec, 128<<10); e != nil {
+		if e = signing.DecodeHistoricalPayload(specification, &spec, 128<<10); e != nil {
 			return view, e
 		}
 		view.ReviewSpecification = &spec

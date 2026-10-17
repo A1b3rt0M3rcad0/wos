@@ -46,7 +46,7 @@ func integrationRepositories(u ports.UnitOfWork) (ports.IntegrationUnitOfWork, e
 }
 func validateTriggerEndpoints(ctx context.Context, r ports.IntegrationUnitOfWork, t domain.Trigger) error {
 	for _, id := range t.TargetEndpointIDs {
-		if _, err := r.Endpoints().Get(ctx, t.Scope.NamespaceID, id); err != nil {
+		if _, err := r.Endpoints().Get(ctx, t.Scope.TenantID, id); err != nil {
 			return err
 		}
 	}
@@ -170,7 +170,7 @@ func (s *Service) RedeliverDelivery(ctx context.Context, cc domain.CommandContex
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		o, err := u.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		o, err := u.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return o, 0, err
 		}
@@ -222,7 +222,7 @@ type IntegrationPage[T any] struct {
 
 func (s *Service) ListDeliveries(ctx context.Context, scope domain.Scope, limit int, cursor string) (IntegrationPage[ports.Delivery], error) {
 	var page IntegrationPage[ports.Delivery]
-	if err := s.Authorize(ctx, scope.NamespaceID, ports.PermissionIntegrationWrite); err != nil && s.requireIdentity {
+	if err := s.Authorize(ctx, scope.TenantID, ports.PermissionIntegrationWrite); err != nil && s.requireIdentity {
 		return page, err
 	}
 	n, err := queryLimit(limit)
@@ -231,7 +231,7 @@ func (s *Service) ListDeliveries(ctx context.Context, scope domain.Scope, limit 
 	}
 	after := ""
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "deliveries", "")
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "deliveries", "")
 		if err != nil {
 			return page, err
 		}
@@ -258,7 +258,7 @@ func (s *Service) ListDeliveries(ctx context.Context, scope domain.Scope, limit 
 	}
 	if len(values) > n {
 		values = values[:n]
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "deliveries", Key: values[n-1].ID})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "deliveries", Key: values[n-1].ID})
 	}
 	page.Items = values
 	page.Consistency = "live_keyset"
@@ -275,7 +275,7 @@ func (s *Service) ListTriggerFirings(ctx context.Context, scope domain.Scope, li
 	}
 	after := ""
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "firings", "")
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "firings", "")
 		if err != nil {
 			return page, err
 		}
@@ -308,7 +308,7 @@ func (s *Service) ListTriggerFirings(ctx context.Context, scope domain.Scope, li
 	}
 	if len(values) > n {
 		values = values[:n]
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "firings", Key: values[n-1].ID.String()})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "firings", Key: values[n-1].ID.String()})
 	}
 	page.Items = values
 	page.Consistency = "live_keyset"

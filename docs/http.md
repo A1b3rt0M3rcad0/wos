@@ -47,13 +47,13 @@ can report a compatible migrated schema.
 
 ## Addressing
 
-Every domain route carries the Namespace explicitly:
+Every domain route carries the Tenant explicitly:
 
 ```text
-/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}
+/api/v1/tenants/{tenant_id}/outcomes/{outcome_id}
 ```
 
-The server never derives a Namespace from external metadata.
+The server never derives a Tenant from external metadata.
 
 All WOS IDs in this contract are normalized UUIDv7 values.
 
@@ -82,11 +82,11 @@ for the response.
 
 ## Reproducible local flow
 
-Set a UUIDv7 Namespace first:
+Set a UUIDv7 Tenant first:
 
 ```bash
 NS=0199e100-0000-7000-8000-000000000001
-BASE=http://127.0.0.1:8080/api/v1/namespaces/$NS
+BASE=http://127.0.0.1:8080/api/v1/tenants/$NS
 ```
 
 Create an Outcome:
@@ -278,7 +278,7 @@ work:admin_complete
 
 In the standalone local profile these permissions remain disabled unless
 `WOS_LOCAL_ADMIN_OVERRIDES=true` is set. This is an explicit local-development
-opt-in; the Namespace grant/token model remains Wave 15.
+opt-in; the Tenant grant/token model remains Wave 15.
 
 Normal `CancelWorkItem` no longer cancels an `in_progress` leased WorkItem.
 An operator with `work:admin_cancel` may use:
@@ -400,7 +400,7 @@ an explicit external cause:
 ```
 
 A persisted `Decision` may also be used as a Blocker cause. The reference is
-validated in the same Namespace/Outcome scope before the Blocker is committed.
+validated in the same Tenant/Outcome scope before the Blocker is committed.
 
 `blocking_states` explains whether each Outcome, Objective and WorkItem is
 blocked, which active Blockers apply and whether each one is direct or inherited.
@@ -654,7 +654,7 @@ Current mappings are:
 | ---- | ------------------------------------------------------------------------------------ |
 | 400  | malformed JSON, invalid identifiers/format or invalid idempotency key                |
 | 403  | authenticated principal lacks a required privileged permission                       |
-| 404  | entity absent from the explicit Namespace/Outcome scope                              |
+| 404  | entity absent from the explicit Tenant/Outcome scope                              |
 | 409  | lifecycle, dependency cycle/graph limit, precondition, lease or idempotency conflict |
 | 412  | stale or mismatched `If-Match` / `expected_version`                                  |
 | 413  | request body exceeds the supported limit                                             |
@@ -670,8 +670,8 @@ token or OAuth resource-server configuration; see [service operation](operations
 
 Signed Contract holders can append immutable observations through
 `POST /api/v1/commands/append_work_activity`. Authorized readers can page through
-`GET /namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity` and inspect
-`GET /namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention`,
+`GET /tenants/{tenant_id}/outcomes/{outcome_id}/work-activity` and inspect
+`GET /tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention`,
 under the `/api/v1` prefix. These adapters share application services with MCP and
 the Go client. Activity never approves criteria or completes work. See the
 [work activity contract](work-activity.md) for authority, pagination, and retry rules.

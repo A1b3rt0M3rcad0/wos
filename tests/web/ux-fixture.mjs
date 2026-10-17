@@ -16,7 +16,7 @@ export const test = base.extend({
     const port = socket.address().port;
     await new Promise((done) => socket.close(done));
     const url = `http://127.0.0.1:${port}`,
-      namespace = "01a11992-0000-7000-8000-000000000001",
+      tenant = "01a11992-0000-7000-8000-000000000001",
       token = randomBytes(32).toString("base64url");
     let logs = "";
     const child = spawn(resolve("../../bin/wos"), ["server"], {
@@ -26,8 +26,8 @@ export const test = base.extend({
         WOS_SQLITE_PATH: join(directory, "wos.db"),
         WOS_AUTH_MODE: "api_token",
         WOS_BOOTSTRAP_TOKEN: token,
-        WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-        WOS_BOOTSTRAP_NAMESPACE_NAME: "Human acceptance",
+        WOS_BOOTSTRAP_TENANT_ID: tenant,
+        WOS_BOOTSTRAP_TENANT_NAME: "Human acceptance",
         WOS_LOCAL_PRINCIPAL_ID: "owner",
       },
       stdio: ["ignore", "ignore", "pipe"],
@@ -62,14 +62,14 @@ export const test = base.extend({
     }
     async function outcome(title = "Acceptance Outcome") {
       const value = await command("create_outcome", {
-        namespace_id: namespace,
+        tenant_id: tenant,
         title,
         desired_state: "A verified result",
         priority: "normal",
       });
       return {
         value,
-        scope: { namespace_id: namespace, outcome_id: value.id },
+        scope: { tenant_id: tenant, outcome_id: value.id },
       };
     }
     try {
@@ -84,7 +84,7 @@ export const test = base.extend({
         await new Promise((done) => setTimeout(done, 50));
       }
       if (!ready) throw Error(logs);
-      await use({ url, namespace, token, api, command, login, outcome });
+      await use({ url, tenant, token, api, command, login, outcome });
     } finally {
       if (child.exitCode === null) {
         const done = once(child, "exit");

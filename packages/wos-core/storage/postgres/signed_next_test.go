@@ -46,12 +46,12 @@ func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T)
 				}
 			}
 			ns := testID("0199a555-0000-7000-8000-000000000001")
-			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+			scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -73,8 +73,8 @@ func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T)
 			uow, err := store.Begin(ctx)
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, TenantID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+			policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			must(registry.SaveCredentialPolicy(ctx, policy, 0))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
@@ -92,7 +92,7 @@ func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T)
 			state, err := protocol.Lock(ctx, ns, true)
 			must(err)
 			state.Phase = d.WorkProtocolSigned
-			state.WriterEpoch = 2
+			state.WriterEpoch = 3
 			state.WritersDrained = true
 			state.Version++
 			state.UpdatedAt = now

@@ -35,7 +35,7 @@ func (s *Service) AdministrativeCancelWorkItem(
 		return MutationResult[domain.WorkItem]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "administrative cancellation reason is required")
 	}
 	if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-		NamespaceID: cmd.Scope.NamespaceID,
+		TenantID:    cmd.Scope.TenantID,
 		PrincipalID: commandContext.PrincipalID,
 		Permission:  ports.PermissionWorkAdminCancel,
 	}); err != nil {
@@ -79,7 +79,7 @@ func (s *Service) AdministrativeCompleteWorkItem(
 		return MutationResult[domain.WorkItem]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "administrative completion reason is required")
 	}
 	if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-		NamespaceID: cmd.Scope.NamespaceID,
+		TenantID:    cmd.Scope.TenantID,
 		PrincipalID: commandContext.PrincipalID,
 		Permission:  ports.PermissionWorkAdminComplete,
 	}); err != nil {

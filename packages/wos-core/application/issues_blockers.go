@@ -419,7 +419,7 @@ func lockExistingOutcome(ctx context.Context, uow ports.UnitOfWork, scope domain
 	if _, err := uow.Coordination().LockOutcome(ctx, scope); err != nil {
 		return err
 	}
-	_, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	_, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	return err
 }
 func validateIssueDuplicateChain(ctx context.Context, issues ports.IssueRepository, scope domain.Scope, source, target domain.ID) error {
@@ -448,7 +448,7 @@ func validateBlockerTarget(ctx context.Context, uow ports.UnitOfWork, ref domain
 		if ref.ID != ref.Scope.OutcomeID {
 			return domain.NewError(domain.ErrorCodeBlocker, "outcome blocked_ref id must equal outcome scope id")
 		}
-		v, err := uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
+		v, err := uow.Outcomes().Get(ctx, ref.Scope.TenantID, ref.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}
@@ -516,7 +516,7 @@ func validateIssueAffectedRefs(
 			if ref.ID != ref.Scope.OutcomeID {
 				err = domain.NewError(domain.ErrorCodeIssue, "outcome affected_ref id must equal outcome scope id")
 			} else {
-				_, err = uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
+				_, err = uow.Outcomes().Get(ctx, ref.Scope.TenantID, ref.Scope.OutcomeID)
 			}
 		case domain.EntityKindObjective:
 			_, err = uow.Objectives().Get(ctx, ref.Scope, ref.ID)
@@ -549,7 +549,7 @@ func blockingStateForRef(ctx context.Context, uow ports.UnitOfWork, ref domain.E
 		if ref.ID != ref.Scope.OutcomeID {
 			return BlockingState{}, domain.NewError(domain.ErrorCodeBlocker, "outcome ref id must equal outcome scope id")
 		}
-		if _, err := uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID); err != nil {
+		if _, err := uow.Outcomes().Get(ctx, ref.Scope.TenantID, ref.Scope.OutcomeID); err != nil {
 			return BlockingState{}, err
 		}
 	case domain.EntityKindObjective:

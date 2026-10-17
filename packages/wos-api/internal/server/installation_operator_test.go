@@ -23,9 +23,9 @@ func TestInstallationMetricsAndProvisioningRequireExplicitOperator(t *testing.T)
 		cfg.MCP.Enabled = true
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("b", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199d098-0000-7000-8000-000000000011"
-		cfg.Auth.BootstrapNamespaceName = "Shared installation"
-		runtime, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Shared installation"
+		runtime, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -37,8 +37,8 @@ func TestInstallationMetricsAndProvisioningRequireExplicitOperator(t *testing.T)
 			t.Fatal(err)
 		}
 		operatorCtx := application.WithIdentity(ctx, operator)
-		ns := operator.NamespaceID
-		if err = security.SetGrant(operatorCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "tenant", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}}); err != nil {
+		ns := operator.TenantID
+		if err = security.SetGrant(operatorCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "tenant", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin}}); err != nil {
 			t.Fatal(err)
 		}
 		_, tenantToken, err := security.IssueCredential(operatorCtx, ns, "tenant", domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "tenant"}, time.Now().Add(time.Hour))
@@ -59,7 +59,7 @@ func TestInstallationMetricsAndProvisioningRequireExplicitOperator(t *testing.T)
 				t.Fatalf("metrics: got %d want %d: %s", w.Code, tc.status, w.Body.String())
 			}
 		}
-		payload, _ := json.Marshal(application.AdministrativeIntent{NamespaceID: ns, ExpectedVersion: 1, Operation: "create_namespace", NamespaceName: "Created through HTTP"})
+		payload, _ := json.Marshal(application.AdministrativeIntent{TenantID: ns, ExpectedVersion: 1, Operation: "create_tenant", TenantName: "Created through HTTP"})
 		r := httptest.NewRequest(http.MethodPost, "/api/v1/security/commands", bytes.NewReader(payload))
 		r.Header.Set("Authorization", "Bearer "+tenantToken)
 		r.Header.Set("Idempotency-Key", "tenant-http-create-0001")
@@ -79,7 +79,7 @@ func TestInstallationMetricsAndProvisioningRequireExplicitOperator(t *testing.T)
 			t.Fatal(err)
 		}
 		defer session.Close()
-		denied, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_administer_namespace", Arguments: map[string]any{"idempotency_key": "tenant-mcp-create-0001", "command": map[string]any{"namespace_id": ns, "expected_namespace_version": 1, "operation": "create_namespace", "namespace_name": "Forbidden"}}})
+		denied, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_administer_tenant", Arguments: map[string]any{"idempotency_key": "tenant-mcp-create-0001", "command": map[string]any{"tenant_id": ns, "expected_tenant_version": 1, "operation": "create_tenant", "tenant_name": "Forbidden"}}})
 		if err != nil || !denied.IsError {
 			t.Fatalf("tenant MCP provision was not denied: %+v %v", denied, err)
 		}
@@ -89,7 +89,8 @@ func TestInstallationMetricsAndProvisioningRequireExplicitOperator(t *testing.T)
 		r.Header.Set("Content-Type", "application/json")
 		w = httptest.NewRecorder()
 		runtime.Handler().ServeHTTP(w, r)
-		if w.Code != http.StatusOK {
+		expected := http.StatusConflict
+		if w.Code != expected {
 			t.Fatalf("operator HTTP provision returned %d: %s", w.Code, w.Body.String())
 		}
 	})
@@ -99,8 +100,9 @@ func TestOfflineOperatorUpgradeIsExplicitAuditedAndDoesNotBootstrap(t *testing.T
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = "legacy-bootstrap-credential-at-least-32"
-		cfg.Auth.BootstrapNamespaceID = "0199d098-0000-7000-8000-000000000012"
-		cfg.Auth.BootstrapNamespaceName = "Legacy"
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Legacy"
+		provisionRuntimeFixture(t, &cfg)
 		var store runtimeStore
 		var err error
 		if cfg.Storage.Driver == StorageDriverPostgres {
@@ -112,28 +114,28 @@ func TestOfflineOperatorUpgradeIsExplicitAuditedAndDoesNotBootstrap(t *testing.T
 			t.Fatal(err)
 		}
 		security := application.SecurityService{Store: store, Clock: systemClock{}, IDs: uuidV7Generator{}}
-		ns, _ := domain.ParseID(cfg.Auth.BootstrapNamespaceID)
-		if err = security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: "Legacy"}, "legacy", cfg.Auth.BootstrapToken); err != nil {
+		ns, _ := domain.ParseID(cfg.Auth.BootstrapTenantID)
+		if err = security.Bootstrap(context.Background(), ports.Tenant{ID: ns, Name: "Legacy"}, "legacy", cfg.Auth.BootstrapToken); err != nil {
 			t.Fatal(err)
 		}
 		// This direct composition setup models pre-upgrade persisted grants.
-		if err = store.PutGrant(context.Background(), ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "legacy", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}}); err != nil {
+		if err = store.PutGrant(context.Background(), ports.TenantGrant{TenantID: ns, PrincipalID: "legacy", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin}}); err != nil {
 			t.Fatal(err)
 		}
 		if err = store.Close(); err != nil {
 			t.Fatal(err)
 		}
-		intent := InstallationOperatorIntent{NamespaceID: ns, PrincipalID: "legacy", ExpectedVersion: 1, IdempotencyKey: "legacy-operator-upgrade-0001", Reason: "Explicitly authorize the existing installation owner"}
+		intent := InstallationOperatorIntent{TenantID: ns, PrincipalID: "legacy", ExpectedVersion: 1, IdempotencyKey: "legacy-operator-upgrade-0001", Reason: "Explicitly authorize the existing installation owner"}
 		if _, err = AuthorizeInstallationOperator(context.Background(), cfg, intent); err == nil {
 			t.Fatal("upgrade accepted missing drained-writer assertion")
 		}
 		intent.DrainedWriters = true
 		result, err := AuthorizeInstallationOperator(context.Background(), cfg, intent)
-		if err != nil || result.NamespaceVersion != 2 {
+		if err != nil || result.TenantVersion != 2 {
 			t.Fatalf("promotion: %+v %v", result, err)
 		}
 		replay, err := AuthorizeInstallationOperator(context.Background(), cfg, intent)
-		if err != nil || !replay.IdempotentReplay || replay.NamespaceVersion != 2 {
+		if err != nil || !replay.IdempotentReplay || replay.TenantVersion != 2 {
 			t.Fatalf("replay: %+v %v", replay, err)
 		}
 		intent.Reason = "Different reason is a different intent"
@@ -163,10 +165,10 @@ func TestOfflineOperatorUpgradeIsExplicitAuditedAndDoesNotBootstrap(t *testing.T
 			t.Fatalf("promotion audit or credential changed: %+v %v", snapshot, err)
 		}
 		// Normal bootstrap still cannot restore an explicitly revoked operator grant.
-		if err = store.PutGrant(context.Background(), ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "legacy", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}}); err != nil {
+		if err = store.PutGrant(context.Background(), ports.TenantGrant{TenantID: ns, PrincipalID: "legacy", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin}}); err != nil {
 			t.Fatal(err)
 		}
-		if err = security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: "Legacy"}, "legacy", cfg.Auth.BootstrapToken); err != nil {
+		if err = security.Bootstrap(context.Background(), ports.Tenant{ID: ns, Name: "Legacy"}, "legacy", cfg.Auth.BootstrapToken); err != nil {
 			t.Fatal(err)
 		}
 		if err = security.RequireInstallation(ctx, ports.PermissionInstallationObserve); err == nil {

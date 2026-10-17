@@ -19,7 +19,7 @@ func (s ServerIdentity) Validate() error {
 	if s.ID.Validate() != nil || s.IssuerKeyID.Validate() != nil || s.CreatedAt.IsZero() {
 		return NewError(ErrorCodeInvalidConfig, "invalid persistent server identity")
 	}
-	k := SigningKey{ID: s.IssuerKeyID, NamespaceID: s.ID, PrincipalID: s.PrincipalID(), Purpose: "issuer", Algorithm: "Ed25519", PublicKey: s.PublicKey, Fingerprint: s.Fingerprint, Version: 1, Status: "active", CreatedAt: s.CreatedAt, UpdatedAt: s.CreatedAt}
+	k := SigningKey{ID: s.IssuerKeyID, TenantID: s.ID, PrincipalID: s.PrincipalID(), Purpose: "issuer", Algorithm: "Ed25519", PublicKey: s.PublicKey, Fingerprint: s.Fingerprint, Version: 1, Status: "active", CreatedAt: s.CreatedAt, UpdatedAt: s.CreatedAt}
 	return k.Validate()
 }
 func (s ServerIdentity) PrincipalID() string { return "wos-server:" + s.ID.String() }

@@ -57,6 +57,12 @@ func TestProcessRolesPreserveDefaultAndRejectUnsafeCompositions(t *testing.T) {
 }
 
 func workerTestConfig(cfg Config) Config {
+	if cfg.Storage.TenantID == "" {
+		cfg.Storage.TenantID = cfg.Auth.BootstrapTenantID
+		if cfg.Storage.TenantID == "" {
+			cfg.Storage.TenantID = cfg.Auth.LocalTenantID
+		}
+	}
 	cfg.Server.Role = ProcessRoleWorker
 	cfg.Storage.Driver = StorageDriverPostgres
 	if cfg.Storage.PostgresDSN == "" {
@@ -64,14 +70,14 @@ func workerTestConfig(cfg Config) Config {
 	}
 	cfg.Auth.Mode = AuthModeAPIToken
 	cfg.Auth.BootstrapToken = ""
-	cfg.Auth.BootstrapNamespaceID = ""
-	cfg.Auth.BootstrapNamespaceName = ""
+	cfg.Auth.BootstrapTenantID = ""
+	cfg.Auth.BootstrapTenantName = ""
 	cfg.HTTP.Enabled = false // The operational listener is independent of product HTTP.
 	return cfg
 }
 
 func TestScaleAdmissionEnvironmentBounds(t *testing.T) {
-	for _, name := range []string{"WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE", "WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT"} {
+	for _, name := range []string{"WOS_DELIVERY_MAX_INFLIGHT_PER_TENANT", "WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT"} {
 		for _, value := range []string{"-1", "65", "invalid"} {
 			t.Run(name+value, func(t *testing.T) {
 				t.Setenv(name, value)
@@ -91,7 +97,7 @@ func TestScaleAdmissionEnvironmentBounds(t *testing.T) {
 	}
 	for _, value := range []string{"-1", "129", "invalid"} {
 		t.Run("http"+value, func(t *testing.T) {
-			t.Setenv("WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE", value)
+			t.Setenv("WOS_HTTP_MAX_INFLIGHT_PER_TENANT", value)
 			if ConfigFromEnv().Validate() == nil {
 				t.Fatal("invalid process admission cap accepted", value)
 			}
@@ -105,7 +111,7 @@ func TestWorkerRefusesToInitializeDatabase(t *testing.T) {
 			t.Skip("independent worker requires PostgreSQL")
 		}
 		cfg = workerTestConfig(cfg)
-		if runtime, err := OpenRuntime(cfg); err == nil {
+		if runtime, err := openRuntimeFixture(t, &cfg); err == nil {
 			runtime.Close()
 			t.Fatal("worker initialized a missing installation")
 		}
@@ -128,9 +134,9 @@ func TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity(t *testing.T
 		}
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("i", 40)
-		cfg.Auth.BootstrapNamespaceID = cfg.Auth.LocalNamespaceID
-		cfg.Auth.BootstrapNamespaceName = "Issuer installation"
-		api, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Issuer installation"
+		api, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -140,18 +146,18 @@ func TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity(t *testing.T
 		t.Setenv("WOS_ROLE_TEST_SEED", base64.StdEncoding.EncodeToString(seed))
 		workerCfg := workerTestConfig(cfg)
 		workerCfg.Signing.SeedEnv = "WOS_ROLE_TEST_SEED"
-		if worker, err := OpenRuntime(workerCfg); err == nil {
+		if worker, err := openRuntimeFixture(t, &workerCfg); err == nil {
 			worker.Close()
 			t.Fatal("worker initialized first issuer identity")
 		}
 		cfg.Signing.SeedEnv = "WOS_ROLE_TEST_SEED"
-		api, err = OpenRuntime(cfg)
+		api, err = openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
 		identity := *api.issuerIdentity
 		api.Close()
-		worker, err := OpenRuntime(workerCfg)
+		worker, err := openRuntimeFixture(t, &workerCfg)
 		if err != nil {
 			t.Fatal("worker rejected matching optional issuer seed", err)
 		}
@@ -161,12 +167,12 @@ func TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity(t *testing.T
 		worker.Close()
 		seed[0]++
 		t.Setenv("WOS_ROLE_TEST_SEED", base64.StdEncoding.EncodeToString(seed))
-		if worker, err = OpenRuntime(workerCfg); err == nil {
+		if worker, err = openRuntimeFixture(t, &workerCfg); err == nil {
 			worker.Close()
 			t.Fatal("worker accepted a replacement issuer seed")
 		}
 		workerCfg.Signing.SeedEnv = ""
-		worker, err = OpenRuntime(workerCfg)
+		worker, err = openRuntimeFixture(t, &workerCfg)
 		if err != nil {
 			t.Fatal("worker requires possession of issuer private key", err)
 		}
@@ -184,15 +190,15 @@ func TestIndependentWorkerOperationalListenerAndSupervision(t *testing.T) {
 		}
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("p", 40)
-		cfg.Auth.BootstrapNamespaceID = cfg.Auth.LocalNamespaceID
-		cfg.Auth.BootstrapNamespaceName = "Existing installation"
-		api, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Existing installation"
+		api, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer api.Close()
 		cfg = workerTestConfig(cfg)
-		worker, err := OpenRuntime(cfg)
+		worker, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -251,7 +257,7 @@ func TestIndependentWorkerOperationalListenerAndSupervision(t *testing.T) {
 		}
 		// A worker-only process must exit on a fatal lane failure so the
 		// deployment supervisor can restore delivery capacity.
-		failed, err := OpenRuntime(cfg)
+		failed, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}

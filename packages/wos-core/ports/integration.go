@@ -11,11 +11,11 @@ import (
 )
 
 type WebhookEndpoint struct {
-	ID          domain.ID `json:"id"`
-	NamespaceID domain.ID `json:"namespace_id"`
-	URL         string    `json:"url"`
-	SecretRef   string    `json:"secret_ref"`
-	KeyID       string    `json:"key_id"`
+	ID        domain.ID `json:"id"`
+	TenantID  domain.ID `json:"tenant_id"`
+	URL       string    `json:"url"`
+	SecretRef string    `json:"secret_ref"`
+	KeyID     string    `json:"key_id"`
 }
 type TriggerRepository interface {
 	Get(context.Context, domain.Scope, domain.ID) (domain.Trigger, error)
@@ -34,7 +34,7 @@ type IntegrationFact struct {
 	SchemaVersion   int                    `json:"schema_version"`
 	ID              domain.ID              `json:"id"`
 	EventType       string                 `json:"event_type"`
-	NamespaceID     domain.ID              `json:"namespace_id"`
+	TenantID        domain.ID              `json:"tenant_id"`
 	OutcomeID       domain.ID              `json:"outcome_id"`
 	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
 	EventIndex      uint32                 `json:"event_index"`
@@ -47,7 +47,7 @@ type IntegrationFact struct {
 }
 
 func PublicFact(e domain.DomainEvent) IntegrationFact {
-	return IntegrationFact{1, e.EventID, e.EventType, e.NamespaceID, e.OutcomeID, e.OutcomeRevision, e.EventIndex, e.AggregateRef, e.PrincipalID, e.Actor, e.CommandID, e.RecordedAt, e.CorrelationID}
+	return IntegrationFact{1, e.EventID, e.EventType, e.TenantID, e.OutcomeID, e.OutcomeRevision, e.EventIndex, e.AggregateRef, e.PrincipalID, e.Actor, e.CommandID, e.RecordedAt, e.CorrelationID}
 }
 
 type TriggerFiring struct {

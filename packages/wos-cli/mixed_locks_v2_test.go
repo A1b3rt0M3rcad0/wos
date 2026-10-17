@@ -73,7 +73,7 @@ func TestSignedMixedLocalOperationsDoNotShareGlobalLock(t *testing.T) {
 	defer held()
 	start := make(chan struct{})
 	results := make(chan error, 5)
-	scope := d.Scope{NamespaceID: acquisition.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}
+	scope := d.Scope{TenantID: acquisition.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}
 	acquire := a.AcquireNextSignedWorkContractCommand{Scope: scope, SignerKeyID: acquisition.Signing.KeyID, Limit: 25, TTLSeconds: 300}
 	jobs := []func() error{
 		func() error {

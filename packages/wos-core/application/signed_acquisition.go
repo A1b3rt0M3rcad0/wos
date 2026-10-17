@@ -37,7 +37,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	server, err := s.requireSignedIssuer(ctx, uow, cmd.Scope.NamespaceID)
+	server, err := s.requireSignedIssuer(ctx, uow, cmd.Scope.TenantID)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -72,11 +72,11 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
+	nsPolicy, e := tenantAcceptancePolicy(ctx, registry, cmd.Scope.TenantID)
 	if e != nil {
 		return zero, 0, e
 	}
-	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveWorkContracts > 0)
+	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.TenantID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveWorkContracts > 0)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -86,8 +86,8 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if counts.CredentialWork >= credential.MaxActiveWorkContracts {
 		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "credential execution quota reached")
 	}
-	if nsPolicy.MaxActiveWorkContracts > 0 && counts.NamespaceWork >= nsPolicy.MaxActiveWorkContracts {
-		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace execution quota reached")
+	if nsPolicy.MaxActiveWorkContracts > 0 && counts.TenantWork >= nsPolicy.MaxActiveWorkContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Tenant execution quota reached")
 	}
 
 	var previous *d.WorkContract
@@ -188,13 +188,13 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "Task has no acknowledged prior review/correction")
 	}
 
-	group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
+	group, err := registry.PrincipalGroup(ctx, cmd.Scope.TenantID, identity.PrincipalID)
 	if err != nil {
 		return zero, 0, err
 	}
 	allowed := []d.ID{}
 	for _, id := range credential.AllowedSigningKeyIDs {
-		key, e := registry.Key(ctx, cmd.Scope.NamespaceID, id)
+		key, e := registry.Key(ctx, cmd.Scope.TenantID, id)
 		if e != nil {
 			if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
 				continue
@@ -205,7 +205,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 			allowed = append(allowed, id)
 		}
 	}
-	binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: floor, PolicyRevision: credential.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
+	binding := d.SignedContractBinding{ProtocolVersion: 3, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: floor, PolicyRevision: credential.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
 	if correction != nil {
 		binding.PreviousReviewCaseID = &correction.ID
 		binding.PreviousSubmissionID = &correction.SubmissionID
@@ -223,7 +223,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	p, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(uow, "signed"))
+	p, err := protocol.Lock(ctx, cmd.Scope.TenantID, exclusiveProtocolGuard(uow, "signed"))
 	if err != nil {
 		return zero, 0, err
 	}
@@ -232,7 +232,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 		return zero, 0, err
 	}
 	contract.SignedBinding = &binding
-	payload := signing.SpecPayload[d.SignedWorkSpec]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: cmd.Scope.NamespaceID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "execution", ContractID: contract.ID.String(), WorkItemID: work.ID.String(), Spec: d.NewSignedWorkSpec(contract.Spec, binding)}
+	payload := signing.SpecPayload[d.SignedWorkSpec]{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: cmd.Scope.TenantID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "execution", ContractID: contract.ID.String(), WorkItemID: work.ID.String(), Spec: d.NewSignedWorkSpec(contract.Spec, binding)}
 	specFact, specDocument, err := s.issueSignedFact(ctx, uow, server, cmd.Scope, contract.ID, "execution", "specification", identity.PrincipalID, signing.ContractSpec, payload, now)
 	if err != nil {
 		return zero, 0, err
@@ -265,7 +265,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 }
 func snapshotContractSpec(ctx context.Context, uow ports.UnitOfWork, work d.WorkItem) (d.WorkContractSpec, error) {
 	spec := d.WorkContractSpec{Title: work.Title, Description: work.Description, ObjectiveID: cloneIDPtr(work.ObjectiveID), Criteria: append([]d.SuccessCriterion{}, work.Criteria.Items...)}
-	outcome, err := uow.Outcomes().Get(ctx, work.Scope.NamespaceID, work.Scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, work.Scope.TenantID, work.Scope.OutcomeID)
 	if err != nil {
 		return spec, err
 	}
@@ -299,6 +299,6 @@ func (s *Service) issueWorkAuthority(ctx context.Context, uow ports.UnitOfWork, 
 	for _, id := range keys {
 		allowed = append(allowed, id.String())
 	}
-	payload := signing.AuthorityPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: c.Scope.NamespaceID.String(), OutcomeID: c.Scope.OutcomeID.String(), PrincipalID: c.HolderPrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "execution", ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), ContractVersion: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), IssuedAt: now.UTC().Format(time.RFC3339Nano), ExpiresAt: c.ExpiresAt.UTC().Format(time.RFC3339Nano), SpecDigest: c.SignedBinding.SpecificationDigest, AcceptanceMode: string(c.SignedBinding.AcceptanceFloor), PolicyRevision: signing.Decimal(policy.Version), AllowedSigningKeyIDs: allowed}
+	payload := signing.AuthorityPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: c.Scope.TenantID.String(), OutcomeID: c.Scope.OutcomeID.String(), PrincipalID: c.HolderPrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "execution", ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), ContractVersion: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), IssuedAt: now.UTC().Format(time.RFC3339Nano), ExpiresAt: c.ExpiresAt.UTC().Format(time.RFC3339Nano), SpecDigest: c.SignedBinding.SpecificationDigest, AcceptanceMode: string(c.SignedBinding.AcceptanceFloor), PolicyRevision: signing.Decimal(policy.Version), AllowedSigningKeyIDs: allowed}
 	return s.issueSignedFact(ctx, uow, server, c.Scope, c.ID, "execution", "authority", c.HolderPrincipalID, signing.ContractAuthority, payload, now)
 }

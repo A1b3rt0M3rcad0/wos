@@ -4,9 +4,11 @@ WOS persists and coordinates work across people, external agents and sessions.
 The same product runs on a small self-hosted server, a shared hosted installation
 or dedicated infrastructure. External runtimes still select and execute agents.
 
-This guide describes this branch's implementation. Use the
-[qualification record](qualification.md) for executed measurements and their
-boundaries; configuration alone does not establish production capacity.
+This guide describes the schema-per-Tenant branch architecture. Follow the
+[Tenant lifecycle and breaking cutover](tenants.md) before upgrading an existing
+installation. The [qualification record](qualification.md) retains the exact
+source of executed measurements; earlier runs do not qualify the new storage
+boundary, and configuration alone does not establish production capacity.
 
 ## Deployment progression
 
@@ -15,7 +17,7 @@ boundaries; configuration alone does not establish production capacity.
 | Local evaluation | One complete process with SQLite | Keeping the simple single-host workflow |
 | Small production | One complete process with PostgreSQL | Database sizing and workload measurement |
 | Replicated installation | API and worker roles against the same PostgreSQL database | Adding capacity to the role under pressure within a database connection budget |
-| Shared service | Several authorized Namespaces in one installation | Resource budgets and placement across installations |
+| Shared service | Several Tenant runtimes, each with a dedicated schema, in one database | Resource budgets and placement across databases/installations |
 | Dedicated service | The same WOS product with dedicated application/database resources | Independently sizing the installation and its infrastructure |
 
 Use the [public Compose profiles](../../deploy/scaling/README.md) for a small
@@ -24,9 +26,10 @@ are not required. The ordinary [local quick start](../../README.md#quick-start)
 continues to use SQLite. A SQLite database remains single-writer; mounting its
 file in more containers does not create a replicated database.
 
-Whole-installation [SQLite-to-PostgreSQL migration](mobility.md) is an explicit
-offline operation with source/destination verification. Starting on PostgreSQL
-avoids that operational cutover when production growth is already expected.
+[SQLite-to-PostgreSQL migration](mobility.md) is an explicit offline operation.
+It is distinct from adopting the Tenant catalog and cannot split a legacy
+multi-customer database automatically. Starting a new production Tenant on
+PostgreSQL avoids the SQLite backend cutover.
 
 ## One product, independently sized processes
 
@@ -42,10 +45,13 @@ migrate an installation, bootstrap its administrator or replace its issuer.
 Workers do not need the issuer private key. They need database access and the
 webhook secret/destination configuration appropriate to their queue.
 
-All processes in an installation use compatible binaries, one schema and the
-same installation identity. Browser sessions and pending work are durable; API
-load balancing requires no process-local business session or sticky routing.
-Open MCP streams reconnect after a process is lost; they do not own work state.
+All replicas of a Tenant use compatible binaries, its catalog-resolved schema
+and its persistent issuer identity. A process can host several independent
+Tenant runtimes through the explicit hostname map, each with its own fixed SQL
+pool and authentication state. Browser sessions and pending work are durable;
+load balancing must retain the selected Tenant host but needs no sticky routing
+to one replica. Open MCP streams reconnect after process loss; they do not own
+work state.
 
 ## Persistent state and concurrency
 
@@ -54,18 +60,18 @@ locking the Outcome for mutation. PostgreSQL retains shared authorization
 barriers so concurrent revocation and administrative changes remain ordered.
 SQLite has one writer and a bounded four-reader pool using WAL snapshots.
 
-Ordinary signed operations share the Namespace protocol barrier. Acquisition
-coordinates the relevant Principal quota and any explicitly configured Namespace
+Ordinary signed operations share the Tenant protocol barrier. Acquisition
+coordinates the relevant Principal quota and any explicitly configured Tenant
 ceiling before taking the Outcome mutation guard. Protocol/security changes
 retain exclusive coordination. One disputed Outcome, one Principal's acquisition
-quota and an enabled shared Namespace ceiling remain genuine shared resources.
+quota and an enabled shared Tenant ceiling remain genuine shared resources.
 
 PostgreSQL commands retain Serializable isolation. Conflicts can still occur;
 clients reconcile and repeat the same exact intention when appropriate. WOS
 does not silently change an expected version, sign a replacement intention or
 extend a lease to make a retry succeed. Configured signed authority ceilings
-retain their existing 1–100 validation; absent Namespace policy has no
-Namespace-wide ceiling and keeps the existing Principal defaults.
+retain their existing 1–100 validation; absent Tenant policy has no
+Tenant-wide ceiling and keeps the existing Principal defaults.
 
 Persistence writes compare transaction-local immutable snapshots, append new
 historical facts and update changed current links. Scoped set reads remove
@@ -80,9 +86,9 @@ traffic; full snapshots and exports retain their documented cost.
 | Setting | Meaning |
 | --- | --- |
 | `WOS_HTTP_MAX_INFLIGHT_REQUESTS` | Process-wide transport admission |
-| `WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE` | Optional authenticated-Namespace admission shared by HTTP/MCP in one process; zero disables |
+| `WOS_HTTP_MAX_INFLIGHT_PER_TENANT` | Optional authenticated-Tenant admission shared by HTTP/MCP in one process; zero disables |
 | `WOS_DELIVERY_WORKER_CONCURRENCY` | Local delivery lanes, with one lease per lane and no prefetch |
-| `WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE` | Live delivery lease ceiling across workers using the same policy; zero disables |
+| `WOS_DELIVERY_MAX_INFLIGHT_PER_TENANT` | Live delivery lease ceiling across workers using the same policy; zero disables |
 | `WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT` | Live lease ceiling for a configured endpoint across those workers; zero disables |
 | `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` | This process's database pool ceiling |
 
@@ -97,16 +103,21 @@ truncated. Reference identifiers retain their existing opaque-string contract.
 Configure additional workers with explicit disjoint secret-reference subsets
 and the corresponding endpoint allowlists when the installation needs more
 references; keep shared capacity limits equal.
-Namespace turns and endpoint caps protect other eligible work from a busy tenant
-or slow destination. The per-Namespace API setting is local, so its aggregate
+Tenant runtimes own separate delivery queues and endpoint caps protect eligible
+work from a slow destination. The per-Tenant API setting is local, so its aggregate
 capacity grows with API replicas. These are resource controls, not commercial
 billing meters or a distributed request-rate contract.
 
-Choose budgets from representative load. The sum of all process pools plus
+Choose budgets from representative load. Count every Tenant runtime in every
+process: five hosted Tenants mean five pools per replica. The sum of all pools,
+held lifecycle guards and catalog connections plus
 maintenance, backup and administrator connections must fit the actual database
 budget. Deployment diagnostics check the operator's declared process/budget
-values; they cannot discover unregistered processes or enforce the database's
-global connection ceiling.
+values, including one held lifecycle connection per Tenant runtime and the
+catalog pool (two for a single Tenant, four for a hosted group); they cannot
+discover unregistered processes or enforce the database's global connection
+ceiling. With pool eight and reserve twenty, four single-Tenant processes need
+64 connections and six need 86. See [deployment budgeting](../../deploy/scaling/README.md#budget-the-database-before-adding-processes).
 
 Storage quotas, query-cost classes and plan-specific commercial limits are not
 added by this branch. Provision shared capacity conservatively and measure its
@@ -114,7 +125,7 @@ growth; the implemented authority quotas are not storage or CPU quotas.
 
 ## Operator and tenant authority
 
-Namespace administration does not grant installation management. WOS uses its
+Tenant administration does not grant installation management. WOS uses its
 existing authorization system for explicit `installation:provision`,
 `installation:observe` and `installation:admin` capabilities. Fresh bootstrap
 grants operator capabilities; existing installations must explicitly promote
@@ -152,45 +163,38 @@ not qualified by adding replica processes.
 
 ## Fleet growth and mobility boundaries
 
-For customer-facing onboarding, use **Account** for a customer or organization
-and **Tenant** for its data/authorization boundary. The simple initial mapping is
-one Account to one Tenant. In the existing WOS API/CLI, that Tenant is a
-`Namespace`; the browser currently calls the same scope a Workspace. These are
-names for the existing boundary, not instructions to create a second isolation
-layer or a new database object. Renaming public contracts requires an explicit
-compatibility migration.
+Use **Account** for the customer or organization and **Tenant** for its complete
+WOS state boundary. One Account can initially map to one Tenant. Current API and
+CLI contracts use `tenant_id`; the browser calls the working context a Workspace.
+The Tenant ID records authenticated scope and provenance inside a schema. It no
+longer partitions several customers' domain rows in a shared schema.
 
-An Account is not an individual login. Several people and agents can be members,
-and one authenticated Principal can hold explicit access to several Tenants.
-Tenant placement is independent of identity: shared infrastructure, a dedicated
-installation and self-hosting do not require a different domain model. Account
-signup, commercial plans and billing belong to the hosting/consumer experience;
-they must provision and authorize the existing WOS scope rather than infer
-authority from an untrusted account identifier. This branch does not add a public
-Account/signup API or automatic cross-installation Tenant relocation.
+Each PostgreSQL Tenant owns its identities, credentials, issuer history, domain
+state, receipts and delivery queues. The shared catalog stores only placement and
+lifecycle metadata with administrative audit. A runtime resolves a fixed schema;
+requests cannot select SQL schemas or alter pooled connection routing. The
+[Tenant guide](tenants.md) documents the hostname mapping, provisioning and the
+stop-before-suspend/delete lifecycle.
 
-One Namespace can serve a customer, team, environment or another operator-chosen
-authorization scope. Several Namespaces can share an installation; several
-installations can share infrastructure. Replicas add capacity to an installation;
-new installations add environments and failure/isolation boundaries.
+A shared database can contain five Tenant schemas, or another operator-selected
+number. Resource usage and recovery requirements determine capacity. Dedicated
+customers use the same product against an exclusive database; dedicated compute
+and storage additionally require exclusive infrastructure. An idle schema consumes
+storage but is not a running process. Suspend access and stop unused runtimes to
+reduce compute; delete data only through an explicit retention-aware operation.
 
 WOS Cloud remains a separate private management repository. It provisions and
-operates this same product through administrative capabilities and external
-infrastructure, maintaining its own commercial organizations/plans/billing. It
-does not reproduce Outcomes, contracts, domain authorization or persistence.
+operates this product through generic administrative capabilities and external
+infrastructure, maintaining its own organizations, plans and billing. It does not
+reproduce Outcomes, contracts, domain authorization or persistence.
 
-Whole-installation movement preserves the installation identity. Shared-to-
-dedicated Namespace movement is a different trust protocol: use the executable
-[Namespace preflight](mobility.md) to inspect references, Principals, leases and
-outbox obligations. It deliberately cannot authorize transfer. Full Namespace
-transfer, generic shard routing and online migration remain planned; never copy
-the shared installation's private issuer into a tenant-owned service or rewrite
-historical signed bytes.
-
-The next storage-distribution boundary to evaluate is Namespace, whose quotas,
-authorization and idempotency already cross Outcomes. Add routing or another
-broker only when measured workload justifies it. No component can make a single
-hot Outcome or PostgreSQL primary grow without bounds.
+New Tenant placement is supported independently of moving an existing customer's
+signed history. Whole-state movement must preserve issuer identity, exact signed
+bytes, accepted receipts, active authority and delivery obligations. The
+[read-only Tenant preflight](mobility.md) cannot authorize transfer. Online
+relocation, automatic sharding, mixed-version rolling migration, cross-cluster
+scheduling and Cloud autoscaling remain separate work. No schema or replica count
+can make a single hot Outcome or PostgreSQL primary grow without bounds.
 
 ## Decisions and verification
 
@@ -200,4 +204,5 @@ hot Outcome or PostgreSQL primary grow without bounds.
 - [Installation operator authority](../adr/0041-installation-operator-authority.md).
 - [Storage growth and migration](../adr/0042-installation-mobility-and-tenant-transfer-boundaries.md).
 - [Shared budgets and delivery time](../adr/0043-shared-resource-budgets-and-delivery-time.md).
+- [Tenant storage and breaking cutover](tenants.md).
 - [Reproducible qualification](qualification.md): source, workload, measurements and unexecuted boundaries.

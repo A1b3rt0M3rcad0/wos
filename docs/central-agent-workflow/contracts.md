@@ -37,6 +37,6 @@ This terminal-resolution path does not cover activity appends. A frozen append t
 - Two local writers cannot lose one another's edits. Other Profiles can still operate while one contract is locked.
 - Tests retain full disk/process death, atomic publication, pending acquisition/lease/return and issuer recovery coverage.
 - Local cleanup requires verified signed closed acceptance. Server history and material remain available afterward.
-- Legacy imports retain unsigned status and cannot acquire retroactive signatures or bypass a signed Namespace.
+- Legacy imports retain unsigned status and cannot acquire retroactive signatures or bypass a signed Tenant.
 
 CAW-03 depends on central Profiles. A smaller CLI command surface must reuse these guards rather than create a second return protocol.

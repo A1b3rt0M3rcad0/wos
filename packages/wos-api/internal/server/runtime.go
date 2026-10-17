@@ -27,6 +27,10 @@ import (
 )
 
 type Runtime struct {
+	catalog             *postgres.TenantCatalog
+	lease               *postgres.TenantLease
+	ownCatalog          bool
+	children            []*Runtime
 	observer            *observability.Observer
 	config              Config
 	store               runtimeStore
@@ -48,6 +52,17 @@ type runtimeStore interface {
 }
 
 func OpenRuntime(config Config) (*Runtime, error) {
+	config = config.withTenantBindingDefaults()
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+	if len(config.TenantHosts) > 0 {
+		return openTenantHostRuntime(config)
+	}
+	return openSingleRuntime(config, nil)
+}
+
+func openSingleRuntime(config Config, catalog *postgres.TenantCatalog) (opened *Runtime, openingErr error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
@@ -56,17 +71,42 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	// Only an API/complete process may initialize an installation. A worker must
 	// connect to an already migrated schema, even when defaults enable migration.
 	migrate := config.Storage.MigrateOnStart && config.ServesAPI()
+	var lease *postgres.TenantLease
+	ownCatalog := false
+	defer func() {
+		if opened != nil {
+			return
+		}
+		if lease != nil {
+			_ = lease.Close()
+		}
+		if ownCatalog {
+			_ = catalog.Close()
+		}
+	}()
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: migrate, MaxOpenConnections: config.Storage.PostgresMaxOpenConnections})
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		binding, openErr := openTenantStorage(ctx, config, migrate, catalog)
+		if openErr != nil {
+			return nil, openErr
+		}
+		store, catalog, lease, ownCatalog = binding.Store, binding.Catalog, binding.Lease, binding.OwnCatalog
+		config.Auth.BootstrapTenantName = lease.Placement().Name
 	} else {
-		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: migrate})
+		tenantID, _ := domain.ParseID(config.Storage.TenantID)
+		tenantName := config.Auth.LocalTenantName
+		if config.Auth.Mode == AuthModeAPIToken {
+			tenantName = config.Auth.BootstrapTenantName
+		}
+		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: migrate, TenantID: tenantID, TenantName: tenantName})
 	}
 	if err != nil {
 		return nil, err
 	}
 
 	// Migration-disabled startup must also refuse unsupported schemas before
-	// bootstrap credentials, namespaces or any serving component can write.
+	// bootstrap credentials, tenants or any serving component can write.
 	version, err := store.SchemaVersion(context.Background())
 	supported, schemaErr := sqlite.LatestSchemaVersion()
 	if config.Storage.Driver == StorageDriverPostgres {
@@ -88,25 +128,25 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 	var security *application.SecurityService
-	var localNamespaces []ports.Namespace
+	var localTenants []ports.Tenant
 	var resolve func(*http.Request) (application.Identity, error)
 	var appAuthorizer ports.Authorizer = authorizer
 	if config.Auth.Mode == AuthModeLocal {
-		ns, _ := domain.ParseID(config.Auth.LocalNamespaceID)
-		namespace := ports.Namespace{ID: ns, Name: config.Auth.LocalNamespaceName}
-		if err = store.PutNamespace(context.Background(), namespace); err != nil {
+		ns, _ := domain.ParseID(config.Auth.LocalTenantID)
+		tenant := ports.Tenant{ID: ns, Name: config.Auth.LocalTenantName}
+		if err = store.PutTenant(context.Background(), tenant); err != nil {
 			if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeAlreadyExists {
 				store.Close()
 				return nil, err
 			}
 		}
-		localNamespaces = []ports.Namespace{namespace}
+		localTenants = []ports.Tenant{tenant}
 	}
 	if config.Auth.Mode == AuthModeAPIToken {
 		security = &application.SecurityService{Store: store, Clock: systemClock{}, IDs: ids}
 		if config.ServesAPI() {
-			ns, _ := domain.ParseID(config.Auth.BootstrapNamespaceID)
-			if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: config.Auth.BootstrapNamespaceName}, config.Auth.LocalPrincipalID, config.Auth.BootstrapToken); err != nil {
+			ns, _ := domain.ParseID(config.Auth.BootstrapTenantID)
+			if err := security.Bootstrap(context.Background(), ports.Tenant{ID: ns, Name: config.Auth.BootstrapTenantName}, config.Auth.LocalPrincipalID, config.Auth.BootstrapToken); err != nil {
 				store.Close()
 				return nil, err
 			}
@@ -114,6 +154,9 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		appAuthorizer = security
 		resolve = func(r *http.Request) (application.Identity, error) {
 			if identity, ok := application.IdentityFromContext(r.Context()); ok {
+				if config.Storage.TenantID != "" && identity.TenantID.String() != config.Storage.TenantID {
+					return application.Identity{}, domain.NewError(domain.ErrorCodeForbidden, "identity does not belong to the bound Tenant")
+				}
 				return identity, nil
 			}
 			raw := r.Header.Get("Authorization")
@@ -170,7 +213,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			LocalAuth:       auth,
 			ResolveIdentity: resolve,
 			Security:        security,
-			LocalNamespaces: localNamespaces,
+			LocalTenants:    localTenants,
 		})
 		if err != nil {
 			_ = store.Close()
@@ -184,7 +227,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		store.Close()
 		return nil, err
 	}
-	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer, deliveryDiagnostics: deliveryDiagnostics}
+	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer, deliveryDiagnostics: deliveryDiagnostics, catalog: catalog, lease: lease, ownCatalog: ownCatalog}
 	if config.RunsDeliveryWorker() {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
@@ -202,7 +245,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			return nil, err
 		}
 		runtime.deliveryWorker.Concurrency = config.Integration.WorkerConcurrency
-		runtime.deliveryWorker.ClaimPolicy = ports.DeliveryClaimPolicy{MaxInflightPerNamespace: config.Integration.MaxInflightPerNamespace, MaxInflightPerEndpoint: config.Integration.MaxInflightPerEndpoint}
+		runtime.deliveryWorker.ClaimPolicy = ports.DeliveryClaimPolicy{MaxInflightPerTenant: config.Integration.MaxInflightPerTenant, MaxInflightPerEndpoint: config.Integration.MaxInflightPerEndpoint}
 		if config.Storage.Driver == StorageDriverSQLite && config.Integration.WorkerConcurrency > 1 {
 			slog.Warn("sqlite_delivery_parallelism", "advisory", "SQLite serializes writes; measure before increasing delivery concurrency")
 		}
@@ -214,7 +257,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Cache-Control", "no-store")
-			json.NewEncoder(w).Encode(map[string]any{"api_prefix": config.HTTP.Prefix, "auth_mode": config.Auth.Mode})
+			json.NewEncoder(w).Encode(map[string]any{"api_prefix": config.HTTP.Prefix, "auth_mode": config.Auth.Mode, "tenant_bound": config.Storage.TenantID != "", "tenant_id": config.Storage.TenantID})
 		})
 		root.Handle("GET /app/", web.Handler())
 		root.HandleFunc("GET /app", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/app/", http.StatusSeeOther) })
@@ -279,7 +322,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	if config.ServesAPI() {
 		root.Handle("/", api)
 	}
-	admittedProduct := tenantAdmissionHTTP(config.HTTP.MaxInflightPerNamespace, resolve, root)
+	admittedProduct := tenantAdmissionHTTP(config.HTTP.MaxInflightPerTenant, resolve, root)
 	business := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.Auth.Mode == AuthModeLocal && !loopbackHost(r.Host) {
 			http.Error(w, "loopback host required", http.StatusForbidden)
@@ -329,55 +372,24 @@ func (r *Runtime) Serve(ctx context.Context) error {
 func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr error) {
 	defer listener.Close()
 	listener = &admissionListener{Listener: listener, slots: make(chan struct{}, r.config.Server.MaxConnections), observer: r.observer}
-	if r.config.ProcessRole() != ProcessRoleAPI {
-		maintenanceCtx, stop := context.WithCancel(ctx)
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			r.runMaintenance(maintenanceCtx, time.Minute)
-		}()
-		defer func() {
-			stop()
-			timer := time.NewTimer(r.config.Server.ShutdownTimeout)
-			defer timer.Stop()
-			select {
-			case <-done:
-			case <-timer.C:
-				serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "maintenance shutdown grace expired"))
-			}
-		}()
-	}
-	var workerFailure <-chan error
-	if r.deliveryWorker != nil {
-		workerCtx, stop := context.WithCancel(ctx)
-		done := make(chan struct{})
-		failed := make(chan error, 1)
-		if r.config.ProcessRole() == ProcessRoleWorker {
-			workerFailure = failed
+	backgroundCtx, stopBackground := context.WithCancel(ctx)
+	backgroundDone := make(chan error, 1)
+	backgroundConsumed := false
+	go func() { backgroundDone <- r.runBackground(backgroundCtx) }()
+	defer func() {
+		stopBackground()
+		if backgroundConsumed {
+			return
 		}
-		go func() {
-			defer close(done)
-			e := r.deliveryWorker.Run(workerCtx)
-			if workerCtx.Err() == nil {
-				slog.Error("delivery_worker_stopped", "failure_class", r.deliveryDiagnostics.DeliveryWorkerStatus().LastFailureClass)
-				if e == nil {
-					e = errors.New("delivery worker exited unexpectedly")
-				}
-				failed <- e
-			}
-		}()
-		defer func() {
-			stop()
-			timer := time.NewTimer(r.config.Server.ShutdownTimeout)
-			defer timer.Stop()
-			select {
-			case <-done:
-			case <-timer.C:
-				serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "delivery worker shutdown grace expired"))
-				slog.Error("delivery_worker_shutdown_timeout")
-			}
-		}()
-	}
+		timer := time.NewTimer(r.config.Server.ShutdownTimeout)
+		defer timer.Stop()
+		select {
+		case err := <-backgroundDone:
+			serveErr = errors.Join(serveErr, err)
+		case <-timer.C:
+			serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "background shutdown grace expired"))
+		}
+	}()
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -385,17 +397,21 @@ func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr er
 	}()
 
 	select {
-	case <-workerFailure:
-		// The worker-only process has no useful serving function after its pool
-		// dies. Exit so an external supervisor can restart it; complete mode
-		// continues exposing a healthy API and its failed local worker state.
+	case backgroundErr := <-backgroundDone:
+		backgroundConsumed = true
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), r.config.Server.ShutdownTimeout)
 		defer cancel()
 		if err := r.http.Shutdown(shutdownCtx); err != nil {
 			_ = r.http.Close()
 		}
 		<-errCh
-		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery worker stopped; inspect classified process diagnostics")
+		if ctx.Err() != nil {
+			return backgroundErr
+		}
+		if backgroundErr == nil {
+			backgroundErr = domain.NewError(domain.ErrorCodeInvalidConfig, "runtime background supervision stopped")
+		}
+		return backgroundErr
 	case err := <-errCh:
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
@@ -418,13 +434,37 @@ func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr er
 }
 
 func (r *Runtime) Close() error {
-	if r == nil || r.store == nil {
+	if r == nil {
 		return nil
 	}
-	return errors.Join(r.http.Close(), r.store.Close())
+	var errs []error
+	if r.http != nil {
+		errs = append(errs, r.http.Close())
+	}
+	for _, child := range r.children {
+		errs = append(errs, child.Close())
+	}
+	if r.store != nil {
+		errs = append(errs, r.store.Close())
+	}
+	if r.lease != nil {
+		errs = append(errs, r.lease.Close())
+	}
+	if r.ownCatalog && r.catalog != nil {
+		errs = append(errs, r.catalog.Close())
+	}
+	return errors.Join(errs...)
 }
 
-func (r *Runtime) Migrate(ctx context.Context) error { return r.store.Migrate(ctx) }
+func (r *Runtime) Migrate(ctx context.Context) error {
+	if r.lease != nil {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "PostgreSQL Tenant migrations require drained runtimes and the suspended Tenant migration operation")
+	}
+	if len(r.children) > 0 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "migrate each drained Tenant explicitly before starting a multi-Tenant host")
+	}
+	return r.store.Migrate(ctx)
+}
 func (r *Runtime) Backup(ctx context.Context, path string) error {
 	if store, ok := r.store.(interface {
 		Backup(context.Context, string) error
@@ -441,6 +481,10 @@ func (r *Runtime) handleLive(w http.ResponseWriter, _ *http.Request) {
 func (r *Runtime) handleReady(w http.ResponseWriter, request *http.Request) {
 	ctx, cancel := context.WithTimeout(request.Context(), 2*time.Second)
 	defer cancel()
+	if r.lease != nil && r.lease.CheckActive(ctx) != nil {
+		r.writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+		return
+	}
 	version, err := r.store.SchemaVersion(ctx)
 	supported, _ := sqlite.LatestSchemaVersion()
 	if r.config.Storage.Driver == StorageDriverPostgres {
@@ -474,8 +518,38 @@ func (r *Runtime) writeHealth(w http.ResponseWriter, status int, state string) {
 }
 
 func (r *Runtime) RunStdio(ctx context.Context) error {
+	if len(r.children) > 0 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "stdio requires one explicit Tenant; hostname routing is available over HTTP")
+	}
 	if r.mcpServer == nil {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "MCP is disabled")
 	}
-	return r.mcpServer.Run(ctx, &mcp.StdioTransport{MaxLineLength: mcptransport.MaxPayloadBytes})
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	backgroundDone := make(chan error, 1)
+	protocolDone := make(chan error, 1)
+	go func() { backgroundDone <- r.runBackground(runCtx) }()
+	go func() {
+		protocolDone <- r.mcpServer.Run(runCtx, &mcp.StdioTransport{MaxLineLength: mcptransport.MaxPayloadBytes})
+	}()
+	var result error
+	var remaining <-chan error
+	select {
+	case result = <-protocolDone:
+		remaining = backgroundDone
+	case result = <-backgroundDone:
+		remaining = protocolDone
+	}
+	cancel()
+	timer := time.NewTimer(r.config.Server.ShutdownTimeout)
+	defer timer.Stop()
+	select {
+	case err := <-remaining:
+		if err != nil && !errors.Is(err, context.Canceled) {
+			result = errors.Join(result, err)
+		}
+	case <-timer.C:
+		result = errors.Join(result, domain.NewError(domain.ErrorCode("deadline_exceeded"), "stdio shutdown grace expired"))
+	}
+	return result
 }

@@ -29,11 +29,11 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 			return result, e
 		}
 	}
-	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String(), workID.String()}
-	if e := r.row(ctx, `SELECT COUNT(*) FROM relations WHERE namespace_id=? AND outcome_id=? AND source_kind='work_item' AND source_id=? AND lifecycle='active'`, args...).Scan(&result.DependencyCount); e != nil {
+	args := []any{scope.TenantID.String(), scope.OutcomeID.String(), workID.String()}
+	if e := r.row(ctx, `SELECT COUNT(*) FROM relations WHERE tenant_id=? AND outcome_id=? AND source_kind='work_item' AND source_id=? AND lifecycle='active'`, args...).Scan(&result.DependencyCount); e != nil {
 		return result, e
 	}
-	rows, e := r.rows(ctx, "SELECT "+relationReadColumns+" FROM relations WHERE namespace_id=? AND outcome_id=? AND source_kind='work_item' AND source_id=? AND lifecycle='active' ORDER BY id LIMIT 101", args...)
+	rows, e := r.rows(ctx, "SELECT "+relationReadColumns+" FROM relations WHERE tenant_id=? AND outcome_id=? AND source_kind='work_item' AND source_id=? AND lifecycle='active' ORDER BY id LIMIT 101", args...)
 	if e != nil {
 		return result, e
 	}
@@ -50,7 +50,7 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 	if e != nil {
 		return result, e
 	}
-	joins := ` FROM relations r LEFT JOIN work_items w ON w.namespace_id=r.namespace_id AND w.outcome_id=r.outcome_id AND w.id=r.target_id AND r.target_kind='work_item' LEFT JOIN objectives o ON o.namespace_id=r.namespace_id AND o.outcome_id=r.outcome_id AND o.id=r.target_id AND r.target_kind='objective' WHERE r.namespace_id=? AND r.outcome_id=? AND r.source_kind='work_item' AND r.source_id=? AND r.lifecycle='active' AND r.relation_type='depends_on'`
+	joins := ` FROM relations r LEFT JOIN work_items w ON w.tenant_id=r.tenant_id AND w.outcome_id=r.outcome_id AND w.id=r.target_id AND r.target_kind='work_item' LEFT JOIN objectives o ON o.tenant_id=r.tenant_id AND o.outcome_id=r.outcome_id AND o.id=r.target_id AND r.target_kind='objective' WHERE r.tenant_id=? AND r.outcome_id=? AND r.source_kind='work_item' AND r.source_id=? AND r.lifecycle='active' AND r.relation_type='depends_on'`
 	var missing int
 	if e = r.row(ctx, "SELECT COUNT(*)"+joins+` AND ((r.target_kind='work_item' AND w.id IS NULL) OR (r.target_kind='objective' AND o.id IS NULL) OR r.target_kind NOT IN('work_item','objective'))`, args...).Scan(&missing); e != nil {
 		return result, e
@@ -78,10 +78,10 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 	if e != nil {
 		return result, e
 	}
-	if e = r.row(ctx, `SELECT COUNT(*) FROM decisions WHERE namespace_id=? AND outcome_id=? AND lifecycle='accepted'`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&result.DecisionCount); e != nil {
+	if e = r.row(ctx, `SELECT COUNT(*) FROM decisions WHERE tenant_id=? AND outcome_id=? AND lifecycle='accepted'`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&result.DecisionCount); e != nil {
 		return result, e
 	}
-	rows, e = r.rows(ctx, "SELECT "+decisionReadColumns+" FROM decisions WHERE namespace_id=? AND outcome_id=? AND lifecycle='accepted' ORDER BY id LIMIT 26", scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e = r.rows(ctx, "SELECT "+decisionReadColumns+" FROM decisions WHERE tenant_id=? AND outcome_id=? AND lifecycle='accepted' ORDER BY id LIMIT 26", scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return result, e
 	}
@@ -99,16 +99,16 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 		return result, e
 	}
 	predicate := ` AND ((target_kind='outcome' AND target_id=?) OR (target_kind='work_item' AND target_id=?)`
-	linkArgs := []any{scope.NamespaceID.String(), scope.OutcomeID.String(), scope.OutcomeID.String(), workID.String()}
+	linkArgs := []any{scope.TenantID.String(), scope.OutcomeID.String(), scope.OutcomeID.String(), workID.String()}
 	if objectiveID != nil {
 		predicate += ` OR (target_kind='objective' AND target_id=?)`
 		linkArgs = append(linkArgs, objectiveID.String())
 	}
 	predicate += ")"
-	if e = r.row(ctx, `SELECT COUNT(*) FROM evidence_links WHERE namespace_id=? AND outcome_id=? AND lifecycle='active'`+predicate, linkArgs...).Scan(&result.EvidenceLinkCount); e != nil {
+	if e = r.row(ctx, `SELECT COUNT(*) FROM evidence_links WHERE tenant_id=? AND outcome_id=? AND lifecycle='active'`+predicate, linkArgs...).Scan(&result.EvidenceLinkCount); e != nil {
 		return result, e
 	}
-	rows, e = r.rows(ctx, "SELECT "+evidenceLinkReadColumns+" FROM evidence_links WHERE namespace_id=? AND outcome_id=? AND lifecycle='active'"+predicate+" ORDER BY id LIMIT 26", linkArgs...)
+	rows, e = r.rows(ctx, "SELECT "+evidenceLinkReadColumns+" FROM evidence_links WHERE tenant_id=? AND outcome_id=? AND lifecycle='active'"+predicate+" ORDER BY id LIMIT 26", linkArgs...)
 	if e != nil {
 		return result, e
 	}
@@ -126,13 +126,13 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 }
 
 const focalAncestorCTE = `WITH RECURSIVE ancestors(id,parent_objective_id) AS (
- SELECT id,parent_objective_id FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?
+ SELECT id,parent_objective_id FROM objectives WHERE tenant_id=? AND outcome_id=? AND id=?
  UNION
- SELECT o.id,o.parent_objective_id FROM objectives o JOIN ancestors a ON o.id=a.parent_objective_id WHERE o.namespace_id=? AND o.outcome_id=?
+ SELECT o.id,o.parent_objective_id FROM objectives o JOIN ancestors a ON o.id=a.parent_objective_id WHERE o.tenant_id=? AND o.outcome_id=?
 ) `
 
 func (r continuityReadRepository) focalAncestors(ctx context.Context, scope d.Scope, id d.ID) ([]d.Objective, error) {
-	rows, e := r.rows(ctx, focalAncestorCTE+`SELECT id,parent_objective_id FROM ancestors ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, focalAncestorCTE+`SELECT id,parent_objective_id FROM ancestors ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String(), id.String(), scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -171,10 +171,10 @@ func (r continuityReadRepository) focalBlockers(ctx context.Context, scope d.Sco
 	args := []any{}
 	if objectiveID != nil {
 		prefix = focalAncestorCTE
-		args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String(), objectiveID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+		args = append(args, scope.TenantID.String(), scope.OutcomeID.String(), objectiveID.String(), scope.TenantID.String(), scope.OutcomeID.String())
 	}
-	query := prefix + "SELECT " + blockerReadColumns + ` FROM blockers WHERE namespace_id=? AND outcome_id=? AND lifecycle='active' AND ((blocked_kind='work_item' AND blocked_id=?) OR (propagation='subtree' AND ((blocked_kind='outcome' AND blocked_id=?)`
-	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String(), workID.String(), scope.OutcomeID.String())
+	query := prefix + "SELECT " + blockerReadColumns + ` FROM blockers WHERE tenant_id=? AND outcome_id=? AND lifecycle='active' AND ((blocked_kind='work_item' AND blocked_id=?) OR (propagation='subtree' AND ((blocked_kind='outcome' AND blocked_id=?)`
+	args = append(args, scope.TenantID.String(), scope.OutcomeID.String(), workID.String(), scope.OutcomeID.String())
 	if objectiveID != nil {
 		query += ` OR (blocked_kind='objective' AND blocked_id IN(SELECT id FROM ancestors))`
 	}

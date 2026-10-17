@@ -25,7 +25,7 @@ func returnFixtureV2(t *testing.T) (ProjectV2, ProfileV2, []byte, ContractFileV2
 		t.Fatal(e)
 	}
 	g := view.Authority
-	b := signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: g.ServerID, NamespaceID: g.NamespaceID, OutcomeID: g.OutcomeID, PrincipalID: g.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, RequestID: "0199ac10-0000-7000-8000-000000000011", IdempotencyKey: "frozen-return-fixture", OperationKind: "work_return", ContractID: g.ContractID, WorkItemID: g.WorkItemID, ExecutionID: g.ExecutionID, FencingToken: g.FencingToken, SpecDigest: g.SpecDigest, AuthorityDigest: signing.Digest(file.Issued.Authority.Payload), ExpectedContractVersion: g.ContractVersion, ExpectedLeaseVersion: g.LeaseVersion, ExpectedWorkItemVersion: file.Local.WorkItemVersion, PolicyRevision: 1}
+	b := signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: g.ServerID, TenantID: g.TenantID, OutcomeID: g.OutcomeID, PrincipalID: g.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, RequestID: "0199ac10-0000-7000-8000-000000000011", IdempotencyKey: "frozen-return-fixture", OperationKind: "work_return", ContractID: g.ContractID, WorkItemID: g.WorkItemID, ExecutionID: g.ExecutionID, FencingToken: g.FencingToken, SpecDigest: g.SpecDigest, AuthorityDigest: signing.Digest(file.Issued.Authority.Payload), ExpectedContractVersion: g.ContractVersion, ExpectedLeaseVersion: g.LeaseVersion, ExpectedWorkItemVersion: file.Local.WorkItemVersion, PolicyRevision: 1}
 	private := ed25519.NewKeyFromSeed(make([]byte, 32))
 	env, e := signing.Sign(signing.WorkReturn, signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: b, CompletionIntent: "auto", Material: file.Execution.Material}, profile.Signing.KeyID.String(), private)
 	if e != nil {
@@ -45,7 +45,7 @@ func returnFixtureV2(t *testing.T) (ProjectV2, ProfileV2, []byte, ContractFileV2
 	if e != nil {
 		t.Fatal(e)
 	}
-	receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: b.ServerID, NamespaceID: b.NamespaceID, OutcomeID: b.OutcomeID, PrincipalID: b.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}, RequestID: b.RequestID, IdempotencyKey: b.IdempotencyKey, RequestDigest: frozen.RequestDigest, ContractID: b.ContractID, WorkItemID: b.WorkItemID, Accepted: true, LocalObligationClosed: true, ContractStatus: "delivered", Disposition: "delivered_for_review"}
+	receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: b.ServerID, TenantID: b.TenantID, OutcomeID: b.OutcomeID, PrincipalID: b.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}, RequestID: b.RequestID, IdempotencyKey: b.IdempotencyKey, RequestDigest: frozen.RequestDigest, ContractID: b.ContractID, WorkItemID: b.WorkItemID, Accepted: true, LocalObligationClosed: true, ContractStatus: "delivered", Disposition: "delivered_for_review"}
 	envelope, e := signing.Sign(signing.AcceptanceReceipt, receipt, receipt.SignerKeyID, private)
 	if e != nil {
 		t.Fatal(e)

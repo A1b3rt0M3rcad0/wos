@@ -67,11 +67,11 @@ func signedRequestHint[T any](envelope signing.Envelope, target *T) error {
 	return signingError(signing.DecodeStrict(payload, target, 180*1024))
 }
 func signedRequestScope(b signing.RequestBinding) (d.Scope, error) {
-	scope := d.Scope{NamespaceID: d.ID(b.NamespaceID), OutcomeID: d.ID(b.OutcomeID)}
+	scope := d.Scope{TenantID: d.ID(b.TenantID), OutcomeID: d.ID(b.OutcomeID)}
 	if err := scope.Validate(); err != nil {
 		return scope, err
 	}
-	if b.ProtocolVersion != 2 || b.PrincipalID == "" || d.ID(b.RequestID).Validate() != nil || d.ID(b.ContractID).Validate() != nil || d.ID(b.WorkItemID).Validate() != nil || d.ID(b.ExecutionID).Validate() != nil || d.ID(b.SignerKeyID).Validate() != nil || d.ValidateIdempotencyKey(b.IdempotencyKey) != nil || b.FencingToken == 0 || b.ExpectedContractVersion == 0 || b.ExpectedLeaseVersion == 0 || b.ExpectedWorkItemVersion == 0 || b.PolicyRevision == 0 || !d.ValidSignedDigest(b.SpecDigest) || !d.ValidSignedDigest(b.AuthorityDigest) {
+	if b.ProtocolVersion != 3 || b.PrincipalID == "" || d.ID(b.RequestID).Validate() != nil || d.ID(b.ContractID).Validate() != nil || d.ID(b.WorkItemID).Validate() != nil || d.ID(b.ExecutionID).Validate() != nil || d.ID(b.SignerKeyID).Validate() != nil || d.ValidateIdempotencyKey(b.IdempotencyKey) != nil || b.FencingToken == 0 || b.ExpectedContractVersion == 0 || b.ExpectedLeaseVersion == 0 || b.ExpectedWorkItemVersion == 0 || b.PolicyRevision == 0 || !d.ValidSignedDigest(b.SpecDigest) || !d.ValidSignedDigest(b.AuthorityDigest) {
 		return scope, d.NewError(d.ErrorCodeInvalidArgument, "signed request bindings are incomplete")
 	}
 	return scope, nil
@@ -106,7 +106,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if err != nil {
 			return zero, 0, err
 		}
-		key, err := registry.Key(ctx, scope.NamespaceID, d.ID(hint.SignerKeyID))
+		key, err := registry.Key(ctx, scope.TenantID, d.ID(hint.SignerKeyID))
 		if err != nil {
 			return zero, 0, err
 		}
@@ -132,7 +132,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if err = s.rejectClosedReturn(ctx, u, request.RequestBinding, "ReturnSignedWork", "execution", digest); err != nil {
 			return zero, 0, err
 		}
-		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
+		if prior, e := repo.Acceptance(ctx, scope.TenantID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
 			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "execution", d.ID(request.ContractID)); e != nil {
 				return zero, 0, e
 			}
@@ -155,7 +155,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if err != nil {
 			return zero, 0, err
 		}
-		server, err := s.requireSignedIssuer(ctx, u, scope.NamespaceID)
+		server, err := s.requireSignedIssuer(ctx, u, scope.TenantID)
 		if err != nil {
 			return zero, 0, err
 		}
@@ -291,7 +291,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		if err != nil {
 			return zero, 0, err
 		}
-		submission := d.WorkSubmission{ProtocolVersion: 2, ID: submissionID, Scope: scope, Material: material, Digest: materialDigest, PrincipalID: identity.PrincipalID, Actor: cc.Actor, SubmittedAt: now}
+		submission := d.WorkSubmission{ProtocolVersion: 3, ID: submissionID, Scope: scope, Material: material, Digest: materialDigest, PrincipalID: identity.PrincipalID, Actor: cc.Actor, SubmittedAt: now}
 		if request.SupersedesSubmissionID != "" {
 			id := d.ID(request.SupersedesSubmissionID)
 			submission.SupersedesSubmissionID = &id
@@ -426,7 +426,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		for k, v := range registered.LocalKeys {
 			localKeys[k] = v.String()
 		}
-		receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: scope.NamespaceID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, LocalKeys: localKeys, RequestID: request.RequestID, IdempotencyKey: cc.IdempotencyKey, RequestDigest: digest, ContractID: contract.ID.String(), WorkItemID: work.ID.String(), SubmissionID: submission.ID.String(), SubmissionDigest: submission.Digest, OutcomeRevision: signing.Decimal(revision), Accepted: true, Disposition: disposition, ContractStatus: string(contract.Status), WorkItemLifecycle: string(work.Lifecycle), LocalObligationClosed: true, AcceptedAt: now.UTC().Format(time.RFC3339Nano)}
+		receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: scope.TenantID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, LocalKeys: localKeys, RequestID: request.RequestID, IdempotencyKey: cc.IdempotencyKey, RequestDigest: digest, ContractID: contract.ID.String(), WorkItemID: work.ID.String(), SubmissionID: submission.ID.String(), SubmissionDigest: submission.Digest, OutcomeRevision: signing.Decimal(revision), Accepted: true, Disposition: disposition, ContractStatus: string(contract.Status), WorkItemLifecycle: string(work.Lifecycle), LocalObligationClosed: true, AcceptedAt: now.UTC().Format(time.RFC3339Nano)}
 		if review != nil {
 			receipt.ReviewCaseID = review.ID.String()
 		}

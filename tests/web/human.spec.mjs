@@ -29,7 +29,7 @@ test("F01: save a persisted Draft without command names, UUIDs or Advanced; setu
   await save(page);
   await expect(page.locator("#title")).toHaveText("My first Outcome");
   await expect(page.locator("#state")).toHaveText("Draft");
-  const pageData = await wos.api(`/namespaces/${wos.namespace}/outcomes`);
+  const pageData = await wos.api(`/tenants/${wos.tenant}/outcomes`);
   assert.equal(pageData.items.length, 1);
   assert.equal(pageData.items[0].lifecycle, "draft");
 });
@@ -122,11 +122,11 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
     .fill("First reviewed plan");
   await save(page);
   const plans = await wos.api(
-    `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/roadmaps`,
+    `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/roadmaps`,
   );
   let original = (
     await wos.api(
-      `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/roadmaps/${plans.items[0].id}`,
+      `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/roadmaps/${plans.items[0].id}`,
     )
   ).value;
   const revision = JSON.stringify(original.revisions[0]);
@@ -157,7 +157,7 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
   await save(page);
   original = (
     await wos.api(
-      `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/roadmaps/${plans.items[0].id}`,
+      `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/roadmaps/${plans.items[0].id}`,
     )
   ).value;
   assert.equal(JSON.stringify(original.revisions[0]), revision);
@@ -165,7 +165,7 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
   assert.equal(
     (
       await wos.api(
-        `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/work-items/${task.id}`,
+        `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/work-items/${task.id}`,
       )
     ).value.lifecycle,
     "todo",
@@ -249,7 +249,7 @@ test("F06: reporting an Issue and blocking work are explicit; resolving the Issu
   await page.getByLabel("Confirm work can proceed", { exact: true }).check();
   await save(page);
   const blockers = await wos.api(
-    `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/blockers`,
+    `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/blockers`,
   );
   assert.equal(blockers.items[0].lifecycle, "resolved");
 });
@@ -296,7 +296,7 @@ test("F08: conflict retains local edits, compares latest state and requires a ne
   assert.equal(
     (
       await wos.api(
-        `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`,
+        `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`,
       )
     ).value.version,
     value.version + 2,
@@ -345,7 +345,7 @@ test("F08: lost response retries the committed command with identical bytes and 
   assert.equal(
     (
       await wos.api(
-        `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`,
+        `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`,
       )
     ).value.version,
     value.version + 1,
@@ -359,7 +359,7 @@ test("reference picker searches 1,001 authorized Tasks and Evidence beyond the f
   const seed = await seedWorkspace({
     url: wos.url,
     token: wos.token,
-    namespace: wos.namespace,
+    tenant: wos.tenant,
     size: 1001,
   });
   await wos.login(page);
@@ -379,11 +379,11 @@ test("reference picker searches 1,001 authorized Tasks and Evidence beyond the f
   );
   await save(page);
   const refs = await wos.api(
-    `/namespaces/${wos.namespace}/outcomes/${seed.outcome.id}/references?kind=work_item&query=Task%20with%20distant%20context`,
+    `/tenants/${wos.tenant}/outcomes/${seed.outcome.id}/references?kind=work_item&query=Task%20with%20distant%20context`,
   );
   const task = (
     await wos.api(
-      `/namespaces/${wos.namespace}/outcomes/${seed.outcome.id}/work-items/${refs.items[0].ref.id}`,
+      `/tenants/${wos.tenant}/outcomes/${seed.outcome.id}/work-items/${refs.items[0].ref.id}`,
     )
   ).value;
   assert.equal(task.execution_spec.context_refs.length, 2);

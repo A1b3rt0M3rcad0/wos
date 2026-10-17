@@ -10,7 +10,7 @@ import (
 
 var ErrWorkerPanic = errors.New("delivery worker panicked; inspect isolated server diagnostics")
 
-// Diagnostics exposes process metadata only. Durable per-Namespace delivery
+// Diagnostics exposes process metadata only. Durable per-Tenant delivery
 // times/counts belong to the database read port, not this in-memory heartbeat.
 type Diagnostics struct {
 	mu     sync.Mutex

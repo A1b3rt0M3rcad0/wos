@@ -12,7 +12,7 @@ import (
 )
 
 func TestSignedCommandsReadBoundedOriginalResponse(t *testing.T) {
-	scope := d.Scope{NamespaceID: d.ID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.ID("0199a555-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.ID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.ID("0199a555-0000-7000-8000-000000000002")}
 	payloadSize := 300 << 10
 	endpoint := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"value": map[string]any{"acquired": false, "search_complete": true, "reasons": []string{strings.Repeat("x", payloadSize)}}, "command_id": "0199a555-0000-7000-8000-000000000003", "outcome_revision": "1"})
@@ -22,7 +22,7 @@ func TestSignedCommandsReadBoundedOriginalResponse(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	cmd := a.AcquireNextSignedWorkContractCommand{Scope: scope, SignerKeyID: scope.NamespaceID, Limit: 1}
+	cmd := a.AcquireNextSignedWorkContractCommand{Scope: scope, SignerKeyID: scope.TenantID, Limit: 1}
 	result, e := client.AcquireNextSignedWorkContract(context.Background(), "original-signed-search", cmd)
 	if e != nil || len(result.Value.Reasons) != 1 || len(result.Value.Reasons[0]) != payloadSize {
 		t.Fatalf("bounded original response truncated: %v", e)

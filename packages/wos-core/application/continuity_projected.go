@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"strings"
 	"time"
 )
@@ -186,7 +187,7 @@ func (s *Service) projectedContinuitySection(ctx context.Context, scope d.Scope,
 	var cursor queryCursor
 	if rawCursor != "" {
 		var e error
-		cursor, e = decodeCursor(rawCursor, scope.NamespaceID, scope.OutcomeID, section, "")
+		cursor, e = decodeCursor(rawCursor, scope.TenantID, scope.OutcomeID, section, "")
 		if e != nil {
 			return zero, true, e
 		}
@@ -365,7 +366,7 @@ func projectedSectionPage(ctx context.Context, frame *continuityReadFrame, scope
 		case "external_references", "active_plan_references", "conclusion_contestations":
 			key = "h:" + filterHash(last.Value)
 		}
-		result.NextCursor = encodeCursor(queryCursor{CursorVersion: 2, Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: section, Revision: frame.revision, Key: key, EvaluatedAt: frame.at})
+		result.NextCursor = encodeCursor(queryCursor{CursorVersion: 2, Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: section, Revision: frame.revision, Key: key, EvaluatedAt: frame.at})
 	}
 	raw, e := json.Marshal(result)
 	if e != nil {
@@ -391,7 +392,7 @@ func populateBlockingItems(ctx context.Context, frame *continuityReadFrame, scop
 	ids := []d.ID{}
 	seen := map[d.ID]bool{}
 	for i, raw := range values {
-		if e := json.Unmarshal(raw, &states[i]); e != nil {
+		if e := signing.DecodeStoredJSON(raw, &states[i], 0); e != nil {
 			return nil, e
 		}
 		for _, applied := range states[i].ActiveBlockers {

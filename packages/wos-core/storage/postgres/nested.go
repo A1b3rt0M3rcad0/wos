@@ -86,8 +86,8 @@ func syncActorLinks(
 	}
 	if _, err := tx.ExecContext(ctx, `
 DELETE FROM entity_actor_links
-WHERE namespace_id = $1 AND outcome_id = $2 AND entity_id = $3 AND role = $4`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), role,
+WHERE tenant_id = $1 AND outcome_id = $2 AND entity_id = $3 AND role = $4`,
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), role,
 	); err != nil {
 		return mapSQLError("replace actor links", err)
 	}
@@ -107,10 +107,10 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND entity_id = $3 AND role = $4`,
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO entity_actor_links (
-    namespace_id, outcome_id, entity_id, role,
+    tenant_id, outcome_id, entity_id, role,
     actor_kind, actor_provider, actor_id, actor_json
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-			owner.NamespaceID.String(),
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			owner.ID.String(),
 			role,
@@ -134,9 +134,9 @@ func loadActorLinks(
 	rows, err := tx.QueryContext(ctx, `
 SELECT actor_json
 FROM entity_actor_links
-WHERE namespace_id = $1 AND outcome_id = $2 AND entity_id = $3 AND role = $4
+WHERE tenant_id = $1 AND outcome_id = $2 AND entity_id = $3 AND role = $4
 ORDER BY actor_kind, actor_provider, actor_id`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), role,
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), role,
 	)
 	if err != nil {
 		return nil, mapSQLError("load actor links", err)
@@ -177,14 +177,14 @@ func syncCriteria(
 		}
 		_, err := tx.ExecContext(ctx, `
 INSERT INTO success_criteria (
-    id, namespace_id, outcome_id, owner_id, owner_kind,
+    id, tenant_id, outcome_id, owner_id, owner_kind,
     criterion_revision, status, created_at
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT(id) DO UPDATE SET
     criterion_revision = excluded.criterion_revision,
     status = excluded.status`,
 			criterion.ID.String(),
-			owner.NamespaceID.String(),
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			owner.ID.String(),
 			owner.Kind.String(),
@@ -217,10 +217,10 @@ ON CONFLICT(id) DO UPDATE SET
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO criterion_revisions (
-    namespace_id, outcome_id, criterion_id, criterion_revision,
+    tenant_id, outcome_id, criterion_id, criterion_revision,
     definition_json, required, verification_mode, status, created_at
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING`,
-			owner.NamespaceID.String(),
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			revision.CriterionID.String(),
 			int64(revision.Revision),
@@ -264,12 +264,12 @@ INSERT INTO criterion_revisions (
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO criterion_assessments (
-    id, namespace_id, outcome_id, criterion_id, criterion_revision,
+    id, tenant_id, outcome_id, criterion_id, criterion_revision,
     result, rationale, principal_id, actor_json, assessed_at,
     evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) ON CONFLICT DO NOTHING`,
 			assessment.ID.String(),
-			owner.NamespaceID.String(),
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			assessment.CriterionID.String(),
 			int64(assessment.CriterionRevision),
@@ -286,9 +286,9 @@ INSERT INTO criterion_assessments (
 		for _, evidenceID := range assessment.EvidenceIDs {
 			if _, err := tx.ExecContext(ctx, `
 INSERT INTO criterion_assessment_evidence (
-    namespace_id, outcome_id, assessment_id, evidence_id
+    tenant_id, outcome_id, assessment_id, evidence_id
 ) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
-				owner.NamespaceID.String(),
+				owner.TenantID.String(),
 				owner.OutcomeID.String(),
 				assessment.ID.String(),
 				evidenceID.String(),
@@ -311,7 +311,7 @@ INSERT INTO criterion_assessment_evidence (
 			continue
 		}
 		if !present {
-			if _, err := tx.ExecContext(ctx, `DELETE FROM criterion_current_assessments WHERE namespace_id=$1 AND outcome_id=$2 AND criterion_id=$3`, owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String()); err != nil {
+			if _, err := tx.ExecContext(ctx, `DELETE FROM criterion_current_assessments WHERE tenant_id=$1 AND outcome_id=$2 AND criterion_id=$3`, owner.TenantID.String(), owner.OutcomeID.String(), criterion.ID.String()); err != nil {
 				return mapSQLError("clear current criterion assessment", err)
 			}
 			continue
@@ -319,10 +319,10 @@ INSERT INTO criterion_assessment_evidence (
 		criterionID := criterion.ID
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO criterion_current_assessments (
-    namespace_id, outcome_id, criterion_id, assessment_id
+    tenant_id, outcome_id, criterion_id, assessment_id
 ) VALUES ($1, $2, $3, $4)
-ON CONFLICT(namespace_id,outcome_id,criterion_id) DO UPDATE SET assessment_id=excluded.assessment_id`,
-			owner.NamespaceID.String(),
+ON CONFLICT(tenant_id,outcome_id,criterion_id) DO UPDATE SET assessment_id=excluded.assessment_id`,
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			criterionID.String(),
 			assessment.ID.String(),
@@ -345,8 +345,8 @@ func verifyCriterionRevision(
 	err := tx.QueryRowContext(ctx, `
 SELECT definition_json, required, verification_mode, status
 FROM criterion_revisions
-WHERE namespace_id = $1 AND outcome_id = $2 AND criterion_id = $3 AND criterion_revision = $4`,
-		scope.NamespaceID.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND criterion_id = $3 AND criterion_revision = $4`,
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		revision.CriterionID.String(),
 		int64(revision.Revision),
@@ -382,8 +382,8 @@ func verifyCriterionAssessment(
 SELECT criterion_id, criterion_revision, result, rationale, principal_id,
        actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
 FROM criterion_assessments
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND id = $3`,
+		scope.TenantID.String(),
 		scope.OutcomeID.String(),
 		assessment.ID.String(),
 	).Scan(
@@ -470,13 +470,13 @@ SELECT c.id, c.criterion_revision, c.status,
        r.definition_json, r.required, r.verification_mode
 FROM success_criteria c
 JOIN criterion_revisions r
-  ON r.namespace_id = c.namespace_id
+  ON r.tenant_id = c.tenant_id
  AND r.outcome_id = c.outcome_id
  AND r.criterion_id = c.id
  AND r.criterion_revision = c.criterion_revision
-WHERE c.namespace_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
+WHERE c.tenant_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
 ORDER BY c.created_at, c.id`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
 	)
 	if err != nil {
 		return domain.CriterionSet{}, mapSQLError("load criteria", err)
@@ -522,12 +522,12 @@ ORDER BY c.created_at, c.id`,
 SELECT r.criterion_id, r.criterion_revision, r.definition_json, r.required, r.verification_mode, r.status
 FROM criterion_revisions r
 JOIN success_criteria c
-  ON c.namespace_id = r.namespace_id
+  ON c.tenant_id = r.tenant_id
  AND c.outcome_id = r.outcome_id
  AND c.id = r.criterion_id
-WHERE c.namespace_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
+WHERE c.tenant_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
 ORDER BY r.criterion_id, r.criterion_revision`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
 	)
 	if err != nil {
 		return domain.CriterionSet{}, mapSQLError("load criterion revision history", err)
@@ -578,12 +578,12 @@ SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,
        a.supersedes_assessment_id, a.submission_id, a.submission_digest
 FROM criterion_assessments a
 JOIN success_criteria c
-  ON c.namespace_id = a.namespace_id
+  ON c.tenant_id = a.tenant_id
  AND c.outcome_id = a.outcome_id
  AND c.id = a.criterion_id
-WHERE c.namespace_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
+WHERE c.tenant_id = $1 AND c.outcome_id = $2 AND c.owner_id = $3 AND c.owner_kind = $4
 ORDER BY a.assessed_at, a.id`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
 	)
 	if err != nil {
 		return domain.CriterionSet{}, mapSQLError("load criterion assessments", err)
@@ -626,14 +626,14 @@ ORDER BY a.assessed_at, a.id`,
 	currentRows, err := tx.QueryContext(ctx, `
 SELECT criterion_id, assessment_id
 FROM criterion_current_assessments
-WHERE namespace_id = $1 AND outcome_id = $2
+WHERE tenant_id = $1 AND outcome_id = $2
   AND criterion_id IN (
       SELECT id FROM success_criteria
-      WHERE namespace_id = $3 AND outcome_id = $4 AND owner_id = $5 AND owner_kind = $6
+      WHERE tenant_id = $3 AND outcome_id = $4 AND owner_id = $5 AND owner_kind = $6
   )
 ORDER BY criterion_id`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(),
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String(),
 	)
 	if err != nil {
 		return domain.CriterionSet{}, mapSQLError("load current assessments", err)
@@ -740,9 +740,9 @@ func loadAssessmentEvidence(
 	rows, err := tx.QueryContext(ctx, `
 SELECT evidence_id
 FROM criterion_assessment_evidence
-WHERE namespace_id = $1 AND outcome_id = $2 AND assessment_id = $3
+WHERE tenant_id = $1 AND outcome_id = $2 AND assessment_id = $3
 ORDER BY evidence_id`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), assessmentID.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(), assessmentID.String(),
 	)
 	if err != nil {
 		return nil, mapSQLError("load criterion assessment evidence", err)
@@ -782,7 +782,7 @@ func syncConclusions(
 	baseline *ownedStateSnapshot,
 ) error {
 	if current == nil && (baseline == nil || baseline.currentConclusion != "") {
-		if _, err := tx.ExecContext(ctx, `DELETE FROM aggregate_current_conclusions WHERE namespace_id=$1 AND outcome_id=$2 AND owner_id=$3`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String()); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM aggregate_current_conclusions WHERE tenant_id=$1 AND outcome_id=$2 AND owner_id=$3`, owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String()); err != nil {
 			return mapSQLError("clear current conclusion", err)
 		}
 	}
@@ -834,12 +834,12 @@ func syncConclusions(
 		}
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO conclusions (
-    id, namespace_id, outcome_id, owner_id, ordinal, owner_version,
+    id, tenant_id, outcome_id, owner_id, ordinal, owner_version,
     lifecycle_result, principal_id, actor_json, recorded_at, rationale,
     obligations_snapshot_json, public_id, submission_id, submission_digest
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) ON CONFLICT DO NOTHING`,
 			storageID,
-			owner.NamespaceID.String(),
+			owner.TenantID.String(),
 			owner.OutcomeID.String(),
 			owner.ID.String(),
 			int64(ordinal),
@@ -857,9 +857,9 @@ INSERT INTO conclusions (
 		for _, ref := range conclusion.Assessments {
 			if _, err := tx.ExecContext(ctx, `
 INSERT INTO conclusion_assessments (
-    namespace_id, outcome_id, conclusion_id, assessment_id
+    tenant_id, outcome_id, conclusion_id, assessment_id
 ) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
-				owner.NamespaceID.String(),
+				owner.TenantID.String(),
 				owner.OutcomeID.String(),
 				storageID,
 				ref.AssessmentID.String(),
@@ -871,9 +871,9 @@ INSERT INTO conclusion_assessments (
 			if _, err := tx.ExecContext(ctx, `
 UPDATE conclusions
 SET public_id = $1
-WHERE namespace_id = $2 AND outcome_id = $3 AND id = $4 AND public_id IS NULL`,
+WHERE tenant_id = $2 AND outcome_id = $3 AND id = $4 AND public_id IS NULL`,
 				conclusion.ID.String(),
-				owner.NamespaceID.String(),
+				owner.TenantID.String(),
 				owner.OutcomeID.String(),
 				storageID,
 			); err != nil {
@@ -899,7 +899,7 @@ WHERE namespace_id = $2 AND outcome_id = $3 AND id = $4 AND public_id IS NULL`,
 			return err
 		}
 		if baseline == nil || baseline.currentConclusion != storageID {
-			if _, err := tx.ExecContext(ctx, `INSERT INTO aggregate_current_conclusions (namespace_id,outcome_id,owner_id,conclusion_id) VALUES ($1,$2,$3,$4) ON CONFLICT(namespace_id,outcome_id,owner_id) DO UPDATE SET conclusion_id=excluded.conclusion_id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), storageID); err != nil {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO aggregate_current_conclusions (tenant_id,outcome_id,owner_id,conclusion_id) VALUES ($1,$2,$3,$4) ON CONFLICT(tenant_id,outcome_id,owner_id) DO UPDATE SET conclusion_id=excluded.conclusion_id`, owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), storageID); err != nil {
 				return mapSQLError("set current conclusion", err)
 			}
 		}
@@ -928,8 +928,8 @@ func verifyConclusionRow(
 SELECT owner_id, owner_version, lifecycle_result, principal_id, actor_json,
        recorded_at, rationale, obligations_snapshot_json, public_id, submission_id, submission_digest
 FROM conclusions
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		owner.NamespaceID.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND id = $3`,
+		owner.TenantID.String(),
 		owner.OutcomeID.String(),
 		storageID,
 	).Scan(
@@ -990,8 +990,8 @@ func loadConclusions(
 	err := tx.QueryRowContext(ctx, `
 SELECT conclusion_id
 FROM aggregate_current_conclusions
-WHERE namespace_id = $1 AND outcome_id = $2 AND owner_id = $3`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND owner_id = $3`,
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(),
 	).Scan(&currentID)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, nil, mapSQLError("load current conclusion id", err)
@@ -1001,9 +1001,9 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND owner_id = $3`,
 SELECT id, public_id, owner_version, lifecycle_result, principal_id, actor_json,
        recorded_at, rationale, obligations_snapshot_json, submission_id, submission_digest
 FROM conclusions
-WHERE namespace_id = $1 AND outcome_id = $2 AND owner_id = $3
+WHERE tenant_id = $1 AND outcome_id = $2 AND owner_id = $3
 ORDER BY ordinal`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(),
+		owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(),
 	)
 	if err != nil {
 		return nil, nil, mapSQLError("load conclusions", err)
@@ -1066,12 +1066,12 @@ func loadConclusionAssessments(
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result
 FROM conclusion_assessments ca
 JOIN criterion_assessments a
-  ON a.namespace_id = ca.namespace_id
+  ON a.tenant_id = ca.tenant_id
  AND a.outcome_id = ca.outcome_id
  AND a.id = ca.assessment_id
-WHERE ca.namespace_id = $1 AND ca.outcome_id = $2 AND ca.conclusion_id = $3
+WHERE ca.tenant_id = $1 AND ca.outcome_id = $2 AND ca.conclusion_id = $3
 ORDER BY a.criterion_id, a.id`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), conclusionID,
+		scope.TenantID.String(), scope.OutcomeID.String(), conclusionID,
 	)
 	if err != nil {
 		return nil, mapSQLError("load conclusion assessments", err)
@@ -1189,7 +1189,7 @@ func idString(id *domain.ID) string {
 // These set reads preserve the single-aggregate public history while avoiding
 // one child SELECT for every historical record.
 func loadOwnerAssessmentEvidence(ctx context.Context, tx *sql.Tx, owner domain.EntityRef) (map[domain.ID][]domain.ID, error) {
-	rows, err := tx.QueryContext(ctx, `SELECT e.assessment_id,e.evidence_id FROM criterion_assessment_evidence e JOIN criterion_assessments a ON a.namespace_id=e.namespace_id AND a.outcome_id=e.outcome_id AND a.id=e.assessment_id JOIN success_criteria c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.criterion_id WHERE c.namespace_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 AND c.owner_kind=$4 ORDER BY e.assessment_id,e.evidence_id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String())
+	rows, err := tx.QueryContext(ctx, `SELECT e.assessment_id,e.evidence_id FROM criterion_assessment_evidence e JOIN criterion_assessments a ON a.tenant_id=e.tenant_id AND a.outcome_id=e.outcome_id AND a.id=e.assessment_id JOIN success_criteria c ON c.tenant_id=a.tenant_id AND c.outcome_id=a.outcome_id AND c.id=a.criterion_id WHERE c.tenant_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 AND c.owner_kind=$4 ORDER BY e.assessment_id,e.evidence_id`, owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String())
 	if err != nil {
 		return nil, mapSQLError("load owner assessment evidence", err)
 	}
@@ -1213,7 +1213,7 @@ func loadOwnerAssessmentEvidence(ctx context.Context, tx *sql.Tx, owner domain.E
 	return result, mapSQLError("iterate owner assessment evidence", rows.Err())
 }
 func loadOwnerConclusionAssessments(ctx context.Context, tx *sql.Tx, owner domain.EntityRef) (map[string][]domain.CriterionAssessmentRef, error) {
-	rows, err := tx.QueryContext(ctx, `SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN conclusions c ON c.namespace_id=ca.namespace_id AND c.outcome_id=ca.outcome_id AND c.id=ca.conclusion_id JOIN criterion_assessments a ON a.namespace_id=ca.namespace_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE c.namespace_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 ORDER BY ca.conclusion_id,a.criterion_id,a.id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String())
+	rows, err := tx.QueryContext(ctx, `SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN conclusions c ON c.tenant_id=ca.tenant_id AND c.outcome_id=ca.outcome_id AND c.id=ca.conclusion_id JOIN criterion_assessments a ON a.tenant_id=ca.tenant_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE c.tenant_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 ORDER BY ca.conclusion_id,a.criterion_id,a.id`, owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String())
 	if err != nil {
 		return nil, mapSQLError("load owner conclusion assessments", err)
 	}

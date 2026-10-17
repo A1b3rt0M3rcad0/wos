@@ -15,8 +15,8 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199ee00-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199ee00-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 
 	createdOutcome := doJSON[application.MutationResult[domain.Outcome]](
 		t, client, http.MethodPost, base,

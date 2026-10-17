@@ -36,7 +36,7 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 		return ReadyWork{}, err
 	}
 
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return ReadyWork{}, err
 	}

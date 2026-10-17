@@ -1,5 +1,12 @@
 # Stable public compatibility contract
 
+> [!NOTE]
+> The current branch introduces the owner-approved major Tenant/schema and signed
+> protocol-3 transition. The [Tenant compatibility review](tenant-contract-review.md)
+> supersedes this earlier additive baseline for addressing, signed protocol and
+> storage placement. The frozen v0.4.2 artifacts remain unchanged. Do not infer
+> current old-client mutation compatibility from the historical table below.
+
 Published baseline: [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), source b572269085494ddd4d6370716ff1cb360b46065f. The operational candidate is unreleased; its additive changes and old-client limits are reviewed in [the operational compatibility record](operational-contract-review.md). Product 1.0 is gated by the original plan and actual immutable-source acceptance; this document alone does not publish or certify that release.
 
 | Identity | Supported compatibility |

@@ -25,13 +25,13 @@ func wave3Context(commandID, key string) domain.CommandContext {
 func TestCreateWorkItemReplayReturnsOriginalResultWithoutNewEvent(t *testing.T) {
 	ctx := context.Background()
 	service, store := newService(t)
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, wave3Context(
 		"0199e710-0000-7000-8000-000000000001",
 		"",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Replay outcome",
 		DesiredState: "State",
 		Priority:     domain.PriorityNormal,
@@ -86,12 +86,12 @@ func TestCreateWorkItemReplayReturnsOriginalResultWithoutNewEvent(t *testing.T) 
 func TestSameIdempotencyKeyWithDifferentPayloadConflicts(t *testing.T) {
 	ctx := context.Background()
 	service, store := newService(t)
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 	outcomeResult, err := service.CreateOutcome(ctx, wave3Context(
 		"0199e711-0000-7000-8000-000000000001",
 		"",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Conflict outcome",
 		DesiredState: "State",
 		Priority:     domain.PriorityNormal,
@@ -135,12 +135,12 @@ func TestSameIdempotencyKeyWithDifferentPayloadConflicts(t *testing.T) {
 func TestExplicitOwnerNoOpDoesNotAdvanceRevisionOrEmitEvent(t *testing.T) {
 	ctx := context.Background()
 	service, store := newService(t)
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 	outcomeResult, err := service.CreateOutcome(ctx, wave3Context(
 		"0199e712-0000-7000-8000-000000000001",
 		"",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "No-op outcome",
 		DesiredState: "State",
 		Priority:     domain.PriorityNormal,
@@ -187,13 +187,13 @@ func TestExplicitOwnerNoOpDoesNotAdvanceRevisionOrEmitEvent(t *testing.T) {
 func TestIdempotencyKeyValidation(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	_, err := service.CreateOutcome(ctx, wave3Context(
 		"0199e713-0000-7000-8000-000000000001",
 		"short",
 	), application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Invalid key", DesiredState: "State", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "Invalid key", DesiredState: "State", Priority: domain.PriorityNormal,
 	})
 	if err == nil {
 		t.Fatal("CreateOutcome() unexpectedly accepted a short idempotency key")

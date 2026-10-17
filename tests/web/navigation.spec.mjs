@@ -22,7 +22,7 @@ test("Canvas and six specialist areas retain the persisted Draft checklist witho
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
   await expect(page.locator("#view-tabs button")).toHaveCount(2);
   expect(
-    (await wos.api(`/namespaces/${wos.namespace}/outcomes/${scope.outcome_id}`))
+    (await wos.api(`/tenants/${wos.tenant}/outcomes/${scope.outcome_id}`))
       .value.lifecycle,
   ).toBe("draft");
 });

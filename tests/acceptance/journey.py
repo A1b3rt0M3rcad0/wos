@@ -76,9 +76,9 @@ async def journey(args):
         port = free_port()
         url = f"http://127.0.0.1:{port}"
         env = {**os.environ, "WOS_LISTEN": f"127.0.0.1:{port}", "WOS_STORAGE_DRIVER": "sqlite", "WOS_SQLITE_PATH": str(directory / "wos.db"),
-               "WOS_AUTH_MODE": "api_token", "WOS_BOOTSTRAP_TOKEN": bootstrap, "WOS_BOOTSTRAP_NAMESPACE_ID": ns, "WOS_BOOTSTRAP_NAMESPACE_NAME": "Full acceptance",
+               "WOS_AUTH_MODE": "api_token", "WOS_BOOTSTRAP_TOKEN": bootstrap, "WOS_BOOTSTRAP_TENANT_ID": ns, "WOS_BOOTSTRAP_TENANT_NAME": "Full acceptance",
                "WOS_LOCAL_PRINCIPAL_ID": "human", "WOS_MCP_ENABLED": "true", "WOS_DELIVERY_WORKER_ENABLED": "true", "WOS_WEBHOOK_ALLOW_LOOPBACK": "true",
-               "WOS_WEBHOOK_ENDPOINTS": json.dumps([{"id": endpoint, "namespace_id": ns, "url": f"http://127.0.0.1:{consumer.server_port}/signals", "secret_ref": "acceptance-key", "key_id": "v1"}]),
+               "WOS_WEBHOOK_ENDPOINTS": json.dumps([{"id": endpoint, "tenant_id": ns, "url": f"http://127.0.0.1:{consumer.server_port}/signals", "secret_ref": "acceptance-key", "key_id": "v1"}]),
                "WOS_WEBHOOK_SECRETS": json.dumps({"acceptance-key": secret})}
         process = None
         log = open(directory / "server.log", "ab")
@@ -129,7 +129,7 @@ async def journey(args):
 
         def independent_state(token):
             reader = Path(__file__).with_name("read_state.py")
-            output = subprocess.check_output([sys.executable, str(reader)], env={**os.environ, "WOS_READER_URL": url + "/api/v1", "WOS_READER_NAMESPACE": ns, "WOS_READER_TOKEN": token}, timeout=20)
+            output = subprocess.check_output([sys.executable, str(reader)], env={**os.environ, "WOS_READER_URL": url + "/api/v1", "WOS_READER_TENANT": ns, "WOS_READER_TOKEN": token}, timeout=20)
             return json.loads(output)
 
         executor = None
@@ -137,12 +137,12 @@ async def journey(args):
         try:
             await start()
             issued = []
-            namespace_version = 1
+            tenant_version = 1
             for principal in ("agent-a", "agent-b"):
-                grant = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "set_grant", "principal_id": principal, "permissions": ["state:read", "work:write", "records:write"]})
-                namespace_version = grant["result"]["namespace_version"]
-                credential = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "issue_credential", "principal_id": principal, "actor_ref": {"kind": "agent", "provider": "acceptance", "id": principal}, "expires_at": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat().replace("+00:00", "Z")})
-                namespace_version = credential["result"]["namespace_version"]
+                grant = request("/security/commands", body={"tenant_id": ns, "expected_tenant_version": tenant_version, "operation": "set_grant", "principal_id": principal, "permissions": ["state:read", "work:write", "records:write"]})
+                tenant_version = grant["result"]["tenant_version"]
+                credential = request("/security/commands", body={"tenant_id": ns, "expected_tenant_version": tenant_version, "operation": "issue_credential", "principal_id": principal, "actor_ref": {"kind": "agent", "provider": "acceptance", "id": principal}, "expires_at": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat().replace("+00:00", "Z")})
+                tenant_version = credential["result"]["tenant_version"]
                 issued.append(credential["token"])
 
             woobe_configs = {}
@@ -170,7 +170,7 @@ async def journey(args):
                     discovered = await DiscoverMcpToolsUseCase(executor).execute(McpDiscoverInput(server_url=url + "/mcp", headers={"Authorization": "Bearer " + token}))
                     assert discovered.initialized and not discovered.error and len(discovered.tools) >= 96
                     config = {"server": {"url": url + "/mcp", "transport": "streamable_http"}, "server_headers": [{"key": "Authorization", "value": "Bearer " + token}], "discovered_tools": [t.model_dump() for t in discovered.tools]}
-                    reviewed = await runtime.test(config, {"__mcp_tool_name": "wos_search_outcomes", "namespace_id": ns})
+                    reviewed = await runtime.test(config, {"__mcp_tool_name": "wos_search_outcomes", "tenant_id": ns})
                     assert not reviewed.success and reviewed.output["error_code"] == "MCP_TOOL_REQUIRES_POLICY"
                     for tool in config["discovered_tools"]:
                         tool["permission"] = {"mode": "allow"}
@@ -193,9 +193,9 @@ async def journey(args):
                 result = await tool(token, name, {"idempotency_key": str(uuid4()), "command": value}, failure)
                 return result if failure else result["value"]
 
-            root = command("create_outcome", {"namespace_id": ns, "title": "Full shared acceptance", "desired_state": "A verified delivery can be continued independently", "priority": "normal"})
-            scope = {"namespace_id": ns, "outcome_id": root["id"]}
-            path = f"/namespaces/{ns}/outcomes/{root['id']}"
+            root = command("create_outcome", {"tenant_id": ns, "title": "Full shared acceptance", "desired_state": "A verified delivery can be continued independently", "priority": "normal"})
+            scope = {"tenant_id": ns, "outcome_id": root["id"]}
+            path = f"/tenants/{ns}/outcomes/{root['id']}"
             ref = lambda kind, entity_id: {**scope, "kind": kind, "id": entity_id}
             outcome_ref = ref("outcome", root["id"])
             criterion = command("add_criterion", {"owner": outcome_ref, "expected_version": root["version"], "title": "Observed contract assertions reviewed", "required": True, "verification_mode": "evidence_review"})
@@ -223,7 +223,7 @@ async def journey(args):
             plan = request(path + "/roadmaps/" + plan["id"])["value"]
             first_revision = json.dumps(plan["revisions"][0], sort_keys=True)
             step(2, "required Objective, WorkItem and immutable initial plan published")
-            found = await tool(issued[0], "search_outcomes", {"namespace_id": ns, "text": "Full shared"})
+            found = await tool(issued[0], "search_outcomes", {"tenant_id": ns, "text": "Full shared"})
             assert found["items"][0]["id"] == root["id"]
             snapshot = await tool(issued[0], "get_continuity", {**scope, "limit": 25})
             assert snapshot["outcome"]["ref"]["id"] == root["id"]
@@ -324,18 +324,18 @@ async def journey(args):
             unarchived = command("unarchive_outcome", {"scope": scope, "expected_version": archived["version"], "reason": "Authorized return from archive"})
             assert unarchived.get("archived_at") is None and unarchived["lifecycle"] == "achieved"
             step(17, "archive remains queryable; explicit unarchive preserves achieved lifecycle")
-            other = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "create_namespace", "namespace_name": "Isolated consumer"})
-            other_ns, other_token = other["result"]["created_namespace"]["id"], other["token"]
-            command("create_outcome", {"namespace_id": ns, "title": "Pagination witness", "desired_state": "Produce a bounded cursor", "priority": "normal"})
-            page = request(f"/namespaces/{ns}/outcomes?limit=1")
+            other = request("/security/commands", body={"tenant_id": ns, "expected_tenant_version": tenant_version, "operation": "create_tenant", "tenant_name": "Isolated consumer"})
+            other_ns, other_token = other["result"]["created_tenant"]["id"], other["token"]
+            command("create_outcome", {"tenant_id": ns, "title": "Pagination witness", "desired_state": "Produce a bounded cursor", "priority": "normal"})
+            page = request(f"/tenants/{ns}/outcomes?limit=1")
             assert page["next_cursor"]
             request(path, other_token, expected=403)
-            request(f"/namespaces/{other_ns}/outcomes/{root['id']}", other_token, expected=404)
-            assert request(f"/namespaces/{other_ns}/outcomes?text=Full", other_token)["items"] == []
-            request(f"/namespaces/{other_ns}/outcomes?limit=1&cursor=" + page["next_cursor"], other_token, expected=422)
-            denied = request("/mcp", other_token, {"jsonrpc": "2.0", "id": "foreign-resource", "method": "resources/read", "params": {"uri": f"wos://namespaces/{ns}/outcomes/{root['id']}/continuity"}}, prefix="")
+            request(f"/tenants/{other_ns}/outcomes/{root['id']}", other_token, expected=404)
+            assert request(f"/tenants/{other_ns}/outcomes?text=Full", other_token)["items"] == []
+            request(f"/tenants/{other_ns}/outcomes?limit=1&cursor=" + page["next_cursor"], other_token, expected=422)
+            denied = request("/mcp", other_token, {"jsonrpc": "2.0", "id": "foreign-resource", "method": "resources/read", "params": {"uri": f"wos://tenants/{ns}/outcomes/{root['id']}/continuity"}}, prefix="")
             assert "error" in denied
-            step(18, "foreign Namespace denied by ID, discovery, bound cursor and MCP resource")
+            step(18, "foreign Tenant denied by ID, discovery, bound cursor and MCP resource")
             print(f"PASS: all 18 steps, client={args.client}, same Outcome, real standalone process, signed delivery and clean restore", flush=True)
         finally:
             if executor:

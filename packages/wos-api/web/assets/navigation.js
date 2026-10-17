@@ -58,10 +58,10 @@ export function areaFor(section) {
 }
 export function readRoute(search) {
   const p = new URLSearchParams(search.replace(/^[?#]/, "")),
-    namespace = p.get("workspace"),
+    tenant = p.get("workspace"),
     outcome = p.get("outcome");
-  if (!namespace && !outcome) return null;
-  if (!uuid.test(namespace || "") || !uuid.test(outcome || ""))
+  if (!tenant && !outcome) return null;
+  if (!uuid.test(tenant || "") || !uuid.test(outcome || ""))
     throw Error(copy.text.thisWorkspaceLinkHasInvalidIdentifiers);
   const area = p.get("area") || "canvas";
   if (!areas[area]) throw Error(copy.text.thisWorkspaceLinkHasAnUnknownArea);
@@ -81,20 +81,20 @@ export function readRoute(search) {
     const [kind, id, ...extra] = p.get("item").split("/");
     if (extra.length || !kinds.has(kind) || !uuid.test(id || ""))
       throw Error(copy.text.thisWorkspaceLinkHasAnInvalidItem);
-    item = { kind, id, namespace_id: namespace, outcome_id: outcome };
+    item = { kind, id, tenant_id: tenant, outcome_id: outcome };
   }
-  return { namespace, outcome, area, view, section, item };
+  return { tenant, outcome, area, view, section, item };
 }
 export function routeQuery({
-  namespace,
+  tenant,
   outcome,
   area = "canvas",
   view = "canvas",
   section = "work_items",
   item,
 }) {
-  if (!namespace || !outcome) return "";
-  const p = new URLSearchParams({ workspace: namespace, outcome, area });
+  if (!tenant || !outcome) return "";
+  const p = new URLSearchParams({ workspace: tenant, outcome, area });
   if (!["canvas", "overview"].includes(area)) p.set("section", section);
   if (area === "work") p.set("view", view);
   if (item) p.set("item", `${item.kind}/${item.id}`);

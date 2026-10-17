@@ -289,7 +289,7 @@ func buildCompoundEvents(
 			EventID:                eventID,
 			EventType:              spec.eventType,
 			SchemaVersion:          domain.DomainEventSchemaVersion,
-			NamespaceID:            spec.ref.NamespaceID,
+			TenantID:               spec.ref.TenantID,
 			OutcomeID:              spec.ref.OutcomeID,
 			OutcomeRevision:        revision,
 			EventIndex:             uint32(index),

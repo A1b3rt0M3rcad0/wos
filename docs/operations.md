@@ -1,6 +1,6 @@
 # Operating WOS
 
-The standalone validation candidate supports Linux amd64 with SQLite or PostgreSQL 18.6. Shared contracts, race detection, HTTP/MCP and recovery have executable evidence in [backend verification](verification-2026-10-07.md) and [current UX acceptance](ux/final-acceptance.md). The native Windows CLI has separate hosted acceptance; cross-compiling a service does not establish runtime support. Release publication and integration into a consumer such as Woobe are separate actions.
+The standalone source targets Linux amd64 with SQLite or PostgreSQL 18.6. This branch introduces [schema-per-Tenant storage and a breaking protocol cutover](scaling/tenants.md). Earlier acceptance records remain scoped to their recorded commits. Shared contracts, race detection, HTTP/MCP and recovery have executable evidence in [backend verification](verification-2026-10-07.md) and [current UX acceptance](ux/final-acceptance.md). The native Windows CLI has separate hosted acceptance; cross-compiling a service does not establish runtime support. Release publication and integration into a consumer such as Woobe are separate actions.
 
 ## Verified operator backup and restore
 
@@ -17,48 +17,53 @@ go build -trimpath -buildvcs=false -o bin/wos ./packages/wos-api/cmd/wos
 ./bin/wos server
 ```
 
-Open `http://127.0.0.1:8080/app/`. Local mode accepts only loopback bind and Host values. It creates the Namespace configured by `WOS_LOCAL_NAMESPACE_ID` (default `0199d000-0000-7000-8000-000000000001`) with `WOS_LOCAL_NAMESPACE_NAME` (default `Local`). Local identity is composition configuration, not multiuser authentication. Special administrative privileges require `WOS_LOCAL_ADMIN_OVERRIDES=true`.
+Open `http://127.0.0.1:8080/app/`. Local mode accepts only loopback bind and Host values. It creates the Tenant configured by `WOS_LOCAL_TENANT_ID` (default `0199d000-0000-7000-8000-000000000001`) with `WOS_LOCAL_TENANT_NAME` (default `Local`). Local identity is composition configuration, not multiuser authentication. Special administrative privileges require `WOS_LOCAL_ADMIN_OVERRIDES=true`.
+
+The SQLite adapter allows up to two minutes for startup initialization and migrations, including the Tenant cutover DDL. This is separate from its five-second transaction busy timeout; increasing startup time does not make a contended write wait indefinitely. Embedded callers can explicitly configure the startup deadline.
 
 Core remains usable through `application.NewService` in trusted embedded composition. A host accepting third-party calls must use `NewAuthorizedService` and resolve authenticated identity outside the payload.
 
 ## Shared service
 
-Configure `WOS_AUTH_MODE=api_token`, `WOS_BOOTSTRAP_NAMESPACE_ID` (UUIDv7), `WOS_BOOTSTRAP_NAMESPACE_NAME`, `WOS_LOCAL_PRINCIPAL_ID` and `WOS_BOOTSTRAP_TOKEN` (a random secret of at least 32 characters). `WOS_LISTEN` can then use a public interface. Terminate HTTPS at the ingress; the process does not terminate TLS. Keep tokens out of versioned commands, logs and URLs.
+Configure `WOS_AUTH_MODE=api_token`, `WOS_BOOTSTRAP_TENANT_ID` (UUIDv7), `WOS_BOOTSTRAP_TENANT_NAME`, `WOS_LOCAL_PRINCIPAL_ID` and `WOS_BOOTSTRAP_TOKEN` (a random secret of at least 32 characters). `WOS_LISTEN` can then use a public interface. Terminate HTTPS at the ingress; the process does not terminate TLS. Keep tokens out of versioned commands, logs and URLs.
 
 Bootstrap applies only to initial installation. If credentials already exist, it cannot restore grants or resurrect revoked tokens. Losing all administrative credentials requires controlled offline recovery; environment configuration provides no login bypass.
 
-Each credential binds a Namespace, Principal and ActorRef. The browser exchanges it for an HttpOnly, SameSite Strict session lasting at most 12 hours. Revoking or expiring the original credential invalidates its sessions. Cookies are Secure outside loopback HTTP. Mutations reject foreign origins.
+Each credential binds a Tenant, Principal and ActorRef. The browser exchanges it for an HttpOnly, SameSite Strict session lasting at most 12 hours. Revoking or expiring the original credential invalidates its sessions. Cookies are Secure outside loopback HTTP. Mutations reject foreign origins.
 
-`GET /api/v1/namespaces/{namespace_id}/administration` returns the administrative version, grants, credential metadata and up to 100 recent audit entries per collection. `truncated` means omissions cannot imply completeness. `POST /api/v1/security/commands` accepts `AdministrativeIntent`: `namespace_id`, `expected_namespace_version`, `operation` and its specific fields, with `Idempotency-Key`. Operations are `set_grant`, `issue_credential`, `revoke_credential` and `create_namespace`. Creation additionally requires `installation:provision`, copies only the creator's current Namespace permissions, and issues a new Namespace credential valid for 12 hours. Installation capabilities are never copied into the new Namespace. The returned administrative version belongs to the originating Namespace; the new one starts at version 1.
+Provision a PostgreSQL Tenant through `wos storage tenant provision` before starting its runtime. Configure `WOS_TENANT_ID` and the approved catalog; the first startup initializes that Tenant's administrator and issuer. Shared hosting uses separate schemas/runtimes, with optional hostname routing. See [Tenant lifecycle](scaling/tenants.md).
 
-Installation capabilities use the existing credential/grant system: `installation:provision` permits Namespace creation, `installation:observe` permits process-global metrics, and `installation:admin` permits changing installation capabilities or issuing/revoking credentials for an operator Principal. The latter changes also require ordinary Namespace administration. Outcome-restricted credentials cannot exercise installation capabilities. Permission and operator-identity checks repeat inside the administrative transaction before returning a replay. New bootstrap operators receive these capabilities once; upgrades and restarts never infer them from `namespace:admin`.
+`GET /api/v1/tenants/{tenant_id}/administration` returns the administrative version, grants, credential metadata and up to 100 recent audit entries per collection. `truncated` means omissions cannot imply completeness. `POST /api/v1/security/commands` accepts `AdministrativeIntent`: `tenant_id`, `expected_tenant_version`, `operation` and its specific fields, with `Idempotency-Key`. Use `set_grant`, `issue_credential` and `revoke_credential` to administer the selected Tenant. The older application-level `create_tenant` operation does not provision a new PostgreSQL schema; the singleton storage boundary rejects a second Tenant in the same data schema. Provision shared customers with the protected storage lifecycle command, then initialize credentials in their own runtimes.
 
-For an existing installation, stop all API and worker writers, migrate with the new binary, and explicitly promote the chosen existing administrator through the offline host command. This does not issue credentials or restore revoked access. Read the originating Namespace administrative version before the cutover and preserve one intent/key for uncertain results:
+Installation capabilities use the existing credential/grant system: `installation:provision` marks application provisioning authority, `installation:observe` permits process-global metrics, and `installation:admin` permits changing installation capabilities or issuing/revoking credentials for an operator Principal. The latter changes also require ordinary Tenant administration. Outcome-restricted credentials cannot exercise installation capabilities. Permission and operator-identity checks repeat inside the administrative transaction before returning a replay. New bootstrap operators receive these capabilities once; upgrades and restarts never infer them from `tenant:admin`.
+
+For an existing installation, stop all API and worker writers, migrate with the new binary, and explicitly promote the chosen existing administrator through the offline host command. This does not issue credentials or restore revoked access. Read the originating Tenant administrative version before the cutover and preserve one intent/key for uncertain results:
 
 ```json
 {
-  "namespace_id": "0199d000-0000-7000-8000-000000000001",
+  "tenant_id": "0199d000-0000-7000-8000-000000000001",
   "principal_id": "operator",
-  "expected_namespace_version": 1,
+  "expected_tenant_version": 1,
   "idempotency_key": "authorize-existing-owner-0001",
   "reason": "Authorize the approved installation owner during the upgrade",
   "drained_writers": true
 }
 ```
 
-Save this intent to a protected file and run `wos installation authorize --file operator-intent.json` with the installation's storage environment. `drained_writers` is the host's explicit assertion, not automatic detection of other processes. The command starts no server, performs no bootstrap or migration, requires an already granted Namespace administrator, preserves existing permissions, advances Namespace CAS and records an idempotent audit receipt including the reason. Repeating the exact intent returns the receipt; a changed intent requires a new key/current version. This is available equally to self-hosted operators and authorized Cloud management.
+Save this intent to a protected file and run `wos installation authorize --file operator-intent.json` with the installation's storage environment. `drained_writers` is the host's explicit assertion, not automatic detection of other processes. The command starts no server, performs no bootstrap or migration, requires an already granted Tenant administrator, preserves existing permissions, advances Tenant CAS and records an idempotent audit receipt including the reason. Repeating the exact intent returns the receipt; a changed intent requires a new key/current version. This is available equally to self-hosted operators and authorized Cloud management.
 
-Issued secrets appear only in the first response. Replay returns a receipt with `token_omitted=true`. If the original response was lost, inspect the credential ID, revoke it and issue another through a new intent. No recoverable secret is persisted. Namespace CAS, current authorization, changes, audit and receipt are atomic. Outcome mutations revalidate grants and credentials inside their transaction before revealing replay or persisting state.
+Issued secrets appear only in the first response. Replay returns a receipt with `token_omitted=true`. If the original response was lost, inspect the credential ID, revoke it and issue another through a new intent. No recoverable secret is persisted. Tenant CAS, current authorization, changes, audit and receipt are atomic. Outcome mutations revalidate grants and credentials inside their transaction before revealing replay or persisting state.
 
 `WOS_INDEPENDENT_REVIEWER=true` requires the assessor/concluder not to have executed work in the same Outcome. The policy compares Principal over the full history; an ActorRef alias is not a new reviewer.
 
 ## PostgreSQL and containers
 
 ```sh
-WOS_STORAGE_DRIVER=postgres WOS_POSTGRES_DSN='postgres://USER:PASSWORD@HOST:5432/DB?sslmode=require' ./bin/wos server
+# Supply WOS_POSTGRES_DSN through protected environment configuration.
+WOS_STORAGE_DRIVER=postgres WOS_TENANT_ID=TENANT_UUID ./bin/wos server
 ```
 
-The DSN is secret configuration. The adapter uses pgx, Serializable transactions, an Outcome guard, a pool of up to 16 connections, a 5-second lock timeout and a 30-second statement timeout. Transient conflicts return `transaction_conflict`; expected versions never change silently. Storage acceptance uses real PostgreSQL. SQLite success does not establish PostgreSQL parity.
+Provision the catalog entry first and set `WOS_TENANT_ID` for the selected Tenant. The optional `WOS_POSTGRES_SCHEMA` must match its catalog binding. The DSN is secret configuration. The adapter uses pgx, Serializable transactions, an Outcome guard, a fixed-schema pool of up to 16 connections per Tenant runtime, a 5-second lock timeout and a 30-second statement timeout. Transient conflicts return `transaction_conflict`; expected versions never change silently. Storage acceptance uses real PostgreSQL. SQLite success does not establish PostgreSQL parity.
 
 For the local Docker example:
 
@@ -69,7 +74,7 @@ docker compose up --build -d
 
 Open `http://localhost:8080/app/`. The supplied example bootstrap credential enables a local demonstration without additional edits; replace it before exposing an instance. `compose.yaml` binds only loopback on the host, enables HTTP/MCP and uses persistent SQLite by default. `Dockerfile` builds CGO-free binaries and runs as UID/GID `10001:10001`, with CA certificates and `/data`. Container and Compose acceptance are recorded with the delivered source and tested scope in [the final record](ux/final-acceptance.md).
 
-For PostgreSQL, configure a nonempty password, `WOS_STORAGE_DRIVER=postgres` and a DSN using host `postgres`, then run `docker compose --profile postgres up --build`. Wait for database health before accepting service traffic. SQLite default Compose acceptance does not certify every optional deployment configuration.
+For production PostgreSQL, use the [shared reference](../deploy/shared/README.md) or [scaling profiles](../deploy/scaling/README.md), which provision the catalog through a one-shot initializer before API startup. The root Compose PostgreSQL option only supplies a database service; a custom operator must provision its Tenant explicitly before starting WOS. Wait for database health before accepting traffic. SQLite default Compose acceptance does not certify optional PostgreSQL configurations.
 
 ## MCP
 
@@ -83,7 +88,9 @@ For SQLite backup, run `WOS_SQLITE_PATH=./data/wos.db ./bin/wos db backup ./back
 
 For SQLite restore, stop the service and workers, then use `./bin/wos db restore ./backup/wos.db ./data/restored.db`. The destination must be new; restoration never overwrites an existing installation. Configure the restored path, apply `db migrate`, check `/readyz` and validate continuity before accepting traffic.
 
-For PostgreSQL, use `pg_dump --format=custom` and `pg_restore --single-transaction` into a new database with the matching client version. Include the full schema, history, grants, credentials, idempotency and outbox. Restoring only current entities loses coordination state. Shared acceptance exercises clean restore and continuity; historical upgrade evidence has its own source-bound report.
+For a whole PostgreSQL installation, use `pg_dump --format=custom` and `pg_restore --single-transaction` into a new database with the matching client version. Include the catalog and every Tenant schema, history, grants, credentials, idempotency and outbox. A single-schema dump is not an automatic Tenant transfer: preserve and verify the catalog binding, issuer trust and external delivery obligations before reopening it. Restoring only current entities loses coordination state. Shared acceptance exercises clean restore and continuity; historical upgrade evidence has its own source-bound report.
+
+Read the [Tenant cutover](scaling/tenants.md#upgrade-an-existing-installation) before migrating older Namespace storage. Multi-Namespace extraction is not implicit, and old signed requests cannot be rewritten as protocol 3.
 
 Numbered migrations are checksummed and forward-only. `db migrate` applies pending migrations; opening the service also migrates. Unknown schemas cannot become ready. Destructive SQL downgrade is unsupported. Operational rollback uses the older binary and a pre-upgrade backup in a separate database, explicitly reconciling subsequent facts.
 
@@ -97,7 +104,7 @@ The qualified multi-API profile uses one source/version. A mixed old/new server 
 
 ## Integrations and observability
 
-Configure `WOS_WEBHOOK_ENDPOINTS` as an array of `{id,namespace_id,url,secret_ref,key_id}`. Secrets belong in `WOS_WEBHOOK_SECRETS`, with random values of at least 32 characters. Trigger commands contain no secret values. `WOS_DELIVERY_WORKER_ENABLED=true` starts the service worker; `WOS_WEBHOOK_ALLOW_LOOPBACK=true` explicitly enables local delivery tests.
+Configure `WOS_WEBHOOK_ENDPOINTS` as an array of `{id,tenant_id,url,secret_ref,key_id}`. Secrets belong in `WOS_WEBHOOK_SECRETS`, with random values of at least 32 characters. Trigger commands contain no secret values. `WOS_DELIVERY_WORKER_ENABLED=true` starts the service worker; `WOS_WEBHOOK_ALLOW_LOOPBACK=true` explicitly enables local delivery tests.
 
 HTTPS targets use a configured host allowlist, DNS/IP checks, blocked private addresses and redirects, a 10-second timeout and a 64 KiB response-read limit. Triggers make no external calls inside domain transactions. Facts, signals and delivery state persist atomically. The worker uses a 30-second fenced lease, up to six attempts, exponential backoff starting at 2 seconds, crash recovery and authorized explicit redelivery. Consumers receive the same stable event ID on retries.
 
@@ -105,7 +112,7 @@ The signature is `X-WOS-Signature = sha256=<HMAC-SHA256(secret, timestamp + "." 
 
 JSON logs record command, Principal/ActorRef, correlation, revision, duration, transaction/guard acquisition, commit, classified error and replay. Queries record identity metadata, revision, duration and error outside Domain. HTTP logs include method, path without query, duration, status and size; they exclude bodies, authentication headers, tokens and documentary payloads.
 
-`/metrics` returns JSON schema 1 with command/replay/conflict/request counters and `command_timing`, `query_timing`, `http_timing` and `delivery_timing`. Timing values are nanosecond sums, counts, maxima and errors. Commands include `transaction_wait_ns`, `guard_ns` and `commit_ns`; guard timing includes acquisition and coordination preparation, not just blocked time. SQLite contention primarily occurs at transaction acquisition. Delivery labels describe classified results, never secrets or URLs. Remote metrics require explicit `installation:observe` and an unrestricted credential. Namespace administrators use the scoped delivery-health operation; `namespace:admin` alone cannot read process-global metrics. Counters reset on process restart. Fixed `duration_buckets` report noncumulative counts against the shared `duration_bucket_bounds_ns` upper bounds, followed by an overflow bucket. External monitoring can aggregate those distributions; they do not report exact percentiles. `storage_pool` reports this process's connection limits, usage and cumulative waits (SQLite aggregates its one-writer/four-reader pools). An OpenTelemetry exporter, database-wide WAL/lock monitoring and durable billing are separate. See [scaling and capacity](scaling/README.md).
+`/metrics` returns JSON schema 1 with command/replay/conflict/request counters and `command_timing`, `query_timing`, `http_timing` and `delivery_timing`. Timing values are nanosecond sums, counts, maxima and errors. Commands include `transaction_wait_ns`, `guard_ns` and `commit_ns`; guard timing includes acquisition and coordination preparation, not just blocked time. SQLite contention primarily occurs at transaction acquisition. Delivery labels describe classified results, never secrets or URLs. Remote metrics require explicit `installation:observe` and an unrestricted credential. Tenant administrators use the scoped delivery-health operation; `tenant:admin` alone cannot read process-global metrics. Counters reset on process restart. Fixed `duration_buckets` report noncumulative counts against the shared `duration_bucket_bounds_ns` upper bounds, followed by an overflow bucket. External monitoring can aggregate those distributions; they do not report exact percentiles. `storage_pool` reports this process's connection limits, usage and cumulative waits (SQLite aggregates its one-writer/four-reader pools). An OpenTelemetry exporter, database-wide WAL/lock monitoring and durable billing are separate. See [scaling and capacity](scaling/README.md).
 
 Outcome idempotency retention defaults to seven days. History and administrative receipts are not automatically purged. Plan capacity and backups; archiving retains history. See [query contracts](contracts.md) for response limits.
 
@@ -168,14 +175,14 @@ introduced by these limits.
 
 ## Delivery health (operational hardening candidate)
 
-API health and webhook delivery health are separate. A healthy `/readyz` means the Core can serve; poll the administrative `GET /api/v1/namespaces/{namespace_id}/operations/delivery-health` for durable queue facts. Supply `?outcome_id=UUID` for an Outcome-restricted credential. The equivalent MCP tool is `wos_delivery_health`, and the Go SDK method is `GetDeliveryHealth`. Authentication and current Namespace administration are required. A `403` is not evidence of an empty queue.
+API health and webhook delivery health are separate. A healthy `/readyz` means the Core can serve; poll the administrative `GET /api/v1/tenants/{tenant_id}/operations/delivery-health` for durable queue facts. Supply `?outcome_id=UUID` for an Outcome-restricted credential. The equivalent MCP tool is `wos_delivery_health`, and the Go SDK method is `GetDeliveryHealth`. Authentication and current Tenant administration are required. A `403` is not evidence of an empty queue.
 
 The response separates `queue_state` from this process's `worker` status. Ages are seconds; unavailable historical timestamps are null. `attempts_total` counts retained attempts across explicit redelivery. `last_successful_delivery` survives redelivery, but does not certify a currently pending delivery as successful. The response excludes destinations' URLs, secret references and event bodies. Worker fatal errors are classified and exposed; restart the deployment after repairing the cause. Another replica may still deliver while this process reports degraded.
 
-Set `WOS_DELIVERY_BACKLOG_MAX_AGE=5m` (default) to choose the due-age alarm threshold. External monitoring should alert on `queue_state=degraded`, any `exhausted`, or a worker expected by the deployment that is disabled, stopped or has no fresh tick. `/metrics` includes the aggregate `delivery_worker` process snapshot and delivery attempt timings. Poll a Namespace/Outcome diagnostic for queue counts, rather than treating a process heartbeat as queue state. External receivers must deduplicate `integration_event_id`; a successful receiver side effect followed by ACK loss can be delivered again.
+Set `WOS_DELIVERY_BACKLOG_MAX_AGE=5m` (default) to choose the due-age alarm threshold. External monitoring should alert on `queue_state=degraded`, any `exhausted`, or a worker expected by the deployment that is disabled, stopped or has no fresh tick. `/metrics` includes the aggregate `delivery_worker` process snapshot and delivery attempt timings. Poll a Tenant/Outcome diagnostic for queue counts, rather than treating a process heartbeat as queue state. External receivers must deduplicate `integration_event_id`; a successful receiver side effect followed by ACK loss can be delivered again.
 
 Set `WOS_DELIVERY_WORKER_ENABLED=true` to run delivery in the API process. `WOS_DELIVERY_WORKER_CONCURRENCY` defaults to 1 and accepts 1..64. Start a shared PostgreSQL deployment at four lanes only after checking receiver capacity, database contention and backlog latency. The cap limits simultaneous attempts, not requests per second; monitor the receiver's own rate limits. SQLite still serializes writes and warns when delivery concurrency exceeds one. Multiple API replicas can each run a pool; count the sum of all lanes when setting capacity. A fatal lane stops its pool visibly; the deployment supervisor owns restart. Claims/ACKs remain fenced, and there is no agent execution in these workers.
 
 ## Shared deployment diagnostics
 
-The local SQLite quick-start remains unchanged. The opt-in [shared PostgreSQL/TLS reference](../deploy/shared/README.md) includes scoped instance credentials, protected persistent issuer files, volumes, health probes, resource limits and optional bounded webhook lanes. `wos config validate --deployment=shared` produces read-only, actionable advisories; it does not connect, initialize storage, generate identity or certify external controls. SQLite reports one writer. PostgreSQL reports its per-process `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` pool (default 16, explicit 1..256). Account for every replica and maintenance connection. Source `.go-version` pins the reviewed Go patch for CI/release and a distribution check keeps Docker aligned.
+The local SQLite quick-start retains a single Tenant file. PostgreSQL runtime startup additionally requires catalog provisioning and the selected Tenant binding. The opt-in [shared PostgreSQL/TLS reference](../deploy/shared/README.md) includes scoped instance credentials, protected persistent issuer files, volumes, health probes, resource limits and optional bounded webhook lanes. `wos config validate --deployment=shared` produces read-only, actionable advisories; it does not connect, initialize storage, generate identity or certify external controls. SQLite reports one writer. PostgreSQL reports its per-process `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` pool (default 16, explicit 1..256). Account for every replica and maintenance connection. Source `.go-version` pins the reviewed Go patch for CI/release and a distribution check keeps Docker aligned.

@@ -19,7 +19,7 @@ func (s *Service) directContinuitySection(ctx context.Context, scope d.Scope, se
 	var cursor queryCursor
 	if rawCursor != "" {
 		var e error
-		cursor, e = decodeCursor(rawCursor, scope.NamespaceID, scope.OutcomeID, section, "")
+		cursor, e = decodeCursor(rawCursor, scope.TenantID, scope.OutcomeID, section, "")
 		if e != nil {
 			return zero, true, e
 		}
@@ -103,7 +103,7 @@ func (s *Service) directContinuitySection(ctx context.Context, scope d.Scope, se
 		if section == "external_references" {
 			key = "h:" + filterHash(last.Value)
 		}
-		result.NextCursor = encodeCursor(queryCursor{CursorVersion: 2, Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: section, Revision: coord.Revision, Key: key, EvaluatedAt: at})
+		result.NextCursor = encodeCursor(queryCursor{CursorVersion: 2, Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: section, Revision: coord.Revision, Key: key, EvaluatedAt: at})
 	}
 	raw, e := json.Marshal(result)
 	if e != nil {

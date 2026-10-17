@@ -59,7 +59,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
   const clientMetadata='github.com/A1b3rt0M3rcad0/wos/packages/wos-cli';
   const clientFlags=`-s -w -X ${clientMetadata}.Version=${version} -X ${clientMetadata}.Commit=${commit} -X ${clientMetadata}.BuiltAt=${builtAt}`;
   run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(native,'wosctl'),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:'linux',GOARCH:'amd64'}});
-  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]}}};
+  const release={schema:1,version,commit,built_at:builtAt,platform:'linux',arch:'amd64',sha256:sha256(await fs.readFile(path.join(native,'wos'))),clients:{wosctl:{sha256:sha256(await fs.readFile(path.join(native,'wosctl'))),work_protocol:'signed_contracts_v3',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v3'],supported_workspace_schemas:[1,2]}}};
   await fs.writeFile(path.join(output,'server-release.json'),JSON.stringify(release,null,2)+'\n');
   run('sh',['tools/distribution/notices.sh',path.join(stages['wos-cli'].stage,'third-party-notices')],{cwd:source});
   // The standalone npm CLI embeds source-identical Linux and Windows Go binaries.
@@ -79,7 +79,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
       cliBinaries[platform]??={};cliBinaries[platform][name]={sha256:sha256(await fs.readFile(dest))};
     }
   }
-  await fs.writeFile(path.join(stages['wos-cli'].stage,'release.json'),JSON.stringify({schema:1,version,commit,built_at:builtAt,binaries:cliBinaries,work_protocol:'signed_contracts_v2',workspace_schema:2},null,2)+'\n');
+  await fs.writeFile(path.join(stages['wos-cli'].stage,'release.json'),JSON.stringify({schema:1,version,commit,built_at:builtAt,binaries:cliBinaries,work_protocol:'signed_contracts_v3',workspace_schema:2},null,2)+'\n');
   const artifacts=[];
   for(const [kind,{stage,pkg}] of Object.entries(stages)) {
     await normalize(stage);
@@ -103,7 +103,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     run('go',['build','-trimpath','-buildvcs=false',`-ldflags=${clientFlags}`,'-o',path.join(stage,executable),'./packages/wos-cli/cmd/wosctl'],{cwd:source,env:{...process.env,CGO_ENABLED:'0',GOOS:platform,GOARCH:'amd64'}});
     const primary=platform==='windows'?'wos.exe':'wos';
     await fs.copyFile(path.join(cliNative,platform+'-amd64',primary),path.join(stage,primary));
-    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),wos_sha256:sha256(await fs.readFile(path.join(stage,primary))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]};
+    const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),wos_sha256:sha256(await fs.readFile(path.join(stage,primary))),work_protocol:'signed_contracts_v3',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v3'],supported_workspace_schemas:[1,2]};
     await fs.writeFile(path.join(stage,'release.json'),JSON.stringify(clientRelease,null,2)+'\n');
     await copyLegalFiles(source, stage);await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
     const filename=`wosctl_${version}_${platform}_amd64.${platform==='windows'?'zip':'tar.gz'}`;

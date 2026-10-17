@@ -11,19 +11,19 @@ import (
 type workProtocolRepository struct{ tx *transaction }
 
 func (tx *transaction) WorkProtocol() ports.WorkProtocolRepository { return workProtocolRepository{tx} }
-func cloneProtocols(src map[d.ID]d.NamespaceWorkProtocol) map[d.ID]d.NamespaceWorkProtocol {
-	out := map[d.ID]d.NamespaceWorkProtocol{}
+func cloneProtocols(src map[d.ID]d.TenantWorkProtocol) map[d.ID]d.TenantWorkProtocol {
+	out := map[d.ID]d.TenantWorkProtocol{}
 	for k, v := range src {
 		out[k] = v
 	}
 	return out
 }
-func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, _ bool) (d.NamespaceWorkProtocol, error) {
+func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, _ bool) (d.TenantWorkProtocol, error) {
 	if err := ctx.Err(); err != nil {
-		return d.NamespaceWorkProtocol{}, err
+		return d.TenantWorkProtocol{}, err
 	}
 	if err := r.tx.ensureOpen(); err != nil {
-		return d.NamespaceWorkProtocol{}, err
+		return d.TenantWorkProtocol{}, err
 	}
 	if p, ok := r.tx.protocols[ns]; ok {
 		return p, p.Validate()
@@ -33,7 +33,7 @@ func (r workProtocolRepository) Lock(ctx context.Context, ns d.ID, _ bool) (d.Na
 func (r workProtocolRepository) Scopes(ctx context.Context, ns d.ID) ([]d.Scope, error) {
 	out := []d.Scope{}
 	for _, o := range r.tx.outcomes {
-		if o.NamespaceID == ns {
+		if o.TenantID == ns {
 			out = append(out, o.Scope())
 		}
 	}
@@ -43,7 +43,7 @@ func (r workProtocolRepository) Scopes(ctx context.Context, ns d.ID) ([]d.Scope,
 func (r workProtocolRepository) ValidLegacyLeases(ctx context.Context, ns d.ID, now time.Time) (int, error) {
 	count := 0
 	for _, w := range r.tx.workItems {
-		if w.Scope.NamespaceID == ns && w.CurrentLease != nil && now.Before(w.CurrentLease.ExpiresAt) {
+		if w.Scope.TenantID == ns && w.CurrentLease != nil && now.Before(w.CurrentLease.ExpiresAt) {
 			count++
 		}
 	}
@@ -52,7 +52,7 @@ func (r workProtocolRepository) ValidLegacyLeases(ctx context.Context, ns d.ID, 
 func (r workProtocolRepository) ValidUnsignedContracts(ctx context.Context, ns d.ID, now time.Time) (int, error) {
 	count := 0
 	for _, c := range r.tx.contracts {
-		if c.Scope.NamespaceID == ns && c.Status == d.ContractActive && now.Before(c.ExpiresAt) {
+		if c.Scope.TenantID == ns && c.Status == d.ContractActive && now.Before(c.ExpiresAt) {
 			count++
 		}
 	}
@@ -65,7 +65,7 @@ func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, no
 		return d.NewError(d.ErrorCodePreconditionFailed, "valid legacy leases remain")
 	}
 	for key, w := range r.tx.workItems {
-		if w.Scope.NamespaceID == ns {
+		if w.Scope.TenantID == ns {
 			w.ContractsEnabled = true
 			w.CurrentLease = nil
 			r.tx.workItems[key] = w
@@ -73,17 +73,17 @@ func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, no
 	}
 	return nil
 }
-func (r workProtocolRepository) Save(ctx context.Context, p d.NamespaceWorkProtocol, expected d.Version) error {
+func (r workProtocolRepository) Save(ctx context.Context, p d.TenantWorkProtocol, expected d.Version) error {
 	if err := p.Validate(); err != nil {
 		return err
 	}
-	old, err := r.Lock(ctx, p.NamespaceID, true)
+	old, err := r.Lock(ctx, p.TenantID, true)
 	if err != nil {
 		return err
 	}
 	if old.Version != expected || p.Version != expected+1 {
 		return d.NewError(d.ErrorCodeVersionConflict, "protocol version conflict")
 	}
-	r.tx.protocols[p.NamespaceID] = p
+	r.tx.protocols[p.TenantID] = p
 	return nil
 }

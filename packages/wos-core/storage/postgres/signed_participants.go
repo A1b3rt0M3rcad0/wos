@@ -11,10 +11,10 @@ func (r signedContractRepository) ExecutionParticipants(ctx context.Context, sco
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid bounded independence query")
 	}
 	rows, err := r.u.tx.QueryContext(ctx, `SELECT DISTINCT principal_id,separation_group FROM (
- SELECT holder_principal_id AS principal_id,COALESCE(state_json::jsonb #>> '{signed_binding,separation_group}','') AS separation_group FROM signed_work_contracts WHERE namespace_id=$1 AND outcome_id=$2 AND work_item_id=$3
- UNION ALL SELECT holder_principal_id,'' FROM work_contracts WHERE namespace_id=$4 AND outcome_id=$5 AND work_item_id=$6
- UNION ALL SELECT principal_id,'' FROM domain_events WHERE namespace_id=$7 AND outcome_id=$8 AND aggregate_id=$9 AND event_type IN ('work_item.claimed','work_item.reclaimed','work_item.admin_completed')
- ) participants ORDER BY principal_id,separation_group LIMIT $10`, scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), limit)
+ SELECT holder_principal_id AS principal_id,COALESCE(state_json::jsonb #>> '{signed_binding,separation_group}','') AS separation_group FROM signed_work_contracts WHERE tenant_id=$1 AND outcome_id=$2 AND work_item_id=$3
+ UNION ALL SELECT holder_principal_id,'' FROM work_contracts WHERE tenant_id=$4 AND outcome_id=$5 AND work_item_id=$6
+ UNION ALL SELECT principal_id,'' FROM domain_events WHERE tenant_id=$7 AND outcome_id=$8 AND aggregate_id=$9 AND event_type IN ('work_item.claimed','work_item.reclaimed','work_item.admin_completed')
+ ) participants ORDER BY principal_id,separation_group LIMIT $10`, scope.TenantID.String(), scope.OutcomeID.String(), work.String(), scope.TenantID.String(), scope.OutcomeID.String(), work.String(), scope.TenantID.String(), scope.OutcomeID.String(), work.String(), limit)
 	if err != nil {
 		return nil, mapSQLError("read execution participants", err)
 	}

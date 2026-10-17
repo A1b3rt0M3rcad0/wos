@@ -68,12 +68,12 @@ func TestRealWebhookRetryKeepsEventIdentityAndSignature(t *testing.T) {
 	ns := domain.MustParseID("0199d102-0000-7000-8000-000000000001")
 	commandID, _ := ids.NewID()
 	cc := domain.CommandContext{PrincipalID: "operator", Actor: domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "operator"}, CommandID: commandID}
-	outcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Webhook", DesiredState: "Durable signed delivery", Priority: domain.PriorityNormal})
+	outcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "Webhook", DesiredState: "Durable signed delivery", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
 	endpointID, _ := ids.NewID()
-	endpoint := ports.WebhookEndpoint{ID: endpointID, NamespaceID: ns, URL: target.URL, SecretRef: "target-key", KeyID: "key-1"}
+	endpoint := ports.WebhookEndpoint{ID: endpointID, TenantID: ns, URL: target.URL, SecretRef: "target-key", KeyID: "key-1"}
 	if err = store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}); err != nil {
 		t.Fatal(err)
 	}

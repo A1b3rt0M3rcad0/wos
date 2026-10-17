@@ -19,11 +19,11 @@ func (r continuityReadRepository) Projection(ctx context.Context, scope d.Scope,
 	var title, lifecycle, priority, external string
 	var version d.Version
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,external_context_json FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority, &archived, &external)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,external_context_json FROM outcomes WHERE tenant_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority, &archived, &external)
 	if e != nil {
 		return data, mapSQLError("read operational Outcome header", e)
 	}
-	data.Outcome = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(lifecycle), Priority: d.Priority(priority), Criteria: d.NewCriterionSet()}
+	data.Outcome = d.Outcome{ID: scope.OutcomeID, TenantID: scope.TenantID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(lifecycle), Priority: d.Priority(priority), Criteria: d.NewCriterionSet()}
 	if e = unmarshalJSON(external, &data.Outcome.ExternalContext); e != nil {
 		return data, e
 	}
@@ -105,7 +105,7 @@ func (r continuityReadRepository) Projection(ctx context.Context, scope d.Scope,
 	return data, nil
 }
 func (r continuityReadRepository) projectionObjectiveHeaders(ctx context.Context, scope d.Scope) ([]d.Objective, error) {
-	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,parent_objective_id,required_for_outcome FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,parent_objective_id,required_for_outcome FROM objectives WHERE tenant_id=? AND outcome_id=? ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, mapSQLError("read operational Objective headers", e)
 	}
@@ -171,8 +171,8 @@ func (r continuityReadRepository) projectionWorkHeaders(ctx context.Context, sco
 	values := []d.WorkItem{}
 	seen := map[d.ID]bool{}
 	read := func(condition string, args ...any) error {
-		query := "SELECT " + projectionWorkColumns + " FROM work_items WHERE namespace_id=? AND outcome_id=?" + condition + " ORDER BY id"
-		params := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		query := "SELECT " + projectionWorkColumns + " FROM work_items WHERE tenant_id=? AND outcome_id=?" + condition + " ORDER BY id"
+		params := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 		params = append(params, args...)
 		rows, e := r.rows(ctx, query, params...)
 		if e != nil {
@@ -198,7 +198,7 @@ func (r continuityReadRepository) projectionWorkHeaders(ctx context.Context, sco
 		return values, nil
 	}
 	if concluded {
-		if e := read(` AND EXISTS(SELECT 1 FROM aggregate_current_conclusions a WHERE a.namespace_id=work_items.namespace_id AND a.outcome_id=work_items.outcome_id AND a.owner_id=work_items.id)`); e != nil {
+		if e := read(` AND EXISTS(SELECT 1 FROM aggregate_current_conclusions a WHERE a.tenant_id=work_items.tenant_id AND a.outcome_id=work_items.outcome_id AND a.owner_id=work_items.id)`); e != nil {
 			return nil, e
 		}
 	}
@@ -237,8 +237,8 @@ func (r continuityReadRepository) addProjectionDependencyTargets(ctx context.Con
 	}
 	for start := 0; start < len(refs); start += 100 {
 		end := min(start+100, len(refs))
-		q := "SELECT " + projectionWorkColumns + " FROM work_items WHERE namespace_id=? AND outcome_id=? AND id IN (" + strings.TrimSuffix(strings.Repeat("?,", end-start), ",") + ") ORDER BY id"
-		args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		q := "SELECT " + projectionWorkColumns + " FROM work_items WHERE tenant_id=? AND outcome_id=? AND id IN (" + strings.TrimSuffix(strings.Repeat("?,", end-start), ",") + ") ORDER BY id"
+		args := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 		for _, id := range refs[start:end] {
 			args = append(args, id.String())
 		}
@@ -265,8 +265,8 @@ func (r continuityReadRepository) addProjectionDependencyTargets(ctx context.Con
 func (r continuityReadRepository) projectionDependencies(ctx context.Context, scope d.Scope, sourceIDs []d.ID, all bool) ([]d.Relation, error) {
 	values := []d.Relation{}
 	read := func(condition string, args ...any) error {
-		query := `SELECT id,source_id,source_kind,target_id,target_kind,strength FROM relations WHERE namespace_id=? AND outcome_id=? AND lifecycle='active' AND relation_type='depends_on'` + condition + ` ORDER BY id`
-		params := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		query := `SELECT id,source_id,source_kind,target_id,target_kind,strength FROM relations WHERE tenant_id=? AND outcome_id=? AND lifecycle='active' AND relation_type='depends_on'` + condition + ` ORDER BY id`
+		params := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 		params = append(params, args...)
 		rows, e := r.rows(ctx, query, params...)
 		if e != nil {
@@ -319,7 +319,7 @@ func (r continuityReadRepository) projectionBlockers(ctx context.Context, scope 
 	if details {
 		columns = blockerReadColumns
 	}
-	rows, e := r.rows(ctx, "SELECT "+columns+" FROM blockers WHERE namespace_id=? AND outcome_id=? AND lifecycle='active' ORDER BY id", scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, "SELECT "+columns+" FROM blockers WHERE tenant_id=? AND outcome_id=? AND lifecycle='active' ORDER BY id", scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -360,7 +360,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 	result := map[d.EntityRef]*projectionProof{}
 	byID := map[d.ID]d.EntityRef{}
 	read := func(query string, consume func(*sql.Rows) error) error {
-		rows, e := r.rows(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String())
+		rows, e := r.rows(ctx, query, scope.TenantID.String(), scope.OutcomeID.String())
 		if e != nil {
 			return mapSQLError("read current conclusion proof projection", e)
 		}
@@ -372,7 +372,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 		}
 		return rows.Err()
 	}
-	e := read(`SELECT a.owner_id,e.kind,c.obligations_snapshot_json FROM aggregate_current_conclusions a JOIN entity_refs e ON e.namespace_id=a.namespace_id AND e.outcome_id=a.outcome_id AND e.id=a.owner_id JOIN conclusions c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE a.namespace_id=? AND a.outcome_id=?`, func(rows *sql.Rows) error {
+	e := read(`SELECT a.owner_id,e.kind,c.obligations_snapshot_json FROM aggregate_current_conclusions a JOIN entity_refs e ON e.tenant_id=a.tenant_id AND e.outcome_id=a.outcome_id AND e.id=a.owner_id JOIN conclusions c ON c.tenant_id=a.tenant_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE a.tenant_id=? AND a.outcome_id=?`, func(rows *sql.Rows) error {
 		var owner, kind, raw string
 		if e := rows.Scan(&owner, &kind, &raw); e != nil {
 			return e
@@ -399,7 +399,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 	if len(result) == 0 {
 		return result, nil
 	}
-	e = read(`SELECT c.owner_id,c.id,c.criterion_revision,c.status,r.required,r.verification_mode FROM success_criteria c JOIN aggregate_current_conclusions a ON a.namespace_id=c.namespace_id AND a.outcome_id=c.outcome_id AND a.owner_id=c.owner_id JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.namespace_id=? AND c.outcome_id=? ORDER BY c.created_at,c.id`, func(rows *sql.Rows) error {
+	e = read(`SELECT c.owner_id,c.id,c.criterion_revision,c.status,r.required,r.verification_mode FROM success_criteria c JOIN aggregate_current_conclusions a ON a.tenant_id=c.tenant_id AND a.outcome_id=c.outcome_id AND a.owner_id=c.owner_id JOIN criterion_revisions r ON r.tenant_id=c.tenant_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision WHERE c.tenant_id=? AND c.outcome_id=? ORDER BY c.created_at,c.id`, func(rows *sql.Rows) error {
 		var owner, id, status, mode string
 		var revision d.CriterionRevision
 		var required int
@@ -421,7 +421,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 	if e != nil {
 		return nil, e
 	}
-	e = read(`SELECT c.owner_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM success_criteria c JOIN aggregate_current_conclusions x ON x.namespace_id=c.namespace_id AND x.outcome_id=c.outcome_id AND x.owner_id=c.owner_id JOIN criterion_current_assessments p ON p.namespace_id=c.namespace_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE c.namespace_id=? AND c.outcome_id=?`, func(rows *sql.Rows) error {
+	e = read(`SELECT c.owner_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM success_criteria c JOIN aggregate_current_conclusions x ON x.tenant_id=c.tenant_id AND x.outcome_id=c.outcome_id AND x.owner_id=c.owner_id JOIN criterion_current_assessments p ON p.tenant_id=c.tenant_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id JOIN criterion_assessments a ON a.tenant_id=p.tenant_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE c.tenant_id=? AND c.outcome_id=?`, func(rows *sql.Rows) error {
 		var owner, id, criterion, resultValue string
 		var revision d.CriterionRevision
 		if e := rows.Scan(&owner, &id, &criterion, &revision, &resultValue); e != nil {
@@ -450,7 +450,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 		index int
 	}
 	assessments := map[d.ID]selected{}
-	e = read(`SELECT x.owner_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM aggregate_current_conclusions x JOIN conclusion_assessments p ON p.namespace_id=x.namespace_id AND p.outcome_id=x.outcome_id AND p.conclusion_id=x.conclusion_id JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE x.namespace_id=? AND x.outcome_id=? ORDER BY a.criterion_id,a.id`, func(rows *sql.Rows) error {
+	e = read(`SELECT x.owner_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM aggregate_current_conclusions x JOIN conclusion_assessments p ON p.tenant_id=x.tenant_id AND p.outcome_id=x.outcome_id AND p.conclusion_id=x.conclusion_id JOIN criterion_assessments a ON a.tenant_id=p.tenant_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id WHERE x.tenant_id=? AND x.outcome_id=? ORDER BY a.criterion_id,a.id`, func(rows *sql.Rows) error {
 		var owner, id, criterion, resultValue string
 		var revision d.CriterionRevision
 		if e := rows.Scan(&owner, &id, &criterion, &revision, &resultValue); e != nil {
@@ -478,7 +478,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 	if e != nil {
 		return nil, e
 	}
-	e = read(`SELECT a.assessment_id,a.evidence_id FROM criterion_assessment_evidence a JOIN conclusion_assessments p ON p.namespace_id=a.namespace_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.assessment_id JOIN aggregate_current_conclusions x ON x.namespace_id=p.namespace_id AND x.outcome_id=p.outcome_id AND x.conclusion_id=p.conclusion_id WHERE a.namespace_id=? AND a.outcome_id=? ORDER BY a.assessment_id,a.evidence_id`, func(rows *sql.Rows) error {
+	e = read(`SELECT a.assessment_id,a.evidence_id FROM criterion_assessment_evidence a JOIN conclusion_assessments p ON p.tenant_id=a.tenant_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.assessment_id JOIN aggregate_current_conclusions x ON x.tenant_id=p.tenant_id AND x.outcome_id=p.outcome_id AND x.conclusion_id=p.conclusion_id WHERE a.tenant_id=? AND a.outcome_id=? ORDER BY a.assessment_id,a.evidence_id`, func(rows *sql.Rows) error {
 		var aid, eid string
 		if e := rows.Scan(&aid, &eid); e != nil {
 			return e
@@ -502,7 +502,7 @@ func (r continuityReadRepository) projectionConclusionProof(ctx context.Context,
 	return result, e
 }
 func (r continuityReadRepository) projectionConclusionEvidence(ctx context.Context, scope d.Scope) ([]d.Evidence, error) {
-	rows, e := r.rows(ctx, `SELECT DISTINCT e.id,e.lifecycle FROM evidence e JOIN criterion_assessment_evidence a ON a.namespace_id=e.namespace_id AND a.outcome_id=e.outcome_id AND a.evidence_id=e.id JOIN conclusion_assessments p ON p.namespace_id=a.namespace_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.assessment_id JOIN aggregate_current_conclusions x ON x.namespace_id=p.namespace_id AND x.outcome_id=p.outcome_id AND x.conclusion_id=p.conclusion_id WHERE e.namespace_id=? AND e.outcome_id=? ORDER BY e.id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, `SELECT DISTINCT e.id,e.lifecycle FROM evidence e JOIN criterion_assessment_evidence a ON a.tenant_id=e.tenant_id AND a.outcome_id=e.outcome_id AND a.evidence_id=e.id JOIN conclusion_assessments p ON p.tenant_id=a.tenant_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.assessment_id JOIN aggregate_current_conclusions x ON x.tenant_id=p.tenant_id AND x.outcome_id=p.outcome_id AND x.conclusion_id=p.conclusion_id WHERE e.tenant_id=? AND e.outcome_id=? ORDER BY e.id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -523,23 +523,23 @@ func (r continuityReadRepository) projectionConclusionEvidence(ctx context.Conte
 }
 func (r continuityReadRepository) projectionProofCounts(ctx context.Context, scope d.Scope) (int, int, int, error) {
 	query := `SELECT COUNT(*),COALESCE(SUM(CASE WHEN a.result='met' AND a.criterion_revision=c.criterion_revision AND NOT EXISTS(
- SELECT 1 FROM criterion_assessment_evidence p LEFT JOIN evidence e ON e.namespace_id=p.namespace_id AND e.outcome_id=p.outcome_id AND e.id=p.evidence_id
- WHERE p.namespace_id=a.namespace_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.id AND (e.id IS NULL OR e.lifecycle!='registered')
+ SELECT 1 FROM criterion_assessment_evidence p LEFT JOIN evidence e ON e.tenant_id=p.tenant_id AND e.outcome_id=p.outcome_id AND e.id=p.evidence_id
+ WHERE p.tenant_id=a.tenant_id AND p.outcome_id=a.outcome_id AND p.assessment_id=a.id AND (e.id IS NULL OR e.lifecycle!='registered')
 ) THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN a.result='waived' AND a.criterion_revision=c.criterion_revision THEN 1 ELSE 0 END),0)
 FROM success_criteria c
-JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision
-LEFT JOIN work_items w ON w.namespace_id=c.namespace_id AND w.outcome_id=c.outcome_id AND w.id=c.owner_id AND c.owner_kind='work_item'
-LEFT JOIN objectives o ON o.namespace_id=c.namespace_id AND o.outcome_id=c.outcome_id AND o.id=c.owner_id AND c.owner_kind='objective'
-LEFT JOIN criterion_current_assessments p ON p.namespace_id=c.namespace_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id
-LEFT JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id
-WHERE c.namespace_id=? AND c.outcome_id=? AND c.status='active' AND r.required=1
+JOIN criterion_revisions r ON r.tenant_id=c.tenant_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision
+LEFT JOIN work_items w ON w.tenant_id=c.tenant_id AND w.outcome_id=c.outcome_id AND w.id=c.owner_id AND c.owner_kind='work_item'
+LEFT JOIN objectives o ON o.tenant_id=c.tenant_id AND o.outcome_id=c.outcome_id AND o.id=c.owner_id AND c.owner_kind='objective'
+LEFT JOIN criterion_current_assessments p ON p.tenant_id=c.tenant_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id
+LEFT JOIN criterion_assessments a ON a.tenant_id=p.tenant_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id
+WHERE c.tenant_id=? AND c.outcome_id=? AND c.status='active' AND r.required=1
 AND (c.owner_kind='outcome' OR (c.owner_kind='work_item' AND w.lifecycle!='cancelled') OR (c.owner_kind='objective' AND o.lifecycle!='cancelled'))`
 	var required, met, waived int
-	e := r.row(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)
+	e := r.row(ctx, query, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&required, &met, &waived)
 	return required, met, waived, mapSQLError("aggregate current required proof", e)
 }
 func (r continuityReadRepository) projectionPlans(ctx context.Context, scope d.Scope) ([]ports.ContinuityActivePlan, error) {
-	rows, e := r.rows(ctx, `SELECT s.plan_scope_kind,s.plan_scope_id,s.roadmap_id,s.revision_number,s.activated_by_json,s.activated_at,r.content_hash FROM roadmap_active_slots s JOIN roadmaps m ON m.namespace_id=s.namespace_id AND m.outcome_id=s.outcome_id AND m.id=s.roadmap_id AND m.plan_scope_kind=s.plan_scope_kind AND m.plan_scope_id=s.plan_scope_id JOIN roadmap_revisions r ON r.namespace_id=s.namespace_id AND r.outcome_id=s.outcome_id AND r.roadmap_id=s.roadmap_id AND r.revision_number=s.revision_number WHERE s.namespace_id=? AND s.outcome_id=? ORDER BY s.roadmap_id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, `SELECT s.plan_scope_kind,s.plan_scope_id,s.roadmap_id,s.revision_number,s.activated_by_json,s.activated_at,r.content_hash FROM roadmap_active_slots s JOIN roadmaps m ON m.tenant_id=s.tenant_id AND m.outcome_id=s.outcome_id AND m.id=s.roadmap_id AND m.plan_scope_kind=s.plan_scope_kind AND m.plan_scope_id=s.plan_scope_id JOIN roadmap_revisions r ON r.tenant_id=s.tenant_id AND r.outcome_id=s.outcome_id AND r.roadmap_id=s.roadmap_id AND r.revision_number=s.revision_number WHERE s.tenant_id=? AND s.outcome_id=? ORDER BY s.roadmap_id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -583,7 +583,7 @@ func (r continuityReadRepository) projectionPlans(ctx context.Context, scope d.S
 	if len(values) == 0 {
 		return values, nil
 	}
-	rows, e = r.rows(ctx, `SELECT n.roadmap_id,n.node_key,n.title,n.target_ref_json,n.reference_snapshot_json FROM roadmap_revision_nodes n JOIN roadmap_active_slots s ON s.namespace_id=n.namespace_id AND s.outcome_id=n.outcome_id AND s.roadmap_id=n.roadmap_id AND s.revision_number=n.revision_number WHERE n.namespace_id=? AND n.outcome_id=? ORDER BY n.roadmap_id,n.node_key`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e = r.rows(ctx, `SELECT n.roadmap_id,n.node_key,n.title,n.target_ref_json,n.reference_snapshot_json FROM roadmap_revision_nodes n JOIN roadmap_active_slots s ON s.tenant_id=n.tenant_id AND s.outcome_id=n.outcome_id AND s.roadmap_id=n.roadmap_id AND s.revision_number=n.revision_number WHERE n.tenant_id=? AND n.outcome_id=? ORDER BY n.roadmap_id,n.node_key`, scope.TenantID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -649,8 +649,8 @@ func (r continuityReadRepository) BlockerDetails(ctx context.Context, scope d.Sc
 	}
 	for start := 0; start < len(unique); start += 100 {
 		end := min(start+100, len(unique))
-		q := "SELECT " + blockerReadColumns + " FROM blockers WHERE namespace_id=? AND outcome_id=? AND id IN (" + strings.TrimSuffix(strings.Repeat("?,", end-start), ",") + ") ORDER BY id"
-		args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		q := "SELECT " + blockerReadColumns + " FROM blockers WHERE tenant_id=? AND outcome_id=? AND id IN (" + strings.TrimSuffix(strings.Repeat("?,", end-start), ",") + ") ORDER BY id"
+		args := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 		for _, id := range unique[start:end] {
 			args = append(args, id.String())
 		}

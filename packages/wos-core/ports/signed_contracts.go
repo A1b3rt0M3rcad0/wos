@@ -19,8 +19,8 @@ type SignedActiveCounts struct {
 	PrincipalReview  int `json:"principal_review"`
 	CredentialWork   int `json:"credential_work"`
 	CredentialReview int `json:"credential_review"`
-	NamespaceWork    int `json:"namespace_work"`
-	NamespaceReview  int `json:"namespace_review"`
+	TenantWork       int `json:"tenant_work"`
+	TenantReview     int `json:"tenant_review"`
 }
 type SignedContractRepository interface {
 	ExecutionParticipants(context.Context, domain.Scope, domain.ID, int) ([]domain.ExecutionParticipant, error)

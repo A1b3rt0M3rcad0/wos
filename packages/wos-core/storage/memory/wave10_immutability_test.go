@@ -10,8 +10,8 @@ import (
 func TestWave10ValidationHistoryAppendOnlyGuard(t *testing.T) {
 	now := time.Date(2026, 10, 2, 20, 45, 0, 0, time.UTC)
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199efe0-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199efe0-0000-7000-8000-000000000010"),
+		TenantID:  domain.MustParseID("0199efe0-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199efe0-0000-7000-8000-000000000010"),
 	}
 	owner := domain.EntityRef{Scope: scope, Kind: domain.EntityKindOutcome, ID: scope.OutcomeID}
 	criterion, err := domain.NewSuccessCriterion(

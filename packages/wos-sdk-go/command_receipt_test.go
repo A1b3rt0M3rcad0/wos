@@ -16,7 +16,7 @@ func TestCommandReceiptObservationPreservesCompactCommitWithoutClaimingFullResul
 	ns := d.MustParseID("0199ff42-0000-7000-8000-000000000001")
 	id := d.MustParseID("0199ff42-0000-7000-8000-000000000002")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/namespaces/"+ns.String()+"/commands/"+id.String() {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v1/tenants/"+ns.String()+"/commands/"+id.String() {
 			t.Error("receipt requested from wrong endpoint")
 		}
 		json.NewEncoder(w).Encode(map[string]any{"command_id": id, "outcome_revision": 3, "result_omitted": true})

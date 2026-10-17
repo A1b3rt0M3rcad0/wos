@@ -29,7 +29,7 @@ func queryLimit(n int) (int, error) {
 
 type queryCursor struct {
 	CursorVersion int                    `json:"cursor_version,omitempty"`
-	Namespace     domain.ID              `json:"ns"`
+	Tenant        domain.ID              `json:"ns"`
 	Outcome       domain.ID              `json:"outcome,omitempty"`
 	Section       string                 `json:"section"`
 	Filter        string                 `json:"filter,omitempty"`
@@ -54,7 +54,7 @@ func decodeCursor(raw string, ns, outcome domain.ID, section, filter string) (qu
 		return c, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor")
 	}
 	b, err := base64.RawURLEncoding.DecodeString(raw)
-	if err != nil || json.Unmarshal(b, &c) != nil || c.Namespace != ns || c.Outcome != outcome || c.Section != section || c.Filter != filter {
+	if err != nil || json.Unmarshal(b, &c) != nil || c.Tenant != ns || c.Outcome != outcome || c.Section != section || c.Filter != filter {
 		return c, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor: scope, section or filter mismatch")
 	}
 	return c, nil
@@ -71,7 +71,7 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	if err := ns.Validate(); err != nil {
 		return OutcomePage{}, err
 	}
-	if err := s.authorizeNamespaceMetadataRead(ctx, ns); err != nil {
+	if err := s.authorizeTenantMetadataRead(ctx, ns); err != nil {
 		return OutcomePage{}, err
 	}
 	if err := f.ExternalContext.Validate(); err != nil {
@@ -155,7 +155,7 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 	if len(items) > n {
 		page.Items = items[:n]
 		last := page.Items[n-1]
-		page.NextCursor = encodeCursor(queryCursor{Namespace: ns, Section: "outcomes", Filter: hash, Key: last.CreatedAt.Format(time.RFC3339Nano) + "/" + last.ID.String()})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: ns, Section: "outcomes", Filter: hash, Key: last.CreatedAt.Format(time.RFC3339Nano) + "/" + last.ID.String()})
 	}
 	return page, nil
 }
@@ -205,7 +205,7 @@ func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q Timelin
 	hash := filterHash(q)
 	f := ports.EventFilter{Limit: n + 1, PrincipalID: q.PrincipalID, CommandID: q.CommandID, EntityID: q.EntityID, EventType: q.EventType}
 	if q.Cursor != "" {
-		c, err := decodeCursor(q.Cursor, scope.NamespaceID, scope.OutcomeID, "timeline", hash)
+		c, err := decodeCursor(q.Cursor, scope.TenantID, scope.OutcomeID, "timeline", hash)
 		if err != nil {
 			return TimelinePage{}, err
 		}
@@ -239,7 +239,7 @@ func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q Timelin
 	if len(events) > n {
 		events = events[:n]
 		last := events[n-1]
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "timeline", Filter: hash, Revision: last.OutcomeRevision, Index: last.EventIndex})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "timeline", Filter: hash, Revision: last.OutcomeRevision, Index: last.EventIndex})
 	}
 	for _, e := range events {
 		page.Items = append(page.Items, TimelineFact{ID: e.EventID, Type: e.EventType, SchemaVersion: 1, Revision: e.OutcomeRevision, Index: e.EventIndex, Entity: e.AggregateRef, PrincipalID: e.PrincipalID, Actor: e.Actor, CommandID: e.CommandID, RecordedAt: e.RecordedAt})
@@ -400,7 +400,7 @@ func (s *Service) continuitySections(state OutcomeState) map[string][]json.RawMe
 func sectionPage(scope domain.Scope, revision domain.OutcomeRevision, at time.Time, section string, values []json.RawMessage, n int, cursor string) (SectionPage, error) {
 	after := ""
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, section, "")
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, section, "")
 		if err != nil {
 			return SectionPage{}, err
 		}
@@ -427,7 +427,7 @@ func sectionPage(scope domain.Scope, revision domain.OutcomeRevision, at time.Ti
 	end := min(start+n, len(values))
 	page := SectionPage{Items: values[start:end], OutcomeRevision: revision, EvaluatedAt: at, Count: len(values), Omitted: len(values) - end}
 	if end < len(values) {
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: section, Revision: revision, Key: filterHash(json.RawMessage(values[end-1])), EvaluatedAt: at})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: section, Revision: revision, Key: filterHash(json.RawMessage(values[end-1])), EvaluatedAt: at})
 	}
 	return page, nil
 }
@@ -530,7 +530,7 @@ func (s *Service) GetContinuitySection(ctx context.Context, scope domain.Scope, 
 	}
 
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, section, "")
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, section, "")
 		if err != nil {
 			return SectionPage{}, err
 		}

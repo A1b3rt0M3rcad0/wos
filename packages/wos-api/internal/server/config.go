@@ -25,13 +25,15 @@ const (
 // files is intentionally separate from validation so embedded hosts can build
 // Config values directly.
 type Config struct {
-	Signing     SigningConfig
-	Server      ServerConfig
-	HTTP        HTTPConfig
-	MCP         MCPConfig
-	Storage     StorageConfig
-	Auth        AuthConfig
-	Integration IntegrationConfig
+	TenantHosts           []TenantHostConfig
+	TenantHostsParseError bool
+	Signing               SigningConfig
+	Server                ServerConfig
+	HTTP                  HTTPConfig
+	MCP                   MCPConfig
+	Storage               StorageConfig
+	Auth                  AuthConfig
+	Integration           IntegrationConfig
 }
 
 type SigningConfig struct {
@@ -40,15 +42,15 @@ type SigningConfig struct {
 }
 
 type IntegrationConfig struct {
-	MaxBacklogAge           time.Duration
-	WorkerConcurrency       int
-	MaxInflightPerNamespace int
-	MaxInflightPerEndpoint  int
-	WorkerEnabled           bool
-	AllowLoopback           bool
-	Endpoints               []ports.WebhookEndpoint
-	Secrets                 map[string]string
-	ParseError              bool
+	MaxBacklogAge          time.Duration
+	WorkerConcurrency      int
+	MaxInflightPerTenant   int
+	MaxInflightPerEndpoint int
+	WorkerEnabled          bool
+	AllowLoopback          bool
+	Endpoints              []ports.WebhookEndpoint
+	Secrets                map[string]string
+	ParseError             bool
 }
 
 type ServerConfig struct {
@@ -59,17 +61,17 @@ type ServerConfig struct {
 }
 
 type HTTPConfig struct {
-	ParseError              bool
-	ReadHeaderTimeout       time.Duration
-	ReadTimeout             time.Duration
-	WriteTimeout            time.Duration
-	IdleTimeout             time.Duration
-	MaxHeaderBytes          int
-	MaxInflightRequests     int
-	MaxInflightPerNamespace int
-	Enabled                 bool
-	Prefix                  string
-	RequestTimeout          time.Duration
+	ParseError           bool
+	ReadHeaderTimeout    time.Duration
+	ReadTimeout          time.Duration
+	WriteTimeout         time.Duration
+	IdleTimeout          time.Duration
+	MaxHeaderBytes       int
+	MaxInflightRequests  int
+	MaxInflightPerTenant int
+	Enabled              bool
+	Prefix               string
+	RequestTimeout       time.Duration
 }
 
 type MCPConfig struct {
@@ -79,6 +81,9 @@ type MCPConfig struct {
 }
 
 type StorageConfig struct {
+	TenantID                   string
+	PostgresSchema             string
+	PostgresCatalogSchema      string
 	ParseError                 bool
 	PostgresMaxOpenConnections int
 	Driver                     string
@@ -88,12 +93,12 @@ type StorageConfig struct {
 }
 
 type AuthConfig struct {
-	LocalNamespaceID                  string
-	LocalNamespaceName                string
+	LocalTenantID                     string
+	LocalTenantName                   string
 	IndependentReviewer               bool
 	BootstrapToken                    string
-	BootstrapNamespaceID              string
-	BootstrapNamespaceName            string
+	BootstrapTenantID                 string
+	BootstrapTenantName               string
 	Mode                              string
 	LocalPrincipalID                  string
 	LocalAllowAdministrativeOverrides bool
@@ -131,8 +136,8 @@ func DefaultConfig() Config {
 			MigrateOnStart:             true,
 		},
 		Auth: AuthConfig{
-			LocalNamespaceID:                  "0199d000-0000-7000-8000-000000000001",
-			LocalNamespaceName:                "Local",
+			LocalTenantID:                     "0199d000-0000-7000-8000-000000000001",
+			LocalTenantName:                   "Local",
 			Mode:                              AuthModeLocal,
 			LocalPrincipalID:                  "local-user",
 			LocalAllowAdministrativeOverrides: false,
@@ -141,6 +146,10 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	cfg = cfg.withTenantBindingDefaults()
+	if err := cfg.validateTenancy(); err != nil {
+		return err
+	}
 	switch cfg.ProcessRole() {
 	case ProcessRoleComplete:
 	case ProcessRoleAPI:
@@ -172,8 +181,8 @@ func (cfg Config) Validate() error {
 	if cfg.HTTP.MaxHeaderBytes < 1024 || cfg.HTTP.MaxHeaderBytes > 1<<20 || cfg.HTTP.MaxInflightRequests < 1 || cfg.HTTP.MaxInflightRequests > 4096 || cfg.Server.MaxConnections < cfg.HTTP.MaxInflightRequests+2 || cfg.Server.MaxConnections > 65536 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "HTTP admission limits require headers 1 KiB..1 MiB, in-flight 1..4096 and connections in-flight+2..65536")
 	}
-	if cfg.HTTP.MaxInflightPerNamespace < 0 || cfg.HTTP.MaxInflightPerNamespace > cfg.HTTP.MaxInflightRequests {
-		return domain.NewError(domain.ErrorCodeInvalidConfig, "per-Namespace HTTP admission must be zero or at most the process in-flight limit")
+	if cfg.HTTP.MaxInflightPerTenant < 0 || cfg.HTTP.MaxInflightPerTenant > cfg.HTTP.MaxInflightRequests {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "per-Tenant HTTP admission must be zero or at most the process in-flight limit")
 	}
 
 	if cfg.Signing.AcceptanceFloor != "" && !cfg.Signing.AcceptanceFloor.Valid() {
@@ -185,7 +194,7 @@ func (cfg Config) Validate() error {
 	if cfg.Integration.WorkerConcurrency < 1 || cfg.Integration.WorkerConcurrency > 64 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery concurrency must be 1..64")
 	}
-	if cfg.Integration.MaxInflightPerNamespace < 0 || cfg.Integration.MaxInflightPerNamespace > 64 || cfg.Integration.MaxInflightPerEndpoint < 0 || cfg.Integration.MaxInflightPerEndpoint > 64 {
+	if cfg.Integration.MaxInflightPerTenant < 0 || cfg.Integration.MaxInflightPerTenant > 64 || cfg.Integration.MaxInflightPerEndpoint < 0 || cfg.Integration.MaxInflightPerEndpoint > 64 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery in-flight limits must be 0..64; zero disables the limit")
 	}
 	if cfg.Integration.MaxBacklogAge <= 0 || cfg.Integration.MaxBacklogAge > 7*24*time.Hour {
@@ -195,7 +204,7 @@ func (cfg Config) Validate() error {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid integration JSON configuration")
 	}
 	if cfg.RunsDeliveryWorker() {
-		if err := integration.ValidateWorkerPolicy(cfg.Integration.Secrets, ports.DeliveryClaimPolicy{MaxInflightPerNamespace: cfg.Integration.MaxInflightPerNamespace, MaxInflightPerEndpoint: cfg.Integration.MaxInflightPerEndpoint}); err != nil {
+		if err := integration.ValidateWorkerPolicy(cfg.Integration.Secrets, ports.DeliveryClaimPolicy{MaxInflightPerTenant: cfg.Integration.MaxInflightPerTenant, MaxInflightPerEndpoint: cfg.Integration.MaxInflightPerEndpoint}); err != nil {
 			return err
 		}
 	}
@@ -204,7 +213,7 @@ func (cfg Config) Validate() error {
 		if err := endpoint.ID.Validate(); err != nil {
 			return err
 		}
-		if err := endpoint.NamespaceID.Validate(); err != nil {
+		if err := endpoint.TenantID.Validate(); err != nil {
 			return err
 		}
 		u, err := url.Parse(endpoint.URL)
@@ -251,8 +260,8 @@ func (cfg Config) Validate() error {
 
 	switch cfg.Auth.Mode {
 	case AuthModeLocal:
-		if _, err := domain.ParseID(cfg.Auth.LocalNamespaceID); err != nil {
-			return domain.WrapError(domain.ErrorCodeInvalidConfig, "invalid local namespace", err)
+		if _, err := domain.ParseID(cfg.Auth.LocalTenantID); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidConfig, "invalid local tenant", err)
 		}
 		host, _, _ := net.SplitHostPort(cfg.Server.Listen)
 		ip := net.ParseIP(host)
@@ -263,16 +272,19 @@ func (cfg Config) Validate() error {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "auth.local principal is required")
 		}
 	case AuthModeAPIToken:
-		if cfg.ProcessRole() == ProcessRoleWorker {
-			// A worker consumes an existing installation. It neither provisions a
-			// Namespace nor needs possession of its bootstrap credential.
+		if len(cfg.TenantHosts) > 0 {
 			break
 		}
-		if len(cfg.Auth.BootstrapToken) < 32 || cfg.Auth.BootstrapNamespaceName == "" {
-			return domain.NewError(domain.ErrorCodeInvalidConfig, "api_token auth requires a bootstrap token and namespace")
+		if cfg.ProcessRole() == ProcessRoleWorker {
+			// A worker consumes an existing installation. It neither provisions a
+			// Tenant nor needs possession of its bootstrap credential.
+			break
 		}
-		if _, err := domain.ParseID(cfg.Auth.BootstrapNamespaceID); err != nil {
-			return domain.WrapError(domain.ErrorCodeInvalidConfig, "bootstrap namespace ID is invalid", err)
+		if len(cfg.Auth.BootstrapToken) < 32 || cfg.Auth.BootstrapTenantName == "" {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "api_token auth requires a bootstrap token and tenant")
+		}
+		if _, err := domain.ParseID(cfg.Auth.BootstrapTenantID); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidConfig, "bootstrap tenant ID is invalid", err)
 		}
 	default:
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "unsupported auth mode")

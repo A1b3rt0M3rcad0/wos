@@ -16,8 +16,8 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199ef00-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199ef00-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	createdOutcome := doJSON[application.MutationResult[domain.Outcome]](
 		t, client, http.MethodPost, base,
 		[]byte(`{"title":"Wave 07 HTTP","desired_state":"issues and blockers coordinate work","priority":"normal"}`),

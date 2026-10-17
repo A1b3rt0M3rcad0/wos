@@ -8,8 +8,8 @@ import (
 )
 
 type DeliveryHealthQuery struct {
-	NamespaceID d.ID  `json:"namespace_id"`
-	OutcomeID   *d.ID `json:"outcome_id,omitempty"`
+	TenantID  d.ID  `json:"tenant_id"`
+	OutcomeID *d.ID `json:"outcome_id,omitempty"`
 }
 type DeliveryHealthResult struct {
 	State                  string                     `json:"state"`
@@ -31,19 +31,19 @@ func (s *Service) ConfigureDeliveryDiagnostics(observer ports.DeliveryDiagnostic
 	return nil
 }
 func (s *Service) GetDeliveryHealth(ctx context.Context, q DeliveryHealthQuery) (DeliveryHealthResult, error) {
-	scope := d.Scope{NamespaceID: q.NamespaceID}
+	scope := d.Scope{TenantID: q.TenantID}
 	if q.OutcomeID != nil {
 		scope.OutcomeID = *q.OutcomeID
 	}
 	var zero DeliveryHealthResult
-	if scope.NamespaceID.Validate() != nil || q.OutcomeID != nil && q.OutcomeID.Validate() != nil {
-		return zero, d.NewError(d.ErrorCodeInvalidArgument, "valid Namespace and optional Outcome required")
+	if scope.TenantID.Validate() != nil || q.OutcomeID != nil && q.OutcomeID.Validate() != nil {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "valid Tenant and optional Outcome required")
 	}
 	identity, ok := IdentityFromContext(ctx)
-	if !ok || identity.NamespaceID != scope.NamespaceID || identity.CredentialDigest == "" {
+	if !ok || identity.TenantID != scope.TenantID || identity.CredentialDigest == "" {
 		return zero, d.NewError(d.ErrorCodeForbidden, "authenticated scoped administrator required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionNamespaceAdmin}
+	request := ports.AuthorizationRequest{TenantID: scope.TenantID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionTenantAdmin}
 	if s.requireIdentity {
 		if e := s.authorizer.Authorize(ctx, request); e != nil {
 			return zero, e
@@ -65,7 +65,7 @@ func (s *Service) GetDeliveryHealth(ctx context.Context, q DeliveryHealthQuery) 
 	if e = access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: request, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); e != nil {
 		return zero, e
 	}
-	// Namespace metadata policy permits a zero Outcome. A queue aggregate,
+	// Tenant metadata policy permits a zero Outcome. A queue aggregate,
 	// however, reveals all Outcomes: resolve the current credential policy in
 	// this same snapshot and reject restricted credentials before reading it.
 	if scope.OutcomeID.IsZero() {
@@ -83,7 +83,7 @@ func (s *Service) GetDeliveryHealth(ctx context.Context, q DeliveryHealthQuery) 
 				return zero, e
 			}
 		}
-		policy, e := signing.CredentialPolicy(ctx, scope.NamespaceID, credential.ID)
+		policy, e := signing.CredentialPolicy(ctx, scope.TenantID, credential.ID)
 		if e != nil {
 			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
 				return zero, e

@@ -24,8 +24,8 @@ func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.
 SELECT version, title, description, severity, lifecycle, reported_by_json,
        resolution_summary, duplicate_of_issue_id, created_at, updated_at
 FROM issues
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND id = ?`,
+		scope.TenantID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
 		&version, &title, &description, &severity, &lifecycle, &reportedByJSON,
 		&resolutionSummary, &duplicateRaw, &createdAt, &updatedAt,
@@ -72,9 +72,9 @@ func (r issueRepository) loadAffectedRefs(ctx context.Context, scope domain.Scop
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT affected_id, affected_kind
 FROM issue_affected_refs
-WHERE namespace_id = ? AND outcome_id = ? AND issue_id = ?
+WHERE tenant_id = ? AND outcome_id = ? AND issue_id = ?
 ORDER BY affected_kind, affected_id`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
+		scope.TenantID.String(), scope.OutcomeID.String(), id.String(),
 	)
 	if err != nil {
 		return nil, mapSQLError("load issue affected refs", err)
@@ -105,8 +105,8 @@ func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) 
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id FROM issues
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+WHERE tenant_id = ? AND outcome_id = ?
+ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list issues", err)
 	}
@@ -153,11 +153,11 @@ func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO issues (
-    id, namespace_id, outcome_id, kind, version, title, description, severity,
+    id, tenant_id, outcome_id, kind, version, title, description, severity,
     lifecycle, reported_by_json, resolution_summary, duplicate_of_issue_id,
     created_at, updated_at
 ) VALUES (?, ?, ?, 'issue', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		issue.ID.String(), issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(),
+		issue.ID.String(), issue.Scope.TenantID.String(), issue.Scope.OutcomeID.String(),
 		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity),
 		string(issue.Lifecycle), reportedByJSON, issue.ResolutionSummary,
 		nullableID(issue.DuplicateOfIssueID), encodeTime(issue.CreatedAt), encodeTime(issue.UpdatedAt),
@@ -168,9 +168,9 @@ INSERT INTO issues (
 	for _, ref := range issue.AffectedRefs {
 		if _, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO issue_affected_refs (
-    namespace_id, outcome_id, issue_id, affected_id, affected_kind
+    tenant_id, outcome_id, issue_id, affected_id, affected_kind
 ) VALUES (?, ?, ?, ?, ?)`,
-			issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+			issue.Scope.TenantID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
 			ref.ID.String(), ref.Kind.String(),
 		); err != nil {
 			return mapSQLError("insert issue affected ref", err)
@@ -193,33 +193,33 @@ func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected 
 UPDATE issues
 SET version = ?, title = ?, description = ?, severity = ?, lifecycle = ?,
     resolution_summary = ?, duplicate_of_issue_id = ?, updated_at = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle),
 		issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
-		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(), int64(expected),
+		issue.Scope.TenantID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save issue", err)
 	}
 	if err := requireVersionedUpdate(
 		ctx, r.uow.tx, result, "issues",
-		issue.Scope.NamespaceID, issue.Scope.OutcomeID, issue.ID, expected,
+		issue.Scope.TenantID, issue.Scope.OutcomeID, issue.ID, expected,
 	); err != nil {
 		return err
 	}
 	if _, err := r.uow.tx.ExecContext(ctx, `
 DELETE FROM issue_affected_refs
-WHERE namespace_id = ? AND outcome_id = ? AND issue_id = ?`,
-		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+WHERE tenant_id = ? AND outcome_id = ? AND issue_id = ?`,
+		issue.Scope.TenantID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
 	); err != nil {
 		return mapSQLError("replace issue affected refs", err)
 	}
 	for _, ref := range issue.AffectedRefs {
 		if _, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO issue_affected_refs (
-    namespace_id, outcome_id, issue_id, affected_id, affected_kind
+    tenant_id, outcome_id, issue_id, affected_id, affected_kind
 ) VALUES (?, ?, ?, ?, ?)`,
-			issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+			issue.Scope.TenantID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
 			ref.ID.String(), ref.Kind.String(),
 		); err != nil {
 			return mapSQLError("replace issue affected ref", err)
@@ -234,7 +234,7 @@ func (r blockerRepository) Get(ctx context.Context, scope domain.Scope, id domai
 	if e := r.uow.ensureOpen(); e != nil {
 		return domain.Blocker{}, e
 	}
-	return scanBlocker(r.uow.tx.QueryRowContext(ctx, `SELECT `+blockerReadColumns+` FROM blockers WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	return scanBlocker(r.uow.tx.QueryRowContext(ctx, `SELECT `+blockerReadColumns+` FROM blockers WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 }
 
 const blockerReadColumns = `id,version, blocked_id, blocked_kind, cause_id, cause_kind, external_cause_json, description, lifecycle, propagation, resolved_at, resolution_summary, created_at, updated_at`
@@ -317,8 +317,8 @@ func (r blockerRepository) ListByOutcome(ctx context.Context, scope domain.Scope
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id FROM blockers
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+WHERE tenant_id = ? AND outcome_id = ?
+ORDER BY id`, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list blockers", err)
 	}
@@ -373,11 +373,11 @@ func (r blockerRepository) Insert(ctx context.Context, blocker domain.Blocker) e
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO blockers (
-    id, namespace_id, outcome_id, kind, version, blocked_id, blocked_kind,
+    id, tenant_id, outcome_id, kind, version, blocked_id, blocked_kind,
     cause_id, cause_kind, external_cause_json, description, lifecycle, propagation,
     resolved_at, resolution_summary, created_at, updated_at
 ) VALUES (?, ?, ?, 'blocker', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		blocker.ID.String(), blocker.Scope.NamespaceID.String(), blocker.Scope.OutcomeID.String(),
+		blocker.ID.String(), blocker.Scope.TenantID.String(), blocker.Scope.OutcomeID.String(),
 		int64(blocker.Version), blocker.BlockedRef.ID.String(), blocker.BlockedRef.Kind.String(),
 		causeID, causeKind, externalJSON, blocker.Description, string(blocker.Lifecycle),
 		string(blocker.Propagation), encodeOptionalTime(blocker.ResolvedAt), blocker.ResolutionSummary,
@@ -399,16 +399,16 @@ func (r blockerRepository) Save(ctx context.Context, blocker domain.Blocker, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE blockers
 SET version = ?, description = ?, lifecycle = ?, resolved_at = ?, resolution_summary = ?, updated_at = ?
-WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
+WHERE tenant_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(blocker.Version), blocker.Description, string(blocker.Lifecycle), encodeOptionalTime(blocker.ResolvedAt),
 		blocker.ResolutionSummary, encodeTime(blocker.UpdatedAt),
-		blocker.Scope.NamespaceID.String(), blocker.Scope.OutcomeID.String(), blocker.ID.String(), int64(expected),
+		blocker.Scope.TenantID.String(), blocker.Scope.OutcomeID.String(), blocker.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save blocker", err)
 	}
 	return requireVersionedUpdate(
 		ctx, r.uow.tx, result, "blockers",
-		blocker.Scope.NamespaceID, blocker.Scope.OutcomeID, blocker.ID, expected,
+		blocker.Scope.TenantID, blocker.Scope.OutcomeID, blocker.ID, expected,
 	)
 }

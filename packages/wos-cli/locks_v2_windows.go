@@ -11,7 +11,7 @@ import (
 func acquireRuntimeLockV2(ctx context.Context, identity string) (func(), error) {
 	// Agents running as a service and an interactive user can share a workspace
 	// across Windows sessions. Failure to create a global mutex is fail-closed;
-	// silently choosing a session-local namespace would weaken exclusion.
+	// silently choosing a session-local tenant would weaken exclusion.
 	name, e := windows.UTF16PtrFromString(`Global\WOS-v2-` + identity)
 	if e != nil {
 		return nil, e

@@ -7,7 +7,7 @@ import (
 )
 
 func syncExternalContextIndex(ctx context.Context, tx *sql.Tx, outcome domain.Outcome) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM outcome_context_entries WHERE namespace_id=? AND outcome_id=?`, outcome.NamespaceID.String(), outcome.ID.String()); err != nil {
+	if _, err := tx.ExecContext(ctx, `DELETE FROM outcome_context_entries WHERE tenant_id=? AND outcome_id=?`, outcome.TenantID.String(), outcome.ID.String()); err != nil {
 		return mapSQLError("replace context index", err)
 	}
 	for key, value := range outcome.ExternalContext {
@@ -15,7 +15,7 @@ func syncExternalContextIndex(ctx context.Context, tx *sql.Tx, outcome domain.Ou
 		if err != nil {
 			return err
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO outcome_context_entries(namespace_id,outcome_id,context_key,canonical_value) VALUES(?,?,?,?)`, outcome.NamespaceID.String(), outcome.ID.String(), key, canonical); err != nil {
+		if _, err = tx.ExecContext(ctx, `INSERT INTO outcome_context_entries(tenant_id,outcome_id,context_key,canonical_value) VALUES(?,?,?,?)`, outcome.TenantID.String(), outcome.ID.String(), key, canonical); err != nil {
 			return mapSQLError("index external context", err)
 		}
 	}

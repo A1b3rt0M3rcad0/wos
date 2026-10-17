@@ -12,7 +12,7 @@ func TestIndependentReviewUsesPrincipalRatherThanActorAlias(t *testing.T) {
 	s, _ := newWave09Service(t)
 	s.SetIndependentReviewer(true)
 	cc := commandContext()
-	outcome, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("0199d110-0000-7000-8000-000000000001"), Title: "Independent proof", DesiredState: "Execution and approval are separate", Priority: domain.PriorityNormal})
+	outcome, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: domain.MustParseID("0199d110-0000-7000-8000-000000000001"), Title: "Independent proof", DesiredState: "Execution and approval are separate", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

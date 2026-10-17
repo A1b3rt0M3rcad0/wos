@@ -13,7 +13,7 @@ import (
 
 func registerResources(server *mcp.Server, s *application.Service, options Options) {
 	registerSignedResources(server, s, options)
-	server.AddResourceTemplate(&mcp.ResourceTemplate{Name: "outcome_continuity", Description: "Authorized compact continuity, schema 1. Use tool section cursors to expand omissions.", URITemplate: "wos://namespaces/{namespace_id}/outcomes/{outcome_id}/continuity", MIMEType: "application/json"}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	server.AddResourceTemplate(&mcp.ResourceTemplate{Name: "outcome_continuity", Description: "Authorized compact continuity, schema 1. Use tool section cursors to expand omissions.", URITemplate: "wos://tenants/{tenant_id}/outcomes/{outcome_id}/continuity", MIMEType: "application/json"}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		headers := http.Header{}
 		if req.Extra != nil {
 			headers = req.Extra.Header
@@ -29,7 +29,7 @@ func registerResources(server *mcp.Server, s *application.Service, options Optio
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid resource URI")
 		}
 		parts := strings.Split(strings.Trim(u.Path, "/"), "/")
-		if u.Scheme != "wos" || u.Host != "namespaces" || u.RawQuery != "" || u.Fragment != "" || len(parts) != 4 || parts[1] != "outcomes" || parts[3] != "continuity" {
+		if u.Scheme != "wos" || u.Host != "tenants" || u.RawQuery != "" || u.Fragment != "" || len(parts) != 4 || parts[1] != "outcomes" || parts[3] != "continuity" {
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid continuity resource URI")
 		}
 		ns, err := domain.ParseID(parts[0])
@@ -40,7 +40,7 @@ func registerResources(server *mcp.Server, s *application.Service, options Optio
 		if err != nil {
 			return nil, err
 		}
-		result, err := s.GetContinuity(ctx, domain.Scope{NamespaceID: ns, OutcomeID: id}, 25)
+		result, err := s.GetContinuity(ctx, domain.Scope{TenantID: ns, OutcomeID: id}, 25)
 		if err != nil {
 			return nil, err
 		}

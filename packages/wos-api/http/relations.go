@@ -53,7 +53,7 @@ func (h *Handler) createRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setETag(w, domain.EntityKindRelation, result.Value.ID, result.Value.Version)
-	w.Header().Set("Location", h.prefix+"/namespaces/"+scope.NamespaceID.String()+"/outcomes/"+scope.OutcomeID.String()+"/relations/"+result.Value.ID.String())
+	w.Header().Set("Location", h.prefix+"/tenants/"+scope.TenantID.String()+"/outcomes/"+scope.OutcomeID.String()+"/relations/"+result.Value.ID.String())
 	writeJSON(w, http.StatusCreated, result)
 }
 

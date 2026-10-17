@@ -31,9 +31,9 @@ func (s SecurityService) Authenticate(ctx context.Context, token string) (Identi
 	if err != nil || s.validateCredential(ctx, c) != nil {
 		return Identity{}, domain.NewError(domain.ErrorCodeForbidden, "invalid or expired credential")
 	}
-	identity := Identity{CredentialID: c.ID, PrincipalID: c.PrincipalID, Actor: c.Actor, NamespaceID: c.NamespaceID, CredentialDigest: c.Digest}
+	identity := Identity{CredentialID: c.ID, PrincipalID: c.PrincipalID, Actor: c.Actor, TenantID: c.TenantID, CredentialDigest: c.Digest}
 	if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
-		policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
+		policy, err := reader.CredentialPolicy(ctx, c.TenantID, c.ID)
 		if err == nil {
 			identity.CredentialPolicyRevision = policy.Version
 		}
@@ -45,8 +45,8 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 		return err
 	}
 	if id, ok := IdentityFromContext(ctx); ok {
-		if id.PrincipalID != r.PrincipalID || id.NamespaceID != r.NamespaceID {
-			return domain.NewError(domain.ErrorCodeForbidden, "credential scope does not match requested namespace")
+		if id.PrincipalID != r.PrincipalID || id.TenantID != r.TenantID {
+			return domain.NewError(domain.ErrorCodeForbidden, "credential scope does not match requested tenant")
 		}
 		if id.CredentialDigest != "" {
 			c, err := s.Store.GetCredential(ctx, id.CredentialDigest)
@@ -60,7 +60,7 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 				}
 			}
 			if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
-				policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
+				policy, err := reader.CredentialPolicy(ctx, c.TenantID, c.ID)
 				if err == nil && !policy.Permits(string(r.Permission), r.OutcomeID) {
 					return domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts operation/scope")
 				}
@@ -76,16 +76,16 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 			}
 		}
 	}
-	grant, err := s.Store.GetGrant(ctx, r.NamespaceID, r.PrincipalID)
+	grant, err := s.Store.GetGrant(ctx, r.TenantID, r.PrincipalID)
 	if err != nil {
-		return domain.NewError(domain.ErrorCodeForbidden, "namespace permission is not granted")
+		return domain.NewError(domain.ErrorCodeForbidden, "tenant permission is not granted")
 	}
 	for _, p := range grant.Permissions {
 		if p == r.Permission {
 			return nil
 		}
 	}
-	return domain.NewError(domain.ErrorCodeForbidden, "namespace permission is not granted")
+	return domain.NewError(domain.ErrorCodeForbidden, "tenant permission is not granted")
 }
 
 func (s SecurityService) validateCredential(ctx context.Context, c ports.Credential) error {
@@ -94,7 +94,7 @@ func (s SecurityService) validateCredential(ctx context.Context, c ports.Credent
 	}
 	if c.ParentDigest != "" {
 		parent, err := s.Store.GetCredential(ctx, c.ParentDigest)
-		if err != nil || parent.ParentDigest != "" || parent.Revoked || !s.Clock.Now().Before(parent.ExpiresAt) || parent.PrincipalID != c.PrincipalID || parent.NamespaceID != c.NamespaceID || parent.Actor != c.Actor {
+		if err != nil || parent.ParentDigest != "" || parent.Revoked || !s.Clock.Now().Before(parent.ExpiresAt) || parent.PrincipalID != c.PrincipalID || parent.TenantID != c.TenantID || parent.Actor != c.Actor {
 			return domain.NewError(domain.ErrorCodeForbidden, "session parent inactive")
 		}
 	}
@@ -115,7 +115,7 @@ func (s SecurityService) CreateSession(ctx context.Context, token string) (ports
 		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeForbidden, "a browser session cannot create another session")
 	}
 	ctx = WithIdentity(ctx, identity)
-	if err = s.Require(ctx, identity.NamespaceID, ports.PermissionStateRead); err != nil {
+	if err = s.Require(ctx, identity.TenantID, ports.PermissionStateRead); err != nil {
 		return ports.Credential{}, "", err
 	}
 	id, err := s.IDs.NewID()
@@ -131,7 +131,7 @@ func (s SecurityService) CreateSession(ctx context.Context, token string) (ports
 	if source.ExpiresAt.Before(expires) {
 		expires = source.ExpiresAt
 	}
-	c := ports.Credential{ID: id, NamespaceID: identity.NamespaceID, PrincipalID: identity.PrincipalID, Actor: identity.Actor, Digest: TokenDigest(session), ParentDigest: source.Digest, ExpiresAt: expires}
+	c := ports.Credential{ID: id, TenantID: identity.TenantID, PrincipalID: identity.PrincipalID, Actor: identity.Actor, Digest: TokenDigest(session), ParentDigest: source.Digest, ExpiresAt: expires}
 	if err = s.Store.PutCredential(ctx, c); err != nil {
 		return ports.Credential{}, "", err
 	}
@@ -156,7 +156,7 @@ func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission p
 	if !ok {
 		return domain.NewError(domain.ErrorCodeForbidden, "authenticated identity is required")
 	}
-	return s.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: id.PrincipalID, Permission: permission})
+	return s.Authorize(ctx, ports.AuthorizationRequest{TenantID: ns, PrincipalID: id.PrincipalID, Permission: permission})
 }
 
 // RequireInstallation applies live credential, parent, policy and grant checks
@@ -169,14 +169,14 @@ func (s SecurityService) RequireInstallation(ctx context.Context, permission por
 	if !ok || id.CredentialDigest == "" {
 		return domain.NewError(domain.ErrorCodeForbidden, "authenticated operator credential required")
 	}
-	return s.Require(ctx, id.NamespaceID, permission)
+	return s.Require(ctx, id.TenantID, permission)
 }
-func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.ID, principal string, actor domain.ActorRef, expires time.Time) (ports.Credential, string, error) {
-	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
+func (s SecurityService) IssueCredential(ctx context.Context, tenant domain.ID, principal string, actor domain.ActorRef, expires time.Time) (ports.Credential, string, error) {
+	if err := s.Require(ctx, tenant, ports.PermissionTenantAdmin); err != nil {
 		return ports.Credential{}, "", err
 	}
 	if identity, ok := IdentityFromContext(ctx); ok && identity.Actor != actor {
-		if err := s.Require(ctx, namespace, ports.PermissionActorDelegate); err != nil {
+		if err := s.Require(ctx, tenant, ports.PermissionActorDelegate); err != nil {
 			return ports.Credential{}, "", err
 		}
 	}
@@ -186,11 +186,11 @@ func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.I
 	if err := actor.Validate(); err != nil {
 		return ports.Credential{}, "", err
 	}
-	// An administrator can issue credentials only for a principal with a grant in its namespace.
-	if _, err := s.Store.GetGrant(ctx, namespace, principal); err != nil {
-		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeForbidden, "target principal has no namespace grant")
+	// An administrator can issue credentials only for a principal with a grant in its tenant.
+	if _, err := s.Store.GetGrant(ctx, tenant, principal); err != nil {
+		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeForbidden, "target principal has no tenant grant")
 	}
-	if err := s.requireProtectedPrincipal(ctx, namespace, principal); err != nil {
+	if err := s.requireProtectedPrincipal(ctx, tenant, principal); err != nil {
 		return ports.Credential{}, "", err
 	}
 	id, err := s.IDs.NewID()
@@ -202,14 +202,14 @@ func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.I
 		return ports.Credential{}, "", err
 	}
 	token := base64.RawURLEncoding.EncodeToString(raw)
-	c := ports.Credential{NamespaceID: namespace, ID: id, PrincipalID: principal, Actor: actor, ExpiresAt: expires.UTC(), Digest: TokenDigest(token)}
+	c := ports.Credential{TenantID: tenant, ID: id, PrincipalID: principal, Actor: actor, ExpiresAt: expires.UTC(), Digest: TokenDigest(token)}
 	if err = s.Store.PutCredential(ctx, c); err != nil {
 		return ports.Credential{}, "", err
 	}
 	return c, token, nil
 }
-func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGrant) error {
-	if err := s.Require(ctx, grant.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+func (s SecurityService) SetGrant(ctx context.Context, grant ports.TenantGrant) error {
+	if err := s.Require(ctx, grant.TenantID, ports.PermissionTenantAdmin); err != nil {
 		return err
 	}
 	if strings.TrimSpace(grant.PrincipalID) == "" {
@@ -225,7 +225,7 @@ func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGran
 			return err
 		}
 	}
-	if err := s.requireProtectedPrincipal(ctx, grant.NamespaceID, grant.PrincipalID); err != nil {
+	if err := s.requireProtectedPrincipal(ctx, grant.TenantID, grant.PrincipalID); err != nil {
 		return err
 	}
 	return s.Store.PutGrant(ctx, grant)
@@ -244,79 +244,79 @@ func (s SecurityService) requireProtectedPrincipal(ctx context.Context, ns domai
 	}
 	return nil
 }
-func (s SecurityService) RevokeCredential(ctx context.Context, namespace domain.ID, credential domain.ID) error {
-	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
+func (s SecurityService) RevokeCredential(ctx context.Context, tenant domain.ID, credential domain.ID) error {
+	if err := s.Require(ctx, tenant, ports.PermissionTenantAdmin); err != nil {
 		return err
 	}
 	if reader, ok := s.Store.(ports.ScopedCredentialPrincipalReader); ok {
-		principal, err := reader.ScopedCredentialPrincipal(ctx, namespace, credential)
+		principal, err := reader.ScopedCredentialPrincipal(ctx, tenant, credential)
 		if err != nil {
 			return err
 		}
-		if err = s.requireProtectedPrincipal(ctx, namespace, principal); err != nil {
+		if err = s.requireProtectedPrincipal(ctx, tenant, principal); err != nil {
 			return err
 		}
 	} else if err := s.RequireInstallation(ctx, ports.PermissionInstallationAdmin); err != nil {
 		return domain.NewError(domain.ErrorCodeForbidden, "adapter cannot verify operator credential protection")
 	}
-	// Store validates the credential's principal belongs to this namespace in ScopedCredentialRevoker.
+	// Store validates the credential's principal belongs to this tenant in ScopedCredentialRevoker.
 	scoped, ok := s.Store.(interface {
 		RevokeScopedCredential(context.Context, domain.ID, domain.ID) error
 	})
 	if !ok {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "scoped credential revocation is unavailable")
 	}
-	return scoped.RevokeScopedCredential(ctx, namespace, credential)
+	return scoped.RevokeScopedCredential(ctx, tenant, credential)
 }
-func (s SecurityService) Namespaces(ctx context.Context) ([]ports.Namespace, error) {
+func (s SecurityService) Tenants(ctx context.Context) ([]ports.Tenant, error) {
 	id, ok := IdentityFromContext(ctx)
 	if !ok {
 		return nil, domain.NewError(domain.ErrorCodeForbidden, "authenticated identity is required")
 	}
-	if !id.NamespaceID.IsZero() {
-		if err := s.Require(ctx, id.NamespaceID, ports.PermissionStateRead); err != nil {
+	if !id.TenantID.IsZero() {
+		if err := s.Require(ctx, id.TenantID, ports.PermissionStateRead); err != nil {
 			return nil, err
 		}
 	}
-	namespaces, err := s.Store.ListNamespaces(ctx, id.PrincipalID)
+	tenants, err := s.Store.ListTenants(ctx, id.PrincipalID)
 	if err != nil {
 		return nil, err
 	}
-	if !id.NamespaceID.IsZero() {
-		filtered := []ports.Namespace{}
-		for _, n := range namespaces {
-			if n.ID == id.NamespaceID {
+	if !id.TenantID.IsZero() {
+		filtered := []ports.Tenant{}
+		for _, n := range tenants {
+			if n.ID == id.TenantID {
 				filtered = append(filtered, n)
 			}
 		}
 		return filtered, nil
 	}
-	return namespaces, nil
+	return tenants, nil
 }
 
 // Bootstrap is an operator-only composition action. It creates no credential on subsequent restarts.
-func (s SecurityService) Bootstrap(ctx context.Context, namespace ports.Namespace, principal, token string) error {
+func (s SecurityService) Bootstrap(ctx context.Context, tenant ports.Tenant, principal, token string) error {
 	if len(token) < 32 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "bootstrap token must contain at least 32 characters")
 	}
-	if err := namespace.ID.Validate(); err != nil {
+	if err := tenant.ID.Validate(); err != nil {
 		return err
 	}
-	if namespace.Name == "" {
-		return domain.NewError(domain.ErrorCodeInvalidConfig, "bootstrap namespace name is required")
+	if tenant.Name == "" {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "bootstrap tenant name is required")
 	}
 	id, err := s.IDs.NewID()
 	if err != nil {
 		return err
 	}
-	permissions := []ports.Permission{ports.PermissionInstallationAdmin, ports.PermissionInstallationProvision, ports.PermissionInstallationObserve, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
+	permissions := []ports.Permission{ports.PermissionInstallationAdmin, ports.PermissionInstallationProvision, ports.PermissionInstallationObserve, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionTenantAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
 	atomic, ok := s.Store.(interface {
-		BootstrapSecurity(context.Context, ports.Namespace, ports.NamespaceGrant, ports.Credential) error
+		BootstrapSecurity(context.Context, ports.Tenant, ports.TenantGrant, ports.Credential) error
 	})
 	if !ok {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "atomic identity bootstrap is unavailable")
 	}
-	return atomic.BootstrapSecurity(ctx, namespace, ports.NamespaceGrant{NamespaceID: namespace.ID, PrincipalID: principal, Permissions: permissions}, ports.Credential{NamespaceID: namespace.ID, ID: id, PrincipalID: principal, Actor: domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "wos", ID: principal}, Digest: TokenDigest(token), ExpiresAt: s.Clock.Now().Add(366 * 24 * time.Hour)})
+	return atomic.BootstrapSecurity(ctx, tenant, ports.TenantGrant{TenantID: tenant.ID, PrincipalID: principal, Permissions: permissions}, ports.Credential{TenantID: tenant.ID, ID: id, PrincipalID: principal, Actor: domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "wos", ID: principal}, Digest: TokenDigest(token), ExpiresAt: s.Clock.Now().Add(366 * 24 * time.Hour)})
 }
 
 func (s SecurityService) AuthorizeInUnitOfWork(ctx context.Context, uow ports.UnitOfWork, request ports.AuthorizationRequest) error {
@@ -324,7 +324,7 @@ func (s SecurityService) AuthorizeInUnitOfWork(ctx context.Context, uow ports.Un
 		return err
 	}
 	identity, ok := IdentityFromContext(ctx)
-	if !ok || identity.PrincipalID != request.PrincipalID || identity.NamespaceID != request.NamespaceID {
+	if !ok || identity.PrincipalID != request.PrincipalID || identity.TenantID != request.TenantID {
 		return domain.NewError(domain.ErrorCodeForbidden, "credential scope mismatch")
 	}
 	access, ok := uow.(ports.AccessSnapshotUnitOfWork)

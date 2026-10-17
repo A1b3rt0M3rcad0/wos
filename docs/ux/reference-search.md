@@ -1,6 +1,6 @@
 # Authorized reference search
 
-`GET /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/references`
+`GET /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/references`
 
 Required `kind` is a comma-separated list drawn from: outcome, objective,
 work_item, issue, blocker, evidence, artifact, decision, roadmap, relation,
@@ -29,7 +29,7 @@ retaining selected IDs. Authorization is rechecked inside the UnitOfWork, includ
 credential and grant revocation, before any metadata query.
 
 SQL searches scoped aggregate metadata in a fixed allowlist of UNION branches;
-all branches use existing UNIQUE(namespace_id,outcome_id,id) indexes for scope and
+all branches use existing UNIQUE(tenant_id,outcome_id,id) indexes for scope and
 keyset scans. Substring matching scans metadata within the authorized Outcome;
 it is not a full-text index or a promise of constant-time search. SQL returns at
 most limit+1 metadata rows and never hydrates full aggregates/evidence bodies.

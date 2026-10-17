@@ -27,8 +27,8 @@ SELECT version, artifact_type, name, uri, media_type, checksum, source_version,
        producer_ref_json, produced_at, registered_at, lifecycle, withdrawal_reason,
        withdrawn_at, updated_at
 FROM artifacts
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND id = $3`,
+		scope.TenantID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(&version, &artifactType, &name, &uri, &mediaType, &checksum, &sourceVersion,
 		&producerJSON, &producedAt, &registeredAt, &lifecycle, &withdrawalReason,
 		&withdrawnAt, &updatedAt)
@@ -91,11 +91,11 @@ func (r artifactRepository) Insert(ctx context.Context, value domain.Artifact) e
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO artifacts (
-    id, namespace_id, outcome_id, kind, version, artifact_type, name, uri, media_type,
+    id, tenant_id, outcome_id, kind, version, artifact_type, name, uri, media_type,
     checksum, source_version, producer_ref_json, produced_at, registered_at, lifecycle,
     withdrawal_reason, withdrawn_at, updated_at
 ) VALUES ($1, $2, $3, 'artifact', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
-		value.ID.String(), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(),
+		value.ID.String(), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(),
 		int64(value.Version), value.ArtifactType, value.Name, value.URI, value.MediaType,
 		value.Checksum, value.SourceVersion, producer, encodeOptionalTime(value.ProducedAt),
 		encodeTime(value.RegisteredAt), string(value.Lifecycle), value.WithdrawalReason,
@@ -127,15 +127,15 @@ func (r artifactRepository) Save(ctx context.Context, value domain.Artifact, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE artifacts
 SET version = $1, lifecycle = $2, withdrawal_reason = $3, withdrawn_at = $4, updated_at = $5
-WHERE namespace_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
+WHERE tenant_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
 		int64(value.Version), string(value.Lifecycle), value.WithdrawalReason,
 		encodeOptionalTime(value.WithdrawnAt), encodeTime(value.UpdatedAt),
-		value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(), value.ID.String(), int64(expected),
+		value.Scope.TenantID.String(), value.Scope.OutcomeID.String(), value.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save artifact", err)
 	}
-	return requireVersionedUpdate(ctx, r.uow.tx, result, "artifacts", value.Scope.NamespaceID, value.Scope.OutcomeID, value.ID, expected)
+	return requireVersionedUpdate(ctx, r.uow.tx, result, "artifacts", value.Scope.TenantID, value.Scope.OutcomeID, value.ID, expected)
 }
 
 type evidenceRepository struct{ uow *unitOfWork }
@@ -155,8 +155,8 @@ SELECT version, evidence_type, description, source_ref_json, producer_ref_json, 
        registered_at, artifact_id, measurement_json, source_version, checksum, lifecycle,
        retraction_reason, retracted_at, updated_at
 FROM evidence
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
-		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
+WHERE tenant_id = $1 AND outcome_id = $2 AND id = $3`,
+		scope.TenantID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(&version, &evidenceType, &description, &sourceJSON, &producerJSON, &capturedAt,
 		&registeredAt, &artifactRaw, &measurementRaw, &sourceVersion, &checksum, &lifecycle,
 		&retractionReason, &retractedAt, &updatedAt)
@@ -245,11 +245,11 @@ func (r evidenceRepository) Insert(ctx context.Context, value domain.Evidence) e
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO evidence (
-    id, namespace_id, outcome_id, kind, version, evidence_type, description, source_ref_json,
+    id, tenant_id, outcome_id, kind, version, evidence_type, description, source_ref_json,
     producer_ref_json, captured_at, registered_at, artifact_id, measurement_json, source_version,
     checksum, lifecycle, retraction_reason, retracted_at, updated_at
 ) VALUES ($1, $2, $3, 'evidence', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
-		value.ID.String(), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(),
+		value.ID.String(), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(),
 		int64(value.Version), string(value.EvidenceType), value.Description, source, producer,
 		encodeTime(value.CapturedAt), encodeTime(value.RegisteredAt), nullableID(value.ArtifactID),
 		measurement, value.SourceVersion, value.Checksum, string(value.Lifecycle),
@@ -281,15 +281,15 @@ func (r evidenceRepository) Save(ctx context.Context, value domain.Evidence, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE evidence
 SET version = $1, lifecycle = $2, retraction_reason = $3, retracted_at = $4, updated_at = $5
-WHERE namespace_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
+WHERE tenant_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
 		int64(value.Version), string(value.Lifecycle), value.RetractionReason, encodeOptionalTime(value.RetractedAt),
-		encodeTime(value.UpdatedAt), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(),
+		encodeTime(value.UpdatedAt), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(),
 		value.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save evidence", err)
 	}
-	return requireVersionedUpdate(ctx, r.uow.tx, result, "evidence", value.Scope.NamespaceID, value.Scope.OutcomeID, value.ID, expected)
+	return requireVersionedUpdate(ctx, r.uow.tx, result, "evidence", value.Scope.TenantID, value.Scope.OutcomeID, value.ID, expected)
 }
 
 type evidenceLinkRepository struct{ uow *unitOfWork }
@@ -298,7 +298,7 @@ func (r evidenceLinkRepository) Get(ctx context.Context, scope domain.Scope, id 
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.EvidenceLink{}, err
 	}
-	return scanEvidenceLink(r.uow.tx.QueryRowContext(ctx, `SELECT `+evidenceLinkReadColumns+` FROM evidence_links WHERE namespace_id=$1 AND outcome_id=$2 AND id=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	return scanEvidenceLink(r.uow.tx.QueryRowContext(ctx, `SELECT `+evidenceLinkReadColumns+` FROM evidence_links WHERE tenant_id=$1 AND outcome_id=$2 AND id=$3`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 }
 
 const evidenceLinkReadColumns = `id,version, evidence_id, target_id, target_kind, criterion_id, stance, rationale, lifecycle, retraction_reason, retracted_at, created_at, updated_at`
@@ -385,10 +385,10 @@ func (r evidenceLinkRepository) Insert(ctx context.Context, value domain.Evidenc
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO evidence_links (
-    id, namespace_id, outcome_id, kind, version, evidence_id, target_id, target_kind,
+    id, tenant_id, outcome_id, kind, version, evidence_id, target_id, target_kind,
     criterion_id, stance, rationale, lifecycle, retraction_reason, retracted_at, created_at, updated_at
 ) VALUES ($1, $2, $3, 'evidence_link', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-		value.ID.String(), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(),
+		value.ID.String(), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(),
 		int64(value.Version), value.EvidenceID.String(), value.TargetRef.ID.String(), value.TargetRef.Kind.String(),
 		nullableID(value.CriterionID), string(value.Stance), value.Rationale, string(value.Lifecycle),
 		value.RetractionReason, encodeOptionalTime(value.RetractedAt), encodeTime(value.CreatedAt), encodeTime(value.UpdatedAt),
@@ -419,15 +419,15 @@ func (r evidenceLinkRepository) Save(ctx context.Context, value domain.EvidenceL
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE evidence_links
 SET version = $1, lifecycle = $2, retraction_reason = $3, retracted_at = $4, updated_at = $5
-WHERE namespace_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
+WHERE tenant_id = $6 AND outcome_id = $7 AND id = $8 AND version = $9`,
 		int64(value.Version), string(value.Lifecycle), value.RetractionReason, encodeOptionalTime(value.RetractedAt),
-		encodeTime(value.UpdatedAt), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(),
+		encodeTime(value.UpdatedAt), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(),
 		value.ID.String(), int64(expected),
 	)
 	if err != nil {
 		return mapSQLError("save evidence link", err)
 	}
-	return requireVersionedUpdate(ctx, r.uow.tx, result, "evidence_links", value.Scope.NamespaceID, value.Scope.OutcomeID, value.ID, expected)
+	return requireVersionedUpdate(ctx, r.uow.tx, result, "evidence_links", value.Scope.TenantID, value.Scope.OutcomeID, value.ID, expected)
 }
 
 type decisionRepository struct{ uow *unitOfWork }
@@ -436,7 +436,7 @@ func (r decisionRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Decision{}, err
 	}
-	return scanDecision(r.uow.tx.QueryRowContext(ctx, `SELECT `+decisionReadColumns+` FROM decisions WHERE namespace_id=$1 AND outcome_id=$2 AND id=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	return scanDecision(r.uow.tx.QueryRowContext(ctx, `SELECT `+decisionReadColumns+` FROM decisions WHERE tenant_id=$1 AND outcome_id=$2 AND id=$3`, scope.TenantID.String(), scope.OutcomeID.String(), id.String()), scope)
 }
 
 const decisionReadColumns = `id,version, title, proposal, chosen_alternative, rationale, alternatives_json, lifecycle, proposed_by_json, decided_by_json, decided_at, rejection_reason, supersedes_decision_id, created_at, updated_at`
@@ -542,11 +542,11 @@ func (r decisionRepository) Insert(ctx context.Context, value domain.Decision) e
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO decisions (
-    id, namespace_id, outcome_id, kind, version, title, proposal, chosen_alternative, rationale,
+    id, tenant_id, outcome_id, kind, version, title, proposal, chosen_alternative, rationale,
     alternatives_json, lifecycle, proposed_by_json, decided_by_json, decided_at, rejection_reason,
     supersedes_decision_id, created_at, updated_at
 ) VALUES ($1, $2, $3, 'decision', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
-		value.ID.String(), value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(), int64(value.Version),
+		value.ID.String(), value.Scope.TenantID.String(), value.Scope.OutcomeID.String(), int64(value.Version),
 		value.Title, value.Proposal, value.ChosenAlternative, value.Rationale, alternatives, string(value.Lifecycle),
 		proposedBy, decidedBy, encodeOptionalTime(value.DecidedAt), value.RejectionReason,
 		nullableID(value.SupersedesDecisionID), encodeTime(value.CreatedAt), encodeTime(value.UpdatedAt))
@@ -594,23 +594,23 @@ UPDATE decisions
 SET version = $1, title = $2, proposal = $3, chosen_alternative = $4, rationale = $5,
     alternatives_json = $6, lifecycle = $7, proposed_by_json = $8, decided_by_json = $9,
     decided_at = $10, rejection_reason = $11, supersedes_decision_id = $12, updated_at = $13
-WHERE namespace_id = $14 AND outcome_id = $15 AND id = $16 AND version = $17`,
+WHERE tenant_id = $14 AND outcome_id = $15 AND id = $16 AND version = $17`,
 		int64(value.Version), value.Title, value.Proposal, value.ChosenAlternative, value.Rationale,
 		alternatives, string(value.Lifecycle), proposedBy, decidedBy, encodeOptionalTime(value.DecidedAt),
 		value.RejectionReason, nullableID(value.SupersedesDecisionID), encodeTime(value.UpdatedAt),
-		value.Scope.NamespaceID.String(), value.Scope.OutcomeID.String(), value.ID.String(), int64(expected))
+		value.Scope.TenantID.String(), value.Scope.OutcomeID.String(), value.ID.String(), int64(expected))
 	if err != nil {
 		return mapSQLError("save decision", err)
 	}
-	return requireVersionedUpdate(ctx, r.uow.tx, result, "decisions", value.Scope.NamespaceID, value.Scope.OutcomeID, value.ID, expected)
+	return requireVersionedUpdate(ctx, r.uow.tx, result, "decisions", value.Scope.TenantID, value.Scope.OutcomeID, value.ID, expected)
 }
 
 func listDocumentaryIDs(ctx context.Context, uow *unitOfWork, table string, scope domain.Scope) ([]domain.ID, error) {
 	if err := uow.ensureOpen(); err != nil {
 		return nil, err
 	}
-	query := "SELECT id FROM " + table + " WHERE namespace_id = $1 AND outcome_id = $2 ORDER BY id"
-	rows, err := uow.tx.QueryContext(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String())
+	query := "SELECT id FROM " + table + " WHERE tenant_id = $1 AND outcome_id = $2 ORDER BY id"
+	rows, err := uow.tx.QueryContext(ctx, query, scope.TenantID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list "+table, err)
 	}

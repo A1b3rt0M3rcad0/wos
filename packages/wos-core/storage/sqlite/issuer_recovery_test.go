@@ -50,10 +50,13 @@ func TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore(t *te
 			service, e := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199a556", next: 1})
 			must(e)
 			must(service.ConfigureSignedIssuer(ctx, old, d.AcceptanceIndependentReview))
-			oldEnvelope, e := signing.Sign(signing.ContractSpec, map[string]any{"protocol_version": 2, "signer_key_id": old.identity.IssuerKeyID.String(), "snapshot": "historical-public-proof"}, old.identity.IssuerKeyID.String(), old.private)
+			// Historical proof bytes are issued independently by this fixture;
+			// production signing deliberately cannot mint protocol-2 authority.
+			oldPayload, e := signing.Canonical(map[string]any{"protocol_version": 2, "signer_key_id": old.identity.IssuerKeyID.String(), "snapshot": "historical-public-proof"})
 			must(e)
+			oldEnvelope := signing.Envelope{PayloadType: signing.LegacyContractSpec, Payload: base64.StdEncoding.EncodeToString(oldPayload), Signatures: []signing.Signature{{KeyID: old.identity.IssuerKeyID.String(), Sig: base64.StdEncoding.EncodeToString(ed25519.Sign(old.private, signing.PAE(signing.LegacyContractSpec, oldPayload)))}}}
 			intent := a.IssuerRecoveryIntent{ServerID: old.identity.ID, PreviousIssuerID: old.identity.IssuerKeyID, PreviousFingerprint: old.identity.Fingerprint, NewIssuerID: replacement.identity.IssuerKeyID, NewFingerprint: replacement.identity.Fingerprint, Reason: "operator restores with independently approved replacement seed"}
-			tenantCtx := a.WithIdentity(ctx, a.Identity{NamespaceID: testID("0199a555-0000-7000-8000-000000000004"), PrincipalID: "tenant-admin"})
+			tenantCtx := a.WithIdentity(ctx, a.Identity{TenantID: testID("0199a555-0000-7000-8000-000000000004"), PrincipalID: "tenant-admin"})
 			if _, _, e = a.RecoverServerIssuer(tenantCtx, store, sqliteFixedClock{now}, intent, replacement); e == nil {
 				t.Fatal("tenant context could replace instance issuer")
 			}
@@ -100,7 +103,7 @@ func TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore(t *te
 			}
 			oldPublic, e := history[0].PublicBytes()
 			must(e)
-			_, e = signing.Verify(oldEnvelope, signing.ContractSpec, old.identity.IssuerKeyID.String(), oldPublic)
+			_, e = signing.VerifyHistorical(oldEnvelope, signing.ContractSpec, old.identity.IssuerKeyID.String(), oldPublic)
 			must(e)
 			must(u.Rollback())
 			restarted, e := a.NewService(store, sqliteFixedClock{now}, &sqliteSequenceIDs{prefix: "0199a556", next: 2})

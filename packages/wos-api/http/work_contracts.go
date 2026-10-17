@@ -111,7 +111,7 @@ func (h *Handler) getWorkSubmission(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, v)
 }
 func (h *Handler) getCommandReceipt(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -160,13 +160,13 @@ func (h *Handler) listAvailableWork(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, v)
 }
 
-func (h *Handler) getNamespaceWorkProtocol(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+func (h *Handler) getTenantWorkProtocol(w http.ResponseWriter, r *http.Request) {
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
-	v, err := h.service.GetNamespaceWorkProtocol(r.Context(), ns)
+	v, err := h.service.GetTenantWorkProtocol(r.Context(), ns)
 	if err != nil {
 		writeError(w, r, err)
 		return

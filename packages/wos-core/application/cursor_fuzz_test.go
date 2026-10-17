@@ -15,7 +15,7 @@ func FuzzCursorRejectsForeignScope(f *testing.F) {
 		if len(key) > 256 || !utf8.ValidString(key) {
 			return
 		}
-		encoded := encodeCursor(queryCursor{Namespace: ns, Section: "work_items", Key: key, Revision: 1})
+		encoded := encodeCursor(queryCursor{Tenant: ns, Section: "work_items", Key: key, Revision: 1})
 		decoded, err := decodeCursor(encoded, ns, "", "work_items", "")
 		if err != nil || decoded.Key != key {
 			t.Fatalf("round trip: %v", err)

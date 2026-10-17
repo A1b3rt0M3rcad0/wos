@@ -11,18 +11,24 @@ import (
 
 func ConfigFromEnv() Config {
 	cfg := DefaultConfig()
+	cfg.Storage.TenantID = os.Getenv("WOS_TENANT_ID")
+	cfg.Storage.PostgresSchema = os.Getenv("WOS_POSTGRES_SCHEMA")
+	cfg.Storage.PostgresCatalogSchema = os.Getenv("WOS_POSTGRES_CATALOG_SCHEMA")
+	if raw, present := os.LookupEnv("WOS_TENANT_HOSTS"); present {
+		cfg.TenantHosts, cfg.TenantHostsParseError = parseTenantHosts(raw)
+	}
 	if role, ok := os.LookupEnv("WOS_PROCESS_ROLE"); ok {
 		cfg.Server.Role = role
 		if role == "" {
 			cfg.HTTP.ParseError = true
 		}
 	}
-	if raw, ok := os.LookupEnv("WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE"); ok {
+	if raw, ok := os.LookupEnv("WOS_HTTP_MAX_INFLIGHT_PER_TENANT"); ok {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil {
 			cfg.HTTP.ParseError = true
 		} else {
-			cfg.HTTP.MaxInflightPerNamespace = parsed
+			cfg.HTTP.MaxInflightPerTenant = parsed
 		}
 	}
 	for name, target := range map[string]*time.Duration{"WOS_HTTP_READ_HEADER_TIMEOUT": &cfg.HTTP.ReadHeaderTimeout, "WOS_HTTP_READ_TIMEOUT": &cfg.HTTP.ReadTimeout, "WOS_HTTP_WRITE_TIMEOUT": &cfg.HTTP.WriteTimeout, "WOS_HTTP_IDLE_TIMEOUT": &cfg.HTTP.IdleTimeout, "WOS_HTTP_REQUEST_TIMEOUT": &cfg.HTTP.RequestTimeout, "WOS_SHUTDOWN_TIMEOUT": &cfg.Server.ShutdownTimeout} {
@@ -46,11 +52,16 @@ func ConfigFromEnv() Config {
 		}
 	}
 
-	if v := os.Getenv("WOS_LOCAL_NAMESPACE_ID"); v != "" {
-		cfg.Auth.LocalNamespaceID = v
+	if cfg.Storage.TenantID != "" {
+		if _, explicitlyLocal := os.LookupEnv("WOS_LOCAL_TENANT_ID"); !explicitlyLocal {
+			cfg.Auth.LocalTenantID = cfg.Storage.TenantID
+		}
 	}
-	if v := os.Getenv("WOS_LOCAL_NAMESPACE_NAME"); v != "" {
-		cfg.Auth.LocalNamespaceName = v
+	if v := os.Getenv("WOS_LOCAL_TENANT_ID"); v != "" {
+		cfg.Auth.LocalTenantID = v
+	}
+	if v := os.Getenv("WOS_LOCAL_TENANT_NAME"); v != "" {
+		cfg.Auth.LocalTenantName = v
 	}
 	cfg.Auth.IndependentReviewer = strings.EqualFold(os.Getenv("WOS_INDEPENDENT_REVIEWER"), "true")
 	if v, ok := os.LookupEnv("WOS_DELIVERY_BACKLOG_MAX_AGE"); ok {
@@ -69,7 +80,7 @@ func ConfigFromEnv() Config {
 			cfg.Integration.WorkerConcurrency = n
 		}
 	}
-	for name, target := range map[string]*int{"WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE": &cfg.Integration.MaxInflightPerNamespace, "WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT": &cfg.Integration.MaxInflightPerEndpoint} {
+	for name, target := range map[string]*int{"WOS_DELIVERY_MAX_INFLIGHT_PER_TENANT": &cfg.Integration.MaxInflightPerTenant, "WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT": &cfg.Integration.MaxInflightPerEndpoint} {
 		if raw, ok := os.LookupEnv(name); ok {
 			parsed, err := strconv.Atoi(raw)
 			if err != nil {
@@ -111,8 +122,8 @@ func ConfigFromEnv() Config {
 	cfg.Signing.SeedEnv = os.Getenv("WOS_SERVER_SIGNING_SEED_ENV")
 	cfg.Signing.AcceptanceFloor = domain.AcceptanceMode(os.Getenv("WOS_SIGNED_ACCEPTANCE_FLOOR"))
 	cfg.Auth.BootstrapToken = os.Getenv("WOS_BOOTSTRAP_TOKEN")
-	cfg.Auth.BootstrapNamespaceID = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_ID")
-	cfg.Auth.BootstrapNamespaceName = os.Getenv("WOS_BOOTSTRAP_NAMESPACE_NAME")
+	cfg.Auth.BootstrapTenantID = os.Getenv("WOS_BOOTSTRAP_TENANT_ID")
+	cfg.Auth.BootstrapTenantName = os.Getenv("WOS_BOOTSTRAP_TENANT_NAME")
 	if value := strings.TrimSpace(os.Getenv("WOS_LISTEN")); value != "" {
 		cfg.Server.Listen = value
 	}
@@ -125,5 +136,5 @@ func ConfigFromEnv() Config {
 	if value := strings.TrimSpace(os.Getenv("WOS_LOCAL_ADMIN_OVERRIDES")); value != "" {
 		cfg.Auth.LocalAllowAdministrativeOverrides = value == "1" || strings.EqualFold(value, "true")
 	}
-	return cfg
+	return cfg.withTenantBindingDefaults()
 }

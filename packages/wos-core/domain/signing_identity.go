@@ -29,7 +29,7 @@ func StrongerAcceptance(modes ...AcceptanceMode) AcceptanceMode {
 
 type SigningKey struct {
 	ID          ID        `json:"id"`
-	NamespaceID ID        `json:"namespace_id"`
+	TenantID    ID        `json:"tenant_id"`
 	PrincipalID string    `json:"principal_id"`
 	Purpose     string    `json:"purpose"`
 	Algorithm   string    `json:"algorithm"`
@@ -43,7 +43,7 @@ type SigningKey struct {
 }
 
 func (k SigningKey) Validate() error {
-	if k.ID.Validate() != nil || k.NamespaceID.Validate() != nil || k.Version.Validate() != nil || strings.TrimSpace(k.PrincipalID) == "" || len(k.PrincipalID) > 256 {
+	if k.ID.Validate() != nil || k.TenantID.Validate() != nil || k.Version.Validate() != nil || strings.TrimSpace(k.PrincipalID) == "" || len(k.PrincipalID) > 256 {
 		return NewError(ErrorCodeInvalidArgument, "invalid signing key identity")
 	}
 	if k.CreatedAt.IsZero() || k.UpdatedAt.Before(k.CreatedAt) {
@@ -71,7 +71,7 @@ func (k SigningKey) PublicBytes() ([]byte, error) {
 
 type SigningEnrollment struct {
 	ID                  ID        `json:"id"`
-	NamespaceID         ID        `json:"namespace_id"`
+	TenantID            ID        `json:"tenant_id"`
 	PrincipalID         string    `json:"principal_id"`
 	CredentialID        ID        `json:"credential_id"`
 	KeyID               ID        `json:"key_id"`
@@ -87,7 +87,7 @@ type SigningEnrollment struct {
 }
 
 func (e SigningEnrollment) Validate() error {
-	if e.ID.Validate() != nil || e.NamespaceID.Validate() != nil || e.CredentialID.Validate() != nil || e.KeyID.Validate() != nil || e.Version.Validate() != nil || e.PrincipalID == "" || e.AuthorizedBy == "" || e.Purpose != "agent" || len(e.Nonce) < 32 || len(e.Nonce) > 128 || e.ExpiresAt.IsZero() {
+	if e.ID.Validate() != nil || e.TenantID.Validate() != nil || e.CredentialID.Validate() != nil || e.KeyID.Validate() != nil || e.Version.Validate() != nil || e.PrincipalID == "" || e.AuthorizedBy == "" || e.Purpose != "agent" || len(e.Nonce) < 32 || len(e.Nonce) > 128 || e.ExpiresAt.IsZero() {
 		return NewError(ErrorCodeInvalidArgument, "invalid signing enrollment")
 	}
 	if e.PreviousKeyID != nil && e.PreviousKeyID.Validate() != nil {
@@ -97,7 +97,7 @@ func (e SigningEnrollment) Validate() error {
 }
 
 type CredentialPolicy struct {
-	NamespaceID              ID             `json:"namespace_id"`
+	TenantID                 ID             `json:"tenant_id"`
 	CredentialID             ID             `json:"credential_id"`
 	PrincipalID              string         `json:"principal_id"`
 	Version                  Version        `json:"revision,string"`
@@ -111,7 +111,7 @@ type CredentialPolicy struct {
 }
 
 func (p CredentialPolicy) Validate() error {
-	if p.NamespaceID.Validate() != nil || p.CredentialID.Validate() != nil || p.Version.Validate() != nil || p.PrincipalID == "" || !p.AcceptanceFloor.Valid() || len(p.PermittedOperations) > 32 || len(p.AllowedOutcomeIDs) > 100 || len(p.AllowedSigningKeyIDs) > 100 || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 {
+	if p.TenantID.Validate() != nil || p.CredentialID.Validate() != nil || p.Version.Validate() != nil || p.PrincipalID == "" || !p.AcceptanceFloor.Valid() || len(p.PermittedOperations) > 32 || len(p.AllowedOutcomeIDs) > 100 || len(p.AllowedSigningKeyIDs) > 100 || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 {
 		return NewError(ErrorCodeInvalidArgument, "invalid credential policy")
 	}
 	seen := map[string]bool{}
@@ -160,7 +160,7 @@ func (p CredentialPolicy) PermitsKey(key ID) bool {
 }
 
 type WorkAcceptancePolicy struct {
-	NamespaceID                 ID             `json:"namespace_id"`
+	TenantID                    ID             `json:"tenant_id"`
 	OutcomeID                   *ID            `json:"outcome_id,omitempty"`
 	WorkItemID                  *ID            `json:"work_item_id,omitempty"`
 	Version                     Version        `json:"revision,string"`
@@ -173,7 +173,7 @@ type WorkAcceptancePolicy struct {
 }
 
 func (p WorkAcceptancePolicy) Validate() error {
-	if p.NamespaceID.Validate() != nil || p.Version.Validate() != nil || !p.AcceptanceFloor.Valid() || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 {
+	if p.TenantID.Validate() != nil || p.Version.Validate() != nil || !p.AcceptanceFloor.Valid() || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 {
 		return NewError(ErrorCodeInvalidArgument, "invalid acceptance policy")
 	}
 	if p.OutcomeID != nil && p.OutcomeID.Validate() != nil {
@@ -184,7 +184,7 @@ func (p WorkAcceptancePolicy) Validate() error {
 	}
 	for _, limit := range []*int{p.MaxActiveWorkPerPrincipal, p.MaxActiveReviewPerPrincipal} {
 		if limit != nil && (*limit < 1 || *limit > 100 || p.OutcomeID != nil || p.WorkItemID != nil) {
-			return NewError(ErrorCodeInvalidArgument, "Principal quotas require a Namespace policy and limits between 1 and 100")
+			return NewError(ErrorCodeInvalidArgument, "Principal quotas require a Tenant policy and limits between 1 and 100")
 		}
 	}
 	return nil

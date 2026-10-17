@@ -26,14 +26,41 @@ type Options struct {
 	IdempotencyRetention time.Duration
 	MaxOpenConnections   int
 	Schema               string
+	// TenantID binds an isolated schema to one Tenant. TenantName is used only
+	// when initializing its singleton metadata row. TenantLease is supplied by
+	// the catalog-backed runtime and fences every pooled database connection.
+	TenantID    domain.ID
+	TenantName  string
+	TenantLease *TenantLease
 }
 type Store struct {
 	db                   *sql.DB
 	path                 string
+	tenantID             domain.ID
 	idempotencyRetention time.Duration
 }
 
 func Open(dsn string, options Options) (*Store, error) {
+	if options.Schema != "" && !regexp.MustCompile(`^[a-z][a-z0-9_]{0,62}$`).MatchString(options.Schema) {
+		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "invalid PostgreSQL schema")
+	}
+	if !options.TenantID.IsZero() {
+		if err := options.TenantID.Validate(); err != nil {
+			return nil, err
+		}
+		if options.Schema == "" || options.Schema == "public" || strings.HasPrefix(options.Schema, "pg_") {
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "a bound Tenant requires an explicit isolated PostgreSQL schema")
+		}
+	}
+	if options.TenantLease != nil {
+		p := options.TenantLease.Placement()
+		if options.TenantID.IsZero() || p.TenantID != options.TenantID || p.Schema != options.Schema {
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "Tenant runtime lease does not match the requested schema and Tenant")
+		}
+		if !options.TenantLease.initializing && options.MigrateOnOpen {
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "active Tenant runtimes cannot migrate schemas; suspend the Tenant and run its explicit migration operation")
+		}
+	}
 	cfg, err := pgx.ParseConfig(dsn)
 	if err != nil {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "invalid PostgreSQL configuration")
@@ -51,34 +78,51 @@ func Open(dsn string, options Options) (*Store, error) {
 	cfg.RuntimeParams["statement_timeout"] = "30000"
 	// Migrations execute multiple DDL statements. This pinned pgx version supports parameter-safe simple protocol.
 	cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
-	db := stdlib.OpenDB(*cfg)
+	if options.Schema != "" {
+		// No public or user-schema fallback: a removed/missing Tenant schema
+		// must cause failure rather than resolve another installation's tables.
+		cfg.RuntimeParams["search_path"] = options.Schema
+	}
+	var dbOptions []stdlib.OptionOpenDB
+	if options.TenantLease != nil {
+		dbOptions = append(dbOptions, stdlib.OptionAfterConnect(options.TenantLease.GuardConnection))
+	}
+	db := stdlib.OpenDB(*cfg, dbOptions...)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err = db.PingContext(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("connect PostgreSQL: %w", err)
 	}
-	if options.Schema != "" {
-		if !regexp.MustCompile(`^[a-z][a-z0-9_]{0,62}$`).MatchString(options.Schema) {
-			db.Close()
-			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "invalid PostgreSQL schema")
-		}
+	if options.Schema != "" && options.MigrateOnOpen && options.TenantLease == nil {
 		if _, err = db.ExecContext(ctx, `CREATE SCHEMA IF NOT EXISTS `+options.Schema); err != nil {
 			db.Close()
 			return nil, err
 		}
-		db.Close()
-		cfg.RuntimeParams["search_path"] = options.Schema
-		db = stdlib.OpenDB(*cfg)
 	}
 	db.SetMaxOpenConns(options.MaxOpenConnections)
 	db.SetMaxIdleConns(options.MaxOpenConnections)
 	db.SetConnMaxLifetime(30 * time.Minute)
-	store := &Store{db: db, path: options.Schema, idempotencyRetention: options.IdempotencyRetention}
+	store := &Store{db: db, path: options.Schema, tenantID: options.TenantID, idempotencyRetention: options.IdempotencyRetention}
 	if options.MigrateOnOpen {
 		if err = store.Migrate(ctx); err != nil {
 			db.Close()
 			return nil, err
+		}
+	}
+	if !options.TenantID.IsZero() {
+		var bindingErr error
+		if options.TenantLease != nil && !options.TenantLease.initializing {
+			bindingErr = store.validateTenantMigrations(ctx)
+			if bindingErr == nil {
+				bindingErr = store.verifyTenantBinding(ctx, options.TenantID)
+			}
+		} else {
+			bindingErr = store.bindTenant(ctx, options.TenantID, options.TenantName)
+		}
+		if bindingErr != nil {
+			_ = db.Close()
+			return nil, bindingErr
 		}
 	}
 	return store, nil

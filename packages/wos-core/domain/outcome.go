@@ -18,7 +18,7 @@ const (
 type Outcome struct {
 	ExternalContext   ExternalContext  `json:"external_context,omitempty"`
 	ID                ID               `json:"id"`
-	NamespaceID       ID               `json:"namespace_id"`
+	TenantID          ID               `json:"tenant_id"`
 	Version           Version          `json:"version"`
 	Title             string           `json:"title"`
 	Description       string           `json:"description,omitempty"`
@@ -34,10 +34,10 @@ type Outcome struct {
 	UpdatedAt         time.Time        `json:"updated_at"`
 }
 
-func NewOutcome(id, namespaceID ID, title, description, desiredState string, priority Priority, createdAt time.Time) (Outcome, error) {
+func NewOutcome(id, tenantID ID, title, description, desiredState string, priority Priority, createdAt time.Time) (Outcome, error) {
 	o := Outcome{
 		ID:           id,
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Version:      InitialVersion,
 		Title:        strings.TrimSpace(title),
 		Description:  strings.TrimSpace(description),
@@ -55,7 +55,7 @@ func NewOutcome(id, namespaceID ID, title, description, desiredState string, pri
 }
 
 func (o Outcome) Scope() Scope {
-	return Scope{NamespaceID: o.NamespaceID, OutcomeID: o.ID}
+	return Scope{TenantID: o.TenantID, OutcomeID: o.ID}
 }
 
 func (o Outcome) Ref() EntityRef {
@@ -71,7 +71,7 @@ func (o Outcome) Validate() error {
 	if err := o.ID.Validate(); err != nil {
 		return err
 	}
-	if err := o.NamespaceID.Validate(); err != nil {
+	if err := o.TenantID.Validate(); err != nil {
 		return err
 	}
 	if err := o.Version.Validate(); err != nil {

@@ -13,7 +13,7 @@ func setupActiveOutcome(t *testing.T, service *application.Service) domain.Outco
 	ctx := context.Background()
 	cc := commandContext()
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  id("0199e260-0000-7000-8000-000000000001"),
+		TenantID:     id("0199e260-0000-7000-8000-000000000001"),
 		Title:        "Dependency outcome",
 		DesiredState: "Dependency semantics are deterministic",
 		Priority:     domain.PriorityNormal,

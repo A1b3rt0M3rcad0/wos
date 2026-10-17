@@ -7,18 +7,18 @@ import (
 )
 
 func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
-	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
+	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or tenant permission inactive")
 	var lifecycle string
-	if err := u.tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=?`, r.Authorization.NamespaceID.String()).Scan(&lifecycle); err != nil {
-		return accessSnapshotReadError("read Namespace access barrier", err)
+	if err := u.tx.QueryRowContext(ctx, `SELECT lifecycle FROM tenants WHERE id=?`, r.Authorization.TenantID.String()).Scan(&lifecycle); err != nil {
+		return accessSnapshotReadError("read Tenant access barrier", err)
 	}
 	if lifecycle != "active" {
 		return denied
 	}
 	var raw string
-	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw)
+	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM tenant_grants g JOIN principals p ON p.id=g.principal_id WHERE g.tenant_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.TenantID.String(), r.Authorization.PrincipalID).Scan(&raw)
 	if err != nil {
-		return accessSnapshotReadError("read Namespace permission", err)
+		return accessSnapshotReadError("read Tenant permission", err)
 	}
 	var permissions []ports.Permission
 	if unmarshalJSON(raw, &permissions) != nil {
@@ -37,20 +37,20 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 	var principal, ns, actor, parent string
 	var revoked int
 	var expires int64
-	err = u.tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
+	err = u.tx.QueryRowContext(ctx, `SELECT principal_id,tenant_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
 	if err != nil {
 		return accessSnapshotReadError("read credential access barrier", err)
 	}
 	var binding domain.ActorRef
-	if principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
+	if principal != r.Authorization.PrincipalID || ns != r.Authorization.TenantID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
 		return denied
 	}
 	if parent != "" {
-		err = u.tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, parent).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
+		err = u.tx.QueryRowContext(ctx, `SELECT principal_id,tenant_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, parent).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
 		if err != nil {
 			return accessSnapshotReadError("read parent credential access barrier", err)
 		}
-		if parent != "" || principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
+		if parent != "" || principal != r.Authorization.PrincipalID || ns != r.Authorization.TenantID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
 			return denied
 		}
 	}
@@ -66,7 +66,7 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 			return accessSnapshotReadError("read signed parent credential access", err)
 		}
 	}
-	policy, err := signing.CredentialPolicy(ctx, credential.NamespaceID, credential.ID)
+	policy, err := signing.CredentialPolicy(ctx, credential.TenantID, credential.ID)
 	if err == nil && r.Authorization.Permission.InstallationScoped() && len(policy.AllowedOutcomeIDs) > 0 {
 		return denied
 	}
@@ -92,7 +92,7 @@ func accessSnapshotReadError(operation string, err error) error {
 		err = mapSQLError(operation, err)
 	}
 	if code, _ := domain.ErrorCodeOf(err); code == domain.ErrorCodeNotFound {
-		return domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
+		return domain.NewError(domain.ErrorCodeForbidden, "credential or tenant permission inactive")
 	}
 	return err
 }

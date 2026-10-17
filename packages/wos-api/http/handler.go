@@ -30,7 +30,7 @@ type Options struct {
 	LocalAuth       local.Resolver
 	ResolveIdentity func(*http.Request) (application.Identity, error)
 	Security        *application.SecurityService
-	LocalNamespaces []ports.Namespace
+	LocalTenants    []ports.Tenant
 }
 
 type Handler struct {
@@ -43,7 +43,7 @@ type Handler struct {
 	prefix          string
 	mux             *http.ServeMux
 	commands        *commands.Catalog
-	localNamespaces []ports.Namespace
+	localTenants    []ports.Tenant
 }
 
 type contractError struct {
@@ -76,7 +76,7 @@ func New(options Options) (*Handler, error) {
 	}
 
 	h := &Handler{
-		localNamespaces: options.LocalNamespaces,
+		localTenants:    options.LocalTenants,
 		commands:        commands.NewCatalog(options.Service, options.IDs),
 		service:         options.Service,
 		ids:             options.IDs,
@@ -117,14 +117,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) routes() {
-	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/operations/delivery-health", h.deliveryHealth)
+	h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/operations/delivery-health", h.deliveryHealth)
 	h.mux.HandleFunc("GET "+h.prefix+"/capabilities", h.executionCapabilities)
-	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/work-protocol", h.getNamespaceWorkProtocol)
-	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/commands/{command_id}", h.getCommandReceipt)
+	h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/work-protocol", h.getTenantWorkProtocol)
+	h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/commands/{command_id}", h.getCommandReceipt)
 	h.mux.HandleFunc("GET "+h.prefix+"/commands", h.commandCatalog)
 	h.mux.HandleFunc("POST "+h.prefix+"/commands/{command}", h.executeCommand)
-	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/effective-permissions", h.effectivePermissions)
-	base := h.prefix + "/namespaces/{namespace_id}/outcomes"
+	h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/effective-permissions", h.effectivePermissions)
+	base := h.prefix + "/tenants/{tenant_id}/outcomes"
 
 	h.mux.HandleFunc("GET "+base+"/{outcome_id}/references", h.searchReferences)
 	h.mux.HandleFunc("POST "+base, h.createOutcome)
@@ -133,14 +133,14 @@ func (h *Handler) routes() {
 		h.mux.HandleFunc("POST "+h.prefix+"/security/commands", h.administer)
 		h.mux.HandleFunc("POST "+h.prefix+"/security/signing-commands", h.signingAdministration)
 		h.mux.HandleFunc("GET "+h.prefix+"/security/signing-identity", h.signingIdentity)
-		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
-		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
-		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
-		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
-		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
+		h.mux.HandleFunc("GET "+h.prefix+"/tenants", h.listTenants)
+		h.mux.HandleFunc("PUT "+h.prefix+"/tenants/{tenant_id}/grants/{principal_id}", h.setGrant)
+		h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/administration", h.securityAdministration)
+		h.mux.HandleFunc("POST "+h.prefix+"/tenants/{tenant_id}/credentials", h.issueCredential)
+		h.mux.HandleFunc("POST "+h.prefix+"/tenants/{tenant_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
 	} else {
-		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", func(w http.ResponseWriter, r *http.Request) {
-			writeJSON(w, 200, map[string]any{"items": h.localNamespaces})
+		h.mux.HandleFunc("GET "+h.prefix+"/tenants", func(w http.ResponseWriter, r *http.Request) {
+			writeJSON(w, 200, map[string]any{"items": h.localTenants})
 		})
 	}
 
@@ -158,7 +158,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+outcome+"/work-activity", h.listWorkActivity)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/attention", h.getWorkAttention)
 	h.mux.HandleFunc("GET "+outcome+"/work-checkpoints/{checkpoint_id}", h.getWorkCheckpoint)
-	h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/signed-trust", h.signedTrust)
+	h.mux.HandleFunc("GET "+h.prefix+"/tenants/{tenant_id}/signed-trust", h.signedTrust)
 	h.mux.HandleFunc("GET "+outcome+"/signed-state/{resource}", h.signedState)
 	h.mux.HandleFunc("GET "+outcome+"/signed-state/{resource}/{entity_id}", h.signedState)
 	h.mux.HandleFunc("GET "+outcome+"/work-contracts", h.listWorkContracts)
@@ -347,7 +347,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, target any) error {
 }
 
 func parseScope(r *http.Request) (domain.Scope, error) {
-	namespaceID, err := domain.ParseID(r.PathValue("namespace_id"))
+	tenantID, err := domain.ParseID(r.PathValue("tenant_id"))
 	if err != nil {
 		return domain.Scope{}, err
 	}
@@ -355,7 +355,7 @@ func parseScope(r *http.Request) (domain.Scope, error) {
 	if err != nil {
 		return domain.Scope{}, err
 	}
-	scope := domain.Scope{NamespaceID: namespaceID, OutcomeID: outcomeID}
+	scope := domain.Scope{TenantID: tenantID, OutcomeID: outcomeID}
 	return scope, scope.Validate()
 }
 

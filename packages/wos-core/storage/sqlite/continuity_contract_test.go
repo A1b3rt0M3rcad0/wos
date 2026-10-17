@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -23,7 +24,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 	cc := sqliteCommandContext("0199d023-0000-7000-8000-000000000001", "")
 	var outcomes []domain.Outcome
 	for i := 0; i < 3; i++ {
-		v, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Continuation", DesiredState: "resume", Priority: domain.PriorityNormal})
+		v, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "Continuation", DesiredState: "resume", Priority: domain.PriorityNormal})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -103,7 +104,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 	if events != 9 {
 		t.Fatalf("timeline contains %d facts, want 9", events)
 	}
-	foreign := domain.Scope{NamespaceID: testID("0199d022-0000-7000-8000-000000000002"), OutcomeID: outcome.ID}
+	foreign := domain.Scope{TenantID: testID("0199d022-0000-7000-8000-000000000002"), OutcomeID: outcome.ID}
 	if _, err = service.GetContinuitySection(ctx, foreign, "work_items", 2, originalCursor); err == nil {
 		t.Fatal("foreign scope accepted a cursor")
 	}
@@ -143,15 +144,7 @@ func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx := u.(*unitOfWork).tx
-	if err = ensureNamespace(ctx, tx, legacy.NamespaceID); err == nil {
-		err = ensureCoordinationRow(ctx, tx, legacy.Scope())
-	}
-	if err == nil {
-		err = insertEntityRef(ctx, tx, legacy.Ref())
-	}
-	if err == nil {
-		_, err = tx.ExecContext(ctx, `INSERT INTO outcomes(id,namespace_id,outcome_id,kind,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES(?,?,?,'outcome',1,?,?,'Before upgrade','','normal','retained','draft')`, legacy.ID.String(), legacy.NamespaceID.String(), legacy.ID.String(), encodeTime(legacy.CreatedAt), encodeTime(legacy.UpdatedAt))
-	}
+	err = insertPublishedOutcomeFixture(ctx, tx, legacy)
 	if err != nil {
 		u.Rollback()
 		t.Fatal(err)
@@ -170,4 +163,20 @@ func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
 	if _, err = service.CreateRoadmap(ctx, cc, application.CreateRoadmapCommand{Scope: created.Value.Scope(), PlanScope: domain.RoadmapPlanScope{Kind: domain.RoadmapScopeOutcome, ID: created.Value.ID}, Title: "After upgrade"}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// These fixtures exercise real pre-33 databases. Construct their historical SQL
+// directly; current repositories correctly target the current Tenant schema.
+func insertPublishedOutcomeFixture(ctx context.Context, tx *sql.Tx, value domain.Outcome) error {
+	if _, err := tx.ExecContext(ctx, `INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES(?,?,'active',1,?,?)`, value.TenantID.String(), value.TenantID.String(), encodeTime(value.CreatedAt), encodeTime(value.UpdatedAt)); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO outcome_coordination(namespace_id,outcome_id,state_revision) VALUES(?,?,0)`, value.TenantID.String(), value.ID.String()); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO entity_refs(id,namespace_id,outcome_id,kind) VALUES(?,?,?,'outcome')`, value.ID.String(), value.TenantID.String(), value.ID.String()); err != nil {
+		return err
+	}
+	_, err := tx.ExecContext(ctx, `INSERT INTO outcomes(id,namespace_id,outcome_id,kind,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES(?,?,?,'outcome',1,?,?,?,?,?,?,?)`, value.ID.String(), value.TenantID.String(), value.ID.String(), encodeTime(value.CreatedAt), encodeTime(value.UpdatedAt), value.Title, value.Description, value.Priority, value.DesiredState, value.Lifecycle)
+	return err
 }

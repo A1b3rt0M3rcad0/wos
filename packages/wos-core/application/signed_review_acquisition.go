@@ -67,7 +67,7 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID)
+	server, err := s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -92,7 +92,7 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	group, err := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
+	group, err := registry.PrincipalGroup(ctx, cmd.Scope.TenantID, identity.PrincipalID)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -103,11 +103,11 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
+	nsPolicy, e := tenantAcceptancePolicy(ctx, registry, cmd.Scope.TenantID)
 	if e != nil {
 		return zero, 0, e
 	}
-	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveReviewContracts > 0)
+	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.TenantID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveReviewContracts > 0)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -117,8 +117,8 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if counts.CredentialReview >= policy.MaxActiveReviewContracts {
 		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "credential review quota reached")
 	}
-	if nsPolicy.MaxActiveReviewContracts > 0 && counts.NamespaceReview >= nsPolicy.MaxActiveReviewContracts {
-		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Namespace review quota reached")
+	if nsPolicy.MaxActiveReviewContracts > 0 && counts.TenantReview >= nsPolicy.MaxActiveReviewContracts {
+		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Tenant review quota reached")
 	}
 
 	var expired *d.ReviewContract
@@ -161,12 +161,12 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	binding := d.SignedContractBinding{ProtocolVersion: 2, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: policy.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
+	binding := d.SignedContractBinding{ProtocolVersion: 3, ServerID: server.ID.String(), CredentialID: identity.CredentialID, SignerKeyID: cmd.SignerKeyID, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: policy.Version, AllowedSigningKeyIDs: allowed, SeparationGroup: group}
 	protocol, err := protocolRepository(u)
 	if err != nil {
 		return zero, 0, err
 	}
-	state, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(u, "signed"))
+	state, err := protocol.Lock(ctx, cmd.Scope.TenantID, exclusiveProtocolGuard(u, "signed"))
 	if err != nil {
 		return zero, 0, err
 	}
@@ -174,7 +174,7 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	payload := signing.SpecPayload[SignedReviewSpec]{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: cmd.Scope.NamespaceID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: id.String(), WorkItemID: work.ID.String(), Spec: target}
+	payload := signing.SpecPayload[SignedReviewSpec]{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: cmd.Scope.TenantID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: id.String(), WorkItemID: work.ID.String(), Spec: target}
 	payload.Spec, err = compactSignedReviewSpec(payload)
 	if err != nil {
 		return zero, 0, err
@@ -217,7 +217,7 @@ func liveSignedKeys(ctx context.Context, u ports.UnitOfWork, p d.CredentialPolic
 	}
 	out := []d.ID{}
 	for _, id := range p.AllowedSigningKeyIDs {
-		k, e := registry.Key(ctx, p.NamespaceID, id)
+		k, e := registry.Key(ctx, p.TenantID, id)
 		if e != nil {
 			return nil, e
 		}
@@ -237,7 +237,7 @@ func (s *Service) requireSignedReviewIndependence(ctx context.Context, u ports.U
 	}
 	if group != "" {
 		for _, executor := range r.ExecutionPrincipals {
-			current, e := registry.PrincipalGroup(ctx, r.Scope.NamespaceID, executor)
+			current, e := registry.PrincipalGroup(ctx, r.Scope.TenantID, executor)
 			if e != nil {
 				return e
 			}
@@ -266,7 +266,7 @@ func (s *Service) authenticatedReviewTarget(ctx context.Context, u ports.UnitOfW
 	if err != nil {
 		return zero, work, err
 	}
-	if submission.ProtocolVersion != 2 || submission.Digest != r.SubmissionDigest || submission.Material.SpecDigest != r.IssuedSpecDigest {
+	if submission.ProtocolVersion != 3 || submission.Digest != r.SubmissionDigest || submission.Material.SpecDigest != r.IssuedSpecDigest {
 		return zero, work, d.NewError(d.ErrorCodeSubmissionNotAccepted, "review submission digest differs")
 	}
 	fact, err := repo.Fact(ctx, r.Scope, *source.IssuedSpecificationID)
@@ -320,7 +320,7 @@ func (s *Service) issueReviewAuthority(ctx context.Context, u ports.UnitOfWork, 
 	for _, id := range keys {
 		allowed = append(allowed, id.String())
 	}
-	payload := signing.AuthorityPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: c.Scope.NamespaceID.String(), OutcomeID: c.Scope.OutcomeID.String(), PrincipalID: c.HolderPrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ReviewCaseID: c.CaseID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), ContractVersion: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), SpecDigest: c.Binding.SpecificationDigest, IssuedAt: now.UTC().Format(time.RFC3339Nano), ExpiresAt: c.ExpiresAt.UTC().Format(time.RFC3339Nano), AcceptanceMode: string(d.AcceptanceIndependentReview), PolicyRevision: signing.Decimal(p.Version), AllowedSigningKeyIDs: allowed}
+	payload := signing.AuthorityPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: c.Scope.TenantID.String(), OutcomeID: c.Scope.OutcomeID.String(), PrincipalID: c.HolderPrincipalID, SignerKeyID: server.IssuerKeyID.String()}, ContractKind: "review", ContractID: c.ID.String(), WorkItemID: c.WorkItemID.String(), ReviewCaseID: c.CaseID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), ContractVersion: signing.Decimal(c.Version), LeaseVersion: signing.Decimal(c.LeaseVersion), SpecDigest: c.Binding.SpecificationDigest, IssuedAt: now.UTC().Format(time.RFC3339Nano), ExpiresAt: c.ExpiresAt.UTC().Format(time.RFC3339Nano), AcceptanceMode: string(d.AcceptanceIndependentReview), PolicyRevision: signing.Decimal(p.Version), AllowedSigningKeyIDs: allowed}
 	return s.issueSignedFact(ctx, u, server, c.Scope, c.ID, "review", "authority", c.HolderPrincipalID, signing.ContractAuthority, payload, now)
 }
 func signedReviewEvents(s *Service, cc d.CommandContext, meta commandMetadata, r SignedReviewContractResult, revision d.OutcomeRevision) ([]d.DomainEvent, error) {

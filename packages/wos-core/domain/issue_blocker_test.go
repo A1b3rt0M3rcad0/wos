@@ -8,8 +8,8 @@ import (
 func TestIssueLifecycleAndDuplicateRules(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := Scope{
-		NamespaceID: MustParseID("0199f000-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f000-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f000-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f000-0000-7000-8000-000000000002"),
 	}
 	reporter := ActorRef{Kind: ActorKindHuman, Provider: "local", ID: "tester"}
 	affected := EntityRef{Scope: scope, Kind: EntityKindWorkItem, ID: MustParseID("0199f000-0000-7000-8000-000000000003")}
@@ -56,10 +56,10 @@ func TestIssueLifecycleAndDuplicateRules(t *testing.T) {
 func TestIssueRejectsCrossScopeAffectedRef(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := Scope{
-		NamespaceID: MustParseID("0199f001-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f001-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f001-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f001-0000-7000-8000-000000000002"),
 	}
-	other := Scope{NamespaceID: scope.NamespaceID, OutcomeID: MustParseID("0199f001-0000-7000-8000-000000000003")}
+	other := Scope{TenantID: scope.TenantID, OutcomeID: MustParseID("0199f001-0000-7000-8000-000000000003")}
 	_, err := NewIssue(
 		MustParseID("0199f001-0000-7000-8000-000000000004"),
 		scope,
@@ -78,8 +78,8 @@ func TestIssueRejectsCrossScopeAffectedRef(t *testing.T) {
 func TestBlockerDefaultsAndClosureAreExplicit(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := Scope{
-		NamespaceID: MustParseID("0199f002-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f002-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f002-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f002-0000-7000-8000-000000000002"),
 	}
 	objective := EntityRef{Scope: scope, Kind: EntityKindObjective, ID: MustParseID("0199f002-0000-7000-8000-000000000003")}
 	issue := EntityRef{Scope: scope, Kind: EntityKindIssue, ID: MustParseID("0199f002-0000-7000-8000-000000000004")}
@@ -109,8 +109,8 @@ func TestBlockerDefaultsAndClosureAreExplicit(t *testing.T) {
 func TestWorkItemBlockerRejectsSubtreePropagation(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := Scope{
-		NamespaceID: MustParseID("0199f003-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f003-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f003-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f003-0000-7000-8000-000000000002"),
 	}
 	work := EntityRef{Scope: scope, Kind: EntityKindWorkItem, ID: MustParseID("0199f003-0000-7000-8000-000000000003")}
 	_, err := NewBlocker(
@@ -130,8 +130,8 @@ func TestWorkItemBlockerRejectsSubtreePropagation(t *testing.T) {
 func TestBlockerRequiresCauseOrDescription(t *testing.T) {
 	now := time.Date(2026, 10, 2, 16, 0, 0, 0, time.UTC)
 	scope := Scope{
-		NamespaceID: MustParseID("0199f004-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f004-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f004-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f004-0000-7000-8000-000000000002"),
 	}
 	_, err := NewBlocker(
 		MustParseID("0199f004-0000-7000-8000-000000000003"),

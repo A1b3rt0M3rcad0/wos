@@ -17,12 +17,12 @@ func (s *Store) GetCredential(ctx context.Context, digest string) (ports.Credent
 	return c, ctx.Err()
 }
 func (s *Store) PutCredential(ctx context.Context, c ports.Credential) error {
-	if c.ID.Validate() != nil || c.NamespaceID.Validate() != nil || c.Actor.Validate() != nil || c.PrincipalID == "" || c.Digest == "" {
+	if c.ID.Validate() != nil || c.TenantID.Validate() != nil || c.Actor.Validate() != nil || c.PrincipalID == "" || c.Digest == "" {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid credential")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.security.Namespaces[c.NamespaceID]; !ok {
+	if _, ok := s.security.Tenants[c.TenantID]; !ok {
 		return missingSigning()
 	}
 	if _, ok := s.security.Credentials[c.Digest]; ok {
@@ -52,7 +52,7 @@ func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id d.ID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for digest, c := range s.security.Credentials {
-		if c.ID == id && c.NamespaceID == ns {
+		if c.ID == id && c.TenantID == ns {
 			c.Revoked = true
 			s.security.Credentials[digest] = c
 			return ctx.Err()
@@ -65,13 +65,13 @@ func (s *Store) ScopedCredentialPrincipal(ctx context.Context, ns, id d.ID) (str
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, c := range s.security.Credentials {
-		if c.ID == id && c.NamespaceID == ns {
+		if c.ID == id && c.TenantID == ns {
 			return c.PrincipalID, ctx.Err()
 		}
 	}
 	return "", missingSigning()
 }
-func (s *Store) GetGrant(ctx context.Context, ns d.ID, principal string) (ports.NamespaceGrant, error) {
+func (s *Store) GetGrant(ctx context.Context, ns d.ID, principal string) (ports.TenantGrant, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	g, ok := s.security.Grants[securityKey(ns, principal)]
@@ -80,8 +80,8 @@ func (s *Store) GetGrant(ctx context.Context, ns d.ID, principal string) (ports.
 	}
 	return deepCopy(g), ctx.Err()
 }
-func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
-	if g.NamespaceID.Validate() != nil || g.PrincipalID == "" {
+func (s *Store) PutGrant(ctx context.Context, g ports.TenantGrant) error {
+	if g.TenantID.Validate() != nil || g.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid grant")
 	}
 	for _, p := range g.Permissions {
@@ -91,30 +91,30 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.security.Namespaces[g.NamespaceID]; !ok {
+	if _, ok := s.security.Tenants[g.TenantID]; !ok {
 		return missingSigning()
 	}
-	s.security.Grants[securityKey(g.NamespaceID, g.PrincipalID)] = deepCopy(g)
+	s.security.Grants[securityKey(g.TenantID, g.PrincipalID)] = deepCopy(g)
 	return ctx.Err()
 }
-func (s *Store) PutNamespace(ctx context.Context, n ports.Namespace) error {
+func (s *Store) PutTenant(ctx context.Context, n ports.Tenant) error {
 	if n.ID.Validate() != nil || n.Name == "" {
-		return d.NewError(d.ErrorCodeInvalidArgument, "invalid namespace")
+		return d.NewError(d.ErrorCodeInvalidArgument, "invalid tenant")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.security.Namespaces[n.ID]; ok {
-		return d.NewError(d.ErrorCodeAlreadyExists, "namespace exists")
+	if _, ok := s.security.Tenants[n.ID]; ok {
+		return d.NewError(d.ErrorCodeAlreadyExists, "tenant exists")
 	}
-	s.security.Namespaces[n.ID] = n
+	s.security.Tenants[n.ID] = n
 	s.security.Versions[n.ID] = 1
 	return ctx.Err()
 }
-func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.Namespace, error) {
+func (s *Store) ListTenants(ctx context.Context, principal string) ([]ports.Tenant, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	out := []ports.Namespace{}
-	for ns, n := range s.security.Namespaces {
+	out := []ports.Tenant{}
+	for ns, n := range s.security.Tenants {
 		if _, ok := s.security.Grants[securityKey(ns, principal)]; ok {
 			out = append(out, n)
 		}
@@ -122,16 +122,16 @@ func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.N
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, ctx.Err()
 }
-func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
-	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
+func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Tenant, g ports.TenantGrant, c ports.Credential) error {
+	if n.ID.Validate() != nil || g.TenantID != n.ID || c.TenantID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid bootstrap binding")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.security.Namespaces[n.ID]; ok {
+	if _, ok := s.security.Tenants[n.ID]; ok {
 		return ctx.Err()
 	}
-	s.security.Namespaces[n.ID] = n
+	s.security.Tenants[n.ID] = n
 	s.security.Versions[n.ID] = 1
 	s.security.Grants[securityKey(n.ID, g.PrincipalID)] = deepCopy(g)
 	s.security.Credentials[c.Digest] = c
@@ -139,10 +139,10 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 }
 func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
 	denied := d.NewError(d.ErrorCodeForbidden, "credential or permission inactive")
-	if _, ok := tx.security.Namespaces[r.Authorization.NamespaceID]; !ok {
+	if _, ok := tx.security.Tenants[r.Authorization.TenantID]; !ok {
 		return denied
 	}
-	grant, ok := tx.security.Grants[securityKey(r.Authorization.NamespaceID, r.Authorization.PrincipalID)]
+	grant, ok := tx.security.Grants[securityKey(r.Authorization.TenantID, r.Authorization.PrincipalID)]
 	if !ok {
 		return denied
 	}
@@ -154,17 +154,17 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 		return denied
 	}
 	c, ok := tx.security.Credentials[r.CredentialDigest]
-	if !ok || c.Revoked || !r.Now.Before(c.ExpiresAt) || c.NamespaceID != r.Authorization.NamespaceID || c.PrincipalID != r.Authorization.PrincipalID || c.Actor != r.Actor {
+	if !ok || c.Revoked || !r.Now.Before(c.ExpiresAt) || c.TenantID != r.Authorization.TenantID || c.PrincipalID != r.Authorization.PrincipalID || c.Actor != r.Actor {
 		return denied
 	}
 	if c.ParentDigest != "" {
 		parent, ok := tx.security.Credentials[c.ParentDigest]
-		if !ok || parent.ParentDigest != "" || parent.Revoked || !r.Now.Before(parent.ExpiresAt) || parent.NamespaceID != c.NamespaceID || parent.PrincipalID != c.PrincipalID || parent.Actor != c.Actor {
+		if !ok || parent.ParentDigest != "" || parent.Revoked || !r.Now.Before(parent.ExpiresAt) || parent.TenantID != c.TenantID || parent.PrincipalID != c.PrincipalID || parent.Actor != c.Actor {
 			return denied
 		}
 		c = parent
 	}
-	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok {
+	if policy, ok := tx.security.Policies[securityKey(c.TenantID, c.ID.String())]; ok {
 		if !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) || (r.Authorization.Permission.InstallationScoped() && len(policy.AllowedOutcomeIDs) > 0) {
 			return denied
 		}

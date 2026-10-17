@@ -6,7 +6,7 @@ import (
 )
 
 func TestCommitReceiptKeepsAcquisitionIdentityForBoundedRecovery(t *testing.T) {
-	raw := json.RawMessage(`{"command_id":"command","outcome_revision":8,"value":{"acquired":true,"result":{"contract":{"id":"contract","work_item_id":"work","version":3,"lease_version":4,"fencing_token":"9007199254740993","scope":{"namespace_id":"namespace","outcome_id":"outcome"}},"work_item":{"private":"omit"}}}}`)
+	raw := json.RawMessage(`{"command_id":"command","outcome_revision":8,"value":{"acquired":true,"result":{"contract":{"id":"contract","work_item_id":"work","version":3,"lease_version":4,"fencing_token":"9007199254740993","scope":{"tenant_id":"tenant","outcome_id":"outcome"}},"work_item":{"private":"omit"}}}}`)
 	receipt, err := CommitReceipt(raw)
 	if err != nil {
 		t.Fatal(err)

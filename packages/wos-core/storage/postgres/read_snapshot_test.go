@@ -23,7 +23,7 @@ func TestReadSnapshotCoexistsWithWriterAndKeepsRevision(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199f381-0000-7000-8000-000000000101", "")
-	created, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199f381-0000-7000-8000-000000000102"), Title: "Before", DesiredState: "Stable snapshot", Priority: d.PriorityNormal})
+	created, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199f381-0000-7000-8000-000000000102"), Title: "Before", DesiredState: "Stable snapshot", Priority: d.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestReadSnapshotCoexistsWithWriterAndKeepsRevision(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reader.Rollback()
-	before, err := reader.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	before, err := reader.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestReadSnapshotCoexistsWithWriterAndKeepsRevision(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reader prevented independent writer: %v", err)
 	}
-	still, err := reader.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	still, err := reader.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,14 +77,14 @@ func TestReadSnapshotMissingScopeDoesNotCreateCoordination(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	scope := d.Scope{NamespaceID: testID("0199f382-0000-7000-8000-000000000001"), OutcomeID: testID("0199f382-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: testID("0199f382-0000-7000-8000-000000000001"), OutcomeID: testID("0199f382-0000-7000-8000-000000000002")}
 	_, err = u.Coordination().LockOutcome(ctx, scope)
 	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		t.Fatal("missing scope was not rejected", err)
 	}
 	u.Rollback()
 	var count int
-	if err := store.db.QueryRowContext(ctx, `SELECT count(*) FROM namespaces`).Scan(&count); err != nil || count != 0 {
-		t.Fatal("read created Namespace state", count, err)
+	if err := store.db.QueryRowContext(ctx, `SELECT count(*) FROM tenants`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("read created Tenant state", count, err)
 	}
 }

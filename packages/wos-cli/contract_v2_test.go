@@ -18,7 +18,7 @@ func contractFixtureV2(t *testing.T) (ProfileV2, ContractFileV2) {
 	contract := d.MustParseID("0199ac10-0000-7000-8000-000000000008")
 	work := d.MustParseID("0199ac10-0000-7000-8000-000000000009")
 	private := ed25519.NewKeyFromSeed(make([]byte, 32))
-	binding := signing.Binding{ProtocolVersion: 2, ServerID: profile.Binding.ServerID.String(), NamespaceID: profile.Binding.NamespaceID.String(), OutcomeID: project.Scope.DefaultOutcomeID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}
+	binding := signing.Binding{ProtocolVersion: 3, ServerID: profile.Binding.ServerID.String(), TenantID: profile.Binding.TenantID.String(), OutcomeID: project.Scope.DefaultOutcomeID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Binding.IssuerKeys[0].KeyID.String()}
 	payload := signing.SpecPayload[d.SignedWorkSpec]{Binding: binding, ContractKind: "execution", ContractID: contract.String(), WorkItemID: work.String(), Spec: d.SignedWorkSpec{Title: "Implement only the bounded change", Description: "Preserve existing behavior", ExecutionSpec: d.ExecutionSpec{Instructions: []string{"Run targeted checks"}}, PolicyRevision: 1}}
 	document := func(purpose signing.PayloadType, body any) signing.Document {
 		t.Helper()

@@ -154,12 +154,12 @@ func (r serverIdentityRepository) IssuerHistory(ctx context.Context, after d.ID,
 }
 
 // SignedIssuerReady is a host health projection, not an authorization grant.
-// One read snapshot observes current issuer and whether any Namespace requires
+// One read snapshot observes current issuer and whether any Tenant requires
 // signed issuance. It never writes, acquires work or exposes tenant identities.
 func (s *Store) SignedIssuerReady(ctx context.Context, configured *d.ServerIdentity) (bool, error) {
 	var current sql.NullString
 	var required bool
-	e := s.db.QueryRowContext(ctx, `SELECT (SELECT state_json FROM server_protocol_identity AS current_issuer WHERE singleton=1), EXISTS(SELECT 1 FROM namespace_work_protocol WHERE phase='signed_contracts_v2')`).Scan(&current, &required)
+	e := s.db.QueryRowContext(ctx, `SELECT (SELECT state_json FROM server_protocol_identity AS current_issuer WHERE singleton=1), EXISTS(SELECT 1 FROM tenant_work_protocol WHERE phase='signed_contracts_v3')`).Scan(&current, &required)
 	if e != nil {
 		return false, mapSQLError("signed issuer readiness", e)
 	}

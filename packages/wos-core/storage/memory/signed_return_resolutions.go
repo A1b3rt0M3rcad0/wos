@@ -49,12 +49,12 @@ func (r signedReturnResolutionRepository) InsertTerminal(ctx context.Context, re
 			return e
 		}
 	}
-	if _, e := r.tx.SigningIdentity().Key(ctx, result.Scope.NamespaceID, result.IssuerKeyID); e != nil {
+	if _, e := r.tx.SigningIdentity().Key(ctx, result.Scope.TenantID, result.IssuerKeyID); e != nil {
 		return e
 	}
-	k := resolutionKey(result.Scope.NamespaceID, result.PrincipalID, result.CredentialID, result.OriginalCommandName, result.OriginalIdempotencyKey)
+	k := resolutionKey(result.Scope.TenantID, result.PrincipalID, result.CredentialID, result.OriginalCommandName, result.OriginalIdempotencyKey)
 	for key, old := range r.tx.signedReview.Resolutions {
-		if key == k || old.Scope.NamespaceID == result.Scope.NamespaceID && old.PrincipalID == result.PrincipalID && old.OriginalRequestID == result.OriginalRequestID {
+		if key == k || old.Scope.TenantID == result.Scope.TenantID && old.PrincipalID == result.PrincipalID && old.OriginalRequestID == result.OriginalRequestID {
 			return d.NewError(d.ErrorCodeAlreadyExists, "terminal return resolution is immutable")
 		}
 	}

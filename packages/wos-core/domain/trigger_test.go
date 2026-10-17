@@ -7,8 +7,8 @@ import (
 
 func TestTriggerPredicatesAreBoundedAndDeterministic(t *testing.T) {
 	id := MustParseID("0199d090-0000-7000-8000-000000000001")
-	scope := Scope{NamespaceID: id, OutcomeID: id}
-	event := DomainEvent{NamespaceID: id, OutcomeID: id, EventType: "work_item.created", AggregateRef: EntityRef{Scope: scope, Kind: EntityKindWorkItem, ID: id}}
+	scope := Scope{TenantID: id, OutcomeID: id}
+	event := DomainEvent{TenantID: id, OutcomeID: id, EventType: "work_item.created", AggregateRef: EntityRef{Scope: scope, Kind: EntityKindWorkItem, ID: id}}
 	predicate := EventPredicate{All: []EventPredicate{{Field: "aggregate.kind", Op: "eq", Value: "work_item"}, {Field: "event_type", Op: "in", Value: []string{"work_item.created", "work_item.completed"}}}}
 	if err := predicate.Validate(); err != nil || !predicate.Matches(event) {
 		t.Fatal("valid predicate failed", err)

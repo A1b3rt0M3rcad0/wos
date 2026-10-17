@@ -70,7 +70,7 @@ func seedFixture(t *testing.T) fixture {
 	must(t, err)
 	id := d.ServerIdentity{ID: d.ID(serverID), IssuerKeyID: d.ID(issuerID), PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, CreatedAt: now}
 	must(t, id.Validate())
-	envelope, err := signing.Sign(signing.ContractAuthority, map[string]any{"protocol_version": 2, "signer_key_id": issuerID, "server_id": serverID, "contract_id": contractID, "note": "exact bytes < & Ω\n"}, issuerID, secret)
+	envelope, err := signing.Sign(signing.ContractAuthority, map[string]any{"protocol_version": signing.ProtocolVersion, "signer_key_id": issuerID, "server_id": serverID, "contract_id": contractID, "note": "exact bytes < & Ω\n"}, issuerID, secret)
 	must(t, err)
 	rawProof, err := json.Marshal(envelope)
 	must(t, err)
@@ -78,29 +78,29 @@ func seedFixture(t *testing.T) fixture {
 	must(t, err)
 	actor := `{"kind":"agent","provider":"test","id":"operator"}`
 	exec := func(query string, args ...any) { t.Helper(); _, err := db.Exec(query, args...); must(t, err) }
-	exec("INSERT INTO namespaces VALUES(?,?,'active',1,?,?)", nsID, "primary", now.UnixMicro(), now.UnixMicro())
-	exec("INSERT INTO namespaces VALUES(?,?,'active',1,?,?)", otherNS, "secondary", now.UnixMicro(), now.UnixMicro())
-	exec("INSERT INTO delivery_namespace_schedule VALUES(?,3)", nsID)
-	exec("INSERT INTO delivery_namespace_schedule VALUES(?,4)", otherNS)
+	exec("INSERT INTO tenants VALUES(?,?,'active',1,?,?)", nsID, "primary", now.UnixMicro(), now.UnixMicro())
+	exec("INSERT INTO tenants VALUES(?,?,'active',1,?,?)", otherNS, "secondary", now.UnixMicro(), now.UnixMicro())
+	exec("INSERT INTO delivery_tenant_schedule VALUES(?,3)", nsID)
+	exec("INSERT INTO delivery_tenant_schedule VALUES(?,4)", otherNS)
 	exec("INSERT INTO principals VALUES('operator','operator','service','active',?)", now.UnixMicro())
-	exec("INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES(?,?,'operator',?,?,?,0)", credentialID, nsID, actor, application.TokenDigest(activeToken), now.Add(time.Hour).UnixMicro())
-	exec("INSERT INTO namespace_grants VALUES(?,'operator','[\"state:read\"]')", nsID)
-	exec("INSERT INTO namespace_grants VALUES(?,'operator','[\"state:read\"]')", otherNS)
+	exec("INSERT INTO credentials(id,tenant_id,principal_id,actor_json,digest,expires_at,revoked) VALUES(?,?,'operator',?,?,?,0)", credentialID, nsID, actor, application.TokenDigest(activeToken), now.Add(time.Hour).UnixMicro())
+	exec("INSERT INTO tenant_grants VALUES(?,'operator','[\"state:read\"]')", nsID)
+	exec("INSERT INTO tenant_grants VALUES(?,'operator','[\"state:read\"]')", otherNS)
 	exec("INSERT INTO outcome_coordination VALUES(?,?,7)", nsID, outcomeID)
 	exec("INSERT INTO entity_refs VALUES(?,?,?,'outcome')", outcomeID, nsID, outcomeID)
-	exec("INSERT INTO outcomes(id,namespace_id,outcome_id,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES(?,?,?,1,?,?,'A < B Ω','preserve text','normal','reviewed','active')", outcomeID, nsID, outcomeID, now.UnixMicro(), now.UnixMicro())
+	exec("INSERT INTO outcomes(id,tenant_id,outcome_id,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES(?,?,?,1,?,?,'A < B Ω','preserve text','normal','reviewed','active')", outcomeID, nsID, outcomeID, now.UnixMicro(), now.UnixMicro())
 	exec("INSERT INTO entity_refs VALUES(?,?,?,'work_item')", workID, nsID, outcomeID)
-	exec("INSERT INTO work_items(id,namespace_id,outcome_id,version,created_at,updated_at,title,description,priority,lifecycle) VALUES(?,?,?,1,?,?,'Task','description','normal','todo')", workID, nsID, outcomeID, now.UnixMicro(), now.UnixMicro())
+	exec("INSERT INTO work_items(id,tenant_id,outcome_id,version,created_at,updated_at,title,description,priority,lifecycle) VALUES(?,?,?,1,?,?,'Task','description','normal','todo')", workID, nsID, outcomeID, now.UnixMicro(), now.UnixMicro())
 	exec("INSERT INTO server_protocol_identity VALUES(1,?)", string(rawID))
 	exec("INSERT INTO server_issuer_public_keys VALUES(?,?,?,?)", issuerID, serverID, fp, string(rawID))
-	exec("INSERT INTO signed_work_contracts(id,namespace_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES(?,?,?,?,?,'operator','active','18446744073709551615','2','18446744073709551615',?,?,?,?)", contractID, nsID, outcomeID, workID, credentialID, now.Add(time.Hour).UnixMicro(), string(rawProof), "{\"exact\": true}", "spec-hash")
+	exec("INSERT INTO signed_work_contracts(id,tenant_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES(?,?,?,?,?,'operator','active','18446744073709551615','2','18446744073709551615',?,?,?,?)", contractID, nsID, outcomeID, workID, credentialID, now.Add(time.Hour).UnixMicro(), string(rawProof), "{\"exact\": true}", "spec-hash")
 	exec("INSERT INTO work_activities VALUES('activity',?,?,?,?,?,?)", nsID, outcomeID, contractID, workID, "00000000000000000002", string(rawProof))
 	exec("INSERT INTO signed_operation_results VALUES(?,?,'operator',?,'original-intent-0001','AcquireSignedWorkContract',?,'0199a221-0000-7000-8000-000000000009','7',?,?)", nsID, outcomeID, credentialID, strings.Repeat("a", 64), string(rawProof), now.UnixMicro())
 	exec("INSERT INTO webhook_endpoints VALUES('endpoint',?,'https://example.invalid/webhook','operator-secret-ref','key')", nsID)
 	exec("INSERT INTO triggers VALUES('trigger',?,?,1,1,'{}')", nsID, outcomeID)
 	exec("INSERT INTO integration_events VALUES('integration',?,?,'{}')", nsID, outcomeID)
 	exec("INSERT INTO trigger_firings VALUES('firing','trigger',1,'integration','{}')")
-	exec("INSERT INTO integration_deliveries(id,namespace_id,outcome_id,integration_event_id,endpoint_id,body_json,url,secret_ref,key_id,status,next_attempt) VALUES('delivery',?,?,'firing','endpoint',?,'https://example.invalid/webhook','operator-secret-ref','key','pending',?)", nsID, outcomeID, string(rawProof), now.UnixMicro())
+	exec("INSERT INTO integration_deliveries(id,tenant_id,outcome_id,integration_event_id,endpoint_id,body_json,url,secret_ref,key_id,status,next_attempt) VALUES('delivery',?,?,'firing','endpoint',?,'https://example.invalid/webhook','operator-secret-ref','key','pending',?)", nsID, outcomeID, string(rawProof), now.UnixMicro())
 	exec("INSERT INTO delivery_attempts VALUES('delivery',1,'old-lease',?,?,'timed_out')", now.Add(-time.Minute).UnixMicro(), now.UnixMicro())
 	return fixture{path: path, identity: id, proof: string(rawProof), public: public}
 }
@@ -156,7 +156,7 @@ func freshPostgres(t *testing.T) string {
 	u.Path = "/" + name
 	return u.String()
 }
-func TestSourceAndNamespacePreflight(t *testing.T) {
+func TestSourceAndTenantPreflight(t *testing.T) {
 	f := seedFixture(t)
 	db, err := openSQLite(f.path)
 	must(t, err)
@@ -175,7 +175,7 @@ func TestSourceAndNamespacePreflight(t *testing.T) {
 		t.Fatal(result)
 	}
 	counts := result["scoped_table_rows"].(map[string]int64)
-	if counts["signed_operation_results"] != 1 || counts["integration_deliveries"] != 1 || counts["namespace_grants"] != 1 {
+	if counts["signed_operation_results"] != 1 || counts["integration_deliveries"] != 1 || counts["tenant_grants"] != 1 {
 		t.Fatal(counts)
 	}
 	indirect := fmt.Sprint(result["tables_requiring_global_or_indirect_reference_closure"])
@@ -185,15 +185,15 @@ func TestSourceAndNamespacePreflight(t *testing.T) {
 		}
 	}
 	inspection := result["inspection"].(map[string]any)
-	if inspection["principal_inventory"].(map[string]int64)["principals_also_referenced_by_other_namespaces"] != 1 || inspection["unexpired_authority"].(map[string]int64)["signed_work_contracts_unexpired"] != 1 || inspection["delivery_inventory"].(map[string]int64)["pending"] != 1 || inspection["delivery_inventory"].(map[string]int64)["indirect_attempts"] != 1 {
+	if inspection["principal_inventory"].(map[string]int64)["principals_also_referenced_by_other_tenants"] != 1 || inspection["unexpired_authority"].(map[string]int64)["signed_work_contracts_unexpired"] != 1 || inspection["delivery_inventory"].(map[string]int64)["pending"] != 1 || inspection["delivery_inventory"].(map[string]int64)["indirect_attempts"] != 1 {
 		t.Fatal(inspection)
 	}
-	if inspection["missing_scoped_references"] != int64(0) || inspection["cross_namespace_references"] != int64(0) {
+	if inspection["missing_scoped_references"] != int64(0) || inspection["cross_tenant_references"] != int64(0) {
 		t.Fatal(inspection)
 	}
 	_, err = preflight(context.Background(), tx, "sqlite", "missing")
 	if err == nil {
-		t.Fatal("missing Namespace accepted")
+		t.Fatal("missing Tenant accepted")
 	}
 }
 func TestPreflightFindsBrokenCredentialAndReferenceClosure(t *testing.T) {
@@ -215,7 +215,7 @@ func TestPreflightFindsBrokenCredentialAndReferenceClosure(t *testing.T) {
 	result, err := preflight(context.Background(), tx, "sqlite", nsID)
 	must(t, err)
 	inspection := result["inspection"].(map[string]any)
-	if inspection["missing_scoped_references"].(int64) < 1 || inspection["credential_inventory"].(map[string]int64)["missing_or_cross_namespace_session_parents"] != 1 {
+	if inspection["missing_scoped_references"].(int64) < 1 || inspection["credential_inventory"].(map[string]int64)["missing_or_cross_tenant_session_parents"] != 1 {
 		t.Fatal(inspection)
 	}
 	if inspection["invalid_credential_reference_counts"].(map[string]int64)["signed_work_contracts.credential_id"] != 1 {
@@ -314,14 +314,14 @@ func TestApprovedBackupIsStagedWithoutUnapprovedWALOrPathReplacement(t *testing.
 
 func TestUnsupportedHostChecksFollowHelpAndPrecedeStorageAccess(t *testing.T) {
 	unsupported := refuse("storage operator commands are supported only on Linux")
-	for _, args := range [][]string{{"migrate-sqlite", "--backup", "absent"}, {"migrate-sqlite", "--backup", "--help", "--writers-stopped"}, {"namespace-preflight", "--sqlite", "absent", "--namespace", nsID}} {
+	for _, args := range [][]string{{"migrate-sqlite", "--backup", "absent"}, {"migrate-sqlite", "--backup", "--help", "--writers-stopped"}, {"tenant-preflight", "--sqlite", "absent", "--tenant", nsID}} {
 		var output bytes.Buffer
 		err := runCommand(context.Background(), args, &output, func() error { return unsupported })
 		if err != unsupported || output.Len() != 0 {
 			t.Fatal("unsupported host reached storage access or accepted help flag value", args, err, output.String())
 		}
 	}
-	for _, args := range [][]string{{"--help"}, {"migrate-sqlite", "--help"}, {"namespace-preflight", "--help"}} {
+	for _, args := range [][]string{{"--help"}, {"migrate-sqlite", "--help"}, {"tenant-preflight", "--help"}} {
 		var output bytes.Buffer
 		err := runCommand(context.Background(), args, &output, func() error { t.Fatal("local help checked storage host"); return unsupported })
 		if err != nil || output.Len() == 0 {
@@ -390,7 +390,7 @@ func TestSQLiteToPostgresPreservesAuthorityReceiptsOutboxAndProof(t *testing.T) 
 		t.Fatal("closure, receipts or original constraints changed", pending, attempts, receipts, noncanonical)
 	}
 	var turn int64
-	must(t, target.QueryRow("SELECT last_turn FROM delivery_namespace_schedule WHERE namespace_id=$1", nsID).Scan(&turn))
+	must(t, target.QueryRow("SELECT last_turn FROM delivery_tenant_schedule WHERE tenant_id=$1", nsID).Scan(&turn))
 	if turn != 3 {
 		t.Fatal("delivery fairness schedule changed")
 	}
@@ -399,7 +399,7 @@ func TestSQLiteToPostgresPreservesAuthorityReceiptsOutboxAndProof(t *testing.T) 
 	checked, err := preflight(context.Background(), preflightTx, "postgres", nsID)
 	must(t, err)
 	must(t, preflightTx.Rollback())
-	if checked["inspection"].(map[string]any)["principal_inventory"].(map[string]int64)["principals_also_referenced_by_other_namespaces"] != 1 {
+	if checked["inspection"].(map[string]any)["principal_inventory"].(map[string]int64)["principals_also_referenced_by_other_tenants"] != 1 {
 		t.Fatal(checked)
 	}
 	store, err := postgres.Open(opts.DSN, postgres.Options{MigrateOnOpen: true})
@@ -449,7 +449,7 @@ func TestMigrationFailureLeavesNoPartialDomainState(t *testing.T) {
 	must(t, err)
 	defer target.Close()
 	var count, changed int
-	must(t, target.QueryRow("SELECT COUNT(*) FROM namespaces").Scan(&count))
+	must(t, target.QueryRow("SELECT COUNT(*) FROM tenants").Scan(&count))
 	must(t, target.QueryRow("SELECT COUNT(*) FROM pg_constraint WHERE connamespace='public'::regnamespace AND contype='f' AND condeferrable").Scan(&changed))
 	if count != 0 || changed != 0 {
 		t.Fatal("partial domain state or relaxed constraints committed")
@@ -458,7 +458,7 @@ func TestMigrationFailureLeavesNoPartialDomainState(t *testing.T) {
 func TestCommandPreflightIsMachineReadableAndNeverReportsReady(t *testing.T) {
 	f := seedFixture(t)
 	var out bytes.Buffer
-	must(t, run(context.Background(), []string{"namespace-preflight", "--sqlite", f.path, "--namespace", nsID}, &out))
+	must(t, run(context.Background(), []string{"tenant-preflight", "--sqlite", f.path, "--tenant", nsID}, &out))
 	var result map[string]any
 	must(t, json.Unmarshal(out.Bytes(), &result))
 	if result["ready_for_transfer"] != false {

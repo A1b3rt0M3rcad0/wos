@@ -23,15 +23,15 @@ type CommandReceipt struct {
 // GetCommandReceiptObservation reads the original Principal-bound result, without retrying
 // or changing an intention. If the command ID is unknown after a timeout, replay
 // the identical original command with its original idempotency key first.
-func (c *Client) GetCommandReceiptObservation(ctx context.Context, namespace, commandID domain.ID) (CommandReceipt, error) {
+func (c *Client) GetCommandReceiptObservation(ctx context.Context, tenant, commandID domain.ID) (CommandReceipt, error) {
 	var value CommandReceipt
-	if err := namespace.Validate(); err != nil {
+	if err := tenant.Validate(); err != nil {
 		return value, err
 	}
 	if err := commandID.Validate(); err != nil {
 		return value, err
 	}
-	err := c.do(ctx, "GET", "/namespaces/"+namespace.String()+"/commands/"+commandID.String(), "", nil, &value)
+	err := c.do(ctx, "GET", "/tenants/"+tenant.String()+"/commands/"+commandID.String(), "", nil, &value)
 	if err != nil {
 		return value, err
 	}
@@ -89,9 +89,9 @@ func (c *Client) ListAvailableWork(ctx context.Context, scope domain.Scope, limi
 	return v, err
 }
 
-func (c *Client) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (domain.NamespaceWorkProtocol, error) {
-	var v domain.NamespaceWorkProtocol
-	err := c.do(ctx, "GET", "/namespaces/"+ns.String()+"/work-protocol", "", nil, &v)
+func (c *Client) GetTenantWorkProtocol(ctx context.Context, ns domain.ID) (domain.TenantWorkProtocol, error) {
+	var v domain.TenantWorkProtocol
+	err := c.do(ctx, "GET", "/tenants/"+ns.String()+"/work-protocol", "", nil, &v)
 	return v, err
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 type OutcomeRepository interface {
-	Get(ctx context.Context, namespaceID, outcomeID domain.ID) (domain.Outcome, error)
+	Get(ctx context.Context, tenantID, outcomeID domain.ID) (domain.Outcome, error)
 	Insert(ctx context.Context, outcome domain.Outcome) error
 	Save(ctx context.Context, outcome domain.Outcome, expected domain.Version) error
 }

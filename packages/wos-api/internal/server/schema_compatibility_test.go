@@ -40,5 +40,18 @@ func TestRuntimeRefusesFutureSchemaEvenWithMigrationsDisabled(t *testing.T) {
 		if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeInvalidConfig {
 			t.Fatal("unexpected rejection", e)
 		}
+		inspect, err := sql.Open("sqlite3", cfg.Storage.SQLitePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var tenants, guards int
+		err = inspect.QueryRow(`SELECT count(*) FROM tenants`).Scan(&tenants)
+		if err == nil {
+			err = inspect.QueryRow(`SELECT count(*) FROM sqlite_schema WHERE name IN ('wos_tenant_identity_insert','wos_tenant_identity_update','wos_single_tenant')`).Scan(&guards)
+		}
+		inspect.Close()
+		if err != nil || tenants != 0 || guards != 0 {
+			t.Fatal("unsupported schema was modified before startup refusal", migrate, tenants, guards, err)
+		}
 	}
 }

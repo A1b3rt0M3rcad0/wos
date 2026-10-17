@@ -34,44 +34,44 @@ func TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory(t *testing.T) {
 		cfg.Signing.SeedEnv = "WOS_TEST_READINESS_ISSUER_SEED"
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("q", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199a779-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "signed readiness"
-		runtime, e := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "signed readiness"
+		runtime, e := openRuntimeFixture(t, &cfg)
 		must(e)
 		defer runtime.Close()
 		endpoint := httptest.NewServer(runtime.Handler())
 		client, e := sdk.New(endpoint.URL, cfg.Auth.BootstrapToken, endpoint.Client())
 		must(e)
-		namespace := d.MustParseID(cfg.Auth.BootstrapNamespaceID)
+		tenant := d.MustParseID(cfg.Auth.BootstrapTenantID)
 		identity, e := client.SigningIdentity(ctx, nil)
 		must(e)
 		security := a.SecurityService{Store: runtime.store, Clock: systemClock{}, IDs: uuidV7Generator{}}
 		admin, e := security.Authenticate(ctx, cfg.Auth.BootstrapToken)
 		must(e)
-		must(security.SetGrant(a.WithIdentity(ctx, admin), ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractAcquire, ports.PermissionSigningKeyEnroll, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite}}))
+		must(security.SetGrant(a.WithIdentity(ctx, admin), ports.TenantGrant{TenantID: tenant, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTenantAdmin, ports.PermissionWorkContractAcquire, ports.PermissionSigningKeyEnroll, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite}}))
 		identity, e = client.SigningIdentity(ctx, nil)
 		must(e)
-		policy := d.CredentialPolicy{NamespaceID: namespace, CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionNamespaceAdmin), string(ports.PermissionWorkContractAcquire), string(ports.PermissionSigningKeyEnroll), string(ports.PermissionOutcomeWrite), string(ports.PermissionWorkWrite)}}
-		configured, e := client.SigningMutation(ctx, "readiness-credential-policy", a.SigningSecurityIntent{NamespaceID: namespace, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+		policy := d.CredentialPolicy{TenantID: tenant, CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTenantAdmin), string(ports.PermissionWorkContractAcquire), string(ports.PermissionSigningKeyEnroll), string(ports.PermissionOutcomeWrite), string(ports.PermissionWorkWrite)}}
+		configured, e := client.SigningMutation(ctx, "readiness-credential-policy", a.SigningSecurityIntent{TenantID: tenant, ExpectedTenantVersion: identity.TenantVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 		must(e)
 		public, private, e := ed25519.GenerateKey(rand.Reader)
 		must(e)
-		enrollment, e := client.SigningMutation(ctx, "readiness-key-enrollment", a.SigningSecurityIntent{NamespaceID: namespace, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
+		enrollment, e := client.SigningMutation(ctx, "readiness-key-enrollment", a.SigningSecurityIntent{TenantID: tenant, ExpectedTenantVersion: configured.TenantVersion, Operation: "create_enrollment", CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
 		must(e)
 		challenge := enrollment.Enrollment
-		proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: identity.ServerID, NamespaceID: namespace.String(), PrincipalID: identity.PrincipalID, SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), private)
+		proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: identity.ServerID, TenantID: tenant.String(), PrincipalID: identity.PrincipalID, SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), private)
 		must(e)
-		registered, e := client.SigningMutation(ctx, "readiness-key-registration", a.SigningSecurityIntent{NamespaceID: namespace, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof})
+		registered, e := client.SigningMutation(ctx, "readiness-key-registration", a.SigningSecurityIntent{TenantID: tenant, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof})
 		must(e)
 		identity, e = client.SigningIdentity(ctx, nil)
 		must(e)
-		_, e = client.SigningMutation(ctx, "readiness-namespace-policy", a.SigningSecurityIntent{NamespaceID: namespace, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{NamespaceID: namespace, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+		_, e = client.SigningMutation(ctx, "readiness-tenant-policy", a.SigningSecurityIntent{TenantID: tenant, ExpectedTenantVersion: identity.TenantVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{TenantID: tenant, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 		must(e)
-		created, e := client.CreateOutcome(ctx, "readiness-outcome", a.CreateOutcomeCommand{NamespaceID: namespace, Title: "Persisted signed history", DesiredState: "History remains readable", Priority: d.PriorityNormal})
+		created, e := client.CreateOutcome(ctx, "readiness-outcome", a.CreateOutcomeCommand{TenantID: tenant, Title: "Persisted signed history", DesiredState: "History remains readable", Priority: d.PriorityNormal})
 		must(e)
 		scope := created.Value.Scope()
 		for i, phase := range []d.WorkProtocolPhase{d.WorkProtocolDraining, d.WorkProtocolContracts, d.WorkProtocolSignedDraining, d.WorkProtocolSigned} {
-			_, e = client.SetNamespaceWorkProtocol(ctx, "readiness-cutover-"+string(phase), a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: d.Version(i + 1), Phase: phase, WritersDrained: phase == d.WorkProtocolContracts || phase == d.WorkProtocolSigned, Reason: "explicit fixture writer drain"})
+			_, e = client.SetTenantWorkProtocol(ctx, "readiness-cutover-"+string(phase), a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: d.Version(i + 1), Phase: phase, WritersDrained: phase == d.WorkProtocolContracts || phase == d.WorkProtocolSigned, Reason: "explicit fixture writer drain"})
 			must(e)
 		}
 		work, e := client.CreateWorkItem(ctx, "readiness-work-task", a.CreateWorkItemCommand{Scope: scope, Title: "No emission without signer", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
@@ -79,7 +79,7 @@ func TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory(t *testing.T) {
 		endpoint.Close()
 		must(runtime.Close())
 		cfg.Signing.SeedEnv = ""
-		restored, e := OpenRuntime(cfg)
+		restored, e := openRuntimeFixture(t, &cfg)
 		must(e)
 		defer restored.Close()
 		endpoint = httptest.NewServer(restored.Handler())
@@ -94,7 +94,7 @@ func TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory(t *testing.T) {
 		}
 		client, e = sdk.New(endpoint.URL, cfg.Auth.BootstrapToken, endpoint.Client())
 		must(e)
-		trust, e := client.GetSignedTrust(ctx, namespace)
+		trust, e := client.GetSignedTrust(ctx, tenant)
 		must(e)
 		if trust.Server == nil || trust.Server.ID.String() != identity.ServerID || trust.Protocol == nil || trust.Protocol.Phase != d.WorkProtocolSigned {
 			t.Fatal("missing signer changed persisted public identity/protocol")

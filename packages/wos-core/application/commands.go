@@ -15,7 +15,7 @@ type MutationResult[T any] struct {
 
 type CreateOutcomeCommand struct {
 	ExternalContext domain.ExternalContext `json:"external_context,omitempty"`
-	NamespaceID     domain.ID
+	TenantID        domain.ID
 	Title           string
 	Description     string
 	DesiredState    string

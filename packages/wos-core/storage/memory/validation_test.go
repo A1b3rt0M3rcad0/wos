@@ -12,13 +12,13 @@ import (
 func TestSaveRejectsStructurallyInvalidAggregate(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
-	namespaceID := domain.MustParseID("0199e600-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199e600-0000-7000-8000-000000000001")
 	outcomeID := domain.MustParseID("0199e600-0000-7000-8000-000000000010")
 	now := time.Date(2026, 10, 1, 23, 30, 0, 0, time.UTC)
 
 	outcome, err := domain.NewOutcome(
 		outcomeID,
-		namespaceID,
+		tenantID,
 		"Validate storage boundary",
 		"",
 		"State",
@@ -46,7 +46,7 @@ func TestSaveRejectsStructurallyInvalidAggregate(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	persisted, err := tx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	persisted, err := tx.Outcomes().Get(ctx, tenantID, outcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-// An independent remote consumer needs only an endpoint, credential and Namespace.
+// An independent remote consumer needs only an endpoint, credential and Tenant.
 package main
 
 import (
@@ -20,14 +20,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	namespace, err := domain.ParseID(os.Getenv("WOS_NAMESPACE_ID"))
+	tenant, err := domain.ParseID(os.Getenv("WOS_TENANT_ID"))
 	if err != nil {
 		return err
 	}
 	ctx := context.Background()
 	cursor := ""
 	for {
-		page, err := client.SearchOutcomes(ctx, namespace, "", 25, cursor)
+		page, err := client.SearchOutcomes(ctx, tenant, "", 25, cursor)
 		if err != nil {
 			return err
 		}

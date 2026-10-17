@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type SetNamespaceWorkProtocolCommand struct {
+type SetTenantWorkProtocolCommand struct {
 	Scope                   domain.Scope
 	ExpectedProtocolVersion domain.Version
 	Phase                   domain.WorkProtocolPhase
@@ -20,43 +20,43 @@ type ProtocolOutcomeRevision struct {
 	Scope    domain.Scope           `json:"scope"`
 	Revision domain.OutcomeRevision `json:"outcome_revision"`
 }
-type NamespaceWorkProtocolResult struct {
-	Protocol         domain.NamespaceWorkProtocol `json:"protocol"`
-	AffectedOutcomes []ProtocolOutcomeRevision    `json:"affected_outcomes"`
+type TenantWorkProtocolResult struct {
+	Protocol         domain.TenantWorkProtocol `json:"protocol"`
+	AffectedOutcomes []ProtocolOutcomeRevision `json:"affected_outcomes"`
 }
 
 func protocolRepository(u ports.UnitOfWork) (ports.WorkProtocolRepository, error) {
 	p, ok := u.(ports.WorkProtocolUnitOfWork)
 	if !ok {
-		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "adapter lacks Namespace protocol metadata")
+		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "adapter lacks Tenant protocol metadata")
 	}
 	return p.WorkProtocol(), nil
 }
-func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.CommandContext, cmd SetNamespaceWorkProtocolCommand) (MutationResult[NamespaceWorkProtocolResult], error) {
+func (s *Service) SetTenantWorkProtocol(ctx context.Context, cc domain.CommandContext, cmd SetTenantWorkProtocolCommand) (MutationResult[TenantWorkProtocolResult], error) {
 	if err := cc.Validate(); err != nil {
-		return MutationResult[NamespaceWorkProtocolResult]{}, err
+		return MutationResult[TenantWorkProtocolResult]{}, err
 	}
-	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (NamespaceWorkProtocolResult, domain.OutcomeRevision, error) {
-		zero := NamespaceWorkProtocolResult{}
+	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (TenantWorkProtocolResult, domain.OutcomeRevision, error) {
+		zero := TenantWorkProtocolResult{}
 		repo, err := protocolRepository(u)
 		if err != nil {
 			return zero, 0, err
 		}
-		p, err := repo.Lock(ctx, cmd.Scope.NamespaceID, true)
+		p, err := repo.Lock(ctx, cmd.Scope.TenantID, true)
 		if err != nil {
 			return zero, 0, err
 		}
 		if p.Version != cmd.ExpectedProtocolVersion {
-			return zero, 0, domain.NewError(domain.ErrorCodeVersionConflict, "Namespace protocol version conflict")
+			return zero, 0, domain.NewError(domain.ErrorCodeVersionConflict, "Tenant protocol version conflict")
 		}
 		if cmd.Reason == "" {
 			return zero, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "protocol change requires reason")
 		}
 		legal := p.Phase == cmd.Phase || p.Phase == domain.WorkProtocolLegacy && cmd.Phase == domain.WorkProtocolDraining || p.Phase == domain.WorkProtocolDraining && cmd.Phase == domain.WorkProtocolContracts || p.Phase == domain.WorkProtocolContracts && cmd.Phase == domain.WorkProtocolSignedDraining || p.Phase == domain.WorkProtocolSignedDraining && cmd.Phase == domain.WorkProtocolSigned
 		if !legal {
-			return zero, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "protocol requires legacy -> draining -> contracts_v1 -> draining_to_signed_v2 -> signed_contracts_v2; downgrade is unsupported")
+			return zero, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "protocol requires legacy -> draining -> contracts_v1 -> draining_to_signed_v3 -> signed_contracts_v3; downgrade is unsupported")
 		}
-		scopes, err := repo.Scopes(ctx, cmd.Scope.NamespaceID)
+		scopes, err := repo.Scopes(ctx, cmd.Scope.TenantID)
 		if err != nil {
 			return zero, 0, err
 		}
@@ -95,7 +95,7 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 			next.WriterEpoch = 1
 			next.WritersDrained = true
 			if p.Phase != domain.WorkProtocolContracts {
-				if err = repo.EnableContracts(ctx, p.NamespaceID, now); err != nil {
+				if err = repo.EnableContracts(ctx, p.TenantID, now); err != nil {
 					return zero, 0, err
 				}
 			}
@@ -108,34 +108,34 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 			if !cmd.WritersDrained {
 				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "operator must explicitly retire and drain all v1 writers")
 			}
-			if count, e := repo.ValidLegacyLeases(ctx, p.NamespaceID, now); e != nil {
+			if count, e := repo.ValidLegacyLeases(ctx, p.TenantID, now); e != nil {
 				return zero, 0, e
 			} else if count > 0 {
 				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "valid legacy claims remain")
 			}
-			if count, e := repo.ValidUnsignedContracts(ctx, p.NamespaceID, now); e != nil {
+			if count, e := repo.ValidUnsignedContracts(ctx, p.TenantID, now); e != nil {
 				return zero, 0, e
 			} else if count > 0 {
 				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "valid unsigned contract authority remains")
 			}
-			if _, e := s.requireSignedIssuer(ctx, u, p.NamespaceID); e != nil {
+			if _, e := s.requireSignedIssuer(ctx, u, p.TenantID); e != nil {
 				return zero, 0, e
 			}
 			registry, e := signingRepository(u)
 			if e != nil {
 				return zero, 0, e
 			}
-			policy, e := registry.AcceptancePolicy(ctx, p.NamespaceID, nil, nil)
+			policy, e := registry.AcceptancePolicy(ctx, p.TenantID, nil, nil)
 			if e != nil {
-				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "explicit Namespace acceptance policy required before signed activation")
+				return zero, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "explicit Tenant acceptance policy required before signed activation")
 			}
 			if e = policy.Validate(); e != nil {
 				return zero, 0, e
 			}
-			next.WriterEpoch = 2
+			next.WriterEpoch = 3
 			next.WritersDrained = true
 			if p.Phase != domain.WorkProtocolSigned {
-				if e = repo.EnableContracts(ctx, p.NamespaceID, now); e != nil {
+				if e = repo.EnableContracts(ctx, p.TenantID, now); e != nil {
 					return zero, 0, e
 				}
 			}
@@ -143,7 +143,7 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 		if err = repo.Save(ctx, next, p.Version); err != nil {
 			return zero, 0, err
 		}
-		result := NamespaceWorkProtocolResult{Protocol: next, AffectedOutcomes: []ProtocolOutcomeRevision{}}
+		result := TenantWorkProtocolResult{Protocol: next, AffectedOutcomes: []ProtocolOutcomeRevision{}}
 		var anchorRevision domain.OutcomeRevision
 		for _, scope := range scopes {
 			rev, e := u.Coordination().AdvanceOutcome(ctx, scope)
@@ -158,28 +158,28 @@ func (s *Service) SetNamespaceWorkProtocol(ctx context.Context, cc domain.Comman
 		return result, anchorRevision, nil
 	})
 }
-func (s *Service) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (domain.NamespaceWorkProtocol, error) {
+func (s *Service) GetTenantWorkProtocol(ctx context.Context, ns domain.ID) (domain.TenantWorkProtocol, error) {
 	if err := ns.Validate(); err != nil {
-		return domain.NamespaceWorkProtocol{}, err
+		return domain.TenantWorkProtocol{}, err
 	}
-	if err := s.authorizeNamespaceMetadataRead(ctx, ns); err != nil {
-		return domain.NamespaceWorkProtocol{}, err
+	if err := s.authorizeTenantMetadataRead(ctx, ns); err != nil {
+		return domain.TenantWorkProtocol{}, err
 	}
 	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
-		return domain.NamespaceWorkProtocol{}, err
+		return domain.TenantWorkProtocol{}, err
 	}
 	defer u.Rollback()
-	if err = s.authorizeScopedReadInUnitOfWork(ctx, u, domain.Scope{NamespaceID: ns}); err != nil {
-		return domain.NamespaceWorkProtocol{}, err
+	if err = s.authorizeScopedReadInUnitOfWork(ctx, u, domain.Scope{TenantID: ns}); err != nil {
+		return domain.TenantWorkProtocol{}, err
 	}
 	repo, err := protocolRepository(u)
 	if err != nil {
-		return domain.NamespaceWorkProtocol{}, err
+		return domain.TenantWorkProtocol{}, err
 	}
 	return repo.Lock(ctx, ns, false)
 }
-func protectWorkProtocol(p domain.NamespaceWorkProtocol, name string) error {
+func protectWorkProtocol(p domain.TenantWorkProtocol, name string) error {
 	if p.Phase == domain.WorkProtocolSigned || p.Phase == domain.WorkProtocolSignedDraining {
 		switch name {
 		case "AcquireWorkContract", "AcquireNextWorkContract":
@@ -189,7 +189,7 @@ func protectWorkProtocol(p domain.NamespaceWorkProtocol, name string) error {
 	if p.Phase == domain.WorkProtocolSigned {
 		switch name {
 		case "ClaimWorkItem", "ReclaimWorkItem", "RenewWorkItemLease", "ReleaseWorkItem", "CompleteWorkItem", "AdministrativeCompleteWorkItem", "RenewWorkContract", "ResumeWorkContract", "RevokeWorkContract", "SyncWorkContract", "SubmitWorkResult", "FinalizeWorkContract", "ReconcileExpiredWorkContracts":
-			return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "signed Namespace requires signed contract operations")
+			return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "signed Tenant requires signed contract operations")
 		}
 	}
 
@@ -201,7 +201,7 @@ func protectWorkProtocol(p domain.NamespaceWorkProtocol, name string) error {
 		blocked = p.Phase == domain.WorkProtocolContracts
 	}
 	if blocked {
-		return domain.NewError(domain.ErrorCodeContractProtocolRequired, "legacy command is disabled by Namespace work protocol")
+		return domain.NewError(domain.ErrorCodeContractProtocolRequired, "legacy command is disabled by Tenant work protocol")
 	}
 	return nil
 }
@@ -209,7 +209,7 @@ func protocolCommandEvents(s *Service, cc domain.CommandContext, meta commandMet
 	if _, ok := value.(ReconciledWorkContracts); ok {
 		return nil, true, nil
 	}
-	r, ok := value.(NamespaceWorkProtocolResult)
+	r, ok := value.(TenantWorkProtocolResult)
 	if !ok {
 		return nil, false, nil
 	}

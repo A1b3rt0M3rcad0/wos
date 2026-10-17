@@ -11,7 +11,7 @@ import (
 
 func reviewBinding() d.SignedContractBinding {
 	key := d.MustParseID("0199f201-0000-7000-8000-000000000001")
-	return d.SignedContractBinding{ProtocolVersion: 2, ServerID: "persistent-server", CredentialID: d.MustParseID("0199f201-0000-7000-8000-000000000002"), SignerKeyID: key, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: 1, AllowedSigningKeyIDs: []d.ID{key}}
+	return d.SignedContractBinding{ProtocolVersion: 3, ServerID: "persistent-server", CredentialID: d.MustParseID("0199f201-0000-7000-8000-000000000002"), SignerKeyID: key, AcceptanceFloor: d.AcceptanceIndependentReview, PolicyRevision: 1, AllowedSigningKeyIDs: []d.ID{key}}
 }
 func reviewFixture(t *testing.T) (d.ReviewCase, time.Time) {
 	t.Helper()
@@ -30,6 +30,12 @@ func TestSignedDeliveryClosesExecutorWithoutCompletingTask(t *testing.T) {
 	}
 	binding := reviewBinding()
 	c.SignedBinding = &binding
+	p.ProtocolVersion = 3
+	var err error
+	p.Digest, err = d.SignedResultDigest(p.Material)
+	if err != nil {
+		t.Fatal(err)
+	}
 	old := c
 	if err := c.Deliver(p, "holder", c.ExecutionID, c.FencingToken, c.Version, now); err != nil {
 		t.Fatal(err)

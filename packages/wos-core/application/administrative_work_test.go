@@ -35,10 +35,10 @@ func TestAdministrativeWorkOverridesRequireExplicitAuthorization(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := commandContext()
-	namespaceID := id("0199f240-0000-7000-8000-000000000001")
+	tenantID := id("0199f240-0000-7000-8000-000000000001")
 
 	created, err := defaultService.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Administrative override",
 		DesiredState: "leased work can be recovered only by authorized override",
 		Priority:     domain.PriorityNormal,
@@ -162,9 +162,9 @@ func TestAdministrativeCompletionOverridesLeaseButNotCompletionGates(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := id("0199f240-0000-7000-8000-000000000011")
+	tenantID := id("0199f240-0000-7000-8000-000000000011")
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Administrative completion",
 		DesiredState: "override ownership without bypassing quality gates",
 		Priority:     domain.PriorityNormal,

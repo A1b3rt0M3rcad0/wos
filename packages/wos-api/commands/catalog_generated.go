@@ -262,14 +262,14 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.RevokeWorkContractCommand](c, "revoke_work_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RevokeWorkContractCommand) (any, error) {
 		return service.RevokeWorkContract(ctx, cc, cmd)
 	})
-	register[application.SetNamespaceWorkProtocolCommand](c, "set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
-		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
-	})
 	register[application.SetObjectiveOwnersCommand](c, "set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)
 	})
 	register[application.SetOutcomeOwnersCommand](c, "set_outcome_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetOutcomeOwnersCommand) (any, error) {
 		return service.SetOutcomeOwners(ctx, cc, cmd)
+	})
+	register[application.SetTenantWorkProtocolCommand](c, "set_tenant_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetTenantWorkProtocolCommand) (any, error) {
+		return service.SetTenantWorkProtocol(ctx, cc, cmd)
 	})
 	register[application.SetTriggerEnabledCommand](c, "set_trigger_enabled", func(ctx context.Context, cc domain.CommandContext, cmd application.SetTriggerEnabledCommand) (any, error) {
 		return service.SetTriggerEnabled(ctx, cc, cmd)

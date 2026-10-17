@@ -13,9 +13,9 @@ import (
 )
 
 func TestOperationExpansionReadsFullBoundedRegistryResult(t *testing.T) {
-	scope := d.Scope{NamespaceID: d.ID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.ID("0199a555-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.ID("0199a555-0000-7000-8000-000000000001"), OutcomeID: d.ID("0199a555-0000-7000-8000-000000000002")}
 	payload := []byte(strings.Repeat("x", d.MaxSignedOperationResultBytes))
-	response := a.SignedStateResult{NamespaceID: scope.NamespaceID, Resource: "operation", OperationPayload: base64.StdEncoding.EncodeToString(payload)}
+	response := a.SignedStateResult{TenantID: scope.TenantID, Resource: "operation", OperationPayload: base64.StdEncoding.EncodeToString(payload)}
 	oversized := false
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if oversized {

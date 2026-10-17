@@ -16,7 +16,7 @@ type DomainEvent struct {
 	EventID                ID                       `json:"event_id"`
 	EventType              string                   `json:"event_type"`
 	SchemaVersion          uint32                   `json:"schema_version"`
-	NamespaceID            ID                       `json:"namespace_id"`
+	TenantID               ID                       `json:"tenant_id"`
 	OutcomeID              ID                       `json:"outcome_id"`
 	OutcomeRevision        OutcomeRevision          `json:"outcome_revision"`
 	EventIndex             uint32                   `json:"event_index"`
@@ -34,7 +34,7 @@ type DomainEvent struct {
 }
 
 func (e DomainEvent) Scope() Scope {
-	return Scope{NamespaceID: e.NamespaceID, OutcomeID: e.OutcomeID}
+	return Scope{TenantID: e.TenantID, OutcomeID: e.OutcomeID}
 }
 
 func (e DomainEvent) Validate() error {

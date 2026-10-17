@@ -61,8 +61,8 @@ func run() error {
 		return err
 	}
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID: domain.MustParseID("0199d140-0000-7000-8000-000000000001"),
-		Title:       "Embedded public Core", DesiredState: "The host records and certifies a verified result", Priority: domain.PriorityNormal,
+		TenantID: domain.MustParseID("0199d140-0000-7000-8000-000000000001"),
+		Title:    "Embedded public Core", DesiredState: "The host records and certifies a verified result", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		return err

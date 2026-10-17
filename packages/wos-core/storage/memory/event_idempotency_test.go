@@ -13,11 +13,11 @@ import (
 func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
-	namespaceID := domain.MustParseID("0199e700-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199e700-0000-7000-8000-000000000001")
 	outcomeID := domain.MustParseID("0199e700-0000-7000-8000-000000000010")
 	eventID := domain.MustParseID("0199e700-0000-7000-8000-000000000020")
 	commandID := domain.MustParseID("0199e700-0000-7000-8000-000000000030")
-	scope := domain.Scope{NamespaceID: namespaceID, OutcomeID: outcomeID}
+	scope := domain.Scope{TenantID: tenantID, OutcomeID: outcomeID}
 	ref := domain.EntityRef{Scope: scope, Kind: domain.EntityKindOutcome, ID: outcomeID}
 	v1 := domain.InitialVersion
 
@@ -26,7 +26,7 @@ func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 		t.Fatal(err)
 	}
 	identity := domain.IdempotencyIdentity{
-		NamespaceID:    namespaceID,
+		TenantID:       tenantID,
 		PrincipalID:    "principal-1",
 		CommandName:    "CreateOutcome",
 		IdempotencyKey: "rollback-key-0001",
@@ -39,7 +39,7 @@ func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 		EventID:               eventID,
 		EventType:             "outcome.created",
 		SchemaVersion:         domain.DomainEventSchemaVersion,
-		NamespaceID:           namespaceID,
+		TenantID:              tenantID,
 		OutcomeID:             outcomeID,
 		OutcomeRevision:       1,
 		EventIndex:            0,
@@ -76,10 +76,10 @@ func TestEventAndIdempotencyRollbackAreAtomic(t *testing.T) {
 func TestIdempotencyReplayAndConflict(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
-	namespaceID := domain.MustParseID("0199e700-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199e700-0000-7000-8000-000000000001")
 	commandID := domain.MustParseID("0199e700-0000-7000-8000-000000000030")
 	identity := domain.IdempotencyIdentity{
-		NamespaceID:    namespaceID,
+		TenantID:       tenantID,
 		PrincipalID:    "principal-1",
 		CommandName:    "CreateWorkItem",
 		IdempotencyKey: "stable-replay-0001",

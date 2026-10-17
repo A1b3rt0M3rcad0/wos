@@ -15,7 +15,7 @@ func TestSignedSchemaRejectsCaseAliasesAtEveryLevel(t *testing.T) {
 		Items    []Nested `json:"items"`
 	}
 	for _, raw := range []string{
-		`{"protocol_version":2,"Protocol_Version":2}`,
+		`{"protocol_version":3,"Protocol_Version":2}`,
 		`{"Protocol_Version":2}`,
 		`{"material":{"Reason":"alternate"}}`,
 		`{"material":{"reason":"original","REASON":"alternate"}}`,
@@ -27,13 +27,13 @@ func TestSignedSchemaRejectsCaseAliasesAtEveryLevel(t *testing.T) {
 		}
 	}
 	var value Payload
-	if err := DecodeStrict([]byte(`{"protocol_version":2,"material":{"reason":"exact"},"items":[{"reason":"exact"}]}`), &value, 4096); err != nil {
+	if err := DecodeStrict([]byte(`{"protocol_version":3,"material":{"reason":"exact"},"items":[{"reason":"exact"}]}`), &value, 4096); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestValidSignatureDoesNotAuthorizeAmbiguousTypedPayload(t *testing.T) {
-	envelope, err := Sign(WorkReturn, map[string]any{"protocol_version": 2, "signer_key_id": "vector-key", "fencing_token": "1", "summary": "declared", "Summary": "alternate"}, "vector-key", vectorKey())
+	envelope, err := Sign(WorkReturn, map[string]any{"protocol_version": 3, "signer_key_id": "vector-key", "fencing_token": "1", "summary": "declared", "Summary": "alternate"}, "vector-key", vectorKey())
 	if err != nil {
 		t.Fatal(err)
 	}

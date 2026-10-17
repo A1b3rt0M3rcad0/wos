@@ -19,6 +19,23 @@ services:
     mem_limit: 1g
     cpus: 2
     networks: [database]
+  tenant-init:
+    build:
+      context: ../..
+    entrypoint: [/bin/sh, /usr/local/lib/wos/shared-entrypoint.sh]
+    command: [storage, tenant, provision, --from-env, --if-absent]
+    environment:
+      NO_PROXY: localhost,127.0.0.1,postgres
+      no_proxy: localhost,127.0.0.1,postgres
+      WOS_TENANT_ID: ${WOS_BOOTSTRAP_TENANT_ID:?set the Tenant UUIDv7}
+      WOS_BOOTSTRAP_TENANT_NAME: ${WOS_BOOTSTRAP_TENANT_NAME:-Shared instance}
+      WOS_POSTGRES_CATALOG_SCHEMA: ${WOS_POSTGRES_CATALOG_SCHEMA:-wos_control}
+    secrets: [database_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [database]
   wos:
     build:
       context: ../..
@@ -30,9 +47,11 @@ services:
       WOS_LISTEN: 0.0.0.0:8080
       WOS_AUTH_MODE: api_token
       WOS_LOCAL_PRINCIPAL_ID: ${WOS_LOCAL_PRINCIPAL_ID:-operator}
-      WOS_BOOTSTRAP_NAMESPACE_ID: ${WOS_BOOTSTRAP_NAMESPACE_ID:?set the instance Namespace UUIDv7}
-      WOS_BOOTSTRAP_NAMESPACE_NAME: ${WOS_BOOTSTRAP_NAMESPACE_NAME:-Shared instance}
+      WOS_BOOTSTRAP_TENANT_ID: ${WOS_BOOTSTRAP_TENANT_ID:?set the instance Tenant UUIDv7}
+      WOS_BOOTSTRAP_TENANT_NAME: ${WOS_BOOTSTRAP_TENANT_NAME:-Shared instance}
       WOS_STORAGE_DRIVER: postgres
+      WOS_TENANT_ID: ${WOS_BOOTSTRAP_TENANT_ID:?set the Tenant UUIDv7}
+      WOS_POSTGRES_CATALOG_SCHEMA: ${WOS_POSTGRES_CATALOG_SCHEMA:-wos_control}
       WOS_POSTGRES_MAX_OPEN_CONNECTIONS: ${WOS_POSTGRES_MAX_OPEN_CONNECTIONS:-16}
       WOS_MCP_ENABLED: "true"
       WOS_SERVER_SIGNING_SEED_ENV: WOS_SERVER_SIGNING_SEED
@@ -47,6 +66,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      tenant-init:
+        condition: service_completed_successfully
     healthcheck:
       test: [CMD-SHELL, "wget -Y off -q -O /dev/null http://127.0.0.1:8080/readyz"]
       interval: 10s

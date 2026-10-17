@@ -87,7 +87,7 @@ func (s *Service) requireSignedIssuer(ctx context.Context, uow ports.UnitOfWork,
 	}
 	key, err := registry.Key(ctx, ns, server.IssuerKeyID)
 	if code, _ := d.ErrorCodeOf(err); code == d.ErrorCodeNotFound {
-		key = d.SigningKey{ID: server.IssuerKeyID, NamespaceID: ns, PrincipalID: server.PrincipalID(), Purpose: "issuer", Algorithm: "Ed25519", PublicKey: server.PublicKey, Fingerprint: server.Fingerprint, Version: 1, Status: "active", CreatedAt: server.CreatedAt, UpdatedAt: server.CreatedAt}
+		key = d.SigningKey{ID: server.IssuerKeyID, TenantID: ns, PrincipalID: server.PrincipalID(), Purpose: "issuer", Algorithm: "Ed25519", PublicKey: server.PublicKey, Fingerprint: server.Fingerprint, Version: 1, Status: "active", CreatedAt: server.CreatedAt, UpdatedAt: server.CreatedAt}
 		if err = registry.SaveKey(ctx, key, 0); err != nil {
 			return zero, err
 		}

@@ -19,7 +19,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
   const port = socket.address().port;
   await new Promise((done) => socket.close(done));
   const url = `http://127.0.0.1:${port}`;
-  const namespace = "0199d090-0000-7000-8000-000000000001";
+  const tenant = "0199d090-0000-7000-8000-000000000001";
   const bootstrap = randomBytes(32).toString("base64url");
   let process,
     logs = "";
@@ -31,8 +31,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
         WOS_SQLITE_PATH: join(directory, "wos.db"),
         WOS_AUTH_MODE: "api_token",
         WOS_BOOTSTRAP_TOKEN: bootstrap,
-        WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-        WOS_BOOTSTRAP_NAMESPACE_NAME: "Browser journey",
+        WOS_BOOTSTRAP_TENANT_ID: tenant,
+        WOS_BOOTSTRAP_TENANT_NAME: "Browser journey",
         WOS_LOCAL_PRINCIPAL_ID: "human",
         WOS_MCP_ENABLED: "true",
       },
@@ -106,15 +106,15 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
   try {
     await start();
     const grant = await api("/security/commands", bootstrap, {
-      namespace_id: namespace,
-      expected_namespace_version: 1,
+      tenant_id: tenant,
+      expected_tenant_version: 1,
       operation: "set_grant",
       principal_id: "agent",
       permissions: ["state:read", "work:write"],
     });
     const issued = await api("/security/commands", bootstrap, {
-      namespace_id: namespace,
-      expected_namespace_version: grant.result.namespace_version,
+      tenant_id: tenant,
+      expected_tenant_version: grant.result.tenant_version,
       operation: "issue_credential",
       principal_id: "agent",
       actor_ref: {
@@ -179,13 +179,13 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     await page.getByLabel("Title", { exact: true }).fill("Executar entrega");
     await submit();
     const discovery = await api(
-      `/namespaces/${namespace}/outcomes?text=Verifiable`,
+      `/tenants/${tenant}/outcomes?text=Verifiable`,
       agentToken,
     );
     const outcome = discovery.items[0];
-    const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    const scope = { tenant_id: tenant, outcome_id: outcome.id };
     const snapshot = await api(
-      `/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,
+      `/tenants/${tenant}/outcomes/${outcome.id}/continuity`,
       agentToken,
     );
     const work = snapshot.sections.work_items[0];
@@ -253,11 +253,11 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     await submit();
     // Replanning starts from revision 1 and preserves its immutable content.
     const plans = await api(
-      `/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps`,
+      `/tenants/${tenant}/outcomes/${outcome.id}/roadmaps`,
       agentToken,
     );
     const roadmap = plans.items[0];
-    const planPath = `/namespaces/${namespace}/outcomes/${outcome.id}/roadmaps/${roadmap.id}`;
+    const planPath = `/tenants/${tenant}/outcomes/${outcome.id}/roadmaps/${roadmap.id}`;
     const originalPlan = await api(planPath, agentToken);
     const revisionOne = JSON.stringify(originalPlan.value.revisions[0]);
     async function planAction(name) {
@@ -318,7 +318,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       reason: "Entrega concluída com execução rastreável",
     });
     const continued = await api(
-      `/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,
+      `/tenants/${tenant}/outcomes/${outcome.id}/continuity`,
       agentToken,
     );
     const planReference = continued.sections.active_plan_references[0];
@@ -326,7 +326,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     assert.equal(planReference.published_reference_title, "Executar entrega");
     assert.equal(planReference.plan_label, "Entrega replanejada");
     const live = await api(
-      `/namespaces/${namespace}/outcomes/${outcome.id}`,
+      `/tenants/${tenant}/outcomes/${outcome.id}`,
       agentToken,
     );
     assert.equal(
@@ -419,7 +419,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
   const port = socket.address().port;
   await new Promise((done) => socket.close(done));
   const url = `http://127.0.0.1:${port}`,
-    namespace = "01a11780-0000-7000-8000-000000000001",
+    tenant = "01a11780-0000-7000-8000-000000000001",
     bootstrap = randomBytes(32).toString("base64url");
   const child = spawn(resolve("../../bin/wos"), ["server"], {
     env: {
@@ -428,8 +428,8 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       WOS_SQLITE_PATH: join(directory, "wos.db"),
       WOS_AUTH_MODE: "api_token",
       WOS_BOOTSTRAP_TOKEN: bootstrap,
-      WOS_BOOTSTRAP_NAMESPACE_ID: namespace,
-      WOS_BOOTSTRAP_NAMESPACE_NAME: "Human review",
+      WOS_BOOTSTRAP_TENANT_ID: tenant,
+      WOS_BOOTSTRAP_TENANT_NAME: "Human review",
       WOS_LOCAL_PRINCIPAL_ID: "reviewer",
     },
     stdio: "ignore",
@@ -640,9 +640,9 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       .fill("2026-10-07T12:00");
     await submit();
     // A second writer changes the version while the first user's form is open.
-    const discovery = await api(`/namespaces/${namespace}/outcomes`);
+    const discovery = await api(`/tenants/${tenant}/outcomes`);
     const outcome = discovery.items[0];
-    const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    const scope = { tenant_id: tenant, outcome_id: outcome.id };
     await open("update_outcome");
     await page.getByLabel("Title", { exact: true }).fill("My stale title");
     await api("/commands/update_outcome", {

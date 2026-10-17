@@ -15,7 +15,7 @@ func TestSignedEvidenceMismatchRejectedBeforeFreeze(t *testing.T) {
 	project, profile, token := profileFixtureV2(t, "executor_a")
 	_, file := contractFixtureV2(t)
 	file.Execution.CompletionIntent = "auto"
-	file.Execution.Material.Evidence = []a.SyncEvidenceInput{{LocalKey: "actual-tests", Evidence: a.RegisterEvidenceCommand{Scope: d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}, EvidenceType: d.EvidenceTypeTestResult, Measurement: &d.Measurement{Value: "5"}}}}
+	file.Execution.Material.Evidence = []a.SyncEvidenceInput{{LocalKey: "actual-tests", Evidence: a.RegisterEvidenceCommand{Scope: d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}, EvidenceType: d.EvidenceTypeTestResult, Measurement: &d.Measurement{Value: "5"}}}}
 	w, e := OpenWorkspace(t.TempDir())
 	if e != nil {
 		t.Fatal(e)
@@ -61,7 +61,7 @@ func TestExecutionAndReviewEvidenceMeasurementSemantics(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 	for _, review := range []bool{false, true} {
 		for _, input := range []struct {
 			kind        d.EvidenceType

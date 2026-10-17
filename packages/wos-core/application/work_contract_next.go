@@ -52,7 +52,7 @@ func (s *Service) AcquireNextWorkContract(ctx context.Context, cc d.CommandConte
 	}{cmd.WorkItemIDs, cmd.ObjectiveID, cmd.Priorities})
 	q := ports.ContractCandidateQuery{Limit: limit + 1}
 	if cmd.Cursor != "" {
-		cursor, err := decodeCursor(cmd.Cursor, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID, "contract_candidates", fingerprint)
+		cursor, err := decodeCursor(cmd.Cursor, cmd.Scope.TenantID, cmd.Scope.OutcomeID, "contract_candidates", fingerprint)
 		if err != nil {
 			return MutationResult[WorkContractAcquisition]{}, err
 		}
@@ -81,7 +81,7 @@ func (s *Service) AcquireNextWorkContract(ctx context.Context, cc d.CommandConte
 		if len(candidates) > limit {
 			candidates = candidates[:limit]
 			last, _ := json.Marshal(candidates[len(candidates)-1])
-			result.NextCursor = encodeCursor(queryCursor{Namespace: cmd.Scope.NamespaceID, Outcome: cmd.Scope.OutcomeID, Section: "contract_candidates", Filter: fingerprint, Key: string(last)})
+			result.NextCursor = encodeCursor(queryCursor{Tenant: cmd.Scope.TenantID, Outcome: cmd.Scope.OutcomeID, Section: "contract_candidates", Filter: fingerprint, Key: string(last)})
 		}
 		repo, err := contractRepository(uow)
 		if err != nil {
@@ -179,7 +179,7 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 	}
 	q := ports.ContractCandidateQuery{Limit: limit + 1}
 	if cursor != "" {
-		c, err := decodeCursor(cursor, scope.NamespaceID, scope.OutcomeID, "available_work", "")
+		c, err := decodeCursor(cursor, scope.TenantID, scope.OutcomeID, "available_work", "")
 		if err != nil {
 			return AvailableWorkPage{}, err
 		}
@@ -219,7 +219,7 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 	if len(candidates) > limit {
 		candidates = candidates[:limit]
 		last, _ := json.Marshal(candidates[len(candidates)-1])
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "available_work", Key: string(last)})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "available_work", Key: string(last)})
 	}
 	now, err := s.transactionTime(ctx, uow)
 	if err != nil {

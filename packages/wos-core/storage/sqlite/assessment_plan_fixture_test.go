@@ -20,7 +20,7 @@ func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199d201-0000-7000-8000-000000000011", "")
-	out, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199d201-0000-7000-8000-000000000012"), Title: "Dense owner history", DesiredState: "Indexed omission counts", Priority: d.PriorityNormal})
+	out, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199d201-0000-7000-8000-000000000012"), Title: "Dense owner history", DesiredState: "Indexed omission counts", Priority: d.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -65,7 +65,7 @@ def main():
             try:
                 expected='sha256='+hmac.new(secret.encode(),(stamp+'.'+event+'.').encode()+body,hashlib.sha256).hexdigest()
                 assert length<=256*1024 and abs(time.time()-int(stamp))<=300 and hmac.compare_digest(expected,self.headers.get('X-WOS-Signature',''))
-                message=json.loads(body);assert message['integration_event_id']==event and message['source']['namespace_id']==ns
+                message=json.loads(body);assert message['integration_event_id']==event and message['source']['tenant_id']==ns
                 digest=hashlib.sha256(body).hexdigest()
                 with sqlite3.connect(ledger,timeout=10) as db:
                     db.execute('INSERT OR IGNORE INTO effects VALUES(?,?)',(event,digest))
@@ -93,11 +93,11 @@ def main():
     for key in list(base_env):
         if key.startswith('WOS_'):base_env.pop(key)
     base_env.update(WOS_AUTH_MODE='api_token',WOS_LOCAL_PRINCIPAL_ID='qualification-operator',
-        WOS_BOOTSTRAP_TOKEN=token,WOS_BOOTSTRAP_NAMESPACE_ID=ns,WOS_BOOTSTRAP_NAMESPACE_NAME='Qualification',
+        WOS_BOOTSTRAP_TOKEN=token,WOS_BOOTSTRAP_TENANT_ID=ns,WOS_BOOTSTRAP_TENANT_NAME='Qualification',
         WOS_STORAGE_DRIVER='postgres',WOS_MCP_ENABLED='true',WOS_SERVER_SIGNING_SEED_ENV='WOS_QUALIFICATION_SEED',
         WOS_QUALIFICATION_SEED=seed,WOS_SIGNED_ACCEPTANCE_FLOOR='independent_review',
         WOS_DELIVERY_WORKER_ENABLED='true',WOS_DELIVERY_WORKER_CONCURRENCY='4',WOS_WEBHOOK_ALLOW_LOOPBACK='true',
-        WOS_WEBHOOK_ENDPOINTS=json.dumps([{'id':endpoint,'namespace_id':ns,'url':f'http://127.0.0.1:{receiver.server_port}/signal','secret_ref':'qualification-hmac','key_id':'qualification-v1'}]),
+        WOS_WEBHOOK_ENDPOINTS=json.dumps([{'id':endpoint,'tenant_id':ns,'url':f'http://127.0.0.1:{receiver.server_port}/signal','secret_ref':'qualification-hmac','key_id':'qualification-v1'}]),
         WOS_WEBHOOK_SECRETS=json.dumps({'qualification-hmac':secret}))
     def request(port,path,method='GET',payload=None,key=None,authorized=True):
         connection=http.client.HTTPConnection('127.0.0.1',port,timeout=20)
@@ -120,18 +120,18 @@ def main():
         process=subprocess.Popen([str(binary),'server'],env=env,stdout=log,stderr=subprocess.STDOUT)
         processes.append(process);wait_ready(ports[index%2]);return process
     def trust(port):
-        status,result=request(port,f'/api/v1/namespaces/{ns}/signed-trust');assert status==200
+        status,result=request(port,f'/api/v1/tenants/{ns}/signed-trust');assert status==200
         return result['server']
     report={'source_commit':args.source_commit,'binary_build':build,'binary_sha256':ops.file_hash(binary),'production_sla':False,
             'scenario':'restore' if args.restore_dsn_env else 'two-server-failover','complete':False}
     try:
         first=start(0,dsns[0]);second=start(1,dsns[0]);approved=trust(ports[0]);assert approved==trust(ports[1])
         report.update(server_id=approved['server_id'],issuer_fingerprint=approved['fingerprint'])
-        path=f'/api/v1/namespaces/{ns}/outcomes'
+        path=f'/api/v1/tenants/{ns}/outcomes'
         status,result=request(ports[0],path,'POST',{'title':'Two server delivery pilot','desired_state':'authoritative queue and external dedupe','priority':'normal'},'qualification-outcome-create');assert status==201,(status,result)
-        oid=result['value']['id'];scope={'namespace_id':ns,'outcome_id':oid}
+        oid=result['value']['id'];scope={'tenant_id':ns,'outcome_id':oid}
         status,result=request(ports[0],'/api/v1/commands/configure_trigger','POST',{'command':{'scope':scope,'name':'Qualification signal','event_types':['work_item.created'],'target_endpoint_ids':[endpoint],'signal_type':'qualification.created'}},'qualification-trigger-configure');assert status==200,(status,result)
-        health=f'/api/v1/namespaces/{ns}/operations/delivery-health?outcome_id={oid}'
+        health=f'/api/v1/tenants/{ns}/operations/delivery-health?outcome_id={oid}'
         for port in ports:
             status,value=request(port,health);assert status==200 and value['worker']['worker_running'] and value['worker']['concurrency']==4
         messages=8 if args.restore_dsn_env else 100

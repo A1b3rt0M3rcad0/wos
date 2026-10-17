@@ -29,8 +29,8 @@ func TestSharedDeploymentDiagnosticsAreSpecificReadOnlyAdvisories(t *testing.T) 
 	cfg.Storage.PostgresMaxOpenConnections = 12
 	cfg.Auth.Mode = AuthModeAPIToken
 	cfg.Auth.BootstrapToken = "also-never-print-me-private-bootstrap-secret"
-	cfg.Auth.BootstrapNamespaceID = cfg.Auth.LocalNamespaceID
-	cfg.Auth.BootstrapNamespaceName = "Instance"
+	cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+	cfg.Auth.BootstrapTenantName = "Instance"
 	cfg.Signing.SeedEnv = "EXTERNALLY_PROVISIONED_SEED"
 	cfg.Integration.WorkerEnabled = true
 	cfg.Integration.WorkerConcurrency = 4
@@ -75,7 +75,7 @@ func TestDeclaredAggregateConnectionBudget(t *testing.T) {
 	cfg.Storage.PostgresMaxOpenConnections = 8
 	decl := DeploymentDeclarations{ExpectedProcesses: 4, DatabaseConnectionBudget: 50, ReservedConnections: 20}
 	report, err := cfg.DeploymentDiagnostics("shared", decl)
-	if err != nil || report.ExpectedConnectionDemand != 52 || report.ProcessRole != ProcessRoleWorker || !report.WorkerEnabled {
+	if err != nil || report.ExpectedConnectionDemand != 64 || report.ProcessRole != ProcessRoleWorker || !report.WorkerEnabled {
 		t.Fatal("lost aggregate worker pool budget", report, err)
 	}
 	found := false

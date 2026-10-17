@@ -9,11 +9,13 @@ WOS_POSTGRES_DSN="postgres://wos:${database_password}@postgres:5432/wos?sslmode=
 export WOS_POSTGRES_DSN
 # A delivery-only worker needs no bootstrap credential or private issuer key.
 # Its administrative listener exposes only process health and operator metrics.
-if [ "${WOS_PROCESS_ROLE:-complete}" != worker ]; then
+if [ "${1:-server}" = server ] && [ "${WOS_PROCESS_ROLE:-complete}" != worker ]; then
     IFS= read -r WOS_BOOTSTRAP_TOKEN < /run/secrets/bootstrap_token || [ -n "${WOS_BOOTSTRAP_TOKEN:-}" ]
     IFS= read -r WOS_SERVER_SIGNING_SEED < /run/secrets/issuer_seed || [ -n "${WOS_SERVER_SIGNING_SEED:-}" ]
     [ "${#WOS_BOOTSTRAP_TOKEN}" -ge 32 ] || { echo 'bootstrap_token needs at least 32 characters' >&2; exit 1; }
     export WOS_BOOTSTRAP_TOKEN WOS_SERVER_SIGNING_SEED
 fi
+WOS_TENANT_ID="${WOS_TENANT_ID:-${WOS_BOOTSTRAP_TENANT_ID:-}}"
+export WOS_TENANT_ID
 unset database_password
 exec wos "$@"

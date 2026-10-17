@@ -72,8 +72,8 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		// Separate orientations retain indexable endpoint predicates. UNION
 		// removes the duplicate when both endpoints occur in the frontier.
 		for _, match := range matches {
-			branches = append(branches, fmt.Sprintf("SELECT %s AS edge_id,%s AS source_kind,%s AS source_id,%s AS target_kind,%s AS target_id,%s AS edge_kind,'%s' AS truth FROM frontier f JOIN %s t ON (%s) WHERE t.namespace_id=? AND t.outcome_id=? AND (%s)", id, sk, si, tk, ti, kind, truth, table, match, predicate))
-			args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
+			branches = append(branches, fmt.Sprintf("SELECT %s AS edge_id,%s AS source_kind,%s AS source_id,%s AS target_kind,%s AS target_id,%s AS edge_kind,'%s' AS truth FROM frontier f JOIN %s t ON (%s) WHERE t.tenant_id=? AND t.outcome_id=? AND (%s)", id, sk, si, tk, ti, kind, truth, table, match, predicate))
+			args = append(args, scope.TenantID.String(), scope.OutcomeID.String())
 		}
 	}
 	add("objectives", "'objective:'||t.id", "CASE WHEN t.parent_objective_id IS NULL THEN 'outcome' ELSE 'objective' END", "COALESCE(t.parent_objective_id,t.outcome_id)", "'objective'", "t.id", "'hierarchy'", "objective", "1=1")
@@ -150,12 +150,12 @@ func (r continuityReadRepository) GraphNodes(ctx context.Context, scope d.Scope,
 		}
 		table, title, priority, _ := directSectionSQL(section)
 		marks := make([]string, len(ids))
-		args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		args := []any{scope.TenantID.String(), scope.OutcomeID.String()}
 		for i, id := range ids {
 			marks[i] = "?"
 			args = append(args, id.String())
 		}
-		rows, e := r.rows(ctx, "SELECT id,version,substr("+title+",1,512),lifecycle,"+priority+" FROM "+table+" WHERE namespace_id=? AND outcome_id=? AND id IN("+strings.Join(marks, ",")+") ORDER BY id", args...)
+		rows, e := r.rows(ctx, "SELECT id,version,substr("+title+",1,512),lifecycle,"+priority+" FROM "+table+" WHERE tenant_id=? AND outcome_id=? AND id IN("+strings.Join(marks, ",")+") ORDER BY id", args...)
 		if e != nil {
 			return nil, e
 		}

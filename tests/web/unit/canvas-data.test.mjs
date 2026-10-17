@@ -7,7 +7,7 @@ import {
 } from "../../../packages/wos-api/web/assets/canvas-data.js";
 
 const scope = {
-  namespace_id: "01a11992-0000-7000-8000-000000000001",
+  tenant_id: "01a11992-0000-7000-8000-000000000001",
   outcome_id: "01a11992-0000-7000-8000-000000000002",
 };
 const id = (n) => `01a11992-0000-7000-8000-${String(n).padStart(12, "0")}`;
@@ -296,7 +296,7 @@ test("new revisions and foreign scopes cannot silently mix into a loaded model",
   };
   await assert.rejects(loader.expand(work.ref), { code: "invalid_response" });
   assert.strictEqual(loader.current(), original);
-  assert.throws(() => loader.expand({ ...work.ref, namespace_id: id(99) }), {
+  assert.throws(() => loader.expand({ ...work.ref, tenant_id: id(99) }), {
     code: "invalid_response",
   });
 });
@@ -341,7 +341,7 @@ test("contract summary lease expiry is unknown until explicit authority inspecti
   graph.nodes[2] = task;
   const signed = await createCanvasData({
     scope,
-    protocolMode: "signed_contracts_v2",
+    protocolMode: "signed_contracts_v3",
     request: async () => graph,
   }).load(data);
   const legacy = await createCanvasData({
@@ -522,7 +522,7 @@ test("the adapter reuses the configured local API prefix", async () => {
     },
   });
   await loader.load(snapshot());
-  assert.ok(requested.startsWith("/custom/v1/namespaces/"));
+  assert.ok(requested.startsWith("/custom/v1/tenants/"));
   assert.throws(() =>
     createCanvasData({ scope, apiPrefix: "//external.test", request() {} }),
   );
@@ -539,7 +539,7 @@ test("selected current context upgrades unknown edges and authority without inhe
   });
   const loader = createCanvasData({
     scope,
-    protocolMode: "signed_contracts_v2",
+    protocolMode: "signed_contracts_v3",
     request: async () => source,
   });
   const initial = await loader.load(snapshot());

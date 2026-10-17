@@ -13,7 +13,7 @@ func FuzzDependencyCycleAgainstReachability(f *testing.F) {
 	f.Add([]byte{0, 0, 0}, uint8(0), uint8(5))
 	f.Fuzz(func(t *testing.T, edges []byte, from, to uint8) {
 		const n = 6
-		scope := Scope{NamespaceID: MustParseID("01a11770-0000-7000-8000-000000000001"), OutcomeID: MustParseID("01a11770-0000-7000-8000-000000000002")}
+		scope := Scope{TenantID: MustParseID("01a11770-0000-7000-8000-000000000001"), OutcomeID: MustParseID("01a11770-0000-7000-8000-000000000002")}
 		ref := func(i int) EntityRef {
 			return EntityRef{Scope: scope, Kind: EntityKindWorkItem, ID: MustParseID(fmt.Sprintf("01a11771-0000-7000-8000-%012x", i+1))}
 		}

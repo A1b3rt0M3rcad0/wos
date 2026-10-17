@@ -24,6 +24,8 @@ type SignedContractBinding struct {
 	PreviousReviewCaseID *ID             `json:"previous_review_case_id,omitempty"`
 }
 
+// Validate also accepts historical protocol-2 metadata for immutable reads.
+// Acquisition and authorization paths separately require the current protocol.
 func (b SignedContractBinding) Validate() error {
 	if len(b.CorrectionFindings) > 100 {
 		return NewError(ErrorCodeInvalidArgument, "correction finding limit is 100")
@@ -31,7 +33,7 @@ func (b SignedContractBinding) Validate() error {
 	if len(b.SeparationGroup) > 256 || (b.SpecificationDigest != "" && !ValidSignedDigest(b.SpecificationDigest)) {
 		return NewError(ErrorCodeInvalidArgument, "invalid frozen specification/group binding")
 	}
-	if b.ProtocolVersion != 2 || strings.TrimSpace(b.ServerID) == "" || len(b.ServerID) > 256 || b.CredentialID.Validate() != nil || b.SignerKeyID.Validate() != nil || b.PolicyRevision.Validate() != nil || !b.AcceptanceFloor.Valid() || len(b.AllowedSigningKeyIDs) < 1 || len(b.AllowedSigningKeyIDs) > 100 {
+	if (b.ProtocolVersion != 2 && b.ProtocolVersion != 3) || strings.TrimSpace(b.ServerID) == "" || len(b.ServerID) > 256 || b.CredentialID.Validate() != nil || b.SignerKeyID.Validate() != nil || b.PolicyRevision.Validate() != nil || !b.AcceptanceFloor.Valid() || len(b.AllowedSigningKeyIDs) < 1 || len(b.AllowedSigningKeyIDs) > 100 {
 		return NewError(ErrorCodeInvalidArgument, "invalid signed contract binding")
 	}
 	seen := map[ID]bool{}
@@ -65,8 +67,8 @@ func ValidSignedDigest(value string) bool {
 // Deliver closes executor authority without certifying the Task. Its immutable
 // submission is subsequently reviewed under a separate ReviewContract.
 func (c *WorkContract) Deliver(submission WorkSubmission, principal string, execution ID, fence FencingToken, expected Version, now time.Time) error {
-	if c.SignedBinding == nil || c.SignedBinding.ProtocolVersion != 2 {
-		return NewError(ErrorCodeSignedProtocolRequired, "delivery requires a signed-v2 contract")
+	if c.SignedBinding == nil || c.SignedBinding.ProtocolVersion != 3 || submission.ProtocolVersion != 3 {
+		return NewError(ErrorCodeSignedProtocolRequired, "delivery requires a signed-v3 contract")
 	}
 	if err := c.Authorize(principal, execution, fence, now); err != nil {
 		return err
@@ -390,6 +392,9 @@ func (c ReviewContract) Validate() error {
 }
 func NewReviewContract(id, execution ID, r ReviewCase, principal string, actor ActorRef, group string, binding SignedContractBinding, policy LeasePolicy, ttl int, now time.Time) (ReviewContract, error) {
 	var zero ReviewContract
+	if binding.ProtocolVersion != 3 {
+		return zero, NewError(ErrorCodeSignedProtocolRequired, "new review authority requires signed protocol 3")
+	}
 	if err := r.Validate(); err != nil {
 		return zero, err
 	}
@@ -414,6 +419,9 @@ func (c ReviewContract) ValidAt(now time.Time) bool {
 	return c.Status == ContractActive && !now.Before(c.AcquiredAt) && now.Before(c.ExpiresAt)
 }
 func (c ReviewContract) Authorize(principal string, execution ID, fence FencingToken, now time.Time) error {
+	if c.Binding.ProtocolVersion != 3 {
+		return NewError(ErrorCodeSignedProtocolRequired, "historical review authority cannot authorize current operations")
+	}
 	if c.Status == ContractExpired || (c.Status == ContractActive && !now.Before(c.ExpiresAt)) {
 		return NewError(ErrorCodeContractExpired, "review authority expired")
 	}
@@ -544,7 +552,7 @@ func ValidateReviewContractUpdate(old, next ReviewContract) error {
 	return next.Validate()
 }
 
-// A v2 issuance binds its exact signed specification digest. Historical design
+// A signed issuance binds its exact signed specification digest. Historical design
 // fixtures without issuance metadata still use the unchanged v1 semantic digest.
 func (c WorkContract) SubmissionSpecDigest() string {
 	if c.SignedBinding != nil && c.SignedBinding.SpecificationDigest != "" {

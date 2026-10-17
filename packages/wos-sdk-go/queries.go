@@ -28,7 +28,7 @@ func (c *Client) DiscoverOutcomes(ctx context.Context, ns domain.ID, filter port
 		}
 		query.Set("external_context", string(raw))
 	}
-	err := c.do(ctx, "GET", "/namespaces/"+ns.String()+"/outcomes?"+query.Encode(), "", nil, &result)
+	err := c.do(ctx, "GET", "/tenants/"+ns.String()+"/outcomes?"+query.Encode(), "", nil, &result)
 	return result, err
 }
 func (c *Client) GetTimeline(ctx context.Context, scope domain.Scope, q application.TimelineQuery) (application.TimelinePage, error) {
@@ -54,7 +54,7 @@ func (c *Client) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q appl
 	err := c.do(ctx, "GET", scopePath(scope)+"/graph?"+query.Encode(), "", nil, &result)
 	return result, err
 }
-func (c *Client) AdministerNamespace(ctx context.Context, key string, intent application.AdministrativeIntent) (ports.SecurityAdminResult, string, error) {
+func (c *Client) AdministerTenant(ctx context.Context, key string, intent application.AdministrativeIntent) (ports.SecurityAdminResult, string, error) {
 	var result struct {
 		Result ports.SecurityAdminResult `json:"result"`
 		Token  string                    `json:"token"`

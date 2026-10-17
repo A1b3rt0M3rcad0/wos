@@ -12,11 +12,11 @@ func (s *Store) GetCredential(ctx context.Context, digest string) (ports.Credent
 	var c ports.Credential
 	var rawID, rawNS, actor string
 	var expires int64
-	err := s.db.QueryRowContext(ctx, `SELECT c.id,c.namespace_id,c.principal_id,c.actor_json,c.expires_at,c.revoked,COALESCE(c.parent_digest,'') FROM credentials c JOIN principals p ON p.id=c.principal_id WHERE c.digest=$1 AND p.lifecycle='active'`, digest).Scan(&rawID, &rawNS, &c.PrincipalID, &actor, &expires, &c.Revoked, &c.ParentDigest)
+	err := s.db.QueryRowContext(ctx, `SELECT c.id,c.tenant_id,c.principal_id,c.actor_json,c.expires_at,c.revoked,COALESCE(c.parent_digest,'') FROM credentials c JOIN principals p ON p.id=c.principal_id WHERE c.digest=$1 AND p.lifecycle='active'`, digest).Scan(&rawID, &rawNS, &c.PrincipalID, &actor, &expires, &c.Revoked, &c.ParentDigest)
 	if err != nil {
 		return c, mapSQLError("resolve credential", err)
 	}
-	c.NamespaceID, err = domain.ParseID(rawNS)
+	c.TenantID, err = domain.ParseID(rawNS)
 	if err != nil {
 		return c, err
 	}
@@ -48,7 +48,7 @@ func (s *Store) PutCredential(ctx context.Context, c ports.Credential) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked,parent_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt), boolInt(c.Revoked), nullableString(c.ParentDigest))
+	_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,tenant_id,principal_id,actor_json,digest,expires_at,revoked,parent_digest) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, c.ID.String(), c.TenantID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt), boolInt(c.Revoked), nullableString(c.ParentDigest))
 	if err != nil {
 		return mapSQLError("create credential", err)
 	}
@@ -59,7 +59,7 @@ func (s *Store) RevokeCredential(ctx context.Context, id domain.ID) error {
 	return err
 }
 func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id domain.ID) error {
-	result, err := s.db.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE id=$1 AND namespace_id=$2`, id.String(), ns.String())
+	result, err := s.db.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE id=$1 AND tenant_id=$2`, id.String(), ns.String())
 	if err != nil {
 		return err
 	}
@@ -72,10 +72,10 @@ func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id domain.ID) er
 
 func (s *Store) ScopedCredentialPrincipal(ctx context.Context, ns, id domain.ID) (string, error) {
 	var principal string
-	err := s.db.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE namespace_id=$1 AND id=$2`, ns.String(), id.String()).Scan(&principal)
+	err := s.db.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE tenant_id=$1 AND id=$2`, ns.String(), id.String()).Scan(&principal)
 	return principal, mapSQLError("read scoped credential principal", err)
 }
-func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
+func (s *Store) PutGrant(ctx context.Context, g ports.TenantGrant) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -88,28 +88,28 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.NamespaceID.String(), g.PrincipalID, payload)
+	_, err = tx.ExecContext(ctx, `INSERT INTO tenant_grants(tenant_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.TenantID.String(), g.PrincipalID, payload)
 	if err != nil {
 		return err
 	}
 	return tx.Commit()
 }
-func (s *Store) GetGrant(ctx context.Context, ns domain.ID, principal string) (ports.NamespaceGrant, error) {
-	g := ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal}
+func (s *Store) GetGrant(ctx context.Context, ns domain.ID, principal string) (ports.TenantGrant, error) {
+	g := ports.TenantGrant{TenantID: ns, PrincipalID: principal}
 	var permissions string
-	err := s.db.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN namespaces n ON n.id=g.namespace_id JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=$1 AND g.principal_id=$2 AND n.lifecycle='active' AND p.lifecycle='active'`, ns.String(), principal).Scan(&permissions)
+	err := s.db.QueryRowContext(ctx, `SELECT g.permissions_json FROM tenant_grants g JOIN tenants n ON n.id=g.tenant_id JOIN principals p ON p.id=g.principal_id WHERE g.tenant_id=$1 AND g.principal_id=$2 AND n.lifecycle='active' AND p.lifecycle='active'`, ns.String(), principal).Scan(&permissions)
 	if err != nil {
-		return g, mapSQLError("read namespace grant", err)
+		return g, mapSQLError("read tenant grant", err)
 	}
 	return g, unmarshalJSON(permissions, &g.Permissions)
 }
-func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.Namespace, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT n.id,n.name,g.permissions_json FROM namespaces n JOIN namespace_grants g ON g.namespace_id=n.id WHERE g.principal_id=$1 AND n.lifecycle='active' ORDER BY n.name,n.id`, principal)
+func (s *Store) ListTenants(ctx context.Context, principal string) ([]ports.Tenant, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT n.id,n.name,g.permissions_json FROM tenants n JOIN tenant_grants g ON g.tenant_id=n.id WHERE g.principal_id=$1 AND n.lifecycle='active' ORDER BY n.name,n.id`, principal)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	out := []ports.Namespace{}
+	out := []ports.Tenant{}
 	for rows.Next() {
 		var raw, name, payload string
 		if err = rows.Scan(&raw, &name, &payload); err != nil {
@@ -132,21 +132,21 @@ func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.N
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, ports.Namespace{ID: id, Name: name})
+		out = append(out, ports.Tenant{ID: id, Name: name})
 	}
 	return out, rows.Err()
 }
-func (s *Store) PutNamespace(ctx context.Context, n ports.Namespace) error {
+func (s *Store) PutTenant(ctx context.Context, n ports.Tenant) error {
 	if err := n.ID.Validate(); err != nil {
 		return err
 	}
-	_, err := s.db.ExecContext(ctx, `INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4)`, n.ID.String(), n.Name, time.Now().UnixMicro(), time.Now().UnixMicro())
-	return mapSQLError("create namespace", err)
+	_, err := s.db.ExecContext(ctx, `INSERT INTO tenants(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4)`, n.ID.String(), n.Name, time.Now().UnixMicro(), time.Now().UnixMicro())
+	return mapSQLError("create tenant", err)
 }
 
 var _ ports.SecurityStore = (*Store)(nil)
 
-func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
+func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Tenant, g ports.TenantGrant, c ports.Credential) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 		return nil
 	}
 	now := time.Now().UnixMicro()
-	if _, err = tx.ExecContext(ctx, `INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4) ON CONFLICT(id) DO NOTHING`, n.ID.String(), n.Name, now, now); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO tenants(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4) ON CONFLICT(id) DO NOTHING`, n.ID.String(), n.Name, now, now); err != nil {
 		return err
 	}
 	if err = ensurePrincipal(ctx, tx, g.PrincipalID); err != nil {
@@ -170,14 +170,14 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 	if err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3)`, g.NamespaceID.String(), g.PrincipalID, perms); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO tenant_grants(tenant_id,principal_id,permissions_json) VALUES($1,$2,$3)`, g.TenantID.String(), g.PrincipalID, perms); err != nil {
 		return err
 	}
 	actor, err := marshalJSON(c.Actor)
 	if err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt)); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,tenant_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), c.TenantID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt)); err != nil {
 		return err
 	}
 	return tx.Commit()

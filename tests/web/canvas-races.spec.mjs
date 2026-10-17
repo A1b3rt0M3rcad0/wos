@@ -3,7 +3,7 @@ import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
 
 const canvas = (page) => page.locator("#operational-canvas");
 const panel = (page) => page.locator("#canvas-details");
-const base = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+const base = (scope) => `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`;
 
 async function openCanvas(page, wos, data, credential) {
   await wos.login(page, credential);
@@ -174,9 +174,9 @@ test("an earlier successful refresh cannot restore private Canvas content after 
   try {
     await page.locator("#refresh").click();
     expect(await held.arrived).toBe(200);
-    const administration = await wos.api(`/namespaces/${wos.namespace}/administration`);
+    const administration = await wos.api(`/tenants/${wos.tenant}/administration`);
     await wos.api("/security/commands", {
-      namespace_id: wos.namespace, expected_namespace_version: administration.namespace_version,
+      tenant_id: wos.tenant, expected_tenant_version: administration.tenant_version,
       operation: "set_grant", principal_id: "canvas-viewer", permissions: [],
     });
     const denied = page.waitForResponse((response) => response.url().endsWith(`/work-items/${data.tasks.unscoped.id}`) && response.status() === 403);

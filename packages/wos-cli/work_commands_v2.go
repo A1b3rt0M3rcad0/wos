@@ -17,7 +17,7 @@ func scopeV2(w *Workspace, profile ProfileV2, o options) (d.Scope, error) {
 	if e != nil {
 		return d.Scope{}, e
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}
 	if value := o.values["outcome"]; value != "" {
 		id, e := d.ParseID(value)
 		if e != nil {
@@ -25,8 +25,8 @@ func scopeV2(w *Workspace, profile ProfileV2, o options) (d.Scope, error) {
 		}
 		scope.OutcomeID = id
 	}
-	if value := o.values["namespace"]; value != "" && value != scope.NamespaceID.String() {
-		return scope, usage("profile Namespace is immutable")
+	if value := o.values["tenant"]; value != "" && value != scope.TenantID.String() {
+		return scope, usage("profile Tenant is immutable")
 	}
 	return scope, scope.Validate()
 }
@@ -298,7 +298,7 @@ func workCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, client 
 		if view.Authority.ContractKind != kind {
 			return result, usage("contract kind differs from selected command")
 		}
-		scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: d.ID(view.Authority.OutcomeID)}
+		scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: d.ID(view.Authority.OutcomeID)}
 		state, e := client.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: kind, ID: id})
 		if e != nil {
 			return result, e

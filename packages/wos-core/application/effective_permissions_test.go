@@ -32,14 +32,14 @@ func TestEffectivePermissionsAreScopedHintsNotAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	scope := domain.Scope{NamespaceID: id("0199ec00-0000-7000-8000-000000000001"), OutcomeID: id("0199ec00-0000-7000-8000-000000000002")}
-	ctx := application.WithIdentity(context.Background(), application.Identity{NamespaceID: scope.NamespaceID, PrincipalID: "viewer"})
+	scope := domain.Scope{TenantID: id("0199ec00-0000-7000-8000-000000000001"), OutcomeID: id("0199ec00-0000-7000-8000-000000000002")}
+	ctx := application.WithIdentity(context.Background(), application.Identity{TenantID: scope.TenantID, PrincipalID: "viewer"})
 	got, err := s.EffectivePermissions(ctx, scope)
 	if err != nil || len(got) != 1 || got[0] != ports.PermissionStateRead {
 		t.Fatalf("viewer: %v %v", got, err)
 	}
 	for _, r := range a.calls {
-		if r.NamespaceID != scope.NamespaceID || r.OutcomeID != scope.OutcomeID || r.PrincipalID != "viewer" {
+		if r.TenantID != scope.TenantID || r.OutcomeID != scope.OutcomeID || r.PrincipalID != "viewer" {
 			t.Fatal("unscoped permission query")
 		}
 	}

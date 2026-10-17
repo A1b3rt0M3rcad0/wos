@@ -43,7 +43,7 @@ func verifyIssuedFact(ctx context.Context, uow ports.UnitOfWork, f d.SignedFact,
 	if err != nil {
 		return document, err
 	}
-	key, err := registry.Key(ctx, f.Scope.NamespaceID, f.KeyID)
+	key, err := registry.Key(ctx, f.Scope.TenantID, f.KeyID)
 	if err != nil {
 		return document, err
 	}
@@ -58,23 +58,23 @@ func verifyIssuedFact(ctx context.Context, uow ports.UnitOfWork, f d.SignedFact,
 	if err != nil {
 		return document, signingError(err)
 	}
-	raw, err := signing.Verify(envelope, purpose, key.ID.String(), public)
+	raw, err := signing.VerifyHistorical(envelope, purpose, key.ID.String(), public)
 	if err != nil {
 		return document, signingError(err)
 	}
-	var binding signing.Binding
-	// Purpose-specific schema is decoded by the caller after verification. Read
-	// only authenticated bindings here; additional fields remain in the raw bytes.
-	if err = json.Unmarshal(raw, &binding); err != nil {
+	// Purpose-specific schema is decoded by the caller after verification.
+	// Historical headers are projected without changing authenticated bytes.
+	binding, err := signing.ReadHistoricalBinding(raw)
+	if err != nil {
 		return document, err
 	}
-	if binding.ServerID != serverID || binding.NamespaceID != f.Scope.NamespaceID.String() || binding.OutcomeID != f.Scope.OutcomeID.String() || binding.PrincipalID != principal {
+	if binding.ServerID != serverID || binding.TenantID != f.Scope.TenantID.String() || binding.OutcomeID != f.Scope.OutcomeID.String() || binding.PrincipalID != principal {
 		return document, d.NewError(d.ErrorCodeForbidden, "issued fact authenticated scope differs")
 	}
 	return document, nil
 }
 func requireIssuedWorkAuthority(ctx context.Context, uow ports.UnitOfWork, c d.WorkContract, authority ContractAuthority, digest string) error {
-	if c.SignedBinding == nil || c.LatestAuthorityID == nil || c.IssuedSpecificationID == nil || !d.ValidSignedDigest(digest) {
+	if c.SignedBinding == nil || c.SignedBinding.ProtocolVersion != 3 || c.LatestAuthorityID == nil || c.IssuedSpecificationID == nil || !d.ValidSignedDigest(digest) {
 		return d.NewError(d.ErrorCodeSignedProtocolRequired, "persisted signed authority required")
 	}
 	repo, _, err := signedRepository(uow)
@@ -132,7 +132,7 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 	if err != nil {
 		return zero, 0, err
 	}
-	server, err := s.requireSignedIssuer(ctx, uow, cmd.Scope.NamespaceID)
+	server, err := s.requireSignedIssuer(ctx, uow, cmd.Scope.TenantID)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -195,7 +195,7 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 		return zero, 0, err
 	}
 	for _, id := range policy.AllowedSigningKeyIDs {
-		key, e := registry.Key(ctx, cmd.Scope.NamespaceID, id)
+		key, e := registry.Key(ctx, cmd.Scope.TenantID, id)
 		if e != nil {
 			return zero, 0, e
 		}

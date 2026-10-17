@@ -31,7 +31,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	ns := testID("0199d122-0000-7000-8000-000000000001")
 	other := testID("0199d122-0000-7000-8000-000000000002")
 	sec := &a.SecurityService{Store: store, Clock: sqliteFixedClock{now}, IDs: ids}
-	must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "health"}, "admin", "health-admin-credential-at-least-32"))
+	must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "health"}, "admin", "health-admin-credential-at-least-32"))
 	identity, e := sec.Authenticate(ctx, "health-admin-credential-at-least-32")
 	must(e)
 	admin := a.WithIdentity(ctx, identity)
@@ -43,18 +43,18 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	cc := sqliteCommandContext("0199d123-0000-7000-8000-000000000001", "")
 	scopes := []d.Scope{}
 	for i, n := range []d.ID{ns, ns, other} {
-		out, e := seed.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: n, Title: fmt.Sprint("queue ", i), DesiredState: "verified delivery", Priority: d.PriorityNormal})
+		out, e := seed.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: n, Title: fmt.Sprint("queue ", i), DesiredState: "verified delivery", Priority: d.PriorityNormal})
 		must(e)
 		scope := out.Value.Scope()
 		scopes = append(scopes, scope)
-		endpoint := ports.WebhookEndpoint{ID: testID(fmt.Sprintf("0199d124-0000-7000-8000-%012d", i+1)), NamespaceID: n, URL: "https://private-receiver.test/secret-path", SecretRef: "secret-reference-never-expose", KeyID: "hidden-key"}
+		endpoint := ports.WebhookEndpoint{ID: testID(fmt.Sprintf("0199d124-0000-7000-8000-%012d", i+1)), TenantID: n, URL: "https://private-receiver.test/secret-path", SecretRef: "secret-reference-never-expose", KeyID: "hidden-key"}
 		must(store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}))
 		_, e = seed.ConfigureTrigger(ctx, cc, a.ConfigureTriggerCommand{Scope: scope, Name: "health signal", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []d.ID{endpoint.ID}, SignalType: "private.body"})
 		must(e)
 		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "private documentary body", Priority: d.PriorityNormal})
 		must(e)
 	}
-	q := a.DeliveryHealthQuery{NamespaceID: ns}
+	q := a.DeliveryHealthQuery{TenantID: ns}
 	health, e := service.GetDeliveryHealth(admin, q)
 	must(e)
 	if health.Queue.Pending != 2 || health.Queue.AttemptsTotal != 0 || health.Queue.PersistedDestinations != 2 || health.State != "degraded" || health.Queue.OldestDueAgeSeconds == nil || *health.Queue.OldestDueAgeSeconds < 599 || health.Queue.LastClaim != nil || health.Queue.LastSuccessfulDelivery != nil {
@@ -73,13 +73,13 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if health.Queue.Pending != 1 {
 		t.Fatal("Outcome filter missing", health)
 	}
-	q.NamespaceID = other
+	q.TenantID = other
 	if _, e = service.GetDeliveryHealth(admin, q); securityErrorCode(e) != d.ErrorCodeForbidden {
-		t.Fatal("cross-Namespace diagnostic", e)
+		t.Fatal("cross-Tenant diagnostic", e)
 	}
-	q.NamespaceID = ns
+	q.TenantID = ns
 	// A read-only grant cannot see administrative operational counts.
-	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+	must(sec.SetGrant(admin, ports.TenantGrant{TenantID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 	credential, token, e := sec.IssueCredential(admin, ns, "reader", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "reader"}, now.Add(time.Hour))
 	must(e)
 	reader, e := sec.Authenticate(ctx, token)
@@ -88,8 +88,8 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
 		t.Fatal("reader diagnostic", e)
 	}
-	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionNamespaceAdmin}}))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 1, PermittedOperations: []string{string(ports.PermissionNamespaceAdmin)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(sec.SetGrant(admin, ports.TenantGrant{TenantID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionTenantAdmin}}))
+	policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 1, PermittedOperations: []string{string(ports.PermissionTenantAdmin)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 	u, e := store.Begin(ctx)
 	must(e)
 	must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 0))
@@ -98,7 +98,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	must(e)
 	q.OutcomeID = nil
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
-		t.Fatal("restricted CID got Namespace aggregate", e)
+		t.Fatal("restricted CID got Tenant aggregate", e)
 	}
 	q.OutcomeID = &scopes[1].OutcomeID
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
@@ -121,9 +121,9 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if lease == nil {
 		t.Fatal("no claim")
 	}
-	q = a.DeliveryHealthQuery{NamespaceID: lease.Scope.NamespaceID, OutcomeID: &lease.Scope.OutcomeID}
-	// All queued rows share the fixture timestamp; the deterministic ID decides which Namespace was claimed.
-	if lease.Scope.NamespaceID != ns {
+	q = a.DeliveryHealthQuery{TenantID: lease.Scope.TenantID, OutcomeID: &lease.Scope.OutcomeID}
+	// All queued rows share the fixture timestamp; the deterministic ID decides which Tenant was claimed.
+	if lease.Scope.TenantID != ns {
 		t.Fatal("fixture ID order changed")
 	}
 	health, e = service.GetDeliveryHealth(admin, q)

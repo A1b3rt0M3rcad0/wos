@@ -44,7 +44,7 @@ func (s *Service) changeExternalReference(ctx context.Context, u ports.UnitOfWor
 	if !ok {
 		return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodeInvalidConfig, "external context repository unavailable")
 	}
-	outcome, err := u.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := u.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return outcome, 0, err
 	}
@@ -132,7 +132,7 @@ func (s *Service) ReplaceExternalContext(ctx context.Context, cc domain.CommandC
 		if err := lockExistingOutcome(ctx, u, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		o, err := u.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		o, err := u.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return o, 0, err
 		}

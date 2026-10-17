@@ -5,10 +5,10 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,7 +23,7 @@ func TestActualV010DatasetMigrationsPreserveProofAndCommandFingerprints(t *testi
 
 func testActualV010DatasetMigrations(t *testing.T) {
 	var fixture struct {
-		NamespaceID  d.ID      `json:"namespace_id"`
+		TenantID     d.ID      `json:"tenant_id"`
 		OutcomeID    d.ID      `json:"outcome_id"`
 		WorkItemID   d.ID      `json:"work_item_id"`
 		WorkVersion  d.Version `json:"work_version"`
@@ -36,7 +36,7 @@ func testActualV010DatasetMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = json.Unmarshal(metadata, &fixture); err != nil {
+	if err = signing.DecodeStoredJSON(metadata, &fixture, 0); err != nil {
 		t.Fatal(err)
 	}
 	compressed, err := os.ReadFile("testdata/v010-contract-migration.db.gz")
@@ -61,14 +61,14 @@ func testActualV010DatasetMigrations(t *testing.T) {
 	}
 	store := openTestStore(t, path)
 	ctx := context.Background()
-	scope := d.Scope{NamespaceID: fixture.NamespaceID, OutcomeID: fixture.OutcomeID}
+	scope := d.Scope{TenantID: fixture.TenantID, OutcomeID: fixture.OutcomeID}
 	// Replay at the backup's last command, while its original receipts are retained.
 	// The bubble also controls SQLite's internal retention clock. Application Clock
 	// injection alone cannot isolate that wall-clock check from the current date.
 	var lastCommandAt, firstExpiry int64
 	if err = store.db.QueryRowContext(ctx, `
 SELECT MAX(created_at), MIN(expires_at) FROM idempotency_records
-WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &firstExpiry); err != nil {
+WHERE tenant_id = ?`, fixture.TenantID.String()).Scan(&lastCommandAt, &firstExpiry); err != nil {
 		t.Fatal(err)
 	}
 	if lastCommandAt >= firstExpiry {
@@ -94,11 +94,11 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 		t.Fatal("new optional submission field changed 0.1 receipt", err)
 	}
 	cc.IdempotencyKey = "legacy-upgrade-draining"
-	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "Stop old 0.1 writers"}); err != nil {
+	if _, err = service.SetTenantWorkProtocol(ctx, cc, a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "Stop old 0.1 writers"}); err != nil {
 		t.Fatal(err)
 	}
 	cc.IdempotencyKey = "legacy-upgrade-contracts"
-	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 2, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "Validated historical backup"}); err != nil {
+	if _, err = service.SetTenantWorkProtocol(ctx, cc, a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 2, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "Validated historical backup"}); err != nil {
 		t.Fatal(err)
 	}
 	tx, _ := store.Begin(ctx)

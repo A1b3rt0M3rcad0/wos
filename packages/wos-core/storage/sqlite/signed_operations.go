@@ -10,9 +10,9 @@ import (
 
 type signedOperationRepository struct{ u *unitOfWork }
 
-func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.ID, principal, key string) (d.LegacySignedOperationResult, error) {
+func (r signedOperationRepository) FindLegacy(ctx context.Context, tenant d.ID, principal, key string) (d.LegacySignedOperationResult, error) {
 	var result d.LegacySignedOperationResult
-	rows, e := r.u.tx.QueryContext(ctx, `SELECT command_name,request_hash,command_id,outcome_revision,response_json,created_at FROM idempotency_records WHERE namespace_id=? AND principal_id=? AND idempotency_key=? AND status='completed' AND command_name IN ('AcquireSignedWorkContract','AcquireNextSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract','ReturnSignedWork','AcquireSignedReviewContract','AcquireNextSignedReviewContract','RenewSignedReviewContract','ResumeSignedReviewContract','ReturnSignedReview','InterveneSignedReviewCase','RevokeSignedContract','ReconcileSignedContracts') ORDER BY command_name LIMIT 2`, namespace.String(), principal, key)
+	rows, e := r.u.tx.QueryContext(ctx, `SELECT command_name,request_hash,command_id,outcome_revision,response_json,created_at FROM idempotency_records WHERE tenant_id=? AND principal_id=? AND idempotency_key=? AND status='completed' AND command_name IN ('AcquireSignedWorkContract','AcquireNextSignedWorkContract','RenewSignedWorkContract','ResumeSignedWorkContract','ReturnSignedWork','AcquireSignedReviewContract','AcquireNextSignedReviewContract','RenewSignedReviewContract','ResumeSignedReviewContract','ReturnSignedReview','InterveneSignedReviewCase','RevokeSignedContract','ReconcileSignedContracts') ORDER BY command_name LIMIT 2`, tenant.String(), principal, key)
 	if e != nil {
 		return result, mapSQLError("read legacy signed operation", e)
 	}
@@ -50,11 +50,11 @@ func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.I
 func (u *unitOfWork) SignedOperations() ports.SignedOperationRepository {
 	return signedOperationRepository{u}
 }
-func (r signedOperationRepository) Get(ctx context.Context, namespace d.ID, principal, key string) (d.SignedOperationResult, error) {
+func (r signedOperationRepository) Get(ctx context.Context, tenant d.ID, principal, key string) (d.SignedOperationResult, error) {
 	var result d.SignedOperationResult
 	var response, revision string
 	var recorded int64
-	e := r.u.tx.QueryRowContext(ctx, `SELECT namespace_id,outcome_id,principal_id,credential_id,idempotency_key,command_name,fingerprint,command_id,outcome_revision,response_json,recorded_at FROM signed_operation_results WHERE namespace_id=? AND principal_id=? AND idempotency_key=?`, namespace.String(), principal, key).Scan(&result.Scope.NamespaceID, &result.Scope.OutcomeID, &result.PrincipalID, &result.CredentialID, &result.IdempotencyKey, &result.CommandName, &result.Fingerprint, &result.Result.CommandID, &revision, &response, &recorded)
+	e := r.u.tx.QueryRowContext(ctx, `SELECT tenant_id,outcome_id,principal_id,credential_id,idempotency_key,command_name,fingerprint,command_id,outcome_revision,response_json,recorded_at FROM signed_operation_results WHERE tenant_id=? AND principal_id=? AND idempotency_key=?`, tenant.String(), principal, key).Scan(&result.Scope.TenantID, &result.Scope.OutcomeID, &result.PrincipalID, &result.CredentialID, &result.IdempotencyKey, &result.CommandName, &result.Fingerprint, &result.Result.CommandID, &revision, &response, &recorded)
 	if e != nil {
 		return result, mapSQLError("read durable signed operation", e)
 	}
@@ -71,7 +71,7 @@ func (r signedOperationRepository) Insert(ctx context.Context, result d.SignedOp
 	if e := result.Validate(); e != nil {
 		return e
 	}
-	_, e := r.u.tx.ExecContext(ctx, `INSERT INTO signed_operation_results(namespace_id,outcome_id,principal_id,credential_id,idempotency_key,command_name,fingerprint,command_id,outcome_revision,response_json,recorded_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, result.Scope.NamespaceID.String(), result.Scope.OutcomeID.String(), result.PrincipalID, result.CredentialID.String(), result.IdempotencyKey, result.CommandName, result.Fingerprint, result.Result.CommandID.String(), strconv.FormatUint(uint64(result.Result.OutcomeRevision), 10), string(result.Result.ResponseJSON), encodeTime(result.RecordedAt))
+	_, e := r.u.tx.ExecContext(ctx, `INSERT INTO signed_operation_results(tenant_id,outcome_id,principal_id,credential_id,idempotency_key,command_name,fingerprint,command_id,outcome_revision,response_json,recorded_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, result.Scope.TenantID.String(), result.Scope.OutcomeID.String(), result.PrincipalID, result.CredentialID.String(), result.IdempotencyKey, result.CommandName, result.Fingerprint, result.Result.CommandID.String(), strconv.FormatUint(uint64(result.Result.OutcomeRevision), 10), string(result.Result.ResponseJSON), encodeTime(result.RecordedAt))
 	return mapSQLError("insert durable signed operation", e)
 }
 

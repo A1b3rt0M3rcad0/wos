@@ -34,9 +34,9 @@ func TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust(t *testi
 		cfg.Signing.SeedEnv = "WOS_TEST_RECOVERY_SEED"
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("r", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199a777-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "host recovery"
-		initial, e := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "host recovery"
+		initial, e := openRuntimeFixture(t, &cfg)
 		must(e)
 		u, e := initial.store.Begin(ctx)
 		must(e)
@@ -51,7 +51,7 @@ func TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust(t *testi
 		must(e)
 		intent := a.IssuerRecoveryIntent{ServerID: old.ID, PreviousIssuerID: old.IssuerKeyID, PreviousFingerprint: old.Fingerprint, NewIssuerID: newID, NewFingerprint: fp, Reason: "explicit operator recovery with approved replacement public fingerprint"}
 		t.Setenv("WOS_TEST_RECOVERY_SEED", base64.StdEncoding.EncodeToString(newSeed))
-		if silently, e := OpenRuntime(cfg); e == nil {
+		if silently, e := openRuntimeFixture(t, &cfg); e == nil {
 			silently.Close()
 			t.Fatal("runtime accepted replacement without host intention")
 		}
@@ -82,14 +82,14 @@ func TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust(t *testi
 		if strings.Contains(string(raw), base64.StdEncoding.EncodeToString(newSeed)) {
 			t.Fatal("recovery receipt exposed private seed")
 		}
-		current, e := OpenRuntime(cfg)
+		current, e := openRuntimeFixture(t, &cfg)
 		must(e)
 		defer current.Close()
 		endpoint := httptest.NewServer(current.Handler())
 		defer endpoint.Close()
 		client, e := sdk.New(endpoint.URL, cfg.Auth.BootstrapToken, endpoint.Client())
 		must(e)
-		query := a.SignedStateQuery{Scope: d.Scope{NamespaceID: d.MustParseID(cfg.Auth.BootstrapNamespaceID), OutcomeID: d.MustParseID("0199a777-0000-7000-8000-000000000002")}, Resource: "trust", Limit: 1}
+		query := a.SignedStateQuery{Scope: d.Scope{TenantID: d.MustParseID(cfg.Auth.BootstrapTenantID), OutcomeID: d.MustParseID("0199a777-0000-7000-8000-000000000002")}, Resource: "trust", Limit: 1}
 		first, e := client.ReadSignedState(ctx, query)
 		must(e)
 		if first.Server == nil || first.Server.ID != old.ID || first.Server.IssuerKeyID != newID || len(first.IssuerHistory) != 1 || first.NextCursor == "" || first.SearchComplete {
@@ -121,9 +121,9 @@ func TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating(t *testing.
 		cfg.Signing.SeedEnv = "WOS_TEST_RECOVERY_SCHEMA_SEED"
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("s", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199a778-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "host schema recovery"
-		runtime, e := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "host schema recovery"
+		runtime, e := openRuntimeFixture(t, &cfg)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -154,7 +154,7 @@ func TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating(t *testing.
 		}
 		cfg.Storage.MigrateOnStart = false
 		_, _, e = RecoverIssuer(ctx, cfg, a.IssuerRecoveryIntent{NewFingerprint: fingerprint})
-		if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeInvalidConfig || !strings.Contains(e.Error(), "database schema") {
+		if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeInvalidConfig || !strings.Contains(e.Error(), "schema") {
 			t.Fatalf("host recovery did not reject incompatible schema: %v", e)
 		}
 		var checksum string

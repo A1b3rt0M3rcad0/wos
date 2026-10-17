@@ -23,11 +23,11 @@ func TestDeliveryRecoverySkipsLockedExpiredDelivery(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199d198-0000-7000-8000-000000000011", "")
-	out, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: testID("0199d198-0000-7000-8000-000000000012"), Title: "Independent recovery", DesiredState: "No queue-wide recovery lock", Priority: d.PriorityNormal})
+	out, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{TenantID: testID("0199d198-0000-7000-8000-000000000012"), Title: "Independent recovery", DesiredState: "No queue-wide recovery lock", Priority: d.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
-	endpoint := ports.WebhookEndpoint{ID: testID("0199d198-0000-7000-8000-000000000013"), NamespaceID: out.Value.NamespaceID, URL: "https://example.test/recovery", SecretRef: "test", KeyID: "test"}
+	endpoint := ports.WebhookEndpoint{ID: testID("0199d198-0000-7000-8000-000000000013"), TenantID: out.Value.TenantID, URL: "https://example.test/recovery", SecretRef: "test", KeyID: "test"}
 	if err = store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}); err != nil {
 		t.Fatal(err)
 	}

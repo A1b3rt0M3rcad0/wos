@@ -28,8 +28,8 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 			}
 			ids := &loadIDs{}
 			clock := sqliteFixedClock{time.Now().UTC()}
-			ns := d.ID(f.request.NamespaceID)
-			scope := d.Scope{NamespaceID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
+			ns := d.ID(f.request.TenantID)
+			scope := d.Scope{TenantID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
 			sec := a.SecurityService{Store: f.store, Clock: clock, IDs: ids}
 			admin, e := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(e)
@@ -93,10 +93,10 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 				t.Fatal("denied acquisition consumed state")
 			}
 			seven, one := 7, 1
-			policy := d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 100, MaxActiveReviewContracts: 100, MaxActiveWorkPerPrincipal: &seven, MaxActiveReviewPerPrincipal: &one}
+			policy := d.WorkAcceptancePolicy{TenantID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 100, MaxActiveReviewContracts: 100, MaxActiveWorkPerPrincipal: &seven, MaxActiveReviewPerPrincipal: &one}
 			view, e := sec.SigningIdentity(adminCtx, nil)
 			must(e)
-			intent := a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_acceptance_policy", ExpectedNamespaceVersion: view.NamespaceVersion, AcceptancePolicy: &policy}
+			intent := a.SigningSecurityIntent{TenantID: ns, Operation: "set_acceptance_policy", ExpectedTenantVersion: view.TenantVersion, AcceptancePolicy: &policy}
 			if _, e = sec.SigningMutation(f.ctx, "quota-unauthorized", intent); securityErrorCode(e) != d.ErrorCodeForbidden {
 				t.Fatal("agent elevated its quota", e)
 			}
@@ -110,7 +110,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 			configured, e := sec.SigningMutation(adminCtx, "quota-admin-raise", intent)
 			must(e)
 			if _, e = sec.SigningMutation(adminCtx, "quota-stale-admin", intent); securityErrorCode(e) != d.ErrorCodeVersionConflict {
-				t.Fatal("stale Namespace CAS accepted", e)
+				t.Fatal("stale Tenant CAS accepted", e)
 			}
 			var success, conflicts, retries atomic.Uint64
 			var wg sync.WaitGroup
@@ -155,7 +155,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 			// Lowering a ceiling keeps already-issued authority intact and blocks new work.
 			two := 2
 			policy.MaxActiveWorkPerPrincipal = &two
-			changed, e := sec.SigningMutation(adminCtx, "quota-lower-active", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_acceptance_policy", ExpectedNamespaceVersion: configured.NamespaceVersion, ExpectedVersion: 1, AcceptancePolicy: &policy})
+			changed, e := sec.SigningMutation(adminCtx, "quota-lower-active", a.SigningSecurityIntent{TenantID: ns, Operation: "set_acceptance_policy", ExpectedTenantVersion: configured.TenantVersion, ExpectedVersion: 1, AcceptancePolicy: &policy})
 			must(e)
 			_ = changed
 			original, e := service.ReadSignedState(f.ctx, a.SignedStateQuery{Scope: scope, Resource: "execution", ID: d.ID(f.request.ContractID)})
@@ -173,7 +173,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 	}
 }
 
-func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testing.T) {
+func TestPrincipalQuotasKeepCredentialTenantAndRevocationIndependent(t *testing.T) {
 	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
@@ -187,8 +187,8 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			}
 			clock := sqliteFixedClock{time.Now().UTC()}
 			sec := a.SecurityService{Store: f.store, Clock: clock, IDs: &loadIDs{}}
-			ns := d.ID(f.request.NamespaceID)
-			scope := d.Scope{NamespaceID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
+			ns := d.ID(f.request.TenantID)
+			scope := d.Scope{TenantID: ns, OutcomeID: d.ID(f.request.OutcomeID)}
 			admin, e := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(e)
 			adminCtx := a.WithIdentity(ctx, admin)
@@ -201,7 +201,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 				if cp != nil {
 					operation = "set_credential_policy"
 				}
-				_, e = sec.SigningMutation(adminCtx, fmt.Sprintf("independent-ceiling-%d", serial), a.SigningSecurityIntent{NamespaceID: ns, Operation: operation, ExpectedNamespaceVersion: v.NamespaceVersion, ExpectedVersion: expected, AcceptancePolicy: p, CredentialPolicy: cp})
+				_, e = sec.SigningMutation(adminCtx, fmt.Sprintf("independent-ceiling-%d", serial), a.SigningSecurityIntent{TenantID: ns, Operation: operation, ExpectedTenantVersion: v.TenantVersion, ExpectedVersion: expected, AcceptancePolicy: p, CredentialPolicy: cp})
 				must(e)
 			}
 			identity, e := sec.SigningIdentity(f.ctx, nil)
@@ -210,7 +210,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			cp.MaxActiveWorkContracts = 1
 			mutate(nil, &cp, 1)
 			five := 5
-			policy := d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, MaxActiveWorkPerPrincipal: &five}
+			policy := d.WorkAcceptancePolicy{TenantID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, MaxActiveWorkPerPrincipal: &five}
 			mutate(&policy, nil, 0)
 			acquire := func(caller context.Context, principal string, actor d.ActorRef, key d.ID, index int) (a.MutationResult[a.WorkContractResult], error) {
 				serial++
@@ -234,13 +234,13 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			second, secondCtx := participant(f.cc.PrincipalID, d.ID(f.request.SignerKeyID), cp)
 			_, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 1)
 			must(e)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 			foreign, foreignCtx := participant("another-executor", foreignKey, cp)
 			_, e = acquire(foreignCtx, foreign.PrincipalID, foreign.Actor, foreignKey, 2)
 			must(e)
-			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); e == nil || !strings.Contains(e.Error(), "Namespace") {
-				t.Fatal("two Principals bypassed Namespace ceiling", e)
+			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); e == nil || !strings.Contains(e.Error(), "Tenant") {
+				t.Fatal("two Principals bypassed Tenant ceiling", e)
 			}
 			must(sec.RevokeCredential(adminCtx, ns, second.CredentialID))
 			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); securityErrorCode(e) != d.ErrorCodeForbidden {

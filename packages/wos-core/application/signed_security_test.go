@@ -33,7 +33,7 @@ func (u policyReadFaultUOW) Rollback() error { return nil }
 
 type policyReadFaultProtocol struct{ ports.WorkProtocolRepository }
 
-func (policyReadFaultProtocol) Lock(_ context.Context, ns d.ID, _ bool) (d.NamespaceWorkProtocol, error) {
+func (policyReadFaultProtocol) Lock(_ context.Context, ns d.ID, _ bool) (d.TenantWorkProtocol, error) {
 	p := d.DefaultWorkProtocol(ns)
 	p.Phase = d.WorkProtocolSigned
 	return p, nil
@@ -53,7 +53,7 @@ func (r policyReadFaultRegistry) CredentialByDigest(context.Context, string) (po
 func (r policyReadFaultRegistry) CredentialPolicy(context.Context, d.ID, d.ID) (d.CredentialPolicy, error) {
 	return r.policy, r.err
 }
-func (r policyReadFaultRegistry) LockNamespace(context.Context, d.ID) (d.Version, error) {
+func (r policyReadFaultRegistry) LockTenant(context.Context, d.ID) (d.Version, error) {
 	return 1, nil
 }
 func (r policyReadFaultRegistry) Receipt(context.Context, d.ID, string, string) (string, json.RawMessage, error) {
@@ -74,8 +74,8 @@ func (s policyReadFaultSecurityStore) Begin(context.Context) (ports.UnitOfWork, 
 func (s policyReadFaultSecurityStore) GetCredential(context.Context, string) (ports.Credential, error) {
 	return s.u.credential, nil
 }
-func (s policyReadFaultSecurityStore) GetGrant(context.Context, d.ID, string) (ports.NamespaceGrant, error) {
-	return ports.NamespaceGrant{Permissions: []ports.Permission{ports.PermissionSigningKeyEnroll}}, nil
+func (s policyReadFaultSecurityStore) GetGrant(context.Context, d.ID, string) (ports.TenantGrant, error) {
+	return ports.TenantGrant{Permissions: []ports.Permission{ports.PermissionSigningKeyEnroll}}, nil
 }
 
 type policyReadFaultClock struct{}
@@ -87,10 +87,10 @@ func (policyReadFaultClock) Now() time.Time { return time.Date(2026, 10, 17, 0, 
 func TestSignedAccessPreservesPolicyReadFailures(t *testing.T) {
 	ns := d.MustParseID("0199f390-0000-7000-8000-000000000001")
 	cid := d.MustParseID("0199f390-0000-7000-8000-000000000002")
-	scope := d.Scope{NamespaceID: ns, OutcomeID: d.MustParseID("0199f390-0000-7000-8000-000000000003")}
-	id := Identity{NamespaceID: ns, PrincipalID: "executor", CredentialDigest: "authenticated-digest"}
+	scope := d.Scope{TenantID: ns, OutcomeID: d.MustParseID("0199f390-0000-7000-8000-000000000003")}
+	id := Identity{TenantID: ns, PrincipalID: "executor", CredentialDigest: "authenticated-digest"}
 	ctx := WithIdentity(context.Background(), id)
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: cid, PrincipalID: id.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionWorkContractAcquire)}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, AcceptanceFloor: d.AcceptanceDirect}
+	policy := d.CredentialPolicy{TenantID: ns, CredentialID: cid, PrincipalID: id.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionWorkContractAcquire)}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, AcceptanceFloor: d.AcceptanceDirect}
 	conflict := d.WrapError(d.ErrorCodeTransactionConflict, "same transaction must be reconciled", errors.New("storage serialization conflict"))
 	for _, tc := range []struct {
 		name    string
@@ -129,23 +129,23 @@ func TestSigningMutationPreservesEnrollmentPolicyReadFailure(t *testing.T) {
 	cid := d.MustParseID("0199f392-0000-7000-8000-000000000002")
 	key := d.MustParseID("0199f392-0000-7000-8000-000000000003")
 	server := "0199f392-0000-7000-8000-000000000004"
-	enrollment := d.SigningEnrollment{ID: d.MustParseID("0199f392-0000-7000-8000-000000000005"), NamespaceID: ns, CredentialID: cid, PrincipalID: "executor", KeyID: key, Nonce: "policy-read-fault-challenge", Purpose: "agent", ExpiresAt: now.Add(time.Minute), Version: 1}
+	enrollment := d.SigningEnrollment{ID: d.MustParseID("0199f392-0000-7000-8000-000000000005"), TenantID: ns, CredentialID: cid, PrincipalID: "executor", KeyID: key, Nonce: "policy-read-fault-challenge", Purpose: "agent", ExpiresAt: now.Add(time.Minute), Version: 1}
 	pub, private, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server, NamespaceID: ns.String(), PrincipalID: "executor", SignerKeyID: key.String()}, EnrollmentID: enrollment.ID.String(), Nonce: enrollment.Nonce, Purpose: enrollment.Purpose, PublicKey: base64.StdEncoding.EncodeToString(pub), ExpiresAt: enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano)}
+	payload := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server, TenantID: ns.String(), PrincipalID: "executor", SignerKeyID: key.String()}, EnrollmentID: enrollment.ID.String(), Nonce: enrollment.Nonce, Purpose: enrollment.Purpose, PublicKey: base64.StdEncoding.EncodeToString(pub), ExpiresAt: enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano)}
 	proof, err := signing.Sign(signing.KeyEnrollment, payload, key.String(), private)
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := Identity{NamespaceID: ns, PrincipalID: "executor", CredentialDigest: "authenticated-digest"}
+	id := Identity{TenantID: ns, PrincipalID: "executor", CredentialDigest: "authenticated-digest"}
 	ctx := WithIdentity(context.Background(), id)
 	conflict := d.NewError(d.ErrorCodeTransactionConflict, "transactional enrollment policy unavailable")
 	for _, failure := range []error{conflict, d.NewError(d.ErrorCodeNotFound, "policy absent")} {
-		u := policyReadFaultUOW{policyReadFaultRegistry: policyReadFaultRegistry{credential: ports.Credential{ID: cid, NamespaceID: ns, PrincipalID: id.PrincipalID, ExpiresAt: now.Add(time.Hour)}, enrollment: enrollment, err: failure}}
+		u := policyReadFaultUOW{policyReadFaultRegistry: policyReadFaultRegistry{credential: ports.Credential{ID: cid, TenantID: ns, PrincipalID: id.PrincipalID, ExpiresAt: now.Add(time.Hour)}, enrollment: enrollment, err: failure}}
 		s := SecurityService{Store: policyReadFaultSecurityStore{u: u}, Clock: policyReadFaultClock{}, ServerID: server}
-		_, err := s.SigningMutation(ctx, "enroll-policy-fault", SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: enrollment.ID, Proof: &proof})
+		_, err := s.SigningMutation(ctx, "enroll-policy-fault", SigningSecurityIntent{TenantID: ns, Operation: "register_signing_key", EnrollmentID: enrollment.ID, Proof: &proof})
 		if failure == conflict {
 			if !errors.Is(err, conflict) {
 				t.Fatal("enrollment policy failure was disguised as denial", err)

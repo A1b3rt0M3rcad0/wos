@@ -165,7 +165,7 @@ func TestHTTPSlowHeadersBodyIdleAndOversizedHeaders(t *testing.T) {
 			case "headers":
 				_, e = io.WriteString(conn, "GET /livez HTTP/1.1\r\nHost: ")
 			case "body":
-				_, e = fmt.Fprintf(conn, "POST /api/v1/namespaces/%s/outcomes HTTP/1.1\r\nHost: %s\r\nContent-Type: application/json\r\nIdempotency-Key: slow-body-not-a-complete-intention\r\nContent-Length: 100\r\n\r\n{\"title\":", cfg.Auth.LocalNamespaceID, address)
+				_, e = fmt.Fprintf(conn, "POST /api/v1/tenants/%s/outcomes HTTP/1.1\r\nHost: %s\r\nContent-Type: application/json\r\nIdempotency-Key: slow-body-not-a-complete-intention\r\nContent-Length: 100\r\n\r\n{\"title\":", cfg.Auth.LocalTenantID, address)
 			case "headers-too-large":
 				_, e = fmt.Fprintf(conn, "GET /livez HTTP/1.1\r\nHost: %s\r\nX-Large: %s\r\n\r\n", address, strings.Repeat("x", 16<<10))
 			case "idle":

@@ -72,19 +72,19 @@ func TestScalableSignedWorkMatrix(t *testing.T) {
 		return value
 	}
 	outcomes := integer("WOS_SCALE_OUTCOMES", 4, 1, 16)
-	namespaces := integer("WOS_SCALE_NAMESPACES", 1, 1, 16)
+	tenants := integer("WOS_SCALE_TENANTS", 1, 1, 16)
 	replicas := integer("WOS_SCALE_REPLICAS", 1, 1, 4)
 	consumers := integer("WOS_SCALE_CONSUMERS", 4, 2, 50)
 	history := integer("WOS_SCALE_HISTORY", 0, 0, 1000)
-	if namespaces > outcomes || outcomes%namespaces != 0 || consumers*2 < outcomes {
-		t.Fatal("Outcomes must divide equally across Namespaces and all Outcomes must receive timed work")
+	if tenants > outcomes || outcomes%tenants != 0 || consumers*2 < outcomes {
+		t.Fatal("Outcomes must divide equally across Tenants and all Outcomes must receive timed work")
 	}
-	t.Run(fmt.Sprintf("namespaces=%d/replicas=%d/outcomes=%d/history=%d/consumers=%d", namespaces, replicas, outcomes, history, consumers), func(t *testing.T) {
-		runSignedLoadCase(t, outcomes, history, consumers, namespaces, replicas, true)
+	t.Run(fmt.Sprintf("tenants=%d/replicas=%d/outcomes=%d/history=%d/consumers=%d", tenants, replicas, outcomes, history, consumers), func(t *testing.T) {
+		runSignedLoadCase(t, outcomes, history, consumers, tenants, replicas, true)
 	})
 }
 
-func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCount, replicaCount int, measuredReads bool) {
+func runSignedLoadCase(t *testing.T, outcomes, history, consumers, tenantCount, replicaCount int, measuredReads bool) {
 	ctx := context.Background()
 	now := time.Now().UTC()
 	clock := sqliteFixedClock{now}
@@ -99,37 +99,37 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	}
 	newID := func() d.ID { id, e := ids.NewID(); must(e); return id }
 	sec := a.SecurityService{Store: store, Clock: clock, IDs: ids}
-	namespaces := []d.ID{}
+	tenants := []d.ID{}
 	admins := map[d.ID]a.Identity{}
 	adminContexts := map[d.ID]context.Context{}
-	namespaceIndexes := map[d.ID]int{}
-	for i := 0; i < namespaceCount; i++ {
+	tenantIndexes := map[d.ID]int{}
+	for i := 0; i < tenantCount; i++ {
 		var ns d.ID
 		token := ""
 		if i == 0 {
 			ns = newID()
 			token = "signed-load-owned-bootstrap-token-at-least-32-0"
-			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed measured workload"}, "load-admin", token))
+			must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed measured workload"}, "load-admin", token))
 		} else {
 			// Bootstrap is one-shot. Provision subsequent tenant scopes with
 			// the same public administrative use case available to operators.
-			rootNS := namespaces[0]
+			rootNS := tenants[0]
 			snapshot, err := sec.AdministrativeSnapshot(adminContexts[rootNS], rootNS)
 			must(err)
-			result, secret, err := sec.AdministrativeMutation(adminContexts[rootNS], fmt.Sprintf("signed-load-create-namespace-%d", i), ports.SecurityAdminCommand{Operation: "create_namespace", NamespaceID: rootNS, ExpectedVersion: snapshot.NamespaceVersion, NamespaceName: fmt.Sprintf("Measured tenant %d", i)})
+			result, secret, err := sec.AdministrativeMutation(adminContexts[rootNS], fmt.Sprintf("signed-load-create-tenant-%d", i), ports.SecurityAdminCommand{Operation: "create_tenant", TenantID: rootNS, ExpectedVersion: snapshot.TenantVersion, TenantName: fmt.Sprintf("Measured tenant %d", i)})
 			must(err)
-			if result.CreatedNamespace == nil || secret == "" {
-				t.Fatal("Namespace provisioning did not return its initial credential")
+			if result.CreatedTenant == nil || secret == "" {
+				t.Fatal("Tenant provisioning did not return its initial credential")
 			}
-			ns = result.CreatedNamespace.ID
+			ns = result.CreatedTenant.ID
 			token = secret
 		}
 		admin, err := sec.Authenticate(ctx, token)
 		must(err)
-		namespaces = append(namespaces, ns)
+		tenants = append(tenants, ns)
 		admins[ns] = admin
 		adminContexts[ns] = a.WithIdentity(ctx, admin)
-		namespaceIndexes[ns] = i
+		tenantIndexes[ns] = i
 	}
 
 	pub, private, e := ed25519.GenerateKey(rand.Reader)
@@ -141,7 +141,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	must(e)
 	must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{issuer, private}, d.AcceptanceIndependentReview))
 	participant := func(ns d.ID, name string, permissions []ports.Permission) signedLoadParticipant {
-		must(sec.SetGrant(adminContexts[ns], ports.NamespaceGrant{NamespaceID: ns, PrincipalID: name, Permissions: permissions}))
+		must(sec.SetGrant(adminContexts[ns], ports.TenantGrant{TenantID: ns, PrincipalID: name, Permissions: permissions}))
 		cred, token, e := sec.IssueCredential(adminContexts[ns], ns, name, d.ActorRef{Kind: d.ActorKindAgent, Provider: "signed-load", ID: name}, now.Add(time.Hour))
 		must(e)
 		identity, e := sec.Authenticate(ctx, token)
@@ -154,18 +154,18 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		u, e := store.Begin(ctx)
 		must(e)
 		registry := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-		must(registry.SaveKey(ctx, d.SigningKey{ID: kid, NamespaceID: ns, PrincipalID: name, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+		must(registry.SaveKey(ctx, d.SigningKey{ID: kid, TenantID: ns, PrincipalID: name, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
 		ops := []string{}
 		for _, op := range permissions {
 			ops = append(ops, string(op))
 		}
-		must(registry.SaveCredentialPolicy(ctx, d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: name, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}, 0))
+		must(registry.SaveCredentialPolicy(ctx, d.CredentialPolicy{TenantID: ns, CredentialID: cred.ID, PrincipalID: name, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}, 0))
 		must(u.Commit())
 		return signedLoadParticipant{identity, a.WithIdentity(ctx, identity), kid, key}
 	}
 	executors := []signedLoadParticipant{}
 	reviewers := []signedLoadParticipant{}
-	for _, ns := range namespaces {
+	for _, ns := range tenants {
 		for i := 0; i < consumers; i++ {
 			executors = append(executors, participant(ns, fmt.Sprintf("executor-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractReturn, ports.PermissionWorkWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
 			reviewers = append(reviewers, participant(ns, fmt.Sprintf("reviewer-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
@@ -175,7 +175,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	u, e := store.Begin(ctx)
 	must(e)
 	for i := 0; i < outcomes; i++ {
-		ns := namespaces[i%namespaceCount]
+		ns := tenants[i%tenantCount]
 		oid := newID()
 		out, e := d.NewOutcome(oid, ns, "Measured signed Outcome", "", "Independent acceptance", d.PriorityNormal, now)
 		must(e)
@@ -184,14 +184,14 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		must(out.AddCriterion(completion, now))
 		must(out.Activate(now))
 		must(u.Outcomes().Insert(ctx, out))
-		scopes = append(scopes, d.Scope{NamespaceID: ns, OutcomeID: oid})
+		scopes = append(scopes, d.Scope{TenantID: ns, OutcomeID: oid})
 	}
-	for _, ns := range namespaces {
+	for _, ns := range tenants {
 		protocol := u.(ports.WorkProtocolUnitOfWork).WorkProtocol()
 		state, e := protocol.Lock(ctx, ns, true)
 		must(e)
 		state.Phase = d.WorkProtocolSigned
-		state.WriterEpoch = 2
+		state.WriterEpoch = 3
 		state.WritersDrained = true
 		state.Version++
 		state.UpdatedAt = now
@@ -201,15 +201,15 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	}
 	must(u.Commit())
 	endpoints := map[d.ID]d.ID{}
-	for _, ns := range namespaces {
-		endpoint := ports.WebhookEndpoint{ID: newID(), NamespaceID: ns, URL: "https://example.invalid/signed-load", SecretRef: "test-only-webhook", KeyID: "load-fixture"}
+	for _, ns := range tenants {
+		endpoint := ports.WebhookEndpoint{ID: newID(), TenantID: ns, URL: "https://example.invalid/signed-load", SecretRef: "test-only-webhook", KeyID: "load-fixture"}
 		must(store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}))
 		endpoints[ns] = endpoint.ID
 	}
 	for _, scope := range scopes {
 		id := newID()
-		admin := admins[scope.NamespaceID]
-		_, err := service.ConfigureTrigger(adminContexts[scope.NamespaceID], d.CommandContext{PrincipalID: admin.PrincipalID, Actor: admin.Actor, CommandID: id, IdempotencyKey: "signed-load-trigger-" + id.String()}, a.ConfigureTriggerCommand{Scope: scope, Name: "Committed signed DONE", EventTypes: []string{"work_item.completed"}, TargetEndpointIDs: []d.ID{endpoints[scope.NamespaceID]}, SignalType: "test.signed_done"})
+		admin := admins[scope.TenantID]
+		_, err := service.ConfigureTrigger(adminContexts[scope.TenantID], d.CommandContext{PrincipalID: admin.PrincipalID, Actor: admin.Actor, CommandID: id, IdempotencyKey: "signed-load-trigger-" + id.String()}, a.ConfigureTriggerCommand{Scope: scope, Name: "Committed signed DONE", EventTypes: []string{"work_item.completed"}, TargetEndpointIDs: []d.ID{endpoints[scope.TenantID]}, SignalType: "test.signed_done"})
 		must(err)
 	}
 	stores := []*Store{store}
@@ -246,7 +246,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		stage := "acquire_work"
 		defer func() {
 			if journeyErr != nil {
-				journeyErr = fmt.Errorf("%s namespace=%s: %w", stage, w.Scope.NamespaceID, journeyErr)
+				journeyErr = fmt.Errorf("%s tenant=%s: %w", stage, w.Scope.TenantID, journeyErr)
 			}
 		}()
 		cc := next(ex)
@@ -264,7 +264,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		c := acq.Value.Contract
 		work := acq.Value.WorkItem
 		cc = next(ex)
-		ret := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: issuer.ID.String(), NamespaceID: w.Scope.NamespaceID.String(), OutcomeID: w.Scope.OutcomeID.String(), PrincipalID: ex.identity.PrincipalID, SignerKeyID: ex.key.String()}, OperationKind: "work_return", RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acq.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: 1}, CompletionIntent: "review", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "load fixture submitted original bounded obligation"}), Reason: "explicit independent review"}}
+		ret := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: issuer.ID.String(), TenantID: w.Scope.TenantID.String(), OutcomeID: w.Scope.OutcomeID.String(), PrincipalID: ex.identity.PrincipalID, SignerKeyID: ex.key.String()}, OperationKind: "work_return", RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acq.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: 1}, CompletionIntent: "review", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "load fixture submitted original bounded obligation"}), Reason: "explicit independent review"}}
 		env, e := signing.Sign(signing.WorkReturn, ret, ex.key.String(), ex.private)
 		if e != nil {
 			return 0, e
@@ -308,7 +308,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		rc := assigned.Value.Contract
 		criterion := work.Criteria.Items[0]
 		cc = next(rev)
-		decision := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: issuer.ID.String(), NamespaceID: w.Scope.NamespaceID.String(), OutcomeID: w.Scope.OutcomeID.String(), PrincipalID: rev.identity.PrincipalID, SignerKeyID: rev.key.String()}, OperationKind: "review_return", RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, ContractID: rc.ID.String(), WorkItemID: rc.WorkItemID.String(), ExecutionID: rc.ExecutionID.String(), FencingToken: signing.Decimal(rc.FencingToken), SpecDigest: rc.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(assigned.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(rc.Version), ExpectedLeaseVersion: signing.Decimal(rc.LeaseVersion), ExpectedWorkItemVersion: assigned.Value.WorkItemVersion, PolicyRevision: 1}, ExpectedReviewCaseVersion: signing.Decimal(assigned.Value.Case.Version), ReviewCaseID: rc.CaseID.String(), SubmissionID: rc.SubmissionID.String(), SubmissionDigest: rc.SubmissionDigest, Decision: "approved", Material: a.SignedReviewMaterial{Reason: "independent fixture assessment of original attestation criterion", Assessments: []a.SignedAssessmentInput{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), Result: d.AssessmentResultMet, Rationale: "verified original fixture requirement"}}}}
+		decision := signing.ReviewReturnPayload[a.SignedReviewMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: issuer.ID.String(), TenantID: w.Scope.TenantID.String(), OutcomeID: w.Scope.OutcomeID.String(), PrincipalID: rev.identity.PrincipalID, SignerKeyID: rev.key.String()}, OperationKind: "review_return", RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, ContractID: rc.ID.String(), WorkItemID: rc.WorkItemID.String(), ExecutionID: rc.ExecutionID.String(), FencingToken: signing.Decimal(rc.FencingToken), SpecDigest: rc.Binding.SpecificationDigest, AuthorityDigest: signing.Digest(assigned.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(rc.Version), ExpectedLeaseVersion: signing.Decimal(rc.LeaseVersion), ExpectedWorkItemVersion: assigned.Value.WorkItemVersion, PolicyRevision: 1}, ExpectedReviewCaseVersion: signing.Decimal(assigned.Value.Case.Version), ReviewCaseID: rc.CaseID.String(), SubmissionID: rc.SubmissionID.String(), SubmissionDigest: rc.SubmissionDigest, Decision: "approved", Material: a.SignedReviewMaterial{Reason: "independent fixture assessment of original attestation criterion", Assessments: []a.SignedAssessmentInput{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), Result: d.AssessmentResultMet, Rationale: "verified original fixture requirement"}}}}
 		env, e = signing.Sign(signing.ReviewReturn, decision, rev.key.String(), rev.private)
 		if e != nil {
 			return 0, e
@@ -359,7 +359,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	}
 	for _, scope := range scopes {
 		for i := 0; i < history; i++ {
-			_, e := runJourney(service, createTask(scope), executors[namespaceIndexes[scope.NamespaceID]*consumers], reviewers[namespaceIndexes[scope.NamespaceID]*consumers])
+			_, e := runJourney(service, createTask(scope), executors[tenantIndexes[scope.TenantID]*consumers], reviewers[tenantIndexes[scope.TenantID]*consumers])
 			must(e)
 		}
 	}
@@ -444,7 +444,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 			go func(i int) {
 				defer readWG.Done()
 				scope := scopes[i%len(scopes)]
-				reader := executors[namespaceIndexes[scope.NamespaceID]*consumers+i]
+				reader := executors[tenantIndexes[scope.TenantID]*consumers+i]
 				for {
 					select {
 					case <-stopReads:
@@ -483,7 +483,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 			defer wg.Done()
 			for _, w := range tasks[i] {
 				start := time.Now()
-				participantIndex := namespaceIndexes[w.Scope.NamespaceID]*consumers + i
+				participantIndex := tenantIndexes[w.Scope.TenantID]*consumers + i
 				size, e := runJourney(services[i%replicaCount], w, executors[participantIndex], reviewers[participantIndex])
 				mu.Lock()
 				if e != nil {
@@ -522,7 +522,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	for _, scope := range scopes {
 		cursor := ""
 		for {
-			page, e := service.ListDeliveries(adminContexts[scope.NamespaceID], scope, 100, cursor)
+			page, e := service.ListDeliveries(adminContexts[scope.TenantID], scope, 100, cursor)
 			must(e)
 			for _, delivery := range page.Items {
 				if stableIDs[delivery.ID] {
@@ -591,7 +591,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		waits = append(waits, float64(v.TransactionWait.Microseconds())/1000)
 		guards = append(guards, float64(v.GuardDuration.Microseconds())/1000)
 	}
-	report := map[string]any{"namespaces": namespaceCount, "service_replicas": replicaCount, "concurrent_reads": len(readLatencies), "read_transaction_conflicts": readConflicts.Load(), "read_p50_ms": loadQuantile(readLatencies, .5), "read_p95_ms": loadQuantile(readLatencies, .95), "read_p99_ms": loadQuantile(readLatencies, .99), "read_max_bytes": maxReadBytes, "pool_wait_count": poolWaitCount, "transport_measured": false, "outcomes": outcomes, "active_outcomes": len(activeScopes), "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v2", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment, "version_collision_winners": collisionWinners.Load(), "version_collision_rejections": versionRejections.Load(), "collision_transaction_conflicts": collisionConflicts.Load(), "collision_exact_retries": collisionRetries.Load()}
+	report := map[string]any{"tenants": tenantCount, "service_replicas": replicaCount, "concurrent_reads": len(readLatencies), "read_transaction_conflicts": readConflicts.Load(), "read_p50_ms": loadQuantile(readLatencies, .5), "read_p95_ms": loadQuantile(readLatencies, .95), "read_p99_ms": loadQuantile(readLatencies, .99), "read_max_bytes": maxReadBytes, "pool_wait_count": poolWaitCount, "transport_measured": false, "outcomes": outcomes, "active_outcomes": len(activeScopes), "accepted_historical_tasks_per_outcome": history, "consumers": consumers, "accepted_deliveries": len(latencies), "signed_mutations": len(observer.items), "elapsed_ms": float64(elapsed.Microseconds()) / 1000, "accepted_per_second": float64(len(latencies)) / elapsed.Seconds(), "delivery_p50_ms": loadQuantile(latencies, .5), "delivery_p95_ms": loadQuantile(latencies, .95), "delivery_p99_ms": loadQuantile(latencies, .99), "transaction_wait_p95_ms": loadQuantile(waits, .95), "guard_wait_p95_ms": loadQuantile(guards, .95), "pool_wait_ms": float64(poolWait.Microseconds()) / 1000, "conflicts": conflicts.Load(), "retries": retries.Load(), "issuance_max_bytes": maxBytes, "protocol": "signed_contracts_v3", "acceptance": "independent_review", "sql_count_available": false, "verified_outbox_deliveries": deliveryCount, "approval_replay_deduplicated": true, "worker_recovery_experiment": recoveryExperiment, "version_collision_winners": collisionWinners.Load(), "version_collision_rejections": versionRejections.Load(), "collision_transaction_conflicts": collisionConflicts.Load(), "collision_exact_retries": collisionRetries.Load()}
 	raw, e := json.Marshal(report)
 	must(e)
 	t.Log("SIGNED_LOAD " + string(raw))

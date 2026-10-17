@@ -26,7 +26,7 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 		ns               domain.ID
 		principal, token string
 	}{{nsA, "alice", tokenA}, {nsB, "bob", tokenB}} {
-		if err := security.Bootstrap(ctx, ports.Namespace{ID: v.ns, Name: v.principal}, v.principal, v.token); err != nil {
+		if err := security.Bootstrap(ctx, ports.Tenant{ID: v.ns, Name: v.principal}, v.principal, v.token); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -40,7 +40,7 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := domain.CommandContext{PrincipalID: alice.PrincipalID, Actor: alice.Actor, CommandID: testID("0199d012-0000-7000-8000-000000000001"), IdempotencyKey: "create-a-00000001"}
-	cmd := application.CreateOutcomeCommand{NamespaceID: nsA, Title: "Shared outcome", DesiredState: "verified", Priority: domain.PriorityNormal}
+	cmd := application.CreateOutcomeCommand{TenantID: nsA, Title: "Shared outcome", DesiredState: "verified", Priority: domain.PriorityNormal}
 	created, err := service.CreateOutcome(aliceCtx, cc, cmd)
 	if err != nil {
 		t.Fatal(err)
@@ -53,19 +53,19 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 		t.Fatal("embedded secure query accepted missing identity")
 	}
 	forged := cmd
-	forged.NamespaceID = nsB
+	forged.TenantID = nsB
 	if _, err = service.CreateOutcome(aliceCtx, cc, forged); err == nil {
-		t.Fatal("cross namespace mutation accepted")
+		t.Fatal("cross tenant mutation accepted")
 	}
 	bob, _ := security.Authenticate(ctx, tokenB)
 	if _, err = service.GetOutcome(application.WithIdentity(ctx, bob), created.Value.Scope()); err == nil {
-		t.Fatal("cross namespace read accepted")
+		t.Fatal("cross tenant read accepted")
 	}
-	// Scoped admins cannot mint credentials for principals belonging only to another namespace.
+	// Scoped admins cannot mint credentials for principals belonging only to another tenant.
 	if _, _, err = security.IssueCredential(aliceCtx, nsA, "bob", bob.Actor, clock.Now().Add(time.Hour)); err == nil {
 		t.Fatal("privilege escalation accepted")
 	}
-	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.SetGrant(aliceCtx, ports.TenantGrant{TenantID: nsA, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	agentCredential, agentToken, err := security.IssueCredential(aliceCtx, nsA, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "agent-1"}, clock.Now().Add(time.Hour))
@@ -93,14 +93,14 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 		t.Fatal("revoked token authenticated")
 	}
 	// Permission revocation must precede stored idempotent response disclosure.
-	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "alice", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.SetGrant(aliceCtx, ports.TenantGrant{TenantID: nsA, PrincipalID: "alice", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = service.CreateOutcome(aliceCtx, cc, cmd); err == nil {
 		t.Fatal("revoked write grant leaked idempotent response")
 	}
 	// Restart/bootstrap cannot resurrect a revoked token or restore removed permissions.
-	if err = security.Bootstrap(ctx, ports.Namespace{ID: nsA, Name: "alice"}, "alice", tokenA); err != nil {
+	if err = security.Bootstrap(ctx, ports.Tenant{ID: nsA, Name: "alice"}, "alice", tokenA); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = service.CreateOutcome(aliceCtx, cc, cmd); err == nil {

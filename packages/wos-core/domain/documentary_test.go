@@ -6,7 +6,7 @@ import (
 )
 
 func TestDocumentaryRecordsPreserveHistoricalContent(t *testing.T) {
-	scope := Scope{NamespaceID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
+	scope := Scope{TenantID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
 	actor := ActorRef{Kind: ActorKindService, Provider: "test", ID: "producer"}
 	now := time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC)
 
@@ -36,7 +36,7 @@ func TestDocumentaryRecordsPreserveHistoricalContent(t *testing.T) {
 }
 
 func TestEvidenceLinkStanceBelongsToLink(t *testing.T) {
-	scope := Scope{NamespaceID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
+	scope := Scope{TenantID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
 	evidenceID := MustParseID("0199e100-0000-7000-8000-000000000021")
 	now := time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC)
 	supports, err := NewEvidenceLink(MustParseID("0199e100-0000-7000-8000-000000000030"), scope, evidenceID, EntityRef{Scope: scope, Kind: EntityKindObjective, ID: MustParseID("0199e100-0000-7000-8000-000000000040")}, nil, EvidenceStanceSupports, "supports objective", now)
@@ -53,7 +53,7 @@ func TestEvidenceLinkStanceBelongsToLink(t *testing.T) {
 }
 
 func TestAcceptedDecisionIsImmutableAndRejectionRequiresReason(t *testing.T) {
-	scope := Scope{NamespaceID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
+	scope := Scope{TenantID: MustParseID("0199e100-0000-7000-8000-000000000001"), OutcomeID: MustParseID("0199e100-0000-7000-8000-000000000010")}
 	actor := ActorRef{Kind: ActorKindHuman, Provider: "test", ID: "u1"}
 	now := time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC)
 	d, err := NewDecision(MustParseID("0199e100-0000-7000-8000-000000000050"), scope, "Storage", "Use SQLite", []string{"SQLite", "PostgreSQL"}, "SQLite", "local-first", actor, now)

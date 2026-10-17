@@ -81,10 +81,10 @@ func checkProfileIdentityV2(ctx context.Context, client *sdk.Client, profile Pro
 	if e != nil {
 		return identity, e
 	}
-	if identity.ServerID != profile.Binding.ServerID.String() || identity.NamespaceID != profile.Binding.NamespaceID || identity.PrincipalID != profile.Binding.PrincipalID || identity.CredentialID != profile.Binding.CredentialID {
+	if identity.ServerID != profile.Binding.ServerID.String() || identity.TenantID != profile.Binding.TenantID || identity.PrincipalID != profile.Binding.PrincipalID || identity.CredentialID != profile.Binding.CredentialID {
 		return identity, fmt.Errorf("remote identity differs from selected profile")
 	}
-	trust, e := client.GetSignedTrust(ctx, profile.Binding.NamespaceID)
+	trust, e := client.GetSignedTrust(ctx, profile.Binding.TenantID)
 	if e != nil {
 		return identity, e
 	}
@@ -136,7 +136,7 @@ func readProfilePrivateV2(profile ProfileV2, resolver SecretResolver) (ed25519.P
 	return key, nil
 }
 func compactProfileV2(profile ProfileV2) any {
-	return map[string]any{"name": profile.Name, "server_id": profile.Binding.ServerID, "server_origin": profile.Binding.ServerOrigin, "namespace_id": profile.Binding.NamespaceID, "principal_id": profile.Binding.PrincipalID, "credential_id": profile.Binding.CredentialID, "signing_key_id": profile.Signing.KeyID, "signing_fingerprint": profile.Signing.PublicKeyFingerprint, "pending_count": len(profile.Local.PendingOperations)}
+	return map[string]any{"name": profile.Name, "server_id": profile.Binding.ServerID, "server_origin": profile.Binding.ServerOrigin, "tenant_id": profile.Binding.TenantID, "principal_id": profile.Binding.PrincipalID, "credential_id": profile.Binding.CredentialID, "signing_key_id": profile.Signing.KeyID, "signing_fingerprint": profile.Signing.PublicKeyFingerprint, "pending_count": len(profile.Local.PendingOperations)}
 }
 
 func compactProfileStatusV2(profile ProfileV2, identity a.SigningIdentityView) any {
@@ -169,7 +169,7 @@ func projectInitializeV2(w *Workspace, o options) (Output, error) {
 	if e != nil {
 		return result, e
 	}
-	namespace, e := d.ParseID(o.values["namespace"])
+	tenant, e := d.ParseID(o.values["tenant"])
 	if e != nil {
 		return result, e
 	}
@@ -181,7 +181,7 @@ func projectInitializeV2(w *Workspace, o options) (Output, error) {
 	if name == "" {
 		name = filepath.Base(w.canonicalPath)
 	}
-	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: name, Connection: ProjectConnectionV2{server, serverID}, Scope: WorkspaceScope{namespace, outcome}, Workspace: ProjectLayoutV2{"profiles"}}
+	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: name, Connection: ProjectConnectionV2{server, serverID}, Scope: WorkspaceScope{tenant, outcome}, Workspace: ProjectLayoutV2{"profiles"}}
 	if e = project.Validate(); e != nil {
 		return result, e
 	}
@@ -221,6 +221,9 @@ func profileCommandV2(ctx context.Context, w *Workspace, o options, resolver Sec
 	selected, e := w.SelectProfileV2(name, os.Getenv("WOS_PROFILE"))
 	if e != nil {
 		return result, e
+	}
+	if o.args[1] == "migrate-tenant" {
+		return migrateTenantProfile(ctx, w, selected, resolver)
 	}
 	if o.args[1] == "trust" {
 		return approveCurrentIssuerV2(ctx, w, selected, o, resolver)
@@ -340,7 +343,7 @@ func createProfileV2(ctx context.Context, w *Workspace, o options, name string, 
 	if e != nil {
 		return result, e
 	}
-	if project.Connection.ServerURL != profile.Binding.ServerOrigin || project.Connection.ExpectedServerID != profile.Binding.ServerID || project.Scope.NamespaceID != profile.Binding.NamespaceID {
+	if project.Connection.ServerURL != profile.Binding.ServerOrigin || project.Connection.ExpectedServerID != profile.Binding.ServerID || project.Scope.TenantID != profile.Binding.TenantID {
 		return result, fmt.Errorf("project/proposal binding differs")
 	}
 	// Separate explicit approval is mandatory on first onboarding; project and
@@ -405,12 +408,12 @@ func createProfileV2(ctx context.Context, w *Workspace, o options, name string, 
 		if challenge.PreviousKeyID != nil {
 			previous = challenge.PreviousKeyID.String()
 		}
-		payload := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: profile.Binding.ServerID.String(), NamespaceID: profile.Binding.NamespaceID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(private.Public().(ed25519.PublicKey)), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano), PreviousKeyID: previous}
+		payload := signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: profile.Binding.ServerID.String(), TenantID: profile.Binding.TenantID.String(), PrincipalID: profile.Binding.PrincipalID, SignerKeyID: profile.Signing.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(private.Public().(ed25519.PublicKey)), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano), PreviousKeyID: previous}
 		proof, e := signing.Sign(signing.KeyEnrollment, payload, profile.Signing.KeyID.String(), private)
 		if e != nil {
 			return result, e
 		}
-		intent := a.SigningSecurityIntent{NamespaceID: profile.Binding.NamespaceID, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof}
+		intent := a.SigningSecurityIntent{TenantID: profile.Binding.TenantID, ExpectedTenantVersion: identity.TenantVersion, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &proof}
 		raw, e := signing.Canonical(intent)
 		if e != nil {
 			return result, e
@@ -419,7 +422,7 @@ func createProfileV2(ctx context.Context, w *Workspace, o options, name string, 
 		if e != nil {
 			return result, e
 		}
-		profile.Local.PendingOperations = []PendingOperationV2{{ID: id, Operation: "register_signing_key", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID}, IdempotencyKey: "profile-enrollment-" + id.String(), Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw)}}
+		profile.Local.PendingOperations = []PendingOperationV2{{ID: id, Operation: "register_signing_key", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID}, IdempotencyKey: "profile-enrollment-" + id.String(), Payload: base64.StdEncoding.EncodeToString(raw), PayloadDigest: signing.Digest(raw)}}
 	}
 	if e = profile.SealBinding(token); e != nil {
 		return result, e
@@ -451,7 +454,7 @@ func recoverProfileEnrollmentV2(ctx context.Context, w *Workspace, profile Profi
 		if e = signing.DecodeStrict(raw, &intent, signing.MaxPayloadBytes); e != nil {
 			return result, e
 		}
-		if intent.Operation != pending.Operation || intent.NamespaceID != profile.Binding.NamespaceID || intent.Proof == nil {
+		if intent.Operation != pending.Operation || intent.TenantID != profile.Binding.TenantID || intent.Proof == nil {
 			return result, fmt.Errorf("pending registration binding differs")
 		}
 		latest, before, e := w.readProfileSnapshotV2(profile.Name)

@@ -204,7 +204,7 @@ func evaluateObjectiveReadiness(
 	objective domain.Objective,
 	now time.Time,
 ) (domain.Readiness, error) {
-	outcome, err := uow.Outcomes().Get(ctx, objective.Scope.NamespaceID, objective.Scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, objective.Scope.TenantID, objective.Scope.OutcomeID)
 	if err != nil {
 		return domain.Readiness{}, err
 	}
@@ -230,7 +230,7 @@ func evaluateWorkItemReadiness(
 	item domain.WorkItem,
 	now time.Time,
 ) (domain.Readiness, error) {
-	outcome, err := uow.Outcomes().Get(ctx, item.Scope.NamespaceID, item.Scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, item.Scope.TenantID, item.Scope.OutcomeID)
 	if err != nil {
 		return domain.Readiness{}, err
 	}

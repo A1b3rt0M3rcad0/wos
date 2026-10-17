@@ -117,13 +117,13 @@ func TestCommitPersistsAndVersionConflictIsDetected(t *testing.T) {
 func TestDocumentaryRepositoriesEnforceHistoricalImmutability(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
-	namespaceID := domain.MustParseID("0199ee00-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ee00-0000-7000-8000-000000000001")
 	outcomeID := domain.MustParseID("0199ee00-0000-7000-8000-000000000010")
-	scope := domain.Scope{NamespaceID: namespaceID, OutcomeID: outcomeID}
+	scope := domain.Scope{TenantID: tenantID, OutcomeID: outcomeID}
 	now := time.Date(2026, 10, 2, 22, 0, 0, 0, time.UTC)
 	actor := domain.ActorRef{Kind: domain.ActorKindService, Provider: "memory-test", ID: "producer"}
 
-	outcome, err := domain.NewOutcome(outcomeID, namespaceID, "Documentary parity", "", "history is immutable", domain.PriorityNormal, now)
+	outcome, err := domain.NewOutcome(outcomeID, tenantID, "Documentary parity", "", "history is immutable", domain.PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,11 +222,11 @@ func TestAssessmentProvenanceIsDeepCopied(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
 	now := time.Date(2026, 10, 2, 23, 0, 0, 0, time.UTC)
-	namespaceID := domain.MustParseID("0199ef30-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ef30-0000-7000-8000-000000000001")
 	outcomeID := domain.MustParseID("0199ef30-0000-7000-8000-000000000010")
-	scope := domain.Scope{NamespaceID: namespaceID, OutcomeID: outcomeID}
+	scope := domain.Scope{TenantID: tenantID, OutcomeID: outcomeID}
 
-	outcome, err := domain.NewOutcome(outcomeID, namespaceID, "Clone assessment", "", "preserve provenance", domain.PriorityNormal, now)
+	outcome, err := domain.NewOutcome(outcomeID, tenantID, "Clone assessment", "", "preserve provenance", domain.PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +278,7 @@ func TestAssessmentProvenanceIsDeepCopied(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stored, err := readTx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	stored, err := readTx.Outcomes().Get(ctx, tenantID, outcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -292,7 +292,7 @@ func TestAssessmentProvenanceIsDeepCopied(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer verifyTx.Rollback()
-	again, err := verifyTx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	again, err := verifyTx.Outcomes().Get(ctx, tenantID, outcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}

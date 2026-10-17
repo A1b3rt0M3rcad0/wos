@@ -40,8 +40,8 @@ func TestWave10TerminalCommandsEmitConclusionRecordedEvent(t *testing.T) {
 
 func TestWave10ConclusionRecordedPayloadCarriesPublicIdentityAndSnapshot(t *testing.T) {
 	scope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199efd0-0000-7000-8000-000000000001"),
-		OutcomeID:   domain.MustParseID("0199efd0-0000-7000-8000-000000000010"),
+		TenantID:  domain.MustParseID("0199efd0-0000-7000-8000-000000000001"),
+		OutcomeID: domain.MustParseID("0199efd0-0000-7000-8000-000000000010"),
 	}
 	owner := domain.EntityRef{Scope: scope, Kind: domain.EntityKindOutcome, ID: scope.OutcomeID}
 	version := domain.Version(4)
@@ -58,7 +58,7 @@ func TestWave10ConclusionRecordedPayloadCarriesPublicIdentityAndSnapshot(t *test
 	}
 	outcome, err := domain.NewOutcome(
 		scope.OutcomeID,
-		scope.NamespaceID,
+		scope.TenantID,
 		"Conclusion event",
 		"",
 		"observable conclusion",

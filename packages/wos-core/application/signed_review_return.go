@@ -55,7 +55,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		if err != nil {
 			return zero, 0, err
 		}
-		key, err := registry.Key(ctx, scope.NamespaceID, d.ID(hint.SignerKeyID))
+		key, err := registry.Key(ctx, scope.TenantID, d.ID(hint.SignerKeyID))
 		if err != nil {
 			return zero, 0, err
 		}
@@ -81,7 +81,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		if err = s.rejectClosedReturn(ctx, u, request.RequestBinding, "ReturnSignedReview", "review", digest); err != nil {
 			return zero, 0, err
 		}
-		if prior, e := repo.Acceptance(ctx, scope.NamespaceID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
+		if prior, e := repo.Acceptance(ctx, scope.TenantID, cc.PrincipalID, cc.IdempotencyKey); e == nil {
 			if e = s.requireSignedAcceptedCredential(ctx, u, scope, "review", d.ID(request.ContractID)); e != nil {
 				return zero, 0, e
 			}
@@ -104,7 +104,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		if err != nil {
 			return zero, 0, err
 		}
-		server, err := s.requireSignedIssuer(ctx, u, scope.NamespaceID)
+		server, err := s.requireSignedIssuer(ctx, u, scope.TenantID)
 		if err != nil {
 			return zero, 0, err
 		}
@@ -152,7 +152,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		if review.Version != d.Version(request.ExpectedReviewCaseVersion) || review.Status != d.ReviewInReview || review.CurrentContractID == nil || *review.CurrentContractID != contract.ID {
 			return zero, 0, d.NewError(d.ErrorCodeVersionConflict, "review case CAS/authority changed")
 		}
-		group, err := registry.PrincipalGroup(ctx, scope.NamespaceID, identity.PrincipalID)
+		group, err := registry.PrincipalGroup(ctx, scope.TenantID, identity.PrincipalID)
 		if err != nil {
 			return zero, 0, err
 		}
@@ -358,7 +358,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		for k, v := range registered.LocalKeys {
 			local[k] = v.String()
 		}
-		receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: scope.NamespaceID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, LocalKeys: local, RequestID: request.RequestID, IdempotencyKey: cc.IdempotencyKey, RequestDigest: digest, ContractID: contract.ID.String(), WorkItemID: work.ID.String(), SubmissionID: submission.ID.String(), SubmissionDigest: submission.Digest, ReviewCaseID: review.ID.String(), DecisionID: decisionID.String(), OutcomeRevision: signing.Decimal(revision), Accepted: true, Disposition: disposition, ContractStatus: string(contract.Status), WorkItemLifecycle: string(work.Lifecycle), LocalObligationClosed: true, AcceptedAt: now.UTC().Format(time.RFC3339Nano)}
+		receipt := signing.ReceiptPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: scope.TenantID.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, LocalKeys: local, RequestID: request.RequestID, IdempotencyKey: cc.IdempotencyKey, RequestDigest: digest, ContractID: contract.ID.String(), WorkItemID: work.ID.String(), SubmissionID: submission.ID.String(), SubmissionDigest: submission.Digest, ReviewCaseID: review.ID.String(), DecisionID: decisionID.String(), OutcomeRevision: signing.Decimal(revision), Accepted: true, Disposition: disposition, ContractStatus: string(contract.Status), WorkItemLifecycle: string(work.Lifecycle), LocalObligationClosed: true, AcceptedAt: now.UTC().Format(time.RFC3339Nano)}
 		acceptance, receiptDoc, err := s.issueSignedFact(ctx, u, server, scope, contract.ID, "review", "acceptance", identity.PrincipalID, signing.AcceptanceReceipt, receipt, now)
 		if err != nil {
 			return zero, 0, err

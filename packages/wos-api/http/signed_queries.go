@@ -43,12 +43,12 @@ func (h *Handler) signedState(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, value)
 }
 func (h *Handler) signedTrust(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
-	value, err := h.service.ReadSignedState(r.Context(), a.SignedStateQuery{Scope: d.Scope{NamespaceID: ns}, Resource: "trust"})
+	value, err := h.service.ReadSignedState(r.Context(), a.SignedStateQuery{Scope: d.Scope{TenantID: ns}, Resource: "trust"})
 	if err != nil {
 		writeError(w, r, err)
 		return

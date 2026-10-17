@@ -61,13 +61,13 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 		}
 	}
 	ns := testID("0199a555-0000-7000-8000-000000000001")
-	scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
-	must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
+	scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a555-0000-7000-8000-000000000002")}
+	must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed-acquisition"}, "admin", "signed-acquisition-bootstrap-token-at-least-32"))
 	admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 	must(err)
 	adminCtx := a.WithIdentity(ctx, admin)
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+	must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+	must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 	credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 	must(err)
 	identity, err := sec.Authenticate(ctx, token)
@@ -89,14 +89,14 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	uow, err := store.Begin(ctx)
 	must(err)
 	registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-	must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+	must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, TenantID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
 	foreignPub, _, err := ed25519.GenerateKey(rand.Reader)
 	must(err)
 	foreignFP, err := signing.Fingerprint(foreignPub)
 	must(err)
 	foreignKey := testID("0199a555-0000-7000-8000-000000000099")
-	must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, TenantID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+	policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 	must(registry.SaveCredentialPolicy(ctx, policy, 0))
 	outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 	must(err)
@@ -119,7 +119,7 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	state, err := protocol.Lock(ctx, ns, true)
 	must(err)
 	state.Phase = d.WorkProtocolSigned
-	state.WriterEpoch = 2
+	state.WriterEpoch = 3
 	state.WritersDrained = true
 	state.Version++
 	state.UpdatedAt = now
@@ -138,7 +138,7 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	work := acquired.Value.WorkItem
 	rid, e := ids.NewID()
 	must(e)
-	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
+	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
 	criterion := d.SuccessCriterion{}
 	if hasCriteria {
 		criterion = work.Criteria.Items[0]
@@ -166,7 +166,7 @@ func TestSignedReturnResolutionRepository(t *testing.T) {
 		t.Run(backend, func(t *testing.T) {
 			f := newResolutionFixture(t, backend)
 			now := time.Now().UTC()
-			r := d.SignedReturnIntentResolution{Scope: d.Scope{NamespaceID: d.ID(f.request.NamespaceID), OutcomeID: d.ID(f.request.OutcomeID)}, PrincipalID: f.cc.PrincipalID, CredentialID: f.credential, OriginalCommandName: "ReturnSignedWork", OriginalIdempotencyKey: f.request.IdempotencyKey, OriginalRequestID: d.ID(f.request.RequestID), OriginalRequestDigest: signing.Digest([]byte("original")), OriginalEnvelopeDigest: signing.Digest([]byte("envelope")), ContractID: d.ID(f.request.ContractID), ResolutionRequestID: testID("0199a555-0000-7000-8000-000000000088"), ResolutionIdempotencyKey: "separate-resolution", ResolutionDigest: signing.Digest([]byte("resolution")), IssuerKeyID: f.server.IssuerKeyID, Decision: "closed_without_acceptance", Reason: "controlled repository contract", OutcomeRevision: 1, Receipt: json.RawMessage(`{"proof":"repository fixture"}`), RecordedAt: now}
+			r := d.SignedReturnIntentResolution{Scope: d.Scope{TenantID: d.ID(f.request.TenantID), OutcomeID: d.ID(f.request.OutcomeID)}, PrincipalID: f.cc.PrincipalID, CredentialID: f.credential, OriginalCommandName: "ReturnSignedWork", OriginalIdempotencyKey: f.request.IdempotencyKey, OriginalRequestID: d.ID(f.request.RequestID), OriginalRequestDigest: signing.Digest([]byte("original")), OriginalEnvelopeDigest: signing.Digest([]byte("envelope")), ContractID: d.ID(f.request.ContractID), ResolutionRequestID: testID("0199a555-0000-7000-8000-000000000088"), ResolutionIdempotencyKey: "separate-resolution", ResolutionDigest: signing.Digest([]byte("resolution")), IssuerKeyID: f.server.IssuerKeyID, Decision: "closed_without_acceptance", Reason: "controlled repository contract", OutcomeRevision: 1, Receipt: json.RawMessage(`{"proof":"repository fixture"}`), RecordedAt: now}
 			u, e := f.store.Begin(f.ctx)
 			if e != nil {
 				t.Fatal(e)
@@ -184,7 +184,7 @@ func TestSignedReturnResolutionRepository(t *testing.T) {
 				t.Fatal(e)
 			}
 			repo = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions()
-			if _, e = repo.GetByOriginalIntent(f.ctx, r.Scope.NamespaceID, r.PrincipalID, r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey); e == nil {
+			if _, e = repo.GetByOriginalIntent(f.ctx, r.Scope.TenantID, r.PrincipalID, r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey); e == nil {
 				u.Rollback()
 				t.Fatal("rollback retained terminal decision")
 			}
@@ -201,11 +201,11 @@ func TestSignedReturnResolutionRepository(t *testing.T) {
 			}
 			defer u.Rollback()
 			repo = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions()
-			got, e := repo.GetByOriginalIntent(f.ctx, r.Scope.NamespaceID, r.PrincipalID, r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey)
+			got, e := repo.GetByOriginalIntent(f.ctx, r.Scope.TenantID, r.PrincipalID, r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey)
 			if e != nil || string(got.Receipt) != string(r.Receipt) {
 				t.Fatalf("durable proof differs: %v", e)
 			}
-			if _, e = repo.GetByOriginalIntent(f.ctx, r.Scope.NamespaceID, "another-principal", r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey); e == nil {
+			if _, e = repo.GetByOriginalIntent(f.ctx, r.Scope.TenantID, "another-principal", r.CredentialID, r.OriginalCommandName, r.OriginalIdempotencyKey); e == nil {
 				t.Fatal("foreign Principal observed a resolution")
 			}
 			r.Reason = "replacement is forbidden"
@@ -234,7 +234,7 @@ func resolutionIntent(t *testing.T, f resolutionFixture, reason string, suffix i
 	cc := f.cc
 	cc.CommandID = d.ID(p.RequestID)
 	cc.IdempotencyKey = p.IdempotencyKey
-	return cc, a.ResolveSignedReturnIntentCommand{Scope: d.Scope{NamespaceID: d.ID(p.NamespaceID), OutcomeID: d.ID(p.OutcomeID)}, OriginalEnvelope: f.envelope, Envelope: envelope}
+	return cc, a.ResolveSignedReturnIntentCommand{Scope: d.Scope{TenantID: d.ID(p.TenantID), OutcomeID: d.ID(p.OutcomeID)}, OriginalEnvelope: f.envelope, Envelope: envelope}
 }
 func TestSignedReturnTerminalResolution(t *testing.T) {
 	for _, backend := range []string{"memory", "sql"} {
@@ -334,7 +334,7 @@ func TestSignedReturnTerminalResolution(t *testing.T) {
 				t.Fatal(e)
 			}
 			defer u.Rollback()
-			if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
+			if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
 				t.Fatal("acceptance created a negative decision")
 			}
 		})
@@ -395,8 +395,8 @@ func TestSignedReturnResolutionRaces(t *testing.T) {
 					t.Fatal(e)
 				}
 				defer u.Rollback()
-				_, accepted := u.(ports.SignedContractUnitOfWork).SignedContracts().Acceptance(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.request.IdempotencyKey)
-				terminal, closed := u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey)
+				_, accepted := u.(ports.SignedContractUnitOfWork).SignedContracts().Acceptance(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, f.request.IdempotencyKey)
+				terminal, closed := u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey)
 				if (accepted == nil) == (closed == nil) {
 					t.Fatal("acceptance and terminal decision must be exclusive")
 				}
@@ -421,7 +421,7 @@ func TestSignedReturnResolutionRaces(t *testing.T) {
 						if terminal.ResolutionIdempotencyKey == loser {
 							loser = cc.IdempotencyKey
 						}
-						_, e := u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, loser)
+						_, e := u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, loser)
 						if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
 							t.Fatal("losing transaction retained a durable success response", e)
 						}
@@ -468,7 +468,7 @@ func TestSignedReturnResolutionRevalidatesAuthority(t *testing.T) {
 						t.Fatal(e)
 					}
 					registry := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
-					k, e := registry.Key(f.ctx, cmd.Scope.NamespaceID, d.ID(p.SignerKeyID))
+					k, e := registry.Key(f.ctx, cmd.Scope.TenantID, d.ID(p.SignerKeyID))
 					if e != nil {
 						u.Rollback()
 						t.Fatal(e)
@@ -519,7 +519,7 @@ func TestSignedReturnResolutionRevalidatesAuthority(t *testing.T) {
 					t.Fatal(e)
 				}
 				defer u.Rollback()
-				if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
+				if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
 					t.Fatal("invalid authority persisted terminal decision")
 				}
 			})
@@ -628,7 +628,7 @@ func TestSignedReturnResolutionRejectsActualExpiredLease(t *testing.T) {
 			if before.Revision != after.Revision || string(b) != string(ar) {
 				t.Fatal("read-time expiry or rejected closure mutated authority/revision")
 			}
-			if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
+			if _, e = u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.TenantID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey); e == nil {
 				t.Fatal("expired lease created a terminal decision")
 			}
 		})

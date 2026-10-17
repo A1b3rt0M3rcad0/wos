@@ -143,7 +143,7 @@ func command[T any](ctx context.Context, c *Client, name, key string, cmd any) (
 	return result, err
 }
 func scopePath(scope domain.Scope) string {
-	return "/namespaces/" + scope.NamespaceID.String() + "/outcomes/" + scope.OutcomeID.String()
+	return "/tenants/" + scope.TenantID.String() + "/outcomes/" + scope.OutcomeID.String()
 }
 func (c *Client) GetContinuity(ctx context.Context, scope domain.Scope, limit int) (application.ContinuitySnapshot, error) {
 	var v application.ContinuitySnapshot
@@ -156,10 +156,10 @@ func (c *Client) GetContinuitySection(ctx context.Context, scope domain.Scope, s
 	err := c.do(ctx, "GET", scopePath(scope)+"/continuity/"+url.PathEscape(section)+"?"+q.Encode(), "", nil, &v)
 	return v, err
 }
-func (c *Client) SearchOutcomes(ctx context.Context, namespace domain.ID, text string, limit int, cursor string) (application.OutcomePage, error) {
+func (c *Client) SearchOutcomes(ctx context.Context, tenant domain.ID, text string, limit int, cursor string) (application.OutcomePage, error) {
 	var v application.OutcomePage
 	q := url.Values{"text": {text}, "limit": {fmt.Sprint(limit)}, "cursor": {cursor}}
-	err := c.do(ctx, "GET", "/namespaces/"+namespace.String()+"/outcomes?"+q.Encode(), "", nil, &v)
+	err := c.do(ctx, "GET", "/tenants/"+tenant.String()+"/outcomes?"+q.Encode(), "", nil, &v)
 	return v, err
 }
 func (c *Client) GetWorkContext(ctx context.Context, scope domain.Scope, id domain.ID) (application.WorkContext, error) {

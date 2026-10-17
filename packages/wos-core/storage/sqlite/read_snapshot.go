@@ -15,22 +15,22 @@ func readOutcomeCoordination(ctx context.Context, u *unitOfWork, scope domain.Sc
 		return ports.OutcomeCoordination{}, err
 	}
 	var revision domain.OutcomeRevision
-	err := u.tx.QueryRowContext(ctx, `SELECT state_revision FROM outcome_coordination WHERE namespace_id=? AND outcome_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&revision)
+	err := u.tx.QueryRowContext(ctx, `SELECT state_revision FROM outcome_coordination WHERE tenant_id=? AND outcome_id=?`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&revision)
 	return ports.OutcomeCoordination{Scope: scope, Revision: revision}, mapSQLError("read outcome revision", err)
 }
 
-func (r signingIdentityRepository) NamespaceVersion(ctx context.Context, ns domain.ID) (domain.Version, error) {
+func (r signingIdentityRepository) TenantVersion(ctx context.Context, ns domain.ID) (domain.Version, error) {
 	if err := r.u.ensureOpen(); err != nil {
 		return 0, err
 	}
 	var version domain.Version
-	err := r.u.tx.QueryRowContext(ctx, `SELECT version FROM namespaces WHERE id=? AND lifecycle='active'`, ns.String()).Scan(&version)
-	return version, mapSQLError("read signing Namespace version", err)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT version FROM tenants WHERE id=? AND lifecycle='active'`, ns.String()).Scan(&version)
+	return version, mapSQLError("read signing Tenant version", err)
 }
 
 // BEGIN IMMEDIATE already excludes competing SQLite writers. Read snapshots
 // use the driver's ReadOnly transaction, which is deferred and query-only.
-func (u *unitOfWork) LockSignedQuota(ctx context.Context, ns domain.ID, principal, kind string, namespace bool) error {
+func (u *unitOfWork) LockSignedQuota(ctx context.Context, ns domain.ID, principal, kind string, tenant bool) error {
 	if err := u.ensureOpen(); err != nil {
 		return err
 	}

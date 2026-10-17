@@ -1,7 +1,7 @@
 import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
 
 const base = (scope) =>
-  `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+  `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`;
 
 // Freeze a genuine, already-completed server read. Only delivery is controlled;
 // all state, permissions, revisions and cursor validation remain real.
@@ -75,7 +75,7 @@ function permissionBarrier(hold, scope) {
   return hold(
     (url) =>
       url.pathname.endsWith(
-        `/namespaces/${scope.namespace_id}/effective-permissions`,
+        `/tenants/${scope.tenant_id}/effective-permissions`,
       ) && url.searchParams.get("outcome_id") === scope.outcome_id,
   );
 }
@@ -105,7 +105,7 @@ test("a committed command stays busy through refresh, then keyboard actions reop
   const writes = trackBrowserWrites(page);
   const hold = await gatedReads(page);
   const discovery = hold(
-    (url) => url.pathname === `/api/v1/namespaces/${scope.namespace_id}/outcomes`,
+    (url) => url.pathname === `/api/v1/tenants/${scope.tenant_id}/outcomes`,
   );
   try {
     await page.locator("#submit-command").click();

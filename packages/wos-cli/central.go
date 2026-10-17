@@ -266,7 +266,7 @@ func centralProfileCommand(ctx context.Context, w *Workspace, o options) (Output
 			if e != nil {
 				return result, e
 			}
-			items = append(items, map[string]any{"name": name, "active": value.ActiveProfile == name, "server": profile.Binding.ServerOrigin, "namespace_id": profile.Binding.NamespaceID, "principal_id": profile.Binding.PrincipalID, "pending_count": len(profile.Local.PendingOperations)})
+			items = append(items, map[string]any{"name": name, "active": value.ActiveProfile == name, "server": profile.Binding.ServerOrigin, "tenant_id": profile.Binding.TenantID, "principal_id": profile.Binding.PrincipalID, "pending_count": len(profile.Local.PendingOperations)})
 		}
 		result.Data = map[string]any{"active_profile": value.ActiveProfile, "items": items}
 		return result, nil
@@ -314,7 +314,7 @@ func centralProfileCommand(ctx context.Context, w *Workspace, o options) (Output
 			return result, usage("active profile cannot be removed; use another profile first")
 		}
 		return removeCentralProfile(ctx, w, store, value, before, name)
-	case "inspect", "recover", "trust":
+	case "inspect", "recover", "trust", "migrate-tenant":
 		o.values["profile"] = name
 		return profileCommandV2(ctx, store, o, defaultSecretResolverV2(store))
 	default:
@@ -412,9 +412,9 @@ func createCentralProfile(ctx context.Context, w *Workspace, value installation,
 	if e != nil {
 		return result, usage("profile create requires the administrator-approved --server-id")
 	}
-	namespace, e := d.ParseID(o.values["namespace"])
+	tenant, e := d.ParseID(o.values["tenant"])
 	if e != nil {
-		return result, usage("profile create requires --namespace")
+		return result, usage("profile create requires --tenant")
 	}
 	var outcome d.ID
 	if o.values["outcome"] != "" {
@@ -454,7 +454,7 @@ func createCentralProfile(ctx context.Context, w *Workspace, value installation,
 		return result, e
 	}
 	defer store.Close()
-	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: name, Connection: ProjectConnectionV2{ServerURL: server, ExpectedServerID: serverID}, Scope: WorkspaceScope{NamespaceID: namespace, DefaultOutcomeID: outcome}, Workspace: ProjectLayoutV2{ProfilesDirectory: "profiles"}}
+	project := ProjectV2{SchemaVersion: 2, Kind: "WOSProject", Name: name, Connection: ProjectConnectionV2{ServerURL: server, ExpectedServerID: serverID}, Scope: WorkspaceScope{TenantID: tenant, DefaultOutcomeID: outcome}, Workspace: ProjectLayoutV2{ProfilesDirectory: "profiles"}}
 	if e = project.Validate(); e != nil {
 		return result, e
 	}

@@ -12,7 +12,7 @@ type Identity struct {
 	CredentialID             domain.ID
 	CredentialPolicyRevision domain.Version
 	PrincipalID              string
-	NamespaceID              domain.ID
+	TenantID                 domain.ID
 	CredentialDigest         string
 	Actor                    domain.ActorRef
 }
@@ -36,15 +36,15 @@ func NewAuthorizedService(tx ports.TransactionManager, clock ports.Clock, ids po
 	s.requireIdentity = true
 	return s, nil
 }
-func (s *Service) Authorize(ctx context.Context, namespace domain.ID, permission ports.Permission) error {
+func (s *Service) Authorize(ctx context.Context, tenant domain.ID, permission ports.Permission) error {
 	id, ok := IdentityFromContext(ctx)
 	if !ok || id.PrincipalID == "" {
 		return domain.NewError(domain.ErrorCodeForbidden, "authenticated identity is required")
 	}
-	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: namespace, PrincipalID: id.PrincipalID, Permission: permission})
+	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{TenantID: tenant, PrincipalID: id.PrincipalID, Permission: permission})
 }
-func (s *Service) authorizeRead(ctx context.Context, namespace domain.ID) error {
-	if err := s.authorizeNamespaceMetadataRead(ctx, namespace); err != nil {
+func (s *Service) authorizeRead(ctx context.Context, tenant domain.ID) error {
+	if err := s.authorizeTenantMetadataRead(ctx, tenant); err != nil {
 		return err
 	}
 	if !s.requireIdentity {
@@ -55,7 +55,7 @@ func (s *Service) authorizeRead(ctx context.Context, namespace domain.ID) error 
 		return err
 	}
 	defer u.Rollback()
-	allowed, err := s.readOutcomeRestrictions(ctx, u, namespace)
+	allowed, err := s.readOutcomeRestrictions(ctx, u, tenant)
 	if err != nil {
 		return err
 	}
@@ -73,14 +73,14 @@ func (s *Service) authorizeMutation(ctx context.Context, cc domain.CommandContex
 	if !ok || id.PrincipalID != cc.PrincipalID || id.Actor != cc.Actor {
 		return domain.NewError(domain.ErrorCodeForbidden, "command identity does not match authenticated identity")
 	}
-	return s.Authorize(ctx, meta.NamespaceID, commandPermission(meta.Name))
+	return s.Authorize(ctx, meta.TenantID, commandPermission(meta.Name))
 }
 func commandPermission(name string) ports.Permission {
 	switch name {
 	case "ResolveSignedReturnIntent":
 		return ports.PermissionStateRead
-	case "InterveneSignedReviewCase", "SetNamespaceWorkProtocol", "ReconcileExpiredWorkContracts":
-		return ports.PermissionNamespaceAdmin
+	case "InterveneSignedReviewCase", "SetTenantWorkProtocol", "ReconcileExpiredWorkContracts":
+		return ports.PermissionTenantAdmin
 	case "AcquireSignedWorkContract", "AcquireNextSignedWorkContract", "AcquireWorkContract", "AcquireNextWorkContract":
 		return ports.PermissionWorkContractAcquire
 	case "RevokeSignedContract", "RevokeWorkContract":

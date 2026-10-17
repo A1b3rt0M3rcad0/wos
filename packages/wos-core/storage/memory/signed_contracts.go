@@ -245,7 +245,7 @@ func (r signedContractRepository) InsertFact(ctx context.Context, f d.SignedFact
 			return err
 		}
 	}
-	key, err := r.tx.SigningIdentity().Key(ctx, f.Scope.NamespaceID, f.KeyID)
+	key, err := r.tx.SigningIdentity().Key(ctx, f.Scope.TenantID, f.KeyID)
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (r signedContractRepository) InsertFact(ctx context.Context, f d.SignedFact
 		return d.NewError(d.ErrorCodeForbidden, "signed fact key role differs")
 	}
 	for _, old := range r.tx.signedReview.Facts {
-		if old.ID == f.ID || (old.Scope.NamespaceID == f.Scope.NamespaceID && old.Kind == f.Kind && (f.Kind == "return" || f.Kind == "acceptance") && old.PrincipalID == f.PrincipalID && old.IdempotencyKey == f.IdempotencyKey) || (f.Kind == "return" && old.Kind == "return" && old.Scope.NamespaceID == f.Scope.NamespaceID && old.RequestID != nil && f.RequestID != nil && *old.RequestID == *f.RequestID) || (f.Kind == "specification" && old.Kind == f.Kind && old.Scope == f.Scope && old.ContractID == f.ContractID) {
+		if old.ID == f.ID || (old.Scope.TenantID == f.Scope.TenantID && old.Kind == f.Kind && (f.Kind == "return" || f.Kind == "acceptance") && old.PrincipalID == f.PrincipalID && old.IdempotencyKey == f.IdempotencyKey) || (f.Kind == "return" && old.Kind == "return" && old.Scope.TenantID == f.Scope.TenantID && old.RequestID != nil && f.RequestID != nil && *old.RequestID == *f.RequestID) || (f.Kind == "specification" && old.Kind == f.Kind && old.Scope == f.Scope && old.ContractID == f.ContractID) {
 			return d.NewError(d.ErrorCodeAlreadyExists, "immutable signed fact/request already exists")
 		}
 	}
@@ -266,7 +266,7 @@ func (r signedContractRepository) Acceptance(ctx context.Context, ns d.ID, princ
 		return zero, err
 	}
 	for _, f := range r.tx.signedReview.Facts {
-		if f.Scope.NamespaceID == ns && f.PrincipalID == principal && f.IdempotencyKey == key && f.Kind == "acceptance" {
+		if f.Scope.TenantID == ns && f.PrincipalID == principal && f.IdempotencyKey == key && f.Kind == "acceptance" {
 			return deepCopy(f), f.Validate()
 		}
 	}
@@ -278,8 +278,8 @@ func (r signedContractRepository) Counts(ctx context.Context, ns d.ID, principal
 		return result, err
 	}
 	for _, c := range r.tx.signedContracts {
-		if c.Scope.NamespaceID == ns && c.ValidAt(now) {
-			result.NamespaceWork++
+		if c.Scope.TenantID == ns && c.ValidAt(now) {
+			result.TenantWork++
 			if c.HolderPrincipalID == principal {
 				result.PrincipalWork++
 			}
@@ -289,8 +289,8 @@ func (r signedContractRepository) Counts(ctx context.Context, ns d.ID, principal
 		}
 	}
 	for _, c := range r.tx.signedReview.Contracts {
-		if c.Scope.NamespaceID == ns && c.ValidAt(now) {
-			result.NamespaceReview++
+		if c.Scope.TenantID == ns && c.ValidAt(now) {
+			result.TenantReview++
 			if c.HolderPrincipalID == principal {
 				result.PrincipalReview++
 			}

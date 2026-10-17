@@ -7,12 +7,12 @@ import (
 )
 
 func (h *Handler) deliveryHealth(w http.ResponseWriter, r *http.Request) {
-	ns, e := parsePathID(r, "namespace_id")
+	ns, e := parsePathID(r, "tenant_id")
 	if e != nil {
 		writeError(w, r, e)
 		return
 	}
-	query := a.DeliveryHealthQuery{NamespaceID: ns}
+	query := a.DeliveryHealthQuery{TenantID: ns}
 	for key, values := range r.URL.Query() {
 		if key != "outcome_id" || len(values) != 1 {
 			writeError(w, r, d.NewError(d.ErrorCodeInvalidArgument, "delivery health accepts one optional outcome_id"))

@@ -11,14 +11,14 @@ func registerSecurity(server *mcp.Server, options Options) {
 		return
 	}
 	registerSigningIdentity(server, options)
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_list_namespaces", Description: "List authorized namespaces; credential scope is enforced."}, func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_list_tenants", Description: "List authorized tenants; credential scope is enforced."}, func(ctx context.Context, req *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {
 			r, e := failure(err)
 			return r, nil, e
 		}
-		value, err := options.Security.Namespaces(ctx)
+		value, err := options.Security.Tenants(ctx)
 		if err != nil {
 			r, e := failure(err)
 			return r, nil, e
@@ -26,14 +26,14 @@ func registerSecurity(server *mcp.Server, options Options) {
 		r, e := success(map[string]any{"items": value})
 		return r, nil, e
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_namespace_administration", Description: "Read namespace version, grants, credential metadata and bounded security audit; namespace:admin required."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_tenant_administration", Description: "Read tenant version, grants, credential metadata and bounded security audit; tenant:admin required."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {
 			r, e := failure(err)
 			return r, nil, e
 		}
-		value, err := options.Security.AdministrativeSnapshot(ctx, q.NamespaceID)
+		value, err := options.Security.AdministrativeSnapshot(ctx, q.TenantID)
 		if err != nil {
 			r, e := failure(err)
 			return r, nil, e
@@ -45,7 +45,7 @@ func registerSecurity(server *mcp.Server, options Options) {
 		Key     string                           `json:"idempotency_key"`
 		Command application.AdministrativeIntent `json:"command"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_administer_namespace", Description: "Set grants, issue/revoke credentials or create a Namespace. namespace:admin, Namespace CAS and idempotency required. Creation additionally requires installation:provision and copies only Namespace permissions. Delegating installation permissions or managing operator credentials requires installation:admin. Issued secret appears once; replay returns receipt with token_omitted."}, func(ctx context.Context, req *mcp.CallToolRequest, in input) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_administer_tenant", Description: "Set grants, issue/revoke credentials or create a Tenant. tenant:admin, Tenant CAS and idempotency required. Creation additionally requires installation:provision and copies only Tenant permissions. Delegating installation permissions or managing operator credentials requires installation:admin. Issued secret appears once; replay returns receipt with token_omitted."}, func(ctx context.Context, req *mcp.CallToolRequest, in input) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {

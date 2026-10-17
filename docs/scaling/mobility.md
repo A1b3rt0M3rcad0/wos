@@ -1,10 +1,16 @@
 # Installation growth and mobility
 
-WOS can start on SQLite and move the **whole installation** to PostgreSQL with an explicit maintenance window. The native `wos storage` operator commands preserve all Namespaces, global Principals, credentials, public issuer identity/history, immutable signed bytes, durable command receipts and integration delivery state. It never changes routing or collects private signing keys.
+> [!NOTE]
+> Current runtimes require the schema-per-Tenant catalog and binding described in
+> [Tenant lifecycle and cutover](tenants.md). A copied schema alone is not eligible
+> to serve. Older migration and preflight evidence retains its original source;
+> it does not qualify the new catalog adoption or signed protocol-3 transition.
+
+WOS can start on SQLite and move the **whole installation** to PostgreSQL with an explicit maintenance window. The native `wos storage` copy preserves the source schema's complete state: identities, credentials, public issuer identity/history, immutable signed bytes, durable command receipts and integration delivery state. It never changes routing or collects private signing keys.
 
 Run actual storage operator commands on the **Linux WOS server host**. The shipped Windows client exposes their help but refuses storage operations before accessing source data or destination credentials. Private staging relies on Linux/POSIX filesystem permissions; Windows DACL protection and Windows/macOS host operations are not qualified. The command does not copy data or imply protected staging on unsupported hosts.
 
-The existing [backup and restore procedures](../../tools/operations/README.md) support whole-installation SQLite-to-SQLite and PostgreSQL-to-PostgreSQL moves. The cross-backend command adds SQLite-to-PostgreSQL. PostgreSQL-to-SQLite conversion, online replication, tenant extraction, automatic failover and transfer between unrelated installation identities are not provided by this command.
+The existing [backup and restore procedures](../../tools/operations/README.md) support whole-installation SQLite-to-SQLite and PostgreSQL-to-PostgreSQL moves. The cross-backend command adds SQLite-to-PostgreSQL. PostgreSQL-to-SQLite conversion, online replication, automatic failover and transfer between unrelated installation identities are not provided by this command. The separate `wos storage tenant import-shared` command partitions a stopped shared PostgreSQL source into suspended schemas in the same database; follow [the Tenant cutover](tenants.md#upgrade-an-existing-installation).
 
 ## SQLite to PostgreSQL
 
@@ -36,35 +42,44 @@ The application-state import runs in one transaction with exclusive destination 
 
 The structural representations of unsigned counters differ: PostgreSQL `NUMERIC(20,0)` receives exact decimal values, including values above signed 64-bit range. SQLite's fixed-width activity sequence becomes its equivalent numeric value. Noncanonical authority counters are refused. Signed JSON, envelopes, receipts, specs and documentary text remain byte-for-byte strings; signed `server_id` bindings are never rewritten.
 
-5. Review `completed: true`, `verified: true`, the public pins and all table results. Configure the destination WOS deployment for PostgreSQL with the **same logical installation identity and existing issuer seed**, verify issuer readiness and restore required integration secrets. This is an operator move of the same installation; never distribute a shared installation's seed to a tenant-owned installation.
+5. Review `completed: true`, `verified: true`, the public pins and all table results. Run `wos storage tenant import-shared --file REQUEST.json --writers-stopped` against the copied database, then verify and explicitly resume its Tenant placements before starting current runtimes; a copy into `public` does not establish that binding. Configure the destination with the **same logical issuer identity and existing seed**, verify issuer readiness and restore required integration secrets. This is an operator move of the same installation; never distribute a shared installation's seed to a tenant-owned installation.
 6. Start the destination, verify authentication and representative persisted state, then resume clients and deliveries. Ensure clocks satisfy the deployment's lease policy. Time elapsed during the maintenance window does not extend contracts or delivery leases. Keep the source fenced permanently while the destination accepts writes.
 
 Before any destination business write, rollback can return to the intact source under an explicit routing cutover. After destination writes or external delivery effects, returning to the old snapshot can lose acknowledged work or repeat effects. Pause and reconcile that state; the command does not perform an automatic reverse migration or merge divergent databases.
 
-## Shared-to-dedicated Namespace preflight
+## Same-database separation
 
-Tenant relocation is a separate trust protocol. A Namespace references global Principals, public installation issuers, exact-intent receipts and indirectly scoped delivery records. Its signed facts bind to the source installation. Copying rows selected only by `namespace_id`, rewriting signed payloads, or giving a tenant the shared private issuer key is unsafe.
+After a verified copy, `wos storage tenant import-shared` can partition a stopped
+legacy shared schema into one schema per Tenant in the same PostgreSQL database.
+It migrates the source to the current chain, verifies target row counts/digests,
+retains immutable signed bytes, commits targets as suspended and fences writes
+to the original source. It is an explicit offline operation; review the complete
+[cutover and rollback boundaries](tenants.md#upgrade-an-existing-installation).
+
+## Shared-to-dedicated Tenant preflight
+
+Tenant relocation is a separate trust protocol. The earlier row-partitioned source can reference global Principals, public installation issuers, exact-intent receipts and indirectly scoped delivery records. The current Tenant schema owns this state together; external references and effects still need explicit treatment. Its signed facts bind to the source installation. Copying rows selected only by `namespace_id`, rewriting signed payloads, or giving a tenant the shared private issuer key is unsafe.
 
 The command offers a **read-only preflight**, not an export/import operation:
 
 ```sh
-wos storage namespace-preflight \
+wos storage tenant-preflight \
   --sqlite /private/snapshots/installation.db \
-  --namespace NAMESPACE_UUID > /private/namespace-preflight.json
+  --tenant TENANT_UUID > /private/tenant-preflight.json
 
-wos storage namespace-preflight \
+wos storage tenant-preflight \
   --dsn-env WOS_MOBILITY_POSTGRES_DSN \
-  --namespace NAMESPACE_UUID > /private/namespace-preflight.json
+  --tenant TENANT_UUID > /private/tenant-preflight.json
 ```
 
-Each preflight reads one coherent snapshot and reports scoped table counts; SQL foreign-key closure and cross-Namespace references; the number of referenced Principals also used elsewhere; revoked credentials, browser sessions and invalid parent links; unexpired execution/review authority; delivery states and indirect attempt/firing counts; public issuer history; and tables that require global or indirect closure.
+Each preflight reads one coherent snapshot and reports scoped table counts; SQL foreign-key closure and cross-Tenant references; the number of referenced Principals also used elsewhere; revoked credentials, browser sessions and invalid parent links; unexpired execution/review authority; delivery states and indirect attempt/firing counts; public issuer history; and tables that require global or indirect closure.
 
-`ready_for_transfer` is **always false**. Exit status zero means the inspection completed, never that a Namespace can be moved. The output contains counts and public trust metadata, not tokens, signed payload contents or private keys. It still belongs in protected operator storage. SQL foreign keys cannot establish closure for every signed payload, documentary reference, polymorphic reference or external side effect; the manifest explicitly records that limit.
+`ready_for_transfer` is **always false**. Exit status zero means the inspection completed, never that a Tenant can be moved. The output contains counts and public trust metadata, not tokens, signed payload contents or private keys. It still belongs in protected operator storage. SQL foreign keys cannot establish closure for every signed payload, documentary reference, polymorphic reference or external side effect; the manifest explicitly records that limit.
 
 Actual shared-to-dedicated transfer remains blocked on these executable protocol capabilities:
 
 - A durable source write fence and bounded cutover, including authorization and active-contract handling.
-- Complete domain-level reference closure, with explicit treatment of global Principals and any references outside the selected Namespace.
+- Complete domain-level reference closure, with explicit treatment of global Principals and any references outside the selected Tenant.
 - Preservation and verification of historical source issuer trust, destination enrollment and client trust-pin transition.
 - Exact-intent receipt, pending delivery and already-executed external-effect reconciliation.
 - Destination validation, interruption recovery and rollback that never allows both installations to grant conflicting authority.

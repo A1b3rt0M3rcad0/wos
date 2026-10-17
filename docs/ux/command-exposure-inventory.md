@@ -86,7 +86,7 @@ This is the explicit presentation contract, not authorization. Every command is 
 | `revise_criterion` | C | Success criteria |
 | `revoke_signed_contract` | S | Signed v2 intervention |
 | `revoke_work_contract` | A | Legacy v1 contracts |
-| `set_namespace_work_protocol` | I | Protocol and integrations |
+| `set_tenant_work_protocol` | I | Protocol and integrations |
 | `set_objective_owners` | A | Objectives |
 | `set_outcome_owners` | A | Outcome participants |
 | `set_trigger_enabled` | I | Protocol and integrations |

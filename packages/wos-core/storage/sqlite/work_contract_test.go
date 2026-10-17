@@ -15,8 +15,8 @@ import (
 func contractStorageFixture(t *testing.T, store *Store, now time.Time) d.WorkItem {
 	t.Helper()
 	ctx := context.Background()
-	scope := d.Scope{NamespaceID: testID("0199ff10-0000-7000-8000-000000000001"), OutcomeID: testID("0199ff10-0000-7000-8000-000000000002")}
-	o, err := d.NewOutcome(scope.OutcomeID, scope.NamespaceID, "Contracts", "", "Verified", d.PriorityNormal, now)
+	scope := d.Scope{TenantID: testID("0199ff10-0000-7000-8000-000000000001"), OutcomeID: testID("0199ff10-0000-7000-8000-000000000002")}
+	o, err := d.NewOutcome(scope.OutcomeID, scope.TenantID, "Contracts", "", "Verified", d.PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}

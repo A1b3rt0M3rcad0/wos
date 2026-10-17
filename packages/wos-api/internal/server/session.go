@@ -64,6 +64,6 @@ func sessionHandler(security *application.SecurityService) http.Handler {
 		}
 		http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: token, Path: "/", HttpOnly: true, Secure: secure, SameSite: http.SameSiteStrictMode, MaxAge: 12 * 3600, Expires: credential.ExpiresAt})
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"namespace_id": credential.NamespaceID, "principal_id": credential.PrincipalID, "actor_ref": credential.Actor, "expires_at": credential.ExpiresAt})
+		json.NewEncoder(w).Encode(map[string]any{"tenant_id": credential.TenantID, "principal_id": credential.PrincipalID, "actor_ref": credential.Actor, "expires_at": credential.ExpiresAt})
 	})
 }

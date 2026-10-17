@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// Exact v2 transport metadata is isolated from the unchanged v1 aggregate
+// Exact signed transport metadata is isolated from the unchanged v1 aggregate
 // encoder. Issued payload bytes/proofs and stored response_json remain opaque.
 func signedWireJSON(value any) ([]byte, error) {
 	raw, err := json.Marshal(value)
@@ -28,8 +28,8 @@ func quoteSignedCounters(value any) {
 			if key == "payload" || key == "response_json" || key == "external_context" {
 				continue
 			}
-			// The Namespace CAS version shares a name with the literal signed
-			// protocol marker. Quote only the mutable Namespace projection.
+			// The Tenant CAS version shares a name with the literal signed
+			// protocol marker. Quote only the mutable Tenant projection.
 			if key == "protocol_version" && node["phase"] != nil && node["writer_epoch"] != nil {
 				if number, ok := child.(json.Number); ok {
 					node[key] = string(number)

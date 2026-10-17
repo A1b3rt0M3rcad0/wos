@@ -36,7 +36,7 @@ The CLI exposes small operational commands to the model. It owns protected persi
 
 ## Steps and dependencies
 
-1. Record the accepted central-storage/CLI-only direction in an ADR. Retain Namespace isolation and Principal/ActorRef separation. This unblocks Profiles and activity work.
+1. Record the accepted central-storage/CLI-only direction in an ADR. Retain Tenant isolation and Principal/ActorRef separation. This unblocks Profiles and activity work.
 2. Move default storage resolution to installation scope without removing explicit legacy recovery entry points. Keep location resolution separate from protected file operations.
 3. Select one Profile once per invocation, construct its destination/identity binding, and never consult mutable global selection during the command.
 4. Add typed activity use cases through Core and ports, then adapters. Do not write SQL from HTTP/MCP or the CLI.
@@ -48,7 +48,7 @@ The CLI exposes small operational commands to the model. It owns protected persi
 - No Domain import of CLI, HTTP, SQL, runtime, or provider-specific agent packages.
 - No network fetch, model call, or agent execution inside a domain transaction.
 - Activity table/event append and durable signed-operation completion share a transaction; failed appends do not leave partial history.
-- A Profile's current directory cannot change destination, Namespace, credential, or signing key.
+- A Profile's current directory cannot change destination, Tenant, credential, or signing key.
 - Coordination still uses expected versions, Outcome guards, leases, quotas and fencing. Convenience references resolve to exact IDs before freezing intent.
 - A prepared-only return is not silently transmitted by recovery; accepted signed proof is required before cleanup.
 

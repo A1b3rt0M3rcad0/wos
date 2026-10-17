@@ -14,7 +14,7 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 	}
 	values := []ports.OutcomeIndexEntry{}
 	for _, v := range r.tx.outcomes {
-		if v.NamespaceID != ns {
+		if v.TenantID != ns {
 			continue
 		}
 		if len(f.AllowedOutcomeIDs) > 0 {
@@ -88,7 +88,7 @@ func (r outcomeRepository) ListOutcomes(ctx context.Context, ns domain.ID, f por
 				continue
 			}
 		}
-		values = append(values, ports.OutcomeIndexEntry{ID: v.ID, NamespaceID: ns, Version: v.Version, Title: v.Title, Description: v.Description, Lifecycle: v.Lifecycle, Priority: v.Priority, ArchivedAt: cloneOutcome(v).ArchivedAt, CreatedAt: v.CreatedAt, UpdatedAt: v.UpdatedAt, DetailOmitted: true})
+		values = append(values, ports.OutcomeIndexEntry{ID: v.ID, TenantID: ns, Version: v.Version, Title: v.Title, Description: v.Description, Lifecycle: v.Lifecycle, Priority: v.Priority, ArchivedAt: cloneOutcome(v).ArchivedAt, CreatedAt: v.CreatedAt, UpdatedAt: v.UpdatedAt, DetailOmitted: true})
 	}
 	sort.Slice(values, func(i, j int) bool {
 		if values[i].CreatedAt.Equal(values[j].CreatedAt) {

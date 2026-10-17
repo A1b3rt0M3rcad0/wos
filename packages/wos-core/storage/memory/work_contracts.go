@@ -284,7 +284,7 @@ func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal 
 		return d.StoredCommandResult{}, err
 	}
 	for _, v := range r.tx.idempotency {
-		if v.Identity.NamespaceID == ns && v.Identity.PrincipalID == principal && v.Completed && v.Result.CommandID == command {
+		if v.Identity.TenantID == ns && v.Identity.PrincipalID == principal && v.Completed && v.Result.CommandID == command {
 			return contractCopy(v.Result), nil
 		}
 	}

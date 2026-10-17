@@ -1,7 +1,7 @@
 package ports
 
 // StoragePoolStats contains process-local connection pressure, never credentials
-// or Namespace data. Aggregate budgets still belong to the installation operator.
+// or Tenant data. Aggregate budgets still belong to the installation operator.
 type StoragePoolStats struct {
 	MaxOpenConnections int   `json:"max_open_connections"`
 	OpenConnections    int   `json:"open_connections"`

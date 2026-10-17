@@ -37,7 +37,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	if !w.ContractsEnabled {
-		return zero, 0, d.NewError(d.ErrorCodeContractProtocolRequired, "Namespace has not activated contract protocol")
+		return zero, 0, d.NewError(d.ErrorCodeContractProtocolRequired, "Tenant has not activated contract protocol")
 	}
 	if cmd.ExpectedWorkItemVersion != w.Version {
 		return zero, 0, d.NewError(d.ErrorCodeVersionConflict, "work item version conflict")
@@ -84,7 +84,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, err
 	}
 	spec := d.WorkContractSpec{Title: w.Title, Description: w.Description, ObjectiveID: cloneIDPtr(w.ObjectiveID), Criteria: append([]d.SuccessCriterion{}, w.Criteria.Items...)}
-	outcome, e := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+	outcome, e := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 	if e != nil {
 		return zero, 0, e
 	}
@@ -121,7 +121,7 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 	}
 	policy := d.DefaultContractLeasePolicy()
 	if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-		p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+		p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.TenantID, false)
 		if e != nil {
 			return zero, 0, e
 		}
@@ -174,7 +174,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 			return zero, 0, err
 		}
 		if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-			p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
+			p, e := pr.WorkProtocol().Lock(ctx, cmd.Scope.TenantID, false)
 			if e != nil {
 				return zero, 0, e
 			}
@@ -259,7 +259,7 @@ func (s *Service) RevokeWorkContract(ctx context.Context, cc d.CommandContext, c
 	if strings.TrimSpace(cmd.Reason) == "" {
 		return MutationResult[WorkContractResult]{}, d.NewError(d.ErrorCodeInvalidArgument, "revocation reason is required")
 	}
-	if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: cmd.Scope.NamespaceID, PrincipalID: cc.PrincipalID, Permission: ports.PermissionWorkContractRevoke}); err != nil {
+	if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{TenantID: cmd.Scope.TenantID, PrincipalID: cc.PrincipalID, Permission: ports.PermissionWorkContractRevoke}); err != nil {
 		return MutationResult[WorkContractResult]{}, err
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {

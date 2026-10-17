@@ -70,7 +70,7 @@ func (s *Service) rejectClosedReturn(ctx context.Context, u ports.UnitOfWork, b 
 	if e != nil {
 		return e
 	}
-	closed, e := r.GetByOriginalIntent(ctx, scope.NamespaceID, b.PrincipalID, identity.CredentialID, command, b.IdempotencyKey)
+	closed, e := r.GetByOriginalIntent(ctx, scope.TenantID, b.PrincipalID, identity.CredentialID, command, b.IdempotencyKey)
 	if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
 		return nil
 	}
@@ -88,7 +88,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 	if e := signedRequestHint(cmd.Envelope, &hint); e != nil {
 		return MutationResult[SignedReturnResolutionResult]{}, e
 	}
-	if cmd.Scope.Validate() != nil || hint.ProtocolVersion != 2 || hint.OperationKind != "resolve_return_intent" || hint.NamespaceID != cmd.Scope.NamespaceID.String() || hint.OutcomeID != cmd.Scope.OutcomeID.String() || hint.PrincipalID != cc.PrincipalID || hint.IdempotencyKey != cc.IdempotencyKey || d.ID(hint.RequestID).Validate() != nil || d.ID(hint.SignerKeyID).Validate() != nil || d.ValidateIdempotencyKey(hint.IdempotencyKey) != nil || strings.TrimSpace(hint.Reason) == "" || len(hint.Reason) > 4096 {
+	if cmd.Scope.Validate() != nil || hint.ProtocolVersion != 3 || hint.OperationKind != "resolve_return_intent" || hint.TenantID != cmd.Scope.TenantID.String() || hint.OutcomeID != cmd.Scope.OutcomeID.String() || hint.PrincipalID != cc.PrincipalID || hint.IdempotencyKey != cc.IdempotencyKey || d.ID(hint.RequestID).Validate() != nil || d.ID(hint.SignerKeyID).Validate() != nil || d.ValidateIdempotencyKey(hint.IdempotencyKey) != nil || strings.TrimSpace(hint.Reason) == "" || len(hint.Reason) > 4096 {
 		return MutationResult[SignedReturnResolutionResult]{}, d.NewError(d.ErrorCodeInvalidArgument, "invalid signed resolution identity or reason")
 	}
 	cc.CommandID = d.ID(hint.RequestID)
@@ -101,7 +101,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e != nil {
 			return zero, 0, e
 		}
-		if b.NamespaceID != hint.NamespaceID || b.OutcomeID != hint.OutcomeID || b.ServerID != hint.ServerID || b.PrincipalID != hint.PrincipalID {
+		if b.TenantID != hint.TenantID || b.OutcomeID != hint.OutcomeID || b.ServerID != hint.ServerID || b.PrincipalID != hint.PrincipalID {
 			return zero, 0, d.NewError(d.ErrorCodeForbidden, "original destination identity differs")
 		}
 		permission := commandPermission(command)
@@ -121,7 +121,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e != nil {
 			return zero, 0, e
 		}
-		key, e := registry.Key(ctx, cmd.Scope.NamespaceID, d.ID(hint.SignerKeyID))
+		key, e := registry.Key(ctx, cmd.Scope.TenantID, d.ID(hint.SignerKeyID))
 		if e != nil {
 			return zero, 0, e
 		}
@@ -137,7 +137,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e = signing.DecodeStrict(raw, &request, 32<<10); e != nil {
 			return zero, 0, signingError(e)
 		}
-		originalKey, e := registry.Key(ctx, cmd.Scope.NamespaceID, d.ID(b.SignerKeyID))
+		originalKey, e := registry.Key(ctx, cmd.Scope.TenantID, d.ID(b.SignerKeyID))
 		if e != nil {
 			return zero, 0, e
 		}
@@ -153,7 +153,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e != nil {
 			return zero, 0, signingError(e)
 		}
-		if b.NamespaceID != request.NamespaceID || b.OutcomeID != request.OutcomeID || b.ServerID != request.ServerID || b.PrincipalID != request.PrincipalID || request.CredentialID != identity.CredentialID.String() || request.OriginalCommandName != command || request.ContractID != b.ContractID || request.OriginalRequestID != b.RequestID || request.OriginalIdempotencyKey != b.IdempotencyKey || request.OriginalRequestDigest != signing.Digest(originalRaw) || request.OriginalEnvelopeDigest != signing.Digest(envelopeBytes) || request.IdempotencyKey == b.IdempotencyKey || request.RequestID == b.RequestID {
+		if b.TenantID != request.TenantID || b.OutcomeID != request.OutcomeID || b.ServerID != request.ServerID || b.PrincipalID != request.PrincipalID || request.CredentialID != identity.CredentialID.String() || request.OriginalCommandName != command || request.ContractID != b.ContractID || request.OriginalRequestID != b.RequestID || request.OriginalIdempotencyKey != b.IdempotencyKey || request.OriginalRequestDigest != signing.Digest(originalRaw) || request.OriginalEnvelopeDigest != signing.Digest(envelopeBytes) || request.IdempotencyKey == b.IdempotencyKey || request.RequestID == b.RequestID {
 			return zero, 0, d.NewError(d.ErrorCodeForbidden, "resolution does not bind the exact original credential, envelope and scope")
 		}
 		serverRepo, e := serverIdentityRepository(u)
@@ -175,7 +175,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e != nil {
 			return zero, 0, e
 		}
-		if prior, err := repo.Acceptance(ctx, cmd.Scope.NamespaceID, cc.PrincipalID, b.IdempotencyKey); err == nil {
+		if prior, err := repo.Acceptance(ctx, cmd.Scope.TenantID, cc.PrincipalID, b.IdempotencyKey); err == nil {
 			if prior.Scope != cmd.Scope || prior.ContractKind != kind || prior.ContractID != d.ID(b.ContractID) || prior.RequestID == nil || prior.RequestID.String() != b.RequestID || prior.RequestDigest != request.OriginalRequestDigest {
 				return zero, 0, d.NewError(d.ErrorCodeIdempotencyConflict, "original accepted intention differs")
 			}
@@ -191,7 +191,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if e != nil {
 			return zero, 0, e
 		}
-		if prior, err := resolutions.GetByOriginalIntent(ctx, cmd.Scope.NamespaceID, cc.PrincipalID, identity.CredentialID, command, b.IdempotencyKey); err == nil {
+		if prior, err := resolutions.GetByOriginalIntent(ctx, cmd.Scope.TenantID, cc.PrincipalID, identity.CredentialID, command, b.IdempotencyKey); err == nil {
 			if prior.ResolutionRequestID != cc.CommandID || prior.ResolutionIdempotencyKey != cc.IdempotencyKey || prior.ResolutionDigest != signing.Digest(raw) {
 				return zero, 0, d.NewError(d.ErrorCodeIdempotencyConflict, "another terminal resolution already exists")
 			}
@@ -282,11 +282,11 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		if !slices.Contains(grant.AllowedSigningKeyIDs, b.SignerKeyID) || !slices.Contains(grant.AllowedSigningKeyIDs, request.SignerKeyID) {
 			return zero, 0, d.NewError(d.ErrorCodeForbidden, "resolution signer outside original grant")
 		}
-		server, e = s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID)
+		server, e = s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID)
 		if e != nil {
 			return zero, 0, e
 		}
-		payload := signing.ReturnResolutionReceiptPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: cmd.Scope.NamespaceID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: cc.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, CredentialID: identity.CredentialID.String(), RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, RequestDigest: signing.Digest(raw), OriginalCommandName: command, OriginalRequestID: b.RequestID, OriginalIdempotencyKey: b.IdempotencyKey, OriginalRequestDigest: request.OriginalRequestDigest, OriginalEnvelopeDigest: request.OriginalEnvelopeDigest, ContractID: b.ContractID, Decision: "closed_without_acceptance", Reason: request.Reason, OutcomeRevision: signing.Decimal(coord.Revision), ResolvedAt: now.UTC().Format(time.RFC3339Nano)}
+		payload := signing.ReturnResolutionReceiptPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: cmd.Scope.TenantID.String(), OutcomeID: cmd.Scope.OutcomeID.String(), PrincipalID: cc.PrincipalID, SignerKeyID: server.IssuerKeyID.String()}, CredentialID: identity.CredentialID.String(), RequestID: cc.CommandID.String(), IdempotencyKey: cc.IdempotencyKey, RequestDigest: signing.Digest(raw), OriginalCommandName: command, OriginalRequestID: b.RequestID, OriginalIdempotencyKey: b.IdempotencyKey, OriginalRequestDigest: request.OriginalRequestDigest, OriginalEnvelopeDigest: request.OriginalEnvelopeDigest, ContractID: b.ContractID, Decision: "closed_without_acceptance", Reason: request.Reason, OutcomeRevision: signing.Decimal(coord.Revision), ResolvedAt: now.UTC().Format(time.RFC3339Nano)}
 		_, doc, e := s.issueSignedFact(ctx, u, server, cmd.Scope, d.ID(b.ContractID), kind, "resolution", cc.PrincipalID, signing.ReturnResolutionReceipt, payload, now)
 		if e != nil {
 			return zero, 0, e
@@ -323,7 +323,7 @@ func verifyResolutionReceipt(ctx context.Context, u ports.UnitOfWork, r d.Signed
 	if e != nil {
 		return doc, e
 	}
-	key, e := registry.Key(ctx, r.Scope.NamespaceID, r.IssuerKeyID)
+	key, e := registry.Key(ctx, r.Scope.TenantID, r.IssuerKeyID)
 	if e != nil {
 		return doc, e
 	}
@@ -338,15 +338,15 @@ func verifyResolutionReceipt(ctx context.Context, u ports.UnitOfWork, r d.Signed
 	if e != nil {
 		return doc, signingError(e)
 	}
-	raw, e := signing.Verify(env, signing.ReturnResolutionReceipt, key.ID.String(), pub)
+	raw, e := signing.VerifyHistorical(env, signing.ReturnResolutionReceipt, key.ID.String(), pub)
 	if e != nil {
 		return doc, signingError(e)
 	}
 	var p signing.ReturnResolutionReceiptPayload
-	if e = signing.DecodeStrict(raw, &p, 32<<10); e != nil {
+	if e = signing.DecodeHistoricalPayload(raw, &p, 32<<10); e != nil {
 		return doc, signingError(e)
 	}
-	if p.ProtocolVersion != 2 || p.ServerID != serverID || p.NamespaceID != r.Scope.NamespaceID.String() || p.OutcomeID != r.Scope.OutcomeID.String() || p.PrincipalID != r.PrincipalID || p.CredentialID != r.CredentialID.String() || p.ContractID != r.ContractID.String() || p.OriginalCommandName != r.OriginalCommandName || p.OriginalRequestID != r.OriginalRequestID.String() || p.OriginalIdempotencyKey != r.OriginalIdempotencyKey || p.OriginalRequestDigest != r.OriginalRequestDigest || p.OriginalEnvelopeDigest != r.OriginalEnvelopeDigest || p.RequestID != r.ResolutionRequestID.String() || p.IdempotencyKey != r.ResolutionIdempotencyKey || p.RequestDigest != r.ResolutionDigest || p.Decision != r.Decision || p.Reason != r.Reason || p.OutcomeRevision != signing.Decimal(r.OutcomeRevision) || p.ResolvedAt != r.RecordedAt.UTC().Format(time.RFC3339Nano) {
+	if (p.ProtocolVersion != 2 && p.ProtocolVersion != 3) || p.ServerID != serverID || p.TenantID != r.Scope.TenantID.String() || p.OutcomeID != r.Scope.OutcomeID.String() || p.PrincipalID != r.PrincipalID || p.CredentialID != r.CredentialID.String() || p.ContractID != r.ContractID.String() || p.OriginalCommandName != r.OriginalCommandName || p.OriginalRequestID != r.OriginalRequestID.String() || p.OriginalIdempotencyKey != r.OriginalIdempotencyKey || p.OriginalRequestDigest != r.OriginalRequestDigest || p.OriginalEnvelopeDigest != r.OriginalEnvelopeDigest || p.RequestID != r.ResolutionRequestID.String() || p.IdempotencyKey != r.ResolutionIdempotencyKey || p.RequestDigest != r.ResolutionDigest || p.Decision != r.Decision || p.Reason != r.Reason || p.OutcomeRevision != signing.Decimal(r.OutcomeRevision) || p.ResolvedAt != r.RecordedAt.UTC().Format(time.RFC3339Nano) {
 		return doc, d.NewError(d.ErrorCodeIdempotencyState, "resolution receipt metadata differs")
 	}
 	return doc, nil

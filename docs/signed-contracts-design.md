@@ -1,5 +1,13 @@
 # Signed contracts v2 implementation contract
 
+> [!NOTE]
+> This document retains the earlier Namespace/protocol contract for historical
+> context and legacy recovery. Current source uses Tenant contracts and signed
+> protocol 3. Follow [Tenant cutover](scaling/tenants.md) and the [current agent
+> workflow](agents.md); do not rename fields inside old signed material or use
+> these historical mutation examples against the current service.
+
+
 Baseline b75aa3e0ca6d649cafadf8450d9b5d606367dda4 / tree e51f8d10d4be81030a3220b8383121f2d45084c5 / product 0.2.0. Master was fetched and confirmed unchanged. The owner authorized execution of the complete supplied plan; its instructions are implementation guidance, not a claim of existing features. C01–C12 are preserved.
 
 ADRs 021–026 govern profiles, signatures, credential policy, handoff/review, cleanup and cutover. Pure signing codec is packages/wos-core/signing; Application owns signed-command derivation and guards. Signing/private secret stores belong only to runtime/CLI composition. Existing wos/wosctl and one command catalog are retained.

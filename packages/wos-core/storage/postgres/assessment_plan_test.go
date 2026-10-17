@@ -14,8 +14,8 @@ func explainAssessmentHistoryPlan(t *testing.T, store *Store, owner d.EntityRef)
 	if _, err := store.db.ExecContext(ctx, "VACUUM (ANALYZE) criterion_assessments, success_criteria"); err != nil {
 		t.Fatal(err)
 	}
-	query := `SELECT COUNT(*) FROM criterion_assessments a WHERE a.namespace_id=$1 AND a.outcome_id=$2 AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=$3 AND c.outcome_id=$4 AND c.owner_id=$5 AND c.owner_kind=$6)`
-	args := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), string(owner.Kind)}
+	query := `SELECT COUNT(*) FROM criterion_assessments a WHERE a.tenant_id=$1 AND a.outcome_id=$2 AND a.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.tenant_id=$3 AND c.outcome_id=$4 AND c.owner_id=$5 AND c.owner_kind=$6)`
+	args := []any{owner.TenantID.String(), owner.OutcomeID.String(), owner.TenantID.String(), owner.OutcomeID.String(), owner.ID.String(), string(owner.Kind)}
 	plan := func(q interface {
 		QueryRowContext(context.Context, string, ...any) *sql.Row
 	}) string {

@@ -72,10 +72,10 @@ func prepareReferencedProfileV2(ctx context.Context, w *Workspace, o options, na
 	if e != nil {
 		return profile, e
 	}
-	if identity.ServerID != project.Connection.ExpectedServerID.String() || identity.NamespaceID != project.Scope.NamespaceID {
+	if identity.ServerID != project.Connection.ExpectedServerID.String() || identity.TenantID != project.Scope.TenantID {
 		return profile, fmt.Errorf("authorized enrollment/persistent identity differs")
 	}
-	trust, e := client.GetSignedTrust(ctx, project.Scope.NamespaceID)
+	trust, e := client.GetSignedTrust(ctx, project.Scope.TenantID)
 	if e != nil {
 		return profile, e
 	}
@@ -102,6 +102,6 @@ func prepareReferencedProfileV2(ctx context.Context, w *Workspace, o options, na
 			return profile, fmt.Errorf("selected protected key is not registered; an authorized --enrollment is required")
 		}
 	}
-	profile = ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: name, Binding: ProfileBindingV2{ServerID: project.Connection.ExpectedServerID, ServerOrigin: project.Connection.ServerURL, NamespaceID: identity.NamespaceID, PrincipalID: identity.PrincipalID, CredentialID: identity.CredentialID, IssuerKeys: []ProfileIssuerV2{{KeyID: trust.Server.IssuerKeyID, PublicKey: trust.Server.PublicKey, Fingerprint: trust.Server.Fingerprint}}}, Authentication: ProfileAuthenticationV2{CredentialRef: credentialRef}, Signing: ProfileSigningV2{KeyID: keyID, PrivateKeyRef: privateRef, PublicKeyFingerprint: fingerprint}, Lease: LeaseConfig{300}, Output: OutputConfig{"json"}, Local: ProfileLocalV2{SchemaVersion: 1, PendingOperations: []PendingOperationV2{}}}
+	profile = ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: name, Binding: ProfileBindingV2{ServerID: project.Connection.ExpectedServerID, ServerOrigin: project.Connection.ServerURL, TenantID: identity.TenantID, PrincipalID: identity.PrincipalID, CredentialID: identity.CredentialID, IssuerKeys: []ProfileIssuerV2{{KeyID: trust.Server.IssuerKeyID, PublicKey: trust.Server.PublicKey, Fingerprint: trust.Server.Fingerprint}}}, Authentication: ProfileAuthenticationV2{CredentialRef: credentialRef}, Signing: ProfileSigningV2{KeyID: keyID, PrivateKeyRef: privateRef, PublicKeyFingerprint: fingerprint}, Lease: LeaseConfig{300}, Output: OutputConfig{"json"}, Local: ProfileLocalV2{SchemaVersion: 1, PendingOperations: []PendingOperationV2{}}}
 	return profile, profile.Validate()
 }

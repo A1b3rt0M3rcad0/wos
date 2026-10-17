@@ -22,7 +22,7 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 	ns := testID("0199d083-0000-7000-8000-000000000001")
 	security := application.SecurityService{Store: store, Clock: sqliteFixedClock{now: now}, IDs: &sqliteSequenceIDs{prefix: "0199d096", next: 1}}
 	bootstrap := "backup-operator-credential-32-characters"
-	if err := security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "Restore scope"}, cc.PrincipalID, bootstrap); err != nil {
+	if err := security.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "Restore scope"}, cc.PrincipalID, bootstrap); err != nil {
 		t.Fatal(err)
 	}
 	identity, err := security.Authenticate(ctx, bootstrap)
@@ -30,12 +30,12 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminCtx := application.WithIdentity(ctx, identity)
-	_, _, err = security.Administer(adminCtx, "backup-grant-receipt-0001", application.AdministrativeIntent{NamespaceID: ns, ExpectedVersion: 1, Operation: "set_grant", PrincipalID: "backup-agent", Permissions: []ports.Permission{ports.PermissionStateRead}})
+	_, _, err = security.Administer(adminCtx, "backup-grant-receipt-0001", application.AdministrativeIntent{TenantID: ns, ExpectedVersion: 1, Operation: "set_grant", PrincipalID: "backup-agent", Permissions: []ports.Permission{ports.PermissionStateRead}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	expires := now.Add(time.Hour)
-	issueIntent := application.AdministrativeIntent{NamespaceID: ns, ExpectedVersion: 2, Operation: "issue_credential", PrincipalID: "backup-agent", Actor: &domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "backup", ID: "agent"}, ExpiresAt: &expires}
+	issueIntent := application.AdministrativeIntent{TenantID: ns, ExpectedVersion: 2, Operation: "issue_credential", PrincipalID: "backup-agent", Actor: &domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "backup", ID: "agent"}, ExpiresAt: &expires}
 	issued, credential, err := security.Administer(adminCtx, "backup-issue-receipt-0001", issueIntent)
 	if err != nil {
 		t.Fatal(err)
@@ -44,11 +44,11 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outcome, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Durable integration", DesiredState: "Signals survive consumers and restart", Priority: domain.PriorityNormal})
+	outcome, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "Durable integration", DesiredState: "Signals survive consumers and restart", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
-	endpoint := ports.WebhookEndpoint{ID: testID("0199d084-0000-7000-8000-000000000001"), NamespaceID: ns, URL: "https://example.test/wos", SecretRef: "product-key", KeyID: "key-1"}
+	endpoint := ports.WebhookEndpoint{ID: testID("0199d084-0000-7000-8000-000000000001"), TenantID: ns, URL: "https://example.test/wos", SecretRef: "product-key", KeyID: "key-1"}
 	if err = store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}); err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 		t.Fatal("restored session/credential parent lost", err)
 	}
 	audit, err := security.AdministrativeSnapshot(adminCtx, ns)
-	if err != nil || len(audit.Audit) != 2 || audit.NamespaceVersion != 3 {
+	if err != nil || len(audit.Audit) != 2 || audit.TenantVersion != 3 {
 		t.Fatal("restored grants/audit lost", err)
 	}
 	adminReplay, hidden, err := security.Administer(adminCtx, "backup-issue-receipt-0001", issueIntent)
@@ -176,12 +176,12 @@ func TestDeliveryCrashBudgetRequiresExplicitRedelivery(t *testing.T) {
 	now := time.Now().UTC()
 	s, _ := application.NewService(store, sqliteFixedClock{now: now}, &sqliteSequenceIDs{prefix: "0199d097", next: 1})
 	cc := sqliteCommandContext("0199d097-0000-7000-8000-000000000011", "")
-	created, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: testID("0199d097-0000-7000-8000-000000000012"), Title: "Bounded crashed workers", DesiredState: "Delivery eventually exhausts", Priority: domain.PriorityNormal})
+	created, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: testID("0199d097-0000-7000-8000-000000000012"), Title: "Bounded crashed workers", DesiredState: "Delivery eventually exhausts", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
 	scope := created.Value.Scope()
-	endpoint := ports.WebhookEndpoint{ID: testID("0199d097-0000-7000-8000-000000000013"), NamespaceID: scope.NamespaceID, URL: "https://example.test/webhook", SecretRef: "key", KeyID: "key-1"}
+	endpoint := ports.WebhookEndpoint{ID: testID("0199d097-0000-7000-8000-000000000013"), TenantID: scope.TenantID, URL: "https://example.test/webhook", SecretRef: "key", KeyID: "key-1"}
 	if err = store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}); err != nil {
 		t.Fatal(err)
 	}

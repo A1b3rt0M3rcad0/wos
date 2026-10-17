@@ -130,10 +130,10 @@ func TestCentralProfilePrecedenceActivePersistenceAndDistinctDestinations(t *tes
 	addCentralFixture(t, "executor", nil)
 	addCentralFixture(t, "reviewer", func(project *ProjectV2, profile *ProfileV2) {
 		project.Connection.ServerURL = "https://other.example"
-		project.Scope.NamespaceID = d.MustParseID("0199ac10-0000-7000-8000-000000000009")
+		project.Scope.TenantID = d.MustParseID("0199ac10-0000-7000-8000-000000000009")
 		project.Scope.DefaultOutcomeID = ""
 		profile.Binding.ServerOrigin = project.Connection.ServerURL
-		profile.Binding.NamespaceID = project.Scope.NamespaceID
+		profile.Binding.TenantID = project.Scope.TenantID
 	})
 	if code, _ := centralRun(t, "profile", "show"); code == 0 {
 		t.Fatal("ambiguous profiles selected without authority")
@@ -184,12 +184,12 @@ func TestCentralInFlightProcessKeepsItsSelectedProfile(t *testing.T) {
 			case <-r.Context().Done():
 				return
 			}
-			json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: project.Connection.ExpectedServerID.String(), NamespaceID: project.Scope.NamespaceID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID})
+			json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: project.Connection.ExpectedServerID.String(), TenantID: project.Scope.TenantID, PrincipalID: template.Binding.PrincipalID, CredentialID: template.Binding.CredentialID})
 		case "/api/v1/capabilities":
 			capabilitiesRead <- struct{}{}
 			json.NewEncoder(rw).Encode(a.ExecutionCapabilities{})
 		default:
-			json.NewEncoder(rw).Encode(a.SignedStateResult{NamespaceID: project.Scope.NamespaceID, Resource: "trust", ProtocolVersion: 2, Server: &d.ServerIdentity{ID: project.Connection.ExpectedServerID, IssuerKeyID: template.Binding.IssuerKeys[0].KeyID, PublicKey: template.Binding.IssuerKeys[0].PublicKey, Fingerprint: template.Binding.IssuerKeys[0].Fingerprint}})
+			json.NewEncoder(rw).Encode(a.SignedStateResult{TenantID: project.Scope.TenantID, Resource: "trust", ProtocolVersion: 3, Server: &d.ServerIdentity{ID: project.Connection.ExpectedServerID, IssuerKeyID: template.Binding.IssuerKeys[0].KeyID, PublicKey: template.Binding.IssuerKeys[0].PublicKey, Fingerprint: template.Binding.IssuerKeys[0].Fingerprint}})
 		}
 	}))
 	defer endpoint.Close()
@@ -253,7 +253,7 @@ func TestCentralProfileRemovalRefusesActivePendingAndContracts(t *testing.T) {
 		t.Fatal(e)
 	}
 	payload := []byte(`{"preserve":"exact intention"}`)
-	profile.Local.PendingOperations = []PendingOperationV2{{ID: d.MustParseID("0199ac10-0000-7000-8000-000000000008"), Operation: "AcquireSignedWorkContract", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID}, IdempotencyKey: "preserved-pending-idempotency", Payload: "eyJwcmVzZXJ2ZSI6ImV4YWN0IGludGVudGlvbiJ9", PayloadDigest: signing.Digest(payload)}}
+	profile.Local.PendingOperations = []PendingOperationV2{{ID: d.MustParseID("0199ac10-0000-7000-8000-000000000008"), Operation: "AcquireSignedWorkContract", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID}, IdempotencyKey: "preserved-pending-idempotency", Payload: "eyJwcmVzZXJ2ZSI6ImV4YWN0IGludGVudGlvbiJ9", PayloadDigest: signing.Digest(payload)}}
 	if e = profile.SealBinding([]byte(os.Getenv("TEST_WOS_TOKEN"))); e != nil {
 		t.Fatal(e)
 	}

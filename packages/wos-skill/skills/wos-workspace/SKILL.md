@@ -38,7 +38,7 @@ Read [recording material](references/workspace.md) only when adding progress, ev
 
 Use context/status first and bounded history only to resolve a specific gap. Preserve cursors, truncation and incomplete-search information. Do not load a full Outcome or transcript on every iteration and do not maintain a duplicate manual pending list.
 
-Namespace administration does not grant installation authority. Creating a Namespace requires explicit `installation:provision`; process-wide metrics require `installation:observe`. Use the scoped delivery diagnostic for the assigned Namespace/Outcome. Installation operator promotion is a host-controlled offline maintenance action, never an agent workaround for a denied request.
+Tenant administration does not grant infrastructure authority. Tenant schema provisioning, suspension and deletion are protected host operations; agents must not invoke storage lifecycle commands to bypass a denied request. Process-wide metrics require `installation:observe`. Use the scoped delivery diagnostic for the assigned Tenant/Outcome. Installation operator promotion is a host-controlled offline maintenance action.
 
 ## Resume safely
 

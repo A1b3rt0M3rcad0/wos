@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
@@ -35,10 +34,10 @@ func legacySignedCacheCredential(ctx context.Context, u ports.UnitOfWork, scope 
 		return result.Contract.Binding.CredentialID, nil
 	case SignedReturnResult:
 		var receipt signing.ReceiptPayload
-		if e := json.Unmarshal(result.Receipt.Payload, &receipt); e != nil {
+		if e := signing.DecodeHistoricalPayload(result.Receipt.Payload, &receipt, signing.MaxPayloadBytes); e != nil {
 			return "", e
 		}
-		if receipt.NamespaceID != scope.NamespaceID.String() || receipt.OutcomeID != scope.OutcomeID.String() {
+		if receipt.TenantID != scope.TenantID.String() || receipt.OutcomeID != scope.OutcomeID.String() {
 			return "", d.NewError(d.ErrorCodeIdempotencyState, "cached acceptance scope differs")
 		}
 		contracts, ok := u.(ports.SignedContractUnitOfWork)
@@ -70,31 +69,31 @@ func legacySignedOperationView(ctx context.Context, u ports.UnitOfWork, scope d.
 	switch legacy.CommandName {
 	case "AcquireNextSignedWorkContract":
 		var result MutationResult[WorkContractAcquisition]
-		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+		if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &result, 0); e != nil {
 			return d.SignedOperationResult{}, e
 		}
 		value = result.Value
 	case "AcquireSignedWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract":
 		var result MutationResult[WorkContractResult]
-		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+		if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &result, 0); e != nil {
 			return d.SignedOperationResult{}, e
 		}
 		value = result.Value
 	case "AcquireNextSignedReviewContract":
 		var result MutationResult[SignedReviewAcquisition]
-		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+		if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &result, 0); e != nil {
 			return d.SignedOperationResult{}, e
 		}
 		value = result.Value
 	case "AcquireSignedReviewContract", "RenewSignedReviewContract", "ResumeSignedReviewContract":
 		var result MutationResult[SignedReviewContractResult]
-		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+		if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &result, 0); e != nil {
 			return d.SignedOperationResult{}, e
 		}
 		value = result.Value
 	case "ReturnSignedWork", "ReturnSignedReview":
 		var result MutationResult[SignedReturnResult]
-		if e := json.Unmarshal(legacy.Result.ResponseJSON, &result); e != nil {
+		if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &result, 0); e != nil {
 			return d.SignedOperationResult{}, e
 		}
 		value = result.Value

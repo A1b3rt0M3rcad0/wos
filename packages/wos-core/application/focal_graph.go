@@ -178,7 +178,7 @@ func (s *Service) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q Gra
 	sort.Slice(selected, func(i, j int) bool { return selected[i].ID < selected[j].ID })
 	after := ""
 	if q.Cursor != "" {
-		c, err := decodeCursor(q.Cursor, scope.NamespaceID, scope.OutcomeID, "graph", hash)
+		c, err := decodeCursor(q.Cursor, scope.TenantID, scope.OutcomeID, "graph", hash)
 		if err != nil {
 			return GraphPage{}, err
 		}
@@ -203,7 +203,7 @@ func (s *Service) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q Gra
 	sort.Slice(page.Nodes, func(i, j int) bool { return page.Nodes[i].Ref.ID < page.Nodes[j].Ref.ID })
 	if end < len(selected) {
 		page.Truncated = true
-		page.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "graph", Filter: hash, Revision: state.OutcomeRevision, Key: selected[end-1].ID})
+		page.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "graph", Filter: hash, Revision: state.OutcomeRevision, Key: selected[end-1].ID})
 	}
 	raw, _ := json.Marshal(page)
 	if len(raw) > MaxSnapshotBytes {
@@ -260,7 +260,7 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 	if err != nil {
 		return WorkContext{}, err
 	}
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return WorkContext{}, err
 	}

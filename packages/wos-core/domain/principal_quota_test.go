@@ -7,7 +7,7 @@ import (
 
 func TestPrincipalQuotaPolicyScopeBoundsAndLegacyDefaults(t *testing.T) {
 	var p WorkAcceptancePolicy
-	if e := json.Unmarshal([]byte(`{"namespace_id":"0199d180-0000-7000-8000-000000000001","revision":"1","acceptance_floor":"direct","max_active_work_contracts":20,"max_active_review_contracts":10}`), &p); e != nil {
+	if e := json.Unmarshal([]byte(`{"tenant_id":"0199d180-0000-7000-8000-000000000001","revision":"1","acceptance_floor":"direct","max_active_work_contracts":20,"max_active_review_contracts":10}`), &p); e != nil {
 		t.Fatal(e)
 	}
 	if e := p.Validate(); e != nil || p.PrincipalWorkLimit() != 3 || p.PrincipalReviewLimit() != 1 {

@@ -8,7 +8,7 @@ export async function seedPresentation(wos) {
     extraTasks: 6,
   });
   const { scope, tasks } = data;
-  const base = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+  const base = `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}`;
   const read = async (collection, id) => (await wos.api(`${base}/${collection}/${id}`)).value;
   const progress = await wos.command("claim_work_item", {
     scope, work_item_id: tasks.advisory.id, expected_version: tasks.advisory.version, ttl_seconds: 900,

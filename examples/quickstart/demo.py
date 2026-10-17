@@ -103,7 +103,7 @@ def main():
 
     directory = Path(tempfile.mkdtemp(prefix="wos-quickstart-"))
     token = secrets.token_urlsafe(32)
-    namespace = "0199d000-0000-7000-8000-000000000001"
+    tenant = "0199d000-0000-7000-8000-000000000001"
     # Authentication prevents writes to another instance if another process wins
     # the small gap between reserving a free port and WOS binding it.
     with socket.socket() as reservation:
@@ -115,8 +115,8 @@ def main():
     environment.update({
         "WOS_LISTEN": f"127.0.0.1:{port}", "WOS_STORAGE_DRIVER": "sqlite",
         "WOS_SQLITE_PATH": str(directory / "wos.db"), "WOS_AUTH_MODE": "api_token",
-        "WOS_BOOTSTRAP_TOKEN": token, "WOS_BOOTSTRAP_NAMESPACE_ID": namespace,
-        "WOS_BOOTSTRAP_NAMESPACE_NAME": "Quickstart", "WOS_LOCAL_PRINCIPAL_ID": "demo-operator",
+        "WOS_BOOTSTRAP_TOKEN": token, "WOS_BOOTSTRAP_TENANT_ID": tenant,
+        "WOS_BOOTSTRAP_TENANT_NAME": "Quickstart", "WOS_LOCAL_PRINCIPAL_ID": "demo-operator",
         "WOS_MCP_ENABLED": "false", "WOS_DELIVERY_WORKER_ENABLED": "false",
     })
     record = None
@@ -149,7 +149,7 @@ def main():
 
         demo.emit("One trusted local operator; unsigned HTTP, not independent signed review.")
         demo.emit("A real server, isolated SQLite, no agent runtime or external service.")
-        base = f"/api/v1/namespaces/{namespace}/outcomes"
+        base = f"/api/v1/tenants/{tenant}/outcomes"
         demo.stage("1. Define the Outcome and one required criterion")
         outcome, outcome_etag = demo.request("POST", base, {
             "title": "Installation instructions are ready for review",

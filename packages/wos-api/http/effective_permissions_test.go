@@ -17,7 +17,7 @@ func TestEffectivePermissionHTTPQuery(t *testing.T) {
 	h := newTestHandler(t)
 	server := httptest.NewServer(h)
 	defer server.Close()
-	path := server.URL + "/api/v1/namespaces/0199ec00-0000-7000-8000-000000000001/effective-permissions"
+	path := server.URL + "/api/v1/tenants/0199ec00-0000-7000-8000-000000000001/effective-permissions"
 	v := doJSON[struct {
 		Permissions []string `json:"permissions"`
 		Authority   bool     `json:"execution_authority"`
@@ -37,7 +37,7 @@ func TestEffectivePermissionMCPParity(t *testing.T) {
 	server := httptest.NewServer(h)
 	defer server.Close()
 	ns := "0199ec00-0000-7000-8000-000000000001"
-	httpResult := doJSON[map[string]any](t, server.Client(), http.MethodGet, server.URL+"/api/v1/namespaces/"+ns+"/effective-permissions", nil, nil, http.StatusOK).Value
+	httpResult := doJSON[map[string]any](t, server.Client(), http.MethodGet, server.URL+"/api/v1/tenants/"+ns+"/effective-permissions", nil, nil, http.StatusOK).Value
 	ctx := context.Background()
 	identity := application.Identity{PrincipalID: h.auth.Principal(), Actor: h.auth.Actor()}
 	protocol, err := mcptransport.New(h.service, h.ids, mcptransport.Options{LocalIdentity: &identity})
@@ -55,7 +55,7 @@ func TestEffectivePermissionMCPParity(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cs.Close()
-	result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "wos_effective_permissions", Arguments: map[string]any{"namespace_id": ns}})
+	result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "wos_effective_permissions", Arguments: map[string]any{"tenant_id": ns}})
 	if err != nil || result.IsError {
 		t.Fatalf("query failed: %+v %v", result, err)
 	}

@@ -18,7 +18,7 @@ func TestReferenceHTTPQueryContract(t *testing.T) {
 	s := httptest.NewServer(handler)
 	defer s.Close()
 	client := s.Client()
-	base := s.URL + "/api/v1/namespaces/0199ec00-0000-7000-8000-000000000001/outcomes"
+	base := s.URL + "/api/v1/tenants/0199ec00-0000-7000-8000-000000000001/outcomes"
 	out := doJSON[application.MutationResult[domain.Outcome]](t, client, http.MethodPost, base, []byte(`{"title":"Reference HTTP","desired_state":"Bounded search","priority":"normal"}`), map[string]string{"Idempotency-Key": "refs-outcome-00001"}, http.StatusCreated).Value.Value
 	path := base + "/" + out.ID.String() + "/references"
 	for _, bad := range []string{"?kind=outcome&limit=0", "?kind=invalid", "?kind=outcome&limit=101", "?kind=outcome&cursor=malformed"} {
@@ -73,7 +73,7 @@ func TestReferenceHTTPQueryContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer clientSession.Close()
-	result, err := clientSession.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_references", Arguments: map[string]any{"namespace_id": out.NamespaceID.String(), "outcome_id": out.ID.String(), "kinds": []string{"outcome"}, "text": "reference", "limit": 1}})
+	result, err := clientSession.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_references", Arguments: map[string]any{"tenant_id": out.TenantID.String(), "outcome_id": out.ID.String(), "kinds": []string{"outcome"}, "text": "reference", "limit": 1}})
 	if err != nil || result.IsError {
 		t.Fatalf("MCP query failed: %+v %v", result, err)
 	}

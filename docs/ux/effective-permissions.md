@@ -1,6 +1,6 @@
 # Effective permissions and human action registry
 
-`GET /api/v1/namespaces/{namespace_id}/effective-permissions?outcome_id=…` returns current permission names and `execution_authority: false`. The optional Outcome binds credential-policy scope; namespace metadata can be read before selecting an Outcome. The response is non-cacheable. MCP `wos_effective_permissions` adapts the same Application method.
+`GET /api/v1/tenants/{tenant_id}/effective-permissions?outcome_id=…` returns current permission names and `execution_authority: false`. The optional Outcome binds credential-policy scope; tenant metadata can be read before selecting an Outcome. The response is non-cacheable. MCP `wos_effective_permissions` adapts the same Application method.
 
 The query checks authenticated read access, tests the supported permission allowlist through the composed authorizer and checks read access again. Authorization denials omit permission hints; infrastructure failures fail the query. Revoked read access cannot produce a successful hint response. Local embedded composition preserves its explicit trusted normal-command behavior while privileged hints still consult authorization.
 

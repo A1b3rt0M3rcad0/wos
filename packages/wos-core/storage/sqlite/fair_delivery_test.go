@@ -25,7 +25,7 @@ func fairDeliveryFixture(t *testing.T) (*Store, time.Time, []domain.Scope) {
 	var scopes []domain.Scope
 	for i := 1; i <= 2; i++ {
 		ns := testID(fmt.Sprintf("0199df03-0000-7000-8000-%012d", i))
-		out, e := service.CreateOutcome(context.Background(), cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: fmt.Sprintf("Tenant %d", i), DesiredState: "Delivery fairness", Priority: domain.PriorityNormal})
+		out, e := service.CreateOutcome(context.Background(), cc, application.CreateOutcomeCommand{TenantID: ns, Title: fmt.Sprintf("Tenant %d", i), DesiredState: "Delivery fairness", Priority: domain.PriorityNormal})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -40,7 +40,7 @@ func fairDeliveryFixture(t *testing.T) (*Store, time.Time, []domain.Scope) {
 		for j := 1; j <= count; j++ {
 			id := testID(fmt.Sprintf("0199df04-0000-7000-8000-%012d", i*10+j))
 			endpointIDs = append(endpointIDs, id)
-			endpoints = append(endpoints, ports.WebhookEndpoint{ID: id, NamespaceID: ns, URL: "https://example.test/hooks", SecretRef: fmt.Sprintf("tenant-%d", i), KeyID: "key"})
+			endpoints = append(endpoints, ports.WebhookEndpoint{ID: id, TenantID: ns, URL: "https://example.test/hooks", SecretRef: fmt.Sprintf("tenant-%d", i), KeyID: "key"})
 		}
 		if e = store.InstallEndpoints(context.Background(), endpoints); e != nil {
 			t.Fatal(e)
@@ -59,10 +59,10 @@ func fairDeliveryFixture(t *testing.T) (*Store, time.Time, []domain.Scope) {
 	return store, now, scopes
 }
 
-func TestDeliveryNamespaceTurnsSharedCapsAndSecretEligibility(t *testing.T) {
+func TestDeliveryTenantTurnsSharedCapsAndSecretEligibility(t *testing.T) {
 	store, now, scopes := fairDeliveryFixture(t)
 	ctx := context.Background()
-	policy := ports.DeliveryClaimPolicy{MaxInflightPerNamespace: 1, MaxInflightPerEndpoint: 1, SecretRefs: []string{"tenant-1", "tenant-2"}}
+	policy := ports.DeliveryClaimPolicy{MaxInflightPerTenant: 1, MaxInflightPerEndpoint: 1, SecretRefs: []string{"tenant-1", "tenant-2"}}
 	claim := func(index int, p ports.DeliveryClaimPolicy) *ports.Delivery {
 		t.Helper()
 		v, e := store.ClaimDeliveryWithPolicy(ctx, now, testID(fmt.Sprintf("0199df05-0000-7000-8000-%012d", index)), time.Minute, p)
@@ -75,16 +75,16 @@ func TestDeliveryNamespaceTurnsSharedCapsAndSecretEligibility(t *testing.T) {
 		t.Fatal("worker without eligible secrets consumed a retry")
 	}
 	first, second := claim(2, policy), claim(3, policy)
-	if first == nil || second == nil || first.Scope.NamespaceID == second.Scope.NamespaceID {
-		t.Fatalf("independent namespaces did not get capacity: %+v %+v", first, second)
+	if first == nil || second == nil || first.Scope.TenantID == second.Scope.TenantID {
+		t.Fatalf("independent tenants did not get capacity: %+v %+v", first, second)
 	}
 	if claim(4, policy) != nil {
-		t.Fatal("shared Namespace cap exceeded")
+		t.Fatal("shared Tenant cap exceeded")
 	}
 	if err := store.FinishDelivery(ctx, *second, now, "http_200", true, now); err != nil {
 		t.Fatal(err)
 	}
-	if next := claim(5, policy); next == nil || next.Scope.NamespaceID != second.Scope.NamespaceID {
+	if next := claim(5, policy); next == nil || next.Scope.TenantID != second.Scope.TenantID {
 		t.Fatal("saturated tenant blocked another tenant")
 	}
 	// Inspect the queue, not a process-local counter: no ineligible attempt ran.
@@ -98,7 +98,7 @@ func TestDeliveryNamespaceTurnsSharedCapsAndSecretEligibility(t *testing.T) {
 func TestDeliveryEndpointCapsAndConcurrentClaimers(t *testing.T) {
 	store, now, scopes := fairDeliveryFixture(t)
 	ctx := context.Background()
-	policy := ports.DeliveryClaimPolicy{MaxInflightPerNamespace: 2, MaxInflightPerEndpoint: 1, SecretRefs: []string{"tenant-1"}}
+	policy := ports.DeliveryClaimPolicy{MaxInflightPerTenant: 2, MaxInflightPerEndpoint: 1, SecretRefs: []string{"tenant-1"}}
 	var mu sync.Mutex
 	var leased []*ports.Delivery
 	var wg sync.WaitGroup

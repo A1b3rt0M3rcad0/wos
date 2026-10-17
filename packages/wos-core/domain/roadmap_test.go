@@ -7,8 +7,8 @@ import (
 
 func roadmapTestScope() Scope {
 	return Scope{
-		NamespaceID: MustParseID("0199f100-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f100-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199f100-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f100-0000-7000-8000-000000000010"),
 	}
 }
 

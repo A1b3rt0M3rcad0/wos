@@ -24,7 +24,7 @@ type queryArgs struct {
 	Kind               domain.EntityKind        `json:"kind,omitempty"`
 	Depth              int                      `json:"depth,omitempty"`
 	Direction          string                   `json:"direction,omitempty"`
-	NamespaceID        domain.ID                `json:"namespace_id"`
+	TenantID           domain.ID                `json:"tenant_id"`
 	OutcomeID          domain.ID                `json:"outcome_id,omitempty"`
 	Limit              int                      `json:"limit,omitempty"`
 	Cursor             string                   `json:"cursor,omitempty"`
@@ -43,7 +43,7 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 	registerDeliveryHealth(server, s, options)
 	registerSignedQueries(server, s, options)
 	registerWorkActivityQueries(server, s, options)
-	for _, name := range []string{"wos_effective_permissions", "wos_search_references", "wos_get_work_checkpoint", "wos_get_namespace_work_protocol", "wos_list_available_work", "wos_capabilities", "wos_get_work_contract", "wos_get_work_contract_spec", "wos_list_work_contracts", "wos_list_contract_checkpoints", "wos_list_work_submissions", "wos_get_work_submission", "wos_get_command_receipt", "wos_get_criterion_history", "wos_list_conclusions", "wos_get_conclusion", "wos_get_roadmap_revision", "wos_list_roadmaps", "wos_get_active_roadmap_slot", "wos_list_roadmap_activation_history", "wos_list_triggers", "wos_list_deliveries", "wos_list_trigger_firings", "wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
+	for _, name := range []string{"wos_effective_permissions", "wos_search_references", "wos_get_work_checkpoint", "wos_get_tenant_work_protocol", "wos_list_available_work", "wos_capabilities", "wos_get_work_contract", "wos_get_work_contract_spec", "wos_list_work_contracts", "wos_list_contract_checkpoints", "wos_list_work_submissions", "wos_get_work_submission", "wos_get_command_receipt", "wos_get_criterion_history", "wos_list_conclusions", "wos_get_conclusion", "wos_get_roadmap_revision", "wos_list_roadmaps", "wos_get_active_roadmap_slot", "wos_list_roadmap_activation_history", "wos_list_triggers", "wos_list_deliveries", "wos_list_trigger_firings", "wos_search_outcomes", "wos_get_continuity", "wos_get_continuity_section", "wos_get_timeline", "wos_list_ready_work", "wos_get_work_context", "wos_get_outcome_graph", "wos_get_entity"} {
 		name := name
 		mcp.AddTool(server, &mcp.Tool{Name: name, Description: "Read authorized WOS state; limit 1–100, default 25. Expand omissions with section cursors; candidates never authorize execution."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
 			ctx, cancel, err := requestContext(ctx, req, options)
@@ -52,7 +52,7 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 				r, e := failure(err)
 				return r, nil, e
 			}
-			scope := domain.Scope{NamespaceID: q.NamespaceID, OutcomeID: q.OutcomeID}
+			scope := domain.Scope{TenantID: q.TenantID, OutcomeID: q.OutcomeID}
 			var value any
 			switch name {
 			case "wos_effective_permissions":
@@ -64,8 +64,8 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 					kinds = append(kinds, domain.EntityKind(kind))
 				}
 				value, err = s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: kinds, Query: q.Text, Lifecycle: q.Lifecycle, Priority: q.Priority, ID: q.EntityID, Limit: q.Limit, Cursor: q.Cursor})
-			case "wos_get_namespace_work_protocol":
-				value, err = s.GetNamespaceWorkProtocol(ctx, q.NamespaceID)
+			case "wos_get_tenant_work_protocol":
+				value, err = s.GetTenantWorkProtocol(ctx, q.TenantID)
 			case "wos_list_available_work":
 				value, err = s.ListAvailableWork(ctx, scope, q.Limit, q.Cursor)
 			case "wos_capabilities":
@@ -89,7 +89,7 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 			case "wos_get_work_submission":
 				value, err = s.GetWorkSubmission(ctx, scope, q.EntityID)
 			case "wos_get_command_receipt":
-				value, err = s.GetCommandReceipt(ctx, q.NamespaceID, q.CommandID)
+				value, err = s.GetCommandReceipt(ctx, q.TenantID, q.CommandID)
 
 			case "wos_get_criterion_history":
 				value, err = s.GetCriterionHistory(ctx, domain.EntityRef{Scope: scope, Kind: q.Kind, ID: q.EntityID}, q.CriterionID)
@@ -158,7 +158,7 @@ func registerQueries(server *mcp.Server, s *application.Service, options Options
 					err = domain.NewError(domain.ErrorCodeInvalidEntityKind, "unsupported entity kind")
 				}
 			case "wos_search_outcomes":
-				value, err = s.SearchOutcomes(ctx, q.NamespaceID, ports.OutcomeFilter{ExternalContext: q.ExternalContext, CreatorPrincipalID: q.CreatorPrincipalID, ExternalProvider: q.ExternalProvider, ExternalKind: q.ExternalKind, ExternalID: q.ExternalID, Owner: q.Owner, Text: q.Text, Lifecycle: q.Lifecycle, Archived: q.Archived, Priority: q.Priority}, q.Limit, q.Cursor)
+				value, err = s.SearchOutcomes(ctx, q.TenantID, ports.OutcomeFilter{ExternalContext: q.ExternalContext, CreatorPrincipalID: q.CreatorPrincipalID, ExternalProvider: q.ExternalProvider, ExternalKind: q.ExternalKind, ExternalID: q.ExternalID, Owner: q.Owner, Text: q.Text, Lifecycle: q.Lifecycle, Archived: q.Archived, Priority: q.Priority}, q.Limit, q.Cursor)
 			case "wos_get_continuity":
 				value, err = s.GetContinuity(ctx, scope, q.Limit)
 			case "wos_get_continuity_section":

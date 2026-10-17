@@ -53,7 +53,7 @@ func (s *Service) UpdateOutcome(
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}

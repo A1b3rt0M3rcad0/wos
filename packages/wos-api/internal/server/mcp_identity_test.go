@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
@@ -35,9 +36,9 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		cfg.MCP.Enabled = true
 		cfg.Auth.Mode = AuthModeAPIToken
 		cfg.Auth.BootstrapToken = strings.Repeat("a", 40)
-		cfg.Auth.BootstrapNamespaceID = "0199d120-0000-7000-8000-000000000001"
-		cfg.Auth.BootstrapNamespaceName = "Remote"
-		server, err := OpenRuntime(cfg)
+		cfg.Auth.BootstrapTenantID = cfg.Auth.LocalTenantID
+		cfg.Auth.BootstrapTenantName = "Remote"
+		server, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,8 +53,8 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 			t.Fatal(err)
 		}
 		humanCtx := application.WithIdentity(ctx, human)
-		ns, _ := domain.ParseID(cfg.Auth.BootstrapNamespaceID)
-		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
+		ns, _ := domain.ParseID(cfg.Auth.BootstrapTenantID)
+		if err = security.SetGrant(humanCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
 			t.Fatal(err)
 		}
 		credential, token, err := security.IssueCredential(humanCtx, ns, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "independent", ID: "agent-1"}, time.Now().Add(time.Hour))
@@ -69,7 +70,7 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		defer session.Close()
 		humanSDK, _ := wossdk.New(httpServer.URL, cfg.Auth.BootstrapToken, httpServer.Client())
 		key, _ := wossdk.NewIdempotencyKey()
-		outcome, err := humanSDK.CreateOutcome(ctx, key, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Mixed human agent state", DesiredState: "Authenticated shared context", Priority: domain.PriorityNormal})
+		outcome, err := humanSDK.CreateOutcome(ctx, key, application.CreateOutcomeCommand{TenantID: ns, Title: "Mixed human agent state", DesiredState: "Authenticated shared context", Priority: domain.PriorityNormal})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,7 +84,7 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if err = json.Unmarshal(raw, &work); err != nil {
 			t.Fatal(err)
 		}
-		facts, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_get_timeline", Arguments: map[string]any{"namespace_id": ns, "outcome_id": outcome.Value.ID, "principal_id": "agent"}})
+		facts, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_get_timeline", Arguments: map[string]any{"tenant_id": ns, "outcome_id": outcome.Value.ID, "principal_id": "agent"}})
 		if err != nil || facts.IsError {
 			t.Fatal("timeline", err)
 		}
@@ -91,15 +92,15 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if !strings.Contains(string(raw), "agent-1") {
 			t.Fatalf("authenticated actor missing: %s", raw)
 		}
-		resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wos://namespaces/" + ns.String() + "/outcomes/" + outcome.Value.ID.String() + "/continuity"})
+		resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wos://tenants/" + ns.String() + "/outcomes/" + outcome.Value.ID.String() + "/continuity"})
 		if err != nil || len(resource.Contents) != 1 {
 			t.Fatal("authorized continuity resource", err)
 		}
-		cross, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_outcomes", Arguments: map[string]any{"namespace_id": "0199d120-0000-7000-8000-000000000002"}})
+		cross, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_search_outcomes", Arguments: map[string]any{"tenant_id": "0199d120-0000-7000-8000-000000000002"}})
 		if err != nil || !cross.IsError {
-			t.Fatal("cross namespace tool was not denied", err)
+			t.Fatal("cross tenant tool was not denied", err)
 		}
-		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		if err = security.SetGrant(humanCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 			t.Fatal(err)
 		}
 		replay, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_work_item", Arguments: args})
@@ -109,7 +110,7 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if err = security.RevokeCredential(humanCtx, ns, credential.ID); err != nil {
 			t.Fatal(err)
 		}
-		if _, err = session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wos://namespaces/" + ns.String() + "/outcomes/" + outcome.Value.ID.String() + "/continuity"}); err == nil {
+		if _, err = session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wos://tenants/" + ns.String() + "/outcomes/" + outcome.Value.ID.String() + "/continuity"}); err == nil {
 			t.Fatal("long-lived session resource survived revocation")
 		}
 
@@ -119,24 +120,40 @@ func TestRealStdioMCPSubprocess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("stdio subprocess disabled in short mode")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	cwd, _ := os.Getwd()
 	root := filepath.Clean(filepath.Join(cwd, "../../../.."))
-	command := exec.Command(filepath.Join(runtime.GOROOT(), "bin/go"), "run", "./packages/wos-api/cmd/wos", "mcp", "stdio")
+	binary := filepath.Join(t.TempDir(), "wos")
+	if runtime.GOOS == "windows" {
+		binary += ".exe"
+	}
+	// Compilation has its own budget; the protocol deadline measures the real
+	// subprocess, not unrelated cache rebuilding during a concurrent test run.
+	buildContext, stopBuild := context.WithTimeout(context.Background(), 2*time.Minute)
+	build := exec.CommandContext(buildContext, filepath.Join(runtime.GOROOT(), "bin/go"), "build", "-o", binary, "./packages/wos-api/cmd/wos")
+	build.Dir = root
+	output, buildErr := build.CombinedOutput()
+	stopBuild()
+	if buildErr != nil {
+		t.Fatalf("build stdio fixture: %v\n%s", buildErr, output)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	command := exec.Command(binary, "mcp", "stdio")
+	var processErrors bytes.Buffer
+	command.Stderr = &processErrors
 	command.Dir = root
-	command.Env = append(os.Environ(), "WOS_AUTH_MODE=local", "WOS_LISTEN=127.0.0.1:8080", "WOS_SQLITE_PATH="+filepath.Join(t.TempDir(), "stdio.db"), "WOS_STORAGE_DRIVER=sqlite")
+	command.Env = append(os.Environ(), "WOS_AUTH_MODE=local", "WOS_LISTEN=127.0.0.1:8080", "WOS_SQLITE_PATH="+filepath.Join(t.TempDir(), "stdio.db"), "WOS_STORAGE_DRIVER=sqlite", "WOS_LOCAL_TENANT_ID=0199d130-0000-7000-8000-000000000001")
 	client := mcp.NewClient(&mcp.Implementation{Name: "independent-stdio-client", Version: "1"}, nil)
 	session, err := client.Connect(ctx, &mcp.CommandTransport{Command: command}, nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("stdio startup failed: %v; stderr: %s", err, processErrors.String())
 	}
 	defer session.Close()
 	tools, err := session.ListTools(ctx, &mcp.ListToolsParams{})
 	if err != nil || len(tools.Tools) < 80 {
 		t.Fatal("stdio discovery", err)
 	}
-	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_outcome", Arguments: map[string]any{"idempotency_key": "stdio-create-outcome-001", "command": map[string]any{"namespace_id": "0199d130-0000-7000-8000-000000000001", "title": "Stdio outcome", "desired_state": "Independent consumer uses real protocol", "priority": "normal"}}})
+	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_outcome", Arguments: map[string]any{"idempotency_key": "stdio-create-outcome-001", "command": map[string]any{"tenant_id": "0199d130-0000-7000-8000-000000000001", "title": "Stdio outcome", "desired_state": "Independent consumer uses real protocol", "priority": "normal"}}})
 	if err != nil || result.IsError {
 		t.Fatal("stdio mutation", err)
 	}

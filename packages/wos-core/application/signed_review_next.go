@@ -35,7 +35,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 	}
 	filter := ports.ReviewFilter{Limit: limit + 1, OpenOnly: true}
 	if cmd.Cursor != "" {
-		cursor, e := decodeCursor(cmd.Cursor, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID, "signed_review_candidates", "")
+		cursor, e := decodeCursor(cmd.Cursor, cmd.Scope.TenantID, cmd.Scope.OutcomeID, "signed_review_candidates", "")
 		if e != nil {
 			return zero, e
 		}
@@ -50,7 +50,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 		if e != nil {
 			return result, 0, e
 		}
-		if _, e = s.requireSignedIssuer(ctx, u, cmd.Scope.NamespaceID); e != nil {
+		if _, e = s.requireSignedIssuer(ctx, u, cmd.Scope.TenantID); e != nil {
 			return result, 0, e
 		}
 		if e = requireActiveOutcome(ctx, u, cmd.Scope); e != nil {
@@ -60,7 +60,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 		if e != nil {
 			return result, 0, e
 		}
-		state, e := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(u, "signed"))
+		state, e := protocol.Lock(ctx, cmd.Scope.TenantID, exclusiveProtocolGuard(u, "signed"))
 		if e != nil {
 			return result, 0, e
 		}
@@ -79,7 +79,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 		if e != nil {
 			return result, 0, e
 		}
-		group, e := registry.PrincipalGroup(ctx, cmd.Scope.NamespaceID, identity.PrincipalID)
+		group, e := registry.PrincipalGroup(ctx, cmd.Scope.TenantID, identity.PrincipalID)
 		if e != nil {
 			return result, 0, e
 		}
@@ -90,7 +90,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 		result.SearchComplete = len(cases) <= limit
 		if len(cases) > limit {
 			cases = cases[:limit]
-			result.NextCursor = encodeCursor(queryCursor{Namespace: cmd.Scope.NamespaceID, Outcome: cmd.Scope.OutcomeID, Section: "signed_review_candidates", Key: cases[len(cases)-1].ID.String()})
+			result.NextCursor = encodeCursor(queryCursor{Tenant: cmd.Scope.TenantID, Outcome: cmd.Scope.OutcomeID, Section: "signed_review_candidates", Key: cases[len(cases)-1].ID.String()})
 		}
 		now, e := securityTransactionTime(ctx, u, s.clock)
 		if e != nil {

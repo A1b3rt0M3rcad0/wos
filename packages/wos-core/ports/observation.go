@@ -8,7 +8,7 @@ import (
 // Observations carry safe metadata only; documentary payloads and credentials are excluded.
 type CommandObservation struct {
 	Name            string
-	NamespaceID     domain.ID
+	TenantID        domain.ID
 	OutcomeID       domain.ID
 	PrincipalID     string
 	Actor           domain.ActorRef

@@ -307,7 +307,7 @@ export function availableActions({
       if (
         a.requiresUnsignedContract &&
         (!entity.current_contract_id ||
-          protocol?.phase === "signed_contracts_v2")
+          protocol?.phase === "signed_contracts_v3")
       )
         return false;
       if (
@@ -344,7 +344,7 @@ export function availableActions({
       if (
         context === "criterion" &&
         entity._kind === "work_item" &&
-        protocol?.phase === "signed_contracts_v2"
+        protocol?.phase === "signed_contracts_v3"
       )
         return false;
       return true;
@@ -369,7 +369,7 @@ export const permissionLabels = Object.freeze({
   "records:write": copy.text.recordsWrite,
   "assessment:write": copy.text.assessmentWrite,
   "conclusion:write": copy.text.conclusionWrite,
-  "namespace:admin": copy.text.namespaceAdmin,
+  "tenant:admin": copy.text.tenantAdmin,
   "integration:write": copy.text.integrationWrite,
   "actor:delegate": copy.text.actorDelegate,
   "work:admin_cancel": copy.text.workAdminCancel,

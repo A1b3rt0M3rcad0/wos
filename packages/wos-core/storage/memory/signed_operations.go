@@ -9,7 +9,7 @@ import (
 
 type signedOperationRepository struct{ tx *transaction }
 
-func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.ID, principal, key string) (d.LegacySignedOperationResult, error) {
+func (r signedOperationRepository) FindLegacy(ctx context.Context, tenant d.ID, principal, key string) (d.LegacySignedOperationResult, error) {
 	var result d.LegacySignedOperationResult
 	if e := ctx.Err(); e != nil {
 		return result, e
@@ -19,7 +19,7 @@ func (r signedOperationRepository) FindLegacy(ctx context.Context, namespace d.I
 	}
 	found := false
 	for _, cached := range r.tx.idempotency {
-		if !cached.Completed || cached.Identity.NamespaceID != namespace || cached.Identity.PrincipalID != principal || cached.Identity.IdempotencyKey != key {
+		if !cached.Completed || cached.Identity.TenantID != tenant || cached.Identity.PrincipalID != principal || cached.Identity.IdempotencyKey != key {
 			continue
 		}
 		name := cached.Identity.CommandName
@@ -56,14 +56,14 @@ func cloneSignedOperation(result d.SignedOperationResult) d.SignedOperationResul
 	result.Result.ResponseJSON = append(json.RawMessage(nil), result.Result.ResponseJSON...)
 	return result
 }
-func (r signedOperationRepository) Get(ctx context.Context, namespace d.ID, principal, key string) (d.SignedOperationResult, error) {
+func (r signedOperationRepository) Get(ctx context.Context, tenant d.ID, principal, key string) (d.SignedOperationResult, error) {
 	if e := ctx.Err(); e != nil {
 		return d.SignedOperationResult{}, e
 	}
 	if e := r.tx.ensureOpen(); e != nil {
 		return d.SignedOperationResult{}, e
 	}
-	result, ok := r.tx.signedReview.Operations[signedOperationKey(namespace, principal, key)]
+	result, ok := r.tx.signedReview.Operations[signedOperationKey(tenant, principal, key)]
 	if !ok {
 		return result, d.NewError(d.ErrorCodeNotFound, "durable signed operation absent")
 	}
@@ -79,7 +79,7 @@ func (r signedOperationRepository) Insert(ctx context.Context, result d.SignedOp
 	if e := result.Validate(); e != nil {
 		return e
 	}
-	key := signedOperationKey(result.Scope.NamespaceID, result.PrincipalID, result.IdempotencyKey)
+	key := signedOperationKey(result.Scope.TenantID, result.PrincipalID, result.IdempotencyKey)
 	if _, exists := r.tx.signedReview.Operations[key]; exists {
 		return d.NewError(d.ErrorCodeIdempotencyConflict, "durable signed operation is immutable")
 	}

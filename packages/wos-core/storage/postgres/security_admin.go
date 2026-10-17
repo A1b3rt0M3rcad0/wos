@@ -11,11 +11,11 @@ import (
 
 func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminRequest) (ports.SecurityAdminResult, error) {
 	var result ports.SecurityAdminResult
-	if r.Command.Grant != nil && r.Command.Grant.NamespaceID != r.Command.NamespaceID {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "grant namespace differs from administrative scope")
+	if r.Command.Grant != nil && r.Command.Grant.TenantID != r.Command.TenantID {
+		return result, domain.NewError(domain.ErrorCodeForbidden, "grant tenant differs from administrative scope")
 	}
-	if r.Command.Operation == "issue_credential" && r.Command.Credential != nil && r.Command.Credential.NamespaceID != r.Command.NamespaceID {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "credential namespace differs from administrative scope")
+	if r.Command.Operation == "issue_credential" && r.Command.Credential != nil && r.Command.Credential.TenantID != r.Command.TenantID {
+		return result, domain.NewError(domain.ErrorCodeForbidden, "credential tenant differs from administrative scope")
 	}
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
@@ -23,24 +23,24 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	}
 	defer tx.Rollback()
 	var version int64
-	err = tx.QueryRowContext(ctx, `SELECT version FROM namespaces WHERE id=$1 AND lifecycle='active' FOR UPDATE`, r.Command.NamespaceID.String()).Scan(&version)
+	err = tx.QueryRowContext(ctx, `SELECT version FROM tenants WHERE id=$1 AND lifecycle='active' FOR UPDATE`, r.Command.TenantID.String()).Scan(&version)
 	if err != nil {
-		return result, mapSQLError("guard namespace", err)
+		return result, mapSQLError("guard tenant", err)
 	}
 	// Authorization and parent-session revocation are rechecked in the same snapshot as the write/replay.
 	var grantJSON string
-	err = tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=$1 AND g.principal_id=$2 AND p.lifecycle='active'`, r.Command.NamespaceID.String(), r.PrincipalID).Scan(&grantJSON)
+	err = tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM tenant_grants g JOIN principals p ON p.id=g.principal_id WHERE g.tenant_id=$1 AND g.principal_id=$2 AND p.lifecycle='active'`, r.Command.TenantID.String(), r.PrincipalID).Scan(&grantJSON)
 	var permissions []ports.Permission
 	if err != nil || unmarshalJSON(grantJSON, &permissions) != nil {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "namespace administration denied")
+		return result, domain.NewError(domain.ErrorCodeForbidden, "tenant administration denied")
 	}
 	admin, delegate := false, false
 	for _, p := range permissions {
-		admin = admin || p == ports.PermissionNamespaceAdmin
+		admin = admin || p == ports.PermissionTenantAdmin
 		delegate = delegate || p == ports.PermissionActorDelegate
 	}
 	if !admin {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "namespace administration denied")
+		return result, domain.NewError(domain.ErrorCodeForbidden, "tenant administration denied")
 	}
 	if r.HostOperator {
 		if r.Command.Operation != "authorize_installation_operator" || r.CredentialDigest != "" || len(r.OperatorReason) < 8 || len(r.OperatorReason) > 1024 {
@@ -52,12 +52,12 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 		access := &unitOfWork{tx: tx}
 		require := func(permission ports.Permission) error {
-			return access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, Permission: permission}, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Now: r.Now})
+			return access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{TenantID: r.Command.TenantID, PrincipalID: r.PrincipalID, Permission: permission}, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Now: r.Now})
 		}
-		if err = require(ports.PermissionNamespaceAdmin); err != nil {
+		if err = require(ports.PermissionTenantAdmin); err != nil {
 			return result, err
 		}
-		if r.Command.Operation == "create_namespace" {
+		if r.Command.Operation == "create_tenant" {
 			if err = require(ports.PermissionInstallationProvision); err != nil {
 				return result, err
 			}
@@ -74,13 +74,13 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 			targetPrincipal = r.Command.Credential.PrincipalID
 		}
 		if r.Command.Operation == "revoke_credential" {
-			if err = tx.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE namespace_id=$1 AND id=$2`, r.Command.NamespaceID.String(), r.Command.CredentialID.String()).Scan(&targetPrincipal); err != nil {
+			if err = tx.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE tenant_id=$1 AND id=$2`, r.Command.TenantID.String(), r.Command.CredentialID.String()).Scan(&targetPrincipal); err != nil {
 				return result, mapSQLError("read protected credential", err)
 			}
 		}
 		if targetPrincipal != "" {
 			var current string
-			err = tx.QueryRowContext(ctx, `SELECT permissions_json FROM namespace_grants WHERE namespace_id=$1 AND principal_id=$2`, r.Command.NamespaceID.String(), targetPrincipal).Scan(&current)
+			err = tx.QueryRowContext(ctx, `SELECT permissions_json FROM tenant_grants WHERE tenant_id=$1 AND principal_id=$2`, r.Command.TenantID.String(), targetPrincipal).Scan(&current)
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				return result, err
 			}
@@ -107,7 +107,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 	}
 	var fingerprint, payload string
-	err = tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM security_admin_results WHERE namespace_id=$1 AND principal_id=$2 AND idempotency_key=$3`, r.Command.NamespaceID.String(), r.PrincipalID, r.IdempotencyKey).Scan(&fingerprint, &payload)
+	err = tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM security_admin_results WHERE tenant_id=$1 AND principal_id=$2 AND idempotency_key=$3`, r.Command.TenantID.String(), r.PrincipalID, r.IdempotencyKey).Scan(&fingerprint, &payload)
 	if err == nil {
 		if fingerprint != r.Fingerprint {
 			return result, domain.NewError(domain.ErrorCodeIdempotencyConflict, "key already represents a different intent")
@@ -123,35 +123,35 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		return result, mapSQLError("read security receipt", err)
 	}
 	if domain.Version(version) != r.Command.ExpectedVersion {
-		return result, domain.NewError(domain.ErrorCodeVersionConflict, "namespace version changed")
+		return result, domain.NewError(domain.ErrorCodeVersionConflict, "tenant version changed")
 	}
 	target := ""
 	switch r.Command.Operation {
-	case "create_namespace":
-		n, c := r.Command.NewNamespace, r.Command.Credential
+	case "create_tenant":
+		n, c := r.Command.NewTenant, r.Command.Credential
 		if n == nil || c == nil {
-			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "namespace and initial credential required")
+			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "tenant and initial credential required")
 		}
 		target = n.ID.String()
 		actor, err := marshalJSON(c.Actor)
 		if err != nil {
 			return result, err
 		}
-		granted, err := marshalJSON(ports.NamespacePermissions(permissions))
+		granted, err := marshalJSON(ports.TenantPermissions(permissions))
 		if err != nil {
 			return result, err
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4)`, n.ID.String(), n.Name, encodeTime(r.Now), encodeTime(r.Now)); err != nil {
-			return result, mapSQLError("create namespace", err)
+		if _, err = tx.ExecContext(ctx, `INSERT INTO tenants(id,name,lifecycle,version,created_at,updated_at) VALUES($1,$2,'active',1,$3,$4)`, n.ID.String(), n.Name, encodeTime(r.Now), encodeTime(r.Now)); err != nil {
+			return result, mapSQLError("create tenant", err)
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3)`, n.ID.String(), r.PrincipalID, granted); err != nil {
+		if _, err = tx.ExecContext(ctx, `INSERT INTO tenant_grants(tenant_id,principal_id,permissions_json) VALUES($1,$2,$3)`, n.ID.String(), r.PrincipalID, granted); err != nil {
 			return result, err
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), n.ID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt)); err != nil {
-			return result, mapSQLError("create namespace credential", err)
+		if _, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,tenant_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), n.ID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt)); err != nil {
+			return result, mapSQLError("create tenant credential", err)
 		}
 		result.Credential = c
-		result.CreatedNamespace = n
+		result.CreatedTenant = n
 	case "authorize_installation_operator":
 		for _, p := range []ports.Permission{ports.PermissionInstallationAdmin, ports.PermissionInstallationProvision, ports.PermissionInstallationObserve} {
 			found := false
@@ -166,7 +166,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if e != nil {
 			return result, e
 		}
-		if _, err = tx.ExecContext(ctx, `UPDATE namespace_grants SET permissions_json=$1 WHERE namespace_id=$2 AND principal_id=$3`, granted, r.Command.NamespaceID.String(), r.PrincipalID); err != nil {
+		if _, err = tx.ExecContext(ctx, `UPDATE tenant_grants SET permissions_json=$1 WHERE tenant_id=$2 AND principal_id=$3`, granted, r.Command.TenantID.String(), r.PrincipalID); err != nil {
 			return result, err
 		}
 		reason, e := marshalJSON(map[string]string{"principal_id": r.PrincipalID, "reason": r.OperatorReason})
@@ -187,7 +187,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if err != nil {
 			return result, err
 		}
-		_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.NamespaceID.String(), g.PrincipalID, p)
+		_, err = tx.ExecContext(ctx, `INSERT INTO tenant_grants(tenant_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(tenant_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.TenantID.String(), g.PrincipalID, p)
 		if err != nil {
 			return result, mapSQLError("write grant", err)
 		}
@@ -198,22 +198,22 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 		target = c.ID.String()
 		var exists int
-		err = tx.QueryRowContext(ctx, `SELECT count(*) FROM namespace_grants WHERE namespace_id=$1 AND principal_id=$2`, c.NamespaceID.String(), c.PrincipalID).Scan(&exists)
+		err = tx.QueryRowContext(ctx, `SELECT count(*) FROM tenant_grants WHERE tenant_id=$1 AND principal_id=$2`, c.TenantID.String(), c.PrincipalID).Scan(&exists)
 		if err != nil || exists != 1 {
-			return result, domain.NewError(domain.ErrorCodeForbidden, "target principal has no namespace grant")
+			return result, domain.NewError(domain.ErrorCodeForbidden, "target principal has no tenant grant")
 		}
 		a, err := marshalJSON(c.Actor)
 		if err != nil {
 			return result, err
 		}
-		_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, a, c.Digest, encodeTime(c.ExpiresAt))
+		_, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,tenant_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), c.TenantID.String(), c.PrincipalID, a, c.Digest, encodeTime(c.ExpiresAt))
 		if err != nil {
 			return result, mapSQLError("issue credential", err)
 		}
 		result.Credential = c
 	case "revoke_credential":
 		target = r.Command.CredentialID.String()
-		updated, err := tx.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE namespace_id=$1 AND id=$2`, r.Command.NamespaceID.String(), target)
+		updated, err := tx.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE tenant_id=$1 AND id=$2`, r.Command.TenantID.String(), target)
 		if err != nil {
 			return result, err
 		}
@@ -224,20 +224,20 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	default:
 		return result, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown security operation")
 	}
-	result.NamespaceVersion = domain.Version(version + 1)
-	updated, err := tx.ExecContext(ctx, `UPDATE namespaces SET version=version+1,updated_at=$1 WHERE id=$2 AND version=$3`, encodeTime(r.Now), r.Command.NamespaceID.String(), version)
+	result.TenantVersion = domain.Version(version + 1)
+	updated, err := tx.ExecContext(ctx, `UPDATE tenants SET version=version+1,updated_at=$1 WHERE id=$2 AND version=$3`, encodeTime(r.Now), r.Command.TenantID.String(), version)
 	if err != nil {
-		return result, mapSQLError("advance namespace version", err)
+		return result, mapSQLError("advance tenant version", err)
 	}
 	n, _ := updated.RowsAffected()
 	if n != 1 {
-		return result, domain.NewError(domain.ErrorCodeVersionConflict, "namespace version changed")
+		return result, domain.NewError(domain.ErrorCodeVersionConflict, "tenant version changed")
 	}
 	actor, err := marshalJSON(r.Actor)
 	if err != nil {
 		return result, err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO security_audit(namespace_id,namespace_version,principal_id,actor_json,operation,target,recorded_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, r.Command.NamespaceID.String(), int64(result.NamespaceVersion), r.PrincipalID, actor, r.Command.Operation, target, encodeTime(r.Now))
+	_, err = tx.ExecContext(ctx, `INSERT INTO security_audit(tenant_id,tenant_version,principal_id,actor_json,operation,target,recorded_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, r.Command.TenantID.String(), int64(result.TenantVersion), r.PrincipalID, actor, r.Command.Operation, target, encodeTime(r.Now))
 	if err != nil {
 		return result, mapSQLError("append security audit", err)
 	}
@@ -245,7 +245,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if err != nil {
 		return result, err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO security_admin_results(namespace_id,principal_id,idempotency_key,fingerprint,result_json) VALUES($1,$2,$3,$4,$5)`, r.Command.NamespaceID.String(), r.PrincipalID, r.IdempotencyKey, r.Fingerprint, payload)
+	_, err = tx.ExecContext(ctx, `INSERT INTO security_admin_results(tenant_id,principal_id,idempotency_key,fingerprint,result_json) VALUES($1,$2,$3,$4,$5)`, r.Command.TenantID.String(), r.PrincipalID, r.IdempotencyKey, r.Fingerprint, payload)
 	if err != nil {
 		return result, mapSQLError("persist security receipt", err)
 	}
@@ -259,20 +259,20 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 		return result, err
 	}
 	defer tx.Rollback()
-	result.Namespace.ID = ns
-	err = tx.QueryRowContext(ctx, `SELECT name,version FROM namespaces WHERE id=$1 AND lifecycle='active'`, ns.String()).Scan(&result.Namespace.Name, &result.NamespaceVersion)
+	result.Tenant.ID = ns
+	err = tx.QueryRowContext(ctx, `SELECT name,version FROM tenants WHERE id=$1 AND lifecycle='active'`, ns.String()).Scan(&result.Tenant.Name, &result.TenantVersion)
 	if err != nil {
-		return result, mapSQLError("read namespace", err)
+		return result, mapSQLError("read tenant", err)
 	}
-	result.Grants = []ports.NamespaceGrant{}
+	result.Grants = []ports.TenantGrant{}
 	result.Credentials = []ports.Credential{}
 	result.Audit = []ports.SecurityAudit{}
-	rows, err := tx.QueryContext(ctx, `SELECT principal_id,permissions_json FROM namespace_grants WHERE namespace_id=$1 ORDER BY principal_id LIMIT 101`, ns.String())
+	rows, err := tx.QueryContext(ctx, `SELECT principal_id,permissions_json FROM tenant_grants WHERE tenant_id=$1 ORDER BY principal_id LIMIT 101`, ns.String())
 	if err != nil {
 		return result, err
 	}
 	for rows.Next() {
-		g := ports.NamespaceGrant{NamespaceID: ns}
+		g := ports.TenantGrant{TenantID: ns}
 		var p string
 		if err = rows.Scan(&g.PrincipalID, &p); err != nil {
 			rows.Close()
@@ -289,12 +289,12 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 	if err != nil {
 		return result, err
 	}
-	rows, err = tx.QueryContext(ctx, `SELECT id,principal_id,actor_json,expires_at,revoked FROM credentials WHERE namespace_id=$1 AND parent_digest IS NULL ORDER BY id LIMIT 101`, ns.String())
+	rows, err = tx.QueryContext(ctx, `SELECT id,principal_id,actor_json,expires_at,revoked FROM credentials WHERE tenant_id=$1 AND parent_digest IS NULL ORDER BY id LIMIT 101`, ns.String())
 	if err != nil {
 		return result, err
 	}
 	for rows.Next() {
-		c := ports.Credential{NamespaceID: ns}
+		c := ports.Credential{TenantID: ns}
 		var id, a string
 		var expires int64
 		if err = rows.Scan(&id, &c.PrincipalID, &a, &expires, &c.Revoked); err != nil {
@@ -318,7 +318,7 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 	if err != nil {
 		return result, err
 	}
-	rows, err = tx.QueryContext(ctx, `SELECT namespace_version,principal_id,actor_json,operation,target,recorded_at FROM security_audit WHERE namespace_id=$1 ORDER BY namespace_version DESC LIMIT 101`, ns.String())
+	rows, err = tx.QueryContext(ctx, `SELECT tenant_version,principal_id,actor_json,operation,target,recorded_at FROM security_audit WHERE tenant_id=$1 ORDER BY tenant_version DESC LIMIT 101`, ns.String())
 	if err != nil {
 		return result, err
 	}
@@ -326,7 +326,7 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 		var a ports.SecurityAudit
 		var actor string
 		var at int64
-		if err = rows.Scan(&a.NamespaceVersion, &a.PrincipalID, &actor, &a.Operation, &a.Target, &at); err != nil {
+		if err = rows.Scan(&a.TenantVersion, &a.PrincipalID, &actor, &a.Operation, &a.Target, &at); err != nil {
 			rows.Close()
 			return result, err
 		}

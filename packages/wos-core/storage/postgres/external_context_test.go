@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable(t *testing.T) {
+func TestExternalReferenceDiscoveryIsTenantScopedAndDurable(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "external.db")
@@ -22,7 +22,7 @@ func TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable(t *testing.T) {
 	}
 	cc := sqliteCommandContext("0199d072-0000-7000-8000-000000000001", "")
 	ns := testID("0199d073-0000-7000-8000-000000000001")
-	o, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "External lookup", DesiredState: "Discover without internal outcome ID", Priority: domain.PriorityNormal})
+	o, err := s.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "External lookup", DesiredState: "Discover without internal outcome ID", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable(t *testing.T) {
 	}
 	foreign, err := s.SearchOutcomes(ctx, testID("0199d073-0000-7000-8000-000000000002"), filter, 25, "")
 	if err != nil || len(foreign.Items) != 0 {
-		t.Fatal("external lookup crossed namespace")
+		t.Fatal("external lookup crossed tenant")
 	}
 	store.Close()
 	store = openTestStore(t, path)
@@ -60,7 +60,7 @@ func TestBrowserSessionRevokedWithParentCredential(t *testing.T) {
 	security := application.SecurityService{Store: store, Clock: sqliteFixedClock{now: time.Now().UTC()}, IDs: &sqliteSequenceIDs{prefix: "0199d075", next: 1}}
 	ns := testID("0199d076-0000-7000-8000-000000000001")
 	token := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	if err := security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "Browser"}, "alice", token); err != nil {
+	if err := security.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "Browser"}, "alice", token); err != nil {
 		t.Fatal(err)
 	}
 	original, err := security.Authenticate(ctx, token)

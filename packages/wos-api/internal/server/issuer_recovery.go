@@ -33,6 +33,7 @@ func DecodeIssuerRecoveryIntent(reader io.Reader) (a.IssuerRecoveryIntent, error
 // pin; the protected seed environment reference supplies possession only.
 func RecoverIssuer(ctx context.Context, config Config, intent a.IssuerRecoveryIntent) (d.IssuerRecovery, bool, error) {
 	var zero d.IssuerRecovery
+	config = config.withTenantBindingDefaults()
 	if e := config.Validate(); e != nil {
 		return zero, false, e
 	}
@@ -58,9 +59,14 @@ func RecoverIssuer(ctx context.Context, config Config, intent a.IssuerRecoveryIn
 	}
 	var store runtimeStore
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, e = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
+		binding, openErr := openTenantStorage(ctx, config, false, nil)
+		if openErr != nil {
+			return zero, false, openErr
+		}
+		defer binding.Close()
+		store = binding.Store
 	} else {
-		store, e = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
+		store, e = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: config.Storage.MigrateOnStart, TenantID: d.MustParseID(config.Storage.TenantID), TenantName: config.Auth.BootstrapTenantName})
 	}
 	if e != nil {
 		return zero, false, e

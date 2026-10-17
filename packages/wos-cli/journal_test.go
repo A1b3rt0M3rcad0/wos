@@ -25,7 +25,7 @@ func journalFixture(t *testing.T) (*Workspace, Config, a.WorkContractResult) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { w.Close() })
-	scope := d.Scope{NamespaceID: d.MustParseID("0199ffaa-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199ffaa-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: d.MustParseID("0199ffaa-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199ffaa-0000-7000-8000-000000000002")}
 	now := time.Now().UTC()
 	work, err := d.NewWorkItem(d.MustParseID("0199ffaa-0000-7000-8000-000000000003"), scope, "Recover only original", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	if err != nil {
@@ -39,7 +39,7 @@ func journalFixture(t *testing.T) (*Workspace, Config, a.WorkContractResult) {
 	if err = work.BindContract(c, now); err != nil {
 		t.Fatal(err)
 	}
-	config := Config{SchemaVersion: 1, Kind: "WOSWorkspace", Connection: ConnectionConfig{ServerURL: "http://placeholder", CredentialRef: "env:WOS_TOKEN"}, Scope: WorkspaceScope{scope.NamespaceID, scope.OutcomeID}, Workspace: WorkspaceConfig{".wos/work", "yaml"}, Lease: LeaseConfig{300}, Output: OutputConfig{"json"}}
+	config := Config{SchemaVersion: 1, Kind: "WOSWorkspace", Connection: ConnectionConfig{ServerURL: "http://placeholder", CredentialRef: "env:WOS_TOKEN"}, Scope: WorkspaceScope{scope.TenantID, scope.OutcomeID}, Workspace: WorkspaceConfig{".wos/work", "yaml"}, Lease: LeaseConfig{300}, Output: OutputConfig{"json"}}
 	return w, config, a.WorkContractResult{Contract: c, WorkItem: work, EvaluatedAt: now}
 }
 func TestJournalReplaysExactIntentAfterCommittedResponseLoss(t *testing.T) {

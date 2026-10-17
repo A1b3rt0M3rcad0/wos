@@ -74,10 +74,10 @@ func TestHumanOnlyScenarioCreatesAndCompletesOutcome(t *testing.T) {
 	ctx := context.Background()
 	service, store := newService(t)
 	cc := commandContext()
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Deliver local capability",
 		DesiredState: "Capability is available and verified",
 		Priority:     domain.PriorityHigh,
@@ -292,10 +292,10 @@ func TestFailedCommandRollsBackStateAndRevision(t *testing.T) {
 	ctx := context.Background()
 	service, store := newService(t)
 	cc := commandContext()
-	namespaceID := id("0199e200-0000-7000-8000-000000000001")
+	tenantID := id("0199e200-0000-7000-8000-000000000001")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID: namespaceID, Title: "Rollback", DesiredState: "State", Priority: domain.PriorityNormal,
+		TenantID: tenantID, Title: "Rollback", DesiredState: "State", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -331,7 +331,7 @@ func TestFailedCommandRollsBackStateAndRevision(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	persisted, err := tx.Outcomes().Get(ctx, namespaceID, outcome.ID)
+	persisted, err := tx.Outcomes().Get(ctx, tenantID, outcome.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -22,8 +22,11 @@ func verify() error {
 		Keys  []d.SigningKey `json:"keys"`
 		Facts []d.SignedFact `json:"facts"`
 	}
-	decoder := json.NewDecoder(io.LimitReader(os.Stdin, 32<<20))
-	if err := decoder.Decode(&input); err != nil {
+	raw, err := io.ReadAll(io.LimitReader(os.Stdin, (32<<20)+1))
+	if err != nil {
+		return err
+	}
+	if err := signing.DecodeStoredJSON(raw, &input, 32<<20); err != nil {
 		return err
 	}
 	keys := map[d.ID]d.SigningKey{}
@@ -60,7 +63,7 @@ func verify() error {
 			}
 		}
 		envelope := signing.Envelope{PayloadType: proof.PayloadType, Payload: base64.StdEncoding.EncodeToString(fact.Payload), Signatures: []signing.Signature{{KeyID: proof.KeyID, Sig: proof.Signature}}}
-		verified, err := signing.Verify(envelope, purpose, fact.KeyID.String(), public)
+		verified, err := signing.VerifyHistorical(envelope, purpose, fact.KeyID.String(), public)
 		if err != nil {
 			return err
 		}

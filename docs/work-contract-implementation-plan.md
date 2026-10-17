@@ -1,5 +1,13 @@
 # WOS — Plano de implementação de contratos de execução, CLI e workspace YAML
 
+> [!NOTE]
+> This document retains the earlier Namespace/protocol contract for historical
+> context and legacy recovery. Current source uses Tenant contracts and signed
+> protocol 3. Follow [Tenant cutover](scaling/tenants.md) and the [current agent
+> workflow](agents.md); do not rename fields inside old signed material or use
+> these historical mutation examples against the current service.
+
+
 **Versão do plano:** 1.0  
 **Data:** 8 de outubro de 2026  
 **Repositório:** `A1b3rt0M3rcad0/wos`  

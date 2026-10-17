@@ -24,11 +24,11 @@ func TestSQLiteWave10AssessmentEvidenceSurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199ef21-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ef21-0000-7000-8000-000000000001")
 	created, err := service.CreateOutcome(ctx, sqliteCommandContext(
 		"0199ef21-0000-7000-8000-000000000101", "",
 	), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Assessment persistence",
 		DesiredState: "assessment Evidence survives restart",
 		Priority:     domain.PriorityNormal,

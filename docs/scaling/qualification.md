@@ -1,5 +1,12 @@
 # Reproducible scalability qualification
 
+> [!NOTE]
+> The recorded measurements and topology below belong to the pre-schema sources
+> named in the evidence. Their Namespace terminology is historical. Schema-per-Tenant
+> runtime, catalog lifecycle and protocol-3 behavior require their own qualification;
+> do not rerun an old multi-Namespace-in-one-schema fixture and describe it as the
+> new deployment model. See [Tenant lifecycle and cutover](tenants.md).
+
 WOS must be qualified as a persistent coordination flow: acquisition, delivery, independent assessment, acceptance, replay and subsequent reads. An HTTP health check or increased API replica count is insufficient evidence of capacity.
 
 The runner [`tools/acceptance/scalability-report.py`](../../tools/acceptance/scalability-report.py) exercises the actual signed Application and SQL storage implementations. It preserves the existing signed workload's independent-review, original-intent retry, version-collision and outbox checks while varying Namespace distribution, independently pooled service replicas and accepted historical work. PostgreSQL is the shared production backend; SQLite remains separately measurable as a single-writer reference.
@@ -72,3 +79,32 @@ A production capacity statement needs a representative workload and declared lat
 - Crash, restart, receiver-deduplication, backup/restore and upgrade results.
 
 Use the [public deployment profiles](../../deploy/scaling/README.md) to grow from one complete PostgreSQL process to API and worker replicas. PostgreSQL HA, rolling binary/schema compatibility, Namespace mobility and storage sharding have separate acceptance requirements; these measurements do not certify them.
+
+## Schema-per-Tenant acceptance
+
+Qualify the new storage boundary independently of the historical matrix above:
+
+- Provision several Tenants in one PostgreSQL database and prove fixed-schema
+  routing, singleton bindings and refusal of another Tenant's credentials on
+  every HTTP/MCP path, including hostname fallback and worker routing.
+- Replicate each Tenant's API and delivery runtimes against its own schema;
+  prove original receipts, one-winner acquisition, revocation, quotas, durable
+  delivery and restart recovery without cross-Tenant reads or writes.
+- Prove lifecycle version checks, refusal to suspend/delete a live runtime,
+  suspension persistence, resumption and deletion tombstones, including partial
+  provisioning and concurrent operator requests.
+- Import a stopped legacy shared source containing identities, revocations,
+  history, receipts and queue obligations. Compare original bytes and signatures,
+  verify suspended targets and persistent source write fences, and inject an
+  import failure to prove transaction rollback.
+- Reject unsafe protocol-2 mutation replay while verifying historical proofs
+  without rewriting them. Reject migration with unresolved old authority or
+  pending local intentions rather than silently constructing new intentions.
+- Verify full connection accounting for multiple Tenant runtimes and replicas.
+  Measure realistic active/idle customer mixes alongside PostgreSQL CPU, I/O,
+  locks, catalog growth, migration duration and backup/restore costs.
+
+Record exact source hashes, actual PostgreSQL execution, normal/race scope,
+skipped prerequisites and failure outputs. A passing installer check or an older
+single-schema load result does not satisfy this list. The [live ROADMAP](../../ROADMAP.md)
+and source-bound PR results must report which checks actually ran.

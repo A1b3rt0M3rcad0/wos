@@ -12,7 +12,7 @@ func workActivityContracts(paths, schemas map[string]any) {
 	schemas["WorkAttention"] = commands.Schema(reflect.TypeFor[application.WorkAttention]())
 	scope := func() []any {
 		return []any{
-			map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}},
+			map[string]any{"name": "tenant_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}},
 			map[string]any{"name": "outcome_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}},
 		}
 	}
@@ -34,12 +34,12 @@ func workActivityContracts(paths, schemas map[string]any) {
 		map[string]any{"name": "limit", "in": "query", "schema": map[string]any{"type": "integer", "minimum": 1, "maximum": 100, "default": 25}},
 		map[string]any{"name": "cursor", "in": "query", "schema": map[string]any{"type": "string"}},
 	)
-	paths["/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity"] = map[string]any{"get": map[string]any{
+	paths["/api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-activity"] = map[string]any{"get": map[string]any{
 		"operationId": "listWorkActivity", "description": "Immutable authorized Outcome work activity. Optional WorkItem/contract filters and opaque scope/filter-bound cursors. Observations never complete work, assess criteria or grant execution authority. Cache-Control: no-store.",
 		"parameters": parameters, "responses": responses("WorkActivityPage", "Bounded activity history and continuation cursor."),
 	}}
 	parameters = append(scope(), map[string]any{"name": "work_item_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}})
-	paths["/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention"] = map[string]any{"get": map[string]any{
+	paths["/api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention"] = map[string]any{"get": map[string]any{
 		"operationId": "getWorkAttention", "description": "Current authorized WorkItem attention projection. Reading never changes lifecycle, renews authority or completes work. Cache-Control: no-store.",
 		"parameters": parameters, "responses": responses("WorkAttention", "Current attention signals and Outcome revision."),
 	}}

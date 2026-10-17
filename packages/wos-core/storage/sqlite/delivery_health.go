@@ -17,16 +17,16 @@ func (r deliveryHealthRepository) row(ctx context.Context, q string, args ...any
 	return r.u.tx.QueryRowContext(ctx, q, args...)
 }
 func (r deliveryHealthRepository) Health(ctx context.Context, scope d.Scope, now time.Time) (ports.DeliveryQueueHealth, error) {
-	result := ports.DeliveryQueueHealth{NamespaceID: scope.NamespaceID, EvaluatedAt: now.UTC()}
+	result := ports.DeliveryQueueHealth{TenantID: scope.TenantID, EvaluatedAt: now.UTC()}
 	if !scope.OutcomeID.IsZero() {
 		result.OutcomeID = &scope.OutcomeID
 	}
-	if scope.NamespaceID.Validate() != nil || !scope.OutcomeID.IsZero() && scope.OutcomeID.Validate() != nil {
+	if scope.TenantID.Validate() != nil || !scope.OutcomeID.IsZero() && scope.OutcomeID.Validate() != nil {
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid delivery health scope")
 	}
 	if !scope.OutcomeID.IsZero() {
 		var exists int
-		if e := r.row(ctx, `SELECT COUNT(*) FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&exists); e != nil {
+		if e := r.row(ctx, `SELECT COUNT(*) FROM outcomes WHERE tenant_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&exists); e != nil {
 			return result, mapSQLError("read queue scope", e)
 		}
 		if exists != 1 {
@@ -46,9 +46,9 @@ func (r deliveryHealthRepository) Health(ctx context.Context, scope d.Scope, now
  MAX(d.last_successful_at)
  FROM integration_deliveries d
  LEFT JOIN delivery_attempts a ON a.delivery_id=d.id AND a.fencing_token=d.fencing_token
- LEFT JOIN webhook_endpoints e ON e.id=d.endpoint_id AND e.namespace_id=d.namespace_id
- WHERE d.namespace_id=?`
-	args := []any{encodeTime(now), encodeTime(now), encodeTime(now), scope.NamespaceID.String()}
+ LEFT JOIN webhook_endpoints e ON e.id=d.endpoint_id AND e.tenant_id=d.tenant_id
+ WHERE d.tenant_id=?`
+	args := []any{encodeTime(now), encodeTime(now), encodeTime(now), scope.TenantID.String()}
 	if !scope.OutcomeID.IsZero() {
 		q += ` AND d.outcome_id=?`
 		args = append(args, scope.OutcomeID.String())
@@ -58,8 +58,8 @@ func (r deliveryHealthRepository) Health(ctx context.Context, scope d.Scope, now
 	if e != nil {
 		return result, mapSQLError("aggregate scoped delivery health", e)
 	}
-	q = `SELECT COUNT(*),MAX(a.started_at) FROM delivery_attempts a JOIN integration_deliveries d ON d.id=a.delivery_id WHERE d.namespace_id=?`
-	args = []any{scope.NamespaceID.String()}
+	q = `SELECT COUNT(*),MAX(a.started_at) FROM delivery_attempts a JOIN integration_deliveries d ON d.id=a.delivery_id WHERE d.tenant_id=?`
+	args = []any{scope.TenantID.String()}
 	if !scope.OutcomeID.IsZero() {
 		q += ` AND d.outcome_id=?`
 		args = append(args, scope.OutcomeID.String())

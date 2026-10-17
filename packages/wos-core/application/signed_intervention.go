@@ -144,7 +144,7 @@ func (s *Service) InterveneSignedReviewCase(ctx context.Context, cc d.CommandCon
 	}
 	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (SignedInterventionResult, d.OutcomeRevision, error) {
 		var zero SignedInterventionResult
-		if _, _, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionNamespaceAdmin, d.ID("")); err != nil {
+		if _, _, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionTenantAdmin, d.ID("")); err != nil {
 			return zero, 0, err
 		}
 		if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {

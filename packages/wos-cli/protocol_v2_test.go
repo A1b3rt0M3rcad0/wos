@@ -14,7 +14,7 @@ import (
 
 func TestProtocolV2FreezesExactCounterAndGetFailureRemainsPrintable(t *testing.T) {
 	project, profile, token := profileFixtureV2(t, "operator")
-	command := a.SetNamespaceWorkProtocolCommand{Scope: d.Scope{NamespaceID: project.Scope.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}, ExpectedProtocolVersion: 9007199254740995, Phase: d.WorkProtocolSignedDraining, Reason: "retire old writers"}
+	command := a.SetTenantWorkProtocolCommand{Scope: d.Scope{TenantID: project.Scope.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}, ExpectedProtocolVersion: 9007199254740995, Phase: d.WorkProtocolSignedDraining, Reason: "retire old writers"}
 	raw, e := freezeProtocolV2(command)
 	if e != nil {
 		t.Fatal(e)
@@ -57,11 +57,11 @@ func TestProtocolV2FreezesExactCounterAndGetFailureRemainsPrintable(t *testing.T
 
 func TestProtocolConfirmedAcceptanceStillRequiresOriginalTargetAndVersion(t *testing.T) {
 	project, _, _ := profileFixtureV2(t, "operator")
-	command := a.SetNamespaceWorkProtocolCommand{Scope: d.Scope{NamespaceID: project.Scope.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}, ExpectedProtocolVersion: 3, Phase: d.WorkProtocolSignedDraining}
-	protocol := d.DefaultWorkProtocol(command.Scope.NamespaceID)
+	command := a.SetTenantWorkProtocolCommand{Scope: d.Scope{TenantID: project.Scope.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}, ExpectedProtocolVersion: 3, Phase: d.WorkProtocolSignedDraining}
+	protocol := d.DefaultWorkProtocol(command.Scope.TenantID)
 	protocol.Version = 4
 	protocol.Phase = command.Phase
-	value := sdk.CommandResult[a.NamespaceWorkProtocolResult]{CommandID: project.Connection.ExpectedServerID, Value: a.NamespaceWorkProtocolResult{Protocol: protocol}}
+	value := sdk.CommandResult[a.TenantWorkProtocolResult]{CommandID: project.Connection.ExpectedServerID, Value: a.TenantWorkProtocolResult{Protocol: protocol}}
 	if e := validateProtocolAcceptanceV2(command, value); e != nil {
 		t.Fatal(e)
 	}

@@ -1,8 +1,8 @@
 # Opt-in backup and recovery procedures
 
-For a whole-installation SQLite-to-PostgreSQL transition and read-only shared-to-dedicated Namespace preflight, use the [installation mobility procedure](../../docs/scaling/mobility.md). Namespace transfer is not an implemented export/import operation.
+For SQLite-to-PostgreSQL staging and read-only Tenant preflight, use the [installation mobility procedure](../../docs/scaling/mobility.md). The current [schema-per-Tenant lifecycle](../../docs/scaling/tenants.md) additionally requires a catalog binding. A schema snapshot alone does not authorize transfer or reopening with another issuer.
 
-These tools are run by an operator or an external cron/systemd/Kubernetes job. They are not installed as a scheduler, service, agent runtime or automatic task in WOS. Python 3 is required; PostgreSQL also needs matching `psql`, `pg_dump` and `pg_restore` clients on PATH. Backups cover the whole WOS database/schema, including all internal Namespaces, not an agent's ordinary API scope. Use an operator database account and protect the output directory.
+These tools are run by an operator or an external cron/systemd/Kubernetes job. They are not installed as a scheduler, service, agent runtime or automatic task in WOS. Python 3 is required; PostgreSQL also needs matching `psql`, `pg_dump` and `pg_restore` clients on PATH. The PostgreSQL helper snapshots the explicitly selected schema. It does not combine the Tenant catalog and every Tenant schema into a verified fleet manifest. A whole-installation backup must preserve the catalog plus every Tenant schema, and the applicable private issuer and integration secrets separately. Use PostgreSQL database-level backup/PITR and rehearse the complete restore. Existing pre-schema receipts remain scoped to their historical source. Use an operator database account and protect the output directory.
 
 `backup_restore.py` takes a consistent online SQLite backup or exports one read-only repeatable-read PostgreSQL snapshot shared with `pg_dump`. It writes new private files, a manifest and checksums. Metadata includes operator-declared deployed source/version, storage schema version, server identity/current issuer fingerprint, Outcome revision watermark, snapshot time and per-table counts/logical digests. Source/version declarations identify the deployment supplied by the operator; they do not cryptographically attest which binary wrote every historical row. No issuer seed, token environment or CLI private key is collected. The database backup itself can contain private application data and credential digests; keep it private and apply your external encryption/access/retention policy.
 
@@ -15,13 +15,20 @@ umask 077
 python3 tools/operations/backup_restore.py backup --backend sqlite --sqlite /data/wos.db \
   --output /private/backups/new-snapshot --source-commit DEPLOYED_GIT_SHA --product-version DEPLOYED_VERSION
 
-python3 tools/operations/backup_restore.py backup --backend postgres --dsn-env WOS_POSTGRES_DSN --schema public \
+python3 tools/operations/backup_restore.py backup --backend postgres --dsn-env WOS_POSTGRES_DSN --schema APPROVED_TENANT_SCHEMA \
   --output /private/backups/new-snapshot --source-commit DEPLOYED_GIT_SHA --product-version DEPLOYED_VERSION
 ```
 
 Record the returned `manifest_sha256` independently of the backup bundle. Bundled checksums detect corruption; an independently approved manifest digest also detects replacement of both data and its bundled checksum. The tools do not replace trusted storage, signatures, approved issuer pins or access control. A failed/incomplete directory is not a completed backup; inspect the error and use a new destination for the next attempt.
 
 ## Inspect, restore and verify
+
+For schema-per-Tenant deployments, this helper's per-schema verification is one
+part of recovery. Restore and validate the catalog binding, Tenant singleton,
+issuer pins, credentials and delivery obligations before starting any runtime.
+Do not treat a successful single-schema restore as a fully restored multi-Tenant
+installation or an authorized shared-to-dedicated transfer.
+
 
 Stop writers and pause agents for the explicit cutover procedure. Keep the old database/service and the original snapshot intact. SQLite restore requires a nonexistent destination file; PostgreSQL restore requires an already provisioned **new empty database** and refuses any existing user object. The tool never drops, cleans, overwrites or downgrades a running database. `--writers-stopped` records the operator's cutover precondition; it does not remotely stop processes.
 

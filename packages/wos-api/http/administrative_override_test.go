@@ -50,8 +50,8 @@ func TestAdministrativeOverrideHTTPRequiresExplicitLocalOptIn(t *testing.T) {
 	defer deniedServer.Close()
 	deniedClient := deniedServer.Client()
 
-	namespaceID := "0199ed82-0000-7000-8000-000000000001"
-	base := deniedServer.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199ed82-0000-7000-8000-000000000001"
+	base := deniedServer.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	created := doJSON[application.MutationResult[domain.Outcome]](
 		t,
 		deniedClient,
@@ -131,8 +131,8 @@ func TestAdministrativeOverrideHTTPCompletesLeasedWorkWhenEnabled(t *testing.T) 
 	defer server.Close()
 	client := server.Client()
 
-	namespaceID := "0199ed83-0000-7000-8000-000000000001"
-	base := server.URL + "/api/v1/namespaces/" + namespaceID + "/outcomes"
+	tenantID := "0199ed83-0000-7000-8000-000000000001"
+	base := server.URL + "/api/v1/tenants/" + tenantID + "/outcomes"
 	created := doJSON[application.MutationResult[domain.Outcome]](
 		t,
 		client,

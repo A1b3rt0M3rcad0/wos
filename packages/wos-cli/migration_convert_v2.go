@@ -21,16 +21,16 @@ type LegacyOriginalV2 struct {
 	Chunks []string `json:"chunks"`
 }
 type LegacyUnsignedFileV2 struct {
-	SchemaVersion     int                `json:"schema_version"`
-	Kind              string             `json:"kind"`
-	Protocol          string             `json:"protocol"`
-	SourceWorkspace   string             `json:"source_workspace"`
-	SourceOrigin      string             `json:"source_origin"`
-	SourceNamespaceID d.ID               `json:"source_namespace_id"`
-	Contract          ContractDocument   `json:"contract"`
-	Checkpoint        *CheckpointDraft   `json:"checkpoint,omitempty"`
-	Result            *ResultDraft       `json:"result,omitempty"`
-	Originals         []LegacyOriginalV2 `json:"originals"`
+	SchemaVersion   int                `json:"schema_version"`
+	Kind            string             `json:"kind"`
+	Protocol        string             `json:"protocol"`
+	SourceWorkspace string             `json:"source_workspace"`
+	SourceOrigin    string             `json:"source_origin"`
+	SourceTenantID  d.ID               `json:"source_tenant_id"`
+	Contract        ContractDocument   `json:"contract"`
+	Checkpoint      *CheckpointDraft   `json:"checkpoint,omitempty"`
+	Result          *ResultDraft       `json:"result,omitempty"`
+	Originals       []LegacyOriginalV2 `json:"originals"`
 }
 type MigrationTargetV2 struct {
 	ContractID d.ID   `json:"contract_id"`
@@ -58,7 +58,7 @@ func convertedLegacyFilesV2(source *Workspace, config Config, inventory Migratio
 			return nil, e
 		}
 		c := contract.Contract
-		if contract.SchemaVersion != 1 || contract.Kind != "WorkContract" || c.Validate() != nil || c.Scope.NamespaceID != config.Scope.NamespaceID || c.SignedBinding != nil || seen[c.ID] {
+		if contract.SchemaVersion != 1 || contract.Kind != "WorkContract" || c.Validate() != nil || c.Scope.TenantID != config.Scope.TenantID || c.SignedBinding != nil || seen[c.ID] {
 			return nil, fmt.Errorf("legacy contract is invalid, signed or ambiguous; preserve originals")
 		}
 		dir := filepath.Dir(filepath.FromSlash(entry.Path))
@@ -66,7 +66,7 @@ func convertedLegacyFilesV2(source *Workspace, config Config, inventory Migratio
 			return nil, fmt.Errorf("legacy contract path/identity differs")
 		}
 		seen[c.ID] = true
-		file := LegacyUnsignedFileV2{SchemaVersion: 2, Kind: "WOSLegacyUnsignedContract", Protocol: "legacy_unsigned", SourceOrigin: config.Connection.ServerURL, SourceWorkspace: source.canonicalPath, SourceNamespaceID: config.Scope.NamespaceID, Contract: contract, Originals: []LegacyOriginalV2{}}
+		file := LegacyUnsignedFileV2{SchemaVersion: 2, Kind: "WOSLegacyUnsignedContract", Protocol: "legacy_unsigned", SourceOrigin: config.Connection.ServerURL, SourceWorkspace: source.canonicalPath, SourceTenantID: config.Scope.TenantID, Contract: contract, Originals: []LegacyOriginalV2{}}
 		for _, original := range inventory.Files {
 			path := filepath.FromSlash(original.Path)
 			if !strings.HasPrefix(path, dir+string(filepath.Separator)) {
@@ -152,7 +152,7 @@ func convertWorkspaceV2(ctx context.Context, source *Workspace, config Config, i
 	if e != nil {
 		return result, e
 	}
-	if profile.Binding.ServerOrigin != config.Connection.ServerURL || profile.Binding.NamespaceID != config.Scope.NamespaceID {
+	if profile.Binding.ServerOrigin != config.Connection.ServerURL || profile.Binding.TenantID != config.Scope.TenantID {
 		return result, fmt.Errorf("approved destination differs from legacy workspace")
 	}
 	_, sourceClient, e := loadClient(source)
@@ -238,7 +238,7 @@ func convertWorkspaceV2(ctx context.Context, source *Workspace, config Config, i
 			if e != nil {
 				return e
 			}
-			intent = PendingOperationV2{ID: id, Operation: "WorkspaceMigration", State: "prepared", Scope: ProfilePendingScopeV2{NamespaceID: profile.Binding.NamespaceID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(frozen), PayloadDigest: signing.Digest(frozen)}
+			intent = PendingOperationV2{ID: id, Operation: "WorkspaceMigration", State: "prepared", Scope: ProfilePendingScopeV2{TenantID: profile.Binding.TenantID}, IdempotencyKey: key, Payload: base64.StdEncoding.EncodeToString(frozen), PayloadDigest: signing.Digest(frozen)}
 			current.Local.PendingOperations = append(current.Local.PendingOperations, intent)
 		}
 		return nil

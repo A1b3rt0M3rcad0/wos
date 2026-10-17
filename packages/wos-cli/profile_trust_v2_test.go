@@ -73,11 +73,11 @@ func TestExplicitProfileTrustRetainsFrozenIntentionsAcrossNativeProcessDeath(t *
 		release()
 		switch r.URL.Path {
 		case "/api/v1/security/signing-identity":
-			if e := json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: profile.Binding.ServerID.String(), NamespaceID: profile.Binding.NamespaceID, PrincipalID: profile.Binding.PrincipalID, CredentialID: profile.Binding.CredentialID}); e != nil {
+			if e := json.NewEncoder(rw).Encode(a.SigningIdentityView{Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, ServerID: profile.Binding.ServerID.String(), TenantID: profile.Binding.TenantID, PrincipalID: profile.Binding.PrincipalID, CredentialID: profile.Binding.CredentialID}); e != nil {
 				t.Error("identity fixture encoding failed", e)
 			}
 		default:
-			if e := json.NewEncoder(rw).Encode(a.SignedStateResult{ProtocolVersion: 2, NamespaceID: profile.Binding.NamespaceID, Resource: "trust", Server: &server}); e != nil {
+			if e := json.NewEncoder(rw).Encode(a.SignedStateResult{ProtocolVersion: 3, TenantID: profile.Binding.TenantID, Resource: "trust", Server: &server}); e != nil {
 				t.Error("trust fixture encoding failed", e)
 			}
 		}

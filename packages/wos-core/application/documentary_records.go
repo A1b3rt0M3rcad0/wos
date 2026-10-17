@@ -703,7 +703,7 @@ func validateEvidenceLinkTarget(ctx context.Context, uow ports.UnitOfWork, decis
 		if ref.ID != ref.Scope.OutcomeID {
 			return domain.NewError(domain.ErrorCodeEvidenceLink, "outcome target id must equal outcome scope id")
 		}
-		value, err := uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, ref.Scope.TenantID, ref.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}

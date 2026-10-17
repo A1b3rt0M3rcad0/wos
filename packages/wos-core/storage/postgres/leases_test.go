@@ -29,7 +29,7 @@ func createSQLiteClaimedWork(
 	store *Store,
 	now time.Time,
 	idPrefix string,
-	namespaceID domain.ID,
+	tenantID domain.ID,
 ) (domain.Outcome, domain.WorkItem) {
 	t.Helper()
 	ctx := context.Background()
@@ -44,7 +44,7 @@ func createSQLiteClaimedWork(
 	cc := sqliteLeaseCommandContext("lease-owner", "0199eb00-0000-7000-8000-000000000101")
 
 	created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Lease durability",
 		DesiredState: "lease coordination survives restart",
 		Priority:     domain.PriorityNormal,
@@ -104,8 +104,8 @@ func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 	}
 
 	claimedAt := time.Date(2026, 10, 2, 23, 0, 0, 0, time.UTC)
-	namespaceID := domain.MustParseID("0199eb01-0000-7000-8000-000000000001")
-	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb02", namespaceID)
+	tenantID := domain.MustParseID("0199eb01-0000-7000-8000-000000000001")
+	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb02", tenantID)
 	oldClaimID := work.CurrentLease.ClaimID
 	oldToken := work.CurrentLease.FencingToken
 
@@ -262,8 +262,8 @@ func TestSQLiteConcurrentReclaimAllowsSingleWinner(t *testing.T) {
 	defer store.Close()
 
 	claimedAt := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
-	namespaceID := domain.MustParseID("0199eb10-0000-7000-8000-000000000001")
-	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb13", namespaceID)
+	tenantID := domain.MustParseID("0199eb10-0000-7000-8000-000000000001")
+	outcome, work := createSQLiteClaimedWork(t, store, claimedAt, "0199eb13", tenantID)
 	expiredAt := work.CurrentLease.ExpiresAt
 	oldToken := work.CurrentLease.FencingToken
 

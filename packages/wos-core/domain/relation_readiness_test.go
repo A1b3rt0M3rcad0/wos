@@ -7,8 +7,8 @@ import (
 
 func TestDependencyRelationValidationAndCycle(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199f000-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f000-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f000-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f000-0000-7000-8000-000000000002"),
 	}
 	ref := func(kind EntityKind, suffix string) EntityRef {
 		return EntityRef{Scope: scope, Kind: kind, ID: MustParseID("0199f000-0000-7000-8000-" + suffix)}
@@ -39,11 +39,11 @@ func TestDependencyRelationValidationAndCycle(t *testing.T) {
 
 func TestReadinessUsesHardDependenciesAndNotBefore(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199f001-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199f001-0000-7000-8000-000000000002"),
+		TenantID:  MustParseID("0199f001-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199f001-0000-7000-8000-000000000002"),
 	}
 	now := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
-	outcome, err := NewOutcome(scope.OutcomeID, scope.NamespaceID, "Outcome", "", "Done", PriorityNormal, now)
+	outcome, err := NewOutcome(scope.OutcomeID, scope.TenantID, "Outcome", "", "Done", PriorityNormal, now)
 	if err != nil {
 		t.Fatal(err)
 	}

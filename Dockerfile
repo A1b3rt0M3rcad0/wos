@@ -1,4 +1,5 @@
 FROM golang:1.27.2-alpine AS build
+ENV GOMAXPROCS=2
 WORKDIR /src
 COPY go.mod go.sum ./
 # Optional build-only trust bundle for an HTTPS package proxy.

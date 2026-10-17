@@ -60,7 +60,7 @@ export const copy = Object.freeze({
     yourWORKSPACE: "YOUR WORKSPACE",
     accessCredential: "Access credential",
     localDevelopmentServer: "Local development server",
-    namespace: "Namespace",
+    tenant: "Tenant",
     w: "W",
     switchOutcome: "Switch outcome",
     filterOutcomes: "Filter outcomes",
@@ -374,7 +374,7 @@ export const copy = Object.freeze({
     recordsWrite: "Records write",
     assessmentWrite: "Assessment write",
     conclusionWrite: "Conclusion write",
-    namespaceAdmin: "Namespace admin",
+    tenantAdmin: "Tenant admin",
     integrationWrite: "Integration write",
     actorDelegate: "Actor delegate",
     workAdminCancel: "Work admin cancel",
@@ -964,7 +964,7 @@ export const copy = Object.freeze({
     localServerGuidance:
       "For a trusted local server configured for local access. Use its workspace ID.",
     localWorkspaceIdentifierGuidance:
-      "This is the Namespace UUID from your server configuration. Shared servers require an access credential.",
+      "This is the Tenant UUID from your server configuration. Shared servers require an access credential.",
     credentialSessionGuidance:
       "Your credential is exchanged for a secure session. The credential itself is not stored in the browser.",
     authorizedWorkspaceGuidance:

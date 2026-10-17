@@ -259,14 +259,14 @@ func (c *Client) RevokeSignedContract(ctx context.Context, key string, cmd appli
 func (c *Client) RevokeWorkContract(ctx context.Context, key string, cmd application.RevokeWorkContractCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "revoke_work_contract", key, cmd)
 }
-func (c *Client) SetNamespaceWorkProtocol(ctx context.Context, key string, cmd application.SetNamespaceWorkProtocolCommand) (CommandResult[application.NamespaceWorkProtocolResult], error) {
-	return command[application.NamespaceWorkProtocolResult](ctx, c, "set_namespace_work_protocol", key, cmd)
-}
 func (c *Client) SetObjectiveOwners(ctx context.Context, key string, cmd application.SetObjectiveOwnersCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "set_objective_owners", key, cmd)
 }
 func (c *Client) SetOutcomeOwners(ctx context.Context, key string, cmd application.SetOutcomeOwnersCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "set_outcome_owners", key, cmd)
+}
+func (c *Client) SetTenantWorkProtocol(ctx context.Context, key string, cmd application.SetTenantWorkProtocolCommand) (CommandResult[application.TenantWorkProtocolResult], error) {
+	return command[application.TenantWorkProtocolResult](ctx, c, "set_tenant_work_protocol", key, cmd)
 }
 func (c *Client) SetTriggerEnabled(ctx context.Context, key string, cmd application.SetTriggerEnabledCommand) (CommandResult[domain.Trigger], error) {
 	return command[domain.Trigger](ctx, c, "set_trigger_enabled", key, cmd)

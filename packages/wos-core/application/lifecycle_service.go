@@ -22,7 +22,7 @@ func (s *Service) FailOutcome(ctx context.Context, commandContext domain.Command
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -51,7 +51,7 @@ func (s *Service) AbandonOutcome(ctx context.Context, commandContext domain.Comm
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -75,7 +75,7 @@ func (s *Service) ReopenOutcome(ctx context.Context, commandContext domain.Comma
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -99,7 +99,7 @@ func (s *Service) ArchiveOutcome(ctx context.Context, commandContext domain.Comm
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -123,7 +123,7 @@ func (s *Service) UnarchiveOutcome(ctx context.Context, commandContext domain.Co
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -326,7 +326,7 @@ func (s *Service) SetOutcomeOwners(ctx context.Context, commandContext domain.Co
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.TenantID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -409,7 +409,7 @@ func (s *Service) SetWorkItemAssignees(ctx context.Context, commandContext domai
 func retireCriterion(ctx context.Context, uow ports.UnitOfWork, owner domain.EntityRef, criterionID domain.ID, expected domain.Version, now time.Time) (domain.SuccessCriterion, error) {
 	switch owner.Kind {
 	case domain.EntityKindOutcome:
-		value, err := uow.Outcomes().Get(ctx, owner.Scope.NamespaceID, owner.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, owner.Scope.TenantID, owner.Scope.OutcomeID)
 		if err != nil {
 			return domain.SuccessCriterion{}, err
 		}
@@ -465,7 +465,7 @@ func requireOpenOutcome(ctx context.Context, uow ports.UnitOfWork, scope domain.
 	if _, err := uow.Coordination().LockOutcome(ctx, scope); err != nil {
 		return err
 	}
-	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	outcome, err := uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID)
 	if err != nil {
 		return err
 	}

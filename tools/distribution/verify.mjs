@@ -59,7 +59,7 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const installedRelease=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/wosctl/release.json'),'utf8'));
     assert.equal(installedRelease.work_protocol,clientVersion.work_protocol);
     assert.equal(installedRelease.workspace_schema,clientVersion.workspace_schema);
-    assert.ok(clientVersion.supported_work_protocols.includes('signed_contracts_v2'));
+    assert.ok(clientVersion.supported_work_protocols.includes('signed_contracts_v3'));
     const draftSchema=JSON.parse(await fs.readFile(path.join(consumer,'node_modules/wosctl/schemas/contract-v2.schema.json'),'utf8'));
     assert.equal(draftSchema.properties.schema_version.const,2);
     assert.match(await fs.readFile(path.join(notices,'index.md'),'utf8'),/go.yaml.in\/yaml\/v3@v3.0.5/);
@@ -91,7 +91,7 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const port=reservation.address().port; await new Promise(resolve=>reservation.close(resolve));
     const credential=randomBytes(32).toString('base64url'),ns='0199d000-0000-7000-8000-000000000001';
     const clientEnv={...process.env,WOS_DIST_CREDENTIAL:credential};
-    server=spawn(cli,['server'],{env:{...process.env,WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:credential,WOS_BOOTSTRAP_NAMESPACE_ID:ns,WOS_BOOTSTRAP_NAMESPACE_NAME:'Offline distribution',WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:path.join(consumer,'smoke.db'),WOS_LOCAL_PRINCIPAL_ID:'npm-smoke',WOS_MCP_ENABLED:'true'},stdio:['ignore','pipe','pipe']});
+    server=spawn(cli,['server'],{env:{...process.env,WOS_AUTH_MODE:'api_token',WOS_BOOTSTRAP_TOKEN:credential,WOS_BOOTSTRAP_TENANT_ID:ns,WOS_BOOTSTRAP_TENANT_NAME:'Offline distribution',WOS_LISTEN:`127.0.0.1:${port}`,WOS_SQLITE_PATH:path.join(consumer,'smoke.db'),WOS_LOCAL_PRINCIPAL_ID:'npm-smoke',WOS_MCP_ENABLED:'true'},stdio:['ignore','pipe','pipe']});
     server.stdout.on('data',b=>log.push(b.toString()));server.stderr.on('data',b=>log.push(b.toString()));
     let ready=false; const base=`http://127.0.0.1:${port}`;
     for(let i=0;i<100;i++) {
@@ -107,20 +107,20 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     assert.equal(init.status,200); const initialized=(await init.json()).result;assert.equal(initialized.protocolVersion,'2025-06-18');assert.equal(initialized.serverInfo.version,manifest.version);
     const tools=await fetch(base+'/mcp',{method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/list',params:{}})});
     assert.equal(tools.status,200);assert.ok((await tools.json()).result.tools.some(t=>t.name==='wos_claim_work_item'));
-    const actor=await fetch(base+'/api/v1/namespaces/0199d000-0000-7000-8000-000000000001/outcomes',{headers});
+    const actor=await fetch(base+'/api/v1/tenants/0199d000-0000-7000-8000-000000000001/outcomes',{headers});
     assert.equal(actor.status,200);
     let commandIndex=0;
     async function mutate(name,command){const r=await fetch(base+'/api/v1/commands/'+name,{method:'POST',headers:{Authorization:`Bearer ${credential}`,'Content-Type':'application/json','Idempotency-Key':`offline-package-command-${++commandIndex}`},body:JSON.stringify({command})});const value=await r.json();assert.ok(r.ok,JSON.stringify(value));return value.value}
-    const out=await mutate('create_outcome',{namespace_id:ns,title:'Offline package contract',desired_state:'Typed client and server agree',priority:'normal'}),scope={namespace_id:ns,outcome_id:out.id};
+    const out=await mutate('create_outcome',{tenant_id:ns,title:'Offline package contract',desired_state:'Typed client and server agree',priority:'normal'}),scope={tenant_id:ns,outcome_id:out.id};
     await mutate('add_criterion',{owner:{...scope,kind:'outcome',id:out.id},expected_version:1,title:'Verified package',required:true,verification_mode:'attestation'});await mutate('activate_outcome',{scope,expected_version:2});
-    await mutate('set_namespace_work_protocol',{scope,expected_protocol_version:1,phase:'draining',reason:'Fresh verification instance'});await mutate('set_namespace_work_protocol',{scope,expected_protocol_version:2,phase:'contracts_v1',writers_drained:true,reason:'No older writers in fixture'});
+    await mutate('set_tenant_work_protocol',{scope,expected_protocol_version:1,phase:'draining',reason:'Fresh verification instance'});await mutate('set_tenant_work_protocol',{scope,expected_protocol_version:2,phase:'contracts_v1',writers_drained:true,reason:'No older writers in fixture'});
     const work=await mutate('create_work_item',{scope,title:'Use packaged client',priority:'normal',lifecycle:'todo'});
-    run(client,['init','--workspace',consumer,'--server',base,'--namespace',ns,'--outcome',out.id,'--credential-env','WOS_DIST_CREDENTIAL','--output','json'],{env:clientEnv});
+    run(client,['init','--workspace',consumer,'--server',base,'--tenant',ns,'--outcome',out.id,'--credential-env','WOS_DIST_CREDENTIAL','--output','json'],{env:clientEnv});
     const checked=JSON.parse(run(client,['work','checkout',work.id,'--version','1','--workspace',consumer,'--output','json'],{env:clientEnv}));assert.equal(checked.committed,true);assert.equal(checked.work_item_id,work.id);
     run(client,['work','status',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});run(client,['work','recover',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});
     await stop(server); assert.equal(server.exitCode,0,'SIGTERM reaches Go graceful shutdown');server=null;
     const signed=await verifySignedPackage(cli,client);
-    assert.equal(signed.protocol,'signed_contracts_v2');
+    assert.equal(signed.protocol,'signed_contracts_v3');
     const binary=path.join(consumer,'node_modules/wosctl/native/linux-amd64/wos');
     await fs.writeFile(binary+'.corrupt',Buffer.concat([await fs.readFile(binary),Buffer.from('corruption')]));await fs.rename(binary+'.corrupt',binary);
     assert.throws(()=>run(cli,['version']),/checksum mismatch/);

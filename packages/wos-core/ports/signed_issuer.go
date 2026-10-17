@@ -22,7 +22,7 @@ type ServerIdentityUnitOfWork interface {
 }
 
 // IssuerRecoveryRepository is available only to trusted host composition, never
-// a Namespace command. Its lock orders replacement against signed issuance.
+// a Tenant command. Its lock orders replacement against signed issuance.
 type IssuerRecoveryRepository interface {
 	LockServerIssuer(context.Context) (domain.ServerIdentity, error)
 	IssuerRecovery(context.Context, domain.ID) (domain.IssuerRecovery, error)

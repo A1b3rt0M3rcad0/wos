@@ -54,7 +54,7 @@ func (o *Observer) ObserveCommand(c ports.CommandObservation) {
 		o.conflicts.Add(1)
 	}
 	if o.Logger != nil {
-		o.Logger.Info("command", "command", c.Name, "namespace_id", string(c.NamespaceID), "outcome_id", string(c.OutcomeID), "principal_id", c.PrincipalID, "actor_ref", c.Actor, "command_id", string(c.CommandID), "correlation_id", c.CorrelationID, "outcome_revision", c.Revision, "duration_ms", float64(c.Duration)/float64(time.Millisecond), "transaction_wait_ms", float64(c.TransactionWait)/float64(time.Millisecond), "commit_ms", float64(c.CommitDuration)/float64(time.Millisecond), "guard_ms", float64(c.GuardDuration)/float64(time.Millisecond), "error_code", c.ErrorCode, "idempotent_replay", c.Replay)
+		o.Logger.Info("command", "command", c.Name, "tenant_id", string(c.TenantID), "outcome_id", string(c.OutcomeID), "principal_id", c.PrincipalID, "actor_ref", c.Actor, "command_id", string(c.CommandID), "correlation_id", c.CorrelationID, "outcome_revision", c.Revision, "duration_ms", float64(c.Duration)/float64(time.Millisecond), "transaction_wait_ms", float64(c.TransactionWait)/float64(time.Millisecond), "commit_ms", float64(c.CommitDuration)/float64(time.Millisecond), "guard_ms", float64(c.GuardDuration)/float64(time.Millisecond), "error_code", c.ErrorCode, "idempotent_replay", c.Replay)
 	}
 }
 
@@ -189,7 +189,7 @@ func (o *Observer) ObserveQuery(q ports.QueryObservation) {
 	o.queryTiming[q.Name] = t
 	o.mu.Unlock()
 	if o.Logger != nil {
-		o.Logger.Info("query", "query", q.Name, "namespace_id", q.Scope.NamespaceID, "outcome_id", q.Scope.OutcomeID, "principal_id", q.PrincipalID, "actor_ref", q.Actor, "outcome_revision", q.Revision, "duration_ms", float64(q.Duration)/float64(time.Millisecond), "error_code", q.ErrorCode)
+		o.Logger.Info("query", "query", q.Name, "tenant_id", q.Scope.TenantID, "outcome_id", q.Scope.OutcomeID, "principal_id", q.PrincipalID, "actor_ref", q.Actor, "outcome_revision", q.Revision, "duration_ms", float64(q.Duration)/float64(time.Millisecond), "error_code", q.ErrorCode)
 	}
 }
 

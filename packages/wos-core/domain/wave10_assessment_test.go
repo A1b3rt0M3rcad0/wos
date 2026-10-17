@@ -7,8 +7,8 @@ import (
 
 func TestCriterionDefinitionRevisionSnapshotsCurrentDefinition(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199ef00-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199ef00-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199ef00-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199ef00-0000-7000-8000-000000000010"),
 	}
 	owner := EntityRef{Scope: scope, Kind: EntityKindOutcome, ID: scope.OutcomeID}
 	criterion, err := NewSuccessCriterion(
@@ -36,8 +36,8 @@ func TestCriterionDefinitionRevisionSnapshotsCurrentDefinition(t *testing.T) {
 
 func TestRecordAssessmentEnforcesVerificationModeContract(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199ef00-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199ef00-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199ef00-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199ef00-0000-7000-8000-000000000010"),
 	}
 	owner := EntityRef{Scope: scope, Kind: EntityKindOutcome, ID: scope.OutcomeID}
 	criterion, err := NewSuccessCriterion(
@@ -76,8 +76,8 @@ func TestRecordAssessmentEnforcesVerificationModeContract(t *testing.T) {
 
 func TestRecordAssessmentRequiresWaiverAuthorization(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199ef00-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199ef00-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199ef00-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199ef00-0000-7000-8000-000000000010"),
 	}
 	owner := EntityRef{Scope: scope, Kind: EntityKindOutcome, ID: scope.OutcomeID}
 	criterion, err := NewSuccessCriterion(
@@ -115,8 +115,8 @@ func TestRecordAssessmentRequiresWaiverAuthorization(t *testing.T) {
 
 func TestExternalEvaluationRequiresEvaluatorIdentity(t *testing.T) {
 	scope := Scope{
-		NamespaceID: MustParseID("0199ef00-0000-7000-8000-000000000001"),
-		OutcomeID:   MustParseID("0199ef00-0000-7000-8000-000000000010"),
+		TenantID:  MustParseID("0199ef00-0000-7000-8000-000000000001"),
+		OutcomeID: MustParseID("0199ef00-0000-7000-8000-000000000010"),
 	}
 	owner := EntityRef{Scope: scope, Kind: EntityKindObjective, ID: MustParseID("0199ef00-0000-7000-8000-000000000050")}
 	criterion, err := NewSuccessCriterion(

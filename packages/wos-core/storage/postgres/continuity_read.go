@@ -84,7 +84,7 @@ func (r continuityReadRepository) Page(ctx context.Context, scope d.Scope, secti
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: reference digest")
 		}
 		var key string
-		e := r.row(ctx, `SELECT continuity_sort_key FROM outcome_external_references WHERE namespace_id=$1 AND outcome_id=$2 AND continuity_key_digest=$3`, scope.NamespaceID.String(), scope.OutcomeID.String(), after[2:]).Scan(&key)
+		e := r.row(ctx, `SELECT continuity_sort_key FROM outcome_external_references WHERE tenant_id=$1 AND outcome_id=$2 AND continuity_key_digest=$3`, scope.TenantID.String(), scope.OutcomeID.String(), after[2:]).Scan(&key)
 		if e == sql.ErrNoRows {
 			return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: section key is missing")
 		}
@@ -93,16 +93,16 @@ func (r continuityReadRepository) Page(ctx context.Context, scope d.Scope, secti
 		}
 		after = key
 	}
-	countQuery := "SELECT COUNT(*),COALESCE(SUM(CASE WHEN " + sortKey + ">? THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN " + sortKey + "=? THEN 1 ELSE 0 END),0) FROM " + table + " WHERE namespace_id=? AND outcome_id=?"
+	countQuery := "SELECT COUNT(*),COALESCE(SUM(CASE WHEN " + sortKey + ">? THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN " + sortKey + "=? THEN 1 ELSE 0 END),0) FROM " + table + " WHERE tenant_id=? AND outcome_id=?"
 	var afterCount, exists int
-	if e := r.row(ctx, countQuery, after, after, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&result.Count, &afterCount, &exists); e != nil {
+	if e := r.row(ctx, countQuery, after, after, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&result.Count, &afterCount, &exists); e != nil {
 		return result, mapSQLError("count scoped continuity page", e)
 	}
 	if after != "" && exists != 1 {
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: section key is missing")
 	}
-	query := "SELECT " + columns + " FROM " + table + " WHERE namespace_id=? AND outcome_id=? AND " + sortKey + ">? ORDER BY " + sortKey + " LIMIT ?"
-	rows, e := r.rows(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	query := "SELECT " + columns + " FROM " + table + " WHERE tenant_id=? AND outcome_id=? AND " + sortKey + ">? ORDER BY " + sortKey + " LIMIT ?"
+	rows, e := r.rows(ctx, query, scope.TenantID.String(), scope.OutcomeID.String(), after, limit)
 	if e != nil {
 		return result, mapSQLError("read scoped continuity page", e)
 	}
@@ -222,7 +222,7 @@ func (r continuityReadRepository) Outcome(ctx context.Context, scope d.Scope) (p
 	}
 	var version d.Version
 	var title, lifecycle, priority string
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority FROM outcomes WHERE namespace_id=$1 AND id=$2`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority FROM outcomes WHERE tenant_id=$1 AND id=$2`, scope.TenantID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority)
 	if e != nil {
 		return zero, mapSQLError("read continuity Outcome metadata", e)
 	}

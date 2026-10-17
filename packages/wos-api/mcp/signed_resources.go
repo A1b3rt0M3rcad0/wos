@@ -12,7 +12,7 @@ import (
 )
 
 func registerSignedResources(server *mcp.Server, service *application.Service, options Options) {
-	server.AddResourceTemplate(&mcp.ResourceTemplate{Name: "signed_state", Description: "One scoped signed-v2 resource. Compact metadata by default; specification, authority, fact or submission can be expanded with an expected digest. Collections use the focal query tool for bounded pagination.", URITemplate: "wos://namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}", MIMEType: "application/json"}, func(ctx context.Context, request *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+	server.AddResourceTemplate(&mcp.ResourceTemplate{Name: "signed_state", Description: "One scoped signed-v2 resource. Compact metadata by default; specification, authority, fact or submission can be expanded with an expected digest. Collections use the focal query tool for bounded pagination.", URITemplate: "wos://tenants/{tenant_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}", MIMEType: "application/json"}, func(ctx context.Context, request *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		headers := http.Header{}
 		if request.Extra != nil {
 			headers = request.Extra.Header
@@ -28,7 +28,7 @@ func registerSignedResources(server *mcp.Server, service *application.Service, o
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid signed resource URI")
 		}
 		parts := strings.Split(strings.Trim(u.Path, "/"), "/")
-		if u.Scheme != "wos" || u.Host != "namespaces" || u.User != nil || u.Fragment != "" || len(parts) != 6 || parts[1] != "outcomes" || parts[3] != "signed-state" {
+		if u.Scheme != "wos" || u.Host != "tenants" || u.User != nil || u.Fragment != "" || len(parts) != 6 || parts[1] != "outcomes" || parts[3] != "signed-state" {
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid signed resource URI")
 		}
 		ns, err := domain.ParseID(parts[0])
@@ -52,7 +52,7 @@ func registerSignedResources(server *mcp.Server, service *application.Service, o
 				return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown or repeated signed resource query")
 			}
 		}
-		value, err := service.ReadSignedState(ctx, application.SignedStateQuery{Scope: domain.Scope{NamespaceID: ns, OutcomeID: outcome}, Resource: parts[4], ID: id, Digest: parameters.Get("digest"), ContractKind: parameters.Get("contract_kind")})
+		value, err := service.ReadSignedState(ctx, application.SignedStateQuery{Scope: domain.Scope{TenantID: ns, OutcomeID: outcome}, Resource: parts[4], ID: id, Digest: parameters.Get("digest"), ContractKind: parameters.Get("contract_kind")})
 		if err != nil {
 			return nil, err
 		}

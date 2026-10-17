@@ -6,7 +6,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-func namespaceAcceptancePolicy(ctx context.Context, registry ports.SigningIdentityRepository, ns d.ID) (d.WorkAcceptancePolicy, error) {
+func tenantAcceptancePolicy(ctx context.Context, registry ports.SigningIdentityRepository, ns d.ID) (d.WorkAcceptancePolicy, error) {
 	p, e := registry.AcceptancePolicy(ctx, ns, nil, nil)
 	if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeNotFound {
 		return d.WorkAcceptancePolicy{}, nil
@@ -21,8 +21,8 @@ type SigningQuotaView struct {
 	MaxActiveReviewPerPrincipal  int  `json:"max_active_review_per_principal"`
 	MaxActiveWorkPerCredential   int  `json:"max_active_work_per_credential,omitempty"`
 	MaxActiveReviewPerCredential int  `json:"max_active_review_per_credential,omitempty"`
-	MaxActiveWorkPerNamespace    int  `json:"max_active_work_per_namespace,omitempty"`
-	MaxActiveReviewPerNamespace  int  `json:"max_active_review_per_namespace,omitempty"`
+	MaxActiveWorkPerTenant       int  `json:"max_active_work_per_tenant,omitempty"`
+	MaxActiveReviewPerTenant     int  `json:"max_active_review_per_tenant,omitempty"`
 	EffectiveWorkCeiling         int  `json:"effective_work_ceiling"`
 	EffectiveReviewCeiling       int  `json:"effective_review_ceiling"`
 	CredentialPolicyConfigured   bool `json:"credential_policy_configured"`
@@ -33,7 +33,7 @@ type SigningQuotaView struct {
 }
 
 func signingQuotaView(policy *d.CredentialPolicy, ns d.WorkAcceptancePolicy, counts ports.SignedActiveCounts) SigningQuotaView {
-	q := SigningQuotaView{MaxActiveWorkPerPrincipal: ns.PrincipalWorkLimit(), MaxActiveReviewPerPrincipal: ns.PrincipalReviewLimit(), MaxActiveWorkPerNamespace: ns.MaxActiveWorkContracts, MaxActiveReviewPerNamespace: ns.MaxActiveReviewContracts, ActivePrincipalWork: counts.PrincipalWork, ActivePrincipalReview: counts.PrincipalReview, ActiveCredentialWork: counts.CredentialWork, ActiveCredentialReview: counts.CredentialReview}
+	q := SigningQuotaView{MaxActiveWorkPerPrincipal: ns.PrincipalWorkLimit(), MaxActiveReviewPerPrincipal: ns.PrincipalReviewLimit(), MaxActiveWorkPerTenant: ns.MaxActiveWorkContracts, MaxActiveReviewPerTenant: ns.MaxActiveReviewContracts, ActivePrincipalWork: counts.PrincipalWork, ActivePrincipalReview: counts.PrincipalReview, ActiveCredentialWork: counts.CredentialWork, ActiveCredentialReview: counts.CredentialReview}
 	if policy != nil {
 		q.CredentialPolicyConfigured = true
 		q.MaxActiveWorkPerCredential = policy.MaxActiveWorkContracts

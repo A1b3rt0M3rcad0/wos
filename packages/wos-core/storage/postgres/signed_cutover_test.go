@@ -39,10 +39,10 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 				}
 			}
 			ns := testID("0199a888-0000-7000-8000-000000000001")
-			scope := d.Scope{NamespaceID: ns, OutcomeID: testID("0199a888-0000-7000-8000-000000000002")}
+			scope := d.Scope{TenantID: ns, OutcomeID: testID("0199a888-0000-7000-8000-000000000002")}
 			security := &a.SecurityService{Store: store, Clock: clock, IDs: ids}
 			const token = "signed-cutover-admin-credential-at-least-32"
-			must(security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "cutover"}, "operator", token))
+			must(security.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "cutover"}, "operator", token))
 			identity, e := security.Authenticate(ctx, token)
 			must(e)
 			admin := a.WithIdentity(ctx, identity)
@@ -63,13 +63,13 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 				must(e)
 				return d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: id, IdempotencyKey: "signed-cutover-" + key}
 			}
-			change := a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "retire legacy writers"}
-			draining, e := service.SetNamespaceWorkProtocol(admin, cc("drain-legacy"), change)
+			change := a.SetTenantWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 1, Phase: d.WorkProtocolDraining, Reason: "retire legacy writers"}
+			draining, e := service.SetTenantWorkProtocol(admin, cc("drain-legacy"), change)
 			must(e)
 			change.ExpectedProtocolVersion = draining.Value.Protocol.Version
 			change.Phase = d.WorkProtocolContracts
 			change.WritersDrained = true
-			v1, e := service.SetNamespaceWorkProtocol(admin, cc("activate-v1"), change)
+			v1, e := service.SetTenantWorkProtocol(admin, cc("activate-v1"), change)
 			must(e)
 			tx, e := store.Begin(ctx)
 			must(e)
@@ -82,12 +82,12 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 			must(e)
 			change.ExpectedProtocolVersion = v1.Value.Protocol.Version
 			change.Phase = d.WorkProtocolSigned
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("skip-signed-drain"), change); e == nil {
+			if _, e = service.SetTenantWorkProtocol(admin, cc("skip-signed-drain"), change); e == nil {
 				t.Fatal("signed activation skipped drain")
 			}
 			change.Phase = d.WorkProtocolSignedDraining
 			change.WritersDrained = false
-			signedDrain, e := service.SetNamespaceWorkProtocol(admin, cc("drain-v1"), change)
+			signedDrain, e := service.SetTenantWorkProtocol(admin, cc("drain-v1"), change)
 			must(e)
 			if signedDrain.Value.Protocol.WritersDrained {
 				t.Fatal("old operator acknowledgement silently reused")
@@ -97,16 +97,16 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 			}
 			change.ExpectedProtocolVersion = signedDrain.Value.Protocol.Version
 			change.Phase = d.WorkProtocolSigned
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("without-drain-ack"), change); e == nil {
+			if _, e = service.SetTenantWorkProtocol(admin, cc("without-drain-ack"), change); e == nil {
 				t.Fatal("signed activation lacked operator drain")
 			}
 			change.WritersDrained = true
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("with-active-v1"), change); e == nil {
+			if _, e = service.SetTenantWorkProtocol(admin, cc("with-active-v1"), change); e == nil {
 				t.Fatal("active unsigned authority survived activation")
 			}
 			revoked, e := service.RevokeWorkContract(admin, cc("revoke-old-authority"), a.RevokeWorkContractCommand{Scope: scope, ContractID: acquired.Value.Contract.ID, ExpectedContractVersion: acquired.Value.Contract.Version, Reason: "explicit operator drain"})
 			must(e)
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("without-issuer"), change); e == nil {
+			if _, e = service.SetTenantWorkProtocol(admin, cc("without-issuer"), change); e == nil {
 				t.Fatal("activation without configured signing host")
 			}
 			private := ed25519.NewKeyFromSeed(make([]byte, 32))
@@ -114,12 +114,12 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 			server := d.ServerIdentity{ID: testID("0199a888-0000-7000-8000-000000000004"), IssuerKeyID: testID("0199a888-0000-7000-8000-000000000005"), PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: signing.Digest(public), CreatedAt: now}
 			must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceIndependentReview))
 			security.ServerID = server.ID.String()
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("without-policy"), change); e == nil {
-				t.Fatal("activation without explicit Namespace acceptance policy")
+			if _, e = service.SetTenantWorkProtocol(admin, cc("without-policy"), change); e == nil {
+				t.Fatal("activation without explicit Tenant acceptance policy")
 			}
 			own, e := security.SigningIdentity(admin, nil)
 			must(e)
-			_, e = security.SigningMutation(admin, "configure-namespace-floor", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: own.NamespaceVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+			_, e = security.SigningMutation(admin, "configure-tenant-floor", a.SigningSecurityIntent{TenantID: ns, ExpectedTenantVersion: own.TenantVersion, Operation: "set_acceptance_policy", AcceptancePolicy: &d.WorkAcceptancePolicy{TenantID: ns, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 			must(e)
 			readiness, e := service.ReadSignedState(admin, a.SignedStateQuery{Scope: scope, Resource: "protocol_preflight"})
 			must(e)
@@ -127,20 +127,20 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 				t.Fatal("readiness lost drain prerequisites")
 			}
 			activationCC := cc("activate-signed-v2")
-			activated, e := service.SetNamespaceWorkProtocol(admin, activationCC, change)
+			activated, e := service.SetTenantWorkProtocol(admin, activationCC, change)
 			must(e)
-			if activated.Value.Protocol.WriterEpoch != 2 || !activated.Value.Protocol.WritersDrained {
+			if activated.Value.Protocol.WriterEpoch != 3 || !activated.Value.Protocol.WritersDrained {
 				t.Fatal("signed activation did not advance writer epoch")
 			}
 			operation, e := service.ReadSignedState(admin, a.SignedStateQuery{Scope: scope, Resource: "operation", IdempotencyKey: activationCC.IdempotencyKey})
 			must(e)
-			if operation.OperationCommandID == nil || *operation.OperationCommandID != activated.CommandID || operation.OperationName != "SetNamespaceWorkProtocol" {
+			if operation.OperationCommandID == nil || *operation.OperationCommandID != activated.CommandID || operation.OperationName != "SetTenantWorkProtocol" {
 				t.Fatal("cutover response not retained by original-CID registry")
 			}
 			// Preserve exact public response after the short cache is unavailable.
 			recoveredService, e := a.NewAuthorizedService(signedNoCacheManager{base: store}, clock, ids, security)
 			must(e)
-			replayedActivation, e := recoveredService.SetNamespaceWorkProtocol(admin, activationCC, change)
+			replayedActivation, e := recoveredService.SetTenantWorkProtocol(admin, activationCC, change)
 			must(e)
 			if !replayedActivation.IdempotentReplay || replayedActivation.CommandID != activated.CommandID || replayedActivation.Value.Protocol.Version != activated.Value.Protocol.Version {
 				t.Fatal("cutover recovery activated again or changed original response")
@@ -160,7 +160,7 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 			}
 			change.ExpectedProtocolVersion = activated.Value.Protocol.Version
 			change.Phase = d.WorkProtocolContracts
-			if _, e = service.SetNamespaceWorkProtocol(admin, cc("downgrade-after-v2"), change); e == nil {
+			if _, e = service.SetTenantWorkProtocol(admin, cc("downgrade-after-v2"), change); e == nil {
 				t.Fatal("epoch two was downgraded")
 			}
 		})

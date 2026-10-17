@@ -139,7 +139,7 @@ func TestWave09RejectsCrossOutcomeEvidenceLink(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
 	first := setupActiveOutcome(t, service)
-	secondResult, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{NamespaceID: first.NamespaceID, Title: "Other", DesiredState: "Other state", Priority: domain.PriorityNormal})
+	secondResult, err := service.CreateOutcome(ctx, commandContext(), application.CreateOutcomeCommand{TenantID: first.TenantID, Title: "Other", DesiredState: "Other state", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,7 +373,7 @@ func TestWave09DecisionNoOpDoesNotAdvanceRevisionOrEmitEvent(t *testing.T) {
 	}
 }
 
-func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
+func TestWave09RejectsCrossTenantEvidenceLink(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
 	outcome := setupActiveOutcome(t, service)
@@ -383,8 +383,8 @@ func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
 	evidenceResult, err := service.RegisterEvidence(ctx, cc, application.RegisterEvidenceCommand{
 		Scope:        scope,
 		EvidenceType: domain.EvidenceTypeSource,
-		Description:  "namespace-bound evidence",
-		SourceRef:    domain.SourceReference{Provider: "test", ID: "cross-namespace"},
+		Description:  "tenant-bound evidence",
+		SourceRef:    domain.SourceReference{Provider: "test", ID: "cross-tenant"},
 		CapturedAt:   time.Date(2026, 10, 2, 18, 0, 0, 0, time.UTC),
 	})
 	if err != nil {
@@ -392,8 +392,8 @@ func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
 	}
 
 	foreignScope := domain.Scope{
-		NamespaceID: domain.MustParseID("0199edff-0000-7000-8000-000000000001"),
-		OutcomeID:   scope.OutcomeID,
+		TenantID:  domain.MustParseID("0199edff-0000-7000-8000-000000000001"),
+		OutcomeID: scope.OutcomeID,
 	}
 	_, err = service.CreateEvidenceLink(ctx, cc, application.CreateEvidenceLinkCommand{
 		Scope:      scope,
@@ -403,7 +403,7 @@ func TestWave09RejectsCrossNamespaceEvidenceLink(t *testing.T) {
 		Rationale:  "must fail",
 	})
 	if err == nil {
-		t.Fatal("cross-Namespace evidence link must fail")
+		t.Fatal("cross-Tenant evidence link must fail")
 	}
 	code, ok := domain.ErrorCodeOf(err)
 	if !ok || code != domain.ErrorCodeEvidenceLink {

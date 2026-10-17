@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { test, expect } from "playwright/test";
 
 const assets = new URL("../../packages/wos-api/web/assets/", import.meta.url);
-const scope = { namespace_id: "namespace", outcome_id: "outcome" };
+const scope = { tenant_id: "tenant", outcome_id: "outcome" };
 const ref = (kind, id) => ({ ...scope, kind, id });
 
 async function fixture(page) {

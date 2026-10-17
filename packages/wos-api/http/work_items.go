@@ -42,7 +42,7 @@ func (h *Handler) createWorkItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setETag(w, domain.EntityKindWorkItem, result.Value.ID, result.Value.Version)
-	w.Header().Set("Location", h.prefix+"/namespaces/"+scope.NamespaceID.String()+"/outcomes/"+scope.OutcomeID.String()+"/work-items/"+result.Value.ID.String())
+	w.Header().Set("Location", h.prefix+"/tenants/"+scope.TenantID.String()+"/outcomes/"+scope.OutcomeID.String()+"/work-items/"+result.Value.ID.String())
 	writeJSON(w, http.StatusCreated, result)
 }
 

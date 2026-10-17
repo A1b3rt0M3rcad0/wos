@@ -43,8 +43,8 @@ func contractServiceFixture(t *testing.T) (*a.Service, *memory.Store, *contractC
 	if err != nil {
 		t.Fatal(err)
 	}
-	scope := d.Scope{NamespaceID: id("0199e200-0000-7000-8000-000000000001"), OutcomeID: id("0199e200-0000-7000-8000-000000000002")}
-	o, err := d.NewOutcome(scope.OutcomeID, scope.NamespaceID, "Contract outcome", "", "Verifiable", d.PriorityNormal, clock.Now())
+	scope := d.Scope{TenantID: id("0199e200-0000-7000-8000-000000000001"), OutcomeID: id("0199e200-0000-7000-8000-000000000002")}
+	o, err := d.NewOutcome(scope.OutcomeID, scope.TenantID, "Contract outcome", "", "Verifiable", d.PriorityNormal, clock.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

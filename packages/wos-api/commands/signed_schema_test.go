@@ -28,7 +28,7 @@ func TestSignedSchemasUseVerifiedDTOFieldsAndFlattenedBinding(t *testing.T) {
 	if _, nested := properties["Binding"]; nested {
 		t.Fatal("binding was nested instead of matching signed bytes")
 	}
-	if properties["protocol_version"].(map[string]any)["const"] != 2 || properties["expected_contract_version"].(map[string]any)["type"] != "string" {
+	if properties["protocol_version"].(map[string]any)["const"] != signing.ProtocolVersion || properties["expected_contract_version"].(map[string]any)["type"] != "string" {
 		t.Fatal("binding/counter schema differs")
 	}
 	material := properties["material"].(map[string]any)["properties"].(map[string]any)
@@ -68,8 +68,8 @@ func TestSignedStateCounterSchemasMatchExactWireAndLeaveUnsignedSchemasIntact(t 
 	if properties["protocol_version"].(map[string]any)["type"] != "integer" {
 		t.Fatal("literal signed protocol marker advertised as string")
 	}
-	protocol := SignedSchema(reflect.TypeFor[d.NamespaceWorkProtocol]())["properties"].(map[string]any)
+	protocol := SignedSchema(reflect.TypeFor[d.TenantWorkProtocol]())["properties"].(map[string]any)
 	if protocol["protocol_version"].(map[string]any)["type"] != "string" || protocol["writer_epoch"].(map[string]any)["type"] != "integer" {
-		t.Fatal("Namespace CAS and epoch conflated")
+		t.Fatal("Tenant CAS and epoch conflated")
 	}
 }

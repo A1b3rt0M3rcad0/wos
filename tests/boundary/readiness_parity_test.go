@@ -99,10 +99,10 @@ func runReadinessScenario(t *testing.T, tx ports.TransactionManager, clock *read
 	if err != nil {
 		t.Fatal(err)
 	}
-	namespaceID := domain.MustParseID("0199ed02-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199ed02-0000-7000-8000-000000000001")
 
 	createdOutcome, err := service.CreateOutcome(ctx, commands.Context(), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
+		TenantID:     tenantID,
 		Title:        "Readiness parity",
 		DesiredState: "Memory and SQLite agree",
 		Priority:     domain.PriorityNormal,

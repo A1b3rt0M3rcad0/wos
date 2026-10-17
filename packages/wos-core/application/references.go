@@ -85,7 +85,7 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 	}{kinds, f.Query, q.Lifecycle, q.ID.String(), string(q.Priority)})
 	var cursor queryCursor
 	if q.Cursor != "" {
-		cursor, err = decodeCursor(q.Cursor, scope.NamespaceID, scope.OutcomeID, "references", hash)
+		cursor, err = decodeCursor(q.Cursor, scope.TenantID, scope.OutcomeID, "references", hash)
 		if err != nil {
 			return result, err
 		}
@@ -107,7 +107,7 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 	if err = s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
 		return result, err
 	}
-	if _, err = uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID); err != nil {
+	if _, err = uow.Outcomes().Get(ctx, scope.TenantID, scope.OutcomeID); err != nil {
 		return result, err
 	}
 	coord, err := uow.Coordination().LockOutcome(ctx, scope)
@@ -129,7 +129,7 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 	if len(items) > n {
 		result.Items = items[:n]
 		last := result.Items[n-1]
-		result.NextCursor = encodeCursor(queryCursor{Namespace: scope.NamespaceID, Outcome: scope.OutcomeID, Section: "references", Filter: hash, Revision: coord.Revision, Key: string(last.Ref.Kind) + "/" + last.Ref.ID.String()})
+		result.NextCursor = encodeCursor(queryCursor{Tenant: scope.TenantID, Outcome: scope.OutcomeID, Section: "references", Filter: hash, Revision: coord.Revision, Key: string(last.Ref.Kind) + "/" + last.Ref.ID.String()})
 	}
 	if result.Items == nil {
 		result.Items = []ports.ReferenceCandidate{}

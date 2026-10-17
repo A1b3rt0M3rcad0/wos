@@ -23,11 +23,11 @@ func TestWave10SQLiteRejectsHistoricalAssessmentRewrite(t *testing.T) {
 	defer store.Close()
 
 	now := time.Date(2026, 10, 2, 21, 0, 0, 0, time.UTC)
-	namespaceID := domain.MustParseID("0199eff0-0000-7000-8000-000000000001")
+	tenantID := domain.MustParseID("0199eff0-0000-7000-8000-000000000001")
 	outcomeID := domain.MustParseID("0199eff0-0000-7000-8000-000000000010")
 	outcome, err := domain.NewOutcome(
 		outcomeID,
-		namespaceID,
+		tenantID,
 		"Immutable assessment",
 		"",
 		"history cannot be rewritten",
@@ -83,7 +83,7 @@ func TestWave10SQLiteRejectsHistoricalAssessmentRewrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	loaded, err := tx.Outcomes().Get(ctx, namespaceID, outcomeID)
+	loaded, err := tx.Outcomes().Get(ctx, tenantID, outcomeID)
 	if err != nil {
 		t.Fatal(err)
 	}

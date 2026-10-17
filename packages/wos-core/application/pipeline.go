@@ -2,8 +2,6 @@ package application
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -18,7 +16,7 @@ import (
 
 type commandMetadata struct {
 	Name            string
-	NamespaceID     domain.ID
+	TenantID        domain.ID
 	Scope           domain.Scope
 	Owner           *domain.EntityRef
 	ExpectedVersion *domain.Version
@@ -54,12 +52,12 @@ func transactCommand[T any, C any](
 
 	if signedCommand(meta.Name) {
 		identity, ok := IdentityFromContext(ctx)
-		if !ok || identity.PrincipalID != commandContext.PrincipalID || identity.Actor != commandContext.Actor || identity.NamespaceID != meta.NamespaceID || identity.CredentialDigest == "" {
+		if !ok || identity.PrincipalID != commandContext.PrincipalID || identity.Actor != commandContext.Actor || identity.TenantID != meta.TenantID || identity.CredentialDigest == "" {
 			return MutationResult[T]{}, domain.NewError(domain.ErrorCodeForbidden, "signed commands always require authenticated scoped credentials")
 		}
 	}
 	observation.Name = meta.Name
-	observation.NamespaceID = meta.NamespaceID
+	observation.TenantID = meta.TenantID
 	observation.OutcomeID = meta.Scope.OutcomeID
 	observation.PrincipalID = commandContext.PrincipalID
 	observation.Actor = commandContext.Actor
@@ -87,16 +85,16 @@ func transactCommand[T any, C any](
 		}
 	}()
 
-	protocol := domain.DefaultWorkProtocol(meta.NamespaceID)
+	protocol := domain.DefaultWorkProtocol(meta.TenantID)
 	if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, exclusiveProtocolGuard(uow, meta.Name))
+		protocol, err = repo.WorkProtocol().Lock(ctx, meta.TenantID, exclusiveProtocolGuard(uow, meta.Name))
 		if err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
 	}
 
 	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
-		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
+		request := ports.AuthorizationRequest{TenantID: meta.TenantID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
@@ -142,7 +140,7 @@ func transactCommand[T any, C any](
 		if e != nil {
 			return MutationResult[T]{Value: zero}, e
 		}
-		if credential.NamespaceID != meta.NamespaceID || credential.PrincipalID != commandContext.PrincipalID {
+		if credential.TenantID != meta.TenantID || credential.PrincipalID != commandContext.PrincipalID {
 			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeForbidden, "cutover credential binding differs")
 		}
 		signedIdentity = id
@@ -155,13 +153,13 @@ func transactCommand[T any, C any](
 			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeInvalidConfig, "durable signed operation repository required")
 		}
 		signedOperations = durable.SignedOperations()
-		previous, lookupError := signedOperations.Get(ctx, meta.NamespaceID, commandContext.PrincipalID, commandContext.IdempotencyKey)
+		previous, lookupError := signedOperations.Get(ctx, meta.TenantID, commandContext.PrincipalID, commandContext.IdempotencyKey)
 		if lookupError == nil {
 			if previous.Scope != meta.Scope || previous.CredentialID != signedIdentity.CredentialID || previous.CommandName != meta.Name || previous.Fingerprint != meta.Fingerprint {
 				return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "signed intention belongs to different scope, credential or command")
 			}
 			var replay MutationResult[T]
-			if err = json.Unmarshal(previous.Result.ResponseJSON, &replay); err != nil {
+			if err = signing.DecodeStoredJSON(previous.Result.ResponseJSON, &replay, 0); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "durable signed result cannot be decoded", err)
 			}
 			replay.CommandID = previous.Result.CommandID
@@ -172,13 +170,13 @@ func transactCommand[T any, C any](
 		if code, _ := domain.ErrorCodeOf(lookupError); code != domain.ErrorCodeNotFound {
 			return MutationResult[T]{Value: zero}, lookupError
 		}
-		legacy, legacyError := signedOperations.FindLegacy(ctx, meta.NamespaceID, commandContext.PrincipalID, commandContext.IdempotencyKey)
+		legacy, legacyError := signedOperations.FindLegacy(ctx, meta.TenantID, commandContext.PrincipalID, commandContext.IdempotencyKey)
 		if legacyError == nil {
 			if legacy.CommandName != meta.Name || legacy.Fingerprint != meta.Fingerprint {
 				return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeIdempotencyConflict, "legacy signed intention differs from requested command")
 			}
 			var replay MutationResult[T]
-			if e := json.Unmarshal(legacy.Result.ResponseJSON, &replay); e != nil {
+			if e := signing.DecodeStoredJSON(legacy.Result.ResponseJSON, &replay, 0); e != nil {
 				return MutationResult[T]{Value: zero}, e
 			}
 			originalCID, e := legacySignedCacheCredential(ctx, uow, meta.Scope, replay.Value)
@@ -211,18 +209,18 @@ func transactCommand[T any, C any](
 	var reservation domain.IdempotencyReservation
 	if commandContext.IdempotencyKey != "" {
 		identity := domain.IdempotencyIdentity{
-			NamespaceID:    meta.NamespaceID,
+			TenantID:       meta.TenantID,
 			PrincipalID:    commandContext.PrincipalID,
 			CommandName:    meta.Name,
 			IdempotencyKey: commandContext.IdempotencyKey,
 		}
-		reservation, err = uow.Idempotency().Reserve(ctx, identity, meta.Fingerprint)
+		reservation, err = reserveCommandIntent(ctx, uow.Idempotency(), identity, meta, commandContext.Actor, command)
 		if err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
 		if reservation.IsReplay() {
 			var replay MutationResult[T]
-			if err := json.Unmarshal(reservation.Replay.ResponseJSON, &replay); err != nil {
+			if err := signing.DecodeStoredJSON(reservation.Replay.ResponseJSON, &replay, 0); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "stored command result cannot be decoded", err)
 			}
 			if signedOperations != nil {
@@ -336,18 +334,18 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 	}
 
 	meta := commandMetadata{Name: name}
-	if field := value.FieldByName("NamespaceID"); field.IsValid() {
-		meta.NamespaceID = field.Interface().(domain.ID)
+	if field := value.FieldByName("TenantID"); field.IsValid() {
+		meta.TenantID = field.Interface().(domain.ID)
 	}
 	if field := value.FieldByName("Scope"); field.IsValid() {
 		meta.Scope = field.Interface().(domain.Scope)
-		meta.NamespaceID = meta.Scope.NamespaceID
+		meta.TenantID = meta.Scope.TenantID
 	}
 	if field := value.FieldByName("Owner"); field.IsValid() {
 		owner := field.Interface().(domain.EntityRef)
 		meta.Owner = &owner
 		meta.Scope = owner.Scope
-		meta.NamespaceID = owner.NamespaceID
+		meta.TenantID = owner.TenantID
 	}
 	if field := value.FieldByName("ExpectedVersion"); field.IsValid() {
 		expected := field.Interface().(domain.Version)
@@ -363,7 +361,7 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 			return commandMetadata{}, err
 		}
 		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
+		meta.TenantID = scope.TenantID
 	}
 	if c, ok := any(command).(ReturnSignedReviewCommand); ok {
 		var hint signing.ReviewReturnPayload[SignedReviewMaterial]
@@ -375,10 +373,10 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 			return commandMetadata{}, err
 		}
 		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
+		meta.TenantID = scope.TenantID
 	}
-	if err := meta.NamespaceID.Validate(); err != nil {
-		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command namespace cannot be resolved", err)
+	if err := meta.TenantID.Validate(); err != nil {
+		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command tenant cannot be resolved", err)
 	}
 
 	normalized, err := normalizedCommandJSON(command)
@@ -387,21 +385,10 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 	}
 	meta.Payload = normalized
 
-	fingerprintInput := struct {
-		CommandName string          `json:"command_name"`
-		Actor       domain.ActorRef `json:"actor_ref"`
-		Payload     json.RawMessage `json:"payload"`
-	}{
-		CommandName: meta.Name,
-		Actor:       commandContext.Actor,
-		Payload:     normalized,
-	}
-	encoded, err := json.Marshal(fingerprintInput)
+	meta.Fingerprint, err = fingerprintCommand(meta.Name, commandContext.Actor, normalized)
 	if err != nil {
-		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command fingerprint cannot be encoded", err)
+		return commandMetadata{}, err
 	}
-	sum := sha256.Sum256(encoded)
-	meta.Fingerprint = hex.EncodeToString(sum[:])
 	return meta, nil
 }
 
@@ -523,7 +510,7 @@ func eventsForCommand[T any](
 			EventID:                eventID,
 			EventType:              eventType,
 			SchemaVersion:          domain.DomainEventSchemaVersion,
-			NamespaceID:            ref.NamespaceID,
+			TenantID:               ref.TenantID,
 			OutcomeID:              ref.OutcomeID,
 			OutcomeRevision:        revision,
 			EventIndex:             uint32(index),

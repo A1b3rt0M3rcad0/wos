@@ -15,8 +15,8 @@ type ReadSnapshotManager interface {
 	BeginReadSnapshot(context.Context) (UnitOfWork, error)
 }
 
-// SigningNamespaceVersionReader reads the diagnostic Namespace CAS marker
+// SigningTenantVersionReader reads the diagnostic Tenant CAS marker
 // without upgrading the shared security barrier to an exclusive mutation lock.
-type SigningNamespaceVersionReader interface {
-	NamespaceVersion(context.Context, domain.ID) (domain.Version, error)
+type SigningTenantVersionReader interface {
+	TenantVersion(context.Context, domain.ID) (domain.Version, error)
 }

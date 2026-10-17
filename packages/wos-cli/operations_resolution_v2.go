@@ -34,9 +34,9 @@ func resolveOutcomeV2(ctx context.Context, w *Workspace, profile ProfileV2, clie
 	if e != nil {
 		return d.Scope{}, e
 	}
-	scope := d.Scope{NamespaceID: profile.Binding.NamespaceID, OutcomeID: project.Scope.DefaultOutcomeID}
-	if value := o.values["namespace"]; value != "" && value != scope.NamespaceID.String() {
-		return scope, usage("profile Namespace is immutable")
+	scope := d.Scope{TenantID: profile.Binding.TenantID, OutcomeID: project.Scope.DefaultOutcomeID}
+	if value := o.values["tenant"]; value != "" && value != scope.TenantID.String() {
+		return scope, usage("profile Tenant is immutable")
 	}
 	ref := o.values["outcome"]
 	if ref == "" && !scope.OutcomeID.IsZero() {
@@ -49,7 +49,7 @@ func resolveOutcomeV2(ctx context.Context, w *Workspace, profile ProfileV2, clie
 	items := []d.ID{}
 	cursor := ""
 	for scan := 0; scan < 10; scan++ {
-		page, e := client.SearchOutcomes(ctx, scope.NamespaceID, "", 100, cursor)
+		page, e := client.SearchOutcomes(ctx, scope.TenantID, "", 100, cursor)
 		if e != nil {
 			return scope, e
 		}
@@ -143,7 +143,7 @@ func outcomeCommandV2(ctx context.Context, w *Workspace, profile ProfileV2, clie
 		if e != nil {
 			return result, e
 		}
-		page, e := client.SearchOutcomes(ctx, profile.Binding.NamespaceID, "", limit, o.values["cursor"])
+		page, e := client.SearchOutcomes(ctx, profile.Binding.TenantID, "", limit, o.values["cursor"])
 		result.Data = page
 		return result, e
 	case "get":

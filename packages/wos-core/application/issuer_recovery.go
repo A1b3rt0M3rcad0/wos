@@ -46,7 +46,7 @@ func RecoverServerIssuer(ctx context.Context, manager ports.TransactionManager, 
 		SignerKeyID     string               `json:"signer_key_id"`
 		Operation       string               `json:"operation"`
 		Intent          IssuerRecoveryIntent `json:"intent"`
-	}{2, intent.NewIssuerID.String(), "host_issuer_recovery", intent})
+	}{3, intent.NewIssuerID.String(), "host_issuer_recovery", intent})
 	if err != nil {
 		return zero, false, err
 	}

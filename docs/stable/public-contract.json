@@ -1,18 +1,21 @@
 {
   "schema": 1,
-  "candidate_product": "unreleased next minor after 0.4.2",
-  "scope": "Exact public command/read and CLI YAML JSON schemas; only product metadata version is normalized. Semantic authority requires real tests.",
+  "candidate_product": "unreleased major Tenant/schema and signed protocol 3 transition",
+  "scope": "Exact current public command/read and CLI YAML JSON schemas; only OpenAPI product metadata version is normalized. Historical v0.4.2 artifacts remain immutable. Explicit ADR 044 projection permits only the reviewed Tenant/protocol naming break; all unrelated additive compatibility and semantic authority checks remain required.",
   "files": {
-    "packages/wos-api/commands.openapi.json": "71e5244613f2a2aaea9c05aec8fc512b3ba0180e2c478ab48a91132d84aa9344",
+    "packages/wos-api/commands.openapi.json": "b24b383ebf4d33b1c60f99e8deface4cfcd4629f724c9199572b8c3dc5ff8ff4",
     "packages/wos-cli/schemas/checkpoint.schema.json": "55d197b792573b7b58d4f5e3975fc110bbfececbe76cd8f440030b22fb47a127",
-    "packages/wos-cli/schemas/config.schema.json": "66920721a33a7ecbc7cf8aa4267a30096b764c80db13bf2fb90bfc12009113ec",
-    "packages/wos-cli/schemas/contract-v2.schema.json": "c9403076e9721e25b0593ad454b5a237d19c9c17b341ecd02260e109ffb23303",
-    "packages/wos-cli/schemas/contract.schema.json": "de502fd1436cd2041c19f9d69be42b1f8407d37e84886eccc827c0495e743ccc",
-    "packages/wos-cli/schemas/legacy-unsigned-v2.schema.json": "d72693c3829213303a61e183d054ae69c930a9a6a2f4951add1513bd97e2dd06",
-    "packages/wos-cli/schemas/profile-v2.schema.json": "560d4958d5551ba8f8f9ea747d04687396f102b29bbe1d0973a551d8c4a2ed48",
-    "packages/wos-cli/schemas/project-v2.schema.json": "d55ad0a984a94d790e51a6d99d0282e6a0eb2e5944725956441a2d56cd992401",
-    "packages/wos-cli/schemas/result.schema.json": "09ba530cd863514956ad407d91c4caca4181af64c0980c218805f1888ae40389"
+    "packages/wos-cli/schemas/config.schema.json": "d22aa402b08f0174246656a1587330c526988aace70347771ce01cfcb34d7e27",
+    "packages/wos-cli/schemas/contract-v2.schema.json": "f7ea8f3e6342ae4287b388b16d5e07dd2bcc97fba2b32ced871f03ad26ee961c",
+    "packages/wos-cli/schemas/contract.schema.json": "2de215bc0af8fa71b75be86efc07e7c2b4cb2b7170f042c188dec7087589a1cd",
+    "packages/wos-cli/schemas/legacy-unsigned-v2.schema.json": "ac6f87ed7248311b3fd96b83ed6bc6ddc4b91a2b9c3e432f85fc7fb5fa5af7f7",
+    "packages/wos-cli/schemas/profile-v2.schema.json": "d0d1c01408692de31980075b0c79d4483c089c570ea1b32d255b417855dff6cb",
+    "packages/wos-cli/schemas/project-v2.schema.json": "a563f14ac9bbf660f1cb6fcabaa00e12d2ef236e0a5997033e58612f286f973c",
+    "packages/wos-cli/schemas/result.schema.json": "8fd5db00a2450755a93a80fc8219c1a5d094d61bbc5be5614309d4f333fe074c"
   },
-  "compatibility_review": "docs/stable/operational-contract-review.md",
-  "released_reference": "docs/stable/contracts/v0.4.2/public-contract.json"
+  "compatibility_review": "docs/stable/tenant-contract-review.md",
+  "released_reference": "docs/stable/contracts/v0.4.2/public-contract.json",
+  "contract_transition": "tenant-schema-protocol-v3",
+  "architecture_decision": "docs/adr/0044-tenant-schemas-and-protocol-cutover.md",
+  "release_change": ".changes/tenant-schema-isolation.json"
 }

@@ -139,6 +139,15 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 func normalizeGoldenEvaluation(value any) {
 	switch v := value.(type) {
 	case map[string]any:
+		// The owner-authorized Tenant contract changes only the scope spelling.
+		// Keep the published v0.4.2 fixture immutable; compare its known Scope
+		// and EntityRef shapes after that explicit field projection.
+		if _, scope := v["outcome_id"]; scope && (len(v) == 2 || len(v) == 4) {
+			if id, old := v["namespace_id"]; old {
+				v["tenant_id"] = id
+				delete(v, "namespace_id")
+			}
+		}
 		for key, item := range v {
 			if key == "evaluated_at" {
 				delete(v, key)

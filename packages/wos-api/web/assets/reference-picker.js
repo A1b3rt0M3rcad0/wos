@@ -69,7 +69,7 @@ export function referencePicker({
     disposed = false,
     valid = true;
   const key = (r) => `${r.kind}/${r.id}`;
-  const path = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/references`;
+  const path = `/tenants/${scope.tenant_id}/outcomes/${scope.outcome_id}/references`;
   function renderSelected() {
     selected.replaceChildren();
     for (const candidate of values.values()) {
@@ -240,7 +240,7 @@ export function referencePicker({
     const ref = candidate.ref || candidate;
     if (
       !kinds.includes(ref.kind) ||
-      ref.namespace_id !== scope.namespace_id ||
+      ref.tenant_id !== scope.tenant_id ||
       ref.outcome_id !== scope.outcome_id
     )
       continue;

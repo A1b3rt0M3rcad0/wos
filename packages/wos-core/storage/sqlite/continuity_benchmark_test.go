@@ -40,7 +40,7 @@ func BenchmarkContinuity(b *testing.B) {
 	cc := sqliteCommandContext("0199d092-0000-7000-8000-000000000011", "")
 	var first domain.Outcome
 	for i := 0; i < 100; i++ {
-		v, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: fmt.Sprintf("Portfolio %03d", i), DesiredState: "benchmark", Priority: domain.PriorityNormal})
+		v, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: fmt.Sprintf("Portfolio %03d", i), DesiredState: "benchmark", Priority: domain.PriorityNormal})
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -54,7 +54,7 @@ func BenchmarkContinuity(b *testing.B) {
 		}
 	}
 
-	rich, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: ns, Title: "Portfolio rich", DesiredState: "batch immutable history", Priority: domain.PriorityNormal})
+	rich, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{TenantID: ns, Title: "Portfolio rich", DesiredState: "batch immutable history", Priority: domain.PriorityNormal})
 	if err != nil {
 		b.Fatal(err)
 	}

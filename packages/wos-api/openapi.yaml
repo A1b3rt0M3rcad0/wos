@@ -1,5 +1,5 @@
 # Generated execution-contract command and REST-read extension: commands.openapi.json
-# ADR-018: contracts_v1 is activated explicitly per Namespace; legacy paths remain scoped to legacy protocol.
+# ADR-018: contracts_v1 is activated explicitly per Tenant; legacy paths remain scoped to legacy protocol.
 openapi: 3.1.0
 info:
   title: Woobe Outcome Server HTTP API
@@ -28,8 +28,8 @@ paths:
       operationId: installationProcessMetrics
       summary: Read installation process metrics
       description: Remote access requires installation:observe through a current unrestricted
-        credential. namespace:admin alone is insufficient. Counters describe this process
-        and reset on restart. Use scoped delivery-health for Namespace diagnostics.
+        credential. tenant:admin alone is insufficient. Counters describe this process
+        and reset on restart. Use scoped delivery-health for Tenant diagnostics.
       responses:
         '200':
           description: Process metrics JSON
@@ -39,10 +39,10 @@ paths:
           description: Installation observation permission denied
   /api/v1/commands/append_work_activity:
     $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_work_activity
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity:
-    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1work-activity
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention:
-    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1work-items~1{work_item_id}~1attention
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-activity:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1tenants~1{tenant_id}~1outcomes~1{outcome_id}~1work-activity
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/attention:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1tenants~1{tenant_id}~1outcomes~1{outcome_id}~1work-items~1{work_item_id}~1attention
   /livez:
     get:
       tags:
@@ -61,13 +61,13 @@ paths:
           description: Storage is reachable and schema is compatible.
         '503':
           description: Server is not ready.
-  /api/v1/namespaces/{namespace_id}/outcomes:
+  /api/v1/tenants/{tenant_id}/outcomes:
     post:
       tags:
       - Outcomes
       operationId: createOutcome
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
       requestBody:
@@ -97,7 +97,7 @@ paths:
     get:
       description: Live keyset discovery ordered by created_at,id. Metadata only; detail_omitted=true.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: &id001
@@ -174,13 +174,13 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}:
     get:
       tags:
       - Outcomes
       operationId: getOutcome
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -201,7 +201,7 @@ paths:
       - Outcomes
       operationId: updateOutcome
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/IfMatch'
@@ -218,13 +218,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/state:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/state:
     get:
       tags:
       - Outcomes
       operationId: getOutcomeState
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -241,13 +241,13 @@ paths:
                 $ref: '#/components/schemas/OutcomeState'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/ready-work:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/ready-work:
     get:
       tags:
       - Queries
       operationId: listReadyWork
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -264,13 +264,13 @@ paths:
                 $ref: '#/components/schemas/ReadyWork'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/relations:
     get:
       tags:
       - Relations
       operationId: listRelations
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -286,7 +286,7 @@ paths:
       operationId: createRelation
       description: Wave 06 accepts the canonical depends_on relation type.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -314,13 +314,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations/{relation_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/relations/{relation_id}:
     get:
       tags:
       - Relations
       operationId: getRelation
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RelationID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -337,13 +337,13 @@ paths:
                 $ref: '#/components/schemas/RelationReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/relations/{relation_id}/actions/remove:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/relations/{relation_id}/actions/remove:
     post:
       tags:
       - Relations
       operationId: removeRelation
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RelationID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -368,13 +368,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/activate:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/actions/activate:
     post:
       tags:
       - Outcomes
       operationId: activateOutcome
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/IfMatch'
@@ -390,13 +390,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/achieve:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/actions/achieve:
     post:
       tags:
       - Outcomes
       operationId: achieveOutcome
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/IfMatch'
@@ -409,7 +409,7 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/actions/{outcome_action}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/actions/{outcome_action}:
     post:
       tags:
       - Outcomes
@@ -420,7 +420,7 @@ paths:
 
         '
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: outcome_action
         in: path
@@ -442,13 +442,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/objectives:
     get:
       tags:
       - Objectives
       operationId: listObjectives
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       responses:
         '200':
@@ -462,7 +462,7 @@ paths:
       - Objectives
       operationId: createObjective
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -484,13 +484,13 @@ paths:
                 $ref: '#/components/schemas/ObjectiveMutationResult'
         '409':
           $ref: '#/components/responses/Conflict'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives/{objective_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/objectives/{objective_id}:
     get:
       tags:
       - Objectives
       operationId: getObjective
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/ObjectiveID'
       responses:
@@ -511,7 +511,7 @@ paths:
       - Objectives
       operationId: updateObjective
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/ObjectiveID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -533,13 +533,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/objectives/{objective_id}/actions/{objective_action}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/objectives/{objective_id}/actions/{objective_action}:
     post:
       tags:
       - Objectives
       operationId: transitionObjective
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/ObjectiveID'
       - name: objective_action
@@ -565,13 +565,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items:
     get:
       tags:
       - WorkItems
       operationId: listWorkItems
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       responses:
         '200':
@@ -585,7 +585,7 @@ paths:
       - WorkItems
       operationId: createWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -605,13 +605,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkItemMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}:
     get:
       tags:
       - WorkItems
       operationId: getWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       responses:
@@ -632,7 +632,7 @@ paths:
       - WorkItems
       operationId: updateWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -654,14 +654,14 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/operational-state:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/operational-state:
     get:
       tags:
       - WorkItems
       operationId: getWorkItemOperationalState
       description: Returns time-evaluated lease and display-state projection without mutating the WorkItem.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -679,13 +679,13 @@ paths:
                 $ref: '#/components/schemas/WorkItemOperationalReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/claim:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/claim:
     post:
       tags:
       - WorkItems
       operationId: claimWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -711,13 +711,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/renew-lease:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/renew-lease:
     post:
       tags:
       - WorkItems
       operationId: renewWorkItemLease
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -745,14 +745,14 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/reclaim:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/reclaim:
     post:
       tags:
       - WorkItems
       operationId: reclaimWorkItem
       description: Reclaims an in-progress WorkItem only after its current lease expires.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -780,7 +780,7 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-cancel:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-cancel:
     post:
       tags:
       - WorkItems
@@ -791,7 +791,7 @@ paths:
 
         '
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -821,7 +821,7 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-complete:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/admin-complete:
     post:
       tags:
       - WorkItems
@@ -832,7 +832,7 @@ paths:
 
         '
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -862,13 +862,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/complete:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/complete:
     post:
       tags:
       - WorkItems
       operationId: completeWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -890,13 +890,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/{work_action}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/actions/{work_action}:
     post:
       tags:
       - WorkItems
       operationId: transitionWorkItem
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/WorkItemID'
       - name: work_action
@@ -923,13 +923,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/criteria:
     post:
       tags:
       - Criteria
       operationId: addOutcomeCriterion
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/IfMatch'
@@ -942,14 +942,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CriterionMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria:
     post:
       tags:
       - Criteria
       operationId: addNestedCriterion
       description: Adds a criterion to an Objective or WorkItem.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: owner_collection
         in: path
@@ -975,13 +975,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CriterionMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria/{criterion_id}/assessments:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/criteria/{criterion_id}/assessments:
     post:
       tags:
       - Criteria
       operationId: recordOutcomeCriterionAssessment
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: criterion_id
         in: path
@@ -1018,14 +1018,14 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/assessments:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/assessments:
     post:
       tags:
       - Criteria
       operationId: recordNestedCriterionAssessment
       description: Records an Objective or WorkItem assessment using the same validation contract as Outcome criteria.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: owner_collection
         in: path
@@ -1075,13 +1075,13 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/criteria/{criterion_id}/history:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/criteria/{criterion_id}/history:
     get:
       tags:
       - Criteria
       operationId: getOutcomeCriterionHistory
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: criterion_id
         in: path
@@ -1098,13 +1098,13 @@ paths:
                 $ref: '#/components/schemas/CriterionValidationHistoryReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/history:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/criteria/{criterion_id}/history:
     get:
       tags:
       - Criteria
       operationId: getNestedCriterionHistory
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: owner_collection
         in: path
@@ -1134,13 +1134,13 @@ paths:
                 $ref: '#/components/schemas/CriterionValidationHistoryReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/conclusions:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/conclusions:
     get:
       tags:
       - Criteria
       operationId: listOutcomeConclusions
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1150,13 +1150,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConclusionHistoryReadResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/conclusions/{conclusion_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/conclusions/{conclusion_id}:
     get:
       tags:
       - Criteria
       operationId: getOutcomeConclusion
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: conclusion_id
         in: path
@@ -1173,13 +1173,13 @@ paths:
                 $ref: '#/components/schemas/ConclusionReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions:
     get:
       tags:
       - Criteria
       operationId: listNestedConclusions
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: owner_collection
         in: path
@@ -1202,13 +1202,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConclusionHistoryReadResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions/{conclusion_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/{owner_collection}/{owner_id}/conclusions/{conclusion_id}:
     get:
       tags:
       - Criteria
       operationId: getNestedConclusion
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - name: owner_collection
         in: path
@@ -1238,13 +1238,13 @@ paths:
                 $ref: '#/components/schemas/ConclusionReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues:
     get:
       tags:
       - Issues
       operationId: listIssues
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1261,7 +1261,7 @@ paths:
       - Issues
       operationId: createIssue
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1287,7 +1287,7 @@ paths:
                 $ref: '#/components/schemas/IssueMutationResult'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/actions/report-with-blocker:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues/actions/report-with-blocker:
     post:
       tags:
       - Issues
@@ -1295,7 +1295,7 @@ paths:
       operationId: reportIssueWithBlocker
       description: Atomically creates an Issue and one Blocker caused by that Issue.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1316,13 +1316,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues/{issue_id}:
     get:
       tags:
       - Issues
       operationId: getIssue
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IssueID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1344,7 +1344,7 @@ paths:
       - Issues
       operationId: updateIssue
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IssueID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1368,7 +1368,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_action}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/{issue_action}:
     post:
       tags:
       - Issues
@@ -1381,7 +1381,7 @@ paths:
 
         '
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IssueID'
       - name: issue_action
@@ -1419,13 +1419,13 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/mark-duplicate:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/mark-duplicate:
     post:
       tags:
       - Issues
       operationId: markIssueDuplicate
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IssueID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1451,7 +1451,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/resolve-with-blockers:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/issues/{issue_id}/actions/resolve-with-blockers:
     post:
       tags:
       - Issues
@@ -1465,7 +1465,7 @@ paths:
 
         '
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IssueID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1490,13 +1490,13 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/blockers:
     get:
       tags:
       - Blockers
       operationId: listBlockers
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1513,7 +1513,7 @@ paths:
       - Blockers
       operationId: createBlocker
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1541,13 +1541,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers/{blocker_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/blockers/{blocker_id}:
     get:
       tags:
       - Blockers
       operationId: getBlocker
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/BlockerID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1570,7 +1570,7 @@ paths:
       operationId: updateBlocker
       description: Wave 07 allows editing the description of an active Blocker.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/BlockerID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1594,14 +1594,14 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/blockers/{blocker_id}/actions/{blocker_action}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/blockers/{blocker_id}/actions/{blocker_action}:
     post:
       tags:
       - Blockers
       operationId: closeBlocker
       description: Resolve or cancel exactly one active Blocker.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/BlockerID'
       - name: blocker_action
@@ -1635,13 +1635,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/artifacts:
     post:
       tags:
       - Artifacts
       operationId: registerArtifact
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1678,7 +1678,7 @@ paths:
       - Artifacts
       operationId: listArtifacts
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1690,13 +1690,13 @@ paths:
                 $ref: '#/components/schemas/ArtifactCollection'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts/{artifact_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/artifacts/{artifact_id}:
     get:
       tags:
       - Artifacts
       operationId: getArtifact
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/ArtifactID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1713,13 +1713,13 @@ paths:
                 $ref: '#/components/schemas/ArtifactReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/artifacts/{artifact_id}/actions/withdraw:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/artifacts/{artifact_id}/actions/withdraw:
     post:
       tags:
       - Artifacts
       operationId: withdrawArtifact
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/ArtifactID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1744,13 +1744,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence:
     post:
       tags:
       - Evidence
       operationId: registerEvidence
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1787,7 +1787,7 @@ paths:
       - Evidence
       operationId: listEvidence
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1799,13 +1799,13 @@ paths:
                 $ref: '#/components/schemas/EvidenceCollection'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence/{evidence_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence/{evidence_id}:
     get:
       tags:
       - Evidence
       operationId: getEvidence
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/EvidenceID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1822,13 +1822,13 @@ paths:
                 $ref: '#/components/schemas/EvidenceReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence/{evidence_id}/actions/retract:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence/{evidence_id}/actions/retract:
     post:
       tags:
       - Evidence
       operationId: retractEvidence
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/EvidenceID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1853,13 +1853,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence-links:
     post:
       tags:
       - Evidence
       operationId: createEvidenceLink
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1896,7 +1896,7 @@ paths:
       - Evidence
       operationId: listEvidenceLinks
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -1906,13 +1906,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceLinkCollection'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}:
     get:
       tags:
       - Evidence
       operationId: getEvidenceLink
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/EvidenceLinkID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -1929,13 +1929,13 @@ paths:
                 $ref: '#/components/schemas/EvidenceLinkReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}/actions/retract:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/evidence-links/{evidence_link_id}/actions/retract:
     post:
       tags:
       - Evidence
       operationId: retractEvidenceLink
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/EvidenceLinkID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1960,13 +1960,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/decisions:
     post:
       tags:
       - Decisions
       operationId: proposeDecision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -2001,7 +2001,7 @@ paths:
       - Decisions
       operationId: listDecisions
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -2011,13 +2011,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DecisionCollection'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/decisions/{decision_id}:
     get:
       tags:
       - Decisions
       operationId: getDecision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/DecisionID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -2039,7 +2039,7 @@ paths:
       - Decisions
       operationId: updateDecision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/DecisionID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2068,13 +2068,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/accept:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/accept:
     post:
       tags:
       - Decisions
       operationId: acceptDecision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/DecisionID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2099,13 +2099,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/reject:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/reject:
     post:
       tags:
       - Decisions
       operationId: rejectDecision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/DecisionID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2130,14 +2130,14 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/supersede:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/decisions/{decision_id}/actions/supersede:
     post:
       tags:
       - Decisions
       operationId: supersedeDecision
       description: Atomically accepts the new Decision and marks the accepted predecessor superseded.
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/DecisionID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2169,13 +2169,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps:
     post:
       tags:
       - Roadmaps
       operationId: createRoadmap
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/CorrelationID'
@@ -2208,7 +2208,7 @@ paths:
       - Roadmaps
       operationId: listRoadmaps
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/CorrelationID'
       responses:
@@ -2218,13 +2218,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapCollection'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}:
     get:
       tags:
       - Roadmaps
       operationId: getRoadmap
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/CorrelationID'
@@ -2241,13 +2241,13 @@ paths:
                 $ref: '#/components/schemas/RoadmapReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/open:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/open:
     post:
       tags:
       - Roadmaps
       operationId: openRoadmapDraft
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2271,13 +2271,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft:
     put:
       tags:
       - Roadmaps
       operationId: replaceRoadmapDraft
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2303,13 +2303,13 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/discard:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/discard:
     post:
       tags:
       - Roadmaps
       operationId: discardRoadmapDraft
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2327,13 +2327,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/publish:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/draft/actions/publish:
     post:
       tags:
       - Roadmaps
       operationId: publishRoadmapDraft
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2358,13 +2358,13 @@ paths:
           $ref: '#/components/responses/PreconditionFailed'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}:
     get:
       tags:
       - Roadmaps
       operationId: getRoadmapRevision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/RoadmapRevisionNumber'
@@ -2377,13 +2377,13 @@ paths:
                 $ref: '#/components/schemas/RoadmapRevisionReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/activate:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/activate:
     post:
       tags:
       - Roadmaps
       operationId: activateRoadmapRevision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/RoadmapRevisionNumber'
@@ -2398,13 +2398,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapActiveSlotMutationResult'
-  ? /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/deactivate
+  ? /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/revisions/{revision_number}/actions/deactivate
   : post:
       tags:
       - Roadmaps
       operationId: deactivateRoadmapRevision
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/RoadmapRevisionNumber'
@@ -2419,13 +2419,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapActivationRecordMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/archive:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/archive:
     post:
       tags:
       - Roadmaps
       operationId: archiveRoadmap
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2439,13 +2439,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/reopen:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmaps/{roadmap_id}/actions/reopen:
     post:
       tags:
       - Roadmaps
       operationId: reopenRoadmap
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapID'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2459,13 +2459,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoadmapMutationResult'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}:
     get:
       tags:
       - Roadmaps
       operationId: getActiveRoadmapSlot
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapScopeKind'
       - $ref: '#/components/parameters/RoadmapScopeID'
@@ -2478,13 +2478,13 @@ paths:
                 $ref: '#/components/schemas/RoadmapActiveSlotReadResult'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}/history:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/roadmap-slots/{scope_kind}/{scope_id}/history:
     get:
       tags:
       - Roadmaps
       operationId: listRoadmapActivationHistory
       parameters:
-      - $ref: '#/components/parameters/NamespaceID'
+      - $ref: '#/components/parameters/TenantID'
       - $ref: '#/components/parameters/OutcomeID'
       - $ref: '#/components/parameters/RoadmapScopeKind'
       - $ref: '#/components/parameters/RoadmapScopeID'
@@ -2529,7 +2529,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2568,7 +2568,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2607,7 +2607,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2646,7 +2646,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2685,7 +2685,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2724,7 +2724,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2763,7 +2763,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2802,7 +2802,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2841,7 +2841,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2880,7 +2880,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2919,7 +2919,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2958,7 +2958,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -2997,7 +2997,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3036,7 +3036,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3075,7 +3075,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3114,7 +3114,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3153,7 +3153,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3192,7 +3192,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3231,7 +3231,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3270,7 +3270,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3309,7 +3309,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3348,7 +3348,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3387,7 +3387,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3426,7 +3426,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3465,7 +3465,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3504,7 +3504,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3543,7 +3543,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3582,7 +3582,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3621,7 +3621,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3660,7 +3660,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3699,7 +3699,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3738,7 +3738,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3777,7 +3777,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3816,7 +3816,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3855,7 +3855,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3894,7 +3894,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3933,7 +3933,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -3972,7 +3972,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4011,7 +4011,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4050,7 +4050,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4089,7 +4089,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4128,7 +4128,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4167,7 +4167,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4206,7 +4206,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4245,7 +4245,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4284,7 +4284,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4323,7 +4323,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4362,7 +4362,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4401,7 +4401,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4440,7 +4440,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4479,7 +4479,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4518,7 +4518,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4557,7 +4557,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4596,7 +4596,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4635,7 +4635,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4674,7 +4674,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4713,7 +4713,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4752,7 +4752,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4791,7 +4791,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4830,7 +4830,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4869,7 +4869,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4908,7 +4908,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4947,7 +4947,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -4986,7 +4986,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5025,7 +5025,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5064,7 +5064,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5103,7 +5103,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5142,7 +5142,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5181,7 +5181,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5220,7 +5220,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5259,7 +5259,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5298,7 +5298,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5337,7 +5337,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5376,7 +5376,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5415,7 +5415,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5454,7 +5454,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5493,7 +5493,7 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
@@ -5532,17 +5532,17 @@ paths:
         '401':
           description: Credential absent, revoked or expired.
         '403':
-          description: Namespace or permission denied.
+          description: Tenant or permission denied.
         '409':
           description: Version, transaction, idempotency or lease conflict; never silently change intent/version.
         '413':
           description: Payload exceeds byte limit.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/continuity:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/continuity:
     get:
       description: Schema 1 coherent snapshot; evaluated_at, outcome_revision, counts, omitted, truncated, section_cursors,
         progress. Maximum 256 KiB.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5560,12 +5560,12 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/continuity/{section}:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/continuity/{section}:
     get:
       description: Expand one section. Cursor binds scope, section, limit-independent filter, revision and evaluated_at;
         mutations invalidate continuation.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5589,11 +5589,11 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/timeline:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/timeline:
     get:
       description: Schema 1 immutable fact metadata; no internal event payload. Append-only keyset.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5628,12 +5628,12 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/graph:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/graph:
     get:
       description: Bounded explicit graph. Hierarchy, operational dependencies, plan ordering and documentary relations
         retain separate source_of_truth.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5675,12 +5675,12 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-items/{work_item_id}/context:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/work-items/{work_item_id}/context:
     get:
       description: Focal work context, parent objectives, required criteria, dependencies, blocking, accepted decisions
         and evidence; explicit truncation.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5701,11 +5701,11 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/triggers:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/triggers:
     get:
       description: Integration administration. Deliveries require integration:write; listings never execute work.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5724,11 +5724,11 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/deliveries:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/deliveries:
     get:
       description: Integration administration. Deliveries require integration:write; listings never execute work.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5747,11 +5747,11 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/trigger-firings:
+  /api/v1/tenants/{tenant_id}/outcomes/{outcome_id}/trigger-firings:
     get:
       description: Integration administration. Deliveries require integration:write; listings never execute work.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5783,9 +5783,9 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces:
+  /api/v1/tenants:
     get:
-      description: Authorized Namespace choices. API tokens are bound to one Namespace.
+      description: Authorized Tenant choices. API tokens are bound to one Tenant.
       parameters: []
       responses:
         '200':
@@ -5796,12 +5796,12 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/administration:
+  /api/v1/tenants/{tenant_id}/administration:
     get:
-      description: Namespace version, grants, credential metadata and last 100 audit entries; explicit truncated
-        flag. Requires namespace:admin.
+      description: Tenant version, grants, credential metadata and last 100 audit entries; explicit truncated
+        flag. Requires tenant:admin.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5814,12 +5814,12 @@ paths:
           description: Scope or permission denied.
         '409':
           description: Version changed or cursor invalidated.
-  /api/v1/namespaces/{namespace_id}/grants/{principal_id}:
+  /api/v1/tenants/{tenant_id}/grants/{principal_id}:
     put:
-      description: Atomic Namespace CAS, receipt and audit. Credential secret appears only on initial issue; replay
+      description: Atomic Tenant CAS, receipt and audit. Credential secret appears only on initial issue; replay
         omits token, requiring explicit replacement if lost.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5852,7 +5852,7 @@ paths:
             schema:
               type: object
               properties:
-                expected_namespace_version:
+                expected_tenant_version:
                   type: integer
                   minimum: 1
                 permissions:
@@ -5860,15 +5860,15 @@ paths:
                   items:
                     type: string
               required:
-              - expected_namespace_version
+              - expected_tenant_version
               - permissions
               additionalProperties: false
-  /api/v1/namespaces/{namespace_id}/credentials:
+  /api/v1/tenants/{tenant_id}/credentials:
     post:
-      description: Atomic Namespace CAS, receipt and audit. Credential secret appears only on initial issue; replay
+      description: Atomic Tenant CAS, receipt and audit. Credential secret appears only on initial issue; replay
         omits token, requiring explicit replacement if lost.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5889,7 +5889,7 @@ paths:
             schema:
               type: object
               properties:
-                expected_namespace_version:
+                expected_tenant_version:
                   type: integer
                   minimum: 1
                 principal_id:
@@ -5900,17 +5900,17 @@ paths:
                   type: string
                   format: date-time
               required:
-              - expected_namespace_version
+              - expected_tenant_version
               - principal_id
               - actor_ref
               - expires_at
               additionalProperties: false
-  /api/v1/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke:
+  /api/v1/tenants/{tenant_id}/credentials/{credential_id}/actions/revoke:
     post:
-      description: Atomic Namespace CAS, receipt and audit. Credential secret appears only on initial issue; replay
+      description: Atomic Tenant CAS, receipt and audit. Credential secret appears only on initial issue; replay
         omits token, requiring explicit replacement if lost.
       parameters:
-      - name: namespace_id
+      - name: tenant_id
         in: path
         required: true
         schema: *id001
@@ -5935,11 +5935,11 @@ paths:
             schema:
               type: object
               properties:
-                expected_namespace_version:
+                expected_tenant_version:
                   type: integer
                   minimum: 1
               required:
-              - expected_namespace_version
+              - expected_tenant_version
               additionalProperties: false
   /session:
     post:
@@ -5984,10 +5984,10 @@ paths:
           description: Version changed or cursor invalidated.
   /api/v1/security/commands:
     post:
-      operationId: administerNamespace
+      operationId: administerTenant
       summary: Apply guarded administrative intent
-      description: Requires namespace:admin, Idempotency-Key and expected_namespace_version.
-        create_namespace additionally requires installation:provision and copies only Namespace permissions.
+      description: Requires tenant:admin, Idempotency-Key and expected_tenant_version.
+        create_tenant additionally requires installation:provision and copies only Tenant permissions.
         Granting or removing installation permissions and issuing or revoking operator credentials
         additionally require installation:admin. Installation authority requires a credential without
         Outcome restrictions. A credential token is returned once; replay preserves the receipt and omits the token.
@@ -6007,14 +6007,14 @@ paths:
               type: object
               additionalProperties: false
               required:
-              - namespace_id
-              - expected_namespace_version
+              - tenant_id
+              - expected_tenant_version
               - operation
               properties:
-                namespace_id:
+                tenant_id:
                   type: string
                   format: uuid
-                expected_namespace_version:
+                expected_tenant_version:
                   type: integer
                   minimum: 1
                 operation:
@@ -6023,7 +6023,7 @@ paths:
                   - set_grant
                   - issue_credential
                   - revoke_credential
-                  - create_namespace
+                  - create_tenant
                 principal_id:
                   type: string
                 permissions:
@@ -6038,7 +6038,7 @@ paths:
                 credential_id:
                   type: string
                   format: uuid
-                namespace_name:
+                tenant_name:
                   type: string
       responses:
         '200':
@@ -6053,8 +6053,8 @@ paths:
           description: Version or idempotency conflict
 components:
   parameters:
-    NamespaceID:
-      name: namespace_id
+    TenantID:
+      name: tenant_id
       in: path
       required: true
       schema:
@@ -6213,7 +6213,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
     NotFound:
-      description: Resource not found in the explicit Namespace/Outcome scope.
+      description: Resource not found in the explicit Tenant/Outcome scope.
       content:
         application/json:
           schema:
@@ -6925,12 +6925,12 @@ components:
       type: object
       additionalProperties: false
       required:
-      - namespace_id
+      - tenant_id
       - outcome_id
       - kind
       - id
       properties:
-        namespace_id:
+        tenant_id:
           $ref: '#/components/schemas/ID'
         outcome_id:
           $ref: '#/components/schemas/ID'
@@ -8060,7 +8060,7 @@ components:
       type: object
       required:
       - id
-      - namespace_id
+      - tenant_id
       - version
       - title
       - desired_state
@@ -8072,7 +8072,7 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/ID'
-        namespace_id:
+        tenant_id:
           $ref: '#/components/schemas/ID'
         version:
           $ref: '#/components/schemas/Version'

@@ -125,7 +125,7 @@ func TestReturnResolutionRecoversLostResponseWithoutRepostingOriginal(t *testing
 				t.Error(e)
 				return
 			}
-			if e = json.NewEncoder(rw).Encode(a.SignedStateResult{ProtocolVersion: 2, NamespaceID: profile.Binding.NamespaceID, Resource: "return_resolution", OutcomeRevision: 1, EvaluatedAt: time.Now().UTC(), Envelope: &env}); e != nil {
+			if e = json.NewEncoder(rw).Encode(a.SignedStateResult{ProtocolVersion: 3, TenantID: profile.Binding.TenantID, Resource: "return_resolution", OutcomeRevision: 1, EvaluatedAt: time.Now().UTC(), Envelope: &env}); e != nil {
 				t.Error(e)
 			}
 			return

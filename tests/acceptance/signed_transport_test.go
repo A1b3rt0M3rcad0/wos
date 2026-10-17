@@ -94,16 +94,16 @@ func signedTransportJourney(t *testing.T, store interface {
 		}
 	}
 	ns := d.MustParseID("0199ff31-0000-7000-8000-000000000001")
-	scope := d.Scope{NamespaceID: ns, OutcomeID: d.MustParseID("0199ff31-0000-7000-8000-000000000002")}
+	scope := d.Scope{TenantID: ns, OutcomeID: d.MustParseID("0199ff31-0000-7000-8000-000000000002")}
 	now := time.Now().UTC()
 	sec := &a.SecurityService{Store: store, Clock: clock{}, IDs: generator}
 	const adminToken = "signed-public-admin-credential-at-least-32"
-	must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed transport"}, "operator", adminToken))
+	must(sec.Bootstrap(ctx, ports.Tenant{ID: ns, Name: "signed transport"}, "operator", adminToken))
 	admin, e := sec.Authenticate(ctx, adminToken)
 	must(e)
 	adminCtx := a.WithIdentity(ctx, admin)
 	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite}
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: permissions}))
+	must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "worker", Permissions: permissions}))
 	credential, token, e := sec.IssueCredential(adminCtx, ns, "worker", d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: "worker"}, now.Add(time.Hour))
 	must(e)
 	service, e := a.NewAuthorizedService(store, clock{}, generator, sec)
@@ -133,24 +133,24 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(e)
 	identity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+	policy := d.CredentialPolicy{TenantID: ns, CredentialID: credential.ID, PrincipalID: "worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, p := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 	}
-	configured, e := operator.SigningMutation(ctx, "transport-set-signing-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := operator.SigningMutation(ctx, "transport-set-signing-policy", a.SigningSecurityIntent{TenantID: ns, ExpectedTenantVersion: identity.TenantVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
 	agentPub, agentPrivate, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	agentFP, e := signing.Fingerprint(agentPub)
 	must(e)
-	enrollment, e := operator.SigningMutation(ctx, "transport-enroll-signing-key", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "worker", ExpectedFingerprint: agentFP})
+	enrollment, e := operator.SigningMutation(ctx, "transport-enroll-signing-key", a.SigningSecurityIntent{TenantID: ns, ExpectedTenantVersion: configured.TenantVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "worker", ExpectedFingerprint: agentFP})
 	must(e)
 	own, e := worker.SigningIdentity(ctx, &enrollment.Enrollment.ID)
 	must(e)
 	if own.ServerID != server.ID.String() || own.CredentialID != credential.ID || own.Enrollment == nil {
 		t.Fatal("public identity binding differs")
 	}
-	proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), PrincipalID: "worker", SignerKeyID: own.Enrollment.KeyID.String()}, EnrollmentID: own.Enrollment.ID.String(), Nonce: own.Enrollment.Nonce, Purpose: own.Enrollment.Purpose, PublicKey: base64.StdEncoding.EncodeToString(agentPub), ExpiresAt: own.Enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano)}, own.Enrollment.KeyID.String(), agentPrivate)
+	proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), PrincipalID: "worker", SignerKeyID: own.Enrollment.KeyID.String()}, EnrollmentID: own.Enrollment.ID.String(), Nonce: own.Enrollment.Nonce, Purpose: own.Enrollment.Purpose, PublicKey: base64.StdEncoding.EncodeToString(agentPub), ExpiresAt: own.Enrollment.ExpiresAt.UTC().Format(time.RFC3339Nano)}, own.Enrollment.KeyID.String(), agentPrivate)
 	must(e)
 	// This identity resolver uses a real credential on every MCP request.
 	mcpClient := mcp.NewClient(&mcp.Implementation{Name: "signed-harness", Version: "2"}, nil)
@@ -171,7 +171,7 @@ func signedTransportJourney(t *testing.T, store interface {
 		must(json.Unmarshal(raw, target))
 	}
 	var registered a.SigningSecurityResult
-	call("wos_manage_signing_identity", map[string]any{"idempotency_key": "transport-register-signing-key", "command": map[string]any{"namespace_id": ns, "operation": "register_signing_key", "expected_namespace_version": "0", "expected_version": "0", "enrollment_id": own.Enrollment.ID, "proof": proof}}, &registered)
+	call("wos_manage_signing_identity", map[string]any{"idempotency_key": "transport-register-signing-key", "command": map[string]any{"tenant_id": ns, "operation": "register_signing_key", "expected_tenant_version": "0", "expected_version": "0", "enrollment_id": own.Enrollment.ID, "proof": proof}}, &registered)
 	if registered.Key == nil || registered.Key.PrincipalID != "worker" {
 		t.Fatal("MCP registration changed ownership")
 	}
@@ -231,7 +231,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	activityCommand := workActivityTransportJourney(t, ctx, worker, session, acquired.Value, registered.Key.ID)
 	requestID, e := generator.NewID()
 	must(e)
-	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "worker", SignerKeyID: registered.Key.ID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: "transport-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(acquired.Value.WorkItem.Version), PolicyRevision: signing.Decimal(registered.CredentialPolicy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "same signed bytes across transports"}), Reason: "no required criteria in bounded fixture"}}
+	request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: "worker", SignerKeyID: registered.Key.ID.String()}, OperationKind: "work_return", RequestID: requestID.String(), IdempotencyKey: "transport-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(acquired.Value.WorkItem.Version), PolicyRevision: signing.Decimal(registered.CredentialPolicy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "same signed bytes across transports"}), Reason: "no required criteria in bounded fixture"}}
 	envelope, e := signing.Sign(signing.WorkReturn, request, registered.Key.ID.String(), agentPrivate)
 	must(e)
 	// A definitive semantic rejection stays frozen until the server arbitrates
@@ -311,29 +311,29 @@ func signedTransportJourney(t *testing.T, store interface {
 	// A separate reviewer uses only its own credential/key/lease, after the
 	// original execution bearer has been revoked. No executor session is reused.
 	reviewPermissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite}
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reviewer", Permissions: reviewPermissions}))
+	must(sec.SetGrant(adminCtx, ports.TenantGrant{TenantID: ns, PrincipalID: "reviewer", Permissions: reviewPermissions}))
 	reviewCredential, reviewToken, e := sec.IssueCredential(adminCtx, ns, "reviewer", d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: "reviewer"}, now.Add(time.Hour))
 	must(e)
 	reviewer, e := sdk.New(endpoint.URL, reviewToken, endpoint.Client())
 	must(e)
 	adminView, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	reviewPolicy := d.CredentialPolicy{NamespaceID: ns, CredentialID: reviewCredential.ID, PrincipalID: "reviewer", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+	reviewPolicy := d.CredentialPolicy{TenantID: ns, CredentialID: reviewCredential.ID, PrincipalID: "reviewer", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, permission := range reviewPermissions {
 		reviewPolicy.PermittedOperations = append(reviewPolicy.PermittedOperations, string(permission))
 	}
-	reviewConfigured, e := operator.SigningMutation(ctx, "transport-review-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: adminView.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &reviewPolicy})
+	reviewConfigured, e := operator.SigningMutation(ctx, "transport-review-policy", a.SigningSecurityIntent{TenantID: ns, ExpectedTenantVersion: adminView.TenantVersion, Operation: "set_credential_policy", CredentialPolicy: &reviewPolicy})
 	must(e)
 	reviewPublic, reviewPrivate, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	reviewFP, e := signing.Fingerprint(reviewPublic)
 	must(e)
-	reviewEnrollment, e := operator.SigningMutation(ctx, "transport-review-enrollment", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: reviewConfigured.NamespaceVersion, Operation: "create_enrollment", CredentialID: reviewCredential.ID, PrincipalID: "reviewer", ExpectedFingerprint: reviewFP})
+	reviewEnrollment, e := operator.SigningMutation(ctx, "transport-review-enrollment", a.SigningSecurityIntent{TenantID: ns, ExpectedTenantVersion: reviewConfigured.TenantVersion, Operation: "create_enrollment", CredentialID: reviewCredential.ID, PrincipalID: "reviewer", ExpectedFingerprint: reviewFP})
 	must(e)
 	challenge := reviewEnrollment.Enrollment
-	reviewProof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), PrincipalID: "reviewer", SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(reviewPublic), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), reviewPrivate)
+	reviewProof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 3, ServerID: server.ID.String(), TenantID: ns.String(), PrincipalID: "reviewer", SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(reviewPublic), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), reviewPrivate)
 	must(e)
-	reviewRegistered, e := reviewer.SigningMutation(ctx, "transport-review-register", a.SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &reviewProof})
+	reviewRegistered, e := reviewer.SigningMutation(ctx, "transport-review-register", a.SigningSecurityIntent{TenantID: ns, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &reviewProof})
 	must(e)
 	must(sec.RevokeCredential(adminCtx, ns, credential.ID))
 	caseView, e := reviewer.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "case", ID: d.ID(receipt.ReviewCaseID)})

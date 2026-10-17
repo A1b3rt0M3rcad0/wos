@@ -70,7 +70,7 @@ async function mount(page) {
     };
     window.searchPending = [];
     window.canvasModel = {
-      scopeKey: "namespace/outcome",
+      scopeKey: "tenant/outcome",
       rootKey: "outcome:root",
       revision: 1,
       partial: true,

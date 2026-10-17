@@ -23,7 +23,7 @@ type ConnectionConfig struct {
 	CredentialRef string `json:"credential_ref"`
 }
 type WorkspaceScope struct {
-	NamespaceID      domain.ID `json:"namespace_id"`
+	TenantID         domain.ID `json:"tenant_id"`
 	DefaultOutcomeID domain.ID `json:"default_outcome_id,omitempty"`
 }
 type WorkspaceConfig struct {
@@ -48,7 +48,7 @@ func (c Config) Validate() error {
 	if !regexp.MustCompile(`^env:[A-Za-z_][A-Za-z0-9_]*$`).MatchString(c.Connection.CredentialRef) {
 		return fmt.Errorf("credential_ref must reference an environment variable")
 	}
-	if err = c.Scope.NamespaceID.Validate(); err != nil {
+	if err = c.Scope.TenantID.Validate(); err != nil {
 		return err
 	}
 	if err = c.Scope.DefaultOutcomeID.Validate(); err != nil {
@@ -66,7 +66,7 @@ func (c Config) Validate() error {
 	return nil
 }
 func (c Config) DefaultScope() domain.Scope {
-	return domain.Scope{NamespaceID: c.Scope.NamespaceID, OutcomeID: c.Scope.DefaultOutcomeID}
+	return domain.Scope{TenantID: c.Scope.TenantID, OutcomeID: c.Scope.DefaultOutcomeID}
 }
 
 type ContractDocument struct {

@@ -6,12 +6,12 @@ import (
 )
 
 func (h *Handler) effectivePermissions(w http.ResponseWriter, r *http.Request) {
-	ns, err := parsePathID(r, "namespace_id")
+	ns, err := parsePathID(r, "tenant_id")
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
-	scope := domain.Scope{NamespaceID: ns}
+	scope := domain.Scope{TenantID: ns}
 	if raw := r.URL.Query().Get("outcome_id"); raw != "" {
 		scope.OutcomeID, err = domain.ParseID(raw)
 		if err != nil {

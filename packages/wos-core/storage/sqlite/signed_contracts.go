@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"strconv"
@@ -17,7 +16,7 @@ func (u *unitOfWork) SignedContracts() ports.SignedContractRepository {
 }
 func signedVersion(v d.Version) string { return strconv.FormatUint(uint64(v), 10) }
 func (r signedContractRepository) Case(ctx context.Context, scope d.Scope, id d.ID) (d.ReviewCase, error) {
-	c, err := signingRead[d.ReviewCase](ctx, r.u, `SELECT state_json FROM work_review_cases WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	c, err := signingRead[d.ReviewCase](ctx, r.u, `SELECT state_json FROM work_review_cases WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String())
 	if err == nil {
 		err = c.Validate()
 		if c.Scope != scope || c.ID != id {
@@ -35,7 +34,7 @@ func signedRows[T any](rows *sql.Rows, validate func(T) error) ([]T, error) {
 		if err := rows.Scan(&raw); err != nil {
 			return nil, mapSQLError("scan signed state", err)
 		}
-		if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		if err := unmarshalJSON(raw, &v); err != nil {
 			return nil, err
 		}
 		if err := validate(v); err != nil {
@@ -49,7 +48,7 @@ func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f po
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "review case page outside 1..101")
 	}
-	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_cases WHERE namespace_id=? AND outcome_id=? AND (?=0 OR status IN ('pending','in_review')) AND (?='' OR work_item_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), boolInt(f.OpenOnly), f.WorkItemID.String(), f.WorkItemID.String(), f.Status, f.Status, f.After.String(), f.Limit)
+	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_cases WHERE tenant_id=? AND outcome_id=? AND (?=0 OR status IN ('pending','in_review')) AND (?='' OR work_item_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), boolInt(f.OpenOnly), f.WorkItemID.String(), f.WorkItemID.String(), f.Status, f.Status, f.After.String(), f.Limit)
 	if err != nil {
 		return nil, mapSQLError("query signed state", err)
 	}
@@ -62,7 +61,7 @@ func (r signedContractRepository) Cases(ctx context.Context, scope d.Scope, f po
 }
 func (r signedContractRepository) OpenCase(ctx context.Context, scope d.Scope, work d.ID) (*d.ReviewCase, error) {
 	var id string
-	err := r.u.tx.QueryRowContext(ctx, `SELECT id FROM work_review_cases WHERE namespace_id=? AND outcome_id=? AND work_item_id=? AND status IN ('pending','in_review')`, scope.NamespaceID.String(), scope.OutcomeID.String(), work.String()).Scan(&id)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT id FROM work_review_cases WHERE tenant_id=? AND outcome_id=? AND work_item_id=? AND status IN ('pending','in_review')`, scope.TenantID.String(), scope.OutcomeID.String(), work.String()).Scan(&id)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -98,7 +97,7 @@ func (r signedContractRepository) InsertCase(ctx context.Context, c d.ReviewCase
 	if err != nil {
 		return err
 	}
-	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_review_cases(id,namespace_id,outcome_id,work_item_id,work_contract_id,submission_id,status,version,state_json) VALUES(?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.WorkContractID.String(), c.SubmissionID.String(), string(c.Status), signedVersion(c.Version), raw)
+	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_review_cases(id,tenant_id,outcome_id,work_item_id,work_contract_id,submission_id,status,version,state_json) VALUES(?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.WorkContractID.String(), c.SubmissionID.String(), string(c.Status), signedVersion(c.Version), raw)
 	return mapSQLError("insert review case", err)
 }
 func (r signedContractRepository) SaveCase(ctx context.Context, c d.ReviewCase, expected d.Version) error {
@@ -116,11 +115,11 @@ func (r signedContractRepository) SaveCase(ctx context.Context, c d.ReviewCase, 
 	if err != nil {
 		return err
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_review_cases SET status=?,version=?,state_json=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=?`, string(c.Status), signedVersion(c.Version), raw, c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.ID.String(), signedVersion(expected))
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_review_cases SET status=?,version=?,state_json=? WHERE tenant_id=? AND outcome_id=? AND id=? AND version=?`, string(c.Status), signedVersion(c.Version), raw, c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.ID.String(), signedVersion(expected))
 	return signingCAS(result, err)
 }
 func (r signedContractRepository) ReviewContract(ctx context.Context, scope d.Scope, id d.ID) (d.ReviewContract, error) {
-	c, err := signingRead[d.ReviewContract](ctx, r.u, `SELECT state_json FROM work_review_contracts WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	c, err := signingRead[d.ReviewContract](ctx, r.u, `SELECT state_json FROM work_review_contracts WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String())
 	if err == nil {
 		err = c.Validate()
 		if c.Scope != scope || c.ID != id {
@@ -133,7 +132,7 @@ func (r signedContractRepository) ReviewContracts(ctx context.Context, scope d.S
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "review contract page outside 1..101")
 	}
-	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, f.Status, f.Status, f.After.String(), f.Limit)
+	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM work_review_contracts WHERE tenant_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, f.Status, f.Status, f.After.String(), f.Limit)
 	if err != nil {
 		return nil, mapSQLError("query signed state", err)
 	}
@@ -166,7 +165,7 @@ func (r signedContractRepository) InsertReviewContract(ctx context.Context, c d.
 	if err != nil {
 		return err
 	}
-	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_review_contracts(id,namespace_id,outcome_id,case_id,work_item_id,holder_principal_id,credential_id,status,version,lease_version,expires_at,state_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.CaseID.String(), c.WorkItemID.String(), c.HolderPrincipalID, c.Binding.CredentialID.String(), string(c.Status), signedVersion(c.Version), signedVersion(c.LeaseVersion), encodeTime(c.ExpiresAt), raw)
+	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO work_review_contracts(id,tenant_id,outcome_id,case_id,work_item_id,holder_principal_id,credential_id,status,version,lease_version,expires_at,state_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.CaseID.String(), c.WorkItemID.String(), c.HolderPrincipalID, c.Binding.CredentialID.String(), string(c.Status), signedVersion(c.Version), signedVersion(c.LeaseVersion), encodeTime(c.ExpiresAt), raw)
 	return mapSQLError("insert review authority", err)
 }
 func (r signedContractRepository) SaveReviewContract(ctx context.Context, c d.ReviewContract, version, lease d.Version) error {
@@ -184,11 +183,11 @@ func (r signedContractRepository) SaveReviewContract(ctx context.Context, c d.Re
 	if err != nil {
 		return err
 	}
-	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_review_contracts SET status=?,version=?,lease_version=?,expires_at=?,state_json=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), signedVersion(c.Version), signedVersion(c.LeaseVersion), encodeTime(c.ExpiresAt), raw, c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.ID.String(), signedVersion(version), signedVersion(lease))
+	result, err := r.u.tx.ExecContext(ctx, `UPDATE work_review_contracts SET status=?,version=?,lease_version=?,expires_at=?,state_json=? WHERE tenant_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), signedVersion(c.Version), signedVersion(c.LeaseVersion), encodeTime(c.ExpiresAt), raw, c.Scope.TenantID.String(), c.Scope.OutcomeID.String(), c.ID.String(), signedVersion(version), signedVersion(lease))
 	return signingCAS(result, err)
 }
 func (r signedContractRepository) Fact(ctx context.Context, scope d.Scope, id d.ID) (d.SignedFact, error) {
-	f, err := signingRead[d.SignedFact](ctx, r.u, `SELECT state_json FROM signed_protocol_facts WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	f, err := signingRead[d.SignedFact](ctx, r.u, `SELECT state_json FROM signed_protocol_facts WHERE tenant_id=? AND outcome_id=? AND id=?`, scope.TenantID.String(), scope.OutcomeID.String(), id.String())
 	if err == nil {
 		err = f.Validate()
 		if f.Scope != scope || f.ID != id {
@@ -201,7 +200,7 @@ func (r signedContractRepository) Facts(ctx context.Context, scope d.Scope, cont
 	if limit < 1 || limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "signed facts page outside 1..101")
 	}
-	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signed_protocol_facts WHERE namespace_id=? AND outcome_id=? AND contract_id=? AND (?='' OR kind=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), contract.String(), kind, kind, after.String(), limit)
+	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signed_protocol_facts WHERE tenant_id=? AND outcome_id=? AND contract_id=? AND (?='' OR kind=?) AND id>? ORDER BY id LIMIT ?`, scope.TenantID.String(), scope.OutcomeID.String(), contract.String(), kind, kind, after.String(), limit)
 	if err != nil {
 		return nil, mapSQLError("query signed state", err)
 	}
@@ -225,7 +224,7 @@ func (r signedContractRepository) InsertFact(ctx context.Context, f d.SignedFact
 			return err
 		}
 	}
-	key, err := r.u.SigningIdentity().Key(ctx, f.Scope.NamespaceID, f.KeyID)
+	key, err := r.u.SigningIdentity().Key(ctx, f.Scope.TenantID, f.KeyID)
 	if err != nil {
 		return err
 	}
@@ -240,37 +239,37 @@ func (r signedContractRepository) InsertFact(ctx context.Context, f d.SignedFact
 	if err != nil {
 		return err
 	}
-	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signed_protocol_facts(id,namespace_id,outcome_id,contract_id,contract_kind,kind,principal_id,key_id,idempotency_key,request_id,payload_digest,state_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, f.ID.String(), f.Scope.NamespaceID.String(), f.Scope.OutcomeID.String(), f.ContractID.String(), f.ContractKind, f.Kind, f.PrincipalID, f.KeyID.String(), f.IdempotencyKey, request, f.PayloadDigest, raw)
+	_, err = r.u.tx.ExecContext(ctx, `INSERT INTO signed_protocol_facts(id,tenant_id,outcome_id,contract_id,contract_kind,kind,principal_id,key_id,idempotency_key,request_id,payload_digest,state_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, f.ID.String(), f.Scope.TenantID.String(), f.Scope.OutcomeID.String(), f.ContractID.String(), f.ContractKind, f.Kind, f.PrincipalID, f.KeyID.String(), f.IdempotencyKey, request, f.PayloadDigest, raw)
 	return mapSQLError("insert immutable signed fact", err)
 }
 func (r signedContractRepository) Acceptance(ctx context.Context, ns d.ID, principal, key string) (d.SignedFact, error) {
-	f, err := signingRead[d.SignedFact](ctx, r.u, `SELECT state_json FROM signed_protocol_facts WHERE namespace_id=? AND principal_id=? AND idempotency_key=? AND kind='acceptance'`, ns.String(), principal, key)
+	f, err := signingRead[d.SignedFact](ctx, r.u, `SELECT state_json FROM signed_protocol_facts WHERE tenant_id=? AND principal_id=? AND idempotency_key=? AND kind='acceptance'`, ns.String(), principal, key)
 	if err == nil {
 		err = f.Validate()
-		if f.Scope.NamespaceID != ns || f.PrincipalID != principal || f.IdempotencyKey != key || f.Kind != "acceptance" {
+		if f.Scope.TenantID != ns || f.PrincipalID != principal || f.IdempotencyKey != key || f.Kind != "acceptance" {
 			err = d.NewError(d.ErrorCodeInvalidScope, "signed acceptance binding differs")
 		}
 	}
 	return f, err
 }
 
-// Counts includes Namespace totals for diagnostics. Acquisition uses CountQuota
-// to avoid scanning another Principal's authority when no Namespace limit applies.
+// Counts includes Tenant totals for diagnostics. Acquisition uses CountQuota
+// to avoid scanning another Principal's authority when no Tenant limit applies.
 func (r signedContractRepository) Counts(ctx context.Context, ns d.ID, principal string, credential d.ID, now time.Time) (ports.SignedActiveCounts, error) {
 	return r.CountQuota(ctx, ns, principal, credential, now, true)
 }
-func (r signedContractRepository) CountQuota(ctx context.Context, ns d.ID, principal string, credential d.ID, now time.Time, includeNamespace bool) (ports.SignedActiveCounts, error) {
+func (r signedContractRepository) CountQuota(ctx context.Context, ns d.ID, principal string, credential d.ID, now time.Time, includeTenant bool) (ports.SignedActiveCounts, error) {
 	var c ports.SignedActiveCounts
-	err := r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=? AND holder_principal_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=? AND credential_id=? AND status='active' AND expires_at>?)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalWork, &c.CredentialWork)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE tenant_id=? AND holder_principal_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM signed_work_contracts WHERE tenant_id=? AND credential_id=? AND status='active' AND expires_at>?)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalWork, &c.CredentialWork)
 	if err != nil {
 		return c, mapSQLError("count active signed work authority", err)
 	}
-	err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=? AND holder_principal_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=? AND credential_id=? AND status='active' AND expires_at>?)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalReview, &c.CredentialReview)
+	err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM work_review_contracts WHERE tenant_id=? AND holder_principal_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM work_review_contracts WHERE tenant_id=? AND credential_id=? AND status='active' AND expires_at>?)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalReview, &c.CredentialReview)
 	if err != nil {
 		return c, mapSQLError("count active signed review authority", err)
 	}
-	if includeNamespace {
-		err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=? AND status='active' AND expires_at>?)`, ns.String(), encodeTime(now), ns.String(), encodeTime(now)).Scan(&c.NamespaceWork, &c.NamespaceReview)
+	if includeTenant {
+		err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE tenant_id=? AND status='active' AND expires_at>?), (SELECT COUNT(*) FROM work_review_contracts WHERE tenant_id=? AND status='active' AND expires_at>?)`, ns.String(), encodeTime(now), ns.String(), encodeTime(now)).Scan(&c.TenantWork, &c.TenantReview)
 	}
-	return c, mapSQLError("count active signed Namespace authority", err)
+	return c, mapSQLError("count active signed Tenant authority", err)
 }

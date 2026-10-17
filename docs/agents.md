@@ -36,9 +36,9 @@ wos --profile executor auth status --output json
 wos --profile executor doctor --output json
 ```
 
-An operator must first provision the Profile's trusted server origin/ServerID, Namespace, Principal, credential, registered signing key and issuer pin. The server must enable the appropriate signed protocol and grant the required operations. Follow the [central CLI provisioning guide](../packages/wos-cli/README.md#profiles-and-protected-onboarding) and [service operations](operations.md#shared-service). Creating a Profile or installing a Skill does not activate a Namespace or grant access.
+An operator must first provision the Profile's trusted server origin/ServerID, Tenant, Principal, credential, registered signing key and issuer pin. The server must enable the appropriate signed protocol and grant the required operations. Follow the [central CLI provisioning guide](../packages/wos-cli/README.md#profiles-and-protected-onboarding) and [service operations](operations.md#shared-service). Creating a Profile or installing a Skill does not activate a Tenant or grant access.
 
-Operational data belongs to one installation directory and commands work from any directory. No per-project `.wos/` is required. A Namespace is the authorization boundary called Workspace in the browser.
+Operational data belongs to one installation directory and commands work from any directory. No per-project `.wos/` is required. A Tenant is the authorization boundary called Workspace in the browser.
 
 Selection resolves once per invocation: `--profile` overrides `WOS_PROFILE`, which overrides the persisted active Profile; a sole Profile can be selected if no default exists. `profile use` is convenient interactively. Concurrent agent processes must pin `--profile NAME` or process-scoped `WOS_PROFILE` so another process changing the active default cannot change their identity.
 

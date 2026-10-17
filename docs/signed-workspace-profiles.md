@@ -13,14 +13,14 @@ The CLI stores operational material in a private OS data directory, independentl
 
 ## Provision an approved identity
 
-An administrator supplies the persistent server ID, issuer fingerprint, Namespace, credential, and authorized enrollment. Onboarding verifies these bindings and grants no server permission. Do not place administrative credentials in an executor profile.
+An administrator supplies the persistent server ID, issuer fingerprint, Tenant, credential, and authorized enrollment. Onboarding verifies these bindings and grants no server permission. Do not place administrative credentials in an executor profile.
 
 For a host with a supported native keyring:
 
 ```sh
 wos profile create executor --token-stdin --generate-signing-key \
   --server https://wos.example.test --server-id SERVER_UUID \
-  --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
+  --tenant TENANT_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
   --enrollment ENROLLMENT_UUID
 ```
 
@@ -31,14 +31,14 @@ A host can instead provision protected references without a proposal file or key
 ```sh
 wos profile create executor \
   --server https://wos.example.test --server-id SERVER_UUID \
-  --namespace NAMESPACE_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
+  --tenant TENANT_UUID --issuer-fingerprint sha256:APPROVED_DIGEST \
   --credential-ref env:WOS_TOKEN --private-key-ref env:WOS_SIGNING_SEED \
   --enrollment ENROLLMENT_UUID
 ```
 
 The host supplies the named environment variables securely. Flags accept references, never secret values. The CLI derives the public fingerprint and verifies enrollment subject, purpose, and approved destination. Omit `--enrollment` only for a uniquely matching already registered live agent key. Protected mounted references are also supported by the [profile schema](../packages/wos-cli/schemas/profile-v2.schema.json): mounted files must be canonical private regular files outside the operational store, with no links and no other-account access. Windows checks a restricted DACL.
 
-`--outcome OUTCOME_UUID` optionally pins a default Outcome. Without it, scoped commands can select `--outcome` explicitly or discover a unique match; ambiguity or an incomplete scan fails safely. Server and Namespace remain bound to the profile. A changed destination or credential requires new onboarding.
+`--outcome OUTCOME_UUID` optionally pins a default Outcome. Without it, scoped commands can select `--outcome` explicitly or discover a unique match; ambiguity or an incomplete scan fails safely. Server and Tenant remain bound to the profile. A changed destination or credential requires new onboarding.
 
 ## Select and inspect profiles
 
@@ -88,7 +88,7 @@ wos --profile executor_a work list --output json
 wos --profile executor_a work show CONTRACT_UUID --for-agent --output json
 ```
 
-`--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server enforces the configured Namespace Principal quota across credentials and profiles (default three active execution contracts), together with credential and Namespace ceilings. A request exceeding current capacity may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
+`--count` (1–10) counts independent intentions; `--limit` (1–100) bounds each scan. The server enforces the configured Tenant Principal quota across credentials and profiles (default three active execution contracts), together with credential and Tenant ceilings. A request exceeding current capacity may therefore finish partially. The bounded set is saved in the profile before the first request. Each item has its own UUID, idempotency key, frozen typed bytes and fingerprint; accepted contracts survive another item's failure. No batch compensation or fresh recovery search is performed.
 
 A search that found nothing is also durable. Repeating its intention returns the original empty result even after a new Task appears. An incomplete page retains `search_complete: false` and `next_cursor`; it does not declare global absence. Continuing that cursor is an explicit new checkout intention. Corrections and replanned deliveries require explicit Task checkout with `--previous-review REVIEW_CASE_UUID`; generic next search does not silently acknowledge their findings.
 
@@ -188,6 +188,6 @@ may close its obligation while review remains pending; it is not Task approval.
 
 ## Signed acquisition quotas
 
-A Namespace administrator can set optional `max_active_work_per_principal` and `max_active_review_per_principal` fields in a Namespace `WorkAcceptancePolicy` through the existing authenticated `set_acceptance_policy` security command, with current `expected_namespace_version` and policy `expected_version`. Defaults remain **3 work / 1 review** when fields are absent; explicit values are **1..100**. Outcome/WorkItem policy overrides of these fields are rejected.
+A Tenant administrator can set optional `max_active_work_per_principal` and `max_active_review_per_principal` fields in a Tenant `WorkAcceptancePolicy` through the existing authenticated `set_acceptance_policy` security command, with current `expected_tenant_version` and policy `expected_version`. Defaults remain **3 work / 1 review** when fields are absent; explicit values are **1..100**. Outcome/WorkItem policy overrides of these fields are rejected.
 
-Credential and Namespace active-contract ceilings still apply independently. Additional profiles or credentials of the same Principal share its capacity and cannot serve as an independent reviewer. Raising a quota does not add permissions or relax review separation, leases or fencing. Lowering it does not revoke issued contracts automatically; it blocks further acquisition until activity permits it. `wos --profile NAME auth status --output json` and doctor expose `quotas`, including current own activity, Principal/CID/Namespace ceilings and the effective minimum. No other Principal's contracts are listed. Quota rejection leaves the original WorkItem/Outcome revision unchanged; retry only the original intent after an authorized configuration or activity change.
+Credential and Tenant active-contract ceilings still apply independently. Additional profiles or credentials of the same Principal share its capacity and cannot serve as an independent reviewer. Raising a quota does not add permissions or relax review separation, leases or fencing. Lowering it does not revoke issued contracts automatically; it blocks further acquisition until activity permits it. `wos --profile NAME auth status --output json` and doctor expose `quotas`, including current own activity, Principal/CID/Tenant ceilings and the effective minimum. No other Principal's contracts are listed. Quota rejection leaves the original WorkItem/Outcome revision unchanged; retry only the original intent after an authorized configuration or activity change.

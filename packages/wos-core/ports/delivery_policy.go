@@ -14,14 +14,14 @@ import (
 type DeliveryClaimPolicy struct {
 	// DatabaseTime is used by fleet workers for shared lease/expiry decisions.
 	// Explicit-clock callers retain the original deterministic storage contract.
-	DatabaseTime            bool
-	MaxInflightPerNamespace int
-	MaxInflightPerEndpoint  int
-	SecretRefs              []string
+	DatabaseTime           bool
+	MaxInflightPerTenant   int
+	MaxInflightPerEndpoint int
+	SecretRefs             []string
 }
 
 func (p DeliveryClaimPolicy) Validate() error {
-	if p.MaxInflightPerNamespace < 0 || p.MaxInflightPerNamespace > 4096 || p.MaxInflightPerEndpoint < 0 || p.MaxInflightPerEndpoint > 4096 || len(p.SecretRefs) > 256 {
+	if p.MaxInflightPerTenant < 0 || p.MaxInflightPerTenant > 4096 || p.MaxInflightPerEndpoint < 0 || p.MaxInflightPerEndpoint > 4096 || len(p.SecretRefs) > 256 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery limits must be 0..4096 and secret references at most 256")
 	}
 	for _, ref := range p.SecretRefs {
@@ -32,7 +32,7 @@ func (p DeliveryClaimPolicy) Validate() error {
 	return nil
 }
 
-// FairDeliveryStore applies namespace turns and capacity checks in the same
+// FairDeliveryStore applies tenant turns and capacity checks in the same
 // transaction as the durable delivery lease, across worker processes.
 type FairDeliveryStore interface {
 	ClaimDeliveryWithPolicy(context.Context, time.Time, domain.ID, time.Duration, DeliveryClaimPolicy) (*Delivery, error)

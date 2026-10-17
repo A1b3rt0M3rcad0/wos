@@ -12,7 +12,7 @@ import (
 
 func TestIndependentSDKConsumerContinuesAfterRestart(t *testing.T) {
 	forEachRuntimeStorage(t, func(t *testing.T, cfg Config) {
-		runtime, err := OpenRuntime(cfg)
+		runtime, err := openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -20,11 +20,11 @@ func TestIndependentSDKConsumerContinuesAfterRestart(t *testing.T) {
 		client, _ := wossdk.New(srv.URL, "", srv.Client())
 		ctx := context.Background()
 		key, _ := wossdk.NewIdempotencyKey()
-		created, err := client.CreateOutcome(ctx, key, application.CreateOutcomeCommand{NamespaceID: domain.MustParseID("0199d050-0000-7000-8000-000000000001"), Title: "SDK durable result", DesiredState: "Independent new consumer continues", Priority: domain.PriorityNormal})
+		created, err := client.CreateOutcome(ctx, key, application.CreateOutcomeCommand{TenantID: domain.MustParseID(cfg.Auth.LocalTenantID), Title: "SDK durable result", DesiredState: "Independent new consumer continues", Priority: domain.PriorityNormal})
 		if err != nil {
 			t.Fatal(err)
 		}
-		replay, err := client.CreateOutcome(ctx, key, application.CreateOutcomeCommand{NamespaceID: created.Value.NamespaceID, Title: "SDK durable result", DesiredState: "Independent new consumer continues", Priority: domain.PriorityNormal})
+		replay, err := client.CreateOutcome(ctx, key, application.CreateOutcomeCommand{TenantID: created.Value.TenantID, Title: "SDK durable result", DesiredState: "Independent new consumer continues", Priority: domain.PriorityNormal})
 		if err != nil || !replay.IdempotentReplay || replay.Value.ID != created.Value.ID {
 			t.Fatalf("replay: %v %+v", err, replay)
 		}
@@ -40,7 +40,7 @@ func TestIndependentSDKConsumerContinuesAfterRestart(t *testing.T) {
 		}
 		srv.Close()
 		runtime.Close()
-		runtime, err = OpenRuntime(cfg)
+		runtime, err = openRuntimeFixture(t, &cfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,7 +48,7 @@ func TestIndependentSDKConsumerContinuesAfterRestart(t *testing.T) {
 		srv = httptest.NewServer(runtime.Handler())
 		defer srv.Close()
 		independent, _ := wossdk.New(srv.URL, "", srv.Client())
-		found, err := independent.SearchOutcomes(ctx, created.Value.NamespaceID, "durable", 1, "")
+		found, err := independent.SearchOutcomes(ctx, created.Value.TenantID, "durable", 1, "")
 		if err != nil || len(found.Items) != 1 {
 			t.Fatalf("discovery after restart: %v %+v", err, found)
 		}
