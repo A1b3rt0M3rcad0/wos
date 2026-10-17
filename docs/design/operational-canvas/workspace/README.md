@@ -44,6 +44,8 @@ The original hand-drawn chain is the only header logo. The supplied robots, incl
 
 Detail, action, command and administration dialogs preserve native focus containment, Escape, backdrop and scrolling. Nested reference/editor controls retain their own keyboard behavior. Common forms use the same canonical commands and authenticated authorship: Artifact registration records a deliverable; proposing a Decision does not accept it. Version conflicts require an explicit comparison, and uncertain responses keep the exact recoverable intent. This presentation does not relax server permissions, expected versions, leases, signed authority or receipts.
 
+Closing an inline Canvas form returns to its details. A slower background read preserves the camera and leaves keyboard focus on the next control or connection the user chooses. Ink and surface states change together so selected controls remain readable throughout the transition.
+
 ## Selected views
 
 These examples use illustrative records created through public commands on isolated local servers. Supplemental desktop captures use 1440 × 1000 CSS px; mobile captures use 390 × 844. The capture helper waits for fonts and visible images, disables screenshot animations and records the viewport without compositing artwork.

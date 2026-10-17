@@ -1,14 +1,14 @@
 {
-  "implementation_commit": "b038940b6c806ceab80ed9c5b191c4410a6d39bb",
+  "implementation_commit": "40499c490ba2abc8ac2623020e7e5233c878204f",
   "capture_test": "tests/web/editorial.spec.mjs",
-  "capture_test_sha256": "55dbcb660a3b0ca12203a62c90ff4a5e59db9b7b5036a29114c456dde6d6a6a2",
+  "capture_test_sha256": "81b5e5b08a51ec7cc26becdf1b7433fa8ccff38742f4caf0fd531833ecf8a2eb",
   "dataset": "Isolated illustrative records created through the public command API; read/transport fault injection only for explicit recovery states",
   "browser": "Chromium 149.0.7827.0 on Linux amd64; deviceScaleFactor 1",
   "source_sha256": {
     "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
     "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-    "packages/wos-api/web/assets/app.js": "2b86102d4f8c27f3fd3049bb0b11f40a17fe8b6a15133403dadefae99c0aae32",
+    "packages/wos-api/web/assets/app.js": "fce80e3faadcb054845c398556c5d0ae0c8251d174d6a9e23cc39bb059e0e574",
     "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
     "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
     "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
@@ -16,7 +16,7 @@
     "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
     "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
     "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
-    "packages/wos-api/web/assets/editorial.css": "e1c0a804e313b4e6420ad6b88640cc148680e52ed6bc737135b4cc609591fe84",
+    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
     "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
     "packages/wos-api/web/assets/en-US.js": "b52179ee869412f6d4db08f0db9ec0a3ae8a6e8b9d4dbb93d5b5843821c7f78c",
     "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
@@ -29,13 +29,13 @@
     "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
     "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
     "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
-    "packages/wos-api/web/assets/workspace-canvas.js": "51d7be3e8265446251b79e7bc1901348e74b34466c88723a36a9793a5e423143",
+    "packages/wos-api/web/assets/workspace-canvas.js": "ab8a66b1b7010c14da01c1d51a905a8a2c19ad588404bd80ae12e4363f99b417",
     "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
     "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
     "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
     "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
   },
-  "native_binary_sha256": "dd9eb42b83a0407af1547da08fb1d8c5a5dc31406987dc3d3903f41c3b7fa756",
+  "native_binary_sha256": "50535c3e19780382c64e0fb23ff65a4ae1270c942958191228e4d09171304da8",
   "screenshots": [
     {
       "file": "screenshots/01-login.png",
@@ -49,7 +49,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:37.432834+00:00",
+      "captured_at_utc": "2026-10-17T03:23:42.228623+00:00",
       "sha256": "49f0e65e2e2da3abd86b89e389d9293d48fcd2e7c22adefff61f8571e4a619b6"
     },
     {
@@ -64,8 +64,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:38.136829+00:00",
-      "sha256": "4659e07feb353974d037ec160a5273fb6d503b09d4d75eaef55fd53964c462ae"
+      "captured_at_utc": "2026-10-17T03:23:42.880619+00:00",
+      "sha256": "43d9b06170cb84a3a4c7632e7ecd7cc4d69df64758efc0bf314a4bb4cdcb7023"
     },
     {
       "file": "screenshots/03-plan.png",
@@ -79,8 +79,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:38.300828+00:00",
-      "sha256": "c5da313078af8c2be74ec6a287aae984b02602df8d740bbf1a0895f012d2153a"
+      "captured_at_utc": "2026-10-17T03:23:43.140617+00:00",
+      "sha256": "5711c0f46bd6b0f4cbb22ea6030e4b549a1bcedd13108c030435df11632554a6"
     },
     {
       "file": "screenshots/04-work.png",
@@ -94,8 +94,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:38.504827+00:00",
-      "sha256": "dd1c2b9c58e5ca7367dbe1f4f19b18937985b2b41257c2bee8964e071ff73a3a"
+      "captured_at_utc": "2026-10-17T03:23:43.452615+00:00",
+      "sha256": "ae67c89c75584e56e31629f65e265dfeb0a4ad7400dd820807711227744591eb"
     },
     {
       "file": "screenshots/05-work-board.png",
@@ -109,8 +109,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:39.308821+00:00",
-      "sha256": "7617e8383e6696e9a72688a94d416431ac4a9cbcfb71d7f7b2a7054dec260245"
+      "captured_at_utc": "2026-10-17T03:23:44.704606+00:00",
+      "sha256": "054aff362c055926e9695d16434156858a6915678adc42782643a641bf0b0ec9"
     },
     {
       "file": "screenshots/06-issues.png",
@@ -124,8 +124,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:38.688825+00:00",
-      "sha256": "33ea292c4131be77918e1200feeb92577bb3f4fc592b3666f2bd0596fa9437b1"
+      "captured_at_utc": "2026-10-17T03:23:43.728613+00:00",
+      "sha256": "b408f797a7e2160b2c6aad9709fa00fc22e5eb4d95d4ce242a0dd2539bb0bd2b"
     },
     {
       "file": "screenshots/07-evidence.png",
@@ -139,8 +139,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:38.840824+00:00",
-      "sha256": "6be793d79f4056feb3edc414f13d735dc1e3d737e3784062940536e7a874fca0"
+      "captured_at_utc": "2026-10-17T03:23:44.036611+00:00",
+      "sha256": "970c6f2f7e0c637bdc97101f49067f588a6d3c5bb7c43f3627b3b02d4f7f6872"
     },
     {
       "file": "screenshots/08-activity.png",
@@ -154,8 +154,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:39.000823+00:00",
-      "sha256": "56352ab832d83caf0190acb8de9de16243c6763fd1dd0aa808d790a4aacfa009"
+      "captured_at_utc": "2026-10-17T03:23:44.256609+00:00",
+      "sha256": "438a49930abff70e0232f998092fe6cb9ddb36e3563593a027c1ac894275f6d7"
     },
     {
       "file": "screenshots/09-task-detail.png",
@@ -169,8 +169,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:39.612819+00:00",
-      "sha256": "baa000191116a821e5d0b16b30c230e47c23d82894c7cc8cdf696313bd637433"
+      "captured_at_utc": "2026-10-17T03:23:45.204603+00:00",
+      "sha256": "1b67f5feab9398c2a64c1e293817e8a017df3d2d442f5e741cf76c69e423fc0d"
     },
     {
       "file": "screenshots/10-task-form.png",
@@ -184,8 +184,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:39.888817+00:00",
-      "sha256": "3cf628d586411dd04b046428ca2b6e6ea60ce547a337b2f09478c6f0d588c9c0"
+      "captured_at_utc": "2026-10-17T03:23:45.852598+00:00",
+      "sha256": "b96a094a5c8dc4f454522bd08aa0818dd141f5c7ecfd3f25bb21fe60e758929d"
     },
     {
       "file": "screenshots/11-settings.png",
@@ -199,8 +199,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:40.496813+00:00",
-      "sha256": "2737ea70d7571b3849d94123ca97b3ab2c5e5d8f38d2510d6cc2e56417658f18"
+      "captured_at_utc": "2026-10-17T03:23:46.520594+00:00",
+      "sha256": "db62d6b0be33384d8e465768d2b83a9630ba504c8906e7095d38fbeb949034d3"
     },
     {
       "file": "screenshots/12-mobile-overview.png",
@@ -214,8 +214,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:43.124795+00:00",
-      "sha256": "464634096f7c80548ce312f97b9254fb8c1ca8719fb29c5c8747641015e3514c"
+      "captured_at_utc": "2026-10-17T03:23:50.680565+00:00",
+      "sha256": "cb2ee9794283cfffb1c02f0bc5a6095097f78069e0153a8e02222fe209da10c6"
     },
     {
       "file": "screenshots/13-mobile-work.png",
@@ -229,8 +229,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:43.304794+00:00",
-      "sha256": "47260879fcb23a8a9bf3f207c2246b16b20769cf1f7e5496b0b1358c1cf8f634"
+      "captured_at_utc": "2026-10-17T03:23:50.792564+00:00",
+      "sha256": "ddda1cbf47be6d70d23ea026aefafb6d4e28fb96167d6a2fabacc89632d9ec18"
     },
     {
       "file": "screenshots/14-outcome-loading.png",
@@ -244,7 +244,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:51.020448+00:00",
+      "captured_at_utc": "2026-10-17T03:23:59.184507+00:00",
       "sha256": "6e08d946840c325384d88ff08d24857f5758ef0d9bb221c193c23e9f562c3798"
     },
     {
@@ -259,8 +259,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:40.124815+00:00",
-      "sha256": "10c102e55e82596d29a6b904d1df5b4fcf9f3ab99c3e7b2f0733988e2d856753"
+      "captured_at_utc": "2026-10-17T03:23:46.140596+00:00",
+      "sha256": "24d398659f44dc09ed52634edcad6218430cac94ec56a747d0c04d82bac35082"
     },
     {
       "file": "screenshots/16-action-menu.png",
@@ -274,8 +274,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:40.280814+00:00",
-      "sha256": "100c3b3edc1ee59e6acfbf66a1fd02a3d3117b6e47cc8b0d97cfef57f6497643"
+      "captured_at_utc": "2026-10-17T03:23:46.296595+00:00",
+      "sha256": "817004461484434081ed5c89b9197db2d416918b15d153d08250d258a5089616"
     },
     {
       "file": "screenshots/17-mobile-task-form.png",
@@ -289,7 +289,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:43.456793+00:00",
+      "captured_at_utc": "2026-10-17T03:23:51.012563+00:00",
       "sha256": "fa6e6d4cc7f6bcdb05093358af7b28c6b507cc571646626a10d4a8281a6b4aae"
     },
     {
@@ -304,7 +304,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:43.592792+00:00",
+      "captured_at_utc": "2026-10-17T03:23:51.160562+00:00",
       "sha256": "39af6f99b75d0c3381dbc33b38b8a7a2cb62eb1131db5feb42d866581f1c7489"
     },
     {
@@ -319,8 +319,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:35.980844+00:00",
-      "sha256": "a87f8515f7a5a843774842a23565828012c2a674a442577a6b377eaf3657c410"
+      "captured_at_utc": "2026-10-17T03:23:40.568635+00:00",
+      "sha256": "be7f067c65e688e522c6d4afaccf9b704cff1e4a56dfffbedece182a865abec7"
     },
     {
       "file": "screenshots/20-fixed-paper-scrolled.png",
@@ -334,7 +334,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:36.132843+00:00",
+      "captured_at_utc": "2026-10-17T03:23:40.740633+00:00",
       "sha256": "fbec41ef4d3c0ed50dbd071fbb2262246fd549fca7b02d9f81ffa1606151fce2"
     },
     {
@@ -349,8 +349,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:36.572840+00:00",
-      "sha256": "e1cbd983030513cd5d5ee38540909d620a7407d730feb1137585607b5003f274"
+      "captured_at_utc": "2026-10-17T03:23:41.208630+00:00",
+      "sha256": "5e503750e3e2ca9e8692dcbc84424b675baabe621e2af22b73f5191a5aa0d265"
     },
     {
       "file": "screenshots/22-area-tab-hover.png",
@@ -364,8 +364,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:10.673018+00:00",
-      "sha256": "40f597f87bc4873e1c7e704de3bdd6cb1156d92d015e1121141eebac51c96f72"
+      "captured_at_utc": "2026-10-17T03:23:14.372815+00:00",
+      "sha256": "d12723da759471133bed6c4211f8a9359d07b20f15c71f48c7fdbfbde95b0a36"
     },
     {
       "file": "screenshots/23-view-switch-hover.png",
@@ -379,8 +379,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:10.837017+00:00",
-      "sha256": "38e879c0363e8585d4571edf3aa51b912d8e3e9b3d37dcaee38efa10c72d09cf"
+      "captured_at_utc": "2026-10-17T03:23:14.696812+00:00",
+      "sha256": "d5bcb77cba96a115a1c25fa07e05090b296a3fdd3024f42c7f1f178ca8a55f72"
     },
     {
       "file": "screenshots/24-board-card-hover.png",
@@ -394,8 +394,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:13.057002+00:00",
-      "sha256": "64731a4812c38ae6392f80b96b5b60f814b4e113ce21cc73f56159ee9d49cf5f"
+      "captured_at_utc": "2026-10-17T03:23:17.568793+00:00",
+      "sha256": "09ea0ca278fa8d4721660ef2d44bc3569c3e3f71bc168f9e63f450b22a197596"
     },
     {
       "file": "screenshots/25-form-controls-hover.png",
@@ -409,8 +409,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:19.124960+00:00",
-      "sha256": "d5dbd8c63e05161cc767e8d79e7e5c12f314088225f7bfecb3750acce29a364e"
+      "captured_at_utc": "2026-10-17T03:23:22.984756+00:00",
+      "sha256": "658ce74e205db18c58dd184fdf57cf44e85eba011ec8e8a8f613849ec874722f"
     },
     {
       "file": "screenshots/26-mobile-tabs-focus.png",
@@ -424,8 +424,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:29.376889+00:00",
-      "sha256": "18e897fccbaa2d43366ef36fb564ca5c5870970017cf3408a2168fa44129de1a"
+      "captured_at_utc": "2026-10-17T03:23:33.264685+00:00",
+      "sha256": "447596c7eeb4d6c1a2f815c3971486b681ce2fed22360fc02384d6e4573233e8"
     },
     {
       "file": "screenshots/27-scale-reference.png",
@@ -439,7 +439,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:36.045255+00:00",
+      "captured_at_utc": "2026-10-17T03:22:43.113030+00:00",
       "sha256": "fbec41ef4d3c0ed50dbd071fbb2262246fd549fca7b02d9f81ffa1606151fce2"
     },
     {
@@ -454,7 +454,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:37.373245+00:00",
+      "captured_at_utc": "2026-10-17T03:22:44.137023+00:00",
       "sha256": "425570edbc294900bf7c9a2662b75a9056982c7c17ff271387060d1fb684a604"
     },
     {
@@ -469,7 +469,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:38.905235+00:00",
+      "captured_at_utc": "2026-10-17T03:22:45.413014+00:00",
       "sha256": "68143a7112ae43c97807c6f7803ddadf967257891a006208aca7e440a9d72721"
     },
     {
@@ -484,7 +484,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:42.637209+00:00",
+      "captured_at_utc": "2026-10-17T03:22:48.072995+00:00",
       "sha256": "fcffd922aae4b57d8fbacb3616e90e121571a97e306e52d153cf17efe44e0cdc"
     },
     {
@@ -499,7 +499,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:39.577230+00:00",
+      "captured_at_utc": "2026-10-17T03:22:45.977010+00:00",
       "sha256": "26612bdb356170071fe98a53ccefde0e3c30689ec0c17536be9a49f5a0279da8"
     },
     {
@@ -514,8 +514,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:40.905221+00:00",
-      "sha256": "a96b61a49c05636007df12ea756c99a5d55d8118196fb78a57f3f7e7e719b615"
+      "captured_at_utc": "2026-10-17T03:22:46.701005+00:00",
+      "sha256": "9d1116fe80c27b2038c3f97e5d5fc4a57de230536af8004b88a655844e9a84dc"
     },
     {
       "file": "screenshots/33-mobile-action-menu.png",
@@ -529,7 +529,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:48.976755+00:00",
+      "captured_at_utc": "2026-10-17T03:23:56.928522+00:00",
       "sha256": "1d02a8f58e84f8e27fd247b2c29d63de41611b799ddfc4fbefb6d4c8d7826c3c"
     },
     {
@@ -544,8 +544,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:49.360752+00:00",
-      "sha256": "9c467799a3258f05273a6568c18d8d39e024b7a9478be3f50d58a353f1cbd4e7"
+      "captured_at_utc": "2026-10-17T03:23:57.396519+00:00",
+      "sha256": "17713aac0db7264a9244b17e218dffed18d3cc3b840cffd5afaead33914c8030"
     },
     {
       "file": "screenshots/35-technical-command.png",
@@ -559,8 +559,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:48.648757+00:00",
-      "sha256": "04c02a4acc1ce387c999bf7a5189ada984a3799badefb15d5a7ac36b242e8b1d"
+      "captured_at_utc": "2026-10-17T03:23:56.640524+00:00",
+      "sha256": "68d5d0bc1dc02bdce25c442f29e97984596ba7181fcb2bd8a79160ee99949931"
     },
     {
       "file": "screenshots/36-mobile-technical-command.png",
@@ -574,7 +574,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:03:49.776749+00:00",
+      "captured_at_utc": "2026-10-17T03:23:57.712517+00:00",
       "sha256": "0b1264f0036f3daba0e8bf3b6b9267a97db1e64edda0e186fe74b518f2bb3241"
     }
   ]

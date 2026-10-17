@@ -1,5 +1,5 @@
 {
-  "implementation_commit": "b038940b6c806ceab80ed9c5b191c4410a6d39bb",
+  "implementation_commit": "40499c490ba2abc8ac2623020e7e5233c878204f",
   "capture_test": "tests/web/canvas.spec.mjs",
   "capture_test_sha256": "97377f34bfd245fd95d8d98f10845667ef168bdd3d9c142f1cdaecf8fb7b39a7",
   "dataset": "Isolated illustrative records created through the public command API; read/transport fault injection only for explicit recovery states",
@@ -8,7 +8,7 @@
     "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
     "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-    "packages/wos-api/web/assets/app.js": "2b86102d4f8c27f3fd3049bb0b11f40a17fe8b6a15133403dadefae99c0aae32",
+    "packages/wos-api/web/assets/app.js": "fce80e3faadcb054845c398556c5d0ae0c8251d174d6a9e23cc39bb059e0e574",
     "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
     "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
     "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
@@ -16,7 +16,7 @@
     "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
     "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
     "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
-    "packages/wos-api/web/assets/editorial.css": "e1c0a804e313b4e6420ad6b88640cc148680e52ed6bc737135b4cc609591fe84",
+    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
     "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
     "packages/wos-api/web/assets/en-US.js": "b52179ee869412f6d4db08f0db9ec0a3ae8a6e8b9d4dbb93d5b5843821c7f78c",
     "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
@@ -29,13 +29,13 @@
     "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
     "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
     "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
-    "packages/wos-api/web/assets/workspace-canvas.js": "51d7be3e8265446251b79e7bc1901348e74b34466c88723a36a9793a5e423143",
+    "packages/wos-api/web/assets/workspace-canvas.js": "ab8a66b1b7010c14da01c1d51a905a8a2c19ad588404bd80ae12e4363f99b417",
     "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
     "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
     "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
     "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
   },
-  "native_binary_sha256": "dd9eb42b83a0407af1547da08fb1d8c5a5dc31406987dc3d3903f41c3b7fa756",
+  "native_binary_sha256": "50535c3e19780382c64e0fb23ff65a4ae1270c942958191228e4d09171304da8",
   "screenshots": [
     {
       "file": "screenshots/01-canvas-workspace-board.png",
@@ -49,8 +49,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:02:02.840172+00:00",
-      "sha256": "7113120eb0752b35b905b63e0e590710d116b955df219e87159d61f4a07100ca"
+      "captured_at_utc": "2026-10-17T03:22:08.797266+00:00",
+      "sha256": "efb751c39c322debf91f3b8d32d4de5d161cb6c1a582304479cfa828288ce245"
     },
     {
       "file": "screenshots/01-canvas-workspace.png",
@@ -64,8 +64,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:02.721487+00:00",
-      "sha256": "e07d30be887c9fcede918b9163f2b61c363801e48ae48ae02769498ceaf7fbcf"
+      "captured_at_utc": "2026-10-17T03:22:08.665267+00:00",
+      "sha256": "d7ccf160b549c10496b54a802ed5760d0d9c6ee712f252063a243438dbb9f150"
     },
     {
       "file": "screenshots/02-canvas-relationships-board.png",
@@ -79,8 +79,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:02:10.797431+00:00",
-      "sha256": "804b3f68cfd6de6127ffe8d2acde0e0ff17dc3d687215c3554caf652c88c73e5"
+      "captured_at_utc": "2026-10-17T03:22:16.621212+00:00",
+      "sha256": "426e409235d1e04823a4fa7883a62757e3b1f82b0902484d6dab7c4c9aac42e2"
     },
     {
       "file": "screenshots/02-canvas-relationships.png",
@@ -94,8 +94,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:10.665432+00:00",
-      "sha256": "103e3b387222be6f75087104290b2800545f372a7f4b5fcc414dee715b0b9dd0"
+      "captured_at_utc": "2026-10-17T03:22:16.509213+00:00",
+      "sha256": "764a51c1abe0c176eb4f0eeade382b7587af420b247acc8f14f0ddb57301e2b4"
     },
     {
       "file": "screenshots/03-canvas-large-outcome.png",
@@ -109,8 +109,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:14.109408+00:00",
-      "sha256": "ed3fc28eb95064667c7e82509e327bbf5467693a0cfccac3ec714aa5d29daf5f"
+      "captured_at_utc": "2026-10-17T03:22:19.729191+00:00",
+      "sha256": "a8888c7be98c0fd3d6016ed3f2fde42fc9a021eb1dad11d255aa34d00b3b5171"
     },
     {
       "file": "screenshots/04-canvas-mobile-map.png",
@@ -124,7 +124,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:24.561335+00:00",
+      "captured_at_utc": "2026-10-17T03:22:31.853107+00:00",
       "sha256": "cd09cd2da33cd744f35ff21fddd578c4907ea81384bbd38e9b30ea304249e527"
     },
     {
@@ -139,8 +139,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:23.565342+00:00",
-      "sha256": "ef3d02e60590c21da4d68bd66e7f33ac7946a59e769c364e916dd0beec21eb84"
+      "captured_at_utc": "2026-10-17T03:22:30.861114+00:00",
+      "sha256": "7d8cc172783b8f12a4409168221fcaf88383fb93dbc5e10574d6d62cf026a6ce"
     },
     {
       "file": "screenshots/05-canvas-2k.png",
@@ -154,8 +154,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:25.285330+00:00",
-      "sha256": "28163f92bbf24d7b4404e3b7052fbd50b87a84c16bc77265a201557634883486"
+      "captured_at_utc": "2026-10-17T03:22:32.689101+00:00",
+      "sha256": "40be41d9bac7f7a7ac99387ad77ccff1d2a9bf099ade6430e9f35234fe0e644a"
     },
     {
       "file": "screenshots/06-canvas-roadmap-board.png",
@@ -169,8 +169,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:02:30.005670+00:00",
-      "sha256": "77eac2077b7c4748defdb4e6a716ddd2e0b084ca318834e6b7c6ba5dddd4b8dc"
+      "captured_at_utc": "2026-10-17T03:22:38.149064+00:00",
+      "sha256": "d637a4d0bd2d8b87a597a5fa8c7c2c2fd5f7debba508f5f0e147127bf454ce64"
     },
     {
       "file": "screenshots/06-canvas-roadmap.png",
@@ -184,8 +184,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:02:29.889297+00:00",
-      "sha256": "32e577714b6c073ed823dc72cefe53de8327a206aa8948820abee2e09f27d18c"
+      "captured_at_utc": "2026-10-17T03:22:38.021065+00:00",
+      "sha256": "d92591e46698f10910b567c7162573cfef597c5d3cfffcfc08ee5c8de8d85abb"
     }
   ]
 }

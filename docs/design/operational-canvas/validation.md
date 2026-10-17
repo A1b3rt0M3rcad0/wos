@@ -10,13 +10,13 @@ In contract modes, Overview uses an explicitly neutral Open work count, Board us
 
 The [same-DOM dialog measurement](workspace/dialog-geometry.json), pinned to implementation commit `3fab26a`, covers 28 comparisons across seven native scenarios at 1440, 390, 320 and 2560 CSS px. All outer dialog/header/form/footer rectangles remain unchanged; 27 comparisons preserve every measured descendant. The single 320 px expanded Roadmap exception removes 25 px of horizontal body overflow by allowing existing fields to shrink; normal wrapping adds 45 px of scroll content height while preserving scroll position. This is an explicit overflow repair, not a claim of pixel identity for that case.
 
-The final coordinated local run uses production inputs at `b038940`, with no later production changes. Go 1.27.2, Node 24.19.0, Playwright 1.62.1 and Chromium 149.0.7827.0 run on Linux amd64. PR checks identify the exact pushed head independently; a previous successful head is not treated as this follow-up's CI result.
+The final coordinated local run uses production inputs at `40499c4`, with no later production changes. Go 1.27.2, Node 24.19.0, Playwright 1.62.1 and Chromium 149.0.7827.0 run on Linux amd64. PR checks identify the exact pushed head independently; a previous successful head is not treated as this follow-up's CI result.
 
 | Check | Executed result |
 | --- | --- |
 | Native build, web tests and vet | Passed after rebuilding the embedded final assets |
 | Web unit suite | 38 passed, no skips |
-| Complete browser suite | 79 passed, no skips, in one final run with all three capture destinations enabled |
+| Complete browser suite | 80 passed, no skips, in one final run with all three capture destinations enabled |
 | Complete page/form/state journeys | Six passed within the full suite: every specialist subtab on desktop/mobile; documentary/planning/admin/technical dialogs; entry/empty/loading/error at minimum width; conflict and exact uncertain retry; real Artifact/Decision creation; existing Draft save and explicit parent removal/reordering |
 | Signed specialist views | Both existing approved/changes-requested journeys pass with active-contract summary/List/Board/detail checks, protocol-specific filters and canonicalized old links; no browser domain writes from inspection |
 | Same-Outcome response ordering | Two real-server regressions pass and fail against the actual earlier frontend: old Roadmap cache and old Board cursor page delivered during refreshed permissions cannot contaminate the new snapshot |
@@ -25,6 +25,14 @@ The final coordinated local run uses production inputs at `b038940`, with no lat
 | Documentation | 86 current-source PNGs, source/image SHA-256 manifests and local Markdown/HTML targets verified; whitespace checks pass |
 
 The interaction harness lets Chromium complete its native hit-test scroll around the fixed header before measuring idle appearance, then retains strict idle/hover/pressed rectangle equality. Presentation audits run at the canonical viewport before documentation deliberately scrolls mobile collections. Child reference menus handle their own first Escape before the parent dialog closes. These synchronize actual browser behavior; no existing geometry, contrast, focus or axe assertion is removed.
+
+### Browser CI follow-up
+
+The first hosted browser run at `4378c8c` passed 77 journeys and exposed two intermittent failures after the complete local 79-test pass. Both were reproduced and corrected in production at `40499c4`.
+
+The selected List/Board control interpolated foreground and background through an unreadable pair. Ink and paper now change together while border color keeps its existing transition; tokens, geometry and end states are unchanged. The existing interaction journey samples actual composited contrast on animation frames across both normal-motion role changes. Routing the earlier stylesheet into that same real journey fails at 2.62:1 after 44 ms; the corrected stylesheet passes the 4.5:1 requirement throughout.
+
+Closing a Canvas form also launched a background detail restoration that could steal focus from a newly focused connection. Background restoration now preserves camera and current focus, and coherent Canvas redraws restore a surviving edge by its exact key. The new real-server barrier test holds the actual Task context response, focuses another edge, releases the old read, then activates and removes the intended advisory dependency with its observed version. Both Tasks keep their lifecycle. The earlier source fails the renderer and real-server focus assertions; the corrected source passes them and the original dependency lifecycle journey.
 
 ### Capture provenance
 
