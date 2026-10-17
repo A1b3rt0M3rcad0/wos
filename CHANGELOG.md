@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 — prepared for release
+
+- Adopt the WOS Sustainable Use License and separate brand policy for new material, allowing production and application use while excluding commercial platform supply; preserve earlier Apache grants and propagate notices through distributions and installed Skills.
+- Centralize CLI profiles and operational material, add agent-safe work commands and durable authorized activity/history, and align the five Skills and documentation without changing immutable signed authority or independent review.
+- Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures.
+- Add a visual operational canvas with original paper cards, typed connections, bounded navigation and contextual workspace actions.
+
 ## Unreleased
 
 - Centralize native CLI state in a private installation with isolated persistent profiles, invocation-pinned selection, protected headless onboarding, and explicit drained-writer migration. Add typed agent commands for context, progress, activity, evidence, artifacts, results and review without editing internal documents.
