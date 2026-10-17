@@ -65,10 +65,9 @@ button {
   font-weight: 500;
   line-height: 1.4;
   padding: calc(10 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
-  transition:
-    background-color 140ms,
-    color 140ms,
-    border-color 140ms;
+  /* Ink and paper change together so inverse states never cross-fade through
+     an unreadable intermediate contrast. Geometry and end-state tokens stay fixed. */
+  transition: border-color 140ms;
 }
 
 button:disabled {
@@ -284,9 +283,7 @@ body:has(#connect:not([hidden])) .topbar-right {
   position: relative;
   counter-increment: outcome;
   align-items: flex-start;
-  transition:
-    background 140ms,
-    border-color 140ms;
+  transition: border-color 140ms;
 }
 
 .outcome-navigation .item.selected {
@@ -918,10 +915,7 @@ progress::-moz-progress-bar {
   border: calc(1 * var(--wos-unit, 1px)) solid var(--line);
   box-shadow: none;
   padding: calc(16 * var(--wos-unit, 1px));
-  transition:
-    background-color 140ms,
-    color 140ms,
-    border-color 140ms;
+  transition: border-color 140ms;
 }
 
 .board-empty {
@@ -1342,9 +1336,7 @@ summary {
   min-height: calc(44 * var(--wos-unit, 1px));
   padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
   list-style-position: inside;
-  transition:
-    background-color 140ms,
-    color 140ms;
+  transition: border-color 140ms;
 }
 pre {
   background: var(--surface);

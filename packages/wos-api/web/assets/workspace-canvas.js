@@ -669,6 +669,7 @@ export function mountWorkspaceCanvas(host, options) {
     );
     const focusedKey =
       focusedCard?.dataset.canvasNode || focusedCard?.dataset.canvasListNode;
+    const focusedEdge = focused?.closest?.("[data-edge-key]")?.dataset.edgeKey;
     const focusedAction = [
       "canvas-expand",
       "canvas-add",
@@ -771,6 +772,10 @@ export function mountWorkspaceCanvas(host, options) {
         (focusedAction && container?.querySelector(`.${focusedAction}`)) ||
         container?.querySelector(".canvas-node-main, .canvas-list-main");
       target?.focus({ preventScroll: true });
+    } else if (focusedEdge) {
+      [...edges.querySelectorAll("[data-edge-key]")]
+        .find((entry) => entry.dataset.edgeKey === focusedEdge)
+        ?.focus({ preventScroll: true });
     }
   }
   function renderEdges() {

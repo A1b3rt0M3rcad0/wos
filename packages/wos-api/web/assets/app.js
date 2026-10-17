@@ -101,7 +101,9 @@ const canvasInspector = createWorkspaceInspector({
         state.canvasSelected &&
         reason !== "reset"
       )
-        showEntity(state.canvasSelected).catch(report);
+        showEntity(state.canvasSelected, { preserveCamera: true }).catch(
+          report,
+        );
     }
     if (!nextSurface && surface !== "form") {
       state.detailGeneration++;
@@ -2936,6 +2938,10 @@ async function showEntity(
       ...(result.value || result),
       ...(operationalState ? { _operational_state: operationalState } : {}),
     };
+    const focusWasInDetails =
+      isCanvas &&
+      canvasInspector.isVisible("detail") &&
+      $("canvas-details").contains(document.activeElement);
     state.contractView = null;
     state.submission = null;
     state.selected = { ...entity, _kind: ref.kind };
@@ -3191,7 +3197,12 @@ async function showEntity(
     $("detail-actions").querySelector(".quick-actions")?.remove();
     $("detail-actions").prepend(quickActions(ref.kind, entity));
     if (isCanvas) {
-      canvasInspector.showDetails();
+      if (
+        !preserveCamera ||
+        !canvasInspector.isVisible("detail") ||
+        (focusWasInDetails && document.activeElement === document.body)
+      )
+        canvasInspector.showDetails();
       if (
         [
           "outcome",
@@ -3216,7 +3227,8 @@ async function showEntity(
         selectedKey: `${ref.kind}:${ref.id}`,
       });
       if (!preserveCamera) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
-      canvasInspector.showDetails();
+      if (!preserveCamera || !canvasInspector.isVisible("detail"))
+        canvasInspector.showDetails();
       if (!preserveCamera) revealCanvasInspector();
     } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
     writeRoute(ref);
