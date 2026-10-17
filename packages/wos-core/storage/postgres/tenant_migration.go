@@ -10,6 +10,27 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
+// Refuse an unsettled published database before applying intermediate
+// migrations. The previous release must still be able to open it and settle
+// its authority. Migration 33 repeats the check in its own DDL transaction.
+func (s *Store) preflightTenantUpgrade(ctx context.Context) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return mapSQLError("begin tenant upgrade preflight", err)
+	}
+	defer tx.Rollback()
+	var current int64
+	if err = tx.QueryRowContext(ctx, `SELECT COALESCE(MAX(version), 0) FROM schema_migrations`).Scan(&current); err != nil {
+		return mapSQLError("read tenant upgrade source version", err)
+	}
+	// Migration 21 introduced all signed authority tables. Older databases
+	// receive their final preflight when migration 33 is reached.
+	if current >= 21 && current < 33 {
+		return preflightTenantIdentityCutover(ctx, tx)
+	}
+	return nil
+}
+
 // This hook runs before migration 33 renames any existing table or column.
 // Protocol-v2 authority must be settled using a compatible old client/server;
 // changing an in-flight signed intent would invalidate its exact binding.

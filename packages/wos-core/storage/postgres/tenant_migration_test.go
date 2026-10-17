@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -16,6 +17,11 @@ import (
 )
 
 func tenantMigrationSource32(t *testing.T) *Store {
+	t.Helper()
+	return tenantMigrationSourceVersion(t, 32)
+}
+
+func tenantMigrationSourceVersion(t *testing.T, version int64) *Store {
 	t.Helper()
 	s, err := openTestPostgres(filepath.Join(t.TempDir(), "before-tenant.db"), Options{})
 	if err != nil {
@@ -31,7 +37,7 @@ func tenantMigrationSource32(t *testing.T) *Store {
 		t.Fatal(err)
 	}
 	for _, m := range ms {
-		if m.version < 33 {
+		if m.version <= version {
 			if err = s.applyMigration(ctx, m); err != nil {
 				t.Fatal(err)
 			}
@@ -146,7 +152,15 @@ func TestTenantIdentityMigrationPreservesSignedBytesAndChangesOnlyCurrentConfigu
 
 func TestTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T) {
 	requirePostgres(t)
-	s := tenantMigrationSource32(t)
+	for _, version := range []int64{26, 32} {
+		t.Run(strconv.FormatInt(version, 10), func(t *testing.T) {
+			testTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t, version)
+		})
+	}
+}
+
+func testTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T, sourceVersion int64) {
+	s := tenantMigrationSourceVersion(t, sourceVersion)
 	ctx := context.Background()
 	// Build valid legacy Outcome/WorkItem references. The acquisition is pending
 	// at the protocol layer; no live application is needed to test upgrade gating.
@@ -170,12 +184,16 @@ func TestTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T) {
 		t.Fatal("upgrade did not identify a required cutover precondition", err)
 	}
 	var version int64
-	if err := s.db.QueryRowContext(ctx, `SELECT MAX(version) FROM schema_migrations`).Scan(&version); err != nil || version != 32 {
+	if err := s.db.QueryRowContext(ctx, `SELECT MAX(version) FROM schema_migrations`).Scan(&version); err != nil || version != sourceVersion {
 		t.Fatal("failed upgrade changed the migration ledger", err, version)
 	}
 	var count int
 	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM namespaces`).Scan(&count); err != nil || count != 1 {
 		t.Fatal("failed upgrade renamed or removed source tables", err)
+	}
+	var state, spec, digest string
+	if err := s.db.QueryRowContext(ctx, `SELECT state_json,spec_json,spec_digest FROM signed_work_contracts WHERE id='c'`).Scan(&state, &spec, &digest); err != nil || state != "{}" || spec != "{}" || digest != "digest" {
+		t.Fatal("failed upgrade changed original contract bytes", err)
 	}
 	if _, err := s.db.ExecContext(ctx, `UPDATE signed_work_contracts SET status='revoked'`); err != nil {
 		t.Fatal(err)

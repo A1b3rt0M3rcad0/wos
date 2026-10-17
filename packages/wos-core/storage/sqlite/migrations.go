@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 	if err != nil {
 		return err
 	}
+	if err := s.preflightTenantUpgrade(ctx); err != nil {
+		return err
+	}
 	for _, item := range migrations {
 		if err := s.applyMigration(ctx, item); err != nil {
 			return err
