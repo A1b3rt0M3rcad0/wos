@@ -95,7 +95,13 @@ export const test = base.extend({
     }
   },
 });
-export async function openOutcome(page, title = "Acceptance Outcome") {
+// Existing specialist-view journeys retain their original Overview starting
+// point. Canvas journeys pass { area: null } to assert the product default.
+export async function openOutcome(
+  page,
+  title = "Acceptance Outcome",
+  { area = "overview" } = {},
+) {
   const switcher = page.locator("#navigation-toggle");
   if (
     (await switcher.isVisible()) &&
@@ -108,8 +114,16 @@ export async function openOutcome(page, title = "Acceptance Outcome") {
     .filter({ hasText: title })
     .click();
   await expect(page.locator("#title")).toHaveText(title);
+  if (area)
+    await page.locator(`#area-tabs [data-area="${area}"]`).click();
 }
 export async function intent(page, label) {
+  // Modal-regression journeys deliberately operate the retained specialist
+  // view; inline canvas actions have their own real-server acceptance suite.
+  if (
+    await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count()
+  )
+    await page.locator('#area-tabs [data-area="overview"]').click();
   await page.locator("#actions").click();
   await page
     .locator("#action-options")

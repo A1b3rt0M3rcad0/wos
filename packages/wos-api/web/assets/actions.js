@@ -130,6 +130,12 @@ export const humanActions = Object.freeze({
     label: copy.text.addDependency,
     contexts: ["work_item", "objective"],
   },
+  remove_dependency: {
+    label: "Remove dependency",
+    contexts: ["relation"],
+    states: ["active"],
+    relationType: "depends_on",
+  },
   create_issue: { label: copy.text.reportIssue, contexts: ["outcome"] },
   report_issue_with_blocker: {
     label: copy.text.reportIssueAndBlockWork,
@@ -287,6 +293,11 @@ export function availableActions({
       )
         return false;
       if (a.states && !a.states.includes(entity.lifecycle)) return false;
+      if (
+        a.relationType &&
+        (entity._kind !== "relation" || entity.relation_type !== a.relationType)
+      )
+        return false;
       if (
         (a.archived && !entity.archived_at) ||
         (a.notArchived && entity.archived_at)

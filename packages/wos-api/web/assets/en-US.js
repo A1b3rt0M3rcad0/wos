@@ -2,6 +2,56 @@
 export const copy = Object.freeze({
   locale: "en-US",
   text: Object.freeze({
+    workspaceReviewCriteria: "Review success criteria",
+    workspaceContractFilterReset:
+      "Legacy readiness filters do not describe current contract authority. All Tasks is shown; open a Task to inspect its current execution and review context.",
+    workspaceMissingPlanReference:
+      "This published reference has no current record in this view. Inspect its Roadmap for the historical plan.",
+    workspaceHistoricalPlanLabel: "Plan: {0} · Revision {1}",
+    workspacePublishedTitle: "Title at publication: {0}",
+    canvas: "Canvas",
+    workspaceCollectionContext: "Part of this Outcome",
+    workspaceLoadedSearch: "Search the records already loaded in this view.",
+    workspaceFilterReset: "Clear filters",
+    workspaceFilterEmpty:
+      "Try another search or clear the filters to return to the loaded records.",
+    workspaceNoTasks:
+      "Create a Task to give the next piece of work a clear scope.",
+    workspaceNoObjectives:
+      "Add an Objective to describe a condition this Outcome needs to meet.",
+    workspaceNoRoadmaps:
+      "A Roadmap is optional. Create one when the work needs phases or milestones.",
+    workspaceNoEvidence:
+      "Record an observation or source, then link it to the criteria it supports or challenges.",
+    workspaceNoArtifacts:
+      "Register a deliverable or reference so others can inspect the work.",
+    workspaceNoDecisions: "Propose a decision with its context and rationale.",
+    workspaceNoIssues:
+      "Record a problem when it needs investigation or an explicit decision.",
+    workspaceNoBlockers:
+      "Record an impediment only when a specific target cannot proceed.",
+    workspaceNoActivity:
+      "Recorded changes will appear here as people and agents work on this Outcome.",
+    workspaceNoRelations:
+      "Explicit connections appear here. Visual proximity does not create a relationship.",
+    workspaceNoPlanReferences:
+      "Published plan references appear here when a Roadmap is active.",
+    workspaceNoContestations:
+      "Contested conclusions appear here when a new observation challenges a recorded result.",
+    workspaceActivityDay: "Recorded activity",
+    workspaceReadBoundary: "Loaded records",
+    workspaceSeverity: "Severity",
+    workspaceRecordType: "Type",
+    workspacePropagation: "Impact",
+    workspaceRevision: "Revision",
+    workspaceContractAuthority:
+      "Open a Task to verify current execution and review authority. Persisted lifecycle does not grant permission to execute.",
+    workspaceOpenWork: "Open work",
+    workspaceLoadedTaskBoard:
+      "Columns show the persisted lifecycle of loaded Tasks. Load more to include the next page; inspect a Task for current contract authority.",
+    workspaceCollectionLoading: "Loading this view",
+    workspaceCollectionError: "This view could not be loaded",
+    workspaceReloadView: "Reload view",
     skipToContent: "Skip to content",
     persistedState: "Persisted state",
     workOUTCOMESYSTEM: "WORK OUTCOME SYSTEM",
@@ -909,6 +959,16 @@ export const copy = Object.freeze({
     aHistoryYouCanReturnTo: "A history you can return to.",
     welcomeBack: "Welcome back",
     accessOutcomesInYourWorkspace: "Access outcomes in your workspace.",
+    credentialFromAdministrator:
+      "Use the credential provided by your workspace administrator.",
+    localServerGuidance:
+      "For a trusted local server configured for local access. Use its workspace ID.",
+    localWorkspaceIdentifierGuidance:
+      "This is the Namespace UUID from your server configuration. Shared servers require an access credential.",
+    credentialSessionGuidance:
+      "Your credential is exchanged for a secure session. The credential itself is not stored in the browser.",
+    authorizedWorkspaceGuidance:
+      "You will only see workspaces your credential can access.",
     signIn: "Sign in",
     openLocalWorkspace: "Open local workspace",
     yourCredentialIsExchangedForASecureSession:
@@ -920,11 +980,24 @@ export const copy = Object.freeze({
     moreOutcomes: "More outcomes",
     planExecuteVerify: "Plan · execute · verify",
     loadingOutcome: "Loading outcome…",
+    readingSharedState: "READING SHARED STATE",
+    loadingOutcomeContext:
+      "Retrieving the selected Outcome and its current context.",
     yourNextOutcome: "YOUR NEXT OUTCOME",
     chooseAnOutcome: "Choose an outcome",
     connectObjectivesTasksAndEvidenceInOnePlace:
-      "Connect objectives, tasks, and evidence in one place.",
+      "Open an Outcome from the sidebar to continue the work, or create one around a result you can verify.",
     createYourFirstOutcome: "Create your first outcome",
+    startAnOutcome: "Start an Outcome",
+    nameTheResult: "Name the result",
+    startWithADraft:
+      "Describe the desired state. Your Outcome starts as a Draft.",
+    defineSuccess: "Define success",
+    defineCriteriaBeforeActivation:
+      "Add criteria that make success verifiable, then activate explicitly.",
+    workAndVerify: "Work and verify",
+    workDoesNotCertifyOutcome:
+      "Add Tasks, record Evidence, and review criteria before concluding.",
     outcomes912d8e: "Outcomes",
     sharedOutcome: "SHARED OUTCOME",
     reviewCriteria: "Review criteria",

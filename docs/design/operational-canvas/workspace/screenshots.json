@@ -1,0 +1,641 @@
+{
+  "implementation_commit": "b745ec55f304d60cc9de4de21b2019b0ab47821a",
+  "capture_test": "tests/web/presentation.spec.mjs",
+  "capture_test_sha256": "c3eec54507ceff3dcf1766a795f78c54c0aacf22dbbb5c6b6a591b7fa1725dd7",
+  "dataset": "Isolated illustrative records created through the public command API; read/transport fault injection only for explicit recovery states",
+  "browser": "Chromium 149.0.7827.0 on Linux amd64; deviceScaleFactor 1",
+  "source_sha256": {
+    "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
+    "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+    "packages/wos-api/web/assets/app.js": "cb49166a920e32d35083f1f4f04c200ef2030c2159824ff0e02fade8b4b1d0b7",
+    "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
+    "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
+    "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
+    "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
+    "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
+    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
+    "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "packages/wos-api/web/assets/en-US.js": "b52179ee869412f6d4db08f0db9ec0a3ae8a6e8b9d4dbb93d5b5843821c7f78c",
+    "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+    "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
+    "packages/wos-api/web/assets/index.html": "1f3693dc885095010a70c11a091d71f749491ff8357372b6777e9f864a2f6761",
+    "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
+    "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "packages/wos-api/web/assets/reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "packages/wos-api/web/assets/workspace-canvas.js": "ab8a66b1b7010c14da01c1d51a905a8a2c19ad588404bd80ae12e4363f99b417",
+    "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
+    "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
+  },
+  "native_binary_sha256": "c822f9626ff930ac1cd8b7a2656fd88894f47d5e48adc253d4c88a1cfeebbc56",
+  "screenshots": [
+    {
+      "file": "screenshots/01-desktop-artifacts.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:15.892145+00:00",
+      "sha256": "bedcb18fba837efe45b5bcb1eb70a1de79eccf1a97736241d2f88a5ee1be45a1"
+    },
+    {
+      "file": "screenshots/01-desktop-blockers.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:14.164156+00:00",
+      "sha256": "9ea86be50a045676725b088f4c4cdea652d2234d7d94f3e67033714c5c30b5d6"
+    },
+    {
+      "file": "screenshots/01-desktop-contested-conclusions.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:19.568119+00:00",
+      "sha256": "6923d903b56e2b1e90d33c751db26f8d815709c15385cfb0cea101ec7b2f7886"
+    },
+    {
+      "file": "screenshots/01-desktop-decisions.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:17.016137+00:00",
+      "sha256": "c2db30759c7dec34658247c1a8a3a2ed1c89ab57c45b839157edbc0ef18e2045"
+    },
+    {
+      "file": "screenshots/01-desktop-plan-references.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:11.316176+00:00",
+      "sha256": "d89f3d28abf851940ac9f9cb4c5d86f2878164ea460d6d8adc13cac18ea4edc8"
+    },
+    {
+      "file": "screenshots/01-desktop-relations.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:21.444107+00:00",
+      "sha256": "4be78c89a8faebe4c52a1f84fd85a6e407d4b3884f954fae9ba7047703672334"
+    },
+    {
+      "file": "screenshots/01-desktop-roadmaps.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:09.296190+00:00",
+      "sha256": "97144c718e42a6db8796dff869ffecdb8aadac64c565732c71b6a4022de60cbf"
+    },
+    {
+      "file": "screenshots/01-mobile-artifacts.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:31.860035+00:00",
+      "sha256": "66606274cc8a8aaf3a56b6d0cf85f43b0bcd677c3314ff676018b8198c781558"
+    },
+    {
+      "file": "screenshots/01-mobile-blockers.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:29.948048+00:00",
+      "sha256": "9bd86bea065ede6deb7d1e47ce7ae3491663236377ac24306176fbb9ba3ebaa3"
+    },
+    {
+      "file": "screenshots/01-mobile-board.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:38.499990+00:00",
+      "sha256": "0231ac36bc311c7fec61fd6cfe1e07f968c3fc2a5e1a9beaf1f3f619bce87f65"
+    },
+    {
+      "file": "screenshots/01-mobile-contested-conclusions.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:35.484010+00:00",
+      "sha256": "52cccff4934f5e87bd0b8053294300bd9723978c3306b3943f825c2f5220ff23"
+    },
+    {
+      "file": "screenshots/01-mobile-decisions.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:32.728029+00:00",
+      "sha256": "9718148b6a95ddd0d9a596aecf775f13c3abfc97840f8dc2a2e2d4648fe6d0b1"
+    },
+    {
+      "file": "screenshots/01-mobile-evidence.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:30.964041+00:00",
+      "sha256": "82ef88e64e14963f5454f127b3fdf8b7b6eeada384e88abbe643c520d75b3aec"
+    },
+    {
+      "file": "screenshots/01-mobile-issues.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:29.152054+00:00",
+      "sha256": "d395384fed71b11d0ef4f781e738eb0cab510c8ec0a9a9787a0214cd747de348"
+    },
+    {
+      "file": "screenshots/01-mobile-objectives.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:24.312087+00:00",
+      "sha256": "9701602006ba18327b4b4f6096ca6268689683ba679b09086de17f507eeaa306"
+    },
+    {
+      "file": "screenshots/01-mobile-relations.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:37.399997+00:00",
+      "sha256": "3fee3bd372309d4cc866c6cb624ff4d72557f6ddbc75321b3d4a4617ad247ea4"
+    },
+    {
+      "file": "screenshots/01-mobile-roadmaps.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:25.216081+00:00",
+      "sha256": "9cdf8aec3643e8f3e66c5cead42e908ea68d77f5594e3da43d5c8352e384b307"
+    },
+    {
+      "file": "screenshots/01-mobile-timeline.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:34.628016+00:00",
+      "sha256": "cc43047b56c0179cf59b93e6bb738854939ba21210fca314b98dc8aecd49bd4c"
+    },
+    {
+      "file": "screenshots/02-desktop-artifact-detail.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:43.907953+00:00",
+      "sha256": "359909fc236dbae99e519cdd60b4ff73d316928f97716e9a5afb976decca63fc"
+    },
+    {
+      "file": "screenshots/02-desktop-criteria.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:46.859932+00:00",
+      "sha256": "f8db9bdf5351aba31ebaf71824610c686853db2b3b0380ed1f739cbe8fd40740"
+    },
+    {
+      "file": "screenshots/02-desktop-decision-detail.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:44.679947+00:00",
+      "sha256": "bd69ee078438345cefb46db6e0f36d9046c44c72e299aac336d520c4dda32901"
+    },
+    {
+      "file": "screenshots/02-desktop-roadmap-detail.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:45.447942+00:00",
+      "sha256": "f2bd67418d1c0a8882e162f8fdd33582f651d3e74daed3a029f665d6e87762ba"
+    },
+    {
+      "file": "screenshots/02-desktop-roadmap-form.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:45.679940+00:00",
+      "sha256": "ceb76e422e1c472149db93766acaafa67e4898d92e94148ab9aaf89268596668"
+    },
+    {
+      "file": "screenshots/02-desktop-roadmap-publication.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:46.619934+00:00",
+      "sha256": "6e38b1563a3c48c7a8b3d6cd522e9399490a2a16a2ff5d39e16b91e7f75c256a"
+    },
+    {
+      "file": "screenshots/02-desktop-settings-issue-credential.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:47.199930+00:00",
+      "sha256": "f901cb4ac847b41b3daa843ba5234aee7ce5b1398095b0438ef84e99daa98c90"
+    },
+    {
+      "file": "screenshots/02-desktop-technical-decision.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:47.523928+00:00",
+      "sha256": "67c2e4117799f2e29ba5702150bacb407a8f2cabad31863ae5af3cccdf504521"
+    },
+    {
+      "file": "screenshots/02-mobile-blocker-detail.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:49.987911+00:00",
+      "sha256": "6d9d9432535cb40f04234a753bf9d6e1b1db2d89c99b6b6f8915992001c9818c"
+    },
+    {
+      "file": "screenshots/02-mobile-decision-form.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:52.351895+00:00",
+      "sha256": "3be2b896af50d033e5cd4903824d5fa611cfede3d183ff7ab4699b16b02a143f"
+    },
+    {
+      "file": "screenshots/02-mobile-evidence-form.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:50.819906+00:00",
+      "sha256": "0fedb0e4d6ceaad67973e1c7ab5ca0e45472edb5aebbb52800c319afe63f5299"
+    },
+    {
+      "file": "screenshots/02-mobile-roadmap-form.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:53.131890+00:00",
+      "sha256": "e6078caf5561860ff09c3964d35a93aef7466d36d45d35e4ab854995626b5cb8"
+    },
+    {
+      "file": "screenshots/02-mobile-settings-create-namespace.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:54.415881+00:00",
+      "sha256": "0a28a2c32b6f079ae2f2b2fa48365409bfe6ffa8bee6a3d20fec9749311ec86a"
+    },
+    {
+      "file": "screenshots/03-desktop-empty-workspace.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:56.915865+00:00",
+      "sha256": "4d181180f26a03aaa9701d8a081b81918bf29cb6208b6be919388560c8ca1f48"
+    },
+    {
+      "file": "screenshots/03-desktop-read-error.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:58.531855+00:00",
+      "sha256": "721f37e41e9ce645a24c5f07d662153ab801f4a41be69df1141e59d9f8ebffe6"
+    },
+    {
+      "file": "screenshots/03-mobile-draft-setup.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:57.379862+00:00",
+      "sha256": "3f6f9ba6722ed966aefb94ecc3ae2182037eaef9e95feac6c49981567668b908"
+    },
+    {
+      "file": "screenshots/03-mobile-empty-workspace.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:56.975864+00:00",
+      "sha256": "b2604875267ac7018c2c61ab793e88c008afae0b095837f09f8453d50411e1f9"
+    },
+    {
+      "file": "screenshots/03-mobile-loading.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:58.175857+00:00",
+      "sha256": "2c5199b384c26f95c72526a40d8e6e4a27acff69ef710fb816ef448d1d09d9f5"
+    },
+    {
+      "file": "screenshots/03-mobile-login.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:44:55.943871+00:00",
+      "sha256": "da43cddc1344498e2ae60d0ffa186ebc845f435d1e68231e8019e9abc34477c1"
+    },
+    {
+      "file": "screenshots/04-mobile-conflict-comparison.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:45:00.595841+00:00",
+      "sha256": "e879955026caad2cc26090f112ec588a8a95f588fdfe7c9de724e15c47d81708"
+    },
+    {
+      "file": "screenshots/04-mobile-conflict.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:45:00.467842+00:00",
+      "sha256": "78271405176e20c926447f79d4496f798974058e3a69e6d5d18858c3e5657477"
+    },
+    {
+      "file": "screenshots/04-mobile-uncertain-intent.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:45:01.599834+00:00",
+      "sha256": "62011188c6005d50957e98684a1163fc44cf350fa415bf6d1fc35aa80c1be36e"
+    }
+  ]
+}

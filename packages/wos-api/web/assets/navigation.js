@@ -1,5 +1,6 @@
 import { copy } from "./en-US.js";
 export const areas = Object.freeze({
+  canvas: { label: copy.text.canvas, sections: [] },
   overview: { label: copy.text.overview, sections: [] },
   plan: {
     label: copy.text.plan,
@@ -62,17 +63,19 @@ export function readRoute(search) {
   if (!namespace && !outcome) return null;
   if (!uuid.test(namespace || "") || !uuid.test(outcome || ""))
     throw Error(copy.text.thisWorkspaceLinkHasInvalidIdentifiers);
-  const area = p.get("area") || "overview";
+  const area = p.get("area") || "canvas";
   if (!areas[area]) throw Error(copy.text.thisWorkspaceLinkHasAnUnknownArea);
   let section = p.get("section") || areas[area].sections[0] || "work_items";
-  if (area !== "overview" && areaFor(section) !== area)
+  if (!["canvas", "overview"].includes(area) && areaFor(section) !== area)
     throw Error(copy.text.theLinkedSectionDoesNotBelongToThisArea);
   const view =
-    area === "overview"
-      ? "summary"
-      : area === "work" && p.get("view") === "board"
-        ? "board"
-        : "list";
+    area === "canvas"
+      ? "canvas"
+      : area === "overview"
+        ? "summary"
+        : area === "work" && p.get("view") === "board"
+          ? "board"
+          : "list";
   let item = null;
   if (p.has("item")) {
     const [kind, id, ...extra] = p.get("item").split("/");
@@ -85,14 +88,14 @@ export function readRoute(search) {
 export function routeQuery({
   namespace,
   outcome,
-  area = "overview",
-  view = "summary",
+  area = "canvas",
+  view = "canvas",
   section = "work_items",
   item,
 }) {
   if (!namespace || !outcome) return "";
   const p = new URLSearchParams({ workspace: namespace, outcome, area });
-  if (area !== "overview") p.set("section", section);
+  if (!["canvas", "overview"].includes(area)) p.set("section", section);
   if (area === "work") p.set("view", view);
   if (item) p.set("item", `${item.kind}/${item.id}`);
   return "?" + p;

@@ -2,6 +2,10 @@ import { message } from "./en-US.js";
 import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
 import { request as networkRequest } from "./api-client.js";
+import { createCanvasData, canvasRevision } from "./canvas-data.js";
+import { mountWorkspaceCanvas } from "./workspace-canvas.js";
+import { createWorkspaceInspector } from "./workspace-inspector.js";
+import { renderCanvasContext } from "./canvas-context.js";
 import {
   areas,
   areaFor,
@@ -12,7 +16,7 @@ import {
 import { humanActions, availableActions, permissionLabels } from "./actions.js";
 import { humanForm } from "./human-forms.js";
 import { createIntent, sameScope, reconcileDraft } from "./intents.js";
-import { button as actionButton } from "./ui.js";
+import { button as actionButton, conflictComparison } from "./ui.js";
 import { copy, initializeCopy } from "./en-US.js";
 initializeCopy(document);
 import {
@@ -41,8 +45,9 @@ const state = {
   outcome: null,
   snapshot: null,
   section: "work_items",
-  view: "summary",
-  area: "overview",
+  view: "canvas",
+  workFilterReset: false,
+  area: "canvas",
   restoringRoute: false,
   generation: 0,
   renderId: 0,
@@ -57,7 +62,127 @@ const state = {
   catalog: [],
   next: "",
   pending: null,
+  refreshGeneration: 0,
+  canvasEpoch: 0,
+  canvasData: null,
+  canvasView: null,
+  canvasModel: null,
+  canvasSelected: null,
+  canvasPlan: null,
+  formTarget: null,
+  formOriginCanvas: false,
+  formEpoch: 0,
 };
+const canvasInspector = createWorkspaceInspector({
+  host: $("canvas-details"),
+  dialogs: {
+    detail: $("detail-dialog"),
+    command: $("command-dialog"),
+    action: $("action-dialog"),
+  },
+  onClose: (surface, { nextSurface, reason }) => {
+    if (
+      surface === "form" &&
+      (state.pending || state.submitting) &&
+      reason !== "reset"
+    ) {
+      queueMicrotask(presentForm);
+      notice(
+        copy.text.resolveThePreviousUncertainResponseWithRetryTheSame,
+        true,
+      );
+      return;
+    }
+    if (surface === "form" && !state.pending) {
+      state.formEpoch++;
+      state.humanForm?.dispose();
+      if (
+        nextSurface === "detail" &&
+        state.canvasSelected &&
+        reason !== "reset"
+      )
+        showEntity(state.canvasSelected, { preserveCamera: true }).catch(
+          report,
+        );
+    }
+    if (!nextSurface && surface !== "form") {
+      state.detailGeneration++;
+      const selected = state.canvasSelected;
+      state.canvasSelected = null;
+      if (state.canvasModel)
+        state.canvasView?.update(canvasPresentation(), { selectedKey: null });
+      if (selected && reason !== "reset") {
+        const key = `${selected.kind}:${selected.id}`;
+        state.canvasView?.focus(key);
+        if (matchMedia("(max-width: 1100px)").matches)
+          $("operational-canvas")
+            .querySelector(`[data-canvas-list-node="${key}"]`)
+            ?.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+      writeRoute(null);
+    }
+  },
+});
+function canvasActive() {
+  return state.area === "canvas" && Boolean(state.outcome);
+}
+function canvasNavigationLocked() {
+  return (
+    (state.formOriginCanvas && (state.submitting || Boolean(state.pending))) ||
+    (canvasInspector.enabled && canvasInspector.isVisible("form"))
+  );
+}
+function allowCanvasNavigation() {
+  if (!canvasNavigationLocked()) return true;
+  notice(
+    state.pending
+      ? copy.text.resolveThePreviousUncertainResponseWithRetryTheSame
+      : "Finish or close the current change before selecting another item.",
+    true,
+  );
+  return false;
+}
+function presentForm() {
+  if (canvasInspector.enabled && !state.technical) {
+    canvasInspector.showForm();
+    revealCanvasInspector();
+  } else if (!$("command-dialog").open) $("command-dialog").showModal();
+}
+function revealCanvasInspector() {
+  if (matchMedia("(max-width: 1100px)").matches) {
+    const host = $("canvas-details");
+    host.style.scrollMarginTop =
+      "calc(var(--header-height) + 16 * var(--wos-unit, 1px))";
+    host.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+}
+function closeForm() {
+  if (canvasInspector.enabled) canvasInspector.close("form");
+  if ($("command-dialog").open) $("command-dialog").close();
+}
+function closeDetail({ clearSelection = true } = {}) {
+  state.detailGeneration++;
+  if (canvasInspector.enabled) canvasInspector.close("detail");
+  if ($("detail-dialog").open) $("detail-dialog").close();
+  if (clearSelection) state.canvasSelected = null;
+}
+function closeActions() {
+  if (canvasInspector.enabled) canvasInspector.close("actions");
+  if ($("action-dialog").open) $("action-dialog").close();
+}
+function resetCanvas() {
+  state.canvasEpoch++;
+  state.canvasData?.dispose();
+  state.canvasData = null;
+  state.canvasView?.dispose();
+  state.canvasView = null;
+  state.canvasModel = null;
+  state.canvasSelected = null;
+  state.canvasPlan = null;
+  state.canvasPlanLabel = "";
+  canvasInspector.closeAll();
+  canvasInspector.setEnabled(false);
+}
 const labels = {
   contract_id: copy.text.contract,
   execution_id: copy.text.execution,
@@ -280,7 +405,12 @@ async function request(path, options = {}) {
       error.discarded = true;
       error.name = "AbortError";
     } else if ([401, 403].includes(error.status) && state.namespace) {
+      state.generation++;
+      state.detailGeneration++;
+      state.refreshGeneration++;
       state.permissions = [];
+      state.snapshot = null;
+      resetCanvas();
       state.entities.clear();
       state.loaded.clear();
       state.boardLoaded.clear();
@@ -332,6 +462,392 @@ function report(error) {
 }
 const base = () => `${api}/namespaces/${state.namespace}/outcomes`;
 const outcomeBase = () => `${base()}/${state.outcome.id}`;
+// The map is a bounded presentation of persisted state. All changes go through
+// the same permission registry, forms and command intents as the list views.
+function canvasPresentation() {
+  if (!state.canvasModel) return null;
+  return {
+    ...state.canvasModel,
+    nodes: state.canvasModel.nodes.map((item) => {
+      if (!item.ref) return item;
+      const actions = effectiveActions(item.kind, {
+        ...item.sourceSummary,
+        _kind: item.kind,
+      });
+      return {
+        ...item,
+        canCreate: [
+          ...(actions.some((a) => a.name === "create_objective")
+            ? ["objective"]
+            : []),
+          ...(actions.some((a) => a.name === "create_work_item")
+            ? ["work_item"]
+            : []),
+        ],
+        canConnect: actions.some((a) => a.name === "add_dependency"),
+      };
+    }),
+  };
+}
+function renderCanvasSummary() {
+  const root = $("canvas-summary");
+  root.replaceChildren();
+  const purpose = el("div", undefined, "canvas-purpose");
+  purpose.append(
+    el("p", "Desired outcome", "eyebrow"),
+    el(
+      "p",
+      state.outcome.desired_state ||
+        state.outcome.description ||
+        state.outcome.title,
+    ),
+  );
+  const actions = el("div", undefined, "canvas-summary-actions");
+  for (const command of [
+    "create_objective",
+    "create_work_item",
+    "create_issue",
+  ])
+    if (
+      effectiveActions("outcome", state.outcome).some((a) => a.name === command)
+    )
+      actions.append(
+        actionButton(
+          humanActions[command].label,
+          () => createItem(command),
+          "quiet",
+        ),
+      );
+  actions.append(
+    actionButton(
+      "Review outcome",
+      () => showEntity(state.snapshot.outcome.ref).catch(report),
+      "quiet",
+    ),
+  );
+  purpose.append(actions);
+  const metrics = el("dl", undefined, "canvas-summary-metrics");
+  const progress = state.snapshot.progress?.work_completion;
+  const count = state.snapshot.counts || {};
+  for (const [label, value] of [
+    [
+      "Task progress",
+      progress?.denominator
+        ? `${Math.round((progress.numerator / progress.denominator) * 100)}%`
+        : "—",
+    ],
+    ["Objectives", count.objectives ?? 0],
+    ["Ready", count.ready_work ?? 0],
+    ["Blocked", count.blocked_work ?? 0],
+    ["signed_contracts_v2", "contracts_v1", "draining_to_signed_v2"].includes(
+      state.protocol?.phase,
+    )
+      ? ["Tasks", count.work_items ?? 0]
+      : ["Needs attention", count.attention_needed_work ?? 0],
+  ]) {
+    const group = el("div");
+    group.append(el("dt", label), el("dd", String(value)));
+    metrics.append(group);
+  }
+  root.append(purpose, metrics);
+}
+function renderCanvasPlanning() {
+  const root = $("canvas-planning");
+  root.replaceChildren(el("span", "Planning / optional"));
+  root.append(
+    el(
+      "p",
+      state.canvasPlanLabel ||
+        "Work directly with Objectives and Tasks, or choose a Roadmap. Planning order does not create dependencies.",
+    ),
+  );
+  root.append(
+    actionButton("Browse Roadmaps", () => navigateArea("plan"), "quiet"),
+  );
+  if (
+    effectiveActions("outcome", state.outcome).some(
+      (a) => a.name === "create_roadmap",
+    )
+  )
+    root.append(
+      actionButton(
+        humanActions.create_roadmap.label,
+        () => createItem("create_roadmap"),
+        "quiet",
+      ),
+    );
+  if (state.canvasPlan)
+    root.append(
+      actionButton(
+        "Hide plan",
+        () => {
+          if (!allowCanvasNavigation()) return;
+          state.canvasPlan = null;
+          state.canvasPlanLabel = "";
+          loadCanvas({ force: true }).catch(report);
+        },
+        "quiet",
+      ),
+    );
+  for (const plan of state.canvasModel?.plans || []) {
+    const slot = plan.slot;
+    root.append(
+      actionButton(
+        `Active plan · revision ${slot.revision_number}`,
+        () =>
+          viewCanvasPlan({
+            roadmap_id: slot.roadmap_id,
+            revision_number: slot.revision_number,
+          }),
+        "quiet",
+      ),
+    );
+  }
+}
+function acceptCanvas(model) {
+  if (
+    !model ||
+    !canvasActive() ||
+    !state.snapshot ||
+    model.scopeKey !== `${state.namespace}/${state.outcome.id}` ||
+    model.revision !== canvasRevision(state.snapshot.outcome_revision)
+  )
+    return;
+  state.canvasModel = model;
+  const selectedKey = state.canvasSelected
+    ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+    : null;
+  if (state.canvasView)
+    state.canvasView.update(canvasPresentation(), { selectedKey });
+  renderCanvasPlanning();
+}
+async function canvasCreate(kind, parentRef) {
+  if (!allowCanvasNavigation()) return;
+  const entity = await showEntity(parentRef);
+  if (
+    !entity ||
+    state.canvasSelected?.id !== parentRef.id ||
+    !allowCanvasNavigation()
+  )
+    return;
+  openCommands(kind === "objective" ? "create_objective" : "create_work_item");
+}
+async function loadCanvas({ force = false } = {}) {
+  if (!canvasActive() || !state.snapshot) return;
+  renderCanvasSummary();
+  if (
+    !force &&
+    state.canvasData &&
+    state.canvasModel?.revision ===
+      canvasRevision(state.snapshot.outcome_revision)
+  ) {
+    renderCanvasPlanning();
+    return;
+  }
+  state.canvasData?.dispose();
+  const epoch = ++state.canvasEpoch,
+    generation = state.generation,
+    refreshGeneration = state.refreshGeneration,
+    scope = currentScope();
+  const data = createCanvasData({
+    request,
+    scope,
+    limit: 100,
+    protocolMode: state.protocol?.phase,
+    apiPrefix: api,
+    isCurrent: () =>
+      epoch === state.canvasEpoch &&
+      generation === state.generation &&
+      refreshGeneration === state.refreshGeneration &&
+      sameScope(scope, currentScope()),
+  });
+  state.canvasData = data;
+  let model = await data.load(state.snapshot);
+  if (!model || state.canvasData !== data || !canvasActive()) return;
+  if (state.canvasPlan) {
+    const selected = state.canvasPlan;
+    if (selected.draft) {
+      const current = await request(
+        `${outcomeBase()}/roadmaps/${selected.roadmap_id}`,
+      );
+      if (
+        state.canvasData !== data ||
+        state.canvasPlan !== selected ||
+        !canvasActive()
+      )
+        return;
+      if (canvasRevision(current.outcome_revision) !== model.revision)
+        throw Error(
+          copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+        );
+      const draft = current.value?.draft;
+      if (draft?.lifecycle === "open") {
+        model = await data.roadmap({
+          roadmap_id: selected.roadmap_id,
+          draft,
+          outcome_revision: current.outcome_revision,
+        });
+        state.canvasPlanLabel = `Draft · version ${draft.draft_version} · not published or activated`;
+      } else {
+        state.canvasPlan = null;
+        state.canvasPlanLabel =
+          "The Draft is closed. Choose a published revision to view its plan.";
+      }
+    } else model = await data.roadmap(selected);
+    if (
+      !model ||
+      state.canvasData !== data ||
+      (state.canvasPlan && state.canvasPlan !== selected) ||
+      !canvasActive()
+    )
+      return;
+  } else state.canvasPlanLabel = "";
+  state.canvasModel = model;
+  if (!state.canvasView)
+    state.canvasView = mountWorkspaceCanvas($("operational-canvas"), {
+      model: canvasPresentation(),
+      selectedKey: state.canvasSelected
+        ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+        : null,
+      onSelect: (ref, item) => {
+        if (!allowCanvasNavigation()) return;
+        const target = ref || item?.roadmapRef;
+        if (target) return showEntity(target);
+      },
+      onSelectEdge: (edge) => edge.ref && showEntity(edge.ref),
+      onCreate: canvasCreate,
+      onConnect: async ({ sourceRef, targetRef }) => {
+        if (!allowCanvasNavigation()) return;
+        const entity = await showEntity(sourceRef);
+        if (
+          !entity ||
+          state.canvasSelected?.id !== sourceRef.id ||
+          !allowCanvasNavigation()
+        )
+          return;
+        if (targetRef)
+          state.selected = { ...entity, _canvasDependencyTarget: targetRef };
+        openCommands("add_dependency");
+      },
+      onLoadMore: async () => acceptCanvas(await state.canvasData?.more()),
+      onExpand: async (item, expanded) => {
+        if (expanded && item.ref)
+          acceptCanvas(await state.canvasData?.expand(item.ref));
+      },
+      onSearch: async (query, { cursor = "" } = {}) =>
+        state.canvasData?.search(query, {
+          cursor,
+          kinds: [
+            "objective",
+            "work_item",
+            "issue",
+            "blocker",
+            "evidence",
+            "artifact",
+            "decision",
+            "roadmap",
+          ],
+        }),
+    });
+  else
+    state.canvasView.update(canvasPresentation(), {
+      selectedKey: state.canvasSelected
+        ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
+        : null,
+    });
+  renderCanvasPlanning();
+}
+async function loadCanvasHistory(host, ref, detailGeneration) {
+  const section = el("section", undefined, "detail-section");
+  section.append(el("h3", "Recorded task activity"));
+  const list = el("ol"),
+    status = el("p", undefined, "field-help");
+  let cursor = "",
+    busy = false,
+    through;
+  const more = actionButton("Load more activity", load, "quiet");
+  section.append(status, list, more);
+  host.querySelector(".canvas-task-history")?.remove();
+  section.classList.add("canvas-task-history");
+  host.append(section);
+  async function load() {
+    if (busy) return;
+    busy = true;
+    more.disabled = true;
+    try {
+      const query = new URLSearchParams({
+        work_item_id: ref.id,
+        limit: "25",
+        descending: "true",
+      });
+      if (cursor) query.set("cursor", cursor);
+      const page = await request(`${outcomeBase()}/work-activity?${query}`);
+      if (detailGeneration !== state.detailGeneration || !section.isConnected)
+        return;
+      const revision = canvasRevision(page.history_through_revision);
+      if (through && through !== revision)
+        throw Error(
+          "Activity changed its historical boundary. Reload this Task.",
+        );
+      through = revision;
+      for (const item of page.items || []) {
+        const row = el("li");
+        row.append(
+          el("strong", display(item.type)),
+          el("p", item.description),
+          el(
+            "small",
+            `${date(item.recorded_at)} · ${item.principal_id || item.actor_ref?.id || "Recorded participant"}`,
+          ),
+        );
+        list.append(row);
+      }
+      cursor = page.next_cursor || "";
+      more.hidden = !cursor;
+      status.textContent = `Recorded activity through revision ${through}. ${cursor ? "More records are available." : list.children.length ? "All records in this traversal are shown." : "No recorded activity in this traversal."} Activity is documentary and does not approve a result.`;
+    } catch (error) {
+      if (detailGeneration !== state.detailGeneration || !section.isConnected)
+        return;
+      report(error);
+      status.textContent = error.message;
+    } finally {
+      busy = false;
+      more.disabled = false;
+    }
+  }
+  await load();
+}
+async function viewCanvasPlan(value) {
+  if (!allowCanvasNavigation()) return;
+  const selection = value.draft
+    ? { roadmap_id: value.roadmap_id, draft: true }
+    : { roadmap_id: value.roadmap_id, revision_number: value.revision_number };
+  state.canvasPlan = selection;
+  try {
+    const model = await state.canvasData.roadmap(value);
+    if (!model || state.canvasPlan !== selection) return;
+    state.canvasPlanLabel = value.draft
+      ? `Draft · version ${value.draft.draft_version} · not published or activated`
+      : `Published revision ${value.revision_number} · activation is a separate action`;
+    acceptCanvas(model);
+    if (!canvasNavigationLocked()) {
+      state.canvasView?.fit(true);
+      const focal =
+        model.nodes.find(
+          (item) =>
+            item.kind === "phase" && item.roadmapRef?.id === value.roadmap_id,
+        ) ||
+        model.nodes.find(
+          (item) => !item.ref && item.roadmapRef?.id === value.roadmap_id,
+        );
+      if (focal) state.canvasView?.focus(focal.key);
+      if (canvasInspector.isVisible("detail")) canvasInspector.showDetails();
+    }
+  } catch (error) {
+    if (state.canvasPlan === selection) report(error);
+  }
+}
+
 const {
   contractSection,
   commandAvailableInUI,
@@ -366,6 +882,7 @@ function el(tag, text, className) {
   return node;
 }
 async function connect(namespace) {
+  resetCanvas();
   state.generation++;
   state.detailGeneration++;
   state.namespace = namespace;
@@ -443,6 +960,10 @@ $("logout").onclick = async () => {
   location.reload();
 };
 $("namespace").onchange = () => {
+  if (!allowCanvasNavigation()) {
+    $("namespace").value = state.namespace;
+    return;
+  }
   state.outcome = null;
   state.snapshot = null;
   $("workspace-loading").hidden = true;
@@ -491,6 +1012,8 @@ async function discover(append = false) {
 }
 $("more-outcomes").onclick = () => discover(true).catch(report);
 async function openOutcome(outcome) {
+  if (!allowCanvasNavigation()) return;
+  resetCanvas();
   state.generation++;
   document.querySelector(".sidebar").classList.add("navigation-collapsed");
   $("navigation-toggle").setAttribute("aria-expanded", "false");
@@ -500,8 +1023,8 @@ async function openOutcome(outcome) {
   state.outcome = outcome;
   state.selected = outcome;
   state.criterion = null;
-  state.view = "summary";
-  state.area = "overview";
+  state.view = "canvas";
+  state.area = "canvas";
   state.snapshot = null;
   $("item-search").value = "";
   $("item-priority").value = "";
@@ -534,60 +1057,92 @@ async function openOutcome(outcome) {
 }
 async function refresh() {
   if (!state.outcome) return discover();
+  state.detailGeneration++;
   const generation = state.generation;
-  const path = outcomeBase();
-  const [snapshot, live, protocol] = await Promise.all([
-    request(`${path}/continuity?limit=25`),
-    request(path),
-    request(`${api}/namespaces/${state.namespace}/work-protocol`),
-  ]);
-  if (generation !== state.generation) return;
-  if (
-    live.outcome_revision !== undefined &&
-    live.outcome_revision !== snapshot.outcome_revision
-  ) {
-    const changed = new Error(
-      copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
-    );
-    changed.code = "precondition_failed";
-    throw changed;
-  }
-  state.protocol = protocol;
-  renderProtocolBanner();
-  state.snapshot = snapshot;
-  state.outcome = live.value || live;
-  state.loaded.clear();
-  state.boardLoaded.clear();
-  state.entities.clear();
-  for (const section of Object.values(snapshot.sections))
-    for (const item of section) {
-      const e = item?.ref ? item : item?.work_item || item?.current;
-      if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
+  const refreshGeneration = ++state.refreshGeneration;
+  try {
+    const path = outcomeBase();
+    const [snapshot, live, protocol] = await Promise.all([
+      request(`${path}/continuity?limit=25`),
+      request(path),
+      request(`${api}/namespaces/${state.namespace}/work-protocol`),
+    ]);
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    if (
+      live.outcome_revision !== undefined &&
+      canvasRevision(live.outcome_revision) !==
+        canvasRevision(snapshot.outcome_revision)
+    ) {
+      const changed = new Error(
+        copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+      );
+      changed.code = "precondition_failed";
+      throw changed;
     }
-  $("empty").hidden = true;
-  $("outcome").hidden = false;
-  $("title").textContent = snapshot.outcome.title;
-  $("state").textContent = display(snapshot.outcome.lifecycle);
-  $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
-  $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
-  $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
-  $("revision").textContent = message(
-    "revision0c81",
-    snapshot.outcome_revision,
-    date(snapshot.evaluated_at),
-  );
-  await refreshPermissions();
-  if (generation !== state.generation) return;
-  renderMetrics();
-  renderTabs();
-  renderSummary();
-  applyView();
-  await renderSection();
-  notice(
-    snapshot.truncated
-      ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
-      : copy.text.sharedStateRefreshed,
-  );
+    state.protocol = protocol;
+    renderProtocolBanner();
+    state.snapshot = snapshot;
+    state.outcome = live.value || live;
+    state.loaded.clear();
+    state.boardLoaded.clear();
+    state.entities.clear();
+    for (const section of Object.values(snapshot.sections))
+      for (const item of section) {
+        const e = item?.ref ? item : item?.work_item || item?.current;
+        if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
+      }
+    $("empty").hidden = true;
+    $("outcome").hidden = false;
+    $("title").textContent = snapshot.outcome.title;
+    $("state").textContent = display(snapshot.outcome.lifecycle);
+    $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
+    $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
+    $("outcome-key").textContent = shortId(snapshot.outcome.ref.id);
+    $("revision").textContent = message(
+      "revision0c81",
+      snapshot.outcome_revision,
+      date(snapshot.evaluated_at),
+    );
+    await refreshPermissions();
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    renderMetrics();
+    renderTabs();
+    renderSummary();
+    applyView();
+    await renderSection();
+    if (canvasActive()) {
+      await loadCanvas({ force: true });
+      if (state.canvasSelected && !canvasNavigationLocked())
+        await showEntity(state.canvasSelected, { preserveCamera: true });
+    }
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    )
+      return;
+    notice(
+      snapshot.truncated
+        ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
+        : copy.text.sharedStateRefreshed,
+    );
+  } catch (error) {
+    if (
+      generation !== state.generation ||
+      refreshGeneration !== state.refreshGeneration
+    ) {
+      error.discarded = true;
+      error.name = "AbortError";
+    }
+    throw error;
+  }
 }
 $("copy-workspace-link").onclick = async () => {
   try {
@@ -644,6 +1199,21 @@ const sectionIcons = {
   conclusion_contestations: "alert",
 };
 function renderTabs() {
+  const contractWork = usesWorkContracts();
+  const terminalSections = ["work_items", "done_work", "cancelled_work"];
+  for (const option of $("work-status").options) {
+    option.disabled = contractWork && !terminalSections.includes(option.value);
+    option.hidden = option.disabled;
+  }
+  state.workFilterReset =
+    contractWork &&
+    state.area === "work" &&
+    !terminalSections.includes(state.section);
+  if (state.workFilterReset) {
+    state.section = "work_items";
+    writeRoute(undefined, true);
+  }
+  $("work-status").value = state.section;
   $("area-tabs").replaceChildren();
   for (const [area, definition] of Object.entries(areas)) {
     const b = actionButton(definition.label, () => navigateArea(area), "quiet");
@@ -665,7 +1235,8 @@ function renderTabs() {
     $("tabs").append(b);
   }
 }
-function writeRoute(item = null, replace = false) {
+function writeRoute(item = undefined, replace = false) {
+  if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
   if (state.restoringRoute || !state.outcome) return;
   const query = routeQuery({
     namespace: state.namespace,
@@ -681,6 +1252,10 @@ function writeRoute(item = null, replace = false) {
 }
 async function restoreRoute(route) {
   if (!route) return;
+  if (!allowCanvasNavigation()) {
+    writeRoute(undefined, true);
+    return;
+  }
   state.restoringRoute = true;
   try {
     if (state.namespace !== route.namespace) {
@@ -704,10 +1279,13 @@ async function restoreRoute(route) {
     renderTabs();
     applyView();
     await renderSection();
+    if (canvasActive() && !state.canvasModel) await loadCanvas();
     if (route.item) await showEntity(route.item);
-    else $("detail-dialog").close();
+    else closeDetail();
   } finally {
     state.restoringRoute = false;
+    if (state.area === "work" && state.section !== route.section)
+      writeRoute(route.item, true);
   }
 }
 window.addEventListener("popstate", () => {
@@ -719,21 +1297,29 @@ window.addEventListener("popstate", () => {
   }
 });
 function navigateArea(area) {
+  if (!allowCanvasNavigation()) return;
+  closeDetail();
   state.area = area;
   state.section = areas[area].sections[0] || "work_items";
-  state.view = area === "overview" ? "summary" : "list";
+  state.view =
+    area === "canvas" ? "canvas" : area === "overview" ? "summary" : "list";
   $("item-search").value = "";
   $("item-priority").value = "";
   $("work-status").value = state.section;
   renderTabs();
   applyView();
   writeRoute();
-  renderSection().catch(report);
+  (canvasActive() ? loadCanvas() : renderSection()).catch(report);
 }
 function applyView() {
-  renderEditorial(state.area);
+  const isCanvas = canvasActive();
+  if (isCanvas) $("outcome").dataset.editorialArea = "canvas";
+  else renderEditorial(state.area);
+  $("area-intro").hidden = isCanvas;
+  $("canvas-view").hidden = !isCanvas;
+  canvasInspector.setEnabled(isCanvas);
   $("summary-view").hidden = state.view !== "summary";
-  $("items-view").hidden = state.view === "summary";
+  $("items-view").hidden = state.view === "summary" || isCanvas;
   for (const button of $("view-tabs").children) {
     button.classList.toggle("selected", button.dataset.view === state.view);
     button.setAttribute(
@@ -744,8 +1330,11 @@ function applyView() {
   $("view-tabs").hidden = state.area !== "work";
   $("work-status-label").hidden =
     state.area !== "work" || state.view === "board";
+  $("item-priority").closest("label").hidden = !collectionHasPriority();
+  if (!collectionHasPriority()) $("item-priority").value = "";
+  $("content").dataset.section = state.section;
   const board = state.view === "board";
-  $("tabs").hidden = board || state.area === "work";
+  $("tabs").hidden = isCanvas || board || state.area === "work";
   $("add-item").textContent =
     board ||
     ["work_items", "ready_work", "blocked_work", "in_progress_work"].includes(
@@ -760,6 +1349,8 @@ function applyView() {
     );
 }
 function navigateSection(section) {
+  if (!allowCanvasNavigation()) return;
+  closeDetail();
   state.section = section;
   state.area = areaFor(section);
   state.view = "list";
@@ -774,6 +1365,7 @@ function navigateSection(section) {
 for (const button of $("view-tabs").children) {
   button.prepend(icon(button.dataset.view));
   button.onclick = () => {
+    if (!allowCanvasNavigation()) return;
     state.area = "work";
     state.view = button.dataset.view;
     renderTabs();
@@ -796,7 +1388,7 @@ const createForSection = {
   blockers: "create_blocker",
   evidence: "register_evidence",
   artifacts: "register_artifact",
-  decisions: "create_decision",
+  decisions: "propose_decision",
   roadmaps: "create_roadmap",
   ready_work: "create_work_item",
   blocked_work: "create_work_item",
@@ -806,6 +1398,7 @@ function sectionCommand() {
   return createForSection[state.section] || "";
 }
 function createItem(command) {
+  if (!allowCanvasNavigation()) return;
   state.selected = { ...state.outcome, _kind: "outcome" };
   state.criterion = null;
   openCommands(command);
@@ -991,36 +1584,53 @@ function renderSummary() {
     root.append(setup);
   }
   const next = summaryCard(copy.text.suggestedNextStep);
-  const suggestion = c.blocked_work
+  const suggestion = usesWorkContracts()
     ? {
-        text: copy.text.reviewBlockingImpact,
-        reason: copy.text.blockedTasksArePresentInTheCurrentState,
-        section: "blockers",
+        text: copy.text.reviewCurrentWork,
+        reason: copy.text.workspaceContractAuthority,
+        section: "work_items",
       }
-    : !(state.outcome.criteria?.items || []).length
+    : c.work_items &&
+        (c.done_work || 0) + (c.cancelled_work || 0) === c.work_items
       ? {
-          text: copy.text.defineSuccessCriteria,
-          reason: copy.text.noSuccessCriteriaAreRecordedYet,
-          command: "add_criterion",
+          text: copy.text.workspaceReviewCriteria,
+          reason:
+            copy.text
+              .taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561,
+          inspect: true,
         }
-      : !c.work_items
+      : c.blocked_work
         ? {
-            text: copy.text.addATask,
-            reason: copy.text.noTasksAreRecordedYet,
-            command: "create_work_item",
+            text: copy.text.reviewBlockingImpact,
+            reason: copy.text.blockedTasksArePresentInTheCurrentState,
+            section: "blockers",
           }
-        : {
-            text: copy.text.reviewCurrentWork,
-            reason: copy.text.tasksAreAvailableForExplicitCoordination,
-            section: "work_items",
-          };
+        : !(state.outcome.criteria?.items || []).length
+          ? {
+              text: copy.text.defineSuccessCriteria,
+              reason: copy.text.noSuccessCriteriaAreRecordedYet,
+              command: "add_criterion",
+            }
+          : !c.work_items
+            ? {
+                text: copy.text.addATask,
+                reason: copy.text.noTasksAreRecordedYet,
+                command: "create_work_item",
+              }
+            : {
+                text: copy.text.reviewCurrentWork,
+                reason: copy.text.tasksAreAvailableForExplicitCoordination,
+                section: "work_items",
+              };
   next.append(
     el("p", suggestion.reason),
     el("small", copy.text.aPresentationHintFromPersistedStateNoPlanningOr),
     actionButton(
       suggestion.text,
       () => {
-        if (suggestion.section) navigateSection(suggestion.section);
+        if (suggestion.inspect)
+          showEntity(state.snapshot.outcome.ref).catch(report);
+        else if (suggestion.section) navigateSection(suggestion.section);
         else {
           state.selected = { ...state.outcome, _kind: "outcome" };
           openCommands(suggestion.command);
@@ -1033,12 +1643,16 @@ function renderSummary() {
 
   const status = summaryCard(copy.text.taskOverview, "work_items");
   const done = c.done_work || 0,
-    active = c.in_progress_work || 0,
-    blocked = (c.blocked_work || 0) + (c.attention_needed_work || 0),
+    active = usesWorkContracts() ? 0 : c.in_progress_work || 0,
+    blocked = usesWorkContracts()
+      ? 0
+      : (c.blocked_work || 0) + (c.attention_needed_work || 0),
     total = c.work_items || 0;
   const parts = [
     {
-      title: copy.text.toDoPlanned,
+      title: usesWorkContracts()
+        ? copy.text.workspaceOpenWork
+        : copy.text.toDoPlanned,
       count: Math.max(
         0,
         total - done - active - blocked - (c.cancelled_work || 0),
@@ -1058,7 +1672,12 @@ function renderSummary() {
       color: "var(--wos-error)",
       tone: "red",
     },
-    { title: copy.text.done, count: done, color: "var(--wos-success)", tone: "green" },
+    {
+      title: copy.text.done,
+      count: done,
+      color: "var(--wos-success)",
+      tone: "green",
+    },
     {
       title: copy.text.cancelled,
       count: c.cancelled_work || 0,
@@ -1066,10 +1685,13 @@ function renderSummary() {
       tone: "violet",
     },
   ];
+  const shownParts = usesWorkContracts()
+    ? parts.filter((_, index) => ![1, 2].includes(index))
+    : parts;
   const body = el("div", undefined, "summary-stats");
-  body.append(donut(parts, total));
+  body.append(donut(shownParts, total));
   const legend = el("div", undefined, "legend");
-  for (const part of parts) {
+  for (const part of shownParts) {
     const row = el("div", undefined, "legend-row");
     row.append(
       el("span", undefined, `legend-dot ${part.tone}`),
@@ -1080,6 +1702,10 @@ function renderSummary() {
   }
   body.append(legend);
   status.append(body);
+  if (usesWorkContracts())
+    status.append(
+      el("p", copy.text.workspaceContractAuthority, "section-note"),
+    );
   root.append(status);
   const proof = summaryCard(copy.text.continueWithContext);
   const counts = el("div", undefined, "summary-counts");
@@ -1112,11 +1738,15 @@ function renderSummary() {
   root.append(proof);
   const recent = summaryCard(copy.text.currentTasks, "work_items");
   recent.classList.add("summary-recent");
-  const items = [
-    ...(s.sections.ready_work || []),
-    ...(s.sections.in_progress_work || []),
-    ...(s.sections.blocked_work || []),
-  ].slice(0, 3);
+  const items = (
+    usesWorkContracts()
+      ? [...(s.sections.work_items || [])]
+      : [
+          ...(s.sections.ready_work || []),
+          ...(s.sections.in_progress_work || []),
+          ...(s.sections.blocked_work || []),
+        ]
+  ).slice(0, 3);
   if (!items.length) items.push(...(s.sections.work_items || []).slice(0, 3));
   for (const item of items) recent.append(itemView(item));
   if (!items.length)
@@ -1157,23 +1787,79 @@ function referenceButton(ref) {
 }
 function operational(item) {
   const e = item.work_item || item.current || item;
+  if (usesWorkContracts() && e.ref?.kind === "work_item")
+    return { display_state: e.lifecycle, readiness_reasons: [] };
   return (
     item.state ||
+    item.operational_state ||
     item.readiness ||
     operationalSections
       .flatMap((key) => state.snapshot.sections[key] || [])
       .find((x) => x.work_item.ref.id === e.ref?.id)?.state
   );
 }
+function usesWorkContracts() {
+  return [
+    "contracts_v1",
+    "signed_contracts_v2",
+    "draining_to_signed_v2",
+  ].includes(state.protocol?.phase);
+}
+function collectionHasPriority() {
+  return state.area === "work" || state.section === "objectives";
+}
 function matches(item) {
   const e = item.work_item || item.current || item;
   const query = $("item-search").value.trim().toLocaleLowerCase("en-US");
+  const refs = [
+    e.ref,
+    item.entity_ref,
+    item.owner_ref,
+    item.from,
+    item.to,
+    item.source_ref,
+    item.target_ref,
+    item.slot && { kind: "roadmap", id: item.slot.roadmap_id },
+  ];
+  const searchable = [
+    e.title,
+    e.description,
+    item.plan_label,
+    item.slot && copy.text.active,
+    item.slot &&
+      message(
+        "revisionPublishedItems",
+        item.slot.revision_number,
+        item.node_count,
+      ),
+    display(e.lifecycle || ""),
+    item.event_type && eventName(item.event_type),
+    item.event_type,
+    item.actor_ref?.id,
+    item.actor_ref?.kind,
+    item.principal_id,
+    item.outcome_revision,
+    item.recorded_at,
+    item.kind,
+    item.type,
+    item.relation_type,
+    ...refs
+      .filter(Boolean)
+      .flatMap((ref) => [
+        ref.id,
+        shortId(ref.id),
+        kindName(ref.kind),
+        titleOf(ref),
+      ]),
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .join(" ")
+    .toLocaleLowerCase("en-US");
   return (
-    (!query ||
-      `${e.title || ""} ${item.plan_label || ""} ${shortId(e.ref?.id)} ${display(e.lifecycle || "")}`
-        .toLocaleLowerCase("en-US")
-        .includes(query)) &&
-    (!$("item-priority").value || e.priority === $("item-priority").value)
+    (!query || searchable.includes(query)) &&
+    (!collectionHasPriority() ||
+      !$("item-priority").value ||
+      e.priority === $("item-priority").value)
   );
 }
 function itemView(item, mode = "card") {
@@ -1222,6 +1908,25 @@ function itemView(item, mode = "card") {
     );
     return card;
   }
+  if (item.target_ref && item.missing) {
+    const card = el("div", undefined, "item");
+    card.append(
+      el(
+        "h3",
+        item.plan_label ||
+          item.published_reference_title ||
+          kindName(item.target_ref.kind),
+      ),
+      el("p", copy.text.workspaceMissingPlanReference),
+      el("small", shortId(item.target_ref.id)),
+      referenceButton({
+        ...item.target_ref,
+        kind: "roadmap",
+        id: item.roadmap_id,
+      }),
+    );
+    return card;
+  }
   const entity = item.work_item || item.current || item;
   if (!entity.ref) {
     const card = el("div", undefined, "item");
@@ -1232,6 +1937,7 @@ function itemView(item, mode = "card") {
   const status = operational(item);
   const button = el("button", undefined, mode === "list" ? "list-row" : "item");
   button.dataset.entityId = entity.ref.id;
+  button.dataset.entityKind = entity.ref.kind;
   button.onclick = () => showEntity(entity.ref).catch(report);
   const main = el("span", undefined, "item-main");
   const symbol = el("span", undefined, `entity-symbol ${entity.ref.kind}`);
@@ -1241,10 +1947,21 @@ function itemView(item, mode = "card") {
     el("span", entity.title || kindName(entity.ref.kind), "item-title"),
     el(
       "span",
-      `${shortId(entity.ref.id)} · ${kindName(entity.ref.kind)}${item.plan_label ? ` · ${item.plan_label}` : ""}`,
+      `${mode === "list" && !collectionHasPriority() ? "" : shortId(entity.ref.id) + " · "}${kindName(entity.ref.kind)}${item.plan_label ? ` · ${message("workspaceHistoricalPlanLabel", item.plan_label, item.revision_number)}` : ""}`,
       "item-subtitle",
     ),
   );
+  if (
+    item.published_reference_title &&
+    item.published_reference_title !== entity.title
+  )
+    itemCopy.append(
+      el(
+        "span",
+        message("workspacePublishedTitle", item.published_reference_title),
+        "item-parent",
+      ),
+    );
   main.append(symbol, itemCopy);
   button.append(main);
   const lifecycle = status?.display_state || entity.lifecycle;
@@ -1253,11 +1970,16 @@ function itemView(item, mode = "card") {
   if (mode === "list") {
     const priority = el(
       "span",
-      entity.priority
-        ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
-        : "—",
-      `item-priority ${entity.priority || ""}`,
+      !collectionHasPriority()
+        ? shortId(entity.ref.id)
+        : entity.priority
+          ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
+          : "—",
+      collectionHasPriority()
+        ? `item-priority ${entity.priority || ""}`
+        : "item-reference",
     );
+    if (!collectionHasPriority()) priority.title = entity.ref.id;
     button.append(stateCell, priority);
   } else {
     const footer = el("span", undefined, "board-card-footer");
@@ -1303,6 +2025,9 @@ function timelineView(item) {
   const marker = el("span", undefined, "timeline-marker");
   marker.append(icon(item.actor_ref?.kind === "agent" ? "work_item" : "user"));
   const body = el("div");
+  body.className = "timeline-body";
+  const recorded = el("time", date(item.recorded_at));
+  recorded.dateTime = item.recorded_at;
   body.append(
     Object.assign(el("h3", eventName(item.event_type)), {
       title: item.event_type,
@@ -1312,7 +2037,7 @@ function timelineView(item) {
       `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revision ${item.outcome_revision}`,
     ),
     referenceButton(item.entity_ref),
-    el("time", date(item.recorded_at)),
+    recorded,
   );
   row.append(marker, body);
   return row;
@@ -1376,11 +2101,24 @@ function emptySection(title, command) {
         blockers: copy.text.noBlockersYet,
       }[state.section] || title;
   const box = el("div", undefined, "empty-section");
+  const filtered = title === copy.text.noItemsMatchTheFilters;
   box.append(
     sectionIllustration(state.area),
     el("h3", title),
-    el("p", copy.text.activityAppearsHereAsWorkProgresses),
+    el("p", filtered ? copy.text.workspaceFilterEmpty : sectionGuidance()),
   );
+  if (filtered)
+    box.append(
+      actionButton(
+        copy.text.workspaceFilterReset,
+        () => {
+          $("item-search").value = "";
+          $("item-priority").value = "";
+          renderSection().catch(report);
+        },
+        "quiet",
+      ),
+    );
   if (command && state.permissions.includes(inventory[command]?.permission)) {
     const b = el("button", actionName(command), "quiet");
     b.onclick = () => createItem(command);
@@ -1388,41 +2126,95 @@ function emptySection(title, command) {
   }
   return box;
 }
+function sectionGuidance() {
+  if (state.area === "work" && state.section !== "work_items")
+    return copy.text.taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561;
+  const keys = {
+    work_items: "workspaceNoTasks",
+    objectives: "workspaceNoObjectives",
+    roadmaps: "workspaceNoRoadmaps",
+    evidence: "workspaceNoEvidence",
+    artifacts: "workspaceNoArtifacts",
+    decisions: "workspaceNoDecisions",
+    issues: "workspaceNoIssues",
+    blockers: "workspaceNoBlockers",
+    timeline: "workspaceNoActivity",
+    graph: "workspaceNoRelations",
+    active_roadmaps: "workspaceNoRoadmaps",
+    active_plan_references: "workspaceNoPlanReferences",
+    conclusion_contestations: "workspaceNoContestations",
+  };
+  return (
+    copy.text[keys[state.section]] ||
+    copy.text.activityAppearsHereAsWorkProgresses
+  );
+}
+function collectionStatus(error) {
+  const box = el("div", undefined, "collection-status");
+  box.dataset.renderState = error ? "error" : "loading";
+  box.setAttribute("role", error ? "alert" : "status");
+  box.append(
+    el("p", human(state.section), "eyebrow"),
+    el(
+      "h3",
+      error
+        ? copy.text.workspaceCollectionError
+        : copy.text.workspaceCollectionLoading,
+    ),
+  );
+  if (error) {
+    box.append(el("p", error.message));
+    box.append(
+      actionButton(
+        copy.text.workspaceReloadView,
+        () => renderSection().catch(report),
+        "quiet",
+      ),
+    );
+  }
+  return box;
+}
 async function sectionData(section, cursor = "", append = false) {
   const cached = state.loaded.get(section);
   if (!cursor && cached) return cached;
+  const revision = state.snapshot.outcome_revision;
+  const consistent = (page) => {
+    if (canvasRevision(page.outcome_revision) !== canvasRevision(revision))
+      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
+    return page;
+  };
   let items, next;
   if (section === "timeline") {
-    const page = await request(
-      `${outcomeBase()}/timeline?limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/timeline?limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      ),
     );
     items = page.items;
     next = page.next_cursor;
   } else if (section === "graph") {
-    const page = await request(
-      `${outcomeBase()}/graph?depth=3&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/graph?depth=3&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      ),
     );
     items = page.edges;
     next = page.next_cursor;
   } else if (section === "roadmaps") {
-    const page = await request(`${outcomeBase()}/roadmaps`);
-    items = (page.items || []).map((x) => ({
-      ref: {
-        namespace_id: state.namespace,
-        outcome_id: state.outcome.id,
-        kind: "roadmap",
-        id: x.id,
-      },
-      title: x.title,
-      version: x.version,
-      lifecycle: x.lifecycle,
-    }));
+    const page = await request(
+      `${outcomeBase()}/references?kind=roadmap&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    );
+    consistent(page);
+    items = page.items || [];
+    next = page.next_cursor;
   } else if (!cursor) {
     items = state.snapshot.sections[section] || [];
     next = state.snapshot.section_cursors[section];
   } else {
-    const page = await request(
-      `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
+      ),
     );
     items = page.items;
     next = page.next_cursor;
@@ -1447,7 +2239,13 @@ async function searchedTasks(cursor = "", append = false) {
     page.items.map((item) => request(`${scope}/work-items/${item.ref.id}`)),
   );
   if (generation !== state.generation) return { items: [] };
-  if (results.some((r) => r.outcome_revision !== page.outcome_revision)) {
+  if (
+    results.some(
+      (r) =>
+        canvasRevision(r.outcome_revision) !==
+        canvasRevision(page.outcome_revision),
+    )
+  ) {
     const e = Error(
       copy.text.stateChangedWhileLoadingSearchResultsRefreshTheSearch,
     );
@@ -1466,14 +2264,22 @@ async function renderSection(cursor = "", append = false) {
   // Explicit navigation/filter/pagination consumes the current input. A queued
   // search must not later discard the page the user just loaded.
   clearTimeout(searchTimer);
-  if (!state.snapshot || state.view === "summary") return;
+  if (!state.snapshot || state.view === "summary" || canvasActive()) return;
   if (state.view === "board") {
     state.renderId++;
     return renderBoard();
   }
   const section = state.section,
     generation = state.generation,
+    snapshot = state.snapshot,
     run = ++state.renderId;
+  const current = () =>
+    generation === state.generation &&
+    snapshot === state.snapshot &&
+    run === state.renderId;
+  const content = $("content");
+  content.setAttribute("aria-busy", "true");
+  if (!append) content.replaceChildren(collectionStatus());
   const globalWork = section === "work_items";
   let data;
   try {
@@ -1481,35 +2287,56 @@ async function renderSection(cursor = "", append = false) {
       ? await searchedTasks(cursor, append)
       : await sectionData(section, cursor, append);
   } catch (error) {
-    if (generation === state.generation && run === state.renderId) throw error;
+    if (current()) {
+      content.setAttribute("aria-busy", "false");
+      content.replaceChildren(collectionStatus(error));
+      throw error;
+    }
+    if ([401, 403].includes(error.status) && !error.discarded) throw error;
     return;
   }
-  if (generation !== state.generation || run !== state.renderId) return;
+  if (!current()) return;
   if (section === "objectives") {
     const path = outcomeBase(),
       revision = state.snapshot.outcome_revision;
     const missing = data.items.filter((x) => !x._hierarchy_loaded);
-    const hydrated = await Promise.all(
-      missing.map(async (x) => {
-        const r = await request(`${path}/objectives/${x.ref.id}`);
-        if (r.outcome_revision !== revision)
-          throw Error(
-            copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
-          );
-        return { ...r.value, ref: x.ref, _hierarchy_loaded: true };
-      }),
-    );
-    if (generation !== state.generation || run !== state.renderId) return;
+    let hydrated;
+    try {
+      hydrated = await Promise.all(
+        missing.map(async (x) => {
+          const r = await request(`${path}/objectives/${x.ref.id}`);
+          if (canvasRevision(r.outcome_revision) !== canvasRevision(revision))
+            throw Error(
+              copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+            );
+          return { ...r.value, ref: x.ref, _hierarchy_loaded: true };
+        }),
+      );
+    } catch (error) {
+      if (!current()) {
+        if ([401, 403].includes(error.status) && !error.discarded) throw error;
+        return;
+      }
+      content.setAttribute("aria-busy", "false");
+      content.replaceChildren(collectionStatus(error));
+      throw error;
+    }
+    if (!current()) return;
     const map = new Map(hydrated.map((x) => [x.ref.id, x]));
     data.items = data.items.map((x) => map.get(x.ref.id) || x);
   }
   state.loaded.set(section, data);
-  const content = $("content");
+  content.setAttribute("aria-busy", "false");
   content.replaceChildren();
   const heading = el("div", undefined, "content-heading");
+  const headingCopy = el("div", undefined, "collection-heading-copy");
   const shown = globalWork ? data.items : data.items.filter(matches);
-  heading.append(
+  headingCopy.append(
+    el("p", copy.text.workspaceCollectionContext, "eyebrow"),
     el("h2", human(section)),
+  );
+  heading.append(
+    headingCopy,
     el(
       "small",
       message(
@@ -1522,6 +2349,11 @@ async function renderSection(cursor = "", append = false) {
     ),
   );
   content.append(heading);
+  content.append(el("p", sectionGuidance(), "collection-guidance"));
+  if (state.workFilterReset)
+    content.append(
+      el("p", copy.text.workspaceContractFilterReset, "section-note"),
+    );
   if (globalWork)
     content.append(
       el(
@@ -1541,14 +2373,17 @@ async function renderSection(cursor = "", append = false) {
   if (!shown.length)
     content.append(
       emptySection(
-        data.items.length
+        data.items.length || $("item-search").value || $("item-priority").value
           ? copy.text.noItemsMatchTheFilters
           : copy.text.noRecordsInThisSectionYet,
-        data.items.length ? "" : sectionCommand(),
+        data.items.length || $("item-search").value || $("item-priority").value
+          ? ""
+          : sectionCommand(),
       ),
     );
   const list = el("div", undefined, "collection");
   let rows = 0;
+  let activityDate, activityGroup;
   for (const item of shown) {
     const entity = item.work_item || item.current || item;
     if (entity.ref) {
@@ -1557,7 +2392,10 @@ async function renderSection(cursor = "", append = false) {
         head.append(
           el("span", copy.text.item),
           el("span", copy.text.lifecycle),
-          el("span", copy.text.priority),
+          el(
+            "span",
+            collectionHasPriority() ? copy.text.priority : copy.text.reference,
+          ),
         );
         list.append(head);
         content.append(list);
@@ -1568,20 +2406,34 @@ async function renderSection(cursor = "", append = false) {
           (x) => x.ref.id === entity.parent_objective_id,
         );
         row.classList.add("objective-child");
-        row.append(
-          referenceButton({
-            namespace_id: state.namespace,
-            outcome_id: state.outcome.id,
-            kind: "objective",
-            id: entity.parent_objective_id,
-          }),
-        );
+        row
+          .querySelector(".item-main > span:last-child")
+          .append(
+            el(
+              "span",
+              parent
+                ? message("withinObjective", parent.title)
+                : copy.text.parentObjectiveOutsidePage,
+              "item-parent",
+            ),
+          );
         row.title = parent
           ? message("withinObjective", parent.title)
           : copy.text.parentObjectiveOutsidePage;
       }
       list.append(row);
       rows++;
+    } else if (section === "timeline" && item.event_type) {
+      const day = String(item.recorded_at || "").slice(0, 10);
+      if (!activityGroup || activityDate !== day) {
+        activityDate = day;
+        activityGroup = el("section", undefined, "activity-day");
+        activityGroup.append(
+          el("h3", day || copy.text.workspaceActivityDay, "activity-day-label"),
+        );
+        content.append(activityGroup);
+      }
+      activityGroup.append(timelineView(item));
     } else if (section === "graph") {
       const ref = item.from || item.source_ref,
         other = item.to || item.target_ref;
@@ -1591,7 +2443,12 @@ async function renderSection(cursor = "", append = false) {
           referenceButton(ref),
           el("span", "→", "relation-arrow"),
           referenceButton(other),
-          badge(item.kind || item.type || item.relation_type || "depends_on"),
+          badge(
+            item.kind ||
+              item.type ||
+              item.relation_type ||
+              copy.text.relation136748,
+          ),
         );
       else row.append(readable(item));
       content.append(row);
@@ -1633,6 +2490,7 @@ const boardGroups = [
   },
 ];
 function renderBoard() {
+  if (usesWorkContracts()) return renderContractBoard();
   const content = $("content");
   content.replaceChildren(
     el(
@@ -1693,24 +2551,45 @@ function renderBoard() {
           copy.text.quietMoreButton,
         );
         more.onclick = async () => {
-          const generation = state.generation;
+          const generation = state.generation,
+            snapshot = state.snapshot;
           more.disabled = true;
           try {
             const page = await request(
               `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
             );
-            if (generation !== state.generation) return;
+            if (generation !== state.generation || snapshot !== state.snapshot)
+              return;
+            if (
+              canvasRevision(page.outcome_revision) !==
+              canvasRevision(snapshot.outcome_revision)
+            )
+              throw Error(
+                copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+              );
             const previous =
               state.boardLoaded.get(section)?.items ||
               state.snapshot.sections[section] ||
               [];
             state.boardLoaded.set(section, {
-              items: [...previous, ...page.items],
+              items: [
+                ...new Map(
+                  [...previous, ...page.items].map((item) => [
+                    (item.work_item || item.current || item).ref.id,
+                    item,
+                  ]),
+                ).values(),
+              ],
               next: page.next_cursor || "",
             });
             if (state.view === "board") renderBoard();
           } catch (e) {
-            report(e);
+            if (
+              (generation === state.generation &&
+                snapshot === state.snapshot) ||
+              [401, 403].includes(e.status)
+            )
+              report(e);
             more.disabled = false;
           }
         };
@@ -1733,6 +2612,104 @@ function renderBoard() {
       ),
     );
 }
+function renderContractBoard() {
+  const content = $("content"),
+    snapshot = state.snapshot;
+  content.setAttribute("aria-busy", "false");
+  content.replaceChildren(
+    el("p", copy.text.workspaceLoadedTaskBoard, "board-caption"),
+  );
+  const page = state.boardLoaded.get("work_items");
+  const loaded = page?.items || snapshot.sections.work_items || [];
+  const board = el("div", undefined, "board contract-board");
+  const groups = [
+    ["backlog", copy.text.backlog],
+    ["todo", display("todo")],
+    ["in_progress", copy.text.inProgress],
+    ["done", copy.text.done],
+    ["cancelled", copy.text.cancelled],
+  ];
+  for (const [lifecycle, label] of groups) {
+    const column = el("section", undefined, "board-column");
+    column.setAttribute("aria-label", label);
+    const records = loaded
+      .filter(
+        (entry) =>
+          (entry.work_item || entry.current || entry).lifecycle === lifecycle,
+      )
+      .filter(matches);
+    const heading = el("div", undefined, "column-heading");
+    heading.append(
+      el("strong", label),
+      el("span", String(records.length), "count"),
+    );
+    column.append(heading);
+    for (const item of records) column.append(itemView(item));
+    if (!records.length)
+      column.append(
+        el("p", copy.text.noLoadedItemsMatchTheFilters, "board-empty"),
+      );
+    board.append(column);
+  }
+  content.append(
+    board,
+    el(
+      "p",
+      message(
+        "itemsShown",
+        loaded.filter(matches).length,
+        ` · ${snapshot.counts.work_items || 0} total`,
+      ),
+      "section-note",
+    ),
+  );
+  const cursor = page ? page.next : snapshot.section_cursors.work_items;
+  if (cursor) {
+    const more = actionButton(
+      copy.text.loadMore,
+      async () => {
+        const generation = state.generation;
+        more.disabled = true;
+        try {
+          const next = await request(
+            `${outcomeBase()}/continuity/work_items?limit=25&cursor=${encodeURIComponent(cursor)}`,
+          );
+          if (generation !== state.generation || snapshot !== state.snapshot)
+            return;
+          if (
+            canvasRevision(next.outcome_revision) !==
+            canvasRevision(snapshot.outcome_revision)
+          )
+            throw Error(
+              copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+            );
+          const unique = new Map(
+            [...loaded, ...next.items].map((item) => [
+              (item.work_item || item.current || item).ref.id,
+              item,
+            ]),
+          );
+          state.boardLoaded.set("work_items", {
+            items: [...unique.values()],
+            next: next.next_cursor || "",
+          });
+          if (state.area === "work" && state.view === "board") renderBoard();
+        } catch (error) {
+          if (
+            (generation === state.generation && snapshot === state.snapshot) ||
+            [401, 403].includes(error.status)
+          )
+            report(error);
+        } finally {
+          more.disabled = false;
+        }
+      },
+      "quiet more-button",
+    );
+    more.dataset.more = "true";
+    content.append(more);
+  }
+}
 const plurals = {
   objective: "objectives",
   work_item: "work-items",
@@ -1742,6 +2719,8 @@ const plurals = {
   evidence: "evidence",
   artifact: "artifacts",
   roadmap: "roadmaps",
+  relation: "relations",
+  evidence_link: "evidence-links",
 };
 function readable(value, key = "", depth = 0, authored = false) {
   authored =
@@ -1871,12 +2850,13 @@ function quickActions(kind, entity) {
   const container = el("div", undefined, "quick-actions");
   const advanced = el("details");
   advanced.append(el("summary", copy.text.advanced));
-  for (const action of effectiveActions(kind, entity)) {
+  for (const action of effectiveActions(kind, { ...entity, _kind: kind })) {
     const destination = action.advanced ? advanced : container;
     destination.append(
       actionButton(
         action.label,
         () => {
+          if (!allowCanvasNavigation()) return;
           state.selected = { ...entity, _kind: kind };
           openCommands(action.name);
         },
@@ -1887,247 +2867,398 @@ function quickActions(kind, entity) {
   if (advanced.children.length > 1) container.append(advanced);
   return container;
 }
-async function showEntity(ref) {
+async function showEntity(
+  ref,
+  { internal = false, preserveCamera = false } = {},
+) {
+  if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
   const generation = state.generation;
-  if (
-    ref.namespace_id !== state.namespace ||
-    ref.outcome_id !== state.outcome.id
-  ) {
-    notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
-    return;
-  }
-  const path =
-    ref.kind === "outcome"
-      ? outcomeBase()
-      : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
-  const result = await request(path);
-  let operationalState;
-  if (ref.kind === "work_item") {
-    const projection = await request(`${path}/operational-state`);
+  const isCanvas = canvasActive();
+  try {
+    if (
+      ref.namespace_id !== state.namespace ||
+      ref.outcome_id !== state.outcome.id
+    ) {
+      notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
+      return;
+    }
+    const path =
+      ref.kind === "outcome"
+        ? outcomeBase()
+        : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
+    const result = await request(path);
     if (
       generation !== state.generation ||
       detailGeneration !== state.detailGeneration
     )
       return;
-    if (result.outcome_revision !== projection.outcome_revision)
-      throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
-    operationalState = projection.state;
-  }
-  if (generation !== state.generation) return;
-  if (detailGeneration !== state.detailGeneration) return;
-  const entity = {
-    ...(result.value || result),
-    ...(operationalState ? { _operational_state: operationalState } : {}),
-  };
-  state.contractView = null;
-  state.submission = null;
-  state.selected = { ...entity, _kind: ref.kind };
-  state.criterion = null;
-  state.entities.set(`${ref.kind}/${ref.id}`, {
-    ref,
-    title: entity.title || entity.name || entity.description,
-    lifecycle: entity.lifecycle,
-  });
-  $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
-  $("detail-title").textContent =
-    entity.title || entity.name || entity.description || human(ref.kind);
-  const detail = $("detail-content");
-  detail.replaceChildren();
-  const status = el("div", undefined, "detail-status");
-  if (entity.lifecycle) status.append(badge(entity.lifecycle));
-  if (entity.priority)
-    status.append(
-      el("span", message("prioritye9f4", display(entity.priority)), "badge"),
-    );
-  if (entity.archived_at)
-    status.append(el("span", copy.text.archived, "badge"));
-  detail.append(status);
-  if (entity._operational_state) {
-    const readiness = el("section", undefined, "detail-section");
-    readiness.append(
-      el("h3", copy.text.operationalReadiness),
-      badge(entity._operational_state.display_state),
-      el(
-        "p",
-        message(
-          "reservationAuthorityEvaluated",
-          display(entity._operational_state.lease_status),
-          date(entity._operational_state.evaluated_at),
-        ),
-      ),
-    );
-    if (entity._operational_state.readiness_reasons?.length)
+    let operationalState, context, attention;
+    if (ref.kind === "work_item") {
+      const needsAttention = isCanvas || usesWorkContracts();
+      const projection = needsAttention
+        ? await request(`${path}/attention`)
+        : await request(`${path}/operational-state`);
+      if (needsAttention) attention = projection;
+      if (isCanvas) {
+        context = await request(`${path}/context`);
+        if (
+          generation !== state.generation ||
+          detailGeneration !== state.detailGeneration
+        )
+          return;
+        if (
+          canvasRevision(context.outcome_revision) !==
+          canvasRevision(result.outcome_revision)
+        )
+          throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
+      }
+      if (
+        generation !== state.generation ||
+        detailGeneration !== state.detailGeneration
+      )
+        return;
+      if (
+        canvasRevision(result.outcome_revision) !==
+        canvasRevision(projection.outcome_revision)
+      )
+        throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
+      operationalState = needsAttention
+        ? attention.operational_state
+        : projection.state;
+    }
+    if (generation !== state.generation) return;
+    if (detailGeneration !== state.detailGeneration) return;
+    if (
+      isCanvas &&
+      state.canvasModel &&
+      canvasRevision(result.outcome_revision) !== state.canvasModel.revision
+    )
+      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
+    state.detailRevision = result.outcome_revision;
+    const entity = {
+      ...(result.value || result),
+      ...(operationalState ? { _operational_state: operationalState } : {}),
+    };
+    const focusWasInDetails =
+      isCanvas &&
+      canvasInspector.isVisible("detail") &&
+      $("canvas-details").contains(document.activeElement);
+    state.contractView = null;
+    state.submission = null;
+    state.selected = { ...entity, _kind: ref.kind };
+    if (isCanvas) state.canvasSelected = ref;
+    state.criterion = null;
+    state.entities.set(`${ref.kind}/${ref.id}`, {
+      ref,
+      title: entity.title || entity.name || entity.description,
+      lifecycle: entity.lifecycle,
+    });
+    $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
+    $("detail-title").textContent =
+      entity.title || entity.name || entity.description || human(ref.kind);
+    const detail = $("detail-content");
+    detail.replaceChildren();
+    const status = el("div", undefined, "detail-status");
+    if (entity.lifecycle) status.append(badge(entity.lifecycle));
+    if (entity.priority)
+      status.append(
+        el("span", message("prioritye9f4", display(entity.priority)), "badge"),
+      );
+    if (entity.archived_at)
+      status.append(el("span", copy.text.archived, "badge"));
+    detail.append(status);
+    if (entity._operational_state) {
+      const readiness = el("section", undefined, "detail-section");
       readiness.append(
+        el("h3", copy.text.operationalReadiness),
+        badge(entity._operational_state.display_state),
         el(
           "p",
-          entity._operational_state.readiness_reasons
-            .map(display)
-            .join(copy.text.message),
+          usesWorkContracts()
+            ? copy.text.workspaceContractAuthority
+            : message(
+                "reservationAuthorityEvaluated",
+                display(entity._operational_state.lease_status),
+                date(entity._operational_state.evaluated_at),
+              ),
         ),
       );
-    detail.append(readiness);
-  }
-  const description =
-    entity.desired_state ||
-    entity.description ||
-    entity.proposal ||
-    entity.result_summary;
-  if (description) detail.append(el("p", description, "detail-description"));
-  const props = el("dl", undefined, "detail-properties");
-  for (const key of [
-    "created_at",
-    "updated_at",
-    "captured_at",
-    "required_for_outcome",
-    "not_before",
-    "severity",
-    "blocked_ref",
-    "cause_ref",
-    "resolution_summary",
-    "parent_objective_id",
-    "verification_mode",
-    "uri",
-    "source_ref",
-    "objective_id",
-    "producer_ref",
-    "assignee_refs",
-  ]) {
-    if (entity[key] === undefined || entity[key] === null || entity[key] === "")
-      continue;
-    const dd = el("dd");
-    if (["objective_id", "parent_objective_id"].includes(key))
-      dd.append(
-        referenceButton({ ...ref, kind: "objective", id: entity[key] }),
+      if (entity._operational_state.readiness_reasons?.length)
+        readiness.append(
+          el(
+            "p",
+            entity._operational_state.readiness_reasons
+              .map(display)
+              .join(copy.text.message),
+          ),
+        );
+      detail.append(readiness);
+    }
+    const description =
+      entity.desired_state ||
+      entity.description ||
+      entity.proposal ||
+      entity.result_summary ||
+      entity.reason ||
+      entity.rationale;
+    if (description) detail.append(el("p", description, "detail-description"));
+    const props = el("dl", undefined, "detail-properties");
+    for (const key of [
+      "created_at",
+      "updated_at",
+      "captured_at",
+      "required_for_outcome",
+      "not_before",
+      "severity",
+      "blocked_ref",
+      "cause_ref",
+      "resolution_summary",
+      "parent_objective_id",
+      "verification_mode",
+      "uri",
+      "source_ref",
+      "objective_id",
+      "producer_ref",
+      "assignee_refs",
+      "target_ref",
+      "relation_type",
+      "strength",
+      "evidence_id",
+      "stance",
+      "criterion_id",
+    ]) {
+      if (
+        entity[key] === undefined ||
+        entity[key] === null ||
+        entity[key] === ""
+      )
+        continue;
+      const dd = el("dd");
+      if (["objective_id", "parent_objective_id"].includes(key))
+        dd.append(
+          referenceButton({ ...ref, kind: "objective", id: entity[key] }),
+        );
+      else if (key === "uri") {
+        try {
+          const u = new URL(entity[key]);
+          if (["https:", "http:"].includes(u.protocol)) {
+            const a = el("a", entity[key]);
+            a.href = u.href;
+            a.target = "_blank";
+            a.rel = copy.text.noopenerNoreferrer;
+            dd.append(a);
+          } else dd.append(el("span", entity[key]));
+        } catch {
+          dd.append(el("span", entity[key]));
+        }
+      } else dd.append(readable(entity[key], key));
+      props.append(el("dt", human(key)), dd);
+    }
+    detail.append(props);
+    if (entity.current_lease) {
+      const lease = el("section", undefined, "detail-section");
+      lease.append(
+        el("h3", copy.text.executionReservation),
+        el(
+          "p",
+          message(
+            "expires",
+            entity.current_lease.actor_ref?.id ||
+              entity.current_lease.principal_id,
+            date(entity.current_lease.expires_at),
+          ),
+        ),
       );
-    else if (key === "uri") {
-      try {
-        const u = new URL(entity[key]);
-        if (["https:", "http:"].includes(u.protocol)) {
-          const a = el("a", entity[key]);
-          a.href = u.href;
-          a.target = "_blank";
-          a.rel = copy.text.noopenerNoreferrer;
-          dd.append(a);
-        } else dd.append(el("span", entity[key]));
-      } catch {
-        dd.append(el("span", entity[key]));
+      detail.append(lease);
+    }
+    if (isCanvas && ref.kind === "work_item") {
+      const contextHost = el("div");
+      detail.append(contextHost);
+      renderCanvasContext(contextHost, {
+        entity,
+        context,
+        attention,
+        onReference: (target) => showEntity(target).catch(report),
+        onHistory: (target) =>
+          loadCanvasHistory(contextHost, target, detailGeneration),
+      });
+      const model = state.canvasData?.context(context, { attention });
+      if (model) acceptCanvas(model);
+    }
+    if (ref.kind === "work_item" && entity.contracts_enabled) {
+      await contractSection(detail, entity, detailGeneration);
+      if (detailGeneration !== state.detailGeneration) return;
+    }
+    const criteria = entity.criteria?.items || [];
+    if (criteria.length) {
+      const group = el("section", undefined, "detail-section");
+      group.append(el("h3", copy.text.successCriteria));
+      for (const criterion of criteria) {
+        const button = el("button", undefined, copy.text.itemCriterionItem);
+        button.append(
+          el("strong", criterion.title),
+          el(
+            "small",
+            message(
+              "revision51f7",
+              criterion.required ? copy.text.required : copy.text.optional,
+              display(criterion.verification_mode),
+              criterion.criterion_revision,
+            ),
+          ),
+        );
+        const assessment = entity.criteria.current_assessments?.[criterion.id];
+        if (assessment) button.append(badge(assessment.result));
+        button.append(el("small", copy.text.reviewAssessment));
+        button.onclick = () => {
+          if (!allowCanvasNavigation()) return;
+          state.criterion = criterion;
+          openCommands("record_criterion_assessment");
+        };
+        group.append(button);
       }
-    } else dd.append(readable(entity[key], key));
-    props.append(el("dt", human(key)), dd);
-  }
-  detail.append(props);
-  if (entity.current_lease) {
-    const lease = el("section", undefined, "detail-section");
-    lease.append(
-      el("h3", copy.text.executionReservation),
-      el(
-        "p",
-        message(
-          "expires",
-          entity.current_lease.actor_ref?.id ||
-            entity.current_lease.principal_id,
-          date(entity.current_lease.expires_at),
-        ),
-      ),
-    );
-    detail.append(lease);
-  }
-  if (ref.kind === "work_item" && entity.contracts_enabled) {
-    await contractSection(detail, entity, detailGeneration);
-    if (detailGeneration !== state.detailGeneration) return;
-  }
-  const criteria = entity.criteria?.items || [];
-  if (criteria.length) {
-    const group = el("section", undefined, "detail-section");
-    group.append(el("h3", copy.text.successCriteria));
-    for (const criterion of criteria) {
-      const button = el("button", undefined, copy.text.itemCriterionItem);
-      button.append(
-        el("strong", criterion.title),
-        el(
-          "small",
-          message(
-            "revision51f7",
-            criterion.required ? copy.text.required : copy.text.optional,
-            display(criterion.verification_mode),
-            criterion.criterion_revision,
-          ),
-        ),
-      );
-      const assessment = entity.criteria.current_assessments?.[criterion.id];
-      if (assessment) button.append(badge(assessment.result));
-      button.append(el("small", copy.text.reviewAssessment));
-      button.onclick = () => {
-        state.criterion = criterion;
-        openCommands("record_criterion_assessment");
-      };
-      group.append(button);
+      detail.append(group);
     }
-    detail.append(group);
-  }
-  if (entity.conclusion) {
-    const group = el("section", undefined, "detail-section");
-    group.append(
-      el("h3", copy.text.currentConclusion),
-      conclusionView(entity.conclusion),
-    );
-    detail.append(group);
-  }
-  if (entity.conclusion_history?.length) {
-    const history = el("details");
-    history.append(el("summary", copy.text.previousConclusions));
-    for (const c of entity.conclusion_history)
-      history.append(conclusionView(c));
-    detail.append(history);
-  }
-  if (ref.kind === "roadmap") {
-    if (entity.draft) {
-      const draft = el("details");
-      draft.open = true;
-      draft.append(
-        el("summary", message("draftVersion3d05", entity.draft.draft_version)),
-        planNodes(entity.draft.nodes),
+    if (entity.conclusion) {
+      const group = el("section", undefined, "detail-section");
+      group.append(
+        el("h3", copy.text.currentConclusion),
+        conclusionView(entity.conclusion),
       );
-      detail.append(draft);
+      detail.append(group);
     }
-    for (const revision of entity.revisions || []) {
+    if (entity.conclusion_history?.length) {
       const history = el("details");
-      history.open = revision === entity.revisions.at(-1);
-      history.append(
-        el(
-          "summary",
-          message(
-            "revision0c81",
-            revision.revision_number,
-            revision.reason || copy.text.publishedRoadmap,
-          ),
-        ),
-        planNodes(revision.nodes),
-      );
+      history.append(el("summary", copy.text.previousConclusions));
+      for (const c of entity.conclusion_history)
+        history.append(conclusionView(c));
       detail.append(history);
     }
+    if (ref.kind === "roadmap") {
+      if (entity.draft) {
+        const draft = el("details");
+        draft.open = true;
+        draft.append(
+          el(
+            "summary",
+            message("draftVersion3d05", entity.draft.draft_version),
+          ),
+          planNodes(entity.draft.nodes),
+        );
+        if (isCanvas && entity.draft.lifecycle === "open")
+          draft.append(
+            actionButton(
+              "View draft on canvas",
+              () =>
+                viewCanvasPlan({
+                  roadmap_id: entity.id,
+                  draft: entity.draft,
+                  outcome_revision: result.outcome_revision,
+                }),
+              "quiet",
+            ),
+          );
+        detail.append(draft);
+      }
+      for (const revision of entity.revisions || []) {
+        const history = el("details");
+        history.open = revision === entity.revisions.at(-1);
+        history.append(
+          el(
+            "summary",
+            message(
+              "revision0c81",
+              revision.revision_number,
+              revision.reason || copy.text.publishedRoadmap,
+            ),
+          ),
+          planNodes(revision.nodes),
+        );
+        if (isCanvas)
+          history.append(
+            actionButton(
+              `View revision ${revision.revision_number} on canvas`,
+              () =>
+                viewCanvasPlan({
+                  roadmap_id: entity.id,
+                  revision_number: revision.revision_number,
+                }),
+              "quiet",
+            ),
+          );
+        detail.append(history);
+      }
+    }
+    const tech = el("details", undefined, "technical");
+    tech.append(
+      el("summary", copy.text.technicalDetailsAndAudit),
+      el("pre", JSON.stringify(entity, null, 2)),
+    );
+    detail.append(tech);
+    $("detail-actions").querySelector(".quick-actions")?.remove();
+    $("detail-actions").prepend(quickActions(ref.kind, entity));
+    if (isCanvas) {
+      if (
+        !preserveCamera ||
+        !canvasInspector.isVisible("detail") ||
+        (focusWasInDetails && document.activeElement === document.body)
+      )
+        canvasInspector.showDetails();
+      if (
+        [
+          "outcome",
+          "objective",
+          "work_item",
+          "issue",
+          "blocker",
+          "evidence",
+          "artifact",
+          "decision",
+        ].includes(ref.kind)
+      ) {
+        const model = await state.canvasData?.expand(ref);
+        if (
+          detailGeneration !== state.detailGeneration ||
+          generation !== state.generation
+        )
+          return;
+        if (model) acceptCanvas(model);
+      }
+      state.canvasView?.update(canvasPresentation(), {
+        selectedKey: `${ref.kind}:${ref.id}`,
+      });
+      if (!preserveCamera) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
+      if (!preserveCamera || !canvasInspector.isVisible("detail"))
+        canvasInspector.showDetails();
+      if (!preserveCamera) revealCanvasInspector();
+    } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
+    writeRoute(ref);
+    return state.selected;
+  } catch (error) {
+    if (
+      generation !== state.generation ||
+      detailGeneration !== state.detailGeneration
+    ) {
+      error.discarded = true;
+      error.name = "AbortError";
+    }
+    throw error;
   }
-  const tech = el("details", undefined, "technical");
-  tech.append(
-    el("summary", copy.text.technicalDetailsAndAudit),
-    el("pre", JSON.stringify(entity, null, 2)),
-  );
-  detail.append(tech);
-  $("detail-actions").querySelector(".quick-actions")?.remove();
-  $("detail-actions").prepend(quickActions(ref.kind, entity));
-  if (!$("detail-dialog").open) $("detail-dialog").showModal();
-  writeRoute(ref);
 }
-$("close-detail").onclick = () => $("detail-dialog").close();
-$("detail-dialog").addEventListener("close", () => writeRoute());
+$("close-detail").onclick = () => closeDetail();
+$("detail-dialog").addEventListener("close", () => {
+  if (!canvasActive()) writeRoute(null);
+});
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
+  if (!allowCanvasNavigation()) return;
   state.selected = { ...state.outcome, _kind: "outcome" };
   state.criterion = null;
   openCommands();
 };
 $("create-outcome").onclick = () => {
+  if (!allowCanvasNavigation()) return;
   state.selected = null;
   openCommands("create_outcome");
 };
@@ -2205,8 +3336,13 @@ function openTechnicalCommands(name) {
     );
     return;
   }
+  if (!allowCanvasNavigation()) return;
+  if (canvasActive()) navigateArea("overview");
   state.humanForm?.dispose();
   state.humanForm = null;
+  state.formOriginCanvas = false;
+  state.formEpoch++;
+  state.formTarget = structuredClone(state.selected);
   state.technical = true;
   state.formScope = currentScope();
   state.formGeneration = state.generation;
@@ -2265,7 +3401,8 @@ function openTechnicalCommands(name) {
   $("command-dialog").showModal();
 }
 function field(name, schema, value, required = false) {
-  const wrap = el("div");
+  const wrap = el("div", undefined, "technical-field");
+  wrap.dataset.fieldKind = schema.type || "";
   let getter;
   if (
     value !== undefined &&
@@ -2602,6 +3739,7 @@ function field(name, schema, value, required = false) {
 }
 let formGetter;
 function buildForm() {
+  $("command-form").dataset.mode = "technical";
   const descriptor = state.catalog.find(
     (x) => x.name === $("command-select").value,
   );
@@ -2642,8 +3780,21 @@ function buildForm() {
 }
 
 $("command-select").onchange = buildForm;
-$("close-command").onclick = () => $("command-dialog").close();
-$("command-dialog").addEventListener("close", () => state.humanForm?.dispose());
+$("close-command").onclick = () => {
+  if (state.submitting || (state.pending && state.formOriginCanvas)) {
+    notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
+    return;
+  }
+  closeForm();
+};
+$("command-dialog").addEventListener("close", () => {
+  state.formEpoch++;
+  state.humanForm?.dispose();
+});
+$("command-dialog").addEventListener("cancel", (event) => {
+  if (state.submitting || (state.pending && state.formOriginCanvas))
+    event.preventDefault();
+});
 function projectCommand(name, value) {
   // The technical catalog validates transport compatibility; it does not generate human fields.
   const allowed =
@@ -2663,7 +3814,11 @@ function openCommands(name) {
   }
   if (state.pending) {
     notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
-    $("command-dialog").showModal();
+    presentForm();
+    return;
+  }
+  if (canvasInspector.isVisible("form")) {
+    allowCanvasNavigation();
     return;
   }
   if (!name) {
@@ -2676,7 +3831,7 @@ function openCommands(name) {
         actionButton(
           action.label,
           () => {
-            $("action-dialog").close();
+            closeActions();
             openCommands(action.name);
           },
           "quiet",
@@ -2687,7 +3842,8 @@ function openCommands(name) {
       menu.append(
         el("p", copy.text.noChangesAreAvailableForYourCurrentPermissionsAnd),
       );
-    $("action-dialog").showModal();
+    if (canvasInspector.enabled) canvasInspector.showActions();
+    else $("action-dialog").showModal();
     return;
   }
   const context =
@@ -2701,8 +3857,13 @@ function openCommands(name) {
     return;
   }
   if (!commandAvailableInUI(name)) return;
+  state.detailGeneration++;
+  state.formEpoch++;
+  state.formTarget = structuredClone(state.selected);
+  state.formOriginCanvas = canvasActive();
   state.humanForm?.dispose();
   state.technical = false;
+  $("command-form").dataset.mode = "human";
   state.formScope = currentScope();
   state.formGeneration = state.generation;
   $("command-select").replaceChildren(
@@ -2722,7 +3883,7 @@ function openCommands(name) {
           : copy.text.saveChanges;
   state.humanForm = humanForm(name, {
     scope: state.formScope,
-    entity: state.selected || {},
+    entity: state.formTarget || {},
     criterion: state.criterion,
     request: (path, options) => request(`${api}${path}`, options),
     permissions: state.permissions,
@@ -2747,10 +3908,10 @@ function openCommands(name) {
   $("conflict-review").replaceChildren();
   $("retry-command").hidden = true;
   $("submit-command").disabled = false;
-  $("detail-dialog").close();
-  $("command-dialog").showModal();
+  if (!canvasInspector.enabled) $("detail-dialog").close();
+  presentForm();
 }
-$("close-actions").onclick = () => $("action-dialog").close();
+$("close-actions").onclick = closeActions;
 $("developer-tools").onclick = () => {
   if (state.pending) {
     openCommands();
@@ -2823,7 +3984,10 @@ async function submit(retry = false, reconciled) {
       state.formGeneration !== state.generation
     )
       return;
-    $("command-dialog").close();
+    const canvasOrigin = state.formOriginCanvas;
+    if (canvasOrigin) {
+      canvasInspector.closeAll();
+    } else $("command-dialog").close();
     state.humanForm?.dispose();
     $("fields").inert = false;
     if (result.value?.desired_state !== undefined) {
@@ -2831,8 +3995,9 @@ async function submit(retry = false, reconciled) {
       state.selected = { ...result.value, _kind: "outcome" };
       if (pending.name === "create_outcome") {
         state.generation++;
-        state.view = "summary";
-        state.area = "overview";
+        resetCanvas();
+        state.view = "canvas";
+        state.area = "canvas";
       }
     }
     const newSection =
@@ -2841,7 +4006,7 @@ async function submit(retry = false, reconciled) {
         : Object.entries(createForSection).find(
             ([, command]) => command === pending.name,
           )?.[0];
-    if (newSection) {
+    if (newSection && !canvasOrigin) {
       state.section = newSection;
       state.area = areaFor(newSection);
       state.view = "list";
@@ -2851,12 +4016,31 @@ async function submit(retry = false, reconciled) {
     await discover();
     if (state.outcome) await refresh();
     writeRoute();
-    if (!state.technical && pending.name === "create_work_item")
-      await showEntity({
-        ...pending.scope,
-        kind: "work_item",
-        id: result.value.id,
-      });
+    const createdKind = {
+      create_objective: "objective",
+      create_work_item: "work_item",
+      create_issue: "issue",
+      register_evidence: "evidence",
+      register_artifact: "artifact",
+      create_roadmap: "roadmap",
+      create_decision: "decision",
+    }[pending.name];
+    const selectedKind = createdKind || state.formTarget?._kind;
+    const selectedID = createdKind ? result.value?.id : state.formTarget?.id;
+    if (canvasOrigin && selectedKind && selectedID) {
+      await showEntity(
+        { ...currentScope(), kind: selectedKind, id: selectedID },
+        { internal: true },
+      );
+    } else if (!state.technical && pending.name === "create_work_item")
+      await showEntity(
+        {
+          ...pending.scope,
+          kind: "work_item",
+          id: result.value.id,
+        },
+        { internal: true },
+      );
     notice(
       pending.name === "create_outcome"
         ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks
@@ -2871,6 +4055,10 @@ async function submit(retry = false, reconciled) {
       : e.code === "version_conflict"
         ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
         : e.message;
+    if (canvasInspector.isVisible("form")) {
+      $("command-error").tabIndex = -1;
+      $("command-error").focus({ preventScroll: true });
+    }
     if (committed) {
       report(e);
       return;
@@ -2908,9 +4096,17 @@ const rebaseEdits = new Set([
   "replace_roadmap_draft",
 ]);
 function offerConflict(pending) {
+  const epoch = state.formEpoch,
+    target = structuredClone(state.formTarget),
+    generation = state.generation;
+  const current = () =>
+    epoch === state.formEpoch &&
+    generation === state.generation &&
+    sameScope(pending.scope, currentScope()) &&
+    $("command-select").value === pending.name;
   const root = $("conflict-review");
   const discard = () => {
-    $("command-dialog").close();
+    closeForm();
     refresh().catch(report);
   };
   root.replaceChildren(
@@ -2929,20 +4125,21 @@ function offerConflict(pending) {
       copy.text.compareWithLatestState,
       async () => {
         try {
-          const entity = state.selected,
+          if (!current()) return;
+          const entity = target,
             kind = entity?._kind || "outcome",
             path =
               kind === "outcome"
                 ? outcomeBase()
                 : `${outcomeBase()}/${plurals[kind]}/${entity.id}`;
           const result = await request(path);
-          if (!sameScope(pending.scope, currentScope())) return;
+          if (!current()) return;
           const latest = result.value || result,
             local = JSON.parse(pending.body).command;
           root.replaceChildren(
             el("h3", copy.text.reviewLatestStateAndYourLocalDraft),
           );
-          const columns = el("div", undefined, "conflict-columns");
+          const columns = conflictComparison();
           for (const [label, data] of [
             [copy.text.latestSavedState, latest],
             [copy.text.yourLocalChanges, local],
@@ -2956,6 +4153,7 @@ function offerConflict(pending) {
             actionButton(
               copy.text.useLatestVersionAndSaveMyEdits,
               () => {
+                if (!current()) return;
                 const next = reconcileDraft(local, latest);
                 state.formScope = pending.scope;
                 state.formGeneration = state.generation;

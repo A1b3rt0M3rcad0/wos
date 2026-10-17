@@ -1,0 +1,319 @@
+# PR — Evolução da UI/UX do WOS: Visual Operational Workspace
+
+Crie um novo PR para evoluir profundamente a UI e a UX do WOS, utilizando a implementação atual da branch `master` como base e **preservando integralmente sua identidade visual**: cores, tipografia, ilustrações, robozinhos, traços, estilo editorial, composição e linguagem visual.
+
+O objetivo não é redesenhar o WOS nem transformá-lo em um dashboard genérico. Quero elevar significativamente seu acabamento, personalidade, fluidez e facilidade de uso.
+
+**Quero que o usuário, ao entrar no WOS, encontre uma experiência visualmente encantadora, sofisticada e tão intuitiva quanto olhar para um quadro de trabalho bem organizado.**
+
+A principal transformação deve ocorrer na arquitetura da informação e na maneira como o usuário visualiza, compreende e interage com o trabalho.
+
+## 1. Entenda profundamente o WOS antes de implementar
+
+Estude a arquitetura e a implementação real do WOS na `master`, especialmente:
+
+- O modelo de domínio e os relacionamentos entre Outcome, Objective, Roadmap, WorkItem, Issue, Blocker, Evidence, Artifact, Assessment, Conclusion e Activity.
+- As regras de planejamento, execução, contratos, dependências, autorização, critérios de sucesso e conclusão.
+- Os fluxos existentes no frontend: Overview, Plan, Work, Issues, Evidence e Activity.
+- Os componentes, serviços, projeções e endpoints já implementados.
+- O design system editorial atual, seus tokens, tipografia, ilustrações, responsividade, modais e padrões de interação.
+
+Consulte especialmente `packages/wos-core`, `packages/wos-api/web/assets`, `docs/architecture.md`, `docs/workspace-ux.md` e `docs/design/editorial`.
+
+**O WOS é um sistema de estado e coordenação persistente de trabalho entre humanos e agentes, não um executor de agentes. A nova UI deve expressar esse domínio real, sem simplificações que alterem suas regras.**
+
+## 2. Transforme o Outcome em um workspace operacional unificado
+
+Atualmente, um Outcome possui seis áreas separadas: Overview, Plan, Work, Issues, Evidence e Activity.
+
+Essa fragmentação obriga o usuário a alternar entre diferentes interfaces para compreender algo que, conceitualmente, faz parte do mesmo trabalho.
+
+Quero transformar cada Outcome em um **workspace operacional unificado, com um canvas visual interativo como experiência principal**.
+
+O usuário deve abrir um Outcome e imediatamente compreender:
+
+- Qual é o resultado pretendido e seus critérios de sucesso.
+- Quais objetivos precisam ser alcançados.
+- Como os objetivos e trabalhos se relacionam.
+- O que já foi concluído, o que está acontecendo e o que permanece pendente.
+- Quais Tasks estão prontas para execução.
+- O que está bloqueado, por qual motivo e quais dependências impedem o avanço.
+- Quais entregas precisam de revisão, validação ou decisão.
+- Quais são os próximos trabalhos disponíveis.
+
+**O canvas deve ser a principal interface de operação do Outcome, e não apenas uma representação gráfica dos dados.**
+
+O usuário deve conseguir compreender, navegar, criar, editar e acompanhar o trabalho sem precisar trocar constantemente de tela.
+
+## 3. Canvas visual com conexões reais
+
+Desenvolva um canvas interativo inspirado na experiência de um board visual conectado, preservando a identidade editorial do WOS.
+
+O canvas deve representar os elementos como nós visuais, com conexões que expressem seus relacionamentos reais.
+
+### Estrutura visual
+
+Utilize o Outcome como contexto principal da experiência.
+
+Os Objectives devem organizar a estrutura operacional, incluindo suas relações hierárquicas. Os WorkItems devem aparecer associados aos respectivos Objectives ou diretamente ao Outcome quando não houver associação.
+
+Roadmaps devem acrescentar a dimensão de planejamento: fases, milestones, referências, organização, sequenciamento e revisões.
+
+Issues, Blockers, Evidence e demais elementos devem ser acessíveis no contexto dos itens aos quais estão relacionados.
+
+**Respeite a diferença entre estrutura operacional e planejamento:**
+
+- Outcome é o resultado central.
+- Objectives são condições intermediárias.
+- WorkItems são unidades concretas de trabalho.
+- Roadmaps são planos opcionais e versionados que referenciam Objectives e WorkItems, sem possuí-los.
+- Um Outcome pode funcionar sem Roadmap.
+- Podem existir Roadmaps vinculados ao Outcome ou a Objectives.
+- A ordem de um Roadmap não cria automaticamente dependências operacionais.
+
+Quando não houver Roadmap, o canvas deve continuar plenamente funcional a partir da hierarquia e dos relacionamentos operacionais existentes.
+
+### Conexões
+
+Represente visualmente os relacionamentos já suportados pelo WOS, incluindo:
+
+- Hierarquia entre Outcome e Objectives.
+- Hierarquia entre Objectives.
+- Associação de WorkItems a Objectives ou Outcome.
+- Dependências operacionais `depends_on`, distinguindo `hard` e `advisory`.
+- Relações explícitas entre entidades.
+- Blockers, seus alvos e causas.
+- Relações de Evidence, incluindo `supports`, `contradicts` e `context`.
+- Referências, fases, milestones e sequenciamento de Roadmaps, quando aplicável.
+
+Utilize estilos de conexão distintos conforme seu significado. Uma dependência operacional não deve ser visualmente confundida com hierarquia, associação ou sequência de planejamento.
+
+As conexões devem ser compreensíveis, com identificação contextual e destaque ao selecionar um elemento.
+
+**Não invente relações de domínio nem transforme proximidade, posição ou ordem visual em dependência real.**
+
+A criação ou remoção de conexões deve utilizar operações existentes, respeitando validações, permissões e invariantes do backend.
+
+## 4. Interação direta e navegação intuitiva
+
+O canvas deve permitir:
+
+- **Zoom e pan:** navegar livremente sem perder orientação.
+- **Auto-layout:** organizar nós e conexões de forma legível, previsível e coerente com a hierarquia.
+- **Expandir e recolher:** explorar objetivos, trabalhos e agrupamentos progressivamente.
+- **Seleção contextual:** destacar o elemento e suas relações relevantes.
+- **Criação direta:** adicionar Objectives, Tasks e outros elementos permitidos no próprio contexto.
+- **Edição simples:** modificar dados autorizados com poucas ações, sem abrir formulários técnicos desnecessários.
+- **Conexões interativas:** visualizar e manipular relacionamentos reais, com validação e confirmação quando necessário.
+- **Busca e localização:** encontrar elementos e centralizá-los no canvas.
+- **Atualização de estados:** refletir o estado persistido após mudanças e atualizações.
+- **Navegação contextual:** aprofundar em um objetivo ou trabalho sem perder a visão do conjunto.
+
+A organização visual deve favorecer leitura imediata, inclusive em Outcomes com centenas de elementos.
+
+Evite a apresentação simultânea de todas as conexões quando isso prejudicar a legibilidade. Utilize agrupamento, detalhamento progressivo, filtros e carregamento sob demanda.
+
+O canvas deve continuar útil tanto para um Outcome com poucos trabalhos quanto para estruturas complexas.
+
+## 5. Um painel contextual integrado
+
+Ao selecionar qualquer elemento, apresente um painel de detalhes dentro do mesmo workspace, preferencialmente lateral, sem tirar o usuário do canvas.
+
+O conteúdo deve variar conforme o tipo de entidade.
+
+Por exemplo, ao selecionar uma Task, o usuário deve conseguir consultar:
+
+- Objetivo associado e contexto do trabalho.
+- Descrição, instruções, restrições e entregáveis.
+- Estado operacional, prioridade e prontidão.
+- Dependências e impedimentos.
+- Critérios de sucesso e avaliações.
+- Evidências, artefatos e decisões relacionados.
+- Contrato, autoridade de execução, submissão e revisão, quando aplicável.
+- Histórico relevante e ações atualmente permitidas.
+
+As ações disponíveis devem ser apresentadas de maneira clara e contextual.
+
+Priorize ações comuns e informações essenciais. Detalhes avançados devem continuar disponíveis, mas não dominar a experiência.
+
+**O usuário deve conseguir trabalhar diretamente no quadro, sem precisar navegar por várias páginas ou abrir sucessivos modais.**
+
+Reutilize os formulários, componentes e mecanismos de mutação existentes. O novo painel deve ser uma evolução dessas capacidades, não uma implementação paralela das regras de negócio.
+
+## 6. Integre Overview, Plan, Work, Issues, Evidence e Activity
+
+Essas áreas devem deixar de representar seis contextos operacionais isolados.
+
+Organize suas capacidades dentro de uma experiência central:
+
+**Overview:** apresente indicadores, progresso, critérios, pendências e próximos passos diretamente no contexto do Outcome.
+
+**Plan:** permita visualizar e manipular a organização do trabalho, incluindo Objectives e Roadmaps. Preserve Draft, histórico de revisões, publicação e ativação como operações distintas.
+
+**Work:** integre Tasks ao mapa operacional, permitindo acompanhar seus estados, consultar contratos e acessar ações de execução permitidas.
+
+**Issues:** exiba problemas e impedimentos em relação aos elementos afetados, respeitando a separação entre Issue e Blocker.
+
+**Evidence:** disponibilize evidências, artefatos, avaliações e decisões no contexto das entidades correspondentes.
+
+**Activity:** apresente acontecimentos e histórico relevantes sem exigir navegação constante para outra tela.
+
+Não é necessário eliminar todas as visualizações atuais.
+
+Mantenha listas, Kanban, histórico e outras visualizações especializadas quando forem mais adequadas para determinada operação.
+
+O importante é que sejam **diferentes formas de explorar o mesmo estado compartilhado**, e não experiências desconectadas.
+
+O canvas deve ser a visualização principal, enquanto as demais funcionam como alternativas ou ferramentas complementares.
+
+## 7. Preserve rigorosamente as regras de negócio
+
+A evolução da interface não pode alterar o funcionamento do WOS.
+
+Respeite especialmente:
+
+- **Roadmaps:** Draft, publicação, revisões imutáveis e ativação independente.
+- **Dependências:** relações explícitas, verificadas pelo backend, sem ciclos inválidos.
+- **Tasks:** diferença entre lifecycle persistido, readiness e estado operacional projetado.
+- **Issues e Blockers:** resolver uma Issue não libera automaticamente seus Blockers.
+- **Evidence e Assessments:** registrar evidência não significa validar um critério.
+- **Conclusions:** concluir uma Task não conclui automaticamente o Objective ou Outcome.
+- **WorkContracts:** aquisição, autoridade, lease, fencing, submissão, revisão e finalização explícita.
+- **Signed contracts:** execução e revisão assinadas continuam dependentes de perfis autorizados externos, com handoff para o CLI quando necessário.
+- **Autorização:** a interface apenas apresenta ações elegíveis; a autoridade continua pertencendo ao backend.
+- **Concorrência:** preserve optimistic concurrency, versões esperadas, idempotência e recuperação de operações incertas.
+
+Não permita que uma ação visual, como arrastar um card ou conectar dois nós, execute silenciosamente uma transição que exige autoridade, avaliação ou confirmação.
+
+**A UX deve esconder complexidade desnecessária, não eliminar garantias do sistema.**
+
+## 8. Evolua o design sem perder a identidade do WOS
+
+Preserve o design editorial atual.
+
+Mantenha:
+
+- Paleta Woobe/WOS já implementada em `colors.css`.
+- Superfícies de papel em tons neutros quentes e fundo quadriculado.
+- Instrument Serif, DM Sans e tipografia monoespaçada.
+- Marca laranja desenhada à mão.
+- Robozinhos monocromáticos e traços ilustrativos originais.
+- Bordas finas, geometria editorial, detalhes tipográficos e linguagem visual.
+- Estados, contrastes e padrões de interação existentes.
+- Identidade visual dos modais, controles e painéis.
+
+Não substitua esses elementos por uma biblioteca visual genérica ou por um estilo convencional de aplicação SaaS.
+
+O canvas deve parecer parte natural do WOS: nós, conectores, menus, painéis, estados e animações devem compartilhar a linguagem visual já estabelecida.
+
+Refine cuidadosamente hierarquia, composição, espaçamento, alinhamento, proporções, estados e microinterações.
+
+**Quero mais personalidade e acabamento, não outra identidade.**
+
+### Responsividade e densidade
+
+Preserve o comportamento responsivo atual, especialmente o dimensionamento proporcional em telas maiores que 1440 CSS pixels.
+
+Garanta boa utilização do espaço em Full HD, 2K e 4K, sem diminuir visualmente os componentes nem criar grandes áreas vazias.
+
+Considere separadamente o dimensionamento responsivo da interface e o zoom interno do canvas.
+
+Em telas pequenas, preserve a usabilidade por meio de navegação adaptada, detalhes contextuais acessíveis e uma alternativa adequada ao canvas quando necessário.
+
+A disposição deve continuar clara, proporcional e funcional, independentemente da resolução.
+
+## 9. Implementação técnica pragmática
+
+A implementação deve aproveitar a arquitetura existente.
+
+O WOS já possui capacidades como:
+
+- `GetOutcomeGraph` e o endpoint `/graph`, com nós, conexões e tipos de origem.
+- Consultas de continuidade, progresso e coleções paginadas.
+- Projeções de estado operacional dos WorkItems.
+- Consultas contextuais de WorkItems.
+- Projeções de referências ativas de Roadmaps.
+- Endpoints de busca, detalhes, critérios, ações e histórico.
+- Registry de ações humanas, permissões e controle de intenções.
+
+Utilize esses recursos como fundação.
+
+Crie uma camada de apresentação que combine corretamente hierarquia operacional, dependências, planejamento e estados, mantendo suas semânticas separadas.
+
+Evite criar um novo modelo de negócio apenas para o canvas. Alterações aditivas de consulta ou projeção podem ser feitas quando justificadas, mas preserve o Core e seus contratos existentes.
+
+O frontend atual usa JavaScript nativo com módulos ES e assets embutidos no servidor Go. Prefira evoluir essa estrutura, extraindo componentes e módulos especializados para o canvas, sem introduzir uma migração completa de framework.
+
+Se uma biblioteca de grafos for realmente necessária, justifique sua adoção, seu custo e sua compatibilidade com a arquitetura e o design atuais.
+
+### Consistência e escala
+
+O canvas deve respeitar:
+
+- Revisão e consistência das respostas do Outcome.
+- Paginação, cursores, limites e indicação explícita de dados parciais.
+- Busca autorizada de entidades não carregadas.
+- Carregamento incremental e detalhamento sob demanda.
+- Atualizações de dados sem sobrescrever interações em andamento.
+- Preservação de navegação, deep links e contexto selecionado.
+- Recuperação de conflitos e operações incertas.
+
+Não apresente um grafo parcial como se fosse completo.
+
+Evite carregar todo o histórico, todas as evidências e todos os detalhes operacionais apenas para renderizar a visão inicial.
+
+A prioridade é uma experiência fluida e previsível mesmo com muitos elementos.
+
+## 10. Critérios de qualidade e validação
+
+Antes de concluir, valide o fluxo completo:
+
+1. Abrir um Workspace e selecionar um Outcome.
+2. Entender imediatamente o estado geral do trabalho.
+3. Navegar pelos Objectives e suas relações.
+4. Criar e editar Objectives e Tasks no contexto visual.
+5. Consultar e manipular dependências autorizadas.
+6. Visualizar impedimentos e seus impactos reais.
+7. Consultar evidências, critérios, avaliações e histórico.
+8. Navegar por Roadmaps, incluindo Drafts e revisões publicadas.
+9. Acompanhar estados operacionais, contratos, entregas e revisões.
+10. Utilizar visualizações alternativas, busca e links diretos sem perder contexto.
+
+Inclua validações para Outcomes pequenos e grandes, diferentes permissões, dados paginados, atualizações concorrentes, protocolos de trabalho e ausência de Roadmap.
+
+Valide teclado, foco, contraste, navegação responsiva e comportamento em diferentes resoluções.
+
+Preserve os testes existentes e amplie a suíte Playwright e os testes de componentes para cobrir a nova experiência.
+
+Nenhum controle deve ser meramente decorativo quando parecer interativo. Cada ação deve funcionar de verdade sobre o WOS.
+
+## 11. Organização do trabalho
+
+Implemente tudo em **um único PR, organizado em múltiplos commits coerentes**, separando evolução da estrutura, componentes visuais, integração de dados, interações, responsividade e testes.
+
+Antes de começar, identifique quais partes existentes podem ser reutilizadas e quais precisam ser evoluídas.
+
+Evite reescritas desnecessárias, dependências excessivas, funcionalidades simuladas ou expansão injustificada do escopo do backend.
+
+Documente brevemente a nova arquitetura da experiência, suas decisões e como ela reutiliza o domínio e a API existentes.
+
+## Resultado esperado
+
+Quero que o WOS se torne uma experiência visual de coordenação de trabalho que seja simultaneamente:
+
+- **Encantadora:** desperta interesse desde o primeiro acesso.
+- **Simples:** permite compreender rapidamente o trabalho, mesmo quando complexo.
+- **Integrada:** centraliza as capacidades relacionadas ao Outcome.
+- **Visual:** torna hierarquias, dependências, estados e progresso naturalmente compreensíveis.
+- **Operacional:** permite executar ações reais diretamente no contexto visual.
+- **Escalável:** permanece utilizável e organizada com centenas de elementos.
+- **Coerente:** respeita integralmente as entidades e os contratos do WOS.
+- **Autêntica:** preserva a personalidade editorial e ilustrativa do produto.
+
+**A experiência final deve ser tão natural quanto trabalhar sobre um quadro físico bem organizado, mas com o poder de um sistema de coordenação persistente de trabalho.**
+
+O usuário não deve precisar entender a arquitetura interna do WOS nem navegar por seis telas para saber o que precisa fazer.
+
+**Ele simplesmente abre um Outcome, visualiza o mapa do trabalho, entende as relações e os impedimentos, seleciona o que precisa e opera diretamente naquele contexto.**
+
+O resultado deve parecer uma evolução natural e significativamente superior do WOS atual — nunca um produto diferente.

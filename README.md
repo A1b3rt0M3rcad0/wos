@@ -37,17 +37,23 @@ The server stores that history and enforces coordination rules. Your tools execu
 | People and agents use different tools                        | The browser, CLI, HTTP, and MCP interfaces use the same persisted state and rules.                                             |
 
 <p align="center">
-  <img src="docs/design/editorial/screenshots/04-work.png" width="960" alt="Workspace Task list" />
+  <img src="docs/design/operational-canvas/screenshots/01-canvas-workspace-board.png" width="960" alt="Operational canvas with contextual Task actions" />
 </p>
 
-The real **Work** area, with illustrative records. Switch between a list and board while keeping the Outcome, its Tasks, and their current state together.
+The **Canvas** brings an Outcome, its Objectives, Tasks and real connections into one working board. Select a note to inspect instructions, evidence and permitted actions, or create work in its Objective context. A Roadmap is optional. These are illustrative records persisted by the real application. [Canvas gallery](docs/design/operational-canvas/README.md#screenshots) · [All workspace pages, forms and mobile states](docs/design/operational-canvas/workspace/README.md).
 
 <details>
-<summary>See the Evidence area</summary>
+<summary>See the workspace, Task list and Evidence area</summary>
+
+![Canvas workspace](docs/design/operational-canvas/screenshots/01-canvas-workspace.png)
+
+![Workspace Task list](docs/design/editorial/screenshots/04-work.png)
+
+The Work area retains its list and Board; Overview, Plan, Issues, Evidence and Activity remain available.
 
 ![Workspace Evidence area](docs/design/editorial/screenshots/07-evidence.png)
 
-Evidence supplies material for assessment; adding it does not accept a result. [Desktop and mobile gallery](docs/design/editorial/README.md#main-pages).
+Evidence supplies material for assessment; adding it does not accept a result. [Desktop and mobile gallery](docs/design/editorial/README.md#main-pages), with [Roadmaps, Artifacts, Decisions, settings and recovery states](docs/design/operational-canvas/workspace/README.md).
 
 </details>
 
@@ -108,7 +114,7 @@ The example starts its own loopback server and uses separate temporary data. See
 ### Run the workspace shown here
 
 ```sh
-git clone --branch feat/central-agent-workflow https://github.com/A1b3rt0M3rcad0/wos.git
+git clone --branch feat/visual-operational-canvas https://github.com/A1b3rt0M3rcad0/wos.git
 cd wos
 cp .env.example .env
 docker compose up --build -d

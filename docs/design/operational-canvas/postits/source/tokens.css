@@ -1,0 +1,11 @@
+/* WOS — EXACT authoritative palette, no invented color values */
+:root {
+  --wos-canvas: #EFEDE8;
+  --wos-workspace: #F5F3EF;
+  --wos-surface: #FFFDF9;
+  --wos-ink: #292620;
+  --wos-copper: #A7441D;
+  --wos-selected: #F1DFD0;
+  --wos-grid: #C2BCB2;
+  --wos-brand: #FF5500;
+}

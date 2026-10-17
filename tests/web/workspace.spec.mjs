@@ -301,6 +301,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#outcomes")
       .getByRole("button", { name: /Lançar o portal/ })
       .click();
+    await page.locator('#area-tabs [data-area="overview"]').click();
     await expect(page.locator("#summary-view")).toBeVisible();
     await expect(page.locator("#metrics")).toContainText("1 of 32 items");
     await expect(page.locator("#summary-content")).toContainText(

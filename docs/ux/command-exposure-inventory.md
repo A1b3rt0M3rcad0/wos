@@ -58,7 +58,7 @@ This is the explicit presentation contract, not authorization. Every command is 
 | `register_evidence` | H | Evidence |
 | `reject_decision` | C | Decisions |
 | `release_work_item` | L | Legacy v0 leases |
-| `remove_dependency` | C | Dependencies |
+| `remove_dependency` | H | Dependencies |
 | `remove_external_reference` | A | External references |
 | `renew_signed_review_contract` | S | Signed v2 review |
 | `renew_signed_work_contract` | S | Signed v2 execution |

@@ -1,13 +1,21 @@
 import { copy } from "./en-US.js";
 import { el, button, inputField } from "./ui.js";
 export function externalContextEditor(initial = {}) {
-  const node = el("section"),
+  const node = el(
+      "section",
+      undefined,
+      "nested-editor external-context-editor",
+    ),
     rows = [];
   node.append(
-    el("p", copy.text.consumerAddressOnlyTheseValuesNeverGrantAccessOr),
+    el(
+      "p",
+      copy.text.consumerAddressOnlyTheseValuesNeverGrantAccessOr,
+      "editor-description",
+    ),
   );
   function add(key = "", value = "") {
-    const row = el("div", undefined, "context-edit-row"),
+    const row = el("div", undefined, "context-edit-row nested-editor-row"),
       name = inputField(copy.text.contextKey, {
         value: key,
         required: true,
@@ -36,12 +44,16 @@ export function externalContextEditor(initial = {}) {
           rows.splice(rows.indexOf(model), 1);
           row.remove();
         },
-        "quiet",
+        "quiet editor-remove",
       ),
     );
     node.insertBefore(row, addButton);
   }
-  const addButton = button(copy.text.addContextEntry, () => add(), "quiet");
+  const addButton = button(
+    copy.text.addContextEntry,
+    () => add(),
+    "quiet editor-add",
+  );
   node.append(addButton);
   for (const [key, value] of Object.entries(initial)) add(key, value);
   return {
@@ -85,17 +97,18 @@ export function externalContextEditor(initial = {}) {
   };
 }
 export function participantEditor(initial = []) {
-  const node = el("section"),
+  const node = el("section", undefined, "nested-editor participant-editor"),
     rows = [];
   node.append(
     el(
       "p",
       copy.text
         .participantsDescribeResponsibilityAssignmentNeverGrantsALeaseContract,
+      "editor-description",
     ),
   );
   function add(value = { kind: "agent" }) {
-    const row = el("div", undefined, "participant-edit-row"),
+    const row = el("div", undefined, "participant-edit-row nested-editor-row"),
       kind = inputField(copy.text.participantType, {
         options: [
           ["human", copy.text.person],
@@ -126,12 +139,16 @@ export function participantEditor(initial = []) {
           rows.splice(rows.indexOf(model), 1);
           row.remove();
         },
-        "quiet",
+        "quiet editor-remove",
       ),
     );
     node.insertBefore(row, addButton);
   }
-  const addButton = button(copy.text.addParticipant, () => add(), "quiet");
+  const addButton = button(
+    copy.text.addParticipant,
+    () => add(),
+    "quiet editor-add",
+  );
   node.append(addButton);
   for (const value of initial) add(value);
   return {

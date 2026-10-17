@@ -136,6 +136,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       page.getByText("Choose an outcome", { exact: true }),
     ).toBeVisible();
     async function open(name, from = "root") {
+      if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
+        await page.locator('#area-tabs [data-area="overview"]').click();
       if (from !== "create") {
         await page
           .locator(from === "entity" ? "#entity-actions" : "#actions")
@@ -391,6 +393,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       .filter({ hasText: "Verifiable mixed journey" })
       .click();
     await expect(resumed.locator("#state")).toHaveText("Achieved");
+    await resumed.locator('#area-tabs [data-area="overview"]').click();
     await resumed.locator("#view-outcome").click();
     await expect(
       resumed.getByText("Current conclusion", { exact: true }),
@@ -449,6 +452,8 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
     return data;
   }
   async function open(name, entity = false) {
+    if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
+      await page.locator('#area-tabs [data-area="overview"]').click();
     await page.locator(entity ? "#entity-actions" : "#actions").click();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");

@@ -1,0 +1,3248 @@
+{
+  "collection": "WOS Canvas Post-its",
+  "palette": {
+    "canvas": "#EFEDE8",
+    "workspace": "#F5F3EF",
+    "surface": "#FFFDF9",
+    "ink": "#292620",
+    "copper": "#A7441D",
+    "selected": "#F1DFD0",
+    "grid": "#C2BCB2",
+    "brand": "#FF5500"
+  },
+  "styles": {
+    "curled": "Canto inferior enrolado",
+    "classic": "Post-it clássico irregular",
+    "rounded": "Bordas arredondadas orgânicas",
+    "dogear": "Dobra no canto superior",
+    "torn": "Borda inferior rasgada",
+    "taped": "Fita adesiva no topo",
+    "pinned": "Alfinete superior",
+    "tabbed": "Aba de organização",
+    "notebook": "Bloco perfurado",
+    "stacked": "Folhas sobrepostas"
+  },
+  "colorways": [
+    "surface",
+    "workspace",
+    "canvas",
+    "selected",
+    "grid",
+    "copper",
+    "brand",
+    "ink"
+  ],
+  "formats": {
+    "square": [
+      800,
+      800
+    ],
+    "wide": [
+      1000,
+      730
+    ]
+  },
+  "count": 160,
+  "assets": [
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/surface.svg",
+      "png": "png/square/curled/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/workspace.svg",
+      "png": "png/square/curled/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/canvas.svg",
+      "png": "png/square/curled/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/selected.svg",
+      "png": "png/square/curled/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/grid.svg",
+      "png": "png/square/curled/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/copper.svg",
+      "png": "png/square/curled/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/brand.svg",
+      "png": "png/square/curled/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/curled/ink.svg",
+      "png": "png/square/curled/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/surface.svg",
+      "png": "png/square/classic/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/workspace.svg",
+      "png": "png/square/classic/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/canvas.svg",
+      "png": "png/square/classic/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/selected.svg",
+      "png": "png/square/classic/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/grid.svg",
+      "png": "png/square/classic/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/copper.svg",
+      "png": "png/square/classic/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/brand.svg",
+      "png": "png/square/classic/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/classic/ink.svg",
+      "png": "png/square/classic/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/surface.svg",
+      "png": "png/square/rounded/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/workspace.svg",
+      "png": "png/square/rounded/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/canvas.svg",
+      "png": "png/square/rounded/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/selected.svg",
+      "png": "png/square/rounded/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/grid.svg",
+      "png": "png/square/rounded/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/copper.svg",
+      "png": "png/square/rounded/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/brand.svg",
+      "png": "png/square/rounded/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/rounded/ink.svg",
+      "png": "png/square/rounded/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/surface.svg",
+      "png": "png/square/dogear/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/workspace.svg",
+      "png": "png/square/dogear/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/canvas.svg",
+      "png": "png/square/dogear/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/selected.svg",
+      "png": "png/square/dogear/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/grid.svg",
+      "png": "png/square/dogear/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/copper.svg",
+      "png": "png/square/dogear/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/brand.svg",
+      "png": "png/square/dogear/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/dogear/ink.svg",
+      "png": "png/square/dogear/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/surface.svg",
+      "png": "png/square/torn/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/workspace.svg",
+      "png": "png/square/torn/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/canvas.svg",
+      "png": "png/square/torn/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/selected.svg",
+      "png": "png/square/torn/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/grid.svg",
+      "png": "png/square/torn/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/copper.svg",
+      "png": "png/square/torn/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/brand.svg",
+      "png": "png/square/torn/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/torn/ink.svg",
+      "png": "png/square/torn/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/surface.svg",
+      "png": "png/square/taped/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/workspace.svg",
+      "png": "png/square/taped/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/canvas.svg",
+      "png": "png/square/taped/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/selected.svg",
+      "png": "png/square/taped/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/grid.svg",
+      "png": "png/square/taped/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/copper.svg",
+      "png": "png/square/taped/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/brand.svg",
+      "png": "png/square/taped/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/taped/ink.svg",
+      "png": "png/square/taped/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/surface.svg",
+      "png": "png/square/pinned/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/workspace.svg",
+      "png": "png/square/pinned/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/canvas.svg",
+      "png": "png/square/pinned/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/selected.svg",
+      "png": "png/square/pinned/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/grid.svg",
+      "png": "png/square/pinned/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/copper.svg",
+      "png": "png/square/pinned/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/brand.svg",
+      "png": "png/square/pinned/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/pinned/ink.svg",
+      "png": "png/square/pinned/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/surface.svg",
+      "png": "png/square/tabbed/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/workspace.svg",
+      "png": "png/square/tabbed/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/canvas.svg",
+      "png": "png/square/tabbed/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/selected.svg",
+      "png": "png/square/tabbed/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/grid.svg",
+      "png": "png/square/tabbed/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/copper.svg",
+      "png": "png/square/tabbed/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/brand.svg",
+      "png": "png/square/tabbed/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/tabbed/ink.svg",
+      "png": "png/square/tabbed/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/surface.svg",
+      "png": "png/square/notebook/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/workspace.svg",
+      "png": "png/square/notebook/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/canvas.svg",
+      "png": "png/square/notebook/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/selected.svg",
+      "png": "png/square/notebook/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/grid.svg",
+      "png": "png/square/notebook/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/copper.svg",
+      "png": "png/square/notebook/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/brand.svg",
+      "png": "png/square/notebook/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/notebook/ink.svg",
+      "png": "png/square/notebook/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/surface.svg",
+      "png": "png/square/stacked/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/workspace.svg",
+      "png": "png/square/stacked/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/canvas.svg",
+      "png": "png/square/stacked/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/selected.svg",
+      "png": "png/square/stacked/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/grid.svg",
+      "png": "png/square/stacked/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/copper.svg",
+      "png": "png/square/stacked/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/brand.svg",
+      "png": "png/square/stacked/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "square",
+      "dimensions": [
+        800,
+        800
+      ],
+      "svg": "svg/square/stacked/ink.svg",
+      "png": "png/square/stacked/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/surface.svg",
+      "png": "png/wide/curled/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/workspace.svg",
+      "png": "png/wide/curled/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/canvas.svg",
+      "png": "png/wide/curled/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/selected.svg",
+      "png": "png/wide/curled/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/grid.svg",
+      "png": "png/wide/curled/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/copper.svg",
+      "png": "png/wide/curled/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/brand.svg",
+      "png": "png/wide/curled/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "curled",
+      "description": "Canto inferior enrolado",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/curled/ink.svg",
+      "png": "png/wide/curled/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 17
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/surface.svg",
+      "png": "png/wide/classic/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/workspace.svg",
+      "png": "png/wide/classic/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/canvas.svg",
+      "png": "png/wide/classic/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/selected.svg",
+      "png": "png/wide/classic/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/grid.svg",
+      "png": "png/wide/classic/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/copper.svg",
+      "png": "png/wide/classic/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/brand.svg",
+      "png": "png/wide/classic/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "classic",
+      "description": "Post-it clássico irregular",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/classic/ink.svg",
+      "png": "png/wide/classic/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/surface.svg",
+      "png": "png/wide/rounded/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/workspace.svg",
+      "png": "png/wide/rounded/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/canvas.svg",
+      "png": "png/wide/rounded/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/selected.svg",
+      "png": "png/wide/rounded/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/grid.svg",
+      "png": "png/wide/rounded/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/copper.svg",
+      "png": "png/wide/rounded/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/brand.svg",
+      "png": "png/wide/rounded/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "rounded",
+      "description": "Bordas arredondadas orgânicas",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/rounded/ink.svg",
+      "png": "png/wide/rounded/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/surface.svg",
+      "png": "png/wide/dogear/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/workspace.svg",
+      "png": "png/wide/dogear/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/canvas.svg",
+      "png": "png/wide/dogear/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/selected.svg",
+      "png": "png/wide/dogear/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/grid.svg",
+      "png": "png/wide/dogear/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/copper.svg",
+      "png": "png/wide/dogear/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/brand.svg",
+      "png": "png/wide/dogear/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "dogear",
+      "description": "Dobra no canto superior",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/dogear/ink.svg",
+      "png": "png/wide/dogear/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/surface.svg",
+      "png": "png/wide/torn/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/workspace.svg",
+      "png": "png/wide/torn/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/canvas.svg",
+      "png": "png/wide/torn/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/selected.svg",
+      "png": "png/wide/torn/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/grid.svg",
+      "png": "png/wide/torn/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/copper.svg",
+      "png": "png/wide/torn/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/brand.svg",
+      "png": "png/wide/torn/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "torn",
+      "description": "Borda inferior rasgada",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/torn/ink.svg",
+      "png": "png/wide/torn/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/surface.svg",
+      "png": "png/wide/taped/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/workspace.svg",
+      "png": "png/wide/taped/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/canvas.svg",
+      "png": "png/wide/taped/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/selected.svg",
+      "png": "png/wide/taped/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/grid.svg",
+      "png": "png/wide/taped/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/copper.svg",
+      "png": "png/wide/taped/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/brand.svg",
+      "png": "png/wide/taped/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "taped",
+      "description": "Fita adesiva no topo",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/taped/ink.svg",
+      "png": "png/wide/taped/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/surface.svg",
+      "png": "png/wide/pinned/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/workspace.svg",
+      "png": "png/wide/pinned/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/canvas.svg",
+      "png": "png/wide/pinned/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/selected.svg",
+      "png": "png/wide/pinned/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/grid.svg",
+      "png": "png/wide/pinned/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/copper.svg",
+      "png": "png/wide/pinned/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/brand.svg",
+      "png": "png/wide/pinned/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "pinned",
+      "description": "Alfinete superior",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/pinned/ink.svg",
+      "png": "png/wide/pinned/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/surface.svg",
+      "png": "png/wide/tabbed/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/workspace.svg",
+      "png": "png/wide/tabbed/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/canvas.svg",
+      "png": "png/wide/tabbed/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/selected.svg",
+      "png": "png/wide/tabbed/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/grid.svg",
+      "png": "png/wide/tabbed/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/copper.svg",
+      "png": "png/wide/tabbed/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/brand.svg",
+      "png": "png/wide/tabbed/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "tabbed",
+      "description": "Aba de organização",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/tabbed/ink.svg",
+      "png": "png/wide/tabbed/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/surface.svg",
+      "png": "png/wide/notebook/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/workspace.svg",
+      "png": "png/wide/notebook/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/canvas.svg",
+      "png": "png/wide/notebook/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/selected.svg",
+      "png": "png/wide/notebook/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/grid.svg",
+      "png": "png/wide/notebook/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/copper.svg",
+      "png": "png/wide/notebook/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/brand.svg",
+      "png": "png/wide/notebook/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "notebook",
+      "description": "Bloco perfurado",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/notebook/ink.svg",
+      "png": "png/wide/notebook/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 22,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "surface",
+      "hex": "#FFFDF9",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/surface.svg",
+      "png": "png/wide/stacked/surface.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "workspace",
+      "hex": "#F5F3EF",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/workspace.svg",
+      "png": "png/wide/stacked/workspace.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "canvas",
+      "hex": "#EFEDE8",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/canvas.svg",
+      "png": "png/wide/stacked/canvas.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "selected",
+      "hex": "#F1DFD0",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/selected.svg",
+      "png": "png/wide/stacked/selected.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "grid",
+      "hex": "#C2BCB2",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/grid.svg",
+      "png": "png/wide/stacked/grid.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "copper",
+      "hex": "#A7441D",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/copper.svg",
+      "png": "png/wide/stacked/copper.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "brand",
+      "hex": "#FF5500",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/brand.svg",
+      "png": "png/wide/stacked/brand.png",
+      "recommended_text_color": "#292620",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    },
+    {
+      "style": "stacked",
+      "description": "Folhas sobrepostas",
+      "color": "ink",
+      "hex": "#292620",
+      "format": "wide",
+      "dimensions": [
+        1000,
+        730
+      ],
+      "svg": "svg/wide/stacked/ink.svg",
+      "png": "png/wide/stacked/ink.png",
+      "recommended_text_color": "#FFFDF9",
+      "content_safe_area_percent": {
+        "left": 14,
+        "right": 14,
+        "top": 16,
+        "bottom": 14
+      }
+    }
+  ]
+}

@@ -13,26 +13,38 @@ Open `http://localhost:8080/app/` and use the example bootstrap credential in `.
 
 ## Start with a verifiable result
 
-Choose **New outcome**, give it a name and describe the desired outcome. Saving persists a Draft; it never activates the Outcome implicitly. The preparation checklist links to success criteria, Objectives and Tasks. Roadmaps are optional. Choose activation explicitly when preparation is ready.
+Choose **New outcome**, give it a name and describe the desired outcome. Saving persists a Draft; it never activates the Outcome implicitly. Use **Review outcome** to inspect criteria and choose permitted actions. The Overview area retains the preparation checklist for success criteria, Objectives and Tasks. Roadmaps are optional. Choose activation explicitly when preparation is ready.
 
 An Outcome describes the desired result. Objectives describe intermediate conditions, including parent/child organization. Tasks describe bounded operational work. Completing a Task does not achieve an Objective or Outcome. Define success criteria and record their assessments before an explicit conclusion.
 
 Choose **Add objective** or **New task** to open dedicated forms. Common creation requires no UUID, command name, JSON or fencing token. Task instructions, constraints, deliverables and scope hints use editable lines. Objective and context references use typed, authorized searches. Optional priority, scheduling and specialized settings appear under Advanced.
 
+## Work in context
+
+Opening an Outcome starts in its operational canvas. The Outcome anchors real Objective hierarchy and Task ownership. Select a note or connection to open current detail and permitted actions alongside the map; contextual Add and Connect controls use the existing forms and authorized reference pickers. Moving a note changes only its local visual position. It does not reparent work, create a dependency or change lifecycle.
+
+Map view provides pan, zoom, fit, auto-layout and progressive expansion. List view presents the same loaded context and is the default on compact screens. Both expose selection and contextual actions without requiring dragging. Map note arrow keys navigate visible hierarchy; background arrow keys pan, `+`/`-` zoom and `0` fits. Search supports keyboard selection and authorized server results beyond the loaded map. Focus returns to an originating control when a contextual surface closes and that control remains available.
+
+The map explicitly reports partial data and loaded counts. Load more retrieves bounded graph/continuity pages, including disconnected Objectives and Tasks. A cursor or selected detail must match the same Outcome revision; a concurrent change requires a refresh rather than combining different revisions. Unloaded context is not an absence of work or proof of readiness. Signed execution authority is resolved from current Task attention on selection rather than inferred from a legacy lease summary.
+
+See [the canvas design and data contract](design/operational-canvas/README.md) for relationship semantics, API boundaries, controls and source-art provenance.
+
 ## Navigate by purpose
 
-| Area | Purpose |
-| --- | --- |
+The existing areas remain available as alternatives and focused collections:
+
+| Area     | Purpose                                                                          |
+| -------- | -------------------------------------------------------------------------------- |
 | Overview | Desired outcome, progress with denominators, preparation and suggested next step |
-| Plan | Objectives and parent relationships, Roadmaps and published history |
-| Work | Task list/board, status filters, readiness and execution detail |
-| Issues | Problems and their separate blocking impacts |
-| Evidence | Observations, deliverables, links and assessment material |
-| Activity | Events, decisions and participation history |
+| Plan     | Objectives and parent relationships, Roadmaps and published history              |
+| Work     | Task list/board, status filters, readiness and execution detail                  |
+| Issues   | Problems and their separate blocking impacts                                     |
+| Evidence | Observations, deliverables, links and assessment material                        |
+| Activity | Events, decisions and participation history                                      |
 
-Deep links restore Workspace, Outcome, area, collection and detail after signing in, reload and browser Back/Forward. Copy link does not grant access. Server authorization is checked when resolving shared context.
+Deep links restore Workspace, Outcome, area, collection and detail after signing in, reload and browser Back/Forward. Canvas links retain their selected entity; camera movement and local note placement are not domain state. Copy link does not grant access. Server authorization is checked when resolving shared context.
 
-**All Tasks** list search covers the selected Outcome on the server, including title and priority filtering with pagination. Outcome discovery also searches the server. The Board and other loaded-collection filters explicitly identify their loaded scope; they do not promise a global search. Searchable reference fields retrieve the authorized candidate set rather than relying on loaded collections.
+**All Tasks** list search covers the selected Outcome on the server, including title and priority filtering with pagination. Outcome discovery also searches the server. The Board, canvas alternative list and other loaded-collection filters explicitly identify their loaded scope; they do not promise a complete Outcome collection. Searchable reference fields retrieve the authorized candidate set rather than relying on loaded collections.
 
 ## Choose references reliably
 
@@ -41,6 +53,8 @@ Type into a reference field to search eligible types in the current scope. Resul
 ## Plan without changing execution
 
 Create a Roadmap, edit its Draft, add phases, milestones and Objective/Task references, arrange their hierarchy and order, then review the diff and publication reason. **Publish revision** freezes a historical revision. **Activate revision** is a separate action. Removing a reference or moving a phase does not cancel or complete operational work. Dependencies are explicit actions on operational entities, never an implicit consequence of Roadmap order.
+
+View a Draft or a particular published revision on the canvas without activating it. Planning nodes and explicit plan order remain an optional overlay; they do not replace Objective hierarchy, Task ownership or hard/advisory dependency relations. Viewing a revision does not make it the active plan. Replacing an overlay leaves operational relationships intact.
 
 ## Verify and resolve explicitly
 
@@ -64,8 +78,8 @@ An uncertain response freezes the original payload and idempotency key. Retry se
 
 ## Verification and limits
 
-See [the final acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [current screenshots](design/editorial/README.md#main-pages).
+The [canvas guide](design/operational-canvas/README.md#acceptance-boundary) records the new implementation and [automated verification](design/operational-canvas/validation.md). Earlier workspace behavior and captures are recorded separately in [the historical acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [editorial gallery](design/editorial/README.md#main-pages).
 
-The real-server browser suite covers 31 journeys, including keyboard controls, 390px layouts, conflict/replay, large reference searches and legacy/unsigned/signed regressions. Automated axe scans cover login, Overview, Task creation and the reference combobox. Equivalent 200%/400% viewport reflow is distinct from native browser zoom.
+The earlier real-server and automated accessibility results cover their recorded baseline. They do not qualify the new canvas, its inspector or its keyboard/mobile behavior. Equivalent 200%/400% viewport reflow is distinct from native browser zoom.
 
 Representative-user usability, human comprehension/timing, manual screen-reader checks and native browser zoom remain pending. The owner confirmed that no representative users or screen-reader testers are available. Automated acceptance is not a usability measurement or WCAG certification.

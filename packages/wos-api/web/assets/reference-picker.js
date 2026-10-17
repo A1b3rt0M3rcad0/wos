@@ -102,6 +102,12 @@ export function referencePicker({
     );
   }
   function choose(candidate) {
+    clearTimeout(timer);
+    ++run;
+    controller?.abort();
+    cursor = "";
+    items = [];
+    status.textContent = "";
     valid = true;
     if (!multiple) values.clear();
     values.set(key(candidate.ref), candidate);
@@ -194,7 +200,9 @@ export function referencePicker({
   input.onfocus = () => search();
   input.onkeydown = (e) => {
     if (e.key === "Escape" && !results.hidden) {
+      e.preventDefault();
       e.stopPropagation();
+      clearTimeout(timer);
       input.removeAttribute("aria-activedescendant");
       results.hidden = true;
       more.hidden = true;

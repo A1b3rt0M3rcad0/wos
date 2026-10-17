@@ -1,0 +1,191 @@
+{
+  "implementation_commit": "b745ec55f304d60cc9de4de21b2019b0ab47821a",
+  "capture_test": "tests/web/canvas.spec.mjs",
+  "capture_test_sha256": "97377f34bfd245fd95d8d98f10845667ef168bdd3d9c142f1cdaecf8fb7b39a7",
+  "dataset": "Isolated illustrative records created through the public command API; read/transport fault injection only for explicit recovery states",
+  "browser": "Chromium 149.0.7827.0 on Linux amd64; deviceScaleFactor 1",
+  "source_sha256": {
+    "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
+    "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+    "packages/wos-api/web/assets/app.js": "cb49166a920e32d35083f1f4f04c200ef2030c2159824ff0e02fade8b4b1d0b7",
+    "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
+    "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
+    "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
+    "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
+    "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
+    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
+    "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "packages/wos-api/web/assets/en-US.js": "b52179ee869412f6d4db08f0db9ec0a3ae8a6e8b9d4dbb93d5b5843821c7f78c",
+    "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+    "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
+    "packages/wos-api/web/assets/index.html": "1f3693dc885095010a70c11a091d71f749491ff8357372b6777e9f864a2f6761",
+    "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
+    "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "packages/wos-api/web/assets/reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "packages/wos-api/web/assets/workspace-canvas.js": "ab8a66b1b7010c14da01c1d51a905a8a2c19ad588404bd80ae12e4363f99b417",
+    "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
+    "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
+  },
+  "native_binary_sha256": "c822f9626ff930ac1cd8b7a2656fd88894f47d5e48adc253d4c88a1cfeebbc56",
+  "screenshots": [
+    {
+      "file": "screenshots/01-canvas-workspace-board.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1116,
+        "height": 892
+      },
+      "full_page": false,
+      "crop": "canvas shell",
+      "captured_at_utc": "2026-10-17T03:41:04.665460+00:00",
+      "sha256": "c19744e7261b0e92da832605c8b1cf799f3f584f9f9d75345fc7099fd267e8e5"
+    },
+    {
+      "file": "screenshots/01-canvas-workspace.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:04.437461+00:00",
+      "sha256": "a96f1ffb362a33852d214529f0d085ac4bc7227947aff8bba4fd454b6ebfc769"
+    },
+    {
+      "file": "screenshots/02-canvas-relationships-board.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1116,
+        "height": 892
+      },
+      "full_page": false,
+      "crop": "canvas shell",
+      "captured_at_utc": "2026-10-17T03:41:11.841411+00:00",
+      "sha256": "666378185e0302698fe352862120ee76ca087c4869edf5015bb45415cf456130"
+    },
+    {
+      "file": "screenshots/02-canvas-relationships.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:11.713411+00:00",
+      "sha256": "8f106c8a49c37f8df2c5fd333cb211bcc9bdc7ac00fbf70cdaf416d62b327d88"
+    },
+    {
+      "file": "screenshots/03-canvas-large-outcome.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:14.633391+00:00",
+      "sha256": "9f3a675cbe4cd1537c78dab19516817e5a38e408adcf859c38c6e065aa83a223"
+    },
+    {
+      "file": "screenshots/04-canvas-mobile-map.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:25.445317+00:00",
+      "sha256": "cd09cd2da33cd744f35ff21fddd578c4907ea81384bbd38e9b30ea304249e527"
+    },
+    {
+      "file": "screenshots/04-canvas-mobile.png",
+      "viewport_css_px": {
+        "width": 390,
+        "height": 844
+      },
+      "pixel_size": {
+        "width": 390,
+        "height": 844
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:24.409324+00:00",
+      "sha256": "05b001799cd16bc6e7cede203fc67a968dc2580d5be69935a6ae090324c3b21a"
+    },
+    {
+      "file": "screenshots/05-canvas-2k.png",
+      "viewport_css_px": {
+        "width": 2560,
+        "height": 1440
+      },
+      "pixel_size": {
+        "width": 2560,
+        "height": 1440
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:26.177312+00:00",
+      "sha256": "c849a866accd49f7a76a9c2312fb0d894fd0039663035ea9c1ac9ec59d37eb69"
+    },
+    {
+      "file": "screenshots/06-canvas-roadmap-board.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1116,
+        "height": 892
+      },
+      "full_page": false,
+      "crop": "canvas shell",
+      "captured_at_utc": "2026-10-17T03:41:38.517227+00:00",
+      "sha256": "d4ac1d4683354778bac84d529d033fd07310aad916574aa0be7ff1c27d0e960a"
+    },
+    {
+      "file": "screenshots/06-canvas-roadmap.png",
+      "viewport_css_px": {
+        "width": 1440,
+        "height": 1000
+      },
+      "pixel_size": {
+        "width": 1440,
+        "height": 1000
+      },
+      "full_page": false,
+      "crop": null,
+      "captured_at_utc": "2026-10-17T03:41:33.517262+00:00",
+      "sha256": "45e0220ecb187a5a430857b92181a01cdc1a732bb42f6a2faad402a086cd4a28"
+    }
+  ]
+}

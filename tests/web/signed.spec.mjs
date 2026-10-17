@@ -375,6 +375,179 @@ for (const decision of ["approved", "changes_requested"])
         "--version",
         String(work.version),
       );
+      // The live signed contract has authority independently of the legacy
+      // WorkLease projection. Specialist views must not call it expired or
+      // imply that opening a browser acquires execution authority.
+      const activePath = `/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.id}`,
+        activeWork = (await api(activePath, token)).value,
+        activeAttention = await api(`${activePath}/attention`, token),
+        activeContract = await api(
+          `/namespaces/${namespace}/outcomes/${outcome.id}/signed-state/execution/${activeWork.current_contract_id}`,
+          token,
+        );
+      assert.equal(activeWork.lifecycle, "in_progress");
+      assert.equal(activeContract.contract.effective_status, "active");
+      assert.equal(activeContract.contract.lease_valid, true);
+      assert.equal(
+        activeAttention.operational_state.display_state,
+        "in_progress",
+      );
+      assert.equal(activeAttention.operational_state.lease_status, "active");
+      const activeContext = await browser.newContext(),
+        activePage = await activeContext.newPage();
+      activePage.on("pageerror", (error) => errors.push(error.message));
+      activePage.on("request", (request) => {
+        if (request.method() === "POST" && request.url().includes("/commands/"))
+          mutations.push(request.url());
+      });
+      try {
+        await activePage.goto(url + "/app/");
+        await activePage
+          .getByLabel("Access credential", { exact: true })
+          .fill(token);
+        await activePage
+          .getByRole("button", { name: "Sign in", exact: true })
+          .click();
+        await activePage
+          .locator("#outcomes")
+          .getByRole("button")
+          .filter({ hasText: outcome.title })
+          .click();
+        await activePage.locator('#area-tabs [data-area="overview"]').click();
+        const overview = activePage.locator("#summary-content");
+        await expect(
+          overview.getByText("Open work", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          overview.getByText("Blocked / needs attention", { exact: true }),
+        ).toHaveCount(0);
+        await activePage.locator('#area-tabs [data-area="work"]').click();
+        const workListRow = activePage.locator(
+          `#content .list-row[data-entity-id="${work.id}"]`,
+        );
+        await expect(workListRow.locator(".item-state")).toHaveText(
+          "In progress",
+        );
+        await expect(workListRow).not.toContainText(
+          /lease expired|needs attention/i,
+        );
+        const availableStatuses = await activePage
+          .locator("#work-status option")
+          .evaluateAll((options) =>
+            options
+              .filter((option) => !option.disabled && !option.hidden)
+              .map((option) => option.value),
+          );
+        expect(availableStatuses).toEqual([
+          "work_items",
+          "done_work",
+          "cancelled_work",
+        ]);
+        for (const value of [
+          "ready_work",
+          "attention_needed_work",
+          "in_progress_work",
+        ])
+          expect(
+            await activePage
+              .locator(`#work-status option[value="${value}"]`)
+              .evaluate((option) => option.disabled || option.hidden),
+          ).toBe(true);
+        const legacyReadinessLink = new URL(activePage.url());
+        legacyReadinessLink.searchParams.set(
+          "section",
+          "attention_needed_work",
+        );
+        legacyReadinessLink.searchParams.set("view", "list");
+        await activePage.goto(legacyReadinessLink.href);
+        await expect(activePage.locator("#work-status")).toHaveValue(
+          "work_items",
+        );
+        await expect(activePage).toHaveURL(
+          (url) =>
+            url.searchParams.get("section") === "work_items" &&
+            url.searchParams.get("area") === "work",
+        );
+        await expect(workListRow.locator(".item-state")).toHaveText(
+          "In progress",
+        );
+        await expect(workListRow).not.toContainText(
+          /lease expired|needs attention/i,
+        );
+        await expect(activePage.locator("#notice")).not.toHaveClass(/error/);
+        await activePage
+          .getByRole("button", { name: "Board", exact: true })
+          .click();
+        await expect(activePage.locator(".board-caption")).toContainText(
+          "persisted lifecycle of loaded Tasks",
+        );
+        for (const name of [
+          "Backlog",
+          "To do",
+          "In progress",
+          "Done",
+          "Cancelled",
+        ])
+          await expect(
+            activePage.locator(`.board-column[aria-label="${name}"]`),
+          ).toHaveCount(1);
+        const activeColumn = activePage.locator(
+          '.board-column[aria-label="In progress"]',
+        );
+        await expect(
+          activeColumn.getByRole("button").filter({ hasText: work.title }),
+        ).toHaveCount(1);
+        await expect(
+          activePage.locator(
+            '.board-column[aria-label="Ready"], .board-column[aria-label="Blockers"]',
+          ),
+        ).toHaveCount(0);
+        await activeColumn
+          .getByRole("button")
+          .filter({ hasText: work.title })
+          .click();
+        const activeDetail = activePage.locator("#detail-dialog");
+        await expect(activeDetail.locator("#detail-title")).toHaveText(
+          work.title,
+        );
+        const readiness = activeDetail.locator(".detail-section").filter({
+          has: activePage.getByRole("heading", {
+            name: "Operational readiness",
+            exact: true,
+          }),
+        });
+        await expect(
+          readiness.getByText("In progress", { exact: true }),
+        ).toBeVisible();
+        await expect(readiness).not.toContainText(/expired|needs attention/i);
+        await expect(
+          activeDetail.locator(".signed-contract-section"),
+        ).toContainText("Execution reserved");
+        await activeDetail
+          .getByText("Execute or review with a profile", { exact: true })
+          .click();
+        await activeContext.grantPermissions([
+          "clipboard-read",
+          "clipboard-write",
+        ]);
+        await activeDetail
+          .getByRole("button", { name: "Copy executor commands", exact: true })
+          .click();
+        const activeHandoff = await activePage.evaluate(() =>
+          navigator.clipboard.readText(),
+        );
+        assert.ok(activeHandoff.includes("wos --profile executor work"));
+        assert.ok(!activeHandoff.includes(token));
+        const unchangedWork = (await api(activePath, token)).value;
+        assert.equal(unchangedWork.version, activeWork.version);
+        assert.equal(
+          unchangedWork.current_contract_id,
+          activeWork.current_contract_id,
+        );
+        assert.equal(unchangedWork.lifecycle, "in_progress");
+      } finally {
+        await activeContext.close();
+      }
       const executionDirectory = join(
           executor.workspace,
           ".wos/profiles/executor/contract",
@@ -443,6 +616,39 @@ for (const decision of ["approved", "changes_requested"])
         .getByRole("button")
         .filter({ hasText: outcome.title })
         .click();
+      // The primary Canvas exposes the same signed handoff as the retained
+      // Board. The browser never signs or decides the independent review.
+      await expect(page.locator("#operational-canvas")).toBeVisible();
+      await page
+        .locator(`[data-canvas-node="work_item:${work.id}"] .canvas-node-main`)
+        .click();
+      await expect(page.locator("#canvas-details #detail-title")).toHaveText(
+        work.title,
+      );
+      await expect(page.locator("#canvas-details")).toContainText(
+        "Awaiting independent review",
+      );
+      await expect(
+        page
+          .locator("#canvas-details")
+          .getByRole("button", { name: "Review submission", exact: true }),
+      ).toHaveCount(0);
+      await page
+        .locator("#canvas-details")
+        .getByText("Execute or review with a profile", { exact: true })
+        .click();
+      await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+      await page
+        .locator("#canvas-details")
+        .getByRole("button", { name: "Copy reviewer commands", exact: true })
+        .click();
+      const canvasHandoff = await page.evaluate(() =>
+        navigator.clipboard.readText(),
+      );
+      assert.ok(
+        canvasHandoff.includes("wos --profile reviewer review checkout"),
+      );
+      assert.ok(!canvasHandoff.includes(token));
       await page.getByRole("button", { name: "Work", exact: true }).click();
       await page.getByRole("button", { name: "Board", exact: true }).click();
       await page

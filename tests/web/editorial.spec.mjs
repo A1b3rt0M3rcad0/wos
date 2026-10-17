@@ -373,6 +373,10 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
   const board = page.locator('#view-tabs button[data-view="board"]');
   await board.hover();
   await capture(page, "23-view-switch-hover");
+  await desktop.selectionTransition("#view-tabs button", () => board.click());
+  await desktop.selectionTransition("#view-tabs button", () =>
+    page.locator('#view-tabs button[data-view="list"]').click(),
+  );
   await board.click();
   await desktop.audit();
   const card = page.locator(".board .item").first();
@@ -610,7 +614,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
   await capture(page, "01-login");
   await wos.login(page);
   await openOutcome(page, "Ship a calmer workspace");
-  await expect(page.locator("#area-tabs button")).toHaveCount(6);
+  await expect(page.locator("#area-tabs button")).toHaveCount(7);
   for (const [area, title, image, name] of [
     [
       "overview",
@@ -1043,6 +1047,7 @@ test("WOS uses the supplied hand-drawn logo alone and real browser icons", async
   }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
+  await page.locator('#area-tabs [data-area="overview"]').click();
   await expect(page.locator("#area-index")).toHaveText("01 / Overview");
 });
 
