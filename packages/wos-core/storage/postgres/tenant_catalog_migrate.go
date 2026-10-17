@@ -38,14 +38,11 @@ func (c *TenantCatalog) MigrateTenant(ctx context.Context, id domain.ID, expecte
 	}
 	initializerLease := &TenantLease{catalog: c, placement: p, conn: conn, initializing: true}
 	p.initializerLease = initializerLease
-	defer func() {
-		initializerLease.mu.Lock()
-		initializerLease.closed = true
-		initializerLease.mu.Unlock()
-	}()
+	defer initializerLease.endInitialization()
 	if err := initialize(ctx, p); err != nil {
 		return p, err
 	}
+	initializerLease.endInitialization()
 	if err := conn.PingContext(ctx); err != nil {
 		return p, mapSQLError("verify Tenant migration fence", err)
 	}
@@ -54,6 +51,9 @@ func (c *TenantCatalog) MigrateTenant(ctx context.Context, id domain.ID, expecte
 		return p, mapSQLError("begin Tenant migration receipt", err)
 	}
 	defer tx.Rollback()
+	if err := c.waitForInitializerData(ctx, tx, id); err != nil {
+		return p, err
+	}
 	current, err := c.lockMutation(ctx, tx, id, expected)
 	if err != nil {
 		return p, err

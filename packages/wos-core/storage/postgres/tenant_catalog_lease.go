@@ -126,6 +126,14 @@ func (l *TenantLease) expectedState() TenantState {
 	return TenantActive
 }
 
+// Once the initializer callback has returned, retained options must not admit
+// new data connections while its existing sessions finish closing.
+func (l *TenantLease) endInitialization() {
+	l.mu.Lock()
+	l.closed = true
+	l.mu.Unlock()
+}
+
 func (l *TenantLease) Close() error {
 	if l == nil {
 		return nil

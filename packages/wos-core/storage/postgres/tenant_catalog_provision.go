@@ -3,10 +3,12 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ProvisionTenant records an unrouteable placement before initialization. A
@@ -117,14 +119,11 @@ func (c *TenantCatalog) exclusiveSession(ctx context.Context, id domain.ID) (*sq
 func (c *TenantCatalog) finishProvision(ctx context.Context, conn *sql.Conn, p TenantPlacement, reason string, initialize func(context.Context, TenantPlacement) error) (TenantPlacement, error) {
 	initializerLease := &TenantLease{catalog: c, placement: p, conn: conn, initializing: true}
 	p.initializerLease = initializerLease
-	defer func() {
-		initializerLease.mu.Lock()
-		initializerLease.closed = true
-		initializerLease.mu.Unlock()
-	}()
+	defer initializerLease.endInitialization()
 	if err := initialize(ctx, p); err != nil {
 		return p, err
 	}
+	initializerLease.endInitialization()
 	// A lost administrative session must not be replaced: its lock is the fence
 	// against deletion/retry while the initializer is running.
 	if err := conn.PingContext(ctx); err != nil {
@@ -135,6 +134,9 @@ func (c *TenantCatalog) finishProvision(ctx context.Context, conn *sql.Conn, p T
 		return p, mapSQLError("begin Tenant activation", err)
 	}
 	defer tx.Rollback()
+	if err := c.waitForInitializerData(ctx, tx, p.TenantID); err != nil {
+		return p, err
+	}
 	current, err := c.lockMutation(ctx, tx, p.TenantID, p.Version)
 	if err != nil {
 		return p, err
@@ -154,4 +156,23 @@ func (c *TenantCatalog) finishProvision(ctx context.Context, conn *sql.Conn, p T
 		return p, err
 	}
 	return p, mapSQLError("commit Tenant activation", tx.Commit())
+}
+
+// Store.Close closes client sockets, but PostgreSQL can still be processing
+// their termination and releasing session locks. Successful initializer
+// completion waits for that server acknowledgment while retaining the parent
+// exclusive lifecycle fence. Destructive/admission operations keep their
+// nonblocking checks; a leaked initializer session still prevents transition.
+func (c *TenantCatalog) waitForInitializerData(ctx context.Context, tx *sql.Tx, id domain.ID) error {
+	if _, err := tx.ExecContext(ctx, `SET LOCAL lock_timeout='5s'`); err != nil {
+		return mapSQLError("bound Tenant initializer drain", err)
+	}
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock($1)`, tenantInitializationKey(c.schema, id)); err != nil {
+		var pg *pgconn.PgError
+		if errors.As(err, &pg) && pg.Code == "55P03" {
+			return domain.NewError(domain.ErrorCodePreconditionFailed, "close all Tenant initializer database sessions before changing its lifecycle")
+		}
+		return mapSQLError("wait for Tenant initializer sessions to close", err)
+	}
+	return nil
 }
