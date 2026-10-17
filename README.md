@@ -226,14 +226,14 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 
 ## Project status
 
-**Next release: 1.0.0.** The release includes the visual workspace, centralized agent workflows, operational hardening and the new source-available license. The major version reflects the licensing compatibility change. Publication is gated by the release workflow; preparation alone does not make the packages available or certify every stable-1.0 acceptance milestone. See the [1.0.0 release notes](docs/releases/1.0.0.md).
+**Unreleased source.** `VERSION` remains 1.0.0 from the [earlier release preparation](docs/releases/1.0.0.md). This branch queues a further major change for Tenant addressing, schema isolation and signed protocol 3. Use matching source builds and follow the [coordinated cutover](docs/scaling/tenants.md#upgrade-an-existing-installation); published 0.4.2 clients cannot submit old requests to the new contracts. Publication remains gated by the release workflow, and preparation alone does not certify every stable-1.0 acceptance milestone.
 
 | Item | State |
 | --- | --- |
 | Published baseline | [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), also available as `wosctl@0.4.2` and on GHCR |
 | This README and tour | Describe current source, including changes not yet published in that release |
-| Prepared version | 1.0.0; coordinated npm, GHCR and GitHub publication pending |
-| Compatibility | Existing HTTP/CLI contracts and checked forward migrations follow the [compatibility policy](docs/stable/compatibility.md); no blanket 1.0 certification |
+| Source version | 1.0.0 metadata; the Tenant/protocol transition is queued for the next major release preparation |
+| Compatibility | Explicit breaking [Tenant/protocol transition](docs/stable/tenant-contract-review.md); original signed proofs remain verifiable, and unrelated contract guarantees remain checked |
 | Stable 1.0 acceptance | Tracked separately in [ROADMAP.md](ROADMAP.md) |
 
 ## Documentation and support

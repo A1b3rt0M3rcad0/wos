@@ -90,7 +90,7 @@ traffic; full snapshots and exports retain their documented cost.
 | `WOS_DELIVERY_WORKER_CONCURRENCY` | Local delivery lanes, with one lease per lane and no prefetch |
 | `WOS_DELIVERY_MAX_INFLIGHT_PER_TENANT` | Live delivery lease ceiling across workers using the same policy; zero disables |
 | `WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT` | Live lease ceiling for a configured endpoint across those workers; zero disables |
-| `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` | This process's database pool ceiling |
+| `WOS_POSTGRES_MAX_OPEN_CONNECTIONS` | Each Tenant runtime's data-pool ceiling |
 
 All workers must use matching shared limits. Lowering a limit leaves existing
 leases intact and stops new claims until capacity is available. Worker secret
@@ -133,8 +133,10 @@ their selected operator through the
 [offline upgrade procedure](../operations.md#shared-service).
 Restarting the server never silently elevates old grants.
 
-`/metrics` is installation-operator-only and process-local. Scoped delivery
-diagnostics remain available through the existing authorized HTTP/MCP contracts.
+`/metrics` requires installation-operator authority and reports the selected
+Tenant runtime. In hosted mode, poll each configured hostname; one response does
+not aggregate every runtime or replica. Scoped delivery diagnostics remain
+available through the existing authorized HTTP/MCP contracts.
 Cloud management uses the same capabilities available to a self-hosted operator.
 
 ## Retention, recovery and updates
@@ -157,7 +159,10 @@ Delivery remains at least once: recipients must deduplicate stable event IDs.
 Recovery does not undo external side effects or restore post-backup revocations.
 
 Use the [operations guide](../operations.md) for backup and coordinated upgrade.
-Stop old API/worker writers before migrating, then start a compatible version.
+For a catalog-managed PostgreSQL Tenant, stop all its API/worker runtimes,
+suspend its catalog entry, apply `storage tenant migrate`, verify, then resume
+and start a compatible version. Legacy shared storage requires the explicit
+[import and cutover](tenants.md#upgrade-an-existing-installation).
 Mixed-version rolling updates, automatic failover and multi-region writes are
 not qualified by adding replica processes.
 

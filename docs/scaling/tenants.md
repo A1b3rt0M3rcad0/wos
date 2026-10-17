@@ -63,8 +63,8 @@ accept `{tenant_id, expected_version, reason}`; read the catalog entry before
 choosing its current version. `list` supports `--after UUID` and `--limit N`
 for bounded pagination. `--dsn-env` selects the protected environment variable
 containing the PostgreSQL URI (default `WOS_POSTGRES_DSN`); `--catalog-schema`
-selects the catalog (default `wos_control`). Never place a database password or issuer seed in an intent
-file or command argument.
+selects the catalog (default `WOS_POSTGRES_CATALOG_SCHEMA`, then `wos_control`).
+Never place a database password or issuer seed in an intent file or command argument.
 
 The supplied shared/scaling Compose profiles run a one-shot initializer with
 `provision --from-env --if-absent`. It reads `WOS_TENANT_ID` and
@@ -145,7 +145,7 @@ single-Tenant mode, four in hosted mode), migrations, backups and operator reser
 in the actual PostgreSQL budget. Monitor each Tenant and the shared database; schema
 separation does not impose storage or CPU quotas.
 
-## Suspend, resume and delete
+## Suspend, migrate, resume and delete
 
 An idle schema is not a running process and cannot be paused like a container.
 Its retained tables still consume storage. Suspension stops access and activity
@@ -162,12 +162,19 @@ reducing unused infrastructure.
 wos storage tenant suspend --file /private/tenant-suspend.json --writers-stopped
 wos storage tenant migrate --file /private/tenant-migrate.json --writers-stopped
 wos storage tenant resume --file /private/tenant-resume.json --writers-stopped
+```
+
+Create each request with the current catalog version; every successful transition
+advances it. To delete instead of resuming a suspended Tenant, use:
+
+```sh
 wos storage tenant delete --file /private/tenant-delete.json --writers-stopped
 ```
 
 Suspension preserves the schema. `migrate` applies the compiled schema chain only
 to a suspended Tenant, checks its version, records an audit entry and leaves it
-suspended at a new version. Verify the result before resuming. Resume makes the
+suspended at a new version. Active runtime startup only verifies schema
+compatibility; it does not apply migrations. Verify the result before resuming. Resume makes the
 Tenant eligible to serve again; restart
 the appropriate runtimes afterward. Deletion requires a suspended Tenant or an
 incomplete provisioning entry, and removes its data schema while retaining the

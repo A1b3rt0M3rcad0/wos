@@ -1,5 +1,13 @@
 # WOS operational reference
 
+> [!NOTE]
+> This reference records the earlier stable-plan procedures and measured source.
+> For the current schema-per-Tenant PostgreSQL lifecycle and breaking upgrade,
+> follow [Tenant operations](../scaling/tenants.md) and the
+> [current backup and upgrade guide](../operations.md#backup-restore-and-upgrade).
+> Active PostgreSQL runtimes no longer apply schema migrations. Historical
+> measurements below do not qualify the new storage boundary.
+
 This reference completes the deployment procedures requested by the stable plan. It is an operating policy and measured fixture envelope, not a managed hosting SLA. Local installation remains `cp .env.example .env && docker compose up --build -d`; the public example credential is only for that loopback demonstration.
 
 ## Capacity and context

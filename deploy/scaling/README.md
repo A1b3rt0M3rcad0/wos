@@ -117,7 +117,7 @@ The [scalability qualification procedure](../../docs/scaling/qualification.md) c
 
 The supplied PostgreSQL service has persistent storage but **is not a high-availability database cluster**. Replica APIs do not make a single database or single ingress highly available. Use a qualified external PostgreSQL HA setup when required, with a documented replication/durability policy, WAL/PITR, independently protected issuer material, restore drills, recovery-time objectives and acceptable data-loss boundaries. A read replica must never authorize work from stale state.
 
-Follow [backup/restore and upgrade cutover](../../docs/operations.md). Schema changes require pausing mutations and stopping all old API/worker writers before migration, then starting one qualified version. This profile does not certify mixed-version rolling upgrades. An additive migration or an old binary's startup refusal does not fence a process already running.
+Follow [backup/restore and upgrade cutover](../../docs/operations.md). For a catalog-managed Tenant, pause mutations and stop all its API/worker runtimes, suspend its placement, apply `wos storage tenant migrate`, verify the suspended data, then resume and start one qualified version. Use a fresh catalog version for every lifecycle action. This profile does not certify mixed-version rolling upgrades. An additive migration or an old binary's startup refusal does not fence a process already running.
 
 For delivery recovery, preserve consumer deduplication records: a crash after the destination commits but before WOS receives its acknowledgement can repeat the external request. Database restoration does not reverse external effects or extend leases.
 
