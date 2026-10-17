@@ -15,6 +15,7 @@
 <p align="center">
   <a href="#how-it-works">Product tour</a> ·
   <a href="#why-use-it">Why use it</a> ·
+  <a href="#concepts-in-one-minute">Concepts</a> ·
   <a href="#for-developers-and-oaas">Developers and OaaS</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#operate-with-agents">Agents</a> ·
@@ -22,15 +23,20 @@
   <a href="docs/README.md">Documentation</a>
 </p>
 
-A shared workspace and coordination backend for teams building software with people and AI agents. Define the result you want, break it into work, and keep the delivery, evidence and review together across tools and sessions.
+**WOS (Work Outcome System) is the coordination layer for teams working with AI agents and companies embedding agents into their products.** You define the requested result and plan the work. WOS keeps the Tasks, dependencies, permissions, deliveries, Evidence and acceptance criteria in shared, persistent state across people, agents, tools and sessions.
 
-An agent can finish a Task without delivering the result you asked for. Here, "the code is done" and "the result meets our criteria" are separate records. A person or another authorized agent checks the material before the Outcome is explicitly accepted. When independent review is required by policy, the reviewer must be a different authenticated identity.
+When work spans several agents and conversations, agents can duplicate effort, lose context between sessions or report "done" without showing that the requested result was achieved. WOS makes the work visible: **what needs to happen, who is authorized to act, what is blocked, what was delivered and what still needs verification.**
 
-Use the browser to plan and inspect work, the CLI to guide coding agents such as Codex or Claude Code, or the APIs to connect your own product. Your runtimes execute and schedule the work; the server persists state and enforces coordination rules.
+- **For developers and teams:** coordinate people, coding agents and subagents around a shared goal. Give participants Tasks with clear scope, permissions and recorded context. Preserve progress between sessions and review deliveries alongside your repository and development tools.
+- **For B2B SaaS and Outcome-as-a-Service (OaaS) builders:** embed persistent work coordination into your application. Represent customer requests as Outcomes, expose progress and track deliveries against agreed criteria while your own agents and workers perform the work.
+
+**Completing a Task is not the same as achieving an Outcome.** WOS keeps execution, delivery, assessment and acceptance separate. Evidence supports verification; it does not automatically approve a criterion or prove that the result is correct.
+
+Use the browser to plan and review, the CLI to coordinate external agents, or HTTP and MCP to integrate your product. Your runtime selects, schedules and runs agents. WOS persists shared state and enforces the rules for coordinating and accepting their work.
 
 ## How it works
 
-Suppose your team needs to **ship partial refunds**. Agree on the expected behavior, assign implementation and testing Tasks, and record the exact change and test results. A completed Task is one step toward the result. Criteria still need assessment, and the Outcome needs an explicit conclusion.
+Suppose your team needs to **ship partial refunds**. Define a success criterion: customers can receive part of a payment back, but never more than the amount still refundable. A coding agent implements the change and records the exact commit and test report. A person or an authorized reviewing agent checks that delivery against the criterion before the Outcome is explicitly accepted. If a session ends midway, the next participant can read the recorded progress and remaining work.
 
 <p align="center">
   <a href="docs/images/workspace-tour.gif"><img src="docs/images/workspace-tour.gif" width="960" alt="Workspace navigation through the Canvas, Tasks, Evidence and criteria" /></a>
@@ -47,7 +53,7 @@ The tour navigates sample records in the real application: **Canvas → Task det
 | Review | Inspect the actual delivery and assess the applicable criteria | The review decision and its supporting observations |
 | Conclude | Explicitly accept the Outcome when its requirements are satisfied | The basis for accepting the result |
 
-**Task completion does not achieve an Outcome. Attaching Evidence does not approve a criterion.**
+When the Workspace policy requires independent review, the reviewer must be a different authenticated identity from the executor.
 
 <details>
 <summary>The shared-work metaphor</summary>
@@ -62,21 +68,42 @@ The board represents shared state; each paper represents a bounded piece of work
 
 ## Why use it
 
-| When this happens | What changes in practice |
+| Problem | How WOS helps |
 | --- | --- |
-| Two agents try to take the same Task | One current acquisition grants authority at a time. Expiry and fencing checks reject stale deliveries. |
+| Two agents try to take the same Task | One participant holds current authority at a time. Expiry and stale-claim checks protect recorded work. |
 | An agent says "done," but nobody has checked the result | Keep delivery and assessment separate; require an eligible independent reviewer when the policy calls for one. |
-| A session ends and its context disappears | The next participant reads the recorded instructions, activity and remaining obligations. |
+| A session ends before the work is finished | The next participant can read the recorded instructions, progress and remaining work. |
 | A request times out and you cannot tell whether it succeeded | Inspect its durable receipt and reconcile the original request instead of guessing or submitting a different operation. |
-| People and agents work in different tools | The workspace, CLI, HTTP and MCP interfaces use the same persisted state and domain rules. |
+| People and agents work in different tools | The workspace, CLI, HTTP and MCP interfaces read and update the same state under the same rules. |
+
+## Concepts in one minute
+
+| Term | Meaning | Partial-refund example |
+| --- | --- | --- |
+| Outcome | The desired result, accepted explicitly | Customers can receive partial refunds |
+| Success criterion | A revisioned condition that must be assessed | Refunds above the remaining amount are rejected |
+| Objective | An optional intermediate condition | Refund behavior is implemented and verified |
+| Task | Concrete work for a participant; `WorkItem` in the API | Implement amount validation |
+| Contract | Bounded authority issued at checkout in a contract-enabled Workspace | Permission to deliver one Task under the issued constraints |
+| Artifact / Evidence | A deliverable reference, and an observation or source used to check it | An exact commit, and the recorded validation test report |
+| Assessment / Conclusion | Evaluation of a criterion, and the basis for accepting the result | The amount check passed; accept the Outcome after all requirements are satisfied |
+| Workspace / Namespace | The same access boundary: Workspace in the UI, Namespace in API/CLI configuration | The team's authorized space |
+
+A Roadmap is an optional versioned plan referencing existing Objectives and Tasks. Publishing it does not execute work or create dependencies automatically.
 
 ## For developers and OaaS
 
-For a development team, keep your repository, coding agents and CI. Use this service to coordinate work across them: make acceptance criteria explicit, issue bounded work, record immutable change references and test reports, and inspect what still needs review. An authorized participant can resume from recorded state after a session ends.
+### Coordinate a development team
 
-For developers building **Outcome-as-a-Service (OaaS)** products, treat a requested result as an Outcome. For example, your product could accept "add partial refunds to my store," record agreed criteria and expose progress while your workers implement and verify the change. The repository supplies the coordination layer; you build and operate the customer-facing service.
+Keep your repository, coding agents and CI. For the partial-refund example, define implementation, testing and review Tasks, with explicit dependencies where one must wait for another. Agents such as Codex or Claude Code acquire authorized work through the CLI, use their existing tools, and record progress and delivery references. Your team uses the workspace to inspect blockers, review test reports and decide whether the result meets the agreed criteria.
 
-| Your product or runtime owns | The coordination service provides |
+### Embed coordination in a SaaS or OaaS product
+
+In an **Outcome-as-a-Service (OaaS)** product, a customer requests an agreed result, such as a verified software change or a reviewed report. Your application records that request as an Outcome, defines the work and criteria, and presents progress to the customer. Your agents and workers produce the deliverables; authorized reviewers assess them.
+
+For example, a finance SaaS could accept "prepare this month's reconciliation report," create Tasks to collect records and investigate discrepancies, and require review before accepting the report. WOS records the work and its verification history. You build and operate the customer-facing service.
+
+| Your product or runtime owns | WOS provides |
 | --- | --- |
 | Customer intake and agreement on the requested result | Outcomes, success criteria, Objectives and Tasks |
 | Agent selection, scheduling, tools and execution | Explicit work acquisition, scoped authority and current obligations |
@@ -143,21 +170,6 @@ For startup failures, inspect `docker compose logs --tail=100 wos`. [Service lif
 </details>
 
 Want an executable example before configuring agents? The [isolated local lifecycle](examples/quickstart/README.md) creates one Outcome, delivers a file, assesses a criterion and concludes the result. It uses one trusted operator and the unsigned API; it does not demonstrate independent review.
-
-## Concepts in one minute
-
-| Term | Meaning | Partial-refund example |
-| --- | --- | --- |
-| Outcome | The desired result, accepted explicitly | Customers can receive partial refunds |
-| Success criterion | A revisioned condition that must be assessed | Refunds above the remaining amount are rejected |
-| Objective | An optional intermediate condition | Refund behavior is implemented and verified |
-| Task | Concrete work for a participant; `WorkItem` in the API | Implement amount validation |
-| Contract | Bounded authority issued at checkout in a contract-enabled Workspace | Permission to deliver one Task under the issued constraints |
-| Artifact / Evidence | A deliverable reference, and an observation or source used to check it | An exact commit, and the recorded validation test report |
-| Assessment / Conclusion | Evaluation of a criterion, and the basis for accepting the result | The amount check passed; accept the Outcome after all requirements are satisfied |
-| Workspace / Namespace | The same access boundary: Workspace in the UI, Namespace in API/CLI configuration | The team's authorized space |
-
-A Roadmap is an optional versioned plan referencing existing Objectives and Tasks. Publishing it does not execute work or create dependencies automatically.
 
 ## Operate with agents
 
