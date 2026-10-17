@@ -16,7 +16,7 @@ import {
 import { humanActions, availableActions, permissionLabels } from "./actions.js";
 import { humanForm } from "./human-forms.js";
 import { createIntent, sameScope, reconcileDraft } from "./intents.js";
-import { button as actionButton } from "./ui.js";
+import { button as actionButton, conflictComparison } from "./ui.js";
 import { copy, initializeCopy } from "./en-US.js";
 initializeCopy(document);
 import {
@@ -1310,6 +1310,9 @@ function applyView() {
   $("view-tabs").hidden = state.area !== "work";
   $("work-status-label").hidden =
     state.area !== "work" || state.view === "board";
+  $("item-priority").closest("label").hidden = !collectionHasPriority();
+  if (!collectionHasPriority()) $("item-priority").value = "";
+  $("content").dataset.section = state.section;
   const board = state.view === "board";
   $("tabs").hidden = isCanvas || board || state.area === "work";
   $("add-item").textContent =
@@ -1365,7 +1368,7 @@ const createForSection = {
   blockers: "create_blocker",
   evidence: "register_evidence",
   artifacts: "register_artifact",
-  decisions: "create_decision",
+  decisions: "propose_decision",
   roadmaps: "create_roadmap",
   ready_work: "create_work_item",
   blocked_work: "create_work_item",
@@ -1561,36 +1564,53 @@ function renderSummary() {
     root.append(setup);
   }
   const next = summaryCard(copy.text.suggestedNextStep);
-  const suggestion = c.blocked_work
+  const suggestion = usesWorkContracts()
     ? {
-        text: copy.text.reviewBlockingImpact,
-        reason: copy.text.blockedTasksArePresentInTheCurrentState,
-        section: "blockers",
+        text: copy.text.reviewCurrentWork,
+        reason: copy.text.workspaceContractAuthority,
+        section: "work_items",
       }
-    : !(state.outcome.criteria?.items || []).length
+    : c.work_items &&
+        (c.done_work || 0) + (c.cancelled_work || 0) === c.work_items
       ? {
-          text: copy.text.defineSuccessCriteria,
-          reason: copy.text.noSuccessCriteriaAreRecordedYet,
-          command: "add_criterion",
+          text: copy.text.workspaceReviewCriteria,
+          reason:
+            copy.text
+              .taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561,
+          inspect: true,
         }
-      : !c.work_items
+      : c.blocked_work
         ? {
-            text: copy.text.addATask,
-            reason: copy.text.noTasksAreRecordedYet,
-            command: "create_work_item",
+            text: copy.text.reviewBlockingImpact,
+            reason: copy.text.blockedTasksArePresentInTheCurrentState,
+            section: "blockers",
           }
-        : {
-            text: copy.text.reviewCurrentWork,
-            reason: copy.text.tasksAreAvailableForExplicitCoordination,
-            section: "work_items",
-          };
+        : !(state.outcome.criteria?.items || []).length
+          ? {
+              text: copy.text.defineSuccessCriteria,
+              reason: copy.text.noSuccessCriteriaAreRecordedYet,
+              command: "add_criterion",
+            }
+          : !c.work_items
+            ? {
+                text: copy.text.addATask,
+                reason: copy.text.noTasksAreRecordedYet,
+                command: "create_work_item",
+              }
+            : {
+                text: copy.text.reviewCurrentWork,
+                reason: copy.text.tasksAreAvailableForExplicitCoordination,
+                section: "work_items",
+              };
   next.append(
     el("p", suggestion.reason),
     el("small", copy.text.aPresentationHintFromPersistedStateNoPlanningOr),
     actionButton(
       suggestion.text,
       () => {
-        if (suggestion.section) navigateSection(suggestion.section);
+        if (suggestion.inspect)
+          showEntity(state.snapshot.outcome.ref).catch(report);
+        else if (suggestion.section) navigateSection(suggestion.section);
         else {
           state.selected = { ...state.outcome, _kind: "outcome" };
           openCommands(suggestion.command);
@@ -1603,12 +1623,16 @@ function renderSummary() {
 
   const status = summaryCard(copy.text.taskOverview, "work_items");
   const done = c.done_work || 0,
-    active = c.in_progress_work || 0,
-    blocked = (c.blocked_work || 0) + (c.attention_needed_work || 0),
+    active = usesWorkContracts() ? 0 : c.in_progress_work || 0,
+    blocked = usesWorkContracts()
+      ? 0
+      : (c.blocked_work || 0) + (c.attention_needed_work || 0),
     total = c.work_items || 0;
   const parts = [
     {
-      title: copy.text.toDoPlanned,
+      title: usesWorkContracts()
+        ? copy.text.workspaceOpenWork
+        : copy.text.toDoPlanned,
       count: Math.max(
         0,
         total - done - active - blocked - (c.cancelled_work || 0),
@@ -1641,10 +1665,13 @@ function renderSummary() {
       tone: "violet",
     },
   ];
+  const shownParts = usesWorkContracts()
+    ? parts.filter((_, index) => ![1, 2].includes(index))
+    : parts;
   const body = el("div", undefined, "summary-stats");
-  body.append(donut(parts, total));
+  body.append(donut(shownParts, total));
   const legend = el("div", undefined, "legend");
-  for (const part of parts) {
+  for (const part of shownParts) {
     const row = el("div", undefined, "legend-row");
     row.append(
       el("span", undefined, `legend-dot ${part.tone}`),
@@ -1655,6 +1682,10 @@ function renderSummary() {
   }
   body.append(legend);
   status.append(body);
+  if (usesWorkContracts())
+    status.append(
+      el("p", copy.text.workspaceContractAuthority, "section-note"),
+    );
   root.append(status);
   const proof = summaryCard(copy.text.continueWithContext);
   const counts = el("div", undefined, "summary-counts");
@@ -1687,11 +1718,15 @@ function renderSummary() {
   root.append(proof);
   const recent = summaryCard(copy.text.currentTasks, "work_items");
   recent.classList.add("summary-recent");
-  const items = [
-    ...(s.sections.ready_work || []),
-    ...(s.sections.in_progress_work || []),
-    ...(s.sections.blocked_work || []),
-  ].slice(0, 3);
+  const items = (
+    usesWorkContracts()
+      ? [...(s.sections.work_items || [])]
+      : [
+          ...(s.sections.ready_work || []),
+          ...(s.sections.in_progress_work || []),
+          ...(s.sections.blocked_work || []),
+        ]
+  ).slice(0, 3);
   if (!items.length) items.push(...(s.sections.work_items || []).slice(0, 3));
   for (const item of items) recent.append(itemView(item));
   if (!items.length)
@@ -1732,23 +1767,79 @@ function referenceButton(ref) {
 }
 function operational(item) {
   const e = item.work_item || item.current || item;
+  if (usesWorkContracts() && e.ref?.kind === "work_item")
+    return { display_state: e.lifecycle, readiness_reasons: [] };
   return (
     item.state ||
+    item.operational_state ||
     item.readiness ||
     operationalSections
       .flatMap((key) => state.snapshot.sections[key] || [])
       .find((x) => x.work_item.ref.id === e.ref?.id)?.state
   );
 }
+function usesWorkContracts() {
+  return [
+    "contracts_v1",
+    "signed_contracts_v2",
+    "draining_to_signed_v2",
+  ].includes(state.protocol?.phase);
+}
+function collectionHasPriority() {
+  return state.area === "work" || state.section === "objectives";
+}
 function matches(item) {
   const e = item.work_item || item.current || item;
   const query = $("item-search").value.trim().toLocaleLowerCase("en-US");
+  const refs = [
+    e.ref,
+    item.entity_ref,
+    item.owner_ref,
+    item.from,
+    item.to,
+    item.source_ref,
+    item.target_ref,
+    item.slot && { kind: "roadmap", id: item.slot.roadmap_id },
+  ];
+  const searchable = [
+    e.title,
+    e.description,
+    item.plan_label,
+    item.slot && copy.text.active,
+    item.slot &&
+      message(
+        "revisionPublishedItems",
+        item.slot.revision_number,
+        item.node_count,
+      ),
+    display(e.lifecycle || ""),
+    item.event_type && eventName(item.event_type),
+    item.event_type,
+    item.actor_ref?.id,
+    item.actor_ref?.kind,
+    item.principal_id,
+    item.outcome_revision,
+    item.recorded_at,
+    item.kind,
+    item.type,
+    item.relation_type,
+    ...refs
+      .filter(Boolean)
+      .flatMap((ref) => [
+        ref.id,
+        shortId(ref.id),
+        kindName(ref.kind),
+        titleOf(ref),
+      ]),
+  ]
+    .filter((value) => value !== undefined && value !== null)
+    .join(" ")
+    .toLocaleLowerCase("en-US");
   return (
-    (!query ||
-      `${e.title || ""} ${item.plan_label || ""} ${shortId(e.ref?.id)} ${display(e.lifecycle || "")}`
-        .toLocaleLowerCase("en-US")
-        .includes(query)) &&
-    (!$("item-priority").value || e.priority === $("item-priority").value)
+    (!query || searchable.includes(query)) &&
+    (!collectionHasPriority() ||
+      !$("item-priority").value ||
+      e.priority === $("item-priority").value)
   );
 }
 function itemView(item, mode = "card") {
@@ -1797,6 +1888,25 @@ function itemView(item, mode = "card") {
     );
     return card;
   }
+  if (item.target_ref && item.missing) {
+    const card = el("div", undefined, "item");
+    card.append(
+      el(
+        "h3",
+        item.plan_label ||
+          item.published_reference_title ||
+          kindName(item.target_ref.kind),
+      ),
+      el("p", copy.text.workspaceMissingPlanReference),
+      el("small", shortId(item.target_ref.id)),
+      referenceButton({
+        ...item.target_ref,
+        kind: "roadmap",
+        id: item.roadmap_id,
+      }),
+    );
+    return card;
+  }
   const entity = item.work_item || item.current || item;
   if (!entity.ref) {
     const card = el("div", undefined, "item");
@@ -1807,6 +1917,7 @@ function itemView(item, mode = "card") {
   const status = operational(item);
   const button = el("button", undefined, mode === "list" ? "list-row" : "item");
   button.dataset.entityId = entity.ref.id;
+  button.dataset.entityKind = entity.ref.kind;
   button.onclick = () => showEntity(entity.ref).catch(report);
   const main = el("span", undefined, "item-main");
   const symbol = el("span", undefined, `entity-symbol ${entity.ref.kind}`);
@@ -1816,10 +1927,21 @@ function itemView(item, mode = "card") {
     el("span", entity.title || kindName(entity.ref.kind), "item-title"),
     el(
       "span",
-      `${shortId(entity.ref.id)} · ${kindName(entity.ref.kind)}${item.plan_label ? ` · ${item.plan_label}` : ""}`,
+      `${mode === "list" && !collectionHasPriority() ? "" : shortId(entity.ref.id) + " · "}${kindName(entity.ref.kind)}${item.plan_label ? ` · ${message("workspaceHistoricalPlanLabel", item.plan_label, item.revision_number)}` : ""}`,
       "item-subtitle",
     ),
   );
+  if (
+    item.published_reference_title &&
+    item.published_reference_title !== entity.title
+  )
+    itemCopy.append(
+      el(
+        "span",
+        message("workspacePublishedTitle", item.published_reference_title),
+        "item-parent",
+      ),
+    );
   main.append(symbol, itemCopy);
   button.append(main);
   const lifecycle = status?.display_state || entity.lifecycle;
@@ -1828,11 +1950,16 @@ function itemView(item, mode = "card") {
   if (mode === "list") {
     const priority = el(
       "span",
-      entity.priority
-        ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
-        : "—",
-      `item-priority ${entity.priority || ""}`,
+      !collectionHasPriority()
+        ? shortId(entity.ref.id)
+        : entity.priority
+          ? `${entity.priority === "low" ? "↓" : entity.priority === "normal" ? "—" : "↑"} ${display(entity.priority)}`
+          : "—",
+      collectionHasPriority()
+        ? `item-priority ${entity.priority || ""}`
+        : "item-reference",
     );
+    if (!collectionHasPriority()) priority.title = entity.ref.id;
     button.append(stateCell, priority);
   } else {
     const footer = el("span", undefined, "board-card-footer");
@@ -1878,6 +2005,9 @@ function timelineView(item) {
   const marker = el("span", undefined, "timeline-marker");
   marker.append(icon(item.actor_ref?.kind === "agent" ? "work_item" : "user"));
   const body = el("div");
+  body.className = "timeline-body";
+  const recorded = el("time", date(item.recorded_at));
+  recorded.dateTime = item.recorded_at;
   body.append(
     Object.assign(el("h3", eventName(item.event_type)), {
       title: item.event_type,
@@ -1887,7 +2017,7 @@ function timelineView(item) {
       `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revision ${item.outcome_revision}`,
     ),
     referenceButton(item.entity_ref),
-    el("time", date(item.recorded_at)),
+    recorded,
   );
   row.append(marker, body);
   return row;
@@ -1951,11 +2081,24 @@ function emptySection(title, command) {
         blockers: copy.text.noBlockersYet,
       }[state.section] || title;
   const box = el("div", undefined, "empty-section");
+  const filtered = title === copy.text.noItemsMatchTheFilters;
   box.append(
     sectionIllustration(state.area),
     el("h3", title),
-    el("p", copy.text.activityAppearsHereAsWorkProgresses),
+    el("p", filtered ? copy.text.workspaceFilterEmpty : sectionGuidance()),
   );
+  if (filtered)
+    box.append(
+      actionButton(
+        copy.text.workspaceFilterReset,
+        () => {
+          $("item-search").value = "";
+          $("item-priority").value = "";
+          renderSection().catch(report);
+        },
+        "quiet",
+      ),
+    );
   if (command && state.permissions.includes(inventory[command]?.permission)) {
     const b = el("button", actionName(command), "quiet");
     b.onclick = () => createItem(command);
@@ -1963,41 +2106,93 @@ function emptySection(title, command) {
   }
   return box;
 }
+function sectionGuidance() {
+  const keys = {
+    work_items: "workspaceNoTasks",
+    objectives: "workspaceNoObjectives",
+    roadmaps: "workspaceNoRoadmaps",
+    evidence: "workspaceNoEvidence",
+    artifacts: "workspaceNoArtifacts",
+    decisions: "workspaceNoDecisions",
+    issues: "workspaceNoIssues",
+    blockers: "workspaceNoBlockers",
+    timeline: "workspaceNoActivity",
+    graph: "workspaceNoRelations",
+    active_roadmaps: "workspaceNoRoadmaps",
+    active_plan_references: "workspaceNoPlanReferences",
+    conclusion_contestations: "workspaceNoContestations",
+  };
+  return (
+    copy.text[keys[state.section]] ||
+    copy.text.activityAppearsHereAsWorkProgresses
+  );
+}
+function collectionStatus(error) {
+  const box = el("div", undefined, "collection-status");
+  box.dataset.renderState = error ? "error" : "loading";
+  box.setAttribute("role", error ? "alert" : "status");
+  box.append(
+    el("p", human(state.section), "eyebrow"),
+    el(
+      "h3",
+      error
+        ? copy.text.workspaceCollectionError
+        : copy.text.workspaceCollectionLoading,
+    ),
+  );
+  if (error) {
+    box.append(el("p", error.message));
+    box.append(
+      actionButton(
+        copy.text.workspaceReloadView,
+        () => renderSection().catch(report),
+        "quiet",
+      ),
+    );
+  }
+  return box;
+}
 async function sectionData(section, cursor = "", append = false) {
   const cached = state.loaded.get(section);
   if (!cursor && cached) return cached;
+  const revision = state.snapshot.outcome_revision;
+  const consistent = (page) => {
+    if (canvasRevision(page.outcome_revision) !== canvasRevision(revision))
+      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
+    return page;
+  };
   let items, next;
   if (section === "timeline") {
-    const page = await request(
-      `${outcomeBase()}/timeline?limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/timeline?limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      ),
     );
     items = page.items;
     next = page.next_cursor;
   } else if (section === "graph") {
-    const page = await request(
-      `${outcomeBase()}/graph?depth=3&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/graph?depth=3&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      ),
     );
     items = page.edges;
     next = page.next_cursor;
   } else if (section === "roadmaps") {
-    const page = await request(`${outcomeBase()}/roadmaps`);
-    items = (page.items || []).map((x) => ({
-      ref: {
-        namespace_id: state.namespace,
-        outcome_id: state.outcome.id,
-        kind: "roadmap",
-        id: x.id,
-      },
-      title: x.title,
-      version: x.version,
-      lifecycle: x.lifecycle,
-    }));
+    const page = await request(
+      `${outcomeBase()}/references?kind=roadmap&limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    );
+    consistent(page);
+    items = page.items || [];
+    next = page.next_cursor;
   } else if (!cursor) {
     items = state.snapshot.sections[section] || [];
     next = state.snapshot.section_cursors[section];
   } else {
-    const page = await request(
-      `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
+    const page = consistent(
+      await request(
+        `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
+      ),
     );
     items = page.items;
     next = page.next_cursor;
@@ -2022,7 +2217,13 @@ async function searchedTasks(cursor = "", append = false) {
     page.items.map((item) => request(`${scope}/work-items/${item.ref.id}`)),
   );
   if (generation !== state.generation) return { items: [] };
-  if (results.some((r) => r.outcome_revision !== page.outcome_revision)) {
+  if (
+    results.some(
+      (r) =>
+        canvasRevision(r.outcome_revision) !==
+        canvasRevision(page.outcome_revision),
+    )
+  ) {
     const e = Error(
       copy.text.stateChangedWhileLoadingSearchResultsRefreshTheSearch,
     );
@@ -2048,7 +2249,15 @@ async function renderSection(cursor = "", append = false) {
   }
   const section = state.section,
     generation = state.generation,
+    snapshot = state.snapshot,
     run = ++state.renderId;
+  const current = () =>
+    generation === state.generation &&
+    snapshot === state.snapshot &&
+    run === state.renderId;
+  const content = $("content");
+  content.setAttribute("aria-busy", "true");
+  if (!append) content.replaceChildren(collectionStatus());
   const globalWork = section === "work_items";
   let data;
   try {
@@ -2056,35 +2265,56 @@ async function renderSection(cursor = "", append = false) {
       ? await searchedTasks(cursor, append)
       : await sectionData(section, cursor, append);
   } catch (error) {
-    if (generation === state.generation && run === state.renderId) throw error;
+    if (current()) {
+      content.setAttribute("aria-busy", "false");
+      content.replaceChildren(collectionStatus(error));
+      throw error;
+    }
+    if ([401, 403].includes(error.status) && !error.discarded) throw error;
     return;
   }
-  if (generation !== state.generation || run !== state.renderId) return;
+  if (!current()) return;
   if (section === "objectives") {
     const path = outcomeBase(),
       revision = state.snapshot.outcome_revision;
     const missing = data.items.filter((x) => !x._hierarchy_loaded);
-    const hydrated = await Promise.all(
-      missing.map(async (x) => {
-        const r = await request(`${path}/objectives/${x.ref.id}`);
-        if (r.outcome_revision !== revision)
-          throw Error(
-            copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
-          );
-        return { ...r.value, ref: x.ref, _hierarchy_loaded: true };
-      }),
-    );
-    if (generation !== state.generation || run !== state.renderId) return;
+    let hydrated;
+    try {
+      hydrated = await Promise.all(
+        missing.map(async (x) => {
+          const r = await request(`${path}/objectives/${x.ref.id}`);
+          if (canvasRevision(r.outcome_revision) !== canvasRevision(revision))
+            throw Error(
+              copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+            );
+          return { ...r.value, ref: x.ref, _hierarchy_loaded: true };
+        }),
+      );
+    } catch (error) {
+      if (!current()) {
+        if ([401, 403].includes(error.status) && !error.discarded) throw error;
+        return;
+      }
+      content.setAttribute("aria-busy", "false");
+      content.replaceChildren(collectionStatus(error));
+      throw error;
+    }
+    if (!current()) return;
     const map = new Map(hydrated.map((x) => [x.ref.id, x]));
     data.items = data.items.map((x) => map.get(x.ref.id) || x);
   }
   state.loaded.set(section, data);
-  const content = $("content");
+  content.setAttribute("aria-busy", "false");
   content.replaceChildren();
   const heading = el("div", undefined, "content-heading");
+  const headingCopy = el("div", undefined, "collection-heading-copy");
   const shown = globalWork ? data.items : data.items.filter(matches);
-  heading.append(
+  headingCopy.append(
+    el("p", copy.text.workspaceCollectionContext, "eyebrow"),
     el("h2", human(section)),
+  );
+  heading.append(
+    headingCopy,
     el(
       "small",
       message(
@@ -2097,6 +2327,7 @@ async function renderSection(cursor = "", append = false) {
     ),
   );
   content.append(heading);
+  content.append(el("p", sectionGuidance(), "collection-guidance"));
   if (globalWork)
     content.append(
       el(
@@ -2116,14 +2347,17 @@ async function renderSection(cursor = "", append = false) {
   if (!shown.length)
     content.append(
       emptySection(
-        data.items.length
+        data.items.length || $("item-search").value || $("item-priority").value
           ? copy.text.noItemsMatchTheFilters
           : copy.text.noRecordsInThisSectionYet,
-        data.items.length ? "" : sectionCommand(),
+        data.items.length || $("item-search").value || $("item-priority").value
+          ? ""
+          : sectionCommand(),
       ),
     );
   const list = el("div", undefined, "collection");
   let rows = 0;
+  let activityDate, activityGroup;
   for (const item of shown) {
     const entity = item.work_item || item.current || item;
     if (entity.ref) {
@@ -2132,7 +2366,10 @@ async function renderSection(cursor = "", append = false) {
         head.append(
           el("span", copy.text.item),
           el("span", copy.text.lifecycle),
-          el("span", copy.text.priority),
+          el(
+            "span",
+            collectionHasPriority() ? copy.text.priority : copy.text.reference,
+          ),
         );
         list.append(head);
         content.append(list);
@@ -2143,20 +2380,34 @@ async function renderSection(cursor = "", append = false) {
           (x) => x.ref.id === entity.parent_objective_id,
         );
         row.classList.add("objective-child");
-        row.append(
-          referenceButton({
-            namespace_id: state.namespace,
-            outcome_id: state.outcome.id,
-            kind: "objective",
-            id: entity.parent_objective_id,
-          }),
-        );
+        row
+          .querySelector(".item-main > span:last-child")
+          .append(
+            el(
+              "span",
+              parent
+                ? message("withinObjective", parent.title)
+                : copy.text.parentObjectiveOutsidePage,
+              "item-parent",
+            ),
+          );
         row.title = parent
           ? message("withinObjective", parent.title)
           : copy.text.parentObjectiveOutsidePage;
       }
       list.append(row);
       rows++;
+    } else if (section === "timeline" && item.event_type) {
+      const day = String(item.recorded_at || "").slice(0, 10);
+      if (!activityGroup || activityDate !== day) {
+        activityDate = day;
+        activityGroup = el("section", undefined, "activity-day");
+        activityGroup.append(
+          el("h3", day || copy.text.workspaceActivityDay, "activity-day-label"),
+        );
+        content.append(activityGroup);
+      }
+      activityGroup.append(timelineView(item));
     } else if (section === "graph") {
       const ref = item.from || item.source_ref,
         other = item.to || item.target_ref;
@@ -2166,7 +2417,12 @@ async function renderSection(cursor = "", append = false) {
           referenceButton(ref),
           el("span", "→", "relation-arrow"),
           referenceButton(other),
-          badge(item.kind || item.type || item.relation_type || "depends_on"),
+          badge(
+            item.kind ||
+              item.type ||
+              item.relation_type ||
+              copy.text.relation136748,
+          ),
         );
       else row.append(readable(item));
       content.append(row);
@@ -2208,6 +2464,7 @@ const boardGroups = [
   },
 ];
 function renderBoard() {
+  if (usesWorkContracts()) return renderContractBoard();
   const content = $("content");
   content.replaceChildren(
     el(
@@ -2268,24 +2525,45 @@ function renderBoard() {
           copy.text.quietMoreButton,
         );
         more.onclick = async () => {
-          const generation = state.generation;
+          const generation = state.generation,
+            snapshot = state.snapshot;
           more.disabled = true;
           try {
             const page = await request(
               `${outcomeBase()}/continuity/${section}?limit=25&cursor=${encodeURIComponent(cursor)}`,
             );
-            if (generation !== state.generation) return;
+            if (generation !== state.generation || snapshot !== state.snapshot)
+              return;
+            if (
+              canvasRevision(page.outcome_revision) !==
+              canvasRevision(snapshot.outcome_revision)
+            )
+              throw Error(
+                copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+              );
             const previous =
               state.boardLoaded.get(section)?.items ||
               state.snapshot.sections[section] ||
               [];
             state.boardLoaded.set(section, {
-              items: [...previous, ...page.items],
+              items: [
+                ...new Map(
+                  [...previous, ...page.items].map((item) => [
+                    (item.work_item || item.current || item).ref.id,
+                    item,
+                  ]),
+                ).values(),
+              ],
               next: page.next_cursor || "",
             });
             if (state.view === "board") renderBoard();
           } catch (e) {
-            report(e);
+            if (
+              (generation === state.generation &&
+                snapshot === state.snapshot) ||
+              [401, 403].includes(e.status)
+            )
+              report(e);
             more.disabled = false;
           }
         };
@@ -2307,6 +2585,104 @@ function renderBoard() {
         "section-note",
       ),
     );
+}
+function renderContractBoard() {
+  const content = $("content"),
+    snapshot = state.snapshot;
+  content.setAttribute("aria-busy", "false");
+  content.replaceChildren(
+    el("p", copy.text.workspaceLoadedTaskBoard, "board-caption"),
+  );
+  const page = state.boardLoaded.get("work_items");
+  const loaded = page?.items || snapshot.sections.work_items || [];
+  const board = el("div", undefined, "board contract-board");
+  const groups = [
+    ["backlog", copy.text.backlog],
+    ["todo", display("todo")],
+    ["in_progress", copy.text.inProgress],
+    ["done", copy.text.done],
+    ["cancelled", copy.text.cancelled],
+  ];
+  for (const [lifecycle, label] of groups) {
+    const column = el("section", undefined, "board-column");
+    column.setAttribute("aria-label", label);
+    const records = loaded
+      .filter(
+        (entry) =>
+          (entry.work_item || entry.current || entry).lifecycle === lifecycle,
+      )
+      .filter(matches);
+    const heading = el("div", undefined, "column-heading");
+    heading.append(
+      el("strong", label),
+      el("span", String(records.length), "count"),
+    );
+    column.append(heading);
+    for (const item of records) column.append(itemView(item));
+    if (!records.length)
+      column.append(
+        el("p", copy.text.noLoadedItemsMatchTheFilters, "board-empty"),
+      );
+    board.append(column);
+  }
+  content.append(
+    board,
+    el(
+      "p",
+      message(
+        "itemsShown",
+        loaded.filter(matches).length,
+        ` · ${snapshot.counts.work_items || 0} total`,
+      ),
+      "section-note",
+    ),
+  );
+  const cursor = page ? page.next : snapshot.section_cursors.work_items;
+  if (cursor) {
+    const more = actionButton(
+      copy.text.loadMore,
+      async () => {
+        const generation = state.generation;
+        more.disabled = true;
+        try {
+          const next = await request(
+            `${outcomeBase()}/continuity/work_items?limit=25&cursor=${encodeURIComponent(cursor)}`,
+          );
+          if (generation !== state.generation || snapshot !== state.snapshot)
+            return;
+          if (
+            canvasRevision(next.outcome_revision) !==
+            canvasRevision(snapshot.outcome_revision)
+          )
+            throw Error(
+              copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
+            );
+          const unique = new Map(
+            [...loaded, ...next.items].map((item) => [
+              (item.work_item || item.current || item).ref.id,
+              item,
+            ]),
+          );
+          state.boardLoaded.set("work_items", {
+            items: [...unique.values()],
+            next: next.next_cursor || "",
+          });
+          if (state.area === "work" && state.view === "board") renderBoard();
+        } catch (error) {
+          if (
+            (generation === state.generation && snapshot === state.snapshot) ||
+            [401, 403].includes(error.status)
+          )
+            report(error);
+        } finally {
+          more.disabled = false;
+        }
+      },
+      "quiet more-button",
+    );
+    more.dataset.more = "true";
+    content.append(more);
+  }
 }
 const plurals = {
   objective: "objectives",
@@ -2493,11 +2869,12 @@ async function showEntity(
       return;
     let operationalState, context, attention;
     if (ref.kind === "work_item") {
-      const projection = isCanvas
+      const needsAttention = isCanvas || usesWorkContracts();
+      const projection = needsAttention
         ? await request(`${path}/attention`)
         : await request(`${path}/operational-state`);
+      if (needsAttention) attention = projection;
       if (isCanvas) {
-        attention = projection;
         context = await request(`${path}/context`);
         if (
           generation !== state.generation ||
@@ -2520,7 +2897,7 @@ async function showEntity(
         canvasRevision(projection.outcome_revision)
       )
         throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
-      operationalState = isCanvas
+      operationalState = needsAttention
         ? attention.operational_state
         : projection.state;
     }
@@ -2568,11 +2945,13 @@ async function showEntity(
         badge(entity._operational_state.display_state),
         el(
           "p",
-          message(
-            "reservationAuthorityEvaluated",
-            display(entity._operational_state.lease_status),
-            date(entity._operational_state.evaluated_at),
-          ),
+          usesWorkContracts()
+            ? copy.text.workspaceContractAuthority
+            : message(
+                "reservationAuthorityEvaluated",
+                display(entity._operational_state.lease_status),
+                date(entity._operational_state.evaluated_at),
+              ),
         ),
       );
       if (entity._operational_state.readiness_reasons?.length)
@@ -2986,7 +3365,8 @@ function openTechnicalCommands(name) {
   $("command-dialog").showModal();
 }
 function field(name, schema, value, required = false) {
-  const wrap = el("div");
+  const wrap = el("div", undefined, "technical-field");
+  wrap.dataset.fieldKind = schema.type || "";
   let getter;
   if (
     value !== undefined &&
@@ -3323,6 +3703,7 @@ function field(name, schema, value, required = false) {
 }
 let formGetter;
 function buildForm() {
+  $("command-form").dataset.mode = "technical";
   const descriptor = state.catalog.find(
     (x) => x.name === $("command-select").value,
   );
@@ -3446,6 +3827,7 @@ function openCommands(name) {
   state.formOriginCanvas = canvasActive();
   state.humanForm?.dispose();
   state.technical = false;
+  $("command-form").dataset.mode = "human";
   state.formScope = currentScope();
   state.formGeneration = state.generation;
   $("command-select").replaceChildren(
@@ -3721,7 +4103,7 @@ function offerConflict(pending) {
           root.replaceChildren(
             el("h3", copy.text.reviewLatestStateAndYourLocalDraft),
           );
-          const columns = el("div", undefined, "conflict-columns");
+          const columns = conflictComparison();
           for (const [label, data] of [
             [copy.text.latestSavedState, latest],
             [copy.text.yourLocalChanges, local],

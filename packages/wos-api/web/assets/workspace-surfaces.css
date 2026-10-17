@@ -1,0 +1,242 @@
+/* Specialist views share the workspace's paper, type and fixed editorial grid.
+   Canvas keeps its own spatial card system. Dimensions use the existing scale. */
+.workspace-main:has(
+  #outcome:not([hidden]):not([data-editorial-area="canvas"])
+) {
+  padding-top: calc(18 * var(--wos-unit, 1px));
+}
+.workspace-main:has(#outcome:not([hidden]):not([data-editorial-area="canvas"]))
+  #notice:not(:empty) {
+  margin-bottom: calc(8 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .breadcrumbs {
+  margin-bottom: calc(12 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .outcome-heading {
+  gap: calc(10 * var(--wos-unit, 1px));
+  margin-bottom: calc(12 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .outcome-heading h1 {
+  font-size: clamp(2.28571rem, calc(2.7 * var(--wos-vw, 1vw)), 2.85714rem);
+  line-height: 1.1;
+  margin-block: calc(8 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .area-intro {
+  min-height: calc(142 * var(--wos-unit, 1px));
+  padding-block: calc(18 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .area-intro h2 {
+  font-size: clamp(2.42857rem, calc(3.3 * var(--wos-vw, 1vw)), 3.42857rem);
+  margin-bottom: calc(8 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .area-vignette {
+  flex-basis: calc(128 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .area-vignette img {
+  width: calc(112 * var(--wos-unit, 1px));
+  height: calc(100 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) #view-tabs {
+  margin-top: calc(10 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .items-toolbar {
+  gap: calc(10 * var(--wos-unit, 1px));
+  margin-bottom: calc(10 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .item-filters {
+  padding-block: calc(10 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) #work-status-label {
+  margin-block: calc(10 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .content-heading {
+  gap: calc(16 * var(--wos-unit, 1px));
+  align-items: flex-end;
+  padding-block: calc(14 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  margin-bottom: 0;
+}
+.collection-heading-copy .eyebrow {
+  color: var(--muted);
+  font: 0.64286rem/1.6 var(--mono);
+  letter-spacing: calc(1 * var(--wos-unit, 1px));
+  margin: 0 0 calc(5 * var(--wos-unit, 1px));
+}
+.collection-heading-copy h2 {
+  font: 400 2.14286rem/1.15 var(--display);
+}
+.collection-guidance {
+  max-width: 76ch;
+  color: var(--muted);
+  font-size: 0.85714rem;
+  line-height: 1.7;
+  margin: 0 0 calc(10 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) #content > .section-note {
+  border: 0;
+  border-left: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: transparent;
+  margin-block: calc(8 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  padding: calc(4 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  font-size: 0.71429rem;
+  color: var(--muted);
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .list-head {
+  background: var(--wos-workspace);
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .list-row {
+  padding: calc(16 * var(--wos-unit, 1px)) calc(14 * var(--wos-unit, 1px));
+  min-height: calc(80 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"]))
+  .item-main
+  > span:last-child {
+  min-width: 0;
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .item-title {
+  font: 400 1.42857rem/1.25 var(--display);
+  overflow-wrap: anywhere;
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .item-subtitle {
+  display: block;
+  margin-top: calc(5 * var(--wos-unit, 1px));
+}
+.item-reference {
+  font: 0.71429rem/1.6 var(--mono);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.item-parent {
+  display: block;
+  color: var(--muted);
+  font: 0.71429rem/1.6 var(--utility);
+  margin-top: calc(7 * var(--wos-unit, 1px));
+  padding-left: calc(10 * var(--wos-unit, 1px));
+  border-left: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+:where(#outcome:not([data-editorial-area="canvas"]))
+  .objective-child
+  .item-main {
+  padding-left: calc(18 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .board-column {
+  min-width: 0;
+  background: var(--wos-workspace);
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .board .item {
+  --button-idle-bg: var(--wos-surface);
+  min-width: 0;
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .board .item-title {
+  font-size: 1.28571rem;
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .column-heading {
+  padding-block: calc(8 * var(--wos-unit, 1px)) calc(14 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  margin-bottom: calc(14 * var(--wos-unit, 1px));
+}
+.collection-status {
+  background: var(--wos-workspace);
+  border-block: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  padding: calc(24 * var(--wos-unit, 1px));
+  margin-block: calc(16 * var(--wos-unit, 1px));
+  overflow-wrap: anywhere;
+}
+.collection-status .eyebrow {
+  color: var(--accent);
+}
+.collection-status h3 {
+  font: 400 2rem/1.2 var(--display);
+  margin-block: calc(10 * var(--wos-unit, 1px));
+}
+.collection-status p:not(.eyebrow) {
+  max-width: 70ch;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.collection-status[data-render-state="error"] {
+  border-left: calc(2 * var(--wos-unit, 1px)) solid var(--wos-error);
+}
+.activity-day {
+  border-top: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  margin-top: calc(20 * var(--wos-unit, 1px));
+}
+.activity-day-label {
+  font: 400 0.71429rem/1.6 var(--mono);
+  color: var(--muted);
+  background: var(--wos-workspace);
+  padding: calc(12 * var(--wos-unit, 1px)) calc(14 * var(--wos-unit, 1px));
+  margin: 0;
+}
+.activity-day .timeline-entry {
+  margin-inline: calc(14 * var(--wos-unit, 1px));
+  padding-block: calc(18 * var(--wos-unit, 1px));
+}
+.timeline-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.activity-day .timeline-entry h3 {
+  font: 400 1.42857rem/1.25 var(--display);
+  margin-block: 0 calc(6 * var(--wos-unit, 1px));
+}
+.timeline-body time {
+  display: block;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-top: calc(8 * var(--wos-unit, 1px));
+}
+:where(#outcome:not([data-editorial-area="canvas"])) .relation-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(12 * var(--wos-unit, 1px));
+  overflow-wrap: anywhere;
+}
+:where(#outcome:not([data-editorial-area="canvas"]))
+  .summary-card:not(.summary-purpose-card) {
+  background: var(--wos-workspace);
+}
+:where(#outcome:not([data-editorial-area="canvas"]))
+  .summary-card
+  > .section-note {
+  background: transparent;
+  border-left-color: var(--wos-border);
+  padding: calc(8 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  margin-top: calc(18 * var(--wos-unit, 1px));
+}
+@media (max-width: 760px) {
+  :where(#outcome:not([data-editorial-area="canvas"])) .area-intro {
+    min-height: auto;
+    gap: calc(14 * var(--wos-unit, 1px));
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .area-vignette {
+    flex-basis: calc(78 * var(--wos-unit, 1px));
+    margin-right: 0;
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .area-vignette img {
+    width: calc(78 * var(--wos-unit, 1px));
+    height: calc(78 * var(--wos-unit, 1px));
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .content-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: calc(8 * var(--wos-unit, 1px));
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .list-row {
+    padding-inline: calc(10 * var(--wos-unit, 1px));
+  }
+  :where(#outcome:not([data-editorial-area="canvas"]))
+    .list-row
+    .item-reference {
+    display: block;
+    grid-column: 1 / -1;
+    padding-left: calc(42 * var(--wos-unit, 1px));
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .relation-card > button {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+}

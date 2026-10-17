@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="editorial.css" />
     <link rel="stylesheet" href="canvas.css" />
+    <link rel="stylesheet" href="workspace-entry.css" />
+    <link rel="stylesheet" href="workspace-surfaces.css" />
+    <link rel="stylesheet" href="workspace-dialogs.css" />
   </head>
   <body>
     <noscript>
@@ -108,31 +111,40 @@
           </div>
         </div>
         <div class="login-panel panel">
-          <p class="eyebrow" data-copy="yourWORKSPACE">YOUR WORKSPACE</p>
-          <h2 data-copy="welcomeBack">Welcome back</h2>
-          <p data-copy="accessOutcomesInYourWorkspace">
-            Access outcomes in your workspace.
-          </p>
+          <div class="entry-panel-heading">
+            <p class="eyebrow" data-copy="yourWORKSPACE">YOUR WORKSPACE</p>
+            <h2 data-copy="welcomeBack">Welcome back</h2>
+            <p data-copy="accessOutcomesInYourWorkspace">
+              Access outcomes in your workspace.
+            </p>
+          </div>
           <form id="login">
             <label data-copy="accessCredential"
               >Access credential<input
                 id="token"
                 type="password"
                 autocomplete="off"
+                aria-describedby="credential-help"
                 required
                 minlength="32"
                 placeholder="Your access credential"
-                data-copy-placeholder="yourAccessCredential" /></label
-            ><button data-copy="signIn">Sign in</button>
+                data-copy-placeholder="yourAccessCredential"
+            /></label>
+            <!-- prettier-ignore -->
+            <p id="credential-help" class="entry-field-help" data-copy="credentialFromAdministrator" >Use the credential provided by your workspace administrator.</p>
+            <button data-copy="signIn">Sign in</button>
           </form>
-          <details>
+          <details class="entry-local">
             <summary data-copy="localDevelopmentServer">
               Local development server
             </summary>
+            <!-- prettier-ignore -->
+            <p class="entry-field-help" data-copy="localServerGuidance">For a trusted local server configured for local access. Use its workspace ID.</p>
             <form id="local">
               <label data-copy="namespace"
                 >Namespace<input
                   id="local-ns"
+                  aria-describedby="local-workspace-help"
                   required
                   placeholder="Local workspace UUIDv7"
                   data-copy-placeholder="localWorkspaceUuidv7" /></label
@@ -140,14 +152,15 @@
                 Open local workspace
               </button>
             </form>
+            <!-- prettier-ignore -->
+            <p id="local-workspace-help" class="entry-field-help" data-copy="localWorkspaceIdentifierGuidance" >This is the Namespace UUID from your server configuration. Shared servers require an access credential.</p>
           </details>
-          <p
-            class="login-footnote"
-            data-copy="yourCredentialIsExchangedForASecureSession"
-          >
-            Your credential is exchanged for a secure session.<br />It is not
-            stored in the browser.
-          </p>
+          <div class="entry-panel-footer">
+            <!-- prettier-ignore -->
+            <p class="login-footnote" data-copy="credentialSessionGuidance">Your credential is exchanged for a secure session. The credential itself is not stored in the browser.</p>
+            <!-- prettier-ignore -->
+            <p class="entry-access-note" data-copy="authorizedWorkspaceGuidance" >You will only see workspaces your credential can access.</p>
+          </div>
         </div>
       </section>
       <section id="workspace" hidden>
@@ -183,7 +196,7 @@
             </button>
           </div>
           <form id="search">
-            <label class="sr" data-copy="searchOutcomes"
+            <label class="sidebar-search-label" data-copy="searchOutcomes"
               >Search outcomes<input
                 id="text"
                 type="search"
@@ -267,7 +280,13 @@
               class="signed-protocol-grid"
             ></div>
           </details>
-          <div id="workspace-loading" class="empty" role="status" hidden>
+          <div
+            id="workspace-loading"
+            class="empty entry-loading"
+            role="status"
+            aria-atomic="true"
+            hidden
+          >
             <img
               class="loading-vignette"
               src="robots/14_observer_metrics.svg"
@@ -275,7 +294,11 @@
               height="120"
               alt=""
             />
+            <!-- prettier-ignore -->
+            <p class="eyebrow" data-copy="readingSharedState">READING SHARED STATE</p>
             <p data-copy="loadingOutcome">Loading outcome…</p>
+            <!-- prettier-ignore -->
+            <p class="entry-loading-note" data-copy="loadingOutcomeContext">Retrieving the selected Outcome and its current context.</p>
           </div>
           <div id="empty" class="empty">
             <img
@@ -287,13 +310,38 @@
             />
             <p class="eyebrow" data-copy="yourNextOutcome">YOUR NEXT OUTCOME</p>
             <h2 data-copy="chooseAnOutcome">Choose an outcome</h2>
-            <p data-copy="connectObjectivesTasksAndEvidenceInOnePlace">
-              Connect objectives, tasks, and evidence in one place.<br />Open an
-              outcome in the sidebar or create your first.
-            </p>
+            <!-- prettier-ignore -->
+            <p data-copy="connectObjectivesTasksAndEvidenceInOnePlace">Open an Outcome from the sidebar to continue the work, or create one around a result you can verify.</p>
             <button id="empty-create" data-copy="createYourFirstOutcome">
               Create your first outcome
             </button>
+            <ol
+              class="entry-empty-guide"
+              aria-label="Start an Outcome"
+              data-copy-aria-label="startAnOutcome"
+            >
+              <li>
+                <span class="entry-step-number" aria-hidden="true">01</span>
+                <!-- prettier-ignore -->
+                <h3 data-copy="nameTheResult">Name the result</h3>
+                <!-- prettier-ignore -->
+                <p data-copy="startWithADraft">Describe the desired state. Your Outcome starts as a Draft.</p>
+              </li>
+              <li>
+                <span class="entry-step-number" aria-hidden="true">02</span>
+                <!-- prettier-ignore -->
+                <h3 data-copy="defineSuccess">Define success</h3>
+                <!-- prettier-ignore -->
+                <p data-copy="defineCriteriaBeforeActivation">Add criteria that make success verifiable, then activate explicitly.</p>
+              </li>
+              <li>
+                <span class="entry-step-number" aria-hidden="true">03</span>
+                <!-- prettier-ignore -->
+                <h3 data-copy="workAndVerify">Work and verify</h3>
+                <!-- prettier-ignore -->
+                <p data-copy="workDoesNotCertifyOutcome">Add Tasks, record Evidence, and review criteria before concluding.</p>
+              </li>
+            </ol>
           </div>
           <div id="outcome" hidden>
             <div class="breadcrumbs">

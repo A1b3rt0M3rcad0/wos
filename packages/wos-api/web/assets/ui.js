@@ -18,8 +18,10 @@ export function inputField(
   { value = "", type = "text", required = false, options, help } = {},
 ) {
   const wrap = el("div", undefined, "human-field"),
-    l = el("label", label),
+    l = el("label", label, "human-field-label"),
     input = el(options ? "select" : type === "textarea" ? "textarea" : "input");
+  input.className = "human-control";
+  wrap.dataset.controlKind = options ? "select" : type;
   if (options)
     for (const [value, text] of options)
       input.append(Object.assign(el("option", text), { value }));
@@ -44,9 +46,9 @@ export function inputField(
   };
 }
 export function listField(label, initial = []) {
-  const group = el("fieldset"),
-    legend = el("legend", label),
-    rows = el("div");
+  const group = el("fieldset", undefined, "list-editor"),
+    legend = el("legend", label, "editor-legend"),
+    rows = el("div", undefined, "list-editor-rows");
   group.append(legend, rows);
   const entries = [];
   function add(value = "") {
@@ -62,14 +64,18 @@ export function listField(label, initial = []) {
           entry.active = false;
           row.remove();
         },
-        "quiet",
+        "quiet editor-remove",
       ),
     );
     rows.append(row);
   }
   initial.forEach(add);
   group.append(
-    button(message("addItemf046", label.toLowerCase()), () => add(), "quiet"),
+    button(
+      message("addItemf046", label.toLowerCase()),
+      () => add(),
+      "quiet editor-add",
+    ),
   );
   return {
     node: group,
@@ -83,5 +89,13 @@ export function listField(label, initial = []) {
 export function details(label) {
   const node = el("details", undefined, "human-advanced");
   node.append(el("summary", label));
+  return node;
+}
+
+export function conflictComparison() {
+  const node = el("div", undefined, "conflict-columns");
+  node.tabIndex = 0;
+  node.setAttribute("role", "region");
+  node.setAttribute("aria-label", copy.text.reviewLatestStateAndYourLocalDraft);
   return node;
 }

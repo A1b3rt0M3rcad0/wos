@@ -1,0 +1,361 @@
+/* Entry and navigation only. The shared paper grid, responsive unit and
+ * original brand/illustrations remain owned by the editorial foundation. */
+#connect .login-panel {
+  overflow: visible;
+  padding: 0;
+  background: var(--wos-canvas);
+  border-color: var(--wos-control-border);
+}
+#connect .entry-panel-heading {
+  padding: calc(30 * var(--wos-unit, 1px)) calc(32 * var(--wos-unit, 1px))
+    calc(22 * var(--wos-unit, 1px));
+  background: var(--wos-workspace);
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+#connect .entry-panel-heading .eyebrow {
+  margin: 0;
+  color: var(--wos-muted);
+}
+#connect .entry-panel-heading h2 {
+  margin-block: calc(14 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+}
+#connect .entry-panel-heading > p:last-child {
+  margin: 0;
+  color: var(--wos-secondary);
+  font: 0.85714rem/1.65 var(--utility);
+}
+#connect #login {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: calc(24 * var(--wos-unit, 1px)) calc(32 * var(--wos-unit, 1px));
+}
+#connect :is(#login, #local) label {
+  margin: 0;
+  color: var(--wos-secondary);
+  font: 500 0.85714rem/1.5 var(--utility);
+}
+#connect :is(#login, #local) input {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  margin-top: calc(7 * var(--wos-unit, 1px));
+  background: var(--wos-surface);
+  border-color: var(--wos-control-border);
+  border-radius: 0;
+  color: var(--wos-foreground);
+}
+#connect .entry-field-help {
+  margin: calc(9 * var(--wos-unit, 1px)) 0 calc(16 * var(--wos-unit, 1px));
+  color: var(--wos-muted);
+  font: 0.78571rem/1.65 var(--utility);
+  overflow-wrap: anywhere;
+}
+#connect :is(#login, #local) button {
+  width: 100%;
+  min-height: calc(46 * var(--wos-unit, 1px));
+  padding: calc(11 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  border-radius: 0;
+}
+#connect .entry-local {
+  padding: 0 calc(32 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+  margin: 0;
+  border-top: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+#connect .entry-local > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(14 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  color: var(--wos-secondary);
+  font: 500 0.78571rem/1.5 var(--utility);
+  cursor: pointer;
+}
+#connect .entry-local > .entry-field-help {
+  margin-block: 0 calc(16 * var(--wos-unit, 1px));
+}
+#connect #local {
+  margin: 0 0 calc(14 * var(--wos-unit, 1px));
+}
+#connect #local button {
+  --button-idle-bg: transparent;
+  --button-idle-ink: var(--wos-foreground);
+  --button-hover-bg: var(--wos-selected);
+  --button-hover-ink: var(--wos-foreground);
+  --button-active-bg: var(--wos-control);
+  --button-active-ink: var(--wos-foreground);
+  margin-top: calc(14 * var(--wos-unit, 1px));
+  border-color: var(--wos-control-border);
+}
+#connect .entry-panel-footer {
+  padding: calc(18 * var(--wos-unit, 1px)) calc(32 * var(--wos-unit, 1px))
+    calc(24 * var(--wos-unit, 1px));
+  border-top: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-canvas);
+}
+#connect .entry-panel-footer .login-footnote {
+  margin: 0;
+  color: var(--wos-secondary);
+  font: 0.71429rem/1.8 var(--mono);
+}
+#connect .entry-access-note {
+  margin: calc(9 * var(--wos-unit, 1px)) 0 0;
+  color: var(--wos-muted);
+  font: 0.78571rem/1.65 var(--utility);
+}
+#connect .login-cards > div {
+  padding-inline-end: calc(12 * var(--wos-unit, 1px));
+}
+#connect .login-cards strong {
+  color: var(--wos-foreground);
+}
+#connect .login-cards small {
+  color: var(--wos-muted);
+}
+/* Native selectors, a visible search caption and generous interaction insets
+ * keep the sidebar useful when names are long or many Outcomes are present. */
+#workspace .sidebar {
+  padding-top: calc(20 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .workspace-switch {
+  padding-bottom: calc(14 * var(--wos-unit, 1px));
+  margin-bottom: calc(12 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .workspace-switch label {
+  min-width: 0;
+  margin: 0;
+  color: var(--wos-muted);
+}
+#workspace .sidebar .workspace-switch select {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  margin-top: calc(5 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid transparent;
+  border-radius: 0;
+  color: var(--wos-foreground);
+  cursor: pointer;
+}
+#workspace .sidebar .sidebar-heading {
+  margin-bottom: calc(8 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .sidebar-heading .icon-button {
+  min-width: calc(44 * var(--wos-unit, 1px));
+  min-height: calc(44 * var(--wos-unit, 1px));
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+#workspace .sidebar #search {
+  margin-bottom: calc(10 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .sidebar-search-label {
+  display: block;
+  color: var(--wos-muted);
+  font: 0.64286rem/1.5 var(--mono);
+  letter-spacing: calc(0.5 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .sidebar-search-label input {
+  margin-top: calc(7 * var(--wos-unit, 1px));
+  font: 0.85714rem/1.5 var(--utility);
+  letter-spacing: 0;
+}
+#workspace .sidebar :is(input:not([type="checkbox"]), select) {
+  min-height: calc(44 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .search-filters {
+  margin-block: calc(2 * var(--wos-unit, 1px)) calc(4 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .search-filters > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(12 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  color: var(--wos-secondary);
+  font: 0.78571rem/1.5 var(--utility);
+  cursor: pointer;
+}
+#workspace .sidebar .search-filters[open] {
+  padding-bottom: calc(12 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+#workspace .sidebar .search-filters label {
+  margin-block: calc(8 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .search-filters .check-label {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  margin-bottom: 0;
+}
+#workspace .sidebar .search-submit {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding-inline: calc(14 * var(--wos-unit, 1px));
+  border-bottom-color: var(--wos-control-border);
+}
+#workspace .sidebar .outcome-navigation .item {
+  --button-hover-bg: var(--wos-control);
+  --button-hover-ink: var(--wos-foreground);
+  --button-active-bg: var(--wos-selected);
+  --button-active-ink: var(--wos-foreground);
+  padding: calc(16 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  gap: calc(10 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .outcome-navigation .item.selected {
+  --button-idle-bg: var(--wos-selected);
+  --button-hover-bg: var(--wos-selected);
+  border-inline-start-color: var(--wos-copper);
+}
+#workspace .sidebar .nav-item-text {
+  min-width: 0;
+}
+#workspace .sidebar .nav-item-text strong {
+  display: block;
+  padding-block: calc(2 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .nav-item-text small {
+  display: block;
+  margin-top: calc(6 * var(--wos-unit, 1px));
+  color: var(--wos-muted);
+  line-height: 1.5;
+}
+#workspace .sidebar .sidebar-bottom button {
+  text-align: start;
+}
+#workspace .sidebar :is(button, select, summary):focus-visible {
+  outline-offset: calc(2 * var(--wos-unit, 1px));
+}
+#workspace .sidebar .outcome-navigation button:focus-visible {
+  outline-offset: calc(-4 * var(--wos-unit, 1px));
+}
+/* Entry states explain what can happen next without simulating progress. */
+#empty {
+  max-width: calc(840 * var(--wos-unit, 1px));
+  padding-block: calc(40 * var(--wos-unit, 1px));
+}
+#empty > p:not(.eyebrow) {
+  max-width: 54ch;
+  color: var(--wos-secondary);
+  line-height: 1.8;
+}
+#empty > button {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding-inline: calc(20 * var(--wos-unit, 1px));
+}
+#empty .entry-empty-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(24 * var(--wos-unit, 1px));
+  margin: calc(36 * var(--wos-unit, 1px)) 0 0;
+  padding: calc(24 * var(--wos-unit, 1px)) 0 0;
+  border-top: calc(1 * var(--wos-unit, 1px)) solid var(--wos-control-border);
+  list-style: none;
+  text-align: start;
+}
+#empty .entry-empty-guide li {
+  min-width: 0;
+}
+#empty .entry-step-number {
+  color: var(--wos-copper);
+  font: 0.64286rem/1.5 var(--mono);
+}
+#empty .entry-empty-guide h3 {
+  margin: calc(10 * var(--wos-unit, 1px)) 0 calc(8 * var(--wos-unit, 1px));
+  color: var(--wos-foreground);
+  font: 400 1.57143rem/1.15 var(--display);
+}
+#empty .entry-empty-guide p {
+  margin: 0;
+  color: var(--wos-muted);
+  font: 0.78571rem/1.8 var(--utility);
+}
+#workspace-loading {
+  padding-block: calc(48 * var(--wos-unit, 1px));
+}
+#workspace-loading .loading-vignette {
+  margin-block: calc(12 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px));
+}
+#workspace-loading > .eyebrow {
+  color: var(--wos-copper);
+  font: 0.64286rem/1.6 var(--mono);
+}
+#workspace-loading > p:not(.eyebrow, .entry-loading-note) {
+  margin-block: calc(12 * var(--wos-unit, 1px));
+  color: var(--wos-foreground);
+  font: 400 2.28571rem/1.15 var(--display);
+}
+#workspace-loading > .entry-loading-note {
+  max-width: 42ch;
+  color: var(--wos-muted);
+  font: 0.85714rem/1.8 var(--utility);
+}
+@media (hover: hover) and (pointer: fine) {
+  #connect .entry-local > summary:hover,
+  #workspace .sidebar .search-filters > summary:hover {
+    color: var(--wos-copper);
+    text-decoration: underline;
+    text-underline-offset: calc(4 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar .workspace-switch select:hover {
+    border-bottom-color: var(--wos-control-border);
+    background-color: var(--wos-workspace);
+  }
+}
+@media (max-width: 760px) {
+  #connect .entry-panel-heading {
+    padding: calc(24 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px))
+      calc(20 * var(--wos-unit, 1px));
+  }
+  #connect #login {
+    padding: calc(20 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px));
+  }
+  #connect .entry-local {
+    padding-inline: calc(24 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-footer {
+    padding: calc(18 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px))
+      calc(22 * var(--wos-unit, 1px));
+  }
+  #connect :is(#login, #local) input,
+  #workspace .sidebar :is(input:not([type="checkbox"]), select) {
+    font-size: 1.14286rem;
+  }
+  #workspace .sidebar {
+    padding-top: calc(16 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar .workspace-switch {
+    padding-bottom: calc(10 * var(--wos-unit, 1px));
+    margin-bottom: calc(8 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar .workspace-switch select {
+    font-size: 1.71429rem;
+  }
+  #workspace .sidebar .sidebar-heading {
+    margin-bottom: 0;
+  }
+  #workspace .sidebar #search {
+    margin-bottom: calc(8 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar .search-filters {
+    margin-inline-end: calc(8 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar .outcome-navigation .item {
+    padding: calc(12 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar.navigation-collapsed .workspace-switch {
+    margin-bottom: calc(8 * var(--wos-unit, 1px));
+  }
+  #empty {
+    padding: calc(28 * var(--wos-unit, 1px)) 0;
+  }
+  #empty .entry-empty-guide {
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(20 * var(--wos-unit, 1px));
+    margin-top: calc(28 * var(--wos-unit, 1px));
+    padding-top: calc(20 * var(--wos-unit, 1px));
+  }
+  #empty .entry-empty-guide li {
+    display: grid;
+    grid-template-columns: calc(28 * var(--wos-unit, 1px)) minmax(0, 1fr);
+    column-gap: calc(12 * var(--wos-unit, 1px));
+  }
+  #empty .entry-step-number {
+    grid-row: span 2;
+    padding-top: calc(4 * var(--wos-unit, 1px));
+  }
+  #empty .entry-empty-guide h3 {
+    margin-top: 0;
+  }
+  #workspace-loading {
+    padding: calc(32 * var(--wos-unit, 1px)) 0;
+  }
+}

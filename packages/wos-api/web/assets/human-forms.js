@@ -378,12 +378,6 @@ export function humanForm(
       f("name", copy.text.artifactName, { required: true });
       f("artifact_type", copy.text.artifactType, { required: true });
       f("uri", "URL", { type: "url", required: true });
-      description();
-      fixed.producer_ref = {
-        kind: "human",
-        provider: "wos-web",
-        id: "browser",
-      };
       break;
     case "create_evidence_link":
       fixed.evidence_id = kind === "evidence" ? entity.id : undefined;

@@ -4,7 +4,7 @@ import { el, button, inputField } from "./ui.js";
 import { referencePicker } from "./reference-picker.js";
 export function roadmapEditor({ entity, scope, request }) {
   const root = el("section", undefined, "roadmap-editor"),
-    rows = el("div"),
+    rows = el("div", undefined, "roadmap-editor-rows"),
     models = [],
     disposers = [];
   root.append(
@@ -48,6 +48,7 @@ export function roadmapEditor({ entity, scope, request }) {
         : null;
     if (picker) disposers.push(picker.dispose);
     const row = el("article", undefined, "roadmap-edit-row");
+    row.dataset.nodeType = item.node_type;
     row.append(
       el(
         "h3",
@@ -56,19 +57,20 @@ export function roadmapEditor({ entity, scope, request }) {
           : item.node_type === "phase"
             ? copy.text.phase
             : copy.text.milestone,
+        "editor-item-heading",
       ),
       title.node,
       parent.node,
     );
     if (picker) row.append(picker.node);
-    const schedule = el("details");
+    const schedule = el("details", undefined, "roadmap-schedule");
     schedule.append(el("summary", copy.text.schedule), start.node, end.node);
     row.append(schedule);
     const model = { item, title, parent, start, end, picker, row };
     models.push(model);
     row.append(
-      button(copy.text.moveUp, () => move(model, -1), "quiet"),
-      button(copy.text.moveDown, () => move(model, 1), "quiet"),
+      button(copy.text.moveUp, () => move(model, -1), "quiet editor-move"),
+      button(copy.text.moveDown, () => move(model, 1), "quiet editor-move"),
       button(
         copy.text.removeFromDraft,
         () => {
@@ -76,7 +78,7 @@ export function roadmapEditor({ entity, scope, request }) {
           picker?.dispose();
           paint();
         },
-        "quiet",
+        "quiet editor-remove",
       ),
     );
     parent.input.value = item.parent_node_key || "";
@@ -114,16 +116,20 @@ export function roadmapEditor({ entity, scope, request }) {
   for (const n of entity.draft?.nodes || []) add(n);
   root.append(
     rows,
-    button(copy.text.addPhase, () => add({ node_type: "phase" }), "quiet"),
+    button(
+      copy.text.addPhase,
+      () => add({ node_type: "phase" }),
+      "quiet editor-add",
+    ),
     button(
       copy.text.addMilestone,
       () => add({ node_type: "milestone" }),
-      "quiet",
+      "quiet editor-add",
     ),
     button(
       copy.text.referenceObjectiveTask,
       () => add({ node_type: "reference" }),
-      "quiet",
+      "quiet editor-add",
     ),
   );
   return {
@@ -178,20 +184,40 @@ export function roadmapDiff(entity) {
     const old = previous.find((x) => x.node_key === n.node_key);
     if (!old || JSON.stringify(old) !== JSON.stringify(n)) {
       root.append(
-        el("p", `${old ? copy.text.changed : copy.text.added}: ${n.title}`),
+        el(
+          "p",
+          `${old ? copy.text.changed : copy.text.added}: ${n.title}`,
+          "roadmap-diff-change",
+        ),
       );
       changes++;
     }
   }
   for (const n of previous)
     if (!next.some((x) => x.node_key === n.node_key)) {
-      root.append(el("p", message("removedReferenceOrPlanItem", n.title)));
+      root.append(
+        el(
+          "p",
+          message("removedReferenceOrPlanItem", n.title),
+          "roadmap-diff-change",
+        ),
+      );
       changes++;
     }
   if (!changes)
-    root.append(el("p", copy.text.noContentChangesFromTheSelectedBaseRevision));
+    root.append(
+      el(
+        "p",
+        copy.text.noContentChangesFromTheSelectedBaseRevision,
+        "editor-empty-note",
+      ),
+    );
   root.append(
-    el("p", copy.text.publishingFreezesThisRevisionActivationIsASeparateAction),
+    el(
+      "p",
+      copy.text.publishingFreezesThisRevisionActivationIsASeparateAction,
+      "editor-notice",
+    ),
   );
   return root;
 }

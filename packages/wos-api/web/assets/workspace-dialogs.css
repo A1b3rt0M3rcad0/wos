@@ -1,0 +1,185 @@
+/* Dialogs continue the workspace paper. These rules refine paint and reading
+   surfaces only: the existing native roots, dimensions, body scrolling,
+   backdrop, field order, responsive scale and focus management stay in charge.
+   Live form nodes moved into the canvas inspector have no dialog ancestor and
+   intentionally retain the canvas stylesheet's presentation. */
+dialog .dialog-heading {
+  border-bottom-color: var(--wos-border);
+}
+
+dialog :is(.dialog-heading h2, .editor-item-heading) {
+  color: var(--wos-foreground);
+}
+
+dialog :is(.dialog-body, .action-options, #admin-snapshot) {
+  color: var(--wos-foreground);
+}
+
+dialog :is(.dialog-form > footer, .detail-drawer > footer) {
+  background-color: var(--wos-workspace);
+  border-top-color: var(--wos-border);
+}
+
+dialog
+  :is(
+    fieldset,
+    .human-advanced,
+    .field-context,
+    .nested-editor,
+    .roadmap-diff,
+    .editor-description,
+    .editor-notice,
+    .conflict-columns section
+  ) {
+  background-color: var(--wos-workspace);
+  border-color: var(--wos-border);
+}
+
+dialog
+  :is(
+    .roadmap-edit-row,
+    .reference-results,
+    .conclusion-card,
+    .contract-progress,
+    .contract-delivery,
+    .signed-review-card,
+    .cli-handoff pre,
+    pre
+  ) {
+  background-color: var(--wos-surface);
+  border-color: var(--wos-border);
+}
+
+/* Native fieldsets and grid children must be allowed to shrink before a long
+   key, permission label, reference title or authored value sets their width. */
+dialog
+  :is(
+    fieldset,
+    .technical-field,
+    .nested-editor,
+    .nested-editor-row,
+    .list-editor,
+    .list-editor-rows,
+    .roadmap-editor,
+    .roadmap-editor-rows,
+    .roadmap-edit-row,
+    .roadmap-schedule,
+    .roadmap-diff,
+    .reference-chip,
+    #admin-snapshot
+  ) {
+  min-width: 0;
+}
+
+dialog
+  :is(
+    legend,
+    .human-field-label,
+    .editor-description,
+    .editor-notice,
+    .editor-empty-note,
+    .roadmap-diff-change,
+    .field-context,
+    .field-help,
+    .field-note,
+    .reference-chip > span,
+    .check-label,
+    .permission-options label,
+    #command-help,
+    #admin-snapshot dd
+  ) {
+  overflow-wrap: anywhere;
+}
+
+dialog :is(.editor-description, .editor-notice, .editor-empty-note) {
+  color: var(--wos-secondary);
+}
+
+dialog :is(.editor-legend, .technical-field > fieldset > legend) {
+  background-color: var(--wos-workspace);
+  color: var(--wos-muted);
+}
+
+dialog :is(input:not([type="checkbox"]), select, textarea) {
+  background-color: var(--wos-surface);
+  border-color: var(--wos-border);
+  color: var(--wos-foreground);
+}
+
+dialog :is(input[readonly], textarea[readonly]) {
+  background-color: var(--wos-surface);
+  color: var(--wos-muted);
+}
+
+dialog :is(input:disabled, select:disabled, textarea:disabled) {
+  background-color: var(--wos-workspace);
+  border-color: var(--wos-border);
+}
+
+dialog :is(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--wos-error);
+}
+
+dialog :is(input:not([type="checkbox"]), select, textarea):focus-visible {
+  border-color: var(--wos-focus);
+  outline-color: var(--wos-focus);
+}
+
+dialog .human-field:focus-within > .human-field-label {
+  color: var(--wos-copper);
+}
+
+dialog .roadmap-edit-row:focus-within {
+  border-color: var(--wos-control-border);
+}
+
+/* Preserve the existing inward field outline and use the same treatment for
+   nested row actions, so a disclosure/scroll edge cannot cut off the focus ring. */
+dialog
+  :is(
+    .editor-add,
+    .editor-remove,
+    .editor-move,
+    .reference-chip button
+  ):focus-visible {
+  outline-offset: calc(-3 * var(--wos-unit, 1px));
+}
+
+dialog .editor-remove {
+  --button-hover-ink: var(--wos-error);
+  --button-active-ink: var(--wos-error);
+}
+
+dialog .editor-add {
+  --button-hover-ink: var(--wos-copper);
+}
+
+/* Optional schema fields keep native controls and their original dimensions.
+   Only raw JSON text gains the existing utility monospace voice. */
+dialog
+  .dialog-form[data-mode="technical"]
+  .technical-field:is([data-field-kind="object"], [data-field-kind=""])
+  > label
+  > textarea {
+  font-family: var(--mono);
+}
+
+dialog :is(#command-error, #admin-error, .danger):not(:empty) {
+  background-color: var(--wos-workspace);
+  color: var(--wos-error);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  dialog
+    :is(
+      input:not([type="checkbox"]):not([readonly]),
+      select,
+      textarea:not([readonly])
+    ):enabled:hover:not(:focus-visible):not([aria-invalid="true"]) {
+    border-color: var(--wos-control-border);
+  }
+
+  dialog .editor-remove:enabled:hover {
+    border-bottom-color: var(--wos-error);
+  }
+}
