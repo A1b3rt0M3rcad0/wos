@@ -203,7 +203,7 @@ jobs:
             ${{ runner.temp }}/wos-operational-pilots/reports.json
           if-no-files-found: error
 
-      - name: Actual v0.2 database upgrade, clean restore and old writer refusal
+      - name: Actual v0.2 clean restore, explicit Tenant cutover and old writer incompatibility
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         shell: bash
@@ -228,7 +228,7 @@ jobs:
           name: historical-v020-upgrade
           path: historical-upgrade.json
 
-      - name: Actual released v0.4.2 signed-state restore and additive upgrade
+      - name: Actual released v0.4.2 signed-state restore and explicit Tenant cutover
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         shell: bash

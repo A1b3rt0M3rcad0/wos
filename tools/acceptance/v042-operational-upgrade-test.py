@@ -1,5 +1,7 @@
 import hashlib
 import importlib.util
+import json
+from unittest.mock import patch
 from pathlib import Path
 import tempfile
 import unittest
@@ -60,6 +62,50 @@ class CandidateMigrationContract(unittest.TestCase):
                     upgrade.verify_current_migrations(changed,expected)
         with self.assertRaisesRegex(AssertionError,'complete candidate source'):
             upgrade.verify_current_migrations(expected[:-1],expected)
+
+
+class TenantCutoverPreservation(unittest.TestCase):
+    def test_only_explicit_current_configuration_may_change(self):
+        original={
+            'namespace_grants':[{'namespace_id':'tenant','principal_id':'admin','permissions_json':'["state:read","namespace:admin"]'}],
+            'namespace_work_protocol':[{'namespace_id':'tenant','version':2,'phase':'signed_contracts_v2','writer_epoch':2,'state_json':json.dumps({'namespace_id':'tenant','protocol_version':2,'phase':'signed_contracts_v2','writer_epoch':2,'reason':'namespace_id is authored text'})}],
+            'credential_policies':[{'credential_id':'credential','version':1,'state_json':json.dumps({'namespace_id':'tenant','revision':'1','permitted_operations':['namespace:admin'],'metadata':{'namespace_id':'authored'}})}],
+            'signed_protocol_facts':[{'namespace_id':'tenant','state_json':'{ "namespace_id": "tenant", "signature":"exact bytes" }'}],
+        }
+        actual={table:[upgrade.expected_configuration(table,row) for row in rows] for table,rows in original.items()}
+        for rows in actual.values():
+            for row in rows:
+                if isinstance(row.get('state_json'),dict):row['state_json']=json.dumps(row['state_json'])
+        upgrade.verify_preserved(original,actual)
+        for table,field in [('signed_protocol_facts','state_json'),('namespace_work_protocol','phase')]:
+            changed=json.loads(json.dumps(actual))
+            changed[table][0][field]+='changed'
+            with self.subTest(table=table),self.assertRaisesRegex(AssertionError,'historical row bytes'):
+                upgrade.verify_preserved(original,changed)
+        self.assertEqual(json.loads(actual['credential_policies'][0]['state_json'])['metadata'],{'namespace_id':'authored'})
+
+    def test_fresh_schema_ledger_checks_checksums_but_preserves_source_applied_time(self):
+        original={'schema_migrations':[{'version':1,'name':'0001.sql','checksum':'abc','applied_at':1}]}
+        target={'schema_migrations':[{'version':1,'name':'0001.sql','checksum':'abc','applied_at':9}]}
+        upgrade.verify_preserved(original,target,fresh_ledger=True)
+        with self.assertRaisesRegex(AssertionError,'migration ledger'):
+            upgrade.verify_preserved(original,target)
+        target['schema_migrations'][0]['checksum']='changed'
+        with self.assertRaisesRegex(AssertionError,'migration ledger'):
+            upgrade.verify_preserved(original,target,fresh_ledger=True)
+
+    def test_old_runtime_keeps_old_configuration_names(self):
+        with tempfile.TemporaryDirectory() as name:
+            directory=Path(name)
+            (directory/'issuer.seed').write_text('private-fixture-seed')
+            with patch.dict('os.environ',{'WOS_TENANT_HOSTS':'must-not-leak','WOS_BOOTSTRAP_TENANT_ID':'unrelated'}):
+                old=upgrade.runtime_environment('sqlite','fixture.db',directory,current=False)
+                new=upgrade.runtime_environment('sqlite','fixture.db',directory,current=True)
+        self.assertEqual(old['WOS_BOOTSTRAP_NAMESPACE_ID'],upgrade.TENANT)
+        self.assertNotIn('WOS_BOOTSTRAP_TENANT_ID',old)
+        self.assertNotIn('WOS_TENANT_HOSTS',old)
+        self.assertEqual(new['WOS_TENANT_ID'],upgrade.TENANT)
+        self.assertNotIn('WOS_BOOTSTRAP_NAMESPACE_ID',new)
 
 
 if __name__=='__main__':unittest.main()

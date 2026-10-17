@@ -49,7 +49,8 @@ def main():
         with ops.PostgresSnapshot(ops.postgres_env(name),'public') as session:
             count=int(session.run("SELECT COUNT(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND c.relkind IN ('r','p','v','m','S','f')")[0])
             if count:parser.error('pilot refuses an existing nonempty database')
-    ns='0199f016-0000-7000-8000-000000000101'
+    tenant='0199f016-0000-7000-8000-000000000101'
+    tenant_schema='wos_t_'+tenant.replace('-', '')
     endpoint='0199f016-0000-7000-8000-000000000102'
     token=secrets.token_urlsafe(48);seed=base64.b64encode(secrets.token_bytes(32)).decode();secret=secrets.token_urlsafe(48)
     gate=threading.Event();eight=threading.Event();lock=threading.Lock()
@@ -65,7 +66,7 @@ def main():
             try:
                 expected='sha256='+hmac.new(secret.encode(),(stamp+'.'+event+'.').encode()+body,hashlib.sha256).hexdigest()
                 assert length<=256*1024 and abs(time.time()-int(stamp))<=300 and hmac.compare_digest(expected,self.headers.get('X-WOS-Signature',''))
-                message=json.loads(body);assert message['integration_event_id']==event and message['source']['tenant_id']==ns
+                message=json.loads(body);assert message['integration_event_id']==event and message['source']['tenant_id']==tenant
                 digest=hashlib.sha256(body).hexdigest()
                 with sqlite3.connect(ledger,timeout=10) as db:
                     db.execute('INSERT OR IGNORE INTO effects VALUES(?,?)',(event,digest))
@@ -93,11 +94,12 @@ def main():
     for key in list(base_env):
         if key.startswith('WOS_'):base_env.pop(key)
     base_env.update(WOS_AUTH_MODE='api_token',WOS_LOCAL_PRINCIPAL_ID='qualification-operator',
-        WOS_BOOTSTRAP_TOKEN=token,WOS_BOOTSTRAP_TENANT_ID=ns,WOS_BOOTSTRAP_TENANT_NAME='Qualification',
+        WOS_TENANT_ID=tenant,WOS_POSTGRES_CATALOG_SCHEMA='wos_control',
+        WOS_BOOTSTRAP_TOKEN=token,WOS_BOOTSTRAP_TENANT_ID=tenant,WOS_BOOTSTRAP_TENANT_NAME='Qualification',
         WOS_STORAGE_DRIVER='postgres',WOS_MCP_ENABLED='true',WOS_SERVER_SIGNING_SEED_ENV='WOS_QUALIFICATION_SEED',
         WOS_QUALIFICATION_SEED=seed,WOS_SIGNED_ACCEPTANCE_FLOOR='independent_review',
         WOS_DELIVERY_WORKER_ENABLED='true',WOS_DELIVERY_WORKER_CONCURRENCY='4',WOS_WEBHOOK_ALLOW_LOOPBACK='true',
-        WOS_WEBHOOK_ENDPOINTS=json.dumps([{'id':endpoint,'tenant_id':ns,'url':f'http://127.0.0.1:{receiver.server_port}/signal','secret_ref':'qualification-hmac','key_id':'qualification-v1'}]),
+        WOS_WEBHOOK_ENDPOINTS=json.dumps([{'id':endpoint,'tenant_id':tenant,'url':f'http://127.0.0.1:{receiver.server_port}/signal','secret_ref':'qualification-hmac','key_id':'qualification-v1'}]),
         WOS_WEBHOOK_SECRETS=json.dumps({'qualification-hmac':secret}))
     def request(port,path,method='GET',payload=None,key=None,authorized=True):
         connection=http.client.HTTPConnection('127.0.0.1',port,timeout=20)
@@ -119,19 +121,51 @@ def main():
         env=base_env.copy();env.update(WOS_LISTEN=f'127.0.0.1:{ports[index%2]}',WOS_POSTGRES_DSN=dsn)
         process=subprocess.Popen([str(binary),'server'],env=env,stdout=log,stderr=subprocess.STDOUT)
         processes.append(process);wait_ready(ports[index%2]);return process
+    def snapshot(database_env):
+        # Both schema contents and the external lifecycle binding belong to
+        # this installation backup. All API writers are stopped by the caller.
+        with ops.PostgresSnapshot(ops.postgres_env(database_env),tenant_schema) as session:
+            data=ops.pg_inspect(session)
+        with ops.PostgresSnapshot(ops.postgres_env(database_env),'wos_control') as session:
+            catalog={}
+            tables=session.run("SELECT table_name FROM information_schema.tables WHERE table_schema='wos_control' AND table_type='BASE TABLE' ORDER BY table_name")
+            for table in tables:
+                rows=session.run('SELECT row_to_json(t)::text FROM '+ops.identifier(table)+' t ORDER BY row_to_json(t)::text COLLATE "C"')
+                catalog[table]={'rows':len(rows),'sha256':hashlib.sha256(b''.join(ops.canonical(json.loads(row))+b'\n' for row in rows)).hexdigest()}
+        assert catalog, 'whole-installation backup requires the Tenant catalog'
+        return {'tenant':data,'catalog':catalog}
+    def restore_installation(approved):
+        before=snapshot(args.dsn_env)
+        assert before['tenant']['server_id']==approved['server_id'] and before['tenant']['issuer_fingerprint']==approved['fingerprint']
+        backup=root/'installation.dump'
+        with backup.open('xb') as output:
+            ops.pg_command('pg_dump',['--format=custom','--no-owner','--no-privileges'],ops.postgres_env(args.dsn_env),output=output)
+        digest=ops.file_hash(backup)
+        started=time.monotonic()
+        with backup.open('rb') as source:
+            ops.pg_command('pg_restore',['--exit-on-error','--single-transaction','--no-owner','--no-privileges','--dbname='+urlparse(dsns[1]).path.lstrip('/')],ops.postgres_env(args.restore_dsn_env),input_file=source)
+        assert ops.file_hash(backup)==digest, 'private dump changed during restore'
+        after=snapshot(args.restore_dsn_env)
+        assert before==after, 'whole-installation restore changed catalog or Tenant state'
+        return {'method':'pg_dump/pg_restore whole database','data_sha256':digest,'tenant_schema':tenant_schema,'catalog_schema':'wos_control','all_catalog_and_tenant_rows_verified':True,'rto_restore_and_verify_seconds':time.monotonic()-started}
     def trust(port):
-        status,result=request(port,f'/api/v1/tenants/{ns}/signed-trust');assert status==200
+        status,result=request(port,f'/api/v1/tenants/{tenant}/signed-trust');assert status==200
         return result['server']
     report={'source_commit':args.source_commit,'binary_build':build,'binary_sha256':ops.file_hash(binary),'production_sla':False,
-            'scenario':'restore' if args.restore_dsn_env else 'two-server-failover','complete':False}
+            'scenario':'restore' if args.restore_dsn_env else 'two-server-failover','complete':False,
+            'tenant_id':tenant,'tenant_schema':tenant_schema,'catalog_schema':'wos_control'}
     try:
+        provision_env=base_env.copy();provision_env['WOS_POSTGRES_DSN']=dsns[0]
+        provisioned=subprocess.run([str(binary),'storage','tenant','provision','--from-env','--if-absent'],env=provision_env,capture_output=True,check=True,timeout=120)
+        placement=json.loads(provisioned.stdout)['data']
+        assert placement['tenant_id']==tenant and placement['schema']==tenant_schema and placement['state']=='active'
         first=start(0,dsns[0]);second=start(1,dsns[0]);approved=trust(ports[0]);assert approved==trust(ports[1])
         report.update(server_id=approved['server_id'],issuer_fingerprint=approved['fingerprint'])
-        path=f'/api/v1/tenants/{ns}/outcomes'
+        path=f'/api/v1/tenants/{tenant}/outcomes'
         status,result=request(ports[0],path,'POST',{'title':'Two server delivery pilot','desired_state':'authoritative queue and external dedupe','priority':'normal'},'qualification-outcome-create');assert status==201,(status,result)
-        oid=result['value']['id'];scope={'tenant_id':ns,'outcome_id':oid}
+        oid=result['value']['id'];scope={'tenant_id':tenant,'outcome_id':oid}
         status,result=request(ports[0],'/api/v1/commands/configure_trigger','POST',{'command':{'scope':scope,'name':'Qualification signal','event_types':['work_item.created'],'target_endpoint_ids':[endpoint],'signal_type':'qualification.created'}},'qualification-trigger-configure');assert status==200,(status,result)
-        health=f'/api/v1/tenants/{ns}/operations/delivery-health?outcome_id={oid}'
+        health=f'/api/v1/tenants/{tenant}/operations/delivery-health?outcome_id={oid}'
         for port in ports:
             status,value=request(port,health);assert status==200 and value['worker']['worker_running'] and value['worker']['concurrency']==4
         messages=8 if args.restore_dsn_env else 100
@@ -168,12 +202,7 @@ def main():
             second.kill();second.wait(timeout=5)
             # External effects were committed before this backup, but their
             # HTTP acknowledgements were held. WOS is now stopped for cutover.
-            options=argparse.Namespace(backend='postgres',dsn_env=args.dsn_env,schema='public',output=str(root/'backup'),source_commit=args.source_commit,product_version='dev')
-            created=ops.backup(options)
-            options=argparse.Namespace(backup=str(root/'backup'),dsn_env=args.restore_dsn_env,sqlite=None,
-                manifest_sha256=created['manifest_sha256'],writers_stopped=True,
-                expected_server_id=approved['server_id'],issuer_fingerprint=approved['fingerprint'])
-            restored=ops.restore(options)
+            restored=restore_installation(approved)
             report['backup_restore']=restored
             gate.set()
             second=start(2,dsns[1]);third=start(3,dsns[1])
@@ -193,7 +222,7 @@ def main():
         assert effects==messages and calls>effects and not state['errors'],state
         # Inspect the actual database, not the receiver, for authoritative ACKs.
         database_env=args.restore_dsn_env or args.dsn_env
-        with ops.PostgresSnapshot(ops.postgres_env(database_env),'public') as session:
+        with ops.PostgresSnapshot(ops.postgres_env(database_env),tenant_schema) as session:
             duplicates=int(session.run("SELECT COUNT(*) FROM (SELECT delivery_id FROM delivery_attempts WHERE result='http_204' GROUP BY delivery_id HAVING COUNT(*)>1) t")[0])
             successes=int(session.run("SELECT COUNT(*) FROM delivery_attempts WHERE result='http_204'")[0])
             restored_work_ids=json.loads(session.run("SELECT COALESCE(json_agg(id ORDER BY id),'[]'::json)::text FROM work_items")[0])
