@@ -11,6 +11,11 @@ https://{$WOS_PUBLIC_HOST:wos.localhost} {
 			resolvers 127.0.0.11
 			versions ipv4
 		}
+		# This transport reaches only this installation's private API addresses.
+		# Keep ambient outbound proxy settings available to all other traffic.
+		transport http {
+			network_proxy none
+		}
 		lb_policy round_robin
 	}
 	header Strict-Transport-Security "max-age=31536000"

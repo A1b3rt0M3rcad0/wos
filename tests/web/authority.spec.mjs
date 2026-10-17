@@ -17,6 +17,25 @@ async function provision(wos, principal, permissions) {
     expires_at: new Date(Date.now() + 3600000).toISOString(),
   });
 }
+test("Namespace administration preserves settings without installation authority", async ({
+  page,
+  wos,
+}) => {
+  await wos.outcome();
+  const issued = await provision(wos, "namespace-administrator", [
+    "state:read",
+    "namespace:admin",
+  ]);
+  await wos.login(page, issued.token);
+  await page.locator("#administration").click();
+  await expect(page.locator("#admin-dialog")).toBeVisible();
+  const provisionOption = page.locator('#admin-operation option[value="create_namespace"]');
+  await expect(provisionOption).toHaveJSProperty("disabled", true);
+  await expect(provisionOption).toHaveJSProperty("hidden", true);
+  await expect(page.locator('#admin-operation option[value="set_grant"]')).toHaveJSProperty("disabled", false);
+  const status = await page.evaluate(async () => (await fetch("/metrics")).status);
+  expect(status).toBe(403);
+});
 test("read-only membership hides mutation and settings affordances", async ({
   page,
   wos,
