@@ -14,7 +14,7 @@ export function roadmapEditor({ entity, scope, request }) {
       "field-help",
     ),
   );
-  function add(node = {}) {
+  function add(node = {}, paintAfter = true) {
     const item = {
       ...structuredClone(node),
       node_key: node.node_key || crypto.randomUUID(),
@@ -67,6 +67,9 @@ export function roadmapEditor({ entity, scope, request }) {
     schedule.append(el("summary", copy.text.schedule), start.node, end.node);
     row.append(schedule);
     const model = { item, title, parent, start, end, picker, row };
+    parent.input.addEventListener("change", () => {
+      item.parent_node_key = parent.get();
+    });
     models.push(model);
     row.append(
       button(copy.text.moveUp, () => move(model, -1), "quiet editor-move"),
@@ -82,7 +85,7 @@ export function roadmapEditor({ entity, scope, request }) {
       ),
     );
     parent.input.value = item.parent_node_key || "";
-    paint();
+    if (paintAfter) paint();
   }
   function move(model, delta) {
     const i = models.indexOf(model),
@@ -113,7 +116,10 @@ export function roadmapEditor({ entity, scope, request }) {
     }
     rows.replaceChildren(...models.map((m) => m.row));
   }
-  for (const n of entity.draft?.nodes || []) add(n);
+  // Canonical drafts can list a child before its phase. Build every parent
+  // candidate before paint validates the selected parent against its options.
+  for (const n of entity.draft?.nodes || []) add(n, false);
+  paint();
   root.append(
     rows,
     button(
