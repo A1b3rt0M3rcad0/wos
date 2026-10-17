@@ -78,7 +78,7 @@ The owner requested completion of every remaining page in the same branch and [P
 - [x] Correct native Artifact/Decision creation adapters and keyboard access to conflict comparison; preserve canonical commands, authenticated authorship, permissions, CAS, receipts and exact uncertain intent.
 - [x] Verify child-first Roadmap Draft hydration and an explicit parent removal through local reordering; keep published revisions and operational dependencies unchanged.
 - [x] Reproduce and repair the first hosted browser run's transient selected-button contrast and delayed Canvas form-restoration focus; retain strict frame contrast and exact edge focus through coherent redraws and actual authorized removal.
-- [x] Complete the final coordinated validation: 80 browser journeys and 38 unit checks pass without skips, native web tests/vet pass, and all 86 documentation captures are refreshed against production inputs at `40499c4`. Record per-file hashes and viewport metadata in the gallery manifests.
+- [x] Complete the final coordinated validation: 80 browser journeys and 38 unit checks pass without skips, native web tests/vet pass, and all 86 documentation captures are refreshed against production inputs at `b745ec5`, including Task-specific guidance in secondary Work filters. Record per-file hashes and viewport metadata in the gallery manifests.
 
 Exact final-head hosted checks are reported by [PR checks](https://github.com/A1b3rt0M3rcad0/wos/pull/110/checks); earlier green commits are separate evidence. Representative-user review, manual screen-reader use and other browser engines remain unqualified. This follow-up changes no backend schema, CLI/Skill execution protocol, release version or release status.
 

@@ -1,5 +1,5 @@
 {
-  "implementation_commit": "40499c490ba2abc8ac2623020e7e5233c878204f",
+  "implementation_commit": "b745ec55f304d60cc9de4de21b2019b0ab47821a",
   "capture_test": "tests/web/canvas.spec.mjs",
   "capture_test_sha256": "97377f34bfd245fd95d8d98f10845667ef168bdd3d9c142f1cdaecf8fb7b39a7",
   "dataset": "Isolated illustrative records created through the public command API; read/transport fault injection only for explicit recovery states",
@@ -8,7 +8,7 @@
     "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
     "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-    "packages/wos-api/web/assets/app.js": "fce80e3faadcb054845c398556c5d0ae0c8251d174d6a9e23cc39bb059e0e574",
+    "packages/wos-api/web/assets/app.js": "cb49166a920e32d35083f1f4f04c200ef2030c2159824ff0e02fade8b4b1d0b7",
     "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
     "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
     "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
@@ -35,7 +35,7 @@
     "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
     "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
   },
-  "native_binary_sha256": "50535c3e19780382c64e0fb23ff65a4ae1270c942958191228e4d09171304da8",
+  "native_binary_sha256": "c822f9626ff930ac1cd8b7a2656fd88894f47d5e48adc253d4c88a1cfeebbc56",
   "screenshots": [
     {
       "file": "screenshots/01-canvas-workspace-board.png",
@@ -49,8 +49,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:22:08.797266+00:00",
-      "sha256": "efb751c39c322debf91f3b8d32d4de5d161cb6c1a582304479cfa828288ce245"
+      "captured_at_utc": "2026-10-17T03:41:04.665460+00:00",
+      "sha256": "c19744e7261b0e92da832605c8b1cf799f3f584f9f9d75345fc7099fd267e8e5"
     },
     {
       "file": "screenshots/01-canvas-workspace.png",
@@ -64,8 +64,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:08.665267+00:00",
-      "sha256": "d7ccf160b549c10496b54a802ed5760d0d9c6ee712f252063a243438dbb9f150"
+      "captured_at_utc": "2026-10-17T03:41:04.437461+00:00",
+      "sha256": "a96f1ffb362a33852d214529f0d085ac4bc7227947aff8bba4fd454b6ebfc769"
     },
     {
       "file": "screenshots/02-canvas-relationships-board.png",
@@ -79,8 +79,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:22:16.621212+00:00",
-      "sha256": "426e409235d1e04823a4fa7883a62757e3b1f82b0902484d6dab7c4c9aac42e2"
+      "captured_at_utc": "2026-10-17T03:41:11.841411+00:00",
+      "sha256": "666378185e0302698fe352862120ee76ca087c4869edf5015bb45415cf456130"
     },
     {
       "file": "screenshots/02-canvas-relationships.png",
@@ -94,8 +94,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:16.509213+00:00",
-      "sha256": "764a51c1abe0c176eb4f0eeade382b7587af420b247acc8f14f0ddb57301e2b4"
+      "captured_at_utc": "2026-10-17T03:41:11.713411+00:00",
+      "sha256": "8f106c8a49c37f8df2c5fd333cb211bcc9bdc7ac00fbf70cdaf416d62b327d88"
     },
     {
       "file": "screenshots/03-canvas-large-outcome.png",
@@ -109,8 +109,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:19.729191+00:00",
-      "sha256": "a8888c7be98c0fd3d6016ed3f2fde42fc9a021eb1dad11d255aa34d00b3b5171"
+      "captured_at_utc": "2026-10-17T03:41:14.633391+00:00",
+      "sha256": "9f3a675cbe4cd1537c78dab19516817e5a38e408adcf859c38c6e065aa83a223"
     },
     {
       "file": "screenshots/04-canvas-mobile-map.png",
@@ -124,7 +124,7 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:31.853107+00:00",
+      "captured_at_utc": "2026-10-17T03:41:25.445317+00:00",
       "sha256": "cd09cd2da33cd744f35ff21fddd578c4907ea81384bbd38e9b30ea304249e527"
     },
     {
@@ -139,8 +139,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:30.861114+00:00",
-      "sha256": "7d8cc172783b8f12a4409168221fcaf88383fb93dbc5e10574d6d62cf026a6ce"
+      "captured_at_utc": "2026-10-17T03:41:24.409324+00:00",
+      "sha256": "05b001799cd16bc6e7cede203fc67a968dc2580d5be69935a6ae090324c3b21a"
     },
     {
       "file": "screenshots/05-canvas-2k.png",
@@ -154,8 +154,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:32.689101+00:00",
-      "sha256": "40be41d9bac7f7a7ac99387ad77ccff1d2a9bf099ade6430e9f35234fe0e644a"
+      "captured_at_utc": "2026-10-17T03:41:26.177312+00:00",
+      "sha256": "c849a866accd49f7a76a9c2312fb0d894fd0039663035ea9c1ac9ec59d37eb69"
     },
     {
       "file": "screenshots/06-canvas-roadmap-board.png",
@@ -169,8 +169,8 @@
       },
       "full_page": false,
       "crop": "canvas shell",
-      "captured_at_utc": "2026-10-17T03:22:38.149064+00:00",
-      "sha256": "d637a4d0bd2d8b87a597a5fa8c7c2c2fd5f7debba508f5f0e147127bf454ce64"
+      "captured_at_utc": "2026-10-17T03:41:38.517227+00:00",
+      "sha256": "d4ac1d4683354778bac84d529d033fd07310aad916574aa0be7ff1c27d0e960a"
     },
     {
       "file": "screenshots/06-canvas-roadmap.png",
@@ -184,8 +184,8 @@
       },
       "full_page": false,
       "crop": null,
-      "captured_at_utc": "2026-10-17T03:22:38.021065+00:00",
-      "sha256": "d92591e46698f10910b567c7162573cfef597c5d3cfffcfc08ee5c8de8d85abb"
+      "captured_at_utc": "2026-10-17T03:41:33.517262+00:00",
+      "sha256": "45e0220ecb187a5a430857b92181a01cdc1a732bb42f6a2faad402a086cd4a28"
     }
   ]
 }

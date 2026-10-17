@@ -10,7 +10,7 @@ In contract modes, Overview uses an explicitly neutral Open work count, Board us
 
 The [same-DOM dialog measurement](workspace/dialog-geometry.json), pinned to implementation commit `3fab26a`, covers 28 comparisons across seven native scenarios at 1440, 390, 320 and 2560 CSS px. All outer dialog/header/form/footer rectangles remain unchanged; 27 comparisons preserve every measured descendant. The single 320 px expanded Roadmap exception removes 25 px of horizontal body overflow by allowing existing fields to shrink; normal wrapping adds 45 px of scroll content height while preserving scroll position. This is an explicit overflow repair, not a claim of pixel identity for that case.
 
-The final coordinated local run uses production inputs at `40499c4`, with no later production changes. Go 1.27.2, Node 24.19.0, Playwright 1.62.1 and Chromium 149.0.7827.0 run on Linux amd64. PR checks identify the exact pushed head independently; a previous successful head is not treated as this follow-up's CI result.
+The final coordinated local run uses production inputs at `b745ec5`, including Task-specific guidance for secondary Work filters, with no later production changes. Go 1.27.2, Node 24.19.0, Playwright 1.62.1 and Chromium 149.0.7827.0 run on Linux amd64. PR checks identify the exact pushed head independently; a previous successful head is not treated as this follow-up's CI result.
 
 | Check | Executed result |
 | --- | --- |
