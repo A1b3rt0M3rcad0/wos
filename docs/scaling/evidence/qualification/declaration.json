@@ -1,0 +1,72 @@
+{
+  "schema": 2,
+  "declared_at": "2026-10-17T21:51:49.548514+00:00",
+  "production_sla": false,
+  "baseline_source": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+  "candidate_source": "aaa447520f9236bd0a6b929fa1aeb7932ec0e246",
+  "backend": "postgres",
+  "topologies": {
+    "same-outcome": [
+      1,
+      1
+    ],
+    "separate-outcomes": [
+      1,
+      4
+    ],
+    "separate-namespaces": [
+      4,
+      4
+    ]
+  },
+  "service_replicas": [
+    1,
+    2
+  ],
+  "accepted_historical_tasks_per_outcome": [
+    0
+  ],
+  "consumers": 4,
+  "repetitions": 3,
+  "expected_cases_per_source": 18,
+  "GOMAXPROCS": 3,
+  "source_run_order": [
+    "baseline",
+    "candidate"
+  ],
+  "database_reset_before_each_source": true,
+  "same_fixture_and_runner_required": true,
+  "failure_policy": "Retain failing/incomplete report; no omitted failures or promotion of earlier development stress to completed qualification.",
+  "qualification_boundary": "Independent service/store replicas in one Go process; not HTTP process load or production capacity.",
+  "earlier_development_stress": "Retained separately with complete=false; includes aborted history16 stress and original shared-memory failure.",
+  "host_control": "Root and all agents finished Go/browser jobs before release21:50UTC; no concurrent root load/builds. Root PG55434 stopped; dedicated benchmark PG55433 only. Shared host not exclusively reserved.",
+  "postgres_environment": {
+    "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "max_connections": "100",
+    "max_locks_per_transaction": "1024",
+    "max_pred_locks_per_transaction": "4096",
+    "shared_buffers": "128MB",
+    "work_mem": "4MB",
+    "container": "wos-qualification-postgres",
+    "container_image": "postgres:18.6",
+    "allocated_cpus": 2,
+    "allocated_memory_bytes": 1073741824,
+    "shared_memory_bytes": 536870912,
+    "benchmark_database_isolated": true,
+    "host_cpu_exclusive": false,
+    "network": "loopback TCP",
+    "notes": "Other development tasks can compete for host CPU. No production SLA or isolated-host causal attribution."
+  },
+  "harness_sha256": {
+    "packages/wos-core/storage/sqlite/signed_load_test.go": "e37b7cd2ad328d5c3e84926cced290d9c3d46f730dc43326704b3523d0332af3",
+    "packages/wos-core/storage/postgres/signed_load_test.go": "ee4841c95345364d64896ba2b26a829a36976ef766a538f161fe453eff5e7b9a",
+    "tools/acceptance/scalability-report.py": "95aca2726ed6d59a6743edb9764e54fe4e6e3d9e7d76c796da7490dc4b056a22"
+  },
+  "declaration_revision": 2,
+  "supersedes_declaration": {
+    "path": "/tmp/wos-scale-declaration.json",
+    "sha256": "3c4d7067446caf255493e2db2be823ff16a413ba2175d2a6dddfc3af27f51bc7",
+    "reason": "Corrected additional Namespace provisioning through AdministrativeMutation and error-stage diagnostics; production SQL classification fixes qualified only in candidate."
+  },
+  "legacy_failure_policy": "Run pristine baseline once with identical corrected harness; retain any original unclassified SQL/Forbidden failure. Candidate runs all18; ratios only for matching complete three-repetition groups; no full matrix comparison if baseline incomplete."
+}

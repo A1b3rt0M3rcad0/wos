@@ -152,6 +152,23 @@ not qualified by adding replica processes.
 
 ## Fleet growth and mobility boundaries
 
+For customer-facing onboarding, use **Account** for a customer or organization
+and **Tenant** for its data/authorization boundary. The simple initial mapping is
+one Account to one Tenant. In the existing WOS API/CLI, that Tenant is a
+`Namespace`; the browser currently calls the same scope a Workspace. These are
+names for the existing boundary, not instructions to create a second isolation
+layer or a new database object. Renaming public contracts requires an explicit
+compatibility migration.
+
+An Account is not an individual login. Several people and agents can be members,
+and one authenticated Principal can hold explicit access to several Tenants.
+Tenant placement is independent of identity: shared infrastructure, a dedicated
+installation and self-hosting do not require a different domain model. Account
+signup, commercial plans and billing belong to the hosting/consumer experience;
+they must provision and authorize the existing WOS scope rather than infer
+authority from an untrusted account identifier. This branch does not add a public
+Account/signup API or automatic cross-installation Tenant relocation.
+
 One Namespace can serve a customer, team, environment or another operator-chosen
 authorization scope. Several Namespaces can share an installation; several
 installations can share infrastructure. Replicas add capacity to an installation;

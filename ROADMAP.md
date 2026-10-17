@@ -52,7 +52,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Scalable WOS installations — 2026-10-17
 
-**Status:** implementation and integrated qualification in progress on
+**Status:** delivered branch scope implemented and locally qualified on
 `feat/scalable-wos-operation`, based on `master` at `cba58d6`. The owner authorized
 implementation in a branch and explicitly prohibited merging. This extends
 completed persistence, security, query and integration waves; it does not declare
@@ -65,7 +65,7 @@ can share infrastructure. No additional agent runtime, business API or separate
 authorization implementation is introduced. Decisions and operating boundaries
 are recorded in [the scaling guide](docs/scaling/README.md) and ADRs 038–043.
 
-Implemented changes awaiting final integrated acceptance:
+Implemented changes and explicitly qualified boundaries:
 
 - Coherent read snapshots across continuity, entity/history, integration and
   signing diagnostics, without Outcome mutation guards. PostgreSQL retains
@@ -96,17 +96,28 @@ Implemented changes awaiting final integrated acceptance:
 
 Acceptance gates:
 
-- [ ] Final integrated normal and race suites with real PostgreSQL, including
+- [x] Normal and race verification with real PostgreSQL, including
   quotas/revocation, snapshot coherence, proof immutability, delivery recovery,
-  operator boundaries and pinned migration/restore.
-- [ ] Generated contracts/adapters, vet, browser permission compatibility,
+  operator boundaries and pinned migration/restore. Final full normal suite passes
+  1,591 test/subtest entries. Earlier full normal/race suites pass 1,579 each;
+  affected worker packages subsequently pass 349 each normally/with race, and
+  final core conflict boundaries have additional passing focused race tests.
+- [x] Generated contracts/adapters, vet, browser permission compatibility,
   documentation links and deployment configuration checks.
-- [ ] Reproducible source-bound contention comparison and actual multi-process
-  deployment pilot, with failed/interrupted runs retained separately.
+- [x] Reproducible source-bound contention measurements and actual multi-process
+  deployment pilot, with failed/interrupted runs retained separately. Candidate
+  `aaa4475` passes 18/18 cases and 144 accepted journeys; the unchanged baseline
+  completes 12 then fails multi-Tenant review, so no complete baseline comparison
+  is claimed. Exact candidate-binary TLS deployment and restart checks pass.
 
-The [qualification record](docs/scaling/qualification.md) will identify executed
-sources, results and limits. Focused agent runs are evidence for their specific
-revisions, not substitutes for final integrated gates.
+The [validation record](docs/scaling/validation.md) identifies actual source scopes,
+counts, optional skips and the final Canvas restoration regression. The
+[qualification record](docs/scaling/qualification.md) identifies measured sources,
+workloads and limits. Account/organization → Tenant is the recommended initial
+customer mapping; the existing Namespace is that isolation boundary. Public
+API/CLI identifiers remain unchanged rather than introducing another scope or
+signup API. Hosted exact-head checks
+remain separately visible on [PR #114](https://github.com/A1b3rt0M3rcad0/wos/pull/114/checks).
 
 Remaining architectural work is explicit: full signed Namespace trust transfer,
 online migration/shard routing, automatic HA/PITR/fleet orchestration, mixed-version

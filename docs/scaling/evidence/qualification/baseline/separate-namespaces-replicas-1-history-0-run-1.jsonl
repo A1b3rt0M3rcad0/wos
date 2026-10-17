@@ -1,0 +1,12 @@
+{"Time":"2026-10-17T21:52:44.669058349Z","Action":"start"}
+{"Time":"2026-10-17T21:52:44.674965965Z","Action":"run","Test":"TestScalableSignedWorkMatrix"}
+{"Time":"2026-10-17T21:52:44.675024013Z","Action":"output","Test":"TestScalableSignedWorkMatrix","Output":"=== RUN   TestScalableSignedWorkMatrix\n","OutputType":"frame"}
+{"Time":"2026-10-17T21:52:44.675200879Z","Action":"run","Test":"TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4"}
+{"Time":"2026-10-17T21:52:44.675217103Z","Action":"output","Test":"TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4","Output":"=== RUN   TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4\n","OutputType":"frame"}
+{"Time":"2026-10-17T21:52:48.047326795Z","Action":"output","Test":"TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4","Output":"    signed_load_test.go:515: signed workload failures: [return_review namespace=0199ff80-0000-7000-8000-000000000007: forbidden: credential or namespace permission inactive return_review namespace=0199ff80-0000-7000-8000-000000000001: forbidden: credential or namespace permission inactive return_review namespace=0199ff80-0000-7000-8000-000000000005: forbidden: credential or namespace permission inactive return_review namespace=0199ff80-0000-7000-8000-000000000007: forbidden: credential or namespace permission inactive]\n"}
+{"Time":"2026-10-17T21:52:48.048257247Z","Action":"output","Test":"TestScalableSignedWorkMatrix","Output":"--- FAIL: TestScalableSignedWorkMatrix (3.37s)\n","OutputType":"frame"}
+{"Time":"2026-10-17T21:52:48.048294065Z","Action":"output","Test":"TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4","Output":"    --- FAIL: TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4 (3.37s)\n","OutputType":"frame"}
+{"Time":"2026-10-17T21:52:48.048298893Z","Action":"fail","Test":"TestScalableSignedWorkMatrix/namespaces=4/replicas=1/outcomes=4/history=0/consumers=4","Elapsed":3.37}
+{"Time":"2026-10-17T21:52:48.048316573Z","Action":"fail","Test":"TestScalableSignedWorkMatrix","Elapsed":3.37}
+{"Time":"2026-10-17T21:52:48.048319482Z","Action":"output","Output":"FAIL\n","OutputType":"frame"}
+{"Time":"2026-10-17T21:52:48.053626639Z","Action":"fail","Elapsed":3.385}

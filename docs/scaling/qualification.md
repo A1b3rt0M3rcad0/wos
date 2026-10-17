@@ -17,11 +17,13 @@ Each case creates a disposable schema/file, real credentials and signing keys, e
 | Repetitions | Default 3; explicitly bounded 1..10 |
 | Read load | One closed-loop reader per consumer, bounded page of 25, 10 ms between attempts |
 
+The PostgreSQL fixture uses the existing test helper's 500 ms lock timeout; the ordinary server's default is different. It retains the same setting across compared sources rather than treating the fixture as a deployment recommendation.
+
 Every timed delivery must finish independent review, retain one completion event and one stable outbox identity, and replay the exact original approval receipt. A separate deliberately conflicting acquisition must retain one winner and reject each losing original version. Only transaction conflicts retry an unchanged mutation; the fixture does not advance expected versions to force success. Read transaction conflicts are recorded separately from successful-read quantiles and are retried as the same read query on the next loop; non-conflict read failures fail the fixture.
 
 The runner records complete-journey and successful-read p50/p95/p99, accepted throughput, read attempts/conflicts, transaction/guard waits, total pool waits, exact mutation retries and response sizes. Whole-child CPU/RSS includes seeding and fixture setup but excludes the database process. Sample counts remain explicit: eight accepted journeys do not establish a production p99.
 
-**Boundary:** service replicas are independent Application/Store instances in one precompiled Go process. This isolates shared SQL coordination and pool behavior; it does not measure independent API processes, load balancing, TLS, browser rendering, network latency or delivery-worker throughput. The [two-server delivery pilot](../../tools/acceptance/two-server-delivery.py), transport tests and actual deployment smoke cover different boundaries. Do not label service replicas as measured HTTP workers.
+**Boundary:** service replicas are independent Application/Store instances in one precompiled Go process. All replicas share the declared `GOMAXPROCS`; increasing this fixture's replica count increases independently managed pools while retaining one Go-process CPU budget. This isolates shared SQL coordination and pool behavior; it does not measure independent API processes, load balancing, TLS, browser rendering, network latency or delivery-worker throughput. The [two-server delivery pilot](../../tools/acceptance/two-server-delivery.py), transport tests and actual deployment smoke cover different boundaries. Do not label service replicas as measured HTTP workers. The separate [actual Compose smoke](evidence/README.md) checks the transition from one complete process to two API and two worker processes, authenticated ingress balancing, private worker routes and persisted state after restarts.
 
 ## Run against immutable sources
 
@@ -41,6 +43,12 @@ For a bounded first check, use `--replicas 1 --history 0 --repetitions 1`. Add 1
 For before/after measurement, create immutable Git archives outside the working tree, copy exactly the same reviewed `signed_load_test.go` harness and runner into both, and supply `--root /archive/path --archive-commit EXACT_40_CHARACTER_SHA`. This overlay is recorded explicitly. A report contains hashes of actual measured Go/SQL/tool inputs as well as the claimed source commit; an overlaid harness is not misrepresented as existing in an earlier release. Never change either archive while it runs.
 
 The explicit `--allow-dirty` development mode records actual source hashes and marks immutable qualification false. It must not be presented as final committed-source evidence. Output must remain outside the repository, is created with private-directory permissions, and is rejected if source inputs change during measurement.
+
+## Recorded bounded qualification
+
+The [source-bound result](evidence/qualification/README.md) records every repetition, exact inputs and raw test output. Candidate `aaa4475` passed all 18 predeclared zero-history cases: three topologies, one/two service replicas and three repetitions, totaling 144 accepted independently reviewed journeys. The unchanged `cba58d6` baseline passed 12 cases and failed its first four-Namespace case with an authorization error during review. Its incomplete report and failure remain published; a complete before/after matrix is not claimed.
+
+Only the four matching groups with three completed repetitions on each source receive comparisons. The run does not qualify the larger history/consumer/replica dimensions supported by the harness. Earlier failed or interrupted development attempts are [listed separately](evidence/qualification/earlier-attempts.json) and cannot replace the recorded runs. These observations do not establish a production capacity or latency guarantee.
 
 ## Compare the right things
 

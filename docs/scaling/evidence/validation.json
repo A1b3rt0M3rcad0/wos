@@ -1,0 +1,238 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-17T21:36:38.668504+00:00",
+  "platform": "Linux amd64",
+  "go": "1.27.2",
+  "GOMAXPROCS": 3,
+  "postgres": "18.6",
+  "postgres_test_configuration": {
+    "shared_memory_bytes": 536870912,
+    "max_locks_per_transaction": 1024,
+    "max_pred_locks_per_transaction": 4096,
+    "separate_normal_race_and_patch_databases": true
+  },
+  "postgres_backup_restore_enabled": true,
+  "raw_logs_in_private_execution_workspace": true,
+  "source_scope_note": "The final full normal suite executes all production Go/SQL corrections at aaa4475. The earlier full race suite predates worker/core corrections; the affected worker packages and final core error boundaries were separately rerun with race detection. Browser readiness changes after aaa4475 affect tests only; hosted checks remain separate live PR evidence.",
+  "go_runs": [
+    {
+      "log": "wos-scale-unit-final.jsonl",
+      "sha256": "53e0acd3863e858776c4d0db0a575c6172a9b143d9bc3df8b5b7f4f17ea7ab9c",
+      "scope": "Full normal suite; production inputs subsequently committed at 54b4c76",
+      "source_reference": "54b4c76d7e5a5367e02259c219b4fbbd7f0944ca",
+      "first_event": "2026-10-17T21:12:04.096516138Z",
+      "last_event": "2026-10-17T21:17:57.399589979Z",
+      "passing_test_and_subtest_entries": 1579,
+      "passing_packages": 21,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringProtectedProfileV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestWorkContractLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestWorkContractLoadMatrix"
+      ],
+      "packages_without_tests": 10,
+      "GOMAXPROCS": 3
+    },
+    {
+      "log": "wos-scale-race-final.jsonl",
+      "sha256": "5e46f74f5328c7af2aaa1003ed065bdce972bd08b4fbd49b8078c00d80462172",
+      "scope": "Full race suite started at fb66a9d, before the final worker-policy correction",
+      "source_reference": "fb66a9de069d9c217c2e8234f783d533b0512f3f",
+      "first_event": "2026-10-17T21:18:57.555935957Z",
+      "last_event": "2026-10-17T21:36:35.504305029Z",
+      "passing_test_and_subtest_entries": 1579,
+      "passing_packages": 21,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringProtectedProfileV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestWorkContractLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestWorkContractLoadMatrix"
+      ],
+      "packages_without_tests": 10,
+      "GOMAXPROCS": 3
+    },
+    {
+      "log": "wos-scale-worker-final-unit.jsonl",
+      "sha256": "6e9e86b8d077384c57de2ca64202a0f3c4cd5e4ceb6d2de7a5bb987251524eb5",
+      "scope": "Full integration, server and ports packages after final worker-policy correction",
+      "source_reference": "bdc67dc700a5823a65c07ebf637f7be17b043c5e",
+      "first_event": "2026-10-17T21:27:34.591638914Z",
+      "last_event": "2026-10-17T21:28:36.339683182Z",
+      "passing_test_and_subtest_entries": 349,
+      "passing_packages": 3,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite"
+      ],
+      "packages_without_tests": 0,
+      "GOMAXPROCS": 2
+    },
+    {
+      "log": "wos-scale-worker-final-race.jsonl",
+      "sha256": "adad9a16d4396c2baecb542335f2f72d5127f0784a6ea7165d49a0454e75ce78",
+      "scope": "Full integration, server and ports packages after final worker-policy correction, race enabled",
+      "source_reference": "bdc67dc700a5823a65c07ebf637f7be17b043c5e",
+      "first_event": "2026-10-17T21:28:54.523357918Z",
+      "last_event": "2026-10-17T21:31:02.278298158Z",
+      "passing_test_and_subtest_entries": 349,
+      "passing_packages": 3,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite"
+      ],
+      "packages_without_tests": 0,
+      "GOMAXPROCS": 2
+    },
+    {
+      "log": "wos-scale-unit-aaa4475.jsonl",
+      "sha256": "4d6d41dd7a3fd7c9b0451ec0f8cf598bfcabb977f6bbf2c072240b5cccf0c09d",
+      "scope": "Full normal suite after all production Go/SQL corrections, real PostgreSQL backup/restore enabled",
+      "source_reference": "aaa447520f9236bd0a6b929fa1aeb7932ec0e246",
+      "first_event": "2026-10-17T21:55:28.106905764Z",
+      "last_event": "2026-10-17T22:01:44.644647786Z",
+      "passing_test_and_subtest_entries": 1591,
+      "passing_packages": 21,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringProtectedProfileV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestWorkContractLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestWorkContractLoadMatrix"
+      ],
+      "packages_without_tests": 10,
+      "GOMAXPROCS": 3
+    }
+  ],
+  "other_log_fingerprints": [
+    {
+      "log": "wos-scale-browser-unit-final.log",
+      "sha256": "8abdba0dfda890f3c81cb5046c7d98e789cb1cf5d3d6e05886b8f4c10e7273a4",
+      "bytes": 4061
+    },
+    {
+      "log": "wos-scale-authority-browser-final.log",
+      "sha256": "be6d480c6214c4ffbc9d6dd6b97bc7fd5b1e55c495f173060510d2c35365dba3",
+      "bytes": 996
+    },
+    {
+      "log": "wos-scale-browser.log",
+      "sha256": "4be5f325de24d29fda0e60d12ab57724296487efe7dd60121c152b9472602ba5",
+      "bytes": 569
+    },
+    {
+      "log": "wos-scale-vet-bdc.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "wos-scale-generated-vet-final.log",
+      "sha256": "bdc2f2594123a2130812c958ae1afbc014ab895963e90e6d37ef3de86d669b7c",
+      "bytes": 24
+    },
+    {
+      "log": "wos-scale-static-build.log",
+      "sha256": "4c670caeb467770441b82a96fbefdace93ea0c9b0d1bcfde745eaccb29f72d81",
+      "bytes": 213
+    },
+    {
+      "log": "wos-scale-static-final.log",
+      "sha256": "7bb30ff235494f5ecfaf9b12eac1d1f977b68cf5504f0dbacf252f9a94e32c79",
+      "bytes": 196
+    },
+    {
+      "log": "wos-scale-static-aaa4475.log",
+      "sha256": "4c670caeb467770441b82a96fbefdace93ea0c9b0d1bcfde745eaccb29f72d81",
+      "bytes": 213,
+      "scope": "Final generated adapter/contracts, event catalogue, archive, formatting and vet checks at aaa4475"
+    }
+  ],
+  "browser_checks": {
+    "unit_checks": 38,
+    "authority_journeys": 5,
+    "desktop_mobile_presentation_journeys": 1
+  },
+  "python_checks": {
+    "backup_manifest": 6,
+    "scalability_report_contract": 3
+  },
+  "production_capacity_qualified": false,
+  "merge_performed": false,
+  "post_ci_browser_regression": {
+    "source_reference": "59f19cde97c711eb86dbd240ea147eebdfa530e9",
+    "canvas_journeys_passed": 9,
+    "namespace_authority_journeys_passed": 1,
+    "log": "wos-scale-canvas-browser-final.log",
+    "sha256": "b648ea1a750bccd0b87c7bf69f1832443ae0248800319b3062961338302d92f5",
+    "rebuilt_embedded_binary": true,
+    "original_failed_test_assertions_preserved": true
+  },
+  "core_conflict_correction": {
+    "source_reference": "aaa447520f9236bd0a6b929fa1aeb7932ec0e246",
+    "GOMAXPROCS": 3,
+    "race_passed": true,
+    "log": "wos-scale-signed-error-mapping-race.log",
+    "sha256": "c18c851899f4c7b1ae8732f34682df947f84825906ed3d442c4f39fb2084f90b",
+    "log_kind": "Console collection from execution-session output, not a benchmark or complete JSON event stream",
+    "coverage": [
+      "Signed access preserves policy read conflict/deadline and policy denials",
+      "Signing enrollment policy failure with actual DSSE proof",
+      "Principal group lookup preserves real PostgreSQL SQLSTATE 40001 and cause",
+      "Existing signed Next acquisition exact replay and scan cursor",
+      "Existing issuer recovery preserves identity and original receipts"
+    ]
+  },
+  "nested_error_correction": {
+    "collected_at_commit": "aaa447520f9236bd0a6b929fa1aeb7932ec0e246",
+    "race_passed": true,
+    "GOMAXPROCS": 2,
+    "sqlite_seconds": 20.557,
+    "postgres_seconds": 4.988,
+    "log": "wos-persistence-final-focused-console.txt",
+    "sha256": "e58d096a110287e1dea1a6facac1e113737a3db3281d35cd3f7f9e9dbeddb9ef",
+    "log_kind": "Collected execution-session console output, not raw redirected JSON",
+    "negative_control_restoring_old_streamed_error_return_failed_as_expected": true,
+    "positive_real_postgres_control_passed": true,
+    "source_provenance_limit": "No whole-tree digest was captured at execution start; the collected record preserves this limit and records the byte-identical overlay comparison."
+  },
+  "post_commit_readiness_regression": {
+    "source_reference": "31d7d2a28d8c4a4d2f0f454975343f8ccb8ab1e5",
+    "product_changed": false,
+    "journey_and_specialist_race_tests_passed": 5,
+    "log": "wos-scale-journey-browser-final.log",
+    "sha256": "15a0fc246d52bc0f4eeb7b57bdde66f14679583edfcd76ab31cc6032a0bfd080",
+    "original_mobile_keyboard_assertions_preserved": true
+  }
+}

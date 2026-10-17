@@ -87,7 +87,9 @@ The board represents shared state; each paper represents a bounded piece of work
 | Contract | Bounded authority issued at checkout in a contract-enabled Workspace | Permission to deliver one Task under the issued constraints |
 | Artifact / Evidence | A deliverable reference, and an observation or source used to check it | An exact commit, and the recorded validation test report |
 | Assessment / Conclusion | Evaluation of a criterion, and the basis for accepting the result | The amount check passed; accept the Outcome after all requirements are satisfied |
-| Workspace / Namespace | The same access boundary: Workspace in the UI, Namespace in API/CLI configuration | The team's authorized space |
+| Tenant (Workspace / Namespace) | One data and authorization boundary: Workspace in the UI, `Namespace` in current API/CLI contracts | A customer's authorized space |
+
+Your application can map one customer Account or organization to one Tenant, with explicit access for its people and agents. An individual login can belong to several Accounts; shared hosting, dedicated infrastructure and self-hosting preserve the same isolation model.
 
 A Roadmap is an optional versioned plan referencing existing Objectives and Tasks. Publishing it does not execute work or create dependencies automatically.
 

@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "qualified": false,
+  "private_log_retention": "Original logs remain only in this local development session; paths are not durable or portable. Final revision2 raw test output is published separately.",
+  "attempts": [
+    {
+      "session_local_path": "/tmp/wos-scale-baseline-report",
+      "complete": false,
+      "completed_cases": 9,
+      "source_commit": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+      "reason": "Incomplete original shared-PostgreSQL history matrix: exhausted shared memory; not qualified.",
+      "report_sha256": "2b1e8d96c51b35aab688976d6741c0ec752eefd0d454468c7943636dd003fe2e",
+      "retained_raw_log_sha256": {
+        "same-outcome-replicas-1-history-0-run-1.jsonl": "63c98326139b48941dba27c7a9a4c7ff7e7538f73bd22c0c48b91bd738a5766e",
+        "same-outcome-replicas-1-history-0-run-2.jsonl": "37037c5ba6e60d34cd1e8bcc71694fdfbb1630600fc22c89c32ec9fc57cb3536",
+        "same-outcome-replicas-1-history-0-run-3.jsonl": "8a608704935c14e32652b2b90a53e2890de825a1c03ced6a705c89e43792a382",
+        "same-outcome-replicas-1-history-16-run-1.jsonl": "c515197d9c8d1730ef96c7d955f0c8a68640785a1096d0770e2709fe90549947",
+        "same-outcome-replicas-1-history-16-run-2.jsonl": "862d6e3b873bb8e20642ca8716baacc676aae9946ec1d3e60976d55addc621ae",
+        "same-outcome-replicas-1-history-16-run-3.jsonl": "97c8897a0a30442f7be607022455961800f25d4a261e35aeb8587337748ceb09",
+        "same-outcome-replicas-2-history-0-run-1.jsonl": "3916c5e2a51b2f5457442400fb6ebb9c15970b26c04905b18451060d1e879636",
+        "same-outcome-replicas-2-history-0-run-2.jsonl": "09005c31ff9568eb597ff8adb6d846364b8cf0f300f94e912a6fddc65fda9d26",
+        "same-outcome-replicas-2-history-0-run-3.jsonl": "aa9c5693eef8390f5ae08e0127425de356fad0a5ef95f1e63dc3b4cbd3f1aaf2",
+        "same-outcome-replicas-2-history-16-run-1.jsonl": "100fb60031a9d4c2491910858ab6d3885600872da740f665235ba5bba60d8fdd"
+      }
+    },
+    {
+      "session_local_path": "/tmp/wos-scale-isolated-baseline-report",
+      "complete": false,
+      "completed_cases": 10,
+      "source_commit": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+      "reason": "Incomplete dedicated-PostgreSQL history matrix: stopped during slow history seeding and competing compilation; not qualified.",
+      "report_sha256": "52615af5f6ae9206a75bf31105368aa8fa323a37d60104da66d540665596fcde",
+      "retained_raw_log_sha256": {
+        "same-outcome-replicas-1-history-0-run-1.jsonl": "b0bf512c6cd107f0b8681e8513a77d061a36671fa8c474ec337869d7a6e707da",
+        "same-outcome-replicas-1-history-0-run-2.jsonl": "669f095f79eaa4014dbc35bc15a1600b65a5f6f77bdc5e75b5bcb675fe07cc4e",
+        "same-outcome-replicas-1-history-0-run-3.jsonl": "9e911b89c91107042be390fb46ea255cbda650bc152f1120ccd5f216b54f0fa1",
+        "same-outcome-replicas-1-history-16-run-1.jsonl": "4fac72bc18d26497ef7979dbe321d49c4bb66d7e6cd20359ae0b5871506c8d69",
+        "same-outcome-replicas-1-history-16-run-2.jsonl": "dd6c9ee32ecb333a5dea3808e7a4570557d2efec4cf6c49a3c1b4ac34ee9aa1f",
+        "same-outcome-replicas-1-history-16-run-3.jsonl": "461e4db15d5bd3ddef8008c8c4fd2771dd10c2933c971d2f03e4fd3afc4872ad",
+        "same-outcome-replicas-2-history-0-run-1.jsonl": "351d806a2f53c21fcc02767aac4589edd0cbba346f04b5f757e5fdf59b3157d6",
+        "same-outcome-replicas-2-history-0-run-2.jsonl": "2f43f0b87d741fc3e8fe9f7107e792783c1e91d2aceb75d64e2a49683e6df31a",
+        "same-outcome-replicas-2-history-0-run-3.jsonl": "befbb2be77d428ac85bee7d9ea9ee094be29506882e42f79ae74f9be2d8cf180",
+        "same-outcome-replicas-2-history-16-run-1.jsonl": "601a989d668fcd55a6bdd8be75a580c23a1fb5d5a8d5891b1011f0ed7d5807e3",
+        "same-outcome-replicas-2-history-16-run-2.jsonl": "efd9db87415ca84b740f1a017562152cc4b532064c14d04237ad8eeb0544260e"
+      }
+    },
+    {
+      "session_local_path": "/tmp/wos-scale-final-baseline",
+      "complete": false,
+      "completed_cases": 12,
+      "source_commit": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+      "reason": "Initial bounded18-case attempt stopped at four-Namespace setup: repeated Bootstrap invalidated shared-principal credentials. Fixture corrected before declared revision2; not qualified.",
+      "report_sha256": "9ee0d73c0c007927ea4cabff0432bda2589ec56f02b1ee5897c15bd1eef0dc08",
+      "retained_raw_log_sha256": {
+        "same-outcome-replicas-1-history-0-run-1.jsonl": "14e59fbcd02f1b5d168543e006ece15742b73f0602e28e86819091ccb0d960ac",
+        "same-outcome-replicas-1-history-0-run-2.jsonl": "8a2463f989ffa90c0d32c37974df93ad41b6a2fca139fba1181474e24754b036",
+        "same-outcome-replicas-1-history-0-run-3.jsonl": "ad0cdf27cec90a921936deeb947429d398d9ba66dc01a6a190a8d7204a164ce3",
+        "same-outcome-replicas-2-history-0-run-1.jsonl": "3e0f8f81273a7eb8c91e6909f93acb742c979a2e6b8938d1b1d601f0a981a0cc",
+        "same-outcome-replicas-2-history-0-run-2.jsonl": "75703b04220b85ec71ca951a10fe584ecb6c2c43d1de0db817468c7b51731186",
+        "same-outcome-replicas-2-history-0-run-3.jsonl": "b159d021a8c77dc5595a4a27f071a927a681d6cb0a41a217b3f128d0733c6314",
+        "separate-namespaces-replicas-1-history-0-run-1.jsonl": "2902b328010299aacc46de2a1e96812a6618b32d034af3839f46f94b229dd41a",
+        "separate-outcomes-replicas-1-history-0-run-1.jsonl": "17199c83724369f973079baba6c0d54cffa5eb05282ebecb259810f490faad10",
+        "separate-outcomes-replicas-1-history-0-run-2.jsonl": "6be9ea3ee1bc1b71b0544eaccc2b40b756784f0afa715e4c18d0d4135d8b78cd",
+        "separate-outcomes-replicas-1-history-0-run-3.jsonl": "b7ecb0b6d933fce66a1edefffd1c9a86ef281ecf35d1d595adb9646a4d55a207",
+        "separate-outcomes-replicas-2-history-0-run-1.jsonl": "8bfe05b628db7425440b57d2e09f340cb3443b70b2303c7c46b7737aa74a85a1",
+        "separate-outcomes-replicas-2-history-0-run-2.jsonl": "c10200ef34c568e0f63f456a548e385313d09c3ec0779a68a16d95118a20fe90",
+        "separate-outcomes-replicas-2-history-0-run-3.jsonl": "6081764c33dc7015b5f3555949633197ade96b42ac2ff42e099bc7cb31841128"
+      }
+    },
+    {
+      "session_local_path": "/tmp/wos-scale-baseline-ns4-diagnostic.jsonl",
+      "diagnostic_only": true,
+      "reason": "Diagnostic only, pristine baseline with corrected fixture: rawSQL40001/Forbidden at signed-work stages.",
+      "raw_log_sha256": "399b7651d1d7e690ab0406d97f20f5f125a056b312ecf0a23057d4f315ac0949"
+    },
+    {
+      "session_local_path": "/tmp/wos-scale-candidate-ns4-after-map-diagnostic.jsonl",
+      "diagnostic_only": true,
+      "reason": "Diagnostic only, candidate production mappings: passed corrected Namespace workload while peer tests ran.",
+      "raw_log_sha256": "d336b233a32b049e24f6005b6aa5114316e225ae6d7447245d5170f2c316bb97"
+    }
+  ]
+}

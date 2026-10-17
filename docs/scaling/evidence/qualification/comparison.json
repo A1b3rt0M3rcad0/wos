@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "production_sla": false,
+  "baseline_source": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+  "candidate_source": "aaa447520f9236bd0a6b929fa1aeb7932ec0e246",
+  "baseline_complete": false,
+  "candidate_complete": true,
+  "full_before_after_matrix_complete": false,
+  "baseline_completed_cases": 12,
+  "candidate_completed_cases": 18,
+  "aggregation": "Medians of three equal-dimension per-run empirical p95/throughput values. Read conflict fraction uses summed successes/conflicts. Incomplete groups receive no ratio.",
+  "groups": [
+    {
+      "topology": "same-outcome",
+      "service_replicas": 1,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1616.578,
+        "accepted_per_second_median": 3.409238253075193,
+        "read_p95_ms_median": 6.234,
+        "successful_reads": 2242,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 120
+      },
+      "baseline": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 2067.911,
+        "accepted_per_second_median": 2.2631643277963334,
+        "read_p95_ms_median": 15.468,
+        "successful_reads": 966,
+        "read_transaction_conflicts": 384,
+        "read_conflict_fraction": 0.28444444444444444,
+        "mutation_transaction_conflicts": 115
+      },
+      "complete_three_repetition_comparison": true,
+      "journey_p95_ratio": 0.7817444754634024,
+      "accepted_throughput_ratio": 1.5064033182225012
+    },
+    {
+      "topology": "same-outcome",
+      "service_replicas": 2,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1378.002,
+        "accepted_per_second_median": 3.9562557728911534,
+        "read_p95_ms_median": 4.638,
+        "successful_reads": 1996,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 105
+      },
+      "baseline": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1856.621,
+        "accepted_per_second_median": 2.8852685903509503,
+        "read_p95_ms_median": 9.895,
+        "successful_reads": 903,
+        "read_transaction_conflicts": 384,
+        "read_conflict_fraction": 0.29836829836829837,
+        "mutation_transaction_conflicts": 143
+      },
+      "complete_three_repetition_comparison": true,
+      "journey_p95_ratio": 0.7422096378313074,
+      "accepted_throughput_ratio": 1.3711915022822654
+    },
+    {
+      "topology": "separate-outcomes",
+      "service_replicas": 1,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1803.128,
+        "accepted_per_second_median": 3.1530051394456726,
+        "read_p95_ms_median": 5.766,
+        "successful_reads": 2242,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 142
+      },
+      "baseline": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 2040.1,
+        "accepted_per_second_median": 2.6374817521250598,
+        "read_p95_ms_median": 6.608,
+        "successful_reads": 2182,
+        "read_transaction_conflicts": 96,
+        "read_conflict_fraction": 0.04214223002633889,
+        "mutation_transaction_conflicts": 129
+      },
+      "complete_three_repetition_comparison": true,
+      "journey_p95_ratio": 0.8838429488750551,
+      "accepted_throughput_ratio": 1.195460456515101
+    },
+    {
+      "topology": "separate-outcomes",
+      "service_replicas": 2,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1737.589,
+        "accepted_per_second_median": 2.9826121177521876,
+        "read_p95_ms_median": 6.181,
+        "successful_reads": 2332,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 151
+      },
+      "baseline": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 2143.598,
+        "accepted_per_second_median": 2.53133185109003,
+        "read_p95_ms_median": 7.802,
+        "successful_reads": 2240,
+        "read_transaction_conflicts": 96,
+        "read_conflict_fraction": 0.0410958904109589,
+        "mutation_transaction_conflicts": 121
+      },
+      "complete_three_repetition_comparison": true,
+      "journey_p95_ratio": 0.8105946170877188,
+      "accepted_throughput_ratio": 1.1782777973057266
+    },
+    {
+      "topology": "separate-namespaces",
+      "service_replicas": 1,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1747.812,
+        "accepted_per_second_median": 3.2630579367961046,
+        "read_p95_ms_median": 6.539,
+        "successful_reads": 2212,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 139
+      },
+      "baseline": null,
+      "complete_three_repetition_comparison": false,
+      "journey_p95_ratio": null,
+      "accepted_throughput_ratio": null
+    },
+    {
+      "topology": "separate-namespaces",
+      "service_replicas": 2,
+      "candidate": {
+        "completed_repetitions": 3,
+        "accepted_journeys": 24,
+        "journey_p95_ms_median": 1759.143,
+        "accepted_per_second_median": 3.193554715498883,
+        "read_p95_ms_median": 6.365,
+        "successful_reads": 2177,
+        "read_transaction_conflicts": 0,
+        "read_conflict_fraction": 0.0,
+        "mutation_transaction_conflicts": 138
+      },
+      "baseline": null,
+      "complete_three_repetition_comparison": false,
+      "journey_p95_ratio": null,
+      "accepted_throughput_ratio": null
+    }
+  ]
+}
