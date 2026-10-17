@@ -218,10 +218,13 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 
 ## Project status
 
+**Next release: 1.0.0.** The release includes the visual workspace, centralized agent workflows, operational hardening and the new source-available license. The major version reflects the licensing compatibility change. Publication is gated by the release workflow; preparation alone does not make the packages available or certify every stable-1.0 acceptance milestone. See the [1.0.0 release notes](docs/releases/1.0.0.md).
+
 | Item | State |
 | --- | --- |
 | Published baseline | [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), also available as `wosctl@0.4.2` and on GHCR |
 | This README and tour | Describe current source, including changes not yet published in that release |
+| Prepared version | 1.0.0; coordinated npm, GHCR and GitHub publication pending |
 | Compatibility | Existing HTTP/CLI contracts and checked forward migrations follow the [compatibility policy](docs/stable/compatibility.md); no blanket 1.0 certification |
 | Stable 1.0 acceptance | Tracked separately in [ROADMAP.md](ROADMAP.md) |
 

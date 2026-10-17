@@ -88,6 +88,10 @@ The owner requested a more useful README demonstration and a clearer explanation
 
 - [x] Verify the seven-state real navigation tour (28 seconds), static alternative and capture provenance; review README claims, local links and preserved incoming anchors; inspect GFM output in Chromium at 1280, 390 and 320 CSS pixels with details closed/open and all images decoded. Record executed scope and limits in [README validation](docs/readme-validation.md).
 
+## Owner-authorized release preparation — 2026-10-17
+
+The owner authorized merging the README clarification and initiating the next coordinated release. The release tool consumes the four queued changes and prepares version **1.0.0**: the licensing compatibility break requires a major bump under `.changes/README.md`; the agent workflow, operational hardening and visual workspace additions are included. README release status explicitly distinguishes preparation from public availability. Publication must use the existing source-gated workflow and immutable npm, GHCR and GitHub artifacts. This version number does not complete the separate stable-1.0 acceptance program; published baseline remains v0.4.2 until verified publication succeeds.
+
 ## Source-available licensing and brand — 2026-10-17
 
 The owner requests production and application use with Woobe-style restrictions against commercial platform supply under the original brand or a replacement brand. [ADR 037](docs/adr/0037-source-available-licensing-and-brand-boundaries.md) adopts the WOS Sustainable Use License 1.0 and [trademark policy](TRADEMARKS.md). Current first-party terms permit internal production, commercial applications/OaaS, private modifications and genuine technical services, while excluding resale, paid hosted/managed platform access, OEM and commercial white label. Qualified legal review is separate from technical consistency checks.
