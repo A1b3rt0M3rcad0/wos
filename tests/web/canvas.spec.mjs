@@ -51,6 +51,56 @@ async function shot(page, name, { preserveScroll = false } = {}) {
     await page.locator(".canvas-workspace-shell").screenshot({ path: join(directory, `${name}-board.png`), animations: "disabled" });
 }
 
+test("Escape during deep-link graph restoration clears selection and preserves back navigation", async ({ page, wos }) => {
+  const data = await seedCanvas(wos);
+  await openCanvas(page, wos, data);
+  await choose(page, "work_item", data.tasks.ready);
+  await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
+  let releaseExpansion, reachedExpansion, completedExpansion, expansionPending = false;
+  const held = new Promise((resolve) => { releaseExpansion = resolve; });
+  const reached = new Promise((resolve) => { reachedExpansion = resolve; });
+  const completed = new Promise((resolve) => { completedExpansion = resolve; });
+  const expansionPath = (url) => url.pathname.endsWith("/graph") &&
+    url.searchParams.get("root_kind") === "work_item" &&
+    url.searchParams.get("root_id") === data.tasks.ready.id;
+  await page.route(expansionPath, async (route) => {
+    expansionPending = true;
+    reachedExpansion();
+    await held;
+    try {
+      await route.continue();
+    } finally {
+      completedExpansion();
+    }
+  });
+  try {
+    await page.reload();
+    await reached;
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).not.toBeVisible();
+    await expect(page).not.toHaveURL(/item=/);
+    await expect(node(page, "work_item", data.tasks.ready)).toBeFocused();
+    const expanded = page.waitForResponse((response) => expansionPath(new URL(response.url())));
+    releaseExpansion();
+    await expanded;
+    await completed;
+    await page.unroute(expansionPath);
+    await expect(panel(page)).not.toBeVisible();
+    await expect(page).not.toHaveURL(/item=/);
+    await expect(node(page, "work_item", data.tasks.ready)).toBeFocused();
+    await page.goBack();
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
+  } finally {
+    releaseExpansion();
+    if (expansionPending) await completed;
+    await page.unroute(expansionPath);
+  }
+});
+
 test("Canvas is the default operational view without a Roadmap and keeps contextual deep links", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
   const errors = [];

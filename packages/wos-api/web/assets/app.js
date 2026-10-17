@@ -119,7 +119,9 @@ const canvasInspector = createWorkspaceInspector({
             .querySelector(`[data-canvas-list-node="${key}"]`)
             ?.scrollIntoView({ block: "center", behavior: "instant" });
       }
-      writeRoute(null);
+      // A person can dismiss a restored inspector before its graph expansion
+      // finishes. That explicit navigation must survive the restoration guard.
+      writeRoute(null, false, { allowDuringRestore: reason !== "reset" });
     }
   },
 });
@@ -1235,9 +1237,9 @@ function renderTabs() {
     $("tabs").append(b);
   }
 }
-function writeRoute(item = undefined, replace = false) {
+function writeRoute(item = undefined, replace = false, { allowDuringRestore = false } = {}) {
   if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
-  if (state.restoringRoute || !state.outcome) return;
+  if ((state.restoringRoute && !allowDuringRestore) || !state.outcome) return;
   const query = routeQuery({
     namespace: state.namespace,
     outcome: state.outcome.id,

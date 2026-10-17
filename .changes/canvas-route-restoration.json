@@ -1,0 +1,1 @@
+{"bump":"patch","summary":"Preserve explicit Canvas inspector dismissal during deep-link restoration: Escape clears the selected route and restores card focus even while graph expansion is pending, without allowing a late response to reopen the panel."}
