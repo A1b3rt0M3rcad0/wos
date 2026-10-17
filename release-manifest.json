@@ -1,18 +1,23 @@
 {
   "schema": 1,
-  "version": "0.4.2",
-  "previous_prepared_version": "0.4.1",
-  "bump": "patch",
+  "version": "0.5.0",
+  "previous_prepared_version": "0.4.2",
+  "bump": "minor",
   "changes": [
     {
-      "file": "client-command-discovery.json",
-      "bump": "patch",
-      "summary": "Add offline versioned CLI help/catalog and protocol-aware command guidance; correct unified distribution documentation."
+      "file": "central-agent-workflow.json",
+      "bump": "minor",
+      "summary": "Centralize CLI profiles and operational material, add agent-safe work commands and durable authorized activity/history, and align the five Skills and documentation without changing immutable signed authority or independent review."
     },
     {
-      "file": "generic-client-recovery.json",
-      "bump": "patch",
-      "summary": "Prevent implicit HTTP mutation replay, preserve compact receipt observations and qualify generic documentary clients across real stores."
+      "file": "operational-hardening.json",
+      "bump": "minor",
+      "summary": "Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures."
+    },
+    {
+      "file": "visual-operational-workspace.json",
+      "bump": "minor",
+      "summary": "Add a visual operational canvas with original paper cards, typed connections, bounded navigation and contextual workspace actions."
     }
   ]
 }
