@@ -123,7 +123,7 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 	}
 	identity, _ := security.Authenticate(context.Background(), token)
 	ctx := application.WithIdentity(context.Background(), identity)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionInstallationProvision}
 	if err := security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: permissions}); err != nil {
 		t.Fatal(err)
 	}
@@ -190,5 +190,101 @@ func TestPermissionRevokedWhileAwaitingTransactionCannotMutate(t *testing.T) {
 	page, err := service.SearchOutcomes(ctx, ns, ports.OutcomeFilter{}, 25, "")
 	if err != nil || len(page.Items) != 0 {
 		t.Fatalf("unauthorized state persisted: %+v %v", page, err)
+	}
+}
+
+func TestNamespaceAdministratorCannotAcquireInstallationAuthority(t *testing.T) {
+	store := openTestStore(t, filepath.Join(t.TempDir(), "operator-boundary.db"))
+	clock := sqliteFixedClock{now: time.Now().UTC()}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: &sqliteSequenceIDs{prefix: "0199d098", next: 1}}
+	ns := testID("0199d098-0000-7000-8000-000000000010")
+	if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: "Shared"}, "operator", "installation-boundary-bootstrap-credential"); err != nil {
+		t.Fatal(err)
+	}
+	operator, err := security.Authenticate(context.Background(), "installation-boundary-bootstrap-credential")
+	if err != nil {
+		t.Fatal(err)
+	}
+	operatorCtx := application.WithIdentity(context.Background(), operator)
+	if err = security.RequireInstallation(operatorCtx, ports.PermissionInstallationObserve); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.SetGrant(operatorCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "tenant-admin", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionActorDelegate}}); err != nil {
+		t.Fatal(err)
+	}
+	_, token, err := security.IssueCredential(operatorCtx, ns, "tenant-admin", domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "tenant"}, clock.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenant, err := security.Authenticate(context.Background(), token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := application.WithIdentity(context.Background(), tenant)
+	if _, err = security.AdministrativeSnapshot(tenantCtx, ns); err != nil {
+		t.Fatal("ordinary administration must remain available", err)
+	}
+	commands := []ports.SecurityAdminCommand{
+		{NamespaceID: ns, ExpectedVersion: 1, Operation: "create_namespace", NamespaceName: "Unauthorized"},
+		{NamespaceID: ns, ExpectedVersion: 1, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "tenant-admin", Permissions: []ports.Permission{ports.PermissionNamespaceAdmin, ports.PermissionInstallationProvision}}},
+		{NamespaceID: ns, ExpectedVersion: 1, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: []ports.Permission{ports.PermissionStateRead}}},
+		{NamespaceID: ns, ExpectedVersion: 1, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: "operator", Actor: tenant.Actor, ExpiresAt: clock.Now().Add(time.Hour)}},
+		{NamespaceID: ns, ExpectedVersion: 1, Operation: "revoke_credential", CredentialID: operator.CredentialID},
+	}
+	for i, command := range commands {
+		_, secret, err := security.AdministrativeMutation(tenantCtx, "operator-boundary-key-0001", command)
+		if securityErrorCode(err) != domain.ErrorCodeForbidden || secret != "" {
+			t.Fatalf("command %d escaped operator boundary: %v", i, err)
+		}
+		// A direct storage caller cannot bypass the transaction's second check.
+		_, err = store.ApplySecurityAdmin(tenantCtx, ports.SecurityAdminRequest{Command: command, PrincipalID: tenant.PrincipalID, Actor: tenant.Actor, CredentialDigest: tenant.CredentialDigest, IdempotencyKey: "operator-boundary-key-0002", Fingerprint: "test", Now: clock.Now()})
+		if securityErrorCode(err) != domain.ErrorCodeForbidden {
+			t.Fatalf("transaction %d escaped operator boundary: %v", i, err)
+		}
+	}
+	if err = security.RequireInstallation(tenantCtx, ports.PermissionInstallationObserve); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatal("tenant read installation metrics", err)
+	}
+	if _, _, err = security.IssueCredential(tenantCtx, ns, "operator", tenant.Actor, clock.Now().Add(time.Hour)); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatal("composition helper minted operator credential", err)
+	}
+	if err = security.RevokeCredential(tenantCtx, ns, operator.CredentialID); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatal("composition helper revoked operator", err)
+	}
+	result, _, err := security.AdministrativeMutation(operatorCtx, "operator-authorized-create-0001", commands[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	createdGrant, err := store.GetGrant(context.Background(), result.CreatedNamespace.ID, operator.PrincipalID)
+	if err != nil || ports.HasInstallationPermissions(createdGrant.Permissions) {
+		t.Fatalf("new Namespace copied installation authority: %+v %v", createdGrant, err)
+	}
+	// Revocation must protect an already known metrics identity on every request.
+	if err = security.SetGrant(operatorCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "tenant-admin", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionInstallationObserve}}); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.RequireInstallation(tenantCtx, ports.PermissionInstallationObserve); err != nil {
+		t.Fatal(err)
+	}
+	u, err := store.Begin(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := domain.CredentialPolicy{NamespaceID: ns, CredentialID: tenant.CredentialID, PrincipalID: tenant.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionNamespaceAdmin), string(ports.PermissionInstallationObserve)}, AllowedOutcomeIDs: []domain.ID{testID("0199d098-0000-7000-8000-000000000099")}, AcceptanceFloor: domain.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: clock.Now()}
+	if err = u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(context.Background(), policy, 0); err != nil {
+		u.Rollback()
+		t.Fatal(err)
+	}
+	if err = u.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.RequireInstallation(tenantCtx, ports.PermissionInstallationObserve); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatal("Outcome-restricted observer read installation metrics", err)
+	}
+	if err = security.SetGrant(operatorCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "tenant-admin", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}}); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.RequireInstallation(tenantCtx, ports.PermissionInstallationObserve); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatal("revoked observer retained authority", err)
 	}
 }

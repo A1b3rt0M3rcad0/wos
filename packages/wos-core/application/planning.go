@@ -430,7 +430,7 @@ func (s *Service) GetActiveRoadmapSlot(
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -462,7 +462,7 @@ func (s *Service) ListRoadmapActivationHistory(
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -533,7 +533,7 @@ func (s *Service) GetRoadmapRevision(
 	if revisionNumber == 0 {
 		return ReadResult[domain.RoadmapRevision]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "roadmap revision number must be at least 1")
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.RoadmapRevision]{}, err
 	}
@@ -574,7 +574,7 @@ func (s *Service) GetRoadmap(
 		return ReadResult[domain.Roadmap]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Roadmap]{}, err
 	}
@@ -611,7 +611,7 @@ func (s *Service) ListRoadmaps(
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}

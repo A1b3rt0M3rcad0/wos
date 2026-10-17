@@ -470,7 +470,7 @@ func (s *Service) GetArtifact(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Artifact]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Artifact]{}, err
 	}
@@ -498,7 +498,7 @@ func (s *Service) ListArtifacts(ctx context.Context, scope domain.Scope) ([]doma
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -526,7 +526,7 @@ func (s *Service) GetEvidence(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Evidence]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Evidence]{}, err
 	}
@@ -554,7 +554,7 @@ func (s *Service) ListEvidence(ctx context.Context, scope domain.Scope) ([]domai
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -582,7 +582,7 @@ func (s *Service) GetEvidenceLink(ctx context.Context, scope domain.Scope, id do
 		return ReadResult[domain.EvidenceLink]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.EvidenceLink]{}, err
 	}
@@ -610,7 +610,7 @@ func (s *Service) ListEvidenceLinks(ctx context.Context, scope domain.Scope) ([]
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -638,7 +638,7 @@ func (s *Service) GetDecision(ctx context.Context, scope domain.Scope, id domain
 		return ReadResult[domain.Decision]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Decision]{}, err
 	}
@@ -666,7 +666,7 @@ func (s *Service) ListDecisions(ctx context.Context, scope domain.Scope) ([]doma
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}

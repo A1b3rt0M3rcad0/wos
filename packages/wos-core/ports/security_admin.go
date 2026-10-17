@@ -18,6 +18,10 @@ type SecurityAdminCommand struct {
 	CredentialID    domain.ID       `json:"credential_id,omitempty"`
 }
 type SecurityAdminRequest struct {
+	// HostOperator is only set by explicit offline deployment composition. It
+	// authorizes the separate operator-promotion operation, never remote intents.
+	HostOperator     bool
+	OperatorReason   string
 	Command          SecurityAdminCommand
 	PrincipalID      string
 	Actor            domain.ActorRef

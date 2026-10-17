@@ -34,3 +34,9 @@ type SecurityStore interface {
 	ListNamespaces(context.Context, string) ([]Namespace, error)
 	PutNamespace(context.Context, Namespace) error
 }
+
+// ScopedCredentialPrincipalReader exposes only the identity needed to protect
+// operator credentials during trusted composition.
+type ScopedCredentialPrincipalReader interface {
+	ScopedCredentialPrincipal(context.Context, domain.ID, domain.ID) (string, error)
+}

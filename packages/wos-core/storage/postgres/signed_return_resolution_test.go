@@ -366,13 +366,13 @@ func TestSignedReturnResolutionRaces(t *testing.T) {
 					errors <- e
 				}
 				go run(func() error { _, e := f.service.ResolveSignedReturnIntent(f.ctx, cc, cmd); return e })
+				otherCC, other := cc, cmd
 				if mode == "return-vs-resolution" {
 					go run(func() error {
 						_, e := f.service.ReturnSignedWork(f.ctx, f.cc, a.ReturnSignedWorkCommand{Envelope: f.envelope})
 						return e
 					})
 				} else {
-					otherCC, other := cc, cmd
 					if mode == "different-resolution" {
 						otherCC, other = resolutionIntent(t, f, "competing terminal intention", 2)
 					}
@@ -400,9 +400,36 @@ func TestSignedReturnResolutionRaces(t *testing.T) {
 				}
 				defer u.Rollback()
 				_, accepted := u.(ports.SignedContractUnitOfWork).SignedContracts().Acceptance(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.request.IdempotencyKey)
-				_, closed := u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey)
+				terminal, closed := u.(ports.SignedReturnResolutionUnitOfWork).SignedReturnResolutions().GetByOriginalIntent(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, f.credential, "ReturnSignedWork", f.request.IdempotencyKey)
 				if (accepted == nil) == (closed == nil) {
 					t.Fatal("acceptance and terminal decision must be exclusive")
+				}
+				if closed == nil {
+					var doc signing.Document
+					if e := json.Unmarshal(terminal.Receipt, &doc); e != nil {
+						t.Fatal(e)
+					}
+					env, e := doc.Envelope()
+					if e != nil {
+						t.Fatal(e)
+					}
+					pub, e := f.server.PublicBytes()
+					if e != nil {
+						t.Fatal(e)
+					}
+					if _, e := signing.Verify(env, signing.ReturnResolutionReceipt, f.server.IssuerKeyID.String(), pub); e != nil {
+						t.Fatal("winning terminal proof is missing or invalid", e)
+					}
+					if mode == "different-resolution" {
+						loser := otherCC.IdempotencyKey
+						if terminal.ResolutionIdempotencyKey == loser {
+							loser = cc.IdempotencyKey
+						}
+						_, e := u.(ports.SignedOperationUnitOfWork).SignedOperations().Get(f.ctx, cmd.Scope.NamespaceID, f.cc.PrincipalID, loser)
+						if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+							t.Fatal("losing transaction retained a durable success response", e)
+						}
+					}
 				}
 			})
 		}

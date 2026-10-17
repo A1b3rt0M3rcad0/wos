@@ -27,7 +27,7 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 	if err := scope.Validate(); err != nil {
 		return ReadyWork{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadyWork{}, err
 	}

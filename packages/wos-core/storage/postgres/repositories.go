@@ -64,7 +64,7 @@ WHERE namespace_id = $1 AND id = $2 AND outcome_id = $3`,
 		value.ArchivedAt = &t
 	}
 
-	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "owner")
+	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow, value.Ref(), "owner")
 	if err != nil {
 		return domain.Outcome{}, err
 	}
@@ -124,7 +124,7 @@ INSERT INTO outcomes (
 		return err
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, outcome.Ref(), "owner", outcome.OwnerRefs, outcome.Criteria,
+		ctx, r.uow, outcome.Ref(), "owner", outcome.OwnerRefs, outcome.Criteria,
 		outcome.CurrentConclusion, outcome.ConclusionHistory, outcome.Version,
 		string(outcome.Lifecycle), outcome.UpdatedAt,
 	)
@@ -174,7 +174,7 @@ WHERE namespace_id = $10 AND id = $11 AND outcome_id = $12 AND version = $13`,
 		return err
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, outcome.Ref(), "owner", outcome.OwnerRefs, outcome.Criteria,
+		ctx, r.uow, outcome.Ref(), "owner", outcome.OwnerRefs, outcome.Criteria,
 		outcome.CurrentConclusion, outcome.ConclusionHistory, outcome.Version,
 		string(outcome.Lifecycle), outcome.UpdatedAt,
 	)
@@ -193,7 +193,7 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.Stri
 	if err != nil {
 		return domain.Objective{}, err
 	}
-	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "owner")
+	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow, value.Ref(), "owner")
 	if err != nil {
 		return domain.Objective{}, err
 	}
@@ -305,6 +305,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 			values[i].CurrentConclusion = state.current
 			values[i].ConclusionHistory = state.history
 		}
+		if err := r.uow.rememberOwnedState(values[i].Ref(), values[i].OwnerRefs, values[i].Criteria, values[i].CurrentConclusion, values[i].ConclusionHistory, values[i].Version, string(values[i].Lifecycle)); err != nil {
+			return nil, err
+		}
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective is invalid", err)
 		}
@@ -344,7 +347,7 @@ INSERT INTO objectives (
 		return mapSQLError("insert objective", err)
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, objective.Ref(), "owner", objective.OwnerRefs, objective.Criteria,
+		ctx, r.uow, objective.Ref(), "owner", objective.OwnerRefs, objective.Criteria,
 		objective.CurrentConclusion, objective.ConclusionHistory, objective.Version,
 		string(objective.Lifecycle), objective.UpdatedAt,
 	)
@@ -386,7 +389,7 @@ WHERE namespace_id = $9 AND outcome_id = $10 AND id = $11 AND version = $12`,
 		return err
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, objective.Ref(), "owner", objective.OwnerRefs, objective.Criteria,
+		ctx, r.uow, objective.Ref(), "owner", objective.OwnerRefs, objective.Criteria,
 		objective.CurrentConclusion, objective.ConclusionHistory, objective.Version,
 		string(objective.Lifecycle), objective.UpdatedAt,
 	)
@@ -406,7 +409,7 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.Stri
 	if err != nil {
 		return domain.WorkItem{}, err
 	}
-	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "assignee")
+	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow, value.Ref(), "assignee")
 	if err != nil {
 		return domain.WorkItem{}, err
 	}
@@ -583,6 +586,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 			values[i].CurrentConclusion = state.current
 			values[i].ConclusionHistory = state.history
 		}
+		if err := r.uow.rememberOwnedState(values[i].Ref(), values[i].AssigneeRefs, values[i].Criteria, values[i].CurrentConclusion, values[i].ConclusionHistory, values[i].Version, string(values[i].Lifecycle)); err != nil {
+			return nil, err
+		}
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
 		}
@@ -641,7 +647,7 @@ INSERT INTO work_items (
 		return mapSQLError("insert work item", err)
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
+		ctx, r.uow, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
 		item.CurrentConclusion, item.ConclusionHistory, item.Version,
 		string(item.Lifecycle), item.UpdatedAt,
 	)
@@ -702,13 +708,16 @@ WHERE namespace_id = $23 AND outcome_id = $24 AND id = $25 AND version = $26`,
 		return err
 	}
 	return syncOwnedState(
-		ctx, r.uow.tx, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
+		ctx, r.uow, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
 		item.CurrentConclusion, item.ConclusionHistory, item.Version,
 		string(item.Lifecycle), item.UpdatedAt,
 	)
 }
 
 func (s coordinationStore) LockOutcome(ctx context.Context, scope domain.Scope) (ports.OutcomeCoordination, error) {
+	if s.uow.readSnapshot {
+		return readOutcomeCoordination(ctx, s.uow, scope)
+	}
 	started := time.Now()
 	defer func() { s.uow.guardDuration += time.Since(started) }()
 	if err := s.uow.ensureOpen(); err != nil {

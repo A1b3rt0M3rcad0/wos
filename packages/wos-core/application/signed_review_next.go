@@ -60,7 +60,7 @@ func (s *Service) AcquireNextSignedReviewContract(ctx context.Context, cc d.Comm
 		if e != nil {
 			return result, 0, e
 		}
-		state, e := protocol.Lock(ctx, cmd.Scope.NamespaceID, true)
+		state, e := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(u, "signed"))
 		if e != nil {
 			return result, 0, e
 		}

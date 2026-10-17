@@ -10,37 +10,69 @@ import (
 type Permission string
 
 const (
-	PermissionWorkContractReturn  Permission = "work.contract.return"
-	PermissionWorkCompleteDirect  Permission = "work.contract.complete_direct"
-	PermissionWorkReviewAcquire   Permission = "work.review.acquire"
-	PermissionWorkReviewDecide    Permission = "work.review.decide"
-	PermissionSigningKeyEnroll    Permission = "identity.signing_key.enroll"
-	PermissionSigningKeyRotate    Permission = "identity.signing_key.rotate"
-	PermissionSigningKeyRevoke    Permission = "identity.signing_key.revoke"
-	PermissionWorkContractAcquire Permission = "work.contract.acquire"
-	PermissionWorkContractRevoke  Permission = "work.contract.revoke"
-	PermissionStateRead           Permission = "state:read"
-	PermissionOutcomeWrite        Permission = "outcome:write"
-	PermissionPlanningWrite       Permission = "planning:write"
-	PermissionWorkWrite           Permission = "work:write"
-	PermissionRecordsWrite        Permission = "records:write"
-	PermissionAssessmentWrite     Permission = "assessment:write"
-	PermissionConclusionWrite     Permission = "conclusion:write"
-	PermissionNamespaceAdmin      Permission = "namespace:admin"
-	PermissionIntegrationWrite    Permission = "integration:write"
-	PermissionActorDelegate       Permission = "actor:delegate"
-	PermissionWorkAdminCancel     Permission = "work:admin_cancel"
-	PermissionWorkAdminComplete   Permission = "work:admin_complete"
-	PermissionAssessmentWaive     Permission = "assessment:waive"
+	PermissionWorkContractReturn    Permission = "work.contract.return"
+	PermissionWorkCompleteDirect    Permission = "work.contract.complete_direct"
+	PermissionWorkReviewAcquire     Permission = "work.review.acquire"
+	PermissionWorkReviewDecide      Permission = "work.review.decide"
+	PermissionSigningKeyEnroll      Permission = "identity.signing_key.enroll"
+	PermissionSigningKeyRotate      Permission = "identity.signing_key.rotate"
+	PermissionSigningKeyRevoke      Permission = "identity.signing_key.revoke"
+	PermissionWorkContractAcquire   Permission = "work.contract.acquire"
+	PermissionWorkContractRevoke    Permission = "work.contract.revoke"
+	PermissionStateRead             Permission = "state:read"
+	PermissionOutcomeWrite          Permission = "outcome:write"
+	PermissionPlanningWrite         Permission = "planning:write"
+	PermissionWorkWrite             Permission = "work:write"
+	PermissionRecordsWrite          Permission = "records:write"
+	PermissionAssessmentWrite       Permission = "assessment:write"
+	PermissionConclusionWrite       Permission = "conclusion:write"
+	PermissionNamespaceAdmin        Permission = "namespace:admin"
+	PermissionInstallationProvision Permission = "installation:provision"
+	PermissionInstallationObserve   Permission = "installation:observe"
+	PermissionInstallationAdmin     Permission = "installation:admin"
+	PermissionIntegrationWrite      Permission = "integration:write"
+	PermissionActorDelegate         Permission = "actor:delegate"
+	PermissionWorkAdminCancel       Permission = "work:admin_cancel"
+	PermissionWorkAdminComplete     Permission = "work:admin_complete"
+	PermissionAssessmentWaive       Permission = "assessment:waive"
 )
 
 func (p Permission) Valid() bool {
+	if p.InstallationScoped() {
+		return true
+	}
 	switch p {
 	case PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive:
 		return true
 	default:
 		return false
 	}
+}
+
+// InstallationScoped identifies explicit operator capabilities. Namespace
+// administration alone never grants or delegates installation authority.
+func (p Permission) InstallationScoped() bool {
+	return p == PermissionInstallationProvision || p == PermissionInstallationObserve || p == PermissionInstallationAdmin
+}
+
+func HasInstallationPermissions(permissions []Permission) bool {
+	for _, p := range permissions {
+		if p.InstallationScoped() {
+			return true
+		}
+	}
+	return false
+}
+
+// NamespacePermissions copies only tenant-local capabilities.
+func NamespacePermissions(permissions []Permission) []Permission {
+	result := make([]Permission, 0, len(permissions))
+	for _, p := range permissions {
+		if !p.InstallationScoped() {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 type AuthorizationRequest struct {
@@ -95,5 +127,5 @@ type AccessSnapshotUnitOfWork interface {
 
 // AllPermissions returns a fresh, bounded list of supported grant values.
 func AllPermissions() []Permission {
-	return []Permission{PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive}
+	return []Permission{PermissionInstallationProvision, PermissionInstallationObserve, PermissionInstallationAdmin, PermissionWorkContractReturn, PermissionWorkCompleteDirect, PermissionWorkReviewAcquire, PermissionWorkReviewDecide, PermissionSigningKeyEnroll, PermissionSigningKeyRotate, PermissionSigningKeyRevoke, PermissionWorkContractAcquire, PermissionWorkContractRevoke, PermissionStateRead, PermissionOutcomeWrite, PermissionPlanningWrite, PermissionWorkWrite, PermissionRecordsWrite, PermissionAssessmentWrite, PermissionConclusionWrite, PermissionNamespaceAdmin, PermissionIntegrationWrite, PermissionActorDelegate, PermissionWorkAdminCancel, PermissionWorkAdminComplete, PermissionAssessmentWaive}
 }

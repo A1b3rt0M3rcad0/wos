@@ -89,7 +89,7 @@ func transactCommand[T any, C any](
 
 	protocol := domain.DefaultWorkProtocol(meta.NamespaceID)
 	if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, meta.Name == "SetNamespaceWorkProtocol" || signedCommand(meta.Name))
+		protocol, err = repo.WorkProtocol().Lock(ctx, meta.NamespaceID, exclusiveProtocolGuard(uow, meta.Name))
 		if err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
@@ -122,6 +122,11 @@ func transactCommand[T any, C any](
 		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey)
 		if accessError != nil {
 			return MutationResult[T]{Value: zero}, accessError
+		}
+	}
+	if signedCommand(meta.Name) {
+		if err := lockAcquisitionQuota(ctx, uow, signedIdentity, meta.Name); err != nil {
+			return MutationResult[T]{Value: zero}, err
 		}
 	}
 	if cutoverIntent {

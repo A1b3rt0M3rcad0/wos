@@ -254,12 +254,24 @@ func (r signedContractRepository) Acceptance(ctx context.Context, ns d.ID, princ
 	}
 	return f, err
 }
+
+// Counts includes Namespace totals for diagnostics. Acquisition uses CountQuota
+// to avoid scanning another Principal's authority when no Namespace limit applies.
 func (r signedContractRepository) Counts(ctx context.Context, ns d.ID, principal string, credential d.ID, now time.Time) (ports.SignedActiveCounts, error) {
+	return r.CountQuota(ctx, ns, principal, credential, now, true)
+}
+func (r signedContractRepository) CountQuota(ctx context.Context, ns d.ID, principal string, credential d.ID, now time.Time, includeNamespace bool) (ports.SignedActiveCounts, error) {
 	var c ports.SignedActiveCounts
-	err := r.u.tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(CASE WHEN holder_principal_id=$1 THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN credential_id=$2 THEN 1 ELSE 0 END),0),COUNT(*) FROM signed_work_contracts WHERE namespace_id=$3 AND status='active' AND expires_at>$4`, principal, credential.String(), ns.String(), encodeTime(now)).Scan(&c.PrincipalWork, &c.CredentialWork, &c.NamespaceWork)
+	err := r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=$1 AND holder_principal_id=$2 AND status='active' AND expires_at>$3), (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=$4 AND credential_id=$5 AND status='active' AND expires_at>$6)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalWork, &c.CredentialWork)
 	if err != nil {
-		return c, mapSQLError("count active signed authority", err)
+		return c, mapSQLError("count active signed work authority", err)
 	}
-	err = r.u.tx.QueryRowContext(ctx, `SELECT COALESCE(SUM(CASE WHEN holder_principal_id=$1 THEN 1 ELSE 0 END),0),COALESCE(SUM(CASE WHEN credential_id=$2 THEN 1 ELSE 0 END),0),COUNT(*) FROM work_review_contracts WHERE namespace_id=$3 AND status='active' AND expires_at>$4`, principal, credential.String(), ns.String(), encodeTime(now)).Scan(&c.PrincipalReview, &c.CredentialReview, &c.NamespaceReview)
-	return c, mapSQLError("count active signed authority", err)
+	err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=$1 AND holder_principal_id=$2 AND status='active' AND expires_at>$3), (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=$4 AND credential_id=$5 AND status='active' AND expires_at>$6)`, ns.String(), principal, encodeTime(now), ns.String(), credential.String(), encodeTime(now)).Scan(&c.PrincipalReview, &c.CredentialReview)
+	if err != nil {
+		return c, mapSQLError("count active signed review authority", err)
+	}
+	if includeNamespace {
+		err = r.u.tx.QueryRowContext(ctx, `SELECT (SELECT COUNT(*) FROM signed_work_contracts WHERE namespace_id=$1 AND status='active' AND expires_at>$2), (SELECT COUNT(*) FROM work_review_contracts WHERE namespace_id=$3 AND status='active' AND expires_at>$4)`, ns.String(), encodeTime(now), ns.String(), encodeTime(now)).Scan(&c.NamespaceWork, &c.NamespaceReview)
+	}
+	return c, mapSQLError("count active signed Namespace authority", err)
 }

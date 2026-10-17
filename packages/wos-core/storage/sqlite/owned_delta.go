@@ -1,0 +1,167 @@
+package sqlite
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"sort"
+
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+)
+
+// A snapshot belongs to one UnitOfWork only. Digests, rather than references to
+// caller-owned slices, keep immutable-history checks valid after in-place edits.
+// This avoids SQL proportional to unchanged history during ordinary writes; the
+// public full aggregate still carries and validates its complete history.
+type ownedStateSnapshot struct {
+	actors             []domain.ActorRef
+	items              map[domain.ID]domain.SuccessCriterion
+	definitions        map[string][32]byte
+	assessments        map[domain.ID][32]byte
+	currentAssessments map[domain.ID]domain.ID
+	conclusions        map[int][32]byte
+	currentConclusion  string
+}
+
+func ownedDigest(value any) ([32]byte, error) {
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return sha256.Sum256(raw), nil
+}
+
+func definitionKey(revision domain.CriterionDefinitionRevision) string {
+	return fmt.Sprintf("%s:%d", revision.CriterionID, revision.Revision)
+}
+
+func assessmentDigest(value domain.CriterionAssessment) ([32]byte, error) {
+	value.AssessedAt = decodeTime(encodeTime(value.AssessedAt))
+	value.EvidenceIDs = append([]domain.ID(nil), value.EvidenceIDs...)
+	sort.Slice(value.EvidenceIDs, func(i, j int) bool { return value.EvidenceIDs[i].String() < value.EvidenceIDs[j].String() })
+	return ownedDigest(value)
+}
+
+func conclusionDigest(value domain.Conclusion, owner domain.EntityRef, version domain.Version, lifecycle string, current bool) ([32]byte, error) {
+	value.ConcludedAt = decodeTime(encodeTime(value.ConcludedAt))
+	if current && value.OwnerVersion == nil && version != 0 {
+		value.OwnerVersion = &version
+		value.OwnerRef = &owner
+	}
+	if value.LifecycleResult == "" {
+		value.LifecycleResult = "historical"
+		if current && lifecycle != "" {
+			value.LifecycleResult = lifecycle
+		}
+	}
+	return ownedDigest(value)
+}
+
+func (u *unitOfWork) rememberOwnedState(owner domain.EntityRef, actors []domain.ActorRef, set domain.CriterionSet, current *domain.Conclusion, history []domain.Conclusion, version domain.Version, lifecycle string) error {
+	if u.readSnapshot {
+		return nil
+	}
+	s := ownedStateSnapshot{
+		actors:             append([]domain.ActorRef(nil), actors...),
+		items:              make(map[domain.ID]domain.SuccessCriterion, len(set.Items)),
+		definitions:        make(map[string][32]byte, len(set.DefinitionRevisions)),
+		assessments:        make(map[domain.ID][32]byte, len(set.Assessments)),
+		currentAssessments: make(map[domain.ID]domain.ID, len(set.CurrentAssessments)),
+		conclusions:        make(map[int][32]byte, len(history)+1),
+	}
+	for _, item := range set.Items {
+		s.items[item.ID] = item
+	}
+	for _, revision := range set.DefinitionRevisions {
+		digest, err := ownedDigest(revision)
+		if err != nil {
+			return err
+		}
+		s.definitions[definitionKey(revision)] = digest
+	}
+	for _, assessment := range set.Assessments {
+		digest, err := assessmentDigest(assessment)
+		if err != nil {
+			return err
+		}
+		s.assessments[assessment.ID] = digest
+	}
+	for criterionID, assessment := range set.CurrentAssessments {
+		s.currentAssessments[criterionID] = assessment.ID
+	}
+	for ordinal, conclusion := range history {
+		digest, err := conclusionDigest(conclusion, owner, version, lifecycle, false)
+		if err != nil {
+			return err
+		}
+		s.conclusions[ordinal] = digest
+	}
+	if current != nil {
+		digest, err := conclusionDigest(*current, owner, version, lifecycle, true)
+		if err != nil {
+			return err
+		}
+		s.conclusions[len(history)] = digest
+		s.currentConclusion, err = conclusionStorageID(owner, len(history), *current)
+		if err != nil {
+			return err
+		}
+	}
+	u.ownedStateMu.Lock()
+	if u.ownedState == nil {
+		u.ownedState = make(map[domain.EntityRef]ownedStateSnapshot)
+	}
+	u.ownedState[owner] = s
+	u.ownedStateMu.Unlock()
+	return nil
+}
+
+func unchangedDefinition(s ownedStateSnapshot, revision domain.CriterionDefinitionRevision) (bool, error) {
+	existing, ok := s.definitions[definitionKey(revision)]
+	if !ok {
+		return false, nil
+	}
+	digest, err := ownedDigest(revision)
+	if err != nil {
+		return false, err
+	}
+	if existing != digest {
+		return false, domain.NewError(domain.ErrorCodeCriterion, "criterion revision is immutable and differs from persisted definition")
+	}
+	return true, nil
+}
+func unchangedAssessment(s ownedStateSnapshot, assessment domain.CriterionAssessment) (bool, error) {
+	existing, ok := s.assessments[assessment.ID]
+	if !ok {
+		return false, nil
+	}
+	digest, err := assessmentDigest(assessment)
+	if err != nil {
+		return false, err
+	}
+	if existing != digest {
+		return false, domain.NewError(domain.ErrorCodeAssessment, "criterion assessment is immutable and differs from persisted history")
+	}
+	return true, nil
+}
+func unchangedConclusion(s ownedStateSnapshot, ordinal int, conclusion domain.Conclusion, owner domain.EntityRef, version domain.Version, lifecycle string, current bool) (bool, error) {
+	existing, ok := s.conclusions[ordinal]
+	if !ok {
+		return false, nil
+	}
+	digest, err := conclusionDigest(conclusion, owner, version, lifecycle, current)
+	if err != nil {
+		return false, err
+	}
+	if existing != digest {
+		return false, domain.NewError(domain.ErrorCodeInvalidArgument, "conclusion history is immutable and differs from persisted record")
+	}
+	return true, nil
+}
+
+func (u *unitOfWork) previousOwnedState(owner domain.EntityRef) (ownedStateSnapshot, bool) {
+	u.ownedStateMu.Lock()
+	defer u.ownedStateMu.Unlock()
+	s, exists := u.ownedState[owner]
+	return s, exists
+}

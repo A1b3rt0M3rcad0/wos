@@ -17,6 +17,10 @@ func (s *Service) authorizeScopedRead(ctx context.Context, scope d.Scope) error 
 	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead})
 }
 func (s *Service) authorizeScopedReadInUnitOfWork(ctx context.Context, u ports.UnitOfWork, scope d.Scope) error {
+	return s.authorizeReadPermissionInUnitOfWork(ctx, u, scope, ports.PermissionStateRead)
+}
+
+func (s *Service) authorizeReadPermissionInUnitOfWork(ctx context.Context, u ports.UnitOfWork, scope d.Scope, permission ports.Permission) error {
 	if !s.requireIdentity {
 		return nil
 	}
@@ -24,7 +28,7 @@ func (s *Service) authorizeScopedReadInUnitOfWork(ctx context.Context, u ports.U
 	if !ok || id.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeForbidden, "authenticated identity required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: ports.PermissionStateRead}
+	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: id.PrincipalID, Permission: permission}
 	if id.CredentialDigest != "" {
 		snapshot, ok := u.(ports.AccessSnapshotUnitOfWork)
 		if !ok {

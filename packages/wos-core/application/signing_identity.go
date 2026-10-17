@@ -412,7 +412,7 @@ func (s SecurityService) SigningOperation(ctx context.Context, key string) (Sign
 	if !ok {
 		return result, d.NewError(d.ErrorCodeInvalidConfig, "signing transaction unavailable")
 	}
-	uow, err := manager.Begin(ctx)
+	uow, err := beginManagerReadSnapshot(ctx, manager)
 	if err != nil {
 		return result, err
 	}
@@ -464,7 +464,7 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 	if !ok {
 		return result, d.NewError(d.ErrorCodeInvalidConfig, "transactional signing identity unavailable")
 	}
-	uow, err := manager.Begin(ctx)
+	uow, err := beginManagerReadSnapshot(ctx, manager)
 	if err != nil {
 		return result, err
 	}
@@ -486,7 +486,12 @@ func (s SecurityService) SigningIdentity(ctx context.Context, enrollmentID *d.ID
 			return result, err
 		}
 	}
-	namespaceVersion, err := repo.LockNamespace(ctx, id.NamespaceID)
+	var namespaceVersion d.Version
+	if reader, ok := repo.(ports.SigningNamespaceVersionReader); ok {
+		namespaceVersion, err = reader.NamespaceVersion(ctx, id.NamespaceID)
+	} else {
+		namespaceVersion, err = repo.LockNamespace(ctx, id.NamespaceID)
+	}
 	if err != nil {
 		return result, err
 	}

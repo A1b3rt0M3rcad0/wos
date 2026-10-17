@@ -103,7 +103,7 @@ func (s *Service) SearchOutcomes(ctx context.Context, ns domain.ID, f ports.Outc
 			return OutcomePage{}, err
 		}
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return OutcomePage{}, err
 	}
@@ -212,7 +212,7 @@ func (s *Service) GetTimeline(ctx context.Context, scope domain.Scope, q Timelin
 		f.AfterRevision = c.Revision
 		f.AfterIndex = c.Index
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return TimelinePage{}, err
 	}

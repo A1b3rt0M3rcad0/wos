@@ -30,7 +30,7 @@ func (s *Service) directContinuitySection(ctx context.Context, scope d.Scope, se
 			return zero, true, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: evaluation time")
 		}
 	}
-	u, e := s.tx.Begin(ctx)
+	u, e := s.beginReadSnapshot(ctx)
 	if e != nil {
 		return zero, true, e
 	}

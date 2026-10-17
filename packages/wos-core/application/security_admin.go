@@ -31,6 +31,11 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 	if err := s.Require(ctx, cmd.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
 		return empty, "", err
 	}
+	if cmd.Operation == "create_namespace" {
+		if err := s.RequireInstallation(ctx, ports.PermissionInstallationProvision); err != nil {
+			return empty, "", err
+		}
+	}
 	if err := domain.ValidateIdempotencyKey(key); err != nil {
 		return empty, "", err
 	}

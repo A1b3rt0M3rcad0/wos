@@ -64,6 +64,9 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 				if err == nil && !policy.Permits(string(r.Permission), r.OutcomeID) {
 					return domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts operation/scope")
 				}
+				if err == nil && r.Permission.InstallationScoped() && len(policy.AllowedOutcomeIDs) > 0 {
+					return domain.NewError(domain.ErrorCodeForbidden, "installation authority requires an unrestricted credential")
+				}
 				if err != nil {
 					code, _ := domain.ErrorCodeOf(err)
 					if code != domain.ErrorCodeNotFound {
@@ -155,6 +158,19 @@ func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission p
 	}
 	return s.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: id.PrincipalID, Permission: permission})
 }
+
+// RequireInstallation applies live credential, parent, policy and grant checks
+// to an explicitly delegated operator capability.
+func (s SecurityService) RequireInstallation(ctx context.Context, permission ports.Permission) error {
+	if !permission.InstallationScoped() {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "installation permission required")
+	}
+	id, ok := IdentityFromContext(ctx)
+	if !ok || id.CredentialDigest == "" {
+		return domain.NewError(domain.ErrorCodeForbidden, "authenticated operator credential required")
+	}
+	return s.Require(ctx, id.NamespaceID, permission)
+}
 func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.ID, principal string, actor domain.ActorRef, expires time.Time) (ports.Credential, string, error) {
 	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
 		return ports.Credential{}, "", err
@@ -173,6 +189,9 @@ func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.I
 	// An administrator can issue credentials only for a principal with a grant in its namespace.
 	if _, err := s.Store.GetGrant(ctx, namespace, principal); err != nil {
 		return ports.Credential{}, "", domain.NewError(domain.ErrorCodeForbidden, "target principal has no namespace grant")
+	}
+	if err := s.requireProtectedPrincipal(ctx, namespace, principal); err != nil {
+		return ports.Credential{}, "", err
 	}
 	id, err := s.IDs.NewID()
 	if err != nil {
@@ -201,11 +220,44 @@ func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGran
 			return domain.NewError(domain.ErrorCodeInvalidArgument, "unknown permission")
 		}
 	}
+	if ports.HasInstallationPermissions(grant.Permissions) {
+		if err := s.RequireInstallation(ctx, ports.PermissionInstallationAdmin); err != nil {
+			return err
+		}
+	}
+	if err := s.requireProtectedPrincipal(ctx, grant.NamespaceID, grant.PrincipalID); err != nil {
+		return err
+	}
 	return s.Store.PutGrant(ctx, grant)
+}
+
+func (s SecurityService) requireProtectedPrincipal(ctx context.Context, ns domain.ID, principal string) error {
+	grant, err := s.Store.GetGrant(ctx, ns, principal)
+	if err != nil {
+		if code, _ := domain.ErrorCodeOf(err); code == domain.ErrorCodeNotFound {
+			return nil
+		}
+		return err
+	}
+	if ports.HasInstallationPermissions(grant.Permissions) {
+		return s.RequireInstallation(ctx, ports.PermissionInstallationAdmin)
+	}
+	return nil
 }
 func (s SecurityService) RevokeCredential(ctx context.Context, namespace domain.ID, credential domain.ID) error {
 	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
 		return err
+	}
+	if reader, ok := s.Store.(ports.ScopedCredentialPrincipalReader); ok {
+		principal, err := reader.ScopedCredentialPrincipal(ctx, namespace, credential)
+		if err != nil {
+			return err
+		}
+		if err = s.requireProtectedPrincipal(ctx, namespace, principal); err != nil {
+			return err
+		}
+	} else if err := s.RequireInstallation(ctx, ports.PermissionInstallationAdmin); err != nil {
+		return domain.NewError(domain.ErrorCodeForbidden, "adapter cannot verify operator credential protection")
 	}
 	// Store validates the credential's principal belongs to this namespace in ScopedCredentialRevoker.
 	scoped, ok := s.Store.(interface {
@@ -257,7 +309,7 @@ func (s SecurityService) Bootstrap(ctx context.Context, namespace ports.Namespac
 	if err != nil {
 		return err
 	}
-	permissions := []ports.Permission{ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
+	permissions := []ports.Permission{ports.PermissionInstallationAdmin, ports.PermissionInstallationProvision, ports.PermissionInstallationObserve, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
 	atomic, ok := s.Store.(interface {
 		BootstrapSecurity(context.Context, ports.Namespace, ports.NamespaceGrant, ports.Credential) error
 	})

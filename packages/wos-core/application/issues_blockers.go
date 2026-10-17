@@ -274,7 +274,7 @@ func (s *Service) GetIssue(ctx context.Context, scope domain.Scope, id domain.ID
 		return ReadResult[domain.Issue]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Issue]{}, err
 	}
@@ -301,7 +301,7 @@ func (s *Service) ListIssues(ctx context.Context, scope domain.Scope) ([]domain.
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -328,7 +328,7 @@ func (s *Service) GetBlocker(ctx context.Context, scope domain.Scope, id domain.
 		return ReadResult[domain.Blocker]{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Blocker]{}, err
 	}
@@ -355,7 +355,7 @@ func (s *Service) ListBlockers(ctx context.Context, scope domain.Scope) ([]domai
 		return nil, 0, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -385,7 +385,7 @@ func (s *Service) GetBlockingState(ctx context.Context, ref domain.EntityRef) (B
 	if err := ref.Validate(); err != nil {
 		return BlockingState{}, 0, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return BlockingState{}, 0, err
 	}

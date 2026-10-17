@@ -27,7 +27,7 @@ func (s *Service) openContinuityFrame(ctx context.Context, scope d.Scope) (*cont
 	if e := s.authorizeScopedRead(ctx, scope); e != nil {
 		return nil, true, e
 	}
-	u, e := s.tx.Begin(ctx)
+	u, e := s.beginReadSnapshot(ctx)
 	if e != nil {
 		return nil, true, e
 	}

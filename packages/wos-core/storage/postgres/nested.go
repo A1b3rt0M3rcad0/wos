@@ -18,7 +18,7 @@ type criterionDefinition struct {
 
 func syncOwnedState(
 	ctx context.Context,
-	tx *sql.Tx,
+	u *unitOfWork,
 	owner domain.EntityRef,
 	actorRole string,
 	actors []domain.ActorRef,
@@ -29,24 +29,33 @@ func syncOwnedState(
 	lifecycleResult string,
 	changedAt time.Time,
 ) error {
-	if err := syncActorLinks(ctx, tx, owner, actorRole, actors); err != nil {
+	tx := u.tx
+	previous, exists := u.previousOwnedState(owner)
+	var baseline *ownedStateSnapshot
+	if exists {
+		baseline = &previous
+	}
+	if baseline == nil || !actorRefsEqualForStorage(previous.actors, actors) {
+		if err := syncActorLinks(ctx, tx, owner, actorRole, actors); err != nil {
+			return err
+		}
+	}
+	if err := syncCriteria(ctx, tx, owner, criteria, changedAt, baseline); err != nil {
 		return err
 	}
-	if err := syncCriteria(ctx, tx, owner, criteria, changedAt); err != nil {
+	if err := syncConclusions(ctx, tx, owner, current, history, ownerVersion, lifecycleResult, baseline); err != nil {
 		return err
 	}
-	if err := syncConclusions(ctx, tx, owner, current, history, ownerVersion, lifecycleResult); err != nil {
-		return err
-	}
-	return nil
+	return u.rememberOwnedState(owner, actors, criteria, current, history, ownerVersion, lifecycleResult)
 }
 
 func loadOwnedState(
 	ctx context.Context,
-	tx *sql.Tx,
+	u *unitOfWork,
 	owner domain.EntityRef,
 	actorRole string,
 ) ([]domain.ActorRef, domain.CriterionSet, *domain.Conclusion, []domain.Conclusion, error) {
+	tx := u.tx
 	actors, err := loadActorLinks(ctx, tx, owner, actorRole)
 	if err != nil {
 		return nil, domain.CriterionSet{}, nil, nil, err
@@ -57,6 +66,9 @@ func loadOwnedState(
 	}
 	current, history, err := loadConclusions(ctx, tx, owner)
 	if err != nil {
+		return nil, domain.CriterionSet{}, nil, nil, err
+	}
+	if err := u.rememberOwnedState(owner, actors, criteria, current, history, 0, ""); err != nil {
 		return nil, domain.CriterionSet{}, nil, nil, err
 	}
 	return actors, criteria, current, history, nil
@@ -154,11 +166,15 @@ func syncCriteria(
 	owner domain.EntityRef,
 	set domain.CriterionSet,
 	changedAt time.Time,
+	baseline *ownedStateSnapshot,
 ) error {
 	if err := set.ValidateForOwner(owner); err != nil {
 		return err
 	}
 	for _, criterion := range set.Items {
+		if baseline != nil && baseline.items[criterion.ID] == criterion {
+			continue
+		}
 		_, err := tx.ExecContext(ctx, `
 INSERT INTO success_criteria (
     id, namespace_id, outcome_id, owner_id, owner_kind,
@@ -180,16 +196,18 @@ ON CONFLICT(id) DO UPDATE SET
 			return mapSQLError("upsert success criterion", err)
 		}
 
-		if _, err := tx.ExecContext(ctx, `
-DELETE FROM criterion_current_assessments
-WHERE namespace_id = $1 AND outcome_id = $2 AND criterion_id = $3`,
-			owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String(),
-		); err != nil {
-			return mapSQLError("clear current criterion assessment", err)
-		}
 	}
 
 	for _, revision := range set.DefinitionRevisions {
+		if baseline != nil {
+			unchanged, err := unchangedDefinition(*baseline, revision)
+			if err != nil {
+				return err
+			}
+			if unchanged {
+				continue
+			}
+		}
 		definition, err := marshalJSON(criterionDefinition{
 			Title:       revision.Title,
 			Description: revision.Description,
@@ -220,6 +238,15 @@ INSERT INTO criterion_revisions (
 	}
 
 	for _, assessment := range set.Assessments {
+		if baseline != nil {
+			unchanged, err := unchangedAssessment(*baseline, assessment)
+			if err != nil {
+				return err
+			}
+			if unchanged {
+				continue
+			}
+		}
 		if err := ensurePrincipal(ctx, tx, assessment.PrincipalID); err != nil {
 			return err
 		}
@@ -274,11 +301,27 @@ INSERT INTO criterion_assessment_evidence (
 		}
 	}
 
-	for criterionID, assessment := range set.CurrentAssessments {
+	for _, criterion := range set.Items {
+		assessment, present := set.CurrentAssessments[criterion.ID]
+		previous, hadPrevious := domain.ID(""), false
+		if baseline != nil {
+			previous, hadPrevious = baseline.currentAssessments[criterion.ID]
+		}
+		if baseline != nil && present == hadPrevious && (!present || previous == assessment.ID) {
+			continue
+		}
+		if !present {
+			if _, err := tx.ExecContext(ctx, `DELETE FROM criterion_current_assessments WHERE namespace_id=$1 AND outcome_id=$2 AND criterion_id=$3`, owner.NamespaceID.String(), owner.OutcomeID.String(), criterion.ID.String()); err != nil {
+				return mapSQLError("clear current criterion assessment", err)
+			}
+			continue
+		}
+		criterionID := criterion.ID
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO criterion_current_assessments (
     namespace_id, outcome_id, criterion_id, assessment_id
-) VALUES ($1, $2, $3, $4)`,
+) VALUES ($1, $2, $3, $4)
+ON CONFLICT(namespace_id,outcome_id,criterion_id) DO UPDATE SET assessment_id=excluded.assessment_id`,
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
 			criterionID.String(),
@@ -559,15 +602,21 @@ ORDER BY a.assessed_at, a.id`,
 		return domain.CriterionSet{}, err
 	}
 	assessmentRows.Close()
-	// A SQL transaction has one connection. Drain and close the parent result
-	// before issuing child queries; pgx cannot interleave active row results.
-	for i := range set.Assessments {
-		assessment := &set.Assessments[i]
-		evidenceIDs, err := loadAssessmentEvidence(ctx, tx, owner.Scope, assessment.ID)
+	// Drain the parent result before querying its children. One scoped set query
+	// keeps the SQL count independent of the number of historical assessments.
+	evidenceByAssessment := make(map[domain.ID][]domain.ID)
+	if len(set.Assessments) > 0 {
+		evidenceByAssessment, err = loadOwnerAssessmentEvidence(ctx, tx, owner)
 		if err != nil {
 			return domain.CriterionSet{}, err
 		}
-		assessment.EvidenceIDs = evidenceIDs
+	}
+	for i := range set.Assessments {
+		assessment := &set.Assessments[i]
+		assessment.EvidenceIDs = evidenceByAssessment[assessment.ID]
+		if assessment.EvidenceIDs == nil {
+			assessment.EvidenceIDs = []domain.ID{}
+		}
 		if err := assessment.Validate(); err != nil {
 			return domain.CriterionSet{}, err
 		}
@@ -730,21 +779,28 @@ func syncConclusions(
 	history []domain.Conclusion,
 	ownerVersion domain.Version,
 	lifecycleResult string,
+	baseline *ownedStateSnapshot,
 ) error {
-	if _, err := tx.ExecContext(ctx, `
-DELETE FROM aggregate_current_conclusions
-WHERE namespace_id = $1 AND outcome_id = $2 AND owner_id = $3`,
-		owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(),
-	); err != nil {
-		return mapSQLError("clear current conclusion", err)
+	if current == nil && (baseline == nil || baseline.currentConclusion != "") {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM aggregate_current_conclusions WHERE namespace_id=$1 AND outcome_id=$2 AND owner_id=$3`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String()); err != nil {
+			return mapSQLError("clear current conclusion", err)
+		}
 	}
-
 	all := make([]domain.Conclusion, 0, len(history)+1)
 	all = append(all, history...)
 	if current != nil {
 		all = append(all, *current)
 	}
 	for ordinal, conclusion := range all {
+		if baseline != nil {
+			unchanged, err := unchangedConclusion(*baseline, ordinal, conclusion, owner, ownerVersion, lifecycleResult, current != nil && ordinal == len(history))
+			if err != nil {
+				return err
+			}
+			if unchanged {
+				continue
+			}
+		}
 		if err := conclusion.Validate(); err != nil {
 			return err
 		}
@@ -836,16 +892,14 @@ WHERE namespace_id = $2 AND outcome_id = $3 AND id = $4 AND public_id IS NULL`,
 		); err != nil {
 			return err
 		}
-		if current != nil && ordinal == len(history) {
-			if _, err := tx.ExecContext(ctx, `
-INSERT INTO aggregate_current_conclusions (
-    namespace_id, outcome_id, owner_id, conclusion_id
-) VALUES ($1, $2, $3, $4)`,
-				owner.NamespaceID.String(),
-				owner.OutcomeID.String(),
-				owner.ID.String(),
-				storageID,
-			); err != nil {
+	}
+	if current != nil {
+		storageID, err := conclusionStorageID(owner, len(history), *current)
+		if err != nil {
+			return err
+		}
+		if baseline == nil || baseline.currentConclusion != storageID {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO aggregate_current_conclusions (namespace_id,outcome_id,owner_id,conclusion_id) VALUES ($1,$2,$3,$4) ON CONFLICT(namespace_id,outcome_id,owner_id) DO UPDATE SET conclusion_id=excluded.conclusion_id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), storageID); err != nil {
 				return mapSQLError("set current conclusion", err)
 			}
 		}
@@ -976,13 +1030,19 @@ ORDER BY ordinal`,
 	if err := rows.Close(); err != nil {
 		return nil, nil, err
 	}
-	for _, record := range pending {
-		value := record.value
-		refs, err := loadConclusionAssessments(ctx, tx, owner.Scope, record.storageID)
+	refsByConclusion := make(map[string][]domain.CriterionAssessmentRef)
+	if len(pending) > 0 {
+		refsByConclusion, err = loadOwnerConclusionAssessments(ctx, tx, owner)
 		if err != nil {
 			return nil, nil, err
 		}
-		value.Assessments = refs
+	}
+	for _, record := range pending {
+		value := record.value
+		value.Assessments = refsByConclusion[record.storageID]
+		if value.Assessments == nil {
+			value.Assessments = []domain.CriterionAssessmentRef{}
+		}
 		if err := value.Validate(); err != nil {
 			return nil, nil, err
 		}
@@ -1124,4 +1184,56 @@ func idString(id *domain.ID) string {
 		return ""
 	}
 	return id.String()
+}
+
+// These set reads preserve the single-aggregate public history while avoiding
+// one child SELECT for every historical record.
+func loadOwnerAssessmentEvidence(ctx context.Context, tx *sql.Tx, owner domain.EntityRef) (map[domain.ID][]domain.ID, error) {
+	rows, err := tx.QueryContext(ctx, `SELECT e.assessment_id,e.evidence_id FROM criterion_assessment_evidence e JOIN criterion_assessments a ON a.namespace_id=e.namespace_id AND a.outcome_id=e.outcome_id AND a.id=e.assessment_id JOIN success_criteria c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.criterion_id WHERE c.namespace_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 AND c.owner_kind=$4 ORDER BY e.assessment_id,e.evidence_id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String())
+	if err != nil {
+		return nil, mapSQLError("load owner assessment evidence", err)
+	}
+	defer rows.Close()
+	result := make(map[domain.ID][]domain.ID)
+	for rows.Next() {
+		var assessmentRaw, evidenceRaw string
+		if err := rows.Scan(&assessmentRaw, &evidenceRaw); err != nil {
+			return nil, err
+		}
+		assessmentID, err := domain.ParseID(assessmentRaw)
+		if err != nil {
+			return nil, err
+		}
+		evidenceID, err := domain.ParseID(evidenceRaw)
+		if err != nil {
+			return nil, err
+		}
+		result[assessmentID] = append(result[assessmentID], evidenceID)
+	}
+	return result, rows.Err()
+}
+func loadOwnerConclusionAssessments(ctx context.Context, tx *sql.Tx, owner domain.EntityRef) (map[string][]domain.CriterionAssessmentRef, error) {
+	rows, err := tx.QueryContext(ctx, `SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN conclusions c ON c.namespace_id=ca.namespace_id AND c.outcome_id=ca.outcome_id AND c.id=ca.conclusion_id JOIN criterion_assessments a ON a.namespace_id=ca.namespace_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE c.namespace_id=$1 AND c.outcome_id=$2 AND c.owner_id=$3 ORDER BY ca.conclusion_id,a.criterion_id,a.id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String())
+	if err != nil {
+		return nil, mapSQLError("load owner conclusion assessments", err)
+	}
+	defer rows.Close()
+	result := make(map[string][]domain.CriterionAssessmentRef)
+	for rows.Next() {
+		var conclusionID, assessmentRaw, criterionRaw, resultRaw string
+		var revision int64
+		if err := rows.Scan(&conclusionID, &assessmentRaw, &criterionRaw, &revision, &resultRaw); err != nil {
+			return nil, err
+		}
+		assessmentID, err := domain.ParseID(assessmentRaw)
+		if err != nil {
+			return nil, err
+		}
+		criterionID, err := domain.ParseID(criterionRaw)
+		if err != nil {
+			return nil, err
+		}
+		result[conclusionID] = append(result[conclusionID], domain.CriterionAssessmentRef{AssessmentID: assessmentID, CriterionID: criterionID, CriterionRevision: domain.CriterionRevision(revision), Result: domain.AssessmentResult(resultRaw)})
+	}
+	return result, rows.Err()
 }

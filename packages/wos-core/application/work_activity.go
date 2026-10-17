@@ -293,7 +293,7 @@ func (s *Service) ListWorkActivity(ctx context.Context, scope d.Scope, filter po
 			return zero, d.NewError(d.ErrorCodeInvalidArgument, "invalid_cursor: activity chronology")
 		}
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return zero, err
 	}

@@ -99,7 +99,7 @@ func (s *Service) SearchReferences(ctx context.Context, scope domain.Scope, q Re
 			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor: reference key")
 		}
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return result, err
 	}

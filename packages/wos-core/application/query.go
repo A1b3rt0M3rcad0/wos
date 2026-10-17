@@ -54,7 +54,7 @@ func (s *Service) GetOutcome(ctx context.Context, scope domain.Scope) (ReadResul
 	if err := scope.Validate(); err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Outcome]{}, err
 	}
@@ -88,7 +88,7 @@ func (s *Service) GetObjective(ctx context.Context, scope domain.Scope, id domai
 	if err := id.Validate(); err != nil {
 		return ReadResult[domain.Objective]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Objective]{}, err
 	}
@@ -122,7 +122,7 @@ func (s *Service) GetWorkItem(ctx context.Context, scope domain.Scope, id domain
 	if err := id.Validate(); err != nil {
 		return ReadResult[domain.WorkItem]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.WorkItem]{}, err
 	}
@@ -160,7 +160,7 @@ func (s *Service) GetCriterionHistory(
 	if err := criterionID.Validate(); err != nil {
 		return ReadResult[CriterionValidationHistory]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[CriterionValidationHistory]{}, err
 	}
@@ -217,7 +217,7 @@ func (s *Service) ListConclusions(
 	if err := owner.Validate(); err != nil {
 		return ReadResult[ConclusionHistory]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[ConclusionHistory]{}, err
 	}
@@ -323,7 +323,7 @@ func (s *Service) GetRelation(ctx context.Context, scope domain.Scope, id domain
 	if err := id.Validate(); err != nil {
 		return ReadResult[domain.Relation]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[domain.Relation]{}, err
 	}
@@ -354,7 +354,7 @@ func (s *Service) ListRelations(ctx context.Context, scope domain.Scope) ([]doma
 	if err := scope.Validate(); err != nil {
 		return nil, 0, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -383,7 +383,7 @@ func (s *Service) GetOutcomeState(ctx context.Context, scope domain.Scope) (resu
 	if err := scope.Validate(); err != nil {
 		return OutcomeState{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return OutcomeState{}, err
 	}

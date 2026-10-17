@@ -27,7 +27,7 @@ func (s *Service) GetWorkItemOperationalState(
 		return WorkItemOperationalReadResult{}, err
 	}
 
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return WorkItemOperationalReadResult{}, err
 	}

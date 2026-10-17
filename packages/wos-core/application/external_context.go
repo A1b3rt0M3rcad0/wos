@@ -95,7 +95,7 @@ func (s *Service) ListExternalReferences(ctx context.Context, scope domain.Scope
 	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}

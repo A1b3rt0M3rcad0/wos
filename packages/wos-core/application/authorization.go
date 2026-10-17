@@ -50,7 +50,7 @@ func (s *Service) authorizeRead(ctx context.Context, namespace domain.ID) error 
 	if !s.requireIdentity {
 		return nil
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return err
 	}

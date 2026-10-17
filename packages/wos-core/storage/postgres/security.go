@@ -69,6 +69,12 @@ func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id domain.ID) er
 	}
 	return err
 }
+
+func (s *Store) ScopedCredentialPrincipal(ctx context.Context, ns, id domain.ID) (string, error) {
+	var principal string
+	err := s.db.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE namespace_id=$1 AND id=$2`, ns.String(), id.String()).Scan(&principal)
+	return principal, mapSQLError("read scoped credential principal", err)
+}
 func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {

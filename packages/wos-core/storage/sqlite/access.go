@@ -9,13 +9,16 @@ import (
 func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
 	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
 	var lifecycle string
-	if err := u.tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=?`, r.Authorization.NamespaceID.String()).Scan(&lifecycle); err != nil || lifecycle != "active" {
+	if err := u.tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=?`, r.Authorization.NamespaceID.String()).Scan(&lifecycle); err != nil {
+		return accessSnapshotReadError("read Namespace access barrier", err)
+	}
+	if lifecycle != "active" {
 		return denied
 	}
 	var raw string
 	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw)
 	if err != nil {
-		return denied
+		return accessSnapshotReadError("read Namespace permission", err)
 	}
 	var permissions []ports.Permission
 	if unmarshalJSON(raw, &permissions) != nil {
@@ -35,13 +38,19 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 	var revoked int
 	var expires int64
 	err = u.tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
+	if err != nil {
+		return accessSnapshotReadError("read credential access barrier", err)
+	}
 	var binding domain.ActorRef
-	if err != nil || principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
+	if principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
 		return denied
 	}
 	if parent != "" {
 		err = u.tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),revoked,expires_at FROM credentials WHERE digest=?`, parent).Scan(&principal, &ns, &actor, &parent, &revoked, &expires)
-		if err != nil || parent != "" || principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
+		if err != nil {
+			return accessSnapshotReadError("read parent credential access barrier", err)
+		}
+		if parent != "" || principal != r.Authorization.PrincipalID || ns != r.Authorization.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
 			return denied
 		}
 	}
@@ -49,15 +58,18 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 	signing := signingIdentityRepository{u}
 	credential, err := signing.CredentialByDigest(ctx, r.CredentialDigest)
 	if err != nil {
-		return denied
+		return accessSnapshotReadError("read signed credential access", err)
 	}
 	if credential.ParentDigest != "" {
 		credential, err = signing.CredentialByDigest(ctx, credential.ParentDigest)
 		if err != nil {
-			return denied
+			return accessSnapshotReadError("read signed parent credential access", err)
 		}
 	}
 	policy, err := signing.CredentialPolicy(ctx, credential.NamespaceID, credential.ID)
+	if err == nil && r.Authorization.Permission.InstallationScoped() && len(policy.AllowedOutcomeIDs) > 0 {
+		return denied
+	}
 	if err == nil && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
 		return denied
 	}
@@ -71,3 +83,16 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 }
 
 var _ ports.AccessSnapshotUnitOfWork = (*unitOfWork)(nil)
+
+// A failed SQL read grants no authority. Missing/inactive security state is a
+// denial; a transaction conflict must remain retryable as the same exact intent
+// instead of being disguised as a permanent credential revocation.
+func accessSnapshotReadError(operation string, err error) error {
+	if _, typed := domain.ErrorCodeOf(err); !typed {
+		err = mapSQLError(operation, err)
+	}
+	if code, _ := domain.ErrorCodeOf(err); code == domain.ErrorCodeNotFound {
+		return domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
+	}
+	return err
+}

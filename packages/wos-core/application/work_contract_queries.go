@@ -30,7 +30,7 @@ func (s *Service) GetWorkContract(ctx context.Context, scope d.Scope, id d.ID) (
 	if err := id.Validate(); err != nil {
 		return ReadResult[WorkContractView]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[WorkContractView]{}, err
 	}
@@ -120,7 +120,7 @@ func (s *Service) ListWorkContracts(ctx context.Context, scope d.Scope, f ports.
 	if err := scope.Validate(); err != nil {
 		return ReadResult[[]d.WorkContract]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[[]d.WorkContract]{}, err
 	}
@@ -205,7 +205,7 @@ func (s *Service) GetWorkSubmission(ctx context.Context, scope d.Scope, id d.ID)
 	if err := id.Validate(); err != nil {
 		return ReadResult[d.WorkSubmission]{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[d.WorkSubmission]{}, err
 	}
@@ -261,7 +261,7 @@ func (s *Service) ContractRecords(ctx context.Context, scope d.Scope, id d.ID, s
 			return ContractRecordPage{}, err
 		}
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ContractRecordPage{}, err
 	}
@@ -319,7 +319,7 @@ func (s *Service) GetCommandReceipt(ctx context.Context, ns, id d.ID) (d.StoredC
 	if err := id.Validate(); err != nil {
 		return d.StoredCommandResult{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return d.StoredCommandResult{}, err
 	}
@@ -365,7 +365,7 @@ func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID)
 	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return ReadResult[d.WorkCheckpoint]{}, err
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return ReadResult[d.WorkCheckpoint]{}, err
 	}

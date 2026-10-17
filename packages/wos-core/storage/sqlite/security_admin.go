@@ -10,6 +10,12 @@ import (
 
 func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminRequest) (ports.SecurityAdminResult, error) {
 	var result ports.SecurityAdminResult
+	if r.Command.Grant != nil && r.Command.Grant.NamespaceID != r.Command.NamespaceID {
+		return result, domain.NewError(domain.ErrorCodeForbidden, "grant namespace differs from administrative scope")
+	}
+	if r.Command.Operation == "issue_credential" && r.Command.Credential != nil && r.Command.Credential.NamespaceID != r.Command.NamespaceID {
+		return result, domain.NewError(domain.ErrorCodeForbidden, "credential namespace differs from administrative scope")
+	}
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return result, mapSQLError("begin security transaction", err)
@@ -35,23 +41,67 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if !admin {
 		return result, domain.NewError(domain.ErrorCodeForbidden, "namespace administration denied")
 	}
-	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "actor delegation denied")
-	}
-	if r.CredentialDigest != "" {
-		var principal, ns, actor, parent string
-		var expires int64
-		var revoked int
-		err = tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &expires, &revoked)
-		var binding domain.ActorRef
-		if err != nil || principal != r.PrincipalID || ns != r.Command.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
-			return result, domain.NewError(domain.ErrorCodeForbidden, "credential inactive")
+	if r.HostOperator {
+		if r.Command.Operation != "authorize_installation_operator" || r.CredentialDigest != "" || len(r.OperatorReason) < 8 || len(r.OperatorReason) > 1024 {
+			return result, domain.NewError(domain.ErrorCodeForbidden, "invalid host operator authorization")
 		}
-		if parent != "" {
-			var active int
-			err = tx.QueryRowContext(ctx, `SELECT count(*) FROM credentials WHERE digest=? AND principal_id=? AND namespace_id=? AND revoked=0 AND expires_at>? AND parent_digest IS NULL`, parent, principal, ns, encodeTime(r.Now)).Scan(&active)
-			if err != nil || active != 1 {
-				return result, domain.NewError(domain.ErrorCodeForbidden, "session parent inactive")
+	} else {
+		if r.Command.Operation == "authorize_installation_operator" {
+			return result, domain.NewError(domain.ErrorCodeForbidden, "offline operator authorization required")
+		}
+		access := &unitOfWork{tx: tx}
+		require := func(permission ports.Permission) error {
+			return access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, Permission: permission}, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Now: r.Now})
+		}
+		if err = require(ports.PermissionNamespaceAdmin); err != nil {
+			return result, err
+		}
+		if r.Command.Operation == "create_namespace" {
+			if err = require(ports.PermissionInstallationProvision); err != nil {
+				return result, err
+			}
+		}
+		// Protect operator identity as well as permission names: issuing a
+		// replacement credential must not become an indirect privilege grant.
+		targetPrincipal := ""
+		protected := false
+		if r.Command.Grant != nil {
+			targetPrincipal = r.Command.Grant.PrincipalID
+			protected = ports.HasInstallationPermissions(r.Command.Grant.Permissions)
+		}
+		if r.Command.Operation == "issue_credential" && r.Command.Credential != nil {
+			targetPrincipal = r.Command.Credential.PrincipalID
+		}
+		if r.Command.Operation == "revoke_credential" {
+			if err = tx.QueryRowContext(ctx, `SELECT principal_id FROM credentials WHERE namespace_id=? AND id=?`, r.Command.NamespaceID.String(), r.Command.CredentialID.String()).Scan(&targetPrincipal); err != nil {
+				return result, mapSQLError("read protected credential", err)
+			}
+		}
+		if targetPrincipal != "" {
+			var current string
+			err = tx.QueryRowContext(ctx, `SELECT permissions_json FROM namespace_grants WHERE namespace_id=? AND principal_id=?`, r.Command.NamespaceID.String(), targetPrincipal).Scan(&current)
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return result, err
+			}
+			if err == nil {
+				var targetPermissions []ports.Permission
+				if err = unmarshalJSON(current, &targetPermissions); err != nil {
+					return result, err
+				}
+				protected = protected || ports.HasInstallationPermissions(targetPermissions)
+			}
+		}
+		if protected {
+			if err = require(ports.PermissionInstallationAdmin); err != nil {
+				return result, err
+			}
+		}
+		if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor {
+			if !delegate {
+				return result, domain.NewError(domain.ErrorCodeForbidden, "actor delegation denied")
+			}
+			if err = require(ports.PermissionActorDelegate); err != nil {
+				return result, err
 			}
 		}
 	}
@@ -86,7 +136,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if err != nil {
 			return result, err
 		}
-		granted, err := marshalJSON(permissions)
+		granted, err := marshalJSON(ports.NamespacePermissions(permissions))
 		if err != nil {
 			return result, err
 		}
@@ -101,6 +151,28 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 		result.Credential = c
 		result.CreatedNamespace = n
+	case "authorize_installation_operator":
+		for _, p := range []ports.Permission{ports.PermissionInstallationAdmin, ports.PermissionInstallationProvision, ports.PermissionInstallationObserve} {
+			found := false
+			for _, current := range permissions {
+				found = found || current == p
+			}
+			if !found {
+				permissions = append(permissions, p)
+			}
+		}
+		granted, e := marshalJSON(permissions)
+		if e != nil {
+			return result, e
+		}
+		if _, err = tx.ExecContext(ctx, `UPDATE namespace_grants SET permissions_json=? WHERE namespace_id=? AND principal_id=?`, granted, r.Command.NamespaceID.String(), r.PrincipalID); err != nil {
+			return result, err
+		}
+		reason, e := marshalJSON(map[string]string{"principal_id": r.PrincipalID, "reason": r.OperatorReason})
+		if e != nil {
+			return result, e
+		}
+		target = string(reason)
 	case "set_grant":
 		g := r.Command.Grant
 		if g == nil {

@@ -10,10 +10,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	sqlite3 "github.com/ncruces/go-sqlite3"
 	_ "github.com/ncruces/go-sqlite3/driver"
 )
 
@@ -32,6 +34,7 @@ type Options struct {
 }
 
 type Store struct {
+	readDB               *sql.DB
 	db                   *sql.DB
 	path                 string
 	busyTimeout          time.Duration
@@ -119,6 +122,15 @@ func Open(path string, opts Options) (*Store, error) {
 			return nil, err
 		}
 	}
+	// A separate bounded pool lets WAL snapshots coexist with the single
+	// immediate writer. ReadOnly BeginTx uses deferred/query-only transactions.
+	store.readDB, err = sql.Open("sqlite3", dsn)
+	if err != nil {
+		_ = db.Close()
+		return nil, domain.WrapError(domain.ErrorCodeInvalidConfig, "open sqlite read pool", err)
+	}
+	store.readDB.SetMaxOpenConns(4)
+	store.readDB.SetMaxIdleConns(4)
 	return store, nil
 }
 
@@ -146,6 +158,9 @@ func (s *Store) Close() error {
 	if s == nil || s.db == nil {
 		return nil
 	}
+	if s.readDB != nil {
+		_ = s.readDB.Close()
+	}
 	return s.db.Close()
 }
 
@@ -157,14 +172,32 @@ func (s *Store) Path() string {
 }
 
 func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
+	return s.begin(ctx, false)
+}
+
+func (s *Store) BeginReadSnapshot(ctx context.Context) (ports.UnitOfWork, error) {
+	return s.begin(ctx, true)
+}
+
+func (s *Store) begin(ctx context.Context, readSnapshot bool) (ports.UnitOfWork, error) {
 	if s == nil || s.db == nil {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "sqlite store is not open")
 	}
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	pool := s.db
+	if readSnapshot {
+		pool = s.readDB
+	}
+	options := &sql.TxOptions{Isolation: sql.LevelSerializable}
+	if readSnapshot {
+		options.Isolation = sql.LevelDefault
+		options.ReadOnly = true
+	}
+	tx, err := pool.BeginTx(ctx, options)
 	if err != nil {
 		return nil, mapSQLError("begin sqlite transaction", err)
 	}
 	uow := &unitOfWork{
+		readSnapshot:         readSnapshot,
 		tx:                   tx,
 		ctx:                  ctx,
 		idempotencyRetention: s.idempotencyRetention,
@@ -188,6 +221,9 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type unitOfWork struct {
+	readSnapshot         bool
+	ownedStateMu         sync.Mutex
+	ownedState           map[domain.EntityRef]ownedStateSnapshot
 	guardDuration        time.Duration
 	tx                   *sql.Tx
 	ctx                  context.Context
@@ -230,6 +266,9 @@ func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }
 
 func (u *unitOfWork) Commit() error {
+	if u.readSnapshot {
+		return domain.NewError(domain.ErrorCodeInvalidTransition, "read snapshots must be rolled back, never committed")
+	}
 	if u.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
@@ -380,6 +419,9 @@ func mapSQLError(operation string, err error) error {
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.NewError(domain.ErrorCodeNotFound, operation)
+	}
+	if errors.Is(err, sqlite3.BUSY) || errors.Is(err, sqlite3.LOCKED) {
+		return domain.WrapError(domain.ErrorCodeTransactionConflict, "transaction conflict; reconcile and retry the same intent and idempotency key", err)
 	}
 	message := strings.ToLower(err.Error())
 	switch {

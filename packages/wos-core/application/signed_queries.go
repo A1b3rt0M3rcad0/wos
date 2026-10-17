@@ -118,7 +118,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	if err := s.authorizeScopedRead(ctx, q.Scope); err != nil {
 		return zero, err
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return zero, err
 	}

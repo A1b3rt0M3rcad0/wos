@@ -238,7 +238,7 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return WorkContext{}, err
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return WorkContext{}, err
 	}

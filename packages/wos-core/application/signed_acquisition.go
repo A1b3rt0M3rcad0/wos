@@ -68,10 +68,6 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	counts, err := repo.Counts(ctx, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now)
-	if err != nil {
-		return zero, 0, err
-	}
 	registry, err := signingRepository(uow)
 	if err != nil {
 		return zero, 0, err
@@ -79,6 +75,10 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
 	if e != nil {
 		return zero, 0, e
+	}
+	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveWorkContracts > 0)
+	if err != nil {
+		return zero, 0, err
 	}
 	if counts.PrincipalWork >= nsPolicy.PrincipalWorkLimit() {
 		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Principal execution quota reached")
@@ -223,7 +223,7 @@ func (s *Service) acquireSignedWork(ctx context.Context, uow ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	p, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, true)
+	p, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(uow, "signed"))
 	if err != nil {
 		return zero, 0, err
 	}

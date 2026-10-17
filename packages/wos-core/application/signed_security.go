@@ -27,7 +27,7 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 	if err != nil {
 		return identity, policy, err
 	}
-	p, err := protocol.Lock(ctx, scope.NamespaceID, true)
+	p, err := protocol.Lock(ctx, scope.NamespaceID, exclusiveProtocolGuard(uow, "signed"))
 	if err != nil {
 		return identity, policy, err
 	}
@@ -96,4 +96,17 @@ func (s *Service) signedAcceptanceFloor(ctx context.Context, uow ports.UnitOfWor
 		floor = d.StrongerAcceptance(floor, p.AcceptanceFloor)
 	}
 	return floor, nil
+}
+
+// Official adapters coordinate acquisition quotas separately. Third-party
+// adapters keep the legacy exclusive barrier until they implement that contract.
+func exclusiveProtocolGuard(u ports.UnitOfWork, command string) bool {
+	if command == "SetNamespaceWorkProtocol" {
+		return true
+	}
+	if command == "signed" || signedCommand(command) {
+		_, scoped := u.(ports.SignedQuotaUnitOfWork)
+		return !scoped
+	}
+	return false
 }

@@ -191,7 +191,7 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 		q.AfterCreated = last.CreatedAt
 		q.AfterPriority = ports.ContractPriorityRank(last.Priority)
 	}
-	uow, err := s.tx.Begin(ctx)
+	uow, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return AvailableWorkPage{}, err
 	}

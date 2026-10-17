@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -136,14 +137,29 @@ func (s *Store) Path() string {
 }
 
 func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
+	return s.begin(ctx, false)
+}
+
+func (s *Store) BeginReadSnapshot(ctx context.Context) (ports.UnitOfWork, error) {
+	return s.begin(ctx, true)
+}
+
+func (s *Store) begin(ctx context.Context, readSnapshot bool) (ports.UnitOfWork, error) {
 	if s == nil || s.db == nil {
 		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "postgres store is not open")
 	}
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	options := &sql.TxOptions{Isolation: sql.LevelSerializable}
+	if readSnapshot {
+		// Shared row security barriers require a read-write transaction; all
+		// domain access remains observational and Commit is prohibited.
+		options.Isolation = sql.LevelRepeatableRead
+	}
+	tx, err := s.db.BeginTx(ctx, options)
 	if err != nil {
 		return nil, mapSQLError("begin postgres transaction", err)
 	}
 	uow := &unitOfWork{
+		readSnapshot:         readSnapshot,
 		tx:                   tx,
 		ctx:                  ctx,
 		idempotencyRetention: s.idempotencyRetention,
@@ -167,6 +183,9 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type unitOfWork struct {
+	readSnapshot         bool
+	ownedStateMu         sync.Mutex
+	ownedState           map[domain.EntityRef]ownedStateSnapshot
 	guardDuration        time.Duration
 	tx                   *sql.Tx
 	ctx                  context.Context
@@ -209,6 +228,9 @@ func (u *unitOfWork) Events() ports.DomainEventLog          { return u.events }
 func (u *unitOfWork) Idempotency() ports.IdempotencyStore   { return u.idempotency }
 
 func (u *unitOfWork) Commit() error {
+	if u.readSnapshot {
+		return domain.NewError(domain.ErrorCodeInvalidTransition, "read snapshots must be rolled back, never committed")
+	}
 	if u.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}

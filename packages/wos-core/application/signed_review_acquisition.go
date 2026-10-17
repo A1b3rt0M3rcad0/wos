@@ -103,13 +103,13 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	counts, err := repo.Counts(ctx, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now)
-	if err != nil {
-		return zero, 0, err
-	}
 	nsPolicy, e := namespaceAcceptancePolicy(ctx, registry, cmd.Scope.NamespaceID)
 	if e != nil {
 		return zero, 0, e
+	}
+	counts, err := countAcquisitionQuota(ctx, repo, cmd.Scope.NamespaceID, identity.PrincipalID, identity.CredentialID, now, nsPolicy.MaxActiveReviewContracts > 0)
+	if err != nil {
+		return zero, 0, err
 	}
 	if counts.PrincipalReview >= nsPolicy.PrincipalReviewLimit() {
 		return zero, 0, d.NewError(d.ErrorCodePreconditionFailed, "Principal review quota reached")
@@ -166,7 +166,7 @@ func (s *Service) acquireSignedReview(ctx context.Context, u ports.UnitOfWork, c
 	if err != nil {
 		return zero, 0, err
 	}
-	state, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, true)
+	state, err := protocol.Lock(ctx, cmd.Scope.NamespaceID, exclusiveProtocolGuard(u, "signed"))
 	if err != nil {
 		return zero, 0, err
 	}

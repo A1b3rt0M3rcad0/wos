@@ -60,6 +60,17 @@ func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id d.ID) error {
 	}
 	return missingSigning()
 }
+
+func (s *Store) ScopedCredentialPrincipal(ctx context.Context, ns, id d.ID) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, c := range s.security.Credentials {
+		if c.ID == id && c.NamespaceID == ns {
+			return c.PrincipalID, ctx.Err()
+		}
+	}
+	return "", missingSigning()
+}
 func (s *Store) GetGrant(ctx context.Context, ns d.ID, principal string) (ports.NamespaceGrant, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -153,8 +164,10 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 		}
 		c = parent
 	}
-	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
-		return denied
+	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok {
+		if !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) || (r.Authorization.Permission.InstallationScoped() && len(policy.AllowedOutcomeIDs) > 0) {
+			return denied
+		}
 	}
 	return ctx.Err()
 }

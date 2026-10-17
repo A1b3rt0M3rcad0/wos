@@ -106,6 +106,11 @@ func (s *Store) InstallEndpoints(ctx context.Context, endpoints []ports.WebhookE
 			return domain.NewError(domain.ErrorCodeForbidden, "endpoint belongs to a different namespace")
 		}
 	}
+	for _, endpoint := range endpoints {
+		if _, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO delivery_namespace_schedule(namespace_id) VALUES(?)`, endpoint.NamespaceID.String()); err != nil {
+			return mapSQLError("configure delivery scheduling", err)
+		}
+	}
 	return mapSQLError("commit endpoints", tx.Commit())
 }
 
@@ -201,6 +206,13 @@ func (r deliveryRepository) Redeliver(ctx context.Context, scope domain.Scope, i
 	return nil
 }
 func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain.ID, ttl time.Duration) (*ports.Delivery, error) {
+	return s.ClaimDeliveryWithPolicy(ctx, now, leaseID, ttl, ports.DeliveryClaimPolicy{})
+}
+
+func (s *Store) ClaimDeliveryWithPolicy(ctx context.Context, now time.Time, leaseID domain.ID, ttl time.Duration, policy ports.DeliveryClaimPolicy) (*ports.Delivery, error) {
+	if err := policy.Validate(); err != nil {
+		return nil, err
+	}
 	if err := leaseID.Validate(); err != nil {
 		return nil, err
 	}
@@ -212,6 +224,12 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 		return nil, mapSQLError("begin delivery claim", err)
 	}
 	defer tx.Rollback()
+	if policy.DatabaseTime {
+		now, err = deliveryDatabaseTime(ctx, tx)
+		if err != nil {
+			return nil, err
+		}
+	}
 	// Lock one parent delivery before touching its attempts, matching ACK order.
 	// Queue-wide attempt recovery can block unrelated lanes and invert locks
 	// against ACKs. PostgreSQL adds SKIP LOCKED to this same bounded claim.
@@ -220,7 +238,7 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 		if recovered == 25 {
 			return nil, mapSQLError("commit delivery recovery", tx.Commit())
 		}
-		v, err = scanDelivery(tx.QueryRowContext(ctx, `SELECT `+deliveryColumns+` FROM integration_deliveries WHERE (status='pending' AND next_attempt<=?) OR (status='leased' AND lease_until<=?) ORDER BY next_attempt,id LIMIT 1`, encodeTime(now), encodeTime(now)))
+		v, err = selectFairDelivery(ctx, tx, now, policy)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, mapSQLError("commit delivery recovery", tx.Commit())
 		}
@@ -259,6 +277,10 @@ func (s *Store) ClaimDelivery(ctx context.Context, now time.Time, leaseID domain
 	return &v, nil
 }
 func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.Time, result string, success bool, next time.Time) error {
+	return s.finishDelivery(ctx, v, now, result, success, next, false, 0)
+}
+
+func (s *Store) finishDelivery(ctx context.Context, v ports.Delivery, now time.Time, result string, success bool, next time.Time, databaseTime bool, retryDelay time.Duration) error {
 	status := "pending"
 	if success {
 		status = "succeeded"
@@ -270,6 +292,16 @@ func (s *Store) FinishDelivery(ctx context.Context, v ports.Delivery, now time.T
 		return mapSQLError("finish delivery", err)
 	}
 	defer tx.Rollback()
+	if databaseTime {
+		if err = lockDeliveryForACK(ctx, tx, v.ID); err != nil {
+			return err
+		}
+		now, err = deliveryDatabaseTime(ctx, tx)
+		if err != nil {
+			return err
+		}
+		next = now.Add(retryDelay)
+	}
 	res, err := tx.ExecContext(ctx, `UPDATE integration_deliveries SET status=?,next_attempt=?,lease_id=NULL,lease_until=NULL,last_result=?,last_successful_at=CASE WHEN ?=1 THEN ? ELSE last_successful_at END WHERE id=? AND status='leased' AND lease_id=? AND fencing_token=? AND lease_until>?`, status, encodeTime(next), result, boolInt(success), encodeTime(now), v.ID, v.LeaseID.String(), v.FencingToken, encodeTime(now))
 	if err != nil {
 		return mapSQLError("acknowledge delivery", err)

@@ -165,7 +165,7 @@ func (s *Service) GetNamespaceWorkProtocol(ctx context.Context, ns domain.ID) (d
 	if err := s.authorizeNamespaceMetadataRead(ctx, ns); err != nil {
 		return domain.NamespaceWorkProtocol{}, err
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return domain.NamespaceWorkProtocol{}, err
 	}

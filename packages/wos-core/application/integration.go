@@ -191,7 +191,7 @@ func (s *Service) ListTriggers(ctx context.Context, scope domain.Scope) ([]domai
 	if err := s.authorizeScopedRead(ctx, scope); err != nil {
 		return nil, 0, err
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -237,11 +237,14 @@ func (s *Service) ListDeliveries(ctx context.Context, scope domain.Scope, limit 
 		}
 		after = c.Key
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return page, err
 	}
 	defer u.Rollback()
+	if err := s.authorizeReadPermissionInUnitOfWork(ctx, u, scope, ports.PermissionIntegrationWrite); err != nil {
+		return page, err
+	}
 	if err = lockExistingOutcome(ctx, u, scope); err != nil {
 		return page, err
 	}
@@ -278,7 +281,7 @@ func (s *Service) ListTriggerFirings(ctx context.Context, scope domain.Scope, li
 		}
 		after = c.Key
 	}
-	u, err := s.tx.Begin(ctx)
+	u, err := s.beginReadSnapshot(ctx)
 	if err != nil {
 		return page, err
 	}

@@ -1,0 +1,250 @@
+package sqlite
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+)
+
+func persistenceHistoryFixture(t *testing.T, count int) (*Store, d.Outcome) {
+	t.Helper()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "history.db"))
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	outcome, err := d.NewOutcome(testID("0199a999-0000-7000-8000-000000000001"), testID("0199a999-0000-7000-8000-000000000002"), "Current state with history", "", "preserve immutable proof", d.PriorityNormal, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion, err := d.NewSuccessCriterion(testID("0199a999-0000-7000-8000-000000000003"), outcome.Ref(), "Verified", "", true, d.VerificationModeAttestation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := outcome.AddCriterion(criterion, now); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < count; i++ {
+		assessment := d.CriterionAssessment{ID: testID(fmt.Sprintf("0199a999-0000-7000-8000-%012x", 100+i)), CriterionID: criterion.ID, CriterionRevision: criterion.Revision, Result: d.AssessmentResultMet, Rationale: fmt.Sprintf("Original assessment %d", i), PrincipalID: "reviewer", Actor: d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "reviewer"}, AssessedAt: now.Add(time.Duration(i) * time.Microsecond)}
+		if err := outcome.RecordCriterionAssessment(assessment, false, now.Add(time.Duration(i)*time.Microsecond)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	u, err := store.Begin(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer u.Rollback()
+	if err := u.Outcomes().Insert(context.Background(), outcome); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	return store, outcome
+}
+
+func TestPersistenceDeltasPreserveHistoryAndNewAssessment(t *testing.T) {
+	ctx := context.Background()
+	store, outcome := persistenceHistoryFixture(t, 256)
+	u, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before, err := json.Marshal(loaded.Criteria.Assessments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := loaded.Version
+	loaded.Title = "Changed current title"
+	loaded.Version++
+	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
+		t.Fatal(err)
+	}
+	// A second read/save within the same UOW must update its baseline as well.
+	loaded, err = u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected = loaded.Version
+	criterion := loaded.Criteria.Items[0]
+	if err := loaded.RecordCriterionAssessment(d.CriterionAssessment{ID: testID("0199a999-0000-7000-8000-000000009999"), CriterionID: criterion.ID, CriterionRevision: criterion.Revision, Result: d.AssessmentResultNotMet, Rationale: "New independent observation", PrincipalID: "reviewer", Actor: d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "reviewer"}, AssessedAt: time.Now().UTC()}, false, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	u, err = store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer u.Rollback()
+	got, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := json.Marshal(got.Criteria.Assessments[:256])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(before) != string(after) || len(got.Criteria.Assessments) != 257 || got.Title != "Changed current title" || got.Criteria.CurrentAssessments[criterion.ID].Result != d.AssessmentResultNotMet {
+		t.Fatal("delta save changed historical proof or lost current state")
+	}
+}
+
+func TestPersistenceDeltaRejectsAliasedHistoricalEdits(t *testing.T) {
+	for _, kind := range []string{"definition", "assessment"} {
+		t.Run(kind, func(t *testing.T) {
+			store, outcome := persistenceHistoryFixture(t, 8)
+			u, err := store.Begin(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer u.Rollback()
+			loaded, err := u.Outcomes().Get(context.Background(), outcome.NamespaceID, outcome.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected := loaded.Version
+			loaded.Version++
+			if kind == "assessment" {
+				loaded.Criteria.Assessments[0].Rationale = "Rewritten"
+			} else {
+				loaded.Criteria.DefinitionRevisions[0].Description = "Rewritten"
+				loaded.Criteria.Items[0].Description = "Rewritten"
+			}
+			if err := u.Outcomes().Save(context.Background(), loaded, expected); err == nil {
+				t.Fatal("in-place mutation bypassed immutable-history validation")
+			}
+		})
+	}
+}
+
+func TestBoundedCacheCleanupPreservesDurableSignedReplay(t *testing.T) {
+	f := newResolutionFixture(t, "sql")
+	store := f.store.(*Store)
+	ctx := context.Background()
+	original, err := f.service.ReturnSignedWork(f.ctx, f.cc, a.ReturnSignedWorkCommand{Envelope: f.envelope})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ns := f.request.NamespaceID
+	for i := 0; i < 9; i++ {
+		status := "completed"
+		expiry := time.Now().Add(-time.Hour)
+		if i == 7 {
+			expiry = time.Now().Add(time.Hour)
+		}
+		if i == 8 {
+			status = "processing"
+		}
+		_, err := store.db.ExecContext(ctx, `INSERT INTO idempotency_records(namespace_id,principal_id,command_name,idempotency_key,request_hash,status,command_id,outcome_revision,response_json,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ns, f.cc.PrincipalID, "cleanup_fixture", fmt.Sprintf("cleanup-fixture-%d", i), "fingerprint", status, f.cc.CommandID.String(), int64(1), `{}`, encodeTime(time.Now().Add(-2*time.Hour)), encodeTime(expiry))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := store.PruneExpiredIdempotency(ctx, 0); err == nil {
+		t.Fatal("unbounded cleanup accepted")
+	}
+	total := int64(0)
+	for i := 0; i < 4; i++ {
+		n, err := store.PruneExpiredIdempotency(ctx, 3)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n > 3 {
+			t.Fatalf("cleanup exceeded batch: %d", n)
+		}
+		total += n
+	}
+	if total != 7 {
+		t.Fatalf("pruned %d records, want 7", total)
+	}
+	var remaining int
+	if err := store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM idempotency_records WHERE command_name='cleanup_fixture'`).Scan(&remaining); err != nil {
+		t.Fatal(err)
+	}
+	if remaining != 2 {
+		t.Fatalf("live or pending cache entry removed: %d", remaining)
+	}
+	replay, err := f.service.ReturnSignedWork(f.ctx, f.cc, a.ReturnSignedWorkCommand{Envelope: f.envelope})
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, _ := json.Marshal(original.Value)
+	y, _ := json.Marshal(replay.Value)
+	if !replay.IdempotentReplay || string(x) != string(y) {
+		t.Fatal("cache cleanup changed durable exact-intent replay")
+	}
+}
+
+func TestPersistenceDeltaPreservesAndProtectsConclusionProof(t *testing.T) {
+	ctx := context.Background()
+	store, outcome := persistenceHistoryFixture(t, 8)
+	u, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer u.Rollback()
+	loaded, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := loaded.Version
+	if err := loaded.Activate(time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
+		t.Fatal(err)
+	}
+	expected = loaded.Version
+	if err := loaded.Achieve(d.Conclusion{ID: testID("0199a999-0000-7000-8000-000000008888"), PrincipalID: "reviewer", Actor: d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "reviewer"}, Reason: "Explicit acceptance", ConcludedAt: time.Now().UTC()}, time.Now().UTC()); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
+		t.Fatal(err)
+	}
+	if err := u.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	u, err = store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer u.Rollback()
+	loaded, err = u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proof, _ := json.Marshal(loaded.CurrentConclusion)
+	expected = loaded.Version
+	loaded.Version++
+	loaded.Title = "Current title after acceptance"
+	if err := u.Outcomes().Save(ctx, loaded, expected); err != nil {
+		t.Fatal(err)
+	}
+	readback, err := u.Outcomes().Get(ctx, outcome.NamespaceID, outcome.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted, _ := json.Marshal(readback.CurrentConclusion)
+	if string(proof) != string(persisted) {
+		t.Fatal("current update rewrote accepted conclusion proof")
+	}
+	expected = readback.Version
+	readback.Version++
+	readback.CurrentConclusion.Obligations.RequiredCriteria[0].CriterionRevision++
+	if err := u.Outcomes().Save(ctx, readback, expected); err == nil {
+		t.Fatal("aliased conclusion obligation rewrite accepted")
+	}
+}

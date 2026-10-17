@@ -54,8 +54,9 @@ func originalReturnBinding(env signing.Envelope) (b signing.RequestBinding, comm
 	return
 }
 
-// Called after signature verification, under the signed Namespace lock, before
-// any acceptance effect. Closed intentions survive cache expiry and restarts.
+// Called after signature verification, under the shared signed security barrier,
+// before any acceptance effect. Serializable isolation and Outcome coordination
+// keep acceptance exclusive with closure. Closed intentions survive cache expiry.
 func (s *Service) rejectClosedReturn(ctx context.Context, u ports.UnitOfWork, b signing.RequestBinding, command, kind string, digest string) error {
 	scope, _ := signedRequestScope(b)
 	if e := s.requireSignedAcceptedCredential(ctx, u, scope, kind, d.ID(b.ContractID)); e != nil {
@@ -296,6 +297,14 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		}
 		record := d.SignedReturnIntentResolution{Scope: cmd.Scope, PrincipalID: cc.PrincipalID, CredentialID: identity.CredentialID, OriginalCommandName: command, OriginalIdempotencyKey: b.IdempotencyKey, OriginalRequestID: d.ID(b.RequestID), OriginalRequestDigest: request.OriginalRequestDigest, OriginalEnvelopeDigest: request.OriginalEnvelopeDigest, ContractID: d.ID(b.ContractID), ResolutionRequestID: cc.CommandID, ResolutionIdempotencyKey: cc.IdempotencyKey, ResolutionDigest: signing.Digest(raw), IssuerKeyID: server.IssuerKeyID, Decision: payload.Decision, Reason: payload.Reason, OutcomeRevision: coord.Revision, Receipt: receipt, RecordedAt: now}
 		if e = resolutions.InsertTerminal(ctx, record); e != nil {
+			// A negative decision intentionally leaves the Outcome revision
+			// unchanged. A concurrent Serializable snapshot can therefore miss
+			// the winner after waiting for its Outcome row lock. The immutable
+			// original-intent uniqueness check remains authoritative: roll back
+			// this transaction and report the same conflict as a visible winner.
+			if code, _ := d.ErrorCodeOf(e); code == d.ErrorCodeAlreadyExists {
+				return zero, 0, d.NewError(d.ErrorCodeIdempotencyConflict, "another terminal resolution already exists")
+			}
 			return zero, 0, e
 		}
 		return SignedReturnResolutionResult{Decision: payload.Decision, ResolutionReceipt: &doc}, coord.Revision, nil
