@@ -2127,6 +2127,8 @@ function emptySection(title, command) {
   return box;
 }
 function sectionGuidance() {
+  if (state.area === "work" && state.section !== "work_items")
+    return copy.text.taskCompletionDoesNotCertifyTheOutcomeReviewRequirementsAndR37f94561;
   const keys = {
     work_items: "workspaceNoTasks",
     objectives: "workspaceNoObjectives",
