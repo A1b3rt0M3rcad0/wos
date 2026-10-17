@@ -78,6 +78,10 @@ export function interactionAudit(page) {
       seen.add(info.key);
       if (info.button && !(await control.isEnabled())) continue;
       await control.scrollIntoViewIfNeeded();
+      // A fixed header can cover a target that is geometrically in the viewport.
+      // Let the browser finish its hit-test scroll before measuring idle paint;
+      // the subsequent idle/hover/pressed rectangles remain strictly identical.
+      await control.hover();
       await page.mouse.move(0, 0);
       const idle = await appearance(control);
       expect(
