@@ -256,7 +256,13 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 			return result, d.NewError(d.ErrorCodeForbidden, "session cannot enroll signing identity")
 		}
 		policy, e := repo.CredentialPolicy(ctx, cmd.NamespaceID, credential.ID)
-		if e != nil || !policy.PermitsKey(keyID) {
+		if e != nil {
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+				return result, e
+			}
+			return result, d.NewError(d.ErrorCodeForbidden, "credential does not authorize prior key")
+		}
+		if !policy.PermitsKey(keyID) {
 			return result, d.NewError(d.ErrorCodeForbidden, "credential does not authorize prior key")
 		}
 		nonce := make([]byte, 32)
@@ -315,7 +321,13 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 			return result, d.NewError(d.ErrorCodeForbidden, "enrollment fingerprint differs")
 		}
 		policy, e := repo.CredentialPolicy(ctx, cmd.NamespaceID, credential.ID)
-		if e != nil || !policy.Permits(string(ports.PermissionSigningKeyEnroll), "") {
+		if e != nil {
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeNotFound {
+				return result, e
+			}
+			return result, d.NewError(d.ErrorCodeForbidden, "explicit enrollment credential policy required")
+		}
+		if !policy.Permits(string(ports.PermissionSigningKeyEnroll), "") {
 			return result, d.NewError(d.ErrorCodeForbidden, "explicit enrollment credential policy required")
 		}
 		registered := d.SigningKey{ID: enrollment.KeyID, NamespaceID: cmd.NamespaceID, PrincipalID: id.PrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(public), Fingerprint: fp, Status: "active", Version: 1, CreatedAt: now, UpdatedAt: now}

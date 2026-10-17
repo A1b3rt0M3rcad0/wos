@@ -16,7 +16,7 @@ func (r signedContractRepository) ExecutionParticipants(ctx context.Context, sco
  UNION ALL SELECT principal_id,'' FROM domain_events WHERE namespace_id=$7 AND outcome_id=$8 AND aggregate_id=$9 AND event_type IN ('work_item.claimed','work_item.reclaimed','work_item.admin_completed')
  ) participants ORDER BY principal_id,separation_group LIMIT $10`, scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), scope.NamespaceID.String(), scope.OutcomeID.String(), work.String(), limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("read execution participants", err)
 	}
 	defer rows.Close()
 	out := []d.ExecutionParticipant{}

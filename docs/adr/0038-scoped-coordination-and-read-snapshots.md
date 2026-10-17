@@ -37,6 +37,12 @@ Security read failures grant no authority. A missing or inactive credential or
 grant remains forbidden; a database serialization/deadlock conflict retains its
 transaction-conflict classification. Disguising that transient database failure
 as credential revocation would prevent exact-intent reconciliation and retries.
+This applies to transactional signed-policy reads during work, enrollment and
+rotation. Only an absent or disallowed policy is an authorization denial.
+SQL failures raised while scanning or iterating nested state, participants,
+candidate work or issuer history retain the same adapter error classification
+as failures raised when issuing the query; a deferred database error must not
+escape as an unclassified server error.
 
 Signing identity and signing-operation diagnostics use the same snapshot path.
 An optional Namespace-version reader obtains the diagnostic CAS marker under a
@@ -107,3 +113,7 @@ identity diagnostic must complete while an independent Principal/Outcome and
 the shared Namespace security barrier remain held. Existing signed quota,
 cutover, revocation, lease expiry,
 cursor/projection and exact-intent suites remain required regression gates.
+Fault tests exercise policy conflicts and a real PostgreSQL `40001` both at a
+Principal-group lookup and after a successful first nested-state row. These
+verify the transactional error code and retained cause independently of a lucky
+load-test schedule.

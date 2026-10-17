@@ -249,7 +249,7 @@ func (r workItemRepository) ContractCandidates(ctx context.Context, scope d.Scop
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `SELECT id,version,priority,created_at FROM work_items WHERE namespace_id=? AND outcome_id=? AND contracts_enabled=1 AND lifecycle IN ('todo','in_progress') AND (?='' OR (CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END)>? OR ((CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END)=? AND (created_at>? OR (created_at=? AND id>?)))) ORDER BY CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,created_at,id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), q.AfterID.String(), q.AfterPriority, q.AfterPriority, encodeTime(q.AfterCreated), encodeTime(q.AfterCreated), q.AfterID.String(), q.Limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("read work contract candidates", err)
 	}
 	defer rows.Close()
 	out := []ports.ContractCandidate{}
@@ -258,7 +258,7 @@ func (r workItemRepository) ContractCandidates(ctx context.Context, scope d.Scop
 		var v ports.ContractCandidate
 		var created int64
 		if err := rows.Scan(&raw, &v.Version, &v.Priority, &created); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan work contract candidate", err)
 		}
 		id, err := d.ParseID(raw)
 		if err != nil {
@@ -268,7 +268,7 @@ func (r workItemRepository) ContractCandidates(ctx context.Context, scope d.Scop
 		v.CreatedAt = decodeTime(created)
 		out = append(out, v)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate work contract candidates", rows.Err())
 }
 
 func (r idempotencyStore) LookupReceipt(ctx context.Context, ns d.ID, principal string, command d.ID) (d.StoredCommandResult, error) {

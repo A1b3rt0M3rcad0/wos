@@ -119,7 +119,7 @@ func (r serverIdentityRepository) IssuerHistory(ctx context.Context, after d.ID,
 	for rows.Next() {
 		var raw string
 		if e = rows.Scan(&raw); e != nil {
-			return nil, e
+			return nil, mapSQLError("scan public issuer history", e)
 		}
 		var identity d.ServerIdentity
 		if e = unmarshalJSON(raw, &identity); e != nil {
@@ -131,7 +131,7 @@ func (r serverIdentityRepository) IssuerHistory(ctx context.Context, after d.ID,
 		result = append(result, identity)
 	}
 	if e = rows.Err(); e != nil {
-		return nil, e
+		return nil, mapSQLError("iterate public issuer history", e)
 	}
 	rows.Close()
 	current, e := r.Server(ctx)

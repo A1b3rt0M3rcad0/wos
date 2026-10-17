@@ -618,7 +618,7 @@ func listDocumentaryIDs(ctx context.Context, uow *unitOfWork, table string, scop
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan documentary IDs", err)
 		}
 		id, err := domain.ParseID(raw)
 		if err != nil {
@@ -626,7 +626,7 @@ func listDocumentaryIDs(ctx context.Context, uow *unitOfWork, table string, scop
 		}
 		result = append(result, id)
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate documentary IDs", rows.Err())
 }
 
 func sameArtifactContent(a, b domain.Artifact) bool {

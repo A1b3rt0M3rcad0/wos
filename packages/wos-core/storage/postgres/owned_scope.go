@@ -37,12 +37,12 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 				return err
 			}
 		}
-		return rows.Err()
+		return mapSQLError("iterate aggregate owned collections", rows.Err())
 	}
 	if err := read(`SELECT l.entity_id,l.actor_json FROM entity_actor_links l JOIN entity_refs e ON e.namespace_id=l.namespace_id AND e.outcome_id=l.outcome_id AND e.id=l.entity_id WHERE l.namespace_id=$1 AND l.outcome_id=$2 AND ((e.kind='work_item' AND l.role='assignee') OR (e.kind IN ('outcome','objective') AND l.role='owner')) ORDER BY l.entity_id,l.actor_kind,l.actor_provider,l.actor_id`, func(rows *sql.Rows) error {
 		var id, encoded string
 		if err := rows.Scan(&id, &encoded); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		parsed, err := domain.ParseID(id)
 		if err != nil {
@@ -66,7 +66,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		var revision int64
 		var required int
 		if err := rows.Scan(&oid, &kind, &cid, &revision, &status, &encoded, &required, &mode); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		ownerID, err := domain.ParseID(oid)
 		if err != nil {
@@ -93,7 +93,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		var revision int64
 		var required int
 		if err := rows.Scan(&cid, &revision, &encoded, &required, &mode, &status); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		id, err := domain.ParseID(cid)
 		if err != nil {
@@ -121,7 +121,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	if err := read(`SELECT assessment_id,evidence_id FROM criterion_assessment_evidence WHERE namespace_id=$1 AND outcome_id=$2 ORDER BY assessment_id,evidence_id`, func(rows *sql.Rows) error {
 		var aid, eid string
 		if err := rows.Scan(&aid, &eid); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		a, err := domain.ParseID(aid)
 		if err != nil {
@@ -163,7 +163,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	if err := read(`SELECT criterion_id,assessment_id FROM criterion_current_assessments WHERE namespace_id=$1 AND outcome_id=$2 ORDER BY criterion_id`, func(rows *sql.Rows) error {
 		var cid, aid string
 		if err := rows.Scan(&cid, &aid); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		c, err := domain.ParseID(cid)
 		if err != nil {
@@ -188,7 +188,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		var conclusion, aid, cid, result string
 		var revision int64
 		if err := rows.Scan(&conclusion, &aid, &cid, &revision, &result); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		a, err := domain.ParseID(aid)
 		if err != nil {
@@ -207,7 +207,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 	if err := read(`SELECT owner_id,conclusion_id FROM aggregate_current_conclusions WHERE namespace_id=$1 AND outcome_id=$2`, func(rows *sql.Rows) error {
 		var oid, cid string
 		if err := rows.Scan(&oid, &cid); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		o, err := domain.ParseID(oid)
 		if err != nil {
@@ -227,7 +227,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		var version sql.NullInt64
 		var at int64
 		if err := rows.Scan(&oid, &kind, &sid, &publicID, &version, &lifecycle, &principal, &actor, &at, &rationale, &obligations, &submissionID, &submissionDigest); err != nil {
-			return err
+			return mapSQLError("scan aggregate owned collections", err)
 		}
 		o, err := domain.ParseID(oid)
 		if err != nil {

@@ -145,7 +145,7 @@ ORDER BY actor_kind, actor_provider, actor_id`,
 	for rows.Next() {
 		var encoded string
 		if err := rows.Scan(&encoded); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan actor link", err)
 		}
 		var actor domain.ActorRef
 		if err := unmarshalJSON(encoded, &actor); err != nil {
@@ -156,7 +156,7 @@ ORDER BY actor_kind, actor_provider, actor_id`,
 		}
 		result = append(result, actor)
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate actor links", rows.Err())
 }
 
 func syncCriteria(
@@ -488,7 +488,7 @@ ORDER BY c.created_at, c.id`,
 		)
 		if err := rows.Scan(&rawID, &revision, &status, &definition, &required, &mode); err != nil {
 			rows.Close()
-			return domain.CriterionSet{}, err
+			return domain.CriterionSet{}, mapSQLError("scan criterion", err)
 		}
 		id, err := domain.ParseID(rawID)
 		if err != nil {
@@ -513,7 +513,7 @@ ORDER BY c.created_at, c.id`,
 	}
 	if err := rows.Err(); err != nil {
 		rows.Close()
-		return domain.CriterionSet{}, err
+		return domain.CriterionSet{}, mapSQLError("iterate criteria", err)
 	}
 	rows.Close()
 
@@ -537,7 +537,7 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 		var required int
 		if err := revisionRows.Scan(&rawCriterionID, &revision, &definition, &required, &mode, &status); err != nil {
 			revisionRows.Close()
-			return domain.CriterionSet{}, err
+			return domain.CriterionSet{}, mapSQLError("scan criterion revision", err)
 		}
 		criterionID, err := domain.ParseID(rawCriterionID)
 		if err != nil {
@@ -567,7 +567,7 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 	}
 	if err := revisionRows.Err(); err != nil {
 		revisionRows.Close()
-		return domain.CriterionSet{}, err
+		return domain.CriterionSet{}, mapSQLError("iterate criterion revisions", err)
 	}
 	revisionRows.Close()
 
@@ -598,7 +598,7 @@ ORDER BY a.assessed_at, a.id`,
 	}
 	if err := assessmentRows.Err(); err != nil {
 		assessmentRows.Close()
-		return domain.CriterionSet{}, err
+		return domain.CriterionSet{}, mapSQLError("iterate criterion assessments", err)
 	}
 	assessmentRows.Close()
 	// Drain the parent result before querying its children. One scoped set query
@@ -641,7 +641,7 @@ ORDER BY criterion_id`,
 	for currentRows.Next() {
 		var criterionRaw, assessmentRaw string
 		if err := currentRows.Scan(&criterionRaw, &assessmentRaw); err != nil {
-			return domain.CriterionSet{}, err
+			return domain.CriterionSet{}, mapSQLError("scan current criterion assessment", err)
 		}
 		criterionID, err := domain.ParseID(criterionRaw)
 		if err != nil {
@@ -661,7 +661,7 @@ ORDER BY criterion_id`,
 		set.CurrentAssessments[criterionID] = assessment
 	}
 	if err := currentRows.Err(); err != nil {
-		return domain.CriterionSet{}, err
+		return domain.CriterionSet{}, mapSQLError("iterate current criterion assessments", err)
 	}
 	return set, nil
 }
@@ -681,7 +681,7 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		&rawID, &rawCriterion, &revision, &result, &rationale,
 		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes, &submissionID, &submissionDigest,
 	); err != nil {
-		return domain.CriterionAssessment{}, err
+		return domain.CriterionAssessment{}, mapSQLError("scan criterion assessment", err)
 	}
 	id, err := domain.ParseID(rawID)
 	if err != nil {
@@ -752,7 +752,7 @@ ORDER BY evidence_id`,
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan criterion assessment evidence", err)
 		}
 		id, err := domain.ParseID(raw)
 		if err != nil {
@@ -760,7 +760,7 @@ ORDER BY evidence_id`,
 		}
 		result = append(result, id)
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate criterion assessment evidence", rows.Err())
 }
 
 func nullableConclusionID(id domain.ID) any {
@@ -1024,10 +1024,10 @@ ORDER BY ordinal`,
 		pending = append(pending, pendingConclusion{storageID: storageID, value: value})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, nil, mapSQLError("iterate conclusions", err)
 	}
 	if err := rows.Close(); err != nil {
-		return nil, nil, err
+		return nil, nil, mapSQLError("close conclusions", err)
 	}
 	refsByConclusion := make(map[string][]domain.CriterionAssessmentRef)
 	if len(pending) > 0 {
@@ -1081,7 +1081,7 @@ ORDER BY a.criterion_id, a.id`,
 		var rawAssessment, rawCriterion, rawResult string
 		var revision int64
 		if err := rows.Scan(&rawAssessment, &rawCriterion, &revision, &rawResult); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan conclusion assessment", err)
 		}
 		assessmentID, err := domain.ParseID(rawAssessment)
 		if err != nil {
@@ -1098,7 +1098,7 @@ ORDER BY a.criterion_id, a.id`,
 			Result:            domain.AssessmentResult(rawResult),
 		})
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate conclusion assessments", rows.Err())
 }
 
 func actorRefsEqualForStorage(left, right []domain.ActorRef) bool {
@@ -1130,7 +1130,7 @@ func scanConclusion(scanner rowScanner, owner domain.EntityRef) (string, domain.
 		&storageID, &publicID, &ownerVersion, &lifecycleResult, &principal, &actorJSON,
 		&recordedAt, &rationale, &obligationsJSON, &submissionID, &submissionDigest,
 	); err != nil {
-		return "", domain.Conclusion{}, err
+		return "", domain.Conclusion{}, mapSQLError("scan conclusion", err)
 	}
 	var actor domain.ActorRef
 	if err := unmarshalJSON(actorJSON, &actor); err != nil {
@@ -1197,7 +1197,7 @@ func loadOwnerAssessmentEvidence(ctx context.Context, tx *sql.Tx, owner domain.E
 	for rows.Next() {
 		var assessmentRaw, evidenceRaw string
 		if err := rows.Scan(&assessmentRaw, &evidenceRaw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan owner assessment evidence", err)
 		}
 		assessmentID, err := domain.ParseID(assessmentRaw)
 		if err != nil {
@@ -1209,7 +1209,7 @@ func loadOwnerAssessmentEvidence(ctx context.Context, tx *sql.Tx, owner domain.E
 		}
 		result[assessmentID] = append(result[assessmentID], evidenceID)
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate owner assessment evidence", rows.Err())
 }
 func loadOwnerConclusionAssessments(ctx context.Context, tx *sql.Tx, owner domain.EntityRef) (map[string][]domain.CriterionAssessmentRef, error) {
 	rows, err := tx.QueryContext(ctx, `SELECT ca.conclusion_id,a.id,a.criterion_id,a.criterion_revision,a.result FROM conclusion_assessments ca JOIN conclusions c ON c.namespace_id=ca.namespace_id AND c.outcome_id=ca.outcome_id AND c.id=ca.conclusion_id JOIN criterion_assessments a ON a.namespace_id=ca.namespace_id AND a.outcome_id=ca.outcome_id AND a.id=ca.assessment_id WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? ORDER BY ca.conclusion_id,a.criterion_id,a.id`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String())
@@ -1222,7 +1222,7 @@ func loadOwnerConclusionAssessments(ctx context.Context, tx *sql.Tx, owner domai
 		var conclusionID, assessmentRaw, criterionRaw, resultRaw string
 		var revision int64
 		if err := rows.Scan(&conclusionID, &assessmentRaw, &criterionRaw, &revision, &resultRaw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan owner conclusion assessment", err)
 		}
 		assessmentID, err := domain.ParseID(assessmentRaw)
 		if err != nil {
@@ -1234,5 +1234,5 @@ func loadOwnerConclusionAssessments(ctx context.Context, tx *sql.Tx, owner domai
 		}
 		result[conclusionID] = append(result[conclusionID], domain.CriterionAssessmentRef{AssessmentID: assessmentID, CriterionID: criterionID, CriterionRevision: domain.CriterionRevision(revision), Result: domain.AssessmentResult(resultRaw)})
 	}
-	return result, rows.Err()
+	return result, mapSQLError("iterate owner conclusion assessments", rows.Err())
 }

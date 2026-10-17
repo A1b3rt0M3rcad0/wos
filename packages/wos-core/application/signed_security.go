@@ -57,7 +57,13 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "browser sessions cannot exercise signed authority")
 	}
 	policy, err = registry.CredentialPolicy(ctx, scope.NamespaceID, credential.ID)
-	if err != nil || policy.PrincipalID != identity.PrincipalID || !policy.Permits(string(permission), scope.OutcomeID) {
+	if err != nil {
+		if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
+			return identity, policy, err
+		}
+		return identity, policy, d.NewError(d.ErrorCodeForbidden, "explicit signed credential policy required")
+	}
+	if policy.PrincipalID != identity.PrincipalID || !policy.Permits(string(permission), scope.OutcomeID) {
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "explicit signed credential policy required")
 	}
 	identity.CredentialID = credential.ID

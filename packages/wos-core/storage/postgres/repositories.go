@@ -276,10 +276,10 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		values = append(values, value)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, mapSQLError("iterate objective aggregates", err)
 	}
 	if err := rows.Close(); err != nil {
-		return nil, err
+		return nil, mapSQLError("close objective aggregates", err)
 	}
 	if len(values) == 0 {
 		return values, nil
@@ -557,10 +557,10 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		values = append(values, value)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, mapSQLError("iterate work item aggregates", err)
 	}
 	if err := rows.Close(); err != nil {
-		return nil, err
+		return nil, mapSQLError("close work item aggregates", err)
 	}
 	if len(values) == 0 {
 		return values, nil
@@ -846,7 +846,7 @@ func requireVersionedUpdate(
 ) error {
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return mapSQLError("read versioned update result", err)
 	}
 	if affected == 1 {
 		return nil
@@ -927,7 +927,7 @@ func ownedAggregateIDs(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan aggregate owned state", err)
 		}
 		id, err := domain.ParseID(raw)
 		if err != nil {
@@ -935,7 +935,7 @@ func ownedAggregateIDs(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map
 		}
 		owners[id] = true
 	}
-	return owners, rows.Err()
+	return owners, mapSQLError("iterate aggregate owned state", rows.Err())
 }
 
 // Legacy signed column remains a compatibility hint; the exact decimal column is authoritative for new writers.

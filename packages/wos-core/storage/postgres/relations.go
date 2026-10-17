@@ -94,7 +94,7 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan relation IDs", err)
 		}
 		id, err := domain.ParseID(raw)
 		if err != nil {
@@ -103,7 +103,7 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		ids = append(ids, id)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, mapSQLError("iterate relation IDs", err)
 	}
 	result := make([]domain.Relation, 0, len(ids))
 	for _, id := range ids {

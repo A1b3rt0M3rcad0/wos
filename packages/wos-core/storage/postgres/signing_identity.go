@@ -74,14 +74,14 @@ func (r signingIdentityRepository) Keys(ctx context.Context, ns d.ID, principal 
 	}
 	rows, err := r.u.tx.QueryContext(ctx, `SELECT state_json FROM signing_keys WHERE namespace_id=$1 AND principal_id=$2 ORDER BY id LIMIT $3`, ns.String(), principal, limit)
 	if err != nil {
-		return nil, err
+		return nil, mapSQLError("read signing keys", err)
 	}
 	defer rows.Close()
 	out := []d.SigningKey{}
 	for rows.Next() {
 		var raw string
 		if err := rows.Scan(&raw); err != nil {
-			return nil, err
+			return nil, mapSQLError("scan signing key", err)
 		}
 		var k d.SigningKey
 		if err = json.Unmarshal([]byte(raw), &k); err != nil {
@@ -92,7 +92,7 @@ func (r signingIdentityRepository) Keys(ctx context.Context, ns d.ID, principal 
 		}
 		out = append(out, k)
 	}
-	return out, rows.Err()
+	return out, mapSQLError("iterate signing keys", rows.Err())
 }
 func (r signingIdentityRepository) SaveKey(ctx context.Context, k d.SigningKey, expected d.Version) error {
 	if err := k.Validate(); err != nil {
@@ -257,7 +257,7 @@ func (r signingIdentityRepository) PrincipalGroup(ctx context.Context, ns d.ID, 
 	if err == sql.ErrNoRows {
 		return "", nil
 	}
-	return group, err
+	return group, mapSQLError("read Principal review group", err)
 }
 func (r signingIdentityRepository) SetPrincipalGroup(ctx context.Context, ns d.ID, principal, group string) error {
 	if len(group) > 256 || strings.TrimSpace(principal) == "" {
