@@ -373,6 +373,10 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
   const board = page.locator('#view-tabs button[data-view="board"]');
   await board.hover();
   await capture(page, "23-view-switch-hover");
+  await desktop.selectionTransition("#view-tabs button", () => board.click());
+  await desktop.selectionTransition("#view-tabs button", () =>
+    page.locator('#view-tabs button[data-view="list"]').click(),
+  );
   await board.click();
   await desktop.audit();
   const card = page.locator(".board .item").first();

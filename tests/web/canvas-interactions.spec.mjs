@@ -255,6 +255,10 @@ test("native canvas controls preserve selection, keyboard focus and explicit com
   const edge = page.locator('[data-edge-key="graph:relation:dep"]');
   await edge.press("Enter");
   await expect(edge).toBeFocused();
+  // A coherent model refresh rebuilds the SVG ancestor. Preserve the exact
+  // focused relationship before detaching it, not only in renderEdges().
+  await page.evaluate(() => canvasHandle.update({ ...canvasModel }));
+  await expect(edge).toBeFocused();
   expect(
     await page.evaluate(() => canvasEvents.edge.map((entry) => entry.ref)),
   ).toEqual([{ kind: "relation", id: "dep" }]);

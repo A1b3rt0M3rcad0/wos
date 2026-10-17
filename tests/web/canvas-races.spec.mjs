@@ -1,4 +1,4 @@
-import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, pick } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
 
 const canvas = (page) => page.locator("#operational-canvas");
@@ -46,6 +46,53 @@ async function settle(page, held) {
   await held.done;
   await page.waitForLoadState("networkidle");
 }
+
+test("a late form restoration preserves edge keyboard focus and exact authorized removal", async ({ page, wos }) => {
+  const data = await seedCanvas(wos);
+  const relation = await wos.command("add_dependency", {
+    scope: data.scope, source_ref: data.ref("work_item", data.tasks.unscoped),
+    target_ref: data.ref("work_item", data.tasks.ready), strength: "advisory",
+    reason: "A real advisory relationship for keyboard selection",
+  });
+  await openCanvas(page, wos, data);
+  await select(page, data.tasks.ready);
+  await panel(page).getByRole("button", { name: "Add dependency", exact: true }).click();
+  await pick(page, "Depends on", data.tasks.unscoped.title);
+  await page.getByLabel("Why is this prerequisite required?", { exact: true }).fill("The server must still reject the reverse cycle");
+  await panel(page).locator("#submit-command").click();
+  await expect(panel(page).locator("#command-error")).toContainText(/cycl/i);
+  await expect(panel(page).locator("#submit-command")).toBeEnabled();
+  const held = await holdOnce(page, `**/work-items/${data.tasks.ready.id}/context`);
+  try {
+    await page.keyboard.press("Escape");
+    expect(await held.arrived).toBe(200);
+    await canvas(page).getByLabel("Connections", { exact: true }).selectOption("all");
+    const edge = canvas(page).locator(`[data-edge-key="graph:relation:${relation.id}"]`);
+    await edge.focus();
+    await expect(edge).toBeFocused();
+    const camera = await canvas(page).locator(".canvas-world").evaluate((element) => element.style.transform);
+    await settle(page, held);
+    await expect(edge).toBeFocused();
+    expect(await canvas(page).locator(".canvas-world").evaluate((element) => element.style.transform)).toBe(camera);
+    await edge.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`item=relation(?:%2F|/)${relation.id}`));
+    await expect(panel(page).locator("#detail-kind")).toContainText(/relation/i);
+    await expect(panel(page)).toContainText(/advisory/i);
+    await panel(page).getByRole("button", { name: "Remove dependency", exact: true }).click();
+    await page.getByLabel("Reason", { exact: true }).fill("The selected advisory context is no longer required");
+    await panel(page).locator("#submit-command").click();
+    await expect(panel(page).locator("#command-form")).toBeHidden();
+    await expect(edge).toHaveCount(0);
+    const persisted = (await wos.api(`${base(data.scope)}/relations`)).items.find((item) => item.id === relation.id);
+    expect(persisted.lifecycle).toBe("removed");
+    expect(persisted.version).toBe(relation.version + 1);
+    for (const task of [data.tasks.ready, data.tasks.unscoped])
+      expect((await wos.api(`${base(data.scope)}/work-items/${task.id}`)).value.lifecycle).toBe("todo");
+  } finally {
+    held.release();
+    if (held.started) await held.done;
+  }
+});
 
 test("a late Task focal read cannot reopen a closed inspector or report an obsolete revision error", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
