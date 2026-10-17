@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"net"
 	"net/url"
@@ -192,6 +193,11 @@ func (cfg Config) Validate() error {
 	}
 	if cfg.Integration.ParseError {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid integration JSON configuration")
+	}
+	if cfg.RunsDeliveryWorker() {
+		if err := integration.ValidateWorkerPolicy(cfg.Integration.Secrets, ports.DeliveryClaimPolicy{MaxInflightPerNamespace: cfg.Integration.MaxInflightPerNamespace, MaxInflightPerEndpoint: cfg.Integration.MaxInflightPerEndpoint}); err != nil {
+			return err
+		}
 	}
 	seen := map[domain.ID]bool{}
 	for _, endpoint := range cfg.Integration.Endpoints {

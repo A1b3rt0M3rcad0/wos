@@ -46,6 +46,9 @@ func New(store ports.DeliveryStore, clock ports.Clock, ids ports.IDGenerator, se
 	if store == nil || clock == nil || ids == nil {
 		return nil, fmt.Errorf("delivery worker dependencies required")
 	}
+	if err := ValidateWorkerPolicy(secrets, ports.DeliveryClaimPolicy{}); err != nil {
+		return nil, err
+	}
 	allowed := map[string]bool{}
 	for _, host := range policy.AllowedHosts {
 		allowed[strings.ToLower(host)] = true
@@ -72,6 +75,29 @@ func New(store ports.DeliveryStore, clock ports.Clock, ids ports.IDGenerator, se
 	}}
 	client := &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 	return &Worker{Store: store, Clock: clock, IDs: ids, Secrets: secrets, Client: client, allowLoopback: policy.AllowLoopback}, nil
+}
+
+// ValidateWorkerPolicy checks the actual eligible signing references before a
+// worker starts. References are opaque storage identifiers, without a new byte
+// length restriction; the 256-reference bound limits each queue query's SQL
+// parameters. A worker never silently truncates its configured eligibility.
+func ValidateWorkerPolicy(secrets map[string]string, policy ports.DeliveryClaimPolicy) error {
+	_, err := workerClaimPolicy(secrets, policy)
+	return err
+}
+
+func workerClaimPolicy(secrets map[string]string, policy ports.DeliveryClaimPolicy) (ports.DeliveryClaimPolicy, error) {
+	policy.SecretRefs = make([]string, 0, min(len(secrets), 256))
+	for ref, secret := range secrets {
+		if len(secret) >= 32 {
+			policy.SecretRefs = append(policy.SecretRefs, ref)
+			if len(policy.SecretRefs) > 256 {
+				return policy, domain.NewError(domain.ErrorCodeInvalidConfig, "delivery worker supports at most 256 eligible signing secret references")
+			}
+		}
+	}
+	sort.Strings(policy.SecretRefs)
+	return policy, policy.Validate()
 }
 func permittedIP(ip net.IP, loopback bool) bool {
 	if ip.IsLoopback() {
@@ -112,15 +138,12 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	var delivery *ports.Delivery
 	_, databaseTime := w.Store.(ports.DurableDeliveryStore)
 	if fair, ok := w.Store.(ports.FairDeliveryStore); ok {
-		policy := w.ClaimPolicy
-		policy.DatabaseTime = databaseTime
-		policy.SecretRefs = make([]string, 0, len(w.Secrets))
-		for ref, secret := range w.Secrets {
-			if len(secret) >= 32 {
-				policy.SecretRefs = append(policy.SecretRefs, ref)
-			}
+		policy, policyErr := workerClaimPolicy(w.Secrets, w.ClaimPolicy)
+		if policyErr != nil {
+			claimCancel()
+			return false, policyErr
 		}
-		sort.Strings(policy.SecretRefs)
+		policy.DatabaseTime = databaseTime
 		delivery, err = fair.ClaimDeliveryWithPolicy(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second, policy)
 	} else if w.ClaimPolicy.MaxInflightPerNamespace != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0 {
 		err = domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store does not support shared capacity limits")
@@ -194,6 +217,12 @@ func (w *Worker) Run(ctx context.Context) (runErr error) {
 	}
 	if concurrency < 1 || concurrency > 64 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery worker concurrency must be 1..64")
+	}
+	if err := ValidateWorkerPolicy(w.Secrets, w.ClaimPolicy); err != nil {
+		return err
+	}
+	if _, ok := w.Store.(ports.FairDeliveryStore); !ok && (w.ClaimPolicy.MaxInflightPerNamespace != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0) {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store does not support shared capacity limits")
 	}
 	if w.Diagnostics != nil {
 		w.Diagnostics.started(w.Clock.Now(), concurrency)

@@ -25,7 +25,7 @@ func (p DeliveryClaimPolicy) Validate() error {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery limits must be 0..4096 and secret references at most 256")
 	}
 	for _, ref := range p.SecretRefs {
-		if ref == "" || len(ref) > 256 {
+		if ref == "" {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid delivery secret reference")
 		}
 	}

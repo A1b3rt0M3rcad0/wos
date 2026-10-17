@@ -89,6 +89,14 @@ traffic; full snapshots and exports retain their documented cost.
 All workers must use matching shared limits. Lowering a limit leaves existing
 leases intact and stops new claims until capacity is available. Worker secret
 eligibility prevents consuming retries for a secret unavailable in that worker.
+Each delivery worker supports at most 256 eligible signing secret references
+(secrets containing at least 32 bytes). This bounds SQL query parameters.
+Configuration validation and direct worker construction/pool startup reject a
+larger eligible set before claiming any delivery; references are never silently
+truncated. Reference identifiers retain their existing opaque-string contract.
+Configure additional workers with explicit disjoint secret-reference subsets
+and the corresponding endpoint allowlists when the installation needs more
+references; keep shared capacity limits equal.
 Namespace turns and endpoint caps protect other eligible work from a busy tenant
 or slow destination. The per-Namespace API setting is local, so its aggregate
 capacity grows with API replicas. These are resource controls, not commercial
