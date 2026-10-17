@@ -11,6 +11,20 @@ import (
 
 func ConfigFromEnv() Config {
 	cfg := DefaultConfig()
+	if role, ok := os.LookupEnv("WOS_PROCESS_ROLE"); ok {
+		cfg.Server.Role = role
+		if role == "" {
+			cfg.HTTP.ParseError = true
+		}
+	}
+	if raw, ok := os.LookupEnv("WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE"); ok {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			cfg.HTTP.ParseError = true
+		} else {
+			cfg.HTTP.MaxInflightPerNamespace = parsed
+		}
+	}
 	for name, target := range map[string]*time.Duration{"WOS_HTTP_READ_HEADER_TIMEOUT": &cfg.HTTP.ReadHeaderTimeout, "WOS_HTTP_READ_TIMEOUT": &cfg.HTTP.ReadTimeout, "WOS_HTTP_WRITE_TIMEOUT": &cfg.HTTP.WriteTimeout, "WOS_HTTP_IDLE_TIMEOUT": &cfg.HTTP.IdleTimeout, "WOS_HTTP_REQUEST_TIMEOUT": &cfg.HTTP.RequestTimeout, "WOS_SHUTDOWN_TIMEOUT": &cfg.Server.ShutdownTimeout} {
 		if value, ok := os.LookupEnv(name); ok {
 			parsed, e := time.ParseDuration(value)
@@ -53,6 +67,16 @@ func ConfigFromEnv() Config {
 			cfg.Integration.ParseError = true
 		} else {
 			cfg.Integration.WorkerConcurrency = n
+		}
+	}
+	for name, target := range map[string]*int{"WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE": &cfg.Integration.MaxInflightPerNamespace, "WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT": &cfg.Integration.MaxInflightPerEndpoint} {
+		if raw, ok := os.LookupEnv(name); ok {
+			parsed, err := strconv.Atoi(raw)
+			if err != nil {
+				cfg.Integration.ParseError = true
+			} else {
+				*target = parsed
+			}
 		}
 	}
 	cfg.Integration.WorkerEnabled = strings.EqualFold(os.Getenv("WOS_DELIVERY_WORKER_ENABLED"), "true")

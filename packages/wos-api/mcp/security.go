@@ -45,7 +45,7 @@ func registerSecurity(server *mcp.Server, options Options) {
 		Key     string                           `json:"idempotency_key"`
 		Command application.AdministrativeIntent `json:"command"`
 	}
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_administer_namespace", Description: "Create namespace, set_grant, issue_credential or revoke_credential. Namespace CAS and idempotency required. Issued secret appears once; replay returns receipt with token_omitted. Namespace creation grants only the creator's current permissions."}, func(ctx context.Context, req *mcp.CallToolRequest, in input) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_administer_namespace", Description: "Set grants, issue/revoke credentials or create a Namespace. namespace:admin, Namespace CAS and idempotency required. Creation additionally requires installation:provision and copies only Namespace permissions. Delegating installation permissions or managing operator credentials requires installation:admin. Issued secret appears once; replay returns receipt with token_omitted."}, func(ctx context.Context, req *mcp.CallToolRequest, in input) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {

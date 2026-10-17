@@ -4205,6 +4205,13 @@ function buildAdmin() {
   adminPending = null;
   $("retry-admin").hidden = true;
   $("submit-admin").disabled = false;
+  const provisionOption = $("admin-operation").querySelector(
+    'option[value="create_namespace"]',
+  );
+  provisionOption.hidden = provisionOption.disabled =
+    !state.permissions.includes("installation:provision");
+  if (provisionOption.disabled && $("admin-operation").value === "create_namespace")
+    $("admin-operation").value = "set_grant";
   const op = $("admin-operation").value;
   const props = {};
   if (op === "create_namespace") props.namespace_name = { type: "string" };

@@ -55,6 +55,9 @@ func configureSignedRuntime(ctx context.Context, config Config, store runtimeSto
 		}
 		return nil, nil
 	}
+	if config.ProcessRole() == ProcessRoleWorker && readErr != nil {
+		return nil, d.NewError(d.ErrorCodeInvalidConfig, "worker cannot initialize signed issuer identity; initialize the installation through an API process")
+	}
 	if security == nil || config.Auth.Mode != AuthModeAPIToken {
 		return nil, d.NewError(d.ErrorCodeInvalidConfig, "signed runtime requires scoped API credentials")
 	}

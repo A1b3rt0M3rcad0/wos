@@ -1,13 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
+	wossqlite "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 )
 
 func captureCommand(t *testing.T, args ...string) (int, []byte) {
@@ -34,6 +38,73 @@ func captureCommand(t *testing.T, args ...string) (int, []byte) {
 		t.Fatal(value.err)
 	}
 	return code, value.data
+}
+
+func TestNativeStorageCommandsDoNotBootstrapServerOrClientConfiguration(t *testing.T) {
+	root := t.TempDir()
+	absent := filepath.Join(root, "unused-server", "wos.db")
+	t.Setenv("WOS_SQLITE_PATH", absent)
+	t.Setenv("WOS_AUTH_MODE", "invalid-unused-configuration")
+	for _, args := range [][]string{{"storage", "--help"}, {"storage", "migrate-sqlite", "--help"}, {"help", "storage"}} {
+		code, output := captureCommand(t, args...)
+		if code != 0 || !strings.Contains(string(output), "migrate-sqlite") {
+			t.Fatal("storage discovery failed", args, code, string(output))
+		}
+	}
+	if runtime.GOOS != "linux" {
+		for _, args := range [][]string{{"storage", "migrate-sqlite", "--backup", "absent"}, {"storage", "namespace-preflight", "--sqlite", "absent", "--namespace", "0199a221-0000-7000-8000-000000000001"}} {
+			code, output := captureCommand(t, args...)
+			if code == 0 || !strings.Contains(string(output), "supported only on Linux") {
+				t.Fatal("unsupported host was not refused before storage access", args, code, string(output))
+			}
+		}
+		if _, err := os.Stat(absent); !os.IsNotExist(err) {
+			t.Fatal("unsupported host initialized server storage", err)
+		}
+		return
+	}
+	source := filepath.Join(root, "source.db")
+	store, err := wossqlite.Open(source, wossqlite.Options{MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	db, err := sql.Open("sqlite3", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	namespace := "0199a221-0000-7000-8000-000000000001"
+	_, err = db.Exec("INSERT INTO namespaces(id,name,lifecycle,version,created_at,updated_at) VALUES(?,'native-preflight','active',1,1,1)", namespace)
+	if err != nil {
+		db.Close()
+		t.Fatal(err)
+	}
+	if err = db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	code, output := captureCommand(t, "storage", "namespace-preflight", "--sqlite", source, "--namespace", namespace)
+	if code != 0 {
+		t.Fatal(code, string(output))
+	}
+	var inspection struct {
+		Operation string `json:"operation"`
+		Ready     bool   `json:"ready_for_transfer"`
+		ReadOnly  bool   `json:"read_only"`
+		Namespace string `json:"namespace_id"`
+	}
+	if err = json.Unmarshal(output, &inspection); err != nil || inspection.Operation != "namespace_transfer_preflight" || inspection.Ready || !inspection.ReadOnly || inspection.Namespace != namespace {
+		t.Fatal("native dispatch changed preflight semantics", string(output), err)
+	}
+	t.Setenv("WOS_MOBILITY_POSTGRES_DSN", "postgres://private-user:private-password@unused.invalid/unused")
+	code, output = captureCommand(t, "storage", "migrate-sqlite", "--backup", "unused")
+	if code == 0 || !strings.Contains(string(output), "writers-stopped") || strings.Contains(string(output), "private-password") {
+		t.Fatal("native migration did not preserve protocol refusal/redaction", code, string(output))
+	}
+	if _, err = os.Stat(absent); !os.IsNotExist(err) {
+		t.Fatal("offline storage operations initialized unrelated server storage", err)
+	}
 }
 
 func TestUnifiedWOSClientUsesServiceReleaseIdentity(t *testing.T) {
@@ -112,5 +183,18 @@ func TestUnifiedSharedConfigValidationDoesNotInitializeStorage(t *testing.T) {
 	}
 	if code, _ = captureCommand(t, "config", "validate", "--deployment=unknown"); code == 0 {
 		t.Fatal("unknown deployment accepted")
+	}
+}
+
+func TestServerRoleFlagRejectsInvalidOrUnsafeRoleBeforeOpeningStorage(t *testing.T) {
+	t.Setenv("WOS_SQLITE_PATH", t.TempDir()+"/absent/wos.db")
+	t.Setenv("WOS_PROCESS_ROLE", "complete")
+	for _, args := range [][]string{{"server", "--role=unknown"}, {"server", "--role="}, {"server", "--role=worker"}, {"server", "extra"}, {"server", "--unexpected"}} {
+		if code, output := captureCommand(t, args...); code == 0 || len(output) == 0 {
+			t.Fatal("invalid server role arguments accepted", args, code, string(output))
+		}
+	}
+	if _, err := os.Stat(os.Getenv("WOS_SQLITE_PATH")); !os.IsNotExist(err) {
+		t.Fatal("invalid role opened storage", err)
 	}
 }

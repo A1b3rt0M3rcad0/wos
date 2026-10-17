@@ -69,3 +69,40 @@ func TestDeploymentPoolEnvironmentAndDeclarationsAreValidated(t *testing.T) {
 		t.Fatal("invalid declaration ignored")
 	}
 }
+
+func TestDeclaredAggregateConnectionBudget(t *testing.T) {
+	cfg := workerTestConfig(DefaultConfig())
+	cfg.Storage.PostgresMaxOpenConnections = 8
+	decl := DeploymentDeclarations{ExpectedProcesses: 4, DatabaseConnectionBudget: 50, ReservedConnections: 20}
+	report, err := cfg.DeploymentDiagnostics("shared", decl)
+	if err != nil || report.ExpectedConnectionDemand != 52 || report.ProcessRole != ProcessRoleWorker || !report.WorkerEnabled {
+		t.Fatal("lost aggregate worker pool budget", report, err)
+	}
+	found := false
+	for _, advisory := range report.Advisories {
+		if advisory.Code == "database_connection_budget" && advisory.Severity == "warning" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("oversubscribed database pools not reported")
+	}
+	decl.DatabaseConnectionBudget = 80
+	report, err = cfg.DeploymentDiagnostics("shared", decl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, advisory := range report.Advisories {
+		if advisory.Code == "database_connection_budget" {
+			t.Fatal("valid declared budget rejected")
+		}
+	}
+	decl.ExpectedProcesses = 0
+	if _, err = cfg.DeploymentDiagnostics("shared", decl); err == nil {
+		t.Fatal("incomplete budget declarations accepted")
+	}
+	t.Setenv("WOS_DEPLOYMENT_EXPECTED_PROCESSES", "not-a-count")
+	if _, err = DeploymentDeclarationsFromEnv(); err == nil {
+		t.Fatal("invalid process count ignored")
+	}
+}

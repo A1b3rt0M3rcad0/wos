@@ -20,6 +20,7 @@ type Observer struct {
 	connectionTimeouts  atomic.Uint64
 	Logger              *slog.Logger
 	DeliveryDiagnostics ports.DeliveryDiagnostics
+	Storage             ports.StoragePoolObserver
 	mu                  sync.Mutex
 	commands            map[string]uint64
 	commandTiming       map[string]timing
@@ -127,27 +128,42 @@ func (o *Observer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		status := o.DeliveryDiagnostics.DeliveryWorkerStatus()
 		worker = &status
 	}
+	var pool *ports.StoragePoolStats
+	if o.Storage != nil {
+		stats := o.Storage.ConnectionStats()
+		pool = &stats
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "delivery_worker": worker, "http_inflight": o.httpInflight.Load(), "http_admission_rejected": o.httpRejected.Load(), "http_timeouts": o.httpTimeouts.Load(), "http_canceled": o.httpCanceled.Load(), "connections_inflight": o.connectionsInflight.Load(), "connections_rejected": o.connectionsRejected.Load(), "connection_timeouts": o.connectionTimeouts.Load(), "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
+	json.NewEncoder(w).Encode(map[string]any{"schema_version": 1, "storage_pool": pool, "duration_bucket_bounds_ns": durationBounds, "delivery_worker": worker, "http_inflight": o.httpInflight.Load(), "http_admission_rejected": o.httpRejected.Load(), "http_timeouts": o.httpTimeouts.Load(), "http_canceled": o.httpCanceled.Load(), "connections_inflight": o.connectionsInflight.Load(), "connections_rejected": o.connectionsRejected.Load(), "connection_timeouts": o.connectionTimeouts.Load(), "commands": commands, "command_timing": commandTiming, "query_timing": queryTiming, "delivery_timing": deliveryTiming, "http_timing": httpTiming, "idempotency_replays": o.replays.Load(), "conflicts": o.conflicts.Load(), "http_requests": o.requests.Load(), "http_get_requests": o.queries.Load(), "http_errors": o.errors.Load()})
 }
 
 // Cumulative nanoseconds/counts allow rates and mean latency to be computed
 // without storing identifiers or high-cardinality documentary data as labels.
 type timing struct {
-	Count         uint64 `json:"count"`
-	Errors        uint64 `json:"errors"`
-	DurationNS    uint64 `json:"duration_ns"`
-	MaxNS         uint64 `json:"max_ns"`
-	WaitNS        uint64 `json:"transaction_wait_ns,omitempty"`
-	GuardNS       uint64 `json:"guard_ns,omitempty"`
-	CommitNS      uint64 `json:"commit_ns,omitempty"`
-	ReturnedItems uint64 `json:"returned_items,omitempty"`
-	EmptyPages    uint64 `json:"empty_pages,omitempty"`
-	Bytes         uint64 `json:"response_bytes,omitempty"`
+	// Counts per bucket (not cumulative); bounds are exported once per response.
+	Buckets       [15]uint64 `json:"duration_buckets"`
+	Count         uint64     `json:"count"`
+	Errors        uint64     `json:"errors"`
+	DurationNS    uint64     `json:"duration_ns"`
+	MaxNS         uint64     `json:"max_ns"`
+	WaitNS        uint64     `json:"transaction_wait_ns,omitempty"`
+	GuardNS       uint64     `json:"guard_ns,omitempty"`
+	CommitNS      uint64     `json:"commit_ns,omitempty"`
+	ReturnedItems uint64     `json:"returned_items,omitempty"`
+	EmptyPages    uint64     `json:"empty_pages,omitempty"`
+	Bytes         uint64     `json:"response_bytes,omitempty"`
 }
 
 func (t *timing) add(d time.Duration, failed bool) {
+	index := len(durationBounds)
+	for i, bound := range durationBounds {
+		if d <= bound {
+			index = i
+			break
+		}
+	}
+	t.Buckets[index]++
 	t.Count++
 	if failed {
 		t.Errors++
@@ -157,6 +173,9 @@ func (t *timing) add(d time.Duration, failed bool) {
 		t.MaxNS = uint64(d)
 	}
 }
+
+var durationBounds = [...]time.Duration{time.Millisecond, 5 * time.Millisecond, 10 * time.Millisecond, 25 * time.Millisecond, 50 * time.Millisecond, 100 * time.Millisecond, 250 * time.Millisecond, 500 * time.Millisecond, time.Second, 2500 * time.Millisecond, 5 * time.Second, 10 * time.Second, 30 * time.Second, 60 * time.Second}
+
 func (o *Observer) ObserveQuery(q ports.QueryObservation) {
 	o.mu.Lock()
 	t := o.queryTiming[q.Name]

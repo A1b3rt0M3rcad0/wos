@@ -9,10 +9,13 @@ import (
 // Declarations describe the operator's external controls. They are not a probe
 // or certification of ingress, secret storage, backup schedules or replicas.
 type DeploymentDeclarations struct {
-	TLSAtIngress        bool `json:"tls_at_ingress"`
-	PersistentIssuer    bool `json:"persistent_issuer"`
-	InstanceCredentials bool `json:"instance_credentials"`
-	ManagedBackups      bool `json:"managed_backups"`
+	TLSAtIngress             bool `json:"tls_at_ingress"`
+	PersistentIssuer         bool `json:"persistent_issuer"`
+	InstanceCredentials      bool `json:"instance_credentials"`
+	ManagedBackups           bool `json:"managed_backups"`
+	ExpectedProcesses        int  `json:"expected_processes,omitempty"`
+	DatabaseConnectionBudget int  `json:"database_connection_budget,omitempty"`
+	ReservedConnections      int  `json:"reserved_connections,omitempty"`
 }
 type DeploymentAdvisory struct {
 	Code     string `json:"code"`
@@ -21,16 +24,18 @@ type DeploymentAdvisory struct {
 	Action   string `json:"action"`
 }
 type DeploymentReport struct {
-	ConfigValid       bool                   `json:"config_valid"`
-	ReadOnly          bool                   `json:"read_only"`
-	Deployment        string                 `json:"deployment"`
-	StorageDriver     string                 `json:"storage_driver"`
-	WriterModel       string                 `json:"writer_model"`
-	DatabasePoolLimit int                    `json:"database_pool_limit"`
-	WorkerEnabled     bool                   `json:"worker_enabled"`
-	WorkerConcurrency int                    `json:"worker_concurrency"`
-	Declarations      DeploymentDeclarations `json:"operator_declarations"`
-	Advisories        []DeploymentAdvisory   `json:"advisories"`
+	ProcessRole              string                 `json:"process_role"`
+	ConfigValid              bool                   `json:"config_valid"`
+	ReadOnly                 bool                   `json:"read_only"`
+	Deployment               string                 `json:"deployment"`
+	StorageDriver            string                 `json:"storage_driver"`
+	WriterModel              string                 `json:"writer_model"`
+	DatabasePoolLimit        int                    `json:"database_pool_limit"`
+	WorkerEnabled            bool                   `json:"worker_enabled"`
+	WorkerConcurrency        int                    `json:"worker_concurrency"`
+	ExpectedConnectionDemand int                    `json:"expected_connection_demand,omitempty"`
+	Declarations             DeploymentDeclarations `json:"operator_declarations"`
+	Advisories               []DeploymentAdvisory   `json:"advisories"`
 }
 
 func DeploymentDeclarationsFromEnv() (DeploymentDeclarations, error) {
@@ -44,15 +49,27 @@ func DeploymentDeclarationsFromEnv() (DeploymentDeclarations, error) {
 			*target = parsed
 		}
 	}
+	for name, target := range map[string]*int{"WOS_DEPLOYMENT_EXPECTED_PROCESSES": &v.ExpectedProcesses, "WOS_DEPLOYMENT_DATABASE_CONNECTION_BUDGET": &v.DatabaseConnectionBudget, "WOS_DEPLOYMENT_RESERVED_CONNECTIONS": &v.ReservedConnections} {
+		if raw, ok := os.LookupEnv(name); ok {
+			parsed, err := strconv.Atoi(raw)
+			if err != nil || parsed < 0 || parsed > 100000 || parsed == 0 && name != "WOS_DEPLOYMENT_RESERVED_CONNECTIONS" {
+				return v, d.NewError(d.ErrorCodeInvalidConfig, "invalid deployment declaration: "+name)
+			}
+			*target = parsed
+		}
+	}
 	return v, nil
 }
 func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarations) (DeploymentReport, error) {
-	r := DeploymentReport{ReadOnly: true, Deployment: profile, StorageDriver: cfg.Storage.Driver, DatabasePoolLimit: 1, WriterModel: "single SQLite writer per instance", WorkerEnabled: cfg.Integration.WorkerEnabled, WorkerConcurrency: cfg.Integration.WorkerConcurrency, Declarations: decl, Advisories: []DeploymentAdvisory{}}
+	r := DeploymentReport{ProcessRole: cfg.ProcessRole(), ReadOnly: true, Deployment: profile, StorageDriver: cfg.Storage.Driver, DatabasePoolLimit: 1, WriterModel: "single SQLite writer per instance", WorkerEnabled: cfg.RunsDeliveryWorker(), WorkerConcurrency: cfg.Integration.WorkerConcurrency, Declarations: decl, Advisories: []DeploymentAdvisory{}}
 	if profile != "local" && profile != "shared" {
 		return r, d.NewError(d.ErrorCodeInvalidArgument, "deployment must be local or shared")
 	}
 	if e := cfg.Validate(); e != nil {
 		return r, e
+	}
+	if decl.ExpectedProcesses < 0 || decl.ExpectedProcesses > 100000 || decl.DatabaseConnectionBudget < 0 || decl.DatabaseConnectionBudget > 100000 || decl.ReservedConnections < 0 || decl.ReservedConnections > 100000 || (decl.ExpectedProcesses == 0) != (decl.DatabaseConnectionBudget == 0) || decl.DatabaseConnectionBudget == 0 && decl.ReservedConnections != 0 {
+		return r, d.NewError(d.ErrorCodeInvalidConfig, "connection budget declarations require a process count and database budget together")
 	}
 	r.ConfigValid = true
 	if cfg.Storage.Driver == StorageDriverPostgres {
@@ -64,6 +81,14 @@ func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarati
 	}
 	add := func(code, severity, message, action string) {
 		r.Advisories = append(r.Advisories, DeploymentAdvisory{code, severity, message, action})
+	}
+	if cfg.Storage.Driver == StorageDriverPostgres && decl.ExpectedProcesses > 0 {
+		// This is an operator-declared upper bound, not an observation of a
+		// fleet. Mixed pools should use their highest pool for this estimate.
+		r.ExpectedConnectionDemand = decl.ExpectedProcesses*r.DatabasePoolLimit + decl.ReservedConnections
+		if r.ExpectedConnectionDemand > decl.DatabaseConnectionBudget {
+			add("database_connection_budget", "warning", "Declared process pools and reserved connections exceed the database connection budget.", "Lower pools or replica counts, or increase the measured database budget. Count APIs, workers, maintenance and other clients together; use the largest pool for a conservative mixed-process estimate.")
+		}
 	}
 	if profile == "local" {
 		return r, nil
@@ -88,8 +113,11 @@ func (cfg Config) DeploymentDiagnostics(profile string, decl DeploymentDeclarati
 	if !decl.ManagedBackups {
 		add("external_backups", "warning", "An external backup and restore-validation process is not declared.", "Install the opt-in tools/operations procedure outside Core, monitor backup age and validate a restore into a new destination.")
 	}
-	if !cfg.Integration.WorkerEnabled {
+	if !cfg.RunsDeliveryWorker() {
 		add("delivery_worker_optional", "info", "The optional webhook worker is disabled in this process.", "If integration signals are emitted, run a supervised worker and monitor scoped delivery-health; API readiness alone does not prove delivery.")
+	}
+	if cfg.ProcessRole() == ProcessRoleWorker {
+		add("worker_operations_listener", "info", "The worker exposes process probes and authorized metrics only; readiness refers to this worker pool and database schema.", "Keep the listener private. Configure the same endpoint allowlist and secret references as the installation; monitor durable queue health through a WOS API process.")
 	}
 	if cfg.Integration.WorkerConcurrency >= r.DatabasePoolLimit && cfg.Storage.Driver == StorageDriverPostgres {
 		add("pool_headroom", "warning", "Webhook concurrency can consume all configured database connections during claims and acknowledgments.", "Measure pool wait with API traffic and reserve connection headroom; default worker concurrency is 1 and the reference is 4.")

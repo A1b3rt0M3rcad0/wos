@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/mobility"
 	cli "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 	wosskill "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill"
@@ -24,6 +25,11 @@ func run(args []string) int {
 	cli.Version, cli.Commit, cli.BuiltAt = server.Version, server.Commit, server.BuiltAt
 	if server.Version != "dev" {
 		wosskill.ReleaseVersion = server.Version
+	}
+	if len(args) > 0 && args[0] == "storage" {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		return mobility.Run(ctx, args[1:], os.Stdout, os.Stderr)
 	}
 	if handled, code := cli.HandleHelp(args, os.Stdout, os.Stderr, true); handled {
 		return code
@@ -51,6 +57,9 @@ func run(args []string) int {
 
 	if len(args) > 0 && args[0] == "skill" {
 		return wosskill.Run(args[1:], os.Stdout, os.Stderr)
+	}
+	if len(args) > 0 && args[0] == "installation" {
+		return server.RunInstallationOperatorCommand(args[1:], os.Stdout, os.Stderr)
 	}
 	if len(args) == 4 && args[0] == "issuer" && args[1] == "recover" && args[2] == "--file" {
 		file, err := os.Open(args[3])
@@ -166,8 +175,23 @@ func run(args []string) int {
 		}
 		return 0
 	}
-	if len(args) == 1 && args[0] == "server" {
+	if len(args) >= 1 && args[0] == "server" {
 		cfg := server.ConfigFromEnv()
+		flags := flag.NewFlagSet("server", flag.ContinueOnError)
+		flags.SetOutput(os.Stderr)
+		role := flags.String("role", cfg.ProcessRole(), "process role: complete, api or worker")
+		if err := flags.Parse(args[1:]); err != nil {
+			return 2
+		}
+		if flags.NArg() != 0 {
+			fmt.Fprintln(os.Stderr, "use wos server [--role=complete|api|worker]")
+			return 2
+		}
+		if *role == "" {
+			fmt.Fprintln(os.Stderr, "server role must be complete, api or worker")
+			return 2
+		}
+		cfg.Server.Role = *role
 		runtime, err := server.OpenRuntime(cfg)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "cannot start WOS: %v\n", err)
@@ -184,6 +208,6 @@ func run(args []string) int {
 		return 0
 	}
 
-	fmt.Fprintln(os.Stderr, "usage: wos <init|project|profile|workspace|auth|capabilities|work|contract|outcome|objective|roadmap|review|protocol|server|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
+	fmt.Fprintln(os.Stderr, "usage: wos <init|project|profile|workspace|auth|capabilities|work|contract|outcome|objective|roadmap|review|protocol|server [--role=complete|api|worker]|installation authorize --file FILE|storage migrate-sqlite|storage namespace-preflight|version|skill install|skill update|skill list|skill doctor|skill uninstall|config validate|mcp stdio|db migrate|db backup FILE|db restore SOURCE DESTINATION|issuer recover --file FILE>")
 	return 2
 }

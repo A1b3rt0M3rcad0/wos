@@ -38,6 +38,8 @@ Read [recording material](references/workspace.md) only when adding progress, ev
 
 Use context/status first and bounded history only to resolve a specific gap. Preserve cursors, truncation and incomplete-search information. Do not load a full Outcome or transcript on every iteration and do not maintain a duplicate manual pending list.
 
+Namespace administration does not grant installation authority. Creating a Namespace requires explicit `installation:provision`; process-wide metrics require `installation:observe`. Use the scoped delivery diagnostic for the assigned Namespace/Outcome. Installation operator promotion is a host-controlled offline maintenance action, never an agent workaround for a denied request.
+
 ## Resume safely
 
 Reconcile `work recover --all-pending` with the original pinned Profile, then read current context/status and necessary durable references. Do not acquire replacement work, delete uncertain data or change expected versions to force a retry. The CLI owns signatures, frozen requests and receipt-driven cleanup. Read [protected signing and recovery](references/signed-protocol.md) for exact guardrails and [correction](references/correction.md) only when assigned an original review finding.

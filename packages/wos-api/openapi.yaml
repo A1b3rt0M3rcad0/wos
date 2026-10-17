@@ -23,6 +23,20 @@ tags:
 - name: Criteria
 - name: Roadmaps
 paths:
+  /metrics:
+    get:
+      operationId: installationProcessMetrics
+      summary: Read installation process metrics
+      description: Remote access requires installation:observe through a current unrestricted
+        credential. namespace:admin alone is insufficient. Counters describe this process
+        and reset on restart. Use scoped delivery-health for Namespace diagnostics.
+      responses:
+        '200':
+          description: Process metrics JSON
+        '401':
+          description: Invalid or missing credential
+        '403':
+          description: Installation observation permission denied
   /api/v1/commands/append_work_activity:
     $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_work_activity
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity:
@@ -5972,8 +5986,11 @@ paths:
     post:
       operationId: administerNamespace
       summary: Apply guarded administrative intent
-      description: Requires namespace:admin, Idempotency-Key and expected_namespace_version. A credential token
-        is returned once; replay preserves the receipt and omits the token.
+      description: Requires namespace:admin, Idempotency-Key and expected_namespace_version.
+        create_namespace additionally requires installation:provision and copies only Namespace permissions.
+        Granting or removing installation permissions and issuing or revoking operator credentials
+        additionally require installation:admin. Installation authority requires a credential without
+        Outcome restrictions. A credential token is returned once; replay preserves the receipt and omits the token.
       parameters:
       - name: Idempotency-Key
         in: header

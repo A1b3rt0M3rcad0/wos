@@ -15,6 +15,9 @@ const (
 	StorageDriverPostgres = "postgres"
 	AuthModeLocal         = "local"
 	AuthModeAPIToken      = "api_token"
+	ProcessRoleComplete   = "complete"
+	ProcessRoleAPI        = "api"
+	ProcessRoleWorker     = "worker"
 )
 
 // Config is the initial standalone composition contract. Parsing configuration
@@ -36,32 +39,36 @@ type SigningConfig struct {
 }
 
 type IntegrationConfig struct {
-	MaxBacklogAge     time.Duration
-	WorkerConcurrency int
-	WorkerEnabled     bool
-	AllowLoopback     bool
-	Endpoints         []ports.WebhookEndpoint
-	Secrets           map[string]string
-	ParseError        bool
+	MaxBacklogAge           time.Duration
+	WorkerConcurrency       int
+	MaxInflightPerNamespace int
+	MaxInflightPerEndpoint  int
+	WorkerEnabled           bool
+	AllowLoopback           bool
+	Endpoints               []ports.WebhookEndpoint
+	Secrets                 map[string]string
+	ParseError              bool
 }
 
 type ServerConfig struct {
+	Role            string
 	Listen          string
 	ShutdownTimeout time.Duration
 	MaxConnections  int
 }
 
 type HTTPConfig struct {
-	ParseError          bool
-	ReadHeaderTimeout   time.Duration
-	ReadTimeout         time.Duration
-	WriteTimeout        time.Duration
-	IdleTimeout         time.Duration
-	MaxHeaderBytes      int
-	MaxInflightRequests int
-	Enabled             bool
-	Prefix              string
-	RequestTimeout      time.Duration
+	ParseError              bool
+	ReadHeaderTimeout       time.Duration
+	ReadTimeout             time.Duration
+	WriteTimeout            time.Duration
+	IdleTimeout             time.Duration
+	MaxHeaderBytes          int
+	MaxInflightRequests     int
+	MaxInflightPerNamespace int
+	Enabled                 bool
+	Prefix                  string
+	RequestTimeout          time.Duration
 }
 
 type MCPConfig struct {
@@ -95,6 +102,7 @@ func DefaultConfig() Config {
 	return Config{
 		Integration: IntegrationConfig{MaxBacklogAge: 5 * time.Minute, WorkerConcurrency: 1},
 		Server: ServerConfig{
+			Role:            ProcessRoleComplete,
 			Listen:          "127.0.0.1:8080",
 			ShutdownTimeout: 15 * time.Second,
 			MaxConnections:  256,
@@ -132,6 +140,25 @@ func DefaultConfig() Config {
 }
 
 func (cfg Config) Validate() error {
+	switch cfg.ProcessRole() {
+	case ProcessRoleComplete:
+	case ProcessRoleAPI:
+		if cfg.Integration.WorkerEnabled {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "api process role cannot enable a delivery worker")
+		}
+	case ProcessRoleWorker:
+		if cfg.Storage.Driver != StorageDriverPostgres || cfg.Auth.Mode != AuthModeAPIToken {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "worker process role requires PostgreSQL and scoped API authentication")
+		}
+		if cfg.MCP.Enabled {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "worker process role cannot expose MCP")
+		}
+	default:
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "process role must be complete, api or worker")
+	}
+	if cfg.ServesAPI() && !cfg.HTTP.Enabled {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "complete and api process roles require HTTP")
+	}
 	if cfg.Storage.ParseError || cfg.Storage.PostgresMaxOpenConnections < 0 || cfg.Storage.PostgresMaxOpenConnections > 256 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "PostgreSQL pool limit must be 1..256 when configured")
 	}
@@ -144,6 +171,9 @@ func (cfg Config) Validate() error {
 	if cfg.HTTP.MaxHeaderBytes < 1024 || cfg.HTTP.MaxHeaderBytes > 1<<20 || cfg.HTTP.MaxInflightRequests < 1 || cfg.HTTP.MaxInflightRequests > 4096 || cfg.Server.MaxConnections < cfg.HTTP.MaxInflightRequests+2 || cfg.Server.MaxConnections > 65536 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "HTTP admission limits require headers 1 KiB..1 MiB, in-flight 1..4096 and connections in-flight+2..65536")
 	}
+	if cfg.HTTP.MaxInflightPerNamespace < 0 || cfg.HTTP.MaxInflightPerNamespace > cfg.HTTP.MaxInflightRequests {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "per-Namespace HTTP admission must be zero or at most the process in-flight limit")
+	}
 
 	if cfg.Signing.AcceptanceFloor != "" && !cfg.Signing.AcceptanceFloor.Valid() {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid signed acceptance floor")
@@ -153,6 +183,9 @@ func (cfg Config) Validate() error {
 	}
 	if cfg.Integration.WorkerConcurrency < 1 || cfg.Integration.WorkerConcurrency > 64 {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery concurrency must be 1..64")
+	}
+	if cfg.Integration.MaxInflightPerNamespace < 0 || cfg.Integration.MaxInflightPerNamespace > 64 || cfg.Integration.MaxInflightPerEndpoint < 0 || cfg.Integration.MaxInflightPerEndpoint > 64 {
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery in-flight limits must be 0..64; zero disables the limit")
 	}
 	if cfg.Integration.MaxBacklogAge <= 0 || cfg.Integration.MaxBacklogAge > 7*24*time.Hour {
 		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery backlog age must be positive and at most seven days")
@@ -174,7 +207,7 @@ func (cfg Config) Validate() error {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "invalid or duplicate webhook endpoint")
 		}
 		seen[endpoint.ID] = true
-		if cfg.Integration.WorkerEnabled && len(cfg.Integration.Secrets[endpoint.SecretRef]) < 32 {
+		if cfg.RunsDeliveryWorker() && len(cfg.Integration.Secrets[endpoint.SecretRef]) < 32 {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "enabled webhook worker requires signing secrets of at least 32 bytes")
 		}
 	}
@@ -224,6 +257,11 @@ func (cfg Config) Validate() error {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "auth.local principal is required")
 		}
 	case AuthModeAPIToken:
+		if cfg.ProcessRole() == ProcessRoleWorker {
+			// A worker consumes an existing installation. It neither provisions a
+			// Namespace nor needs possession of its bootstrap credential.
+			break
+		}
 		if len(cfg.Auth.BootstrapToken) < 32 || cfg.Auth.BootstrapNamespaceName == "" {
 			return domain.NewError(domain.ErrorCodeInvalidConfig, "api_token auth requires a bootstrap token and namespace")
 		}
@@ -235,6 +273,21 @@ func (cfg Config) Validate() error {
 	}
 
 	return nil
+}
+
+// ProcessRole treats an omitted embedded Config role as the historical complete
+// process. Parsing an explicitly empty environment value is rejected separately.
+func (cfg Config) ProcessRole() string {
+	if cfg.Server.Role == "" {
+		return ProcessRoleComplete
+	}
+	return cfg.Server.Role
+}
+
+func (cfg Config) ServesAPI() bool { return cfg.ProcessRole() != ProcessRoleWorker }
+
+func (cfg Config) RunsDeliveryWorker() bool {
+	return cfg.ProcessRole() == ProcessRoleWorker || cfg.ProcessRole() == ProcessRoleComplete && cfg.Integration.WorkerEnabled
 }
 
 func validAbsolutePath(value string) bool {

@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ import (
 type Worker struct {
 	Diagnostics   *Diagnostics
 	Concurrency   int
+	ClaimPolicy   ports.DeliveryClaimPolicy
 	Store         ports.DeliveryStore
 	Clock         ports.Clock
 	IDs           ports.IDGenerator
@@ -107,7 +109,24 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	claimCtx, claimCancel := context.WithTimeout(ctx, 5*time.Second)
-	delivery, err := w.Store.ClaimDelivery(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second)
+	var delivery *ports.Delivery
+	_, databaseTime := w.Store.(ports.DurableDeliveryStore)
+	if fair, ok := w.Store.(ports.FairDeliveryStore); ok {
+		policy := w.ClaimPolicy
+		policy.DatabaseTime = databaseTime
+		policy.SecretRefs = make([]string, 0, len(w.Secrets))
+		for ref, secret := range w.Secrets {
+			if len(secret) >= 32 {
+				policy.SecretRefs = append(policy.SecretRefs, ref)
+			}
+		}
+		sort.Strings(policy.SecretRefs)
+		delivery, err = fair.ClaimDeliveryWithPolicy(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second, policy)
+	} else if w.ClaimPolicy.MaxInflightPerNamespace != 0 || w.ClaimPolicy.MaxInflightPerEndpoint != 0 {
+		err = domain.NewError(domain.ErrorCodeInvalidConfig, "delivery store does not support shared capacity limits")
+	} else {
+		delivery, err = w.Store.ClaimDelivery(claimCtx, w.Clock.Now().UTC(), id, 30*time.Second)
+	}
 	claimCancel()
 	if err != nil || delivery == nil {
 		return false, err
@@ -157,7 +176,11 @@ func (w *Worker) Tick(ctx context.Context) (bool, error) {
 	// delivery may have reached the receiver, so retry uses the same event identity.
 	ackCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err = w.Store.FinishDelivery(ackCtx, *delivery, w.Clock.Now().UTC(), result, success, next)
+	if durable, ok := w.Store.(ports.DurableDeliveryStore); ok && databaseTime {
+		err = durable.FinishDeliveryUsingDatabaseTime(ackCtx, *delivery, result, success, backoff)
+	} else {
+		err = w.Store.FinishDelivery(ackCtx, *delivery, w.Clock.Now().UTC(), result, success, next)
+	}
 	acknowledged = err == nil
 	return true, err
 }

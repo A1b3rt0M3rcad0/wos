@@ -63,3 +63,34 @@ func TestReferenceSearchCountsEmptyPagesWithoutContent(t *testing.T) {
 		t.Fatalf("incorrect query metrics: %+v", v)
 	}
 }
+
+type testStoragePool struct{}
+
+func (testStoragePool) ConnectionStats() ports.StoragePoolStats {
+	return ports.StoragePoolStats{MaxOpenConnections: 8, OpenConnections: 4, InUse: 3, Idle: 1, WaitCount: 7, WaitDurationNS: 42}
+}
+
+func TestLatencyBucketsAndStoragePressureAreExported(t *testing.T) {
+	o := New(nil)
+	o.Storage = testStoragePool{}
+	for _, d := range []time.Duration{time.Millisecond, 2 * time.Millisecond, 60 * time.Second, 61 * time.Second} {
+		o.ObserveQuery(ports.QueryObservation{Name: "continuity", Duration: d})
+	}
+	r := httptest.NewRecorder()
+	o.ServeHTTP(r, httptest.NewRequest("GET", "/metrics", nil))
+	var result struct {
+		Pool    ports.StoragePoolStats `json:"storage_pool"`
+		Bounds  []int64                `json:"duration_bucket_bounds_ns"`
+		Queries map[string]timing      `json:"query_timing"`
+	}
+	if err := json.Unmarshal(r.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	query := result.Queries["continuity"]
+	if len(result.Bounds) != 14 || query.Count != 4 || query.Buckets[0] != 1 || query.Buckets[1] != 1 || query.Buckets[13] != 1 || query.Buckets[14] != 1 {
+		t.Fatalf("invalid latency distribution: %+v", result)
+	}
+	if result.Pool.InUse != 3 || result.Pool.WaitCount != 7 || result.Pool.WaitDurationNS != 42 {
+		t.Fatalf("pool pressure lost: %+v", result.Pool)
+	}
+}

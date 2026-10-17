@@ -51,16 +51,15 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
-	if !config.HTTP.Enabled {
-		return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "Wave 05 standalone runtime requires HTTP to be enabled")
-	}
-
 	var store runtimeStore
 	var err error
+	// Only an API/complete process may initialize an installation. A worker must
+	// connect to an already migrated schema, even when defaults enable migration.
+	migrate := config.Storage.MigrateOnStart && config.ServesAPI()
 	if config.Storage.Driver == StorageDriverPostgres {
-		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: config.Storage.MigrateOnStart, MaxOpenConnections: config.Storage.PostgresMaxOpenConnections})
+		store, err = postgres.Open(config.Storage.PostgresDSN, postgres.Options{MigrateOnOpen: migrate, MaxOpenConnections: config.Storage.PostgresMaxOpenConnections})
 	} else {
-		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: config.Storage.MigrateOnStart})
+		store, err = sqlite.Open(config.Storage.SQLitePath, sqlite.Options{MigrateOnOpen: migrate})
 	}
 	if err != nil {
 		return nil, err
@@ -105,13 +104,18 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	}
 	if config.Auth.Mode == AuthModeAPIToken {
 		security = &application.SecurityService{Store: store, Clock: systemClock{}, IDs: ids}
-		ns, _ := domain.ParseID(config.Auth.BootstrapNamespaceID)
-		if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: config.Auth.BootstrapNamespaceName}, config.Auth.LocalPrincipalID, config.Auth.BootstrapToken); err != nil {
-			store.Close()
-			return nil, err
+		if config.ServesAPI() {
+			ns, _ := domain.ParseID(config.Auth.BootstrapNamespaceID)
+			if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: config.Auth.BootstrapNamespaceName}, config.Auth.LocalPrincipalID, config.Auth.BootstrapToken); err != nil {
+				store.Close()
+				return nil, err
+			}
 		}
 		appAuthorizer = security
 		resolve = func(r *http.Request) (application.Identity, error) {
+			if identity, ok := application.IdentityFromContext(r.Context()); ok {
+				return identity, nil
+			}
 			raw := r.Header.Get("Authorization")
 			if raw == "" {
 				if cookie, err := r.Cookie(sessionCookie); err == nil {
@@ -133,6 +137,9 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		return nil, err
 	}
 	observer := observability.New(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	if stats, ok := store.(ports.StoragePoolObserver); ok {
+		observer.Storage = stats
+	}
 	service.SetObserver(observer)
 	service.SetIndependentReviewer(config.Auth.IndependentReviewer)
 	issuerIdentity, err := configureSignedRuntime(context.Background(), config, store, service, security, ids)
@@ -140,7 +147,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		_ = store.Close()
 		return nil, err
 	}
-	if len(config.Integration.Endpoints) > 0 {
+	if config.ServesAPI() && len(config.Integration.Endpoints) > 0 {
 		installer, ok := store.(interface {
 			InstallEndpoints(context.Context, []ports.WebhookEndpoint) error
 		})
@@ -153,29 +160,32 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			return nil, err
 		}
 	}
-	api, err := httptransport.New(httptransport.Options{
-		Prefix:          config.HTTP.Prefix,
-		RequestTimeout:  config.HTTP.RequestTimeout,
-		Service:         service,
-		IDs:             ids,
-		LocalAuth:       auth,
-		ResolveIdentity: resolve,
-		Security:        security,
-		LocalNamespaces: localNamespaces,
-	})
-	if err != nil {
-		_ = store.Close()
-		return nil, err
+	var api http.Handler
+	if config.ServesAPI() {
+		api, err = httptransport.New(httptransport.Options{
+			Prefix:          config.HTTP.Prefix,
+			RequestTimeout:  config.HTTP.RequestTimeout,
+			Service:         service,
+			IDs:             ids,
+			LocalAuth:       auth,
+			ResolveIdentity: resolve,
+			Security:        security,
+			LocalNamespaces: localNamespaces,
+		})
+		if err != nil {
+			_ = store.Close()
+			return nil, err
+		}
 	}
 
-	deliveryDiagnostics := integration.NewDiagnostics(config.Integration.WorkerEnabled)
+	deliveryDiagnostics := integration.NewDiagnostics(config.RunsDeliveryWorker())
 	observer.DeliveryDiagnostics = deliveryDiagnostics
 	if err = service.ConfigureDeliveryDiagnostics(deliveryDiagnostics, config.Integration.MaxBacklogAge); err != nil {
 		store.Close()
 		return nil, err
 	}
 	runtime := &Runtime{config: config, store: store, issuerIdentity: issuerIdentity, observer: observer, deliveryDiagnostics: deliveryDiagnostics}
-	if config.Integration.WorkerEnabled {
+	if config.RunsDeliveryWorker() {
 		outbox, ok := store.(ports.DeliveryStore)
 		if !ok {
 			store.Close()
@@ -192,6 +202,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			return nil, err
 		}
 		runtime.deliveryWorker.Concurrency = config.Integration.WorkerConcurrency
+		runtime.deliveryWorker.ClaimPolicy = ports.DeliveryClaimPolicy{MaxInflightPerNamespace: config.Integration.MaxInflightPerNamespace, MaxInflightPerEndpoint: config.Integration.MaxInflightPerEndpoint}
 		if config.Storage.Driver == StorageDriverSQLite && config.Integration.WorkerConcurrency > 1 {
 			slog.Warn("sqlite_delivery_parallelism", "advisory", "SQLite serializes writes; measure before increasing delivery concurrency")
 		}
@@ -199,17 +210,20 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		runtime.deliveryWorker.Diagnostics = deliveryDiagnostics
 	}
 	root := http.NewServeMux()
-	root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "no-store")
-		json.NewEncoder(w).Encode(map[string]any{"api_prefix": config.HTTP.Prefix, "auth_mode": config.Auth.Mode})
-	})
-	root.Handle("GET /app/", web.Handler())
-	root.HandleFunc("GET /app", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/app/", http.StatusSeeOther) })
-	if security != nil {
-		root.Handle("/session", sessionHandler(security))
+	if config.ServesAPI() {
+		root.HandleFunc("GET /app/config", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Cache-Control", "no-store")
+			json.NewEncoder(w).Encode(map[string]any{"api_prefix": config.HTTP.Prefix, "auth_mode": config.Auth.Mode})
+		})
+		root.Handle("GET /app/", web.Handler())
+		root.HandleFunc("GET /app", func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, "/app/", http.StatusSeeOther) })
+		if security != nil {
+			root.Handle("/session", sessionHandler(security))
+		}
 	}
 	root.Handle("GET /metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
 		if security != nil {
 			id, err := resolve(r)
 			if err != nil {
@@ -217,7 +231,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 				return
 			}
 			ctx := application.WithIdentity(r.Context(), id)
-			if err = security.Require(ctx, id.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+			if err = security.RequireInstallation(ctx, ports.PermissionInstallationObserve); err != nil {
 				http.Error(w, "forbidden", 403)
 				return
 			}
@@ -226,7 +240,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 	}))
 	root.HandleFunc("GET /livez", runtime.handleLive)
 	root.HandleFunc("GET /readyz", runtime.handleReady)
-	if config.MCP.Enabled {
+	if config.ServesAPI() && config.MCP.Enabled {
 		options := mcptransport.Options{ProductVersion: Version, Security: security, RequestTimeout: config.HTTP.RequestTimeout}
 		if resolve != nil {
 			options.ResolveIdentity = func(ctx context.Context, headers http.Header) (application.Identity, error) {
@@ -262,7 +276,10 @@ func OpenRuntime(config Config) (*Runtime, error) {
 			stream.ServeHTTP(w, r)
 		}))
 	}
-	root.Handle("/", api)
+	if config.ServesAPI() {
+		root.Handle("/", api)
+	}
+	admittedProduct := tenantAdmissionHTTP(config.HTTP.MaxInflightPerNamespace, resolve, root)
 	business := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.Auth.Mode == AuthModeLocal && !loopbackHost(r.Host) {
 			http.Error(w, "loopback host required", http.StatusForbidden)
@@ -270,6 +287,10 @@ func OpenRuntime(config Config) (*Runtime, error) {
 		}
 		if r.Method != "GET" && r.Method != "HEAD" && r.Method != "OPTIONS" && !sameOrigin(r) {
 			http.Error(w, "origin rejected", http.StatusForbidden)
+			return
+		}
+		if config.ServesAPI() && (r.URL.Path == config.HTTP.Prefix || strings.HasPrefix(r.URL.Path, strings.TrimSuffix(config.HTTP.Prefix, "/")+"/") || config.MCP.Enabled && r.URL.Path == config.MCP.Path) {
+			admittedProduct.ServeHTTP(w, r)
 			return
 		}
 		root.ServeHTTP(w, r)
@@ -308,13 +329,41 @@ func (r *Runtime) Serve(ctx context.Context) error {
 func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr error) {
 	defer listener.Close()
 	listener = &admissionListener{Listener: listener, slots: make(chan struct{}, r.config.Server.MaxConnections), observer: r.observer}
-	if r.deliveryWorker != nil {
-		workerCtx, stop := context.WithCancel(ctx)
+	if r.config.ProcessRole() != ProcessRoleAPI {
+		maintenanceCtx, stop := context.WithCancel(ctx)
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			if e := r.deliveryWorker.Run(workerCtx); e != nil && workerCtx.Err() == nil {
+			r.runMaintenance(maintenanceCtx, time.Minute)
+		}()
+		defer func() {
+			stop()
+			timer := time.NewTimer(r.config.Server.ShutdownTimeout)
+			defer timer.Stop()
+			select {
+			case <-done:
+			case <-timer.C:
+				serveErr = errors.Join(serveErr, domain.NewError(domain.ErrorCode("deadline_exceeded"), "maintenance shutdown grace expired"))
+			}
+		}()
+	}
+	var workerFailure <-chan error
+	if r.deliveryWorker != nil {
+		workerCtx, stop := context.WithCancel(ctx)
+		done := make(chan struct{})
+		failed := make(chan error, 1)
+		if r.config.ProcessRole() == ProcessRoleWorker {
+			workerFailure = failed
+		}
+		go func() {
+			defer close(done)
+			e := r.deliveryWorker.Run(workerCtx)
+			if workerCtx.Err() == nil {
 				slog.Error("delivery_worker_stopped", "failure_class", r.deliveryDiagnostics.DeliveryWorkerStatus().LastFailureClass)
+				if e == nil {
+					e = errors.New("delivery worker exited unexpectedly")
+				}
+				failed <- e
 			}
 		}()
 		defer func() {
@@ -336,6 +385,17 @@ func (r *Runtime) serve(ctx context.Context, listener net.Listener) (serveErr er
 	}()
 
 	select {
+	case <-workerFailure:
+		// The worker-only process has no useful serving function after its pool
+		// dies. Exit so an external supervisor can restart it; complete mode
+		// continues exposing a healthy API and its failed local worker state.
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), r.config.Server.ShutdownTimeout)
+		defer cancel()
+		if err := r.http.Shutdown(shutdownCtx); err != nil {
+			_ = r.http.Close()
+		}
+		<-errCh
+		return domain.NewError(domain.ErrorCodeInvalidConfig, "delivery worker stopped; inspect classified process diagnostics")
 	case err := <-errCh:
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
@@ -375,7 +435,7 @@ func (r *Runtime) Backup(ctx context.Context, path string) error {
 }
 
 func (r *Runtime) handleLive(w http.ResponseWriter, _ *http.Request) {
-	writeHealth(w, http.StatusOK, "live")
+	r.writeHealth(w, http.StatusOK, "live")
 }
 
 func (r *Runtime) handleReady(w http.ResponseWriter, request *http.Request) {
@@ -387,21 +447,30 @@ func (r *Runtime) handleReady(w http.ResponseWriter, request *http.Request) {
 		supported, _ = postgres.LatestSchemaVersion()
 	}
 	if err != nil || version != supported {
-		writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+		r.writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+		return
+	}
+	if r.config.ProcessRole() == ProcessRoleWorker {
+		worker := r.deliveryDiagnostics.DeliveryWorkerStatus()
+		if !worker.Running {
+			r.writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+			return
+		}
+		r.writeHealth(w, http.StatusOK, "ready")
 		return
 	}
 	issuerReady, err := r.store.SignedIssuerReady(ctx, r.issuerIdentity)
 	if err != nil || !issuerReady {
-		writeHealth(w, http.StatusServiceUnavailable, "not_ready")
+		r.writeHealth(w, http.StatusServiceUnavailable, "not_ready")
 		return
 	}
-	writeHealth(w, http.StatusOK, "ready")
+	r.writeHealth(w, http.StatusOK, "ready")
 }
 
-func writeHealth(w http.ResponseWriter, status int, state string) {
+func (r *Runtime) writeHealth(w http.ResponseWriter, status int, state string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": state})
+	_ = json.NewEncoder(w).Encode(map[string]any{"status": state, "process_role": r.config.ProcessRole(), "worker_scope": "this_process", "delivery_worker": r.deliveryDiagnostics.DeliveryWorkerStatus()})
 }
 
 func (r *Runtime) RunStdio(ctx context.Context) error {

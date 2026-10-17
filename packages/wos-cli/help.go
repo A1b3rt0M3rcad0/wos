@@ -43,7 +43,9 @@ func localCatalog(service bool) CommandCatalog {
 	}
 	if service {
 		groups = append(groups,
-			CommandGroup{"server", "Standalone WOS service", []string{"wos server"}},
+			CommandGroup{"server", "WOS process roles; worker uses an existing PostgreSQL installation", []string{"wos server", "wos server --role api", "wos server --role worker"}},
+			CommandGroup{"installation", "Offline installation operator authorization", []string{"wos installation authorize --file FILE"}},
+			CommandGroup{"storage", "Linux-host installation migration and read-only Namespace transfer preflight", []string{"wos storage migrate-sqlite --backup DIR --manifest-sha256 SHA256 --dsn-env WOS_MOBILITY_POSTGRES_DSN --writers-stopped", "wos storage namespace-preflight --sqlite FILE --namespace UUID", "wos storage namespace-preflight --dsn-env WOS_MOBILITY_POSTGRES_DSN --namespace UUID"}},
 			CommandGroup{"skill", "Install bundled agent skills through the primary wos executable", []string{"wos skill install --agent codex", "wos skill update --agent codex", "wos skill list", "wos skill doctor --agent codex", "wos skill uninstall --agent codex"}},
 			CommandGroup{"config", "Validate local service configuration", []string{"wos config validate", "wos config validate --deployment=shared"}},
 			CommandGroup{"db", "Service-side database operations; restore targets a new SQLite file", []string{"wos db migrate", "wos db backup FILE", "wos db restore SOURCE DESTINATION"}},
