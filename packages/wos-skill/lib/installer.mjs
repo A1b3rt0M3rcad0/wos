@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 export const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 export const names = ['wos-coordination', 'wos-delegation', 'wos-continuity', 'wos-review', 'wos-workspace'];
 export const agents = ['claude', 'codex', 'hermes', 'openclaw', 'generic', 'all'];
+export const legalFiles = ['LICENSE', 'TRADEMARKS.md', 'NOTICE.md', 'THIRD_PARTY_NOTICES.md', 'LICENSES/Apache-2.0.txt'];
 const marker = '.wos-skill.json';
 const sha = value => createHash('sha256').update(value).digest('hex');
 // Normalize key order: Go's encoding/json and JS locale sorting emit different
@@ -81,6 +82,11 @@ export async function operate(command, options = {}) {
       const target = path.join(base, name);
       const prior = await inspected(target);
       const files = await contents(path.join(packageRoot, 'skills', name));
+      for (const filename of legalFiles) {
+        const data = await fs.readFile(path.join(packageRoot, filename));
+        if (!data.length) throw new Error(`Empty bundled legal file: ${filename}`);
+        files[filename] = sha(data);
+      }
       const same = prior.exists && prior.version === version && sameFiles(prior.files, files);
       const action = command === 'uninstall' ? (prior.exists ? 'remove' : 'absent') : ['doctor', 'list'].includes(command) ? (prior.exists ? 'installed' : 'absent') : same ? 'unchanged' : prior.exists ? 'update' : 'install';
       plan.push({ target, name, version, action, files, prior });
@@ -99,6 +105,10 @@ export async function operate(command, options = {}) {
       const backup = `${p.target}.backup-${randomUUID()}`;
       try {
         await fs.cp(path.join(packageRoot, 'skills', p.name), stage, { recursive: true, dereference: false });
+        for (const filename of legalFiles) {
+          await fs.mkdir(path.dirname(path.join(stage, filename)), {recursive: true});
+          await fs.copyFile(path.join(packageRoot, filename), path.join(stage, filename));
+        }
         await fs.writeFile(path.join(stage, marker), JSON.stringify({ schema: 1, package: '@a1b3rt0m3rcad0/wos-skill', name: p.name, version, files: p.files }, null, 2) + '\n');
         if (prior.exists) await fs.rename(p.target, backup);
         try { await fs.rename(stage, p.target); } catch (e) { if (prior.exists) await fs.rename(backup, p.target); throw e; }

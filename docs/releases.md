@@ -31,7 +31,9 @@ Before any upload, compare existing registry integrity, tag/source identity and 
 
 Partial registry/image/asset failures leave the GitHub release unfinished. Resume with the original source; verify every existing artifact and finalize only after all required surfaces are proven. Never infer public availability from a prepared version or an upload process exit alone.
 
-Current publication evidence and outstanding stable gates are tracked in [ROADMAP](../ROADMAP.md) and [the stable plan](stable/original-plan-2026-10-12.md). Apache-2.0 remains the effective license; bundled third-party notices travel with all native/npm/container artifacts.
+Current publication evidence and outstanding stable gates are tracked in [ROADMAP](../ROADMAP.md) and [the stable plan](stable/original-plan-2026-10-12.md). Current source uses the [WOS Sustainable Use License 1.0](../LICENSE); earlier Apache-2.0 grants and upstream licenses remain effective for their material. Existing published versions and immutable artifacts are not relabeled or replaced. See [licensing](licensing.md).
+
+New source distributions carry `LICENSE`, `TRADEMARKS.md`, `NOTICE.md`, `THIRD_PARTY_NOTICES.md`, `LICENSES/Apache-2.0.txt` and applicable generated upstream notices in npm, native archives and containers. Installed Skills retain the same legal files. npm metadata uses `SEE LICENSE IN LICENSE`; the OCI identifier is `LicenseRef-WOS-Sustainable-Use-1.0`. These changes do not publish a new version or alter immutable release checksums.
 
 
 ## Staged npm publication

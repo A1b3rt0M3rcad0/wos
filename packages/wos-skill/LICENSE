@@ -1,202 +1,109 @@
+WOS Sustainable Use License 1.0
 
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+Copyright (c) 2026 A1b3rt0M3rcad0 and the respective copyright holders.
+All rights reserved except for the permissions expressly granted below.
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+WOS is source-available software. This is not an OSI Open Source license.
+License identifier: LicenseRef-WOS-Sustainable-Use-1.0
 
-   1. Definitions.
+1. License boundaries
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+"Licensor" means the copyright owner or entity authorized to grant rights in the applicable WOS material. The official repository is https://github.com/A1b3rt0M3rcad0/wos, maintained by A1b3rt0M3rcad0. Each grant applies only to rights that its grantor owns or is authorized to license.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+"You" means the individual or legal entity exercising the permissions below.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+"WOS" or "Software" means first-party software and supporting repository content distributed under this license, including copies, modifications, derivative portions and compiled forms. It includes the Core, server, browser workspace, CLI, official Skills, client libraries, first-party tooling, tests, scripts and documentation, unless a different applicable notice governs particular material.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+Third-party components and separately licensed material retain their own licenses. WOS names, logos, symbols and distinctive brand assets are excluded from the general software grant and governed by TRADEMARKS.md, including its limited permissions for ordinary identification and truthful descriptive references. Earlier grants are preserved as described in section 11.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+2. Acceptance and grant
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+You do not need to accept this license merely to view the repository where applicable law or repository-host terms independently permit that activity.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+By exercising permissions granted here, including downloading, building, running, modifying, deploying or redistributing Software, You accept these terms.
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+Subject to these terms, Licensor grants You a worldwide, royalty-free, non-exclusive, non-transferable and non-sublicensable license to use, copy, compile, run, modify, prepare derivative works from and distribute Software for the permitted uses in section 3. Recipients obtain their permissions to Licensor's material directly under this license; You may not sublicense that material on terms that remove its restrictions.
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+3. Permitted uses
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+Personal, internal and production use
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+You may use Software for personal use, non-commercial use and Your own internal business operations, including production. You may self-host it on Your own equipment or on general-purpose infrastructure You rent from a third party.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+You may maintain private forks and modifications for permitted uses. This license does not require publication of private modifications or independently developed applications merely because they use Software.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+Infrastructure for Your own applications and services
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+You may use Software as infrastructure for Your own applications, products and services, including commercial offerings. This includes coordinating people and agents, using HTTP, MCP, CLI or Go interfaces, and delivering application functionality or customer outcomes through an Outcome-as-a-Service product.
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+You may distribute Software as a component of such an application, including an application installed on a customer's infrastructure, subject to sections 4 and 6. Customers must receive the applicable WOS terms for the included WOS material.
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+These permissions cover the delivery of Your application's functionality or outcomes. They do not authorize commercial supply of the WOS platform itself described in section 4. An application is not excluded merely because it depends heavily on Software, uses its APIs, exposes an embedded work or progress view, or provides configuration confined to that application's purpose.
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+Professional services
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+You may charge for genuine consulting, implementation, integration, training, maintenance or support work on a customer's own permitted deployment. The customer must control that deployment and obtain software rights under the applicable WOS terms. The charge must be for technical work, rather than for a software license, a supplied WOS instance or continued access to the WOS platform.
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+Renting general-purpose compute, storage or network infrastructure does not itself constitute supplying the WOS platform.
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+Free distribution
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+You may publish and share copies, source forks and modifications without charge for non-commercial purposes, subject to the notice and brand requirements below. A free distribution does not authorize recipients to commercially supply the platform.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+4. Prohibited commercial supply of the WOS platform
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
+You may not sell, rent, lease, sublicense, commercially redistribute, resell, OEM-supply, commercially white-label, or charge third parties for access to Software itself or to a fork, modification or derivative of it as a platform.
 
-   END OF TERMS AND CONDITIONS
+This prohibition covers providing WOS, or a material part of its general-purpose shared-state, coordination, work-authority, planning, delivery, review or outcome-management capabilities, as the software or service being commercially supplied. It includes:
 
-   APPENDIX: How to apply the Apache License to your work.
+- selling copies, downloads, packages, images, appliances or installations of the platform;
+- supplying a WOS instance through a paid hosted or managed service;
+- charging for access to a general-purpose WOS workspace, control plane, coordination APIs or work-management capabilities;
+- supplying a renamed, rebranded or redesigned derivative platform;
+- supplying the platform within a paid bundle, even if no separate price is assigned to WOS.
 
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
+The prohibition applies to direct and indirect consideration for that supply, including required subscriptions, access plans or bundled charges. Calling the platform free, or describing an access charge as support or consulting, does not change the substance of the transaction.
 
-   Copyright [yyyy] [name of copyright owner]
+Names, logos, colors, domains, interfaces, wrappers, deployment models and the absence of a graphical interface do not change this restriction. You need not supply every WOS feature for a platform offering to fall within it.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+The permitted applications, component distribution, professional services and general-purpose infrastructure in section 3 remain permitted. The relevant distinction is whether You supply Your own application's functionality or outcomes, or commercially supply WOS platform capabilities themselves.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+This license grants no platform resale, reseller, OEM, commercial white-label or paid hosted-platform rights.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+5. WOS name, logo and brand
+
+This software license grants no general trademark, service-mark or branding rights. The limited permissions and restrictions in TRADEMARKS.md apply independently.
+
+You may make truthful descriptive references such as "compatible with WOS", "built with WOS" or "forked from WOS" under that policy. You may not use the WOS brand to sell or market the WOS platform as Your own offering or imply that You are WOS or its official representative.
+
+Using another name or logo does not make prohibited commercial supply permissible. A descriptive reference to WOS does not authorize an activity prohibited by this license.
+
+6. Modifications, distribution and notices
+
+Every permitted distribution must preserve applicable copyright, license and attribution notices and provide recipients with this license, TRADEMARKS.md, NOTICE.md, THIRD_PARTY_NOTICES.md and the applicable license texts and third-party notices. These obligations apply to source and compiled distributions, including packages, container images, installed Skills and embedded copies.
+
+Modified distributions must clearly identify material changes and their independent origin. Do not represent a modified build or fork as an official WOS distribution.
+
+You may not remove or obscure applicable legal notices or represent that material covered exclusively by this license is under unrestricted replacement terms. Your own independent code retains its own applicable terms; distributing it alongside Software does not relicense Licensor's material or require publishing that independent code.
+
+7. Third-party components
+
+Third-party components remain governed by their own licenses. This license does not replace, restrict or expand those licenses. See THIRD_PARTY_NOTICES.md and the license texts and third-party notices included with the applicable artifact.
+
+8. Patent permission
+
+To the extent Licensor owns patent claims necessarily infringed by Software, Licensor grants a worldwide, royalty-free, non-exclusive patent license only as necessary to exercise uses otherwise permitted by this license. This patent permission does not expand the permitted uses or override the restrictions above.
+
+9. Warranty and liability
+
+Software is provided as-is, without warranties or conditions of any kind, express or implied, to the maximum extent permitted by applicable law. To that same maximum extent, Licensor, copyright holders and contributors are not liable for claims or damages arising from use of Software.
+
+10. Termination
+
+Rights under this license terminate automatically upon material violation. If a first curable violation is fully cured within thirty days after written notice describing it, the rights terminated because of that violation are reinstated. Other reinstatement requires written agreement when legally available.
+
+11. No implied rights and earlier grants
+
+No rights are granted by this license except those expressly stated. Applicable third-party licenses, rights independently provided by a repository-hosting service for its own platform functionality, and rights that applicable law does not allow this license to restrict remain unaffected.
+
+Permissions apply to material lawfully distributed under this text. Updating this repository does not relicense copies previously obtained under other applicable terms or revoke previously granted rights. Earlier WOS material distributed under Apache-2.0 remains subject to those grants, including any rights in that material retained in later distributions. The prior license text is preserved in LICENSES/Apache-2.0.txt. Those prior grants do not automatically extend to new material supplied only under this license.

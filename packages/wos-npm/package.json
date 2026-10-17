@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "WOS Go service and API-only wosctl client with HTTP, MCP and human workspace",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "node": ">=22"
   },
@@ -24,7 +24,11 @@
     "release.json",
     "third-party-notices",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "TRADEMARKS.md",
+    "NOTICE.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES"
   ],
   "repository": {
     "type": "git",

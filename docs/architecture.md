@@ -50,3 +50,7 @@ Continuity reads, graph projections, and cursors declare scope, revision, and om
 Triggers emit durable integration signals. Optional webhook delivery has at-least-once semantics, requiring consumer verification and deduplication. Neither triggers nor the server launch agents or execute tools.
 
 See [public contracts](contracts.md), [operations](operations.md), [signed profiles](signed-workspace-profiles.md), and [client qualification](client-qualification.md) for operational details and limits.
+
+## Licensing boundary
+
+Current first-party source uses the WOS Sustainable Use License 1.0, with production and commercial application infrastructure permitted and commercial platform supply excluded. Software permissions, brand rights, upstream licenses and earlier Apache grants remain distinct. [ADR 037](adr/0037-source-available-licensing-and-brand-boundaries.md) records the owner's licensing decision; [the licensing guide](licensing.md) explains it. This supersedes the original specification's Open Source licensing direction without changing its domain or runtime boundaries.

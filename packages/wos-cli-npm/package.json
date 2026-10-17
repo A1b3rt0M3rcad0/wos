@@ -3,7 +3,7 @@
   "version": "0.4.2",
   "description": "Unified native Go wos command for service, signed work, review and offline skills on Linux/Windows x64",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "node": ">=22"
   },
@@ -19,7 +19,11 @@
     "release.json",
     "third-party-notices",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "TRADEMARKS.md",
+    "NOTICE.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES"
   ],
   "repository": {
     "type": "git",

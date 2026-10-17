@@ -3,7 +3,7 @@
 An agent acquires one WorkItem, performs the work in its own runtime, records what happened and the actual proof, and returns a delivery for the required review. A new session can continue from recorded state instead of reconstructing the conversation. WOS coordinates authority and persists shared state; it does not start agents or execute their tools.
 
 > [!NOTE]
-> This guide describes the centralized workflow on `feat/central-agent-workflow`. Published `wosctl` v0.4.2 does not contain these new commands. Use a binary built from this branch and check `wos version --output json` / `wos --help`. Do not assume installing `@latest` installs branch behavior. See [source development](getting-started.md#build-from-source).
+> This guide describes the centralized workflow in the current `master` source. Published `wosctl` v0.4.2 does not contain these new commands. Use a binary built from current source and check `wos version --output json` / `wos --help`. Do not assume installing `@latest` installs source behavior. See [source development](getting-started.md#build-from-source).
 
 ## 1. Install instructions in the external runtime
 

@@ -34,3 +34,7 @@ The original specification proposed numbers, not immutable file identities. Acce
 
 - [ADR-035 — Central CLI installation and pinned profiles](0035-central-cli-installation.md)
 - [ADR-036 — Durable execution activity and attention projections](0036-durable-execution-activity.md)
+
+## Licensing and brand
+
+- [ADR-037 — Source-available licensing and brand boundaries](0037-source-available-licensing-and-brand-boundaries.md)

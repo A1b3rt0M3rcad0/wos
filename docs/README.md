@@ -12,6 +12,8 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | View the current desktop and mobile interface       | [Operational canvas and screenshots](design/operational-canvas/README.md#screenshots) |
 | Inspect every page, native form and recovery state | [Complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
+| See real navigation through the current product     | [Workspace tour](images/workspace-tour.md)                             |
+| Connect a development team or an OaaS product       | [Developers and OaaS](../README.md#for-developers-and-oaas)             |
 | Inspect the README illustration's provenance        | [Original artwork record](images/assets.json)                          |
 
 ## Connect agents and applications
@@ -46,6 +48,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 - [Architecture overview](architecture.md): domain model, invariants, and package boundaries.
 - [Architecture decisions](adr/): accepted choices and rationale.
 - [Dependencies](dependencies.md): toolchain and libraries.
+- [Licensing](licensing.md): production/application use, platform-resale restrictions, brand rights, earlier grants and distribution notices.
 - [Current interface validation](design/operational-canvas/validation.md): automated checks and limitations; [earlier editorial baselines](design/editorial/validation.md) remain dated separately.
 
 Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.
