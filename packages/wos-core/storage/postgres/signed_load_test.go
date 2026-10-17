@@ -107,9 +107,26 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	adminContexts := map[d.ID]context.Context{}
 	namespaceIndexes := map[d.ID]int{}
 	for i := 0; i < namespaceCount; i++ {
-		ns := newID()
-		token := fmt.Sprintf("signed-load-owned-bootstrap-token-at-least-32-%d", i)
-		must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed measured workload"}, "load-admin", token))
+		var ns d.ID
+		token := ""
+		if i == 0 {
+			ns = newID()
+			token = "signed-load-owned-bootstrap-token-at-least-32-0"
+			must(sec.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "signed measured workload"}, "load-admin", token))
+		} else {
+			// Bootstrap is one-shot. Provision subsequent tenant scopes with
+			// the same public administrative use case available to operators.
+			rootNS := namespaces[0]
+			snapshot, err := sec.AdministrativeSnapshot(adminContexts[rootNS], rootNS)
+			must(err)
+			result, secret, err := sec.AdministrativeMutation(adminContexts[rootNS], fmt.Sprintf("signed-load-create-namespace-%d", i), ports.SecurityAdminCommand{Operation: "create_namespace", NamespaceID: rootNS, ExpectedVersion: snapshot.NamespaceVersion, NamespaceName: fmt.Sprintf("Measured tenant %d", i)})
+			must(err)
+			if result.CreatedNamespace == nil || secret == "" {
+				t.Fatal("Namespace provisioning did not return its initial credential")
+			}
+			ns = result.CreatedNamespace.ID
+			token = secret
+		}
 		admin, err := sec.Authenticate(ctx, token)
 		must(err)
 		namespaces = append(namespaces, ns)
@@ -117,6 +134,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		adminContexts[ns] = a.WithIdentity(ctx, admin)
 		namespaceIndexes[ns] = i
 	}
+
 	pub, private, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	fp, e := signing.Fingerprint(pub)
@@ -180,7 +198,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		state.WritersDrained = true
 		state.Version++
 		state.UpdatedAt = now
-		state.UpdatedBy = "load-admin"
+		state.UpdatedBy = admins[ns].PrincipalID
 		state.Reason = "owned test-only fixture, public cutover separately validated"
 		must(protocol.Save(ctx, state, 1))
 	}
@@ -227,7 +245,13 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 	}
 	// The caller creates immutable command/envelope once, outside the retry. Only
 	// transaction_conflict repeats that exact original CID and payload.
-	runJourney := func(service *a.Service, w d.WorkItem, ex, rev signedLoadParticipant) (int, error) {
+	runJourney := func(service *a.Service, w d.WorkItem, ex, rev signedLoadParticipant) (issuedBytes int, journeyErr error) {
+		stage := "acquire_work"
+		defer func() {
+			if journeyErr != nil {
+				journeyErr = fmt.Errorf("%s namespace=%s: %w", stage, w.Scope.NamespaceID, journeyErr)
+			}
+		}()
 		cc := next(ex)
 		acq, e := retrySignedLoadMutation(func() (a.MutationResult[a.WorkContractResult], error) {
 			return service.AcquireSignedWorkContract(ex.ctx, cc, a.AcquireSignedWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: ex.key, TTLSeconds: 300})
@@ -248,6 +272,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		if e != nil {
 			return 0, e
 		}
+		stage = "return_work"
 		accepted, e := retrySignedLoadMutation(func() (a.MutationResult[a.SignedReturnResult], error) {
 			return service.ReturnSignedWork(ex.ctx, cc, a.ReturnSignedWorkCommand{Envelope: env})
 		}, &conflicts, &retries)
@@ -262,6 +287,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		if e != nil {
 			return 0, e
 		}
+		stage = "audit_events_before_review"
 		events, e := store.SnapshotDomainEvents(ctx, w.Scope)
 		if e != nil {
 			return 0, e
@@ -275,6 +301,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		reviewID := d.ID(receipt.ReviewCaseID)
 		// A newly delivered case starts at version 1; acquisition returns the exact
 		// post-acquisition case/version used by the signed decision.
+		stage = "acquire_review"
 		assigned, e := retrySignedLoadMutation(func() (a.MutationResult[a.SignedReviewContractResult], error) {
 			return service.AcquireSignedReviewContract(rev.ctx, cc, a.AcquireSignedReviewContractCommand{Scope: w.Scope, ReviewCaseID: reviewID, ExpectedReviewCaseVersion: 1, SignerKeyID: rev.key, TTLSeconds: 300})
 		}, &conflicts, &retries)
@@ -289,6 +316,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		if e != nil {
 			return 0, e
 		}
+		stage = "return_review"
 		approved, e := retrySignedLoadMutation(func() (a.MutationResult[a.SignedReturnResult], error) {
 			return service.ReturnSignedReview(rev.ctx, cc, a.ReturnSignedReviewCommand{Envelope: env})
 		}, &conflicts, &retries)
@@ -306,6 +334,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		if final.WorkItemLifecycle != "done" || !final.LocalObligationClosed {
 			return 0, fmt.Errorf("unaccepted independent review")
 		}
+		stage = "replay_review"
 		replay, e := retrySignedLoadMutation(func() (a.MutationResult[a.SignedReturnResult], error) {
 			return service.ReturnSignedReview(rev.ctx, cc, a.ReturnSignedReviewCommand{Envelope: env})
 		}, &conflicts, &retries)
@@ -315,6 +344,7 @@ func runSignedLoadCase(t *testing.T, outcomes, history, consumers, namespaceCoun
 		if !replay.IdempotentReplay || string(replay.Value.Receipt.Payload) != string(approved.Value.Receipt.Payload) {
 			return 0, fmt.Errorf("signed decision replay changed original receipt")
 		}
+		stage = "audit_events_after_review"
 		events, e = store.SnapshotDomainEvents(ctx, w.Scope)
 		if e != nil {
 			return 0, e
