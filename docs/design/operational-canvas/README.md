@@ -2,7 +2,7 @@
 
 The canvas brings the selected Outcome, its Objectives, Tasks and related records into one working view. Selecting a note opens the existing detail and action surfaces beside the map. The six purpose-based areas remain available for summaries, complete collections and focused work. The canvas is a presentation of persisted WOS state; arranging a note does not change that state.
 
-This guide records the implementation contract on `feat/visual-operational-canvas`. The automated implementation checks and [integrated gallery](#screenshots) are recorded in [verification](validation.md). The [editorial guide](../editorial/README.md) documents the inherited visual system and its earlier captures.
+This guide records the implementation contract on `feat/visual-operational-canvas`. The automated implementation checks and [integrated gallery](#screenshots) are recorded in [verification](validation.md). The [editorial guide](../editorial/README.md) documents the shared visual system and refreshed main-page captures. The [complete workspace follow-up](workspace/README.md) covers login, every specialist area, documentary details, forms, administration and recovery on desktop and mobile.
 
 ## Read the map
 

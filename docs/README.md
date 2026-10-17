@@ -10,6 +10,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
 | View the current desktop and mobile interface       | [Operational canvas and screenshots](design/operational-canvas/README.md#screenshots) |
+| Inspect every page, native form and recovery state | [Complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
 | Inspect the README illustration's provenance        | [Original artwork record](images/assets.json)                          |
 
@@ -45,7 +46,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 - [Architecture overview](architecture.md): domain model, invariants, and package boundaries.
 - [Architecture decisions](adr/): accepted choices and rationale.
 - [Dependencies](dependencies.md): toolchain and libraries.
-- [Current interface validation](design/editorial/validation.md): automated checks and limitations.
+- [Current interface validation](design/operational-canvas/validation.md): automated checks and limitations; [earlier editorial baselines](design/editorial/validation.md) remain dated separately.
 
 Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.
 

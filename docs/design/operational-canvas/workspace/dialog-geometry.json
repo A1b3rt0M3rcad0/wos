@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-17T02:51:13.833Z",
+  "source_state": "Production asset files at the implementation commit identified below; SHA-256 hashes pin the exact measured inputs.",
+  "browser": "Chromium 149.0.7827.0, headless, reduced motion",
+  "server": "Real native bin/wos server, isolated SQLite database and authenticated browser session; seeded through public commands.",
+  "method": {
+    "comparison": "For each open native dialog, capture the same live DOM with workspace-dialogs.css enabled, disable only that stylesheet, wait two animation frames, capture again, then re-enable it. All other styles, content, fonts, viewport and form state remain fixed.",
+    "measurements": [
+      "DOM element count and order",
+      "bounding rectangle x/y/width/height rounded to 0.001 CSS px",
+      "scrollWidth/scrollHeight/clientWidth/clientHeight/scrollTop",
+      "display/position/overflow",
+      "padding/margins/gap/grid-template-columns",
+      "border widths/font size"
+    ],
+    "outer_nodes": "Native dialog, form, footer and .dialog-heading nodes are compared separately and remain identical in all 28 comparisons.",
+    "scenarios": [
+      "human-form-expanded",
+      "action-menu",
+      "task-detail",
+      "administration-permissions",
+      "technical-json",
+      "roadmap-draft-expanded",
+      "typed-external-context"
+    ]
+  },
+  "totals": {
+    "comparisons": 28,
+    "inspected_elements": 2396,
+    "completely_unchanged_comparisons": 27,
+    "unchanged_outer_comparisons": 28,
+    "identical_elements": 2296,
+    "intentional_reflow_comparisons": 1,
+    "unexpected_differences": 0
+  },
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000,
+      "comparisons": 7,
+      "inspected_elements": 599,
+      "unchanged_comparisons": 7,
+      "intentional_reflows": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "comparisons": 7,
+      "inspected_elements": 599,
+      "unchanged_comparisons": 7,
+      "intentional_reflows": 0
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "comparisons": 7,
+      "inspected_elements": 599,
+      "unchanged_comparisons": 6,
+      "intentional_reflows": 1
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "comparisons": 7,
+      "inspected_elements": 599,
+      "unchanged_comparisons": 7,
+      "intentional_reflows": 0
+    }
+  ],
+  "exception": {
+    "scenario": "roadmap-draft-expanded",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "reason": "Allowing existing fieldsets and Roadmap editor grid children to shrink with min-width: 0 repairs a min-content overflow at 320 CSS px. Controls wrap within the original available width; no column, section or control is moved or added.",
+    "unchanged": [
+      "native dialog rectangle",
+      "form rectangle",
+      "header rectangle",
+      "footer rectangle",
+      "dialog-body client width and height",
+      "scrollTop",
+      "overflow rules"
+    ],
+    "without_stylesheet": {
+      "grid_track_width": 284,
+      "body_scroll_width": 304,
+      "body_scroll_height": 2484,
+      "body_client_width": 279,
+      "body_client_height": 521,
+      "body_scroll_top": 300
+    },
+    "with_stylesheet": {
+      "grid_track_width": 239,
+      "body_scroll_width": 279,
+      "body_scroll_height": 2529,
+      "body_client_width": 279,
+      "body_client_height": 521,
+      "body_scroll_top": 300
+    },
+    "effect": "Removes 25 CSS px of horizontal body overflow. Normal internal text/control reflow increases scroll content height by 45 CSS px, with 100 descendant measurement differences. Outer geometry remains unchanged.",
+    "changed_descendant_measurements": 100
+  },
+  "limitations": [
+    "This is a same-DOM stylesheet isolation check, not a comparison with another source revision or a pixel-image identity claim.",
+    "Covers the seven seeded dialog scenarios at four CSS viewports; it is not exhaustive content or browser-engine coverage.",
+    "Keyboard, focus, accessibility and mutation behavior are covered by separate browser acceptance tests; this report records geometry only."
+  ],
+  "source_sha256": {
+    "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "packages/wos-api/web/assets/roadmap-editor.js": "66aced4036be54bc8bc703730d156870caf542351e2ad2e0d7725824b947e8d5",
+    "packages/wos-api/web/assets/app.js": "d6a4a90e86dc5cf572495b4424a662f2df86dc80daf06c8e5cf2271df3a6a6c9",
+    "packages/wos-api/web/assets/index.html": "1f3693dc885095010a70c11a091d71f749491ff8357372b6777e9f864a2f6761",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "packages/wos-api/web/assets/editorial.css": "e1c0a804e313b4e6420ad6b88640cc148680e52ed6bc737135b4cc609591fe84",
+    "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
+    "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
+    "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d",
+    "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8"
+  },
+  "native_binary_sha256": "37ffb085184c22190eaa7d1b242326b99e78a63b7dec13103d80439c1fdd9795",
+  "implementation_commit": "3fab26ac5c0aafe3a5b812c18b26d89a7c5b71cb"
+}

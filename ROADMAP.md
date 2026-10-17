@@ -68,6 +68,19 @@ Automated acceptance is recorded in [verification](docs/design/operational-canva
 
 Earlier workspace and centralized-agent verification records below describe their own baselines. They do not establish acceptance of this new presentation. Independent human usability and screen-reader validation remain separate from automated checks and screenshots.
 
+### Complete workspace page follow-up — 2026-10-17
+
+The owner requested completion of every remaining page in the same branch and [PR #110](https://github.com/A1b3rt0M3rcad0/wos/pull/110), without merging. The [coverage matrix and gallery](docs/design/operational-canvas/workspace/README.md) include all specialist tabs, authentication/navigation, entry states, details, native forms, settings and technical tools. Source and executed results belong to [verification](docs/design/operational-canvas/validation.md#complete-workspace-follow-up--2026-10-17).
+
+- [x] Apply the shared editorial hierarchy and matte paper to every remaining area; preserve structural grids, original brand/robots/post-its, native surfaces, fixed paper and the existing responsive scale.
+- [x] Make collection metadata and filters appropriate to the actual record; bound Roadmap discovery, search real loaded Activity/Relations/Active Roadmap fields, separate historical plan labels from live records, and retain explicit empty/loading/error recovery.
+- [x] Preserve signed-aware current Task authority in specialist views; use neutral summary counts and persisted-lifecycle Board columns in contract modes without extrapolating legacy lease expiry.
+- [x] Correct native Artifact/Decision creation adapters and keyboard access to conflict comparison; preserve canonical commands, authenticated authorship, permissions, CAS, receipts and exact uncertain intent.
+- [x] Verify child-first Roadmap Draft hydration and an explicit parent removal through local reordering; keep published revisions and operational dependencies unchanged.
+- [x] Complete the final coordinated validation: 79 browser journeys and 38 unit checks pass without skips, native web tests/vet pass, and all 86 documentation captures are refreshed against production inputs at `b038940`. Record per-file hashes and viewport metadata in the gallery manifests.
+
+Exact final-head hosted checks are reported by [PR checks](https://github.com/A1b3rt0M3rcad0/wos/pull/110/checks); earlier green commits are separate evidence. Representative-user review, manual screen-reader use and other browser engines remain unqualified. This follow-up changes no backend schema, CLI/Skill execution protocol, release version or release status.
+
 ## Centralized agent operations — 2026-10-16
 
 **Status:** merged by the maintainer as [PR #109](https://github.com/A1b3rt0M3rcad0/wos/pull/109) into `master` at `14b6708` on 2026-10-16; release publication remains separate. The owner requests coordinated CLI, five Skills, backend, README and documentation changes. The supplied implementation brief and strategic summary define the scope; the detailed plan is maintained under `docs/central-agent-workflow/`.

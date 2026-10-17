@@ -1,6 +1,6 @@
 # Matte workspace modals
 
-The owner requested a color-only continuation of the workspace paper across every modal. The existing four native `<dialog>` roots cover action selection, human/technical command forms, entity details, and workspace administration. No modal markup or application JavaScript changes are needed.
+The owner requested a color-only continuation of the workspace paper across every modal. The existing four native `<dialog>` roots cover action selection, human/technical command forms, entity details, and workspace administration. The original color-only change needed no modal markup or application JavaScript changes. The later [complete workspace follow-up](../operational-canvas/workspace/README.md) adds presentation classes to nested editors and technical fields, with scoped `workspace-dialogs.css` refinements for paper roles, long-label wrapping and focus. Native roots, body/footer ordering, dimensions, scrolling and backdrop remain in charge.
 
 | Role | Existing token | Coverage |
 | --- | --- | --- |

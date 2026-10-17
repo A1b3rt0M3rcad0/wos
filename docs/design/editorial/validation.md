@@ -1,5 +1,7 @@
 # Editorial workspace validation
 
+The current branch's all-page follow-up is recorded in [workspace verification](../operational-canvas/validation.md#complete-workspace-follow-up--2026-10-17), with a [complete gallery](../operational-canvas/workspace/README.md). The 36 main-page images and their [manifest](screenshots.json) are refreshed together. The historical results below describe their original source and date; they are not the acceptance count for the latest UI.
+
 Validated locally on 2026-10-16 (America/Sao_Paulo), against a built native WOS server and isolated SQLite databases. Tooling: Go 1.27.2, Node 24.19.0, locked Playwright 1.62.1, and Chromium 154.0.8037.57 on Linux amd64.
 
 ## Executed checks

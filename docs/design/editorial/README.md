@@ -69,6 +69,8 @@ The planner replacement preserves the existing image path, dimensions, and layou
 
 ## Main pages
 
+The current branch refreshes every capture below after the [complete workspace review](../operational-canvas/workspace/README.md). That guide adds the remaining specialist tabs, documentary details, Roadmap publication, administration forms, empty/loading/error states and mobile conflict recovery. Current verification is recorded [with the Canvas follow-up](../operational-canvas/validation.md); the older validation page retains its dated baselines.
+
 These 36 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Main desktop viewports are 1440 × 1000 CSS px, mobile viewports are 390 × 844, and the scale comparison includes Full HD, 2K, and 4K. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
 ### Sign in
