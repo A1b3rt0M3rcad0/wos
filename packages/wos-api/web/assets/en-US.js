@@ -3,6 +3,8 @@ export const copy = Object.freeze({
   locale: "en-US",
   text: Object.freeze({
     workspaceReviewCriteria: "Review success criteria",
+    workspaceContractFilterReset:
+      "Legacy readiness filters do not describe current contract authority. All Tasks is shown; open a Task to inspect its current execution and review context.",
     workspaceMissingPlanReference:
       "This published reference has no current record in this view. Inspect its Roadmap for the historical plan.",
     workspaceHistoricalPlanLabel: "Plan: {0} · Revision {1}",

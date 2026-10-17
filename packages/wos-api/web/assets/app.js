@@ -46,6 +46,7 @@ const state = {
   snapshot: null,
   section: "work_items",
   view: "canvas",
+  workFilterReset: false,
   area: "canvas",
   restoringRoute: false,
   generation: 0,
@@ -1196,6 +1197,21 @@ const sectionIcons = {
   conclusion_contestations: "alert",
 };
 function renderTabs() {
+  const contractWork = usesWorkContracts();
+  const terminalSections = ["work_items", "done_work", "cancelled_work"];
+  for (const option of $("work-status").options) {
+    option.disabled = contractWork && !terminalSections.includes(option.value);
+    option.hidden = option.disabled;
+  }
+  state.workFilterReset =
+    contractWork &&
+    state.area === "work" &&
+    !terminalSections.includes(state.section);
+  if (state.workFilterReset) {
+    state.section = "work_items";
+    writeRoute(undefined, true);
+  }
+  $("work-status").value = state.section;
   $("area-tabs").replaceChildren();
   for (const [area, definition] of Object.entries(areas)) {
     const b = actionButton(definition.label, () => navigateArea(area), "quiet");
@@ -1266,6 +1282,8 @@ async function restoreRoute(route) {
     else closeDetail();
   } finally {
     state.restoringRoute = false;
+    if (state.area === "work" && state.section !== route.section)
+      writeRoute(route.item, true);
   }
 }
 window.addEventListener("popstate", () => {
@@ -2328,6 +2346,10 @@ async function renderSection(cursor = "", append = false) {
   );
   content.append(heading);
   content.append(el("p", sectionGuidance(), "collection-guidance"));
+  if (state.workFilterReset)
+    content.append(
+      el("p", copy.text.workspaceContractFilterReset, "section-note"),
+    );
   if (globalWork)
     content.append(
       el(
