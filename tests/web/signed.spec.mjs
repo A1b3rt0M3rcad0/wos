@@ -415,7 +415,9 @@ for (const decision of ["approved", "changes_requested"])
           .click();
         await activePage.locator('#area-tabs [data-area="overview"]').click();
         const overview = activePage.locator("#summary-content");
-        await expect(overview.getByText("Open work", { exact: true })).toBeVisible();
+        await expect(
+          overview.getByText("Open work", { exact: true }),
+        ).toBeVisible();
         await expect(
           overview.getByText("Blocked / needs attention", { exact: true }),
         ).toHaveCount(0);
@@ -429,6 +431,50 @@ for (const decision of ["approved", "changes_requested"])
         await expect(workListRow).not.toContainText(
           /lease expired|needs attention/i,
         );
+        const availableStatuses = await activePage
+          .locator("#work-status option")
+          .evaluateAll((options) =>
+            options
+              .filter((option) => !option.disabled && !option.hidden)
+              .map((option) => option.value),
+          );
+        expect(availableStatuses).toEqual([
+          "work_items",
+          "done_work",
+          "cancelled_work",
+        ]);
+        for (const value of [
+          "ready_work",
+          "attention_needed_work",
+          "in_progress_work",
+        ])
+          expect(
+            await activePage
+              .locator(`#work-status option[value="${value}"]`)
+              .evaluate((option) => option.disabled || option.hidden),
+          ).toBe(true);
+        const legacyReadinessLink = new URL(activePage.url());
+        legacyReadinessLink.searchParams.set(
+          "section",
+          "attention_needed_work",
+        );
+        legacyReadinessLink.searchParams.set("view", "list");
+        await activePage.goto(legacyReadinessLink.href);
+        await expect(activePage.locator("#work-status")).toHaveValue(
+          "work_items",
+        );
+        await expect(activePage).toHaveURL(
+          (url) =>
+            url.searchParams.get("section") === "work_items" &&
+            url.searchParams.get("area") === "work",
+        );
+        await expect(workListRow.locator(".item-state")).toHaveText(
+          "In progress",
+        );
+        await expect(workListRow).not.toContainText(
+          /lease expired|needs attention/i,
+        );
+        await expect(activePage.locator("#notice")).not.toHaveClass(/error/);
         await activePage
           .getByRole("button", { name: "Board", exact: true })
           .click();
