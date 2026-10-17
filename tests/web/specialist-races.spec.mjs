@@ -1,4 +1,4 @@
-import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
 
 const base = (scope) =>
   `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -90,6 +90,59 @@ async function openSpecialist(page, wos, outcome, area) {
     page.locator(`#area-tabs [data-area="${area}"]`),
   ).toHaveAttribute("aria-pressed", "true");
 }
+
+test("a committed command stays busy through refresh, then keyboard actions reopen on mobile", async ({
+  page,
+  wos,
+}) => {
+  const { value: outcome, scope } = await wos.outcome(
+    "A command is complete after its shared state refresh",
+  );
+  await openSpecialist(page, wos, outcome, "overview");
+  await intent(page, "Edit outcome");
+  const title = "A committed change with its refresh still pending";
+  await page.getByLabel("Outcome name", { exact: true }).fill(title);
+  const writes = trackBrowserWrites(page);
+  const hold = await gatedReads(page);
+  const discovery = hold(
+    (url) => url.pathname === `/api/v1/namespaces/${scope.namespace_id}/outcomes`,
+  );
+  try {
+    await page.locator("#submit-command").click();
+    const refreshed = await discovery.arrived;
+    expect(refreshed.status).toBe(200);
+    const persisted = (await wos.api(base(scope))).value;
+    expect(persisted.title).toBe(title);
+    expect(persisted.version).toBe(outcome.version + 1);
+    // Closing the modal acknowledges the commit. The command remains busy
+    // until the genuine post-commit reads have installed the refreshed state.
+    await expect(page.locator("#command-dialog")).not.toBeVisible();
+    await expect(page.locator("#submit-command")).toBeDisabled();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#actions").focus();
+    await expect(page.locator("#actions")).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#action-dialog")).not.toBeVisible();
+    await expect(page.locator("#notice")).toHaveText(
+      "Wait for the current change to finish before starting another.",
+    );
+    expect(writes).toHaveLength(1);
+    await deliver(page, discovery, refreshed.url);
+    await expect(page.locator("#submit-command")).toBeEnabled();
+    await expect(page.locator("#title")).toHaveText(title);
+    await expect(page.locator("#notice")).not.toHaveClass(/error/);
+    await page.locator("#actions").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#action-dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#action-dialog")).not.toBeVisible();
+    await expect(page.locator("#actions")).toBeFocused();
+    expect(writes).toHaveLength(1);
+  } finally {
+    discovery.release();
+    if (discovery.started) await discovery.done;
+  }
+});
 
 test("an old Roadmap list cannot refill a new snapshot's cache while refresh permissions are pending", async ({
   page,

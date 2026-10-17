@@ -152,6 +152,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       await page.locator("#submit-command").click();
       try {
         await expect(page.locator("#command-dialog")).not.toBeVisible();
+        await expect(page.locator("#submit-command")).toBeEnabled();
       } catch (error) {
         throw new Error(
           (await page.locator("#command-error").textContent()) ||
@@ -464,6 +465,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
     await page.locator("#submit-command").click();
     try {
       await expect(page.locator("#command-dialog")).not.toBeVisible();
+      await expect(page.locator("#submit-command")).toBeEnabled();
     } catch (error) {
       throw new Error(
         (await page.locator("#command-error").textContent()) ||
