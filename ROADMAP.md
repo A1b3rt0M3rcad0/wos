@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-16
+**Last reviewed:** 2026-10-17
 **Current target:** Stable 1.0 hardening; public npm package wosctl
 **Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
 
@@ -52,7 +52,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Visual operational workspace — 2026-10-16
 
-**Status:** automated implementation verified on `feat/visual-operational-canvas`, based on `master` at `14b6708`. The owner requests one new PR with coherent commits, without merging. This is a presentation extension of the existing human workspace and centralized-agent APIs, not a new backend wave or a release qualification.
+**Status:** merged with the owner's authorization as [PR #110](https://github.com/A1b3rt0M3rcad0/wos/pull/110) into `master` at `c321b95` on 2026-10-17. The implementation was verified on `feat/visual-operational-canvas`, based on `master` at `14b6708`. This is a presentation extension of the existing human workspace and centralized-agent APIs, not a new backend wave or a release qualification.
 
 The implementation brings existing Outcome context into a default canvas with real Objective hierarchy, Task ownership, typed operational connections, optional Roadmap overlays and contextual use of existing detail/forms/actions. Native ES modules retain the approved editorial identity, existing responsive scale and original supplied post-it artwork. Domain models, signed authority, independent review, authorization, CAS and exact-intent recovery remain authoritative. See [architecture, behavior and decisions](docs/design/operational-canvas/README.md), [workspace operation](docs/workspace-ux.md) and [source-asset provenance](docs/design/operational-canvas/postits/README.md).
 
@@ -70,7 +70,7 @@ Earlier workspace and centralized-agent verification records below describe thei
 
 ### Complete workspace page follow-up — 2026-10-17
 
-The owner requested completion of every remaining page in the same branch and [PR #110](https://github.com/A1b3rt0M3rcad0/wos/pull/110), without merging. The [coverage matrix and gallery](docs/design/operational-canvas/workspace/README.md) include all specialist tabs, authentication/navigation, entry states, details, native forms, settings and technical tools. Source and executed results belong to [verification](docs/design/operational-canvas/validation.md#complete-workspace-follow-up--2026-10-17).
+The owner requested completion of every remaining page in the same branch and [PR #110](https://github.com/A1b3rt0M3rcad0/wos/pull/110), initially without merging, and subsequently authorized its merge. The [coverage matrix and gallery](docs/design/operational-canvas/workspace/README.md) include all specialist tabs, authentication/navigation, entry states, details, native forms, settings and technical tools. Source and executed results belong to [verification](docs/design/operational-canvas/validation.md#complete-workspace-follow-up--2026-10-17).
 
 - [x] Apply the shared editorial hierarchy and matte paper to every remaining area; preserve structural grids, original brand/robots/post-its, native surfaces, fixed paper and the existing responsive scale.
 - [x] Make collection metadata and filters appropriate to the actual record; bound Roadmap discovery, search real loaded Activity/Relations/Active Roadmap fields, separate historical plan labels from live records, and retain explicit empty/loading/error recovery.
@@ -81,6 +81,12 @@ The owner requested completion of every remaining page in the same branch and [P
 - [x] Complete the final coordinated validation: 80 browser journeys and 38 unit checks pass without skips, native web tests/vet pass, and all 86 documentation captures are refreshed against production inputs at `b745ec5`, including Task-specific guidance in secondary Work filters. Record per-file hashes and viewport metadata in the gallery manifests.
 
 Exact final-head hosted checks are reported by [PR checks](https://github.com/A1b3rt0M3rcad0/wos/pull/110/checks); earlier green commits are separate evidence. Representative-user review, manual screen-reader use and other browser engines remain unqualified. This follow-up changes no backend schema, CLI/Skill execution protocol, release version or release status.
+
+### Product explanation and browser tour — 2026-10-17
+
+The owner requested a more useful README demonstration and a clearer explanation for developers and Outcome-as-a-Service (OaaS) products. This documentation follow-up replaces the README's terminal animation with real workspace navigation, connects the result/work/delivery/review model to a concrete software example, and presents OaaS as an integration pattern with external execution, customer management and billing. Detailed CLI provisioning, signing and recovery remain in their existing guides. The published v0.4.2 and current-source distinction remains explicit; no domain, runtime or commercial-service capability is added.
+
+- [x] Verify the seven-state real navigation tour (28 seconds), static alternative and capture provenance; review README claims, local links and preserved incoming anchors; inspect GFM output in Chromium at 1280, 390 and 320 CSS pixels with details closed/open and all images decoded. Record executed scope and limits in [README validation](docs/readme-validation.md).
 
 ## Centralized agent operations — 2026-10-16
 

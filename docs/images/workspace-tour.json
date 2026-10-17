@@ -1,0 +1,127 @@
+{
+  "captured_at": "2026-10-17T16:21:10.585Z",
+  "source_commit": "c321b951c23e08af62a32a92c1ac39794b4f0b37",
+  "method": "Seven genuine browser screenshots held for four seconds each. The browser navigates a real loopback WOS server and isolated SQLite database seeded through public command APIs; no invented UI, overlays, external execution, assessment, or acceptance.",
+  "source_inputs_sha256": {
+    "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
+    "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+    "packages/wos-api/web/assets/app.js": "cb49166a920e32d35083f1f4f04c200ef2030c2159824ff0e02fade8b4b1d0b7",
+    "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
+    "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
+    "packages/wos-api/web/assets/canvas.css": "8eb1021eedee49e9607e312b485146e98408f714bee346f17cf441a8d67e3c2d",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
+    "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
+    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
+    "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "packages/wos-api/web/assets/en-US.js": "b52179ee869412f6d4db08f0db9ec0a3ae8a6e8b9d4dbb93d5b5843821c7f78c",
+    "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
+    "packages/wos-api/web/assets/index.html": "1f3693dc885095010a70c11a091d71f749491ff8357372b6777e9f864a2f6761",
+    "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
+    "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "packages/wos-api/web/assets/reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "packages/wos-api/web/assets/workspace-canvas.js": "ab8a66b1b7010c14da01c1d51a905a8a2c19ad588404bd80ae12e4363f99b417",
+    "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "packages/wos-api/web/assets/workspace-entry.css": "513e5dfb324ea04b91f9146a673067b24575422774e5312854dbc4731bf236be",
+    "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
+  },
+  "recorder": "tools/documentation/record-workspace-tour.mjs",
+  "recorder_sha256": "855d5217c201a0189b632389603656da447b4c1d7ec600cd90d9711ae90f34e8",
+  "shared_navigation_helper": "tests/web/ux-fixture.mjs",
+  "shared_navigation_helper_sha256": "a23bd828c0d1db0540bb5ec7b209e794ab38fd300de9d600e1145aaa5fa97136",
+  "binary_sha256": "c822f9626ff930ac1cd8b7a2656fd88894f47d5e48adc253d4c88a1cfeebbc56",
+  "binary_source_attestation": "Every served top-level JS/CSS/HTML/JSON web input is byte-identical to source. The native binary hash is recorded; no stronger native binary-to-source build attestation is claimed.",
+  "chromium": "154.0.8037.57",
+  "playwright": "1.62.1",
+  "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium node tools/documentation/record-workspace-tour.mjs",
+  "viewport_css": {
+    "width": 1280,
+    "height": 1100
+  },
+  "device_scale_factor": 1,
+  "gif": {
+    "file": "docs/images/workspace-tour.gif",
+    "sha256": "cbf6388e965595acc5a809b4473532b64f4b3b378409b48dfd377fe1d506605b",
+    "pixel_size": {
+      "width": 1120,
+      "height": 963
+    },
+    "duration_seconds": 28,
+    "fps": 2,
+    "loop": true
+  },
+  "poster": {
+    "file": "docs/images/workspace-tour.png",
+    "sha256": "439465e02a288c19ac6b3ba930f04ed1ab977d8c3b995ba7347b65d0a290e977",
+    "pixel_size": {
+      "width": 1280,
+      "height": 1100
+    }
+  },
+  "sequence": [
+    {
+      "name": "Canvas: one Outcome, related Tasks, and explicit dependencies",
+      "start_seconds": 0,
+      "duration_seconds": 4,
+      "sha256": "439465e02a288c19ac6b3ba930f04ed1ab977d8c3b995ba7347b65d0a290e977"
+    },
+    {
+      "name": "Task inspector: delivery scope and execution boundary",
+      "start_seconds": 4,
+      "duration_seconds": 4,
+      "sha256": "57738f369825f4b3470f92c7496066655f757331db14cb678fb12c9a543819e4"
+    },
+    {
+      "name": "Work: a completed implementation and separate review Task",
+      "start_seconds": 8,
+      "duration_seconds": 4,
+      "sha256": "7560c5d08059a9eddcd59e26ae1cad1e7e71c9992745e7fe0ed941ede81dffad"
+    },
+    {
+      "name": "Evidence: a persisted observation, available for review",
+      "start_seconds": 12,
+      "duration_seconds": 4,
+      "sha256": "f47a519fd053d0d3cee69920ae742f1df671350315717d9d065c38d58c20aa78"
+    },
+    {
+      "name": "Evidence detail: report provenance",
+      "start_seconds": 16,
+      "duration_seconds": 4,
+      "sha256": "4b96a5b73676a751a22aff214b944274e81e1b8de68a867f9e6e893172c74990"
+    },
+    {
+      "name": "Overview: work progress does not automatically verify the Outcome",
+      "start_seconds": 20,
+      "duration_seconds": 4,
+      "sha256": "3758d88f665c0ff924926cd5624be67cc2f1485405574c70b98635053772cbfd"
+    },
+    {
+      "name": "Success criteria: independent review and explicit acceptance remain pending",
+      "start_seconds": 24,
+      "duration_seconds": 4,
+      "sha256": "d8476af94386b376adb75fb689f2688a676fa67d1e0951542a7c8d5f52ea4008"
+    }
+  ],
+  "assertions": [
+    "Every embedded top-level web input matches source",
+    "Every page and detail renders its expected persisted record",
+    "No page-level horizontal overflow",
+    "All visible images decode",
+    "No browser script errors",
+    "No failed same-origin HTTP responses during authenticated navigation",
+    "No browser domain mutation requests during navigation",
+    "Outcome remains Active, with unchanged version, no criterion assessment, and no Conclusion"
+  ],
+  "limitations": [
+    "Illustrative content, not a real refund implementation or test result",
+    "One trusted local operator seeds unsigned example records; no signed independent-review demonstration",
+    "Navigation only; WOS does not execute, test, review, publish, or bill on behalf of participants",
+    "Readability demonstration in Chromium desktop; not a new cross-platform or accessibility qualification"
+  ]
+}

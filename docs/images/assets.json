@@ -19,25 +19,13 @@
     "preserved_original": true,
     "readme_width": 240
   },
-  "readme_illustration_width": 360,
+  "readme_illustration_width": 280,
   "product_screenshots": [
     {
-      "file": "docs/design/editorial/screenshots/04-work.png",
-      "sha256": "17043f0ce187898bb3f073b2641199a1f043434ec0b1726018a165bab12a5d03",
-      "provenance": "docs/design/editorial/screenshots.json",
-      "role": "Primary product screenshot"
-    },
-    {
-      "file": "docs/design/editorial/screenshots/07-evidence.png",
-      "sha256": "2603e1118636291d8aa40b5a00167695050dacaec1a351ebc2ba6a883a587fa1",
-      "provenance": "docs/design/editorial/screenshots.json",
-      "role": "Expandable Evidence view"
-    },
-    {
-      "file": "docs/design/editorial/screenshots/01-login.png",
-      "sha256": "e31f4d7bda098b2095f5135e83a0ae61a06385e953f00fc219f04da42f991fc5",
-      "provenance": "docs/design/editorial/screenshots.json",
-      "role": "Source branch sign-in preview"
+      "file": "docs/images/workspace-tour.png",
+      "sha256": "439465e02a288c19ac6b3ba930f04ed1ab977d8c3b995ba7347b65d0a290e977",
+      "provenance": "docs/images/workspace-tour.json",
+      "role": "Static alternative to the README product tour; real illustrative persisted records"
     }
   ],
   "terminal_demo": {
@@ -45,7 +33,8 @@
     "sha256": "142b58378dab3b1e266f3cadce2cf005bb4f84892ff2c449924ecd3bd9b923b3",
     "render_provenance": "docs/images/quickstart.json",
     "recording_provenance": "examples/quickstart/demo.provenance.json",
-    "scope": "Real unsigned local HTTP lifecycle performed by one trusted operator; no signed independent-review claim."
+    "scope": "Real unsigned local HTTP lifecycle performed by one trusted operator; no signed independent-review claim.",
+    "role": "Historical unsigned example recording, retained with its provenance; no longer embedded in the README"
   },
   "static_badges": {
     "meaning": "Version badges identify the verified published baseline; the Go badge identifies the source build pin. Links point to releases, npm, toolchain and license. CI uses the live master workflow badge with its own label.",
@@ -68,5 +57,12 @@
         "sha256": "070cbaa15d7086585ce7779a832f452e2158afb3a1dbe61a47a83401d21763f9"
       }
     ]
+  },
+  "workspace_tour": {
+    "file": "docs/images/workspace-tour.gif",
+    "sha256": "cbf6388e965595acc5a809b4473532b64f4b3b378409b48dfd377fe1d506605b",
+    "provenance": "docs/images/workspace-tour.json",
+    "guide": "docs/images/workspace-tour.md",
+    "scope": "Real read-only workspace navigation of illustrative records; completed Task and unassessed Outcome criteria remain distinct."
   }
 }
