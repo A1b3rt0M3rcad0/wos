@@ -48,6 +48,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 - [Architecture overview](architecture.md): domain model, invariants, and package boundaries.
 - [Architecture decisions](adr/): accepted choices and rationale.
 - [Dependencies](dependencies.md): toolchain and libraries.
+- [Licensing](licensing.md): production/application use, platform-resale restrictions, brand rights, earlier grants and distribution notices.
 - [Current interface validation](design/operational-canvas/validation.md): automated checks and limitations; [earlier editorial baselines](design/editorial/validation.md) remain dated separately.
 
 Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.

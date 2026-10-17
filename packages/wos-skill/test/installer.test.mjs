@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { destinations, names, operate, packageRoot } from '../lib/installer.mjs';
+import { destinations, legalFiles, names, operate, packageRoot } from '../lib/installer.mjs';
 
 async function fixture(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'wos-skill-'));
@@ -24,7 +24,13 @@ test('all-agent installation is repeatable, dry-run makes no files, updates mana
   const root = await fixture(t); const opts={agent:'all',project:root};
   assert.equal((await operate('install',{...opts,dryRun:true})).length,names.length*4);
   assert.deepEqual(await fs.readdir(root),[]);
-  assert.ok((await operate('install',opts)).every(x=>x.action==='install'));
+  const installed=await operate('install',opts);
+  assert.ok(installed.every(x=>x.action==='install'));
+  for(const item of installed) {
+    for(const filename of legalFiles) {
+      assert.deepEqual(await fs.readFile(path.join(item.target,filename)),await fs.readFile(path.join(packageRoot,'../..',filename)),filename+' differs from root legal terms');
+    }
+  }
   assert.ok((await operate('doctor',opts)).every(x=>x.action==='installed'));
   assert.ok((await operate('install',opts)).every(x=>x.action==='unchanged'));
   const marker=path.join(root,'.agents/skills/wos-coordination/.wos-skill.json');
@@ -32,6 +38,25 @@ test('all-agent installation is repeatable, dry-run makes no files, updates mana
   assert.equal((await operate('update',opts)).filter(x=>x.action==='update').length,1);
   assert.ok((await operate('uninstall',opts)).every(x=>x.action==='remove'));
   assert.ok((await operate('uninstall',opts)).every(x=>x.action==='absent'));
+});
+
+test('intact older managed Skills gain legal files while edited legal files remain protected', async t => {
+  const root=await fixture(t), opts={agent:'codex',project:root};
+  const installed=await operate('install',opts);
+  const target=installed[0].target, marker=path.join(target,'.wos-skill.json');
+  const prior=JSON.parse(await fs.readFile(marker,'utf8'));
+  for(const filename of legalFiles) {
+    await fs.rm(path.join(target,filename));
+    delete prior.files[filename];
+  }
+  await fs.writeFile(marker,JSON.stringify(prior));
+  assert.equal((await operate('update',opts)).filter(item=>item.action==='update').length,1);
+  for(const filename of legalFiles) assert.deepEqual(await fs.readFile(path.join(target,filename)),await fs.readFile(path.join(packageRoot,filename)));
+  const notice=path.join(target,'NOTICE.md');
+  await fs.appendFile(notice,'\nLocal notice\n');
+  await assert.rejects(operate('update',opts),/Locally modified/);
+  await assert.rejects(operate('uninstall',opts),/Locally modified/);
+  assert.match(await fs.readFile(notice,'utf8'),/Local notice/);
 });
 
 test('user edits, unmanaged bundles, extra files and symlinks are preserved before any write', async t => {

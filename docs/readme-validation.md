@@ -1,6 +1,6 @@
 # README validation
 
-Validated on 2026-10-17 for the product explanation and workspace-tour follow-up, using application source at `c321b95`. Changes are limited to documentation, media and its recording helper. Server, CLI, API, database and web application behavior are unchanged.
+This record covers the product explanation and workspace-tour follow-up committed at `8e2e83b` on 2026-10-17, using application source at `c321b95`. That baseline changed documentation, media and its recording helper. The subsequent licensing, distribution and managed Skill-notice changes are qualified separately in [licensing validation](licensing-validation.md); the captured tour keeps its original source provenance.
 
 ## Executed checks
 

@@ -31,6 +31,16 @@ func TestNativeSkillInstallInspectUpdateAndRemove(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(action.Target, "SKILL.md")); err != nil {
 			t.Fatal(err)
 		}
+		for _, filename := range legalFiles {
+			expected, err := os.ReadFile(filepath.Join("..", "..", filepath.FromSlash(filename)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			actual, err := os.ReadFile(filepath.Join(action.Target, filepath.FromSlash(filename)))
+			if err != nil || !bytes.Equal(actual, expected) {
+				t.Fatalf("installed legal file differs from source: %s, %v", filename, err)
+			}
+		}
 	}
 	check, err := Operate("doctor", opts)
 	if err != nil || check[0].Action != "installed" {
@@ -74,6 +84,74 @@ func TestNativeSkillInstallInspectUpdateAndRemove(t *testing.T) {
 		if _, err := os.Stat(action.Target); !errors.Is(err, os.ErrNotExist) {
 			t.Fatalf("not removed: %s %v", action.Target, err)
 		}
+	}
+}
+
+func TestNativeInstallerUpgradesManagedBundlesWithoutLegalFiles(t *testing.T) {
+	opts := Options{Project: t.TempDir(), Agent: "codex"}
+	installed, err := Operate("install", opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Simulate an intact older installer bundle: its ownership manifest has no
+	// legal files. Updating it must add notices without treating it as edited.
+	for _, item := range installed {
+		marker := filepath.Join(item.Target, markerFile)
+		content, err := os.ReadFile(marker)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var m manifest
+		if err := json.Unmarshal(content, &m); err != nil {
+			t.Fatal(err)
+		}
+		for _, filename := range legalFiles {
+			if err := os.Remove(filepath.Join(item.Target, filepath.FromSlash(filename))); err != nil {
+				t.Fatal(err)
+			}
+			delete(m.Files, filename)
+		}
+		content, err = json.Marshal(m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(marker, content, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	updated, err := Operate("update", opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range updated {
+		if item.Action != "update" {
+			t.Fatalf("missing legal files were not restored: %+v", item)
+		}
+	}
+	for _, filename := range legalFiles {
+		if _, err := os.Stat(filepath.Join(updated[0].Target, filepath.FromSlash(filename))); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestNativeInstallerPreservesModifiedLegalFiles(t *testing.T) {
+	opts := Options{Project: t.TempDir(), Agent: "codex"}
+	installed, err := Operate("install", opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	notice := filepath.Join(installed[0].Target, "NOTICE.md")
+	if err := os.WriteFile(notice, []byte("local notice"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, command := range []string{"update", "uninstall"} {
+		if _, err := Operate(command, opts); err == nil || !strings.Contains(err.Error(), "locally modified") {
+			t.Fatalf("%s replaced edited legal material: %v", command, err)
+		}
+	}
+	if data, err := os.ReadFile(notice); err != nil || string(data) != "local notice" {
+		t.Fatalf("modified notice lost: %q %v", data, err)
 	}
 }
 

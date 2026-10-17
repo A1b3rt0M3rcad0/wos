@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { copyLegalFiles, legalEntries, npmLicense } from './legal.mjs';
 
 export const root = fileURLToPath(new URL('../../', import.meta.url));
 export const sha256 = data => createHash('sha256').update(data).digest('hex');
@@ -40,13 +41,14 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.rm(stage,{recursive:true,force:true}); await fs.mkdir(stage,{recursive:true});
     const pkg = JSON.parse(await fs.readFile(path.join(source,'packages',src,'package.json'),'utf8'));
     if (pkg.version !== version || pkg.scripts?.preinstall || pkg.scripts?.install || pkg.scripts?.postinstall || pkg.scripts?.prepare) throw new Error('Version mismatch or unexpected lifecycle script');
-    for (const entry of pkg.files.filter(f=>!['native','schemas','release.json','LICENSE','third-party-notices'].includes(f))) {
+    if (pkg.license !== npmLicense || !legalEntries.every(filename => pkg.files.includes(filename))) throw new Error('Incomplete WOS license metadata');
+    for (const entry of pkg.files.filter(f=>!['native','schemas','release.json',...legalEntries,'third-party-notices'].includes(f))) {
       await fs.cp(path.join(source,'packages',src,entry),path.join(stage,entry),{recursive:true});
     }
     // Do not advertise test scripts when test sources are intentionally excluded.
     delete pkg.scripts;
     await fs.writeFile(path.join(stage,'package.json'),JSON.stringify(pkg,null,2)+'\n');
-    await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));
+    await copyLegalFiles(source, stage);
     stages[kind] = {stage,pkg};
     if (kind === 'wos' || kind === 'wos-cli') await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});
   }
@@ -87,7 +89,8 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     artifacts.push({kind,name:pkg.name,version,filename,integrity:pack.integrity,sha256:sha256(await fs.readFile(path.join(output,filename)))});
   }
   const archiveStage=path.join(output,'archive'); await fs.rm(archiveStage,{recursive:true,force:true}); await fs.mkdir(archiveStage);
-  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(source,'LICENSE'),'LICENSE'],[path.join(output,'server-release.json'),'release.json'],[path.join(source,'packages/wos-cli-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
+  for(const [src,name] of [[path.join(native,'wos'),'wos'],[path.join(native,'wosctl'),'wosctl'],[path.join(output,'server-release.json'),'release.json'],[path.join(source,'packages/wos-cli-npm/README.md'),'README.md']]) await fs.copyFile(src,path.join(archiveStage,name));
+  await copyLegalFiles(source, archiveStage);
   await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(archiveStage,'third-party-notices'),{recursive:true});
   await fs.cp(path.join(stages['wos-cli'].stage,'schemas'),path.join(archiveStage,'schemas'),{recursive:true});
   await normalize(archiveStage);
@@ -102,7 +105,7 @@ export async function buildDistribution({ output = path.join(root, 'dist'), sour
     await fs.copyFile(path.join(cliNative,platform+'-amd64',primary),path.join(stage,primary));
     const clientRelease={schema:1,version,commit,built_at:builtAt,platform,arch:'amd64',sha256:sha256(await fs.readFile(path.join(stage,executable))),wos_sha256:sha256(await fs.readFile(path.join(stage,primary))),work_protocol:'signed_contracts_v2',workspace_schema:2,supported_work_protocols:['contracts_v1','signed_contracts_v2'],supported_workspace_schemas:[1,2]};
     await fs.writeFile(path.join(stage,'release.json'),JSON.stringify(clientRelease,null,2)+'\n');
-    await fs.copyFile(path.join(source,'LICENSE'),path.join(stage,'LICENSE'));await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
+    await copyLegalFiles(source, stage);await fs.copyFile(path.join(source,'packages/wos-cli/README.md'),path.join(stage,'README.md'));await fs.cp(path.join(source,'packages/wos-cli/schemas'),path.join(stage,'schemas'),{recursive:true});await fs.cp(path.join(stages['wos-cli'].stage,'third-party-notices'),path.join(stage,'third-party-notices'),{recursive:true});await normalize(stage);
     const filename=`wosctl_${version}_${platform}_amd64.${platform==='windows'?'zip':'tar.gz'}`;
     if(platform==='windows')run('python3',['tools/distribution/zip.py',stage,path.join(output,filename),epoch],{cwd:source});
     else run('tar',['--sort=name',`--mtime=@${epoch}`,'--owner=0','--group=0','--numeric-owner','-czf',path.join(output,filename),'-C',stage,'.']);

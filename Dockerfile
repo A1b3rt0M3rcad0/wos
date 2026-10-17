@@ -24,7 +24,7 @@ ARG WOS_COMMIT=unknown
 ARG WOS_BUILT_AT=unknown
 LABEL org.opencontainers.image.title="WOS" \
       org.opencontainers.image.source="https://github.com/A1b3rt0M3rcad0/wos" \
-      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.licenses="LicenseRef-WOS-Sustainable-Use-1.0" \
       org.opencontainers.image.version="${WOS_VERSION}" \
       org.opencontainers.image.revision="${WOS_COMMIT}" \
       org.opencontainers.image.created="${WOS_BUILT_AT}"
@@ -35,7 +35,8 @@ COPY --chmod=0555 deploy/shared/entrypoint.sh /usr/local/lib/wos/shared-entrypoi
 COPY --from=build /wos /usr/local/bin/wos
 COPY --from=build /wosctl /usr/local/bin/wosctl
 COPY --from=build /licenses /usr/share/doc/wos/third-party-notices
-COPY LICENSE /usr/share/doc/wos/LICENSE
+COPY LICENSE TRADEMARKS.md NOTICE.md THIRD_PARTY_NOTICES.md /usr/share/doc/wos/
+COPY LICENSES /usr/share/doc/wos/LICENSES
 USER 10001:10001
 ENV WOS_SQLITE_PATH=/data/wos.db
 EXPOSE 8080

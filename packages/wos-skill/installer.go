@@ -25,9 +25,11 @@ var skillNames = []string{
 	"wos-coordination", "wos-delegation", "wos-continuity", "wos-review", "wos-workspace",
 }
 
+var legalFiles = []string{"LICENSE", "TRADEMARKS.md", "NOTICE.md", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt"}
+
 // The Go service embeds the same source used by the standalone npm skill installer.
 //
-//go:embed skills package.json
+//go:embed skills package.json LICENSE TRADEMARKS.md NOTICE.md THIRD_PARTY_NOTICES.md LICENSES
 var assets embed.FS
 
 type Options struct {
@@ -418,6 +420,18 @@ func bundledFiles(name string) (map[string][]byte, map[string]string, error) {
 	}
 	if len(files) == 0 || len(files["SKILL.md"]) == 0 {
 		return nil, nil, fmt.Errorf("incomplete embedded skill: %s", name)
+	}
+	for _, filename := range legalFiles {
+		data, err := assets.ReadFile(filename)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(data) == 0 {
+			return nil, nil, fmt.Errorf("empty embedded legal file: %s", filename)
+		}
+		hash := sha256.Sum256(data)
+		files[filename] = data
+		digests[filename] = hex.EncodeToString(hash[:])
 	}
 	return files, digests, nil
 }

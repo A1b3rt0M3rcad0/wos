@@ -37,8 +37,7 @@
     "role": "Historical unsigned example recording, retained with its provenance; no longer embedded in the README"
   },
   "static_badges": {
-    "meaning": "Version badges identify the verified published baseline; the Go badge identifies the source build pin. Links point to releases, npm, toolchain and license. CI uses the live master workflow badge with its own label.",
-    "verified_at_utc": "2026-10-16T19:03:32.427205+00:00",
+    "meaning": "Release/npm badges identify the published baseline, Go identifies the source pin, and the license badge identifies current source terms. CI is the live master workflow badge.",
     "files": [
       {
         "file": "docs/images/badges/go.svg",
@@ -46,7 +45,7 @@
       },
       {
         "file": "docs/images/badges/license.svg",
-        "sha256": "1972de0e868a04853fd1a66462b94dc2eb94029e4eeb6222bf4f1e4232a20ae2"
+        "sha256": "f3941318852238374393cfe2dba4dfc09037e1ca5a94fa9b259a534d225cee92"
       },
       {
         "file": "docs/images/badges/npm.svg",
@@ -56,7 +55,9 @@
         "file": "docs/images/badges/release.svg",
         "sha256": "070cbaa15d7086585ce7779a832f452e2158afb3a1dbe61a47a83401d21763f9"
       }
-    ]
+    ],
+    "baseline_verified_at_utc": "2026-10-16T19:03:32.427205+00:00",
+    "license_updated_at_utc": "2026-10-17T16:39:22.575498+00:00"
   },
   "workspace_tour": {
     "file": "docs/images/workspace-tour.gif",

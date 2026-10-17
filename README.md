@@ -9,7 +9,7 @@
   <a href="https://www.npmjs.com/package/wosctl"><img src="docs/images/badges/npm.svg" alt="npm version" /></a>
   <a href="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml"><img src="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI on master" /></a>
   <a href=".go-version"><img src="docs/images/badges/go.svg" alt="Go 1.27.2" /></a>
-  <a href="LICENSE"><img src="docs/images/badges/license.svg" alt="Apache 2.0 license" /></a>
+  <a href="LICENSE"><img src="docs/images/badges/license.svg" alt="WOS Sustainable Use License 1.0: source-available" /></a>
 </p>
 
 <p align="center">
@@ -84,6 +84,8 @@ For developers building **Outcome-as-a-Service (OaaS)** products, treat a reques
 | Customer access, provisioning, pricing and billing | Namespace authorization boundaries, recorded state, history and integration events |
 
 Provision credentials and grants for each integration; a customer ID in metadata does not grant access. Webhooks report recorded changes with at-least-once delivery. Your consumer verifies and deduplicates them before deciding what to do next. See [security boundaries](SECURITY.md) and [events and webhooks](docs/integration-events.md).
+
+The license permits delivering your application's functionality or outcomes. Reselling WOS itself or charging for access to a WOS platform or instance is excluded, regardless of the brand used. See [license and brand](#license-and-brand).
 
 ### Choose an interface
 
@@ -192,6 +194,16 @@ Use a checklist or issue tracker when human conventions are enough. Add this ser
 
 The server checks recorded authority and state. It cannot prove that claimed external execution happened. Reviewers must inspect the actual material, and Task acquisition does not lock your Git branch or filesystem. See [security boundaries](SECURITY.md).
 
+## License and brand
+
+Current source is available under the [WOS Sustainable Use License 1.0](LICENSE). You may self-host it in production, modify it privately, use it as infrastructure for commercial applications and OaaS products, and charge for genuine technical services on a customer's own permitted deployment.
+
+**You may not sell the WOS platform, supply paid access to a hosted or managed instance, or commercially white-label, rebrand or OEM-supply the platform.** The restriction applies under the WOS brand and under any other name, including paid bundles. Your own application's functionality and outcomes remain permitted within the license.
+
+The [trademark policy](TRADEMARKS.md) permits ordinary installation identification and truthful descriptive references. It grants no right to market the platform as your own or imply official representation. See the [licensing guide](docs/licensing.md) for examples and distribution obligations.
+
+Previously granted Apache-2.0 rights and third-party licenses remain effective for the material they cover. The new terms do not retroactively change published copies. [Notices and earlier grants](NOTICE.md).
+
 ## Project status
 
 | Item | State |
@@ -209,4 +221,4 @@ The server checks recorded authority and state. It cannot prove that claimed ext
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).
 
-[Release process](docs/releases.md) · [Apache 2.0 license](LICENSE)
+[Release process](docs/releases.md) · [Source-available license](LICENSE)

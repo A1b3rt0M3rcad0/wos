@@ -34,7 +34,7 @@ The architecture document describes what should exist. This ROADMAP records what
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
 | Live implementation roadmap | ✅ | Root `ROADMAP.md` |
 | Product package topology | ✅ | `packages/wos-core` + `packages/wos-api`; ADR-011 |
-| Concrete Open Source license | ✅ | Apache 2.0 chosen by maintainer; LICENSE present |
+| Current source license | ✅ | Owner-selected WOS Sustainable Use License 1.0 and separate brand policy; earlier Apache grants and third-party rights retained. See [licensing](docs/licensing.md). |
 
 ## Milestones
 
@@ -87,6 +87,16 @@ Exact final-head hosted checks are reported by [PR checks](https://github.com/A1
 The owner requested a more useful README demonstration and a clearer explanation for developers and Outcome-as-a-Service (OaaS) products. This documentation follow-up replaces the README's terminal animation with real workspace navigation, connects the result/work/delivery/review model to a concrete software example, and presents OaaS as an integration pattern with external execution, customer management and billing. Detailed CLI provisioning, signing and recovery remain in their existing guides. The published v0.4.2 and current-source distinction remains explicit; no domain, runtime or commercial-service capability is added.
 
 - [x] Verify the seven-state real navigation tour (28 seconds), static alternative and capture provenance; review README claims, local links and preserved incoming anchors; inspect GFM output in Chromium at 1280, 390 and 320 CSS pixels with details closed/open and all images decoded. Record executed scope and limits in [README validation](docs/readme-validation.md).
+
+## Source-available licensing and brand — 2026-10-17
+
+The owner requests production and application use with Woobe-style restrictions against commercial platform supply under the original brand or a replacement brand. [ADR 037](docs/adr/0037-source-available-licensing-and-brand-boundaries.md) adopts the WOS Sustainable Use License 1.0 and [trademark policy](TRADEMARKS.md). Current first-party terms permit internal production, commercial applications/OaaS, private modifications and genuine technical services, while excluding resale, paid hosted/managed platform access, OEM and commercial white label. Qualified legal review is separate from technical consistency checks.
+
+- [x] Record the owner decision, software/brand boundaries, examples and contribution authority; preserve the exact prior Apache text and all upstream licenses/notices.
+- [x] Propagate terms and notices through npm, native archives, container packaging and offline Skills, with meaningful integrity, installed-file and preservation checks.
+- [x] Pass 30 focused Node tests, race checks for both affected Go packages, actual archive/npm/20-installed-Skill byte comparisons and the complete packaged smoke verifier. Check current-document links and incoming README anchors, and inspect GFM at 1280/390/320 CSS pixels. Record working-tree provenance, unexecuted container/Windows runtime limits and separate exact-head qualification in [licensing validation](docs/licensing-validation.md).
+
+Earlier Apache grants remain effective for their material, including portions retained in later builds. This change does not revoke past rights, relicense other owners' material or rewrite immutable releases. Dated Apache-selection/qualification statements below record their historical baselines and are superseded for new material by this owner decision. The major release-queue entry records a licensing compatibility break; it does not prepare, publish or certify product 1.0, and no release version is changed here.
 
 ## Centralized agent operations — 2026-10-16
 
