@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "description": "Portable WOS contract coordination, delegation, continuity, review and local workspace skills",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "node": ">=22"
   },
@@ -30,7 +30,11 @@
     "lib",
     "skills",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "TRADEMARKS.md",
+    "NOTICE.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs"

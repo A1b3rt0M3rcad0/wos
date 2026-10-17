@@ -7,7 +7,7 @@ Choose the source branch for the interface shown in the project README, or the p
 With Git and Docker Compose v2 installed:
 
 ```sh
-git clone --branch design/editorial-robot-workspace https://github.com/A1b3rt0M3rcad0/wos.git
+git clone --branch master https://github.com/A1b3rt0M3rcad0/wos.git
 cd wos
 cp .env.example .env
 docker compose up --build -d

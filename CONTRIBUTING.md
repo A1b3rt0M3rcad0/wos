@@ -56,4 +56,6 @@ Playwright's browser dependencies may require system package installation. `npm 
 - Preserve owner-supplied artwork and historical evidence; follow the art instructions in AGENTS.md for visual work.
 - Exclude credentials, private keys, local databases, and generated runtime state.
 
-Use [GitHub Issues](https://github.com/A1b3rt0M3rcad0/wos/issues) for bugs and proposals. For suspected vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of posting sensitive details publicly. Contributions are covered by the repository's [Apache-2.0 license](LICENSE).
+Use [GitHub Issues](https://github.com/A1b3rt0M3rcad0/wos/issues) for bugs and proposals. For suspected vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of posting sensitive details publicly.
+
+New first-party contributions intentionally submitted for inclusion are offered under the [WOS Sustainable Use License 1.0](LICENSE), unless a separate written agreement applies. Submit only material you have authority to contribute under those terms, and identify incorporated third-party material and its license. Contributors retain their ownership; this policy does not assign copyright or retroactively change earlier grants. See [licensing and contribution boundaries](docs/licensing.md).

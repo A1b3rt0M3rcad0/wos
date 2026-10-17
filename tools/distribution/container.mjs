@@ -4,7 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as pause } from 'node:timers/promises';
 import assert from 'node:assert/strict';
-import { root, run } from './build.mjs';
+import { root, run, sha256 } from './build.mjs';
+import { legalFiles, licenseReference } from './legal.mjs';
 
 export async function verifyContainer(image='wos:release-tested') {
   const manifest=JSON.parse(await readFile(path.join(root,'dist/distribution.json'),'utf8'));
@@ -12,6 +13,7 @@ export async function verifyContainer(image='wos:release-tested') {
   assert.equal(info.Config.User,'10001:10001');
   assert.equal(info.Config.Labels['org.opencontainers.image.version'],manifest.version);
   assert.equal(info.Config.Labels['org.opencontainers.image.revision'],manifest.commit);
+  assert.equal(info.Config.Labels['org.opencontainers.image.licenses'],licenseReference);
   assert.ok(run('docker',['run','--rm',image,'version']).includes(`wos ${manifest.version} (commit ${manifest.commit}, built ${manifest.built_at})`));
   run('docker',['run','--rm',image,'config','validate']);
   const client=JSON.parse(run('docker',['run','--rm','--entrypoint','wosctl',image,'version','--output','json'])).data;assert.equal(client.version,manifest.version);assert.equal(client.commit,manifest.commit);
@@ -37,7 +39,12 @@ export async function verifyContainer(image='wos:release-tested') {
     assert.equal(mcp.status,200);assert.equal((await mcp.json()).result.protocolVersion,'2025-06-18');
     run('docker',['exec',container,'test','-s','/etc/ssl/certs/ca-certificates.crt']);
     run('docker',['exec',container,'test','-s','/usr/share/doc/wos/third-party-notices/Go-LICENSE.txt']);
-    return {version:manifest.version,commit:manifest.commit,checks:['OCI/source identity','non-root/read-only','version/config','health','HTTP authentication/catalog','MCP negotiation','runtime CA bundle']};
+    for(const filename of legalFiles) {
+      const expected=sha256(await readFile(path.join(root,filename)));
+      const actual=run('docker',['exec',container,'sha256sum',`/usr/share/doc/wos/${filename}`]).split(/\s+/)[0];
+      assert.equal(actual,expected,filename+' differs from the source legal terms');
+    }
+    return {version:manifest.version,commit:manifest.commit,checks:['OCI/source identity and license','source-identical legal files','non-root/read-only','version/config','health','HTTP authentication/catalog','MCP negotiation','runtime CA bundle']};
   }finally{run('docker',['rm','-f',container]);}
 }
 

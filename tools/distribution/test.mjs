@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { root, validVersion, run } from './build.mjs';
 import path from 'node:path';
+import { copyLegalFiles, legalEntries, npmLicense, verifyArchiveLegalFiles, verifyLegalFiles } from './legal.mjs';
 
 test('distribution rejects prerelease/untrusted metadata and failed commands', () => {
   for(const value of ['1.2.3','0.1.0','10.20.30']) assert.equal(validVersion(value),value);
@@ -14,11 +15,41 @@ test('single wosctl package identity/version are synchronized without install ho
   const version=(await readFile(path.join(root,'VERSION'),'utf8')).trim();
   for(const folder of ['wos-cli-npm']) {
     const pkg=JSON.parse(await readFile(path.join(root,'packages',folder,'package.json'),'utf8'));
-    assert.equal(pkg.version,version); assert.equal(pkg.license,'Apache-2.0');
+    assert.equal(pkg.version,version); assert.equal(pkg.license,npmLicense);
     assert.equal(pkg.name, 'wosctl');
     assert.equal(pkg.dependencies,undefined);
     for(const hook of ['preinstall','install','postinstall','prepare']) assert.equal(pkg.scripts?.[hook],undefined);
   }
+});
+
+test('all current package metadata and the embedded Skill legal files follow the root terms', async () => {
+  for (const folder of ['wos-cli-npm', 'wos-npm', 'wos-skill']) {
+    const pkg = JSON.parse(await readFile(path.join(root, 'packages', folder, 'package.json'), 'utf8'));
+    assert.equal(pkg.license, npmLicense, folder);
+    assert.ok(legalEntries.every(filename => pkg.files.includes(filename)), folder + ' omits legal files');
+  }
+  await verifyLegalFiles(root, path.join(root, 'packages', 'wos-skill'));
+});
+
+test('legal propagation rejects missing or altered terms instead of silently accepting an incomplete bundle', async t => {
+  const fs = await import('node:fs/promises');
+  const os = await import('node:os');
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'wos-legal-proof-'));
+  t.after(() => fs.rm(directory, {recursive: true, force: true}));
+  await copyLegalFiles(root, directory);
+  await verifyLegalFiles(root, directory);
+  const archive=path.join(directory,'legal.tar.gz');
+  run('tar',['-czf',archive,'-C',directory,...legalEntries.map(filename=>'./'+filename)]);
+  await verifyArchiveLegalFiles(root,archive);
+  await fs.appendFile(path.join(directory, 'NOTICE.md'), '\nAltered notice\n');
+  await assert.rejects(verifyLegalFiles(root, directory), /NOTICE\.md differs/);
+  run('tar',['-czf',archive,'-C',directory,...legalEntries.map(filename=>'./'+filename)]);
+  await assert.rejects(verifyArchiveLegalFiles(root,archive),/NOTICE\.md differs/);
+  await copyLegalFiles(root, directory);
+  await fs.rm(path.join(directory, 'TRADEMARKS.md'));
+  await assert.rejects(verifyLegalFiles(root, directory), /ENOENT/);
+  run('tar',['-czf',archive,'-C',directory,...legalEntries.filter(filename=>filename!=='TRADEMARKS.md').map(filename=>'./'+filename)]);
+  await assert.rejects(verifyArchiveLegalFiles(root,archive),/missing or unreadable legal files/);
 });
 
 test('publication needs actual matching native hosts and binary checksums', async t => {

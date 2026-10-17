@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {root} from '../distribution/build.mjs';
+import {legalEntries, licenseReference, npmLicense, verifyLegalFiles} from '../distribution/legal.mjs';
 
 function digest(bytes){return createHash('sha256').update(bytes).digest('hex');}
 function normalize(filename,bytes) {
@@ -71,10 +72,16 @@ test('released v0.4.2 requests and workspace schemas retain old accepted shapes'
 });
 test('one public package and both OpenAPI specifications follow the product release/license',async()=>{
  const version=(await readFile(path.join(root,'VERSION'),'utf8')).trim();
- const pkg=JSON.parse(await readFile(path.join(root,'packages/wos-cli-npm/package.json'),'utf8'));assert.equal(pkg.name,'wosctl');assert.equal(pkg.version,version);assert.equal(pkg.license,'Apache-2.0');
+ const pkg=JSON.parse(await readFile(path.join(root,'packages/wos-cli-npm/package.json'),'utf8'));assert.equal(pkg.name,'wosctl');assert.equal(pkg.version,version);assert.equal(pkg.license,npmLicense);
  for(const fixture of ['wos-npm','wos-skill'])assert.equal(JSON.parse(await readFile(path.join(root,'packages',fixture,'package.json'),'utf8')).private,true);
- assert.match(await readFile(path.join(root,'LICENSE'),'utf8'),/Apache License/);
- assert.match(await readFile(path.join(root,'Dockerfile'),'utf8'),/org\.opencontainers\.image\.licenses="Apache-2\.0"/);
+ const license=await readFile(path.join(root,'LICENSE'),'utf8');
+ assert.match(license,/WOS Sustainable Use License/);
+ assert.doesNotMatch(license,/Enterprise Edition/);
+ await verifyLegalFiles(root,path.join(root,'packages/wos-skill'));
+ const docker=await readFile(path.join(root,'Dockerfile'),'utf8');
+ assert.ok(docker.includes(`org.opencontainers.image.licenses="${licenseReference}"`));
+ assert.ok(docker.includes(`COPY ${legalEntries.filter(filename=>filename!=='LICENSES').join(' ')} /usr/share/doc/wos/`));
+ assert.ok(docker.includes('COPY LICENSES /usr/share/doc/wos/LICENSES'));
  assert.equal(JSON.parse(await readFile(path.join(root,'packages/wos-api/commands.openapi.json'),'utf8')).info.version,version);
  assert.equal((await readFile(path.join(root,'packages/wos-api/openapi.yaml'),'utf8')).match(/^  version: (.+)$/m)?.[1],version);
 });

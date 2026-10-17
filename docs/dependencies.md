@@ -27,7 +27,7 @@ The `go.mod` directive defines the language baseline. `.go-version` pins the bui
 
 ### Indirect module graph
 
-`go.mod` and `go.sum` contain the exact tidy graph. CI verifies both with a zero-diff `go mod tidy`. All external storage/transport dependencies remain outside Domain/Application/Ports. Apache 2.0 is the WOS license; the added Go SDK/driver retain their upstream notices/licenses.
+`go.mod` and `go.sum` contain the exact tidy graph. CI verifies both with a zero-diff `go mod tidy`. All external storage/transport dependencies remain outside Domain/Application/Ports. Current first-party terms are the [WOS Sustainable Use License 1.0](../LICENSE); dependencies and separately licensed material retain their upstream notices/licenses. Earlier Apache-2.0 grants are preserved as explained in [the licensing guide](licensing.md).
 
 ## CI dependencies
 
@@ -67,7 +67,7 @@ Before adding a dependency:
 1. identify the roadmap wave and concrete requirement it satisfies;
 2. prefer the standard library when it provides a clear, maintainable implementation;
 3. pin an explicit version in the repository;
-4. verify license compatibility with the WOS license once the project license is selected;
+4. verify compatibility and notice obligations against the current WOS license and the dependency's own terms; preserve upstream grants and attribution rather than relabeling dependency code;
 5. keep the dependency out of `packages/wos-core/domain` unless it is genuinely part of a public domain contract and an ADR justifies it;
 6. add tests covering the behavior for which the dependency was introduced;
 7. update this file and `ROADMAP.md` in the same work.
