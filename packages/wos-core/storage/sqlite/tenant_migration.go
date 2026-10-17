@@ -22,10 +22,24 @@ func (s *Store) preflightTenantUpgrade(ctx context.Context) error {
 	if err = tx.QueryRowContext(ctx, `SELECT COALESCE(MAX(version), 0) FROM schema_migrations`).Scan(&current); err != nil {
 		return mapSQLError("read tenant upgrade source version", err)
 	}
-	// Migration 21 introduced all signed authority tables. Older databases
-	// receive their final preflight when migration 33 is reached.
+	if current < 1 || current >= 33 {
+		return nil
+	}
+	// Read only the authority tables present in the source version, so even
+	// unsigned releases remain usable for settlement after a refused upgrade.
 	if current >= 21 && current < 33 {
 		return preflightTenantIdentityCutover(ctx, tx)
+	}
+	query := `SELECT COUNT(*) FROM work_items WHERE lease_claim_id IS NOT NULL AND lease_expires_at>?`
+	if current >= 16 {
+		query = `SELECT (SELECT COUNT(*) FROM work_contracts WHERE status='active') + (SELECT COUNT(*) FROM work_items WHERE lease_claim_id IS NOT NULL AND lease_expires_at>?)`
+	}
+	var unfinished int
+	if err := tx.QueryRowContext(ctx, query, time.Now().UTC().UnixMicro()).Scan(&unfinished); err != nil {
+		return mapSQLError("inspect legacy tenant upgrade authority", err)
+	}
+	if unfinished != 0 {
+		return domain.NewError(domain.ErrorCodePreconditionFailed, "settle or revoke active legacy contracts and live leases with the previous release before migrating to Tenant protocol v3")
 	}
 	return nil
 }

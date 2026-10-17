@@ -152,7 +152,7 @@ func TestTenantIdentityMigrationPreservesSignedBytesAndChangesOnlyCurrentConfigu
 
 func TestTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T) {
 	requirePostgres(t)
-	for _, version := range []int64{26, 32} {
+	for _, version := range []int64{10, 19, 26, 32} {
 		t.Run(strconv.FormatInt(version, 10), func(t *testing.T) {
 			testTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t, version)
 		})
@@ -172,11 +172,22 @@ func testTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T, so
 		`INSERT INTO outcomes(id,namespace_id,outcome_id,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES('o','t','o',1,1,1,'Outcome','','normal','','active')`,
 		`INSERT INTO entity_refs(id,namespace_id,outcome_id,kind) VALUES('w','t','o','work_item')`,
 		`INSERT INTO work_items(id,namespace_id,outcome_id,version,created_at,updated_at,title,description,priority,lifecycle) VALUES('w','t','o',1,1,1,'Task','','normal','todo')`,
-		`INSERT INTO signed_work_contracts(id,namespace_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES('c','t','o','w','credential','p','active','1','1','1',1,'{}','{}','digest')`,
 	} {
 		if _, err := s.db.ExecContext(ctx, q); err != nil {
 			t.Fatal(err)
 		}
+	}
+	var authority string
+	switch {
+	case sourceVersion >= 21:
+		authority = `INSERT INTO signed_work_contracts(id,namespace_id,outcome_id,work_item_id,credential_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES('c','t','o','w','credential','p','active','1','1','1',1,'{}','{}','digest')`
+	case sourceVersion >= 16:
+		authority = `INSERT INTO work_contracts(id,namespace_id,outcome_id,work_item_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES('c','t','o','w','p','active',1,1,'1',1,'{}','{}','digest')`
+	default:
+		authority = `UPDATE work_items SET lease_claim_id='claim',lease_principal_id='p',lease_actor_json='{}',lease_acquired_at=1,lease_expires_at=4102444800000000 WHERE id='w'`
+	}
+	if _, err := s.db.ExecContext(ctx, authority); err != nil {
+		t.Fatal(err)
 	}
 	if err := s.Migrate(ctx); err == nil {
 		t.Fatal("upgrade accepted unresolved legacy signed authority")
@@ -191,12 +202,26 @@ func testTenantIdentityCutoverRejectsUnsettledProtocolBeforeDDL(t *testing.T, so
 	if err := s.db.QueryRowContext(ctx, `SELECT count(*) FROM namespaces`).Scan(&count); err != nil || count != 1 {
 		t.Fatal("failed upgrade renamed or removed source tables", err)
 	}
-	var state, spec, digest string
-	if err := s.db.QueryRowContext(ctx, `SELECT state_json,spec_json,spec_digest FROM signed_work_contracts WHERE id='c'`).Scan(&state, &spec, &digest); err != nil || state != "{}" || spec != "{}" || digest != "digest" {
-		t.Fatal("failed upgrade changed original contract bytes", err)
-	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE signed_work_contracts SET status='revoked'`); err != nil {
-		t.Fatal(err)
+	if sourceVersion >= 16 {
+		table := "work_contracts"
+		if sourceVersion >= 21 {
+			table = "signed_work_contracts"
+		}
+		var state, spec, digest string
+		if err := s.db.QueryRowContext(ctx, `SELECT state_json,spec_json,spec_digest FROM `+table+` WHERE id='c'`).Scan(&state, &spec, &digest); err != nil || state != "{}" || spec != "{}" || digest != "digest" {
+			t.Fatal("failed upgrade changed original contract bytes", err)
+		}
+		if _, err := s.db.ExecContext(ctx, `UPDATE `+table+` SET status='revoked'`); err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		var claim string
+		if err := s.db.QueryRowContext(ctx, `SELECT lease_claim_id FROM work_items WHERE id='w'`).Scan(&claim); err != nil || claim != "claim" {
+			t.Fatal("failed upgrade changed original lease", err)
+		}
+		if _, err := s.db.ExecContext(ctx, `UPDATE work_items SET lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL`); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if err := s.Migrate(ctx); err != nil {
 		t.Fatal("settled legacy data could not migrate", err)

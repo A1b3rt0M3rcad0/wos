@@ -154,7 +154,13 @@ func TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating(t *testing.
 		}
 		cfg.Storage.MigrateOnStart = false
 		_, _, e = RecoverIssuer(ctx, cfg, a.IssuerRecoveryIntent{NewFingerprint: fingerprint})
-		if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeInvalidConfig || !strings.Contains(e.Error(), "schema") {
+		expectedCode, expectedMessage := d.ErrorCodeInvalidConfig, "schema"
+		if cfg.Storage.Driver == StorageDriverPostgres {
+			// PostgreSQL checks the complete ledger before opening the bound
+			// runtime, including entries that belong to a newer binary.
+			expectedCode, expectedMessage = d.ErrorCodePreconditionFailed, "migration ledger does not match this binary"
+		}
+		if code, _ := d.ErrorCodeOf(e); code != expectedCode || !strings.Contains(e.Error(), expectedMessage) {
 			t.Fatalf("host recovery did not reject incompatible schema: %v", e)
 		}
 		var checksum string
