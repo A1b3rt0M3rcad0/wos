@@ -1,0 +1,52 @@
+# Apply after compose.yaml using the same Compose project and persistent volumes.
+services:
+  wos:
+    environment:
+      WOS_PROCESS_ROLE: api
+      WOS_DELIVERY_WORKER_ENABLED: "false"
+      WOS_WEBHOOK_SECRETS: ""
+      WOS_DEPLOYMENT_EXPECTED_PROCESSES: ${WOS_DEPLOYMENT_EXPECTED_PROCESSES:-4}
+    deploy:
+      replicas: 2
+  worker:
+    build:
+      context: ../..
+    entrypoint: [/bin/sh, /usr/local/lib/wos/shared-entrypoint.sh]
+    command: [server]
+    environment:
+      NO_PROXY: localhost,127.0.0.1,postgres
+      no_proxy: localhost,127.0.0.1,postgres
+      WOS_PROCESS_ROLE: worker
+      WOS_MCP_ENABLED: "false"
+      WOS_WEBHOOK_ENDPOINTS: ${WOS_WEBHOOK_ENDPOINTS:-}
+      WOS_WEBHOOK_SECRETS: ${WOS_WEBHOOK_SECRETS:-}
+      WOS_LISTEN: 0.0.0.0:8080
+      WOS_AUTH_MODE: api_token
+      WOS_STORAGE_DRIVER: postgres
+      WOS_POSTGRES_MAX_OPEN_CONNECTIONS: ${WOS_POSTGRES_MAX_OPEN_CONNECTIONS:-8}
+      WOS_DEPLOYMENT_EXPECTED_PROCESSES: ${WOS_DEPLOYMENT_EXPECTED_PROCESSES:-4}
+      WOS_DEPLOYMENT_DATABASE_CONNECTION_BUDGET: ${WOS_DEPLOYMENT_DATABASE_CONNECTION_BUDGET:-80}
+      WOS_DEPLOYMENT_RESERVED_CONNECTIONS: ${WOS_DEPLOYMENT_RESERVED_CONNECTIONS:-20}
+      WOS_DELIVERY_WORKER_CONCURRENCY: ${WOS_DELIVERY_WORKER_CONCURRENCY:-4}
+      WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE: ${WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE:-4}
+      WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT: ${WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT:-2}
+    secrets: [database_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      wos:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "wget -Y off -q -O /dev/null http://127.0.0.1:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    stop_grace_period: 35s
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1
+    deploy:
+      replicas: 2
+    networks: [database, egress]
+networks:
+  egress:

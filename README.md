@@ -171,6 +171,12 @@ For startup failures, inspect `docker compose logs --tail=100 wos`. [Service lif
 
 Want an executable example before configuring agents? The [isolated local lifecycle](examples/quickstart/README.md) creates one Outcome, delivers a file, assesses a criterion and concludes the result. It uses one trusted operator and the unsigned API; it does not demonstrate independent review.
 
+## Self-host and grow
+
+Start with one complete process. For production growth, the [PostgreSQL deployment profiles](deploy/scaling/README.md) provide a small installation and a replica overlay that separates API and delivery-worker capacity. The same WOS product serves shared Namespaces or dedicated infrastructure; your own runtime continues to execute agents.
+
+The [scaling guide](docs/scaling/README.md) explains persistent-state coordination, shared-resource budgets, operator permissions, connection sizing and recovery. A verified offline [SQLite-to-PostgreSQL migration](docs/scaling/mobility.md) supports whole-installation growth. Capacity measurements, database HA and Namespace relocation have explicit [qualification boundaries](docs/scaling/qualification.md).
+
 ## Operate with agents
 
 > [!NOTE]

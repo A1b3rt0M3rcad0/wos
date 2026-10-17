@@ -1,5 +1,7 @@
 # Opt-in backup and recovery procedures
 
+For a whole-installation SQLite-to-PostgreSQL transition and read-only shared-to-dedicated Namespace preflight, use the [installation mobility procedure](../../docs/scaling/mobility.md). Namespace transfer is not an implemented export/import operation.
+
 These tools are run by an operator or an external cron/systemd/Kubernetes job. They are not installed as a scheduler, service, agent runtime or automatic task in WOS. Python 3 is required; PostgreSQL also needs matching `psql`, `pg_dump` and `pg_restore` clients on PATH. Backups cover the whole WOS database/schema, including all internal Namespaces, not an agent's ordinary API scope. Use an operator database account and protect the output directory.
 
 `backup_restore.py` takes a consistent online SQLite backup or exports one read-only repeatable-read PostgreSQL snapshot shared with `pg_dump`. It writes new private files, a manifest and checksums. Metadata includes operator-declared deployed source/version, storage schema version, server identity/current issuer fingerprint, Outcome revision watermark, snapshot time and per-table counts/logical digests. Source/version declarations identify the deployment supplied by the operator; they do not cryptographically attest which binary wrote every historical row. No issuer seed, token environment or CLI private key is collected. The database backup itself can contain private application data and credential digests; keep it private and apply your external encryption/access/retention policy.

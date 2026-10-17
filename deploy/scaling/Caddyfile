@@ -1,0 +1,17 @@
+# Compose DNS discovers every API replica. Workers never join ingress.
+# Replace local CA policy and loopback publishing deliberately for public hosting.
+https://{$WOS_PUBLIC_HOST:wos.localhost} {
+	tls internal
+	encode zstd gzip
+	reverse_proxy {
+		dynamic a {
+			name wos
+			port 8080
+			refresh 5s
+			resolvers 127.0.0.11
+			versions ipv4
+		}
+		lb_policy round_robin
+	}
+	header Strict-Transport-Security "max-age=31536000"
+}

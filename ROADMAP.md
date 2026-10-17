@@ -3,8 +3,8 @@
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-17
-**Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
+**Current target:** Owner-requested scalable WOS installations; existing release/human acceptance remains separately tracked
+**Current wave:** Scalable persistent coordination, independent API/workers and generic operator capabilities; branch only, no merge authorized
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,71 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Scalable WOS installations — 2026-10-17
+
+**Status:** implementation and integrated qualification in progress on
+`feat/scalable-wos-operation`, based on `master` at `cba58d6`. The owner authorized
+implementation in a branch and explicitly prohibited merging. This extends
+completed persistence, security, query and integration waves; it does not declare
+the historical stable-1.0 program, production capacity or human acceptance done.
+
+WOS remains the complete source-available product. Its private Cloud manager
+provisions and operates the same installations through generic WOS capabilities
+and external infrastructure. Namespaces can share an installation; installations
+can share infrastructure. No additional agent runtime, business API or separate
+authorization implementation is introduced. Decisions and operating boundaries
+are recorded in [the scaling guide](docs/scaling/README.md) and ADRs 038–043.
+
+Implemented changes awaiting final integrated acceptance:
+
+- Coherent read snapshots across continuity, entity/history, integration and
+  signing diagnostics, without Outcome mutation guards. PostgreSQL retains
+  Repeatable Read plus shared security barriers; SQLite retains one writer and
+  adds four bounded WAL readers. Third-party adapters have a compatible fallback.
+- Shared signed protocol barriers and explicit Principal/optional Namespace quota
+  coordination, including removal of four late exclusive protocol rereads.
+  Serializable commands, current revocation, exact intent and genuine Outcome
+  serialization remain required. Existing configured 1–100 authority ceilings
+  remain explicit.
+- Incremental historical persistence and scoped set reads, indexed quota queries
+  and bounded expired short-cache maintenance. Durable signed receipts are never
+  maintenance targets. Full aggregate hydration/hashing still grows with history.
+- `complete`/`api`/`worker` roles in one product, independent operational worker
+  listener, graceful shutdown/supervision and declared database pool budgeting.
+- Per-process authenticated-Namespace HTTP/MCP admission; durable shared delivery
+  caps, Namespace turns, secret eligibility and PostgreSQL-clock fleet lease/ACK
+  decisions. Fixed latency distributions and connection pressure are operator
+  diagnostics, not billing or production percentile guarantees.
+- Explicit installation provision/observe/admin authority and an audited offline
+  promotion command. Existing Namespace administrators are never auto-elevated;
+  this intentional authorization restriction is recorded as a major release-queue
+  change. No version preparation/publication is performed by this branch.
+- Public small PostgreSQL and replica Compose profiles, verified whole-installation
+  SQLite-to-PostgreSQL migration and active read-only Namespace transfer preflight.
+  Approved migration sources are privately staged and opened immutable to exclude
+  unapproved WAL/path replacement.
+
+Acceptance gates:
+
+- [ ] Final integrated normal and race suites with real PostgreSQL, including
+  quotas/revocation, snapshot coherence, proof immutability, delivery recovery,
+  operator boundaries and pinned migration/restore.
+- [ ] Generated contracts/adapters, vet, browser permission compatibility,
+  documentation links and deployment configuration checks.
+- [ ] Reproducible source-bound contention comparison and actual multi-process
+  deployment pilot, with failed/interrupted runs retained separately.
+
+The [qualification record](docs/scaling/qualification.md) will identify executed
+sources, results and limits. Focused agent runs are evidence for their specific
+revisions, not substitutes for final integrated gates.
+
+Remaining architectural work is explicit: full signed Namespace trust transfer,
+online migration/shard routing, automatic HA/PITR/fleet orchestration, mixed-version
+rolling updates, historical archival/partitioning and enforced storage/CPU quotas
+are not implemented by these foundations. External PostgreSQL HA and monitoring
+remain operator responsibilities. No infinite-capacity or user-count claim is
+made; additional mechanisms require workload evidence and separate qualification.
 
 ## Visual operational workspace — 2026-10-16
 

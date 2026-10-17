@@ -1,0 +1,44 @@
+# Small production-shaped PostgreSQL reference. No Redis or orchestrator required.
+# Uses the same externally provisioned secrets and local TLS policy as shared/.
+services:
+  postgres:
+    extends:
+      file: ../shared/compose.yaml
+      service: postgres
+  wos:
+    extends:
+      file: ../shared/compose.yaml
+      service: wos
+    environment:
+      WOS_PROCESS_ROLE: complete
+      WOS_WEBHOOK_ENDPOINTS: ${WOS_WEBHOOK_ENDPOINTS:-}
+      WOS_WEBHOOK_SECRETS: ${WOS_WEBHOOK_SECRETS:-}
+      WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE: ${WOS_HTTP_MAX_INFLIGHT_PER_NAMESPACE:-32}
+      WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE: ${WOS_DELIVERY_MAX_INFLIGHT_PER_NAMESPACE:-4}
+      WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT: ${WOS_DELIVERY_MAX_INFLIGHT_PER_ENDPOINT:-2}
+      WOS_POSTGRES_MAX_OPEN_CONNECTIONS: ${WOS_POSTGRES_MAX_OPEN_CONNECTIONS:-8}
+      WOS_DEPLOYMENT_EXPECTED_PROCESSES: ${WOS_DEPLOYMENT_EXPECTED_PROCESSES:-1}
+      WOS_DEPLOYMENT_DATABASE_CONNECTION_BUDGET: ${WOS_DEPLOYMENT_DATABASE_CONNECTION_BUDGET:-80}
+      WOS_DEPLOYMENT_RESERVED_CONNECTIONS: ${WOS_DEPLOYMENT_RESERVED_CONNECTIONS:-20}
+    stop_grace_period: 35s
+  ingress:
+    extends:
+      file: ../shared/compose.yaml
+      service: ingress
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+secrets:
+  database_password:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/database_password
+  bootstrap_token:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/bootstrap_token
+  issuer_seed:
+    file: ${WOS_SHARED_SECRETS_DIR:?set external secrets directory}/issuer_seed
+volumes:
+  postgres_data:
+  ingress_data:
+  ingress_config:
+networks:
+  database:
+    internal: true
+  ingress:

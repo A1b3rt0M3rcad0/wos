@@ -38,3 +38,12 @@ The original specification proposed numbers, not immutable file identities. Acce
 ## Licensing and brand
 
 - [ADR-037 — Source-available licensing and brand boundaries](0037-source-available-licensing-and-brand-boundaries.md)
+
+## Scalable installations
+
+- [ADR-038 — Scoped coordination and coherent read snapshots](0038-scoped-coordination-and-read-snapshots.md)
+- [ADR-039 — Incremental persistence and disposable cache](0039-incremental-persistence-and-disposable-cache.md)
+- [ADR-040 — Independent process roles](0040-independent-wos-process-roles.md)
+- [ADR-041 — Explicit installation operator authority](0041-installation-operator-authority.md)
+- [ADR-042 — Installation mobility and tenant transfer boundaries](0042-installation-mobility-and-tenant-transfer-boundaries.md)
+- [ADR-043 — Shared resource budgets and delivery time](0043-shared-resource-budgets-and-delivery-time.md)

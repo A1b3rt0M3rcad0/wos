@@ -33,6 +33,8 @@ Start with the [project README](../README.md) to understand the purpose, run the
 
 ## Operate the server
 
+- [Start small and scale](scaling/README.md): PostgreSQL growth, independent API/workers, resource budgets and self-hosted/Cloud boundaries.
+- [Verified storage migration](scaling/mobility.md): whole-installation SQLite-to-PostgreSQL movement and read-only Namespace preflight.
 - [Operations](operations.md): local setup, authenticated services, databases, backup, and restore.
 - [Issuer recovery](issuer-recovery.md): identity and trust for signed contracts.
 - [Releases and distribution](releases.md): public installation, platforms, and publication.
