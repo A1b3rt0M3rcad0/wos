@@ -9,10 +9,10 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
-| View the current desktop and mobile interface       | [Operational canvas and screenshots](design/operational-canvas/README.md#screenshots) |
-| Inspect every page, native form and recovery state | [Complete workspace gallery](design/operational-canvas/workspace/README.md) |
+| View the current desktop and mobile interface       | [Outcome Board workspace and screenshots](design/operational-canvas/canvas-first/README.md) |
+| Inspect earlier specialist pages, native forms and recovery states | [Earlier complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
-| See real navigation through the current product     | [Workspace tour](images/workspace-tour.md)                             |
+| See real navigation through the earlier interface   | [Recorded workspace tour](images/workspace-tour.md)                    |
 | Connect a development team or an OaaS product       | [Developers and OaaS](../README.md#for-developers-and-oaas)             |
 | Inspect the README illustration's provenance        | [Original artwork record](images/assets.json)                          |
 
@@ -49,7 +49,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 - [Architecture decisions](adr/): accepted choices and rationale.
 - [Dependencies](dependencies.md): toolchain and libraries.
 - [Licensing](licensing.md): production/application use, platform-resale restrictions, brand rights, earlier grants and distribution notices.
-- [Current interface validation](design/operational-canvas/validation.md): automated checks and limitations; [earlier editorial baselines](design/editorial/validation.md) remain dated separately.
+- [Current interface validation](design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance): source-pinned Outcome Board checks, captures and limitations; [earlier operational Canvas](design/operational-canvas/validation.md) and [editorial baselines](design/editorial/validation.md) remain dated separately.
 
 Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.
 
@@ -57,4 +57,4 @@ Maintained product copy and user guides use English. Original owner-supplied spe
 
 Dated reports, original implementation plans, ADRs, and evidence under `audit/`, `ux/`, and `stable/` describe specific revisions. They do not replace current guides or automatically establish acceptance of later versions. The [original canonical specification](WOS_Design_Arquitetura_Planejamento_Atualizado.md) is preserved as a source document; the English architecture overview explains the implemented boundaries.
 
-The former gallery is superseded by the [editorial gallery](design/editorial/README.md#main-pages). Earlier captures and the two October 5 reports removed from active documentation remain in Git history; acceptance references point to the preserving commit.
+The [editorial gallery](design/editorial/README.md#main-pages) preserves an earlier visual baseline; the current Outcome Board gallery is linked above. Older captures and the two October 5 reports removed from active documentation remain in Git history; acceptance references point to the preserving commit.

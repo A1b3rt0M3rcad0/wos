@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Canvas-first workspace presentation; existing release and human acceptance remain separately tracked
+**Current wave:** Outcome Board workspace without a sidebar; existing release and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -50,6 +50,42 @@ The architecture document describes what should exist. This ROADMAP records what
 
 # Implementation waves
 
+## Outcome Board workspace follow-up — 2026-10-18
+
+**Status: Implemented and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+The owner identifies the spatial Board as the working environment itself. The
+left sidebar belongs in Overview and the other specialist views rather than
+inside this working region. This supersedes retaining a sidebar in the initial
+Canvas-first presentation below.
+
+- [x] Hide the sidebar only for the active Outcome Board and give its space to
+  the working region; retain Overview/specialist navigation and Outcome switching.
+- [x] Rename visible and accessible Canvas controls to Outcome Board; distinguish
+  the specialized Task Board in Work and preserve existing internal routes.
+- [x] Verify focus when navigation becomes hidden, desktop/mobile/native zoom,
+  inherited journeys, hosted failure corrections and refreshed source-bound captures.
+
+Current operation and evidence are maintained in the
+[workspace review](docs/design/operational-canvas/canvas-first/README.md).
+The earlier source-bound qualification below is historical, not proof of this
+follow-up. No domain, protocol, backend, storage or release change is included.
+
+Production source `5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a` passes all eight
+viewport journeys, including hidden-sidebar focus exclusion, restoration in all
+six specialist areas and real Outcome switching through Overview. The full run
+passes 44 unit checks and 86 of 88 browser journeys. Its two custom journey
+helpers returned before post-commit refresh completed; test-only correction
+`b784113280bf2866f78080e3dcc2bd5d8545fd3a` waits for the submit control to
+re-enable, and both focused rechecks pass. All 26 production inputs are unchanged
+between runs. This covers all 88 journeys across the regression and recheck;
+it is not a claim of a single clean 88-case execution. Native web tests and vet
+pass. The previous hosted plan-disclosure and proportional-navigation failures
+also pass locally with explicit completion and geometry checks. The
+[22 current captures and manifest](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+qualify the production source, while hosted checks qualify the pushed head
+independently. Representative-user and manual screen-reader acceptance remain
+separate.
+
 ## Canvas-first workspace — 2026-10-18
 
 **Status: Implemented and locally verified; draft review, no merge.** The work is
@@ -85,7 +121,7 @@ Outcome name, mobile inspector/forms, and native 125%/150% browser zoom. The
 actual graph occupies 70.11%, 71.98%, 73.63% and 73.76% of the four requested
 desktop viewports. Native web race tests and vet pass. The 22 unannotated captures,
 served-asset checks and exact input/image hashes are recorded in the
-[capture manifest](docs/design/operational-canvas/canvas-first/screenshots.json).
+[original capture manifest](https://github.com/A1b3rt0M3rcad0/wos/blob/c12177ac92a2e4a1f7ed9bd45c296cd811a939f0/docs/design/operational-canvas/canvas-first/screenshots.json).
 Hosted checks qualify the pushed PR head independently. Representative-user,
 manual screen-reader and other-browser acceptance remain unclaimed.
 
