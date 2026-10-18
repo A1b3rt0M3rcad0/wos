@@ -6,6 +6,8 @@ import { createCanvasData, canvasRevision } from "./canvas-data.js";
 import { mountWorkspaceCanvas } from "./workspace-canvas.js";
 import { createWorkspaceInspector } from "./workspace-inspector.js";
 import { renderCanvasContext } from "./canvas-context.js";
+import { buildEntityContext, renderEntityContext } from "./workspace-entity-context.js";
+import { renderActionMenu } from "./workspace-action-menu.js";
 import {
   areas,
   areaFor,
@@ -68,6 +70,7 @@ const state = {
   canvasView: null,
   canvasModel: null,
   canvasSelected: null,
+  entityContextRefresh: null,
   canvasPlan: null,
   formTarget: null,
   formOriginCanvas: false,
@@ -227,6 +230,7 @@ function resetCanvas() {
   state.canvasView = null;
   state.canvasModel = null;
   state.canvasSelected = null;
+  state.entityContextRefresh = null;
   state.canvasPlan = null;
   state.canvasPlanLabel = "";
   canvasInspector.closeAll();
@@ -498,7 +502,15 @@ async function refreshPermissions() {
     $(id).disabled = !state.permissions.includes("outcome:write");
   }
 }
+function placeNotice(onBoard = canvasActive() && !$("outcome").hidden && !$("canvas-view").hidden) {
+  const parent = onBoard ? $("canvas-feedback") : $("main-content");
+  if ($("notice").parentElement !== parent)
+    parent.insertBefore($("notice"), parent.firstChild);
+}
 function notice(message, error = false) {
+  // A failed Outcome/workspace transition can leave the previous Board hidden.
+  // Announce its error in the visible main workspace rather than that subtree.
+  placeNotice();
   $("notice").textContent = message;
   $("notice").classList.toggle("error", error);
 }
@@ -675,6 +687,7 @@ function acceptCanvas(model) {
   )
     return;
   state.canvasModel = model;
+  state.entityContextRefresh?.();
   const selectedKey = state.canvasSelected
     ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
     : null;
@@ -1281,7 +1294,7 @@ async function refresh() {
     )
       return;
     notice(
-      snapshot.truncated
+      snapshot.truncated && !canvasActive()
         ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
         : copy.text.sharedStateRefreshed,
     );
@@ -1496,6 +1509,9 @@ function navigateArea(area) {
 }
 function applyView() {
   const isCanvas = canvasActive();
+  // Keep the original live region and its announcements. On the Board it is
+  // ordinary workspace feedback, outside the map and inspector, never a toast.
+  placeNotice(isCanvas);
   const refresh = $("refresh");
   const activeHeaderControl = document.activeElement;
   const leavingOutcomeTools =
@@ -3106,6 +3122,7 @@ async function showEntity(
 ) {
   if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
+  state.entityContextRefresh = null;
   const generation = state.generation;
   const isCanvas = canvasActive();
   try {
@@ -3236,6 +3253,55 @@ async function showEntity(
       entity.reason ||
       entity.rationale;
     if (description) detail.append(el("p", description, "detail-description"));
+    const relationshipHost = el("div");
+    detail.append(relationshipHost);
+    let relationshipContext, relationshipSnapshot;
+    function refreshRelationships() {
+      if (generation !== state.generation || detailGeneration !== state.detailGeneration ||
+        !relationshipHost.isConnected) return;
+      const options = {
+        ref, entity, model: isCanvas ? state.canvasModel : undefined,
+        placementOnly: ref.kind === "work_item" && isCanvas,
+        onReference: (target) => showEntity(target).catch(report),
+      };
+      const snapshot = JSON.stringify(buildEntityContext(options));
+      if (snapshot === relationshipSnapshot) return;
+      relationshipSnapshot = snapshot;
+      const active = relationshipHost.contains(document.activeElement) ? document.activeElement : null;
+      const activeReference = active?.dataset.entityContextRef;
+      const activeSection = active?.tagName === "SUMMARY" ? active.parentElement.dataset.entityContextSection : null;
+      const openSections = new Set(Array.from(relationshipHost.querySelectorAll("details[open]"))
+        .map((element) => element.dataset.entityContextSection));
+      relationshipHost.replaceChildren();
+      relationshipContext = renderEntityContext(relationshipHost, options);
+      for (const disclosure of relationshipHost.querySelectorAll("details"))
+        disclosure.open = openSections.has(disclosure.dataset.entityContextSection);
+      const restored = activeReference
+        ? Array.from(relationshipHost.querySelectorAll("[data-entity-context-ref]"))
+          .find((element) => element.dataset.entityContextRef === activeReference)
+        : activeSection
+          ? Array.from(relationshipHost.querySelectorAll("details"))
+            .find((element) => element.dataset.entityContextSection === activeSection)?.querySelector("summary")
+          : null;
+      restored?.focus({ preventScroll: true });
+    }
+    refreshRelationships();
+    if (isCanvas) state.entityContextRefresh = refreshRelationships;
+    if (isCanvas && ref.kind === "work_item") {
+      const contextHost = el("div");
+      detail.append(contextHost);
+      renderCanvasContext(contextHost, {
+        entity,
+        context,
+        attention,
+        skipPlacement: Boolean(relationshipContext),
+        onReference: (target) => showEntity(target).catch(report),
+        onHistory: (target) =>
+          loadCanvasHistory(contextHost, target, detailGeneration),
+      });
+      const model = state.canvasData?.context(context, { attention });
+      if (model) acceptCanvas(model);
+    }
     const props = el("dl", undefined, "detail-properties");
     for (const key of [
       "created_at",
@@ -3246,6 +3312,8 @@ async function showEntity(
       "severity",
       "blocked_ref",
       "cause_ref",
+      "external_cause",
+      "propagation",
       "resolution_summary",
       "parent_objective_id",
       "verification_mode",
@@ -3261,6 +3329,11 @@ async function showEntity(
       "stance",
       "criterion_id",
     ]) {
+      if (
+        relationshipContext &&
+        ["parent_objective_id", "objective_id", "blocked_ref", "cause_ref",
+          "evidence_id", "target_ref"].includes(key)
+      ) continue;
       if (
         entity[key] === undefined ||
         entity[key] === null ||
@@ -3304,20 +3377,6 @@ async function showEntity(
         ),
       );
       detail.append(lease);
-    }
-    if (isCanvas && ref.kind === "work_item") {
-      const contextHost = el("div");
-      detail.append(contextHost);
-      renderCanvasContext(contextHost, {
-        entity,
-        context,
-        attention,
-        onReference: (target) => showEntity(target).catch(report),
-        onHistory: (target) =>
-          loadCanvasHistory(contextHost, target, detailGeneration),
-      });
-      const model = state.canvasData?.context(context, { attention });
-      if (model) acceptCanvas(model);
     }
     if (ref.kind === "work_item" && entity.contracts_enabled) {
       await contractSection(detail, entity, detailGeneration);
@@ -3450,6 +3509,7 @@ async function showEntity(
           "decision",
         ].includes(ref.kind)
       ) {
+        const expansionFocus = document.activeElement;
         const model = await state.canvasData?.expand(ref);
         if (
           detailGeneration !== state.detailGeneration ||
@@ -3457,6 +3517,15 @@ async function showEntity(
         )
           return;
         if (model) acceptCanvas(model);
+        // A bounded read may finish after someone has started using the
+        // inspector or search. Its result must not take their focus back.
+        if (document.activeElement !== expansionFocus && document.activeElement !== document.body) {
+          state.canvasView?.update(canvasPresentation(), {
+            selectedKey: `${ref.kind}:${ref.id}`,
+          });
+          writeRoute(ref);
+          return state.selected;
+        }
       }
       state.canvasView?.update(canvasPresentation(), {
         selectedKey: `${ref.kind}:${ref.id}`,
@@ -3486,9 +3555,7 @@ $("detail-dialog").addEventListener("close", () => {
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
   if (!allowCanvasNavigation()) return;
-  state.selected = { ...state.outcome, _kind: "outcome" };
-  state.criterion = null;
-  openCommands();
+  openCommands(undefined, { kind: "outcome", entity: state.outcome });
 };
 $("create-outcome").onclick = () => {
   if (!allowCanvasNavigation()) return;
@@ -4036,7 +4103,7 @@ function projectCommand(name, value) {
     Object.entries(value).filter(([key]) => key in allowed),
   );
 }
-function openCommands(name) {
+function openCommands(name, menuTarget) {
   if (state.submitting) {
     notice(copy.text.waitForTheCurrentChangeToFinishBeforeStarting, true);
     return;
@@ -4055,26 +4122,21 @@ function openCommands(name) {
     return;
   }
   if (!name) {
-    const menu = $("action-options");
-    menu.replaceChildren();
-    const advanced = el("details");
-    advanced.append(el("summary", copy.text.advanced));
-    for (const action of effectiveActions())
-      (action.advanced ? advanced : menu).append(
-        actionButton(
-          action.label,
-          () => {
-            closeActions();
-            openCommands(action.name);
-          },
-          "quiet",
-        ),
-      );
-    if (advanced.children.length > 1) menu.append(advanced);
-    if (!menu.children.length)
-      menu.append(
-        el("p", copy.text.noChangesAreAvailableForYourCurrentPermissionsAnd),
-      );
+    const kind = menuTarget?.kind || (state.criterion ? "criterion" : state.selected?._kind || "outcome");
+    const entity = menuTarget?.entity || state.selected || state.outcome;
+    renderActionMenu($("action-options"), {
+      actions: effectiveActions(kind, entity),
+      kind,
+      entity: menuTarget?.entity || state.criterion || entity,
+      onAction: (action) => {
+        closeActions();
+        if (menuTarget) {
+          state.selected = { ...entity, _kind: kind };
+          state.criterion = null;
+        }
+        openCommands(action.name);
+      },
+    });
     if (canvasInspector.enabled) canvasInspector.showActions();
     else $("action-dialog").showModal();
     return;

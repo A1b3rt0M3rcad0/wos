@@ -46,6 +46,8 @@ The **Outcome Board** shows the requested result, Objectives, Tasks and their re
 
 Use the map's **+**, **−**, **Center view** and **Fit view** controls to explore the work. Inspection stays below the Board toolbar, keeping navigation available while you review a card.
 
+Drag cards in any direction to arrange the Board locally; scroll or drag its background to pan. **Ctrl/Command + scroll** zooms around the pointer. Placement does not create a relationship. The inspector explains each record's role, its actual connections and the limits of the loaded view. [Understand how Outcomes, Objectives, Tasks, Evidence and Issues fit together](docs/workspace-relationships.md).
+
 Fonts, controls and panels keep stable operational sizes on larger monitors;
 the extra space belongs to the work. [Desktop and mobile screenshots](docs/design/editorial/density/README.md).
 

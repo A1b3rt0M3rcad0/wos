@@ -301,8 +301,8 @@ export function layoutCanvas(
     if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
       const entry = {
         ...item,
-        x: Math.max(16, saved.x),
-        y: Math.max(16, saved.y),
+        x: saved.x,
+        y: saved.y,
       };
       placed.set(item.key, entry);
       occupied.push(entry);
@@ -326,6 +326,14 @@ export function layoutCanvas(
     occupied.push(entry);
   }
   const nodes = visible.map((item) => placed.get(item.key));
+  // The map has no top/left wall. Bounds describe only its loaded cards and
+  // their reading margin; they do not constrain a user's local arrangement.
+  const x = nodes.length ? Math.min(...nodes.map((item) => item.x - 48)) : 0,
+    y = nodes.length ? Math.min(...nodes.map((item) => item.y - 48)) : 0;
+  const width =
+      Math.max(600, ...nodes.map((item) => item.x + item.width + 112 - x)),
+    height =
+      Math.max(400, ...nodes.map((item) => item.y + item.height + 48 - y));
   return {
     nodes,
     byKey: placed,
@@ -335,8 +343,9 @@ export function layoutCanvas(
       (edge) => placed.has(edge.sourceKey) && placed.has(edge.targetKey),
     ),
     hiddenCount: sorted.length - nodes.length,
-    width: Math.max(600, ...nodes.map((item) => item.x + item.width + 112)),
-    height: Math.max(400, ...nodes.map((item) => item.y + item.height + 48)),
+    bounds: { x, y, width, height },
+    width,
+    height,
   };
 }
 
@@ -444,7 +453,7 @@ export function mountWorkspaceCanvas(host, options) {
   viewport.setAttribute("role", "region");
   viewport.setAttribute(
     "aria-label",
-    "Outcome Board map. Drag the background to pan; use arrow keys to move focus, plus and minus to zoom.",
+    "Outcome Board map. Drag cards to arrange them; drag the background or scroll to pan. Use Control or Command with scroll to zoom, arrow keys to navigate, plus and minus to zoom.",
   );
   const world = node("div", undefined, "canvas-world");
   const edges = document.createElementNS(SVG, "svg");
@@ -637,8 +646,12 @@ export function mountWorkspaceCanvas(host, options) {
     if (!layout) return;
     const area = cameraArea(),
       scale = uiUnit();
-    camera.x = (area.width - layout.width * scale * camera.zoom) / 2;
-    camera.y = (area.height - layout.height * scale * camera.zoom) / 2;
+    camera.x =
+      (area.width - layout.width * scale * camera.zoom) / 2 -
+      layout.bounds.x * scale * camera.zoom;
+    camera.y =
+      (area.height - layout.height * scale * camera.zoom) / 2 -
+      layout.bounds.y * scale * camera.zoom;
     cameraPaint();
   }
   function zoom(factor, point) {
@@ -670,8 +683,12 @@ export function mountWorkspaceCanvas(host, options) {
     // Initial entry keeps notes readable. An explicit Fit may use overview
     // scale to show the whole loaded map; List/details keep full-size content.
     camera.zoom = initial ? Math.max(desired, 0.75) : desired;
-    camera.x = Math.max(24, (area.width - width * camera.zoom) / 2);
-    camera.y = Math.max(24, (area.height - height * camera.zoom) / 2);
+    camera.x =
+      Math.max(24, (area.width - width * camera.zoom) / 2) -
+      layout.bounds.x * scale * camera.zoom;
+    camera.y =
+      Math.max(24, (area.height - height * camera.zoom) / 2) -
+      layout.bounds.y * scale * camera.zoom;
     if (initial && desired < 0.75) {
       const anchor =
         layout.byKey.get(selectedKey) ||
@@ -759,13 +776,14 @@ export function mountWorkspaceCanvas(host, options) {
       const source = layout.byKey.get(edge.sourceKey),
         target = layout.byKey.get(edge.targetKey);
       if (source && target) {
-        const scale = uiUnit() * camera.zoom;
+        const scale = uiUnit() * camera.zoom,
+          area = cameraArea();
         camera.x =
-          viewport.clientWidth / 2 -
+          area.width / 2 -
           ((source.x + source.width / 2 + target.x + target.width / 2) / 2) *
             scale;
         camera.y =
-          viewport.clientHeight / 2 -
+          area.height / 2 -
           ((source.y + source.height / 2 + target.y + target.height / 2) / 2) *
             scale;
         cameraPaint();
@@ -790,9 +808,10 @@ export function mountWorkspaceCanvas(host, options) {
     if (changed) render();
     const item = layout.byKey.get(key);
     if (!item) return false;
-    const scale = uiUnit() * camera.zoom;
-    camera.x = viewport.clientWidth / 2 - (item.x + item.width / 2) * scale;
-    camera.y = viewport.clientHeight / 2 - (item.y + item.height / 2) * scale;
+    const scale = uiUnit() * camera.zoom,
+      area = cameraArea();
+    camera.x = area.width / 2 - (item.x + item.width / 2) * scale;
+    camera.y = area.height / 2 - (item.y + item.height / 2) * scale;
     cameraPaint();
     const button =
       view() === "list"
@@ -997,7 +1016,12 @@ export function mountWorkspaceCanvas(host, options) {
     const focusedEdge =
       document.activeElement?.closest?.("[data-edge-key]")?.dataset.edgeKey;
     edges.replaceChildren();
-    edges.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+    edges.setAttribute(
+      "viewBox",
+      `${layout.bounds.x} ${layout.bounds.y} ${layout.width} ${layout.height}`,
+    );
+    edges.style.left = unit(layout.bounds.x);
+    edges.style.top = unit(layout.bounds.y);
     edges.style.width = unit(layout.width);
     edges.style.height = unit(layout.height);
     const defs = document.createElementNS(SVG, "defs"),
@@ -1350,13 +1374,47 @@ export function mountWorkspaceCanvas(host, options) {
   viewport.addEventListener(
     "wheel",
     (event) => {
-      if (!(event.ctrlKey || event.metaKey)) return;
+      // Leave native controls and any scrollable record content alone. The
+      // map owns its background/card surface, not the inspector or toolbar.
+      if (
+        gesture ||
+        event.target.closest(
+          ".canvas-node-actions, button:not(.canvas-node-main), a[href], input, select, textarea, [contenteditable]:not([contenteditable=false])",
+        )
+      )
+        return;
+      for (
+        let element = event.target;
+        element && element !== viewport;
+        element = element.parentElement
+      ) {
+        const style = getComputedStyle(element);
+        if (
+          (/auto|scroll/.test(style.overflowY) &&
+            element.scrollHeight > element.clientHeight) ||
+          (/auto|scroll/.test(style.overflowX) &&
+            element.scrollWidth > element.clientWidth)
+        )
+          return;
+      }
       event.preventDefault();
-      const rect = viewport.getBoundingClientRect();
-      zoom(Math.exp(-event.deltaY * 0.003), {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      });
+      const deltaUnit =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? viewport.clientHeight
+            : 1;
+      if (event.ctrlKey || event.metaKey) {
+        const rect = viewport.getBoundingClientRect();
+        zoom(Math.exp(-event.deltaY * deltaUnit * 0.003), {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      } else {
+        camera.x -= event.deltaX * deltaUnit;
+        camera.y -= event.deltaY * deltaUnit;
+        cameraPaint();
+      }
     },
     { signal: abort.signal, passive: false },
   );
@@ -1399,8 +1457,8 @@ export function mountWorkspaceCanvas(host, options) {
       if (gesture.item) {
         const scale = uiUnit() * camera.zoom;
         const position = {
-          x: Math.max(16, gesture.position.x + dx / scale),
-          y: Math.max(16, gesture.position.y + dy / scale),
+          x: gesture.position.x + dx / scale,
+          y: gesture.position.y + dy / scale,
         };
         positions.set(gesture.item.key, position);
         manualPositions.set(gesture.item.key, position);

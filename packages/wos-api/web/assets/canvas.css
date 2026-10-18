@@ -154,6 +154,11 @@ dl.canvas-summary-metrics > div {
   border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
   background: var(--wos-workspace);
 }
+/* Suggestions belong above the overlaid inspector. Raising only the results'
+   own z-index cannot escape the toolbar's lower stacking context. */
+.canvas-toolbar:has(.canvas-search-results:not([hidden])) {
+  z-index: 7;
+}
 .canvas-toolbar button,
 .canvas-node-actions button,
 .canvas-list-expand {
@@ -832,17 +837,78 @@ dl.canvas-summary-metrics > div {
   max-width: 100%;
   min-width: 0;
 }
+:where(.canvas-context-panel, #action-dialog) .action-options {
+  grid-auto-rows: max-content;
+  align-content: start;
+  align-items: start;
+}
 .canvas-context-panel .action-options {
   grid-template-columns: minmax(0, 1fr);
   min-height: 0;
   overflow: auto;
+  scroll-padding-block: calc(12 * var(--wos-unit, 1px));
   padding: calc(12 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
 }
-.canvas-context-panel .action-options button {
+:where(.canvas-context-panel, #action-dialog) .action-options button {
+  display: grid;
+  align-content: center;
+  gap: calc(4 * var(--wos-unit, 1px));
   width: 100%;
+  min-width: 0;
   text-align: start;
-  font-size: 1.14286rem;
-  padding-inline: calc(10 * var(--wos-unit, 1px));
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font: 400 1rem/1.45 var(--utility);
+}
+.canvas-context-panel .action-options button {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  height: auto;
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options :is(.action-context, .action-group) {
+  min-width: 0;
+  margin: 0;
+}
+:where(.canvas-context-panel, #action-dialog) .action-context {
+  grid-column: 1 / -1;
+  padding-bottom: calc(12 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  color: var(--muted);
+  font-size: 0.85714rem;
+  overflow-wrap: anywhere;
+}
+:where(.canvas-context-panel, #action-dialog) .action-context > p {
+  margin: calc(6 * var(--wos-unit, 1px)) 0 0;
+  font-size: inherit;
+}
+.canvas-context-panel .action-group + .action-group {
+  margin-top: calc(12 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-group h3 {
+  margin: 0 0 calc(6 * var(--wos-unit, 1px));
+  font: 600 0.85714rem/1.5 var(--utility);
+  color: var(--muted);
+}
+:where(.canvas-context-panel, #action-dialog) .action-group-options {
+  display: grid;
+  gap: calc(4 * var(--wos-unit, 1px));
+  grid-auto-rows: max-content;
+  align-content: start;
+}
+:where(.canvas-context-panel, #action-dialog) .action-description {
+  font-size: 0.85714rem;
+  line-height: 1.45;
+  color: inherit;
+  opacity: 0.8;
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details {
+  margin-top: calc(8 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details .action-group {
+  margin: calc(12 * var(--wos-unit, 1px));
 }
 .canvas-context-section {
   min-width: 0;
@@ -1184,25 +1250,27 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   min-height: 0;
   padding: calc(6 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
 }
-.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty) {
-  flex-shrink: 0;
+/* Announce feedback in its own document row. Map coverage already has a
+   persistent footer status and never needs a toast over the inspector. */
+.canvas-feedback {
+  flex: 0 0 auto;
+  min-width: 0;
   max-height: 20dvh;
   overflow: auto;
-  padding-block: calc(4 * var(--wos-unit, 1px));
-  margin-bottom: calc(6 * var(--wos-unit, 1px));
-}
-/* Routine refresh feedback remains announced without becoming another fixed
-   header row. Errors keep their bounded, visible place in the normal flow. */
-.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty):not(.error) {
-  position: absolute;
-  z-index: 5;
-  inset-inline-end: calc(24 * var(--wos-unit, 1px));
-  bottom: calc(56 * var(--wos-unit, 1px));
-  max-width: min(60%, calc(560 * var(--wos-unit, 1px)));
-  margin: 0;
-  padding: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  overscroll-behavior: contain;
   background: var(--wos-workspace);
-  pointer-events: none;
+}
+.canvas-feedback:empty,
+.canvas-feedback:not(:has(#notice:not(:empty))) {
+  display: none;
+}
+.canvas-feedback > #notice:not(:empty) {
+  position: static;
+  max-width: 100%;
+  margin: calc(4 * var(--wos-unit, 1px)) 0 0;
+  padding: calc(6 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+  font-size: 0.85714rem;
+  overflow-wrap: anywhere;
 }
 .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #signed-protocol-info {
   flex-shrink: 0;

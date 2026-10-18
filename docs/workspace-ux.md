@@ -1,5 +1,10 @@
 # Human workspace
 
+To understand how Outcomes, Objectives, Tasks, Evidence, Issues and Blockers
+relate, use the [relationship guide](workspace-relationships.md). The inspector
+separates recorded placement, dependencies, observations and actual blocking;
+none of these silently accepts a result.
+
 The bundled workspace is served at `/app/`. Sign in with an access credential, choose an authorized Workspace and open or create an Outcome. The credential is exchanged for a secure session; shareable links contain scope and navigation, never credentials. Official product copy is English and dates label UTC. Authored titles, descriptions and external context retain their original language and values.
 
 The default login fits compact desktop and mobile screens. Its introduction becomes smaller while the credential field, guidance and Sign in remain complete. Expanding local access or increasing text size can scroll naturally; controls are not clipped to force the page into one screen.

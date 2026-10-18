@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Correct operational density across viewport sizes using Woobe's actual interface dimensions; release publication and human acceptance remain separately tracked
+**Current wave:** Clear entity relationships, nonblocking Board notices, free local movement and compact contextual actions in draft PR #116
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,23 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Board communication and navigation — 2026-10-18
+
+**Status: In progress in [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116).**
+The owner reports an obstructive persistent Partial view notice, artificial
+limits on card movement, stretched action rows, and unclear relationships among
+Outcomes, Objectives, Tasks, Evidence and Issues. Continue the same draft PR.
+
+- [ ] Place persistent data-completeness information in the Board status flow,
+  preserving visible errors and accessible feedback without covering controls.
+- [ ] Allow panning and local card placement around every side of the Board;
+  preserve correct fitting, connections, selection and camera behavior.
+- [ ] Make action menus compact, grouped by purpose and contextual to the
+  selected record, with readable explanations and reachable native forms.
+- [ ] Map and clarify actual entity relationships, ownership, dependencies,
+  documentary support and blocking, without inferring acceptance or authority.
+- [ ] Verify desktop/mobile workflows and refresh source-bound captures and docs.
 
 ## Stable operational density — 2026-10-18
 
