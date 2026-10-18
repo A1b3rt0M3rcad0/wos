@@ -195,16 +195,17 @@
               +
             </button>
           </div>
-          <form id="search">
-            <label class="sidebar-search-label" data-copy="searchOutcomes"
-              >Search outcomes<input
+          <form id="search" role="search" aria-label="Outcome search">
+            <label class="sidebar-search-label">
+              <span class="sr" data-copy="searchOutcomes">Search outcomes</span>
+              <input
                 id="text"
                 type="search"
                 placeholder="Search outcomes"
                 data-copy-placeholder="searchOutcomes"
             /></label>
             <details class="search-filters">
-              <summary data-copy="filterOutcomes">Filter outcomes</summary>
+              <summary data-copy="filterOutcomes">Filters</summary>
               <label data-copy="lifecycle"
                 >Lifecycle<select id="lifecycle">
                   <option value="" data-copy="all">All</option>
@@ -222,10 +223,8 @@
                 ><input id="archived" type="checkbox" />Include archived</label
               >
             </details>
-            <button class="quiet search-submit" data-copy="search">
-              Search
-            </button>
           </form>
+          <p id="outcome-search-status" class="sr" role="status" aria-live="polite"></p>
           <div id="outcomes" class="outcome-navigation"></div>
           <button
             id="more-outcomes"
@@ -240,8 +239,8 @@
               <img
                 class="sidebar-vignette"
                 src="robots/18_workspace_organizer.svg"
-                width="96"
-                height="108"
+                width="54"
+                height="48"
                 alt=""
                 loading="lazy"
               />
@@ -356,40 +355,48 @@
                 <div class="outcome-meta">
                   <span id="state" class="badge"></span
                   ><span id="revision"></span>
+                  <span id="canvas-counts" class="canvas-counts" hidden></span>
                 </div>
               </div>
+              <nav
+                id="area-tabs"
+                class="outcome-view-navigation"
+                aria-label="Outcome areas"
+                data-copy-aria-label="outcomeAreas"
+              ></nav>
               <div class="heading-actions">
-                <button
-                  id="copy-workspace-link"
-                  class="quiet"
-                  data-copy="copyLink"
-                >
-                  Copy link</button
-                ><button
-                  id="refresh"
-                  class="quiet"
-                  title="Refresh state"
-                  data-copy-title="refreshState"
-                  data-copy="refresh"
-                >
-                  Refresh</button
-                ><button
-                  id="view-outcome"
-                  class="quiet"
-                  data-copy="reviewCriteria"
-                >
-                  Review criteria</button
-                ><button id="actions" data-copy="chooseAnAction">
+                <details id="canvas-context" class="canvas-context-disclosure" name="outcome-header" hidden>
+                  <summary data-copy="outcomeContext">Outcome context</summary>
+                  <div class="canvas-context-content">
+                    <div id="canvas-summary" class="canvas-overview"></div>
+                    <div id="canvas-planning" class="canvas-planning"></div>
+                  </div>
+                </details>
+                <details id="outcome-tools" class="outcome-tools" name="outcome-header">
+                  <summary data-copy="outcomeTools">Outcome tools</summary>
+                  <div class="outcome-tool-options">
+                    <button id="copy-workspace-link" class="quiet" data-copy="copyLink">
+                      Copy link
+                    </button>
+                    <button
+                      id="refresh"
+                      class="quiet"
+                      title="Refresh state"
+                      data-copy-title="refreshState"
+                      data-copy="refresh"
+                    >
+                      Refresh
+                    </button>
+                    <button id="view-outcome" class="quiet" data-copy="reviewCriteria">
+                      Review criteria
+                    </button>
+                  </div>
+                </details>
+                <button id="actions" data-copy="chooseAnAction">
                   Choose an action
                 </button>
               </div>
             </div>
-            <nav
-              id="area-tabs"
-              class="view-tabs"
-              aria-label="Outcome areas"
-              data-copy-aria-label="outcomeAreas"
-            ></nav>
             <nav
               id="view-tabs"
               class="view-tabs"
@@ -399,7 +406,7 @@
               <button data-view="list" aria-pressed="false" data-copy="list">
                 List</button
               ><button data-view="board" aria-pressed="false" data-copy="board">
-                Board
+                Task Board
               </button>
             </nav>
             <section
@@ -407,12 +414,10 @@
               aria-label="Visual operational workspace"
               hidden
             >
-              <div id="canvas-summary" class="canvas-overview"></div>
-              <div id="canvas-planning" class="canvas-planning"></div>
               <div class="canvas-workspace-shell">
                 <section
                   id="operational-canvas"
-                  aria-label="Outcome canvas"
+                  aria-label="Outcome Board workspace"
                 ></section>
                 <aside
                   id="canvas-details"

@@ -1,4 +1,4 @@
-import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, clickWorkspaceTool } from "./ux-fixture.mjs";
 
 const base = (scope) =>
   `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -133,7 +133,7 @@ test("an old Roadmap list cannot refill a new snapshot's cache while refresh per
       String(old.value.outcome_revision),
     );
     permissions = permissionBarrier(hold, scope);
-    await page.locator("#refresh").click();
+    await clickWorkspaceTool(page, "refresh");
     const currentPermissions = await permissions.arrived;
     expect(currentPermissions.status).toBe(200);
     await expect(page.locator("#revision")).toContainText(
@@ -216,7 +216,7 @@ test("a delayed Board page cannot append obsolete records after a same-Outcome r
       String(old.value.outcome_revision),
     );
     permissions = permissionBarrier(hold, scope);
-    await page.locator("#refresh").click();
+    await clickWorkspaceTool(page, "refresh");
     const currentPermissions = await permissions.arrived;
     expect(currentPermissions.status).toBe(200);
     await expect(page.locator("#revision")).toContainText(

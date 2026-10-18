@@ -1,0 +1,2940 @@
+{
+  "schemaVersion": 1,
+  "interface": {
+    "mainView": "Outcome Board",
+    "taskView": "Task Board",
+    "sidebar": "Hidden only in the active Outcome Board; retained and compacted in all six specialist views",
+    "globalHeaderActions": "Outcome tools and Choose an action appear only on Outcome Board",
+    "specialistActions": "The same Refresh control remains local; Overview exposes Review outcome and existing entity/collection forms remain available",
+    "discovery": "One visible server-backed Outcome search; 250 ms debounce, immediate Enter/filters, cancellation and query-bound pagination",
+    "routes": "Existing internal canvas identifiers are preserved for compatibility",
+    "entry": "Complete default login at compact desktop and mobile sizes; natural scroll retained for expanded local access, enlarged text and constrained height",
+    "inspector": "Dock or overlay only within the map/list stage; the Outcome header, Board toolbar and footer stay outside it",
+    "camera": "Persistent map controls for zoom in/out, center preserving scale and fit to the uncovered region; Auto-layout remains explicit in the toolbar"
+  },
+  "sourceCommit": "0d84588da082f9d2b3539d00e48527b31c8d7487",
+  "baseCommit": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
+  "generatedAt": "2026-10-18T15:29:53.199292+00:00",
+  "browser": {
+    "executable": "/usr/bin/chromium",
+    "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+    "playwright": "1.62.1",
+    "mode": "headless full Chromium",
+    "normalDeviceScaleFactor": 1
+  },
+  "runtime": {
+    "node": "v24.19.0",
+    "go": "go version go1.27.2 linux/amd64",
+    "platform": "Linux amd64",
+    "storage": "isolated SQLite per browser journey"
+  },
+  "server": {
+    "path": "bin/wos",
+    "sha256": "1a910d38252e69f8667a0c5bf70415fbf657d9447da687933d2f1fdec0602da1",
+    "versionOutput": "wos dev (commit 0d84588da082f9d2b3539d00e48527b31c8d7487, built unknown)",
+    "build": "go build -trimpath -buildvcs=false -ldflags \"-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=<sourceCommit>\" -o bin/wos ./packages/wos-api/cmd/wos"
+  },
+  "dataset": {
+    "kind": "illustrative records created through real public commands",
+    "fixtureSha256": {
+      "tests/web/canvas-fixture.mjs": "b5ae1e378ee268f164ee1994f57ef44304836605ac58cd17b1833dbe3ffc95a0",
+      "tests/web/ux-fixture.mjs": "31c533443a09d3abc693631fee4a37ceb6e7fb69f670d31f314e5c7ae82713f8",
+      "tests/web/canvas-workspace-layout.spec.mjs": "b85245d803cd1875792e55fffb8b81eb5d4ad8ce36405c182196213ca8525c69",
+      "tests/web/native-browser-zoom.mjs": "3d061ae6b70c73744bb9820cd1bcbbe17089aeff7e89e0f485e3f04e952af690",
+      "tests/web/outcome-navigation.spec.mjs": "130a3d8bcace3c06ef504733fd3dfa2c234dc1e0e55c756f92b78db20dc50f1d"
+    },
+    "desktop": "2 Objectives, 5 Tasks, 1 Issue, explicit Blocker and typed Evidence links; 1366px case has a long Outcome title",
+    "mobile": "same fixture with 35 additional Tasks; List, Task inspector/form and explicit Map alternative",
+    "context": "published and activated Roadmap fixture for progressive context and Views; a second Outcome verifies switching through the restored Overview sidebar",
+    "sidebar": "desktop Overview and Work at 1366x768, compact Overview at 320x740 and 390x844",
+    "entry": "Unauthenticated default credential login with Local development server collapsed"
+  },
+  "sourceAssetsSha256": {
+    "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
+    "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+    "packages/wos-api/web/assets/app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-currentcolor.svg": "0696961c1826d9333f5e86bd7dade89dcff538759fe6c6b0714de7be54cc4cb5",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-ink.svg": "f6dd82b34b7d1bd27e8b841bb8dbabced92f4a44c72d6e2383a40f0c4b23e7a8",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-muted.svg": "7556478fd8dd48d9af793135b21ec5e87f13090841b202f83270291c5d1b16bf",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-ink.svg": "4fc8bad44bfe0b974e298a78b90fd66596394542ffb6083b827acc6ae0f36b6d",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-primary.svg": "5f515f88b9c81fcabf59bbb7e06db0477d3a20b945094bf65af3de3fe20d10c5",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-padded-white.svg": "7d4752f201c6733aaf76c7a473212dee81c8091993775dc97b0f698af6d36663",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-primary.svg": "53e62bcf2fbd3b9b488851f8e81b315bd66ca0afdf270dba812689c832072247",
+    "packages/wos-api/web/assets/brand/01-marca/wos-symbol-white.svg": "687391c82f6e7bb109971e425d9900dee9870a8bde4ca4b34e498c406bb2884c",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-compact-dark.svg": "a25ef039770d0c97d8459405f7d90a4df4b095c28e917ef59ecea95aab942545",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-compact-light.svg": "5424c2a516734580e0dd544d6158ff09ab75128ac6ce224080e2918e420dea2c",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-all-orange.svg": "97c6bf976d7c5be76a890fe7cfb6cd3f1c6cb5cdf01e6f2591793d8e99ce0450",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-dark.svg": "f347f503d44dd4767d128aa3fe797d161b3e774f5537d38f4c1ed4ed081afd1f",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-light.svg": "feb903ffc7853250fbf0ddef470f3c5d8bb1b6afc44043ab1b54e593d37e04a3",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-mono-ink.svg": "a4e9836e4f0806468ed950638768be6ecf1cc2aba91b9d78b149133549acbd45",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-horizontal-mono-white.svg": "6f615adb97e14fa60a55d1f3aab969a42caad104749251f8830a0eb644176ba8",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-stacked-dark.svg": "6fbb821ec5ad7d0dacac0b536af15fbf4daf288d9cc7e6642ddedaee7ad2c6c8",
+    "packages/wos-api/web/assets/brand/02-logotipos/wos-stacked-light.svg": "58934542fcf59fca218e3e5935c53cca316a7c3ada60fb0d532d0eaea3887b56",
+    "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-dark.svg": "5d7521a425d94362a7a84e987f2264fb16013e68543794f910cdb4f5b6e31f61",
+    "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-light.svg": "76c7715d240aad9d128f9041b00a25368155ba8c1a5c79e1a2e2de242f2d75bc",
+    "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-orange.svg": "9b7a04847fe5247b8d9e371c66af5cf29342332b479c0a3a411f0f331f1dcee5",
+    "packages/wos-api/web/assets/brand/03-favicon-app/app-icon-transparent.svg": "122ec2db5fc9ae40dab7c3f362369a636550286426f0cc47ef7ae24834da81fd",
+    "packages/wos-api/web/assets/brand/03-favicon-app/apple-touch-icon.svg": "4b5c531f94bdf3c9edc85e646febe7e241ca342b91604e3e74a16e1d82883a67",
+    "packages/wos-api/web/assets/brand/03-favicon-app/favicon-16.svg": "b4a5c1d4890e9adf5ba446c1aaf14d07b13b0c875401fa266d3a71d040cda562",
+    "packages/wos-api/web/assets/brand/03-favicon-app/favicon-32.svg": "783c3c9ed12feacc23de841558d260886b8ca6160a99e14f67f63e732ada434e",
+    "packages/wos-api/web/assets/brand/03-favicon-app/favicon-48.svg": "1075e0e2afc6d283c5cdeb7e21655c978fa3e4a08bbacae17a32f91c161474be",
+    "packages/wos-api/web/assets/brand/03-favicon-app/favicon-64.svg": "3b97e8669e01b004a43fa58a764e93cbc79f2181209fc2efcddbcad17a00b431",
+    "packages/wos-api/web/assets/brand/03-favicon-app/favicon.svg": "cb3f0ca59c6d1ea8b765c72b194defe2135fa2550db2f5dd94013ba5c5e841e4",
+    "packages/wos-api/web/assets/brand/03-favicon-app/pwa-maskable.svg": "db75c29594dc07685ac264cfdd5d070d7602b6fcf62dfb1034844774383110bc",
+    "packages/wos-api/web/assets/brand/03-favicon-app/safari-pinned-tab.svg": "4d9e6485b3fab395348e3a65d28980e638b4b3a0a1c14ee03fce3831a2263737",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-ink.svg": "91d8adb46e0995504895f3844ff8f380b97ef3ba56d5792fae269d6636d56431",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-orange.svg": "8bbdc9a9010160b7110196145016938f75c05218d46f218879813004634efc24",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-avatar-soft.svg": "8e6070cae4837877731a26cfaf17ce9e63618f34ef587a73e95b5d9ad5afd501",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-brand-card-dark.svg": "64aa707dee0368e1bf0daebec0e1329b15e7c3923aa371aa70bff9945ba95d16",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-brand-card-light.svg": "b5af2cc92453d71c4441e2bd9166b6a190e4639f682281c1eebea4bd7a586502",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-footer-dark.svg": "4d7910a8fbf2a594f6d3fb6d6eec100ad5fa5376d870a74fbc51e8fce4231f5c",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-footer-light.svg": "9060a40ca434e6e251ad5547a82e944d8a49a40f51c3da30b4aa42e3b7e38e44",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-dark.svg": "90471add6b96dcad4614c35e87a540fbb338509cab22682ec5cd44124ac41dde",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-light.svg": "d0e89634db725971622cd7260040bf4012be31b1a01dce3c12f789f7fcef9a35",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-icon-button-orange.svg": "88affc048feef255289fde8a08db8a625fa4f2b78d4f897701ab09d0a7022883",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-navbar-dark.svg": "68c23b5d9ca37982a3b9fc0eb7eddfffb4317c8e21c1406e256d92798cae7ebc",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-navbar-light.svg": "9e12551984728bdb1c47960b353e8098cab7ca1e6e438943dbd0d3262318639c",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-sidebar-dark.svg": "c65ef6edcbc7002f61ad6fa76e25549ca08cd5fd7fcfb1b320ad7b1c53226cba",
+    "packages/wos-api/web/assets/brand/04-navegacao/wos-sidebar-light.svg": "f865d23a2e15b230aaaf58c0d3ee68704c7d2785bad006e672706c1c417a2d51",
+    "packages/wos-api/web/assets/brand/05-badges/wos-outline-pill.svg": "7f60d69d678c0091bdcb8567f3a636364a99d445d34c4764e7f2577828e5e7ce",
+    "packages/wos-api/web/assets/brand/05-badges/wos-pill-dark.svg": "c7516775c123264e5af6d1c6bbd8e0dadaf1e1572630d130360e967abaf0da83",
+    "packages/wos-api/web/assets/brand/05-badges/wos-pill-light.svg": "4e4bc55ac463d398e7ccc673af732e09a3263c0808c939578fbc94bc71d81ca2",
+    "packages/wos-api/web/assets/brand/05-badges/wos-round-seal.svg": "e6b03bbbc07c2f2b48f5344d2fe177257705e6286384346d7bb1cf59470c816d",
+    "packages/wos-api/web/assets/brand/05-badges/wos-status-dark.svg": "b718e8ffaa30dd2ff5b26d1b8dbef352eacc00a93fadd16514a54125e7e934ae",
+    "packages/wos-api/web/assets/brand/05-badges/wos-status-light.svg": "126da70178de54195170224c975b4f8f3adfb29e35a074f3f178b13c2dc0fa88",
+    "packages/wos-api/web/assets/brand/06-loading/wos-loader-dash.svg": "783d1c610c87b1c71e8c4cf675caa3e5a1be6af1908ae382430cbbfe03b21feb",
+    "packages/wos-api/web/assets/brand/06-loading/wos-loader-orbit.svg": "0ae718cf1b0b57e1a5e67dea64d79b3afec1734a7272a3ad7e03cb8de8f1d080",
+    "packages/wos-api/web/assets/brand/06-loading/wos-loader-pulse.svg": "f97fbddf80a41dc94f1785c0ab6f66f51d48647e0e6f253389753482bb3b55ed",
+    "packages/wos-api/web/assets/brand/06-loading/wos-loader-triple.svg": "71befe14e8e7ccd64d1ee18cfdc2f9dc009bc06cc82e17ba30374ada9651555f",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-activity.svg": "df7ad54a0bbddd59891a6d860921c65bd89237e061d05eefbaef1ee17bbfdd19",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-network.svg": "0d5dc5d87a5e9e8983e14d66812ff36182e826a5707ead5449fbbcc61437cc75",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-search.svg": "130c6493626cd35b49a4ac4014e4dced46247bd43af3602df90664c975774b20",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-tasks.svg": "de63d5fc977ffc0f9f81be9550aaedeafee1cd6a528a8bc2da2ca1b93aef9d50",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-empty-workspace.svg": "6b6705dc232acf3ca8165f064ed9218546f4fb85d576ce77844febe3f18c3096",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-feedback-alert.svg": "be4f47ca62d98e9d48d94c5c5be737205a2e33b9c5f0f597d3df337829665475",
+    "packages/wos-api/web/assets/brand/07-estados-vazios/wos-feedback-success.svg": "00c0e6deb8a36840ac10d5255f76c4c3a9a884fa21b603a32db426e13d6f7203",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-corner-left.svg": "3a0d5cd7893c3d1c89900e8df3a925cef0c6805fba950d5e00df7af96ef762dc",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-corner-right.svg": "a2db5858c2f6a8f4dbcd7c092cfdb47021978a9df3fe333045c61b3d316c5d18",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-illustration-dark.svg": "a0b0e117af0cbec70bc53554e7b53fe12551ef534367afe5b67ecf00df7804e2",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-illustration-light.svg": "297702e9279b2111c28f18e59a1b4303f51818da917500d330238480d926045c",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-mark.svg": "72b74de7b9014dc5b3332f074d3138a1cd4083fad7e7c96751c50f7b65924ba5",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-watermark-dark.svg": "69b03c84121c30275fb5a2a87623ddf7f35a283017ccdd135ed5ef518044acd4",
+    "packages/wos-api/web/assets/brand/08-hero/wos-hero-watermark-light.svg": "27602f1267dff8719fd70d3d978c6b4a44ff2913f386063957dcb80c27d95408",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-bg-grid.svg": "f9d2a50ecd29ec99342d4ff546fb764a163bc40990c64b432957ab2d27dd2e31",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-card-corner.svg": "d0c06f0fe142bb338d75241d556966d05d910442b6987faa4a1d2d429cdf7a02",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-pattern-tile-dark.svg": "04fa847750aa048e88c1acfa76d96079f07386b88acceeea4493d693efdc3f5e",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-pattern-tile-light.svg": "48ff0d7df985b8a310f6539dd0b9576934fcdd36f774758da4947e9a9d252d75",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-section-divider.svg": "80c86501be41336b48e0675e3740aaa7b8a91e8febf157480fb3ce5b8648166e",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-section-wash-dark.svg": "894d2da390e7c303179ae94db4414f9de7c55a307199243fa8381070b48b540a",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-section-wash-light.svg": "fb564c9e204cd6c96a352d13ca40d3cfa993253b6a9f121941848e74336a58b9",
+    "packages/wos-api/web/assets/brand/09-patterns/wos-top-edge.svg": "442c7203b13889eac20b000e1dc4118e70c5db76c6e75cc9ce388bdcc402166b",
+    "packages/wos-api/web/assets/brand/10-social/wos-open-graph-dark.svg": "1fa04be35864b7a0ffb04ce6a184e1bf51531d4934ec4e483e994ff8d495aab5",
+    "packages/wos-api/web/assets/brand/10-social/wos-open-graph-light.svg": "8b8ce6083b4f4c0a3af4de1ded8b54dbe768559989887fd115756469280e867b",
+    "packages/wos-api/web/assets/brand/10-social/wos-social-square-dark.svg": "d417cfd111730718b31e7557c1b3531cdea1594459a05f4bb143cfe2422ce519",
+    "packages/wos-api/web/assets/brand/10-social/wos-social-square-light.svg": "7caf08b9fbbcb4edd33221a3e890f66964eda51345d3807c94fbad354ef9daab",
+    "packages/wos-api/web/assets/brand/11-sprites/wos-symbol-sprite.svg": "f9fba8486dabcd1cf0e1806a0cbbb656d5254ab97f6e0431ca87c1c1f483e523",
+    "packages/wos-api/web/assets/brand/12-png-web/app-icon-192.png": "daa3464f9cceda5da6587a02b9ad47bf1a6cbe4902f8db434732b085c19d8e4b",
+    "packages/wos-api/web/assets/brand/12-png-web/apple-touch-icon-180.png": "aacd7dd4a287795b16e0516ef3ed6641ba1fc7a0cc985b8508590ee6d07cdf89",
+    "packages/wos-api/web/assets/brand/12-png-web/favicon-16.png": "e295843cb0b4715a661fbf99d5d22f1d5b5b5f1a6c336e6875c3e6b01bfec5dc",
+    "packages/wos-api/web/assets/brand/12-png-web/favicon-32.png": "1484e497e0260cd5f40b4757fa4bcd38fa0d34651df31e31ad2797aefed59a5e",
+    "packages/wos-api/web/assets/brand/12-png-web/favicon-48.png": "b92dd550e5ad127259bcd39e658f1177778ffb2229a2bee988f9d1cd6d81da8e",
+    "packages/wos-api/web/assets/brand/12-png-web/favicon-64.png": "8c3dec7711f476e3b3a919b9fafc85c13c3e49427d712d012791e87a58cdf37f",
+    "packages/wos-api/web/assets/brand/12-png-web/favicon.ico": "97f42f737543897ab44cc253f4bf13586ba0f05a01364402a44bed9982015f49",
+    "packages/wos-api/web/assets/brand/12-png-web/pwa-maskable-512.png": "3e6e56260f046f2603dda83610d267d81916ae910a4a7adfc027cda976a2f37f",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-open-graph-dark.png": "6a9ac3fe288114a1b6159a26d809eb8e8412c5483c142a746ebc6b2c3351cbce",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-open-graph-light.png": "b90c7b5536b11c82f9224a7e6cf2b1ef4bee9c439c8b2c4e024dce3330756875",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-social-square-dark.png": "429c8983618a86ee5d9b167609486c53bb51ec487d02f903df07ff2021da9325",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-social-square-light.png": "984a1a63966be85349ffb923ab7641bb5f9a7fb2d3cb735f7f5faa316a7a714f",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-symbol-transparent-1024.png": "861281bf2d408cdd12c067b63266cc145ef9fb5ac49fb216727ca30f91a677cb",
+    "packages/wos-api/web/assets/brand/12-png-web/wos-symbol-transparent-512.png": "18f00ad58f579195f384a71630ca174aca663bed1e4a8df25ef658772a5220a7",
+    "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.png": "f87acddd29bb85d89c2438346e779466aa371f7a2f2a9b89dd378e79b91e06fd",
+    "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn Orange Chain Icon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+    "packages/wos-api/web/assets/brand/hand-drawn-chain/Hand-Drawn-Orange-Chain-Icon.ico": "3ffcd18c6210504dd0b4125f28b641d1549d253ab2dc362708ca506e7f834862",
+    "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
+    "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
+    "packages/wos-api/web/assets/canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+    "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
+    "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
+    "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
+    "packages/wos-api/web/assets/editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+    "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "packages/wos-api/web/assets/en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+    "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
+    "packages/wos-api/web/assets/fonts/README.md": "deff825845814225edb0bc39fe0b54c0c37be00c280639105f2687581d6c94d8",
+    "packages/wos-api/web/assets/fonts/dm-sans-OFL.txt": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
+    "packages/wos-api/web/assets/fonts/dm-sans-latin-wght-normal.woff2": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+    "packages/wos-api/web/assets/fonts/instrument-serif-OFL.txt": "b6106a757902d2d412e09d94dc4a226fe3da80485208a98003969f1b8b6b1d74",
+    "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-italic.woff2": "5a51946dfffa82972bc98745359c46761515641fda557c25116459a9f83da4a7",
+    "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-normal.woff2": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
+    "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
+    "packages/wos-api/web/assets/index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+    "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
+    "packages/wos-api/web/assets/postits/svg/square/classic/brand.svg": "59c0f85216813cfaf3fb9ae89730340cceb079074aaf416ca2b1e2be26345836",
+    "packages/wos-api/web/assets/postits/svg/square/classic/canvas.svg": "3f393609496e938d7f7c73328626fc7602e8ac91f96ca0acbb6c940991060265",
+    "packages/wos-api/web/assets/postits/svg/square/classic/copper.svg": "39f64da36c2511e85d311df0b0aff3d7ae972d5745da3e42d128b91e8b19c767",
+    "packages/wos-api/web/assets/postits/svg/square/classic/grid.svg": "2bc1f40ba814b558f1c3536dd403ce608dd2acb53fba0c65336922435ce23073",
+    "packages/wos-api/web/assets/postits/svg/square/classic/ink.svg": "8e26557413fb8886cf9f97b902ddaf0d07a58c3f6220445dfd48c3ca903f0fba",
+    "packages/wos-api/web/assets/postits/svg/square/classic/selected.svg": "b8000f4516ebc30c5c6ab038f4d97543b5bff99aa117054d6a827c16953e01f4",
+    "packages/wos-api/web/assets/postits/svg/square/classic/surface.svg": "2cf41a8375616f4e33ae9e082aa13e39ddbb8d7f7afa48bc041aacab3cf1ecff",
+    "packages/wos-api/web/assets/postits/svg/square/classic/workspace.svg": "7f126965a151a57e18976f20b3d46959a93d60d7c4bead9f1f510d754d553b80",
+    "packages/wos-api/web/assets/postits/svg/square/curled/brand.svg": "6a723406c717a8a81ae96b5a586ee5c9355426f27b88865412b27d719210647a",
+    "packages/wos-api/web/assets/postits/svg/square/curled/canvas.svg": "3078ae1a3353a14c641e1638242c87e16554de1a97d8d3e4a25e0b27cd3516dd",
+    "packages/wos-api/web/assets/postits/svg/square/curled/copper.svg": "cd270ae24329c76e8dca3cc468440c4c4f31258465151fabdf93ee3989f3bb24",
+    "packages/wos-api/web/assets/postits/svg/square/curled/grid.svg": "9bcc082adc18d11720d9b61959981f01405cb11a8be40e78eda6be5345b1bb2f",
+    "packages/wos-api/web/assets/postits/svg/square/curled/ink.svg": "6bdc63987a18e9ef956ad7977391876efba20f41ae339c274f7c84bf0aefb946",
+    "packages/wos-api/web/assets/postits/svg/square/curled/selected.svg": "73da77651ef35e78872a6855ac7dc0b9a09fae33b9fd304cbb07553eb59691ec",
+    "packages/wos-api/web/assets/postits/svg/square/curled/surface.svg": "8e91160ada929e33aeab8ffa62f96c943b4c0e3a1902298bef745056e17a72a2",
+    "packages/wos-api/web/assets/postits/svg/square/curled/workspace.svg": "bf0f89800c57c7bb4eecfd660ca71afceef6fdd83858ad4f909fb543c3a8326b",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/brand.svg": "0fcea79edd3ece947c5e87118b1bebcbacff4f5ef9acf6314d31e91f92e4e7bf",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/canvas.svg": "0f27298ac91426cce7816c546e4a0c47e026046efc39a1fb602f262123ed2e05",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/copper.svg": "b1405ac826a9db19b04e988eaec2af2a22251d8adb454fb40bc6ddf83c3cd636",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/grid.svg": "c262177aa46f6ece3cb3b8603fed728546b296a34a64baee263fb30d2306afa9",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/ink.svg": "ec58fbe71f03acfb124cfd0270997ce83edfe27e72d590891fc9bef627de09bd",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/selected.svg": "eed1ac162403ec5c466fad3caa69363a4d295783dfb1e837c56493fe0f3a1505",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/surface.svg": "93ece4bb9003b5a6e1990427646613951a67a94bfbe7bb7b5b210e1d4a3cb540",
+    "packages/wos-api/web/assets/postits/svg/square/dogear/workspace.svg": "00961e9e22f77cc9c7bef7f453db461b242f479313283b24836ad06165c85f46",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/brand.svg": "7d3de90eb2aad5e38c845965514c8a92baefc489d21ea37bab46d746d0dfbbaa",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/canvas.svg": "fc6ee0d7a98ac2f3cc571987008cfc1bed626060102370856c84b0813a14e94c",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/copper.svg": "e7e6da50d858a445298674eec431beb4e071f05ef5ca0e633671ea4f82c96cdc",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/grid.svg": "c56a692e2da20a05d8e3a42c89116476e4553c25a67b65c828060ef479cf1867",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/ink.svg": "a8a7dd591e148af2fac8955bb95aabfe60914951f52610b9da863449bee3e55d",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/selected.svg": "d934d56aa7aa7ee98cec44bd7c733b1f193de497fdb4a23e501e5cca68c7f5ba",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/surface.svg": "bada6ed71525826bd9d85ab594a084d04977070139ce78088124b87f4e6fed9f",
+    "packages/wos-api/web/assets/postits/svg/square/notebook/workspace.svg": "49db1138a793a7038b3afb6582048caf32be26f9ded2f9438408325566e3f20b",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/brand.svg": "fe2292fbb0be92b5c5a45b12b37865734b8d9f730afa0d6fc80a125c9364f26d",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/canvas.svg": "e548c7dcef0beff2ca70d7c670abb93d5997b19b3e4372f9459b20c7636f286b",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/copper.svg": "d68e003bc4709d2c6e7385119a24061edbf3d209aca566e410dd27c3cabbc5ca",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/grid.svg": "4d59e38fdc4907f3d7b9ec1e023176d36dfe1c486555562f651e58b1667e68c3",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/ink.svg": "79a73073bd4625c45d3f43c93eb9c2ce48dc068b9fe4c0bb1428ea9feec9e856",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/selected.svg": "56bbfe9c2c43167fc7250db431ce552414e11c2e885b79754c828cdc4caba43e",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/surface.svg": "ee5746cf1ed50572df2d76e11d9859216110efd6dfe867bd8be5cae118177437",
+    "packages/wos-api/web/assets/postits/svg/square/pinned/workspace.svg": "193d969ec99f23ecd868681a9388b022224cce0c8ff95db9add3ef064e097413",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/brand.svg": "5e978dfbc836a7594e97bf1b684560152ca6f669b27c5df81f7baa47206b8f1a",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/canvas.svg": "6d006516b4f95afd5977d19989ff1e5dda4da43e802a28b52a288edcc57b9a65",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/copper.svg": "9276600868acdfb2fcd00789d08c1e538551ba666cac797f70d9abec00a7d7b9",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/grid.svg": "f54451988f953069bb27c0f2eb05168630a80bbeab26458d071c5c68d34d155b",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/ink.svg": "1bc4dce6ed43f88a60c842d4c61d46a4af6819edafeecafdfab1c589c7f529da",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/selected.svg": "2b0c59a99e1afa00600948e1867fe79e7b6924bfdc6297f851467ff8ffffe547",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/surface.svg": "351b70843feeb40598aa320d5c41ba4fad27501c4013ff9d431a6798dec3c355",
+    "packages/wos-api/web/assets/postits/svg/square/rounded/workspace.svg": "f84dd7bb4b65197fcbecc8bc91830a0e307cf7dcab3b014e582f74fc1e177cf0",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/brand.svg": "b8f0ad79fcc1057b641ba7404ac04d51bee15c4250ea091e0780914e61bb64bc",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/canvas.svg": "0eeb65ff9dd8f1631527332908bea6dde5cf4549e65415fc6bffe53c507b184d",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/copper.svg": "8c005f2d7ac1d9db104306b5e9424bc04490637789995efb37dece62a390428c",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/grid.svg": "50d5b7f0724e9135c62a06c0c8655025d83b12e982c0d1546a9c57b59b264648",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/ink.svg": "4a0ac19808859d5bf9036640c902d47dc449841b0c36247e9daf77aa200ec0a2",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/selected.svg": "2e2ad5f5df124853c5dcdafb21cac0bc5c717c548bc56963c12345c27e932dc4",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/surface.svg": "4f7b7795df032a46d8a67216a0f60f047f4cc13f307abab83d8ce8754beaf0ec",
+    "packages/wos-api/web/assets/postits/svg/square/stacked/workspace.svg": "57440be7ffd771a89e71de125f0dffc231516d502f29448c86098d380f16a61a",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/brand.svg": "597e79ac550a2b7efdf5ace713c95eda254e079fa73dd1a8d26871f8a06e9102",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/canvas.svg": "a0678eb39ab5cfa8e2ad49a06e64e64827442ecae694c683f956ce0129b42793",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/copper.svg": "3d386a055117dcc20b41c4897910557c9974b01b69703314853c4bb1b03f2619",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/grid.svg": "283186dbdc58d26f887c08ca8b9a828d2f3107a3d3aa4eac4391cac9d0c982c7",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/ink.svg": "64a7990636099909387336d7c49758d76cdb21f0259e470a74f3f2b0844a79f7",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/selected.svg": "00b102863c1cc460022310911b075ea0cca24695132a25637667b1a66c245910",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/surface.svg": "8b9f7c3dcd29df8b9685fb9a40498344d353242f3ea4f665eeb264fbdbcb7496",
+    "packages/wos-api/web/assets/postits/svg/square/tabbed/workspace.svg": "5960c3200ebf401e44b01fd449bd902906ff9c0a0e741a68ad3efd86a0453ef7",
+    "packages/wos-api/web/assets/postits/svg/square/taped/brand.svg": "f66bc4ce3bf0d33ca1a8972abd66dbd4711e14e48094c29cb0e1d532c7b557fb",
+    "packages/wos-api/web/assets/postits/svg/square/taped/canvas.svg": "640e2776f1dacbc2d8512b6459568fd28d8160ac1f7b89cf2d3c6385c2a8e504",
+    "packages/wos-api/web/assets/postits/svg/square/taped/copper.svg": "7b3b4dbc8c201e8a7567e0601572f88fe96d0647f692e719114966c1993a9a0d",
+    "packages/wos-api/web/assets/postits/svg/square/taped/grid.svg": "34f99eb7847c4346202c09223c22abd65f191465b56e2773e94577fdd188b0a3",
+    "packages/wos-api/web/assets/postits/svg/square/taped/ink.svg": "c19362a364b315b19725d37f8b4fcac103dea23336ae5b2721b08d083632c5b3",
+    "packages/wos-api/web/assets/postits/svg/square/taped/selected.svg": "07c723e848e74c2ae9525e89317318c6163408224d7d5aa42f8e60b001788bd4",
+    "packages/wos-api/web/assets/postits/svg/square/taped/surface.svg": "6c077c59b314c7db681398a0a29c900fc982b8539621837676adfaef3d51aa0a",
+    "packages/wos-api/web/assets/postits/svg/square/taped/workspace.svg": "0fc5be915630b96e288b8b029078facb05094e602d75c8f878d01993d4f3b3fb",
+    "packages/wos-api/web/assets/postits/svg/square/torn/brand.svg": "440b77156cff96e09ef772bd5bbf7fefbcd88a0dcfa8574e105d952166cc9c48",
+    "packages/wos-api/web/assets/postits/svg/square/torn/canvas.svg": "229067b6091935e7a40687da3b6b8cbcb45975ac3e706d11c677658971b21a15",
+    "packages/wos-api/web/assets/postits/svg/square/torn/copper.svg": "542271d0b7c3f1cb4526c51905a884df6ca9b6313dd052b5f5a0a09bc9e5220d",
+    "packages/wos-api/web/assets/postits/svg/square/torn/grid.svg": "0587547cab469cf7f774c41863e9fe7ea1ccb8309c7b234cac72d3d404b47fca",
+    "packages/wos-api/web/assets/postits/svg/square/torn/ink.svg": "93e1ce14f847c0fd275ab304c1df23f1e37d0d2ee1f29d1c327f95edc4fea9f4",
+    "packages/wos-api/web/assets/postits/svg/square/torn/selected.svg": "e3565d4fa8406f2287de098864fa17efcdf7f96c9d52b78a8c266919f7474cec",
+    "packages/wos-api/web/assets/postits/svg/square/torn/surface.svg": "a29198b69b9687864b8ac2acb41ee525c94cf11ee8b922d705280d5b5f2e1623",
+    "packages/wos-api/web/assets/postits/svg/square/torn/workspace.svg": "27d62771c817de1f8508d0d0c1d33635b0ae2dbe1a08b6805af271f4324e5d21",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/brand.svg": "df9d7a9acafc6568e6401772c36b3c353e91a2a9cec216a74530f23620adf9ef",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/canvas.svg": "8273e6c8daf55d14725685ddaae2cd24b26366ee92a6c0d530e869bba75b091d",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/copper.svg": "c33624e623835bcca309a1256d8aed9ffcc657b9575cdf1b1998c614ec3832c1",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/grid.svg": "86a46beae3ecefab22c412b0e16ae95ab136a804660ac25623972ac5daa4c2f9",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/ink.svg": "ddb2e098ee16b8988933f3ec6b9bf2dcc4515fefcd20edaa972df8f6d9c7a610",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/selected.svg": "801f4670b3f8eb40b9e437b992105ad1e4cd046c8a275f4c6af76f4c13de3127",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/surface.svg": "3347108571a703368593bd27961a7b7720a91a862c6e41a91894166a8fb8741f",
+    "packages/wos-api/web/assets/postits/svg/wide/classic/workspace.svg": "3d7f0de168bac5a53a86957c2f872093dd13927e78dd340a56620d6cfea42b7c",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/brand.svg": "29924492c6ad6f2697f52284a0787c52bc484262edfd598af625248739445dd6",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/canvas.svg": "687a87f096a530b62861bba28c405a7ce28e1106799034370e5031b764324c44",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/copper.svg": "03d058c1491086fbbaa546e304b9122acdd991b00a4889c14b49392d09fc23d7",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/grid.svg": "9e83c956e18c99b55f199a67f1658818710d16a2c62a9bd6b4d1ebfbba26e2c4",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/ink.svg": "1f3b01d84c4f91102dfc391d8a9aa9e8c8110ed772dea15d2615d770f91bc7b8",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/selected.svg": "ff331d47b27528ddc1a88a9bc16239a8f1f60a71986349527ea603f079578920",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/surface.svg": "10d50b4b7bac2f258c6b214126f6ffd78fc5309eed9f78b3491e867665547b78",
+    "packages/wos-api/web/assets/postits/svg/wide/curled/workspace.svg": "ff58f2130b4c85e0ea98aece56933d2a1ff62485575e6d6166fa9d84b0f9dbd5",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/brand.svg": "980c3c76c99abd07cafe9a726df1b63412b2f1959a46108f3c48efdc585e2f78",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/canvas.svg": "5b64c2d748aee349f4381d817241cfbf621719137f5c7b5129a31e142dc855d4",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/copper.svg": "4bb5912cf46a0ba34b763577ac61b6f0715aed74fa7949e54412ec2a0cb1a27c",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/grid.svg": "b64d846474ee1890dfbc732fe7ec109f0d51327f3022caf0b9b2f12829ace53d",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/ink.svg": "875d5b47c0acb55e4b558eeb7ed39f84a0099781f6df3ab45702b81920735625",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/selected.svg": "9108e04345520a56efdaf4edcd8bf283a0a68cbf6b67220ce943083503e3ec74",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/surface.svg": "fb6c98f6fd76987729621b55b7ead9d53fccc019a183bbae1c42d3d0e4d225b7",
+    "packages/wos-api/web/assets/postits/svg/wide/dogear/workspace.svg": "4252752eec915362ca626e7e1a1c92db5825ef6c72e3d14643a29edbbfd37097",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/brand.svg": "a3ec916c55362da0ae8fe3103de74b27678e74b31cbd0527a7b722629ae8a007",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/canvas.svg": "18bb3c80ece360508b215ca844a4ec6fccdbbe267cb196c63495849302a09390",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/copper.svg": "c273f44301e9d6b4e0a5b68e72f811d174f69498d45b6165a79235fd7c7a45d4",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/grid.svg": "e52b9a696de163d95118c5b6e3a4ebefc634a4284eab5edff990982ab894ca58",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/ink.svg": "e8bdf94b7d9581461e6006122c8546b346dc08cc63a1cbabb5e18bb596f89c84",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/selected.svg": "58423cdc1c78bc8c05cff3fbb2eab8b0c7dd52a0894d74d1e5b046c079e3e95a",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/surface.svg": "ef5d9da2b4859693a6b08f01d9247fc8c8421cbc238b5a3524a5a54bd42812fc",
+    "packages/wos-api/web/assets/postits/svg/wide/notebook/workspace.svg": "dcd33e5368cbc3372aeb54d99a2a727484e65261a186e43f60f824a1b6f02982",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/brand.svg": "feac287cf4d53ec9512a589e554366be7a24436ad963e32b392724ccfd0bc0d7",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/canvas.svg": "7ac2b48169609255e0e434d0f23e3bca2f79466c88bb201ea808007a77df8795",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/copper.svg": "1e270d6a5deed34a6cbdeece929ff50369abaa6b66bdcca139db06e371de9b83",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/grid.svg": "d3332da37bd0a067489144565b24d8cd84276e051fdcafb5f381fd9631c652e4",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/ink.svg": "307e82b174500b1672ca2f52c16cf0a22f1c53e8446949d2d5487934a939aee5",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/selected.svg": "0b05addf4d08efd16e95a961a4aa4806ca8287395f4a9102aed60e6cca39b52f",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/surface.svg": "2d1ab89066e9c675ba337e4a115d654cbd1c8c240fd350123785e8576f633266",
+    "packages/wos-api/web/assets/postits/svg/wide/pinned/workspace.svg": "ada18c95efce70df09b017494b8508a6906afca349bb9f119c6a9d6f2b028738",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/brand.svg": "7f67db594c6315571ef65fff2caebc93d5c54d72441a6ac7d6ee58f982a59f1c",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/canvas.svg": "f90bf5f0b9cb48005f09c8771b09160dfc765afb376f374f44b37a3707d19409",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/copper.svg": "12958c4bc7428b348f2536f75d590b416a538188811151f4aa7137309d133df5",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/grid.svg": "04b486713d421cbd6f6e98f3c430bd4f398c8bd9da892b6946f1d8fc2214593a",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/ink.svg": "38b1e4bc86934f5b45949b0ebdd75f0113f3e6484b4c0d8c4b788c5e57299d9d",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/selected.svg": "344bd70d9b06f8daac86f4df8edc4b30e8b1a974d2cabc1518fcf8b7ced3f963",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/surface.svg": "247658d8c88ee29dcc71226012e41329eeed51bca1cc719b504f01b61d5eddab",
+    "packages/wos-api/web/assets/postits/svg/wide/rounded/workspace.svg": "f5bea9057f92e066c58598284a1fec74399819c31fc434ac073d8f3a7d472794",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/brand.svg": "e3c025d718cc667aef518e1dd3a8796386e1e433b1c6326ec781fbb6f299dbd9",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/canvas.svg": "786957f14f1726feb83a4999dbfc8592cdd7d7638ef32d0f5765b09b6279dc2c",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/copper.svg": "945b49fff419be1114bd776b348fbce93b3528757b10b26f6aaef5508ec60e21",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/grid.svg": "eafbe8b9e761252fd7024a192830dbe7e0de9357ea8ff11e96d486bb2a5ee1cf",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/ink.svg": "6d23559cd0bf3dba8b24a7a524cb944687605241f7da07ea6cb72f1e94480b63",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/selected.svg": "d01d94833dbb51428339568a1c43b3a5a5c0cb058ab5f7cfc5b6fc94161d82c1",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/surface.svg": "ecb9be80b50fa7962c1ded1df6a55411ffa7c98ca0c01e8a911f733f76f9170e",
+    "packages/wos-api/web/assets/postits/svg/wide/stacked/workspace.svg": "c4a4c172643a3a8d04197605fabc9323cba70b362a328712acd9c368f52e7c5c",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/brand.svg": "707cb19b2190a2f5d493a0eb7fc210c5b81510b2755b0d222acca598e7cc142f",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/canvas.svg": "1af13d728038ad9d121b8673d15de28394530891a46307e6da36545ecdde6941",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/copper.svg": "2af9ebf8a271fc5070080876e19a5f7d02ed8c7e0adcbad43bfd73d2a90076a1",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/grid.svg": "7cc45305da0b8c6598db601705abdae74890df639607d140a40c7ac685949e40",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/ink.svg": "db28737576c9aecae45352484e54106f8290d25908e784a30948685b6527a219",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/selected.svg": "213470ea6e6baf997b9333bc889cfd846862f59f02608476f27aa3ce81d44148",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/surface.svg": "8558faa8d9418eb2e9dd94bb1d072cdb576010124cf728f9e35b35a9e3514550",
+    "packages/wos-api/web/assets/postits/svg/wide/tabbed/workspace.svg": "01a6ec96895bb4b99ec7b89e50a19aab023bc9239084d480d86e63fe9e520886",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/brand.svg": "9e02f673e6608650eb5ff6b773e65fb4940c7e4302067adfa837e050d6f14a68",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/canvas.svg": "738d34983aa713c9a8217e06abfe91a6d5641b412115ab6625d5fd3c67703c87",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/copper.svg": "2e348ab3a16f89bebcd2e5cd1e4740ddb4f3a1f3f6302f7306d41cc7f4057e57",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/grid.svg": "f0f99de7fa55fde50f464a3deda3b6579c29822309098f5bb52597b3dcf71a21",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/ink.svg": "82a24e5399011292e485ebb9d0c60a8e9e565c457ed924e4c72a26b3339d6f4b",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/selected.svg": "b82dc28a1d5168f81f26186eab7665ec87b378f8f525ba9861d3d6e944df7d57",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/surface.svg": "29d69ffd580b3ae1c9c5db577a1e8ffb708f255f338a744301dcf19502021b69",
+    "packages/wos-api/web/assets/postits/svg/wide/taped/workspace.svg": "d6dbd2867a3570a7c941d20d6dd6911dfbe29a4ba307cbd218384a87afea3f23",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/brand.svg": "88e566d8ad0e576347505349d7d24b3610d70704c11c63e6d620bb8ff3ca6933",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/canvas.svg": "dd66ee681992fda36c05785d8a9fd10eda7ea4b9b9a5a6b740d23f97c09178bc",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/copper.svg": "fe9dbc04e325dee0c37d0f0762fecc1638ee0de854c8373d00e3853d037ca34d",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/grid.svg": "b3af11d88900992fe6971c247b7ce21c97319debf08a9a9513f55fe51c4537fb",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/ink.svg": "5e8b66db823f32f364228eb8c2db41aea0bdd45a6af3939cad0ce72ced4e75ca",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/selected.svg": "2f8d6482f7766a41e084f5f994b2cc75d100396424653cea9264b9a7134f8fd6",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/surface.svg": "fadf92b60ec5e56b4bcb8af5528bd3f6b0f6770c07f8a868559e23bbe17678f7",
+    "packages/wos-api/web/assets/postits/svg/wide/torn/workspace.svg": "6f7679236f67c91212bfaf536148b6096ec48614771f807cfaa7ef6cbf249b5f",
+    "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "packages/wos-api/web/assets/reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "packages/wos-api/web/assets/robots/01_planner_map.svg": "a243254893bd4c3ba783854cdde83daadf951ec50e44715b84bc42f2902c55da",
+    "packages/wos-api/web/assets/robots/02_decomposer_tasks.svg": "5b50434935ed02a99854c76d116c4b858c3875e9bda1736a1bfc6a5866221ef6",
+    "packages/wos-api/web/assets/robots/03_executor_package.svg": "235adfb2ae66094ec3274ba4883ae02a562165778c88bddf6c85b58b52b06bef",
+    "packages/wos-api/web/assets/robots/04_reviewer_clipboard.svg": "77005b68ec7e4ce57c3b28672d2346852be49b24635cc552e3f0281f3ac905f6",
+    "packages/wos-api/web/assets/robots/05_coordinator_kanban.svg": "9f769573405e9be556df006f8fd3240f70338992e32e9beaeb00880371dbe7a9",
+    "packages/wos-api/web/assets/robots/06_researcher_books.svg": "fb117864f7c0742ece853e33aa8dd85b8508197917c326a4926953283c9bfc1c",
+    "packages/wos-api/web/assets/robots/07_coder_laptop.svg": "1d8ab6bd204299d304cee7c63cb67d7074b59c0209e8a5c6fde2da43a6c3f290",
+    "packages/wos-api/web/assets/robots/08_tester_bug.svg": "5ff6ffe238cec3c6785554bd1eaa5243cdaeb263724465c524a63ceea472fd78",
+    "packages/wos-api/web/assets/robots/09_documenter_notes.svg": "4dfa5102c76912ad59e9d2675596fb92dabe32166f7f0b80ea71faf2c68625e1",
+    "packages/wos-api/web/assets/robots/10_operator_servers.svg": "cfdbad08a48533718e2040f5a16011a5e8d727a81caa51a3b74146373ce395c2",
+    "packages/wos-api/web/assets/robots/11_contract_keeper.svg": "7b801a1d3184e7de0b2b518294cad51683249499b7d8efe4165e457eaf892f55",
+    "packages/wos-api/web/assets/robots/12_key_signature_guardian.svg": "6449b83a19812aa8179afba3cf38ec152ebecd177e2f073f82f8df4739c45132",
+    "packages/wos-api/web/assets/robots/13_dependency_mechanic.svg": "ea265d0a01a4c534faa17d75fb978c976f020cb745ee105a593a6531c22a0f99",
+    "packages/wos-api/web/assets/robots/14_observer_metrics.svg": "c0aa2ef9294d5a57e70aca94f842632b417242bbe08805d8a8706ff314a4e410",
+    "packages/wos-api/web/assets/robots/15_archivist_box.svg": "b5ea3533ea8a148f406f5fdb0a97359c2beae095b93f58df0664cafaad4dc687",
+    "packages/wos-api/web/assets/robots/16_blocker_sentinel.svg": "eff8e068a74a63cb174745b0e127fb778911da07aa44b4dd69ee21049b128055",
+    "packages/wos-api/web/assets/robots/17_outcome_flagbearer.svg": "b923e9c96df0ebbf168ad88944fb9b968df1545744ea499ae6bec4d469dddd3a",
+    "packages/wos-api/web/assets/robots/18_workspace_organizer.svg": "6cd715be2f8f8f5795c1fbf3a85d62cfe5aad2a56a4015b6b1c5dd5349d2dc6a",
+    "packages/wos-api/web/assets/robots/19_integration_connector.svg": "7c892bc604a60056e2c4cf3b557a8a56730cb3b8ce040070e378a9e204869076",
+    "packages/wos-api/web/assets/robots/20_scientist_inventor.svg": "2170de2e7e0197e253ac332f20496e326d38a66c5dbfe3bdfad7c1305613f631",
+    "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "packages/wos-api/web/assets/workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+    "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "packages/wos-api/web/assets/workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2",
+    "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
+  },
+  "embeddedVerification": "Each capture journey fetches seven production assets from the actual server and compares their SHA-256 hashes with source; each image records those verified served hashes.",
+  "verification": {
+    "fullRegression": {
+      "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/wos-canvas-first-cache WOS_CAPTURE_CANVAS_FIRST=<repository>/docs/design/operational-canvas/canvas-first/screenshots npm test -- --reporter=list --workers=2",
+      "sourceCommit": "0d84588da082f9d2b3539d00e48527b31c8d7487",
+      "units": {
+        "passed": 44,
+        "failed": 0,
+        "skipped": 0
+      },
+      "browser": {
+        "total": 99,
+        "passed": 99,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "6.3m"
+      },
+      "logSha256": "d92d4b7b0dfe1a918ad146b14b3527c19fa306e425a46ef22f67f6bedc26d35c",
+      "productionInputsSha256": {
+        "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
+        "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+        "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
+        "packages/wos-api/web/assets/app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
+        "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
+        "packages/wos-api/web/assets/canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+        "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
+        "packages/wos-api/web/assets/editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+        "packages/wos-api/web/assets/en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
+        "packages/wos-api/web/assets/index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+        "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
+        "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+        "packages/wos-api/web/assets/reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+        "packages/wos-api/web/assets/roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+        "packages/wos-api/web/assets/style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+        "packages/wos-api/web/assets/ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+        "packages/wos-api/web/assets/workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "packages/wos-api/web/assets/workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+        "packages/wos-api/web/assets/workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2",
+        "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+        "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
+      },
+      "differenceFromCaptureSource": {},
+      "scopeNote": "One clean full run at the committed implementation source; later documentation changes do not alter the recorded production inputs. Hosted checks qualify the pushed head separately."
+    },
+    "viewportCaptureJourneys": {
+      "partOfFullRegression": true,
+      "browserJourneys": 15,
+      "failures": 0,
+      "skipped": 0,
+      "images": 35
+    },
+    "outcomeDiscoveryJourneys": {
+      "partOfFullRegression": true,
+      "browserJourneys": 4,
+      "failures": 0,
+      "skipped": 0,
+      "scope": "debounce and Enter; obsolete response ordering; real multi-page query/cursor reset; immediate filters and contextual mobile navigation"
+    },
+    "nativeWeb": [
+      "go test ./packages/wos-api/web: passed",
+      "go vet ./packages/wos-api/web: passed"
+    ],
+    "releaseCompatibility": {
+      "command": "node --test tools/releases/*.test.mjs",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "logSha256": "b0463f94d2358a962348c7fd5193153820ce34cf1614a37d4b09e820000f2461"
+    },
+    "actualDistribution": {
+      "sourceCommit": "0d84588da082f9d2b3539d00e48527b31c8d7487",
+      "version": "1.1.0",
+      "buildCommand": "node tools/distribution/build.mjs",
+      "verifyCommand": "node tools/distribution/verify.mjs",
+      "buildLogSha256": "264e8d73fb06e9fbc576df7fdeb2ea3d107993ebcfca11df4f0a1c7a1f8ab2c4",
+      "verifyLogSha256": "1d485fdc36790e0ef150d111990cf05eb07e7f3bbe1442733a9256b4bacb7aea",
+      "checks": [
+        "artifact hashes",
+        "source-identical legal files and npm license metadata",
+        "offline npm install",
+        "server/client source versions and exit propagation",
+        "packaged CLI init/checkout/status/recover",
+        "signed protected profile checkout/finish/independent review/recover",
+        "four skill destinations with source-identical legal files",
+        "native Go offline skill install/update/doctor/uninstall and generic destination",
+        "HTTP/MCP/UI readiness",
+        "SIGTERM graceful shutdown",
+        "corruption rejection",
+        "cross-platform standalone Go CLI npm package"
+      ],
+      "artifacts": [
+        {
+          "kind": "wos-cli",
+          "name": "wosctl",
+          "version": "1.1.0",
+          "filename": "wosctl-1.1.0.tgz",
+          "integrity": "sha512-YZtsuTfj2876JcenEf/Lfss3p/2lwDItxxpRm6sbCsUfT57NY8xQFVPdu6jPhb9E/gn0pKk5pLlrUqRlULZ3JQ==",
+          "sha256": "091427b54da0b94564701e558fda2fc9bfb517d3ee6b8a5ed58256f3fff8a46a"
+        },
+        {
+          "kind": "archive",
+          "filename": "wos_1.1.0_linux_amd64.tar.gz",
+          "sha256": "552d902f7a971bc41f6e29b68e0dd532c6fa6b44e1fb4b6432a4d927adca676b"
+        },
+        {
+          "kind": "client-linux",
+          "filename": "wosctl_1.1.0_linux_amd64.tar.gz",
+          "sha256": "76f3bafe2eb7cce2a482bcd536198368fdfe4a1abf931bcc5cbe24de964818e6",
+          "binary_sha256": "662a6b5519195889f6c50073e46d0fdffb63568c62aa513cb73fe78e2635e73f",
+          "platform": "linux",
+          "arch": "amd64"
+        },
+        {
+          "kind": "client-windows",
+          "filename": "wosctl_1.1.0_windows_amd64.zip",
+          "sha256": "e4b0d3d1317503461c3879245d4177c9b448780b1f2f17b819d3bf9193ad90d2",
+          "binary_sha256": "7708eb9fbdd67bb3ac87bd43130d5219e399b705e14e4a6471d18badd431aecd",
+          "platform": "windows",
+          "arch": "amd64"
+        }
+      ],
+      "limits": "Offline local Linux execution and structural Windows archive checks; actual Windows-native and exact publication-source gates remain hosted requirements. No tag or registry upload performed."
+    }
+  },
+  "captureRules": "Unannotated application viewport; no compositing, image resizing or CSS zoom. Native browser zoom uses Settings API and CDP captures its complete visible framebuffer without a CSS clip. Raster dimensions differ from CSS viewport at native zoom. Specialist pages retain their normal document scroll.",
+  "limits": [
+    "Chromium only; no other browser engine qualification",
+    "No representative-user usability or manual screen-reader acceptance",
+    "Graph height target is measured at default desktop browser zoom; native zoom retains functional reflow and controls with a smaller CSS viewport",
+    "No backend, schema, protocol, Cloud or concurrency capacity qualification"
+  ],
+  "historicalQualification": "https://github.com/A1b3rt0M3rcad0/wos/blob/85041088eb779561c07890d3a14514c3ee36e1a4/docs/design/operational-canvas/canvas-first/README.md",
+  "captures": [
+    {
+      "file": "screenshots/canvas-1280x720-inspector.png",
+      "sha256": "ee4432a97b077673216fac7d04e52a7270adc7a19d2ff22d2df1ebcea80502a8",
+      "width": 1246,
+      "height": 504.8125,
+      "heightRatio": 0.7011284722222222,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1246,
+        "height": 504.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1263,
+        "bottom": 668
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 668,
+          "height": 45,
+          "bottom": 713
+        },
+        "#notice": {
+          "top": 639,
+          "height": 25,
+          "bottom": 664
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 672,
+          "bottom": 720
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:23.400Z"
+    },
+    {
+      "file": "screenshots/canvas-1280x720.png",
+      "sha256": "14b8e87ff951eca6cfac2a155f1db640c8cf1010a07984c98c3d995c6501a2d3",
+      "width": 1246,
+      "height": 504.8125,
+      "heightRatio": 0.7011284722222222,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1246,
+        "height": 504.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1263,
+        "bottom": 668
+      },
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 668,
+          "height": 45,
+          "bottom": 713
+        },
+        "#notice": {
+          "top": 639,
+          "height": 25,
+          "bottom": 664
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 672,
+          "bottom": 720
+        }
+      },
+      "state": "default",
+      "pixelSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:22.573Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-fitted.png",
+      "sha256": "f62614e15a0ca8edf6edc7d64d4e8c5a01c7ed92a3e4e0fcead82561408dac50",
+      "width": 1332,
+      "height": 552.8125,
+      "heightRatio": 0.7198079427083334,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1332,
+        "height": 552.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1349,
+        "bottom": 716
+      },
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 716,
+          "height": 45,
+          "bottom": 761
+        },
+        "#notice": {
+          "top": 687,
+          "height": 25,
+          "bottom": 712
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 720,
+          "bottom": 768
+        }
+      },
+      "state": "complete loaded map fitted in the area beside the open inspector",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:29.855Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-inspector.png",
+      "sha256": "f8152a3d389385912f0c7d91de66acda49bf6496ded2151f668bdb1a68f7c094",
+      "width": 1332,
+      "height": 552.8125,
+      "heightRatio": 0.7198079427083334,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1332,
+        "height": 552.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1349,
+        "bottom": 716
+      },
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 716,
+          "height": 45,
+          "bottom": 761
+        },
+        "#notice": {
+          "top": 687,
+          "height": 25,
+          "bottom": 712
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 720,
+          "bottom": 768
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:28.862Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-overview-sidebar.png",
+      "sha256": "e1882762c1d1e3634646e7e9e82f3e82d8a1101e22372b03103ad8763d7c6633",
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 76,
+        "width": 244,
+        "height": 692,
+        "top": 76,
+        "right": 244,
+        "bottom": 768,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 1366,
+        "height": 1637
+      },
+      "specialist": true,
+      "state": "overview with retained live-search sidebar and local actions",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:50.372Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-work-sidebar.png",
+      "sha256": "97a5abc662de6f3144e13a683f2ff2bf5c3f41ba621b11830b3560b422be7314",
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 76,
+        "width": 244,
+        "height": 692,
+        "top": 76,
+        "right": 244,
+        "bottom": 768,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 1366,
+        "height": 1298
+      },
+      "specialist": true,
+      "state": "work with retained live-search sidebar and local actions",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:51.247Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768.png",
+      "sha256": "491e4cfb71a9ce073199ff02be6d4fe6e7b62c5d86abfaeec9724afcb1f7ed9c",
+      "width": 1332,
+      "height": 552.8125,
+      "heightRatio": 0.7198079427083334,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1332,
+        "height": 552.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1349,
+        "bottom": 716
+      },
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 716,
+          "height": 45,
+          "bottom": 761
+        },
+        "#notice": {
+          "top": 687,
+          "height": 25,
+          "bottom": 712
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 720,
+          "bottom": 768
+        }
+      },
+      "state": "default",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:27.948Z"
+    },
+    {
+      "file": "screenshots/canvas-1920x1080-inspector.png",
+      "sha256": "1f6c378998f41a257a9ffb4a4ac8947001d762db305cac214d1f44c757c7b8e1",
+      "width": 1395.34375,
+      "height": 795.15625,
+      "heightRatio": 0.7362557870370371,
+      "rect": {
+        "x": 22.328125,
+        "y": 216.1875,
+        "width": 1395.34375,
+        "height": 795.15625,
+        "left": 22.328125,
+        "top": 216.1875,
+        "right": 1417.671875,
+        "bottom": 1011.34375
+      },
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 64,
+          "bottom": 64
+        },
+        ".outcome-heading": {
+          "top": 72,
+          "height": 65.5625,
+          "bottom": 137.5625
+        },
+        ".canvas-toolbar": {
+          "top": 149.21875,
+          "height": 66.96875,
+          "bottom": 216.1875
+        },
+        ".canvas-footer": {
+          "top": 1011.34375,
+          "height": 59.65625,
+          "bottom": 1071
+        },
+        "#notice": {
+          "top": 972.03125,
+          "height": 33.3125,
+          "bottom": 1005.34375
+        },
+        ".workspace-main": {
+          "top": 64,
+          "height": 1016,
+          "bottom": 1080
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:35.336Z"
+    },
+    {
+      "file": "screenshots/canvas-1920x1080.png",
+      "sha256": "bdb1570c0345395b71e1b321d7e1239d9ae2fbb957b3e56f31626f90abe5e724",
+      "width": 1875.34375,
+      "height": 795.15625,
+      "heightRatio": 0.7362557870370371,
+      "rect": {
+        "x": 22.328125,
+        "y": 216.1875,
+        "width": 1875.34375,
+        "height": 795.15625,
+        "left": 22.328125,
+        "top": 216.1875,
+        "right": 1897.671875,
+        "bottom": 1011.34375
+      },
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 64,
+          "bottom": 64
+        },
+        ".outcome-heading": {
+          "top": 72,
+          "height": 65.5625,
+          "bottom": 137.5625
+        },
+        ".canvas-toolbar": {
+          "top": 149.21875,
+          "height": 66.96875,
+          "bottom": 216.1875
+        },
+        ".canvas-footer": {
+          "top": 1011.34375,
+          "height": 59.65625,
+          "bottom": 1071
+        },
+        "#notice": {
+          "top": 972.03125,
+          "height": 33.3125,
+          "bottom": 1005.34375
+        },
+        ".workspace-main": {
+          "top": 64,
+          "height": 1016,
+          "bottom": 1080
+        }
+      },
+      "state": "default",
+      "pixelSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:34.266Z"
+    },
+    {
+      "file": "screenshots/canvas-2560x1440-inspector.png",
+      "sha256": "3e7447bcc3aa55cc24d5699beeb3a47e8d1bf358cd4d4d261cb2c9d09a586433",
+      "width": 1861.125,
+      "height": 1062.1875,
+      "heightRatio": 0.7376302083333334,
+      "rect": {
+        "x": 29.4375,
+        "y": 286.9375,
+        "width": 1861.125,
+        "height": 1062.1875,
+        "left": 29.4375,
+        "top": 286.9375,
+        "right": 1890.5625,
+        "bottom": 1349.125
+      },
+      "viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 85.328125,
+          "bottom": 85.328125
+        },
+        ".outcome-heading": {
+          "top": 95.984375,
+          "height": 87.421875,
+          "bottom": 183.40625
+        },
+        ".canvas-toolbar": {
+          "top": 198.625,
+          "height": 88.3125,
+          "bottom": 286.9375
+        },
+        ".canvas-footer": {
+          "top": 1349.125,
+          "height": 79.21875,
+          "bottom": 1428.34375
+        },
+        "#notice": {
+          "top": 1296.015625,
+          "height": 44.4375,
+          "bottom": 1340.453125
+        },
+        ".workspace-main": {
+          "top": 85.328125,
+          "height": 1354.671875,
+          "bottom": 1440
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 2560,
+        "height": 1440
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:42.767Z"
+    },
+    {
+      "file": "screenshots/canvas-2560x1440.png",
+      "sha256": "fa74c8449dc053b7bff5deb55c3b58528cff6f63f34529bba5a8450190fe8b48",
+      "width": 2501.125,
+      "height": 1062.1875,
+      "heightRatio": 0.7376302083333334,
+      "rect": {
+        "x": 29.4375,
+        "y": 286.9375,
+        "width": 2501.125,
+        "height": 1062.1875,
+        "left": 29.4375,
+        "top": 286.9375,
+        "right": 2530.5625,
+        "bottom": 1349.125
+      },
+      "viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 85.328125,
+          "bottom": 85.328125
+        },
+        ".outcome-heading": {
+          "top": 95.984375,
+          "height": 87.421875,
+          "bottom": 183.40625
+        },
+        ".canvas-toolbar": {
+          "top": 198.625,
+          "height": 88.3125,
+          "bottom": 286.9375
+        },
+        ".canvas-footer": {
+          "top": 1349.125,
+          "height": 79.21875,
+          "bottom": 1428.34375
+        },
+        "#notice": {
+          "top": 1296.015625,
+          "height": 44.4375,
+          "bottom": 1340.453125
+        },
+        ".workspace-main": {
+          "top": 85.328125,
+          "height": 1354.671875,
+          "bottom": 1440
+        }
+      },
+      "state": "default",
+      "pixelSize": {
+        "width": 2560,
+        "height": 1440
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:41.497Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-form.png",
+      "sha256": "9d4405df5b84443bdc7ee910f60cb406beea58dbf4585b9264a0e6e11a0ce930",
+      "width": 302,
+      "height": 311.015625,
+      "heightRatio": 0.42029138513513514,
+      "rect": {
+        "x": 9,
+        "y": 308.984375,
+        "width": 302,
+        "height": 311.015625,
+        "left": 9,
+        "top": 308.984375,
+        "right": 311,
+        "bottom": 620
+      },
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 55,
+          "bottom": 308.984375
+        },
+        ".canvas-footer": {
+          "top": 620,
+          "height": 113,
+          "bottom": 733
+        },
+        "#notice": {
+          "top": 645.40625,
+          "height": 38.59375,
+          "bottom": 684
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 692,
+          "bottom": 740
+        }
+      },
+      "state": "contextual form with independent scroll",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:03.197Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-inspector.png",
+      "sha256": "cfa488ac55eaffa52bf76cf641578d448f02a958affd6058fd2c88e3e376be31",
+      "width": 302,
+      "height": 311.015625,
+      "heightRatio": 0.42029138513513514,
+      "rect": {
+        "x": 9,
+        "y": 308.984375,
+        "width": 302,
+        "height": 311.015625,
+        "left": 9,
+        "top": 308.984375,
+        "right": 311,
+        "bottom": 620
+      },
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 55,
+          "bottom": 308.984375
+        },
+        ".canvas-footer": {
+          "top": 620,
+          "height": 113,
+          "bottom": 733
+        },
+        "#notice": {
+          "top": 645.40625,
+          "height": 38.59375,
+          "bottom": 684
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 692,
+          "bottom": 740
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:02.556Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-list.png",
+      "sha256": "ece1d560cc45697edac5a9b38ca20a85b7e95fb3ec02fe372bb8f9234dda1700",
+      "width": 302,
+      "height": 311.015625,
+      "heightRatio": 0.42029138513513514,
+      "rect": {
+        "x": 9,
+        "y": 308.984375,
+        "width": 302,
+        "height": 311.015625,
+        "left": 9,
+        "top": 308.984375,
+        "right": 311,
+        "bottom": 620
+      },
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 55,
+          "bottom": 308.984375
+        },
+        ".canvas-footer": {
+          "top": 620,
+          "height": 113,
+          "bottom": 733
+        },
+        "#notice": {
+          "top": 645.40625,
+          "height": 38.59375,
+          "bottom": 684
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 692,
+          "bottom": 740
+        }
+      },
+      "state": "independently scrolled list",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:02.270Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-map.png",
+      "sha256": "a727dffccb2a3488435e1aabb15794f931349cb52a756c62dc6e21b0494bbcdc",
+      "width": 302,
+      "height": 263.015625,
+      "heightRatio": 0.3554265202702703,
+      "rect": {
+        "x": 9,
+        "y": 356.984375,
+        "width": 302,
+        "height": 263.015625,
+        "left": 9,
+        "top": 356.984375,
+        "right": 311,
+        "bottom": 620
+      },
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 103,
+          "bottom": 356.984375
+        },
+        ".canvas-footer": {
+          "top": 620,
+          "height": 113,
+          "bottom": 733
+        },
+        "#notice": {
+          "top": 645.40625,
+          "height": 38.59375,
+          "bottom": 684
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 692,
+          "bottom": 740
+        }
+      },
+      "state": "explicit Map alternative",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:03.723Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-overview-sidebar.png",
+      "sha256": "a74e98d89daf7001aaf6687c8d3505ddde96bb070d0aad99b06565611ef54e3c",
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 64,
+        "width": 320,
+        "height": 462.6875,
+        "top": 64,
+        "right": 320,
+        "bottom": 526.6875,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 320,
+        "height": 3639
+      },
+      "specialist": true,
+      "state": "expanded mobile Overview navigation and live search",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:05.410Z"
+    },
+    {
+      "file": "screenshots/canvas-360x640-inspector.png",
+      "sha256": "97bdb1cab5ea6dfe44bb3c2393870a2eb57af45ae52d1e9ae00f71989b6dab4b",
+      "width": 342,
+      "height": 147.015625,
+      "heightRatio": 0.2297119140625,
+      "rect": {
+        "x": 9,
+        "y": 356.984375,
+        "width": 342,
+        "height": 147.015625,
+        "left": 9,
+        "top": 356.984375,
+        "right": 351,
+        "bottom": 504
+      },
+      "viewport": {
+        "width": 360,
+        "height": 640,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 103,
+          "bottom": 356.984375
+        },
+        ".canvas-footer": {
+          "top": 504,
+          "height": 129,
+          "bottom": 633
+        },
+        "#notice": {
+          "top": 545.40625,
+          "height": 38.59375,
+          "bottom": 584
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 592,
+          "bottom": 640
+        }
+      },
+      "state": "short mobile inspection; its whole detail surface scrolls inside the stage",
+      "pixelSize": {
+        "width": 360,
+        "height": 640
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:04.962Z"
+    },
+    {
+      "file": "screenshots/canvas-360x640-map.png",
+      "sha256": "bf3746cf7e76e431fe5d812f97c3a68c2786fd6bfc01ca49a869dee998c98e16",
+      "width": 342,
+      "height": 147.015625,
+      "heightRatio": 0.2297119140625,
+      "rect": {
+        "x": 9,
+        "y": 356.984375,
+        "width": 342,
+        "height": 147.015625,
+        "left": 9,
+        "top": 356.984375,
+        "right": 351,
+        "bottom": 504
+      },
+      "viewport": {
+        "width": 360,
+        "height": 640,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 192.984375,
+          "bottom": 246.984375
+        },
+        ".canvas-toolbar": {
+          "top": 253.984375,
+          "height": 103,
+          "bottom": 356.984375
+        },
+        ".canvas-footer": {
+          "top": 504,
+          "height": 129,
+          "bottom": 633
+        },
+        "#notice": {
+          "top": 545.40625,
+          "height": 38.59375,
+          "bottom": 584
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 592,
+          "bottom": 640
+        }
+      },
+      "state": "short mobile Map alternative with horizontal camera controls and explicit fit",
+      "pixelSize": {
+        "width": 360,
+        "height": 640
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:04.288Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-form.png",
+      "sha256": "40a74bca6c5d533f91c2bffd1f6153f09a190556cb17b4458163ee7166ba980d",
+      "width": 372,
+      "height": 479.015625,
+      "heightRatio": 0.5675540580568721,
+      "rect": {
+        "x": 9,
+        "y": 260.984375,
+        "width": 372,
+        "height": 479.015625,
+        "left": 9,
+        "top": 260.984375,
+        "right": 381,
+        "bottom": 740
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 144.984375,
+          "bottom": 198.984375
+        },
+        ".canvas-toolbar": {
+          "top": 205.984375,
+          "height": 55,
+          "bottom": 260.984375
+        },
+        ".canvas-footer": {
+          "top": 740,
+          "height": 97,
+          "bottom": 837
+        },
+        "#notice": {
+          "top": 749.40625,
+          "height": 38.59375,
+          "bottom": 788
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 796,
+          "bottom": 844
+        }
+      },
+      "state": "contextual form with independent scroll",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:08.880Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-inspector.png",
+      "sha256": "74783851467a1281a7480d57fcdb0cbe145b6ef74d9d47a058c0440dedd1d26f",
+      "width": 372,
+      "height": 479.015625,
+      "heightRatio": 0.5675540580568721,
+      "rect": {
+        "x": 9,
+        "y": 260.984375,
+        "width": 372,
+        "height": 479.015625,
+        "left": 9,
+        "top": 260.984375,
+        "right": 381,
+        "bottom": 740
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 144.984375,
+          "bottom": 198.984375
+        },
+        ".canvas-toolbar": {
+          "top": 205.984375,
+          "height": 55,
+          "bottom": 260.984375
+        },
+        ".canvas-footer": {
+          "top": 740,
+          "height": 97,
+          "bottom": 837
+        },
+        "#notice": {
+          "top": 749.40625,
+          "height": 38.59375,
+          "bottom": 788
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 796,
+          "bottom": 844
+        }
+      },
+      "state": "selected Task, initial context",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:08.521Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-list.png",
+      "sha256": "0e3bb2215f714fe011b32c0f8b43ac5f536da2c595a53245f715c516942e345f",
+      "width": 372,
+      "height": 479.015625,
+      "heightRatio": 0.5675540580568721,
+      "rect": {
+        "x": 9,
+        "y": 260.984375,
+        "width": 372,
+        "height": 479.015625,
+        "left": 9,
+        "top": 260.984375,
+        "right": 381,
+        "bottom": 740
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 144.984375,
+          "bottom": 198.984375
+        },
+        ".canvas-toolbar": {
+          "top": 205.984375,
+          "height": 55,
+          "bottom": 260.984375
+        },
+        ".canvas-footer": {
+          "top": 740,
+          "height": 97,
+          "bottom": 837
+        },
+        "#notice": {
+          "top": 749.40625,
+          "height": 38.59375,
+          "bottom": 788
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 796,
+          "bottom": 844
+        }
+      },
+      "state": "independently scrolled list",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:08.088Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-map.png",
+      "sha256": "bd2f1b5e49eaea24721af14e157d0631ee667db60a2c30406e08dc6ce5eafb29",
+      "width": 372,
+      "height": 431.015625,
+      "heightRatio": 0.5106820201421801,
+      "rect": {
+        "x": 9,
+        "y": 308.984375,
+        "width": 372,
+        "height": 431.015625,
+        "left": 9,
+        "top": 308.984375,
+        "right": 381,
+        "bottom": 740
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 144.984375,
+          "bottom": 198.984375
+        },
+        ".canvas-toolbar": {
+          "top": 205.984375,
+          "height": 103,
+          "bottom": 308.984375
+        },
+        ".canvas-footer": {
+          "top": 740,
+          "height": 97,
+          "bottom": 837
+        },
+        "#notice": {
+          "top": 749.40625,
+          "height": 38.59375,
+          "bottom": 788
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 796,
+          "bottom": 844
+        }
+      },
+      "state": "explicit Map alternative",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:09.616Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-overview-sidebar.png",
+      "sha256": "d9e9a03757f1ea77ace9bbd779417460cb02bf048f8283d0320f9f3366ba3e19",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 64,
+        "width": 390,
+        "height": 418.6875,
+        "top": 64,
+        "right": 390,
+        "bottom": 482.6875,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 390,
+        "height": 3194
+      },
+      "specialist": true,
+      "state": "expanded mobile Overview navigation and live search",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:09.939Z"
+    },
+    {
+      "file": "screenshots/canvas-native-zoom-125-inspector.png",
+      "sha256": "86e044fcf3ae1fd49f24a0849a05bac86a874efa6d6e93636f87af0c077b313f",
+      "width": 1059.1999988555908,
+      "height": 352.3999786376953,
+      "heightRatio": 0.5739413332861487,
+      "rect": {
+        "x": 16.80000114440918,
+        "y": 210.40000915527344,
+        "width": 1059.1999988555908,
+        "height": 352.3999786376953,
+        "left": 16.80000114440918,
+        "top": 210.40000915527344,
+        "right": 1076,
+        "bottom": 562.7999877929688
+      },
+      "viewport": {
+        "width": 1093,
+        "height": 614,
+        "devicePixelRatio": 1.25,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.20000076293945,
+          "bottom": 103.20000076293945
+        },
+        ".canvas-toolbar": {
+          "top": 112,
+          "height": 98.4000015258789,
+          "bottom": 210.4000015258789
+        },
+        ".canvas-footer": {
+          "top": 562.7999877929688,
+          "height": 44.79999923706055,
+          "bottom": 607.5999870300293
+        },
+        "#notice": {
+          "top": 533.4000244140625,
+          "height": 25,
+          "bottom": 558.4000244140625
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 566.4000244140625,
+          "bottom": 614.4000244140625
+        }
+      },
+      "state": "selected Task, initial context",
+      "nativeBrowserZoom": 1.25,
+      "unzoomedViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "metrics": {
+        "width": 1093,
+        "height": 614,
+        "outerWidth": 1366,
+        "outerHeight": 855,
+        "devicePixelRatio": 1.25,
+        "visualScale": 1
+      },
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:16.350Z"
+    },
+    {
+      "file": "screenshots/canvas-native-zoom-125.png",
+      "sha256": "51924a9717bd07d2d69199cb4a6413d56525eeef6e56991a75fcd4f9e12230f7",
+      "width": 1059.1999988555908,
+      "height": 352.3999786376953,
+      "heightRatio": 0.5739413332861487,
+      "rect": {
+        "x": 16.80000114440918,
+        "y": 210.40000915527344,
+        "width": 1059.1999988555908,
+        "height": 352.3999786376953,
+        "left": 16.80000114440918,
+        "top": 210.40000915527344,
+        "right": 1076,
+        "bottom": 562.7999877929688
+      },
+      "viewport": {
+        "width": 1093,
+        "height": 614,
+        "devicePixelRatio": 1.25,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.20000076293945,
+          "bottom": 103.20000076293945
+        },
+        ".canvas-toolbar": {
+          "top": 112,
+          "height": 98.4000015258789,
+          "bottom": 210.4000015258789
+        },
+        ".canvas-footer": {
+          "top": 562.7999877929688,
+          "height": 44.79999923706055,
+          "bottom": 607.5999870300293
+        },
+        "#notice": {
+          "top": 533.4000244140625,
+          "height": 25,
+          "bottom": 558.4000244140625
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 566.4000244140625,
+          "bottom": 614.4000244140625
+        }
+      },
+      "nativeBrowserZoom": 1.25,
+      "unzoomedViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "metrics": {
+        "width": 1093,
+        "height": 614,
+        "outerWidth": 1366,
+        "outerHeight": 855,
+        "devicePixelRatio": 1.25,
+        "visualScale": 1
+      },
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:15.678Z"
+    },
+    {
+      "file": "screenshots/canvas-native-zoom-150-inspector.png",
+      "sha256": "45aca6e4f647c1dd204e595d0b7917580bc092a35aa5bffb2552f2b73c13e5ce",
+      "width": 877.3333320617676,
+      "height": 258.81251525878906,
+      "heightRatio": 0.5054931938648224,
+      "rect": {
+        "x": 16.666667938232422,
+        "y": 203.8541717529297,
+        "width": 877.3333320617676,
+        "height": 258.81251525878906,
+        "left": 16.666667938232422,
+        "top": 203.8541717529297,
+        "right": 894,
+        "bottom": 462.66668701171875
+      },
+      "viewport": {
+        "width": 911,
+        "height": 512,
+        "devicePixelRatio": 1.5,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 52,
+          "height": 49.1875,
+          "bottom": 101.1875
+        },
+        ".canvas-toolbar": {
+          "top": 105.85417175292969,
+          "height": 98,
+          "bottom": 203.8541717529297
+        },
+        ".canvas-footer": {
+          "top": 462.66668701171875,
+          "height": 44.66666793823242,
+          "bottom": 507.3333549499512
+        },
+        "#notice": {
+          "top": 431,
+          "height": 25,
+          "bottom": 456
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 464,
+          "bottom": 512
+        }
+      },
+      "state": "selected Task, initial context",
+      "nativeBrowserZoom": 1.5,
+      "unzoomedViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "metrics": {
+        "width": 911,
+        "height": 512,
+        "outerWidth": 1366,
+        "outerHeight": 855,
+        "devicePixelRatio": 1.5,
+        "visualScale": 1
+      },
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:18.207Z"
+    },
+    {
+      "file": "screenshots/canvas-native-zoom-150.png",
+      "sha256": "10f8f926534c23e6b3fff100a6c9a7060b8ef64976bad5005f40329d9315177f",
+      "width": 877.3333320617676,
+      "height": 258.81251525878906,
+      "heightRatio": 0.5054931938648224,
+      "rect": {
+        "x": 16.666667938232422,
+        "y": 203.8541717529297,
+        "width": 877.3333320617676,
+        "height": 258.81251525878906,
+        "left": 16.666667938232422,
+        "top": 203.8541717529297,
+        "right": 894,
+        "bottom": 462.66668701171875
+      },
+      "viewport": {
+        "width": 911,
+        "height": 512,
+        "devicePixelRatio": 1.5,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 52,
+          "height": 49.1875,
+          "bottom": 101.1875
+        },
+        ".canvas-toolbar": {
+          "top": 105.85417175292969,
+          "height": 98,
+          "bottom": 203.8541717529297
+        },
+        ".canvas-footer": {
+          "top": 462.66668701171875,
+          "height": 44.66666793823242,
+          "bottom": 507.3333549499512
+        },
+        "#notice": {
+          "top": 431,
+          "height": 25,
+          "bottom": 456
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 464,
+          "bottom": 512
+        }
+      },
+      "nativeBrowserZoom": 1.5,
+      "unzoomedViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "metrics": {
+        "width": 911,
+        "height": 512,
+        "outerWidth": 1366,
+        "outerHeight": 855,
+        "devicePixelRatio": 1.5,
+        "visualScale": 1
+      },
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:25:17.547Z"
+    },
+    {
+      "file": "screenshots/canvas-outcome-context.png",
+      "sha256": "68eb594163f3583dbd619ba2d388cab76e335264360da101021e7a73dbec0548",
+      "width": 1332,
+      "height": 552.8125,
+      "heightRatio": 0.7198079427083334,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1332,
+        "height": 552.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1349,
+        "bottom": 716
+      },
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 716,
+          "height": 45,
+          "bottom": 761
+        },
+        "#notice": {
+          "top": 687,
+          "height": 25,
+          "bottom": 712
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 720,
+          "bottom": 768
+        }
+      },
+      "state": "expanded Outcome context and active planning",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:49.024Z"
+    },
+    {
+      "file": "screenshots/canvas-views.png",
+      "sha256": "760ff38ea3d524847b0d08f256508b170bce7dbe7fbbd9616a3f6002ea100840",
+      "width": 1332,
+      "height": 552.8125,
+      "heightRatio": 0.7198079427083334,
+      "rect": {
+        "x": 17,
+        "y": 163.1875,
+        "width": 1332,
+        "height": 552.8125,
+        "left": 17,
+        "top": 163.1875,
+        "right": 1349,
+        "bottom": 716
+      },
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "chrome": {
+        ".topbar": {
+          "top": 0,
+          "height": 48,
+          "bottom": 48
+        },
+        ".outcome-heading": {
+          "top": 54,
+          "height": 49.1875,
+          "bottom": 103.1875
+        },
+        ".canvas-toolbar": {
+          "top": 112.1875,
+          "height": 51,
+          "bottom": 163.1875
+        },
+        ".canvas-footer": {
+          "top": 716,
+          "height": 45,
+          "bottom": 761
+        },
+        "#notice": {
+          "top": 687,
+          "height": 25,
+          "bottom": 712
+        },
+        ".workspace-main": {
+          "top": 48,
+          "height": 720,
+          "bottom": 768
+        }
+      },
+      "state": "expanded specialist Views navigation",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:49.688Z"
+    },
+    {
+      "file": "screenshots/login-1024x768.png",
+      "sha256": "e734cc78facc13f5b3e9598f34282f6fbd77e6a25a42a56efa0423bdd2abe074",
+      "entry": true,
+      "viewport": {
+        "width": 1024,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 1024,
+        "height": 768,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 590.953125,
+        "y": 99.03125,
+        "width": 393.046875,
+        "height": 477.171875,
+        "top": 99.03125,
+        "bottom": 576.203125,
+        "left": 590.953125,
+        "right": 984
+      },
+      "story": {
+        "x": 40,
+        "y": 99.03125,
+        "width": 510.953125,
+        "height": 563.828125,
+        "top": 99.03125,
+        "bottom": 662.859375,
+        "left": 40,
+        "right": 550.953125
+      },
+      "input": {
+        "x": 615.953125,
+        "y": 269.421875,
+        "width": 343.046875,
+        "height": 44,
+        "top": 269.421875,
+        "bottom": 313.421875,
+        "left": 615.953125,
+        "right": 959
+      },
+      "submit": {
+        "x": 615.953125,
+        "y": 351.5625,
+        "width": 343.046875,
+        "height": 46,
+        "top": 351.5625,
+        "bottom": 397.5625,
+        "left": 615.953125,
+        "right": 959
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 1024,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:12.859Z"
+    },
+    {
+      "file": "screenshots/login-1280x720.png",
+      "sha256": "e9ce3d7b13b7485dca13227d45585284645f514afd727198b7f68b64685817ef",
+      "entry": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 1280,
+        "height": 720,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 811.46875,
+        "y": 97.59375,
+        "width": 404.515625,
+        "height": 477.171875,
+        "top": 97.59375,
+        "bottom": 574.765625,
+        "left": 811.46875,
+        "right": 1215.984375
+      },
+      "story": {
+        "x": 64,
+        "y": 97.59375,
+        "width": 667.46875,
+        "height": 510.46875,
+        "top": 97.59375,
+        "bottom": 608.0625,
+        "left": 64,
+        "right": 731.46875
+      },
+      "input": {
+        "x": 836.46875,
+        "y": 267.984375,
+        "width": 354.515625,
+        "height": 44,
+        "top": 267.984375,
+        "bottom": 311.984375,
+        "left": 836.46875,
+        "right": 1190.984375
+      },
+      "submit": {
+        "x": 836.46875,
+        "y": 350.125,
+        "width": 354.515625,
+        "height": 46,
+        "top": 350.125,
+        "bottom": 396.125,
+        "left": 836.46875,
+        "right": 1190.984375
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:09.619Z"
+    },
+    {
+      "file": "screenshots/login-1366x768.png",
+      "sha256": "2f831d519a07f5cb51c4219fcdf7936c99d2f47172aaa849cca0ece44f2de201",
+      "entry": true,
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 1366,
+        "height": 768,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 865.015625,
+        "y": 99.03125,
+        "width": 436.96875,
+        "height": 477.171875,
+        "top": 99.03125,
+        "bottom": 576.203125,
+        "left": 865.015625,
+        "right": 1301.984375
+      },
+      "story": {
+        "x": 64,
+        "y": 99.03125,
+        "width": 721.015625,
+        "height": 523.828125,
+        "top": 99.03125,
+        "bottom": 622.859375,
+        "left": 64,
+        "right": 785.015625
+      },
+      "input": {
+        "x": 890.015625,
+        "y": 269.421875,
+        "width": 386.96875,
+        "height": 44,
+        "top": 269.421875,
+        "bottom": 313.421875,
+        "left": 890.015625,
+        "right": 1276.984375
+      },
+      "submit": {
+        "x": 890.015625,
+        "y": 351.5625,
+        "width": 386.96875,
+        "height": 46,
+        "top": 351.5625,
+        "bottom": 397.5625,
+        "left": 890.015625,
+        "right": 1276.984375
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:11.442Z"
+    },
+    {
+      "file": "screenshots/login-320x740.png",
+      "sha256": "0e04b611ab84fb2dd7c27ffba95df281bbd4b23c3d201f3e0a036f84ba7542b2",
+      "entry": true,
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 320,
+        "height": 740,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 20,
+        "y": 203.875,
+        "width": 280,
+        "height": 423.359375,
+        "top": 203.875,
+        "bottom": 627.234375,
+        "left": 20,
+        "right": 300
+      },
+      "story": {
+        "x": 20,
+        "y": 76,
+        "width": 280,
+        "height": 115.875,
+        "top": 76,
+        "bottom": 191.875,
+        "left": 20,
+        "right": 300
+      },
+      "input": {
+        "x": 41,
+        "y": 299.671875,
+        "width": 238,
+        "height": 46,
+        "top": 299.671875,
+        "bottom": 345.671875,
+        "left": 41,
+        "right": 279
+      },
+      "submit": {
+        "x": 41,
+        "y": 392.453125,
+        "width": 238,
+        "height": 46,
+        "top": 392.453125,
+        "bottom": 438.453125,
+        "left": 41,
+        "right": 279
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:18.108Z"
+    },
+    {
+      "file": "screenshots/login-360x640.png",
+      "sha256": "2fd81ff4f0ef446a9441efa56cc7c33c84b6b5fc8ff573ddee332494d6e20c68",
+      "entry": true,
+      "viewport": {
+        "width": 360,
+        "height": 640,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 360,
+        "height": 640,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 20,
+        "y": 171.25,
+        "width": 320,
+        "height": 423.359375,
+        "top": 171.25,
+        "bottom": 594.609375,
+        "left": 20,
+        "right": 340
+      },
+      "story": {
+        "x": 20,
+        "y": 76,
+        "width": 320,
+        "height": 83.25,
+        "top": 76,
+        "bottom": 159.25,
+        "left": 20,
+        "right": 340
+      },
+      "input": {
+        "x": 41,
+        "y": 267.046875,
+        "width": 278,
+        "height": 46,
+        "top": 267.046875,
+        "bottom": 313.046875,
+        "left": 41,
+        "right": 319
+      },
+      "submit": {
+        "x": 41,
+        "y": 359.828125,
+        "width": 278,
+        "height": 46,
+        "top": 359.828125,
+        "bottom": 405.828125,
+        "left": 41,
+        "right": 319
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 360,
+        "height": 640
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:16.279Z"
+    },
+    {
+      "file": "screenshots/login-390x844.png",
+      "sha256": "aa3054238c575a92ad5e5d9aca97618d9445e2e06df3fd1becfc29cd19e98f9a",
+      "entry": true,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "document": {
+        "width": 390,
+        "height": 844,
+        "scrollX": 0,
+        "scrollY": 0
+      },
+      "panel": {
+        "x": 20,
+        "y": 232,
+        "width": 350,
+        "height": 449.15625,
+        "top": 232,
+        "bottom": 681.15625,
+        "left": 20,
+        "right": 370
+      },
+      "story": {
+        "x": 20,
+        "y": 80,
+        "width": 350,
+        "height": 138,
+        "top": 80,
+        "bottom": 218,
+        "left": 20,
+        "right": 370
+      },
+      "input": {
+        "x": 41,
+        "y": 383.984375,
+        "width": 308,
+        "height": 46,
+        "top": 383.984375,
+        "bottom": 429.984375,
+        "left": 41,
+        "right": 349
+      },
+      "submit": {
+        "x": 41,
+        "y": 476.765625,
+        "width": 308,
+        "height": 46,
+        "top": 476.765625,
+        "bottom": 522.765625,
+        "left": 41,
+        "right": 349
+      },
+      "state": "default credential login; local access collapsed",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "6ef4b546f4d2a9630b6282adc47c76df02208079ff206d7aec70a3c26981db20",
+        "canvas.css": "1567abcc84549a52de0ee70aa49dc607b4c81b719270b448898b246c839c211e",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "d81db1400f856cacc9252678b391bdeed86c92339ea2ebc9878b39bf215567b0",
+        "workspace-entry.css": "cf1c5576d8c33e5dc5fc102adfaf263eac6bb1ec7b146d3bee207a4de550edc2"
+      },
+      "capturedAt": "2026-10-18T15:24:14.794Z"
+    }
+  ]
+}

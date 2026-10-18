@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, intent } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent, outcomeActions } from "./ux-fixture.mjs";
 async function provision(wos, principal, permissions) {
   const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
   const grant = await wos.api("/security/commands", {
@@ -28,7 +28,7 @@ test("read-only membership hides mutation and settings affordances", async ({
   await expect(page.locator("#create-outcome")).toBeDisabled();
   await expect(page.locator("#developer-tools")).not.toBeVisible();
   await expect(page.locator("#administration")).not.toBeVisible();
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await expect(page.locator("#action-options button")).toHaveCount(0);
 });
 test("revoked credential cannot retrieve references or dispatch edits", async ({

@@ -109,6 +109,61 @@
 #connect .login-cards small {
   color: var(--wos-muted);
 }
+/* Short desktop windows keep the complete entry in view. The aspect-ratio
+ * condition also follows proportionally scaled desktop viewports. */
+@media (min-width: 761px) and (min-aspect-ratio: 16/10),
+  (min-width: 761px) and (max-width: 1200px) and (max-height: 850px) {
+  #connect {
+    align-items: center;
+    padding-block: clamp(calc(16 * var(--wos-unit, 1px)), 3vh, calc(32 * var(--wos-unit, 1px)));
+  }
+  #connect .login-story {
+    padding-top: 0;
+  }
+  #connect .login-story h1 {
+    margin-block: calc(14 * var(--wos-unit, 1px));
+    font-size: clamp(3.42857rem, 9.5vh, 6.28571rem);
+  }
+  #connect .login-vignette {
+    margin-top: calc(4 * var(--wos-unit, 1px));
+  }
+  #connect .login-vignette img {
+    width: calc(110 * var(--wos-unit, 1px));
+    height: calc(105 * var(--wos-unit, 1px));
+  }
+  #connect .login-cards {
+    margin-top: calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .login-cards > div {
+    padding-top: calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .login-cards strong {
+    margin-block: calc(10 * var(--wos-unit, 1px)) calc(6 * var(--wos-unit, 1px));
+    font-size: 1.42857rem;
+  }
+  #connect .login-panel {
+    margin-top: 0;
+  }
+  #connect .entry-panel-heading {
+    padding: calc(20 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-heading h2 {
+    margin-block: calc(10 * var(--wos-unit, 1px)) calc(6 * var(--wos-unit, 1px));
+    font-size: 2.57143rem;
+  }
+  #connect #login {
+    padding: calc(16 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px));
+  }
+  #connect .entry-field-help {
+    margin-block: calc(8 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .entry-local {
+    padding: 0 calc(24 * var(--wos-unit, 1px)) calc(4 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-footer {
+    padding: calc(12 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  }
+}
 /* Native selectors, a visible search caption and generous interaction insets
  * keep the sidebar useful when names are long or many Outcomes are present. */
 #workspace .sidebar {
@@ -291,19 +346,78 @@
   }
 }
 @media (max-width: 760px) {
+  #connect {
+    gap: calc(14 * var(--wos-unit, 1px));
+    padding: calc(16 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
+  }
+  #connect .login-story {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) calc(72 * var(--wos-unit, 1px));
+    column-gap: calc(12 * var(--wos-unit, 1px));
+    padding: 0;
+  }
+  #connect .login-story .eyebrow {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.64286rem;
+  }
+  #connect .login-story h1 {
+    margin-block: calc(8 * var(--wos-unit, 1px)) 0;
+    max-width: none;
+    font-size: clamp(2.28571rem, 8.2vw, 3.42857rem);
+    line-height: 1.02;
+    letter-spacing: calc(-1 * var(--wos-unit, 1px));
+  }
+  #connect .login-story > p:not(.eyebrow) {
+    grid-column: 1 / -1;
+    margin-block: calc(8 * var(--wos-unit, 1px)) 0;
+    font-size: 0.85714rem;
+    line-height: 1.5;
+  }
+  #connect .login-vignette {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    align-self: center;
+  }
+  #connect .login-vignette img {
+    width: calc(72 * var(--wos-unit, 1px));
+    height: calc(84 * var(--wos-unit, 1px));
+  }
+  #connect .login-vignette .marginal-note {
+    display: none;
+  }
   #connect .entry-panel-heading {
-    padding: calc(24 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px))
-      calc(20 * var(--wos-unit, 1px));
+    padding: calc(16 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px))
+      calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-heading h2 {
+    margin-block: calc(6 * var(--wos-unit, 1px));
+    font-size: 2.28571rem;
   }
   #connect #login {
-    padding: calc(20 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px));
+    padding: calc(14 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
+  }
+  #connect .entry-field-help {
+    margin-block: calc(6 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+    line-height: 1.4;
   }
   #connect .entry-local {
-    padding-inline: calc(24 * var(--wos-unit, 1px));
+    padding: 0 calc(20 * var(--wos-unit, 1px));
+  }
+  #connect .entry-local > summary {
+    padding-block: calc(8 * var(--wos-unit, 1px)) calc(6 * var(--wos-unit, 1px));
   }
   #connect .entry-panel-footer {
-    padding: calc(18 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px))
-      calc(22 * var(--wos-unit, 1px));
+    padding: calc(12 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px))
+      calc(14 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-footer .login-footnote {
+    line-height: 1.5;
+  }
+  #connect .entry-access-note {
+    margin-top: calc(6 * var(--wos-unit, 1px));
+    line-height: 1.4;
   }
   #connect :is(#login, #local) input,
   #workspace .sidebar :is(input:not([type="checkbox"]), select) {
@@ -357,5 +471,25 @@
   }
   #workspace-loading {
     padding: calc(32 * var(--wos-unit, 1px)) 0;
+  }
+}
+@media (max-width: 760px) and (max-height: 740px) {
+  #connect {
+    gap: calc(12 * var(--wos-unit, 1px));
+    padding-block: calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .login-story > p:not(.eyebrow),
+  #connect .entry-panel-heading > p {
+    display: none;
+  }
+  #connect .login-vignette img {
+    height: calc(70 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-heading {
+    padding-block: calc(12 * var(--wos-unit, 1px));
+  }
+  #connect .entry-panel-heading h2 {
+    margin: 0;
+    font-size: 2rem;
   }
 }

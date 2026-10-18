@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {releasePlan,prepareRelease,nextVersion} from './version.mjs';
+import {releasePlan,prepareRelease,nextVersion,renderReadmeRelease} from './version.mjs';
 import {publishRelease,realAdapters,awaitNpmIntegrity} from './publish.mjs';
 import {sha256} from '../distribution/build.mjs';
 
@@ -13,6 +13,7 @@ async function fixture(t) {
   await fs.writeFile(path.join(dir,'.changes/README.md'),'queue');
   await fs.writeFile(path.join(dir,'VERSION'),'0.1.0\n');
   await fs.writeFile(path.join(dir,'CHANGELOG.md'),'# Changelog\n\nExisting history\n');
+  await fs.writeFile(path.join(dir,'README.md'),'# Product introduction\n\n'+renderReadmeRelease('0.1.0')+'\n\nKeep the product documentation.\n');
   for(const name of ['wos-cli-npm']) {
     await fs.mkdir(path.join(dir,'packages',name),{recursive:true});
     await fs.writeFile(path.join(dir,'packages',name,'package.json'),JSON.stringify({name,version:'0.1.0',...(name==='wos-skill'?{wosCompatibility:{service:'0.1.0',httpApi:'v1',snapshotSchema:1}}:{})}));
@@ -34,7 +35,7 @@ test('explicit stable SemVer chooses highest bump and first release keeps baseli
   assert.throws(()=>nextVersion('0.1.0','guess'),/Invalid bump/);
 });
 
-test('preparation is repeatable, consumes changes and synchronizes both packages and notes', async t => {
+test('preparation is repeatable, consumes changes and synchronizes package, README and notes', async t => {
   const dir=await fixture(t);
   assert.equal(await releasePlan(dir),null);
   await change(dir,'a','patch');await change(dir,'b','minor','Add delegation');
@@ -48,8 +49,22 @@ test('preparation is repeatable, consumes changes and synchronizes both packages
   assert.equal(api.info.version,'0.1.1');assert.equal(api.paths['/unchanged'].get.operationId,'preserved');
   assert.match(await fs.readFile(path.join(dir,'docs/releases/0.1.1.md'),'utf8'),/Fix claim handoff/);
   assert.match(await fs.readFile(path.join(dir,'CHANGELOG.md'),'utf8'),/Existing history/);
+  assert.equal(await fs.readFile(path.join(dir,'README.md'),'utf8'),'# Product introduction\n\n'+renderReadmeRelease('0.1.1')+'\n\nKeep the product documentation.\n');
   await change(dir,'d','patch');await change(dir,'e','major');
   assert.equal((await releasePlan(dir)).version,'1.0.0');
+});
+
+test('missing, duplicated or reversed README markers fail before changing release state', async t => {
+  const dir=await fixture(t);await change(dir,'good','minor');
+  const start='<!-- wos-release:start -->',end='<!-- wos-release:end -->';
+  for(const readme of ['No version markers',start+start+end,end+start]) {
+    await fs.writeFile(path.join(dir,'README.md'),readme);
+    await assert.rejects(prepareRelease(dir),/README release markers/);
+    assert.equal(await fs.readFile(path.join(dir,'VERSION'),'utf8'),'0.1.0\n');
+    assert.equal((await releasePlan(dir)).changes.length,1);
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages/wos-cli-npm/package.json'),'utf8')).version,'0.1.0');
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'packages/wos-api/commands.openapi.json'),'utf8')).info.version,'0.1.0');
+  }
 });
 
 test('bad changes and unsynchronized packages fail before writing any release state', async t => {

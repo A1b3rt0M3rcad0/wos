@@ -23,7 +23,7 @@ test.beforeAll(async () => {
     if (request.url === "/") {
       response.setHeader("Content-Type", "text/html");
       response.end(
-        `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Canvas renderer</title>${["colors", "style", "editorial", "canvas"].map((name) => `<link rel="stylesheet" href="/app/${name}.css">`).join("")}<body><main><div class="canvas-workspace-shell"><div id="operational-canvas"></div></div></main></body></html>`,
+        `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Outcome Board renderer</title>${["colors", "style", "editorial", "canvas"].map((name) => `<link rel="stylesheet" href="/app/${name}.css">`).join("")}<body><main><div class="canvas-workspace-shell"><div id="operational-canvas"></div></div></main></body></html>`,
       );
       return;
     }
@@ -207,7 +207,7 @@ async function mount(page) {
   await expect(page.locator(".canvas-world")).toHaveCSS("transform", /matrix/);
 }
 const card = (page, key) => page.locator(`[data-canvas-node="${key}"]`);
-const search = (page) => page.getByRole("combobox", { name: "Search canvas" });
+const search = (page) => page.getByRole("combobox", { name: "Search Outcome Board" });
 const result = (page, title) =>
   page
     .getByRole("listbox", { name: "Matching items" })
@@ -222,9 +222,9 @@ test("native canvas controls preserve selection, keyboard focus and explicit com
   await mount(page);
   await card(page, "outcome:root").locator(".canvas-node-main").click();
   expect(await page.evaluate(() => canvasEvents.select.length)).toBe(1);
-  const zoom = await page.getByLabel("Canvas zoom").textContent();
+  const zoom = await page.getByLabel("Outcome Board zoom").textContent();
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
-  await expect(page.getByLabel("Canvas zoom")).not.toHaveText(zoom);
+  await expect(page.getByLabel("Outcome Board zoom")).not.toHaveText(zoom);
   await page.evaluate(() => canvasHandle.focus("objective:one"));
   await card(page, "objective:one").locator(".canvas-expand").click();
   await expect(card(page, "work_item:a")).toHaveCount(0);
@@ -419,10 +419,10 @@ test("responsive UI scaling remains separate from camera and mobile has a native
   await page.setViewportSize({ width: 1440, height: 1100 });
   await mount(page);
   await page.evaluate(() => canvasHandle.focus("work_item:b"));
-  const zoom = await page.getByLabel("Canvas zoom").textContent();
+  const zoom = await page.getByLabel("Outcome Board zoom").textContent();
   const normal = await card(page, "work_item:b").boundingBox();
   await page.setViewportSize({ width: 2560, height: 1440 });
-  await expect(page.getByLabel("Canvas zoom")).toHaveText(zoom);
+  await expect(page.getByLabel("Outcome Board zoom")).toHaveText(zoom);
   const larger = await card(page, "work_item:b").boundingBox();
   expect(larger.width / normal.width).toBeCloseTo(2560 / 1440, 2);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -454,7 +454,7 @@ test("overview zoom preserves accessible controls through item selection and the
   await mount(page);
   for (let index = 0; index < 10; index++)
     await page.getByRole("button", { name: "Zoom out", exact: true }).click();
-  await expect(page.getByLabel("Canvas zoom")).toHaveText("25%");
+  await expect(page.getByLabel("Outcome Board zoom")).toHaveText("25%");
   await expect(page.locator(".workspace-canvas")).toHaveAttribute(
     "data-detail",
     "overview",

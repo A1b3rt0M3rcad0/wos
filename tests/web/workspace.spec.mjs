@@ -1,3 +1,4 @@
+import { chooseArea, clickWorkspaceTool, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -301,7 +302,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#outcomes")
       .getByRole("button", { name: /Lançar o portal/ })
       .click();
-    await page.locator('#area-tabs [data-area="overview"]').click();
+    await chooseArea(page, "overview");
     await expect(page.locator("#summary-view")).toBeVisible();
     await expect(page.locator("#metrics")).toContainText("1 of 32 items");
     await expect(page.locator("#summary-content")).toContainText(
@@ -311,8 +312,8 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       "Active roadmaps",
     );
     await shot("02-resumo");
-    await page.getByRole("button", { name: "Work", exact: true }).click();
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await chooseArea(page, "work");
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(page.locator(".board-column")).toHaveCount(5);
     await expect(
       page.getByRole("region", { name: "In progress", exact: true }),
@@ -372,16 +373,13 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       `/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${readyItems[0].id}`,
     );
     assert.equal(result.value.lifecycle, "in_progress");
-    await page.getByRole("button", { name: "Work", exact: true }).click();
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await chooseArea(page, "work");
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "In progress", exact: true }),
     ).toContainText("Mapear a jornada");
     await page.getByRole("button", { name: "List", exact: true }).click();
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Plan", exact: true })
-      .click();
+    await chooseArea(page, "Plan");
     await page
       .locator("#tabs")
       .getByRole("button", { name: "All roadmaps", exact: true })
@@ -405,10 +403,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     ).toHaveCount(0);
     await shot("06-plano");
     await page.keyboard.press("Escape");
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Plan", exact: true })
-      .click();
+    await chooseArea(page, "Plan");
     await page
       .locator("#tabs")
       .getByRole("button", { name: "Objectives", exact: true })
@@ -448,10 +443,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       });
     await shot("09-avaliacao");
     await page.keyboard.press("Escape");
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Issues", exact: true })
-      .click();
+    await chooseArea(page, "Issues");
     await page
       .locator("#tabs")
       .getByRole("button", { name: "Blockers", exact: true })
@@ -467,10 +459,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       "Acesso à homologação pendente",
     );
     await page.keyboard.press("Escape");
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Activity", exact: true })
-      .click();
+    await chooseArea(page, "Activity");
     await expect(page.locator(".timeline-entry").first()).toBeVisible();
     await expect(page.locator("#content pre")).toHaveCount(0);
     await shot("07-historico");
@@ -480,9 +469,9 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       expected_version: 1,
       reason: "Entrega removida do escopo por decisão explícita.",
     });
-    await page.locator("#refresh").click();
-    await page.getByRole("button", { name: "Work", exact: true }).click();
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await clickWorkspaceTool(page, "refresh");
+    await chooseArea(page, "work");
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "Cancelled", exact: true }),
     ).toContainText("Refinar navegação do workspace");
@@ -520,8 +509,8 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       "Lançar o portal de colaboração",
     );
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole("button", { name: "Work", exact: true }).click();
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await chooseArea(page, "work");
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -530,11 +519,12 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     );
     await page.locator(".board").scrollIntoViewIfNeeded();
     await shot("08-mobile");
-    await page.locator("#actions").focus();
+    await reviewOutcome(page);
+    await page.locator("#entity-actions").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("#action-dialog")).toBeVisible();
     await page.keyboard.press("Escape");
-    await expect(page.locator("#actions")).toBeFocused();
+    await expect(page.locator("#entity-actions")).toBeFocused();
     assert.deepEqual(errors, [], JSON.stringify(failedResources));
   } finally {
     await context.close();

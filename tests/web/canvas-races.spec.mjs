@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, pick } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
 
 const canvas = (page) => page.locator("#operational-canvas");
@@ -11,7 +11,7 @@ async function openCanvas(page, wos, data, credential) {
   await expect(canvas(page)).toBeVisible();
 }
 async function select(page, value, { wait = true } = {}) {
-  await canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }).fill(value.title);
+  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(value.title);
   await canvas(page).getByRole("option").filter({ hasText: value.title }).first().click();
   if (wait) await expect(panel(page).locator("#detail-title")).toHaveText(value.title);
 }
@@ -104,7 +104,7 @@ test("a late Task focal read cannot reopen a closed inspector or report an obsol
     await select(page, delayedTask, { wait: false });
     expect(await held.arrived).toBe(200);
     await panel(page).locator("#close-detail").click();
-    await page.locator('#area-tabs [data-area="work"]').click();
+    await chooseArea(page, "work");
     await expect(page.locator("#content")).toContainText(delayedTask.title);
     await expect(page.locator("#notice")).not.toHaveClass(/error/);
     // A subsequent context read would now observe a newer revision. Closing
@@ -137,7 +137,7 @@ test("a late comparison for Task A cannot replace Task B's draft or introduce an
     expected_version: first.version, title: "Task A changed by another participant",
   });
   const refreshed = page.waitForResponse((response) => response.url().includes(`${base(data.scope)}/continuity?`));
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await refreshed;
   await page.waitForLoadState("networkidle");
   await panel(page).locator("#submit-command").click();
@@ -172,7 +172,7 @@ test("an earlier successful refresh cannot restore private Canvas content after 
   await select(page, data.tasks.ready);
   const held = await holdOnce(page, `**/outcomes/${data.outcome.id}/continuity?*`);
   try {
-    await page.locator("#refresh").click();
+    await clickWorkspaceTool(page, "refresh");
     expect(await held.arrived).toBe(200);
     const administration = await wos.api(`/namespaces/${wos.namespace}/administration`);
     await wos.api("/security/commands", {

@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, pick } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool, openCanvasContext } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer, seedCanvasRoadmap } from "./canvas-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
@@ -18,7 +18,7 @@ async function openCanvas(page, wos, data, credential) {
 }
 async function choose(page, kind, value) {
   const title = value.title || value.description;
-  await canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }).fill(title);
+  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(title);
   await canvas(page).getByRole("option").filter({ hasText: title }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
   await expect(panel(page)).toBeVisible();
@@ -27,6 +27,9 @@ async function choose(page, kind, value) {
 async function finishInline(page) {
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#command-form")).not.toBeVisible();
+  // The form closes after commit; discovery, refresh and detail restoration
+  // still hold navigation until this real completion boundary is released.
+  await expect(page.locator("#submit-command")).toBeEnabled();
   await expect(page.locator("#notice")).not.toHaveClass(/error/);
   await expect(canvas(page)).toBeVisible();
 }
@@ -51,7 +54,7 @@ async function shot(page, name, { preserveScroll = false } = {}) {
     await page.locator(".canvas-workspace-shell").screenshot({ path: join(directory, `${name}-board.png`), animations: "disabled" });
 }
 
-test("Canvas is the default operational view without a Roadmap and keeps contextual deep links", async ({ page, wos }) => {
+test("Outcome Board is the default operational view without a Roadmap and keeps contextual deep links", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -73,7 +76,7 @@ test("Canvas is the default operational view without a Roadmap and keeps context
     scope: data.scope, work_item_id: data.tasks.ready.id,
     expected_version: data.tasks.ready.version, title: "A shared Task updated by another participant",
   });
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
   await expect(node(page, "work_item", data.tasks.ready)).toContainText(data.tasks.ready.title);
   expect(page.url()).toBe(selectedRoute);
@@ -85,9 +88,9 @@ test("Canvas is the default operational view without a Roadmap and keeps context
   await expect(node(page, "work_item", data.tasks.ready)).toBeFocused();
   await page.goBack();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
-  await page.locator("#area-tabs").getByRole("button", { name: "Work", exact: true }).click();
+  await chooseArea(page, "Work");
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
-  await page.locator("#area-tabs").getByRole("button", { name: "Canvas", exact: true }).click();
+  await chooseArea(page, "Canvas");
   await expect(canvas(page)).toBeVisible();
   // A real context response that arrives after dismissal must not reopen the
   // inspector or restore a selection the person already closed.
@@ -102,7 +105,7 @@ test("Canvas is the default operational view without a Roadmap and keeps context
     await route.continue();
   });
   try {
-    await canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }).fill(data.tasks.ready.title);
+    await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(data.tasks.ready.title);
     await canvas(page).getByRole("option").filter({ hasText: data.tasks.ready.title }).first().click();
     await reached;
     await panel(page).locator("#close-detail").click();
@@ -191,7 +194,7 @@ test("large Outcomes declare partial data, load incrementally and find authorize
   await canvas(page).getByRole("button", { name: "Load more map items", exact: true }).click();
   await expect.poll(loadedCount).toBeGreaterThan(before);
   const remote = data.additional.at(-1);
-  await canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }).fill("off-page verification");
+  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill("off-page verification");
   await canvas(page).getByRole("option").filter({ hasText: remote.title }).click();
   await expect(panel(page).locator("#detail-title")).toHaveText(remote.title);
   await expect(node(page, "work_item", remote)).toBeVisible();
@@ -233,7 +236,7 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}`)).value.lifecycle).toBe("todo");
 });
 
-test("read-only Canvas has usable keyboard and mobile views while zoom and layout never mutate state", async ({ page, wos }) => {
+test("read-only Outcome Board has usable keyboard and mobile views while zoom and layout never mutate state", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
   const viewer = await provisionCanvasViewer(wos);
   const mutations = [];
@@ -249,7 +252,7 @@ test("read-only Canvas has usable keyboard and mobile views while zoom and layou
   await expect(panel(page).getByRole("button", { name: "Edit task", exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(node(page, "work_item", data.tasks.ready)).toBeFocused();
-  const zoom = canvas(page).getByLabel("Canvas zoom", { exact: true });
+  const zoom = canvas(page).getByLabel("Outcome Board zoom", { exact: true });
   const start = await zoom.textContent();
   await canvas(page).getByRole("button", { name: "Zoom in", exact: true }).click();
   await expect(zoom).not.toHaveText(start);
@@ -331,7 +334,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
   await page.getByLabel("Task title", { exact: true }).fill("My retained canvas edit");
   await wos.command("update_work_item", { scope: data.scope, work_item_id: data.tasks.ready.id, expected_version: data.tasks.ready.version, title: "Another participant changed this Task" });
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(page.getByLabel("Task title", { exact: true })).toHaveValue("My retained canvas edit");
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#command-error")).toContainText("A newer version exists");
@@ -356,7 +359,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#retry-command")).toBeVisible();
   await expect(panel(page).locator("#fields")).toHaveAttribute("inert", "");
-  await page.locator("#area-tabs").getByRole("button", { name: "Work", exact: true }).click();
+  await chooseArea(page, "Work");
   await expect(canvas(page)).toBeVisible();
   await expect(panel(page).locator("#retry-command")).toBeVisible();
   await panel(page).locator("#retry-command").click();
@@ -375,7 +378,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await openCanvas(page, wos, data);
   await choose(page, "roadmap", roadmap);
   await expect(panel(page)).toContainText("Discover and verify");
-  await panel(page).getByRole("button", { name: "View draft on canvas", exact: true }).click();
+  await panel(page).getByRole("button", { name: "View draft on Outcome Board", exact: true }).click();
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   await expect(canvas(page).locator('[data-canvas-edge="plan_reference"]')).toHaveCount(2);
@@ -391,16 +394,17 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   const original = JSON.stringify(published.revisions[0]);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}/operational-state`)).state.display_state).toBe("ready");
   await choose(page, "roadmap", published);
-  await panel(page).getByRole("button", { name: "View revision 1 on canvas", exact: true }).click();
+  await panel(page).getByRole("button", { name: "View revision 1 on Outcome Board", exact: true }).click();
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
-  await expect.poll(async () => parseFloat(await canvas(page).getByLabel("Canvas zoom", { exact: true }).textContent())).toBeGreaterThanOrEqual(75);
+  await expect.poll(async () => parseFloat(await canvas(page).getByLabel("Outcome Board zoom", { exact: true }).textContent())).toBeGreaterThanOrEqual(75);
   await expect(canvas(page).locator('.canvas-node[data-kind="phase"]')).toBeVisible();
   await originalPapers(page);
   await shot(page, "06-canvas-roadmap");
   await choose(page, "roadmap", published);
   await panel(page).getByRole("button", { name: "Activate revision", exact: true }).click();
   await finishInline(page);
+  await openCanvasContext(page);
   await expect(page.locator("#canvas-planning").getByRole("button", { name: "Active plan · revision 1", exact: true })).toBeVisible();
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   expect(JSON.stringify((await wos.api(path)).value.revisions[0])).toBe(original);

@@ -5,8 +5,8 @@
 <p align="center"><strong>Meaningful outcomes. Work together.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/A1b3rt0M3rcad0/wos/releases/latest"><img src="docs/images/badges/release.svg" alt="Published baseline 0.4.2" /></a>
-  <a href="https://www.npmjs.com/package/wosctl"><img src="docs/images/badges/npm.svg" alt="npm version" /></a>
+  <a href="https://github.com/A1b3rt0M3rcad0/wos/releases/latest"><img src="https://img.shields.io/github/v/release/A1b3rt0M3rcad0/wos?label=release&amp;color=A7441D&amp;labelColor=292620" alt="Latest published GitHub release" /></a>
+  <a href="https://www.npmjs.com/package/wosctl"><img src="https://img.shields.io/npm/v/wosctl?color=A7441D&amp;labelColor=292620" alt="Latest published npm version" /></a>
   <a href="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml"><img src="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI on master" /></a>
   <a href=".go-version"><img src="docs/images/badges/go.svg" alt="Go 1.27.2" /></a>
   <a href="LICENSE"><img src="docs/images/badges/license.svg" alt="WOS Sustainable Use License 1.0: source-available" /></a>
@@ -39,10 +39,14 @@ Use the browser to plan and review, the CLI to coordinate external agents, or HT
 Suppose your team needs to **ship partial refunds**. Define a success criterion: customers can receive part of a payment back, but never more than the amount still refundable. A coding agent implements the change and records the exact commit and test report. A person or an authorized reviewing agent checks that delivery against the criterion before the Outcome is explicitly accepted. If a session ends midway, the next participant can read the recorded progress and remaining work.
 
 <p align="center">
-  <a href="docs/images/workspace-tour.gif"><img src="docs/images/workspace-tour.gif" width="960" alt="Workspace navigation through the Canvas, Tasks, Evidence and criteria" /></a>
+  <a href="docs/design/operational-canvas/canvas-first/screenshots/canvas-1920x1080.png"><img src="docs/design/operational-canvas/canvas-first/screenshots/canvas-1920x1080.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
-The tour navigates sample records in the real application: **Canvas → Task details → Work → Evidence → Overview and criteria**. It shows a completed Task alongside criteria still awaiting assessment. Navigation does not execute the work or demonstrate a signed independent review. [Static view](docs/images/workspace-tour.png) · [Recording details](docs/images/workspace-tour.md) · [All desktop and mobile pages](docs/design/operational-canvas/workspace/README.md).
+The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
+
+Use the map's **+**, **−**, **Center view** and **Fit view** controls to explore the work. Inspection stays below the Board toolbar, keeping navigation available while you review a card.
+
+Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Current workspace guide and captures](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
 | Step | What you do | What stays recorded |
 | --- | --- | --- |
@@ -62,7 +66,7 @@ When the Workspace policy requires independent review, the reviewer must be a di
   <img src="docs/images/robots-queuing-for-paperwork.png" width="280" alt="Robots sharing work at a desk" />
 </p>
 
-The board represents shared state; each paper represents a bounded piece of work. The product tour above shows the actual interface.
+The board represents shared state; each paper represents a bounded piece of work. The product view above shows the actual interface.
 
 </details>
 
@@ -118,7 +122,7 @@ The license permits delivering your application's functionality or outcomes. Res
 
 | Interface | Use it for | Start here |
 | --- | --- | --- |
-| Browser workspace | Human planning, Canvas navigation, review and inspection | [Workspace guide](docs/workspace-ux.md) |
+| Browser workspace | Human planning, Outcome Board navigation, review and inspection | [Workspace guide](docs/workspace-ux.md) |
 | Native CLI and five Skills | Coding agents acquiring work, recording progress and returning deliveries | [Agent guide](docs/agents.md) |
 | HTTP API and remote Go client | Connecting a service, customer portal, job or integration | [HTTP API](docs/http.md) · [Client example](examples/remote-client) |
 | MCP | Exposing authorized coordination tools to an MCP client | [MCP contracts](docs/contracts.md) |
@@ -127,6 +131,9 @@ The license permits delivering your application's functionality or outcomes. Res
 Official agent Skills operate through the CLI. MCP and HTTP are additional integration interfaces. An embedded host is responsible for its authentication and authorization boundaries; see [deployment modes](docs/operations.md).
 
 ## Quick start
+
+> [!NOTE]
+> This guide follows the checked-out source. Use a matching release's documentation when installing an already published package; source and published versions are listed [below](#project-status).
 
 ### Run the current workspace
 
@@ -144,7 +151,7 @@ docker compose up --build -d
 > [!WARNING]
 > The example contains a public development credential. Keep it on localhost. Before sharing a deployment, configure private credentials, permissions and HTTPS using the [shared-service guide](docs/operations.md#shared-service). Do not print credentials in logs.
 
-Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Canvas**, **Work** and **Evidence**. **Choose an action** exposes the operations your permissions and the current state allow. A new installation starts with your own records, not the tour's sample data.
+Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Views → Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
 
 <a id="requirements-and-platforms"></a>
 <details>
@@ -218,20 +225,23 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 
 ## Project status
 
-**Next release: 1.0.0.** The release includes the visual workspace, centralized agent workflows, operational hardening and the new source-available license. The major version reflects the licensing compatibility change. Publication is gated by the release workflow; preparation alone does not make the packages available or certify every stable-1.0 acceptance milestone. See the [1.0.0 release notes](docs/releases/1.0.0.md).
+<!-- wos-release:start -->
+**Source version: [1.1.0](docs/releases/1.1.0.md).** The product, npm package metadata and release notes use this version. The badges above show the latest versions actually published to GitHub and npm.
 
 | Item | State |
 | --- | --- |
-| Published baseline | [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), also available as `wosctl@0.4.2` and on GHCR |
-| This README and tour | Describe current source, including changes not yet published in that release |
-| Prepared version | 1.0.0; coordinated npm, GHCR and GitHub publication pending |
+| Source and release manifest | 1.1.0 |
+| npm package built from this checkout | `wosctl@1.1.0` |
+| Published distributions | [GitHub Release](https://github.com/A1b3rt0M3rcad0/wos/releases/latest) · [npm](https://www.npmjs.com/package/wosctl) · [GHCR](https://github.com/A1b3rt0M3rcad0/wos/pkgs/container/wos) |
+| Source vs installation | `wosctl@latest` installs npm's published version; this checkout and its captures can contain changes awaiting coordinated publication |
 | Compatibility | Existing HTTP/CLI contracts and checked forward migrations follow the [compatibility policy](docs/stable/compatibility.md); no blanket 1.0 certification |
 | Stable 1.0 acceptance | Tracked separately in [ROADMAP.md](ROADMAP.md) |
+<!-- wos-release:end -->
 
 ## Documentation and support
 
 - [Documentation index](docs/README.md): setup, workspace use, agents and integration references.
-- [Workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Canvas guide](docs/design/operational-canvas/README.md): pages, forms, mobile states and interaction details.
+- [Outcome Board workspace](docs/design/operational-canvas/canvas-first/README.md): viewport-based operation, compact navigation, responsive inspection and current captures. [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
 - [Server operations](docs/operations.md), [architecture](docs/architecture.md) and [operational acceptance](docs/stable/operational-acceptance.md).
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).

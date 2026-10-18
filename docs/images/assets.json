@@ -37,7 +37,7 @@
     "role": "Historical unsigned example recording, retained with its provenance; no longer embedded in the README"
   },
   "static_badges": {
-    "meaning": "Release/npm badges identify the published baseline, Go identifies the source pin, and the license badge identifies current source terms. CI is the live master workflow badge.",
+    "meaning": "Go identifies the source pin and the license badge identifies current source terms. The static release/npm badges below are historical 0.4.2 snapshots retained with their original hashes; the README now uses live GitHub/npm publication badges. CI is the live master workflow badge.",
     "files": [
       {
         "file": "docs/images/badges/go.svg",

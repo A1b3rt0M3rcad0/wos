@@ -18,7 +18,12 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../../tests/web/node_modules/playwright/index.mjs";
-import { expect, openOutcome } from "../../tests/web/ux-fixture.mjs";
+import {
+  expect,
+  openOutcome,
+  chooseArea,
+  reviewOutcome,
+} from "../../tests/web/ux-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const output = resolve(
@@ -339,10 +344,10 @@ try {
       `[data-canvas-node="work_item:${tasks[0].id}"] .canvas-node-main`,
     ),
   ).toBeInViewport({ ratio: 1 });
-  await frame("Canvas: one Outcome, related Tasks, and explicit dependencies");
+  await frame("Outcome Board: one Outcome, related Tasks, and explicit dependencies");
   await page
     .locator("#operational-canvas")
-    .getByRole("combobox", { name: "Search canvas", exact: true })
+    .getByRole("combobox", { name: "Search Outcome Board", exact: true })
     .fill(tasks[0].title);
   await page
     .locator("#operational-canvas")
@@ -357,7 +362,7 @@ try {
     "Execution happens outside WOS",
   );
   await frame("Task inspector: delivery scope and execution boundary");
-  await page.locator('#area-tabs [data-area="work"]').click();
+  await chooseArea(page, "work");
   await page.evaluate(() => scrollTo(0, 0));
   await expect(page.locator("#content .content-heading h2")).toHaveText(
     "Tasks",
@@ -370,7 +375,7 @@ try {
       page.locator(`#content [data-entity-id="${task.id}"]`),
     ).toBeInViewport({ ratio: 1 });
   await frame("Work: a completed implementation and separate review Task");
-  await page.locator('#area-tabs [data-area="evidence"]').click();
+  await chooseArea(page, "evidence");
   await page.evaluate(() => scrollTo(0, 0));
   await expect(page.locator("#content .content-heading h2")).toHaveText(
     "Evidence",
@@ -385,7 +390,7 @@ try {
   );
   await frame("Evidence detail: report provenance");
   await page.keyboard.press("Escape");
-  await page.locator('#area-tabs [data-area="overview"]').click();
+  await chooseArea(page, "overview");
   await page.evaluate(() => scrollTo(0, 0));
   await expect(page.locator("#area-title")).toHaveText("The whole picture.");
   await expect(page.locator("#metrics")).toContainText("Criteria met");
@@ -398,7 +403,7 @@ try {
   await frame(
     "Overview: work progress does not automatically verify the Outcome",
   );
-  await page.locator("#view-outcome").click();
+  await reviewOutcome(page);
   await expect(page.locator("#detail-dialog")).toBeVisible();
   await expect(page.locator("#detail-content")).toContainText(criterion.title);
   await expect(page.locator("#detail-content")).toContainText(

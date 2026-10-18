@@ -1,3 +1,4 @@
+import { chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
@@ -413,7 +414,7 @@ for (const decision of ["approved", "changes_requested"])
           .getByRole("button")
           .filter({ hasText: outcome.title })
           .click();
-        await activePage.locator('#area-tabs [data-area="overview"]').click();
+        await chooseArea(activePage, "overview");
         const overview = activePage.locator("#summary-content");
         await expect(
           overview.getByText("Open work", { exact: true }),
@@ -421,7 +422,7 @@ for (const decision of ["approved", "changes_requested"])
         await expect(
           overview.getByText("Blocked / needs attention", { exact: true }),
         ).toHaveCount(0);
-        await activePage.locator('#area-tabs [data-area="work"]').click();
+        await chooseArea(activePage, "work");
         const workListRow = activePage.locator(
           `#content .list-row[data-entity-id="${work.id}"]`,
         );
@@ -476,7 +477,7 @@ for (const decision of ["approved", "changes_requested"])
         );
         await expect(activePage.locator("#notice")).not.toHaveClass(/error/);
         await activePage
-          .getByRole("button", { name: "Board", exact: true })
+          .getByRole("button", { name: "Task Board", exact: true })
           .click();
         await expect(activePage.locator(".board-caption")).toContainText(
           "persisted lifecycle of loaded Tasks",
@@ -649,8 +650,8 @@ for (const decision of ["approved", "changes_requested"])
         canvasHandoff.includes("wos --profile reviewer review checkout"),
       );
       assert.ok(!canvasHandoff.includes(token));
-      await page.getByRole("button", { name: "Work", exact: true }).click();
-      await page.getByRole("button", { name: "Board", exact: true }).click();
+      await chooseArea(page, "work");
+      await page.getByRole("button", { name: "Task Board", exact: true }).click();
       await page
         .getByRole("button")
         .filter({ hasText: work.title })
@@ -763,7 +764,7 @@ for (const decision of ["approved", "changes_requested"])
       );
       assert.deepEqual(await readdir(reviewDirectory), []);
       await expect(page.locator("#detail-dialog")).not.toBeVisible();
-      await page.locator("#refresh").click();
+      await clickWorkspaceTool(page, "refresh");
       await page
         .getByRole("button")
         .filter({ hasText: work.title })

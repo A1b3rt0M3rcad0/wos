@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-17
+**Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
+**Current wave:** Compact login, stable Board inspection and visible camera controls; release 1.1.0 and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -28,7 +28,7 @@ The architecture document describes what should exist. This ROADMAP records what
 | --- | --- | --- |
 | GitHub repository | ✅ | `A1b3rt0M3rcad0/wos`, default branch `master` |
 | Canonical architecture specification | ✅ | Stored under `docs/`; revision 2 |
-| Public README | ✅ | Executable features, draft PR status and remaining acceptance explicitly separated |
+| Public README | ✅ | Executable features, source/published versions and remaining acceptance explicitly separated |
 | Go module | ✅ | `github.com/A1b3rt0M3rcad0/wos` |
 | Repository ignore rules | ✅ | Go, local DB/data, environment/secrets, IDE files |
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
@@ -49,6 +49,185 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Compact entry and Board inspection — 2026-10-18
+
+**Status: Implemented and locally verified in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).**
+The owner reports avoidable login scrolling on smaller screens and a contextual
+inspector that disrupts the Outcome Board header. The owner also requests clear
+centering/zoom controls, using Woobe's Network as an interaction reference.
+
+- [x] Fit the default login composition in compact desktop/mobile viewports
+  without clipping fields, shrinking touch targets or disabling natural reflow
+  when local access, enlarged text or an on-screen keyboard needs more room.
+- [x] Keep the Outcome/Board header and toolbar stable during inspection;
+  constrain the existing detail/form/action surfaces to the graphic region.
+- [x] Expose persistent map camera controls, preserving keyboard, pan, selected
+  context and the distinction between centering, fit and local auto-layout.
+- [x] Verify normal/compact/zoomed entry, inspector focus/forms and camera
+  interactions, then update the captures and source-bound qualification.
+
+The existing editorial tokens, original art, commands, authority and recovery
+contracts remain unchanged. Merge was authorized by the owner; additional UI
+corrections precede integration and exact-source checks. Implementation source `0d84588da082f9d2b3539d00e48527b31c8d7487` passes 44 unit checks
+and all 99 browser journeys in one clean run (6.3m), without failures or skips.
+All 15 entry/layout journeys and four discovery journeys pass. The
+[35 captures](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+include six compact login sizes, short-phone map/inspection, desktop docking,
+forms and native 125%/150% browser zoom. Seven served assets match source per
+image; the manifest records all production, binary, fixture and image hashes.
+Native web tests/vet and four release-compatibility checks pass. Actual 1.1.0
+artifacts from this same source pass the offline installed-package verifier
+(12 checks), including matching service/client/Skill versions, legal/hash checks,
+signed execution/review/recovery, readiness, shutdown and corruption rejection.
+Windows-native and exact publication-source gates remain hosted requirements.
+Version 1.1.0 is prepared; publication follows integration and exact-source gates.
+The PR and release workflow expose current integration and publication status.
+
+## Coordinated release and README versions — 2026-10-18
+
+**Status: Prepared and locally verified in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).** The owner subsequently authorized integration; its current checks and publication status are tracked in the compact-entry follow-up above.
+The owner requests preparing the next release in this PR and keeping the npm
+package and README synchronized. Initial read-only GitHub and npm checks
+confirmed that v1.0.0 was already published while the README still advertised
+v0.4.2. The queued Outcome Board feature requires a minor release, now prepared
+as 1.1.0.
+
+- [x] Prepare VERSION, npm metadata, both OpenAPI versions, manifest, changelog
+  and release notes together, consuming the reviewed change queue.
+- [x] Generate the README source-version section during release preparation and
+  use live published-version badges instead of manual release/npm numbers.
+- [x] Include generated README metadata in automatic release preparation and
+  reject version drift through release/compatibility checks.
+- [x] Verify release preparation, immutable compatibility and actual package
+  contents before updating the PR. Publication follows integration and
+  existing exact-source release gates; preparation itself does not publish.
+
+The 32 package/Skill/distribution/release contract tests pass. After adding
+independent assertions for the actual README version and release-notes target,
+all 16 release/compatibility checks pass again. Preparation produces 1.1.0 and
+consumes the queue; a repeated plan returns null.
+
+Actual 1.1.0 artifacts built from committed source
+`21d0a6f8e4235ce00cb8c5541050bee7bd24eaa3` pass the distribution verifier:
+offline npm installation, matching service/client/Skill versions, source and
+artifact hashes, original legal files, native Skill operations, signed execution
+and independent review/recovery, HTTP/MCP/UI readiness, shutdown and corruption
+rejection. The local runner uses writable npm/XDG cache paths under `/tmp`.
+Windows archives are cross-built and checked structurally here; native Windows
+execution and the remaining exact-source release gates belong to hosted CI.
+No registry upload, tag creation, release publication or merge was performed.
+
+## Contextual Outcome actions and compact navigation — 2026-10-18
+
+**Status: Implemented in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115); historical qualification below.** The compact-entry follow-up above records the current source and integration state.
+The owner requests fewer repeated operations and more useful space in the
+specialist sidebar. Outcome-wide tools and the general action menu belong in
+Outcome Board; individual records and collections retain their own actions.
+
+- [x] Restrict Outcome tools and Choose an action to Outcome Board; preserve
+  same-view Refresh, Overview review and existing native entity/collection forms.
+- [x] Use one visible Outcome search field with automatic reads, immediate Enter
+  and filters, cancellation, query-bound pagination and authorization handling.
+- [x] Compact the sidebar's spacing and original robot/caption while preserving
+  selection, keyboard focus, mobile navigation and functional targets.
+- [x] Validate the view matrix, discovery ordering/pagination, native forms,
+  permissions and recovery; refresh source-bound Board and sidebar captures.
+
+Production source `c3c3139f5fb1d71bebdc80c14de5cc915c23de98` passes 44 unit
+checks and 91 of 92 browser journeys in the full run. Its only failure was a
+modal-palette test selecting a Work row after navigating to Overview. Test-only
+correction `62cbc03a917a6e4a501f14a69b3184cfb2d510b8` explicitly returns to Work;
+the affected desktop/mobile journey passes its focused recheck with all existing
+assertions retained. All 92 journeys are covered across those runs, with zero
+skips and identical production inputs; this is not one clean 92-case execution.
+
+All eight viewport journeys and all four new discovery journeys pass within the
+full run. The [26 source-bound captures](https://github.com/A1b3rt0M3rcad0/wos/blob/85041088eb779561c07890d3a14514c3ee36e1a4/docs/design/operational-canvas/canvas-first/README.md#screenshots)
+include desktop Overview/Work and compact Overview sidebars alongside the Board,
+inspector/forms and native 125%/150% browser zoom. Native web tests and vet pass.
+The [manifest](https://github.com/A1b3rt0M3rcad0/wos/blob/85041088eb779561c07890d3a14514c3ee36e1a4/docs/design/operational-canvas/canvas-first/screenshots.json)
+records exact cohorts, source/binary/image hashes and six served assets checked
+against source per capture. Hosted checks qualify the pushed head independently.
+
+No domain, backend, protocol, schema or release change is included. The earlier
+qualifications below remain historical. Representative-user and manual
+screen-reader acceptance remain separate.
+
+## Outcome Board workspace follow-up — 2026-10-18
+
+**Status: Implemented in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115); historical qualification below.** The compact-entry follow-up above records the current source and integration state.
+The owner identifies the spatial Board as the working environment itself. The
+left sidebar belongs in Overview and the other specialist views rather than
+inside this working region. This supersedes retaining a sidebar in the initial
+Canvas-first presentation below.
+
+- [x] Hide the sidebar only for the active Outcome Board and give its space to
+  the working region; retain Overview/specialist navigation and Outcome switching.
+- [x] Rename visible and accessible Canvas controls to Outcome Board; distinguish
+  the specialized Task Board in Work and preserve existing internal routes.
+- [x] Verify focus when navigation becomes hidden, desktop/mobile/native zoom,
+  inherited journeys, hosted failure corrections and refreshed source-bound captures.
+
+Current operation and evidence are maintained in the
+[workspace review](docs/design/operational-canvas/canvas-first/README.md).
+The earlier source-bound qualification below is historical, not proof of this
+follow-up. No domain, protocol, backend, storage or release change is included.
+
+Production source `5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a` passes all eight
+viewport journeys, including hidden-sidebar focus exclusion, restoration in all
+six specialist areas and real Outcome switching through Overview. The full run
+passes 44 unit checks and 86 of 88 browser journeys. Its two custom journey
+helpers returned before post-commit refresh completed; test-only correction
+`b784113280bf2866f78080e3dcc2bd5d8545fd3a` waits for the submit control to
+re-enable, and both focused rechecks pass. All 26 production inputs are unchanged
+between runs. This covers all 88 journeys across the regression and recheck;
+it is not a claim of a single clean 88-case execution. Native web tests and vet
+pass. The previous hosted plan-disclosure and proportional-navigation failures
+also pass locally with explicit completion and geometry checks. The
+[22 captures from this source](https://github.com/A1b3rt0M3rcad0/wos/blob/15593b763a820d97026db2354b8013424798c2e9/docs/design/operational-canvas/canvas-first/README.md#screenshots)
+qualify the production source, while hosted checks qualify the pushed head
+independently. Representative-user and manual screen-reader acceptance remain
+separate.
+
+## Canvas-first workspace — 2026-10-18
+
+**Historical status: Implemented and locally verified before owner-authorized integration.** The work is
+based on `master` at `cba58d6`. This presentation follow-up is independent from the
+closed scalable-installation PR #114 and introduces no backend, schema, CLI or
+execution-protocol changes. The [plan review and acceptance record](docs/design/operational-canvas/canvas-first/README.md)
+identify the implementation and validation boundaries.
+
+- [x] Make the active Canvas occupy the viewport remainder, with explicit internal
+  scroll ownership instead of a fixed minimum map height.
+- [x] Replace the horizontal area row with Canvas and compact Views navigation;
+  retain specialist views, deep links and the distinct Work Board.
+- [x] Keep Outcome identity/status and priority actions compact; expose existing
+  summary, planning and secondary tools progressively.
+- [x] Preserve the existing inspector/form nodes, exact pending intent, keyboard
+  return and camera; overlay inspection on compact screens without document scroll.
+- [x] Show actual loaded dependency, Blocker and EvidenceLink indicators without
+  treating Evidence, note position or visual connections as criterion verification.
+- [x] Validate desktop HD/Full HD/QHD, mobile reflow, real 125%/150% browser zoom,
+  navigation/permissions/races and source-bound screenshots before qualification.
+
+The supplied plan's 70–80% map-height target is measured against the actual CSS
+viewport; controls, reading and keyboard access take precedence at reduced sizes.
+The existing editorial palette, typography, fixed grid, robot and post-it assets
+remain authoritative. Automated checks and representative-user acceptance stay
+distinct; earlier screenshots do not qualify this structural change.
+
+The complete local regression passes 44 unit checks and 88 browser journeys with
+no skips. Its recorded production hashes precede only the final Issues count
+wording/pluralization correction. Eight final-source layout journeys pass at
+`6695b7984d1e3447139c71dff15fa2ba61948b90`, including that correction, a long
+Outcome name, mobile inspector/forms, and native 125%/150% browser zoom. The
+actual graph occupies 70.11%, 71.98%, 73.63% and 73.76% of the four requested
+desktop viewports. Native web race tests and vet pass. The 22 unannotated captures,
+served-asset checks and exact input/image hashes are recorded in the
+[original capture manifest](https://github.com/A1b3rt0M3rcad0/wos/blob/c12177ac92a2e4a1f7ed9bd45c296cd811a939f0/docs/design/operational-canvas/canvas-first/screenshots.json).
+Hosted checks qualify the pushed PR head independently. Representative-user,
+manual screen-reader and other-browser acceptance remain unclaimed.
 
 ## Visual operational workspace — 2026-10-16
 
@@ -91,6 +270,11 @@ The owner requested a more useful README demonstration and a clearer explanation
 ## Owner-authorized release preparation — 2026-10-17
 
 The owner authorized merging the README clarification and initiating the next coordinated release. The release tool consumes the four queued changes and prepares version **1.0.0**: the licensing compatibility break requires a major bump under `.changes/README.md`; the agent workflow, operational hardening and visual workspace additions are included. README release status explicitly distinguishes preparation from public availability. Publication must use the existing source-gated workflow and immutable npm, GHCR and GitHub artifacts. This version number does not complete the separate stable-1.0 acceptance program; published baseline remains v0.4.2 until verified publication succeeds.
+
+Publication follow-up verified on 2026-10-18: GitHub Release v1.0.0 was published
+on 2026-10-17 at source `cba58d6d609377df141d1369dccaaaf3b3e331e3`, and public
+npm `wosctl@latest` resolves to 1.0.0. The preparation status above is historical;
+the next source release is tracked in the coordinated-release wave above.
 
 ## Source-available licensing and brand — 2026-10-17
 

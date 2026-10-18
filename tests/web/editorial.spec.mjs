@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, intent, save } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent, save, chooseArea, openViews, outcomeActions } from "./ux-fixture.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { interactionAudit } from "./interaction-audit.mjs";
@@ -217,7 +217,7 @@ test("large viewports scale the reference composition without rearranging it", a
     ".sidebar",
     ".workspace-main",
     "#title",
-    "#area-tabs",
+    "#outcome-views > summary",
     ".area-intro",
     "#area-title",
     ".area-vignette img",
@@ -283,7 +283,7 @@ test("large viewports scale the reference composition without rearranging it", a
       "evidence",
       "activity",
     ]) {
-      await page.locator(`[data-area="${area}"]`).click();
+      await chooseArea(page, area);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -291,7 +291,7 @@ test("large viewports scale the reference composition without rearranging it", a
         `${area} at ${width}px`,
       ).toBe(true);
     }
-    await page.locator('[data-area="work"]').click();
+    await chooseArea(page, "work");
     await page.locator('[data-view="board"]').click();
     expect(
       await page
@@ -307,7 +307,7 @@ test("large viewports scale the reference composition without rearranging it", a
       await page.evaluate(() => document.activeElement?.blur());
       await capture(page, "32-scale-2k-work-board");
     }
-    await page.locator('[data-area="overview"]').click();
+    await chooseArea(page, "overview");
   }
   // The upper bound stops component growth even beyond a 4K-wide viewport.
   await page.setViewportSize({ width: 5120, height: 2880 });
@@ -346,11 +346,12 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
     "evidence",
     "activity",
   ]) {
-    await page.locator(`[data-area="${area}"]`).click();
+    await chooseArea(page, area);
     await desktop.audit();
   }
-  await page.locator('[data-area="work"]').click();
+  await chooseArea(page, "work");
   await page.evaluate(() => scrollTo(0, 0));
+  await openViews(page);
   await page.locator('[data-area="issues"]').hover();
   await expect(page.locator('[data-area="work"]')).toHaveAttribute(
     "aria-pressed",
@@ -363,13 +364,14 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
   expect(
     await page
       .locator('[data-area="issues"]')
-      .evaluate((element) => getComputedStyle(element).borderBottomColor),
+      .evaluate((element) => getComputedStyle(element).color),
   ).not.toBe(
     await page
       .locator('[data-area="work"]')
-      .evaluate((element) => getComputedStyle(element).borderBottomColor),
+      .evaluate((element) => getComputedStyle(element).color),
   );
   await capture(page, "22-area-tab-hover");
+  await page.locator("#outcome-views > summary").click();
   const board = page.locator('#view-tabs button[data-view="board"]');
   await board.hover();
   await capture(page, "23-view-switch-hover");
@@ -415,13 +417,14 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
     await desktop.audit(page.locator("#admin-dialog"));
   }
   await page.keyboard.press("Escape");
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await desktop.audit(page.locator("#action-dialog"));
   await page
     .locator("#action-dialog")
     .getByText("Advanced", { exact: true })
     .click();
   await desktop.audit(page.locator("#action-dialog"));
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   const touch = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -436,8 +439,9 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
     const audit = interactionAudit(mobile);
     for (const width of [390, 320]) {
       await mobile.setViewportSize({ width, height: 844 });
-      await mobile.locator('[data-area="work"]').click();
+      await chooseArea(mobile, "work");
       await audit.audit();
+      await openViews(mobile);
       const inactive = mobile.locator('[data-area="issues"]');
       await mobile.mouse.move(0, 0);
       const before = await inactive.evaluate(
@@ -556,6 +560,10 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
     "aria-expanded",
     "false",
   );
+  await expect(page.locator(".sidebar")).toBeHidden();
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
+  await chooseArea(page, "overview");
+  await expect(page.locator(".sidebar")).toBeVisible();
   // More than one sidebar viewport: the final action remains reachable.
   for (let index = 0; index < 12; index++)
     await wos.command("create_outcome", {
@@ -565,7 +573,7 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
       priority: "normal",
     });
   await page.setViewportSize({ width: 1440, height: 700 });
-  await page.locator("#search").evaluate((form) => form.requestSubmit());
+  await page.locator("#text").press("Enter");
   await expect(page.locator("#outcomes .item")).toHaveCount(15);
   await page.locator("#administration").focus();
   await expect(page.locator("#administration")).toBeInViewport();
@@ -638,7 +646,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
       "08-activity",
     ],
   ]) {
-    await page.locator(`[data-area="${area}"]`).click();
+    await chooseArea(page, area);
     await expect(page.locator("#area-title")).toHaveText(title);
     await expect(page.locator("#area-index")).toContainText(
       area[0].toUpperCase() + area.slice(1),
@@ -664,8 +672,8 @@ test("editorial chapters keep all six areas, real records and illustration asset
       ),
     ).toBe(true);
   }
-  await page.locator('[data-area="work"]').click();
-  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await chooseArea(page, "work");
+  await page.getByRole("button", { name: "Task Board", exact: true }).click();
   await expect(page.locator(".board")).toBeVisible();
   await capture(page, "05-work-board");
   await page.getByRole("button", { name: "List", exact: true }).click();
@@ -693,9 +701,10 @@ test("editorial chapters keep all six areas, real records and illustration asset
     );
   await capture(page, "15-expanded-task-form");
   await page.keyboard.press("Escape");
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await expect(page.locator("#action-dialog")).toBeVisible();
   await capture(page, "16-action-menu");
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.locator("#administration").click();
   await expect(page.locator("#admin-dialog")).toBeVisible();
@@ -730,7 +739,7 @@ test("editorial layout reflows, respects reduced motion and survives missing fon
       "evidence",
       "activity",
     ]) {
-      await page.locator(`[data-area="${area}"]`).click();
+      await chooseArea(page, area);
       await expect(page.locator("#area-title")).toBeVisible();
       expect(
         await page.evaluate(
@@ -739,10 +748,10 @@ test("editorial layout reflows, respects reduced motion and survives missing fon
         `${area} at ${width}px`,
       ).toBe(true);
     }
-    await page.locator('[data-area="overview"]').click();
+    await chooseArea(page, "overview");
     if (width === 390) await capture(page, "12-mobile-overview");
     if (width === 390) {
-      await page.locator('[data-area="work"]').click();
+      await chooseArea(page, "work");
       await capture(page, "13-mobile-work");
       await intent(page, "New task");
       await capture(page, "17-mobile-task-form");
@@ -751,7 +760,7 @@ test("editorial layout reflows, respects reduced motion and survives missing fon
       await expect(page.locator("#admin-dialog")).toBeVisible();
       await capture(page, "18-mobile-settings");
       await page.keyboard.press("Escape");
-      await page.locator('[data-area="overview"]').click();
+      await chooseArea(page, "overview");
     }
   }
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -766,7 +775,7 @@ test("editorial layout reflows, respects reduced motion and survives missing fon
   await page.route(/\.(woff2|svg)(\?|$)/, (route) => route.abort());
   await page.reload();
   await expect(page.locator("#area-title")).toBeVisible();
-  await page.locator('[data-area="work"]').click();
+  await chooseArea(page, "work");
   await expect(page.locator(".list-row")).toHaveCount(5);
   await intent(page, "New task");
   await expect(page.getByLabel("Task title", { exact: true })).toBeVisible();
@@ -835,7 +844,7 @@ test("Woobe colors distinguish interaction copper, primary charcoal and semantic
     "background-color",
     "rgb(241, 223, 208)",
   );
-  await page.locator('#area-tabs [data-area="work"]').click();
+  await chooseArea(page, "work");
   await expect(page.locator(".list-row")).toHaveCount(5);
   await expect(
     page.locator(".list-row .badge").filter({ hasText: /^Done$/ }),
@@ -892,8 +901,8 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
 
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
-    await page.locator('#area-tabs [data-area="work"]').click();
-    await page.locator("#actions").click();
+    await chooseArea(page, "work");
+    await outcomeActions(page);
     await paper("#action-dialog");
     await page.locator("#action-dialog summary").click();
     await paper("#action-dialog");
@@ -904,6 +913,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
       await page.mouse.move(0, 0);
       await capture(page, "33-mobile-action-menu");
     }
+    await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
 
     await intent(page, "New task");
@@ -917,6 +927,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
     );
     await page.keyboard.press("Escape");
 
+    await chooseArea(page, "work");
     await page
       .locator(".list-row")
       .filter({ hasText: "Connect the evidence review" })
@@ -1047,7 +1058,7 @@ test("WOS uses the supplied hand-drawn logo alone and real browser icons", async
   }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await expect(page.locator("#title")).toHaveText("Ship a calmer workspace");
-  await page.locator('#area-tabs [data-area="overview"]').click();
+  await chooseArea(page, "overview");
   await expect(page.locator("#area-index")).toHaveText("01 / Overview");
 });
 

@@ -2,32 +2,6 @@
  * Pan/zoom belongs to the world; viewport scale remains --wos-unit + rem.
  * Artwork provenance: docs/design/operational-canvas/postits/README.md.
  */
-/* Keep the working board in view without changing other Outcome areas. */
-.workspace-main:has(> #outcome[data-editorial-area="canvas"]) {
-  padding-top: calc(12 * var(--wos-unit, 1px));
-}
-.workspace-main:has(> #outcome[data-editorial-area="canvas"])
-  > #notice:not(:empty) {
-  padding-block: calc(4 * var(--wos-unit, 1px));
-  margin-bottom: calc(8 * var(--wos-unit, 1px));
-}
-#outcome[data-editorial-area="canvas"] > .breadcrumbs {
-  margin-bottom: calc(8 * var(--wos-unit, 1px));
-}
-#outcome[data-editorial-area="canvas"] > .outcome-heading {
-  gap: calc(10 * var(--wos-unit, 1px));
-  margin-bottom: calc(10 * var(--wos-unit, 1px));
-}
-#outcome[data-editorial-area="canvas"] .outcome-heading .eyebrow {
-  margin-bottom: calc(4 * var(--wos-unit, 1px));
-}
-#outcome[data-editorial-area="canvas"] .outcome-heading h1 {
-  margin-block: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
-}
-#outcome[data-editorial-area="canvas"] > #area-tabs button {
-  min-height: calc(44 * var(--wos-unit, 1px));
-  padding-block: calc(10 * var(--wos-unit, 1px));
-}
 .canvas-overview {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
@@ -134,8 +108,30 @@ dl.canvas-summary-metrics > div {
   min-width: 0;
   border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
 }
-.canvas-workspace-shell:has(.canvas-context-panel:not([hidden])) {
+.canvas-stage:has(.canvas-context-panel:not([hidden])) {
   grid-template-columns: minmax(0, 1fr) calc(360 * var(--wos-unit, 1px));
+}
+.canvas-stage {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.canvas-map {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.canvas-stage > :is(.canvas-map, .canvas-list) {
+  grid-area: 1 / 1;
+}
+.canvas-stage > .canvas-context-panel {
+  grid-area: 1 / 2;
 }
 #operational-canvas,
 .workspace-canvas {
@@ -196,10 +192,46 @@ dl.canvas-summary-metrics > div {
   --button-active-ink: var(--wos-on-primary);
 }
 .canvas-camera-controls {
-  gap: calc(2 * var(--wos-unit, 1px));
-  margin-inline-start: auto;
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: calc(12 * var(--wos-unit, 1px));
+  inset-block-end: calc(12 * var(--wos-unit, 1px));
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-control-border);
+  background: var(--wos-workspace);
+  box-shadow: 0 calc(2 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px)) var(--wos-shadow);
 }
 .canvas-camera-controls button {
+  --button-idle-bg: transparent;
+  --button-idle-ink: var(--wos-foreground);
+  --button-hover-bg: var(--wos-selected);
+  --button-hover-ink: var(--wos-foreground);
+  --button-active-bg: var(--wos-control);
+  --button-active-ink: var(--wos-foreground);
+  display: grid;
+  place-items: center;
+  min-width: calc(44 * var(--wos-unit, 1px));
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px));
+  border: 0;
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+.canvas-camera-controls button:last-child {
+  border-bottom: 0;
+}
+.canvas-camera-controls svg {
+  width: calc(18 * var(--wos-unit, 1px));
+  height: calc(18 * var(--wos-unit, 1px));
+  pointer-events: none;
+}
+.canvas-camera-controls :is(button, output) {
+  width: 100%;
+}
+.canvas-camera-controls output {
+  display: block;
+  padding-block: calc(4 * var(--wos-unit, 1px));
   border-bottom-color: var(--wos-border);
 }
 .canvas-camera-controls output {
@@ -521,6 +553,22 @@ dl.canvas-summary-metrics > div {
   overflow: hidden;
   color: var(--wos-muted);
   font: 0.78571rem/1.45 var(--utility);
+}
+.canvas-node-indicators {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wos-secondary);
+  font: 0.71429rem/1.4 var(--mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.canvas-list-main .canvas-node-indicators {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .canvas-node-actions {
   position: relative;
@@ -849,7 +897,7 @@ dl.canvas-summary-metrics > div {
     grid-template-columns: minmax(0, 1fr);
     gap: calc(12 * var(--wos-unit, 1px));
   }
-  .canvas-workspace-shell:has(.canvas-context-panel:not([hidden])) {
+  .canvas-stage:has(.canvas-context-panel:not([hidden])) {
     grid-template-columns: minmax(0, 1fr);
   }
   .canvas-context-panel {
@@ -892,11 +940,7 @@ dl.canvas-summary-metrics > div {
   .canvas-view-switch button {
     flex: 1;
   }
-  .canvas-camera-controls {
-    flex: 1 1 100%;
-    justify-content: space-between;
-    margin-inline-start: 0;
-  }
+  .canvas-camera-controls { margin-inline-start: 0; }
   .canvas-camera-controls button {
     padding-inline: calc(8 * var(--wos-unit, 1px));
   }
@@ -973,4 +1017,584 @@ dl.canvas-summary-metrics > div {
 .canvas-context-panel .detail-properties .detail-properties > dd {
   margin-inline-start: 0;
   padding-bottom: calc(8 * var(--wos-unit, 1px));
+}
+
+/* Compact navigation retains the same routes, controls and native disclosure
+   behavior in every Outcome view. Popovers remain above the working surface. */
+#outcome .outcome-heading #area-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+  gap: calc(6 * var(--wos-unit, 1px));
+  margin: 0;
+  border: 0;
+  overflow: visible;
+}
+#outcome .outcome-heading #area-tabs > button,
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--wos-unit, 1px));
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  border: calc(1 * var(--wos-unit, 1px)) solid transparent;
+  border-bottom-color: var(--wos-border);
+  color: var(--wos-foreground);
+  font: 500 0.78571rem/1.4 var(--utility);
+  cursor: pointer;
+  list-style: none;
+}
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary::-webkit-details-marker {
+  display: none;
+}
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary::after {
+  content: "+";
+  margin-inline-start: auto;
+  color: var(--wos-copper);
+  font: 1rem/1 var(--mono);
+}
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure)[open] > summary {
+  background: var(--wos-selected);
+  border-bottom-color: var(--wos-copper);
+}
+#outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure)[open] > summary::after {
+  content: "−";
+}
+.outcome-view-options,
+.outcome-tool-options,
+.canvas-context-content {
+  position: absolute;
+  z-index: 30;
+  inset-block-start: calc(100% + calc(6 * var(--wos-unit, 1px)));
+  inset-inline-end: 0;
+  min-width: calc(220 * var(--wos-unit, 1px));
+  max-width: calc(100vw - calc(24 * var(--wos-unit, 1px)));
+  max-height: min(70dvh, calc(560 * var(--wos-unit, 1px)));
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: calc(8 * var(--wos-unit, 1px));
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
+  box-shadow: 0 calc(8 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px)) var(--wos-shadow);
+}
+#outcome :is(.outcome-view-options, .outcome-tool-options) button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px)) calc(14 * var(--wos-unit, 1px));
+  margin: 0;
+  border: 0;
+  text-align: start;
+  white-space: normal;
+  font: 500 0.85714rem/1.4 var(--utility);
+}
+#outcome .outcome-view-options button[aria-pressed="true"] {
+  --button-idle-bg: var(--wos-selected);
+  --button-idle-ink: var(--wos-copper);
+}
+#outcome .outcome-heading #area-tabs > button[aria-pressed="true"] {
+  --button-idle-bg: var(--wos-selected);
+  --button-idle-ink: var(--wos-copper);
+  border-bottom-color: var(--wos-copper);
+}
+.canvas-context-content {
+  width: min(calc(640 * var(--wos-unit, 1px)), calc(100vw - calc(24 * var(--wos-unit, 1px))));
+  padding: calc(16 * var(--wos-unit, 1px));
+}
+.canvas-context-content .canvas-overview {
+  grid-template-columns: minmax(0, 1fr);
+  border-top: 0;
+}
+.canvas-context-provenance {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--wos-muted);
+  font: 0.71429rem/1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+.canvas-context-content .canvas-purpose > p:not(.eyebrow) {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+.canvas-context-content .canvas-planning {
+  margin: calc(12 * var(--wos-unit, 1px)) 0 0;
+  padding-top: calc(12 * var(--wos-unit, 1px));
+  border-top: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  border-bottom: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  #outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary:hover {
+    background: var(--wos-selected);
+  }
+}
+
+/* Only an active Canvas is a viewport workspace. Entry states, specialist
+   views and standalone renderer fixtures retain their natural document flow.
+   Each flex child can shrink; long lists and inspector bodies own scrolling. */
+body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="canvas"]) {
+  --header-height: calc(48 * var(--wos-unit, 1px));
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+}
+body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="canvas"]) > .topbar {
+  position: relative;
+  flex: 0 0 var(--header-height);
+  min-height: var(--header-height);
+}
+body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="canvas"]) > .topbar .brand-logo {
+  width: calc(90 * var(--wos-unit, 1px));
+}
+body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="canvas"]) > main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+#workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+#workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar {
+  /* The spatial workspace owns the full width; specialist views keep the rail. */
+  display: none;
+}
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: calc(6 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+}
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty) {
+  flex-shrink: 0;
+  max-height: 20dvh;
+  overflow: auto;
+  padding-block: calc(4 * var(--wos-unit, 1px));
+  margin-bottom: calc(6 * var(--wos-unit, 1px));
+}
+/* Routine refresh feedback remains announced without becoming another fixed
+   header row. Errors keep their bounded, visible place in the normal flow. */
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty):not(.error) {
+  position: absolute;
+  z-index: 5;
+  inset-inline-end: calc(24 * var(--wos-unit, 1px));
+  bottom: calc(56 * var(--wos-unit, 1px));
+  max-width: min(60%, calc(560 * var(--wos-unit, 1px)));
+  margin: 0;
+  padding: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  background: var(--wos-workspace);
+  pointer-events: none;
+}
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #signed-protocol-info {
+  flex-shrink: 0;
+  margin: 0 0 calc(6 * var(--wos-unit, 1px));
+  padding: 0 calc(8 * var(--wos-unit, 1px));
+}
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #signed-protocol-info > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding-block: calc(8 * var(--wos-unit, 1px));
+}
+.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #signed-protocol-info > .signed-protocol-grid {
+  max-height: min(35dvh, calc(300 * var(--wos-unit, 1px)));
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: calc(12 * var(--wos-unit, 1px));
+}
+#outcome:not([hidden])[data-editorial-area="canvas"] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+}
+#outcome[data-editorial-area="canvas"] > .breadcrumbs,
+#outcome[data-editorial-area="canvas"] .outcome-heading-text > .eyebrow {
+  display: none;
+}
+#outcome[data-editorial-area="canvas"] > .outcome-heading {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(8 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  margin: 0 0 calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .outcome-heading-text {
+  flex: 1 1 calc(200 * var(--wos-unit, 1px));
+  min-width: 0;
+}
+#outcome[data-editorial-area="canvas"] .outcome-heading h1 {
+  max-width: none;
+  margin: 0 0 calc(4 * var(--wos-unit, 1px));
+  font-size: 1.85714rem;
+  line-height: 1.1;
+  letter-spacing: calc(-0.3 * var(--wos-unit, 1px));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#outcome[data-editorial-area="canvas"] #revision {
+  display: none;
+}
+#outcome[data-editorial-area="canvas"] .outcome-meta {
+  flex-wrap: wrap;
+  gap: calc(3 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .outcome-meta .badge {
+  padding: calc(2 * var(--wos-unit, 1px)) calc(5 * var(--wos-unit, 1px));
+  font-size: 0.64286rem;
+  line-height: 1.4;
+}
+#outcome[data-editorial-area="canvas"] #canvas-counts {
+  color: var(--wos-muted);
+  font: 0.71429rem/1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+#outcome[data-editorial-area="canvas"] .heading-actions {
+  flex: 0 1 auto;
+  align-items: center;
+  gap: calc(6 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .heading-actions > button {
+  font-size: 0.78571rem;
+  padding-inline: calc(12 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] #canvas-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-workspace-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+#outcome[data-editorial-area="canvas"] .canvas-map {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#outcome[data-editorial-area="canvas"] :is(#operational-canvas, .workspace-canvas) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#outcome[data-editorial-area="canvas"] .workspace-canvas {
+  flex: 1;
+}
+#outcome[data-editorial-area="canvas"] .canvas-toolbar,
+#outcome[data-editorial-area="canvas"] .canvas-footer {
+  flex-shrink: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-toolbar {
+  gap: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  padding: calc(2 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-toolbar button {
+  padding-inline: calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-toolbar :is(input, select) {
+  margin-top: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-view-switch {
+  gap: calc(2 * var(--wos-unit, 1px));
+  padding: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-search {
+  order: 1;
+  flex: 1 1 calc(140 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-link-filter {
+  order: 2;
+}
+#outcome[data-editorial-area="canvas"] .canvas-auto-layout {
+  order: 3;
+}
+#outcome[data-editorial-area="canvas"] .canvas-viewport,
+#outcome[data-editorial-area="canvas"] .canvas-list {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+#outcome[data-editorial-area="canvas"] .canvas-list {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: calc(12 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-footer {
+  gap: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  padding: 0 calc(10 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-footer > button {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  font-size: 0.71429rem;
+}
+#outcome[data-editorial-area="canvas"] .canvas-legend {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-legend > summary {
+  display: flex;
+  align-items: center;
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding-inline: calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-legend[open] {
+  padding: 0;
+  border: 0;
+}
+#outcome[data-editorial-area="canvas"] .canvas-legend-items {
+  position: absolute;
+  z-index: 5;
+  inset-inline-end: 0;
+  bottom: 100%;
+  width: min(calc(420 * var(--wos-unit, 1px)), calc(100vw - calc(48 * var(--wos-unit, 1px))));
+  max-height: 50dvh;
+  overflow: auto;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--wos-workspace);
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel {
+  --canvas-panel-height: 100%;
+  position: relative;
+  top: auto;
+  min-height: 0;
+  height: calc(100% - calc(16 * var(--wos-unit, 1px)));
+  max-height: none;
+  overflow: hidden;
+  margin: calc(8 * var(--wos-unit, 1px));
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-slot,
+#outcome[data-editorial-area="canvas"] .canvas-inspector-slot > .dialog-form {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel :is(.dialog-body, .action-options) {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading {
+  padding: calc(14 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading h2 {
+  margin: 0;
+  font-size: 1.85714rem;
+  overflow-wrap: anywhere;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading .eyebrow {
+  color: var(--wos-copper);
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-body {
+  padding: calc(16 * var(--wos-unit, 1px));
+}
+/* Detail actions can span many rows. Keep their own scroll region rather than
+   letting a nonshrinking footer consume the inspector's readable body. The
+   command form retains its normal footer and visible primary submit action. */
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  max-height: min(42%, calc(220 * var(--wos-unit, 1px)));
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions > details {
+  grid-column: 1 / -1;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions > details > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer button {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail #entity-actions {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+@media (max-width: 1100px) and (min-width: 761px) {
+  #outcome[data-editorial-area="canvas"] .canvas-search {
+    flex-basis: calc(100% - calc(180 * var(--wos-unit, 1px)));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-link-filter {
+    flex: 0 1 calc(190 * var(--wos-unit, 1px));
+    font-size: 0;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-link-filter select {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.78571rem;
+  }
+}
+@media (max-width: 1400px), (max-height: 800px) {
+  #outcome[data-editorial-area="canvas"] .canvas-stage:has(.canvas-context-panel:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel {
+    position: absolute;
+    z-index: 5;
+    grid-area: auto;
+    inset-block: calc(8 * var(--wos-unit, 1px));
+    inset-inline-end: calc(8 * var(--wos-unit, 1px));
+    width: min(calc(420 * var(--wos-unit, 1px)), calc(100% - calc(16 * var(--wos-unit, 1px))));
+    height: auto;
+    margin: 0;
+    border-inline-start: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+    box-shadow: calc(-8 * var(--wos-unit, 1px)) 0 calc(24 * var(--wos-unit, 1px)) var(--wos-shadow);
+  }
+}
+@media (max-height: 600px) {
+  .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) {
+    padding-block: calc(4 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] > .outcome-heading {
+    row-gap: calc(4 * var(--wos-unit, 1px));
+    margin-bottom: calc(4 * var(--wos-unit, 1px));
+  }
+}
+@media (max-width: 760px) {
+  .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) {
+    padding: calc(6 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] > .outcome-heading {
+    gap: calc(6 * var(--wos-unit, 1px));
+    margin-bottom: calc(6 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .outcome-heading-text {
+    flex: 1 1 100%;
+  }
+  #outcome[data-editorial-area="canvas"] .outcome-heading h1 {
+    font-size: 1.71429rem;
+  }
+  #outcome[data-editorial-area="canvas"] .heading-actions {
+    flex: 1;
+    justify-content: flex-end;
+    gap: calc(4 * var(--wos-unit, 1px));
+  }
+  #outcome .outcome-heading #area-tabs {
+    gap: calc(4 * var(--wos-unit, 1px));
+  }
+  #outcome .outcome-heading #area-tabs > button,
+  #outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary,
+  #outcome[data-editorial-area="canvas"] .heading-actions > button {
+    padding-inline: calc(8 * var(--wos-unit, 1px));
+    font-size: 0.71429rem;
+  }
+  #outcome .outcome-view-options {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+  }
+  #outcome .canvas-context-content {
+    position: fixed;
+    inset-inline: calc(12 * var(--wos-unit, 1px));
+    inset-block-start: calc(var(--header-height) + calc(72 * var(--wos-unit, 1px)));
+    width: auto;
+    max-height: 65dvh;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-toolbar {
+    gap: calc(4 * var(--wos-unit, 1px));
+    padding: calc(4 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-view-switch {
+    flex: 0 0 auto;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-search {
+    flex: 1 1 calc(120 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-link-filter {
+    flex: 1 1 calc(170 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-link-filter select {
+    min-width: 0;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-footer {
+    padding-inline: calc(6 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-status {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 760px), (max-height: 600px) {
+  .canvas-camera-controls {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .canvas-camera-controls :is(button, output) {
+    width: auto;
+  }
+  .canvas-camera-controls button {
+    border-bottom: 0;
+    border-inline-end: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  }
+  .canvas-camera-controls button:last-child {
+    border-inline-end: 0;
+  }
+  .canvas-camera-controls output {
+    display: grid;
+    place-items: center;
+  }
+}
+/* On a short phone, a fixed heading and action footer would leave no reading
+ * area. Let the whole inspector surface scroll within the same bounded stage. */
+@media (max-width: 760px) and (max-height: 700px) {
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-slot {
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-slot > .dialog-form {
+    display: block;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel :is(.dialog-body, .action-options),
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer {
+    max-height: none;
+    overflow: visible;
+  }
 }

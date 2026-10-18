@@ -5,8 +5,25 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {root} from '../distribution/build.mjs';
 import {legalEntries, licenseReference, npmLicense, verifyLegalFiles} from '../distribution/legal.mjs';
+import {renderReadmeRelease,updateReadmeRelease} from './version.mjs';
 
 function digest(bytes){return createHash('sha256').update(bytes).digest('hex');}
+test('README source metadata follows VERSION and published badges stay live',async()=>{
+ const version=(await readFile(path.join(root,'VERSION'),'utf8')).trim();
+ const readme=await readFile(path.join(root,'README.md'),'utf8');
+ const section=readme.match(/<!-- wos-release:start -->([\s\S]*?)<!-- wos-release:end -->/)?.[1];
+ assert.ok(section,'README release section is missing');
+ assert.equal(section.match(/\*\*Source version: \[([^\]]+)\]/)?.[1],version,'README source version differs from VERSION');
+ assert.ok(section.includes('`wosctl@'+version+'`'),'README npm metadata version differs from VERSION');
+ assert.ok(section.includes(`](docs/releases/${version}.md)`),'README release-notes link differs from VERSION');
+ await readFile(path.join(root,'docs/releases',`${version}.md`));
+ assert.equal(updateReadmeRelease(readme,version),readme,'README version metadata is stale');
+ assert.ok(readme.includes(renderReadmeRelease(version)));
+ assert.ok(readme.includes('https://img.shields.io/github/v/release/A1b3rt0M3rcad0/wos?'));
+ assert.ok(readme.includes('https://img.shields.io/npm/v/wosctl?'));
+ assert.ok(!readme.includes('docs/images/badges/release.svg'));
+ assert.ok(!readme.includes('docs/images/badges/npm.svg'));
+});
 function normalize(filename,bytes) {
  if(filename==='packages/wos-api/commands.openapi.json')return bytes.toString().replace(/("version": )"[0-9]+\.[0-9]+\.[0-9]+"/,'$1"PRODUCT_VERSION"');
  return bytes;

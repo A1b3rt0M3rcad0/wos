@@ -7,6 +7,55 @@ import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
 export { expect };
+// Specialist views live in the compact, native Views disclosure. Use the real
+// control rather than opening hidden content through DOM mutation in a test.
+export async function openViews(page) {
+  const views = page.locator("#outcome-views");
+  if (!(await views.evaluate((element) => element.open)))
+    await views.locator(":scope > summary").click();
+  return views;
+}
+export async function chooseArea(page, area) {
+  const key = area.toLowerCase() === "outcome board" ? "canvas" : area.toLowerCase();
+  if (key !== "canvas") await openViews(page);
+  await page.locator(`#area-tabs [data-area="${key}"]`).click();
+}
+export async function openWorkspaceTools(page) {
+  const tools = page.locator("#outcome-tools");
+  if (!(await tools.evaluate((element) => element.open)))
+    await tools.locator(":scope > summary").click();
+  return tools;
+}
+export async function clickWorkspaceTool(page, id) {
+  if (id === "refresh" && await page.locator("#refresh").isVisible()) {
+    await page.locator("#refresh").click();
+    return;
+  }
+  if (id === "view-outcome" && !(await page.locator("#outcome-tools").isVisible())) {
+    await reviewOutcome(page);
+    return;
+  }
+  await openWorkspaceTools(page);
+  await page.locator(`#${id}`).click();
+}
+export async function reviewOutcome(page) {
+  if (await page.locator("#detail-dialog").isVisible())
+    await page.keyboard.press("Escape");
+  await chooseArea(page, "overview");
+  await page.locator("#review-outcome").click();
+  await expect(page.locator("#detail-dialog")).toBeVisible();
+}
+export async function outcomeActions(page) {
+  await reviewOutcome(page);
+  await page.locator("#entity-actions").click();
+  await expect(page.locator("#action-dialog")).toBeVisible();
+}
+export async function openCanvasContext(page) {
+  const context = page.locator("#canvas-context");
+  if (!(await context.evaluate((element) => element.open)))
+    await context.locator(":scope > summary").click();
+  return context;
+}
 export const test = base.extend({
   wos: async ({}, use) => {
     const directory = await mkdtemp(join(tmpdir(), "wos-human-ux-")),
@@ -102,6 +151,11 @@ export async function openOutcome(
   title = "Acceptance Outcome",
   { area = "overview" } = {},
 ) {
+  // Outcome navigation is available in the retained specialist views. Leave
+  // the focused Board through Views rather than targeting its hidden sidebar.
+  if (await page.locator("#outcome").isVisible() &&
+      await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
+    await chooseArea(page, "overview");
   const switcher = page.locator("#navigation-toggle");
   if (
     (await switcher.isVisible()) &&
@@ -115,20 +169,23 @@ export async function openOutcome(
     .click();
   await expect(page.locator("#title")).toHaveText(title);
   if (area)
-    await page.locator(`#area-tabs [data-area="${area}"]`).click();
+    await chooseArea(page, area);
 }
 export async function intent(page, label) {
-  // Modal-regression journeys deliberately operate the retained specialist
-  // view; inline canvas actions have their own real-server acceptance suite.
-  if (
-    await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count()
-  )
-    await page.locator('#area-tabs [data-area="overview"]').click();
-  await page.locator("#actions").click();
-  await page
-    .locator("#action-options")
-    .getByRole("button", { name: label, exact: true })
-    .click();
+  // Modal journeys use actual collection/Overview controls. Global Board
+  // actions remain contextual and have independent inline-inspector coverage.
+  if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
+    await chooseArea(page, "overview");
+  const add = page.locator("#add-item");
+  const quick = page.locator(".summary-quick").getByRole("button", { name: label, exact: true });
+  if (await add.isVisible() && (await add.innerText()).replace(/^\+\s*/, "") === label)
+    await add.click();
+  else if (await quick.isVisible())
+    await quick.click();
+  else {
+    await outcomeActions(page);
+    await page.locator("#action-options").getByRole("button", { name: label, exact: true }).click();
+  }
   await expect(page.locator("#command-dialog")).toBeVisible();
   await expect(page.locator("#command-select")).not.toBeVisible();
 }
@@ -158,10 +215,7 @@ export async function detail(page, section, title) {
     Decisions: "Evidence",
   }[section];
   if (area)
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: area, exact: true })
-      .click();
+    await chooseArea(page, area);
   if (section === "Tasks")
     await page
       .getByLabel("Work status", { exact: true })
