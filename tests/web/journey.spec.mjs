@@ -160,6 +160,9 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
           { cause: error },
         );
       }
+      // Modal closure precedes discovery/refresh. Wait for the submitted
+      // operation to finish before choosing a view or using its sidebar.
+      await expect(page.locator("#submit-command")).toBeEnabled();
     }
     await open("create_outcome", "create");
     await page
@@ -473,6 +476,8 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
         { cause: error },
       );
     }
+    // Keep the next explicit intent behind the real post-refresh completion.
+    await expect(page.locator("#submit-command")).toBeEnabled();
   }
   async function entity(tab, title) {
     const area = {
