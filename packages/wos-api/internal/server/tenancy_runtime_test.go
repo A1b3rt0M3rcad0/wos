@@ -48,7 +48,9 @@ func TestHostedPostgresTenantsIsolateCredentialsSessionsAndPersistentState(t *te
 			return
 		}
 		defer db.Close()
-		cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// Drop both complete Tenant schemas within a bounded cleanup budget even
+		// when other PostgreSQL package suites are releasing fixture databases.
+		cleanup, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		for _, placement := range placements {
 			if _, err := db.ExecContext(cleanup, "DROP SCHEMA IF EXISTS "+placement.Schema+" CASCADE"); err != nil {
@@ -200,10 +202,7 @@ func TestHostedPostgresTenantsIsolateCredentialsSessionsAndPersistentState(t *te
 	if err = runtime.Close(); err != nil {
 		t.Fatal(err)
 	}
-	suspended, err := catalog.ChangeTenantState(ctx, firstID, placements[0].Version, postgres.TenantSuspended, "drained host accepted suspension")
-	if err != nil {
-		t.Fatal(err)
-	}
+	suspended := changeTenantStateAfterRuntimeDrain(t, ctx, catalog, placements[0], postgres.TenantSuspended, "drained host accepted suspension")
 	if forbidden, err := OpenRuntime(cfg); err == nil {
 		forbidden.Close()
 		t.Fatal("restarted suspended Tenant")
@@ -230,6 +229,40 @@ func TestHostedPostgresTenantsIsolateCredentialsSessionsAndPersistentState(t *te
 	defer stop()
 	if err := restarted.runBackground(supervise); err == nil || supervise.Err() != nil {
 		t.Fatal("host supervision did not report the lost Tenant lifecycle lease", err)
+	}
+}
+
+// Runtime.Close closes client connections, while PostgreSQL may still be
+// releasing their session locks. Model an operator observing that bounded
+// shutdown interval: retry only the exact rejected intent, never refresh CAS.
+func changeTenantStateAfterRuntimeDrain(t *testing.T, ctx context.Context, catalog *postgres.TenantCatalog, before postgres.TenantPlacement, state postgres.TenantState, reason string) postgres.TenantPlacement {
+	t.Helper()
+	drain, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	var lastRefusal error
+	for {
+		changed, err := catalog.ChangeTenantState(drain, before.TenantID, before.Version, state, reason)
+		if err == nil {
+			if changed.TenantID != before.TenantID || changed.State != state || changed.Version != before.Version+1 {
+				t.Fatal("drained lifecycle request changed its original intent", changed)
+			}
+			return changed
+		}
+		if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodePreconditionFailed {
+			t.Fatalf("change lifecycle after runtime close: %v; last drain refusal: %v", err, lastRefusal)
+		}
+		lastRefusal = err
+		current, readErr := catalog.GetTenant(drain, before.TenantID)
+		if readErr != nil || current.State != before.State || current.Version != before.Version {
+			t.Fatalf("drain refusal changed Tenant state/version: current=%+v read=%v refusal=%v", current, readErr, lastRefusal)
+		}
+		select {
+		case <-drain.Done():
+			t.Fatalf("PostgreSQL sessions did not drain after runtime close: %v; last refusal: %v", drain.Err(), lastRefusal)
+		case <-ticker.C:
+		}
 	}
 }
 
