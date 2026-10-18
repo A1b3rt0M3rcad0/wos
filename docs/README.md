@@ -9,6 +9,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
+| Find Outcomes through live search and filters      | [Outcome discovery](workspace-ux.md#find-another-outcome)               |
 | View the current desktop and mobile interface       | [Outcome Board workspace and screenshots](design/operational-canvas/canvas-first/README.md) |
 | Inspect earlier specialist pages, native forms and recovery states | [Earlier complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |

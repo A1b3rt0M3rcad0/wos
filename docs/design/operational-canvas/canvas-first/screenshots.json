@@ -3,12 +3,15 @@
   "interface": {
     "mainView": "Outcome Board",
     "taskView": "Task Board",
-    "sidebar": "Hidden only in the active Outcome Board; present in Overview and all six specialist views",
+    "sidebar": "Hidden only in the active Outcome Board; retained and compacted in all six specialist views",
+    "globalHeaderActions": "Outcome tools and Choose an action appear only on Outcome Board",
+    "specialistActions": "The same Refresh control remains local; Overview exposes Review outcome and existing entity/collection forms remain available",
+    "discovery": "One visible server-backed Outcome search; 250 ms debounce, immediate Enter/filters, cancellation and query-bound pagination",
     "routes": "Existing internal canvas identifiers are preserved for compatibility"
   },
-  "sourceCommit": "5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a",
+  "sourceCommit": "c3c3139f5fb1d71bebdc80c14de5cc915c23de98",
   "baseCommit": "cba58d6d609377df141d1369dccaaaf3b3e331e3",
-  "generatedAt": "2026-10-18T03:43:35.591284+00:00",
+  "generatedAt": "2026-10-18T04:09:20.211724+00:00",
   "browser": {
     "executable": "/usr/bin/chromium",
     "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
@@ -24,27 +27,29 @@
   },
   "server": {
     "path": "bin/wos",
-    "sha256": "a8a6d5ef7273dfe7719fc192e0576a1ff57407f7be16af239a74103e7b8e45e5",
-    "versionOutput": "wos dev (commit 5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a, built unknown)",
+    "sha256": "9d0b23f6a2cc605ad93f4ab87817b504ec521e8291cd88fd660d399588a35697",
+    "versionOutput": "wos dev (commit c3c3139f5fb1d71bebdc80c14de5cc915c23de98, built unknown)",
     "build": "go build -trimpath -buildvcs=false -ldflags \"-X github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server.Commit=<sourceCommit>\" -o bin/wos ./packages/wos-api/cmd/wos"
   },
   "dataset": {
     "kind": "illustrative records created through real public commands",
     "fixtureSha256": {
       "tests/web/canvas-fixture.mjs": "b5ae1e378ee268f164ee1994f57ef44304836605ac58cd17b1833dbe3ffc95a0",
-      "tests/web/ux-fixture.mjs": "c86f6e4e5b581f78c24ac4cc282743e381bcf7558f3e898cb35de97c3b8e6ef3",
-      "tests/web/canvas-workspace-layout.spec.mjs": "6850b99537485956350ef88ba444e04ac7a5edf3339bc8198528c9ea506cbcc5",
-      "tests/web/native-browser-zoom.mjs": "3d061ae6b70c73744bb9820cd1bcbbe17089aeff7e89e0f485e3f04e952af690"
+      "tests/web/ux-fixture.mjs": "31c533443a09d3abc693631fee4a37ceb6e7fb69f670d31f314e5c7ae82713f8",
+      "tests/web/canvas-workspace-layout.spec.mjs": "e241db8685d0198eaab49fb183cf1f7beaa05fb3e7e7c4cfb3dbd2d1410bb98d",
+      "tests/web/native-browser-zoom.mjs": "3d061ae6b70c73744bb9820cd1bcbbe17089aeff7e89e0f485e3f04e952af690",
+      "tests/web/outcome-navigation.spec.mjs": "130a3d8bcace3c06ef504733fd3dfa2c234dc1e0e55c756f92b78db20dc50f1d"
     },
     "desktop": "2 Objectives, 5 Tasks, 1 Issue, explicit Blocker and typed Evidence links; 1366px case has a long Outcome title",
     "mobile": "same fixture with 35 additional Tasks; List, Task inspector/form and explicit Map alternative",
-    "context": "published and activated Roadmap fixture for progressive context and Views; a second Outcome verifies switching through the restored Overview sidebar"
+    "context": "published and activated Roadmap fixture for progressive context and Views; a second Outcome verifies switching through the restored Overview sidebar",
+    "sidebar": "desktop Overview and Work at 1366x768, compact Overview at 320x740 and 390x844"
   },
   "sourceAssetsSha256": {
     "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
     "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-    "packages/wos-api/web/assets/app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+    "packages/wos-api/web/assets/app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
     "packages/wos-api/web/assets/brand/01-marca/wos-symbol-currentcolor.svg": "0696961c1826d9333f5e86bd7dade89dcff538759fe6c6b0714de7be54cc4cb5",
     "packages/wos-api/web/assets/brand/01-marca/wos-symbol-ink.svg": "f6dd82b34b7d1bd27e8b841bb8dbabced92f4a44c72d6e2383a40f0c4b23e7a8",
     "packages/wos-api/web/assets/brand/01-marca/wos-symbol-muted.svg": "7556478fd8dd48d9af793135b21ec5e87f13090841b202f83270291c5d1b16bf",
@@ -149,9 +154,9 @@
     "packages/wos-api/web/assets/command-exposure.json": "eba250c823a90f933eb432be4b8526968233baa74cdfefecd80afa6d595b519a",
     "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
     "packages/wos-api/web/assets/editorial-grid.svg": "1cecff7609ed9f970a0d541cac4f84fb18bb7ff7aa1627067de470b0b5df7a26",
-    "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
+    "packages/wos-api/web/assets/editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
     "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
-    "packages/wos-api/web/assets/en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
+    "packages/wos-api/web/assets/en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
     "packages/wos-api/web/assets/favicon.svg": "b241eba21a1e4fe6a341f7c0e60f1ba8259565e2490b533fe3bf3d2c9bba07d4",
     "packages/wos-api/web/assets/fonts/README.md": "deff825845814225edb0bc39fe0b54c0c37be00c280639105f2687581d6c94d8",
     "packages/wos-api/web/assets/fonts/dm-sans-OFL.txt": "6fbd040a29c2037a765dfb9f2561e9965b5c95c6dcb5dce516089d63d5f17af7",
@@ -160,7 +165,7 @@
     "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-italic.woff2": "5a51946dfffa82972bc98745359c46761515641fda557c25116459a9f83da4a7",
     "packages/wos-api/web/assets/fonts/instrument-serif-latin-400-normal.woff2": "5eb09b5ac0e28b67c2f041c8ba6d244604ca0c0980d65912ab2d47fed84ddc31",
     "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
-    "packages/wos-api/web/assets/index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+    "packages/wos-api/web/assets/index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
     "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
     "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
     "packages/wos-api/web/assets/postits/svg/square/classic/brand.svg": "59c0f85216813cfaf3fb9ae89730340cceb079074aaf416ca2b1e2be26345836",
@@ -354,39 +359,39 @@
     "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
     "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
   },
-  "embeddedVerification": "Each capture journey fetches the five modified production assets from the actual server and compares SHA-256 with disk. Per-capture hashes below identify the served bytes.",
+  "embeddedVerification": "Every capture journey fetches six production assets from the actual server and compares SHA-256 with source; each image records the served hashes.",
   "verification": {
     "fullRegression": {
-      "command": "npm test -- --reporter=list",
-      "sourceCommit": "5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a",
+      "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/wos-canvas-first-cache WOS_CAPTURE_CANVAS_FIRST=<repository>/docs/design/operational-canvas/canvas-first/screenshots npm test -- --reporter=list",
+      "sourceCommit": "c3c3139f5fb1d71bebdc80c14de5cc915c23de98",
       "units": {
         "passed": 44,
         "failed": 0,
         "skipped": 0
       },
       "initialBrowserRun": {
-        "total": 88,
-        "passed": 86,
-        "failed": 2,
+        "total": 92,
+        "passed": 91,
+        "failed": 1,
         "skipped": 0,
-        "duration": "6.8m",
-        "logSha256": "624af38a7d29c1a99a39d32026467039fd17fe868bd8baa16db352c42b64d046"
+        "duration": "6.8m"
       },
+      "logSha256": "a8cc547947f2167854af83081e181397e179b3a574433284d4a6d0387f47c413",
       "productionInputsSha256": {
         "packages/wos-api/web/assets/actions.js": "45c2934ca9ded687ddf3bbb65aaa768c9bb6f259083e98de8ce593af6c233010",
         "packages/wos-api/web/assets/advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
         "packages/wos-api/web/assets/api-client.js": "42151e52f3bc53fbc19dcd8b6c84970d6e2699f0d55c15282a082f6da812ff0c",
-        "packages/wos-api/web/assets/app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "packages/wos-api/web/assets/app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "packages/wos-api/web/assets/canvas-context.js": "cd06667f9f897dac09537f700dbeb2548e82db95178b91a5d23f9ef4f96b8e0e",
         "packages/wos-api/web/assets/canvas-data.js": "584a92cec882854d4ee5b8eac40d3766525a396cb19dc68cb813b32995408eec",
         "packages/wos-api/web/assets/canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
         "packages/wos-api/web/assets/colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
         "packages/wos-api/web/assets/contracts-view.js": "61dd07f323a8b16c94f00cac0e8e626e95d30c95a2a4389e2c1dc1f174e2d885",
-        "packages/wos-api/web/assets/editorial.css": "efa17343bc3f4b1267f293cf3954ae1b1ef75987ace1d774fe53bd1522250c32",
+        "packages/wos-api/web/assets/editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
         "packages/wos-api/web/assets/editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
-        "packages/wos-api/web/assets/en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
+        "packages/wos-api/web/assets/en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
         "packages/wos-api/web/assets/human-forms.js": "dca7e24064c44488c601beb671ac9cea80deee4d4cf4ed9c36444b4180ffc6a8",
-        "packages/wos-api/web/assets/index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "packages/wos-api/web/assets/index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "packages/wos-api/web/assets/intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
         "packages/wos-api/web/assets/navigation.js": "0b2b6dc51ec333fd4ce5fd9cd19fa4099e20bffaebc5630cfbd74f24dc7b7c74",
         "packages/wos-api/web/assets/presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
@@ -400,43 +405,52 @@
         "packages/wos-api/web/assets/workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
         "packages/wos-api/web/assets/workspace-surfaces.css": "b5e4564e3829aa53532f0e20163a4968dbe98c4d15e63d19c625bcc1fd58bc9d"
       },
-      "differenceFromFinalSource": {},
+      "differenceFromCaptureSource": {},
       "fixtureCorrection": {
-        "sourceCommit": "b784113280bf2866f78080e3dcc2bd5d8545fd3a",
-        "file": "tests/web/journey.spec.mjs",
-        "sha256": "9fced78a88763930d1092c252fdb6848dfbea607ebe1dea6215d250c574727f7",
-        "reason": "Both custom submit helpers returned at form close before post-commit refresh and inspector restoration. They now wait for the submit control to re-enable before the next navigation."
+        "sourceCommit": "62cbc03a917a6e4a501f14a69b3184cfb2d510b8",
+        "file": "tests/web/editorial.spec.mjs",
+        "sha256": "abf64eb9ada6536a18d735c64cdaaa4377d27428e2876ea87866b4ba6dd478f5",
+        "reason": "After testing Overview-local Outcome actions and Task creation, the modal palette journey now explicitly navigates back to Work before selecting its Task row. All actual palette/focus/scroll assertions are retained."
       },
       "focusedRecheck": {
-        "command": "npx playwright test journey.spec.mjs",
-        "passed": 2,
+        "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/wos-canvas-first-cache npx playwright test editorial.spec.mjs --grep \"all modal families share matte workspace paper on desktop and mobile\" --reporter=list",
+        "passed": 1,
         "failed": 0,
         "skipped": 0,
-        "logSha256": "06dcf907aa06fe80dc0371da0fdd09fdf08da95b515aacad40d99768c7e8c1d3"
+        "duration": "6.3s",
+        "logSha256": "147b123c1209b7ac9394663b324801eb5cb4b26067e8d904b898b99afaacea42"
       },
-      "coverage": "All 88 browser journeys are covered across the full run and the two successful focused rechecks. This is not a claim of one clean 88-case run. The production assets, source-pinned server and 22 captures are unchanged by the test-only helper correction."
+      "scopeNote": "All 92 browser journeys are covered across the full run and the successful test-only navigation recheck. This is not a claim of one clean 92-case execution. The frozen production assets, source-pinned server and 26 captures are unchanged. Hosted checks qualify the pushed head independently."
     },
     "viewportCaptureJourneys": {
-      "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/wos-canvas-first-cache WOS_CAPTURE_CANVAS_FIRST=\"$PWD/../../docs/design/operational-canvas/canvas-first/screenshots\" npm test -- --reporter=list",
       "partOfFullRegression": true,
       "browserJourneys": 8,
       "failures": 0,
       "skipped": 0,
-      "images": 22
+      "images": 26
+    },
+    "outcomeDiscoveryJourneys": {
+      "partOfFullRegression": true,
+      "browserJourneys": 4,
+      "failures": 0,
+      "skipped": 0,
+      "scope": "debounce and Enter; obsolete response ordering; real multi-page query/cursor reset; immediate filters and contextual mobile navigation"
     },
     "nativeWeb": [
       "go test ./packages/wos-api/web: passed",
       "go vet ./packages/wos-api/web: passed"
     ],
-    "ciRegressionRepairs": "The proportional Views audit measures the actual CSS sibling gap instead of text-dependent absolute x. Inline form journeys await the submit control re-enabling after refresh/inspector restoration before issuing the next intent.",
+    "priorCorrections": "The static Filters fallback was aligned with the official copy catalog before this run. Existing same-view stale-page and permissions tests remain local; the Activity reload journey awaits actual view restoration before accessing the retained sidebar.",
     "captureToolSmoke": {
-      "sourceCommit": "5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a",
+      "command": "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium XDG_CACHE_HOME=/tmp/wos-canvas-first-cache node tools/acceptance/workspace-screenshots.mjs <repository> <temporary-output>",
+      "exitCode": 0,
       "screenshots": 10,
-      "result": "passed",
-      "scope": "Standalone screenshot tool with the new Task Board label and real Views navigation; isolated temporary captures outside this gallery."
+      "committedImages": false,
+      "logSha256": "29eb49986a2da01bed065ca9046b99947fd198516f9fbfed04b8dd96bbd978e8",
+      "scope": "The changed standalone screenshot tool completes against the same source-pinned server; these temporary images are separate from the 26-image gallery."
     }
   },
-  "captureRules": "Unannotated application viewport. No compositing, image resizing or CSS zoom. Native browser zoom uses Settings API; CDP captures its complete visible framebuffer without a CSS clip. Raster dimensions differ from CSS viewport at native zoom.",
+  "captureRules": "Unannotated application viewport; no compositing, image resizing or CSS zoom. Native browser zoom uses Settings API and CDP captures its complete visible framebuffer without a CSS clip. Raster dimensions differ from CSS viewport at native zoom. Specialist pages retain their normal document scroll.",
   "limits": [
     "Chromium only; no other browser engine qualification",
     "No representative-user usability or manual screen-reader acceptance",
@@ -446,7 +460,7 @@
   "captures": [
     {
       "file": "screenshots/canvas-1280x720-inspector.png",
-      "sha256": "344fe3bd9365606ec5a85ed39166ce91db662989d86efff09937b67166407589",
+      "sha256": "59b453de1f31e3fbfa99cd183ba4a1e6ddeadb5f9499ca70276b13eeae1aa675",
       "width": 1246,
       "height": 504.8125,
       "heightRatio": 0.7011284722222222,
@@ -505,13 +519,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:29.666Z"
+      "capturedAt": "2026-10-18T04:02:52.137Z"
     },
     {
       "file": "screenshots/canvas-1280x720.png",
@@ -574,17 +589,18 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:29.398Z"
+      "capturedAt": "2026-10-18T04:02:51.736Z"
     },
     {
       "file": "screenshots/canvas-1366x768-inspector.png",
-      "sha256": "e4f37d0c893c726129600a833ce0853a7614502fe875da203a1c9c4908a0b2d9",
+      "sha256": "91cc057d223a043f40112eea62acb01e9e684f7fad7bd0c8ddf129d76ccf8d9e",
       "width": 1332,
       "height": 552.8125,
       "heightRatio": 0.7198079427083334,
@@ -643,13 +659,98 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:32.775Z"
+      "capturedAt": "2026-10-18T04:02:55.626Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-overview-sidebar.png",
+      "sha256": "ae051a67b2a5f0a30bc5918f4320f19083f3da261ee163ea35a15ba529ebb547",
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 76,
+        "width": 244,
+        "height": 692,
+        "top": 76,
+        "right": 244,
+        "bottom": 768,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 1366,
+        "height": 1637
+      },
+      "specialist": true,
+      "state": "overview with retained live-search sidebar and local actions",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
+        "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
+      },
+      "capturedAt": "2026-10-18T04:03:05.779Z"
+    },
+    {
+      "file": "screenshots/canvas-1366x768-work-sidebar.png",
+      "sha256": "2e010fa2fc8835756588e36c0fc025714ba4ed6bb2d003a68be3df1855bdda2a",
+      "viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 76,
+        "width": 244,
+        "height": 692,
+        "top": 76,
+        "right": 244,
+        "bottom": 768,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 1366,
+        "height": 1298
+      },
+      "specialist": true,
+      "state": "work with retained live-search sidebar and local actions",
+      "pixelSize": {
+        "width": 1366,
+        "height": 768
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
+        "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
+      },
+      "capturedAt": "2026-10-18T04:03:06.241Z"
     },
     {
       "file": "screenshots/canvas-1366x768.png",
@@ -712,17 +813,18 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:32.470Z"
+      "capturedAt": "2026-10-18T04:02:55.294Z"
     },
     {
       "file": "screenshots/canvas-1920x1080-inspector.png",
-      "sha256": "7a67683e835829e2c6db9ff4eb44b7f9455d5f730af2799176fa9e00038849f8",
+      "sha256": "23bc52f003f2b84f59b2df700b564ec5d27549fb2909c1e68530f89d2ed0e842",
       "width": 1395.34375,
       "height": 795.15625,
       "heightRatio": 0.7362557870370371,
@@ -781,13 +883,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:35.750Z"
+      "capturedAt": "2026-10-18T04:02:58.634Z"
     },
     {
       "file": "screenshots/canvas-1920x1080.png",
@@ -850,17 +953,18 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:35.416Z"
+      "capturedAt": "2026-10-18T04:02:58.303Z"
     },
     {
       "file": "screenshots/canvas-2560x1440-inspector.png",
-      "sha256": "057fa9f6107e2360f2205f82de5b5042bf91312065a322eff1c39e10e426e40b",
+      "sha256": "6bc89153940c48546681797cdef344d32e88ff11c0c6d58b1e40fa3fb6d683a1",
       "width": 1861.125,
       "height": 1062.1875,
       "heightRatio": 0.7376302083333334,
@@ -919,13 +1023,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:39.043Z"
+      "capturedAt": "2026-10-18T04:03:02.203Z"
     },
     {
       "file": "screenshots/canvas-2560x1440.png",
@@ -988,13 +1093,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:38.493Z"
+      "capturedAt": "2026-10-18T04:03:01.727Z"
     },
     {
       "file": "screenshots/canvas-320x740-form.png",
@@ -1057,17 +1163,18 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:48.169Z"
+      "capturedAt": "2026-10-18T04:03:11.693Z"
     },
     {
       "file": "screenshots/canvas-320x740-inspector.png",
-      "sha256": "8a9a8b8211b8d77dc081dc34c188e08ef03ad50e41672f61fdb1465b140e466f",
+      "sha256": "fe3dcd2b889c273aaa493fd5e67d59a191b3da97c5a536d14bda5b64dba01d25",
       "width": 302,
       "height": 311.015625,
       "heightRatio": 0.42029138513513514,
@@ -1126,13 +1233,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:47.871Z"
+      "capturedAt": "2026-10-18T04:03:11.351Z"
     },
     {
       "file": "screenshots/canvas-320x740-list.png",
@@ -1195,13 +1303,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:47.642Z"
+      "capturedAt": "2026-10-18T04:03:11.121Z"
     },
     {
       "file": "screenshots/canvas-320x740-map.png",
@@ -1264,13 +1373,56 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:48.452Z"
+      "capturedAt": "2026-10-18T04:03:12.043Z"
+    },
+    {
+      "file": "screenshots/canvas-320x740-overview-sidebar.png",
+      "sha256": "9028a0d87bd312f757d3da485b48c894411b412b71b2d6397fb99f0b48c8980d",
+      "viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 64,
+        "width": 320,
+        "height": 462.6875,
+        "top": 64,
+        "right": 320,
+        "bottom": 526.6875,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 320,
+        "height": 3639
+      },
+      "specialist": true,
+      "state": "expanded mobile Overview navigation and live search",
+      "pixelSize": {
+        "width": 320,
+        "height": 740
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
+        "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
+      },
+      "capturedAt": "2026-10-18T04:03:12.271Z"
     },
     {
       "file": "screenshots/canvas-390x844-form.png",
@@ -1333,17 +1485,18 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:51.053Z"
+      "capturedAt": "2026-10-18T04:03:14.677Z"
     },
     {
       "file": "screenshots/canvas-390x844-inspector.png",
-      "sha256": "5aa7d2834fdf74db75daf08964320511f8d1edc320f7a2cc841bfdaaa0129e6d",
+      "sha256": "ae217e89e418c2ecd1c6546808ebdf00a3d141e347632ee1b64f332f2c87a20c",
       "width": 372,
       "height": 479.015625,
       "heightRatio": 0.5675540580568721,
@@ -1402,13 +1555,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:50.743Z"
+      "capturedAt": "2026-10-18T04:03:14.371Z"
     },
     {
       "file": "screenshots/canvas-390x844-list.png",
@@ -1471,13 +1625,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:50.251Z"
+      "capturedAt": "2026-10-18T04:03:14.108Z"
     },
     {
       "file": "screenshots/canvas-390x844-map.png",
@@ -1540,17 +1695,60 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:51.363Z"
+      "capturedAt": "2026-10-18T04:03:15.007Z"
+    },
+    {
+      "file": "screenshots/canvas-390x844-overview-sidebar.png",
+      "sha256": "23b3035c482ba0b8edcde046f182fc09e03b9c2f25f29b116c4ad16488ada767",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "sidebar": {
+        "x": 0,
+        "y": 64,
+        "width": 390,
+        "height": 418.6875,
+        "top": 64,
+        "right": 390,
+        "bottom": 482.6875,
+        "left": 0
+      },
+      "document": {
+        "scrollX": 0,
+        "scrollY": 0,
+        "width": 390,
+        "height": 3194
+      },
+      "specialist": true,
+      "state": "expanded mobile Overview navigation and live search",
+      "pixelSize": {
+        "width": 390,
+        "height": 844
+      },
+      "captureMethod": "Playwright viewport screenshot",
+      "servedAssetsSha256": {
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
+        "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
+        "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
+      },
+      "capturedAt": "2026-10-18T04:03:15.207Z"
     },
     {
       "file": "screenshots/canvas-native-zoom-125-inspector.png",
-      "sha256": "520d33af7bbf615b972f61a48ec9fb915c5b5f1f45f7e296e215ef9e3f491e6c",
+      "sha256": "e0a7aa5f163c14c428190c31b91278b22a5d3a4159d721f84c82ab4c1f009d9b",
       "width": 1059.1999988555908,
       "height": 352.3999786376953,
       "heightRatio": 0.5739413332861487,
@@ -1622,13 +1820,14 @@
       },
       "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:54.982Z"
+      "capturedAt": "2026-10-18T04:03:19.071Z"
     },
     {
       "file": "screenshots/canvas-native-zoom-125.png",
@@ -1703,17 +1902,18 @@
       },
       "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:54.569Z"
+      "capturedAt": "2026-10-18T04:03:18.778Z"
     },
     {
       "file": "screenshots/canvas-native-zoom-150-inspector.png",
-      "sha256": "63bd3e8805fe7592456a043bbd410520d1d0ecd277b67525665d51e308f691ae",
+      "sha256": "0c633d68c40f4e412714484864db19f5dab3fb412c45c8fb31d6939e9d9f3034",
       "width": 877.3333320617676,
       "height": 258.81251525878906,
       "heightRatio": 0.5054931938648224,
@@ -1785,13 +1985,14 @@
       },
       "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:55.823Z"
+      "capturedAt": "2026-10-18T04:03:19.861Z"
     },
     {
       "file": "screenshots/canvas-native-zoom-150.png",
@@ -1866,17 +2067,18 @@
       },
       "captureMethod": "CDP Page.captureScreenshot; visible surface; no clip or resizing",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:55.438Z"
+      "capturedAt": "2026-10-18T04:03:19.548Z"
     },
     {
       "file": "screenshots/canvas-outcome-context.png",
-      "sha256": "eea3ef9d95eac48b98ff553f92c2a93c1db063cd4388fd4fbec5bef4eab253f4",
+      "sha256": "1ab7d48cd6bfb4305937b001a3d56ae9ca87c4dc0aea74cc823ba68567d1aa15",
       "width": 1332,
       "height": 552.8125,
       "heightRatio": 0.7198079427083334,
@@ -1935,13 +2137,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:42.259Z"
+      "capturedAt": "2026-10-18T04:03:05.029Z"
     },
     {
       "file": "screenshots/canvas-views.png",
@@ -2004,13 +2207,14 @@
       },
       "captureMethod": "Playwright viewport screenshot",
       "servedAssetsSha256": {
-        "app.js": "3473f7490f65b1f86c31312337d9c8eeaba84c9f388d9ab5847942ffc3f372a0",
+        "app.js": "d2727d70ed115e3036292b6ac95b12946bddf521b41de8375bd833f8762ad5b7",
         "canvas.css": "1b85cdf930bb81ead3cd8214e0ece6788e1cf99fdd2c1cc9dc9731c526dea9e7",
-        "en-US.js": "ffba0c77499989ca4dcd3daafb734a0175f5a3862eea88a5155d58a85765e14f",
-        "index.html": "2fec35cc5d738a228f1c783236300e3c8833eb5b5177aa57d504de77871d5e0a",
+        "editorial.css": "4aaa6992daa1da759d98b831975b6f2d1aeba76a42627f069d7e1713b0a988f3",
+        "en-US.js": "6d35ae70321411cdbcfe2724c1cd2564d7608c05335e8cf837c37fe4cc7e5d48",
+        "index.html": "9802c3951fc537a52ff3f34a45ae2ac2d258973c73c14a1d5ce5990a7853301f",
         "workspace-canvas.js": "a02336ca969c2dab348018e986fba5abcf56ef1cefcb284260db25f36802acf7"
       },
-      "capturedAt": "2026-10-18T03:35:42.518Z"
+      "capturedAt": "2026-10-18T04:03:05.323Z"
     }
   ]
 }

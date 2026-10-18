@@ -2,7 +2,7 @@
 
 The Outcome Board is the main spatial workspace for an Outcome. It occupies the viewport's available working region without a left sidebar, rather than appearing below a long page header. It changes the browser presentation of existing WOS state, not the graph engine, domain, authorization, execution protocol or storage model.
 
-**Branch:** `feat/canvas-first-workspace`, based on `master` at `cba58d6`, in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115). Implementation source: `5fb4e8af7e90876cedc243e8bb1ed27b1fe1e57a`. The sidebar-free Outcome Board and explicit Task Board naming are implemented and locally qualified through the recorded test cohorts below. This work excludes the closed Tenant/scaling PR. Review, merging and release remain separate; no merge is authorized.
+**Branch:** `feat/canvas-first-workspace`, based on `master` at `cba58d6`, in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115). Implementation source: `c3c3139f5fb1d71bebdc80c14de5cc915c23de98`. The Outcome Board layout, refined specialist navigation and 26 source-pinned captures are locally qualified through the recorded test cohorts below. This work excludes the closed Tenant/scaling PR. Review, merging and release remain separate; no merge is authorized.
 
 ## Review of the proposed plan
 
@@ -21,11 +21,11 @@ The review adds three safeguards to the proposed plan:
 | Concern | Decision | Preserved behavior |
 | --- | --- | --- |
 | Main region | Outcome Board occupies the remaining viewport height and full workspace width with flex sizing and `min-height: 0`; it has no page-height-independent 540-unit minimum | Existing pan, zoom, fit, search, expansion and rendering |
-| Outcome header | Keep the Outcome name, lifecycle and primary operation compact | Explicit activation/conclusion, current permissions and mutation preconditions |
+| Outcome header | Keep the Outcome name, lifecycle and navigation compact; show Outcome tools and Choose an action only in Outcome Board | Explicit activation/conclusion, current permissions and mutation preconditions |
 | Area navigation | Keep a direct Outcome Board control; place Overview, Plan, Work, Issues, Evidence and Activity in Views | Existing routes, browser history and focused collections |
-| Sidebar | Hide it only in the Outcome Board; Views → Overview restores Outcome/Workspace switching, creation, settings and tools | The sidebar and its operations remain in all six specialist areas |
+| Sidebar | Hide it only in Outcome Board; elsewhere use one live Search outcomes field, Filters and bounded More outcomes | Outcome/Workspace switching, creation, settings and tools remain in all six specialist areas |
 | Summary and planning | Retain the information inside Outcome context rather than permanently stacking it above the map | Loaded counts and explicit planning/operational distinctions |
-| Secondary actions | Keep sharing, refresh and criteria review in Outcome tools | Existing handlers, permissions and recovery behavior |
+| Secondary actions | Keep sharing, refresh and criteria review inside Outcome Board's Outcome tools; other views expose Refresh view | Existing refresh behavior and specialist collection/entity actions |
 | Inspector | Reuse the existing detail/form/action DOM; use a workspace overlay in compact or short viewports | Current entity state, local form inputs, observed versions and exact uncertain intent |
 | Task Board | Retain it as a specialized Task view inside Work, explicitly named Task Board | Protocol-appropriate Task grouping; distinct from the Outcome Board |
 
@@ -41,7 +41,15 @@ The focused source-pinned journeys verify the requested navigation boundary:
 - Outcome Board and Task Board have distinct visible labels and accessible names, while existing `canvas` links remain valid.
 - The same four desktop sizes, two compact sizes, real 125%/150% browser zoom, inspector/forms and original editorial assets remain usable.
 
-The four desktop sizes, both compact sizes and both real zoom settings pass these checks at `5fb4e8a`. The current 22-image gallery records that source. The [manifest](screenshots.json) separates the full regression, test-helper correction and focused recheck while preserving their identical production input hashes.
+The four desktop sizes, both compact sizes and both real zoom settings pass these checks at `c3c3139`. The current 26-image gallery includes the sidebar-free Board and retained specialist navigation. The [manifest](screenshots.json) records the current test cohorts, source hashes and complete capture provenance.
+
+### Outcome-wide controls and sidebar discovery
+
+The global **Outcome tools** disclosure and **Choose an action** menu belong to Outcome Board. Overview, Plan, Work, Issues, Evidence and Activity retain their contextual collection and entity controls, with a quiet **Refresh view** button that refreshes the current view without navigating away. Overview's local **Review outcome** opens the existing Outcome detail, criteria and permitted entity actions. The same canonical forms and permission checks apply; a simpler header does not remove a workflow or grant new authority.
+
+The sidebar has one visible **Search outcomes** input with an accessible label, a **Filters** disclosure for lifecycle/archive options and **More outcomes** for bounded pagination. Typing starts an authorized server query after a 250 ms pause; Enter and filter changes apply immediately. New queries reset pagination. Requests are aborted when superseded, and query/epoch checks prevent late results or an old More page from appearing under a new search. Pages deduplicate repeated Outcome IDs. Losing authorization clears private results. These controls search the authorized collection rather than merely filtering loaded Outcomes.
+
+The original organizer robot and its caption form a small footer accent. The artwork, its transparency, the editorial type and existing palette remain unchanged; tighter list spacing and reduced repeated labels give the operational controls more room. Desktop Overview/Work and compact Overview captures show this navigation separately from the Board.
 
 The inspector is a labelled, nonmodal region. Opening it does not inert the map or create a dialog focus trap. Its body scrolls independently; a long detail-action footer has its own bounded scroll region so it cannot consume the readable body or hide later actions. Contextual command forms retain their reachable submit footer. The inspector overlays the workspace at widths of **1400 CSS px or less**, or heights of **800 CSS px or less**, preserving the map's dimensions. Above both thresholds it shares the available width beside the map. Escape respects a nested reference picker or other control first. Closing restores focus to a still-mounted origin; closing an inline form retains the established return to details. Native dialogs remain separate and keep their backdrop, focus containment and scroll behavior.
 
@@ -55,7 +63,7 @@ The existing [map contract](../README.md#read-the-map), [dependency actions](../
 
 ## Acceptance matrix
 
-The initial desktop condition is an opened Outcome in Outcome Board: the graph/list and its controls are visible without scrolling the document to reach the workspace, with no sidebar or reserved sidebar column. The focused source-pinned journeys also inspect a card, close it, return to the map, open all six specialist areas and switch Outcomes through the restored sidebar.
+The initial desktop condition is an opened Outcome in Outcome Board: the graph/list and its controls are visible without scrolling the document to reach the workspace, with no sidebar or reserved sidebar column. Current acceptance also requires Board-only global header controls, retained local specialist actions, live sidebar discovery and race-safe query pagination. The table and geometry below identify the source-pinned checks independently of the full regression result.
 
 | Environment | Required check | Status |
 | --- | --- | --- |
@@ -67,9 +75,10 @@ The initial desktop condition is an opened Outcome in Outcome Board: the graph/l
 | Native browser zoom 150% | Same checks; preserve existing lower-width behavior as CSS viewport changes | Passed at the implementation source |
 | 390 × 844 and 320 × 740 CSS px | Readable default List, explicit Map alternative, accessible navigation and reachable inspector/actions | Passed at the implementation source |
 | Keyboard | Progressive disclosures, card selection, nested Escape handling, sidebar exclusion and focus return | Passed in the focused source-pinned journeys |
-| Existing flows | Deep links/history, native forms, conflict comparison, exact uncertain retry and signed handoffs | All 88 journeys covered across the full run and two corrected-fixture rechecks |
+| Sidebar discovery | Live queries, immediate Enter/filters, late-response protection, query-bound pagination and deduplication | Four source-pinned discovery journeys passed |
+| Existing flows | Deep links/history, native forms, conflict comparison, exact uncertain retry and signed handoffs | All 92 journeys covered across the full run and corrected-fixture recheck |
 
-The default desktop graph viewport meets the requested 70–80% height target at `5fb4e8a`. Measurements below exclude the toolbar and footer. Every focused journey checks zero document scroll and zero document overflow independently of panel/list scrolling. The graph uses the full available working width rather than reserving a sidebar column.
+The default desktop graph viewport meets the requested 70–80% height target at `c3c3139`. Measurements below exclude the toolbar and footer. Every layout journey checks zero document scroll and zero document overflow independently of panel/list scrolling. The graph uses the full available working width rather than reserving a sidebar column.
 
 | CSS viewport | Graph width | Graph top–bottom | Graph height | Share of viewport height | Inspector presentation |
 | --- | --- | --- | --- | --- | --- |
@@ -82,19 +91,23 @@ On wide/tall screens, opening the docked inspector reduces the graph width while
 
 ## Verification and capture provenance
 
-On 2026-10-18, the focused run passed **8 browser journeys, zero failures and zero skips in 34.5 seconds** against implementation source `5fb4e8a`. It covers four desktop sizes, progressive navigation/context, two compact sizes and native zoom. It verifies the absent sidebar and reserved column, retained sidebar operations in all six specialist areas, keyboard exclusion of hidden navigation, Outcome switching through Overview and distinct Outcome Board/Task Board names. It also exercises reachable detail actions and inline form submission controls, independent scrolling, Escape/focus return, browser history/reload, map camera interactions and the absence of domain writes during exploration. The 1366 px case explicitly verifies a long Outcome title and its complete text inside Outcome context. The Issue count retains its correct singular label without implying that it counts only open Issues.
+On 2026-10-18, all **eight layout/capture journeys** passed against `c3c3139`, producing the 26 images below. They cover four desktop sizes, progressive navigation/context, two compact sizes and native zoom, including Board-only global header controls, retained specialist sidebar/local actions, quiet Refresh view and Overview's Review outcome detail. They exercise hidden-sidebar keyboard exclusion, Outcome switching, reachable detail actions and form submission, independent scrolling, Escape/focus return, browser history/reload and the absence of domain writes during exploration. The 1366 px case verifies a long Outcome title and its complete text inside Outcome context.
 
-The full run passed **44 unit checks** and **86 of 88 browser journeys**, with no skips, in 6.8 minutes. Two browser journeys failed because their custom test helpers continued at form close, before the post-commit refresh and inspector restoration completed. The test-only correction at `b784113280bf2866f78080e3dcc2bd5d8545fd3a` waits for the submit control to re-enable before the next navigation. It changes no production code or assertion of product behavior.
+All **four Outcome-discovery journeys** also passed in the same run. They check debounce and immediate Enter, obsolete-response ordering, real multi-page query/cursor reset with deduplication, and immediate filters with contextual mobile navigation.
 
-Both affected journeys then passed their focused recheck: **2 passed, zero failures and zero skips in 22.4 seconds**. All 26 production input hashes match the frozen implementation across both runs. All 88 journeys are therefore covered across the full run and successful rechecks; this is not a claim of one clean 88-journey run. The [manifest](screenshots.json) records the two cohorts, log hashes and exact test-helper correction. The eight layout/capture journeys also passed inside the full run. Hosted PR checks qualify the pushed head separately.
+The full run passed **44 unit checks** and **91 of 92 browser journeys**, with no skips, in 6.8 minutes. One inherited modal-palette journey then attempted to select a hidden Work row after exercising Overview-local actions. The test-only correction at `62cbc03a917a6e4a501f14a69b3184cfb2d510b8` restores the normal navigation to Work before selecting that row. Existing palette, focus and scroll assertions remain intact; no production code changes.
+
+The affected journey passed its focused recheck, including desktop and mobile iterations: **one passed, zero failures and zero skips in 6.3 seconds**. All 26 production input hashes match across both runs. All 92 browser journeys are covered across the full run and successful recheck; this is not a claim of one clean 92-journey execution. The [manifest](screenshots.json) records the cohorts, log hashes and exact test-only correction. The source-pinned server and all 26 images are unchanged by that correction. Hosted PR checks qualify the pushed head separately.
 
 The native web package's targeted tests and vet checks passed. This frontend qualification does not establish backend concurrency, schema behavior, production capacity or a release.
+
+The earlier sidebar-free source `5fb4e8a`, its 44 unit checks, 86 passing browser journeys plus two successful rechecks, and 22 captures remain available in the [pinned historical qualification](https://github.com/A1b3rt0M3rcad0/wos/blob/15593b763a820d97026db2354b8013424798c2e9/docs/design/operational-canvas/canvas-first/README.md). That record does not qualify the later header controls or refined discovery.
 
 The earlier Canvas-first source `6695b79`, its 44-unit/88-browser regression, eight-journey focused result and sidebar-bearing captures remain available in the [pinned historical qualification](https://github.com/A1b3rt0M3rcad0/wos/blob/c12177ac92a2e4a1f7ed9bd45c296cd811a939f0/docs/design/operational-canvas/canvas-first/README.md). That record preserves its exact full-run/final-copy source difference; it does not qualify the later sidebar-free view.
 
 Earlier [Canvas verification](../validation.md), [complete-workspace coverage](../workspace/README.md) and [responsive-scale proof](../../editorial/responsive-scale.md) qualify their recorded source baselines only. Their passing results are not presented as qualification of this shell.
 
-The 22 current captures in [the gallery](#screenshots) use an isolated SQLite instance per browser journey and illustrative records created through real public commands. Each capture journey fetches the five modified production assets from the running server and compares their SHA-256 hashes with source. The server embeds the full implementation commit in its version output. The consolidated [source and capture manifest](screenshots.json) records hashes for all 312 embedded web assets and the server binary, fixture/test hashes, browser version, CSS viewport, device-pixel ratio, native zoom, capture method and image hash. The test-only helper correction leaves that server and all 22 captures unchanged.
+The 26 current captures in [the gallery](#screenshots) use an isolated SQLite instance per browser journey and illustrative records created through real public commands. Each capture journey fetches the six modified production assets from the running server and compares their SHA-256 hashes with source. All 156 served-asset comparisons match. The server embeds the full implementation commit in its version output. The consolidated [source and capture manifest](screenshots.json) records all 312 embedded asset hashes, server-binary hash, fixture/test hashes, browser version, CSS viewport, device-pixel ratio, native zoom, capture method and image hash.
 
 The capture browser is full **Chromium 154.0.8037.57**, headless on Linux amd64, driven by Playwright 1.62.1. Normal captures use device scale factor 1. Fonts and visible images finish loading before capture. The images show the actual application viewport without compositing, annotation, resizing or CSS zoom. Desktop inspector captures at 1280/1366 px show overlays; Full HD/QHD captures show docked inspection.
 
@@ -109,7 +122,7 @@ The zoom captures use `Page.captureScreenshot` on the complete visible surface w
 
 ## Screenshots
 
-The 22 images below record the sidebar-free Outcome Board at `5fb4e8a`. Each link opens an unedited capture; the consolidated [manifest](screenshots.json) records individual hashes and measured geometry. Historical filenames containing `canvas` remain valid after the visible name changes.
+The 26 images below record the Outcome Board and refined specialist navigation at `c3c3139`. Each link opens an unedited capture; the consolidated [manifest](screenshots.json) records individual hashes and measured geometry. Historical filenames containing `canvas` remain valid after the visible name changes. Specialist pages retain their normal vertical document scrolling; their captures show the visible viewport rather than claiming to show every record or action.
 
 | Environment or state | Captures |
 | --- | --- |
@@ -118,6 +131,8 @@ The 22 images below record the sidebar-free Outcome Board at `5fb4e8a`. Each lin
 | Full HD, 1920 × 1080 | [Outcome Board](screenshots/canvas-1920x1080.png) · [Docked inspector](screenshots/canvas-1920x1080-inspector.png) |
 | QHD, 2560 × 1440 | [Outcome Board](screenshots/canvas-2560x1440.png) · [Docked inspector](screenshots/canvas-2560x1440-inspector.png) |
 | Progressive controls, 1366 × 768 | [Views](screenshots/canvas-views.png) · [Outcome context with active planning](screenshots/canvas-outcome-context.png) |
+| Specialist navigation, 1366 × 768 | [Overview sidebar and local review](screenshots/canvas-1366x768-overview-sidebar.png) · [Work sidebar and contextual actions](screenshots/canvas-1366x768-work-sidebar.png) |
+| Compact specialist navigation | [Overview at 320 × 740](screenshots/canvas-320x740-overview-sidebar.png) · [Overview at 390 × 844](screenshots/canvas-390x844-overview-sidebar.png) |
 | Compact, 320 × 740 | [Scrolled List](screenshots/canvas-320x740-list.png) · [Inspector](screenshots/canvas-320x740-inspector.png) · [Contextual form](screenshots/canvas-320x740-form.png) · [Map alternative](screenshots/canvas-320x740-map.png) |
 | Mobile, 390 × 844 | [Scrolled List](screenshots/canvas-390x844-list.png) · [Inspector](screenshots/canvas-390x844-inspector.png) · [Contextual form](screenshots/canvas-390x844-form.png) · [Map alternative](screenshots/canvas-390x844-map.png) |
 | Native page zoom 125% | [Outcome Board](screenshots/canvas-native-zoom-125.png) · [Inspector](screenshots/canvas-native-zoom-125-inspector.png) |

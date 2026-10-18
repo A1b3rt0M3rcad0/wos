@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Outcome Board workspace without a sidebar; existing release and human acceptance remain separately tracked
+**Current wave:** Contextual Outcome actions and compact sidebar navigation; existing release and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -50,6 +50,42 @@ The architecture document describes what should exist. This ROADMAP records what
 
 # Implementation waves
 
+## Contextual Outcome actions and compact navigation — 2026-10-18
+
+**Status: Implemented and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+The owner requests fewer repeated operations and more useful space in the
+specialist sidebar. Outcome-wide tools and the general action menu belong in
+Outcome Board; individual records and collections retain their own actions.
+
+- [x] Restrict Outcome tools and Choose an action to Outcome Board; preserve
+  same-view Refresh, Overview review and existing native entity/collection forms.
+- [x] Use one visible Outcome search field with automatic reads, immediate Enter
+  and filters, cancellation, query-bound pagination and authorization handling.
+- [x] Compact the sidebar's spacing and original robot/caption while preserving
+  selection, keyboard focus, mobile navigation and functional targets.
+- [x] Validate the view matrix, discovery ordering/pagination, native forms,
+  permissions and recovery; refresh source-bound Board and sidebar captures.
+
+Production source `c3c3139f5fb1d71bebdc80c14de5cc915c23de98` passes 44 unit
+checks and 91 of 92 browser journeys in the full run. Its only failure was a
+modal-palette test selecting a Work row after navigating to Overview. Test-only
+correction `62cbc03a917a6e4a501f14a69b3184cfb2d510b8` explicitly returns to Work;
+the affected desktop/mobile journey passes its focused recheck with all existing
+assertions retained. All 92 journeys are covered across those runs, with zero
+skips and identical production inputs; this is not one clean 92-case execution.
+
+All eight viewport journeys and all four new discovery journeys pass within the
+full run. The [26 source-bound captures](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+include desktop Overview/Work and compact Overview sidebars alongside the Board,
+inspector/forms and native 125%/150% browser zoom. Native web tests and vet pass.
+The [manifest](docs/design/operational-canvas/canvas-first/screenshots.json)
+records exact cohorts, source/binary/image hashes and six served assets checked
+against source per capture. Hosted checks qualify the pushed head independently.
+
+No domain, backend, protocol, schema or release change is included. The earlier
+qualifications below remain historical. Representative-user and manual
+screen-reader acceptance remain separate.
+
 ## Outcome Board workspace follow-up — 2026-10-18
 
 **Status: Implemented and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
@@ -81,7 +117,7 @@ between runs. This covers all 88 journeys across the regression and recheck;
 it is not a claim of a single clean 88-case execution. Native web tests and vet
 pass. The previous hosted plan-disclosure and proportional-navigation failures
 also pass locally with explicit completion and geometry checks. The
-[22 current captures and manifest](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+[22 captures from this source](https://github.com/A1b3rt0M3rcad0/wos/blob/15593b763a820d97026db2354b8013424798c2e9/docs/design/operational-canvas/canvas-first/README.md#screenshots)
 qualify the production source, while hosted checks qualify the pushed head
 independently. Representative-user and manual screen-reader acceptance remain
 separate.

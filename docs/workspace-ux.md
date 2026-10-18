@@ -13,7 +13,7 @@ Open `http://localhost:8080/app/` and use the example bootstrap credential in `.
 
 ## Start with a verifiable result
 
-Choose **New outcome**, give it a name and describe the desired outcome. Saving persists a Draft; it never activates the Outcome implicitly. Use **Review outcome** to inspect criteria and choose permitted actions. The Overview area retains the preparation checklist for success criteria, Objectives and Tasks. Roadmaps are optional. Choose activation explicitly when preparation is ready.
+Choose **New outcome**, give it a name and describe the desired outcome. Saving persists a Draft; it never activates the Outcome implicitly. In Overview, **Review outcome** opens the existing Outcome detail with its criteria and permitted entity actions. The Overview area retains the preparation checklist for success criteria, Objectives and Tasks. Roadmaps are optional. Choose activation explicitly when preparation is ready.
 
 An Outcome describes the desired result. Objectives describe intermediate conditions, including parent/child organization. Tasks describe bounded operational work. Completing a Task does not achieve an Objective or Outcome. Define success criteria and record their assessments before an explicit conclusion.
 
@@ -23,9 +23,11 @@ Choose **Add objective** or **New task** to open dedicated forms. Common creatio
 
 Opening an Outcome starts in its **Outcome Board**. The Outcome anchors real Objective hierarchy and Task ownership. Select a note or connection to open current detail and permitted actions alongside the map; contextual Add and Connect controls use the existing forms and authorized reference pickers. Moving a note changes only its local visual position. It does not reparent work, create a dependency or change lifecycle.
 
-The Outcome Board keeps the working region within the available viewport height and uses the full workspace width, with no left sidebar in this view. The Outcome header retains its name and lifecycle, with a direct **Outcome Board** control and a **Views** disclosure for specialist areas. **Outcome context** exposes the retained summary and planning information; **Outcome tools** groups secondary actions such as sharing, refresh and criteria review. These controls keep the map immediately reachable without removing those capabilities. See the [layout decisions and verification status](design/operational-canvas/canvas-first/README.md).
+The Outcome Board keeps the working region within the available viewport height and uses the full workspace width, with no left sidebar in this view. The Outcome header retains its name and lifecycle, with a direct **Outcome Board** control and a **Views** disclosure for specialist areas. **Outcome context** exposes the retained summary and planning information. Outcome Board alone shows the global **Outcome tools** disclosure and **Choose an action** menu: sharing, refresh, criteria review and permitted Outcome-wide operations remain available there. See the [layout decisions and verification status](design/operational-canvas/canvas-first/README.md).
 
 Choose **Views → Overview** to restore the sidebar and switch Outcomes or Workspaces, create an Outcome, or access authorized settings and tools. The sidebar remains available in Overview, Plan, Work, Issues, Evidence and Activity. Hiding it in the Outcome Board does not remove its operations or change its compact-screen disclosure behavior in those other views.
+
+Specialist views retain their contextual collection and entity actions. Their quiet **Refresh view** control refreshes the current view without navigating to Outcome Board. Overview also retains its local Review outcome action; opening a detail still exposes that entity's permitted actions and criteria. The separation of global header controls does not remove those workflows.
 
 Map view provides pan, zoom, fit, auto-layout and progressive expansion. List view presents the same loaded context and is the default on compact screens. Both expose selection and contextual actions without requiring dragging. Map note arrow keys navigate visible hierarchy; background arrow keys pan, `+`/`-` zoom and `0` fits. Search supports keyboard selection and authorized server results beyond the loaded map. Focus returns to an originating control when a contextual surface closes and that control remains available.
 
@@ -47,6 +49,12 @@ Choose **Views** to open the existing areas as alternatives and focused collecti
 | Issues   | Problems and their separate blocking impacts                                     |
 | Evidence | Observations, deliverables, links and assessment material                        |
 | Activity | Events, decisions and participation history                                      |
+
+### Find another Outcome
+
+In the sidebar, type into **Search outcomes** to query the authorized Outcome collection. Results update as you type; Enter starts the current search immediately. Open **Filters** to change lifecycle or archive scope; those changes apply immediately. On compact screens, **Switch outcome** expands this navigation.
+
+**More outcomes** loads the next bounded page for the current search and filters. A new query resets pagination, and later responses from an older query cannot replace the current results. This is server-backed discovery, independent of which Outcomes were already loaded. Losing authorization clears private Outcome results rather than retaining an accessible stale list.
 
 Deep links restore Workspace, Outcome, area, collection and detail after signing in, reload and browser Back/Forward. Outcome Board links retain their selected entity; camera movement and local note placement are not domain state. Existing `canvas` route values remain compatible. Copy link does not grant access. Server authorization is checked when resolving shared context.
 
@@ -88,6 +96,6 @@ The [Outcome Board guide](design/operational-canvas/README.md#acceptance-boundar
 
 The earlier real-server and automated accessibility results cover their recorded baseline. They do not qualify the sidebar-free Outcome Board, its inspector or its keyboard/mobile behavior. Equivalent viewport reflow and device scale factors are distinct from native browser zoom; the follow-up records those checks independently.
 
-The current Outcome Board [gallery](design/operational-canvas/canvas-first/README.md#screenshots) records 22 real captures and eight passing focused journeys at `5fb4e8a`, including 1280 × 720, 1366 × 768 with a long title, Full HD/QHD, 320 × 740, 390 × 844 and native Chromium 125%/150% page zoom. The full run passed 44 unit checks and 86 browser journeys; its two fixture-timing failures passed after a test-only helper correction and focused recheck. All 88 journeys are covered across those runs with identical production inputs, as recorded in the [manifest](design/operational-canvas/canvas-first/screenshots.json); this is not a claim of one clean full run. Earlier Canvas-first evidence is preserved through a pinned historical record rather than attributed to the sidebar-free view.
+The current [gallery](design/operational-canvas/canvas-first/README.md#screenshots) contains 26 source-pinned Board and specialist-sidebar captures at `c3c3139`; all eight layout/capture and four discovery journeys pass. The full run passed 44 unit checks and 91 browser journeys; one test-only navigation correction then passed its focused recheck. All 92 journeys are covered across those runs with identical production inputs; a single clean full run is not claimed. Exact cohorts and capture provenance are recorded in the [current qualification](design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance). Earlier sidebar-free evidence remains pinned separately.
 
 Representative-user usability, human comprehension/timing, manual screen-reader checks and other-browser acceptance remain pending. Native Chromium page zoom at 125% and 150% is tracked in the viewport-workspace qualification rather than inferred from smaller screenshot dimensions. The owner confirmed that no representative users or screen-reader testers are available. Automated acceptance is not a usability measurement or WCAG certification.

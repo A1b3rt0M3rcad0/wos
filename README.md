@@ -44,7 +44,7 @@ Suppose your team needs to **ship partial refunds**. Define a success criterion:
 
 The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
 
-Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to switch Outcomes or Workspaces and access settings. The six specialist areas remain available through Views. Work also offers a **Task Board** for task-specific organization. [Current workspace guide and captures](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
+Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Current workspace guide and captures](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
 | Step | What you do | What stays recorded |
 | --- | --- | --- |
@@ -149,7 +149,7 @@ docker compose up --build -d
 > [!WARNING]
 > The example contains a public development credential. Keep it on localhost. Before sharing a deployment, configure private credentials, permissions and HTTPS using the [shared-service guide](docs/operations.md#shared-service). Do not print credentials in logs.
 
-Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. From the Outcome Board, choose **Views → Overview** to restore the sidebar and switch Outcomes. **Choose an action** exposes the operations your permissions and the current state allow. A new installation starts with your own records, not the tour's sample data.
+Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Views → Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
 
 <a id="requirements-and-platforms"></a>
 <details>
