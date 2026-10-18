@@ -344,10 +344,10 @@ try {
       `[data-canvas-node="work_item:${tasks[0].id}"] .canvas-node-main`,
     ),
   ).toBeInViewport({ ratio: 1 });
-  await frame("Canvas: one Outcome, related Tasks, and explicit dependencies");
+  await frame("Outcome Board: one Outcome, related Tasks, and explicit dependencies");
   await page
     .locator("#operational-canvas")
-    .getByRole("combobox", { name: "Search canvas", exact: true })
+    .getByRole("combobox", { name: "Search Outcome Board", exact: true })
     .fill(tasks[0].title);
   await page
     .locator("#operational-canvas")

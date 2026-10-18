@@ -164,7 +164,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       .filter({ hasText: "Contratos verificados" })
       .click();
     await chooseArea(page, "work");
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await page
       .getByRole("button")
       .filter({ hasText: "Implementar fluxo contratual" })

@@ -477,7 +477,7 @@ for (const decision of ["approved", "changes_requested"])
         );
         await expect(activePage.locator("#notice")).not.toHaveClass(/error/);
         await activePage
-          .getByRole("button", { name: "Board", exact: true })
+          .getByRole("button", { name: "Task Board", exact: true })
           .click();
         await expect(activePage.locator(".board-caption")).toContainText(
           "persisted lifecycle of loaded Tasks",
@@ -651,7 +651,7 @@ for (const decision of ["approved", "changes_requested"])
       );
       assert.ok(!canvasHandoff.includes(token));
       await chooseArea(page, "work");
-      await page.getByRole("button", { name: "Board", exact: true }).click();
+      await page.getByRole("button", { name: "Task Board", exact: true }).click();
       await page
         .getByRole("button")
         .filter({ hasText: work.title })

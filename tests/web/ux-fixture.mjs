@@ -16,7 +16,7 @@ export async function openViews(page) {
   return views;
 }
 export async function chooseArea(page, area) {
-  const key = area.toLowerCase();
+  const key = area.toLowerCase() === "outcome board" ? "canvas" : area.toLowerCase();
   if (key !== "canvas") await openViews(page);
   await page.locator(`#area-tabs [data-area="${key}"]`).click();
 }
@@ -131,6 +131,11 @@ export async function openOutcome(
   title = "Acceptance Outcome",
   { area = "overview" } = {},
 ) {
+  // Outcome navigation is available in the retained specialist views. Leave
+  // the focused Board through Views rather than targeting its hidden sidebar.
+  if (await page.locator("#outcome").isVisible() &&
+      await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
+    await chooseArea(page, "overview");
   const switcher = page.locator("#navigation-toggle");
   if (
     (await switcher.isVisible()) &&

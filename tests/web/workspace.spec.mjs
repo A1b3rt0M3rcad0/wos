@@ -313,7 +313,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     );
     await shot("02-resumo");
     await chooseArea(page, "work");
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(page.locator(".board-column")).toHaveCount(5);
     await expect(
       page.getByRole("region", { name: "In progress", exact: true }),
@@ -374,7 +374,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     );
     assert.equal(result.value.lifecycle, "in_progress");
     await chooseArea(page, "work");
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "In progress", exact: true }),
     ).toContainText("Mapear a jornada");
@@ -471,7 +471,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     });
     await clickWorkspaceTool(page, "refresh");
     await chooseArea(page, "work");
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     await expect(
       page.getByRole("region", { name: "Cancelled", exact: true }),
     ).toContainText("Refinar navegação do workspace");
@@ -510,7 +510,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await chooseArea(page, "work");
-    await page.getByRole("button", { name: "Board", exact: true }).click();
+    await page.getByRole("button", { name: "Task Board", exact: true }).click();
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

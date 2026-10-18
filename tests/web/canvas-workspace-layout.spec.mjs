@@ -59,9 +59,24 @@ async function workspaceBounds(page) {
 async function controls(page) {
   await fullyVisible(page.locator('#area-tabs [data-area="canvas"]'));
   await fullyVisible(page.locator("#outcome-views > summary"));
-  await fullyVisible(canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }));
+  await fullyVisible(canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }));
   for (const name of ["Zoom in", "Zoom out", "Fit view"])
     await fullyVisible(canvas(page).getByRole("button", { name, exact: true }));
+}
+async function focusedBoardOwnsNavigation(page) {
+  const sidebar = page.locator(".sidebar");
+  const board = page.locator('#area-tabs [data-area="canvas"]');
+  await expect(sidebar).toBeHidden();
+  await expect(page.getByRole("complementary", { name: "Workspace navigation", exact: true })).toHaveCount(0);
+  expect(await sidebar.locator("button, input, select, a[href], [tabindex]").evaluateAll((controls) =>
+    controls.every((control) => {
+      control.focus();
+      return !control.closest(".sidebar").contains(document.activeElement);
+    }),
+  )).toBe(true);
+  await page.locator("#logout").focus();
+  await page.keyboard.press("Tab");
+  await expect(board).toBeFocused();
 }
 async function inspectorActionsRemainReachable(page) {
   const body = panel(page).locator("#detail-content");
@@ -90,8 +105,16 @@ async function openCanvas(page, wos, data) {
   await wos.login(page);
   await openOutcome(page, data.outcome.title, { area: null });
   await expect(page.locator('#area-tabs [data-area="canvas"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toHaveText("Outcome Board");
+  await expect(canvas(page)).toHaveAttribute("aria-label", "Outcome Board workspace");
   await expect(canvas(page).locator(".workspace-canvas")).toBeVisible();
+  await expect(canvas(page).locator(".workspace-canvas")).toHaveAttribute("aria-label", "Outcome Board");
+  await expect(viewport(page)).toHaveAttribute("aria-label", /^Outcome Board map\./);
+  await expect(canvas(page).locator(".canvas-list")).toHaveAttribute("aria-label", "Outcome Board list");
   await page.evaluate(() => document.fonts.ready);
+  // Selecting an Outcome must move focus out of navigation that is now hidden.
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
+  await focusedBoardOwnsNavigation(page);
   if (process.env.WOS_CAPTURE_CANVAS_FIRST) {
     const entries = await Promise.all(["app.js", "canvas.css", "en-US.js", "index.html", "workspace-canvas.js"].map(async (file) => {
       const [response, source] = await Promise.all([
@@ -140,7 +163,7 @@ async function capture(page, name, measurement) {
 }
 
 for (const [width, height] of [[1280, 720], [1366, 768], [1920, 1080], [2560, 1440]]) {
-  test(`Canvas uses the available desktop workspace at ${width} x ${height}`, async ({ page, wos }) => {
+  test(`Outcome Board uses the available desktop workspace at ${width} x ${height}`, async ({ page, wos }) => {
     await page.setViewportSize({ width, height });
     const data = await seedCanvas(wos, width === 1366 ? {
       title: "Coordinate a complete customer delivery across people, agents, tools and sessions while preserving a shared verification trail",
@@ -201,6 +224,7 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await page.setViewportSize({ width: 1366, height: 768 });
   const data = await seedCanvas(wos);
   await seedCanvasRoadmap(wos, data, { published: true, active: true });
+  const other = await wos.outcome("A separate customer delivery");
   const mutations = [];
   page.on("request", (request) => {
     if (request.method() === "POST" && request.url().includes("/commands/")) mutations.push(request.url());
@@ -222,6 +246,25 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await page.keyboard.press("Escape");
   await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
   await expect(page.locator("#outcome-views > summary")).toBeFocused();
+  for (const area of ["overview", "plan", "work", "issues", "evidence", "activity"]) {
+    await chooseArea(page, area);
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Workspace navigation", exact: true })).toBeVisible();
+    await expect(page.locator(`#area-tabs [data-area="${area}"]`)).toHaveAttribute("aria-pressed", "true");
+  }
+  await chooseArea(page, "overview");
+  await openOutcome(page, other.value.title, { area: "overview" });
+  await expect(page.locator(".sidebar")).toBeVisible();
+  await expect(page.locator("#title")).toHaveText(other.value.title);
+  await chooseArea(page, "canvas");
+  await expect(page).toHaveURL(new RegExp(`outcome=${other.value.id}.*area=canvas`));
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
+  await focusedBoardOwnsNavigation(page);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await expect(page).toHaveURL(new RegExp(`outcome=${data.outcome.id}.*area=canvas`));
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
+  await focusedBoardOwnsNavigation(page);
+  await workspaceBounds(page);
   await chooseArea(page, "work");
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
   await expect(page.locator("#outcome-views > summary")).toBeFocused();
@@ -229,7 +272,7 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await page.goBack();
   await expect(viewport(page)).toBeVisible();
   await workspaceBounds(page);
-  const search = canvas(page).getByRole("combobox", { name: "Search canvas", exact: true });
+  const search = canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true });
   await search.fill(data.evidence[0].description);
   await canvas(page).getByRole("option").filter({ hasText: data.evidence[0].description }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.evidence[0].description);
@@ -241,7 +284,7 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
 });
 
 for (const [width, height] of [[320, 740], [390, 844]]) {
-  test(`Compact Canvas keeps its own list and inspector scroll at ${width} x ${height}`, async ({ page, wos }) => {
+  test(`Compact Outcome Board keeps its own list and inspector scroll at ${width} x ${height}`, async ({ page, wos }) => {
     await page.setViewportSize({ width, height });
     const data = await seedCanvas(wos, { extraTasks: 35 });
     await openCanvas(page, wos, data);
@@ -281,7 +324,7 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
   });
 }
 
-test("native browser zoom at 125% and 150% preserves Canvas controls and contextual return", async ({ wos }) => {
+test("native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return", async ({ wos }) => {
   test.setTimeout(180000);
   const data = await seedCanvas(wos);
   const browser = await nativeZoomBrowser({ width: 1366, height: 768 });
@@ -292,6 +335,7 @@ test("native browser zoom at 125% and 150% preserves Canvas controls and context
     const outer = await page.evaluate(() => ({ width: outerWidth, height: outerHeight }));
     for (const factor of [1.25, 1.5]) {
       await browser.setZoom(factor);
+      await expect(page.locator(".sidebar")).toBeHidden();
       await controls(page);
       const bounds = await workspaceBounds(page);
       const metrics = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, outerWidth, outerHeight, devicePixelRatio, visualScale: visualViewport.scale }));

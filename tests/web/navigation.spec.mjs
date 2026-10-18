@@ -1,5 +1,5 @@
 import { test, expect, openOutcome, chooseArea, openViews } from "./ux-fixture.mjs";
-test("Canvas and six specialist areas retain the persisted Draft checklist without automatic activation", async ({
+test("Outcome Board and six specialist areas retain the persisted Draft checklist without automatic activation", async ({
   page,
   wos,
 }) => {
@@ -9,7 +9,7 @@ test("Canvas and six specialist areas retain the persisted Draft checklist witho
   await expect(page.locator("#area-tabs button")).toHaveCount(7);
   await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
   await openViews(page);
-  for (const name of ["Canvas", "Overview", "Plan", "Work", "Issues", "Evidence", "Activity"])
+  for (const name of ["Outcome Board", "Overview", "Plan", "Work", "Issues", "Evidence", "Activity"])
     await expect(page.locator("#area-tabs").getByRole("button", { name, exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Prepare your Outcome" }),

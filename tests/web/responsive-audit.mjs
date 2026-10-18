@@ -47,6 +47,9 @@ export async function dimensions(page, selectors) {
         textFits: element.scrollWidth <= Math.ceil(element.clientWidth),
         fitsParent:
           box.right <= element.parentElement.getBoundingClientRect().right + 1,
+        precedingGap: selector === "#outcome-views > summary"
+          ? box.left - element.closest("details").previousElementSibling.getBoundingClientRect().right
+          : null,
       };
     }
     return result;
@@ -64,6 +67,7 @@ export function expectProportional(actual, reference, factor) {
     ...headings,
     ".summary-quick button",
     "#submit-command",
+    "#outcome-views > summary",
   ]);
   for (const [selector, baseline] of Object.entries(reference)) {
     for (const key of [
@@ -79,6 +83,13 @@ export function expectProportional(actual, reference, factor) {
       // engines. Compare their type, lines and containment; layout boxes retain
       // the strict dimensional comparison below.
       if (intrinsicWidths.has(selector) && key === "width") continue;
+      // Views follows a button whose intrinsic glyph advances are quantized
+      // separately at each font size. Check its actual sibling gap instead of
+      // treating that text-dependent absolute x as a fixed layout dimension.
+      if (selector === "#outcome-views > summary" && key === "x") {
+        expect(actual[selector].precedingGap / factor).toBeCloseTo(baseline.precedingGap, 1);
+        continue;
+      }
       // Native scrollbar gutters stay in browser pixels; account for that only
       // when checking descendant horizontal dimensions.
       const gutter = ["x", "width"].includes(key)

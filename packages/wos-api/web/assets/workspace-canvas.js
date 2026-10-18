@@ -393,18 +393,18 @@ export function mountWorkspaceCanvas(host, options) {
   const id = `work-map-${++sequence}`;
   const abort = new AbortController();
   const root = node("section", undefined, "workspace-canvas");
-  root.setAttribute("aria-label", "Outcome work map");
+  root.setAttribute("aria-label", "Outcome Board");
   const toolbar = node("div", undefined, "canvas-toolbar");
   const switcher = node("div", undefined, "canvas-view-switch");
-  switcher.setAttribute("aria-label", "Work map view");
+  switcher.setAttribute("aria-label", "Outcome Board view");
   const cameraControls = node("div", undefined, "canvas-camera-controls");
   const zoomOutput = node("output", "100%", "canvas-zoom");
-  zoomOutput.setAttribute("aria-label", "Canvas zoom");
+  zoomOutput.setAttribute("aria-label", "Outcome Board zoom");
   const searchWrap = node("div", undefined, "canvas-search");
   const search = node("input");
   search.type = "search";
   search.placeholder = "Find an item…";
-  search.setAttribute("aria-label", "Search canvas");
+  search.setAttribute("aria-label", "Search Outcome Board");
   search.setAttribute("role", "combobox");
   search.setAttribute("aria-autocomplete", "list");
   search.setAttribute("aria-expanded", "false");
@@ -444,7 +444,7 @@ export function mountWorkspaceCanvas(host, options) {
   viewport.setAttribute("role", "region");
   viewport.setAttribute(
     "aria-label",
-    "Interactive work map. Drag the background to pan; use arrow keys to move focus, plus and minus to zoom.",
+    "Outcome Board map. Drag the background to pan; use arrow keys to move focus, plus and minus to zoom.",
   );
   const world = node("div", undefined, "canvas-world");
   const edges = document.createElementNS(SVG, "svg");
@@ -454,7 +454,7 @@ export function mountWorkspaceCanvas(host, options) {
   world.append(edges);
   viewport.append(world);
   const list = node("ul", undefined, "canvas-list");
-  list.setAttribute("aria-label", "Work map items");
+  list.setAttribute("aria-label", "Outcome Board list");
   const footer = node("div", undefined, "canvas-footer");
   const status = node("p", undefined, "canvas-status");
   status.setAttribute("role", "status");

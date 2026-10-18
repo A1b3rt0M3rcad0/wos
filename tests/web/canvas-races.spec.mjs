@@ -11,7 +11,7 @@ async function openCanvas(page, wos, data, credential) {
   await expect(canvas(page)).toBeVisible();
 }
 async function select(page, value, { wait = true } = {}) {
-  await canvas(page).getByRole("combobox", { name: "Search canvas", exact: true }).fill(value.title);
+  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(value.title);
   await canvas(page).getByRole("option").filter({ hasText: value.title }).first().click();
   if (wait) await expect(panel(page).locator("#detail-title")).toHaveText(value.title);
 }

@@ -1109,16 +1109,15 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   min-height: 0;
 }
 #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) {
+  display: grid;
   flex: 1;
   min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
 }
 #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar {
-  position: relative;
-  top: auto;
-  min-height: 0;
-  height: 100%;
-  overscroll-behavior: contain;
+  /* The spatial workspace owns the full width; specialist views keep the rail. */
+  display: none;
 }
 .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) {
   position: relative;
@@ -1402,43 +1401,6 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   }
 }
 @media (max-width: 760px) {
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar {
-    height: auto;
-    max-height: 40dvh;
-    padding: calc(6 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: calc(8 * var(--wos-unit, 1px));
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed .workspace-switch {
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed .workspace-switch::after,
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed .sidebar-bottom {
-    display: none;
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed .workspace-switch label {
-    width: 100%;
-    font-size: 0.57143rem;
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar.navigation-collapsed .workspace-switch select {
-    margin: 0;
-    min-height: calc(44 * var(--wos-unit, 1px));
-    font-size: 1.14286rem;
-  }
-  #workspace:has(#outcome:not([hidden])[data-editorial-area="canvas"]) > .sidebar .sidebar-heading {
-    margin: 0;
-  }
   .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) {
     padding: calc(6 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
   }

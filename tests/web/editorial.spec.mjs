@@ -559,6 +559,10 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
     "aria-expanded",
     "false",
   );
+  await expect(page.locator(".sidebar")).toBeHidden();
+  await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
+  await chooseArea(page, "overview");
+  await expect(page.locator(".sidebar")).toBeVisible();
   // More than one sidebar viewport: the final action remains reachable.
   for (let index = 0; index < 12; index++)
     await wos.command("create_outcome", {
@@ -668,7 +672,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
     ).toBe(true);
   }
   await chooseArea(page, "work");
-  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await page.getByRole("button", { name: "Task Board", exact: true }).click();
   await expect(page.locator(".board")).toBeVisible();
   await capture(page, "05-work-board");
   await page.getByRole("button", { name: "List", exact: true }).click();

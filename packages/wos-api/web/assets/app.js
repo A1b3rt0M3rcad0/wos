@@ -1067,6 +1067,8 @@ async function discover(append = false) {
 $("more-outcomes").onclick = () => discover(true).catch(report);
 async function openOutcome(outcome) {
   if (!allowCanvasNavigation()) return;
+  const sidebar = document.querySelector(".sidebar");
+  const openedFromSidebar = sidebar.contains(document.activeElement);
   resetCanvas();
   state.generation++;
   document.querySelector(".sidebar").classList.add("navigation-collapsed");
@@ -1101,6 +1103,16 @@ async function openOutcome(outcome) {
   try {
     await refresh();
     writeRoute();
+    if (
+      generation === state.generation &&
+      canvasActive() &&
+      openedFromSidebar &&
+      (document.activeElement === document.body ||
+        sidebar.contains(document.activeElement))
+    )
+      $("area-tabs")
+        .querySelector('[data-area="canvas"]')
+        ?.focus({ preventScroll: true });
   } catch (error) {
     if (generation !== state.generation) return;
     $("empty").hidden = false;
@@ -1399,6 +1411,9 @@ function navigateArea(area) {
 }
 function applyView() {
   const isCanvas = canvasActive();
+  const hadSidebarFocus = document
+    .querySelector(".sidebar")
+    .contains(document.activeElement);
   if (isCanvas) $("outcome").dataset.editorialArea = "canvas";
   else renderEditorial(state.area);
   $("area-intro").hidden = isCanvas;
@@ -1436,6 +1451,10 @@ function applyView() {
     !state.permissions.includes(
       inventory[board ? "create_work_item" : sectionCommand()]?.permission,
     );
+  if (isCanvas && hadSidebarFocus)
+    $("area-tabs")
+      .querySelector('[data-area="canvas"]')
+      ?.focus({ preventScroll: true });
 }
 function navigateSection(section) {
   if (!allowCanvasNavigation()) return;
@@ -3238,7 +3257,7 @@ async function showEntity(
         if (isCanvas && entity.draft.lifecycle === "open")
           draft.append(
             actionButton(
-              "View draft on canvas",
+              "View draft on Outcome Board",
               () =>
                 viewCanvasPlan({
                   roadmap_id: entity.id,
@@ -3267,7 +3286,7 @@ async function showEntity(
         if (isCanvas)
           history.append(
             actionButton(
-              `View revision ${revision.revision_number} on canvas`,
+              `View revision ${revision.revision_number} on Outcome Board`,
               () =>
                 viewCanvasPlan({
                   roadmap_id: entity.id,
