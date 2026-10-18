@@ -464,6 +464,22 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await controls(page);
     await workspaceBounds(page);
     await capture(page, `canvas-${width}x${height}-map`, { state: "explicit Map alternative" });
+    if (width === 320) {
+      await page.setViewportSize({ width: 360, height: 640 });
+      await controls(page);
+      const map = await viewport(page).boundingBox();
+      const camera = await canvas(page).locator(".canvas-camera-controls").boundingBox();
+      expect(camera.y).toBeGreaterThanOrEqual(map.y);
+      expect(camera.y + camera.height).toBeLessThanOrEqual(map.y + map.height);
+      const beforeZoom = Number(await viewport(page).getAttribute("data-scale"));
+      await canvas(page).getByRole("button", { name: "Zoom in", exact: true }).click();
+      expect(Number(await viewport(page).getAttribute("data-scale"))).toBeGreaterThan(beforeZoom);
+      await canvas(page).getByRole("button", { name: "Center view", exact: true }).click();
+      await canvas(page).getByRole("button", { name: "Fit view", exact: true }).click();
+      await workspaceBounds(page);
+      await capture(page, "canvas-360x640-map", { state: "short mobile Map alternative with horizontal camera controls and explicit fit" });
+      await page.setViewportSize({ width, height });
+    }
     await chooseArea(page, "overview");
     const navigation = page.locator("#navigation-toggle");
     if (await navigation.getAttribute("aria-expanded") === "false") await navigation.click();

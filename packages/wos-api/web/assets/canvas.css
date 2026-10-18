@@ -1558,7 +1558,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     flex-basis: 100%;
   }
 }
-@media (max-height: 600px) {
+@media (max-width: 760px), (max-height: 600px) {
   .canvas-camera-controls {
     flex-direction: row;
     align-items: stretch;
