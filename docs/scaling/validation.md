@@ -4,7 +4,8 @@
 > This is historical evidence for the pre-schema commits identified below. The
 > schema-per-Tenant and protocol-3 transition changes the tested executable and
 > storage boundary. These results are not relabelled as validation of that change.
-> See [Tenant operations](tenants.md) and current PR checks for the new scope.
+> See [Tenant qualification](tenant-validation.md), [operations](tenants.md)
+> and current PR checks for the new scope.
 
 This record belongs to `feat/scalable-wos-operation`, based on `master` at
 `cba58d6d609377df141d1369dccaaaf3b3e331e3`. [PR #114](https://github.com/A1b3rt0M3rcad0/wos/pull/114)

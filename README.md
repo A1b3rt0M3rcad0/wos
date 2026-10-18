@@ -177,7 +177,7 @@ Want an executable example before configuring agents? The [isolated local lifecy
 
 Start with one complete process. For production growth, the [PostgreSQL deployment profiles](deploy/scaling/README.md) provide a small installation and a replica overlay that separates API and delivery-worker capacity. The same WOS product serves a Tenant in its own PostgreSQL schema, several Tenants in separate schemas of one database, or a dedicated database and infrastructure. Your own runtime continues to execute agents.
 
-The [scaling guide](docs/scaling/README.md) explains persistent-state coordination, shared-resource budgets, operator permissions, connection sizing and recovery. The [Tenant operations guide](docs/scaling/tenants.md) covers provisioning, suspension, reactivation, deletion and the breaking upgrade from the previous row-partitioned model. Existing capacity and migration evidence is source-bound; see the [qualification boundaries](docs/scaling/qualification.md) before treating historical results as evidence for the schema transition.
+The [scaling guide](docs/scaling/README.md) explains persistent-state coordination, shared-resource budgets, operator permissions, connection sizing and recovery. The [Tenant operations guide](docs/scaling/tenants.md) covers provisioning, suspension, reactivation, deletion and the breaking upgrade from the previous row-partitioned model. The [Tenant qualification](docs/scaling/tenant-validation.md) records the schema transition; [earlier capacity measurements](docs/scaling/qualification.md) remain evidence for their original sources.
 
 ## Operate with agents
 

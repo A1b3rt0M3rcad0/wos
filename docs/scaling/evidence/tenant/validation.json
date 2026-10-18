@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "complete": true,
+  "recorded_at": "2026-10-18T00:54:10.896941+00:00",
+  "source_reference": "6ac6f17eaac4398abfc6d56497f371301ce3e99c",
+  "production_source_reference": "f21d454f8d84da398bc9e908054b2b20e581544f",
+  "test_harness_reference": "e81c20643ac0a63ea59cf6d72e4c787f22f40434",
+  "ci_package_budget_reference": "6ac6f17eaac4398abfc6d56497f371301ce3e99c",
+  "go_sql_module_test_inputs": {
+    "count": 795,
+    "sha256": "4031616ecfa75c88b39f1bb3d67a80a2b589d9b2121f35654b320634f8ba2b96"
+  },
+  "production_go_sql_inputs": {
+    "count": 465,
+    "sha256": "ca092afe0a14158c0af70a46709e5807f8b12a632dc94580ba19f1b745f0aa10"
+  },
+  "platform": "Linux amd64",
+  "go": "1.27.2",
+  "GOMAXPROCS": 2,
+  "postgres": "18.6",
+  "postgres_test_configuration": {
+    "shared_memory_bytes": 536870912,
+    "max_locks_per_transaction": 1024,
+    "max_pred_locks_per_transaction": 4096,
+    "separate_normal_race_databases": true,
+    "actual_backup_restore_enabled": true
+  },
+  "source_scope_note": "Final full normal/race runs use the unchanged production inputs at production_source_reference with test fixtures at test_harness_reference. Valid Go package-cache results are identified per run. Test-only fixtures copy an empty migrated SQLite snapshot into independent files; cold migration, upgrade and direct startup tests retain real initialization. Published-version and Compose receipts retain their exact executable sources. Earlier local browser logs do not independently pin executable commits; hosted Browser acceptance is separately pinned by source, job and run. Fuzz logs use unchanged package inputs at the recorded earlier source. Earlier failed/interrupted diagnostic runs are excluded from passing counts.",
+  "go_runs": [
+    {
+      "log": "wos-tenant-unit-final.jsonl",
+      "sha256": "46ae6d016f19467f7680e4f25eb3f603a43c4b37fa90c269cae3829ffb36e8e7",
+      "bytes": 2507638,
+      "scope": "Full normal suite, real PostgreSQL and actual backup/restore",
+      "source_reference": "e81c20643ac0a63ea59cf6d72e4c787f22f40434",
+      "first_event": "2026-10-18T00:39:23.96474888Z",
+      "last_event": "2026-10-18T00:41:29.957481549Z",
+      "package_parallelism": 1,
+      "package_timeout": "20m",
+      "exit_code": 0,
+      "race_detector_enabled": false,
+      "cached_packages": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/mobility",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/tenants",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill",
+        "github.com/A1b3rt0M3rcad0/wos/tests/acceptance"
+      ],
+      "passing_test_and_subtest_entries": 1676,
+      "passing_packages": 22,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringProtectedProfileV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestWorkContractLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestWorkContractLoadMatrix"
+      ],
+      "packages_without_tests": 10
+    },
+    {
+      "log": "wos-tenant-race-final.jsonl",
+      "sha256": "c76e467593921c8c8468f0594440648ae1a2ef51ee678aeeec7a302b16e7b6e8",
+      "bytes": 2509307,
+      "scope": "Full race suite, real PostgreSQL and actual backup/restore",
+      "source_reference": "e81c20643ac0a63ea59cf6d72e4c787f22f40434",
+      "first_event": "2026-10-18T00:42:51.036497687Z",
+      "last_event": "2026-10-18T00:52:54.562513882Z",
+      "package_parallelism": 2,
+      "package_timeout": "20m",
+      "exit_code": 0,
+      "race_detector_enabled": true,
+      "cached_packages": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/mobility",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/operations/tenants",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill",
+        "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "github.com/A1b3rt0M3rcad0/wos/tests/boundary"
+      ],
+      "passing_test_and_subtest_entries": 1676,
+      "passing_packages": 22,
+      "skipped_optional_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration:TestDeliveryWorkerCrashChild",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerRefusesToInitializeDatabase/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestWorkerIssuerIsOptionalAndCannotInitializeOrReplaceIdentity/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server:TestIndependentWorkerOperationalListenerAndSupervision/sqlite",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReceiptCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringProtectedProfileV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestNativeOSKeyringChildV2",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli:TestReturnResolutionCleanupRecoversRealFullDisk",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres:TestWorkContractLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestSignedWorkReviewLoadMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestScalableSignedWorkMatrix",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite:TestWorkContractLoadMatrix"
+      ],
+      "packages_without_tests": 10
+    }
+  ],
+  "other_private_log_fingerprints": [
+    {
+      "log": "wos-sqlite-fixture-cache-normal-final.jsonl",
+      "sha256": "7a00ba4dd08466976ac9ec30a88b1f84c11b05a13b1ae0e316072a9f1e0884a7",
+      "bytes": 60998
+    },
+    {
+      "log": "wos-sqlite-fixture-cache-race-final.jsonl",
+      "sha256": "9eb3de507cbfc46247b7d9d1ebc93d86dc4044938fa84aa95da46cc87b614424",
+      "bytes": 32736
+    },
+    {
+      "log": "wos-server-sqlite-fixture-race-qualified.jsonl",
+      "sha256": "cf8d076e50ff61e0ef4428fe71fbcc1192e4750215d7236d866d396007c1fe68",
+      "bytes": 473830
+    },
+    {
+      "log": "wos-server-sqlite-fixture-unit-qualified.jsonl",
+      "sha256": "bd4b8139c771fd099600cbbcc00c2071f36539ae119bfafef13c9276ed98fc41",
+      "bytes": 472312
+    },
+    {
+      "log": "wos-server-sqlite-memory-fixture-unit.jsonl",
+      "sha256": "a26009d214dbb07713661cb1914ec67bc246ea63aa4c77ac32ba3c43f66f63d8",
+      "bytes": 1690
+    },
+    {
+      "log": "wos-tenant-startup-budget-race-final.jsonl",
+      "sha256": "e6c872ae88a7571296265bcefc4cb0c664ada2ec21151558f8d364e9d7d386b1",
+      "bytes": 1684
+    },
+    {
+      "log": "wos-tenant-runtime-drain-race-final.jsonl",
+      "sha256": "c17d19da453539552b11b657e8dd02b95d4c409825c77e0dd17e72dc14c3bec9",
+      "bytes": 30708
+    },
+    {
+      "log": "wos-tenant-initializer-drain-race.jsonl",
+      "sha256": "08d218336eda8abef65c0d72c38cf13646b961122fbce1657b4b0fbe92af113c",
+      "bytes": 11407
+    },
+    {
+      "log": "wos-tenant-initializer-release-regression.log",
+      "sha256": "23889ad6bba0050061e2f5db4f316ef0c781eb98ebfcef5ef9d8faf32bfa2fa1",
+      "bytes": 75
+    },
+    {
+      "log": "wos-tenant-web-unit-final.log",
+      "sha256": "4d8ead6d5446774fcced39f2fa1a1dc1b09bf45c10370b947e0a37e99258d783",
+      "bytes": 3816
+    },
+    {
+      "log": "wos-tenant-browser-integration-1.log",
+      "sha256": "1117fbb869bd893487c080b37040090df6010b81bd5261e1f35bee232512fbd3",
+      "bytes": 1851
+    },
+    {
+      "log": "wos-tenant-browser-final-correct.log",
+      "sha256": "dafa82b77a3cc3a420a622361a41d97c67cdc3061dea682d06bcb04342b1dddb",
+      "bytes": 4532
+    },
+    {
+      "log": "wos-signed-browser-cache-final.log",
+      "sha256": "b85ed8f5c379c46168bb13fb63da7f0258b396d8fa9715f1a142d29ba1eed81c",
+      "bytes": 690
+    },
+    {
+      "log": "wos-tenant-early-preflight-all-releases-normal.log",
+      "sha256": "c02383e204477f577e287a14d46f94f274397b03b9ccee6fd08fb7def1568678",
+      "bytes": 152
+    },
+    {
+      "log": "wos-tenant-early-preflight-all-releases-race.log",
+      "sha256": "0d3b54fe4f35850886892bf1394ae94133181e22677836f4f1c8a3de47e8a914",
+      "bytes": 154
+    },
+    {
+      "log": "wos-tenant-vet-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "log": "wos-tenant-release-final-2.log",
+      "sha256": "ed728415b06dbd8b5c61802648410e322ce52af916e16a67e5ad7592f753c819",
+      "bytes": 1622
+    },
+    {
+      "log": "wos-tenant-fuzz-canonical.jsonl",
+      "sha256": "655fa5c24d78b3ee03447d9daaf085eb414ddae45173a46fb379c5448b923e03",
+      "bytes": 2822
+    },
+    {
+      "log": "wos-tenant-fuzz-envelope.jsonl",
+      "sha256": "1317ad7df04a695f46d7fcb26e1d54e569a13aa6d2d2112d5efb0a73c747e86f",
+      "bytes": 2794
+    },
+    {
+      "log": "wos-tenant-fuzz-resolution.jsonl",
+      "sha256": "87c5b5808c2426e99f95aec7508ba95fc8634828d45d4802e86c4830314f6d53",
+      "bytes": 2901
+    },
+    {
+      "log": "wos-tenant-fuzz-yaml.jsonl",
+      "sha256": "acd7dc35172dd7fb37d691e47386216d50649a8cc990d3b30c4bbaa943e9d042",
+      "bytes": 2686
+    }
+  ],
+  "browser_scope": {
+    "real_server_passing_tests": 18,
+    "web_unit_passing_tests": 38,
+    "local_source_boundary": "Tenant implementation worktrees before or at 790dcc2; executable commit metadata was not independently captured. These are not final-head logs.",
+    "hosted_browser_acceptance": {
+      "source_reference": "6ac6f17eaac4398abfc6d56497f371301ce3e99c",
+      "job": 117545680399,
+      "run": 39083660857,
+      "conclusion": "success",
+      "url": "https://github.com/A1b3rt0M3rcad0/wos/actions/runs/39083660857/job/117545680399"
+    },
+    "mixed_run_note": "browser-final-correct includes four successful inspector checks and two environment-only signed cache failures. Only those four inspector passes count; the later signed cache run supplies the two signed passes."
+  },
+  "release_compatibility_tests_passed": 15,
+  "fuzz_campaign_seconds_each": 10,
+  "fuzz_executions_total": 105524,
+  "fuzz_source_reference": "528d4dea440690485798b6c04a67045fa83ba9ca",
+  "test_fixture_boundary": {
+    "production_modified": false,
+    "private_independent_files": true,
+    "existing_files_preserved": true,
+    "cold_migration_checks_retained": true,
+    "server_template_unbound_and_without_credentials_or_issuer": true,
+    "postgres_native_initialization_retained": true
+  },
+  "production_sla": false,
+  "public_reports": {
+    "compose-lifecycle.json": {
+      "log": "compose-lifecycle.json",
+      "sha256": "39470b7e0144b1c5099da73d14d3556649208afbcbabfe545e79f46f5dcdfa69",
+      "bytes": 60842
+    },
+    "two-api-recovery.json": {
+      "log": "two-api-recovery.json",
+      "sha256": "3cc6ef1426a961b750b24874a5226267cd25b40faff966aca8f238dc00d892d0",
+      "bytes": 5818
+    },
+    "v020-cutover.json": {
+      "log": "v020-cutover.json",
+      "sha256": "05af16eabb5078b553909b854f51e25b98e684a133620d8fbf8ecfe984128396",
+      "bytes": 19674
+    },
+    "v042-cutover.json": {
+      "log": "v042-cutover.json",
+      "sha256": "5302016fa7a18dd4281e17f9566d3be080992c755cac34d180295259517127d2",
+      "bytes": 4585
+    }
+  },
+  "diagnostics_excluded_from_passing_counts": [
+    {
+      "log": "wos-tenant-unit-790dcc2.jsonl",
+      "result": "superseded and interrupted after the corrected backend-specific future-ledger recovery assertion"
+    },
+    {
+      "log": "wos-tenant-unit-diagnostic-provisioning.jsonl",
+      "result": "interrupted after the initializer connection release race was found"
+    },
+    {
+      "log": "wos-tenant-race-diagnostic-provisioning.jsonl",
+      "result": "interrupted to restart after the initializer connection release correction"
+    },
+    {
+      "log": "wos-tenant-unit-diagnostic-runtime-drain.jsonl",
+      "result": "superseded test-only immediate backend shutdown assumption; corrected test retries the unchanged intent while asserting unchanged lifecycle state"
+    },
+    {
+      "log": "wos-tenant-race-diagnostic-cold-fixtures.jsonl",
+      "result": "interrupted to replace repeated cold business-test fixtures with isolated snapshot copies; not a passing full run"
+    },
+    {
+      "log": "wos-tenant-sqlite-diagnostic-cold-fixtures.jsonl",
+      "result": "interrupted cold-fixture timing diagnostic; cold migration tests remain present"
+    },
+    {
+      "log": "wos-tenant-race-diagnostic-startup-budget.jsonl",
+      "sqlite_package_elapsed_seconds": 667.43,
+      "result": "cold migration exceeded the startup regression test explicit 30-second budget under race instrumentation; the corrected test exercises the existing 120-second production default while retaining explicit cancellation and independent one-millisecond writer contention"
+    }
+  ],
+  "raw_logs_private": true
+}

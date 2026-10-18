@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-17
+**Last reviewed:** 2026-10-18
 **Current target:** Owner-requested scalable WOS installations; existing release/human acceptance remains separately tracked
 **Current wave:** Tenant schema isolation and protocol-v3 cutover on the scalable-installation branch; no merge authorized
 
@@ -52,22 +52,40 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Tenant schemas and lifecycle — 2026-10-17
 
-**Status: In progress.** The owner authorized replacing Namespace/`namespace_id`
-with Tenant addressing and complete schema isolation in the existing PR #114.
+**Status: Delivered and locally qualified.** The owner authorized replacing
+Namespace/`namespace_id` with Tenant addressing and complete schema isolation in
+the existing [PR #114](https://github.com/A1b3rt0M3rcad0/wos/pull/114), without merging.
 [ADR 044](docs/adr/0044-tenant-schemas-and-protocol-cutover.md) supersedes the
 earlier row-isolation recommendation and defines the breaking protocol transition.
 
-- [ ] Single-Tenant PostgreSQL schema binding, catalog and complete state ownership.
-- [ ] Host-routed shared installations and dedicated database configuration.
-- [ ] Drain-first provision/suspend/resume/delete with replica exclusion and audit.
-- [ ] Tenant API/CLI/SDK/skills and strict signed protocol-v3 mutation contracts.
-- [ ] Historical proof preservation, explicit profile/data migration and cutover gates.
-- [ ] Real PostgreSQL isolation/lifecycle, migration, normal/race and browser checks.
+- [x] Single-Tenant PostgreSQL schema binding, catalog and complete state ownership.
+- [x] Host-routed shared installations and dedicated database configuration.
+- [x] Drain-first provision/suspend/resume/delete with replica exclusion and audit.
+- [x] Tenant API/CLI/SDK/skills and strict signed protocol-v3 mutation contracts.
+- [x] Historical proof preservation, explicit profile/data migration and cutover gates.
+- [x] Real PostgreSQL isolation/lifecycle, migration, normal/race and browser checks.
 
-Earlier qualification below describes source `aaa4475` and does not validate this
-new change. The branch will be committed and PR #114 updated without merging.
+The [Tenant qualification](docs/scaling/tenant-validation.md) and
+[receipts](docs/scaling/evidence/tenant/validation.json) pin production source
+`f21d454` and final test harness `e81c206`. Both full Go suites pass 1,676
+test/subtest entries in 22 packages, with 14 explicit optional skips each.
+Published v0.2/v0.4.2 cutovers pass on SQLite and PostgreSQL; the two-API failure
+and whole-database restore pilots, eight Compose/TLS/lifecycle checks and
+source-pinned hosted Browser acceptance also pass. CI preserves all cold
+migration checks with a bounded twenty-minute package timeout.
+
+Earlier qualification below describes source `aaa4475` and does not validate
+this change. PR review, production capacity, infrastructure HA/autoscaling,
+private Cloud management and the separate stable-1.0/human acceptance program
+remain outside this qualification. The branch is committed and PR #114 updated
+without merging or publishing a release.
 
 ## Scalable WOS installations — 2026-10-17
+
+> Historical qualification for the pre-schema sources identified below. Its
+> Namespace terminology and unchanged-identifier decision are superseded by
+> ADR 044 and the Tenant transition above. Preserve its measured results as
+> evidence of those original sources.
 
 **Status:** delivered branch scope implemented and locally qualified on
 `feat/scalable-wos-operation`, based on `master` at `cba58d6`. The owner authorized

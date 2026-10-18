@@ -39,6 +39,10 @@ domain schema. A runtime resolves the approved catalog entry and binds its SQL
 pool to that schema for its entire lifetime. It does not accept a schema name
 from an HTTP/MCP payload or change a pooled connection's `search_path` per request.
 
+Use direct PostgreSQL connections or a pooler with session pooling. Transaction
+and statement pooling do not preserve the session-level lifecycle locks and
+fixed connection binding required by this runtime.
+
 A schema is logical separation within PostgreSQL. Schemas in one database share
 CPU, memory, I/O, WAL and the database failure boundary. A dedicated database on
 the same PostgreSQL server still shares that server's resources. Database roles,
@@ -180,7 +184,10 @@ the appropriate runtimes afterward. Deletion requires a suspended Tenant or an
 incomplete provisioning entry, and removes its data schema while retaining the
 catalog tombstone and lifecycle audit. A live runtime prevents the operation;
 `--writers-stopped` records the operator's assertion and does not remotely drain
-or stop processes. After an uncertain response, inspect the catalog state and
+or stop processes. PostgreSQL may briefly retain session locks after a process
+closes its sockets. If a lifecycle operation refuses during that interval, wait
+for the sessions to close and verify that placement and version remain unchanged
+before retrying the same intent. After an uncertain response, inspect the catalog state and
 audit before choosing another operation; do not change the expected version just
 to force a destructive retry.
 

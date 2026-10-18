@@ -1,0 +1,484 @@
+{
+  "schema": 1,
+  "historical_source": "b75aa3e0ca6d649cafadf8450d9b5d606367dda4",
+  "historical_binary_sha256": "f85a09d46e85c21c85c8f3f13b146e405fee98e430bd771899dfcca985d57289",
+  "current_binary_sha256": "1c584b1e668ce4520e427e79aa967f1a790b1160d80098ee4c557e2a920bdd0a",
+  "current_source": "f21d454f8d84da398bc9e908054b2b20e581544f",
+  "current_build": "wos 1.0.0 (commit f21d454f8d84da398bc9e908054b2b20e581544f, built unknown)",
+  "results": [
+    {
+      "driver": "sqlite",
+      "old_schema": 19,
+      "current_schema": 33,
+      "backup_sha256": "8b6c4f0cc4388f57ed01da2a026f3f31315271ac3e31de158894e2631c23281a",
+      "historical_receipts_replayed_before_cutover": 7,
+      "historical_receipts_preserved": 10,
+      "legacy_request_fields_rejected": 7,
+      "contracts_preserved": 1,
+      "submissions_preserved": 1,
+      "criteria_preserved": 2,
+      "unsigned_history_not_resigned": true,
+      "old_authority_settled_before_cutover": true,
+      "old_binary_migration_command_refused": false,
+      "old_binary_readiness_status": 503,
+      "old_binary_mutation_http_status": 401,
+      "old_binary_mutation_failed_without_writes": true,
+      "mixed_version_operation_supported": false,
+      "explicit_breaking_cutover": true,
+      "tenant_placement": null
+    },
+    {
+      "driver": "postgres",
+      "old_schema": 19,
+      "current_schema": 33,
+      "backup_sha256": "34fe8dc5850c675174cf0a5236664245fb561759ee7d0c9f8616452d58235c4a",
+      "historical_receipts_replayed_before_cutover": 7,
+      "historical_receipts_preserved": 10,
+      "legacy_request_fields_rejected": 7,
+      "contracts_preserved": 1,
+      "submissions_preserved": 1,
+      "criteria_preserved": 2,
+      "unsigned_history_not_resigned": true,
+      "old_authority_settled_before_cutover": true,
+      "old_binary_migration_command_refused": false,
+      "old_binary_readiness_status": 503,
+      "old_binary_mutation_http_status": 401,
+      "old_binary_mutation_failed_without_writes": true,
+      "mixed_version_operation_supported": false,
+      "explicit_breaking_cutover": true,
+      "tenant_placement": {
+        "source_schema": "public",
+        "source_write_fenced": true,
+        "placements": [
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "schema": "wos_t_01a11a00000070008000000000000001",
+            "name": "Actual v0.2 upgrade",
+            "state": "suspended",
+            "version": 1,
+            "created_at": "2026-10-18T00:00:56.527805634Z",
+            "updated_at": "2026-10-18T00:00:56.527805634Z"
+          }
+        ],
+        "tables": [
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "aggregate_current_conclusions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "artifacts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "blockers",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "conclusion_assessments",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "conclusions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "credential_policies",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "credentials",
+            "rows": 1,
+            "sha256": "9ddb8a94b5327dc7169438d97634b6f2bc465fd54b026ce51d1c134280d9f87d"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "criterion_assessment_evidence",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "criterion_assessments",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "criterion_current_assessments",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "criterion_revisions",
+            "rows": 2,
+            "sha256": "6053845a999728b75a024a409edb93b88a2ddfd2a7e2871652dfcdf494a836ec"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "decisions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "delivery_attempts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "delivery_tenant_schedule",
+            "rows": 1,
+            "sha256": "6eab0c1934d75bbf80a1187ce01faad757a04e86cf7ec7b3f7742b1a582693ee"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "domain_events",
+            "rows": 10,
+            "sha256": "0e264d38f03d2362d29c46e4ea43272aaff788d371cda6505d2b81283618b682"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "entity_actor_links",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "entity_refs",
+            "rows": 2,
+            "sha256": "ff83c5b7d9802f06eee2b6a9fcae3967f885cb445d044afab04ad4acacd66d87"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "evidence",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "evidence_links",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "idempotency_records",
+            "rows": 10,
+            "sha256": "765569fb4762cc9598d12fdf2ec55ae4fd6701dc7002389b602f19a5b0c5351f"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "integration_deliveries",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "integration_events",
+            "rows": 10,
+            "sha256": "984b51e6652c8dc5b880d1c4ca728714848238e846a7d012fd6b50ef0f931dc4"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "issue_affected_refs",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "issues",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "objectives",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "outcome_context_entries",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "outcome_coordination",
+            "rows": 1,
+            "sha256": "7ae10a436f3defe8e7bbe8276878106ff25cc6f6080fa550c02ab01fbd570f23"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "outcome_external_references",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "outcomes",
+            "rows": 1,
+            "sha256": "267566717fa2507934cb201c030482bc505b051270f4692b1ab774e572e8cacf"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "principal_review_groups",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "principals",
+            "rows": 1,
+            "sha256": "e1521efffb0058f569930e81cea28505b323aa21c18c6b7eb49ca2627bc3afe3"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "relations",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_activation_history",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_active_slots",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_drafts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_revision_after_links",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_revision_dependencies",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_revision_nodes",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmap_revisions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "roadmaps",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "security_admin_results",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "security_audit",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "server_issuer_public_keys",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "server_issuer_recoveries",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "server_protocol_identity",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_operation_results",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_protocol_facts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_return_intent_resolutions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_work_contract_checkpoints",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_work_contract_submissions",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signed_work_contracts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signing_key_enrollments",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signing_keys",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "signing_security_results",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "success_criteria",
+            "rows": 2,
+            "sha256": "2c7c288b748ddfe1fe995564453f2c7e740041dc080a0dca57a6e1e6a3f69e1f"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "tenant_grants",
+            "rows": 1,
+            "sha256": "9d45274dd01308b1a9d7554ba0a5ef98f69ddbc254e813a86c5ba58ef2f5d294"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "tenant_work_protocol",
+            "rows": 1,
+            "sha256": "8d19a3f540c6217268020640d964b379c56b80121313b2f48748b72049af52c3"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "tenants",
+            "rows": 1,
+            "sha256": "b70c7310c054b309937772596fb314bd85b0396d4b8d0f37fe334a19f1252282"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "trigger_firings",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "triggers",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "webhook_endpoints",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_acceptance_policies",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_activities",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_contract_checkpoints",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_contract_submissions",
+            "rows": 1,
+            "sha256": "03e86ac7bae8b510989cff114fe25a3385e02282a1a03837f15a37034ade1f1b"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_contracts",
+            "rows": 1,
+            "sha256": "54a222b3e5e40bc3fb94f0175b9c1c1fef15e38a0c39f5395f53d2e7ec85abd3"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_items",
+            "rows": 1,
+            "sha256": "fab9d8ba6654004631a6372c9c4f00de856a437abe3a7b966631a9e6c5f596ef"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_review_cases",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "tenant_id": "01a11a00-0000-7000-8000-000000000001",
+            "table": "work_review_contracts",
+            "rows": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ]
+      }
+    }
+  ],
+  "native_windows_executed": false,
+  "signed_pending_restore_executed": false
+}

@@ -6,7 +6,8 @@ or dedicated infrastructure. External runtimes still select and execute agents.
 
 This guide describes the schema-per-Tenant branch architecture. Follow the
 [Tenant lifecycle and breaking cutover](tenants.md) before upgrading an existing
-installation. The [qualification record](qualification.md) retains the exact
+installation. [Tenant qualification](tenant-validation.md) records the new
+schema boundary. The [earlier qualification record](qualification.md) retains the exact
 source of executed measurements; earlier runs do not qualify the new storage
 boundary, and configuration alone does not establish production capacity.
 

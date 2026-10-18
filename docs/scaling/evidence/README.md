@@ -2,6 +2,10 @@
 
 These records cover different boundaries:
 
+- [Tenant qualification](../tenant-validation.md): current schema isolation,
+  explicit published-version cutovers and replicated recovery. Public receipts
+  are under [`tenant/`](tenant/); their source commits remain distinct from the
+  historical measurements below.
 - [Signed SQL qualification](qualification/README.md): immutable sources, every
   completed repetition, the retained baseline failure and all raw final case logs.
 - [Local validation](../validation.md) and [its receipt](validation.json): test
