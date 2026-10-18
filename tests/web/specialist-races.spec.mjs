@@ -83,9 +83,10 @@ function permissionBarrier(hold, scope) {
 async function openSpecialist(page, wos, outcome, area) {
   await wos.login(page);
   await openOutcome(page, outcome.title, { area });
-  await expect(page.locator("#notice")).toHaveText(
-    /Shared state refreshed|Partial view/,
-  );
+  // Collection readiness is represented by its rendered heading and records;
+  // routine Board feedback no longer creates a second persistent status row.
+  await expect(page.locator("#content .content-heading h2")).toBeVisible();
+  await expect(page.locator("#notice")).not.toHaveClass(/error/);
   await expect(
     page.locator(`#area-tabs [data-area="${area}"]`),
   ).toHaveAttribute("aria-pressed", "true");

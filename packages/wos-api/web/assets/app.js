@@ -3270,6 +3270,9 @@ async function showEntity(
       const options = {
         ref, entity, model: isCanvas ? state.canvasModel : undefined,
         placementOnly: ref.kind === "work_item" && isCanvas,
+        // Reuse names from the current authorized snapshot outside the Board
+        // too; labels neither add relationships nor trigger extra reads.
+        referenceTitle: titleOf,
         onReference: (target) => showEntity(target).catch(report),
       };
       const snapshot = JSON.stringify(buildEntityContext(options));

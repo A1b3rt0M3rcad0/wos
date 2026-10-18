@@ -189,7 +189,7 @@ test("specialist entity details explain direct recorded scope without claiming a
   await expect(summary).toContainText("Affected item · not a blocking statement");
   await summary.getByText("Loaded connections and coverage", { exact: true }).click();
   await expect(summary).toContainText("The Board connection index is not included here");
-  await expect(summary.getByRole("button", { name: /^Task / })).toHaveCount(1);
+  await expect(summary.getByRole("button", { name: data.tasks.blocked.title, exact: true })).toHaveCount(1);
 });
 
 test("a late bounded graph expansion refreshes actual Objective connections without losing focus or disclosure state", async ({ page, wos }) => {

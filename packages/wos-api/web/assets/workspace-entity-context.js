@@ -180,13 +180,13 @@ export function buildEntityContext({ ref, entity = {}, model, placementOnly = fa
   return result();
 }
 
-export function renderEntityContext(host, { onReference, ...options } = {}) {
+export function renderEntityContext(host, { onReference, referenceTitle, ...options } = {}) {
   const context = buildEntityContext(options);
   if (!context) return null;
   const root = el("section", undefined, "detail-section entity-context");
   root.append(el("h3", text("Title")), el("p", context.role, "canvas-context-text"));
   function reference(value) {
-    const label = value.title || `${kindName(value.ref.kind)} ${shortId(value.ref.id)}`;
+    const label = value.title || referenceTitle?.(value.ref) || `${kindName(value.ref.kind)} ${shortId(value.ref.id)}`;
     if (typeof onReference !== "function")
       return el("span", label, "canvas-context-reference");
     const control = button(label, () => onReference({ ...value.ref }), "quiet canvas-context-reference");
