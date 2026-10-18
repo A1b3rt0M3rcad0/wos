@@ -39,7 +39,7 @@ Use the browser to plan and review, the CLI to coordinate external agents, or HT
 Suppose your team needs to **ship partial refunds**. Define a success criterion: customers can receive part of a payment back, but never more than the amount still refundable. A coding agent implements the change and records the exact commit and test report. A person or an authorized reviewing agent checks that delivery against the criterion before the Outcome is explicitly accepted. If a session ends midway, the next participant can read the recorded progress and remaining work.
 
 <p align="center">
-  <a href="docs/design/editorial/density/screenshots/board-2560x1440-map.png"><img src="docs/design/editorial/density/screenshots/board-2560x1440-map.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
+  <a href="docs/design/editorial/board-communication/screenshots/board-2560x1440-map.png"><img src="docs/design/editorial/board-communication/screenshots/board-2560x1440-map.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
 The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
@@ -49,7 +49,7 @@ Use the map's **+**, **−**, **Center view** and **Fit view** controls to explo
 Drag cards in any direction to arrange the Board locally; scroll or drag its background to pan. **Ctrl/Command + scroll** zooms around the pointer. Placement does not create a relationship. The inspector explains each record's role, its actual connections and the limits of the loaded view. [Understand how Outcomes, Objectives, Tasks, Evidence and Issues fit together](docs/workspace-relationships.md).
 
 Fonts, controls and panels keep stable operational sizes on larger monitors;
-the extra space belongs to the work. [Desktop and mobile screenshots](docs/design/editorial/density/README.md).
+the extra space belongs to the work. [Desktop and mobile screenshots](docs/design/editorial/board-communication/README.md).
 
 Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Workspace interaction guide](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
@@ -246,7 +246,7 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 ## Documentation and support
 
 - [Documentation index](docs/README.md): setup, workspace use, agents and integration references.
-- [Outcome Board workspace](docs/design/operational-canvas/canvas-first/README.md): viewport-based operation, compact navigation and responsive inspection. [Current screenshots](docs/design/editorial/density/README.md). [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
+- [Outcome Board workspace](docs/design/operational-canvas/canvas-first/README.md): viewport-based operation, compact navigation and responsive inspection. [Current screenshots](docs/design/editorial/board-communication/README.md). [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
 - [Server operations](docs/operations.md), [architecture](docs/architecture.md) and [operational acceptance](docs/stable/operational-acceptance.md).
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).

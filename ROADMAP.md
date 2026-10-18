@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Clear entity relationships, nonblocking Board notices, free local movement and compact contextual actions in draft PR #116
+**Current wave:** Review and hosted qualification of Board communication, contextual actions and free local movement in draft PR #116
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -52,20 +52,31 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Board communication and navigation — 2026-10-18
 
-**Status: In progress in [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116).**
+**Status: Implemented and locally qualified in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116); review and hosted qualification remain separate.**
 The owner reports an obstructive persistent Partial view notice, artificial
 limits on card movement, stretched action rows, and unclear relationships among
 Outcomes, Objectives, Tasks, Evidence and Issues. Continue the same draft PR.
 
-- [ ] Place persistent data-completeness information in the Board status flow,
+- [x] Place persistent data-completeness information in the Board status flow,
   preserving visible errors and accessible feedback without covering controls.
-- [ ] Allow panning and local card placement around every side of the Board;
+- [x] Allow panning and local card placement around every side of the Board;
   preserve correct fitting, connections, selection and camera behavior.
-- [ ] Make action menus compact, grouped by purpose and contextual to the
+- [x] Make action menus compact, grouped by purpose and contextual to the
   selected record, with readable explanations and reachable native forms.
-- [ ] Map and clarify actual entity relationships, ownership, dependencies,
+- [x] Map and clarify actual entity relationships, ownership, dependencies,
   documentary support and blocking, without inferring acceptance or authority.
-- [ ] Verify desktop/mobile workflows and refresh source-bound captures and docs.
+- [x] Verify desktop/mobile workflows and refresh source-bound captures and docs.
+
+Implementation source `c394f13801a7ca56900da334a862f917fed43aa8` passes all
+57 unit checks and 122 browser journeys in one clean full run (5.7m), with no
+failures, skips, retries or flaky results. Native web tests/vet and 16
+release/compatibility checks pass. The [33-image source-bound gallery](docs/design/editorial/board-communication/README.md)
+records desktop/mobile, DPR and native browser zoom. The
+[relationship guide](docs/workspace-relationships.md) maps actual ownership,
+dependencies, Evidence stances, Issue scope, blocking and explicit verification.
+The existing release queue plans a minor 1.2.0 preparation; this does not
+publish a version. No domain, API, storage or authority changes are included.
+No merge is performed.
 
 ## Stable operational density — 2026-10-18
 

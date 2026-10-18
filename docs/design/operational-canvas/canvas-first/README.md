@@ -2,7 +2,7 @@
 
 The newer [operational density correction](../../editorial/operational-density.md)
 removes monitor-width enlargement and compacts small-screen controls. Its
-[source-bound gallery](../../editorial/density/README.md) records the current
+[source-bound gallery](../../editorial/board-communication/README.md) records the current
 sizes. The measurements and captures below remain historical qualification of
 `0d84588`; they do not describe the newer sizing rules.
 

@@ -11,7 +11,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
 | Connect Objectives, Tasks, Evidence and problems without confusing completion with acceptance | [Understand the relationships](workspace-relationships.md) |
 | Find Outcomes through live search and filters      | [Outcome discovery](workspace-ux.md#find-another-outcome)               |
-| View the current desktop and mobile interface       | [Outcome Board workspace and screenshots](design/operational-canvas/canvas-first/README.md) |
+| View the current desktop and mobile interface       | [Current Board and workspace screenshots](design/editorial/board-communication/README.md) |
 | Inspect earlier specialist pages, native forms and recovery states | [Earlier complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
 | See real navigation through the earlier interface   | [Recorded workspace tour](images/workspace-tour.md)                    |

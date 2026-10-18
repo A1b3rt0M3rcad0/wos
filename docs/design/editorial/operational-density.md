@@ -1,5 +1,9 @@
 # Stable operational density
 
+The [newer Board gallery](board-communication/README.md) records current
+actions, relationships and feedback while retaining these sizing rules.
+The density-only verification figures below retain their identified source.
+
 The interface uses bounded operational dimensions across desktop, tablet and
 phone viewports. A larger monitor gives the workspace more room for content;
 it does not multiply every font, control, illustration and panel.

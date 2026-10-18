@@ -1,8 +1,8 @@
 # WOS editorial workspace
 
 The latest [operational density correction](operational-density.md) supersedes
-the former proportional viewport enlargement. See the [current captures](density/README.md)
-for compact navigation, bounded typography and readable inspection. Earlier
+the former proportional viewport enlargement. See the [current captures](board-communication/README.md)
+for compact navigation, readable inspection, grouped actions and explicit entity relationships. Earlier
 captures below remain historical records of their identified implementations.
 
 This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette and the owner-supplied WOS web identity. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
@@ -19,7 +19,7 @@ This is a presentation change to the six existing areas, authentication screen, 
 | Utility type | DM Sans variable for controls; system monospace for metadata | Relative font sizes; readable controls and visible focus |
 | Interaction | Copper `#A7441D` for links, relevant accents, and keyboard focus; selected surface `#F1DFD0` | Same roles, with explicit selected states |
 | Primary actions | Charcoal `#292620`, hover `#403A32`, and on-primary text `#FFFDF9` | Same contrast and interaction states |
-| Secondary actions | Padded utility buttons with a fine rule, lighter textual actions, and ruled serif action-menu rows; hover preserves contrast and selected states | At least 44 px targets; List/Board stays a framed switch; touch does not retain mouse-hover paint |
+| Secondary actions | Padded utility buttons with a fine rule, lighter textual actions, and compact grouped action-menu rows; hover preserves contrast and selected states | At least 44 px targets; List/Board stays a framed switch; touch does not retain mouse-hover paint |
 | Semantic state | Success `#246846`, warning `#865B13`, error `#B23834`, and info `#365F85`; every badge retains a text label | Meaning never relies on color alone |
 | Brand | Owner-supplied hand-drawn orange chain, displayed alone in the header; original SVG/PNG/ICO browser assets | Transparent vector symbol with its original proportions; accessible home-link name and monochrome robots retained |
 | Robot vignettes | User-supplied monochrome pen-and-ink illustrations; each chapter has a relevant action | Smaller, reserved space alongside the introduction |

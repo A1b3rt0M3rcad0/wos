@@ -1,5 +1,9 @@
 # Operational density screenshots
 
+The [newer Board communication gallery](../board-communication/README.md) records
+current feedback, action menus and relationship inspection. The captures below
+retain their original density-only source qualification.
+
 These 27 captures show the running interface at source
 [`9d41b3a`](https://github.com/A1b3rt0M3rcad0/wos/tree/9d41b3aace7378ba7ed34948fb36db7f32464e47).
 They document stable operational sizes and compact mobile controls, replacing
