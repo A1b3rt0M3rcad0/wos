@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Coordinated 1.1.0 release metadata and README synchronization; human acceptance remains separately tracked
+**Current wave:** Compact login, stable Board inspection and visible camera controls; release 1.1.0 and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,28 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Compact entry and Board inspection — 2026-10-18
+
+**Status: In progress in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).**
+The owner reports avoidable login scrolling on smaller screens and a contextual
+inspector that disrupts the Outcome Board header. The owner also requests clear
+centering/zoom controls, using Woobe's Network as an interaction reference.
+
+- [ ] Fit the default login composition in compact desktop/mobile viewports
+  without clipping fields, shrinking touch targets or disabling natural reflow
+  when local access, enlarged text or an on-screen keyboard needs more room.
+- [ ] Keep the Outcome/Board header and toolbar stable during inspection;
+  constrain the existing detail/form/action surfaces to the graphic region.
+- [ ] Expose persistent map camera controls, preserving keyboard, pan, selected
+  context and the distinction between centering, fit and local auto-layout.
+- [ ] Verify normal/compact/zoomed entry, inspector focus/forms and camera
+  interactions, then update the captures and source-bound qualification.
+
+The existing editorial tokens, original art, commands, authority and recovery
+contracts remain unchanged. Merge was authorized by the owner; additional UI
+corrections precede integration and exact-source checks. Version 1.1.0 remains
+prepared and unpublished while this PR is open.
 
 ## Coordinated release and README versions — 2026-10-18
 

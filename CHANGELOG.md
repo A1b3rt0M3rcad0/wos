@@ -2,7 +2,7 @@
 
 ## 1.1.0 — prepared for release
 
-- Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work.
+- Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work. Fit the default login on compact screens, keep inspection below a stable Board toolbar, and expose persistent zoom, centering and whole-map fit controls.
 - Synchronize the README source version with coordinated release preparation, display live GitHub/npm publication badges, and reject documentation version drift in release checks.
 
 ## 1.0.0 — prepared for release

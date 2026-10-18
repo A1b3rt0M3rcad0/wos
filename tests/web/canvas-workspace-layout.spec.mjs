@@ -11,6 +11,48 @@ import { createHash } from "node:crypto";
 const verifiedAssets = new WeakMap();
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
+for (const [width, height] of [[1280, 720], [1366, 768], [1024, 768], [390, 844], [360, 640], [320, 740]]) {
+  test(`Compact login fits its complete default composition at ${width} x ${height}`, async ({ page, wos }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto(`${wos.url}/app/`);
+    await page.evaluate(() => document.fonts.ready);
+    await verifyCaptureAssets(page, wos);
+    const measurement = await entryBounds(page);
+    await capture(page, `login-${width}x${height}`, { ...measurement, state: "default credential login; local access collapsed" });
+    expect(measurement.document.width).toBeLessThanOrEqual(width);
+    expect(measurement.document.height).toBeLessThanOrEqual(height);
+    await fullyVisible(page.locator(".login-panel"));
+    await fullyVisible(page.locator("#token"));
+    await fullyVisible(page.locator("#login button"));
+    expect(measurement.input.height).toBeGreaterThanOrEqual(44);
+    expect(measurement.submit.height).toBeGreaterThanOrEqual(44);
+    await page.locator("#token").focus();
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#login button")).toBeFocused();
+    await wos.login(page);
+    await expect(page.locator("#connect")).toBeHidden();
+  });
+}
+
+test("Expanded local login and enlarged text keep natural scrolling and whole controls", async ({ page, wos }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto(`${wos.url}/app/`);
+  await page.locator(".entry-local > summary").click();
+  await page.locator("#local-ns").fill(wos.namespace);
+  await page.locator("#local button").scrollIntoViewIfNeeded();
+  await fullyVisible(page.locator("#local button"));
+  await page.locator("html").evaluate((element) => { element.style.fontSize = "200%"; });
+  await page.locator("#token").scrollIntoViewIfNeeded();
+  await page.locator("#token").fill("a".repeat(32));
+  await page.locator("#login button").scrollIntoViewIfNeeded();
+  await fullyVisible(page.locator("#login button"));
+  const bounds = await entryBounds(page);
+  expect(bounds.document.width).toBeLessThanOrEqual(bounds.viewport.width);
+  expect(bounds.document.height).toBeGreaterThan(bounds.viewport.height);
+  await page.locator("#local button").scrollIntoViewIfNeeded();
+  await fullyVisible(page.locator("#local button"));
+});
+
 const canvas = (page) => page.locator("#operational-canvas");
 const viewport = (page) => canvas(page).locator(".canvas-viewport");
 const panel = (page) => page.locator("#canvas-details");
@@ -56,12 +98,80 @@ async function workspaceBounds(page) {
     viewport: dimensions, chrome,
   };
 }
+async function entryBounds(page) {
+  return page.evaluate(() => {
+    const box = (selector) => {
+      const r = document.querySelector(selector).getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height, top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+    };
+    return {
+      entry: true,
+      viewport: { width: innerWidth, height: innerHeight, devicePixelRatio, visualViewportScale: visualViewport.scale },
+      document: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight, scrollX, scrollY },
+      panel: box(".login-panel"), story: box(".login-story"), input: box("#token"), submit: box("#login button"),
+    };
+  });
+}
+async function verifyCaptureAssets(page, wos) {
+  if (!process.env.WOS_CAPTURE_CANVAS_FIRST) return;
+  const entries = await Promise.all(["app.js", "canvas.css", "editorial.css", "en-US.js", "index.html", "workspace-canvas.js", "workspace-entry.css"].map(async (file) => {
+    const [response, source] = await Promise.all([
+      page.request.get(`${wos.url}/app/${file}`),
+      readFile(new URL(`../../packages/wos-api/web/assets/${file}`, import.meta.url)),
+    ]);
+    expect(response.ok(), `Capture asset ${file} is served`).toBe(true);
+    const actual = sha256(await response.body());
+    expect(actual, `Capture refuses a stale embedded ${file}`).toBe(sha256(source));
+    return [file, actual];
+  }));
+  verifiedAssets.set(page, Object.fromEntries(entries));
+  await test.info().attach("verified-embedded-assets", { body: JSON.stringify(verifiedAssets.get(page), null, 2), contentType: "application/json" });
+}
 async function controls(page) {
   await fullyVisible(page.locator('#area-tabs [data-area="canvas"]'));
   await fullyVisible(page.locator("#outcome-views > summary"));
   await fullyVisible(canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }));
-  for (const name of ["Zoom in", "Zoom out", "Fit view"])
-    await fullyVisible(canvas(page).getByRole("button", { name, exact: true }));
+  for (const name of ["Zoom in", "Zoom out", "Center view", "Fit view"]) {
+    const button = canvas(page).getByRole("button", { name, exact: true });
+    await fullyVisible(button);
+    expect(await button.evaluate((element) => {
+      const r = element.getBoundingClientRect();
+      return r.width >= 44 && r.height >= 44 && element.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+    }), `${name} has a whole, unobscured touch target`).toBe(true);
+  }
+}
+async function exerciseCameraWithInspection(page) {
+  const scale = () => viewport(page).evaluate((element) => Number(element.dataset.scale));
+  const initialScale = await scale();
+  await canvas(page).getByRole("button", { name: "Zoom in", exact: true }).click();
+  expect(await scale()).toBeGreaterThan(initialScale);
+  await canvas(page).getByRole("button", { name: "Zoom out", exact: true }).click();
+  expect(await scale()).toBeCloseTo(initialScale, 4);
+  await viewport(page).focus();
+  await page.keyboard.press("ArrowRight");
+  const panned = await canvas(page).locator(".canvas-world").getAttribute("style");
+  await canvas(page).getByRole("button", { name: "Center view", exact: true }).click();
+  expect(await scale()).toBeCloseTo(initialScale, 4);
+  await expect(canvas(page).locator(".canvas-world")).not.toHaveAttribute("style", panned);
+  const geometry = () => canvas(page).evaluate((element) => {
+    const map = element.querySelector(".canvas-viewport").getBoundingClientRect();
+    const world = element.querySelector(".canvas-world").getBoundingClientRect();
+    const inspector = element.querySelector(".canvas-context-panel").getBoundingClientRect();
+    const unit = parseFloat(getComputedStyle(document.documentElement).fontSize) / 14;
+    const right = inspector.left < map.right ? inspector.left - 12 * unit : map.right;
+    return { map: { left: map.left, right, top: map.top, bottom: map.bottom }, world: { left: world.left, right: world.right, top: world.top, bottom: world.bottom } };
+  });
+  let position = await geometry();
+  expect((position.world.left + position.world.right) / 2).toBeCloseTo((position.map.left + position.map.right) / 2, 0);
+  expect((position.world.top + position.world.bottom) / 2).toBeCloseTo((position.map.top + position.map.bottom) / 2, 0);
+  await canvas(page).getByRole("button", { name: "Fit view", exact: true }).click();
+  position = await geometry();
+  expect(position.world.left).toBeGreaterThanOrEqual(position.map.left);
+  expect(position.world.right).toBeLessThanOrEqual(position.map.right + 1);
+  expect(position.world.top).toBeGreaterThanOrEqual(position.map.top);
+  expect(position.world.bottom).toBeLessThanOrEqual(position.map.bottom + 1);
+  await expect(panel(page)).toBeVisible();
+  await panel(page).locator(".canvas-inspector-detail").focus();
 }
 async function focusedBoardOwnsNavigation(page) {
   const sidebar = page.locator(".sidebar");
@@ -119,20 +229,7 @@ async function openCanvas(page, wos, data) {
   // Selecting an Outcome must move focus out of navigation that is now hidden.
   await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
   await focusedBoardOwnsNavigation(page);
-  if (process.env.WOS_CAPTURE_CANVAS_FIRST) {
-    const entries = await Promise.all(["app.js", "canvas.css", "editorial.css", "en-US.js", "index.html", "workspace-canvas.js"].map(async (file) => {
-      const [response, source] = await Promise.all([
-        page.request.get(`${wos.url}/app/${file}`),
-        readFile(new URL(`../../packages/wos-api/web/assets/${file}`, import.meta.url)),
-      ]);
-      expect(response.ok(), `Capture asset ${file} is served`).toBe(true);
-      const actual = sha256(await response.body());
-      expect(actual, `Capture refuses a stale embedded ${file}`).toBe(sha256(source));
-      return [file, actual];
-    }));
-    verifiedAssets.set(page, Object.fromEntries(entries));
-    await test.info().attach("verified-embedded-assets", { body: JSON.stringify(verifiedAssets.get(page), null, 2), contentType: "application/json" });
-  }
+  await verifyCaptureAssets(page, wos);
 }
 async function sidebarBounds(page) {
   await expect(page.locator(".sidebar")).toBeVisible();
@@ -174,7 +271,7 @@ async function capture(page, name, measurement) {
   if (measurement.nativeBrowserZoom) expect(pixelSize).toEqual(measurement.unzoomedViewport);
   expect(verifiedAssets.has(page), "The captured server's modified assets were checked against source").toBe(true);
   await writeFile(join(directory, `${name}.json`), JSON.stringify({
-    ...(measurement.specialist ? await sidebarBounds(page) : await workspaceBounds(page)), ...measurement, pixelSize, captureMethod,
+    ...(measurement.entry ? await entryBounds(page) : measurement.specialist ? await sidebarBounds(page) : await workspaceBounds(page)), ...measurement, pixelSize, captureMethod,
     servedAssetsSha256: verifiedAssets.get(page), capturedAt: new Date().toISOString(),
   }, null, 2) + "\n");
 }
@@ -202,6 +299,8 @@ for (const [width, height] of [[1280, 720], [1366, 768], [1920, 1080], [2560, 14
     }
     await controls(page);
     const initial = await workspaceBounds(page);
+    const headerBefore = await page.locator(".outcome-heading").boundingBox();
+    const toolbarBefore = await canvas(page).locator(".canvas-toolbar").boundingBox();
     await capture(page, `canvas-${width}x${height}`, { state: "default", ...initial });
     expect(initial.heightRatio).toBeGreaterThanOrEqual(0.7);
     await task(page, data.tasks.ready).focus();
@@ -209,9 +308,19 @@ for (const [width, height] of [[1280, 720], [1366, 768], [1920, 1080], [2560, 14
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
     await fullyVisible(panel(page));
     const selected = await workspaceBounds(page);
+    expect(await page.locator(".outcome-heading").boundingBox()).toEqual(headerBefore);
+    expect(await canvas(page).locator(".canvas-toolbar").boundingBox()).toEqual(toolbarBefore);
+    const inspection = await panel(page).boundingBox();
+    const footer = await canvas(page).locator(".canvas-footer").boundingBox();
+    expect(inspection.y).toBeGreaterThanOrEqual(toolbarBefore.y + toolbarBefore.height);
+    expect(inspection.y + inspection.height).toBeLessThanOrEqual(footer.y + 1);
+    await controls(page);
     if (width <= 1400 || height <= 800) expect(selected.width).toBeCloseTo(initial.width, 0);
     await capture(page, `canvas-${width}x${height}-inspector`, { state: "selected Task, initial context", ...selected });
     await inspectorActionsRemainReachable(page);
+    await exerciseCameraWithInspection(page);
+    if (width === 1366)
+      await capture(page, "canvas-1366x768-fitted", { state: "complete loaded map fitted in the area beside the open inspector" });
     const body = panel(page).locator(".dialog-body").first();
     await body.evaluate((element) => { element.scrollTop = element.scrollHeight; });
     await workspaceBounds(page);

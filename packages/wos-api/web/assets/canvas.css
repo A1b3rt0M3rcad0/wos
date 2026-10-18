@@ -108,8 +108,30 @@ dl.canvas-summary-metrics > div {
   min-width: 0;
   border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
 }
-.canvas-workspace-shell:has(.canvas-context-panel:not([hidden])) {
+.canvas-stage:has(.canvas-context-panel:not([hidden])) {
   grid-template-columns: minmax(0, 1fr) calc(360 * var(--wos-unit, 1px));
+}
+.canvas-stage {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.canvas-map {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.canvas-stage > :is(.canvas-map, .canvas-list) {
+  grid-area: 1 / 1;
+}
+.canvas-stage > .canvas-context-panel {
+  grid-area: 1 / 2;
 }
 #operational-canvas,
 .workspace-canvas {
@@ -170,10 +192,46 @@ dl.canvas-summary-metrics > div {
   --button-active-ink: var(--wos-on-primary);
 }
 .canvas-camera-controls {
-  gap: calc(2 * var(--wos-unit, 1px));
-  margin-inline-start: auto;
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: calc(12 * var(--wos-unit, 1px));
+  inset-block-end: calc(12 * var(--wos-unit, 1px));
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-control-border);
+  background: var(--wos-workspace);
+  box-shadow: 0 calc(2 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px)) var(--wos-shadow);
 }
 .canvas-camera-controls button {
+  --button-idle-bg: transparent;
+  --button-idle-ink: var(--wos-foreground);
+  --button-hover-bg: var(--wos-selected);
+  --button-hover-ink: var(--wos-foreground);
+  --button-active-bg: var(--wos-control);
+  --button-active-ink: var(--wos-foreground);
+  display: grid;
+  place-items: center;
+  min-width: calc(44 * var(--wos-unit, 1px));
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px));
+  border: 0;
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+}
+.canvas-camera-controls button:last-child {
+  border-bottom: 0;
+}
+.canvas-camera-controls svg {
+  width: calc(18 * var(--wos-unit, 1px));
+  height: calc(18 * var(--wos-unit, 1px));
+  pointer-events: none;
+}
+.canvas-camera-controls :is(button, output) {
+  width: 100%;
+}
+.canvas-camera-controls output {
+  display: block;
+  padding-block: calc(4 * var(--wos-unit, 1px));
   border-bottom-color: var(--wos-border);
 }
 .canvas-camera-controls output {
@@ -839,7 +897,7 @@ dl.canvas-summary-metrics > div {
     grid-template-columns: minmax(0, 1fr);
     gap: calc(12 * var(--wos-unit, 1px));
   }
-  .canvas-workspace-shell:has(.canvas-context-panel:not([hidden])) {
+  .canvas-stage:has(.canvas-context-panel:not([hidden])) {
     grid-template-columns: minmax(0, 1fr);
   }
   .canvas-context-panel {
@@ -882,11 +940,7 @@ dl.canvas-summary-metrics > div {
   .canvas-view-switch button {
     flex: 1;
   }
-  .canvas-camera-controls {
-    flex: 1 1 100%;
-    justify-content: space-between;
-    margin-inline-start: 0;
-  }
+  .canvas-camera-controls { margin-inline-start: 0; }
   .canvas-camera-controls button {
     padding-inline: calc(8 * var(--wos-unit, 1px));
   }
@@ -1237,6 +1291,11 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
 }
+#outcome[data-editorial-area="canvas"] .canvas-map {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 #outcome[data-editorial-area="canvas"] :is(#operational-canvas, .workspace-canvas) {
   display: flex;
   flex-direction: column;
@@ -1270,9 +1329,8 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 #outcome[data-editorial-area="canvas"] .canvas-link-filter {
   order: 2;
 }
-#outcome[data-editorial-area="canvas"] .canvas-camera-controls {
+#outcome[data-editorial-area="canvas"] .canvas-auto-layout {
   order: 3;
-  gap: 0;
 }
 #outcome[data-editorial-area="canvas"] .canvas-viewport,
 #outcome[data-editorial-area="canvas"] .canvas-list {
@@ -1326,10 +1384,12 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   position: relative;
   top: auto;
   min-height: 0;
-  height: 100%;
+  height: calc(100% - calc(16 * var(--wos-unit, 1px)));
   max-height: none;
   overflow: hidden;
-  border-top: 0;
+  margin: calc(8 * var(--wos-unit, 1px));
+  border: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
 }
 #outcome[data-editorial-area="canvas"] .canvas-inspector-slot,
 #outcome[data-editorial-area="canvas"] .canvas-inspector-slot > .dialog-form {
@@ -1345,6 +1405,20 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 }
 #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading {
   padding: calc(14 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading h2 {
+  margin: 0;
+  font-size: 1.85714rem;
+  overflow-wrap: anywhere;
+}
+#outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading .eyebrow {
+  color: var(--wos-copper);
 }
 #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-body {
   padding: calc(16 * var(--wos-unit, 1px));
@@ -1353,11 +1427,34 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
    letting a nonshrinking footer consume the inspector's readable body. The
    command form retains its normal footer and visible primary submit action. */
 #outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
   max-height: min(42%, calc(220 * var(--wos-unit, 1px)));
   overflow: auto;
   overscroll-behavior: contain;
   scroll-padding-block: calc(8 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions > details {
+  grid-column: 1 / -1;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .quick-actions > details > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer button {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail #entity-actions {
+  grid-column: 1 / -1;
+  text-align: center;
 }
 @media (max-width: 1100px) and (min-width: 761px) {
   #outcome[data-editorial-area="canvas"] .canvas-search {
@@ -1372,21 +1469,20 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     min-width: 0;
     font-size: 0.78571rem;
   }
-  #outcome[data-editorial-area="canvas"] .canvas-camera-controls {
-    flex: 1 1 calc(300 * var(--wos-unit, 1px));
-    justify-content: flex-end;
-  }
 }
 @media (max-width: 1400px), (max-height: 800px) {
-  #outcome[data-editorial-area="canvas"] .canvas-workspace-shell:has(.canvas-context-panel:not([hidden])) {
+  #outcome[data-editorial-area="canvas"] .canvas-stage:has(.canvas-context-panel:not([hidden])) {
     grid-template-columns: minmax(0, 1fr);
   }
   #outcome[data-editorial-area="canvas"] .canvas-context-panel {
     position: absolute;
     z-index: 5;
-    inset-block: 0;
-    inset-inline-end: 0;
-    width: min(calc(420 * var(--wos-unit, 1px)), 100%);
+    grid-area: auto;
+    inset-block: calc(8 * var(--wos-unit, 1px));
+    inset-inline-end: calc(8 * var(--wos-unit, 1px));
+    width: min(calc(420 * var(--wos-unit, 1px)), calc(100% - calc(16 * var(--wos-unit, 1px))));
+    height: auto;
+    margin: 0;
     border-inline-start: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
     box-shadow: calc(-8 * var(--wos-unit, 1px)) 0 calc(24 * var(--wos-unit, 1px)) var(--wos-shadow);
   }
@@ -1449,17 +1545,36 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   #outcome[data-editorial-area="canvas"] .canvas-search {
     flex: 1 1 calc(120 * var(--wos-unit, 1px));
   }
-  #outcome[data-editorial-area="canvas"] .canvas-camera-controls {
-    flex: 1 1 100%;
-    justify-content: space-between;
-  }
   #outcome[data-editorial-area="canvas"] .canvas-link-filter {
-    flex: 1 1 100%;
+    flex: 1 1 calc(170 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-link-filter select {
+    min-width: 0;
   }
   #outcome[data-editorial-area="canvas"] .canvas-footer {
     padding-inline: calc(6 * var(--wos-unit, 1px));
   }
   #outcome[data-editorial-area="canvas"] .canvas-status {
     flex-basis: 100%;
+  }
+}
+@media (max-height: 600px) {
+  .canvas-camera-controls {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .canvas-camera-controls :is(button, output) {
+    width: auto;
+  }
+  .canvas-camera-controls button {
+    border-bottom: 0;
+    border-inline-end: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  }
+  .canvas-camera-controls button:last-child {
+    border-inline-end: 0;
+  }
+  .canvas-camera-controls output {
+    display: grid;
+    place-items: center;
   }
 }

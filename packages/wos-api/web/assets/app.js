@@ -766,6 +766,7 @@ async function loadCanvas({ force = false } = {}) {
   state.canvasModel = model;
   if (!state.canvasView)
     state.canvasView = mountWorkspaceCanvas($("operational-canvas"), {
+      inspectorHost: $("canvas-details"),
       model: canvasPresentation(),
       selectedKey: state.canvasSelected
         ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`

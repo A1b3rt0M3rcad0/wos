@@ -7,7 +7,7 @@
     {
       "file": "canvas-first-workspace.json",
       "bump": "minor",
-      "summary": "Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work."
+      "summary": "Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work. Fit the default login on compact screens, keep inspection below a stable Board toolbar, and expose persistent zoom, centering and whole-map fit controls."
     },
     {
       "file": "release-readme-sync.json",

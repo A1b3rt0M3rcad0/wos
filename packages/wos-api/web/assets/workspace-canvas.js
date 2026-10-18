@@ -453,8 +453,16 @@ export function mountWorkspaceCanvas(host, options) {
   edges.setAttribute("aria-label", "Loaded connections");
   world.append(edges);
   viewport.append(world);
+  const map = node("div", undefined, "canvas-map");
+  map.append(viewport, cameraControls);
   const list = node("ul", undefined, "canvas-list");
   list.setAttribute("aria-label", "Outcome Board list");
+  const stage = node("div", undefined, "canvas-stage");
+  stage.append(map, list);
+  const inspectorHost = options.inspectorHost;
+  const inspectorParent = inspectorHost?.parentNode;
+  const inspectorNext = inspectorHost?.nextSibling;
+  if (inspectorHost) stage.append(inspectorHost);
   const footer = node("div", undefined, "canvas-footer");
   const status = node("p", undefined, "canvas-status");
   status.setAttribute("role", "status");
@@ -478,7 +486,7 @@ export function mountWorkspaceCanvas(host, options) {
   }
   legend.append(node("summary", "Connection key"), legendItems);
   footer.append(status, legend);
-  root.append(toolbar, viewport, list, footer);
+  root.append(toolbar, stage, footer);
   host.replaceChildren(root);
 
   let model,
@@ -522,19 +530,45 @@ export function mountWorkspaceCanvas(host, options) {
   const mapButton = control("Map view", () => changeView("map"));
   const listButton = control("List view", () => changeView("list"));
   switcher.append(mapButton, listButton);
+  function cameraControl(label, paths, action) {
+    const button = control(label, action, "quiet canvas-camera-button");
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    const icon = document.createElementNS(SVG, "svg");
+    icon.setAttribute("viewBox", "0 0 20 20");
+    icon.setAttribute("aria-hidden", "true");
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "currentColor");
+    icon.setAttribute("stroke-width", "1.5");
+    icon.setAttribute("stroke-linecap", "round");
+    icon.setAttribute("stroke-linejoin", "round");
+    for (const d of paths) {
+      const path = document.createElementNS(SVG, "path");
+      path.setAttribute("d", d);
+      icon.append(path);
+    }
+    button.replaceChildren(icon);
+    return button;
+  }
+  cameraControls.setAttribute("role", "group");
+  cameraControls.setAttribute("aria-label", "Board camera controls");
   cameraControls.append(
-    control("Zoom out", () => zoom(1 / 1.2)),
+    cameraControl("Zoom in", ["M10 4v12M4 10h12"], () => zoom(1.2)),
+    cameraControl("Zoom out", ["M4 10h12"], () => zoom(1 / 1.2)),
     zoomOutput,
-    control("Zoom in", () => zoom(1.2)),
-    control("Fit view", () => fit()),
-    control("Auto-layout", () => {
-      positions.clear();
-      manualPositions.clear();
-      render();
-      fit();
-    }),
+    cameraControl("Center view", [
+      "M10 2v4m0 8v4M2 10h4m8 0h4",
+      "M14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
+    ], () => center()),
+    cameraControl("Fit view", ["M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"], () => fit()),
   );
-  toolbar.append(switcher, cameraControls, searchWrap, filterWrap);
+  const autoLayout = control("Auto-layout", () => {
+    positions.clear();
+    manualPositions.clear();
+    render();
+    fit();
+  }, "quiet canvas-auto-layout");
+  toolbar.append(switcher, searchWrap, filterWrap, autoLayout);
   const more = control("Load more map items", () => invoke(options.onLoadMore));
   footer.insertBefore(more, legend);
 
@@ -582,26 +616,62 @@ export function mountWorkspaceCanvas(host, options) {
       announce();
     }
   }
-  function zoom(
-    factor,
-    point = { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 },
-  ) {
-    camera = zoomCanvasCamera(camera, factor, point);
+  function cameraArea() {
+    const area = { width: viewport.clientWidth, height: viewport.clientHeight };
+    if (inspectorHost && !inspectorHost.hidden) {
+      const mapBox = viewport.getBoundingClientRect();
+      const panelBox = inspectorHost.getBoundingClientRect();
+      const uncovered = panelBox.left - mapBox.left - 12 * uiUnit();
+      // A right overlay should not become the center of fit/zoom. On compact
+      // screens it covers nearly the whole map; preserve that map's camera.
+      if (
+        panelBox.left < mapBox.right &&
+        uncovered >= 160 && uncovered < area.width &&
+        panelBox.bottom > mapBox.top
+      )
+        area.width = uncovered;
+    }
+    return area;
+  }
+  function center() {
+    if (!layout) return;
+    const area = cameraArea(),
+      scale = uiUnit();
+    camera.x = (area.width - layout.width * scale * camera.zoom) / 2;
+    camera.y = (area.height - layout.height * scale * camera.zoom) / 2;
     cameraPaint();
+  }
+  function zoom(factor, point) {
+    const area = cameraArea();
+    point ||= { x: area.width / 2, y: area.height / 2 };
+    camera = zoomCanvasCamera(camera, factor, point, {
+      min: Math.min(MIN_ZOOM, fitScale(area)),
+    });
+    cameraPaint();
+  }
+  function fitScale(area) {
+    if (!layout) return MIN_ZOOM;
+    const scale = uiUnit();
+    return Math.max(0.001,
+      Math.min(
+        (area.width - 48) / (layout.width * scale),
+        (area.height - 48) / (layout.height * scale),
+        1,
+      ),
+    );
   }
   function fit(initial = false) {
     if (!layout || !viewport.clientWidth || !viewport.clientHeight) return;
     const scale = uiUnit();
     const width = layout.width * scale,
       height = layout.height * scale;
-    const desired = Math.min(
-      (viewport.clientWidth - 48) / width,
-      (viewport.clientHeight - 48) / height,
-      1,
-    );
-    camera.zoom = clamp(desired, initial ? 0.75 : MIN_ZOOM, 1);
-    camera.x = Math.max(24, (viewport.clientWidth - width * camera.zoom) / 2);
-    camera.y = Math.max(24, (viewport.clientHeight - height * camera.zoom) / 2);
+    const area = cameraArea();
+    const desired = fitScale(area);
+    // Initial entry keeps notes readable. An explicit Fit may use overview
+    // scale to show the whole loaded map; List/details keep full-size content.
+    camera.zoom = initial ? Math.max(desired, 0.75) : desired;
+    camera.x = Math.max(24, (area.width - width * camera.zoom) / 2);
+    camera.y = Math.max(24, (area.height - height * camera.zoom) / 2);
     if (initial && desired < 0.75) {
       const anchor =
         layout.byKey.get(selectedKey) ||
@@ -625,9 +695,11 @@ export function mountWorkspaceCanvas(host, options) {
   function paintView() {
     const mode = view();
     root.dataset.view = mode;
+    map.hidden = mode !== "map";
     viewport.hidden = mode !== "map";
     list.hidden = mode !== "list";
     cameraControls.hidden = mode !== "map";
+    autoLayout.hidden = mode !== "map";
     filterWrap.hidden = mode !== "map";
     mapButton.setAttribute("aria-pressed", String(mode === "map"));
     listButton.setAttribute("aria-pressed", String(mode === "list"));
@@ -1511,6 +1583,13 @@ export function mountWorkspaceCanvas(host, options) {
       resize.disconnect();
       clearTimeout(searchTimer);
       searchAbort?.abort();
+      // The inspector owns persistent native dialog/form nodes. Return its
+      // original host before removing this renderer, without cloning state.
+      if (inspectorHost && inspectorParent)
+        inspectorParent.insertBefore(
+          inspectorHost,
+          inspectorNext?.parentNode === inspectorParent ? inspectorNext : null,
+        );
       root.remove();
     },
   };
