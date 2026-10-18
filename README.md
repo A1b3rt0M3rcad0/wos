@@ -44,6 +44,8 @@ Suppose your team needs to **ship partial refunds**. Define a success criterion:
 
 The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
 
+Use the map's **+**, **−**, **Center view** and **Fit view** controls to explore the work. Inspection stays below the Board toolbar, keeping navigation available while you review a card.
+
 Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Current workspace guide and captures](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
 | Step | What you do | What stays recorded |
@@ -131,7 +133,7 @@ Official agent Skills operate through the CLI. MCP and HTTP are additional integ
 ## Quick start
 
 > [!NOTE]
-> The Outcome Board interface shown here is being reviewed in [draft PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115). To preview it before merge, check out `feat/canvas-first-workspace` after cloning.
+> This guide follows the checked-out source. Use a matching release's documentation when installing an already published package; source and published versions are listed [below](#project-status).
 
 ### Run the current workspace
 

@@ -28,7 +28,7 @@ The architecture document describes what should exist. This ROADMAP records what
 | --- | --- | --- |
 | GitHub repository | ✅ | `A1b3rt0M3rcad0/wos`, default branch `master` |
 | Canonical architecture specification | ✅ | Stored under `docs/`; revision 2 |
-| Public README | ✅ | Executable features, draft PR status and remaining acceptance explicitly separated |
+| Public README | ✅ | Executable features, source/published versions and remaining acceptance explicitly separated |
 | Go module | ✅ | `github.com/A1b3rt0M3rcad0/wos` |
 | Repository ignore rules | ✅ | Go, local DB/data, environment/secrets, IDE files |
 | AGENTS development contract | ✅ | Root `AGENTS.md` |
@@ -52,29 +52,41 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Compact entry and Board inspection — 2026-10-18
 
-**Status: In progress in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).**
+**Status: Implemented and locally verified in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).**
 The owner reports avoidable login scrolling on smaller screens and a contextual
 inspector that disrupts the Outcome Board header. The owner also requests clear
 centering/zoom controls, using Woobe's Network as an interaction reference.
 
-- [ ] Fit the default login composition in compact desktop/mobile viewports
+- [x] Fit the default login composition in compact desktop/mobile viewports
   without clipping fields, shrinking touch targets or disabling natural reflow
   when local access, enlarged text or an on-screen keyboard needs more room.
-- [ ] Keep the Outcome/Board header and toolbar stable during inspection;
+- [x] Keep the Outcome/Board header and toolbar stable during inspection;
   constrain the existing detail/form/action surfaces to the graphic region.
-- [ ] Expose persistent map camera controls, preserving keyboard, pan, selected
+- [x] Expose persistent map camera controls, preserving keyboard, pan, selected
   context and the distinction between centering, fit and local auto-layout.
-- [ ] Verify normal/compact/zoomed entry, inspector focus/forms and camera
+- [x] Verify normal/compact/zoomed entry, inspector focus/forms and camera
   interactions, then update the captures and source-bound qualification.
 
 The existing editorial tokens, original art, commands, authority and recovery
 contracts remain unchanged. Merge was authorized by the owner; additional UI
-corrections precede integration and exact-source checks. Version 1.1.0 remains
-prepared and unpublished while this PR is open.
+corrections precede integration and exact-source checks. Implementation source `0d84588da082f9d2b3539d00e48527b31c8d7487` passes 44 unit checks
+and all 99 browser journeys in one clean run (6.3m), without failures or skips.
+All 15 entry/layout journeys and four discovery journeys pass. The
+[35 captures](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+include six compact login sizes, short-phone map/inspection, desktop docking,
+forms and native 125%/150% browser zoom. Seven served assets match source per
+image; the manifest records all production, binary, fixture and image hashes.
+Native web tests/vet and four release-compatibility checks pass. Actual 1.1.0
+artifacts from this same source pass the offline installed-package verifier
+(12 checks), including matching service/client/Skill versions, legal/hash checks,
+signed execution/review/recovery, readiness, shutdown and corruption rejection.
+Windows-native and exact publication-source gates remain hosted requirements.
+Version 1.1.0 is prepared; publication follows integration and exact-source gates.
+The PR and release workflow expose current integration and publication status.
 
 ## Coordinated release and README versions — 2026-10-18
 
-**Status: Prepared and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+**Status: Prepared and locally verified in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115).** The owner subsequently authorized integration; its current checks and publication status are tracked in the compact-entry follow-up above.
 The owner requests preparing the next release in this PR and keeping the npm
 package and README synchronized. Initial read-only GitHub and npm checks
 confirmed that v1.0.0 was already published while the README still advertised
@@ -88,8 +100,8 @@ as 1.1.0.
 - [x] Include generated README metadata in automatic release preparation and
   reject version drift through release/compatibility checks.
 - [x] Verify release preparation, immutable compatibility and actual package
-  contents before updating the draft PR. Publication follows integration and
-  existing exact-source release gates; no merge or registry publication here.
+  contents before updating the PR. Publication follows integration and
+  existing exact-source release gates; preparation itself does not publish.
 
 The 32 package/Skill/distribution/release contract tests pass. After adding
 independent assertions for the actual README version and release-notes target,
@@ -108,7 +120,7 @@ No registry upload, tag creation, release publication or merge was performed.
 
 ## Contextual Outcome actions and compact navigation — 2026-10-18
 
-**Status: Implemented and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+**Status: Implemented in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115); historical qualification below.** The compact-entry follow-up above records the current source and integration state.
 The owner requests fewer repeated operations and more useful space in the
 specialist sidebar. Outcome-wide tools and the general action menu belong in
 Outcome Board; individual records and collections retain their own actions.
@@ -131,10 +143,10 @@ assertions retained. All 92 journeys are covered across those runs, with zero
 skips and identical production inputs; this is not one clean 92-case execution.
 
 All eight viewport journeys and all four new discovery journeys pass within the
-full run. The [26 source-bound captures](docs/design/operational-canvas/canvas-first/README.md#screenshots)
+full run. The [26 source-bound captures](https://github.com/A1b3rt0M3rcad0/wos/blob/85041088eb779561c07890d3a14514c3ee36e1a4/docs/design/operational-canvas/canvas-first/README.md#screenshots)
 include desktop Overview/Work and compact Overview sidebars alongside the Board,
 inspector/forms and native 125%/150% browser zoom. Native web tests and vet pass.
-The [manifest](docs/design/operational-canvas/canvas-first/screenshots.json)
+The [manifest](https://github.com/A1b3rt0M3rcad0/wos/blob/85041088eb779561c07890d3a14514c3ee36e1a4/docs/design/operational-canvas/canvas-first/screenshots.json)
 records exact cohorts, source/binary/image hashes and six served assets checked
 against source per capture. Hosted checks qualify the pushed head independently.
 
@@ -144,7 +156,7 @@ screen-reader acceptance remain separate.
 
 ## Outcome Board workspace follow-up — 2026-10-18
 
-**Status: Implemented and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+**Status: Implemented in [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115); historical qualification below.** The compact-entry follow-up above records the current source and integration state.
 The owner identifies the spatial Board as the working environment itself. The
 left sidebar belongs in Overview and the other specialist views rather than
 inside this working region. This supersedes retaining a sidebar in the initial
@@ -180,7 +192,7 @@ separate.
 
 ## Canvas-first workspace — 2026-10-18
 
-**Status: Implemented and locally verified; draft review, no merge.** The work is
+**Historical status: Implemented and locally verified before owner-authorized integration.** The work is
 based on `master` at `cba58d6`. This presentation follow-up is independent from the
 closed scalable-installation PR #114 and introduces no backend, schema, CLI or
 execution-protocol changes. The [plan review and acceptance record](docs/design/operational-canvas/canvas-first/README.md)
