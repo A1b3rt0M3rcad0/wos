@@ -52,11 +52,12 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Coordinated release and README versions — 2026-10-18
 
-**Status: In progress in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+**Status: Prepared and locally verified in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
 The owner requests preparing the next release in this PR and keeping the npm
-package and README synchronized. Read-only GitHub and npm checks confirm that
-v1.0.0 is already published, while the README still advertises v0.4.2. The queued
-Outcome Board feature requires a minor release, targeting 1.1.0.
+package and README synchronized. Initial read-only GitHub and npm checks
+confirmed that v1.0.0 was already published while the README still advertised
+v0.4.2. The queued Outcome Board feature requires a minor release, now prepared
+as 1.1.0.
 
 - [x] Prepare VERSION, npm metadata, both OpenAPI versions, manifest, changelog
   and release notes together, consuming the reviewed change queue.
@@ -64,15 +65,24 @@ Outcome Board feature requires a minor release, targeting 1.1.0.
   use live published-version badges instead of manual release/npm numbers.
 - [x] Include generated README metadata in automatic release preparation and
   reject version drift through release/compatibility checks.
-- [ ] Verify release preparation, immutable compatibility and actual package
+- [x] Verify release preparation, immutable compatibility and actual package
   contents before updating the draft PR. Publication follows integration and
   existing exact-source release gates; no merge or registry publication here.
 
 The 32 package/Skill/distribution/release contract tests pass. After adding
 independent assertions for the actual README version and release-notes target,
 all 16 release/compatibility checks pass again. Preparation produces 1.1.0 and
-consumes the queue; a repeated plan returns null. Actual artifact build and
-installed-package verification remain in progress.
+consumes the queue; a repeated plan returns null.
+
+Actual 1.1.0 artifacts built from committed source
+`21d0a6f8e4235ce00cb8c5541050bee7bd24eaa3` pass the distribution verifier:
+offline npm installation, matching service/client/Skill versions, source and
+artifact hashes, original legal files, native Skill operations, signed execution
+and independent review/recovery, HTTP/MCP/UI readiness, shutdown and corruption
+rejection. The local runner uses writable npm/XDG cache paths under `/tmp`.
+Windows archives are cross-built and checked structurally here; native Windows
+execution and the remaining exact-source release gates belong to hosted CI.
+No registry upload, tag creation, release publication or merge was performed.
 
 ## Contextual Outcome actions and compact navigation — 2026-10-18
 
