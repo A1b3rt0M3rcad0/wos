@@ -313,6 +313,7 @@ dl.canvas-summary-metrics > div {
   min-width: calc(130 * var(--wos-unit, 1px));
   max-width: 100%;
   font-size: 1rem;
+  font-family: var(--utility);
 }
 .canvas-viewport {
   position: relative;
