@@ -1578,3 +1578,23 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     place-items: center;
   }
 }
+/* On a short phone, a fixed heading and action footer would leave no reading
+ * area. Let the whole inspector surface scroll within the same bounded stage. */
+@media (max-width: 760px) and (max-height: 700px) {
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-slot {
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-slot > .dialog-form {
+    display: block;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel :is(.dialog-body, .action-options),
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer {
+    max-height: none;
+    overflow: visible;
+  }
+}

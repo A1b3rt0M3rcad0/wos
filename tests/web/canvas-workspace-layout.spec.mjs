@@ -478,6 +478,24 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
       await canvas(page).getByRole("button", { name: "Fit view", exact: true }).click();
       await workspaceBounds(page);
       await capture(page, "canvas-360x640-map", { state: "short mobile Map alternative with horizontal camera controls and explicit fit" });
+      // The bounded large fixture need not include every other Task. Reopen
+      // the same loaded Task already inspected through its list alternative.
+      await task(page, data.tasks.unscoped).focus();
+      await page.keyboard.press("Enter");
+      await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.unscoped.title);
+      await fullyVisible(panel(page));
+      const detailSlot = panel(page).locator(".canvas-inspector-detail");
+      const reading = panel(page).getByRole("heading", { name: "Operational readiness", exact: true });
+      await reading.scrollIntoViewIfNeeded();
+      await fullyVisible(reading);
+      expect(await detailSlot.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+      await inspectorActionsRemainReachable(page);
+      await panel(page).locator("#close-detail").scrollIntoViewIfNeeded();
+      await fullyVisible(panel(page).locator("#close-detail"));
+      await workspaceBounds(page);
+      await capture(page, "canvas-360x640-inspector", { state: "short mobile inspection; its whole detail surface scrolls inside the stage" });
+      await panel(page).locator("#close-detail").click();
+      await expect(panel(page)).toBeHidden();
       await page.setViewportSize({ width, height });
     }
     await chooseArea(page, "overview");
