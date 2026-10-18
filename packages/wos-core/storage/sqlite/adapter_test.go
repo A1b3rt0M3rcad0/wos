@@ -18,6 +18,12 @@ func testID(value string) domain.ID {
 
 func openTestStore(t *testing.T, path string) *Store {
 	t.Helper()
+	prepareCurrentTestStore(t, path)
+	return openColdTestStore(t, path)
+}
+
+func openColdTestStore(t *testing.T, path string) *Store {
+	t.Helper()
 	store, err := Open(path, Options{
 		BusyTimeout:   500 * time.Millisecond,
 		MigrateOnOpen: true,
@@ -33,7 +39,7 @@ func openTestStore(t *testing.T, path string) *Store {
 
 func TestSQLiteConnectionProfileAndMigrations(t *testing.T) {
 	ctx := context.Background()
-	store := openTestStore(t, filepath.Join(t.TempDir(), "wos.db"))
+	store := openColdTestStore(t, filepath.Join(t.TempDir(), "wos.db"))
 
 	settings, err := store.ConnectionSettings(ctx)
 	if err != nil {

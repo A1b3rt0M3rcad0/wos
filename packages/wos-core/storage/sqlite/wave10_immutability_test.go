@@ -11,8 +11,10 @@ import (
 
 func TestWave10SQLiteRejectsHistoricalAssessmentRewrite(t *testing.T) {
 	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "wos.db")
+	prepareCurrentTestStore(t, path)
 	store, err := Open(
-		filepath.Join(t.TempDir(), "wos.db"),
+		path,
 		Options{BusyTimeout: time.Second, MigrateOnOpen: true},
 	)
 	if err != nil {

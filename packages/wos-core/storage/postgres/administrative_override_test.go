@@ -36,6 +36,7 @@ func TestSQLiteAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
+	prepareCurrentTestStore(t, path)
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)

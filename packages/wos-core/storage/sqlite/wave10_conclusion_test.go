@@ -13,6 +13,7 @@ import (
 func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
+	prepareCurrentTestStore(t, path)
 	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +126,7 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
+	prepareCurrentTestStore(t, path)
 	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)

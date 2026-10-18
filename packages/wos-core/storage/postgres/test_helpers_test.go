@@ -18,6 +18,11 @@ func requirePostgres(t *testing.T) {
 	}
 }
 func testID(s string) domain.ID { return domain.MustParseID(s) }
+
+// SQLite can copy its empty migrated fixture; PostgreSQL continues to create
+// each isolated test schema through the native adapter's migration path.
+func prepareCurrentTestStore(t *testing.T, _ string) { t.Helper() }
+
 func openTestPostgres(path string, opts Options) (*Store, error) {
 	opts.Schema = fmt.Sprintf("wos_test_%x", sha256.Sum256([]byte(path)))[:42]
 	// Migration-disabled adapter startup never creates schemas. Tests that build

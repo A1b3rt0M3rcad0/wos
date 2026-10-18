@@ -16,6 +16,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	now := time.Date(2026, 10, 2, 15, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)
 
+	prepareCurrentTestStore(t, path)
 	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)

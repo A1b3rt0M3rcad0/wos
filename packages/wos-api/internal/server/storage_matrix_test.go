@@ -97,6 +97,15 @@ func forEachRuntimeStorage(t *testing.T, scenario func(*testing.T, Config)) {
 // Tenant just by naming a schema or presenting a bootstrap credential.
 func provisionRuntimeFixture(t *testing.T, cfg *Config) {
 	t.Helper()
+	if cfg.Storage.Driver == StorageDriverSQLite {
+		validated := cfg.withTenantBindingDefaults()
+		if validated.Validate() == nil && validated.ServesAPI() && validated.Storage.MigrateOnStart {
+			if err := seedRuntimeSQLiteFixture(validated.Storage.SQLitePath); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return
+	}
 	if cfg.Storage.Driver != StorageDriverPostgres {
 		return
 	}

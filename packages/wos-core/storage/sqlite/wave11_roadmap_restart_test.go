@@ -13,6 +13,7 @@ import (
 func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
+	prepareCurrentTestStore(t, path)
 	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
@@ -158,6 +159,7 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "snapshots.db")
+	prepareCurrentTestStore(t, path)
 	store, err := Open(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
