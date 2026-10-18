@@ -43,7 +43,12 @@ async function rowDetail(page, key, section, item) {
   await area(page, key, section);
   await page.locator(`#content [data-entity-id="${item.id}"]`).click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
-  await expect(page.locator("#detail-title")).toHaveText(item.title || item.name || item.description);
+  const kindHeading = { blockers: "Blocker", evidence: "Evidence" }[section];
+  await expect(page.locator("#detail-title")).toHaveText(item.title || item.name || kindHeading);
+  if (!item.title && !item.name) {
+    await expect(page.locator(".detail-description")).toHaveText(item.description);
+    expect(await page.locator("#detail-content").getByText(item.description, { exact: true }).count()).toBe(1);
+  }
 }
 async function dialogAccess(page, id) {
   const dialog = page.locator(id);

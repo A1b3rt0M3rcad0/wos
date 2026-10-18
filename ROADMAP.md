@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Compact login, stable Board inspection and visible camera controls; release 1.1.0 and human acceptance remain separately tracked
+**Current wave:** Correct operational density across viewport sizes using Woobe's actual interface dimensions; release publication and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,21 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Stable operational density — 2026-10-18
+
+**Status: In progress.** The owner rejects oversized typography, sidebars and
+controls on large and small screens. This explicitly supersedes the earlier
+viewport-proportional enlargement requirement. Use Woobe's actual operational
+measurements as a sizing reference while preserving WOS's editorial fonts,
+palette, paper grid, original art, domain behavior and Board camera.
+
+- [ ] Replace automatic whole-interface growth with stable, bounded dimensions
+  for text, controls, navigation and contextual inspection.
+- [ ] Review top-down composition and long authored descriptions, avoiding
+  oversized or repeated inspector text without losing record content.
+- [ ] Verify desktop, QHD/4K, compact/mobile and enlarged text, preserve working
+  camera/forms/focus, and publish current-source screenshots and measurements.
 
 ## Compact entry and Board inspection — 2026-10-18
 

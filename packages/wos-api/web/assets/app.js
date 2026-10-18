@@ -3189,7 +3189,7 @@ async function showEntity(
     });
     $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
     $("detail-title").textContent =
-      entity.title || entity.name || entity.description || human(ref.kind);
+      entity.title || entity.name || kindName(ref.kind);
     const detail = $("detail-content");
     detail.replaceChildren();
     const status = el("div", undefined, "detail-status");

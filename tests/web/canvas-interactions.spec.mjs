@@ -413,7 +413,7 @@ test("canvas search paginates and deduplicates without reopening stale queries o
   await expect(page.locator(".workspace-canvas")).toHaveCount(0);
 });
 
-test("responsive UI scaling remains separate from camera and mobile has a native list alternative", async ({
+test("viewport growth preserves map scale and mobile has a native list alternative", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });
@@ -424,7 +424,8 @@ test("responsive UI scaling remains separate from camera and mobile has a native
   await page.setViewportSize({ width: 2560, height: 1440 });
   await expect(page.getByLabel("Outcome Board zoom")).toHaveText(zoom);
   const larger = await card(page, "work_item:b").boundingBox();
-  expect(larger.width / normal.width).toBeCloseTo(2560 / 1440, 2);
+  expect(larger.width).toBeCloseTo(normal.width, 1);
+  expect(larger.height).toBeCloseTo(normal.height, 1);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator(".workspace-canvas")).toHaveAttribute(
     "data-view",

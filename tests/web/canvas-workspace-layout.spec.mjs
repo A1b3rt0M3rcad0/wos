@@ -418,7 +418,8 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   const search = canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true });
   await search.fill(data.evidence[0].description);
   await canvas(page).getByRole("option").filter({ hasText: data.evidence[0].description }).first().click();
-  await expect(panel(page).locator("#detail-title")).toHaveText(data.evidence[0].description);
+  await expect(panel(page).locator("#detail-title")).toHaveText("Evidence");
+  await expect(panel(page).locator(".detail-description")).toHaveText(data.evidence[0].description);
   const persisted = await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}`);
   expect(persisted.value.lifecycle).toBe("active");
   expect(mutations).toEqual([]);

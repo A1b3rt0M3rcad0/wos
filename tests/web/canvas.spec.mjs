@@ -294,7 +294,7 @@ test("read-only Outcome Board has usable keyboard and mobile views while zoom an
     await expect(canvas(page).locator(".canvas-viewport")).toHaveAttribute("data-scale", internalZoom);
     const titleFont = await canvas(page).locator(".canvas-node-title").first().evaluate((element) => parseFloat(getComputedStyle(element).fontSize));
     if (width === 1440) referenceFont = titleFont;
-    else if (width > 1440) expect(titleFont).toBeGreaterThan(referenceFont);
+    else if (width > 1440) expect(titleFont).toBeCloseTo(referenceFont, 2);
     if (width === 390) await canvas(page).getByRole("button", { name: "List view", exact: true }).click();
     await expect(node(page, "work_item", data.tasks.ready)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

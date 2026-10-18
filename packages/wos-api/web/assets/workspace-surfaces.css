@@ -1,5 +1,6 @@
 /* Specialist views share the workspace's paper, type and fixed editorial grid.
-   Canvas keeps its own spatial card system. Dimensions use the existing scale. */
+   Canvas keeps its own spatial card system. Operational sizes do not grow with
+   monitor width; shared editorial tokens also govern small-screen headings. */
 .workspace-main:has(
   #outcome:not([hidden]):not([data-editorial-area="canvas"])
 ) {
@@ -17,24 +18,24 @@
   margin-bottom: calc(12 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .outcome-heading h1 {
-  font-size: clamp(2.28571rem, calc(2.7 * var(--wos-vw, 1vw)), 2.85714rem);
+  font-size: var(--wos-page-title);
   line-height: 1.1;
   margin-block: calc(8 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .area-intro {
-  min-height: calc(142 * var(--wos-unit, 1px));
+  min-height: calc(136 * var(--wos-unit, 1px));
   padding-block: calc(18 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .area-intro h2 {
-  font-size: clamp(2.42857rem, calc(3.3 * var(--wos-vw, 1vw)), 3.42857rem);
+  font-size: var(--wos-section-title);
   margin-bottom: calc(8 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .area-vignette {
-  flex-basis: calc(128 * var(--wos-unit, 1px));
+  flex-basis: calc(112 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .area-vignette img {
-  width: calc(112 * var(--wos-unit, 1px));
-  height: calc(100 * var(--wos-unit, 1px));
+  width: calc(96 * var(--wos-unit, 1px));
+  height: calc(88 * var(--wos-unit, 1px));
 }
 :where(#outcome:not([data-editorial-area="canvas"])) #view-tabs {
   margin-top: calc(10 * var(--wos-unit, 1px));
@@ -62,7 +63,7 @@
   margin: 0 0 calc(5 * var(--wos-unit, 1px));
 }
 .collection-heading-copy h2 {
-  font: 400 2.14286rem/1.15 var(--display);
+  font: 400 1.71429rem/1.25 var(--display);
 }
 .collection-guidance {
   max-width: 76ch;
@@ -94,7 +95,7 @@
   min-width: 0;
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .item-title {
-  font: 400 1.42857rem/1.25 var(--display);
+  font: 400 1.14286rem/1.35 var(--display);
   overflow-wrap: anywhere;
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .item-subtitle {
@@ -128,7 +129,7 @@
   min-width: 0;
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .board .item-title {
-  font-size: 1.28571rem;
+  font-size: 1.14286rem;
 }
 :where(#outcome:not([data-editorial-area="canvas"])) .column-heading {
   padding-block: calc(8 * var(--wos-unit, 1px)) calc(14 * var(--wos-unit, 1px));
@@ -146,7 +147,7 @@
   color: var(--accent);
 }
 .collection-status h3 {
-  font: 400 2rem/1.2 var(--display);
+  font: 400 1.71429rem/1.25 var(--display);
   margin-block: calc(10 * var(--wos-unit, 1px));
 }
 .collection-status p:not(.eyebrow) {
@@ -177,7 +178,7 @@
   overflow-wrap: anywhere;
 }
 .activity-day .timeline-entry h3 {
-  font: 400 1.42857rem/1.25 var(--display);
+  font: 400 1.14286rem/1.35 var(--display);
   margin-block: 0 calc(6 * var(--wos-unit, 1px));
 }
 .timeline-body time {
@@ -206,6 +207,19 @@
   margin-top: calc(18 * var(--wos-unit, 1px));
 }
 @media (max-width: 760px) {
+  :where(#outcome:not([data-editorial-area="canvas"])) .outcome-heading {
+    flex-direction: row;
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .outcome-heading-text {
+    flex: 1 1 100%;
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .heading-actions {
+    width: auto;
+    margin-inline-start: auto;
+  }
+  :where(#outcome:not([data-editorial-area="canvas"])) .heading-actions > #refresh {
+    padding-inline: calc(8 * var(--wos-unit, 1px));
+  }
   :where(#outcome:not([data-editorial-area="canvas"])) .area-intro {
     min-height: auto;
     gap: calc(14 * var(--wos-unit, 1px));
