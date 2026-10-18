@@ -67,7 +67,7 @@ Keyboard controls are scoped to the focused element:
 
 Search combines loaded matches with the authorized server candidate query. Selecting a result can load its neighborhood; it does not require that the initial map already contain it. Expand/collapse controls expose groups progressively. Load more retrieves another bounded source page, and the visible status reports loaded items, connections and collapsed content.
 
-The existing warm paper, fixed editorial grid, Instrument Serif, DM Sans, monospace metadata, orange chain and monochrome robots remain authoritative. The existing viewport scale above 1440 CSS px is separate from the map's internal camera zoom. A map transform is local to its world, not a global page-scale replacement. Mobile reflow and reduced-motion behavior remain part of acceptance.
+The existing warm paper, fixed editorial grid, Instrument Serif, DM Sans, monospace metadata, orange chain and monochrome robots remain authoritative. [Operational dimensions](../editorial/operational-density.md) remain stable as the viewport grows, independently of the map's internal camera zoom. A map transform is local to its world. Mobile reflow and reduced-motion behavior remain part of acceptance.
 
 ## Data architecture
 

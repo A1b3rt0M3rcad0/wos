@@ -52,18 +52,29 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Stable operational density — 2026-10-18
 
-**Status: In progress.** The owner rejects oversized typography, sidebars and
+**Status: Implemented and locally verified.** The owner rejects oversized typography, sidebars and
 controls on large and small screens. This explicitly supersedes the earlier
 viewport-proportional enlargement requirement. Use Woobe's actual operational
 measurements as a sizing reference while preserving WOS's editorial fonts,
 palette, paper grid, original art, domain behavior and Board camera.
 
-- [ ] Replace automatic whole-interface growth with stable, bounded dimensions
+- [x] Replace automatic whole-interface growth with stable, bounded dimensions
   for text, controls, navigation and contextual inspection.
-- [ ] Review top-down composition and long authored descriptions, avoiding
+- [x] Review top-down composition and long authored descriptions, avoiding
   oversized or repeated inspector text without losing record content.
-- [ ] Verify desktop, QHD/4K, compact/mobile and enlarged text, preserve working
+- [x] Verify desktop, QHD/4K, compact/mobile and enlarged text, preserve working
   camera/forms/focus, and publish current-source screenshots and measurements.
+
+Implementation source `9d41b3aace7378ba7ed34948fb36db7f32464e47` passes 44 unit
+checks and all 106 browser journeys in one clean full run (5.1m), with no
+failures, retries or skips. Native web tests/vet and 16 release/compatibility
+checks pass. The [27 current captures](docs/design/editorial/density/README.md)
+record known CSS viewports, DPR, long Evidence, forms, mobile navigation, empty
+states and native 125%/150% browser zoom. Mobile navigation measures 123–131 px
+high; inspector headings/body remain 20/14 px, with desktop navigation capped
+at its original operational width. See [the sizing reference](docs/design/editorial/operational-density.md)
+and source/image/served-asset hashes in the gallery manifest. A normal patch
+release is queued; merge, hosted qualification and publication remain separate.
 
 ## Compact entry and Board inspection — 2026-10-18
 

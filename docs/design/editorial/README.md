@@ -1,5 +1,10 @@
 # WOS editorial workspace
 
+The latest [operational density correction](operational-density.md) supersedes
+the former proportional viewport enlargement. See the [current captures](density/README.md)
+for compact navigation, bounded typography and readable inspection. Earlier
+captures below remain historical records of their identified implementations.
+
 This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette and the owner-supplied WOS web identity. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
 
 This is a presentation change to the six existing areas, authentication screen, outcome selection, collections, board, forms, settings, and entity details. HTTP/MCP contracts, persisted lifecycle rules, authorization, independent review, and explicit completion remain the source of product behavior.
@@ -69,7 +74,7 @@ The planner replacement preserves the existing image path, dimensions, and layou
 
 ## Main pages
 
-The current branch refreshes every capture below after the [complete workspace review](../operational-canvas/workspace/README.md). That guide adds the remaining specialist tabs, documentary details, Roadmap publication, administration forms, empty/loading/error states and mobile conflict recovery. Current verification is recorded [with the Canvas follow-up](../operational-canvas/validation.md); the older validation page retains its dated baselines.
+The captures below record the earlier [complete workspace review](../operational-canvas/workspace/README.md), including specialist tabs, documentary details, Roadmap publication, administration forms, empty/loading/error states and mobile conflict recovery. The [current density gallery](density/README.md) records the newer typography, navigation and inspection. Earlier verification remains recorded [with the Canvas follow-up](../operational-canvas/validation.md).
 
 These 36 captures use a real local server and isolated illustrative databases. The demo's records are created through public commands. They are examples, not product metrics, customer evidence, or release certification. Main desktop viewports are 1440 × 1000 CSS px, mobile viewports are 390 × 844, and the scale comparison includes Full HD, 2K, and 4K. All captures show the actual viewport, including fixed layers, scroll regions, and persistent actions. Pages continue below the captured opening view.
 
