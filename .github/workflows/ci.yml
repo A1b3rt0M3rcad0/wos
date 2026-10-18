@@ -106,7 +106,7 @@ jobs:
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          if go test -p 1 -json ./... > unit-contract-tests.jsonl; then
+          if go test -p 1 -timeout 20m -json ./... > unit-contract-tests.jsonl; then
             echo 'Unit/contract execution recorded'
           else
             status=$?
@@ -118,7 +118,9 @@ jobs:
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          if go test -p 1 -json -race ./... > race-tests.jsonl; then
+          # Historical migrations stay cold under race instrumentation; bound
+          # the package runner separately from production operation deadlines.
+          if go test -p 1 -timeout 20m -json -race ./... > race-tests.jsonl; then
             echo 'Race execution recorded'
           else
             status=$?
