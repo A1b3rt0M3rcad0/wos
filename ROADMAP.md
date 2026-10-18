@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-17
+**Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** A — reconcile 0.4.0 distribution as one native wosctl npm package; human validation remains pending
+**Current wave:** Canvas-first workspace presentation; existing release and human acceptance remain separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,45 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Canvas-first workspace — 2026-10-18
+
+**Status: Implemented and locally verified; draft review, no merge.** The work is
+based on `master` at `cba58d6`. This presentation follow-up is independent from the
+closed scalable-installation PR #114 and introduces no backend, schema, CLI or
+execution-protocol changes. The [plan review and acceptance record](docs/design/operational-canvas/canvas-first/README.md)
+identify the implementation and validation boundaries.
+
+- [x] Make the active Canvas occupy the viewport remainder, with explicit internal
+  scroll ownership instead of a fixed minimum map height.
+- [x] Replace the horizontal area row with Canvas and compact Views navigation;
+  retain specialist views, deep links and the distinct Work Board.
+- [x] Keep Outcome identity/status and priority actions compact; expose existing
+  summary, planning and secondary tools progressively.
+- [x] Preserve the existing inspector/form nodes, exact pending intent, keyboard
+  return and camera; overlay inspection on compact screens without document scroll.
+- [x] Show actual loaded dependency, Blocker and EvidenceLink indicators without
+  treating Evidence, note position or visual connections as criterion verification.
+- [x] Validate desktop HD/Full HD/QHD, mobile reflow, real 125%/150% browser zoom,
+  navigation/permissions/races and source-bound screenshots before qualification.
+
+The supplied plan's 70–80% map-height target is measured against the actual CSS
+viewport; controls, reading and keyboard access take precedence at reduced sizes.
+The existing editorial palette, typography, fixed grid, robot and post-it assets
+remain authoritative. Automated checks and representative-user acceptance stay
+distinct; earlier screenshots do not qualify this structural change.
+
+The complete local regression passes 44 unit checks and 88 browser journeys with
+no skips. Its recorded production hashes precede only the final Issues count
+wording/pluralization correction. Eight final-source layout journeys pass at
+`6695b7984d1e3447139c71dff15fa2ba61948b90`, including that correction, a long
+Outcome name, mobile inspector/forms, and native 125%/150% browser zoom. The
+actual graph occupies 70.11%, 71.98%, 73.63% and 73.76% of the four requested
+desktop viewports. Native web race tests and vet pass. The 22 unannotated captures,
+served-asset checks and exact input/image hashes are recorded in the
+[capture manifest](docs/design/operational-canvas/canvas-first/screenshots.json).
+Hosted checks qualify the pushed PR head independently. Representative-user,
+manual screen-reader and other-browser acceptance remain unclaimed.
 
 ## Visual operational workspace — 2026-10-16
 

@@ -231,7 +231,7 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 ## Documentation and support
 
 - [Documentation index](docs/README.md): setup, workspace use, agents and integration references.
-- [Workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Canvas guide](docs/design/operational-canvas/README.md): pages, forms, mobile states and interaction details.
+- [Canvas workspace](docs/design/operational-canvas/canvas-first/README.md): viewport-based operation, compact navigation, responsive inspection and current captures. [Workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Canvas guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
 - [Server operations](docs/operations.md), [architecture](docs/architecture.md) and [operational acceptance](docs/stable/operational-acceptance.md).
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).

@@ -23,7 +23,11 @@ Choose **Add objective** or **New task** to open dedicated forms. Common creatio
 
 Opening an Outcome starts in its operational canvas. The Outcome anchors real Objective hierarchy and Task ownership. Select a note or connection to open current detail and permitted actions alongside the map; contextual Add and Connect controls use the existing forms and authorized reference pickers. Moving a note changes only its local visual position. It does not reparent work, create a dependency or change lifecycle.
 
+The Canvas-first shell keeps the working region within the available viewport height. The Outcome header retains its name and lifecycle, with a direct **Canvas** control and a **Views** disclosure for specialist areas. **Outcome context** exposes the retained summary and planning information; **Outcome tools** groups secondary actions such as sharing, refresh and criteria review. These controls keep the map immediately reachable without removing those capabilities. See the [layout decisions and verification status](design/operational-canvas/canvas-first/README.md).
+
 Map view provides pan, zoom, fit, auto-layout and progressive expansion. List view presents the same loaded context and is the default on compact screens. Both expose selection and contextual actions without requiring dragging. Map note arrow keys navigate visible hierarchy; background arrow keys pan, `+`/`-` zoom and `0` fits. Search supports keyboard selection and authorized server results beyond the loaded map. Focus returns to an originating control when a contextual surface closes and that control remains available.
+
+At widths of 1400 CSS px or less, or heights of 800 CSS px or less, the inspector overlays the working region, preserving the map's size and camera. Its body and a long detail-action footer scroll independently; contextual forms retain reachable submit controls. Wider and taller screens show it beside the map. It remains nonmodal: the map is not hidden from accessibility tools and opening the inspector does not introduce a focus trap. Escape first belongs to nested controls, then closes the inspector when appropriate. Native dialogs and forms keep their existing focus, close and recovery behavior.
 
 The map explicitly reports partial data and loaded counts. Load more retrieves bounded graph/continuity pages, including disconnected Objectives and Tasks. A cursor or selected detail must match the same Outcome revision; a concurrent change requires a refresh rather than combining different revisions. Unloaded context is not an absence of work or proof of readiness. Signed execution authority is resolved from current Task attention on selection rather than inferred from a legacy lease summary.
 
@@ -31,7 +35,7 @@ See [the canvas design and data contract](design/operational-canvas/README.md) f
 
 ## Navigate by purpose
 
-The existing areas remain available as alternatives and focused collections:
+Choose **Views** to open the existing areas as alternatives and focused collections. **Canvas** returns to the spatial workspace; the current specialist area is identified in the navigation. Work's **Board** is a Task-specific view, distinct from the Outcome Canvas:
 
 | Area     | Purpose                                                                          |
 | -------- | -------------------------------------------------------------------------------- |
@@ -78,8 +82,10 @@ An uncertain response freezes the original payload and idempotency key. Retry se
 
 ## Verification and limits
 
-The [canvas guide](design/operational-canvas/README.md#acceptance-boundary) records the new implementation and [automated verification](design/operational-canvas/validation.md). Earlier workspace behavior and captures are recorded separately in [the historical acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [editorial gallery](design/editorial/README.md#main-pages).
+The [canvas guide](design/operational-canvas/README.md#acceptance-boundary) records the map and action contracts. [Canvas-first verification](design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance) tracks the viewport shell and compact inspector separately from the [earlier automated verification](design/operational-canvas/validation.md). Earlier workspace behavior and captures are recorded in [the historical acceptance record](ux/final-acceptance.md), [experience contracts](ux/experience-contract.md), [architecture decision](adr/0027-human-workspace-client.md) and [editorial gallery](design/editorial/README.md#main-pages).
 
-The earlier real-server and automated accessibility results cover their recorded baseline. They do not qualify the new canvas, its inspector or its keyboard/mobile behavior. Equivalent 200%/400% viewport reflow is distinct from native browser zoom.
+The earlier real-server and automated accessibility results cover their recorded baseline. They do not qualify the Canvas-first shell, its inspector or its keyboard/mobile behavior. Equivalent viewport reflow and device scale factors are distinct from native browser zoom; the follow-up records those checks independently.
 
-Representative-user usability, human comprehension/timing, manual screen-reader checks and native browser zoom remain pending. The owner confirmed that no representative users or screen-reader testers are available. Automated acceptance is not a usability measurement or WCAG certification.
+The Canvas-first [gallery](design/operational-canvas/canvas-first/README.md#screenshots) and [manifest](design/operational-canvas/canvas-first/screenshots.json) record 22 real captures and eight passing final-source journeys at `6695b79`, including 1280 × 720, 1366 × 768 with a long title, Full HD/QHD, 320 × 740, 390 × 844 and native Chromium 125%/150% page zoom. The full 44-unit/88-browser regression passed before the final Issues-count wording correction; the qualification records that exact source difference rather than attributing the entire run to the later commit.
+
+Representative-user usability, human comprehension/timing, manual screen-reader checks and other-browser acceptance remain pending. Native Chromium page zoom at 125% and 150% is tracked in the Canvas-first qualification rather than inferred from smaller screenshot dimensions. The owner confirmed that no representative users or screen-reader testers are available. Automated acceptance is not a usability measurement or WCAG certification.
