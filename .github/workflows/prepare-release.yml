@@ -34,14 +34,18 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add VERSION packages/wos-api/commands.openapi.json packages/wos-api/openapi.yaml packages/wos-cli-npm/package.json release-manifest.json docs/releases CHANGELOG.md .changes
+          git add VERSION packages/wos-api/commands.openapi.json packages/wos-api/openapi.yaml packages/wos-cli-npm/package.json release-manifest.json docs/releases CHANGELOG.md README.md .changes
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
           import {execFileSync} from 'node:child_process';
+          import {updateReadmeRelease} from './tools/releases/version.mjs';
           const changed=execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim().split('\n');
-          const fixed=new Set(['VERSION','CHANGELOG.md','release-manifest.json','packages/wos-api/commands.openapi.json','packages/wos-api/openapi.yaml','packages/wos-cli-npm/package.json']);
+          const fixed=new Set(['VERSION','CHANGELOG.md','README.md','release-manifest.json','packages/wos-api/commands.openapi.json','packages/wos-api/openapi.yaml','packages/wos-cli-npm/package.json']);
           assert.ok(changed.length>0);
           for(const file of changed)assert.ok(fixed.has(file)||/^\.changes\/[a-z0-9-]+\.json$/.test(file)||/^docs\/releases\/[0-9]+\.[0-9]+\.[0-9]+\.md$/.test(file),'unexpected non-metadata change: '+file);
+          const priorReadme=execFileSync('git',['show','HEAD:README.md'],{encoding:'utf8'});
+          assert.equal(readFileSync('README.md','utf8'),updateReadmeRelease(priorReadme,readFileSync('VERSION','utf8').trim()),'release preparation changed README content outside generated metadata');
           JS
           git commit -m "chore(release): prepare v$(cat VERSION)"
           release_branch="release/prepared-${GITHUB_SHA}"

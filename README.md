@@ -5,8 +5,8 @@
 <p align="center"><strong>Meaningful outcomes. Work together.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/A1b3rt0M3rcad0/wos/releases/latest"><img src="docs/images/badges/release.svg" alt="Published baseline 0.4.2" /></a>
-  <a href="https://www.npmjs.com/package/wosctl"><img src="docs/images/badges/npm.svg" alt="npm version" /></a>
+  <a href="https://github.com/A1b3rt0M3rcad0/wos/releases/latest"><img src="https://img.shields.io/github/v/release/A1b3rt0M3rcad0/wos?label=release&amp;color=A7441D&amp;labelColor=292620" alt="Latest published GitHub release" /></a>
+  <a href="https://www.npmjs.com/package/wosctl"><img src="https://img.shields.io/npm/v/wosctl?color=A7441D&amp;labelColor=292620" alt="Latest published npm version" /></a>
   <a href="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml"><img src="https://github.com/A1b3rt0M3rcad0/wos/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI on master" /></a>
   <a href=".go-version"><img src="docs/images/badges/go.svg" alt="Go 1.27.2" /></a>
   <a href="LICENSE"><img src="docs/images/badges/license.svg" alt="WOS Sustainable Use License 1.0: source-available" /></a>
@@ -223,15 +223,18 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 
 ## Project status
 
-**Next release: 1.0.0.** The release includes the visual workspace, centralized agent workflows, operational hardening and the new source-available license. The major version reflects the licensing compatibility change. Publication is gated by the release workflow; preparation alone does not make the packages available or certify every stable-1.0 acceptance milestone. See the [1.0.0 release notes](docs/releases/1.0.0.md).
+<!-- wos-release:start -->
+**Source version: [1.1.0](docs/releases/1.1.0.md).** The product, npm package metadata and release notes use this version. The badges above show the latest versions actually published to GitHub and npm.
 
 | Item | State |
 | --- | --- |
-| Published baseline | [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), also available as `wosctl@0.4.2` and on GHCR |
-| This README and product captures | Describe current source, including changes not yet published in that release; the linked earlier tour retains its recorded interface |
-| Prepared version | 1.0.0; coordinated npm, GHCR and GitHub publication pending |
+| Source and release manifest | 1.1.0 |
+| npm package built from this checkout | `wosctl@1.1.0` |
+| Published distributions | [GitHub Release](https://github.com/A1b3rt0M3rcad0/wos/releases/latest) · [npm](https://www.npmjs.com/package/wosctl) · [GHCR](https://github.com/A1b3rt0M3rcad0/wos/pkgs/container/wos) |
+| Source vs installation | `wosctl@latest` installs npm's published version; this checkout and its captures can contain changes awaiting coordinated publication |
 | Compatibility | Existing HTTP/CLI contracts and checked forward migrations follow the [compatibility policy](docs/stable/compatibility.md); no blanket 1.0 certification |
 | Stable 1.0 acceptance | Tracked separately in [ROADMAP.md](ROADMAP.md) |
+<!-- wos-release:end -->
 
 ## Documentation and support
 

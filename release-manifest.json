@@ -1,28 +1,18 @@
 {
   "schema": 1,
-  "version": "1.0.0",
-  "previous_prepared_version": "0.4.2",
-  "bump": "major",
+  "version": "1.1.0",
+  "previous_prepared_version": "1.0.0",
+  "bump": "minor",
   "changes": [
     {
-      "file": "2026-10-17-sustainable-use-licensing.json",
-      "bump": "major",
-      "summary": "Adopt the WOS Sustainable Use License and separate brand policy for new material, allowing production and application use while excluding commercial platform supply; preserve earlier Apache grants and propagate notices through distributions and installed Skills."
+      "file": "canvas-first-workspace.json",
+      "bump": "minor",
+      "summary": "Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work."
     },
     {
-      "file": "central-agent-workflow.json",
-      "bump": "minor",
-      "summary": "Centralize CLI profiles and operational material, add agent-safe work commands and durable authorized activity/history, and align the five Skills and documentation without changing immutable signed authority or independent review."
-    },
-    {
-      "file": "operational-hardening.json",
-      "bump": "minor",
-      "summary": "Add authoritative signed return resolution, bounded HTTP and read models, delivery health and recovery, configurable Principal quotas, shared deployment and verified operator backup/restore procedures."
-    },
-    {
-      "file": "visual-operational-workspace.json",
-      "bump": "minor",
-      "summary": "Add a visual operational canvas with original paper cards, typed connections, bounded navigation and contextual workspace actions."
+      "file": "release-readme-sync.json",
+      "bump": "patch",
+      "summary": "Synchronize the README source version with coordinated release preparation, display live GitHub/npm publication badges, and reject documentation version drift in release checks."
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Stable public compatibility contract
 
-Published baseline: [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), source b572269085494ddd4d6370716ff1cb360b46065f. The operational candidate is unreleased; its additive changes and old-client limits are reviewed in [the operational compatibility record](operational-contract-review.md). Product 1.0 is gated by the original plan and actual immutable-source acceptance; this document alone does not publish or certify that release.
+The latest published versions are available from [GitHub Releases](https://github.com/A1b3rt0M3rcad0/wos/releases/latest) and [npm](https://www.npmjs.com/package/wosctl). The source release follows [`VERSION`](../../VERSION) and the [release manifest](../../release-manifest.json). The historical compatibility baseline is [v0.4.2](https://github.com/A1b3rt0M3rcad0/wos/releases/tag/v0.4.2), source b572269085494ddd4d6370716ff1cb360b46065f; its immutable contracts remain regression fixtures. The additive operational changes shipped in v1.0.0; their old-client limits are reviewed in [the operational compatibility record](operational-contract-review.md). Release publication and the remaining stable acceptance program are tracked separately.
 
 | Identity | Supported compatibility |
 | --- | --- |

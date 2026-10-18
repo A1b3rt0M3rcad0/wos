@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 — prepared for release
+
+- Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work.
+- Synchronize the README source version with coordinated release preparation, display live GitHub/npm publication badges, and reject documentation version drift in release checks.
+
 ## 1.0.0 — prepared for release
 
 - Adopt the WOS Sustainable Use License and separate brand policy for new material, allowing production and application use while excluding commercial platform supply; preserve earlier Apache grants and propagate notices through distributions and installed Skills.

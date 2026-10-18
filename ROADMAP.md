@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-18
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Contextual Outcome actions and compact sidebar navigation; existing release and human acceptance remain separately tracked
+**Current wave:** Coordinated 1.1.0 release metadata and README synchronization; human acceptance remains separately tracked
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,30 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Coordinated release and README versions — 2026-10-18
+
+**Status: In progress in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115), no merge.**
+The owner requests preparing the next release in this PR and keeping the npm
+package and README synchronized. Read-only GitHub and npm checks confirm that
+v1.0.0 is already published, while the README still advertises v0.4.2. The queued
+Outcome Board feature requires a minor release, targeting 1.1.0.
+
+- [x] Prepare VERSION, npm metadata, both OpenAPI versions, manifest, changelog
+  and release notes together, consuming the reviewed change queue.
+- [x] Generate the README source-version section during release preparation and
+  use live published-version badges instead of manual release/npm numbers.
+- [x] Include generated README metadata in automatic release preparation and
+  reject version drift through release/compatibility checks.
+- [ ] Verify release preparation, immutable compatibility and actual package
+  contents before updating the draft PR. Publication follows integration and
+  existing exact-source release gates; no merge or registry publication here.
+
+The 32 package/Skill/distribution/release contract tests pass. After adding
+independent assertions for the actual README version and release-notes target,
+all 16 release/compatibility checks pass again. Preparation produces 1.1.0 and
+consumes the queue; a repeated plan returns null. Actual artifact build and
+installed-package verification remain in progress.
 
 ## Contextual Outcome actions and compact navigation — 2026-10-18
 
@@ -202,6 +226,11 @@ The owner requested a more useful README demonstration and a clearer explanation
 ## Owner-authorized release preparation — 2026-10-17
 
 The owner authorized merging the README clarification and initiating the next coordinated release. The release tool consumes the four queued changes and prepares version **1.0.0**: the licensing compatibility break requires a major bump under `.changes/README.md`; the agent workflow, operational hardening and visual workspace additions are included. README release status explicitly distinguishes preparation from public availability. Publication must use the existing source-gated workflow and immutable npm, GHCR and GitHub artifacts. This version number does not complete the separate stable-1.0 acceptance program; published baseline remains v0.4.2 until verified publication succeeds.
+
+Publication follow-up verified on 2026-10-18: GitHub Release v1.0.0 was published
+on 2026-10-17 at source `cba58d6d609377df141d1369dccaaaf3b3e331e3`, and public
+npm `wosctl@latest` resolves to 1.0.0. The preparation status above is historical;
+the next source release is tracked in the coordinated-release wave above.
 
 ## Source-available licensing and brand — 2026-10-17
 

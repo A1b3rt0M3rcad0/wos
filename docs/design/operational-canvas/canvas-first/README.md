@@ -2,7 +2,7 @@
 
 The Outcome Board is the main spatial workspace for an Outcome. It occupies the viewport's available working region without a left sidebar, rather than appearing below a long page header. It changes the browser presentation of existing WOS state, not the graph engine, domain, authorization, execution protocol or storage model.
 
-**Branch:** `feat/canvas-first-workspace`, based on `master` at `cba58d6`, in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115). Implementation source: `c3c3139f5fb1d71bebdc80c14de5cc915c23de98`. The Outcome Board layout, refined specialist navigation and 26 source-pinned captures are locally qualified through the recorded test cohorts below. This work excludes the closed Tenant/scaling PR. Review, merging and release remain separate; no merge is authorized.
+**Branch:** `feat/canvas-first-workspace`, based on `master` at `cba58d6`, in draft [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115). Frontend implementation source: `c3c3139f5fb1d71bebdc80c14de5cc915c23de98`. The Outcome Board layout, refined specialist navigation and 26 source-pinned captures are locally qualified through the recorded test cohorts below. This work excludes the closed Tenant/scaling PR. The PR also prepares [release 1.1.0](../../../releases/1.1.0.md) with synchronized product/npm/README metadata; this does not change the captured web assets. Publication follows integration and exact-source release gates; no merge is authorized.
 
 ## Review of the proposed plan
 
@@ -165,4 +165,4 @@ WOS_CAPTURE_CANVAS_FIRST="$PWD/../../docs/design/operational-canvas/canvas-first
 
 Set `WOS_TEST_CHROMIUM_PATH` when using an existing full Chromium binary. The native-zoom journey needs full Chromium's Settings API; headless-shell alone does not provide it. Capture is optional and does not replace test assertions. The checked-in [manifest](screenshots.json) identifies the executed capture command, exact source and binary; regenerate the manifest when replacing its images.
 
-Representative-user usability, manual screen-reader acceptance and other browser engines remain unqualified. Automated checks and screenshots are not WCAG certification. No merge or release is part of this task.
+Representative-user usability, manual screen-reader acceptance and other browser engines remain unqualified. Automated checks and screenshots are not WCAG certification. Frontend qualification and release preparation are separate records; neither performs a merge or registry publication.
