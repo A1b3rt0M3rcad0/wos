@@ -452,6 +452,9 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await expect(panel(page).locator("#command-form")).toBeVisible();
     const body = panel(page).locator("#fields");
     await body.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+    // Narrow/short inspectors scroll as one surface; native focus must reveal
+    // the submit action there as well as in the independently scrolling body.
+    await panel(page).locator("#submit-command").focus();
     await fullyVisible(panel(page).locator("#submit-command"));
     await workspaceBounds(page);
     await capture(page, `canvas-${width}x${height}-form`, { state: "contextual form with independent scroll" });

@@ -256,6 +256,9 @@ for (const scenario of scenarios) {
       await expect(panel(page).locator(".canvas-inspector-actions")).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(panel(page).locator(".canvas-inspector-detail")).toBeVisible();
+      // Returning to details restores the action trigger's focus. A user can
+      // focus the header again to reveal it in a whole-surface scroller.
+      await panel(page).locator("#close-detail").focus();
       await wholeControl(panel(page).locator("#close-detail"));
       await panel(page).locator("#close-detail").click();
       await expect(panel(page)).toBeHidden();
