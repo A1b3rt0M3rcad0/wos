@@ -927,6 +927,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
     );
     await page.keyboard.press("Escape");
 
+    await chooseArea(page, "work");
     await page
       .locator(".list-row")
       .filter({ hasText: "Connect the evidence review" })
