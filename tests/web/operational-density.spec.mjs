@@ -235,6 +235,13 @@ for (const scenario of scenarios) {
       expect(inspected.elements[".detail-description"].fontFamily).toContain("DM Sans");
       expect(inspected.elements["#detail-title"].fontFamily).toContain("Instrument Serif");
       expect(inspected.elements["#detail-content"].clientHeight).toBeGreaterThan(48);
+      // A nonzero body can still expose just one line below its status row.
+      // Require an actual reading area before the footer or panel boundary.
+      const prose = inspected.elements[".detail-description"];
+      const readingBottom = Math.min(inspected.elements["#detail-content"].bottom, inspector.bottom);
+      const visibleProse = Math.min(prose.bottom, readingBottom) - Math.max(prose.y, inspector.y);
+      expect(visibleProse, "The initial inspector exposes at least three lines of authored prose")
+        .toBeGreaterThanOrEqual(Math.min(prose.height, parseFloat(prose.lineHeight) * 3) - 2);
       await capture(page, `board-${label}-inspector`, "Untitled Evidence keeps its long authored description once, in readable operational body text");
 
       // Exercise the actual scrolling surface before opening the existing action
