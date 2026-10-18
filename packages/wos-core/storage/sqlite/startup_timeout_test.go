@@ -17,7 +17,9 @@ func TestStartupDeadlineIsIndependentFromWriterContention(t *testing.T) {
 	} else if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("startup did not preserve cancellation: %v", err)
 	}
-	store, err := Open(path, Options{StartupTimeout: 30 * time.Second, BusyTimeout: time.Millisecond, MigrateOnOpen: true})
+	// The default startup budget accommodates a cold migration under the race
+	// detector and remains independent from the one-millisecond writer limit.
+	store, err := Open(path, Options{BusyTimeout: time.Millisecond, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
