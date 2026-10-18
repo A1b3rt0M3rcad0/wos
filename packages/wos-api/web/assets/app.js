@@ -1294,9 +1294,13 @@ async function refresh() {
     )
       return;
     notice(
-      snapshot.truncated && !canvasActive()
-        ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
-        : copy.text.sharedStateRefreshed,
+      // The Board footer announces loaded counts, revision and partial-map
+      // coverage. Avoid repeating routine refresh feedback in another row.
+      canvasActive()
+        ? ""
+        : snapshot.truncated
+          ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
+          : copy.text.sharedStateRefreshed,
     );
   } catch (error) {
     if (

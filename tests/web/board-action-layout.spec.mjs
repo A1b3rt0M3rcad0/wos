@@ -16,6 +16,9 @@ async function selectEvidence(page, evidence) {
   await page.getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(evidence.description);
   await page.getByRole("option").filter({ hasText: evidence.description }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText("Evidence");
+  // Entity expansion finishes by recording the deep link. The heading appears
+  // earlier and cannot alone establish that selection has settled.
+  await page.waitForURL((url) => url.searchParams.get("item") === `evidence/${evidence.id}`);
 }
 
 async function wholeControl(locator) {
