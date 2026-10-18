@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, intent, save, chooseArea, openViews } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent, save, chooseArea, openViews, outcomeActions } from "./ux-fixture.mjs";
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { interactionAudit } from "./interaction-audit.mjs";
@@ -417,13 +417,14 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
     await desktop.audit(page.locator("#admin-dialog"));
   }
   await page.keyboard.press("Escape");
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await desktop.audit(page.locator("#action-dialog"));
   await page
     .locator("#action-dialog")
     .getByText("Advanced", { exact: true })
     .click();
   await desktop.audit(page.locator("#action-dialog"));
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   const touch = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -572,7 +573,7 @@ test("paper stays fixed behind scrolling content and the editorial sidebar remai
       priority: "normal",
     });
   await page.setViewportSize({ width: 1440, height: 700 });
-  await page.locator("#search").evaluate((form) => form.requestSubmit());
+  await page.locator("#text").press("Enter");
   await expect(page.locator("#outcomes .item")).toHaveCount(15);
   await page.locator("#administration").focus();
   await expect(page.locator("#administration")).toBeInViewport();
@@ -700,9 +701,10 @@ test("editorial chapters keep all six areas, real records and illustration asset
     );
   await capture(page, "15-expanded-task-form");
   await page.keyboard.press("Escape");
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await expect(page.locator("#action-dialog")).toBeVisible();
   await capture(page, "16-action-menu");
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.locator("#administration").click();
   await expect(page.locator("#admin-dialog")).toBeVisible();
@@ -900,7 +902,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
     await chooseArea(page, "work");
-    await page.locator("#actions").click();
+    await outcomeActions(page);
     await paper("#action-dialog");
     await page.locator("#action-dialog summary").click();
     await paper("#action-dialog");
@@ -911,6 +913,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
       await page.mouse.move(0, 0);
       await capture(page, "33-mobile-action-menu");
     }
+    await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
 
     await intent(page, "New task");

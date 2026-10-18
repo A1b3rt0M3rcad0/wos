@@ -73,6 +73,11 @@ const state = {
   formOriginCanvas: false,
   formEpoch: 0,
 };
+let outcomeSearchTimer;
+let outcomeSearchController;
+let outcomeSearchEpoch = 0;
+let outcomeSearchLoading = false;
+let outcomeSearchQuery = "";
 const canvasInspector = createWorkspaceInspector({
   host: $("canvas-details"),
   dialogs: {
@@ -449,6 +454,8 @@ async function request(path, options = {}) {
       error.discarded = true;
       error.name = "AbortError";
     } else if ([401, 403].includes(error.status) && state.namespace) {
+      invalidateOutcomeSearch();
+      $("outcomes").replaceChildren();
       state.generation++;
       state.detailGeneration++;
       state.refreshGeneration++;
@@ -565,7 +572,7 @@ function renderCanvasSummary() {
       );
   actions.append(
     actionButton(
-      "Review outcome",
+      copy.text.reviewOutcome,
       () => showEntity(state.snapshot.outcome.ref).catch(report),
       "quiet",
     ),
@@ -936,6 +943,8 @@ function el(tag, text, className) {
   return node;
 }
 async function connect(namespace) {
+  invalidateOutcomeSearch();
+  $("outcomes").replaceChildren();
   resetCanvas();
   state.generation++;
   state.detailGeneration++;
@@ -1031,38 +1040,113 @@ $("search").onsubmit = (event) => {
   event.preventDefault();
   discover().catch(report);
 };
+$("text").oninput = () => {
+  invalidateOutcomeSearch();
+  $("outcomes").setAttribute("aria-busy", "true");
+  $("outcome-search-status").textContent = copy.text.findingOutcomes;
+  outcomeSearchTimer = setTimeout(() => discover().catch(report), 250);
+};
+for (const id of ["lifecycle", "archived"])
+  $(id).onchange = () => discover().catch(report);
+function invalidateOutcomeSearch() {
+  clearTimeout(outcomeSearchTimer);
+  outcomeSearchController?.abort();
+  outcomeSearchController = null;
+  outcomeSearchEpoch++;
+  outcomeSearchLoading = false;
+  state.next = "";
+  $("more-outcomes").hidden = true;
+  $("more-outcomes").disabled = false;
+  $("outcomes").setAttribute("aria-busy", "false");
+  $("outcome-search-status").textContent = "";
+}
+function outcomeSearchParams() {
+  const query = new URLSearchParams({ limit: "25", text: $("text").value });
+  if ($("lifecycle").value) query.set("lifecycle", $("lifecycle").value);
+  if (!$("archived").checked) query.set("archived", "false");
+  return query;
+}
 async function discover(append = false) {
+  const q = outcomeSearchParams();
+  const namespace = state.namespace;
+  const signature = `${namespace}?${q}`;
+  const cursor = state.next;
+  if (
+    append &&
+    (outcomeSearchLoading || !cursor || signature !== outcomeSearchQuery)
+  )
+    return;
+  if (!append) invalidateOutcomeSearch();
+  else clearTimeout(outcomeSearchTimer);
+  const epoch = ++outcomeSearchEpoch;
   const generation = state.generation;
-  const q = new URLSearchParams({ limit: "25", text: $("text").value });
-  if ($("lifecycle").value) q.set("lifecycle", $("lifecycle").value);
-  if (!$("archived").checked) q.set("archived", "false");
-  if (append && state.next) q.set("cursor", state.next);
-  const page = await request(`${base()}?${q}`);
-  if (generation !== state.generation) return;
-  if (!append) $("outcomes").replaceChildren();
-  for (const item of page.items) {
-    const button = el("button", undefined, "item");
-    button.dataset.outcomeId = item.id;
-    button.classList.toggle("selected", state.outcome?.id === item.id);
-    button.setAttribute("aria-pressed", String(state.outcome?.id === item.id));
-    const navCopy = el("span", undefined, "nav-item-text");
-    navCopy.append(
-      el("strong", item.title),
-      el(
-        "small",
-        `${display(item.lifecycle)}${item.archived_at ? copy.text.archivedc089d2 : ""}`,
-      ),
+  const controller = new AbortController();
+  outcomeSearchController = controller;
+  outcomeSearchLoading = true;
+  $("outcomes").setAttribute("aria-busy", "true");
+  $("more-outcomes").disabled = true;
+  $("outcome-search-status").textContent = copy.text.findingOutcomes;
+  if (append) q.set("cursor", cursor);
+  try {
+    const page = await request(`${base()}?${q}`, { signal: controller.signal });
+    if (
+      epoch !== outcomeSearchEpoch ||
+      generation !== state.generation ||
+      namespace !== state.namespace ||
+      signature !== `${state.namespace}?${outcomeSearchParams()}` ||
+      (append && cursor !== state.next)
+    )
+      return;
+    if (!append) $("outcomes").replaceChildren();
+    const loaded = new Set(
+      [...$("outcomes").children].map((child) => child.dataset.outcomeId),
     );
-    const navIndex = el("span", undefined, "nav-dot");
-    navIndex.setAttribute("aria-hidden", "true");
-    button.append(navIndex, navCopy);
-    button.onclick = () => openOutcome(item).catch(report);
-    $("outcomes").append(button);
+    for (const item of page.items) {
+      if (loaded.has(item.id)) continue;
+      loaded.add(item.id);
+      const button = el("button", undefined, "item");
+      button.dataset.outcomeId = item.id;
+      button.classList.toggle("selected", state.outcome?.id === item.id);
+      button.setAttribute("aria-pressed", String(state.outcome?.id === item.id));
+      const navCopy = el("span", undefined, "nav-item-text");
+      navCopy.append(
+        el("strong", item.title),
+        el(
+          "small",
+          `${display(item.lifecycle)}${item.archived_at ? copy.text.archivedc089d2 : ""}`,
+        ),
+      );
+      const navIndex = el("span", undefined, "nav-dot");
+      navIndex.setAttribute("aria-hidden", "true");
+      button.append(navIndex, navCopy);
+      button.onclick = () => openOutcome(item).catch(report);
+      $("outcomes").append(button);
+    }
+    if (!page.items.length && !append)
+      $("outcomes").append(el("p", copy.text.noMatchingOutcomes));
+    state.next = page.next_cursor || "";
+    outcomeSearchQuery = signature;
+    $("more-outcomes").hidden = !state.next;
+    $("outcome-search-status").textContent = message(
+      "outcomesShown",
+      $("outcomes").querySelectorAll("button[data-outcome-id]").length,
+    );
+  } catch (error) {
+    if (error.discarded || error.name === "AbortError") return;
+    // A current-scope access denial must still clear private state through
+    // request(), even if the user has already typed a newer search query.
+    if ([401, 403].includes(error.status)) throw error;
+    if (epoch !== outcomeSearchEpoch || generation !== state.generation) return;
+    $("outcome-search-status").textContent = error.message;
+    throw error;
+  } finally {
+    if (epoch === outcomeSearchEpoch) {
+      outcomeSearchLoading = false;
+      outcomeSearchController = null;
+      $("outcomes").setAttribute("aria-busy", "false");
+      $("more-outcomes").disabled = false;
+    }
   }
-  if (!page.items.length && !append)
-    $("outcomes").append(el("p", copy.text.noMatchingOutcomes));
-  state.next = page.next_cursor;
-  $("more-outcomes").hidden = !state.next;
 }
 $("more-outcomes").onclick = () => discover(true).catch(report);
 async function openOutcome(outcome) {
@@ -1411,6 +1495,14 @@ function navigateArea(area) {
 }
 function applyView() {
   const isCanvas = canvasActive();
+  const refresh = $("refresh");
+  const activeHeaderControl = document.activeElement;
+  const leavingOutcomeTools =
+    !isCanvas &&
+    activeHeaderControl !== refresh &&
+    ($("outcome-tools").contains(activeHeaderControl) ||
+      $("canvas-context").contains(activeHeaderControl) ||
+      activeHeaderControl === $("actions"));
   const hadSidebarFocus = document
     .querySelector(".sidebar")
     .contains(document.activeElement);
@@ -1421,6 +1513,29 @@ function applyView() {
   $("canvas-context").hidden = !isCanvas;
   $("canvas-counts").hidden = !isCanvas;
   if (!isCanvas) $("canvas-context").open = false;
+  $("outcome-tools").hidden = !isCanvas;
+  $("actions").hidden = !isCanvas;
+  if (!isCanvas) $("outcome-tools").open = false;
+  // A view can refresh its current snapshot without exposing Outcome-wide
+  // operations or changing routes. Reuse the same button and its handler.
+  const refreshParent = isCanvas
+    ? $("view-outcome").parentElement
+    : $("outcome-tools").parentElement;
+  if (refresh.parentElement !== refreshParent) {
+    refreshParent.insertBefore(
+      refresh,
+      isCanvas ? $("view-outcome") : $("outcome-tools"),
+    );
+    if (activeHeaderControl === refresh)
+      (isCanvas && !$("outcome-tools").open
+        ? $("outcome-tools").querySelector("summary")
+        : refresh
+      ).focus({ preventScroll: true });
+  }
+  refresh.dataset.copy = isCanvas ? "refresh" : "refreshView";
+  refresh.dataset.copyTitle = isCanvas ? "refreshState" : "refreshView";
+  refresh.textContent = copy.text[refresh.dataset.copy];
+  refresh.title = copy.text[refresh.dataset.copyTitle];
   canvasInspector.setEnabled(isCanvas);
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary" || isCanvas;
@@ -1455,6 +1570,8 @@ function applyView() {
     $("area-tabs")
       .querySelector('[data-area="canvas"]')
       ?.focus({ preventScroll: true });
+  else if (leavingOutcomeTools)
+    $("outcome-views").querySelector("summary").focus({ preventScroll: true });
 }
 function navigateSection(section) {
   if (!allowCanvasNavigation()) return;
@@ -1622,6 +1739,13 @@ function renderSummary() {
     quick.append(b);
   }
   purpose.append(quick);
+  const review = actionButton(
+    copy.text.reviewOutcome,
+    () => showEntity(state.snapshot.outcome.ref).catch(report),
+    "quiet",
+  );
+  review.id = "review-outcome";
+  quick.append(review);
   root.append(purpose);
   if (state.outcome.lifecycle === "draft") {
     const setup = summaryCard(copy.text.prepareYourOutcome);

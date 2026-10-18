@@ -6,6 +6,7 @@ import {
   save,
   pick,
   detail,
+  outcomeActions,
 } from "./ux-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 async function audit(page) {
@@ -109,7 +110,10 @@ test("keyboard opens, searches, selects, confirms and restores focus without a p
   });
   await wos.login(page);
   await openOutcome(page);
-  await page.locator("#actions").focus();
+  await page.locator("#review-outcome").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#detail-dialog")).toBeVisible();
+  await page.locator("#entity-actions").focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#action-dialog")).toBeVisible();
   await page
@@ -178,7 +182,7 @@ test("typed external context preserves scalar types without changing permission"
   const { scope } = await wos.outcome();
   await wos.login(page);
   await openOutcome(page);
-  await page.locator("#actions").click();
+  await outcomeActions(page);
   await page.locator("#action-options details summary").click();
   await page
     .getByRole("button", { name: "Edit external context", exact: true })

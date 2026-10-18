@@ -27,8 +27,28 @@ export async function openWorkspaceTools(page) {
   return tools;
 }
 export async function clickWorkspaceTool(page, id) {
+  if (id === "refresh" && await page.locator("#refresh").isVisible()) {
+    await page.locator("#refresh").click();
+    return;
+  }
+  if (id === "view-outcome" && !(await page.locator("#outcome-tools").isVisible())) {
+    await reviewOutcome(page);
+    return;
+  }
   await openWorkspaceTools(page);
   await page.locator(`#${id}`).click();
+}
+export async function reviewOutcome(page) {
+  if (await page.locator("#detail-dialog").isVisible())
+    await page.keyboard.press("Escape");
+  await chooseArea(page, "overview");
+  await page.locator("#review-outcome").click();
+  await expect(page.locator("#detail-dialog")).toBeVisible();
+}
+export async function outcomeActions(page) {
+  await reviewOutcome(page);
+  await page.locator("#entity-actions").click();
+  await expect(page.locator("#action-dialog")).toBeVisible();
 }
 export async function openCanvasContext(page) {
   const context = page.locator("#canvas-context");
@@ -152,17 +172,20 @@ export async function openOutcome(
     await chooseArea(page, area);
 }
 export async function intent(page, label) {
-  // Modal-regression journeys deliberately operate the retained specialist
-  // view; inline canvas actions have their own real-server acceptance suite.
-  if (
-    await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count()
-  )
+  // Modal journeys use actual collection/Overview controls. Global Board
+  // actions remain contextual and have independent inline-inspector coverage.
+  if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
     await chooseArea(page, "overview");
-  await page.locator("#actions").click();
-  await page
-    .locator("#action-options")
-    .getByRole("button", { name: label, exact: true })
-    .click();
+  const add = page.locator("#add-item");
+  const quick = page.locator(".summary-quick").getByRole("button", { name: label, exact: true });
+  if (await add.isVisible() && (await add.innerText()).replace(/^\+\s*/, "") === label)
+    await add.click();
+  else if (await quick.isVisible())
+    await quick.click();
+  else {
+    await outcomeActions(page);
+    await page.locator("#action-options").getByRole("button", { name: label, exact: true }).click();
+  }
   await expect(page.locator("#command-dialog")).toBeVisible();
   await expect(page.locator("#command-select")).not.toBeVisible();
 }

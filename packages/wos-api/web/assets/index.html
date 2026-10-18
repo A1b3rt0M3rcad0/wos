@@ -195,9 +195,10 @@
               +
             </button>
           </div>
-          <form id="search">
-            <label class="sidebar-search-label" data-copy="searchOutcomes"
-              >Search outcomes<input
+          <form id="search" role="search" aria-label="Outcome search">
+            <label class="sidebar-search-label">
+              <span class="sr" data-copy="searchOutcomes">Search outcomes</span>
+              <input
                 id="text"
                 type="search"
                 placeholder="Search outcomes"
@@ -222,10 +223,8 @@
                 ><input id="archived" type="checkbox" />Include archived</label
               >
             </details>
-            <button class="quiet search-submit" data-copy="search">
-              Search
-            </button>
           </form>
+          <p id="outcome-search-status" class="sr" role="status" aria-live="polite"></p>
           <div id="outcomes" class="outcome-navigation"></div>
           <button
             id="more-outcomes"
@@ -240,8 +239,8 @@
               <img
                 class="sidebar-vignette"
                 src="robots/18_workspace_organizer.svg"
-                width="96"
-                height="108"
+                width="54"
+                height="48"
                 alt=""
                 loading="lazy"
               />

@@ -260,6 +260,10 @@ test("entry, empty sections, pending reads and recoverable read errors remain us
   const { value: next } = await wos.outcome("A separate context loads safely");
   await page.reload();
   await expect(page.locator("#title")).toHaveText("A verifiable first delivery");
+  // Title publication precedes restored-area rendering. Wait for that actual
+  // navigation boundary before inspecting a mobile toggle hidden on the Board.
+  await expect(page.locator('#area-tabs [data-area="activity"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".sidebar")).toBeVisible();
   let release;
   const pending = new Promise((resolve) => { release = resolve; });
   const pattern = `**/outcomes/${next.id}/continuity?**`;

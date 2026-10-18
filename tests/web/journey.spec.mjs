@@ -1,4 +1,4 @@
-import { chooseArea, clickWorkspaceTool, openWorkspaceTools } from "./ux-fixture.mjs";
+import { chooseArea, clickWorkspaceTool, openWorkspaceTools, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect, chromium } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -140,9 +140,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
         await chooseArea(page, "overview");
       if (from !== "create") {
-        await page
-          .locator(from === "entity" ? "#entity-actions" : "#actions")
-          .click();
+        if (from !== "entity") await reviewOutcome(page);
+        await page.locator("#entity-actions").click();
         await page.keyboard.press("Escape");
         await page.keyboard.press("Escape");
       }
@@ -359,6 +358,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     await submit();
     await expect(page.locator("#state")).toHaveText("Achieved");
     await page.setViewportSize({ width: 390, height: 844 });
+    await chooseArea(page, "canvas");
     await openWorkspaceTools(page);
     await expect(page.locator("#view-outcome")).toBeVisible();
     assert.ok(
@@ -459,7 +459,8 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
   async function open(name, entity = false) {
     if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
       await chooseArea(page, "overview");
-    await page.locator(entity ? "#entity-actions" : "#actions").click();
+    if (!entity) await reviewOutcome(page);
+    await page.locator("#entity-actions").click();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
     await page.locator("#developer-tools").click();
@@ -740,12 +741,13 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
         ),
       ),
     );
-    await page.locator("#actions").focus();
+    await reviewOutcome(page);
+    await page.locator("#entity-actions").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("#action-dialog")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.locator("#action-dialog")).not.toBeVisible();
-    await expect(page.locator("#actions")).toBeFocused();
+    await expect(page.locator("#entity-actions")).toBeFocused();
     assert.deepEqual(
       await page.evaluate(() =>
         Array.from(document.querySelectorAll("input,select,textarea"))

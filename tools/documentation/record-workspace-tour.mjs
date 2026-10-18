@@ -22,7 +22,7 @@ import {
   expect,
   openOutcome,
   chooseArea,
-  clickWorkspaceTool,
+  reviewOutcome,
 } from "../../tests/web/ux-fixture.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -403,7 +403,7 @@ try {
   await frame(
     "Overview: work progress does not automatically verify the Outcome",
   );
-  await clickWorkspaceTool(page, "view-outcome");
+  await reviewOutcome(page);
   await expect(page.locator("#detail-dialog")).toBeVisible();
   await expect(page.locator("#detail-content")).toContainText(criterion.title);
   await expect(page.locator("#detail-content")).toContainText(

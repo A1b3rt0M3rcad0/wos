@@ -1,4 +1,4 @@
-import { chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
+import { chooseArea, clickWorkspaceTool, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -519,11 +519,12 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     );
     await page.locator(".board").scrollIntoViewIfNeeded();
     await shot("08-mobile");
-    await page.locator("#actions").focus();
+    await reviewOutcome(page);
+    await page.locator("#entity-actions").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator("#action-dialog")).toBeVisible();
     await page.keyboard.press("Escape");
-    await expect(page.locator("#actions")).toBeFocused();
+    await expect(page.locator("#entity-actions")).toBeFocused();
     assert.deepEqual(errors, [], JSON.stringify(failedResources));
   } finally {
     await context.close();

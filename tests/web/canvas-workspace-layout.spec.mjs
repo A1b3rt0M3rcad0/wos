@@ -106,6 +106,10 @@ async function openCanvas(page, wos, data) {
   await openOutcome(page, data.outcome.title, { area: null });
   await expect(page.locator('#area-tabs [data-area="canvas"]')).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator('#area-tabs [data-area="canvas"]')).toHaveText("Outcome Board");
+  await expect(page.locator("#outcome-tools")).toBeVisible();
+  await expect(page.locator("#actions")).toBeVisible();
+  await expect(page.locator("#refresh")).toHaveCount(1);
+  await expect(page.locator("#outcome-tools #refresh")).toHaveCount(1);
   await expect(canvas(page)).toHaveAttribute("aria-label", "Outcome Board workspace");
   await expect(canvas(page).locator(".workspace-canvas")).toBeVisible();
   await expect(canvas(page).locator(".workspace-canvas")).toHaveAttribute("aria-label", "Outcome Board");
@@ -116,7 +120,7 @@ async function openCanvas(page, wos, data) {
   await expect(page.locator('#area-tabs [data-area="canvas"]')).toBeFocused();
   await focusedBoardOwnsNavigation(page);
   if (process.env.WOS_CAPTURE_CANVAS_FIRST) {
-    const entries = await Promise.all(["app.js", "canvas.css", "en-US.js", "index.html", "workspace-canvas.js"].map(async (file) => {
+    const entries = await Promise.all(["app.js", "canvas.css", "editorial.css", "en-US.js", "index.html", "workspace-canvas.js"].map(async (file) => {
       const [response, source] = await Promise.all([
         page.request.get(`${wos.url}/app/${file}`),
         readFile(new URL(`../../packages/wos-api/web/assets/${file}`, import.meta.url)),
@@ -129,6 +133,19 @@ async function openCanvas(page, wos, data) {
     verifiedAssets.set(page, Object.fromEntries(entries));
     await test.info().attach("verified-embedded-assets", { body: JSON.stringify(verifiedAssets.get(page), null, 2), contentType: "application/json" });
   }
+}
+async function sidebarBounds(page) {
+  await expect(page.locator(".sidebar")).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const rect = document.querySelector(".sidebar").getBoundingClientRect();
+    return {
+      viewport: { width: innerWidth, height: innerHeight, devicePixelRatio, visualViewportScale: visualViewport.scale },
+      sidebar: { x: rect.x, y: rect.y, width: rect.width, height: rect.height, top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left },
+      document: { scrollX, scrollY, width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+    };
+  });
+  expect(geometry.document.width).toBeLessThanOrEqual(geometry.viewport.width);
+  return geometry;
 }
 async function capture(page, name, measurement) {
   await test.info().attach(`${name}-geometry`, { body: JSON.stringify(measurement, null, 2), contentType: "application/json" });
@@ -157,7 +174,7 @@ async function capture(page, name, measurement) {
   if (measurement.nativeBrowserZoom) expect(pixelSize).toEqual(measurement.unzoomedViewport);
   expect(verifiedAssets.has(page), "The captured server's modified assets were checked against source").toBe(true);
   await writeFile(join(directory, `${name}.json`), JSON.stringify({
-    ...await workspaceBounds(page), ...measurement, pixelSize, captureMethod,
+    ...(measurement.specialist ? await sidebarBounds(page) : await workspaceBounds(page)), ...measurement, pixelSize, captureMethod,
     servedAssetsSha256: verifiedAssets.get(page), capturedAt: new Date().toISOString(),
   }, null, 2) + "\n");
 }
@@ -249,8 +266,25 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   for (const area of ["overview", "plan", "work", "issues", "evidence", "activity"]) {
     await chooseArea(page, area);
     await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.locator("#outcome-tools")).toBeHidden();
+    await expect(page.locator("#actions")).toBeHidden();
+    await expect(page.locator("#refresh")).toHaveCount(1);
+    await expect(page.locator(".heading-actions > #refresh")).toBeVisible();
+    await expect(page.locator("#refresh")).toHaveText("Refresh view");
+    if (area === "overview") {
+      await expect(page.locator(".summary-quick > #review-outcome")).toBeVisible();
+      await page.locator("#review-outcome").click();
+      await expect(page.locator("#detail-title")).toHaveText(data.outcome.title);
+      await expect(page.locator("#detail-dialog")).toBeVisible();
+      await page.keyboard.press("Escape");
+    } else if (area !== "activity")
+      await expect(page.locator("#add-item")).toBeVisible();
     await expect(page.getByRole("complementary", { name: "Workspace navigation", exact: true })).toBeVisible();
     await expect(page.locator(`#area-tabs [data-area="${area}"]`)).toHaveAttribute("aria-pressed", "true");
+    if (["overview", "work"].includes(area)) {
+      await page.evaluate(() => scrollTo(0, 0));
+      await capture(page, `canvas-1366x768-${area}-sidebar`, { specialist: true, state: `${area} with retained live-search sidebar and local actions` });
+    }
   }
   await chooseArea(page, "overview");
   await openOutcome(page, other.value.title, { area: "overview" });
@@ -321,6 +355,14 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await controls(page);
     await workspaceBounds(page);
     await capture(page, `canvas-${width}x${height}-map`, { state: "explicit Map alternative" });
+    await chooseArea(page, "overview");
+    const navigation = page.locator("#navigation-toggle");
+    if (await navigation.getAttribute("aria-expanded") === "false") await navigation.click();
+    await page.evaluate(() => scrollTo(0, 0));
+    await capture(page, `canvas-${width}x${height}-overview-sidebar`, { specialist: true, state: "expanded mobile Overview navigation and live search" });
+    await navigation.click();
+    await chooseArea(page, "canvas");
+    await workspaceBounds(page);
   });
 }
 
