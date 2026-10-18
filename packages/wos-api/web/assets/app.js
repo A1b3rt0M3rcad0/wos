@@ -504,6 +504,10 @@ async function refreshPermissions() {
 }
 function placeNotice(onBoard = canvasActive() && !$("outcome").hidden && !$("canvas-view").hidden) {
   const parent = onBoard ? $("canvas-feedback") : $("main-content");
+  if (onBoard && !$("notice").classList.contains("error") &&
+    [copy.text.partialViewMoreItemsAreAvailableUseLoadMore, copy.text.sharedStateRefreshed]
+      .includes($("notice").textContent))
+    $("notice").textContent = "";
   if ($("notice").parentElement !== parent)
     parent.insertBefore($("notice"), parent.firstChild);
 }

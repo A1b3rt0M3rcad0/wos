@@ -197,4 +197,10 @@ test("Partial map coverage stays in the footer and other feedback never covers i
   await chooseArea(page, "overview");
   await expect(page.locator(".workspace-main > #notice")).toHaveCount(1);
   await expect(page.locator("#canvas-feedback > #notice")).toHaveCount(0);
+  await clickWorkspaceTool(page, "refresh");
+  await expect(page.locator("#notice")).toContainText("Partial view");
+  await chooseArea(page, "canvas");
+  await expect(page.locator("#canvas-feedback > #notice")).toBeEmpty();
+  await expect(page.locator("#canvas-feedback")).toBeHidden();
+  await expect(page.locator(".canvas-status")).toContainText("Partial map");
 });
