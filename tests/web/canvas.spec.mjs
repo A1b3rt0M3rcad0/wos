@@ -17,11 +17,22 @@ async function openCanvas(page, wos, data, credential) {
   await expect(canvas(page)).toBeVisible();
 }
 async function choose(page, kind, value) {
-  const title = value.title || value.description;
-  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(title);
-  await canvas(page).getByRole("option").filter({ hasText: title }).first().click();
-  await expect(panel(page).locator("#detail-title")).toHaveText(title);
+  // Search preserves the authored label; the inspector distinguishes concise
+  // record identity from the full description of records without a title.
+  const searchLabel = value.title || value.name || value.description;
+  await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(searchLabel);
+  await canvas(page).getByRole("option").filter({ hasText: searchLabel }).first().click();
+  const kindHeading = {
+    outcome: "Outcome", objective: "Objective", work_item: "Task", issue: "Issue",
+    blocker: "Blocker", evidence: "Evidence", artifact: "Artifact", decision: "Decision", roadmap: "Roadmap",
+  }[kind];
+  await expect(panel(page).locator("#detail-title")).toHaveText(value.title || value.name || kindHeading);
   await expect(panel(page)).toBeVisible();
+  if (!value.title && !value.name) {
+    const body = panel(page).locator("#detail-content");
+    await expect(body.locator(".detail-description")).toHaveText(value.description);
+    await expect(body.getByText(value.description, { exact: true })).toHaveCount(1);
+  }
   await expect(page.locator("#detail-dialog")).not.toBeVisible();
 }
 async function finishInline(page) {
