@@ -356,40 +356,48 @@
                 <div class="outcome-meta">
                   <span id="state" class="badge"></span
                   ><span id="revision"></span>
+                  <span id="canvas-counts" class="canvas-counts" hidden></span>
                 </div>
               </div>
+              <nav
+                id="area-tabs"
+                class="outcome-view-navigation"
+                aria-label="Outcome areas"
+                data-copy-aria-label="outcomeAreas"
+              ></nav>
               <div class="heading-actions">
-                <button
-                  id="copy-workspace-link"
-                  class="quiet"
-                  data-copy="copyLink"
-                >
-                  Copy link</button
-                ><button
-                  id="refresh"
-                  class="quiet"
-                  title="Refresh state"
-                  data-copy-title="refreshState"
-                  data-copy="refresh"
-                >
-                  Refresh</button
-                ><button
-                  id="view-outcome"
-                  class="quiet"
-                  data-copy="reviewCriteria"
-                >
-                  Review criteria</button
-                ><button id="actions" data-copy="chooseAnAction">
+                <details id="canvas-context" class="canvas-context-disclosure" name="outcome-header" hidden>
+                  <summary data-copy="outcomeContext">Outcome context</summary>
+                  <div class="canvas-context-content">
+                    <div id="canvas-summary" class="canvas-overview"></div>
+                    <div id="canvas-planning" class="canvas-planning"></div>
+                  </div>
+                </details>
+                <details id="outcome-tools" class="outcome-tools" name="outcome-header">
+                  <summary data-copy="outcomeTools">Outcome tools</summary>
+                  <div class="outcome-tool-options">
+                    <button id="copy-workspace-link" class="quiet" data-copy="copyLink">
+                      Copy link
+                    </button>
+                    <button
+                      id="refresh"
+                      class="quiet"
+                      title="Refresh state"
+                      data-copy-title="refreshState"
+                      data-copy="refresh"
+                    >
+                      Refresh
+                    </button>
+                    <button id="view-outcome" class="quiet" data-copy="reviewCriteria">
+                      Review criteria
+                    </button>
+                  </div>
+                </details>
+                <button id="actions" data-copy="chooseAnAction">
                   Choose an action
                 </button>
               </div>
             </div>
-            <nav
-              id="area-tabs"
-              class="view-tabs"
-              aria-label="Outcome areas"
-              data-copy-aria-label="outcomeAreas"
-            ></nav>
             <nav
               id="view-tabs"
               class="view-tabs"
@@ -407,8 +415,6 @@
               aria-label="Visual operational workspace"
               hidden
             >
-              <div id="canvas-summary" class="canvas-overview"></div>
-              <div id="canvas-planning" class="canvas-planning"></div>
               <div class="canvas-workspace-shell">
                 <section
                   id="operational-canvas"

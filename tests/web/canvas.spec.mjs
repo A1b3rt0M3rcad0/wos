@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, pick } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool, openCanvasContext } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer, seedCanvasRoadmap } from "./canvas-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
@@ -73,7 +73,7 @@ test("Canvas is the default operational view without a Roadmap and keeps context
     scope: data.scope, work_item_id: data.tasks.ready.id,
     expected_version: data.tasks.ready.version, title: "A shared Task updated by another participant",
   });
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
   await expect(node(page, "work_item", data.tasks.ready)).toContainText(data.tasks.ready.title);
   expect(page.url()).toBe(selectedRoute);
@@ -85,9 +85,9 @@ test("Canvas is the default operational view without a Roadmap and keeps context
   await expect(node(page, "work_item", data.tasks.ready)).toBeFocused();
   await page.goBack();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
-  await page.locator("#area-tabs").getByRole("button", { name: "Work", exact: true }).click();
+  await chooseArea(page, "Work");
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
-  await page.locator("#area-tabs").getByRole("button", { name: "Canvas", exact: true }).click();
+  await chooseArea(page, "Canvas");
   await expect(canvas(page)).toBeVisible();
   // A real context response that arrives after dismissal must not reopen the
   // inspector or restore a selection the person already closed.
@@ -331,7 +331,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
   await page.getByLabel("Task title", { exact: true }).fill("My retained canvas edit");
   await wos.command("update_work_item", { scope: data.scope, work_item_id: data.tasks.ready.id, expected_version: data.tasks.ready.version, title: "Another participant changed this Task" });
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(page.getByLabel("Task title", { exact: true })).toHaveValue("My retained canvas edit");
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#command-error")).toContainText("A newer version exists");
@@ -356,7 +356,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#retry-command")).toBeVisible();
   await expect(panel(page).locator("#fields")).toHaveAttribute("inert", "");
-  await page.locator("#area-tabs").getByRole("button", { name: "Work", exact: true }).click();
+  await chooseArea(page, "Work");
   await expect(canvas(page)).toBeVisible();
   await expect(panel(page).locator("#retry-command")).toBeVisible();
   await panel(page).locator("#retry-command").click();
@@ -401,6 +401,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await choose(page, "roadmap", published);
   await panel(page).getByRole("button", { name: "Activate revision", exact: true }).click();
   await finishInline(page);
+  await openCanvasContext(page);
   await expect(page.locator("#canvas-planning").getByRole("button", { name: "Active plan · revision 1", exact: true })).toBeVisible();
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   expect(JSON.stringify((await wos.api(path)).value.revisions[0])).toBe(original);

@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, intent, save } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, intent, save, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { seedPresentation } from "./presentation-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
@@ -26,7 +26,7 @@ async function capture(page, name) {
   await page.screenshot({ path: join(directory, `${name}.png`), fullPage: false, animations: "disabled" });
 }
 async function area(page, key, section) {
-  await page.locator(`#area-tabs [data-area="${key}"]`).click();
+  await chooseArea(page, key);
   if (section && key !== "work") await page.locator(`#tabs [data-section="${section}"]`).click();
   if (section && key === "work") await page.locator("#work-status").selectOption(section);
   await expect(page.locator(`#area-tabs [data-area="${key}"]`)).toHaveAttribute("aria-pressed", "true");
@@ -204,7 +204,7 @@ test("standalone details, contextual forms and Roadmap revisions preserve their 
     await expect(page.getByLabel("Publication reason", { exact: true })).toBeVisible();
     if (device === "desktop") await capture(page, `02-${device}-roadmap-publication`);
     await page.keyboard.press("Escape");
-    await page.locator("#view-outcome").click();
+    await clickWorkspaceTool(page, "view-outcome");
     await expect(page.locator("#detail-content")).toContainText("A person can verify the delivered result");
     if (device === "desktop") await capture(page, `02-${device}-criteria`);
     await page.keyboard.press("Escape");
@@ -249,7 +249,7 @@ test("entry, empty sections, pending reads and recoverable read errors remain us
   await page.getByLabel("Outcome name", { exact: true }).fill("A verifiable first delivery");
   await page.getByLabel("What does success look like?", { exact: true }).fill("People can resume and review the same work.");
   await save(page);
-  await page.locator('#area-tabs [data-area="overview"]').click();
+  await chooseArea(page, "overview");
   await expect(page.getByRole("heading", { name: "Prepare your Outcome", exact: true })).toBeVisible();
   await capture(page, "03-mobile-draft-setup");
   for (const key of ["plan", "work", "issues", "evidence", "activity"]) {
@@ -274,14 +274,14 @@ test("entry, empty sections, pending reads and recoverable read errors remain us
   } finally { release(); }
   await expect(page.locator("#workspace-loading")).not.toBeVisible();
   await page.unroute(pattern);
-  await page.locator('#area-tabs [data-area="overview"]').click();
+  await chooseArea(page, "overview");
   await page.route(pattern, (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":{"message":"The state service is temporarily unavailable. Refresh to try again."}}' }));
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(page.locator("#notice")).toHaveClass(/error/);
   await expect(page.locator("#notice")).toContainText("temporarily unavailable");
   await capture(page, "03-desktop-read-error");
   await page.unroute(pattern);
-  await page.locator("#refresh").click();
+  await clickWorkspaceTool(page, "refresh");
   await expect(page.locator("#notice")).not.toHaveClass(/error/);
   await expect(page.locator("#notice")).toContainText("Shared state refreshed");
   await expect(page.locator("#workspace-loading")).not.toBeVisible();

@@ -1,4 +1,4 @@
-import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, chooseArea, openViews } from "./ux-fixture.mjs";
 test("Canvas and six specialist areas retain the persisted Draft checklist without automatic activation", async ({
   page,
   wos,
@@ -7,6 +7,8 @@ test("Canvas and six specialist areas retain the persisted Draft checklist witho
   await wos.login(page);
   await openOutcome(page);
   await expect(page.locator("#area-tabs button")).toHaveCount(7);
+  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await openViews(page);
   for (const name of ["Canvas", "Overview", "Plan", "Work", "Issues", "Evidence", "Activity"])
     await expect(page.locator("#area-tabs").getByRole("button", { name, exact: true })).toBeVisible();
   await expect(
@@ -15,10 +17,9 @@ test("Canvas and six specialist areas retain the persisted Draft checklist witho
   await expect(
     page.getByRole("button", { name: "Activate outcome", exact: true }),
   ).toBeVisible();
-  await page
-    .locator("#area-tabs")
-    .getByRole("button", { name: "Work", exact: true })
-    .click();
+  await chooseArea(page, "Work");
+  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#outcome-views > summary")).toBeFocused();
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
   await expect(page.locator("#view-tabs button")).toHaveCount(2);
   expect(
@@ -38,10 +39,7 @@ test("deep links restore area and scoped item through reload, back and forward",
   });
   await wos.login(page);
   await openOutcome(page);
-  await page
-    .locator("#area-tabs")
-    .getByRole("button", { name: "Plan", exact: true })
-    .click();
+  await chooseArea(page, "Plan");
   await page
     .locator("#content")
     .getByRole("button")
@@ -72,10 +70,7 @@ test("all Task search and priority filter find an off-page item in 1,001 records
     });
   await wos.login(page);
   await openOutcome(page);
-  await page
-    .locator("#area-tabs")
-    .getByRole("button", { name: "Work", exact: true })
-    .click();
+  await chooseArea(page, "Work");
   await page.getByLabel("Search items", { exact: true }).fill("Unique remote");
   await page.getByLabel("Priority", { exact: true }).selectOption("high");
   await expect(page.locator(".list-row")).toHaveCount(1);
@@ -99,10 +94,7 @@ test("queued search cannot discard a page after explicit status navigation", asy
     });
   await wos.login(page);
   await openOutcome(page);
-  await page
-    .locator("#area-tabs")
-    .getByRole("button", { name: "Work", exact: true })
-    .click();
+  await chooseArea(page, "Work");
   await expect(page.locator(".list-row")).toHaveCount(25);
   await page.clock.install();
   await page.clock.pauseAt(new Date());

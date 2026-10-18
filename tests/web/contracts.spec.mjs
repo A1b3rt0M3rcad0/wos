@@ -1,3 +1,4 @@
+import { chooseArea } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -162,7 +163,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       .getByRole("button")
       .filter({ hasText: "Contratos verificados" })
       .click();
-    await page.getByRole("button", { name: "Work", exact: true }).click();
+    await chooseArea(page, "work");
     await page.getByRole("button", { name: "Board", exact: true }).click();
     await page
       .getByRole("button")

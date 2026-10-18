@@ -60,6 +60,132 @@ const compare = (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const unit = (value) => `calc(${value} * var(--wos-unit, 1px))`;
 
+// These are counts of loaded, typed links, not a second readiness or proof
+// projection. Index once for the whole render, including collapsed records;
+// paper position and visual grouping never contribute operational facts.
+export function canvasNodeIndicators(model) {
+  const nodes = new Map((model.nodes || []).map((item) => [item.key, item]));
+  const indexed = new Map(
+    [...nodes.keys()].map((key) => [
+      key,
+      {
+        dependencies: new Map(),
+        blockers: new Set(),
+        evidence: new Map(),
+      },
+    ]),
+  );
+  const identity = (edge) => {
+    const truth = edge.sourceOfTruth;
+    if (edge.ref?.kind === truth && edge.ref.id)
+      return `${truth}:${edge.ref.id}`;
+    const prefix = `graph:${truth}:`;
+    if (edge.key?.startsWith(prefix)) return edge.key.slice(6);
+    return `${truth}:${edge.key || `${edge.sourceKey}:${edge.targetKey}`}`;
+  };
+  const remember = (entries, key, value) => {
+    if (!entries.has(key)) entries.set(key, new Set());
+    if (value !== "unknown") entries.get(key).add(value);
+  };
+  const countClasses = (entries, classes) => {
+    const counts = { total: entries.size, ...classes, unknown: 0 };
+    for (const values of entries.values())
+      counts[values.size === 1 ? [...values][0] : "unknown"]++;
+    return counts;
+  };
+  const operational = new Set(["objective", "work_item"]);
+  const blockedKinds = new Set(["outcome", ...operational]);
+  const evidenceKinds = new Set([...blockedKinds, "issue", "decision"]);
+  for (const edge of model.edges || []) {
+    const source = nodes.get(edge.sourceKey),
+      target = nodes.get(edge.targetKey);
+    // An unloaded endpoint is not a loaded relationship in this model.
+    // A contextMissing placeholder still carries its real typed reference.
+    if (!source || !target) continue;
+    if (
+      edge.kind === "depends_on" &&
+      edge.sourceOfTruth === "relation" &&
+      operational.has(source.kind) &&
+      operational.has(target.kind)
+    )
+      remember(
+        indexed.get(source.key).dependencies,
+        identity(edge),
+        ["hard", "advisory"].includes(edge.mode) ? edge.mode : "unknown",
+      );
+    else if (
+      edge.kind === "blocks" &&
+      edge.sourceOfTruth === "blocker" &&
+      source.kind === "blocker" &&
+      blockedKinds.has(target.kind)
+    )
+      // A Blocker owns exactly one direct target. Its cause edge and any
+      // associated Issue cannot add an extra or inherited impact here.
+      indexed.get(target.key).blockers.add(source.key);
+    else if (
+      edge.sourceOfTruth === "evidence_link" &&
+      source.kind === "evidence" &&
+      evidenceKinds.has(target.kind)
+    ) {
+      const stance = ["supports", "contradicts", "context"].includes(edge.kind)
+        ? edge.kind
+        : "unknown";
+      const key = identity(edge);
+      remember(indexed.get(source.key).evidence, key, stance);
+      remember(indexed.get(target.key).evidence, key, stance);
+    }
+  }
+  const limited = Boolean(model.partial || model.boundary?.scopeLimited);
+  const result = new Map();
+  for (const [key, links] of indexed) {
+    const dependencies = countClasses(links.dependencies, {
+      hard: 0,
+      advisory: 0,
+    });
+    const evidence = countClasses(links.evidence, {
+      supports: 0,
+      contradicts: 0,
+      context: 0,
+    });
+    const blockers = links.blockers.size;
+    const labels = [],
+      details = [];
+    if (dependencies.total) {
+      labels.push(
+        `${dependencies.total} ${dependencies.total === 1 ? "dep" : "deps"}`,
+      );
+      details.push(
+        `${dependencies.total} outgoing dependencies: ${dependencies.hard} hard, ${dependencies.advisory} advisory, ${dependencies.unknown} strength not loaded`,
+      );
+    }
+    if (blockers) {
+      labels.push(`${blockers} ${blockers === 1 ? "blocker" : "blockers"}`);
+      details.push(
+        `${blockers} direct Blocker impact ${blockers === 1 ? "link" : "links"}; inherited blocking is not inferred`,
+      );
+    }
+    if (evidence.total) {
+      labels.push(
+        `${evidence.total} evidence ${evidence.total === 1 ? "link" : "links"}`,
+      );
+      details.push(
+        `${evidence.total} ${nodes.get(key).kind === "evidence" ? "outgoing" : "incoming"} EvidenceLinks: ${evidence.supports} supporting, ${evidence.contradicts} contradicting, ${evidence.context} context, ${evidence.unknown} stance not loaded; Evidence is not criterion verification`,
+      );
+    }
+    result.set(key, {
+      dependencies,
+      blockers,
+      evidence,
+      limited,
+      label: labels.length ? `Loaded · ${labels.join(" · ")}` : "",
+      description: details.length
+        ? `Loaded relationships only${limited ? "; this map is partial or query-limited" : ""}. ${details.join(". ")}. Readiness and acceptance remain explicit server state.`
+        : "",
+    });
+  }
+  return result;
+}
+
 // A deterministic forest layout. Only the adapter's explicit structural parent
 // is considered: operational dependencies and Roadmap order cannot reparent a
 // card. Existing local positions win during a refresh; new cards avoid them.
@@ -676,6 +802,7 @@ export function mountWorkspaceCanvas(host, options) {
       "canvas-connect",
     ].find((name) => focused?.classList.contains(name));
     layout = layoutCanvas(model, { collapsed, positions });
+    const indicators = canvasNodeIndicators(model);
     for (const item of layout.nodes)
       positions.set(item.key, { x: item.x, y: item.y });
     world.style.width = unit(layout.width);
@@ -720,7 +847,7 @@ export function mountWorkspaceCanvas(host, options) {
       main.dataset.key = item.key;
       main.setAttribute(
         "aria-label",
-        `${kindName(item.kind)}: ${item.title}${item.displayState || item.lifecycle ? ", " + display(item.displayState || item.lifecycle) : ""}`,
+        `${kindName(item.kind)}: ${item.title}${item.displayState || item.lifecycle ? ", " + display(item.displayState || item.lifecycle) : ""}${indicators.get(item.key)?.description ? ". " + indicators.get(item.key).description : ""}`,
       );
       main.setAttribute("aria-pressed", String(item.key === selectedKey));
       main.append(
@@ -737,6 +864,12 @@ export function mountWorkspaceCanvas(host, options) {
       main.append(meta);
       if (item.kind === "outcome" && item.summary)
         main.append(node("span", item.summary, "canvas-node-summary"));
+      const indicator = indicators.get(item.key);
+      if (indicator?.label) {
+        const summary = node("span", indicator.label, "canvas-node-indicators");
+        summary.title = indicator.description;
+        main.append(summary);
+      }
       main.onkeydown = (event) => nodeKey(event, item);
       content.append(main, nodeActions(item));
       article.append(paper, content);
@@ -754,6 +887,15 @@ export function mountWorkspaceCanvas(host, options) {
       );
       if (item.displayState || item.lifecycle)
         listMain.append(badge(item.displayState || item.lifecycle));
+      if (indicator?.label) {
+        const summary = node("span", indicator.label, "canvas-node-indicators");
+        summary.title = indicator.description;
+        listMain.append(summary);
+        listMain.setAttribute(
+          "aria-label",
+          `${kindName(item.kind)}: ${item.title}${item.displayState || item.lifecycle ? ", " + display(item.displayState || item.lifecycle) : ""}. ${indicator.description}`,
+        );
+      }
       row.append(listMain, nodeActions(item));
       list.append(row);
     }

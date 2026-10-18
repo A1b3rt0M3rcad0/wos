@@ -114,10 +114,6 @@ const canvasInspector = createWorkspaceInspector({
       if (selected && reason !== "reset") {
         const key = `${selected.kind}:${selected.id}`;
         state.canvasView?.focus(key);
-        if (matchMedia("(max-width: 1100px)").matches)
-          $("operational-canvas")
-            .querySelector(`[data-canvas-list-node="${key}"]`)
-            ?.scrollIntoView({ block: "center", behavior: "instant" });
       }
       writeRoute(null);
     }
@@ -143,19 +139,67 @@ function allowCanvasNavigation() {
   return false;
 }
 function presentForm() {
+  closeWorkspaceDisclosures();
   if (canvasInspector.enabled && !state.technical) {
     canvasInspector.showForm();
     revealCanvasInspector();
   } else if (!$("command-dialog").open) $("command-dialog").showModal();
 }
 function revealCanvasInspector() {
-  if (matchMedia("(max-width: 1100px)").matches) {
-    const host = $("canvas-details");
-    host.style.scrollMarginTop =
-      "calc(var(--header-height) + 16 * var(--wos-unit, 1px))";
-    host.scrollIntoView({ block: "start", behavior: "instant" });
+  closeWorkspaceDisclosures();
+  const host = $("canvas-details");
+  // The inspector stays in the workspace. Its own body scrolls; opening it
+  // must not move the document or replace focus inside an existing form.
+  if (!host.hidden && !host.contains(document.activeElement))
+    host
+      .querySelector(".canvas-inspector-slot:not([hidden])")
+      ?.focus({ preventScroll: true });
+}
+
+function closeWorkspaceDisclosures({ except = null } = {}) {
+  for (const id of ["outcome-views", "outcome-tools", "canvas-context"]) {
+    const disclosure = $(id);
+    if (disclosure && disclosure !== except) {
+      const returnFocus =
+        disclosure.open && disclosure.contains(document.activeElement);
+      disclosure.open = false;
+      if (returnFocus)
+        disclosure.querySelector("summary")?.focus({ preventScroll: true });
+    }
   }
 }
+
+document.addEventListener("click", (event) => {
+  for (const id of ["outcome-views", "outcome-tools", "canvas-context"]) {
+    const disclosure = $(id);
+    if (disclosure?.open && !disclosure.contains(event.target))
+      disclosure.open = false;
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || event.defaultPrevented || event.isComposing)
+    return;
+  const disclosure = event.target.closest?.(
+    ".outcome-heading details[open]",
+  );
+  if (
+    !disclosure ||
+    event.target.closest?.(
+      'select, [role="listbox"], [role="combobox"][aria-expanded="true"], dialog[open]',
+    )
+  )
+    return;
+  disclosure.open = false;
+  disclosure.querySelector("summary")?.focus({ preventScroll: true });
+  event.preventDefault();
+});
+$("outcome-tools").addEventListener("click", (event) => {
+  const button = event.target.closest?.(".outcome-tool-options button");
+  if (!button) return;
+  $("outcome-tools").open = false;
+  if (document.activeElement === button)
+    $("outcome-tools").querySelector("summary").focus({ preventScroll: true });
+});
 function closeForm() {
   if (canvasInspector.enabled) canvasInspector.close("form");
   if ($("command-dialog").open) $("command-dialog").close();
@@ -494,6 +538,7 @@ function renderCanvasSummary() {
   root.replaceChildren();
   const purpose = el("div", undefined, "canvas-purpose");
   purpose.append(
+    el("h2", state.outcome.title, "canvas-context-title"),
     el("p", "Desired outcome", "eyebrow"),
     el(
       "p",
@@ -529,6 +574,15 @@ function renderCanvasSummary() {
   const metrics = el("dl", undefined, "canvas-summary-metrics");
   const progress = state.snapshot.progress?.work_completion;
   const count = state.snapshot.counts || {};
+  $("canvas-counts").textContent = [
+    [count.objectives ?? 0, "Objective"],
+    [count.work_items ?? 0, "Task"],
+    [count.issues ?? 0, "Issue"],
+  ]
+    .map(([value, label]) => `${value} ${label}${value === 1 ? "" : "s"}`)
+    .join(" · ");
+  const provenance = el("p", undefined, "canvas-context-provenance");
+  provenance.textContent = `${$("context-name").textContent} · ${$("revision").textContent}`;
   for (const [label, value] of [
     [
       "Task progress",
@@ -549,7 +603,7 @@ function renderCanvasSummary() {
     group.append(el("dt", label), el("dd", String(value)));
     metrics.append(group);
   }
-  root.append(purpose, metrics);
+  root.append(purpose, metrics, provenance);
 }
 function renderCanvasPlanning() {
   const root = $("canvas-planning");
@@ -1098,6 +1152,7 @@ async function refresh() {
     $("empty").hidden = true;
     $("outcome").hidden = false;
     $("title").textContent = snapshot.outcome.title;
+    $("title").title = snapshot.outcome.title;
     $("state").textContent = display(snapshot.outcome.lifecycle);
     $("state").dataset.lifecycle = snapshot.outcome.lifecycle;
     $("state").className = `badge ${tone(snapshot.outcome.lifecycle)}`;
@@ -1214,14 +1269,45 @@ function renderTabs() {
     writeRoute(undefined, true);
   }
   $("work-status").value = state.section;
-  $("area-tabs").replaceChildren();
+  const navigation = $("area-tabs");
+  const hadNavigationFocus = navigation.contains(document.activeElement);
+  navigation.replaceChildren();
+  const views = el("details", undefined, "outcome-views");
+  views.id = "outcome-views";
+  views.name = "outcome-header";
+  const viewLabel = el("summary", copy.text.workspaceViews);
+  if (state.area !== "canvas") {
+    viewLabel.append(
+      el("span", ` · ${areas[state.area].label}`, "outcome-current-view"),
+    );
+  }
+  const viewOptions = el("div", undefined, "outcome-view-options");
+  views.append(viewLabel, viewOptions);
   for (const [area, definition] of Object.entries(areas)) {
-    const b = actionButton(definition.label, () => navigateArea(area), "quiet");
+    const b = actionButton(
+      definition.label,
+      () => {
+        navigateArea(area);
+        if (area !== "canvas") {
+          const currentViews = $("outcome-views");
+          currentViews.open = false;
+          currentViews.querySelector("summary").focus({ preventScroll: true });
+        }
+      },
+      "quiet",
+    );
     b.dataset.area = area;
     b.setAttribute("aria-pressed", String(state.area === area));
     b.classList.toggle("selected", state.area === area);
-    $("area-tabs").append(b);
+    if (state.area === area) b.setAttribute("aria-current", "page");
+    (area === "canvas" ? navigation : viewOptions).append(b);
   }
+  navigation.append(views);
+  if (hadNavigationFocus)
+    (state.area === "canvas"
+      ? navigation.querySelector('[data-area="canvas"]')
+      : viewLabel
+    ).focus({ preventScroll: true });
   $("tabs").replaceChildren();
   for (const section of areas[state.area].sections) {
     const b = actionButton(
@@ -1317,6 +1403,9 @@ function applyView() {
   else renderEditorial(state.area);
   $("area-intro").hidden = isCanvas;
   $("canvas-view").hidden = !isCanvas;
+  $("canvas-context").hidden = !isCanvas;
+  $("canvas-counts").hidden = !isCanvas;
+  if (!isCanvas) $("canvas-context").open = false;
   canvasInspector.setEnabled(isCanvas);
   $("summary-view").hidden = state.view !== "summary";
   $("items-view").hidden = state.view === "summary" || isCanvas;

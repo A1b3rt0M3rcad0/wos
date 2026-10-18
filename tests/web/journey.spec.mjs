@@ -1,3 +1,4 @@
+import { chooseArea, clickWorkspaceTool, openWorkspaceTools } from "./ux-fixture.mjs";
 import { test, expect, chromium } from "playwright/test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -137,7 +138,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     ).toBeVisible();
     async function open(name, from = "root") {
       if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
-        await page.locator('#area-tabs [data-area="overview"]').click();
+        await chooseArea(page, "overview");
       if (from !== "create") {
         await page
           .locator(from === "entity" ? "#entity-actions" : "#actions")
@@ -333,8 +334,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       "active",
       "work must not certify the Outcome",
     );
-    await page.locator("#refresh").click();
-    await page.locator("#view-outcome").click();
+    await clickWorkspaceTool(page, "refresh");
+    await clickWorkspaceTool(page, "view-outcome");
     await page
       .getByRole("button")
       .filter({ hasText: "Entrega revisada" })
@@ -355,6 +356,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     await submit();
     await expect(page.locator("#state")).toHaveText("Achieved");
     await page.setViewportSize({ width: 390, height: 844 });
+    await openWorkspaceTools(page);
     await expect(page.locator("#view-outcome")).toBeVisible();
     assert.ok(
       await page.evaluate(
@@ -393,8 +395,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       .filter({ hasText: "Verifiable mixed journey" })
       .click();
     await expect(resumed.locator("#state")).toHaveText("Achieved");
-    await resumed.locator('#area-tabs [data-area="overview"]').click();
-    await resumed.locator("#view-outcome").click();
+    await chooseArea(resumed, "overview");
+    await clickWorkspaceTool(resumed, "view-outcome");
     await expect(
       resumed.getByText("Current conclusion", { exact: true }),
     ).toBeVisible();
@@ -453,7 +455,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
   }
   async function open(name, entity = false) {
     if (await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count())
-      await page.locator('#area-tabs [data-area="overview"]').click();
+      await chooseArea(page, "overview");
     await page.locator(entity ? "#entity-actions" : "#actions").click();
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
@@ -483,10 +485,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       Tasks: "Work",
     }[tab];
     if (area)
-      await page
-        .locator("#area-tabs")
-        .getByRole("button", { name: area, exact: true })
-        .click();
+      await chooseArea(page, area);
     if (["Blocked", "Ready", "Tasks"].includes(tab))
       await page
         .getByLabel("Work status", { exact: true })
@@ -578,10 +577,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       .getByRole("combobox", { name: "Blocking cause", exact: true })
       .selectOption({ label: "Problema identificado · Issue" });
     await submit();
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Work", exact: true })
-      .click();
+    await chooseArea(page, "Work");
     await page
       .getByLabel("Work status", { exact: true })
       .selectOption("blocked_work");
@@ -594,10 +590,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       .getByLabel("Resolution summary", { exact: true })
       .fill("Correção verificada");
     await submit();
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Work", exact: true })
-      .click();
+    await chooseArea(page, "Work");
     await page
       .getByLabel("Work status", { exact: true })
       .selectOption("blocked_work");
@@ -653,11 +646,11 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       "A newer version exists",
     );
     await page.keyboard.press("Escape");
-    await page.locator("#refresh").click();
+    await clickWorkspaceTool(page, "refresh");
     await expect(page.locator("#title")).toHaveText(
       "Changed by another participant",
     );
-    await page.locator("#view-outcome").click();
+    await clickWorkspaceTool(page, "view-outcome");
     await page.getByRole("button", { name: /Prova observada/ }).click();
     await page.keyboard.press("Escape");
     await page.locator("#developer-tools").click();
@@ -716,10 +709,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       .getByLabel("Reason", { exact: true })
       .fill("Nova observação contradiz o teste");
     await submit();
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: "Activity", exact: true })
-      .click();
+    await chooseArea(page, "Activity");
     await page
       .locator("#tabs")
       .getByRole("button", { name: "Contested conclusions", exact: true })

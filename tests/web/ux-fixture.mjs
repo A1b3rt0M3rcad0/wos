@@ -7,6 +7,35 @@ import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
 export { expect };
+// Specialist views live in the compact, native Views disclosure. Use the real
+// control rather than opening hidden content through DOM mutation in a test.
+export async function openViews(page) {
+  const views = page.locator("#outcome-views");
+  if (!(await views.evaluate((element) => element.open)))
+    await views.locator(":scope > summary").click();
+  return views;
+}
+export async function chooseArea(page, area) {
+  const key = area.toLowerCase();
+  if (key !== "canvas") await openViews(page);
+  await page.locator(`#area-tabs [data-area="${key}"]`).click();
+}
+export async function openWorkspaceTools(page) {
+  const tools = page.locator("#outcome-tools");
+  if (!(await tools.evaluate((element) => element.open)))
+    await tools.locator(":scope > summary").click();
+  return tools;
+}
+export async function clickWorkspaceTool(page, id) {
+  await openWorkspaceTools(page);
+  await page.locator(`#${id}`).click();
+}
+export async function openCanvasContext(page) {
+  const context = page.locator("#canvas-context");
+  if (!(await context.evaluate((element) => element.open)))
+    await context.locator(":scope > summary").click();
+  return context;
+}
 export const test = base.extend({
   wos: async ({}, use) => {
     const directory = await mkdtemp(join(tmpdir(), "wos-human-ux-")),
@@ -115,7 +144,7 @@ export async function openOutcome(
     .click();
   await expect(page.locator("#title")).toHaveText(title);
   if (area)
-    await page.locator(`#area-tabs [data-area="${area}"]`).click();
+    await chooseArea(page, area);
 }
 export async function intent(page, label) {
   // Modal-regression journeys deliberately operate the retained specialist
@@ -123,7 +152,7 @@ export async function intent(page, label) {
   if (
     await page.locator('#area-tabs [data-area="canvas"][aria-pressed="true"]').count()
   )
-    await page.locator('#area-tabs [data-area="overview"]').click();
+    await chooseArea(page, "overview");
   await page.locator("#actions").click();
   await page
     .locator("#action-options")
@@ -158,10 +187,7 @@ export async function detail(page, section, title) {
     Decisions: "Evidence",
   }[section];
   if (area)
-    await page
-      .locator("#area-tabs")
-      .getByRole("button", { name: area, exact: true })
-      .click();
+    await chooseArea(page, area);
   if (section === "Tasks")
     await page
       .getByLabel("Work status", { exact: true })

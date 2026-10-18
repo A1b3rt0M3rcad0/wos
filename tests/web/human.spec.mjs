@@ -1,12 +1,4 @@
-import {
-  test,
-  expect,
-  intent,
-  save,
-  pick,
-  openOutcome,
-  detail,
-} from "./ux-fixture.mjs";
+import { test, expect, intent, save, pick, openOutcome, detail, clickWorkspaceTool } from "./ux-fixture.mjs";
 import assert from "node:assert/strict";
 import { seedWorkspace } from "./ux-datasets.mjs";
 
@@ -196,7 +188,7 @@ test("F05: register proof then assess its exact criterion revision; Evidence alo
     .fill("https://example.test/verified-run");
   await save(page);
   await expect(page.locator("#state")).toHaveText("Draft");
-  await page.locator("#view-outcome").click();
+  await clickWorkspaceTool(page, "view-outcome");
   await page
     .getByRole("button")
     .filter({ hasText: "Delivery independently checked" })
