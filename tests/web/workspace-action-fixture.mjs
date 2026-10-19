@@ -26,3 +26,16 @@ export async function clickRecordAction(page, label) {
   }
   await expect(page.locator("#command-form")).toBeVisible();
 }
+
+// Deeper regression journeys opt into the new progressive inspector through its
+// real disclosures; compact-default assertions remain in contextual-kanban.spec.
+export async function expandWorkspaceDetails(scope, { history = true } = {}) {
+  const management = scope.locator('.workspace-management').first();
+  if (await management.count() && !(await management.evaluate(node => node.open)))
+    await management.locator(':scope > summary').click();
+  if (history) {
+    const activity = scope.locator('.workspace-history').first();
+    if (await activity.count() && !(await activity.evaluate(node => node.open)))
+      await activity.locator(':scope > summary').click();
+  }
+}

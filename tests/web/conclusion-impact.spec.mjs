@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome } from "./ux-fixture.mjs";
 import { revealMenuAction } from "./workspace-action-fixture.mjs";
 
@@ -10,6 +11,7 @@ async function selectRecord(page, title) {
   await page.getByRole("option").filter({ hasText: title }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
   await expect(panel(page)).toHaveAttribute("data-surface", "detail");
+  await expandWorkspaceDetails(panel(page));
 }
 
 async function openAction(page, name) {

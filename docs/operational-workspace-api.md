@@ -331,3 +331,35 @@ The executable command catalog, [OpenAPI](../packages/wos-api/openapi.yaml),
 [exposure inventory](ux/command-exposure-inventory.md) describe transport details.
 See [workspace relationships](workspace-relationships.md) for operational meaning
 and [signed profiles](signed-workspace-profiles.md) for execution authority.
+
+## Contextual Kanbans and strict completion (unreleased)
+
+`workspace-cards` now includes an additive `stage` projection: `todo`,
+`in_progress`, `verification`, `accepted`, or `cancelled`. It never replaces
+`lifecycle`. Actual pending review is required for the verification stage;
+terminal completion/cancellation wins over stale review indicators. Child pages
+retain their authenticated, revision-bound cursor and explicit coverage. Counts
+in the browser's contextual Kanban describe loaded cards, not global totals.
+
+`workspace-view` accepts optional `include_activity: false` to defer the activity
+facet. Omission preserves the existing recent-history read. Deferred coverage is
+`not_loaded`, never an empty complete history.
+
+`create_outcome` accepts optional `completion_policy`: omitted/`compatible`
+preserves existing completion behavior; `strict_work` additionally checks the
+complete applicable work set. Human creation visibly defaults to strict work.
+Existing Outcomes are not migrated to strict behavior, and policy editing is not
+exposed. SQLite and PostgreSQL require migration 0033.
+
+For strict completion, `achieve_outcome` and `achieve_objective` accept
+`acknowledged_cancelled_work`, an exact set of references from the current
+`conclusion_impact.cancelled_items` preview. A nonempty acknowledgement requires
+`observed_outcome_revision`; duplicate, unrelated or stale acknowledgements fail.
+The immutable Conclusion stores the set in
+`obligations.acknowledged_cancelled_work`, with the existing reason/author/time.
+A capability with `confirmation_kind: cancelled_scope_exclusion` allows opening
+the confirmation UI; the command still revalidates the acknowledgement and all
+acceptance rules. See [ADR-039](adr/0039-contextual-kanbans-and-strict-completion.md).
+
+HTTP command dispatch, MCP, CLI and the Go SDK share these Application command
+fields. No new writable Kanban entity, agent execution or file upload is added.

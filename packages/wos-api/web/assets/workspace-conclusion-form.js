@@ -14,10 +14,11 @@ const consequences = {
 // deliberate and clears acknowledgement without replacing the person's reason.
 export function conclusionImpactEditor(initialView) {
   const node = el("section", undefined, "nested-editor workspace-conclusion-impact");
-  let view, acknowledgement, valid = false;
+  let view, acknowledgement, cancelledAcknowledgement, valid = false;
   function update(next) {
     view = next;
     acknowledgement = null;
+    cancelledAcknowledgement = null;
     const impact = view?.conclusion_impact;
     const coverage = view?.coverage?.conclusion_impact;
     valid = !!impact && ["complete", "partial"].includes(coverage?.status)
@@ -33,6 +34,18 @@ export function conclusionImpactEditor(initialView) {
       return;
     }
     const total = impact.open_objectives + impact.open_tasks;
+    node.append(el("p", impact.completion_policy === "strict_work"
+      ? "Strict work: required work must be resolved before acceptance."
+      : "Compatible completion: open descendants are reported without adding new acceptance gates.", "field-help"));
+    if (impact.required_open_work?.length) node.append(el("p", "Required work is still open. Resolve it before accepting this result.", "field-help"));
+    if (impact.cancelled_items?.length) {
+      node.append(el("h4", "Cancelled work — not accepted"));
+      const list = el("ul");
+      for (const item of impact.cancelled_items) list.append(el("li", item.title));
+      node.append(list);
+      cancelledAcknowledgement = inputField("I reviewed these cancellations and accept their exclusion from the result.", {type:"checkbox",required:true});
+      node.append(cancelledAcknowledgement.node);
+    }
     node.append(el("p", message("formConclusionOpenCount",
       impact.open_objectives, impact.open_tasks)));
     if (impact.open_items.length) {
@@ -61,7 +74,9 @@ export function conclusionImpactEditor(initialView) {
     get() {
       if (!valid) throw Error(copy.text.formConclusionImpactUnavailable);
       if (acknowledgement && !acknowledgement.get()) throw Error(copy.text.formConclusionReviewRequired);
-      return { expected_version: view.entity_version, observed_outcome_revision: view.outcome_revision };
+      if (cancelledAcknowledgement && !cancelledAcknowledgement.get()) throw Error("Review the cancelled work before confirming its exclusion.");
+      return { expected_version: view.entity_version, observed_outcome_revision: view.outcome_revision,
+        ...(cancelledAcknowledgement ? {acknowledged_cancelled_work:view.conclusion_impact.cancelled_items.map(item=>item.ref)}:{}) };
     },
   };
 }

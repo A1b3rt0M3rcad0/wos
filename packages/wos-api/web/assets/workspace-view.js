@@ -1,3 +1,4 @@
+import { compactWorkspace } from './workspace-compact.js';
 import { copy, message } from "./en-US.js";
 import { el, button, details } from "./ui.js";
 import { display, kindName, date } from "./presentation.js";
@@ -39,12 +40,12 @@ function actionButton(label, handler, actionId, className = "quiet") {
 }
 
 export function renderWorkspaceActions(host, {
-  view, onAction, onBlocked, onMoreActions,
+  view, onAction, onBlocked, onMoreActions, primaryAlreadyPresent = false,
 } = {}) {
   host.replaceChildren();
   host.classList.add("workspace-primary-actions");
   const actions = workspaceActions(view);
-  for (const [index, capability] of actions.slice(0, 3).entries()) {
+  for (const [index, capability] of actions.slice(0, primaryAlreadyPresent ? 2 : 3).entries()) {
     const name = workspaceCommandName(capability.action_id);
     const signed = capability.transport === "signed_host";
     const label = signed ? copy.text.workspaceSignedAction : humanActions[name]?.label;
@@ -52,7 +53,7 @@ export function renderWorkspaceActions(host, {
     const control = actionButton(label, () => {
       if (capability.availability !== "available" && onBlocked) onBlocked(capability);
       else onAction?.(capability.action_id, capability);
-    }, name, index === 0 ? "workspace-primary-action" : "quiet");
+    }, name, index === 0 && !primaryAlreadyPresent ? "workspace-primary-action" : "quiet");
     control.dataset.availability = capability.availability;
     if (capability.availability !== "available") {
       control.append(el("small", copy.text.workspaceBlockedAction));
@@ -97,7 +98,7 @@ const authorityCopy = (state) => ({
 
 export function renderWorkspaceView(host, {
   view, onReference, onAction, onBlocked, onCriterion, onTimelineMore, onNote,
-  onFullRecord, onFacetMore, onSubject, onPlan, principalId,
+  onFullRecord, onFacetMore, onSubject, onPlan, principalId, onKanban, onVerify, onMaterial, onActivity, disclosures,
 } = {}) {
   host.replaceChildren();
   host.classList.add("workspace-view");
@@ -554,6 +555,7 @@ export function renderWorkspaceView(host, {
   audit.append(payload);
   if (onFullRecord) audit.append(actionButton(copy.text.workspaceReadFullRecord, () => onFullRecord(view), "read_full_record"));
   host.append(audit);
+  compactWorkspace(host, view, { onKanban, onVerify, onMaterial, onActivity, onReference, disclosures });
   return { actions };
 }
 

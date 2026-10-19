@@ -42,7 +42,7 @@ Suppose your team needs to **ship partial refunds**. Define a success criterion:
   <a href="docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png"><img src="docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
-The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
+The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Outcomes open an Objectives Kanban, and Objectives open a Tasks Kanban, within the same Board. Details and activity stay expandable. [Contextual planning and review](docs/ux/contextual-kanban/README.md). Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
 
 Start with a name and add detail when it is useful. New Tasks in the quick editor stay in **backlog** until you explicitly make them available; creating one does not reserve execution. Objectives are visibly required for the Outcome by default in this editor, including nested Objectives.
 

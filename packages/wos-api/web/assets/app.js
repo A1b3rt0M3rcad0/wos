@@ -1,3 +1,4 @@
+import { createContextualKanban } from './workspace-kanban.js';
 import { message } from "./en-US.js";
 import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
@@ -129,6 +130,29 @@ const canvasInspector = createWorkspaceInspector({
       }
       writeRoute(null);
     }
+  },
+});
+const workspaceDisclosures = new Map();
+const contextualKanban = createContextualKanban({
+  scopeKey: () => `${state.generation}/${state.namespace}/${state.outcome?.id}/${state.principal}`,
+  requestCards: (body) => request(`${outcomeBase()}/workspace-cards`, { method: 'POST', body: JSON.stringify(body) }),
+  query: (subject, options) => workspaceQuery(subject,options),
+  onError: report,
+  onReturn: async (view) => {
+    if (JSON.stringify(state.workspaceView?.subject) !== JSON.stringify(view.subject))
+      await showEntity(view.subject.ref, {preserveCamera:true,subject:view.subject});
+    return $('canvas-details').querySelector('.workspace-kanban-open,.canvas-inspector-detail');
+  },
+  onAction: async (action, capability, view) => {
+    await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
+    if (action === 'read_entity_note') await openWorkspaceNote(capability.entry,state.detailGeneration,capability.options);
+    else if (action) workspaceAction(action, capability);
+    else await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration);
+    const actions = $('detail-actions');
+    let back = actions.querySelector('[data-return-kanban]');
+    if (!back) { back = actionButton('Return to Kanban', () => {
+      if (allowCanvasNavigation()) contextualKanban.resume().catch(report);
+    }, 'quiet'); back.dataset.returnKanban = ''; actions.prepend(back); }
   },
 });
 function canvasActive() {
@@ -464,7 +488,9 @@ async function request(path, options = {}) {
     } else if ([401, 403].includes(error.status) && state.namespace) {
       invalidateOutcomeSearch();
       $("outcomes").replaceChildren();
-      state.generation++;
+      contextualKanban.reset();
+  workspaceDisclosures.clear();
+  state.generation++;
       state.detailGeneration++;
       state.refreshGeneration++;
       state.permissions = [];
@@ -950,6 +976,8 @@ async function connect(namespace) {
   invalidateOutcomeSearch();
   $("outcomes").replaceChildren();
   resetCanvas();
+  contextualKanban.reset();
+  workspaceDisclosures.clear();
   state.generation++;
   state.detailGeneration++;
   state.namespace = namespace;
@@ -1187,6 +1215,8 @@ async function openOutcome(outcome) {
   const sidebar = document.querySelector(".sidebar");
   const openedFromSidebar = sidebar.contains(document.activeElement);
   resetCanvas();
+  contextualKanban.reset();
+  workspaceDisclosures.clear();
   state.generation++;
   document.querySelector(".sidebar").classList.add("navigation-collapsed");
   $("navigation-toggle").setAttribute("aria-expanded", "false");
@@ -3096,7 +3126,7 @@ function quickActions(kind, entity) {
 }
 async function workspaceQuery(subject, options = {}) {
   return request(`${outcomeBase()}/workspace-view`, {
-    method: "POST", body: JSON.stringify({ subject, ...options }),
+    method: "POST", body: JSON.stringify({ subject, include_activity:false, ...options }),
   });
 }
 async function showEntity(ref, { internal = false, preserveCamera = false, subject } = {}) {
@@ -3112,6 +3142,7 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
     }
     const view = await workspaceQuery(selection);
     if (!current()) return;
+    if (JSON.stringify(state.workspaceView?.subject) !== JSON.stringify(view.subject)) workspaceDisclosures.clear();
     state.workspaceView = view;
     state.detailRevision = view.outcome_revision;
     state.contractView = null;
@@ -3125,10 +3156,27 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
     $("detail-kind").textContent = `${kindName(view.header.kind)} / ${shortId(selection.criterion_id || ref.id)}`;
     $("detail-title").textContent = view.header.title || kindName(ref.kind);
     const detail = $("detail-content");
+    let activityLoading = false;
     const render = () => {
+      const hadInspectorFocus = isCanvas && $("canvas-details").contains(document.activeElement);
       renderWorkspaceView(detail, {
         view: state.workspaceView,
         principalId: state.principal,
+        disclosures: workspaceDisclosures,
+        onActivity: async () => {
+          if (activityLoading) return; activityLoading = true;
+          try {
+            const next = await workspaceQuery(selection, {include_activity:true});
+            if (!current()) return;
+            if (next.outcome_revision !== state.workspaceView.outcome_revision) { notice(copy.text.workspaceNewData, true); return; }
+            state.workspaceView.activity = next.activity;
+            state.workspaceView.coverage.activity = next.coverage.activity; render();
+          } catch(error) { if(current()) report(error); }
+          finally { activityLoading = false; }
+        },
+        onKanban: (view) => contextualKanban.open(view).catch(report),
+        onVerify: (view) => contextualKanban.open(view, {mode:'criteria'}).catch(report),
+        onMaterial: (view) => contextualKanban.open(view, {mode:'materials'}).catch(report),
         onReference: (target) => showEntity(target).catch(report),
         onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report),
         onPlan: (plan) => viewCanvasPlan(plan),
@@ -3164,10 +3212,16 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
       if (!actions) { actions = el("div", undefined, "workspace-actions"); $("detail-actions").prepend(actions); }
       renderWorkspaceActions(actions, {
         view: state.workspaceView,
+        primaryAlreadyPresent: state.workspaceView.subject.kind === "entity" && (["outcome", "objective"].includes(state.workspaceView.subject.ref.kind) || ["done", "cancelled", "achieved", "failed", "abandoned"].includes(state.workspaceView.header.lifecycle)),
         onAction: (action, capability) => workspaceAction(action, capability),
       });
       $("entity-actions").textContent = copy.text.workspaceMore;
       $("entity-actions").dataset.actionId = "more_actions";
+      if (!contextualKanban.suspended) $("detail-actions").querySelector('[data-return-kanban]')?.remove();
+      // Replacing the previous detail removes its focused action. Keep keyboard
+      // navigation in the restored inspector so Escape still closes it.
+      if (hadInspectorFocus && !$("canvas-details").contains(document.activeElement))
+        $("canvas-details").querySelector('.canvas-inspector-detail')?.focus({preventScroll:true});
     };
     render();
     // The authorized inspector already selected this record. Optional map
@@ -4271,7 +4325,9 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
       state.outcome = result.value;
       state.selected = { ...result.value, _kind: "outcome" };
       if (pending.name === "create_outcome") {
-        state.generation++;
+        contextualKanban.reset();
+  workspaceDisclosures.clear();
+  state.generation++;
         resetCanvas();
         state.view = "canvas";
         state.area = "canvas";

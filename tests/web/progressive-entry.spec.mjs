@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome } from "./ux-fixture.mjs";
 import { clickRecordAction } from "./workspace-action-fixture.mjs";
 
@@ -88,6 +89,7 @@ test("a criterion deep link reloads the typed subject and retains its real Task 
   await wos.login(page);
   await openOutcome(page, outcome.title, { area: null });
   await select(page, task.title);
+  await expandWorkspaceDetails(panel(page), {history:false});
   await panel(page).locator(`[data-criterion-id="${criterion.id}"] [data-action-id="open_criterion"]`).click();
   await expect(panel(page).locator("#detail-title")).toHaveText(criterion.title);
   await page.waitForURL((url) => url.searchParams.get("subject") === "criterion"

@@ -1,0 +1,219 @@
+/* The spatial Board stays behind one native modal; no new presentation entity. */
+dialog.workspace-kanban {
+  width: min(1500px, calc(100vw - 32px));
+  max-width: none;
+  height: calc(100svh - 32px);
+  max-height: calc(100svh - 32px);
+  padding: 0;
+  background: var(--wos-canvas);
+  color: var(--wos-foreground);
+  border: 1px solid var(--wos-border);
+}
+dialog.workspace-kanban[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+.workspace-kanban-header,
+.workspace-kanban-controls,
+.workspace-kanban-breadcrumb,
+.workspace-kanban-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+.workspace-kanban-header {
+  justify-content: space-between;
+}
+.workspace-kanban h2 {
+  font-size: 26px;
+  margin: 0;
+}
+.workspace-kanban h3 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.workspace-kanban-status {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 12px;
+}
+.workspace-kanban-controls input {
+  width: min(300px, 100%);
+  min-width: 0;
+}
+.workspace-kanban-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+.workspace-kanban-columns {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+  padding: 12px 16px;
+  overflow-x: auto;
+}
+.workspace-kanban-column {
+  flex: 1 0 235px;
+  min-width: 235px;
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--wos-workspace);
+  border: 1px solid var(--wos-border);
+}
+.workspace-kanban-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+  gap: 8px;
+  padding: 18px;
+  margin-bottom: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  background: var(--wos-surface);
+  border: 1px solid var(--wos-border);
+}
+.workspace-kanban-card strong {
+  font-size: 18px;
+  font-weight: 400;
+}
+.workspace-kanban-card small {
+  font-size: 12px;
+}
+.workspace-kanban-inspection {
+  flex: 0 0 340px;
+  width: 340px;
+  max-width: 100%;
+  padding: 16px;
+  overflow: auto;
+  border-left: 1px solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+.workspace-kanban-footer {
+  max-height: 28%;
+  overflow: auto;
+  border-top: 1px solid var(--wos-border);
+  border-bottom: 0;
+}
+.workspace-kanban-footer .workspace-primary-actions {
+  flex-wrap: wrap;
+}
+.workspace-compact > details {
+  border-top: 1px solid var(--wos-border);
+  padding: 12px 0;
+}
+.workspace-compact > details > summary {
+  padding: 8px 0;
+  cursor: pointer;
+}
+.workspace-compact-intro {
+  display: grid;
+  gap: 12px;
+}
+.workspace-compact-intro .detail-description {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-compact .workspace-kanban-open {
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 12px;
+}
+.workspace-compact-intro [data-workspace-facet="attention"] {
+  padding: 0;
+  border: 0;
+}
+.workspace-compact-intro [data-workspace-facet="attention"] h3 {
+  font-size: 16px;
+}
+@media (max-width: 760px) {
+  dialog.workspace-kanban {
+    width: calc(100vw - 12px);
+    height: calc(100svh - 12px);
+    max-height: calc(100svh - 12px);
+  }
+  .workspace-kanban-header,
+  .workspace-kanban-controls,
+  .workspace-kanban-breadcrumb,
+  .workspace-kanban-footer {
+    padding: 8px;
+  }
+  .workspace-kanban-inspection {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: min(360px, 100%);
+  }
+  .workspace-kanban h2 {
+    font-size: 23px;
+  }
+}
+.workspace-material-wizard,
+.workspace-review-checklist {
+  width: 100%;
+  max-width: 700px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.workspace-material-wizard button {
+  display: block;
+  margin: 16px 0 8px;
+}
+.workspace-review-checklist .workspace-criterion {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--wos-border);
+}
+.workspace-kanban-filters {
+  position: relative;
+}
+.workspace-kanban-filters > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.workspace-kanban-filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+.workspace-kanban-filters[open] {
+  flex-basis: 100%;
+}
+.workspace-kanban button,
+.workspace-kanban input,
+.workspace-kanban select {
+  min-height: 44px;
+}
+@media (max-height: 560px) {
+  dialog.workspace-kanban[open] {
+    overflow-y: auto;
+  }
+  .workspace-kanban-header,
+  .workspace-kanban-breadcrumb,
+  .workspace-kanban-controls,
+  .workspace-kanban-status {
+    flex-shrink: 0;
+  }
+  .workspace-kanban-body {
+    flex: 1 0 240px;
+    min-height: 240px;
+  }
+  .workspace-kanban-footer {
+    flex-shrink: 0;
+    max-height: none;
+  }
+}

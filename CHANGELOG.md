@@ -14,6 +14,9 @@
 
 ## Unreleased
 
+- Preserve the spatial Outcome Board while adding one contextual Objectives/Tasks Kanban modal, a compact inspector with Details and management plus lazy Activity history, guided criteria/material entry, and keyboard/context return.
+- Add explicit opt-in `strict_work` completion, compatible defaults for historical/API clients, revision-pinned acknowledgement of cancelled work, and forward-only SQLite/PostgreSQL migration 0033. Existing authorization, review and signing protocols remain authoritative.
+
 - Centralize native CLI state in a private installation with isolated persistent profiles, invocation-pinned selection, protected headless onboarding, and explicit drained-writer migration. Add typed agent commands for context, progress, activity, evidence, artifacts, results and review without editing internal documents.
 - Persist authorized signed-execution activity and documentary references with bounded chronological/recent history, current obligation projections, historical execution discovery and HTTP/MCP/SDK parity. Preserve immutable issued authority, exact-intent recovery and independent review; report delivery separately from Task completion.
 - Rewrite the five official Skills and agent guides around the central CLI, and add a reproducible implementation-plan archive and real-process independent-review acceptance runner.

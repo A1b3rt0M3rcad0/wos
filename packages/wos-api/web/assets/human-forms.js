@@ -169,6 +169,8 @@ export function humanForm(
         required: true,
       });
       a("description", copy.text.description, { type: "textarea" });
+      f("completion_policy", "Completion policy", {options: [["strict_work", "Strict work — required work must be resolved"], ["compatible", "Compatible — criteria and existing completion rules"]], value: "strict_work",
+        help: "Strict work also checks Tasks and subobjectives. Cancelled work requires an explicit scope acknowledgement; it is never counted as accepted."});
       initialCriteria();
       a("priority", copy.text.priority, { options: priority, value: "normal" });
       help.textContent = copy.text.anOutcomeIsAResultToVerifySaveA;

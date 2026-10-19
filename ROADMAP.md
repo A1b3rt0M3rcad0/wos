@@ -14,6 +14,15 @@ This file records the real implementation state of WOS. It must be kept synchron
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
 
+## Contextual Kanbans and compact inspector — 2026-10-19
+
+**In progress.** Implement the [approved owner plan](docs/ux/contextual-kanban/owner-plan-2026-10-19.md)
+using the locally installed product-design-and-ux skill. Preserve the spatial Board,
+introduce compact contextual inspectors and a single navigable Kanban modal,
+guide Criteria/material workflows, and add opt-in strict completion without
+changing historical compatible behavior. Qualification and pending human study
+will be recorded separately. No merge or publication is authorized.
+
 ## Login viewport follow-up — 2026-10-19
 
 The login composition now fills and centers within the height below the real

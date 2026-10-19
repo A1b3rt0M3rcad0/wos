@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
 import { seedCanvas } from "./canvas-fixture.mjs";
 
@@ -10,6 +11,7 @@ async function selectBoardRecord(page, title, heading = title) {
   await page.getByRole("option").filter({ hasText: title }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(heading);
   await expect(panel(page).locator(".workspace-view")).toBeVisible();
+  await expandWorkspaceDetails(panel(page));
 }
 
 async function setup(wos) {
@@ -40,7 +42,7 @@ async function setup(wos) {
   return { ...data, criterion, artifact: artifact.artifact, decision: decision.decision };
 }
 
-test("one coherent Task inspector exposes the five information groups without granting authority or accepting linked proof", async ({ page, wos }) => {
+test("one coherent Task inspector exposes its information facets inside two progressive groups without granting authority or accepting linked proof", async ({ page, wos }) => {
   const data = await setup(wos);
   const mutations = [], errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -71,6 +73,7 @@ test("one coherent Task inspector exposes the five information groups without gr
   await expect(view.locator("[data-activity-id]")).toHaveCount(10);
   await view.locator(`[data-criterion-id="${data.criterion.id}"] [data-action-id="open_criterion"]`).click();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.criterion.title);
+  await expandWorkspaceDetails(panel(page));
   await expect(panel(page).locator(".workspace-view")).toContainText("Not assessed");
   await panel(page).locator('.workspace-path [data-reference-kind="work_item"]').click();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
@@ -103,6 +106,7 @@ test("the same typed inspector explains documentary entities and actual blocking
   await chooseArea(page, "work");
   await page.locator("#content").getByRole("button").filter({ hasText: data.tasks.ready.title }).first().click();
   await expect(page.locator("#detail-dialog .workspace-view")).toBeVisible();
+  await expandWorkspaceDetails(page.locator("#detail-dialog"));
   await expect(page.locator('#detail-dialog [data-workspace-facet="criteria"]')).toContainText(data.criterion.title);
 });
 
