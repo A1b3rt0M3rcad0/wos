@@ -3170,6 +3170,10 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
       $("entity-actions").dataset.actionId = "more_actions";
     };
     render();
+    // The authorized inspector already selected this record. Optional map
+    // enrichment may need a newer Board revision; it must not leave its URL
+    // pointing to the previously inspected record when that read fails.
+    writeRoute(ref);
     if (isCanvas) {
       if (!preserveCamera || !canvasInspector.isVisible("detail")) canvasInspector.showDetails();
       // Expand only on explicit selection. This enriches the Board without
@@ -3184,7 +3188,6 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
       if (!preserveCamera && !focusMoved) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
       if (!preserveCamera && !focusMoved) revealCanvasInspector();
     } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
-    writeRoute(ref);
     return state.selected;
   } catch (error) {
     if (!current()) { error.discarded = true; error.name = "AbortError"; }
