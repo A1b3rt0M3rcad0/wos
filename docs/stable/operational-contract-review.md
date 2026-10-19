@@ -98,3 +98,30 @@ omission, exact revisions above JavaScript's integer precision, numeric rejectio
 for the new counters, and explicit nullable query binding. Two consecutive
 MCP/catalog/SDK/OpenAPI generations are deterministic; recursive released-wire
 compatibility and the release metadata tests remain required independently.
+
+## Contextual Kanbans and opt-in strict work — 2026-10-19
+
+Compared with PR source `184be7c32193a9e1369338128302088a0e37144d`, the command
+catalog adds optional `completion_policy` on creation and optional
+`acknowledged_cancelled_work` on the two parent achievement commands. Omission
+retains compatible historical semantics. A nonempty acknowledgement additionally
+requires the already supported observed revision; this new-input constraint does
+not change a historical request that omits the new field.
+
+`WorkspaceViewQuery.include_activity` is optional/nullable; omission preserves the
+old history behavior. Responses add server-classified card `stage`, completion
+policy/strict-work impact details and immutable acknowledgement references on
+Conclusion obligations. These are additive response properties; `stage` is always
+emitted on a current card response, not a newly required client input. Existing
+required input fields, routes, signing schemas and CLI YAML constraints remain.
+
+The current normalized OpenAPI fingerprint is
+`9cc1b9622f3131eb8e9474366790660185b6b06c29848947714aeef584dba3ba`.
+Only that current candidate digest was refreshed after inspecting the generated
+diff and passing the recursive released-v0.4.2 shape guard. All eight CLI schema
+digests and immutable released fixtures remain unchanged. The strict exact-hash
+gate remains enabled; no test or historical receipt is rewritten to hide drift.
+[ADR-039](../adr/0039-contextual-kanbans-and-strict-completion.md) defines the
+semantic scope; the [qualification](../ux/contextual-kanban/qualification.md)
+separates actual adapter tests, presentation checks and pending manual evidence.
+No release is prepared or published by this review.

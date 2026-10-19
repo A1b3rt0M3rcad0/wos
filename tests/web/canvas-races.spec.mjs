@@ -77,6 +77,9 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
   await expect(panel(page).locator("#submit-command")).toBeEnabled();
   const held = await holdOnce(page, "**/workspace-view", { subjectId: data.tasks.ready.id });
   try {
+    // The keyboard action starts in the form, after the error's focus update.
+    await panel(page).locator("#command-error").focus();
+    await expect(panel(page).locator("#command-error")).toBeFocused();
     await page.keyboard.press("Escape");
     expect(await held.arrived).toBe(200);
     await canvas(page).getByLabel("Connections", { exact: true }).selectOption("all");

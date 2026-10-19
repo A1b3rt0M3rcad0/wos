@@ -399,7 +399,13 @@ test("reference picker keyboard navigation selects duplicate titles using IDs an
   await page.getByRole("button", { name: "Change placement", exact: true }).click();
   const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
+  const matchingSearch = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith("/references") && url.searchParams.get("query") === "Same title";
+  });
   await input.fill("Same title");
+  await matchingSearch;
+  await page.waitForLoadState("networkidle");
   await expect(page.locator(".reference-picker [role=option]")).toHaveCount(2);
   await input.press("ArrowDown");
   await expect(input).toHaveAttribute("aria-activedescendant", /option-0$/);

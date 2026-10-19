@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
@@ -31,9 +32,14 @@ func TestWorkspacePlanningRecoveryFreezesNoteAndProtectsProfile(t *testing.T) {
 	if err = os.WriteFile(file, input, 0600); err != nil {
 		t.Fatal(err)
 	}
+	var requestState sync.Mutex
 	calls := 0
 	keys := map[string]bool{}
+	count := func() int { requestState.Lock(); defer requestState.Unlock(); return calls }
+	keyCount := func() int { requestState.Lock(); defer requestState.Unlock(); return len(keys) }
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestState.Lock()
+		defer requestState.Unlock()
 		calls++
 		keys[request.Header.Get("Idempotency-Key")] = true
 		if request.URL.Path != "/api/v1/commands/append_entity_note" {
@@ -59,7 +65,7 @@ func TestWorkspacePlanningRecoveryFreezesNoteAndProtectsProfile(t *testing.T) {
 	if _, err = workspacePlanningCommand(context.Background(), w, client, config, scope, credential, o); err == nil {
 		t.Fatal("lost response was treated as confirmation")
 	}
-	if calls != 1 {
+	if count() != 1 {
 		t.Fatalf("intention failed before the simulated response loss: %v", err)
 	}
 	if err = w.ensureNoWorkspacePlanningPending(credential); err == nil {
@@ -70,18 +76,18 @@ func TestWorkspacePlanningRecoveryFreezesNoteAndProtectsProfile(t *testing.T) {
 	if err = os.WriteFile(file, changed, 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = workspacePlanningCommand(context.Background(), w, client, config, scope, credential, o); err == nil || calls != 1 {
+	if _, err = workspacePlanningCommand(context.Background(), w, client, config, scope, credential, o); err == nil || count() != 1 {
 		t.Fatal("new draft replaced an uncertain intention", err)
 	}
 	recovery := options{args: []string{"planning", "recover"}, values: map[string]string{}}
 	result, err := workspacePlanningCommand(context.Background(), w, client, config, scope, credential, recovery)
-	if err != nil || !result.Committed || calls != 2 || len(keys) != 1 {
-		t.Fatalf("exact recovery failed: %+v %v calls=%d keys=%d", result, err, calls, len(keys))
+	if err != nil || !result.Committed || count() != 2 || keyCount() != 1 {
+		t.Fatalf("exact recovery failed: %+v %v calls=%d keys=%d", result, err, count(), keyCount())
 	}
 	if err = w.ensureNoWorkspacePlanningPending(credential); err != nil {
 		t.Fatal("confirmed documentary intention still blocks profile removal", err)
 	}
-	if _, err = workspacePlanningCommand(context.Background(), w, client, config, scope, credential, recovery); err != nil || calls != 2 {
+	if _, err = workspacePlanningCommand(context.Background(), w, client, config, scope, credential, recovery); err != nil || count() != 2 {
 		t.Fatal("confirmed local receipt caused another network mutation", err)
 	}
 }
