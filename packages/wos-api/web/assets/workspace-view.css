@@ -1,4 +1,61 @@
 /* Coherent inspector facets share the existing editorial surface and type. */
+.workspace-conclusion-impact {
+  display: grid;
+  gap: .7rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-conclusion-impact > h3 {
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-conclusion-impact p,
+.workspace-conclusion-impact ul {
+  margin: 0;
+  line-height: 1.55;
+}
+.workspace-conclusion-impact ul {
+  padding-inline-start: 1.25rem;
+}
+.workspace-conclusion-impact li + li {
+  margin-top: .5rem;
+}
+.workspace-structural-editor,
+.workspace-move-preview,
+.workspace-move-change,
+.workspace-blocking-preview-body {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  gap: .7rem;
+  overflow-wrap: anywhere;
+}
+.workspace-move-preview h3,
+.workspace-move-preview h4,
+.workspace-move-preview h5,
+.workspace-blocking-preview-body h4 {
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-move-preview p {
+  margin: 0;
+  line-height: 1.55;
+}
+.workspace-move-change {
+  padding: .8rem;
+  border: 1px solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+.workspace-move-blockers {
+  display: grid;
+  gap: .45rem;
+}
+.workspace-move-blockers small {
+  display: block;
+  color: var(--wos-muted);
+}
 .workspace-view {
   min-width: 0;
   overflow-wrap: anywhere;

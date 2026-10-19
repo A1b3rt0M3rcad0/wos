@@ -540,6 +540,8 @@ for (const decision of ["approved", "changes_requested"])
           navigator.clipboard.readText(),
         );
         assert.ok(activeHandoff.includes("wos --profile executor work"));
+        assert.ok(activeHandoff.includes(`work checkout ${work.id} --version ${activeWork.version}`));
+        assert.ok(activeHandoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
         assert.ok(!activeHandoff.includes(token));
         const unchangedWork = (await api(activePath, token)).value;
         assert.equal(unchangedWork.version, activeWork.version);
@@ -652,6 +654,13 @@ for (const decision of ["approved", "changes_requested"])
       assert.ok(
         canvasHandoff.includes("wos --profile reviewer review checkout"),
       );
+      const deliveredWork = (await api(activePath, token)).value;
+      const pendingReview = (await api(
+        `/namespaces/${namespace}/outcomes/${outcome.id}/signed-state/case/${deliveredWork.pending_review_case_id}`,
+        token,
+      )).review_case;
+      assert.ok(canvasHandoff.includes(`review checkout ${pendingReview.id} --version ${pendingReview.version}`));
+      assert.ok(canvasHandoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
       assert.ok(!canvasHandoff.includes(token));
       await chooseArea(page, "work");
       await page.getByRole("button", { name: "Task Board", exact: true }).click();
@@ -684,6 +693,8 @@ for (const decision of ["approved", "changes_requested"])
         .click();
       const handoff = await page.evaluate(() => navigator.clipboard.readText());
       assert.ok(handoff.includes("wos --profile reviewer review checkout"));
+      assert.ok(handoff.includes(`review checkout ${pendingReview.id} --version ${pendingReview.version}`));
+      assert.ok(handoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
       assert.ok(!handoff.includes(token));
       await expect(
         page.getByRole("button", {

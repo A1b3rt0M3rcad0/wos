@@ -1,4 +1,4 @@
-import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, chooseArea, pick } from "./ux-fixture.mjs";
 import { revealMenuAction } from "./workspace-action-fixture.mjs";
 import { seedCanvas, seedCanvasRoadmap } from "./canvas-fixture.mjs";
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
@@ -167,7 +167,18 @@ async function seed(wos) {
       rationale: "Documents the participant's observation for a separate reviewer." }],
   });
   const roadmap = await seedCanvasRoadmap(wos, data, { published: true, active: true });
-  return { ...data, criterion, observation, roadmap };
+  const base = `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}`;
+  let reviewedObjective = (await wos.api(`${base}/objectives/${data.objective.id}`)).value;
+  const objectiveOwner = data.ref("objective", reviewedObjective);
+  const objectiveCriterion = await wos.command("add_criterion", { owner: objectiveOwner,
+    expected_version: reviewedObjective.version, title: "The agreed handoff was independently reviewed",
+    required: true, verification_mode: "attestation" });
+  reviewedObjective = (await wos.api(`${base}/objectives/${reviewedObjective.id}`)).value;
+  await wos.command("attest_criterion", { owner: objectiveOwner, expected_version: reviewedObjective.version,
+    criterion_id: objectiveCriterion.id, criterion_revision: objectiveCriterion.criterion_revision,
+    result: "met", rationale: "An authorized participant reviewed the current handoff condition. Open follow-up work remains separate." });
+  reviewedObjective = (await wos.api(`${base}/objectives/${reviewedObjective.id}`)).value;
+  return { ...data, criterion, observation, roadmap, reviewedObjective };
 }
 
 async function selectRecord(page, record, heading) {
@@ -271,6 +282,50 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.getByRole("button", { name: "Preview plan", exact: true }).click();
   await expect(page.locator(".workspace-plan-row")).toHaveCount(3);
   await capture(page, metadata, `batch-plan-${label}`, "Explicit unsaved plan preview; no existing work is moved");
+  await page.keyboard.press("Escape");
+  await selectRecord(page, data.reviewedObjective);
+  await openAction(page, "achieve_objective");
+  await page.getByLabel("Reason", { exact: true }).fill("The agreed condition was reviewed. The listed follow-up work retains its own lifecycle.");
+  const conclusion = page.locator(".workspace-conclusion-impact");
+  await expect(conclusion.getByRole("heading", { name: "Review conclusion impact", exact: true })).toBeVisible();
+  await expect(conclusion).toContainText(data.child.title);
+  await expect(page.getByLabel("I understand that this open work is not completed by this conclusion", { exact: true })).not.toBeChecked();
+  await page.locator("#submit-command").focus();
+  await unobscured(page.locator("#submit-command"));
+  await conclusion.getByRole("heading", { name: "Review conclusion impact", exact: true }).scrollIntoViewIfNeeded();
+  await capture(page, metadata, `conclusion-impact-${label}`, "Unsaved parent conclusion reviews real open descendants and unchanged child lifecycles; no acceptance has been submitted");
+  await page.keyboard.press("Escape");
+  await selectRecord(page, data.tasks.ready);
+  await openAction(page, "set_work_item_objective");
+  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await pick(page, "New placement", data.objective.title);
+  await page.getByRole("button", { name: "Preview move", exact: true }).click();
+  const movement = page.locator(".workspace-move-preview");
+  await expect(movement.getByRole("heading", { name: "Observed movement impact", exact: true })).toBeVisible();
+  await expect(movement).toContainText(data.child.title);
+  await expect(movement).toContainText(data.objective.title);
+  await expect(page.getByLabel("I reviewed the new placement and its blocking impacts", { exact: true })).not.toBeChecked();
+  await page.locator("#submit-command").focus();
+  await unobscured(page.locator("#submit-command"));
+  await movement.getByRole("heading", { name: "Observed movement impact", exact: true }).scrollIntoViewIfNeeded();
+  await capture(page, metadata, `move-impact-${label}`, "Read-only preview compares actual old and proposed placement, inherited blocking and readiness before any move is saved");
+  await page.keyboard.press("Escape");
+  await selectRecord(page, data.objective);
+  await openAction(page, "create_issue");
+  await page.getByLabel("Issue title", { exact: true }).fill("Review access prevents this branch from continuing");
+  await page.getByLabel("Description", { exact: true }).fill("An explicit problem and its proposed blocking scope are reviewed separately from completion.");
+  await page.getByLabel("Prevents continuing?", { exact: true }).check();
+  await page.getByLabel("Blocking impact", { exact: true }).fill("Wait for verified access before continuing work on this branch.");
+  await page.getByLabel("Propagation", { exact: true }).selectOption("subtree");
+  const blocking = page.locator(".workspace-blocking-preview");
+  await blocking.getByRole("button", { name: "Preview blocking impact", exact: true }).click();
+  await expect(blocking.getByRole("heading", { name: "Open work affected by this Blocker", exact: true })).toBeVisible();
+  await expect(blocking).toContainText(data.child.title);
+  await expect(page.getByLabel("I reviewed the open work affected by this Blocker", { exact: true })).not.toBeChecked();
+  await page.locator("#submit-command").focus();
+  await unobscured(page.locator("#submit-command"));
+  await blocking.getByRole("heading", { name: "Open work affected by this Blocker", exact: true }).scrollIntoViewIfNeeded();
+  await capture(page, metadata, `blocking-impact-${label}`, "Unsaved contextual Issue explicitly previews its proposed subtree Blocker and named affected open work");
   await page.keyboard.press("Escape");
   await selectRecord(page, data.roadmap);
   await expect(panel(page)).toContainText("Publication and activation are separate");

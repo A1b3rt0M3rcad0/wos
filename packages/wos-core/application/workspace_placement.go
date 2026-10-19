@@ -205,6 +205,13 @@ func (s *Service) workspacePlacementPreview(ctx context.Context, f *continuityRe
 			p.RelatedRefs = append(p.RelatedRefs, detail.Details.RelatedRefs...)
 			p.Remedies = append(p.Remedies, detail.Details.Remedies...)
 		}
+		if detail.Code == d.ErrorCodeNotFound || detail.Code == d.ErrorCodeDependencyCycle {
+			// There is no valid candidate ancestry to project. Do not present
+			// missing/cyclic ancestors as an empty inherited-Blocker set.
+			p.Coverage = WorkspaceCoverage{Status: "unknown", ReturnedCount: workspaceCount(0), TotalCount: workspaceCount(len(affected)), Reason: "invalid_candidate_placement; fix the destination before reviewing operational impact"}
+			v.Coverage["placement_preview"] = p.Coverage
+			return p, nil
+		}
 	}
 	blockers, err := graph.WorkspacePlacementBlockers(ctx, ref.Scope, d.DefaultDependencyGraphLimit+1)
 	if err != nil {

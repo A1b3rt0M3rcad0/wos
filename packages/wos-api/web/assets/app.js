@@ -3264,6 +3264,9 @@ function showPreparation(error, pending) {
   }
   const remedies = details.remedies?.length ? details.remedies :
     details.reason_code === "missing_required_criterion" ? [{ action_id: "add_criterion", subject_ref: state.workspaceView?.subject.ref }] : [];
+  if (inForm && details.reason_code === "conclusion_impact_changed")
+    section.append(actionButton(copy.text.formConclusionReviewCurrent,
+      () => reviewCurrentConclusionImpact().catch(report), "quiet"));
   for (const remedy of remedies) {
     const name = workspaceActionName(remedy.action_id);
     if (!preparationActions.has(name) || !humanActions[name] ||
@@ -3280,6 +3283,23 @@ function showPreparation(error, pending) {
   }
   if (inForm) host.replaceChildren(section); else host.append(section);
   section.tabIndex = -1; section.focus({ preventScroll: true });
+}
+async function reviewCurrentConclusionImpact() {
+  if (state.pending || state.submitting || !["achieve_outcome", "achieve_objective"].includes($("command-select").value)) return;
+  const generation = state.generation, epoch = state.formEpoch, form = state.humanForm;
+  const subject = state.formSubject, scope = currentScope();
+  if (!subject || !form) return;
+  const view = await workspaceQuery(subject);
+  if (generation !== state.generation || epoch !== state.formEpoch || form !== state.humanForm
+    || !sameScope(scope, currentScope()) || state.pending || state.submitting) return;
+  form.updateConclusionImpact(view);
+  state.workspaceView = view;
+  state.selected = { ...state.selected, version: view.entity_version };
+  state.formTarget = { ...state.formTarget, version: view.entity_version };
+  $("conflict-review").replaceChildren();
+  $("command-error").textContent = "";
+  $("command-help").textContent = copy.text.workspaceReviewAgain;
+  $("fields").querySelector(".workspace-conclusion-impact input")?.focus({ preventScroll: true });
 }
 async function inspectPreparationReference(host, subject) {
   const generation = state.generation, epoch = state.formEpoch;
@@ -3340,6 +3360,7 @@ async function restorePreparationDraft() {
   state.formDrafts.pop();
   state.humanForm?.dispose();
   state.humanForm = original.humanForm;
+  state.humanForm?.updateConclusionImpact(view);
   state.workspaceView = view;
   state.selected = { ...original.selected, version: view.entity_version };
   state.criterion = original.criterion;
@@ -4035,6 +4056,23 @@ function openCommands(name, menuTarget) {
       openCommands(name, menuTarget);
     }).catch(report);
     return;
+  }
+  if (["achieve_outcome", "achieve_objective"].includes(name)) {
+    const selected = state.selected || state.outcome;
+    const ref = { ...currentScope(), kind: selected?._kind || "outcome", id: selected?.id };
+    if (!state.workspaceView?.conclusion_impact || state.workspaceView.subject.kind !== "entity"
+      || state.workspaceView.subject.ref.id !== ref.id || state.workspaceView.subject.ref.kind !== ref.kind) {
+      const generation = state.generation, detailGeneration = state.detailGeneration;
+      workspaceQuery({ kind: "entity", ref }).then((view) => {
+        if (generation !== state.generation || detailGeneration !== state.detailGeneration
+          || selected !== (state.selected || state.outcome)) return;
+        if (!view.conclusion_impact) throw Error(copy.text.formConclusionImpactUnavailable);
+        state.workspaceView = view;
+        state.selected = { ...view.entity, id: ref.id, version: view.entity_version, _kind: ref.kind };
+        openCommands(name, menuTarget);
+      }).catch(report);
+      return;
+    }
   }
   const fullRecordForms = new Set(["update_outcome", "update_objective", "update_work_item",
     "update_issue", "update_blocker_description", "revise_criterion", "complete_work_item", "release_work_item",

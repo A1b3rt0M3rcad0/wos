@@ -109,7 +109,7 @@ export function localDateTime(value) {
 // Its label is presentation; authorization is always revalidated by the command.
 export function placementField({
   scope, request, parent, title, label = copy.text.formCurrentPlacement,
-  outcomeTitle, allowChange = true,
+  outcomeTitle, allowChange = true, onChange,
 }) {
   const node = el("section", undefined, "field-context workspace-placement");
   const context = el("p", undefined, "workspace-placement-summary");
@@ -118,6 +118,17 @@ export function placementField({
   if (!parent && outcomeTitle) context.append(el("span", outcomeTitle));
   node.append(context);
   let picker;
+  const selectedParent = () => picker ? picker.get()?.id ?? null : parent ?? null;
+  let observed = parent ?? null;
+  const observer = new MutationObserver(() => {
+    let current;
+    try { current = selectedParent(); } catch { current = undefined; }
+    if (current !== observed) {
+      observed = current;
+      onChange?.(current);
+    }
+  });
+  observer.observe(node, { childList: true, subtree: true });
   if (allowChange) node.append(button(copy.text.formChangePlacement, () => {
     if (picker) return picker.node.querySelector("input")?.focus();
     picker = referencePicker({
@@ -130,7 +141,7 @@ export function placementField({
   }, "quiet"));
   return {
     node,
-    get: () => picker ? picker.get()?.id ?? null : parent ?? null,
-    dispose: () => picker?.dispose(),
+    get: selectedParent,
+    dispose() { observer.disconnect(); picker?.dispose(); },
   };
 }

@@ -1,0 +1,153 @@
+import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
+
+const confirmation = "I understand that this open work is not completed by this conclusion";
+const panel = (page) => page.locator("#canvas-details");
+
+async function selectRecord(page, title) {
+  const search = page.getByRole("combobox", { name: "Search Outcome Board", exact: true });
+  await search.fill(title);
+  await page.getByRole("option").filter({ hasText: title }).first().click();
+  await expect(panel(page).locator("#detail-title")).toHaveText(title);
+  await expect(panel(page)).toHaveAttribute("data-surface", "detail");
+}
+
+async function openAction(page, name) {
+  const direct = panel(page).locator(`[data-action-id="${name}"]`).filter({ visible: true });
+  if (await direct.count()) await direct.first().click();
+  else {
+    await panel(page).locator("#entity-actions").click();
+    const target = page.locator(`#action-options [data-action-id="${name}"]`);
+    await revealMenuAction(target);
+    await target.click();
+  }
+  await expect(page.locator("#command-form")).toBeVisible();
+  await expect(page.locator("#command-select")).not.toBeVisible();
+}
+
+for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844 }]) {
+  test(`concluding parents reviews actual open work, rejects stale impact and preserves children at ${viewport.width}px`, async ({ page, wos }) => {
+    test.setTimeout(150000);
+    await page.setViewportSize(viewport);
+    const { scope, value: outcome } = await wos.outcome("Accept only the reviewed parent result");
+    const base = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+    const ref = (kind, record) => ({ ...scope, kind, id: record.id });
+    const read = async (kind, id) => (await wos.api(kind === "outcome" ? base : `${base}/${kind === "objective" ? "objectives" : "work-items"}/${id}`)).value;
+    const viewOf = async (owner) => wos.api(`${base}/workspace-view`, { subject: { kind: "entity", ref: owner } });
+    async function meetCriterion(kind, record) {
+      const owner = ref(kind, record);
+      const criterion = await wos.command("add_criterion", { owner, expected_version: record.version,
+        title: `${kind === "outcome" ? "Outcome" : "Objective"} result was independently checked`,
+        required: true, verification_mode: "attestation" });
+      let current = await read(kind, record.id);
+      await wos.command("attest_criterion", { owner, expected_version: current.version,
+        criterion_id: criterion.id, criterion_revision: criterion.criterion_revision,
+        result: "met", rationale: "An authorized participant reviewed the agreed condition before requesting acceptance." });
+      return read(kind, record.id);
+    }
+    let reviewedOutcome = await meetCriterion("outcome", outcome);
+    await wos.command("activate_outcome", { scope, expected_version: reviewedOutcome.version });
+    let objective = await wos.command("create_objective", { scope, title: "Accept the reviewed documentation result",
+      priority: "normal", required_for_outcome: false });
+    objective = await meetCriterion("objective", objective);
+    objective = await wos.command("start_objective", { scope, objective_id: objective.id, expected_version: objective.version });
+    const child = await wos.command("create_objective", { scope, title: "Optional follow-up remains open",
+      priority: "normal", parent_objective_id: objective.id, required_for_outcome: false });
+    const originalTask = await wos.command("create_work_item", { scope, title: "Unfinished delivery keeps its own workflow",
+      priority: "normal", lifecycle: "backlog", objective_id: objective.id,
+      initial_criteria: [{ title: "The child delivery has its own unassessed criterion", required: true, verification_mode: "evidence_review" }] });
+    const unchangedChildren = [{ kind: "objective", record: child }, { kind: "work_item", record: originalTask }];
+    const errors = [], attempts = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("request", (request) => {
+      if (request.method() === "POST" && /\/commands\/achieve_(outcome|objective)$/.test(request.url()))
+        attempts.push({ name: request.url().split("/").at(-1), command: request.postDataJSON().command });
+    });
+    await wos.login(page);
+    await openOutcome(page, outcome.title, { area: null });
+
+    // Both conclusion types use a genuine guarded read. A parent conclusion
+    // must not manufacture completion, assessment, cancellation or authority
+    // on a descendant, including descendants of an already achieved Objective.
+    for (const [kind, record] of [["objective", objective], ["outcome", outcome]]) {
+      const owner = ref(kind, record), commandName = `achieve_${kind}`;
+      await selectRecord(page, record.title);
+      const initialView = await viewOf(owner);
+      expect(initialView.conclusion_impact.open_objectives).toBeGreaterThan(0);
+      expect(initialView.conclusion_impact.open_tasks).toBeGreaterThan(0);
+      expect(initialView.coverage.conclusion_impact.status).toBe("complete");
+      await openAction(page, commandName);
+      const impact = page.locator(".workspace-conclusion-impact");
+      await expect(impact.getByRole("heading", { name: "Review conclusion impact", exact: true })).toBeVisible();
+      await expect(impact).toContainText(`${initialView.conclusion_impact.open_objectives} open Objectives · ${initialView.conclusion_impact.open_tasks} open Tasks`);
+      for (const item of initialView.conclusion_impact.open_items) await expect(impact).toContainText(item.title);
+      await expect(impact).toContainText("Open child records keep their current lifecycle");
+      await expect(impact).toContainText("Criteria, Evidence and assessments on child records remain unchanged.");
+      const acknowledgement = page.getByLabel(confirmation, { exact: true });
+      await expect(acknowledgement).not.toBeChecked();
+      await expect(acknowledgement).toHaveJSProperty("required", true);
+      const reason = `I reviewed the ${kind} criteria and the explicitly listed unfinished work.`;
+      await page.getByLabel("Reason", { exact: true }).fill(reason);
+      expect(await acknowledgement.evaluate((input) => input.validity.valueMissing)).toBe(true);
+      await acknowledgement.check();
+
+      // A different participant adds a real Task after the person acknowledged
+      // the displayed snapshot. The owner's version alone cannot catch this.
+      const lateTask = await wos.command("create_work_item", { scope,
+        title: `${kind === "objective" ? "Objective" : "Outcome"} work added after impact review`,
+        lifecycle: "backlog", priority: "normal", ...(kind === "objective" ? { objective_id: objective.id } : {}) });
+      unchangedChildren.push({ kind: "work_item", record: lateTask });
+      const changedView = await viewOf(owner);
+      expect(changedView.entity_version).toBe(initialView.entity_version);
+      expect(changedView.outcome_revision).not.toBe(initialView.outcome_revision);
+      const rejected = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith(`/commands/${commandName}`));
+      await page.locator("#submit-command").click();
+      const rejection = await rejected, error = await rejection.json();
+      expect(rejection.ok()).toBe(false);
+      expect(error.error.code).toBe("precondition_failed");
+      expect(error.error.details).toMatchObject({ reason_code: "conclusion_impact_changed",
+        subject_ref: owner, field_paths: ["observed_outcome_revision"] });
+      expect(error.error.details.remedies).toContainEqual({ action_id: "review_conclusion_impact", subject_ref: owner });
+      expect(attempts.at(-1).command.observed_outcome_revision).toBe(initialView.outcome_revision);
+      expect(typeof attempts.at(-1).command.observed_outcome_revision).toBe("string");
+      await expect(page.getByLabel("Reason", { exact: true })).toHaveValue(reason);
+      const unconcluded = await read(kind, record.id);
+      expect(unconcluded.lifecycle).toBe(kind === "objective" ? "in_progress" : "active");
+      expect(unconcluded.conclusion).toBeUndefined();
+      await page.locator("#conflict-review").getByRole("button", { name: "Review current impact", exact: true }).click();
+      await expect(impact).toContainText(lateTask.title);
+      await expect(page.getByLabel("Reason", { exact: true })).toHaveValue(reason);
+      await expect(acknowledgement).not.toBeChecked();
+      expect(await acknowledgement.evaluate((input) => input.validity.valueMissing)).toBe(true);
+      await expect(page.locator("#conflict-review")).toBeEmpty();
+      expect(attempts.filter((attempt) => attempt.name === commandName)).toHaveLength(1);
+
+      // Refreshing is a read; only a new explicit acknowledgement and submit
+      // can accept this parent's result against the fresh shared revision.
+      await acknowledgement.check();
+      const accepted = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith(`/commands/${commandName}`));
+      await page.locator("#submit-command").click();
+      const acceptance = await accepted;
+      const result = await acceptance.json();
+      expect(acceptance.ok(), JSON.stringify(result)).toBe(true);
+      await expect(page.locator("#command-form")).not.toBeVisible();
+      expect(attempts.at(-1).command.observed_outcome_revision).toBe(changedView.outcome_revision);
+      const concluded = await read(kind, record.id);
+      expect(concluded.lifecycle).toBe("achieved");
+      expect(concluded.conclusion.reason).toBe(reason);
+      for (const descendant of unchangedChildren) {
+        const current = await read(descendant.kind, descendant.record.id);
+        expect(current.lifecycle).toBe(descendant.record.lifecycle);
+        expect(current.version).toBe(descendant.record.version);
+        expect(current.criteria).toEqual(descendant.record.criteria);
+        expect(current.conclusion).toBeUndefined();
+        expect(current.current_lease).toBeUndefined();
+        expect(current.current_contract_id).toBeUndefined();
+      }
+    }
+    expect(attempts.map((attempt) => attempt.name)).toEqual([
+      "achieve_objective", "achieve_objective", "achieve_outcome", "achieve_outcome",
+    ]);
+    expect(errors).toEqual([]);
+  });
+}

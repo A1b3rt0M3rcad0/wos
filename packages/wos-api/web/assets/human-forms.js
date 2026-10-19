@@ -13,6 +13,9 @@ import {
 } from "./workspace-form-fields.js";
 import { planEditor } from "./workspace-plan-editor.js";
 import { contextualEvidenceForm } from "./workspace-evidence-form.js";
+import { conclusionImpactEditor } from "./workspace-conclusion-form.js";
+import { blockingImpactEditor } from "./workspace-blocking-form.js";
+import { structuralMoveEditor } from "./structural-form-preview.js";
 const priority = ["normal", "high", "critical", "low"].map((x) => [
   x,
   display(x),
@@ -45,6 +48,7 @@ export function humanForm(
   const kind = entity._kind || "outcome";
   const ref = { ...scope, kind, id: entity.id || scope.outcome_id };
   let commandName = () => name;
+  let conclusionEditor;
   function f(key, label, options = {}) {
     const field = inputField(label, options);
     node.append(field.node);
@@ -76,15 +80,6 @@ export function humanForm(
     if (typeof value === "string" && /^[1-9][0-9]*$/.test(value)) return value;
     if (Number.isSafeInteger(value) && value > 0) return String(value);
     throw Error(copy.text.formReviewTargets);
-  }
-  function observeStructurePreview() {
-    const value = workspaceView?.outcome_revision;
-    if (value === undefined) return;
-    if (typeof value === "string" && /^[0-9]+$/.test(value))
-      fixed.expected_outcome_revision = value;
-    else if (Number.isSafeInteger(value) && value >= 0)
-      fixed.expected_outcome_revision = String(value);
-    else throw Error(copy.text.formReviewTargets);
   }
   function title(label = copy.text.title, value) {
     f("title", label, { required: true, value });
@@ -132,6 +127,16 @@ export function humanForm(
   const help = el("p", undefined, "flow-help");
   node.append(help);
   switch (name) {
+    case "achieve_outcome":
+    case "achieve_objective": {
+      id();
+      conclusionEditor = conclusionImpactEditor(workspaceView);
+      node.append(conclusionEditor.node);
+      getters._editor = () => conclusionEditor.get();
+      reason();
+      help.textContent = copy.text.thisIsAnExplicitLifecycleDecisionTheServerChecks;
+      break;
+    }
     case "replace_external_context": {
       id("outcome");
       const editor = externalContextEditor(entity.external_context || {});
@@ -285,10 +290,10 @@ export function humanForm(
     case "set_work_item_objective":
     case "set_objective_parent": {
       id(kind);
-      fixed.expected_version = exactObservedVersion();
-      observeStructurePreview();
-      const key = kind === "work_item" ? "objective_id" : "parent_objective_id";
-      placement(key, entity[key] || null, copy.text.formPreviousPlacement);
+      const editor = structuralMoveEditor({ scope, entity, kind, workspaceView, request, outcomeTitle });
+      node.append(editor.node);
+      getters._editor = editor.get;
+      disposers.push(editor.dispose);
       help.textContent = kind === "work_item" ? copy.text.formMoveTaskHelp : copy.text.formMoveObjectiveHelp;
       break;
     }
@@ -577,6 +582,11 @@ export function humanForm(
       const propagation = inputField(copy.text.propagation, { options: [] });
       const propagationMessage = el("p", undefined, "field-help");
       impact.append(impactDescription.node, propagation.node, propagationMessage);
+      const blockingPreview = blockingImpactEditor({ scope, request,
+        getTarget: () => isContextual ? ref : target?.get(), getPropagation: propagation.get });
+      impact.append(blockingPreview.node);
+      disposers.push(blockingPreview.dispose);
+      getters._editor = () => blocks.get() ? blockingPreview.get() : {};
       node.append(impact);
       const propagationByKind = eligibility?.blocker_propagation
         || workspaceView?.eligibility?.blocker_propagation;
@@ -593,8 +603,10 @@ export function humanForm(
         impact.inert = !blocks.get();
         impactDescription.input.required = blocks.get();
         propagation.input.required = blocks.get();
+        blockingPreview.sync();
       }
       blocks.input.addEventListener("change", updateImpact);
+      propagation.input.addEventListener("change", () => blockingPreview.sync());
       target?.node.addEventListener("click", updateImpact);
       target?.node.addEventListener("keydown", () => queueMicrotask(updateImpact));
       updateImpact();
@@ -948,6 +960,7 @@ export function humanForm(
   return {
     node,
     commandName: () => commandName(),
+    updateConclusionImpact(view) { conclusionEditor?.update(view); },
     async get() {
       const result = { ...fixed };
       for (const [key, get] of Object.entries(getters)) {

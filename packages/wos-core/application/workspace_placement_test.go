@@ -190,6 +190,14 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			if cycle.Availability != "blocked" || cycle.Error == nil || cycle.ReasonCodes[0] != "objective_hierarchy_cycle" {
 				t.Fatalf("cycle was not explained: %+v", cycle)
 			}
+			if cycle.Coverage.Status != "unknown" || len(cycle.BlockingChanges) != 0 {
+				t.Fatal("invalid cyclic ancestry was presented as complete operational impact")
+			}
+			missingID := id()
+			missing := preview(task.Ref(), &missingID).PlacementPreview
+			if missing.Availability != "blocked" || missing.Error == nil || missing.Error.Code != d.ErrorCodeNotFound || missing.Coverage.Status != "unknown" || missing.ReadinessAfter != nil {
+				t.Fatalf("missing destination was presented as valid readiness: %+v", missing)
+			}
 			inExecution := preview(frozen.Ref(), &second.ID).PlacementPreview
 			if inExecution.Availability != "blocked" || inExecution.Error == nil || inExecution.ReasonCodes[0] != "objective_subtree_in_execution" {
 				t.Fatalf("executing subtree was not guarded: %+v", inExecution)

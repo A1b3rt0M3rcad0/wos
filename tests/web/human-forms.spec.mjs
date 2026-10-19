@@ -20,12 +20,21 @@ async function fixture(page, name, options = {}) {
   await page.goto("http://human-forms.test/");
   await page.evaluate(async ({ name, options, scope, rules }) => {
     const { humanForm } = await import("/assets/human-forms.js");
+    const sourceVersion = String(options.entity?.version || "3");
     window.reads = [];
     window.submits = [];
     window.editor = humanForm(name, {
       scope, eligibility: rules, outcomeTitle: "Ship a usable release", ...options,
       request: async (path, options) => {
-        if (options?.method && options.method !== "GET") throw Error("A form must not write records");
+        if (options?.method && options.method !== "GET") {
+          if (options.method !== "POST" || !path.endsWith("/workspace-view")) throw Error("A form must not write records");
+          const query = JSON.parse(options.body);
+          window.reads.push(path);
+          return { subject: query.subject, entity_version: sourceVersion, outcome_revision: "19",
+            placement_preview: { availability: "available", old_parent: { ref: { ...scope, kind: "outcome", id: scope.outcome_id }, title: "Ship a usable release" },
+              new_parent: { ref: { ...scope, kind: query.placement_preview.parent_id ? "objective" : "outcome", id: query.placement_preview.parent_id || scope.outcome_id }, title: "Ship a usable release" },
+              affected_objectives: 0, affected_tasks: 1, blocking_changes: [], coverage: { status: "complete" } } };
+        }
         window.reads.push(path);
         return { items: [
           { ref: { ...scope, kind: "objective", id: "objective" }, title: "Installation works", version: 1 },
@@ -99,7 +108,12 @@ test("replacement setters preserve exact versions and send explicit date, list a
   await fixture(page, "set_work_item_execution_spec", { entity: { _kind: "work_item", id: "task", version: "2" } });
   expect(await page.evaluate(() => window.editor.get())).toMatchObject({ expected_version: "2", execution_spec: { instructions: [], constraints: [], deliverables: [], scope_hints: [], context_refs: [] } });
   await fixture(page, "set_work_item_objective", { entity: { _kind: "work_item", id: "task", version: "3" } });
-  expect(await page.evaluate(() => window.editor.get())).toEqual({ scope, work_item_id: "task", expected_version: "3", objective_id: null });
+  expect(await page.evaluate(async () => {
+    try { await window.editor.get(); return "accepted"; } catch (error) { return error.message; }
+  })).toContain("Preview this destination");
+  await page.getByRole("button", { name: "Preview move", exact: true }).click();
+  await page.getByLabel("I reviewed the new placement and its blocking impacts", { exact: true }).check();
+  expect(await page.evaluate(() => window.editor.get())).toEqual({ scope, work_item_id: "task", expected_version: "3", expected_outcome_revision: "19", objective_id: null });
 });
 
 test("a documentary note contains authenticated-context inputs rather than a state transition", async ({ page }) => {

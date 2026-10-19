@@ -1,4 +1,26 @@
-import { message } from "./en-US.js";
+import { message, copy as sharedCopy } from "./en-US.js";
+
+// Only canonical identifiers and exact decimal versions may enter a copied
+// shell command. Authored titles, labels, URLs and credential material never do.
+export function signedCheckoutHandoff({ kind, id, version, scope, previousReviewCaseId }) {
+  const identifier = (value) => {
+    if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value))
+      throw Error(sharedCopy.text.formReviewTargets);
+    return value;
+  };
+  const observed = typeof version === "string" ? version
+    : Number.isSafeInteger(version) ? String(version) : "";
+  if (!/^[1-9][0-9]*$/.test(observed) || BigInt(observed) > 18446744073709551615n
+    || !["work", "review"].includes(kind))
+    throw Error(sharedCopy.text.formReviewTargets);
+  const profile = kind === "work" ? "executor" : "reviewer";
+  const options = ` --namespace ${identifier(scope?.namespace_id)} --outcome ${identifier(scope?.outcome_id)}`;
+  const previous = kind === "work" && previousReviewCaseId
+    ? ` --previous-review ${identifier(previousReviewCaseId)}` : "";
+  const placeholder = kind === "work" ? "CONTRACT_UUID" : "REVIEW_CONTRACT_UUID";
+  return `wos --profile ${profile} ${kind} checkout ${identifier(id)} --version ${observed}${options}${previous}\nwos --profile ${profile} ${kind} show ${placeholder} --for-agent\nwos --profile ${profile} ${kind} finish ${placeholder}`;
+}
+
 export function contractViews({
   state,
   api,
@@ -678,18 +700,23 @@ export function contractViews({
         instructions.append(
           cliHandoff(
             copy.text.executor,
-            `wos --profile executor work checkout ${entity.id} --version ${entity.version}${entity.correction_review_case_id ? ` --previous-review ${entity.correction_review_case_id}` : ""}
-wos --profile executor work show CONTRACT_UUID --for-agent
-wos --profile executor work finish CONTRACT_UUID`,
+            signedCheckoutHandoff({ kind: "work", id: entity.id,
+              version: state.workspaceView?.subject?.ref?.kind === "work_item"
+                && state.workspaceView.subject.ref.id === entity.id
+                && state.workspaceView.subject.ref.namespace_id === state.namespace
+                && state.workspaceView.subject.ref.outcome_id === state.outcome?.id
+                ? state.workspaceView.entity_version : entity.version,
+              scope: { namespace_id: state.namespace, outcome_id: state.outcome?.id },
+              previousReviewCaseId: entity.correction_review_case_id }),
           ),
         );
       if (entity.pending_review_case_id && pendingReviewVersion !== undefined)
         instructions.append(
           cliHandoff(
             copy.text.reviewer,
-            `wos --profile reviewer review checkout ${entity.pending_review_case_id} --version ${pendingReviewVersion}
-wos --profile reviewer review show REVIEW_CONTRACT_UUID --for-agent
-wos --profile reviewer review finish REVIEW_CONTRACT_UUID`,
+            signedCheckoutHandoff({ kind: "review", id: entity.pending_review_case_id,
+              version: pendingReviewVersion,
+              scope: { namespace_id: state.namespace, outcome_id: state.outcome?.id } }),
           ),
         );
       instructions.append(
