@@ -17,15 +17,17 @@ import (
 )
 
 type Output struct {
-	Operation      string    `json:"operation"`
-	OutcomeID      domain.ID `json:"outcome_id,omitempty"`
-	WorkItemID     domain.ID `json:"work_item_id,omitempty"`
-	ContractID     domain.ID `json:"contract_id,omitempty"`
-	Committed      bool      `json:"committed"`
-	RequiresAction string    `json:"requires_action,omitempty"`
-	ReceiptPath    string    `json:"receipt_path,omitempty"`
-	Data           any       `json:"data,omitempty"`
-	Error          string    `json:"error,omitempty"`
+	Operation      string               `json:"operation"`
+	OutcomeID      domain.ID            `json:"outcome_id,omitempty"`
+	WorkItemID     domain.ID            `json:"work_item_id,omitempty"`
+	ContractID     domain.ID            `json:"contract_id,omitempty"`
+	Committed      bool                 `json:"committed"`
+	RequiresAction string               `json:"requires_action,omitempty"`
+	ReceiptPath    string               `json:"receipt_path,omitempty"`
+	Data           any                  `json:"data,omitempty"`
+	Error          string               `json:"error,omitempty"`
+	ErrorCode      string               `json:"error_code,omitempty"`
+	ErrorDetails   *domain.ErrorDetails `json:"error_details,omitempty"`
 }
 type exitError struct {
 	code int
@@ -142,6 +144,10 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	code := exitCode(err)
 	if err != nil {
 		result.Error = err.Error()
+		var remote *sdk.Error
+		if errors.As(err, &remote) {
+			result.ErrorCode, result.ErrorDetails = remote.Code, remote.Details
+		}
 		var local *LocalError
 		if errors.As(err, &local) {
 			result.Committed = local.Committed
@@ -274,6 +280,10 @@ func run(ctx context.Context, o options) (Output, error) {
 	}
 	result.OutcomeID = scope.OutcomeID
 	switch o.args[0] {
+	case "planning":
+		return workspacePlanningCommand(ctx, w, client, config, scope, "", o)
+	case "inspect":
+		return workspaceInspectCommand(ctx, client, scope, o)
 	case "capabilities":
 		v, err := client.Capabilities(ctx)
 		result.Data = v

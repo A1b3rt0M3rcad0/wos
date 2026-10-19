@@ -58,6 +58,9 @@ func (c *Client) AdministrativeCancelWorkItem(ctx context.Context, key string, c
 func (c *Client) AdministrativeCompleteWorkItem(ctx context.Context, key string, cmd application.AdministrativeCompleteWorkItemCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "administrative_complete_work_item", key, cmd)
 }
+func (c *Client) AppendEntityNote(ctx context.Context, key string, cmd application.AppendEntityNoteCommand) (CommandResult[domain.EntityNote], error) {
+	return command[domain.EntityNote](ctx, c, "append_entity_note", key, cmd)
+}
 func (c *Client) AppendWorkActivity(ctx context.Context, key string, cmd application.AppendWorkActivityCommand) (CommandResult[application.WorkActivityResult], error) {
 	return command[application.WorkActivityResult](ctx, c, "append_work_activity", key, cmd)
 }
@@ -103,6 +106,9 @@ func (c *Client) CreateObjective(ctx context.Context, key string, cmd applicatio
 func (c *Client) CreateOutcome(ctx context.Context, key string, cmd application.CreateOutcomeCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "create_outcome", key, cmd)
 }
+func (c *Client) CreatePlanItems(ctx context.Context, key string, cmd application.CreatePlanItemsCommand) (CommandResult[application.CreatePlanItemsResult], error) {
+	return command[application.CreatePlanItemsResult](ctx, c, "create_plan_items", key, cmd)
+}
 func (c *Client) CreateRoadmap(ctx context.Context, key string, cmd application.CreateRoadmapCommand) (CommandResult[domain.Roadmap], error) {
 	return command[domain.Roadmap](ctx, c, "create_roadmap", key, cmd)
 }
@@ -145,6 +151,9 @@ func (c *Client) OpenRoadmapDraft(ctx context.Context, key string, cmd applicati
 func (c *Client) ProposeDecision(ctx context.Context, key string, cmd application.ProposeDecisionCommand) (CommandResult[domain.Decision], error) {
 	return command[domain.Decision](ctx, c, "propose_decision", key, cmd)
 }
+func (c *Client) ProposeDecisionInContext(ctx context.Context, key string, cmd application.ProposeDecisionInContextCommand) (CommandResult[application.ProposeDecisionInContextResult], error) {
+	return command[application.ProposeDecisionInContextResult](ctx, c, "propose_decision_in_context", key, cmd)
+}
 func (c *Client) PublishRoadmapDraft(ctx context.Context, key string, cmd application.PublishRoadmapDraftCommand) (CommandResult[domain.Roadmap], error) {
 	return command[domain.Roadmap](ctx, c, "publish_roadmap_draft", key, cmd)
 }
@@ -163,8 +172,14 @@ func (c *Client) RedeliverDelivery(ctx context.Context, key string, cmd applicat
 func (c *Client) RegisterArtifact(ctx context.Context, key string, cmd application.RegisterArtifactCommand) (CommandResult[domain.Artifact], error) {
 	return command[domain.Artifact](ctx, c, "register_artifact", key, cmd)
 }
+func (c *Client) RegisterArtifactInContext(ctx context.Context, key string, cmd application.RegisterArtifactInContextCommand) (CommandResult[application.RegisterArtifactInContextResult], error) {
+	return command[application.RegisterArtifactInContextResult](ctx, c, "register_artifact_in_context", key, cmd)
+}
 func (c *Client) RegisterEvidence(ctx context.Context, key string, cmd application.RegisterEvidenceCommand) (CommandResult[domain.Evidence], error) {
 	return command[domain.Evidence](ctx, c, "register_evidence", key, cmd)
+}
+func (c *Client) RegisterEvidenceWithLinks(ctx context.Context, key string, cmd application.RegisterEvidenceWithLinksCommand) (CommandResult[application.RegisterEvidenceWithLinksResult], error) {
+	return command[application.RegisterEvidenceWithLinksResult](ctx, c, "register_evidence_with_links", key, cmd)
 }
 func (c *Client) RejectDecision(ctx context.Context, key string, cmd application.RejectDecisionCommand) (CommandResult[domain.Decision], error) {
 	return command[domain.Decision](ctx, c, "reject_decision", key, cmd)
@@ -265,6 +280,9 @@ func (c *Client) SetNamespaceWorkProtocol(ctx context.Context, key string, cmd a
 func (c *Client) SetObjectiveOwners(ctx context.Context, key string, cmd application.SetObjectiveOwnersCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "set_objective_owners", key, cmd)
 }
+func (c *Client) SetObjectiveParent(ctx context.Context, key string, cmd application.SetObjectiveParentCommand) (CommandResult[domain.Objective], error) {
+	return command[domain.Objective](ctx, c, "set_objective_parent", key, cmd)
+}
 func (c *Client) SetOutcomeOwners(ctx context.Context, key string, cmd application.SetOutcomeOwnersCommand) (CommandResult[domain.Outcome], error) {
 	return command[domain.Outcome](ctx, c, "set_outcome_owners", key, cmd)
 }
@@ -273,6 +291,15 @@ func (c *Client) SetTriggerEnabled(ctx context.Context, key string, cmd applicat
 }
 func (c *Client) SetWorkItemAssignees(ctx context.Context, key string, cmd application.SetWorkItemAssigneesCommand) (CommandResult[domain.WorkItem], error) {
 	return command[domain.WorkItem](ctx, c, "set_work_item_assignees", key, cmd)
+}
+func (c *Client) SetWorkItemExecutionSpec(ctx context.Context, key string, cmd application.SetWorkItemExecutionSpecCommand) (CommandResult[domain.WorkItem], error) {
+	return command[domain.WorkItem](ctx, c, "set_work_item_execution_spec", key, cmd)
+}
+func (c *Client) SetWorkItemNotBefore(ctx context.Context, key string, cmd application.SetWorkItemNotBeforeCommand) (CommandResult[domain.WorkItem], error) {
+	return command[domain.WorkItem](ctx, c, "set_work_item_not_before", key, cmd)
+}
+func (c *Client) SetWorkItemObjective(ctx context.Context, key string, cmd application.SetWorkItemObjectiveCommand) (CommandResult[domain.WorkItem], error) {
+	return command[domain.WorkItem](ctx, c, "set_work_item_objective", key, cmd)
 }
 func (c *Client) StartObjective(ctx context.Context, key string, cmd application.StartObjectiveCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "start_objective", key, cmd)

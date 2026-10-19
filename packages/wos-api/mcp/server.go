@@ -3,6 +3,7 @@ package mcptransport
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -15,6 +16,8 @@ import (
 )
 
 const MaxPayloadBytes = 256 << 10
+
+var workspaceCommandOutputSchemas = commands.WorkspaceCommandResults()
 
 type Options struct {
 	ProductVersion string
@@ -86,7 +89,12 @@ func failure(err error) (*mcp.CallToolResult, error) {
 	case domain.ErrorCodeIdempotencyConflict:
 		recovery = "reuse a key only for the identical intent"
 	}
-	b, _ := json.Marshal(map[string]any{"error": map[string]any{"code": code, "message": err.Error(), "recovery": recovery}})
+	body := map[string]any{"code": code, "message": err.Error(), "recovery": recovery}
+	var typed *domain.Error
+	if errors.As(err, &typed) && typed.Details != nil {
+		body["details"] = typed.Details
+	}
+	b, _ := json.Marshal(map[string]any{"error": body})
 	return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(b)}}, StructuredContent: json.RawMessage(b)}, nil
 }
 func success(value any) (*mcp.CallToolResult, error) {
@@ -115,7 +123,11 @@ func mutationSuccess(value any) (*mcp.CallToolResult, error) {
 }
 func registerCommand[C any](server *mcp.Server, ids ports.IDGenerator, options Options, name string, run func(context.Context, domain.CommandContext, C) (any, error)) {
 	schema := map[string]any{"type": "object", "additionalProperties": false, "required": []string{"idempotency_key", "command"}, "properties": map[string]any{"idempotency_key": map[string]any{"type": "string", "minLength": 16, "maxLength": 128}, "correlation_id": map[string]any{"type": "string", "maxLength": 256}, "command": typeSchema(reflect.TypeFor[C]())}}
-	server.AddTool(&mcp.Tool{Name: name, Description: "Execute " + strings.TrimPrefix(name, "wos_") + " through the same Application service as HTTP. Optimistic versions and fencing are mandatory where specified. TTL uses seconds.", InputSchema: schema}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var output any
+	if resultSchema, ok := workspaceCommandOutputSchemas[strings.TrimPrefix(name, "wos_")]; ok {
+		output = resultSchema
+	}
+	server.AddTool(&mcp.Tool{Name: name, Description: "Execute " + strings.TrimPrefix(name, "wos_") + " through the same Application service as HTTP. Optimistic versions and fencing are mandatory where specified. TTL uses seconds.", InputSchema: schema, OutputSchema: output}, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {

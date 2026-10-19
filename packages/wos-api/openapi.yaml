@@ -23,6 +23,32 @@ tags:
 - name: Criteria
 - name: Roadmaps
 paths:
+  /api/v1/commands/append_entity_note:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_entity_note
+  /api/v1/commands/create_plan_items:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1create_plan_items
+  /api/v1/commands/set_work_item_execution_spec:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_execution_spec
+  /api/v1/commands/set_work_item_not_before:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_not_before
+  /api/v1/commands/set_work_item_objective:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_objective
+  /api/v1/commands/set_objective_parent:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_objective_parent
+  /api/v1/commands/register_evidence_with_links:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1register_evidence_with_links
+  /api/v1/commands/register_artifact_in_context:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1register_artifact_in_context
+  /api/v1/commands/propose_decision_in_context:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1propose_decision_in_context
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-view:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-view
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-cards:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-cards
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-timeline:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-timeline
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/entity-notes/{note_id}:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1entity-notes~1{note_id}
   /api/v1/commands/append_work_activity:
     $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_work_activity
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity:

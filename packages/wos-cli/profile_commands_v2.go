@@ -249,6 +249,9 @@ func profileCommandV2(ctx context.Context, w *Workspace, o options, resolver Sec
 		if len(profile.Local.PendingOperations) != 0 {
 			return result, fmt.Errorf("pending intentions must be reconciled before profile removal")
 		}
+		if e = w.ensureNoWorkspacePlanningPending(profile.Binding.CredentialID); e != nil {
+			return result, e
+		}
 		directory := filepath.Join(".wos/profiles", selected)
 		entries, e := w.readDirectoryV2(directory)
 		if e != nil {

@@ -46,7 +46,7 @@ func encodeValue(v reflect.Value) (any, error) {
 				continue
 			}
 			fv := v.Field(i)
-			if (strings.Contains(f.Tag.Get("json"), "omitempty") || fv.Kind() == reflect.Pointer || fv.Kind() == reflect.Slice) && fv.IsZero() {
+			if f.Tag.Get("wos") != "required" && (strings.Contains(f.Tag.Get("json"), "omitempty") || fv.Kind() == reflect.Pointer || fv.Kind() == reflect.Slice) && fv.IsZero() {
 				continue
 			}
 			encoded, err := encodeValue(fv)

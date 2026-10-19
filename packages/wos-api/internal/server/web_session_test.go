@@ -82,6 +82,16 @@ func TestBrowserSessionCatalogAndRevocation(t *testing.T) {
 		if status != 200 || !replay.IdempotentReplay || replay.Value.ID != created.Value.ID {
 			t.Fatalf("replay: %d %s", status, raw)
 		}
+		viewPath := "/api/v1/namespaces/" + cfg.Auth.BootstrapNamespaceID + "/outcomes/" + created.Value.ID.String() + "/workspace-view"
+		viewQuery := application.WorkspaceViewQuery{Subject: application.WorkspaceSubject{Kind: "entity", Ref: created.Value.Ref()}}
+		status, _ = call("POST", viewPath, viewQuery, "https://foreign.example", "")
+		if status != 403 {
+			t.Fatalf("read-only POST bypassed browser Origin protection: %d", status)
+		}
+		status, raw = call("POST", viewPath, viewQuery, srv.URL, "")
+		if status != 200 || !bytes.Contains(raw, []byte(`"outcome_revision":"`)) {
+			t.Fatalf("authorized read-only POST requires no mutation idempotency key and preserves exact revision: %d %s", status, raw)
+		}
 		u, _ := http.NewRequest("GET", srv.URL, nil)
 		cookies := jar.Cookies(u.URL)
 		if len(cookies) != 1 {

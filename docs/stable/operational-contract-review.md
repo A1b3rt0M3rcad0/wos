@@ -26,3 +26,45 @@ The local project schema makes only `default_outcome_id` optional. Namespace, se
 Migration `0030` adds immutable activity storage and scoped indexed chronology without rewriting earlier migrations. Activity is documentary and authorized under the live signed holder; it cannot renew authority or evaluate a criterion. Attention checks exact current submission bindings and distinguishes terminal state. The five new query parameters grant no additional read authority. See ADRs 035/036, authority/replay/restore and HTTP/MCP/SDK tests, and the [source-bound central workflow validation record](../central-agent-workflow/validation.md).
 
 Only the current OpenAPI and project-schema fingerprints were refreshed after this semantic review. All seven other frozen schema digests and the byte-preserved released baseline remain unchanged. This records reviewed compatibility, not release publication or native-platform certification.
+
+## Operational workspace review — 2026-10-19
+
+Compared with the current branch base, this candidate adds nine mutation routes
+and four bounded read routes. It removes or changes no existing route. The new
+commands cover immutable Entity notes, atomic planning and documentary creation,
+and typed Task/Objective setters. The new reads expose an authorized coherent
+workspace snapshot, compact cards, a documentary timeline and full Entity notes.
+All transports call the same Core methods; new capabilities grant no implicit
+execution or acceptance authority. The [workspace API guide](../operational-workspace-api.md)
+records the actual HTTP, MCP, SDK and CLI contracts.
+
+Existing create commands gain only optional `initial_criteria`; the existing
+Evidence-link command gains only optional observed target-version and
+criterion-revision fields. Its previously unconstrained target-kind wire schema
+is preserved for released clients. Canonical eligibility remains enforced by the
+Core and exposed as `workspace_rules`; the new compound Evidence-link input uses
+the canonical enum. The existing Work attention projection gains only optional
+criterion diagnostic reason codes. No old required field, constraint, enum value,
+command path, numeric counter format or signed canonical representation changes.
+
+New workspace counters are quoted decimal strings, including optimistic
+preconditions. Explicitly required nullable setter fields distinguish an omitted
+field from an intentional clear. Typed errors add optional structured details.
+New bounded mutation receipts preserve every generated identifier when a full
+result exceeds the response budget, so uncertain-response recovery never needs
+another mutation. CLI planning journals reuse frozen durable intentions and
+receipt lookup; they cannot invoke signed execution through an unsigned fallback.
+
+New workspace projections include revision-bound criteria, relationship and
+required-Objective cursors, honest partial coverage, and actual observation
+provenance. An unavailable internal note stays unavailable; external URLs are
+never fetched. These fields and commands are additive, rather than a claim that
+an older client can operate the new features.
+
+The current OpenAPI fingerprint alone was refreshed after inspecting all added
+routes/schemas and rerunning the recursive released-v0.4.2 compatibility guard.
+The eight CLI schema fingerprints and byte-preserved released reference remain
+unchanged. Two consecutive MCP/catalog/SDK/OpenAPI generations produced identical
+output hashes. This review records wire compatibility; the separate PostgreSQL,
+SQLite, transport, recovery, browser and upgrade qualification evidence still
+controls acceptance and does not imply release publication.

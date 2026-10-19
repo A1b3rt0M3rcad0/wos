@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "catalogue_revision": "2026-10-16",
+  "catalogue_revision": "2026-10-19",
   "envelope": "IntegrationFact",
   "delivery": "at_least_once",
   "events": [
@@ -33,6 +33,9 @@
     },
     {
       "event_type": "decision.updated"
+    },
+    {
+      "event_type": "entity_note.recorded"
     },
     {
       "event_type": "evidence.link_created"
@@ -95,6 +98,9 @@
       "event_type": "objective.criterion_revised"
     },
     {
+      "event_type": "objective.parent_changed"
+    },
+    {
       "event_type": "objective.reopened"
     },
     {
@@ -155,8 +161,7 @@
       "event_type": "outcome.updated"
     },
     {
-      "event_type": "outcome.work_protocol_changed",
-      "description": "Namespace work protocol changed explicitly under exclusive guard; each affected Outcome records its coordination revision."
+      "event_type": "outcome.work_protocol_changed"
     },
     {
       "event_type": "relation.created"
@@ -267,7 +272,16 @@
       "event_type": "work_item.criterion_revised"
     },
     {
+      "event_type": "work_item.execution_spec_changed"
+    },
+    {
       "event_type": "work_item.lease_renewed"
+    },
+    {
+      "event_type": "work_item.not_before_changed"
+    },
+    {
+      "event_type": "work_item.objective_changed"
     },
     {
       "event_type": "work_item.reclaimed"

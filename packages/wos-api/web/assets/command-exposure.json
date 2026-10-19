@@ -101,6 +101,12 @@
     "permission": "work:admin_complete",
     "surface": "developer"
   },
+  "append_entity_note": {
+    "exposure": "C",
+    "journey": "Documentary updates",
+    "permission": "records:write",
+    "surface": "human"
+  },
   "append_work_activity": {
     "exposure": "S",
     "journey": "Signed v2 execution activity",
@@ -191,6 +197,12 @@
     "permission": "outcome:write",
     "surface": "human"
   },
+  "create_plan_items": {
+    "exposure": "H",
+    "journey": "Contextual planning batches",
+    "permission": "planning:write",
+    "surface": "human"
+  },
   "create_roadmap": {
     "exposure": "H",
     "journey": "Roadmap creation and editing",
@@ -275,6 +287,12 @@
     "permission": "records:write",
     "surface": "human"
   },
+  "propose_decision_in_context": {
+    "exposure": "C",
+    "journey": "Contextual decisions",
+    "permission": "records:write",
+    "surface": "human"
+  },
   "publish_roadmap_draft": {
     "exposure": "C",
     "journey": "Roadmap publication and lifecycle",
@@ -311,9 +329,21 @@
     "permission": "records:write",
     "surface": "human"
   },
+  "register_artifact_in_context": {
+    "exposure": "C",
+    "journey": "Contextual artifacts",
+    "permission": "records:write",
+    "surface": "human"
+  },
   "register_evidence": {
     "exposure": "H",
     "journey": "Evidence",
+    "permission": "records:write",
+    "surface": "human"
+  },
+  "register_evidence_with_links": {
+    "exposure": "H",
+    "journey": "Contextual evidence",
     "permission": "records:write",
     "surface": "human"
   },
@@ -510,16 +540,22 @@
     "surface": "developer"
   },
   "set_objective_owners": {
-    "exposure": "A",
+    "exposure": "C",
     "journey": "Objectives",
     "permission": "outcome:write",
-    "surface": "developer"
+    "surface": "human"
+  },
+  "set_objective_parent": {
+    "exposure": "C",
+    "journey": "Objective placement",
+    "permission": "outcome:write",
+    "surface": "human"
   },
   "set_outcome_owners": {
-    "exposure": "A",
+    "exposure": "C",
     "journey": "Outcome participants",
     "permission": "outcome:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "set_trigger_enabled": {
     "exposure": "I",
@@ -528,8 +564,26 @@
     "surface": "developer"
   },
   "set_work_item_assignees": {
-    "exposure": "A",
+    "exposure": "C",
     "journey": "Task creation and editing",
+    "permission": "work:write",
+    "surface": "human"
+  },
+  "set_work_item_execution_spec": {
+    "exposure": "C",
+    "journey": "Task specification",
+    "permission": "work:write",
+    "surface": "human"
+  },
+  "set_work_item_not_before": {
+    "exposure": "C",
+    "journey": "Task scheduling",
+    "permission": "work:write",
+    "surface": "human"
+  },
+  "set_work_item_objective": {
+    "exposure": "C",
+    "journey": "Task placement",
     "permission": "work:write",
     "surface": "human"
   },

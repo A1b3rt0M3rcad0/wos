@@ -66,6 +66,7 @@ func typeSchema(t reflect.Type) map[string]any {
 		reflect.TypeFor[domain.AssessmentResult]():   {string(domain.AssessmentResultMet), string(domain.AssessmentResultNotMet), string(domain.AssessmentResultInconclusive), string(domain.AssessmentResultWaived)},
 		reflect.TypeFor[domain.EvidenceType]():       {string(domain.EvidenceTypeMeasurement), string(domain.EvidenceTypeTestResult), string(domain.EvidenceTypeInspection), string(domain.EvidenceTypeAttestation), string(domain.EvidenceTypeSource), string(domain.EvidenceTypeExternalEvaluation)},
 		reflect.TypeFor[domain.WorkActivityType]():   {string(domain.WorkActivityProgress), string(domain.WorkActivityDiscovery), string(domain.WorkActivityProblem), string(domain.WorkActivityCorrection), string(domain.WorkActivityValidation), string(domain.WorkActivityResult)},
+		reflect.TypeFor[domain.EntityNoteType]():     {string(domain.EntityNoteUpdate), string(domain.EntityNoteDiscovery), string(domain.EntityNoteObservation)},
 	}
 	if values, ok := enumValues[t]; ok {
 		return map[string]any{"type": "string", "enum": values}
@@ -120,6 +121,26 @@ func typeSchema(t reflect.Type) map[string]any {
 			}
 			name := fieldName(f)
 			p[name] = typeSchema(f.Type)
+			workspaceFieldBounds(t, name, p[name].(map[string]any))
+			// The released CreateEvidenceLink wire schema leaves kind unconstrained;
+			// its domain validator still enforces the canonical target set. Advertise
+			// the enum only on the new compound input to preserve old wire contracts.
+			if name == "target_ref" && f.Type == reflect.TypeFor[domain.EntityRef]() && t.Name() == "EvidenceLinkInput" {
+				kinds := []string{}
+				for _, kind := range domain.EvidenceLinkTargetKinds() {
+					kinds = append(kinds, string(kind))
+				}
+				p[name].(map[string]any)["properties"].(map[string]any)["kind"] = map[string]any{"type": "string", "enum": kinds}
+			}
+			if t.Name() == "PlanItemInput" && t.PkgPath() == "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application" && name == "kind" {
+				p[name] = map[string]any{"type": "string", "enum": []string{string(domain.EntityKindObjective), string(domain.EntityKindWorkItem)}}
+			}
+			// Typed setters distinguish an explicit clear from an omitted field.
+			// Only explicitly required pointers accept null; existing optional
+			// command fields retain their established schema and encoding.
+			if f.Tag.Get("wos") == "required" && f.Type.Kind() == reflect.Pointer {
+				p[name] = map[string]any{"anyOf": []any{p[name], map[string]any{"type": "null"}}}
+			}
 			if strings.Contains(f.Tag.Get("json"), ",string") {
 				p[name] = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
 			}
@@ -201,6 +222,9 @@ func normalizeValue(value any, t reflect.Type) (any, error) {
 			}
 			name := fieldName(f)
 			known[name] = true
+			if _, present := m[name]; !present && f.Tag.Get("wos") == "required" {
+				return nil, fmt.Errorf("%s must be explicitly provided", name)
+			}
 			if v, ok := m[name]; ok {
 				if strings.Contains(f.Tag.Get("json"), ",string") {
 					if _, quoted := v.(string); !quoted {

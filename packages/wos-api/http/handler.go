@@ -154,6 +154,10 @@ func (h *Handler) routes() {
 		writeJSON(w, http.StatusOK, map[string]any{"principal_id": identity.PrincipalID, "actor_ref": identity.Actor})
 	})
 	outcome := base + "/{outcome_id}"
+	h.mux.HandleFunc("POST "+outcome+"/workspace-view", h.getEntityWorkspaceView)
+	h.mux.HandleFunc("POST "+outcome+"/workspace-cards", h.getWorkspaceCards)
+	h.mux.HandleFunc("GET "+outcome+"/workspace-timeline", h.getWorkspaceTimeline)
+	h.mux.HandleFunc("GET "+outcome+"/entity-notes/{note_id}", h.getEntityNote)
 	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
 	h.mux.HandleFunc("GET "+outcome+"/work-activity", h.listWorkActivity)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/attention", h.getWorkAttention)
@@ -457,6 +461,10 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	} else if domainCode, ok := domain.ErrorCodeOf(err); ok {
 		code = string(domainCode)
 		message = err.Error()
+		var domainErr *domain.Error
+		if errors.As(err, &domainErr) && domainErr != nil && domainErr.Details != nil {
+			details = domainErr.Details
+		}
 		switch domainCode {
 		case domain.ErrorCodeInvalidID,
 			domain.ErrorCodeInvalidScope,
