@@ -38,3 +38,7 @@ The original specification proposed numbers, not immutable file identities. Acce
 ## Licensing and brand
 
 - [ADR-037 — Source-available licensing and brand boundaries](0037-source-available-licensing-and-brand-boundaries.md)
+
+## Operational workspace
+
+- [ADR-038 — Operational workspace projections and contextual writes](0038-operational-workspace.md)

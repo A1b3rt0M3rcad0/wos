@@ -1,0 +1,781 @@
+{
+  "source_revision": "5d945d3081f85927b80c686d695849bd1df73a5d",
+  "owner_plan_sha256": "2785364fd8fe055b1837b9c3d504741eab7c606a2220b9a5c73f2181bedef65d",
+  "units": [
+    {
+      "id": "WOS-01",
+      "owner_title": "Baseline e preservação da branch",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-02",
+      "owner_title": "ADR de experiência e contratos",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-03",
+      "owner_title": "Fixtures e testes de caracterização",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-04",
+      "owner_title": "Erros de precondição e preparação coerente",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-05",
+      "owner_title": "Predicados, elegibilidade e proteção de comandos",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-06",
+      "owner_title": "Notas documentais persistentes",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-07",
+      "owner_title": "Criação com critérios e lotes de planejamento",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-08",
+      "owner_title": "Edição posterior de detalhes e participação",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-09",
+      "owner_title": "Reorganização persistente e dependências",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-10",
+      "owner_title": "Operações documentais compostas",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-11",
+      "owner_title": "Timeline coerente e paginada",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-12",
+      "owner_title": "EntityWorkspaceView e capabilities",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-13",
+      "owner_title": "Resumo de cards em lote",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-14",
+      "owner_title": "Inspector comum e navegação de contexto",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-15",
+      "owner_title": "Critérios, comprovação e notas no inspector",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-16",
+      "owner_title": "Criação rápida e editor de estrutura",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-17",
+      "owner_title": "Fluxos de problemas e registros relacionados",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-18",
+      "owner_title": "Ação principal, protocolo e conclusão guiada",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-19",
+      "owner_title": "Relações e movimentos na interface",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-20",
+      "owner_title": "Mapa principal, cards e camadas",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-21",
+      "owner_title": "Responsividade, teclado e acabamento",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-22",
+      "owner_title": "Paridade de API, CLI, MCP e compatibilidade",
+      "status": "in_progress"
+    },
+    {
+      "id": "WOS-23",
+      "owner_title": "Qualificação integrada e usabilidade",
+      "status": "planned"
+    },
+    {
+      "id": "WOS-24",
+      "owner_title": "Consolidação do PR e documentação final",
+      "status": "planned"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "T001",
+      "owner_requirement": "Criar Outcome com nome e estado desejado: permanece draft e não ganha critério inventado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T002",
+      "owner_requirement": "Salvar Outcome e critérios iniciais: nenhum estado intermediário parcialmente persistido.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T003",
+      "owner_requirement": "Criar Objective no Outcome: vínculo e default obrigatório visíveis e corretos.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T004",
+      "owner_requirement": "Criar subobjetivo: pai persistido correto; obrigatoriedade refere-se ao Outcome, não a uma herança fictícia.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T005",
+      "owner_requirement": "Tornar novo Objective opcional: flag false realmente enviada e respeitada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T006",
+      "owner_requirement": "Criar Task no Objective apenas com título: backlog, vínculo correto, nenhuma aquisição.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T007",
+      "owner_requirement": "Criar Task diretamente no Outcome: associação null e leitura explícita, sem objetivo artificial.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T008",
+      "owner_requirement": "Disponibilizar Task: passa a todo por intenção explícita; não concede lease automaticamente.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T009",
+      "owner_requirement": "Adicionar instruções, constraints, deliverables e referências depois de criar: persistência e leitura corretas.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T010",
+      "owner_requirement": "Limpar lista/data/Objective: distinguir clear explícito de campo omitido.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T011",
+      "owner_requirement": "Lote de novos itens com local keys: IDs retornados estáveis e vínculos válidos entre itens novos.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T012",
+      "owner_requirement": "Lote com último item inválido: rollback de todos os itens e eventos; repetição não deixa órfãos.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T013",
+      "owner_requirement": "Chaves duplicadas, ciclos e pai local ausente: erro localizado antes de salvar, sem inferência silenciosa.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T014",
+      "owner_requirement": "Limites de lote/bytes/critério: rejeição previsível no boundary, sem exceção ou write parcial.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T015",
+      "owner_requirement": "Enter cria e permite continuar; Escape não salva; falha mantém texto e contexto.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T016",
+      "owner_requirement": "Outcome só com critério opcional não está pronto para ativar.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T017",
+      "owner_requirement": "Critério obrigatório retired não satisfaz preparação.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T018",
+      "owner_requirement": "Critério obrigatório ativo ainda sem assessment permite preparação onde a regra pede definição, não prova.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T019",
+      "owner_requirement": "Registrar Evidence já no Criterion: owner/id corretos, revisão observada validada e avaliação continua pendente.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T020",
+      "owner_requirement": "Mesmo documento em dois alvos: uma Evidence, vínculos distintos, stances independentes.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T021",
+      "owner_requirement": "Evidence contraditória: não é ocultada por filtro de suporte e não vira aprovação.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T022",
+      "owner_requirement": "Evidence retraída: não aceita novo vínculo e não satisfaz comprovação vigente indevidamente.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T023",
+      "owner_requirement": "Assessment da revisão antiga: aparece no histórico, não atende critério revisado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T024",
+      "owner_requirement": "Assessment de submissão/digest anterior: não aprova nova entrega mesmo com o mesmo criterion ID/revision.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T025",
+      "owner_requirement": "Waiver autorizada: resultado explícito, motivo preservado e contador separado de comprovados.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T026",
+      "owner_requirement": "Usuário sem waiver permission: não recebe nem consegue executar dispensa.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T027",
+      "owner_requirement": "Modos attestation/evidence_review/external_evaluation: formulário e validação correspondem ao modo real.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T028",
+      "owner_requirement": "Target Decision permitido; target Blocker proibido; Issue/Decision não recebem criterion_id.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T029",
+      "owner_requirement": "Registros antigos com links incompletos: mostrar ausência de contexto conhecido, não inventar avaliação.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T030",
+      "owner_requirement": "Evidência de observação interna: origem resolvível, autor real, sem alegar execução de teste pelo servidor.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T031",
+      "owner_requirement": "URL de Artifact/Evidence: não buscar conteúdo no servidor nem executar dados como código.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T032",
+      "owner_requirement": "Transação de Evidence com vínculo inválido: nenhum Artifact, nota ou Evidence parcial é criado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T033",
+      "owner_requirement": "Critério retirado/revisado enquanto formulário aberto: nova decisão exigida, entradas preservadas.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T034",
+      "owner_requirement": "Owner/assignee atribuído: não se torna automaticamente executor, autenticado ou autorizado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T035",
+      "owner_requirement": "Contrato vigente de outro principal: UI não oferece iniciar como se estivesse livre.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T036",
+      "owner_requirement": "Contrato expirado: não mostrar atividade física presumida; oferecer recuperação legítima quando suportada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T037",
+      "owner_requirement": "Resumo assinado sem autoridade suficiente: mostrar desconhecido, não usar expiração do lease legado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T038",
+      "owner_requirement": "Revisor corrente e executor anterior: papéis distintos e provenientes dos contratos/casos corretos.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T039",
+      "owner_requirement": "Entrega recebida: não aparece como aprovada ou concluída por mero recebimento.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T040",
+      "owner_requirement": "Correções solicitadas: achados atuais aparecem antes de sugerir nova conclusão.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T041",
+      "owner_requirement": "Execução assinada: browser não recebe chave privada, não assina e não faz fallback para claim legado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T042",
+      "owner_requirement": "Snippet de perfil: alvo, versão e escopo corretos, sem interpolar shell não confiável.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T043",
+      "owner_requirement": "Edição de especificação/criteria/estrutura congelada: bloqueada no servidor, não apenas escondida na UI.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T044",
+      "owner_requirement": "Nova mutação registrada: coberta por autorização, guard, replay e event factory; nenhum bypass por tipo novo.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T045",
+      "owner_requirement": "Objective planned já comprovado: conclusão canônica permitida sem Start artificial.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T046",
+      "owner_requirement": "Todas as Tasks done, critério do Objective pendente: não marcar Objective alcançado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T047",
+      "owner_requirement": "Todos os Objectives alcançados, critério próprio do Outcome pendente: não concluir Outcome.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T048",
+      "owner_requirement": "Objective opcional incompleto: não transformá-lo em gate obrigatório por posição na árvore.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T049",
+      "owner_requirement": "Concluir com trabalho aberto: explicitar consequência sobre o escopo, sem cancelamento/conclusão dos filhos.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T050",
+      "owner_requirement": "Reabertura: histórico preservado e estado/revisões atuais usados na próxima ação.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T051",
+      "owner_requirement": "Nota “terminei a Task”: aparece como declaração, sem transição de lifecycle.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T052",
+      "owner_requirement": "Nota “encontrei problema”: não cria Issue/Blocker sem intenção explícita.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T053",
+      "owner_requirement": "AppendWorkActivity sem autoridade assinada válida: continua rejeitado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T054",
+      "owner_requirement": "Correção de nota do próprio autor: nova nota, mesmo contexto; conteúdo original preservado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T055",
+      "owner_requirement": "Tentar sobrescrever nota de outro autor: rejeitado; novo comentário não falsifica autoria.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T056",
+      "owner_requirement": "Nota em item terminal não arquivado: documental permitida; novo trabalho operacional continua protegido.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T057",
+      "owner_requirement": "Nota em Outcome arquivado: comportamento de bloqueio consistente com as regras do escopo.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T058",
+      "owner_requirement": "Timeline carregada ao abrir item: primeiras entradas acessíveis sem caçar botão de cobertura.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T059",
+      "owner_requirement": "WorkActivity e seu evento: uma entrada documental representativa, sem duplicação enganosa.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T060",
+      "owner_requirement": "Vários fatos na mesma revisão: cursor não pula nem repete entradas.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T061",
+      "owner_requirement": "Novo evento durante paginação: fronteira congelada e aviso de novidades, sem mistura invisível.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T062",
+      "owner_requirement": "Atividade do descendente no pai: origem e caminho identificados; não atribuída ao pai.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T063",
+      "owner_requirement": "Datas de observação diferentes da ordem de registro: ambas corretas, sem cronologia inventada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T064",
+      "owner_requirement": "Issue criada na Task: affected_refs preenchido; nenhuma pesquisa repetida do alvo.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T065",
+      "owner_requirement": "Issue sem “impede continuar”: não altera prontidão por si só.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T066",
+      "owner_requirement": "Issue com impedimento: comando composto cria os dois registros com target correto.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T067",
+      "owner_requirement": "Propagação incompatível com Task/Outcome: opção não oferecida e API rejeita entrada forjada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T068",
+      "owner_requirement": "Resolver Issue sem liberar Blocker: trabalho continua impedido e isso fica explícito.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T069",
+      "owner_requirement": "Liberar um de vários Blockers: os restantes continuam aplicáveis.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T070",
+      "owner_requirement": "Problema após conclusão: Issue documental possível, Blocker operacional exige reabertura conforme domínio.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T071",
+      "owner_requirement": "Mover papel livremente: não envia comando de domínio nem altera parent/Objective.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T072",
+      "owner_requirement": "Reassociar Task: preserva ID, critérios, evidências e histórico, atualiza vínculo atual.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T073",
+      "owner_requirement": "Destino em outro Outcome/namespace: rejeitado antes de gravar; nenhuma informação privada revelada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T074",
+      "owner_requirement": "Ciclo de Objective: rejeitado, inclusive em operações concorrentes.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T075",
+      "owner_requirement": "Movimento com subárvore em execução ou revisão aberta: motivo claro e nenhuma revogação implícita.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T076",
+      "owner_requirement": "Dependência hard da Task em seu próprio Objective: reproduzir incompatibilidade; rejeitar criação/reassociação que a introduza.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T077",
+      "owner_requirement": "Relação advisory: continua informativa, sem bloqueio operacional inventado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T078",
+      "owner_requirement": "Preview de impacto fica obsoleto: commit detecta nova situação e pede revisão, não usa preview como autorização.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T079",
+      "owner_requirement": "Artifact produzido versus apenas relacionado: tipo de Relation correto, sem EvidenceLink indevido.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T080",
+      "owner_requirement": "Decision aceita substitui outra: inspector mostra cadeia real; Blocker associado não se libera por inferência.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T081",
+      "owner_requirement": "Falta de critério: precondition correto, ação adicionar, sem mensagem de edição concorrente.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T082",
+      "owner_requirement": "Conflito real: versão base/local/atual disponíveis e nenhuma perda do rascunho.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T083",
+      "owner_requirement": "Timeout após commit de criação composta: retry retorna IDs originais, sem duplicatas.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T084",
+      "owner_requirement": "Write confirmado e refresh falho: não oferecer repetir a mutação como nova intenção.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T085",
+      "owner_requirement": "Duas criações/avaliações concorrentes: guard e versões preservam invariantes do Outcome.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T086",
+      "owner_requirement": "Revogação de permissão durante formulário/query: nenhuma gravação ou conteúdo antigo reaplicado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T087",
+      "owner_requirement": "Mudança de scope ou identidade com resposta atrasada: geração antiga descartada.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T088",
+      "owner_requirement": "Versão maior que Number.MAX_SAFE_INTEGER: comparação exata, cursor e payload preservados.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T089",
+      "owner_requirement": "Facetas de revisões diferentes: view não publicada como coerente; leitura/refetch controlado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T090",
+      "owner_requirement": "Capability disponível seguida de mudança: comando revalida e pode recusar corretamente.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T091",
+      "owner_requirement": "Referência maliciosa, ActorRef não autorizado ou source interna falsa: não ganha autoridade/procedência.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T092",
+      "owner_requirement": "Leitura de página parcial: ausência de item/evidência não vira total zero ou prontidão verdadeira.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T093",
+      "owner_requirement": "Task revela critérios, evidências, pessoas, histórico e pendências no resumo sem navegação global.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T094",
+      "owner_requirement": "Criterion/Evidence/Issue/Roadmap têm facetas pertinentes; não recebem executor ou critérios fictícios.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T095",
+      "owner_requirement": "Abrir, voltar, copiar deep link e recarregar: sujeito correto e retorno ao contexto preservado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T096",
+      "owner_requirement": "Adicionar informação não reorganiza arbitrariamente o mapa nem perde câmera/seleção.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T097",
+      "owner_requirement": "Busca server-backed encontra item fora do mapa carregado e indica seu contexto real.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T098",
+      "owner_requirement": "Mapa grande usa lote/paginação; não faz uma sequência de chamadas completas por card.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T099",
+      "owner_requirement": "Ramo colapsado/fit explícito/zoom de trabalho: títulos e controles continuam compreensíveis.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T100",
+      "owner_requirement": "HD e telas baixas: mapa continua central, inspector não fica abaixo de uma página enorme.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T101",
+      "owner_requirement": "Mobile com teclado: salvar, cancelar e erro permanecem alcançáveis.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T102",
+      "owner_requirement": "Teclado sem drag: criar, abrir, mover por comando, avaliar, voltar e fechar são operáveis.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T103",
+      "owner_requirement": "Zoom nativo/texto aumentado: sem títulos cortados, botões microscópicos ou foco perdido.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T104",
+      "owner_requirement": "Assets originais: sem esticar papel, cortar robô, cobrir texto com dobra ou substituir identidade.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T105",
+      "owner_requirement": "Upgrade de banco anterior: dados/contratos intactos, notas funcionam e nenhum default antigo muda.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T106",
+      "owner_requirement": "Clientes antigos sem campos opcionais novos: continuam válidos e respeitam seus defaults.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T107",
+      "owner_requirement": "Exposição CLI/MCP/inventário: permissões e semântica equivalentes à API, sem endpoint humano privilegiado.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "T108",
+      "owner_requirement": "Relatório final identifica pass/fail/pending e ambiente; não confunde teste automatizado com compreensão humana.",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "human_validation": {
+    "status": "pending",
+    "minimum_participants": 5,
+    "reason": "No independent participant sessions have been conducted."
+  }
+}

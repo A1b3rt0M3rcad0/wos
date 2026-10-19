@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-18
+**Last reviewed:** 2026-10-19
 **Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Review and hosted qualification of Board communication, contextual actions and free local movement in draft PR #116
+**Current wave:** Implement the owner's operational workspace plan in draft PR #116
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -49,6 +49,21 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Operational workspace — 2026-10-19
+
+**Status: In progress in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116).**
+The owner expands this PR to progressive creation, persistent documentary notes,
+guarded definition/placement edits, atomic contextual records, coherent inspector
+and card reads, and an event-backed timeline. This scope supersedes the earlier
+statement that the whole PR contains presentation changes only. Existing authority,
+verification and exact-intent recovery rules remain in force.
+
+The [unaltered owner plan](docs/ux/operational-workspace/owner-plan-2026-10-19.md),
+[ADR-038](docs/adr/0038-operational-workspace.md) and
+[24-unit / 108-scenario tracker](docs/ux/operational-workspace/acceptance.json)
+separate implementation from actual qualification. Automated and human acceptance
+are tracked independently. Continue this branch; do not merge or publish.
 
 ## Board communication and navigation — 2026-10-18
 
