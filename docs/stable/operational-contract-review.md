@@ -68,3 +68,33 @@ unchanged. Two consecutive MCP/catalog/SDK/OpenAPI generations produced identica
 output hashes. This review records wire compatibility; the separate PostgreSQL,
 SQLite, transport, recovery, browser and upgrade qualification evidence still
 controls acceptance and does not imply release publication.
+
+
+## Reviewed impact previews — 2026-10-19
+
+The conclusion and relationship review adds no route and changes no existing
+property constraint. The existing `achieve_outcome`, `achieve_objective` and
+`report_issue_with_blocker` commands gain only optional, quoted-decimal
+`observed_outcome_revision`. Omitting it preserves the old Core intention bytes
+and the existing numeric `expected_version` encoding. A supplied revision is
+checked under the Outcome guard before mutation; changed scope returns typed
+`conclusion_impact_changed` or `blocker_impact_changed` and requires an explicit
+review. It grants no authority or automatic child conclusion.
+
+The workspace response adds bounded `conclusion_impact`, `placement_preview` and
+`blocker_preview` facets. The existing query adds only optional opt-in preview
+objects. Placement requires an explicit nullable `parent_id`; an omitted key is
+invalid, while `null` deliberately selects the Outcome. Both previews use the
+same authorized revision and evaluation time as the inspector, expose honest
+coverage and remain advisory reads. Structural setters retain their existing
+`expected_outcome_revision` precondition. Existing read routes, signed protocols
+and execution permissions are unchanged.
+
+Review against the preceding candidate found additions to five existing schema
+definitions and no changed old route, required input, constraint or field representation.
+The current OpenAPI digest alone was refreshed; the eight CLI schema digests
+and byte-preserved released reference remain unchanged. Tests exercise old
+omission, exact revisions above JavaScript's integer precision, numeric rejection
+for the new counters, and explicit nullable query binding. Two consecutive
+MCP/catalog/SDK/OpenAPI generations are deterministic; recursive released-wire
+compatibility and the release metadata tests remain required independently.

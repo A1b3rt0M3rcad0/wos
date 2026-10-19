@@ -57,10 +57,11 @@ Execution record kinds are `contract`, `submission` and `review_case`.
 Criterion is not a new globally writable entity kind.
 
 Follow the relevant facet's `next_cursor` using `criteria_cursor`,
-`relation_cursor` or `required_objectives_cursor`. A facet reports `complete`, `partial`, `not_loaded`,
-`unavailable` or `not_applicable`; counts are present only when known. A missing
-count is not zero. A capability explains availability, related references and
-the legitimate channel; the command always revalidates current state.
+`relation_cursor` or `required_objectives_cursor`. A facet reports `complete`,
+`partial`, `not_loaded`, `unavailable` or `not_applicable`; counts are present
+only when known. A missing count is not zero. A capability explains availability,
+related references and the legitimate channel; the command always revalidates
+current state.
 
 The selected record, applicable Criteria, people, delivery, current conditions
 and recent activity are assembled inside one authorized database snapshot with
@@ -76,6 +77,38 @@ subobjectives and branches outside the currently visible Board. The
 continuation. Send `required_objectives_cursor` to read the next page. Optional
 Objectives do not become acceptance gates because of their position or because
 their Tasks are complete.
+
+Outcome and Objective views include `conclusion_impact`: current open-Objective
+and open-Task counts, a sample of at most 20 named items, and the consequences
+of closing that scope. `coverage.conclusion_impact` distinguishes the sample
+from the complete counts. Reviewing this information does not change a child
+lifecycle or satisfy a Criterion.
+
+Two optional read queries provide prospective impact in the same authorized
+frame. For a Task or Objective, add
+`"placement_preview": {"parent_id": "OBJECTIVE_UUID"}`; explicit `null`
+selects the Outcome as parent. An empty preview object is invalid. The response
+names both parents, reports affected counts, and explains blocked moves with
+typed reasons and remedies. It samples at most 20 affected entities and five
+Blockers per before/after state, with coverage for each sample. Task previews
+also expose current and prospective readiness. The existing structural graph
+bounds remain enforced.
+
+For a permitted Outcome, Objective or Task target, add
+`"blocker_preview": {"propagation": "subtree"}` or `"direct"` according
+to `workspace_rules`. The response identifies the target, counts affected open
+work and samples at most 20 named items with explicit coverage. Reading either
+preview performs no mutation. Omitting these query fields keeps them unloaded.
+
+When confirming the reviewed conclusion, send the view's quoted
+`outcome_revision` as optional `observed_outcome_revision` on
+`achieve_outcome` or `achieve_objective`. The same optional field binds
+`report_issue_with_blocker` to its reviewed scope. Existing `expected_version`
+fields on the conclusion commands keep their legacy numeric encoding. Changed
+scope returns a typed `conclusion_impact_changed` or `blocker_impact_changed`
+precondition and requires another review. Existing clients may omit the new
+field and retain their previous contract. Structural setters instead use their
+existing quoted `expected_outcome_revision` to bind a placement preview.
 
 For `workspace-cards`, supply either `refs` (at most 100 references) or one
 `parent_ref` plus optional `limit` and `cursor`. Parent mode reads direct
