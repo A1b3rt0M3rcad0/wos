@@ -39,7 +39,7 @@ Use the browser to plan and review, the CLI to coordinate external agents, or HT
 Suppose your team needs to **ship partial refunds**. Define a success criterion: customers can receive part of a payment back, but never more than the amount still refundable. A coding agent implements the change and records the exact commit and test report. A person or an authorized reviewing agent checks that delivery against the criterion before the Outcome is explicitly accepted. If a session ends midway, the next participant can read the recorded progress and remaining work.
 
 <p align="center">
-  <a href="docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png"><img src="docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
+  <a href="docs/ux/contextual-kanban/screenshots/356c5e650027/inspector-1280x720.png"><img src="docs/ux/contextual-kanban/screenshots/356c5e650027/inspector-1280x720.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
 The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Outcomes open an Objectives Kanban, and Objectives open a Tasks Kanban, within the same Board. Details and activity stay expandable. [Contextual planning and review](docs/ux/contextual-kanban/README.md). Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
@@ -255,7 +255,7 @@ The operational workspace changes on this branch are queued for the next minor r
 ## Documentation and support
 
 - [Documentation index](docs/README.md): setup, workspace use, agents and integration references.
-- [Outcome Board workspace](docs/ux/operational-workspace/README.md): progressive planning, shared contextual inspection, current proof and durable participant updates. [Current screenshots](docs/design/editorial/operational-workspace/README.md). [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
+- [Outcome Board workspace](docs/ux/operational-workspace/README.md): progressive planning, shared contextual inspection, current proof and durable participant updates. [Current screenshots](docs/ux/contextual-kanban/screenshots/README.md). [Earlier full-page gallery](docs/design/editorial/operational-workspace/README.md). [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
 - [Server operations](docs/operations.md), [architecture](docs/architecture.md) and [operational acceptance](docs/stable/operational-acceptance.md).
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).

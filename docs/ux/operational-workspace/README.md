@@ -1,5 +1,10 @@
 # Operate an Outcome from its Board
 
+The current Board interaction adds [contextual Kanbans and a compact inspector](../contextual-kanban/README.md).
+The map stays primary; Outcome and Objective inspectors open one navigable modal.
+Details and activity start collapsed. New browser Outcomes visibly default to
+strict work; historical/API omission retains compatible completion.
+
 The Outcome Board is the working map of one requested result. Use it to build
 the plan, understand the current work, record what happened and review what is
 still unverified. Agents and people execute outside WOS; the Board shows the
@@ -112,8 +117,10 @@ level explicitly. Outcome preparation includes its own active required Criteria
 and its actual required Objectives, including those outside the visible branch.
 An eligible planned Objective can be achieved without an artificial Start step.
 The conclusion form shows the current number of open child Objectives and Tasks,
-a bounded list of their names and the scope consequences. Confirm explicitly
-when work remains open. Concluding an Outcome closes its operational scope until
+a bounded list of their names and the scope consequences. Under `compatible`,
+confirm explicitly when work remains open. Under `strict_work`, applicable open
+work prevents completion; each cancelled exclusion requires a reasoned,
+revision-pinned acknowledgement and is never counted as accepted. Concluding an Outcome closes its operational scope until
 it is reopened. Concluding an Objective closes it to new children; existing
 descendants retain their own workflow rules. Neither action silently completes,
 cancels or waives child work or its Criteria.

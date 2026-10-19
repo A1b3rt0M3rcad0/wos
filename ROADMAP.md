@@ -16,12 +16,23 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Contextual Kanbans and compact inspector — 2026-10-19
 
-**In progress.** Implement the [approved owner plan](docs/ux/contextual-kanban/owner-plan-2026-10-19.md)
-using the locally installed product-design-and-ux skill. Preserve the spatial Board,
-introduce compact contextual inspectors and a single navigable Kanban modal,
-guide Criteria/material workflows, and add opt-in strict completion without
-changing historical compatible behavior. Qualification and pending human study
-will be recorded separately. No merge or publication is authorized.
+**Implementation delivered; qualification is tracked separately.** The
+[approved owner plan](docs/ux/contextual-kanban/owner-plan-2026-10-19.md) is
+preserved byte-for-byte. The locally installed product-design-and-ux skill guides
+compact inspection, one navigable Objectives/Tasks modal, guided Criteria/material
+entry and controlled return to the spatial Board. Original paper assets, map
+engine, authority and signed execution remain intact.
+
+- [x] Compact summary and exactly two primary disclosures; activity loads on demand.
+- [x] Contextual Kanbans separate Objectives, direct Tasks and subobjectives; server-derived stages, cancellation history, partial counts, pinned paging and focus/scroll return.
+- [x] Criteria/material actions reuse the canonical authorized forms; waiver remains distinct from verification.
+- [x] Opt-in strict-work completion and migration 0033 across SQLite/PostgreSQL; complete obligation scans and durable, revision-pinned cancelled-scope acknowledgement. Historical/API omission stays compatible.
+- [x] Real browser roundtrips for strict cancellation exclusion and revocation while the Kanban is open.
+- [x] Updated docs, compatibility review and 29 source-bound captures; see [technical qualification](docs/ux/contextual-kanban/qualification.md).
+- [ ] Independent participant study, manual assistive/device checks and reference-environment performance qualification. The [62-scenario matrix](docs/ux/contextual-kanban/acceptance.json) identifies 56 verified for automated scope and six partially verified.
+- [ ] Dedicated aggregate Kanban read/authoritative server-filter counts are deferred using the owner's bounded V1. Loaded scope remains labelled; no new runtime or Cloud subsystem is introduced.
+
+The PR remains draft. No merge, version advancement or publication is performed.
 
 ## Login viewport follow-up — 2026-10-19
 
@@ -29,9 +40,10 @@ The login composition now fills and centers within the height below the real
 header, without increasing fonts or controls. Safe alignment preserves scrolling
 on short screens and expanded local access. Twelve desktop/mobile screenshots
 and geometry regressions are recorded in the [login guide](docs/design/editorial/operational-workspace/login-viewport/README.md).
-The broader 35-case check passed 33 cases and exposed two mobile Board Escape-close
-failures; those remain pending and are not counted as accepted. No merge or
-release is performed by this follow-up.
+The historical 35-case check passed 33 cases and exposed two mobile Board Escape-close
+failures. Subsequent focus/disclosure corrections and the complete 193-case browser
+run close those regressions; see the [current qualification](docs/ux/contextual-kanban/qualification.md).
+No merge or release is performed.
 
 ## Status legend
 

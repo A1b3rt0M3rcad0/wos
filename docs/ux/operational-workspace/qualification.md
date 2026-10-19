@@ -1,5 +1,10 @@
 # Operational workspace qualification
 
+For the subsequent contextual Kanbans, compact inspector and strict-work policy,
+see the [new qualification guide](../contextual-kanban/README.md). The later
+complete 193-case browser run closes the earlier login-follow-up Escape regressions. Counts and source
+revisions below qualify their recorded snapshots, not this later implementation.
+
 Implementation and acceptance are tracked separately. The [owner plan](owner-plan-2026-10-19.md)
 is preserved verbatim; [ADR-038](../../adr/0038-operational-workspace.md) records the
 accepted boundaries. The [108-scenario matrix](acceptance.json) identifies what

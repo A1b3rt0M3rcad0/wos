@@ -21,6 +21,14 @@ This English overview describes established boundaries. [ROADMAP.md](../ROADMAP.
 
 Task completion does not automatically achieve an Objective or Outcome. Evidence does not automatically assess a criterion. Publishing a Roadmap freezes a revision; activating it is a separate operation. Plan order does not create operational dependencies.
 
+An Outcome's explicit `completion_policy` preserves `compatible` behavior for
+historical records and omitted API input. `strict_work` additionally checks all
+applicable work inside the guarded transaction; excluding cancelled work requires
+an exact revision-pinned acknowledgement recorded in the Conclusion. The spatial
+Board and contextual Kanbans are read presentations, not new domain aggregates.
+See [ADR-039](adr/0039-contextual-kanbans-and-strict-completion.md).
+
+
 ## Packages and interfaces
 
 `packages/wos-api` owns server composition, HTTP, MCP, and the embedded web workspace. It depends on the public `packages/wos-core` packages. Core application services orchestrate domain behavior through ports implemented by storage adapters. Domain does not depend on transports, SQL, agent runtimes, or a particular consumer application.

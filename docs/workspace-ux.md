@@ -1,6 +1,6 @@
 # Human workspace
 
-For the current progressive creation, shared inspector and documentary updates,
+For the current [contextual Kanbans, compact inspector and completion policy](ux/contextual-kanban/README.md), start with the new guide. For progressive creation and documentary updates,
 start with the [operational workspace guide](ux/operational-workspace/README.md).
 This guide also covers service access, settings and specialist navigation.
 

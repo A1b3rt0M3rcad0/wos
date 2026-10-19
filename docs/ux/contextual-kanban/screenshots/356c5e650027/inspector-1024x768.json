@@ -1,0 +1,76 @@
+{
+  "sourceCommit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+  "binary": {
+    "built_at": "2026-10-19T22:40:55.458128+00:00",
+    "commit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "1.1.0",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2,
+    "sha256": "c53a13ee455d218616679d6361ea44c2fa757c217e77f32f149caf8972329a7b"
+  },
+  "testSha256": "7896a638e4095c39d7a94d9f8db2a08672f070a42dc9bbfe953c660f8e3c079e",
+  "viewport": {
+    "width": 1024,
+    "height": 768
+  },
+  "browser": "154.0.8037.57",
+  "state": "inspector-1024x768",
+  "screenshotSha256": "645ed44cf9ad70c7e92e714c61230e920d8d5d5ba1f96f2aaa39bb72cb6bc1d8",
+  "servedAssetsSha256": {
+    "actions.js": "c61398fe3200a4319f16ce4e758cfec426b2441a450d3298b41eb81583aaa1b7",
+    "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
+    "app.js": "d1818df064f279398f1b2a09ff5442101d191d7ba1fb73ebc0b353a1555e0396",
+    "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
+    "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
+    "canvas.css": "3b5bb9b0391772d0a8bc023180cc275824711470f2d5151f899e175e88e62187",
+    "colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "contracts-view.js": "c0dae57cc5b566b1e68e6f9d294540ad44c4a752894e0b90c70ed691b7a6b839",
+    "editorial.css": "fe3e1facdf46fe70cd20b9857e36cf1bda71b1b019be2025a897a91260fae84f",
+    "editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "en-US.js": "5df5ceceb73b464a04636717763da53dd18671ad1eaab27fd03c744b4b2ec8b6",
+    "human-forms.js": "ea71340642be9561af6910e782a75cac63c424966a9eb603aa19e15064f22f12",
+    "index.html": "23dd44d7c24a69c086f76efad60c8283d2c49e6122f3c862f77b206a628de14d",
+    "intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "navigation.js": "46b0ed04e300445801930046a9443dd723b6cf912b7b845c6752494305fb2a8a",
+    "presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "structural-form-preview.js": "291bfe28bd3b8f969551b242a4438501c882edae61eb7e2ec29e3ae2224ee50f",
+    "style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "workspace-action-menu.js": "7567a791bc82a2b0ef455b77df2e30bf97413d7c16cea55274c3867a6324dd27",
+    "workspace-actions.js": "9ebfcb9ed80485a7223686023c892aa7ac02e3aae69996298738f6773483992b",
+    "workspace-blocking-form.js": "862512b9a83819a643e0bb95972879607449594677d08365ed32840c8f6f063e",
+    "workspace-board.css": "af969d574d3f7b9fd675e66b62e7818f1699d57159035811506531d309fbbf28",
+    "workspace-canvas.js": "f211323447fa2b37ea028689ba436026982d590819ba1ff51e2a9d0a18fb720b",
+    "workspace-card-summary.js": "e7cb8e8f8a50a1dc6aae00b286a3d0bd7c0a8f9fed9c46b6ed44b24f589321b9",
+    "workspace-compact.js": "288da1f968f78f9b552c543bf65fe559f30f2fb9bf6b99c63be40ddf24baa69b",
+    "workspace-conclusion-form.js": "15f1e7f9eaca264ea0aa03efea7af40f2d29f283a2ee39c489290a75655e8c79",
+    "workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "workspace-entity-context.js": "54381fd34bb28411cb12d6efdd542586195c72a954b66ef4156b94a40d7aeb69",
+    "workspace-entry.css": "872f0b6827f8d90d96e713a076a16abe55592efc5e2d9401d2d612d056cb1293",
+    "workspace-evidence-form.js": "fb7ee146a9e446ff7030aea5749984a7dd9f251e81d796b717ce57c03e060032",
+    "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
+    "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "workspace-kanban.css": "e6db9b24df67eb748c24bf5052d6a5bd3e9839e4b8db4447ed8ae85cd3c93b14",
+    "workspace-kanban.js": "9e872b81d89c52f3c888ec59ce6850e799fff181eedddb23395526960d3008a2",
+    "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
+    "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
+    "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
+    "workspace-view.js": "c7dbc95a120384bd46c4e19f2fe7bb60b853f79db1919c739210378d4b0bb99c",
+    "workspace-workflows.css": "3a3e7f8d9ff9bf516c7e4d623d1cb7671df9aac334a8edc5212aadb5f31888ca"
+  },
+  "pixelSize": {
+    "width": 1024,
+    "height": 768
+  }
+}

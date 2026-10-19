@@ -1,5 +1,9 @@
 # Operational workspace: current interface
 
+For the subsequent compact inspector and navigable Objectives/Tasks modal, see the
+[current contextual Kanban gallery](../../../ux/contextual-kanban/screenshots/README.md).
+The source-bound captures below remain historical evidence for their recorded version.
+
 The Outcome Board keeps planning, work and verification in one contextual
 workspace. Quick creation, persistent participant updates and shared inspection
 extend the existing editorial identity: original paper assets, restrained type,

@@ -1,0 +1,775 @@
+{
+  "owner_plan_sha256": "864da37dee877bfea15eff2011a0ad92e6ffe63773cd09b6f48aab182878b9a2",
+  "status": "Implementation delivered. Automated evidence and remaining acceptance are explicit; no independent participant study or production-scale performance acceptance is claimed.",
+  "scenarios": [
+    {
+      "id": "UX-001",
+      "owner_scenario": "Selecionar Outcome no mapa",
+      "owner_acceptance": "Inspector compacta resumo e apresenta `Abrir Kanban de objetivos` sem deslocar a câmera.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-002",
+      "owner_scenario": "Selecionar Objective no mapa",
+      "owner_acceptance": "Mostra `Abrir Kanban de tarefas`, parent verdadeiro, critérios e progresso.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-003",
+      "owner_scenario": "Selecionar Task",
+      "owner_acceptance": "Mostra próxima ação correta ao protocolo/estado, sem botão de Kanban.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-004",
+      "owner_scenario": "Selecionar Issue/Blocker",
+      "owner_acceptance": "Renderiza fatos próprios sem falso executor nem checklist inválido.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-005",
+      "owner_scenario": "Abrir/fechar Kanban",
+      "owner_acceptance": "Modal não navega para página distinta; restitui pan, zoom, seleção e foco.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban-guards.spec.mjs",
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-006",
+      "owner_scenario": "Entrar em Objective dentro do modal",
+      "owner_acceptance": "Troca contexto do único modal, breadcrumb e dados de parent corretos.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-007",
+      "owner_scenario": "Task direta do Outcome",
+      "owner_acceptance": "Visível em segmento específico, nunca “Objective fictício”.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-008",
+      "owner_scenario": "Subobjetivo aninhado",
+      "owner_acceptance": "Preserva caminho e relação obrigatória global sem achatar a hierarquia semanticamente.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-009",
+      "owner_scenario": "Filtros e paginação",
+      "owner_acceptance": "Não contam apenas cards carregados como total; coverage correta.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-010",
+      "owner_scenario": "Desktop 1280×720 / 1366×768",
+      "owner_acceptance": "Cabeçalho, botões, Kanban e inspector alcançáveis sem overflow oculto.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-011",
+      "owner_scenario": "QHD / 4K",
+      "owner_acceptance": "Densidade visual mantida, colunas e post-its legíveis, sem excesso de espaço vazio.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "UX-012",
+      "owner_scenario": "Mobile e zoom nativo",
+      "owner_acceptance": "Navegação, rolagem, formulários e controles operáveis com teclado/touch.",
+      "status": "partially_verified",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "Browser reflow/native zoom is tested; physical touch and on-screen keyboard remain manual qualification."
+    },
+    {
+      "id": "UX-013",
+      "owner_scenario": "Keyboard-only",
+      "owner_acceptance": "Abrir/modal/navegar/avaliar/fechar/foco devolvido; alternativa ao drag.",
+      "status": "partially_verified",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "Native keyboard opening, selection, Escape and focus return are tested; a complete keyboard-only assessment journey and manual assistive-technology review are not claimed."
+    },
+    {
+      "id": "UX-014",
+      "owner_scenario": "Conteúdo parcial",
+      "owner_acceptance": "Mostra “parcial/desconhecido”, nunca “0 pendentes” inventado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CREATE-001",
+      "owner_scenario": "Criar Outcome simples",
+      "owner_acceptance": "Recolhe nome+estado desejado, mantém draft, sem Criterion inventado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/human-forms.spec.mjs",
+        "packages/wos-core/application/planning_creation_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CREATE-002",
+      "owner_scenario": "Criar Objective",
+      "owner_acceptance": "Parent correto, flag global requerida visível e lifecycle planned.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/human-forms.spec.mjs",
+        "packages/wos-core/application/planning_creation_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CREATE-003",
+      "owner_scenario": "Criar Task dentro de Objective",
+      "owner_acceptance": "Backlog, parent correto, sem contrato/claim.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/human-forms.spec.mjs",
+        "packages/wos-core/application/planning_creation_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CREATE-004",
+      "owner_scenario": "Criar batch misto",
+      "owner_acceptance": "Previsão correta e atomicidade total na gravação/rejeição.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/human-forms.spec.mjs",
+        "packages/wos-core/application/planning_creation_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-001",
+      "owner_scenario": "Critério ativo ausente na ativação",
+      "owner_acceptance": "Explica condição, permite criar Criterion e repetir intenção após revisão.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-002",
+      "owner_scenario": "`met` autorizado",
+      "owner_acceptance": "Assessment persistido com versão/rationale/evidência aplicável.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-003",
+      "owner_scenario": "`not_met`/`inconclusive`",
+      "owner_acceptance": "Não conclui item, mostra apontamento/ação corretiva.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-004",
+      "owner_scenario": "`waived` autorizado",
+      "owner_acceptance": "Exibido distinto de atendido, com justificativa e permission checks.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-005",
+      "owner_scenario": "Revisor não elegível",
+      "owner_acceptance": "Browser não permite/salva aprovação; signed path não é contornado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-006",
+      "owner_scenario": "Criterion revisado após Assessment",
+      "owner_acceptance": "Avaliação antiga não vale automaticamente para revisão nova.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-007",
+      "owner_scenario": "Nova Submission com digest diferente",
+      "owner_acceptance": "Assessment de submissão antiga não aprova nova entrega.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "CRIT-008",
+      "owner_scenario": "Evidence retirada",
+      "owner_acceptance": "Prova retracted gera reavaliação e impede conclusão quando aplicável.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/wave10_assessment_test.go",
+        "packages/wos-core/application/work_contract_results_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "MAT-001",
+      "owner_scenario": "Registrar Artifact",
+      "owner_acceptance": "Relation correta ao contexto; não cria Evidence/Approval implícitos.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/application/documentary_records_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "MAT-002",
+      "owner_scenario": "Registrar Evidence por Criterion",
+      "owner_acceptance": "Source, stance, rationale e vínculo criados atomicamente.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/application/documentary_records_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "MAT-003",
+      "owner_scenario": "Reusar Evidence existente",
+      "owner_acceptance": "Não duplica Evidence; vínculo independente mantém sua stance.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/application/documentary_records_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "MAT-004",
+      "owner_scenario": "Evidence contraditória",
+      "owner_acceptance": "Visível ao revisor e não escondida pela contagem de provas favoráveis.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/application/documentary_records_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "MAT-005",
+      "owner_scenario": "Registro externo sem fetch",
+      "owner_acceptance": "UI informa origem fornecida, não afirma inspeção pelo WOS.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/application/documentary_records_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-001",
+      "owner_scenario": "Task todo pronta",
+      "owner_acceptance": "Aquisição exige identidade e protocolo correto; card só reflete sucesso confirmado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "owner_scenario": "Task dependente de outra",
+      "owner_acceptance": "Ação de início não ignora hard dependency.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "owner_scenario": "Task assinada entregue",
+      "owner_acceptance": "ReviewCase verdadeiro leva a Verificação e vincula submission atual.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "owner_scenario": "Revisor independente",
+      "owner_acceptance": "Executor não se autoaprova sob política separada de identidade.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "owner_scenario": "Correção solicitada",
+      "owner_acceptance": "Histórico/finding preservados e nova execução exige autoridade própria.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "owner_scenario": "Task done",
+      "owner_acceptance": "Coluna Aceitos com Conclusion; sem execução automática de dependente.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contracts.spec.mjs",
+        "tests/web/signed.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "packages/wos-core/application/reviewer_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OBJ-001",
+      "owner_scenario": "Objective planned abre Kanban",
+      "owner_acceptance": "Navegação não altera lifecycle nem requer Start artificial.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OBJ-002",
+      "owner_scenario": "Objective com Tasks done, Criterion pendente",
+      "owner_acceptance": "Não aceita automaticamente; mostra `Verificar critérios`.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "packages/wos-core/application/workspace_stage_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-001",
+      "owner_scenario": "Outcome com Objective requerido não achieved",
+      "owner_acceptance": "Conclusão recusada, mesmo se esse Objective está fora dos cards carregados.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-002",
+      "owner_scenario": "Outcome compatível com descendentes abertos",
+      "owner_acceptance": "Semântica existente preservada, observada a legislação de gates atuais.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-003",
+      "owner_scenario": "`strict_work` com Task aberta",
+      "owner_acceptance": "Conclusão recusada no backend com referência à Task.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-004",
+      "owner_scenario": "`strict_work` com Tasks diretas abertas",
+      "owner_acceptance": "Outcome não é aceito omitindo trabalho diretamente vinculado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-005",
+      "owner_scenario": "`strict_work` com cancelamentos",
+      "owner_acceptance": "Exibe e exige reconhecimento explícito; cancelado não conta aceito.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban-guards.spec.mjs",
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "OUT-006",
+      "owner_scenario": "Verificação final reprovada",
+      "owner_acceptance": "Outcome continua ativo/corrigível, sem Blocker subtree automático.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/conclusion-impact.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "packages/wos-core/application/lifecycle_service_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ISSUE-001",
+      "owner_scenario": "Issue sem Blocker",
+      "owner_acceptance": "Problema registrado, trabalho não é falsamente bloqueado.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/blocker-impact.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ISSUE-002",
+      "owner_scenario": "Issue com Blocker",
+      "owner_acceptance": "Prévia e gravação atômicas; impacto correto por escopo.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/blocker-impact.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ISSUE-003",
+      "owner_scenario": "Resolver Issue",
+      "owner_acceptance": "Não libera automaticamente Blockers não selecionados.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/blocker-impact.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ISSUE-004",
+      "owner_scenario": "Criar Task corretiva",
+      "owner_acceptance": "Vincular ao Objective legítimo com critérios próprios quando necessários.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/blocker-impact.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "HIST-001",
+      "owner_scenario": "Abrir Histórico",
+      "owner_acceptance": "Mostrar timeline paginada com autor, tempo, tipo e sujeito correto.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban-guards.spec.mjs",
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/operational-workspace.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "HIST-002",
+      "owner_scenario": "Corrigir nota",
+      "owner_acceptance": "Cria nova nota de correção imutável, mantém original.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/operational-workspace.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "HIST-003",
+      "owner_scenario": "Ler descendentes",
+      "owner_acceptance": "O evento não troca o autor/sujeito real pelo pai.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/operational-workspace.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ERR-001",
+      "owner_scenario": "Version conflict",
+      "owner_acceptance": "Preserva rascunho e exige revisão manual do estado atual.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/structural-preview.spec.mjs",
+        "tests/web/authority.spec.mjs",
+        "tests/web/human.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ERR-002",
+      "owner_scenario": "Outcome revision mudou após prévia",
+      "owner_acceptance": "Prévia antiga é rejeitada; acknowledgement perde validade.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban-guards.spec.mjs",
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/structural-preview.spec.mjs",
+        "tests/web/authority.spec.mjs",
+        "tests/web/human.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ERR-003",
+      "owner_scenario": "Resposta incerta",
+      "owner_acceptance": "Recovery com intenção original, sem duplicidade.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/structural-preview.spec.mjs",
+        "tests/web/authority.spec.mjs",
+        "tests/web/human.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ERR-004",
+      "owner_scenario": "Sessão revogada em modal",
+      "owner_acceptance": "Fecha ações privadas; resposta tardia não restaura informações.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/contextual-kanban-guards.spec.mjs",
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/structural-preview.spec.mjs",
+        "tests/web/authority.spec.mjs",
+        "tests/web/human.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "ERR-005",
+      "owner_scenario": "Falha após mutation confirmada",
+      "owner_acceptance": "Atualiza read sem repetir write.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/structural-preview.spec.mjs",
+        "tests/web/authority.spec.mjs",
+        "tests/web/human.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "API-001",
+      "owner_scenario": "Nova projeção Kanban",
+      "owner_acceptance": "Retorna revisões exatas, escopo autorizado, coverage honesta e paginação estável.",
+      "status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "tools/releases/compatibility.test.mjs",
+        "docs/operational-workspace-api.md",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "Owner-approved bounded V1 composes revision-pinned existing cards/view reads. No dedicated aggregate Kanban endpoint or complete server-side filter totals are claimed."
+    },
+    {
+      "id": "API-002",
+      "owner_scenario": "Paridade de adapters",
+      "owner_acceptance": "Migrations, política e gates idênticos em SQLite/PostgreSQL.",
+      "status": "verified_for_automated_scope",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "tools/releases/compatibility.test.mjs",
+        "docs/operational-workspace-api.md",
+        "docs/ux/contextual-kanban/qualification.json"
+      ]
+    },
+    {
+      "id": "API-003",
+      "owner_scenario": "Paridade de transportes",
+      "owner_acceptance": "HTTP/MCP/SDK/CLI preservam regras de autorização, versão e idempotência.",
+      "status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "packages/wos-core/storage/postgres/completion_policy_test.go",
+        "tools/releases/compatibility.test.mjs",
+        "docs/operational-workspace-api.md",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "Shared application gates and generated HTTP/MCP/SDK schemas are checked; this does not claim a new strict-cancellation end-to-end command cycle on every transport/platform."
+    },
+    {
+      "id": "A11Y-001",
+      "owner_scenario": "Leitor de tela",
+      "owner_acceptance": "Headings, status, modal, disclosures e mensagens associados corretamente.",
+      "status": "partially_verified",
+      "evidence": [
+        "tests/web/accessibility.spec.mjs",
+        "tests/web/contextual-kanban.spec.mjs",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "Native modal/disclosure semantics and automated interaction checks are covered. Manual screen-reader/browser combinations remain pending."
+    },
+    {
+      "id": "PERF-001",
+      "owner_scenario": "Kanban grande",
+      "owner_acceptance": "Sem N+1; medição reproduzível com fixture e ambiente declarados.",
+      "status": "partially_verified",
+      "evidence": [
+        "tests/web/contextual-kanban.spec.mjs",
+        "packages/wos-core/storage/sqlite/completion_policy_test.go",
+        "docs/ux/contextual-kanban/qualification.json"
+      ],
+      "remaining_acceptance": "105-record pagination and full obligation scans are exercised. Reference workload latency, SQL query counts and production performance targets are not measured."
+    }
+  ],
+  "counts": {
+    "verified_for_automated_scope": 56,
+    "partially_verified": 6
+  }
+}
