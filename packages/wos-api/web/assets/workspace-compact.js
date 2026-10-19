@@ -84,7 +84,10 @@ export function compactWorkspace(
     intro.append(
       el(
         "p",
-        `${met}/${applicable.length} required criteria met · ${waived} waived${view.coverage?.criteria?.status === "complete" ? "" : " · loaded criteria only; coverage incomplete"}`,
+        applicable.length === 0 &&
+          view.coverage?.criteria?.status === "complete"
+          ? "No required success condition defined"
+          : `${met}/${applicable.length} required criteria met · ${waived} waived${view.coverage?.criteria?.status === "complete" ? "" : " · loaded criteria only; coverage incomplete"}`,
         "field-help",
       ),
     );

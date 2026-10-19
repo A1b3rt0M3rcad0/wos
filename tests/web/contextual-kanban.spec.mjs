@@ -177,6 +177,35 @@ for (const [width, height] of [
     ).toBeVisible();
     await expect(modal.locator(".workspace-kanban-card")).toHaveCount(1);
     await expect(modal).not.toContainText(data.nested.title);
+    const contrast = await modal
+      .locator(".workspace-kanban-card")
+      .first()
+      .evaluate((card) => {
+        const rgb = (value) =>
+          value
+            .match(/[\d.]+/g)
+            .slice(0, 3)
+            .map(Number)
+            .map((channel) => {
+              channel /= 255;
+              return channel <= 0.04045
+                ? channel / 12.92
+                : ((channel + 0.055) / 1.055) ** 2.4;
+            });
+        const luminance = (value) => {
+          const [r, g, b] = rgb(value);
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        const ink = luminance(
+            getComputedStyle(card.querySelector("strong")).color,
+          ),
+          paper = luminance(getComputedStyle(card).backgroundColor);
+        return (Math.max(ink, paper) + 0.05) / (Math.min(ink, paper) + 0.05);
+      });
+    expect(
+      contrast,
+      "Card text must remain legible on the actual paper surface",
+    ).toBeGreaterThanOrEqual(4.5);
     await capture(page, `objectives-${width}x${height}`);
     await modal
       .getByRole("button", { name: "Direct Tasks", exact: true })

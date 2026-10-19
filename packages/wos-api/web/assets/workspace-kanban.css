@@ -265,3 +265,24 @@ dialog.workspace-kanban[open] {
     min-height: 240px;
   }
 }
+.workspace-kanban-card,
+.workspace-kanban-card > * {
+  color: var(--wos-foreground);
+}
+.workspace-kanban-card:is(:hover, :focus-visible) {
+  color: var(--wos-foreground);
+  background: var(--wos-selected);
+  border-color: var(--wos-copper);
+}
+@media (max-width: 760px) {
+  dialog.workspace-kanban[open] {
+    overflow-y: auto;
+  }
+  .workspace-kanban-body {
+    flex: 1 0 300px;
+    min-height: 300px;
+  }
+  .workspace-kanban-footer {
+    max-height: none;
+  }
+}
