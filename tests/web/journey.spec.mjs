@@ -342,6 +342,8 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       .getByRole("button")
       .filter({ hasText: "Entrega revisada" })
       .click();
+    await expect(page.locator("#detail-title")).toHaveText("Entrega revisada");
+    await expect(page.locator("#detail-content")).toContainText("Not assessed");
     await page.keyboard.press("Escape");
     await page.locator("#developer-tools").click();
     await page
@@ -543,7 +545,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
     await submit();
     await open("create_objective");
     await page.getByLabel("Title", { exact: true }).fill("Revisão obrigatória");
-    await page.getByLabel("Required for outcome", { exact: true }).check();
+    await page.getByLabel("Required for Outcome", { exact: true }).check();
     await submit();
     await entity("Objectives", "Revisão obrigatória");
     await open("add_criterion", true);
@@ -657,7 +659,9 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       "Changed by another participant",
     );
     await clickWorkspaceTool(page, "view-outcome");
-    await page.getByRole("button", { name: /Prova observada/ }).click();
+    await page.getByRole("button", { name: "Prova observada", exact: true }).click();
+    await expect(page.locator("#detail-title")).toHaveText("Prova observada");
+    await expect(page.locator("#detail-content")).toContainText("Not assessed");
     await page.keyboard.press("Escape");
     await page.locator("#developer-tools").click();
     await page
@@ -687,7 +691,9 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
     await expect(page.locator("#command-error")).not.toBeEmpty();
     await page.keyboard.press("Escape");
     await entity("Objectives", "Revisão obrigatória");
-    await page.getByRole("button", { name: /Attestation/ }).click();
+    await page.getByRole("button", { name: "Revisão humana", exact: true }).click();
+    await expect(page.locator("#detail-title")).toHaveText("Revisão humana");
+    await expect(page.locator("#detail-content")).toContainText("Not assessed");
     await page.keyboard.press("Escape");
     await page.locator("#developer-tools").click();
     await page

@@ -1,4 +1,5 @@
 import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool, openCanvasContext } from "./ux-fixture.mjs";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer, seedCanvasRoadmap } from "./canvas-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
@@ -31,7 +32,9 @@ async function choose(page, kind, value) {
   if (!value.title && !value.name) {
     const body = panel(page).locator("#detail-content");
     await expect(body.locator(".detail-description")).toHaveText(value.description);
-    await expect(body.getByText(value.description, { exact: true })).toHaveCount(1);
+    // Named relationship endpoints can repeat the record's authored label.
+    // The primary description itself must still be rendered exactly once.
+    await expect(body.locator(".detail-description")).toHaveCount(1);
   }
   await expect(page.locator("#detail-dialog")).not.toBeVisible();
 }
@@ -79,7 +82,8 @@ test("Outcome Board is the default operational view without a Roadmap and keeps 
   await expect(panel(page).locator("#detail-title")).toHaveText(data.outcome.title);
   await choose(page, "work_item", data.tasks.ready);
   await expect(panel(page).getByText("Perform only the scoped task", { exact: true })).toBeVisible();
-  await expect(panel(page)).toContainText("Operational readiness");
+  await expect(panel(page).locator(".workspace-state")).toBeVisible();
+  await expect(panel(page).locator('[data-workspace-facet="attention"]')).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`area=canvas.*item=work_item(?:%2F|/)${data.tasks.ready.id}`));
   await shot(page, "01-canvas-workspace");
   const selectedRoute = page.url();
@@ -138,7 +142,7 @@ test("contextual creation and editing reuse the real form and preserve Objective
   const data = await seedCanvas(wos);
   await openCanvas(page, wos, data);
   await choose(page, "objective", data.child);
-  await panel(page).getByRole("button", { name: "New task", exact: true }).click();
+  await clickRecordAction(page, "New task");
   await expect(panel(page).locator("#command-form")).toBeVisible();
   await expect(page.locator("#command-dialog")).not.toBeVisible();
   await page.getByLabel("Task title", { exact: true }).fill("Created in the review context");
@@ -147,7 +151,7 @@ test("contextual creation and editing reuse the real form and preserve Objective
   expect(task).toBeTruthy();
   expect(task.objective_id).toBe(data.child.id);
   await choose(page, "work_item", task);
-  await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+  await clickRecordAction(page, "Edit task");
   await page.getByLabel("Task title", { exact: true }).fill("A precisely edited contextual Task");
   await finishInline(page);
   await expect(node(page, "work_item", task)).toContainText("A precisely edited contextual Task");
@@ -164,13 +168,14 @@ test("real connections distinguish hierarchy, dependency strength and Evidence s
   // The initial map has a declared depth bound. Selecting the real Blocker
   // loads one authorized neighborhood so its Issue cause is revealed.
   await choose(page, "blocker", data.blocker);
+  await canvas(page).getByLabel("Map layers", { exact: true }).selectOption("records");
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("all");
   for (const kind of ["hierarchy", "ownership", "blocks", "causes", "supports", "contradicts", "context"])
     await expect(canvas(page).locator(`[data-canvas-edge="${kind}"]`).first()).toBeAttached();
   await expect(canvas(page).locator('[data-canvas-edge="depends_on"][data-strength="hard"]')).toHaveCount(1);
   await expect(canvas(page).locator('[data-canvas-edge="depends_on"][data-strength="advisory"]')).toHaveCount(1);
   await choose(page, "issue", data.issue);
-  await panel(page).getByRole("button", { name: "Resolve issue", exact: true }).click();
+  await clickRecordAction(page, "Resolve issue");
   await page.getByLabel("Resolution summary", { exact: true }).fill("Access was restored; blocking impact is reviewed separately");
   await finishInline(page);
   const blocker = (await wos.api(`${endpoint(data.scope)}/blockers/${data.blocker.id}`)).value;
@@ -180,7 +185,7 @@ test("real connections distinguish hierarchy, dependency strength and Evidence s
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.blocked.id}/operational-state`)).state.is_blocked).toBe(true);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.advisory.id}/operational-state`)).state.display_state).toBe("ready");
   await choose(page, "evidence", data.evidence[2]);
-  await panel(page).getByRole("button", { name: "Link evidence", exact: true }).click();
+  await clickRecordAction(page, "Link evidence");
   await pick(page, "Related item", data.tasks.unscoped.title);
   await page.getByLabel("Evidence stance", { exact: true }).selectOption("context");
   await page.getByLabel("Rationale", { exact: true }).fill("The observation provides context, without claiming that a criterion is met");
@@ -217,7 +222,7 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   const data = await seedCanvas(wos);
   await openCanvas(page, wos, data);
   await choose(page, "work_item", data.tasks.unscoped);
-  await panel(page).getByRole("button", { name: "Add dependency", exact: true }).click();
+  await clickRecordAction(page, "Add dependency");
   await pick(page, "Depends on", data.tasks.ready.title);
   await page.getByLabel("Dependency type", { exact: true }).selectOption("advisory");
   await page.getByLabel("Why is this prerequisite required?", { exact: true }).fill("Share context without preventing this work from starting");
@@ -226,7 +231,7 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   expect(relation.strength).toBe("advisory");
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}/operational-state`)).state.display_state).toBe("ready");
   await choose(page, "work_item", data.tasks.ready);
-  await panel(page).getByRole("button", { name: "Add dependency", exact: true }).click();
+  await clickRecordAction(page, "Add dependency");
   await pick(page, "Depends on", data.tasks.unscoped.title);
   await page.getByLabel("Why is this prerequisite required?", { exact: true }).fill("Attempting the reverse edge must still be validated by the server");
   await panel(page).locator("#submit-command").click();
@@ -236,7 +241,7 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("all");
   const edge = canvas(page).locator(`[data-edge-key="graph:relation:${relation.id}"]`);
   await edge.press("Enter");
-  await panel(page).getByRole("button", { name: "Remove dependency", exact: true }).click();
+  await clickRecordAction(page, "Remove dependency");
   await page.getByLabel("Reason", { exact: true }).fill("The advisory context no longer needs a persisted dependency");
   await finishInline(page);
   await expect(edge).toHaveCount(0);
@@ -342,7 +347,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   const data = await seedCanvas(wos);
   await openCanvas(page, wos, data);
   await choose(page, "work_item", data.tasks.ready);
-  await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+  await clickRecordAction(page, "Edit task");
   await page.getByLabel("Task title", { exact: true }).fill("My retained canvas edit");
   await wos.command("update_work_item", { scope: data.scope, work_item_id: data.tasks.ready.id, expected_version: data.tasks.ready.version, title: "Another participant changed this Task" });
   await clickWorkspaceTool(page, "refresh");
@@ -355,7 +360,7 @@ test("inline conflicts preserve local edits and uncertain retries keep their exa
   await page.getByRole("button", { name: "Use latest version and save my edits", exact: true }).click();
   await expect(panel(page).locator("#command-form")).not.toBeVisible();
   await choose(page, "work_item", { ...data.tasks.ready, title: "My retained canvas edit" });
-  await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+  await clickRecordAction(page, "Edit task");
   await page.getByLabel("Task title", { exact: true }).fill("Saved once from the Canvas");
   const dispatched = [];
   let lose = true;
@@ -388,14 +393,15 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openCanvas(page, wos, data);
   await choose(page, "roadmap", roadmap);
-  await expect(panel(page)).toContainText("Discover and verify");
-  await panel(page).getByRole("button", { name: "View draft on Outcome Board", exact: true }).click();
+  await expect(panel(page).locator('[data-workspace-facet="roadmap"]')).toContainText("Draft");
+  await panel(page).locator('[data-action-id="view_roadmap_draft"]').click();
+  await expect(canvas(page)).toContainText("Discover and verify");
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   await expect(canvas(page).locator('[data-canvas-edge="plan_reference"]')).toHaveCount(2);
   await expect(canvas(page).locator('.canvas-node[data-kind="phase"]')).toBeVisible();
   await choose(page, "roadmap", roadmap);
-  await panel(page).getByRole("button", { name: "Review and publish", exact: true }).click();
+  await clickRecordAction(page, "Review and publish");
   await expect(page.locator("#fields")).toContainText("Publish");
   await page.getByLabel("Publication reason", { exact: true }).fill("Review the planning references explicitly");
   await finishInline(page);
@@ -405,7 +411,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   const original = JSON.stringify(published.revisions[0]);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}/operational-state`)).state.display_state).toBe("ready");
   await choose(page, "roadmap", published);
-  await panel(page).getByRole("button", { name: "View revision 1 on Outcome Board", exact: true }).click();
+  await panel(page).locator('[data-action-id="view_roadmap_revision"]').click();
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);
   await expect.poll(async () => parseFloat(await canvas(page).getByLabel("Outcome Board zoom", { exact: true }).textContent())).toBeGreaterThanOrEqual(75);
@@ -413,7 +419,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await originalPapers(page);
   await shot(page, "06-canvas-roadmap");
   await choose(page, "roadmap", published);
-  await panel(page).getByRole("button", { name: "Activate revision", exact: true }).click();
+  await clickRecordAction(page, "Activate revision");
   await finishInline(page);
   await openCanvasContext(page);
   await expect(page.locator("#canvas-planning").getByRole("button", { name: "Active plan · revision 1", exact: true })).toBeVisible();

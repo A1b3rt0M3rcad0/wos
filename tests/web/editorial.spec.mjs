@@ -216,7 +216,8 @@ test("operational density stays bounded across desktop, tablet and phone viewpor
     await intent(page, "New task");
     if (width >= 1440)
       expectStableMetrics(await dimensions(page, formTargets), formReference, ["fontSize", "paddingTop", "paddingLeft", "width"]);
-    await expectWholeControl(page.getByLabel("Initial state", { exact: true }));
+    await page.getByText("Details and success conditions", { exact: true }).click();
+    await expectWholeControl(page.getByLabel("Priority", { exact: true }));
     await expect(page.locator("#submit-command")).toBeInViewport();
     expect(await page.locator("#submit-command").evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
     if (width === 2560) await capture(page, "density-2560x1440-task-form");
@@ -307,14 +308,15 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
   await desktop.audit(page.locator("#detail-dialog"));
   await page.keyboard.press("Escape");
   await intent(page, "New task");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   const add = page.getByRole("button", {
     name: "Add instructions item",
     exact: true,
   });
   await add.click();
+  await page.getByRole("button", { name: "Change placement", exact: true }).click();
   const objective = page.getByRole("combobox", {
-    name: "Objective",
+    name: "New placement",
     exact: true,
   });
   await objective.fill("A clear path");
@@ -608,7 +610,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
   await page.keyboard.press("Escape");
   await intent(page, "New task");
   await capture(page, "10-task-form");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   await page
     .getByRole("button", { name: "Add instructions item", exact: true })
     .click();
@@ -835,7 +837,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
     await page.keyboard.press("Escape");
 
     await intent(page, "New task");
-    await page.getByText("Execution instructions", { exact: true }).click();
+    await page.getByText("Details and success conditions", { exact: true }).click();
     await page
       .getByRole("button", { name: "Add instructions item", exact: true })
       .click();
@@ -1045,27 +1047,27 @@ test("forms preserve whole controls and save actions through nested editors, com
     await page
       .getByLabel("Task title", { exact: true })
       .fill(`Form review ${width}`);
-    await dialog.getByLabel("Priority", { exact: true }).selectOption("high");
-    const lifecycle = page.getByLabel("Initial state", { exact: true });
-    await lifecycle.selectOption("backlog");
+    await dialog.getByText("Details and success conditions", { exact: true }).click();
+    const priority = dialog.getByLabel("Priority", { exact: true });
+    await priority.selectOption("high");
     await page.keyboard.press("Tab");
-    await expectWholeControl(lifecycle);
+    await expectWholeControl(priority);
     await expect(page.locator("#submit-command")).toBeInViewport();
-    await page.getByText("Execution instructions", { exact: true }).click();
     await page
       .getByRole("button", { name: "Add instructions item", exact: true })
       .click();
     const instruction = page.getByLabel("Instructions item", { exact: true });
     await instruction.fill("Keep the selected values and attach scoped proof.");
     await expectWholeControl(instruction);
+    await page.getByRole("button", { name: "Change placement", exact: true }).click();
     const picker = page.getByRole("combobox", {
-      name: "Objective",
+      name: "New placement",
       exact: true,
     });
     await picker.fill("A clear path");
     await expect(
       dialog
-        .getByRole("listbox", { name: "Objective", exact: true })
+        .getByRole("listbox", { name: "New placement", exact: true })
         .getByRole("option"),
     ).toHaveCount(1);
     await picker.press("ArrowDown");
@@ -1075,8 +1077,12 @@ test("forms preserve whole controls and save actions through nested editors, com
     );
     await expectWholeControl(picker);
     await dialog.getByText("Advanced", { exact: true }).click();
+    const available = page.getByLabel("Create as available", { exact: true });
+    await expect(available).not.toBeChecked();
+    await available.focus();
+    await expect(available).toBeInViewport();
     await expectWholeControl(dialog.locator('input[type="datetime-local"]'));
-    await expect(lifecycle).toHaveValue("backlog");
+    await expect(priority).toHaveValue("high");
     await save(page);
     await expect(page.locator("#notice")).not.toHaveClass(/error/);
     await expect(page.locator("#detail-dialog")).toBeVisible();

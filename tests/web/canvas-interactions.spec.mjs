@@ -23,7 +23,7 @@ test.beforeAll(async () => {
     if (request.url === "/") {
       response.setHeader("Content-Type", "text/html");
       response.end(
-        `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Outcome Board renderer</title>${["colors", "style", "editorial", "canvas"].map((name) => `<link rel="stylesheet" href="/app/${name}.css">`).join("")}<body><main><div class="canvas-workspace-shell"><div id="operational-canvas"></div></div></main></body></html>`,
+        `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Outcome Board renderer</title>${["colors", "style", "editorial", "canvas", "workspace-board"].map((name) => `<link rel="stylesheet" href="/app/${name}.css">`).join("")}<body><main><div class="canvas-workspace-shell"><div id="operational-canvas"></div></div></main></body></html>`,
       );
       return;
     }
@@ -55,9 +55,9 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => new Promise((done) => server.close(done)));
 
-async function mount(page) {
+async function mount(page, { initialLayer = "records" } = {}) {
   await page.goto(origin);
-  await page.evaluate(async () => {
+  await page.evaluate(async (initialLayer) => {
     const { mountWorkspaceCanvas } = await import("/app/workspace-canvas.js");
     const ref = (kind, id) => ({ kind, id });
     window.canvasEvents = {
@@ -158,6 +158,7 @@ async function mount(page) {
       document.querySelector("#operational-canvas"),
       {
         model: window.canvasModel,
+        initialLayer,
         onSelect: (ref, item) => {
           canvasEvents.select.push([ref, item]);
           if (window.canvasSelectionError) {
@@ -203,7 +204,7 @@ async function mount(page) {
         },
       },
     );
-  });
+  }, initialLayer);
   await expect(page.locator(".canvas-world")).toHaveCSS("transform", /matrix/);
 }
 const card = (page, key) => page.locator(`[data-canvas-node="${key}"]`);
@@ -212,6 +213,53 @@ const result = (page, title) =>
   page
     .getByRole("listbox", { name: "Matching items" })
     .getByRole("option", { name: title, exact: true });
+
+test("the default work map exposes records deliberately and preserves local positions and authority distinctions", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await mount(page, { initialLayer: "work" });
+  await expect(page.getByLabel("Map layers", { exact: true })).toHaveValue("work");
+  await expect(card(page, "issue:one")).toHaveCount(0);
+  await expect(page.locator(".canvas-status")).toContainText("1 loaded records");
+  const position = await card(page, "work_item:a").evaluate((element) => ({ left: element.style.left, top: element.style.top }));
+  await page.evaluate(() => canvasHandle.focus("work_item:a"));
+  await card(page, "work_item:a").locator(".canvas-add").click();
+  await card(page, "work_item:a").getByRole("button", { name: /Show linked records: Remote Alpha/ }).click();
+  await expect(card(page, "issue:one")).toHaveCount(1);
+  expect(await card(page, "issue:one").evaluate((element) => {
+    const record = element.getBoundingClientRect(), viewport = element.closest(".canvas-viewport").getBoundingClientRect();
+    return record.left >= viewport.left && record.right <= viewport.right && record.top >= viewport.top && record.bottom <= viewport.bottom;
+  })).toBe(true);
+  expect(await card(page, "work_item:a").evaluate((element) => ({ left: element.style.left, top: element.style.top }))).toEqual(position);
+  expect(await page.evaluate(() => canvasEvents.connect)).toEqual([]);
+  await card(page, "work_item:a").locator(".canvas-add").click();
+  await card(page, "work_item:a").getByRole("button", { name: "Add a dependency for Remote Alpha", exact: true }).click();
+  expect(await page.evaluate(() => canvasEvents.connect)).toEqual([{ sourceRef: { kind: "work_item", id: "a" }, targetRef: null }]);
+  await page.getByLabel("Map layers", { exact: true }).selectOption("records");
+  await expect(card(page, "issue:one")).toHaveCount(1);
+  await page.getByLabel("Map layers", { exact: true }).selectOption("work");
+  await page.evaluate(() => {
+    const task = canvasModel.nodes.find((entry) => entry.key === "work_item:a");
+    task.title = "A long but readable Task with recorded responsibilities";
+    task.cardSummary = {
+      authority_state: "unknown", participants: [{ role: "declared_assignee", actor_ref: { id: "coding-agent" } }],
+      criteria: { active: 3, required: 2, met: 1, waived: 1, pending: 1 },
+    };
+    canvasHandle.update(canvasModel);
+    canvasHandle.focus(task.key);
+  });
+  await expect(card(page, "work_item:a")).toContainText("Assigned: coding-agent");
+  await expect(card(page, "work_item:a")).toContainText("1 of 3 criteria met · 1 waived");
+  await expect(card(page, "work_item:a").locator(".canvas-node-main")).not.toHaveAccessibleName(/Authorized: coding-agent/);
+  const safe = await card(page, "work_item:a").evaluate((element) => {
+    const main = element.querySelector(".canvas-node-main").getBoundingClientRect();
+    const actions = element.querySelector(".canvas-node-actions").getBoundingClientRect();
+    return [...element.querySelectorAll(".canvas-node-type, .canvas-node-title, .canvas-node-meta, .canvas-node-person, .canvas-node-summary")].every((entry) => {
+      const box = entry.getBoundingClientRect();
+      return box.top >= main.top - 1 && box.bottom <= actions.top + 1 && box.right <= main.right + 1;
+    });
+  });
+  expect(safe).toBe(true);
+});
 
 test("native canvas controls preserve selection, keyboard focus and explicit command boundaries", async ({
   page,
@@ -615,7 +663,7 @@ test("all map cards display the original supplied paper behind live accessible c
       format: "wide",
       style: "curled",
       color: "surface",
-      width: 284,
+      width: 304,
       top: 16,
       bottom: 17,
     },

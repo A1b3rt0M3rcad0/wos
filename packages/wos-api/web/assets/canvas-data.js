@@ -140,6 +140,7 @@ function buildModel(
   plans,
   protocolMode,
   contexts = new Map(),
+  cardSummaries = new Map(),
 ) {
   const nodes = new Map(),
     edges = new Map(),
@@ -334,6 +335,21 @@ function buildModel(
     }
   }
 
+  // Card facts are a bounded server projection from this exact Outcome
+  // revision. They never hydrate inspectors or infer authority from assignees.
+  for (const [key, summary] of cardSummaries) {
+    const entry = nodes.get(key);
+    if (!entry) continue;
+    entry.cardSummary = clone(summary);
+    entry.title = summary.title || entry.title;
+    entry.lifecycle = summary.lifecycle || entry.lifecycle;
+    if (summary.display_state && (!entry.reportedOperationalState ||
+        ["awaiting_review", "corrections_requested"].includes(summary.display_state)))
+      entry.displayState = summary.display_state;
+    if (!entry.authorityKnown)
+      entry.authorityUnknown = summary.authority_state === "unknown";
+  }
+
   const planHeaders = [];
   for (const header of sections.get("active_roadmaps")?.items || []) {
     const slot = header.slot;
@@ -519,6 +535,7 @@ export function createCanvasData({
     graphs = new Map(),
     plans = new Map(),
     contexts = new Map(),
+    cardSummaries = new Map(),
     model = null,
     pending = Promise.resolve(),
     lastMoreWasGraph = false;
@@ -551,6 +568,7 @@ export function createCanvasData({
     nextGraphs = graphs,
     nextPlans = plans,
     nextContexts = contexts,
+    nextCards = cardSummaries,
   ) => {
     const next = buildModel(
       scope,
@@ -560,11 +578,13 @@ export function createCanvasData({
       nextPlans,
       protocolMode,
       nextContexts,
+      nextCards,
     );
     sections = nextSections;
     graphs = nextGraphs;
     plans = nextPlans;
     contexts = nextContexts;
+    cardSummaries = nextCards;
     model = next;
     return next;
   };
@@ -620,9 +640,31 @@ export function createCanvasData({
       graphs = nextGraphs;
       plans = nextPlans;
       contexts = new Map();
+      cardSummaries = new Map();
       model = nextModel;
       lastMoreWasGraph = false;
       return nextModel;
+    },
+    summaries(page) {
+      if (!active(epoch) || !model) return null;
+      assertRevision(page, model.revision);
+      if (!Array.isArray(page.items) || page.items.length > 100)
+        throw failure("Card summaries must be a bounded batch of at most 100 records.");
+      const next = new Map(cardSummaries);
+      const seen = new Set();
+      for (const summary of page.items) {
+        const ref = checkedRef(summary.ref, scope), key = canvasKey(ref);
+        if (seen.has(key)) throw failure("A card summary batch contains a duplicate record.");
+        seen.add(key);
+        canvasRevision(summary.version);
+        const current = model.nodes.find((entry) => entry.key === key);
+        if (!current)
+          throw failure("Card summaries may enrich only records already loaded in this map.");
+        if (current.version != null && canvasRevision(current.version) !== canvasRevision(summary.version))
+          throw failure("Card summaries do not match the loaded entity version.", "precondition_failed");
+        next.set(key, clone(summary));
+      }
+      return publish(sections, graphs, plans, contexts, next);
     },
     more() {
       return enqueue(async (token) => {

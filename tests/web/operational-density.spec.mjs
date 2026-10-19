@@ -171,9 +171,10 @@ for (const scenario of scenarios) {
       if (width === 2560 || width === 390) {
         await intent(page, "New task");
         const form = page.locator("#command-dialog");
-        const initialState = form.getByLabel("Initial state", { exact: true });
-        await initialState.scrollIntoViewIfNeeded();
-        await wholeControl(initialState);
+        await form.getByText("Details and success conditions", { exact: true }).click();
+        const priority = form.getByLabel("Priority", { exact: true });
+        await priority.scrollIntoViewIfNeeded();
+        await wholeControl(priority);
         await wholeControl(page.locator("#submit-command"));
         expect(await form.locator(".dialog-heading h2").evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeLessThanOrEqual(24.1);
         const fields = await form.locator("input, select, textarea").evaluateAll((elements) => elements

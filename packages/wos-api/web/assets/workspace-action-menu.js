@@ -3,7 +3,7 @@ import { el, button } from "./ui.js";
 import { kindName, shortId } from "./presentation.js";
 
 const categories = {
-  Plan: ["create_outcome", "update_outcome", "create_objective", "update_objective",
+  Plan: ["create_plan_items", "set_work_item_execution_spec", "set_work_item_not_before", "set_work_item_objective", "set_objective_parent", "set_outcome_owners", "set_objective_owners", "set_work_item_assignees", "create_outcome", "update_outcome", "create_objective", "update_objective",
     "create_work_item", "update_work_item", "create_roadmap", "open_roadmap_draft",
     "replace_roadmap_draft", "discard_roadmap_draft", "publish_roadmap_draft",
     "activate_roadmap_revision", "deactivate_roadmap_revision", "archive_roadmap", "reopen_roadmap"],
@@ -13,7 +13,7 @@ const categories = {
   Problems: ["create_issue", "report_issue_with_blocker", "create_blocker",
     "update_issue", "investigate_issue", "resolve_issue", "resolve_issue_and_blockers",
     "reopen_issue", "update_blocker_description", "resolve_blocker", "cancel_blocker"],
-  Records: ["register_evidence", "retract_evidence", "create_evidence_link",
+  Records: ["append_entity_note", "register_evidence_with_links", "register_artifact_in_context", "propose_decision_in_context", "register_evidence", "retract_evidence", "create_evidence_link",
     "register_artifact", "withdraw_artifact", "propose_decision", "accept_decision", "reject_decision"],
 };
 const descriptions = {
@@ -60,6 +60,11 @@ export function renderActionMenu(host, { actions = [], kind = "outcome", entity 
       // Keep existing control names stable, with the explanation announced as
       // a description rather than becoming part of the command's name.
       control.setAttribute("aria-label", action.label);
+      control.dataset.actionId = action.name;
+      if (action.availability && action.availability !== "available") {
+        control.dataset.availability = action.availability;
+        control.append(el("small", copy.text.workspacePreparationNeeded, "action-description"));
+      }
       const suffix = descriptions[action.name];
       if (suffix) {
         const description = el("small", copy.text[`actionDescription${suffix}`], "action-description");

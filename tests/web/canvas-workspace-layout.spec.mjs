@@ -2,6 +2,7 @@ import {
   test, expect, openOutcome, chooseArea, openViews, openCanvasContext,
 } from "./ux-fixture.mjs";
 import { seedCanvas, seedCanvasRoadmap } from "./canvas-fixture.mjs";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -448,7 +449,7 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await fullyVisible(panel(page));
     await capture(page, `canvas-${width}x${height}-inspector`, { state: "selected Task, initial context" });
     await inspectorActionsRemainReachable(page);
-    await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+    await clickRecordAction(page, "Edit task");
     await expect(panel(page).locator("#command-form")).toBeVisible();
     const body = panel(page).locator("#fields");
     await body.evaluate((element) => { element.scrollTop = element.scrollHeight; });
@@ -489,7 +490,7 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
       await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.unscoped.title);
       await fullyVisible(panel(page));
       const detailSlot = panel(page).locator(".canvas-inspector-detail");
-      const reading = panel(page).getByRole("heading", { name: "Operational readiness", exact: true });
+      const reading = panel(page).getByRole("heading", { name: "What needs attention", exact: true });
       await reading.scrollIntoViewIfNeeded();
       await fullyVisible(reading);
       expect(await detailSlot.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);

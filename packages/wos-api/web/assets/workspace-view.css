@@ -1,0 +1,170 @@
+/* Coherent inspector facets share the existing editorial surface and type. */
+.workspace-view {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-view .workspace-section {
+  display: grid;
+  align-content: start;
+  gap: .65rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--wos-border);
+}
+.workspace-view .workspace-section > h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.workspace-view h4 {
+  margin: .25rem 0 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-view p,
+.workspace-view ul {
+  margin: 0;
+}
+.workspace-view .detail-description {
+  font-size: 1rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.workspace-path,
+.workspace-state,
+.workspace-criterion-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+.workspace-state {
+  margin-block: .5rem 1rem !important;
+}
+.workspace-path .workspace-reference {
+  max-width: 100%;
+}
+.workspace-reference,
+.workspace-criterion-title {
+  min-height: 44px;
+  padding: .65rem .8rem;
+  text-align: start;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.workspace-meaning,
+.workspace-empty,
+.workspace-coverage,
+.workspace-section small {
+  color: var(--wos-muted);
+  line-height: 1.55;
+}
+.workspace-person,
+.workspace-record-fact,
+.workspace-activity-entry,
+.workspace-criterion,
+.workspace-relationship {
+  display: grid;
+  align-content: start;
+  gap: .4rem;
+  min-width: 0;
+}
+.workspace-person,
+.workspace-criterion,
+.workspace-activity-entry {
+  padding: .8rem;
+  background: var(--wos-workspace);
+  border: 1px solid var(--wos-border);
+}
+.workspace-criterion-title {
+  width: 100%;
+  font-weight: 600;
+}
+.workspace-criterion-state > span,
+.workspace-criterion-state > strong {
+  font-size: .86rem;
+}
+.workspace-activity-entry p,
+.workspace-assessment-rationale {
+  white-space: pre-wrap;
+}
+.workspace-relationship {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding-block: .45rem;
+  border-bottom: 1px solid var(--wos-border);
+}
+.workspace-relationship-label {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  font-size: .86rem;
+  color: var(--wos-muted);
+}
+.workspace-relationship small {
+  grid-column: 1 / -1;
+}
+.workspace-record-fact > small,
+.workspace-placement-summary > small {
+  display: block;
+}
+.workspace-record-fact a {
+  color: var(--wos-copper);
+}
+.workspace-audit {
+  margin-block: 1rem;
+}
+.workspace-audit pre {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.workspace-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: .5rem;
+  min-width: 0;
+}
+.workspace-primary-actions > button {
+  min-height: 44px;
+  padding: .65rem .8rem;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.workspace-primary-actions > .workspace-primary-action,
+.workspace-primary-actions > button:last-child:nth-child(even) {
+  grid-column: 1 / -1;
+}
+.workspace-primary-actions button small {
+  display: block;
+  font-weight: 400;
+  margin-top: .3rem;
+}
+.workspace-placement-summary {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+}
+.workspace-criteria-rows,
+.workspace-plan-preview {
+  display: grid;
+  gap: 1rem;
+}
+.workspace-criterion-row,
+.workspace-plan-row,
+.workspace-issue-impact,
+.workspace-evidence-source {
+  display: grid;
+  gap: .65rem;
+  min-width: 0;
+}
+.workspace-plan-preview {
+  margin-block: .8rem;
+}
+.workspace-evidence-form > [hidden],
+.workspace-issue-impact[hidden] {
+  display: none;
+}

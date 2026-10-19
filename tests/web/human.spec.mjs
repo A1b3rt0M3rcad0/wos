@@ -1,3 +1,4 @@
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { test, expect, intent, save, pick, openOutcome, detail, clickWorkspaceTool } from "./ux-fixture.mjs";
 import assert from "node:assert/strict";
 import { seedWorkspace } from "./ux-datasets.mjs";
@@ -36,12 +37,13 @@ test("F02/F03: add an Objective and scoped Task with readable list instructions"
   await page
     .getByLabel("Objective title", { exact: true })
     .fill("Condition to verify");
-  await page.getByLabel("Required for outcome", { exact: true }).check();
+  await page.getByLabel("Required for Outcome", { exact: true }).check();
   await save(page);
-  await intent(page, "New task");
+  await detail(page, "Objectives", "Condition to verify");
+  await clickRecordAction(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Bounded task");
-  await pick(page, "Objective", "Condition");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await expect(page.locator("#fields")).toContainText("Condition to verify");
+  await page.getByText("Details and success conditions", { exact: true }).click();
   await page
     .getByRole("button", { name: "Add instructions item", exact: true })
     .click();
@@ -82,10 +84,10 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
     await detail(page, "All roadmaps", "Delivery roadmap");
   }
   await roadmap();
-  await page.getByRole("button", { name: "Edit roadmap", exact: true }).click();
+  await clickRecordAction(page, "Edit roadmap");
   await save(page);
   await roadmap();
-  await page.getByRole("button", { name: "Edit draft", exact: true }).click();
+  await clickRecordAction(page, "Edit draft");
   await page.getByRole("button", { name: "Add phase", exact: true }).click();
   await page
     .locator(".roadmap-edit-row")
@@ -103,9 +105,7 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
   await pick(page, "Reference objective or task", "Referenced");
   await save(page);
   await roadmap();
-  await page
-    .getByRole("button", { name: "Review and publish", exact: true })
-    .click();
+  await clickRecordAction(page, "Review and publish");
   await expect(page.locator("#fields")).toContainText(
     "Added: Build deliverable",
   );
@@ -124,25 +124,24 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
   const revision = JSON.stringify(original.revisions[0]);
   assert.equal(original.revisions.length, 1);
   await roadmap();
-  await page
-    .getByRole("button", { name: "Activate revision", exact: true })
-    .click();
+  await clickRecordAction(page, "Activate revision");
   await save(page);
   await roadmap();
-  await page.getByRole("button", { name: "Edit roadmap", exact: true }).click();
+  await clickRecordAction(page, "Edit roadmap");
   await save(page);
   await roadmap();
-  await page.getByRole("button", { name: "Edit draft", exact: true }).click();
-  await page
-    .locator(".roadmap-edit-row")
-    .last()
+  await clickRecordAction(page, "Edit draft");
+  await expect(page.locator(".roadmap-edit-row")).toHaveCount(2);
+  const referenceRow = page.locator('.roadmap-edit-row[data-node-type="reference"]');
+  await expect(referenceRow).toHaveCount(1);
+  await expect(referenceRow.getByLabel("Item title", { exact: true }))
+    .toHaveValue("Build deliverable");
+  await referenceRow
     .getByRole("button", { name: "Remove from draft", exact: true })
     .click();
   await save(page);
   await roadmap();
-  await page
-    .getByRole("button", { name: "Review and publish", exact: true })
-    .click();
+  await clickRecordAction(page, "Review and publish");
   await page
     .getByLabel("Publication reason", { exact: true })
     .fill("Replan, remove reference only");
@@ -172,7 +171,7 @@ test("F05: register proof then assess its exact criterion revision; Evidence alo
   await openOutcome(page);
   await intent(page, "Add success criterion");
   await page
-    .getByLabel("Criterion title", { exact: true })
+    .getByLabel("What must be true to consider this item satisfied?", { exact: true })
     .fill("Delivery independently checked");
   await page
     .getByLabel("How will it be verified?", { exact: true })
@@ -193,6 +192,7 @@ test("F05: register proof then assess its exact criterion revision; Evidence alo
     .getByRole("button")
     .filter({ hasText: "Delivery independently checked" })
     .click();
+  await clickRecordAction(page, "Assess criterion");
   await pick(page, "Evidence used", "Successful test");
   await page
     .getByLabel("Rationale", { exact: true })
@@ -213,28 +213,26 @@ test("F06: reporting an Issue and blocking work are explicit; resolving the Issu
   });
   await wos.login(page);
   await openOutcome(page);
-  await intent(page, "Report issue and block work");
+  await detail(page, "Tasks", "Blocked delivery");
+  await clickRecordAction(page, "Report issue");
+  await page.getByLabel("Prevents continuing?", { exact: true }).check();
   await page
     .getByLabel("Issue title", { exact: true })
     .fill("Access unavailable");
   await page
     .getByLabel("Blocking impact", { exact: true })
     .fill("Wait for access");
-  await pick(page, "Blocked item", "Blocked delivery");
+  await expect(page.locator("#fields")).toContainText("Blocked delivery");
   await save(page);
   await detail(page, "Issues", "Access unavailable");
-  await page
-    .getByRole("button", { name: "Resolve issue", exact: true })
-    .click();
+  await clickRecordAction(page, "Resolve issue");
   await page
     .getByLabel("Resolution summary", { exact: true })
     .fill("Credentials restored");
   await save(page);
   await detail(page, "Blockers", "Wait for access");
   await expect(page.locator("#detail-content")).toContainText("Active");
-  await page
-    .getByRole("button", { name: "Release blocker", exact: true })
-    .click();
+  await clickRecordAction(page, "Release blocker");
   await page
     .getByLabel("Resolution summary", { exact: true })
     .fill("Verified work can resume");
@@ -360,7 +358,7 @@ test("reference picker searches 1,001 authorized Tasks and Evidence beyond the f
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Task with distant context");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   await pick(page, "Context references", "Off-page acceptance task");
   await pick(page, "Context references", "Off-page acceptance evidence");
   await expect(page.locator(".reference-selections").last()).toContainText(
@@ -398,7 +396,8 @@ test("reference picker keyboard navigation selects duplicate titles using IDs an
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Keyboard selection");
-  const input = page.getByRole("combobox", { name: "Objective", exact: true });
+  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
   await input.fill("Same title");
   await expect(page.locator(".reference-picker [role=option]")).toHaveCount(2);
@@ -426,7 +425,7 @@ test("stale reference cursor asks for reload and retains selections without sile
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Stale cursor draft");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   const input = page.getByRole("combobox", {
     name: "Context references",
     exact: true,

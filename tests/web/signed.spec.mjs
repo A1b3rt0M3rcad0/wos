@@ -22,6 +22,12 @@ import {
   createHash,
 } from "node:crypto";
 
+async function fullSignedRecord(detail) {
+  await detail.locator(".workspace-audit > summary").click();
+  await detail.locator('.workspace-audit [data-action-id="read_full_record"]').click();
+  await expect(detail.locator(".signed-contract-section")).toBeVisible();
+}
+
 for (const decision of ["approved", "changes_requested"])
   test(`signed work shows accepted delivery, independent review and protected profile actions: ${decision}`, async ({
     browser,
@@ -511,16 +517,12 @@ for (const decision of ["approved", "changes_requested"])
         await expect(activeDetail.locator("#detail-title")).toHaveText(
           work.title,
         );
-        const readiness = activeDetail.locator(".detail-section").filter({
-          has: activePage.getByRole("heading", {
-            name: "Operational readiness",
-            exact: true,
-          }),
-        });
+        const readiness = activeDetail.locator(".workspace-state");
         await expect(
           readiness.getByText("In progress", { exact: true }),
         ).toBeVisible();
         await expect(readiness).not.toContainText(/expired|needs attention/i);
+        await fullSignedRecord(activeDetail);
         await expect(
           activeDetail.locator(".signed-contract-section"),
         ).toContainText("Execution reserved");
@@ -626,6 +628,7 @@ for (const decision of ["approved", "changes_requested"])
       await expect(page.locator("#canvas-details #detail-title")).toHaveText(
         work.title,
       );
+      await fullSignedRecord(page.locator("#canvas-details"));
       await expect(page.locator("#canvas-details")).toContainText(
         "Awaiting independent review",
       );
@@ -657,6 +660,7 @@ for (const decision of ["approved", "changes_requested"])
         .filter({ hasText: work.title })
         .first()
         .click();
+      await fullSignedRecord(page.locator("#detail-dialog"));
       await expect(
         page.getByText("Awaiting independent review", { exact: true }),
       ).toBeVisible();
@@ -667,7 +671,7 @@ for (const decision of ["approved", "changes_requested"])
         .getByRole("button", { name: "Load accepted material", exact: true })
         .click();
       await expect(
-        page.getByText("Material exato entregue pelo executor", {
+        page.locator(".signed-contract-section").getByText("Material exato entregue pelo executor", {
           exact: true,
         }),
       ).toBeVisible();
@@ -770,6 +774,7 @@ for (const decision of ["approved", "changes_requested"])
         .filter({ hasText: work.title })
         .first()
         .click();
+      await fullSignedRecord(page.locator("#detail-dialog"));
       await expect(
         page.getByText(
           decision === "approved" ? "Review approved" : "Changes requested",

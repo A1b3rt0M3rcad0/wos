@@ -1,5 +1,16 @@
 import { copy } from "./en-US.js";
 export const humanActions = Object.freeze({
+  append_entity_note: { label: copy.text.workspaceAddUpdate, contexts: ["outcome", "objective", "work_item", "issue", "blocker", "evidence", "artifact", "decision", "roadmap", "criterion", "relation", "evidence_link"] },
+  create_plan_items: { label: copy.text.workspaceCreatePlan, contexts: ["outcome", "objective"] },
+  set_work_item_execution_spec: { label: copy.text.workspaceEditExecution, contexts: ["work_item"] },
+  set_work_item_not_before: { label: copy.text.workspaceEditSchedule, contexts: ["work_item"], advanced: true },
+  set_work_item_objective: { label: copy.text.workspaceMoveTask, contexts: ["work_item"], advanced: true },
+  set_objective_parent: { label: copy.text.workspaceMoveObjective, contexts: ["objective"], advanced: true },
+  set_outcome_owners: { label: copy.text.editParticipants, contexts: ["outcome"], advanced: true },
+  set_objective_owners: { label: copy.text.editParticipants, contexts: ["objective"], advanced: true },
+  register_evidence_with_links: { label: copy.text.workspaceAddEvidence, contexts: ["outcome", "objective", "work_item", "issue", "decision", "criterion"] },
+  register_artifact_in_context: { label: copy.text.workspaceAddArtifact, contexts: ["outcome", "objective", "work_item", "issue", "blocker", "decision", "evidence"] },
+  propose_decision_in_context: { label: copy.text.workspaceAddDecision, contexts: ["outcome", "objective", "work_item", "issue", "blocker", "decision", "evidence"] },
   replace_external_context: {
     label: copy.text.editExternalContext,
     contexts: ["outcome"],
@@ -94,7 +105,7 @@ export const humanActions = Object.freeze({
   achieve_objective: {
     label: copy.text.certifyObjective,
     contexts: ["objective"],
-    states: ["in_progress"],
+    states: ["planned", "in_progress"],
   },
   cancel_objective: {
     label: copy.text.cancelObjective,
@@ -136,7 +147,7 @@ export const humanActions = Object.freeze({
     states: ["active"],
     relationType: "depends_on",
   },
-  create_issue: { label: copy.text.reportIssue, contexts: ["outcome"] },
+  create_issue: { label: copy.text.reportIssue, contexts: ["outcome", "objective", "work_item", "artifact", "evidence", "decision"] },
   report_issue_with_blocker: {
     label: copy.text.reportIssueAndBlockWork,
     contexts: ["outcome"],

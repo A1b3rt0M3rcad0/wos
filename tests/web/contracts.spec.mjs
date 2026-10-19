@@ -9,6 +9,13 @@ import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
 
+async function fullContractRecord(page) {
+  const detail = page.locator("#detail-dialog");
+  await detail.locator(".workspace-audit > summary").click();
+  await detail.locator('.workspace-audit [data-action-id="read_full_record"]').click();
+  await expect(detail.locator(".contract-section")).toBeVisible();
+}
+
 test("explicit cutover, contract progress, human review and privileged revocation", async ({
   browser,
 }) => {
@@ -170,6 +177,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       .filter({ hasText: "Implementar fluxo contratual" })
       .first()
       .click();
+    await fullContractRecord(page);
     await expect(
       page.getByText("Active reservation", { exact: true }),
     ).toBeVisible();
@@ -177,7 +185,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       page.getByText("Implementação pronta para avaliação", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByText("Entrega imutável para revisão", { exact: true }),
+      page.locator(".contract-section").getByText("Entrega imutável para revisão", { exact: true }),
     ).toBeVisible();
     await page
       .getByRole("button", { name: "Review submission", exact: true })
@@ -195,6 +203,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       .filter({ hasText: "Implementar fluxo contratual" })
       .first()
       .click();
+    await fullContractRecord(page);
     await page
       .locator(".contract-section details summary")
       .filter({ hasText: "Advanced" })
@@ -213,6 +222,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       .filter({ hasText: "Implementar fluxo contratual" })
       .first()
       .click();
+    await fullContractRecord(page);
     await page.getByText("Contract history", { exact: true }).click();
     await page.getByRole("button").filter({ hasText: "revoked" }).click();
     await expect(

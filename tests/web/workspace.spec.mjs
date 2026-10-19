@@ -388,12 +388,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#content")
       .getByRole("button", { name: /Portal de colaboração/ })
       .click();
-    await expect(page.locator("#detail-content")).toContainText(
-      "Descobrir e planejar",
-    );
-    await expect(page.locator("#detail-content")).toContainText(
-      "Validar com clientes",
-    );
+    await expect(page.locator('#detail-content [data-workspace-facet="roadmap"]')).toContainText("Active revision 1");
     await expect(page.locator("#detail-content pre")).not.toBeVisible();
     await expect(
       page.locator("#detail-actions").getByRole("button", {
@@ -401,6 +396,11 @@ test("workspace summary, scoped list, operational board, pagination and real hum
         exact: true,
       }),
     ).toHaveCount(0);
+    // The canonical inspector loads plan content only after an explicit View
+    // plan action. Verify the actual published nodes on the Board it opens.
+    await page.locator('#detail-content [data-action-id="view_roadmap_revision"]').click();
+    await expect(page.locator('#operational-canvas [data-kind="phase"]').filter({ hasText: "Descobrir e planejar" })).toHaveCount(1);
+    await expect(page.locator('#operational-canvas')).toContainText("Validar com clientes");
     await shot("06-plano");
     await page.keyboard.press("Escape");
     await chooseArea(page, "Plan");

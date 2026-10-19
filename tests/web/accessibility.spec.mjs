@@ -36,8 +36,9 @@ test("axe checks login, six-area overview, common Task form and server combobox"
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Accessible Task");
   await audit(page);
+  await page.getByRole("button", { name: "Change placement", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "Objective", exact: true })
+    .getByRole("combobox", { name: "New placement", exact: true })
     .fill("Accessible");
   await expect(page.locator("[role=option]")).toHaveCount(1);
   await audit(page);
@@ -64,7 +65,8 @@ test("390px mobile creates Outcome and Task with a usable searched reference", a
   await save(page);
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Mobile Task");
-  await pick(page, "Objective", "Mobile condition");
+  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await pick(page, "New placement", "Mobile condition");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -122,7 +124,9 @@ test("keyboard opens, searches, selects, confirms and restores focus without a p
     .focus();
   await page.keyboard.press("Enter");
   await page.getByLabel("Task title", { exact: true }).fill("Keyboard Task");
-  const input = page.getByRole("combobox", { name: "Objective", exact: true });
+  await page.getByRole("button", { name: "Change placement", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
   await page.keyboard.type("Keyboard");
   await expect(page.locator("[role=option]")).toHaveCount(1);
@@ -153,16 +157,14 @@ test("compound Issue resolution explicitly releases selected impacts atomically"
   await wos.login(page);
   await openOutcome(page);
   await detail(page, "Issues", "Compound problem");
-  await page
-    .getByRole("button", {
-      name: "Resolve issue and release selected blockers",
-      exact: true,
-    })
-    .click();
+  await page.locator("#entity-actions").click();
+  await page.locator('#action-options [data-action-id="resolve_issue_and_blockers"]').click();
   await page
     .getByLabel("Issue resolution summary", { exact: true })
     .fill("Verified together");
-  await pick(page, "Blockers to release", "Concrete impact");
+  const impact = page.getByLabel("Affected Task", { exact: true });
+  await expect(impact).not.toBeChecked();
+  await impact.check();
   await page
     .getByLabel("Confirm each selected impact is released", { exact: true })
     .check();
@@ -213,10 +215,8 @@ test("typed participants are documentary and never acquire execution authority",
   await wos.login(page);
   await openOutcome(page);
   await detail(page, "Tasks", "Participant Task");
-  await page.locator(".quick-actions details summary").click();
-  await page
-    .getByRole("button", { name: "Edit participants", exact: true })
-    .click();
+  await page.locator("#entity-actions").click();
+  await page.locator('#action-options [data-action-id="set_work_item_assignees"]').click();
   await page
     .getByRole("button", { name: "Add participant", exact: true })
     .click();

@@ -6,16 +6,21 @@ import { join } from "node:path";
 
 const board = (page) => page.locator("#operational-canvas");
 const panel = (page) => page.locator("#canvas-details");
-const context = (page) => panel(page).locator(".entity-context");
+const context = (page) => panel(page).locator(".workspace-view");
+const facet = (page, name, host = panel(page)) => host.locator(`[data-workspace-facet="${name}"]`);
+const reference = (host, kind, id) => host.locator(`button[data-reference-kind="${kind}"][data-reference-id="${id}"]`);
+const rows = (page, label) => facet(page, "relationships").locator(".workspace-relationship").filter({ has: page.locator(".workspace-relationship-label").filter({ hasText: new RegExp(`^${label}$`) }) });
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const production = [
-  "app.js", "canvas.css", "canvas-context.js", "editorial.css", "en-US.js",
+  "app.js", "canvas.css", "editorial.css", "en-US.js",
   "index.html", "style.css", "colors.css", "workspace-entry.css",
-  "workspace-canvas.js", "workspace-entity-context.js", "workspace-action-menu.js",
+  "workspace-canvas.js", "canvas-data.js", "workspace-card-summary.js", "workspace-board.css",
+  "workspace-view.js", "workspace-view.css", "workspace-inspector.js", "workspace-action-menu.js",
+  "workspace-workflows.css", "workspace-actions.js",
 ];
 const qualified = new WeakMap();
 async function qualify(page, wos) {
-  if (!process.env.WOS_CAPTURE_BOARD_COMMUNICATION) return;
+  if (!process.env.WOS_CAPTURE_WORKSPACE_RELATIONSHIPS) return;
   const assets = await Promise.all(production.map(async (file) => {
     const [response, source] = await Promise.all([
       page.request.get(`${wos.url}/app/${file}`),
@@ -29,7 +34,7 @@ async function qualify(page, wos) {
   qualified.set(page, Object.fromEntries(assets));
 }
 async function capture(page, name, state) {
-  const directory = process.env.WOS_CAPTURE_BOARD_COMMUNICATION;
+  const directory = process.env.WOS_CAPTURE_WORKSPACE_RELATIONSHIPS;
   if (!directory) return;
   expect(qualified.has(page)).toBe(true);
   await mkdir(directory, { recursive: true });
@@ -72,16 +77,16 @@ async function select(page, record, title = record.title || record.name || "Evid
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
   await expect(context(page)).toBeVisible();
 }
-async function group(page, title) {
-  return context(page).locator(".canvas-context-section").filter({
-    has: page.getByRole("heading", { name: title, exact: true }),
-  });
-}
-
 for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844 }]) {
   test(`relationships communicate placement, evidence and real blocking at ${viewport.width} x ${viewport.height}`, async ({ page, wos }) => {
     await page.setViewportSize(viewport);
     const data = await seedCanvas(wos);
+    const criterion = await wos.command("add_criterion", {
+      owner: data.ref("work_item", data.tasks.ready), expected_version: data.tasks.ready.version,
+      title: "The requested result has been independently reviewed", required: true,
+      verification_mode: "evidence_review",
+    });
+    data.tasks.ready.version++;
     const mutations = [], errors = [];
     page.on("request", (request) => {
       if (request.method() === "POST" && request.url().includes("/commands/")) mutations.push(request.url());
@@ -93,75 +98,69 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
     await expect(board(page)).toBeVisible();
 
     await select(page, data.child);
-    await expect(context(page)).toContainText("A verifiable condition within this Outcome");
-    await expect(context(page).getByRole("button", { name: data.outcome.title, exact: true })).toHaveCount(1);
-    await expect(context(page).getByRole("button", { name: data.objective.title, exact: true })).toHaveCount(1);
-    const work = await group(page, "Objectives and Tasks");
-    await expect(work.getByRole("button", { name: data.tasks.ready.title, exact: true })).toHaveCount(1);
+    await expect(panel(page).locator("#detail-kind")).toContainText("Objective");
+    await expect(context(page).locator(".workspace-state")).toContainText("Optional for Outcome");
+    const path = context(page).locator(".workspace-path");
+    await expect(reference(path, "outcome", data.outcome.id)).toHaveCount(1);
+    await expect(reference(path, "objective", data.objective.id)).toHaveCount(1);
+    const work = facet(page, "relationships");
+    await expect(reference(work, "work_item", data.tasks.ready.id)).toHaveCount(1);
+    await expect(work).toContainText("Belongs to");
     await capture(page, `relationships-${viewport.width}x${viewport.height}-objective`,
-      "Objective membership and clickable associated Tasks, with explicit role and direct parent; loaded-only scope");
-    await work.getByRole("button", { name: data.tasks.ready.title, exact: true }).click();
+      "Canonical Objective ownership and bounded, clickable related work, independent from Board loading");
+    await reference(work, "work_item", data.tasks.ready.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
-    await expect(context(page)).toContainText("does not automatically achieve its Objective or Outcome");
-    await expect(context(page).getByRole("button", { name: data.child.title, exact: true })).toHaveCount(1);
-    await expect(panel(page).getByRole("heading", { name: "Outcome and Objective", exact: true })).toHaveCount(0);
-    await expect(panel(page).getByRole("heading", { name: "Task context", exact: true })).toHaveCount(1);
-    await expect(panel(page).locator(".entity-context .canvas-context-section")).toHaveCount(0);
-    const taskEvidence = panel(page).locator(".canvas-task-context .canvas-context-section").filter({
-      has: page.getByRole("heading", { name: "Evidence relationships", exact: true }),
-    });
-    await expect(taskEvidence).toContainText("Supports");
-    await expect(taskEvidence).toContainText("Contradicts");
-    await expect(taskEvidence).toContainText("not an assessment or acceptance decision");
-    const supporting = taskEvidence.locator(".canvas-context-card").filter({
-      has: page.getByText("Supports", { exact: true }),
-    });
-    await supporting.getByRole("button", { name: /^Evidence / }).click();
+    await expect(reference(context(page).locator(".workspace-path"), "objective", data.child.id)).toHaveCount(1);
+    // The old focal detail renderer is gone. The same canonical inspector
+    // exposes every pertinent group without five unrelated tabs.
+    await expect(panel(page).locator(".canvas-task-context")).toHaveCount(0);
+    for (const name of ["work", "people", "attention", "criteria", "delivery", "relationships", "activity"])
+      await expect(facet(page, name)).toHaveCount(1);
+    await expect(facet(page, "work")).toContainText("Perform only the scoped task");
+    await expect(facet(page, "people")).toContainText("Declared responsibility does not grant execution authority");
+    await expect(facet(page, "criteria").locator(`[data-criterion-id="${criterion.id}"]`)).toContainText("Not assessed");
+    await expect(rows(page, "Supports")).toHaveCount(1);
+    await expect(rows(page, "Contradicts")).toHaveCount(1);
+    await expect(rows(page, "Provides context")).toHaveCount(1);
+    await expect(rows(page, "Supports")).toContainText("does not assess a criterion");
+    await reference(rows(page, "Supports"), "evidence", data.evidence[0].id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText("Evidence");
-    await expect(panel(page).locator(".detail-description")).toHaveText(data.evidence[0].description);
-    await expect(context(page)).toContainText("linking it does not verify a criterion");
-    const linked = await group(page, "Evidence relationships");
-    await expect(linked).toContainText("Supports");
-    await expect(linked.getByRole("button", { name: data.tasks.ready.title, exact: true })).toHaveCount(1);
-    await linked.getByRole("button", { name: "Inspect link", exact: true }).click();
-    await expect(context(page)).toContainText("One observation related to one target, with a specific stance");
-    const endpoints = await group(page, "Relationship endpoints");
-    await expect(endpoints).toContainText("Supports");
-    await endpoints.getByRole("button", { name: data.tasks.ready.title, exact: true }).click();
+    await expect(context(page).locator(".detail-description")).toHaveText(data.evidence[0].description);
+    await expect(context(page)).toContainText("A link, an assessment and acceptance are distinct records");
+    await expect(reference(rows(page, "Supports"), "work_item", data.tasks.ready.id)).toHaveCount(1);
+    await rows(page, "Supports").getByRole("button", { name: "Inspect relationship", exact: true }).click();
+    await expect(panel(page).locator("#detail-kind")).toContainText(/evidence.*link/i);
+    await expect(panel(page).locator("#detail-title")).toHaveText("supports");
+    const endpoints = facet(page, "record");
+    await expect(reference(endpoints, "evidence", data.evidence[0].id)).toHaveCount(1);
+    await expect(reference(endpoints, "work_item", data.tasks.ready.id)).toHaveCount(1);
+    await reference(endpoints, "work_item", data.tasks.ready.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(facet(page, "criteria").locator(`[data-criterion-id="${criterion.id}"]`)).toContainText("Not assessed");
 
     await select(page, data.issue);
-    await expect(context(page)).toContainText("a separate Blocker records an actual impediment");
-    const impacts = await group(page, "Problems and blocking");
-    await expect(impacts).toContainText("Affected item · not a blocking statement");
-    await expect(impacts.getByRole("button", { name: data.tasks.blocked.title, exact: true })).toHaveCount(1);
+    await expect(context(page)).toContainText("Only explicit Blockers record an impediment");
+    const impacts = rows(page, "Affects; does not itself block");
+    await expect(reference(impacts, "work_item", data.tasks.blocked.id)).toHaveCount(1);
     await capture(page, `relationships-${viewport.width}x${viewport.height}-issue`,
-      "Issue affected scope is distinct from actual explicit Blocker causation; inspector remains within working stage");
-    // The initial bounded graph need not include the Issue->Blocker cause
-    // edge. Follow the recorded affected Task and its authoritative blocking
-    // response rather than treating omission as proof of no impact.
-    await impacts.getByRole("button", { name: data.tasks.blocked.title, exact: true }).click();
-    await expect(panel(page).getByText("Blocked: Yes", { exact: true })).toHaveCount(1);
-    const blocking = panel(page).locator(".canvas-task-context .canvas-context-section").filter({
-      has: page.getByRole("heading", { name: "Blocking impact", exact: true }),
-    });
-    await blocking.getByRole("button", { name: /^Blocker / }).click();
+      "Issue affected scope remains distinct from explicit Blocker impacts and their recorded causes");
+    await reference(impacts, "work_item", data.tasks.blocked.id).click();
+    await expect(context(page).locator(".workspace-state")).toContainText("Blocked");
+    await expect(facet(page, "attention")).toContainText(/block/i);
+    await reference(rows(page, "Blocks"), "blocker", data.blocker.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText("Blocker");
-    const blocker = await group(page, "Problems and blocking");
-    await expect(blocker).toContainText("Blocks");
-    await expect(blocker).toContainText("Recorded cause");
-    await expect(blocker.getByRole("button", { name: data.issue.title, exact: true })).toHaveCount(1);
-    await blocker.getByRole("button", { name: data.tasks.blocked.title, exact: true }).click();
-    await expect(panel(page).getByText("Blocked: Yes", { exact: true })).toHaveCount(1);
+    await expect(context(page)).toContainText("Evidence belongs to the cause or affected work");
+    await expect(rows(page, "Cause of impediment")).toHaveCount(1);
+    await expect(reference(rows(page, "Cause of impediment"), "issue", data.issue.id)).toHaveCount(1);
+    await reference(rows(page, "Blocks"), "work_item", data.tasks.blocked.id).click();
+    await expect(context(page).locator(".workspace-state")).toContainText("Blocked");
 
     await select(page, data.evidence[0]);
-    const trigger = panel(page).locator("#entity-actions");
-    await trigger.scrollIntoViewIfNeeded();
-    await trigger.click();
+    await panel(page).locator('#entity-actions').click();
     await expect(panel(page).locator(".canvas-inspector-actions")).toBeVisible();
     await expect(panel(page).locator("#action-options")).toContainText("Evidence");
     await capture(page, `relationships-${viewport.width}x${viewport.height}-actions`,
-      "Compact available actions for the selected Evidence with context and consequence descriptions, without viewport-filling tiles");
+      "Compact contextual actions retain the selected Evidence and its documentary consequences");
     await page.keyboard.press("Escape");
     await expect(panel(page).locator(".canvas-inspector-detail")).toBeVisible();
     expect(await page.evaluate(() => ({
@@ -172,27 +171,37 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
     expect(response.state.is_blocked).toBe(true);
     const issue = await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/issues/${data.issue.id}`);
     expect(issue.value.lifecycle).toBe("open");
+    const owner = await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${data.tasks.ready.id}`);
+    expect(owner.value.criteria.current_assessments || {}).toEqual({});
+    expect((await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/objectives/${data.child.id}`)).value.lifecycle).toBe("planned");
     expect(mutations).toEqual([]);
     expect(errors).toEqual([]);
   });
 }
 
-test("specialist entity details explain direct recorded scope without claiming a loaded Board index", async ({ page, wos }) => {
+test("specialist entity details use the same canonical relationships without depending on a loaded Board index", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
   await wos.login(page);
-  await openOutcome(page, data.outcome.title);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await select(page, data.issue);
+  const boardMeaning = await context(page).locator(".workspace-meaning").textContent();
+  const boardImpact = await rows(page, "Affects; does not itself block").textContent();
+  await panel(page).locator("#close-detail").click();
   await chooseArea(page, "issues");
   await page.locator("#content").getByRole("button").filter({ hasText: data.issue.title }).first().click();
   const detail = page.locator("#detail-dialog");
   await expect(detail).toBeVisible();
-  const summary = detail.locator(".entity-context");
-  await expect(summary).toContainText("Affected item · not a blocking statement");
-  await summary.getByText("Loaded connections and coverage", { exact: true }).click();
-  await expect(summary).toContainText("The Board connection index is not included here");
-  await expect(summary.getByRole("button", { name: data.tasks.blocked.title, exact: true })).toHaveCount(1);
+  const view = detail.locator(".workspace-view");
+  await expect(view.locator(".workspace-meaning")).toHaveText(boardMeaning);
+  const affected = facet(page, "relationships", detail).locator(".workspace-relationship").filter({
+    has: page.locator(".workspace-relationship-label").filter({ hasText: /^Affects; does not itself block$/ }),
+  });
+  await expect(affected).toHaveText(boardImpact);
+  await expect(reference(affected, "work_item", data.tasks.blocked.id)).toHaveCount(1);
+  await expect(detail.locator(".entity-context, .canvas-task-context")).toHaveCount(0);
 });
 
-test("a late bounded graph expansion refreshes actual Objective connections without losing focus or disclosure state", async ({ page, wos }) => {
+test("a late bounded graph expansion preserves coherent relationship pages, keyboard focus and disclosure state", async ({ page, wos }) => {
   const data = await seedCanvas(wos, { extraTasks: 35 });
   for (const task of data.additional.slice(0, 30))
     await wos.command("add_dependency", {
@@ -207,8 +216,8 @@ test("a late bounded graph expansion refreshes actual Objective connections with
   const match = "**/graph?**";
   await page.route(match, async (route) => {
     const parameters = new URL(route.request().url()).searchParams;
-    if (parameters.get("root_kind") !== "objective" ||
-      parameters.get("root_id") !== data.objective.id) return route.continue();
+    if (parameters.get("root_kind") !== "objective" || parameters.get("root_id") !== data.objective.id)
+      return route.continue();
     held = true;
     try {
       const response = await route.fetch();
@@ -216,9 +225,7 @@ test("a late bounded graph expansion refreshes actual Objective connections with
       arrived();
       await gate;
       await route.fulfill({ response });
-    } finally {
-      finished();
-    }
+    } finally { finished(); }
   });
   const mutations = [];
   page.on("request", (request) => {
@@ -229,26 +236,27 @@ test("a late bounded graph expansion refreshes actual Objective connections with
     await openOutcome(page, data.outcome.title, { area: null });
     await select(page, data.objective);
     await seen;
-    const dependencies = await group(page, "Dependencies");
-    const originalCount = await dependencies.locator(".canvas-context-card").count();
+    const relationships = facet(page, "relationships");
+    const originalCount = await relationships.locator(".workspace-relationship").count();
     expect(originalCount).toBeGreaterThan(4);
     expect(originalCount).toBeLessThan(30);
-    for (const id of ["PlanWork", "Dependencies", "coverage"]) {
-      const disclosure = context(page).locator(`details[data-entity-context-section="${id}"]`);
-      await disclosure.locator(":scope > summary").click();
-      await expect(disclosure).toHaveAttribute("open", "");
-    }
-    const focused = dependencies.getByRole("button", { name: "Inspect link", exact: true }).first();
+    await expect(relationships).toContainText("Partial view of this information");
+    const audit = context(page).locator(".workspace-audit");
+    await audit.locator(":scope > summary").click();
+    await expect(audit).toHaveAttribute("open", "");
+    const focused = relationships.getByRole("button", { name: "Inspect relationship", exact: true }).first();
     await focused.focus();
-    const identity = await focused.getAttribute("data-entity-context-ref");
     await expect(focused).toBeFocused();
     release();
     await done;
-    await expect(dependencies.locator(".canvas-context-card")).toHaveCount(30);
-    for (const id of ["PlanWork", "Dependencies", "coverage"])
-      await expect(context(page).locator(`details[data-entity-context-section="${id}"]`)).toHaveAttribute("open", "");
-    await expect(context(page).locator(`[data-entity-context-ref="${identity}"]`)).toBeFocused();
-    await expect(dependencies).toContainText("Advisory dependency");
+    // Graph exploration enriches the Board only. It must neither splice a
+    // separate snapshot into the inspector nor steal an established focus.
+    await expect(relationships.locator(".workspace-relationship")).toHaveCount(originalCount);
+    await expect(audit).toHaveAttribute("open", "");
+    await expect(focused).toBeFocused();
+    await expect(relationships).toContainText("Advisory dependency");
+    await relationships.locator('[data-action-id="load_more_relationships"]').click();
+    await expect.poll(() => relationships.locator(".workspace-relationship").count()).toBeGreaterThan(originalCount);
     expect(mutations).toEqual([]);
   } finally {
     release();

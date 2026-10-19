@@ -118,7 +118,7 @@ test("Dismissing global Outcome actions preserves the selected Evidence and its 
   await expect(menu(page).locator(".action-context")).toContainText("Evidence");
   expect(await menu(page).getByRole("button").evaluateAll((elements) => elements
     .map((element) => element.getAttribute("aria-label")).sort(),
-  )).toEqual(["Link evidence", "Retract evidence"]);
+  )).toEqual(["Add artifact here", "Link evidence", "Propose decision here", "Record an update", "Report issue", "Retract evidence"]);
   await page.keyboard.press("Escape");
 
   await page.locator("#actions").click();

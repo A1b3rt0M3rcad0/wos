@@ -234,6 +234,7 @@ test("connection filters preserve selected documentary context and distinct unkn
     /strength not loaded/,
   );
   assert.match(canvasEdgeLabel(edges[1]), /advisory/);
+  assert.match(canvasEdgeLabel({ kind: "depends_on", mode: "hard", label: "Generic connection" }), /^Depends on.*hard/);
   assert.match(canvasEdgeLabel(edges[3]), /Plan order/);
 });
 

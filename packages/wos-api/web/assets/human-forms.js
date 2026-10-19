@@ -8,6 +8,11 @@ import { el, inputField, listField, details } from "./ui.js";
 import { display } from "./presentation.js";
 import { referencePicker, referenceKinds } from "./reference-picker.js";
 import { roadmapEditor, roadmapDiff } from "./roadmap-editor.js";
+import {
+  criteriaEditor, criterionModes, executionSpecEditor, localDateTime, placementField,
+} from "./workspace-form-fields.js";
+import { planEditor } from "./workspace-plan-editor.js";
+import { contextualEvidenceForm } from "./workspace-evidence-form.js";
 const priority = ["normal", "high", "critical", "low"].map((x) => [
   x,
   display(x),
@@ -23,6 +28,13 @@ export function humanForm(
     protocol,
     submission,
     contractView,
+    mode = "full",
+    contextTitle,
+    outcomeTitle,
+    eligibility,
+    workspaceView,
+    batchKind = "work_item",
+    note,
   },
 ) {
   const node = el("div", undefined, "human-form"),
@@ -32,6 +44,7 @@ export function humanForm(
     disposers = [];
   const kind = entity._kind || "outcome";
   const ref = { ...scope, kind, id: entity.id || scope.outcome_id };
+  let commandName = () => name;
   function f(key, label, options = {}) {
     const field = inputField(label, options);
     node.append(field.node);
@@ -58,6 +71,21 @@ export function humanForm(
     if (k !== "outcome") fixed[`${k}_id`] = entity.id;
     fixed.expected_version = entity.version;
   }
+  function exactObservedVersion() {
+    const value = workspaceView?.entity_version ?? entity.version;
+    if (typeof value === "string" && /^[1-9][0-9]*$/.test(value)) return value;
+    if (Number.isSafeInteger(value) && value > 0) return String(value);
+    throw Error(copy.text.formReviewTargets);
+  }
+  function observeStructurePreview() {
+    const value = workspaceView?.outcome_revision;
+    if (value === undefined) return;
+    if (typeof value === "string" && /^[0-9]+$/.test(value))
+      fixed.expected_outcome_revision = value;
+    else if (Number.isSafeInteger(value) && value >= 0)
+      fixed.expected_outcome_revision = String(value);
+    else throw Error(copy.text.formReviewTargets);
+  }
   function title(label = copy.text.title, value) {
     f("title", label, { required: true, value });
   }
@@ -70,6 +98,36 @@ export function humanForm(
   function criteriaOwner() {
     fixed.owner = ref;
     fixed.expected_version = entity.version;
+  }
+  function initialCriteria(parent = node) {
+    const editor = criteriaEditor();
+    parent.append(editor.node);
+    getters.initial_criteria = () => {
+      const value = editor.get();
+      return value.length ? value : undefined;
+    };
+  }
+  function placement(key, parent, label) {
+    const creating = name === "create_objective" || name === "create_work_item";
+    const editor = placementField({
+      scope, request, parent, label, outcomeTitle,
+      title: creating && kind === "objective" ? entity.title
+        : workspaceView?.placement?.parent?.title || workspaceView?.placement?.objective?.title,
+      allowChange: mode !== "quick",
+    });
+    node.append(editor.node);
+    getters[key] = editor.get;
+    disposers.push(editor.dispose);
+  }
+  function contextualTarget(label = copy.text.formCurrentPlacement) {
+    const node = el("p", undefined, "field-context");
+    node.append(el("small", label), el("strong", contextTitle || entity.title || entity.name || display(kind)));
+    return node;
+  }
+  function nestFields(key, names) {
+    const fields = names.map((name) => [name, getters[name]]).filter(([, get]) => get);
+    for (const [name] of fields) delete getters[name];
+    getters[key] = () => Object.fromEntries(fields.map(([name, get]) => [name, get()]));
   }
   const help = el("p", undefined, "flow-help");
   node.append(help);
@@ -88,6 +146,14 @@ export function humanForm(
       getters.assignee_refs = editor.get;
       break;
     }
+    case "set_outcome_owners":
+    case "set_objective_owners": {
+      id(kind);
+      const editor = participantEditor(entity.owner_refs || []);
+      node.append(editor.node);
+      getters.owner_refs = editor.get;
+      break;
+    }
 
     case "create_outcome":
       delete fixed.scope;
@@ -97,7 +163,8 @@ export function humanForm(
         type: "textarea",
         required: true,
       });
-      description();
+      a("description", copy.text.description, { type: "textarea" });
+      initialCriteria();
       a("priority", copy.text.priority, { options: priority, value: "normal" });
       help.textContent = copy.text.anOutcomeIsAResultToVerifySaveA;
       break;
@@ -115,22 +182,24 @@ export function humanForm(
         value: entity.priority,
       });
       break;
-    case "create_objective":
+    case "create_objective": {
       title(copy.text.objectiveTitle);
-      description();
-      p("parent_objective_id", copy.text.parentObjective, ["objective"], {
-        ids: true,
-        initial: kind === "objective" ? [ref] : [],
-      });
+      placement("parent_objective_id", kind === "objective" ? entity.id : null);
       f("required_for_outcome", copy.text.requiredForOutcome, {
         type: "checkbox",
-        value: false,
-        help: copy.text.thisObjectiveMustBeAchievedBeforeTheOutcomeCan,
+        value: true,
+        help: copy.text.formRequiredOutcomeHelp,
       });
+      const extra = details(copy.text.formDetails);
+      const text = f("description", copy.text.description, { type: "textarea" });
+      extra.append(text.node);
+      initialCriteria(extra);
+      node.append(extra);
       a("priority", copy.text.priority, { options: priority, value: "normal" });
       help.textContent =
         copy.text.anObjectiveDescribesAnIntermediateConditionNotAnExecution;
       break;
+    }
     case "update_objective":
       id();
       title(copy.text.objectiveTitle, entity.title);
@@ -146,53 +215,32 @@ export function humanForm(
       break;
     case "create_work_item": {
       title(copy.text.taskTitle);
-      description();
-      p("objective_id", copy.text.objective, ["objective"], {
-        ids: true,
-        initial: kind === "objective" ? [ref] : [],
-      });
-      const settings = el("div", undefined, "field-row");
-      const taskPriority = f("priority", copy.text.priority, {
+      placement("objective_id", kind === "objective" ? entity.id : null);
+      node.append(el("p", copy.text.formPlannedTask, "status-badge"),
+        el("p", copy.text.formPlannedTaskHelp, "field-help"));
+      const extra = details(copy.text.formDetails);
+      const text = f("description", copy.text.description, { type: "textarea" });
+      extra.append(text.node);
+      initialCriteria(extra);
+      const taskPriority = a("priority", copy.text.priority, {
         options: priority,
         value: "normal",
       });
-      const lifecycle = f("lifecycle", copy.text.initialState, {
-        options: [
-          ["todo", copy.text.toDo],
-          ["backlog", copy.text.backlog],
-        ],
-        value: "todo",
-        help: copy.text.toDoCanBecomeReadyWhenTheOutcomeDependencies,
-      });
-      settings.append(taskPriority.node, lifecycle.node);
-      node.append(settings);
-      const spec = details(copy.text.executionInstructions);
-      const lists = {};
-      for (const [key, label] of Object.entries({
-        instructions: copy.text.instructions,
-        constraints: copy.text.constraints,
-        deliverables: copy.text.deliverables,
-        scope_hints: copy.text.scopeHints,
-      })) {
-        const list = listField(label);
-        spec.append(list.node);
-        lists[key] = list.get;
+      extra.append(taskPriority.node);
+      fixed.lifecycle = "backlog";
+      if (mode !== "quick") {
+        const available = inputField(copy.text.formCreateAvailable, {
+          type: "checkbox", value: false, help: copy.text.formCreateAvailableHelp,
+        });
+        advanced.append(available.node);
+        getters.lifecycle = () => available.get() ? "todo" : "backlog";
       }
-      const context = referencePicker({
-        label: copy.text.contextReferences,
-        kinds: referenceKinds,
-        scope,
-        request,
-        multiple: true,
-      });
-      spec.append(context.node);
-      lists.context_refs = context.get;
-      disposers.push(context.dispose);
-      node.append(spec);
+      const spec = executionSpecEditor({ scope, request });
+      extra.append(spec.node);
+      disposers.push(spec.dispose);
+      node.append(extra);
       getters.execution_spec = () => {
-        const value = Object.fromEntries(
-          Object.entries(lists).map(([k, get]) => [k, get()]),
-        );
+        const value = spec.get();
         return Object.values(value).some((v) => v.length) ? value : undefined;
       };
       const date = a("not_before", copy.text.scheduledStartLocalTime, {
@@ -203,6 +251,45 @@ export function humanForm(
         date.get() ? new Date(date.get()).toISOString() : undefined;
       help.textContent =
         copy.text.aTaskDescribesBoundedWorkCompletingItNeverCertifies;
+      break;
+    }
+    case "create_plan_items": {
+      const editor = planEditor({
+        kind: batchKind, parent: kind === "objective" ? entity.id : undefined,
+        parentTitle: contextTitle || entity.title, outcomeTitle,
+      });
+      node.append(editor.node);
+      getters.items = editor.get;
+      break;
+    }
+    case "set_work_item_execution_spec": {
+      id("work_item");
+      fixed.expected_version = exactObservedVersion();
+      const editor = executionSpecEditor({ initial: entity.execution_spec, scope, request });
+      node.append(editor.node);
+      getters.execution_spec = editor.get;
+      disposers.push(editor.dispose);
+      help.textContent = copy.text.formReplaceSpecHelp;
+      break;
+    }
+    case "set_work_item_not_before": {
+      id("work_item");
+      fixed.expected_version = exactObservedVersion();
+      const date = f("not_before", copy.text.scheduledStartLocalTime, {
+        type: "datetime-local", value: localDateTime(entity.not_before),
+      });
+      getters.not_before = () => date.get() ? new Date(date.get()).toISOString() : null;
+      help.textContent = copy.text.formClearDateHelp;
+      break;
+    }
+    case "set_work_item_objective":
+    case "set_objective_parent": {
+      id(kind);
+      fixed.expected_version = exactObservedVersion();
+      observeStructurePreview();
+      const key = kind === "work_item" ? "objective_id" : "parent_objective_id";
+      placement(key, entity[key] || null, copy.text.formPreviousPlacement);
+      help.textContent = kind === "work_item" ? copy.text.formMoveTaskHelp : copy.text.formMoveObjectiveHelp;
       break;
     }
     case "update_work_item":
@@ -217,18 +304,11 @@ export function humanForm(
     case "add_criterion":
       criteriaOwner();
       delete fixed.scope;
-      title(copy.text.criterionTitle);
+      title(copy.text.formSuccessQuestion);
       description();
       f("required", copy.text.required, { type: "checkbox", value: true });
       f("verification_mode", copy.text.howWillItBeVerified, {
-        options: [
-          ["attestation", copy.text.attestationAuthorizedDeclaration],
-          ["evidence_review", copy.text.evidenceReviewAssessRegisteredProof],
-          [
-            "external_evaluation",
-            copy.text.externalEvaluationIndependentEvaluator,
-          ],
-        ],
+        options: criterionModes(), value: "evidence_review",
       });
       help.textContent =
         copy.text.requiredCriteriaMustBeAssessedBeforeAnExplicitConclusion;
@@ -248,11 +328,7 @@ export function humanForm(
         });
         f("verification_mode", copy.text.howWillItBeVerified, {
           value: criterion.verification_mode,
-          options: [
-            ["attestation", copy.text.attestation],
-            ["evidence_review", copy.text.evidenceReview],
-            ["external_evaluation", copy.text.externalEvaluation],
-          ],
+          options: criterionModes(),
         });
       }
       reason();
@@ -311,6 +387,41 @@ export function humanForm(
           version: version.get(),
         });
       }
+      break;
+    }
+    case "append_entity_note": {
+      fixed.subject_ref = ref;
+      if (criterion?.id) fixed.criterion_id = criterion.id;
+      if (note?.id) fixed.supersedes_note_id = note.id;
+      node.append(contextualTarget());
+      f("type", copy.text.formNoteKind, {
+        options: [
+          ["update", copy.text.formNoteUpdate], ["discovery", copy.text.formNoteDiscovery],
+          ["observation", copy.text.formNoteObservation],
+        ], value: note?.type || "update",
+      });
+      const body = f("body", copy.text.formNoteBody, {
+        type: "textarea", required: true, value: note?.body,
+      });
+      body.input.rows = 5;
+      getters.body = () => {
+        const value = body.get();
+        if (new TextEncoder().encode(value || "").length > 16384)
+          throw Error(copy.text.formNoteLimit);
+        return value;
+      };
+      const occurred = a("occurred_at", copy.text.formOccurredAt, {
+        type: "datetime-local", value: localDateTime(note?.occurred_at),
+      });
+      getters.occurred_at = () => occurred.get() ? new Date(occurred.get()).toISOString() : undefined;
+      for (const [key, label, recordKind] of [
+        ["artifact_refs", copy.text.formReferencedArtifacts, "artifact"],
+        ["evidence_refs", copy.text.formReferencedEvidence, "evidence"],
+      ]) {
+        const picker = p(key, label, [recordKind], { multiple: true, ids: true });
+        advanced.append(picker.node);
+      }
+      help.textContent = copy.text.formNoteHelp;
       break;
     }
     case "register_evidence": {
@@ -374,10 +485,33 @@ export function humanForm(
         copy.text.registerAnObservationHereAssessASuccessCriterionSeparately;
       break;
     }
+    case "register_evidence_with_links": {
+      const editor = contextualEvidenceForm({ scope, entity, criterion, request,
+        contextTitle, eligibility: eligibility || workspaceView?.eligibility });
+      node.append(editor.node);
+      getters._editor = editor.get;
+      disposers.push(editor.dispose);
+      break;
+    }
     case "register_artifact":
+    case "register_artifact_in_context":
+      if (name === "register_artifact_in_context") {
+        fixed.subject_ref = ref;
+        node.append(contextualTarget());
+        f("relationship", copy.text.formContextLink, {
+          options: [
+            ["relates_to", copy.text.formContextArtifact],
+            ...(["outcome", "objective", "work_item"].includes(kind)
+              ? [["produces", copy.text.formProducedArtifact]] : []),
+          ], value: "relates_to",
+        });
+        help.textContent = copy.text.formContextRecordHelp;
+      }
       f("name", copy.text.artifactName, { required: true });
       f("artifact_type", copy.text.artifactType, { required: true });
       f("uri", "URL", { type: "url", required: true });
+      if (name === "register_artifact_in_context")
+        nestFields("artifact", ["name", "artifact_type", "uri"]);
       break;
     case "create_evidence_link":
       fixed.evidence_id = kind === "evidence" ? entity.id : undefined;
@@ -386,24 +520,35 @@ export function humanForm(
           ids: true,
           required: true,
         });
-      p(
-        "target_ref",
-        copy.text.relatedItem,
-        ["outcome", "objective", "work_item", "issue", "blocker"],
-        { required: true },
-      );
+      {
+        const kinds = eligibility?.evidence_link_target_kinds
+          || workspaceView?.eligibility?.evidence_link_target_kinds || [];
+        if (kinds.includes(kind)) {
+          fixed.target_ref = ref;
+          node.append(contextualTarget(copy.text.relatedItem));
+          if (criterion?.id) fixed.criterion_id = criterion.id;
+        } else {
+          const picker = p("target_ref", copy.text.relatedItem, kinds, { required: true });
+          if (!kinds.length) node.append(el("p", copy.text.formEvidenceTargetsUnavailable, "field-help"));
+          getters.target_ref = () => {
+            if (!kinds.length) throw Error(copy.text.formEvidenceTargetsUnavailable);
+            return picker.get();
+          };
+        }
+      }
       f("stance", copy.text.evidenceStance, {
         options: ["supports", "contradicts", "context"].map((x) => [
           x,
-          x === "context" ? "Context" : display(x),
+          x === "context" ? copy.text.formEvidenceContext : display(x),
         ]),
+        value: criterion ? "supports" : "context",
       });
       f("rationale", copy.text.rationale, { required: true, type: "textarea" });
       help.textContent =
         copy.text.linkingEvidenceRecordsARelationshipItDoesNotAssess;
       break;
     case "create_issue":
-    case "report_issue_with_blocker":
+    case "report_issue_with_blocker": {
       title(copy.text.issueTitle);
       description();
       f("severity", copy.text.severity, {
@@ -412,42 +557,70 @@ export function humanForm(
           display(x),
         ]),
       });
-      p(
-        "affected_refs",
-        copy.text.affectedItems,
-        ["outcome", "objective", "work_item"],
-        { multiple: true },
-      );
-      if (name === "report_issue_with_blocker") {
-        p(
-          "blocked_ref",
-          copy.text.blockedItem,
-          ["outcome", "objective", "work_item"],
-          { required: true },
-        );
-        f("blocker_description", copy.text.blockingImpact, {
-          required: true,
-          type: "textarea",
-        });
-        f("propagation", copy.text.propagation, {
-          options: [
-            ["direct", copy.text.onlyThisItem],
-            ["subtree", copy.text.thisItemAndItsDescendants],
-          ],
-        });
+      const isContextual = ["outcome", "objective", "work_item"].includes(kind);
+      if (isContextual) {
+        node.append(contextualTarget(copy.text.affectedItems));
+        fixed.affected_refs = [ref];
+      } else p("affected_refs", copy.text.affectedItems,
+        ["outcome", "objective", "work_item"], { multiple: true });
+      const blocks = f("_blocks", copy.text.formPreventsContinuing, {
+        type: "checkbox", value: name === "report_issue_with_blocker",
+      });
+      const impact = el("section", undefined, "nested-editor workspace-issue-impact");
+      let target;
+      if (!isContextual) {
+        target = p("_blocked_ref", copy.text.blockedItem,
+          ["outcome", "objective", "work_item"]);
+        impact.append(target.node);
       }
-      help.textContent =
-        name === "create_issue"
-          ? copy.text.anIssueRecordsAProblemItDoesNotBlock
-          : copy.text.thisExplicitCompoundActionReportsAProblemAndA;
+      const impactDescription = inputField(copy.text.blockingImpact, { type: "textarea" });
+      const propagation = inputField(copy.text.propagation, { options: [] });
+      const propagationMessage = el("p", undefined, "field-help");
+      impact.append(impactDescription.node, propagation.node, propagationMessage);
+      node.append(impact);
+      const propagationByKind = eligibility?.blocker_propagation
+        || workspaceView?.eligibility?.blocker_propagation;
+      function updateImpact() {
+        const blockedKind = isContextual ? kind : target?.get()?.kind;
+        const allowed = propagationByKind?.[blockedKind] || [];
+        const previous = propagation.get();
+        propagation.input.replaceChildren(...allowed.map((value) =>
+          Object.assign(el("option", value === "direct" ? copy.text.onlyThisItem
+            : copy.text.thisItemAndItsDescendants), { value })));
+        if (allowed.includes(previous)) propagation.input.value = previous;
+        propagationMessage.textContent = allowed.length ? "" : copy.text.formPropagationUnavailable;
+        impact.hidden = !blocks.get();
+        impact.inert = !blocks.get();
+        impactDescription.input.required = blocks.get();
+        propagation.input.required = blocks.get();
+      }
+      blocks.input.addEventListener("change", updateImpact);
+      target?.node.addEventListener("click", updateImpact);
+      target?.node.addEventListener("keydown", () => queueMicrotask(updateImpact));
+      updateImpact();
+      commandName = () => blocks.get() ? "report_issue_with_blocker" : "create_issue";
+      getters.blocked_ref = () => blocks.get() ? isContextual ? ref : target.get() : undefined;
+      getters.blocker_description = () => blocks.get() ? impactDescription.get() : undefined;
+      getters.propagation = () => {
+        if (!blocks.get()) return undefined;
+        const blockedKind = isContextual ? kind : target?.get()?.kind;
+        if (!propagationByKind?.[blockedKind]?.includes(propagation.get()))
+          throw Error(copy.text.formPropagationUnavailable);
+        return propagation.get();
+      };
+      help.textContent = copy.text.formIssueContextHelp;
+      if (["done", "achieved", "cancelled", "failed", "abandoned"].includes(entity.lifecycle))
+        node.append(el("p", copy.text.formIssueTerminalHelp, "field-help"));
       break;
-    case "create_blocker":
-      p(
-        "blocked_ref",
-        copy.text.blockedItem,
-        ["outcome", "objective", "work_item"],
-        { required: true, initial: kind === "work_item" ? [ref] : [] },
-      );
+    }
+    case "create_blocker": {
+      const byKind = eligibility?.blocker_propagation || workspaceView?.eligibility?.blocker_propagation || {};
+      const contextual = Object.hasOwn(byKind, kind);
+      let picker;
+      if (contextual) {
+        fixed.blocked_ref = ref;
+        node.append(contextualTarget(copy.text.blockedItem));
+      } else picker = p("blocked_ref", copy.text.blockedItem, Object.keys(byKind), { required: true });
       description();
       p("cause_ref", copy.text.blockingCause, [
         "issue",
@@ -455,14 +628,32 @@ export function humanForm(
         "objective",
         "decision",
       ]);
-      f("propagation", copy.text.propagation, {
-        options: [
-          ["direct", copy.text.onlyThisItem],
-          ["subtree", copy.text.thisItemAndItsDescendants],
-        ],
-      });
+      const propagation = f("propagation", copy.text.propagation, { options: [] });
+      const warning = el("p", undefined, "field-help");
+      node.append(warning);
+      function selectedKind() {
+        try { return contextual ? kind : picker?.get()?.kind; } catch { return undefined; }
+      }
+      function syncPropagation() {
+        const previous = propagation.get();
+        const values = byKind[selectedKind()] || [];
+        propagation.input.replaceChildren(...values.map((value) =>
+          Object.assign(el("option", value === "direct" ? copy.text.onlyThisItem
+            : copy.text.thisItemAndItsDescendants), { value })));
+        if (values.includes(previous)) propagation.input.value = previous;
+        warning.textContent = values.length ? "" : copy.text.formPropagationUnavailable;
+      }
+      picker?.node.addEventListener("click", syncPropagation);
+      picker?.node.addEventListener("keydown", () => queueMicrotask(syncPropagation));
+      syncPropagation();
+      getters.propagation = () => {
+        if (!byKind[selectedKind()]?.includes(propagation.get()))
+          throw Error(copy.text.formPropagationUnavailable);
+        return propagation.get();
+      };
       help.textContent = copy.text.aBlockerRecordsImpactOnWorkResolvingItsIssue;
       break;
+    }
     case "update_issue":
       id();
       title(copy.text.issueTitle, entity.title);
@@ -503,10 +694,71 @@ export function humanForm(
         required: true,
         type: "textarea",
       });
-      const picker = p("_blockers", copy.text.blockersToRelease, ["blocker"], {
-        multiple: true,
-        lifecycle: "active",
-      });
+      const contextBlockers = [];
+      const known = new Set();
+      const refs = (workspaceView?.relationships?.items || [])
+        .filter((edge) => edge.kind === "causes" && edge.source_ref?.kind === "issue"
+          && edge.source_ref.id === entity.id && edge.target_ref?.kind === "blocker"
+          && edge.target_ref.namespace_id === scope.namespace_id
+          && edge.target_ref.outcome_id === scope.outcome_id)
+        .map((edge) => edge.target_ref).filter((ref) => {
+          if (known.has(ref.id)) return false;
+          known.add(ref.id); return true;
+        }).slice(0, 20);
+      const contextList = el("section", undefined, "workspace-release-impacts");
+      contextList.append(el("h3", copy.text.blockersToRelease));
+      node.append(contextList);
+      let disposed = false;
+      const controller = new AbortController();
+      disposers.push(() => { disposed = true; controller.abort(); });
+      const headings = workspaceView?.relationships?.nodes || [];
+      for (const ref of refs) {
+        const entry = { loading: true };
+        contextBlockers.push(entry);
+        const status = el("p", copy.text.formImpactLoading, "field-help");
+        status.setAttribute("role", "status");
+        contextList.append(status);
+        (async () => {
+          try {
+            const response = await request(`/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/blockers/${ref.id}`, { signal: controller.signal });
+            const blocker = response.value || response;
+            if (disposed) return;
+            if (blocker.cause_ref?.kind !== "issue" || blocker.cause_ref.id !== entity.id
+              || blocker.scope?.namespace_id !== scope.namespace_id || blocker.scope?.outcome_id !== scope.outcome_id)
+              throw Error(copy.text.selectOnlyBlockersCausedByThisIssue);
+            entry.blocker = blocker;
+            entry.loading = false;
+            if (blocker.lifecycle !== "active") { status.remove(); return; }
+            const target = blocker.blocked_ref;
+            let title = headings.find((value) => value.ref?.kind === target.kind && value.ref.id === target.id)?.title;
+            if (!title) {
+              const query = new URLSearchParams({ kind: target.kind, id: target.id, limit: "1" });
+              const matches = await request(`/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/references?${query}`, { signal: controller.signal });
+              if (disposed) return;
+              title = matches.items?.find((value) => value.ref?.id === target.id)?.title;
+            }
+            const field = inputField(title || copy.text.blockedItem, { type: "checkbox", value: false,
+              help: blocker.description });
+            entry.field = field;
+            status.replaceWith(field.node);
+          } catch (error) {
+            if (disposed) return;
+            entry.loading = false;
+            entry.error = error;
+            status.textContent = error.message;
+          }
+        })();
+      }
+      if (!refs.length) contextList.append(el("p", copy.text.formNoContextImpacts, "field-help"));
+      const partial = !workspaceView || workspaceView.coverage?.relationships?.status !== "complete";
+      let picker;
+      if (partial) {
+        contextList.append(el("p", copy.text.formMoreImpactsMayExist, "field-help"));
+        picker = p("_blockers", copy.text.blockersToRelease, ["blocker"], {
+          multiple: true, lifecycle: "active",
+        });
+        advanced.append(picker.node);
+      }
       const confirmed = f(
         "_confirmed",
         copy.text.confirmEachSelectedImpactIsReleased,
@@ -514,18 +766,23 @@ export function humanForm(
           type: "checkbox",
         },
       );
-      getters.blockers = async () => []; // get below resolves versions on an authorized read.
       getters.blockers = () => {
         if (!confirmed.get())
           throw Error(copy.text.confirmTheBlockingImpactsAreReleased);
-        return picker.get().map((r) => ({
+        if (contextBlockers.some((entry) => entry.loading)) throw Error(copy.text.formImpactLoading);
+        const selected = new Map(contextBlockers.filter((entry) => entry.field?.get())
+          .map((entry) => [entry.blocker.id, { blocker_id: entry.blocker.id,
+            expected_version: entry.blocker.version,
+            resolution_summary: getters.issue_resolution_summary(), release_confirmed: true }]));
+        for (const item of (picker?.get() || []).map((r) => ({
           blocker_id: r.id,
           expected_version: picker
             .getCandidates()
             .find((c) => c.ref.id === r.id)?.version,
           resolution_summary: getters.issue_resolution_summary(),
           release_confirmed: true,
-        }));
+        }))) selected.set(item.blocker_id, item);
+        return [...selected.values()];
       };
       help.textContent =
         copy.text.thisExplicitlyResolvesTheIssueAndTheSelectedBlockers;
@@ -632,6 +889,12 @@ export function humanForm(
         "Remove this dependency with an explicit reason. Its source and target remain unchanged. The server checks the relation version and source lifecycle.";
       break;
     case "propose_decision":
+    case "propose_decision_in_context":
+      if (name === "propose_decision_in_context") {
+        fixed.subject_ref = ref;
+        node.append(contextualTarget());
+        help.textContent = copy.text.formContextRecordHelp;
+      }
       title(copy.text.decisionTitle);
       f("proposal", copy.text.proposal, { type: "textarea", required: true });
       f("chosen_alternative", copy.text.chosenAlternative, { required: true });
@@ -639,6 +902,8 @@ export function humanForm(
       const alternatives = listField(copy.text.alternatives);
       node.append(alternatives.node);
       getters.alternatives = alternatives.get;
+      if (name === "propose_decision_in_context")
+        nestFields("decision", ["title", "proposal", "chosen_alternative", "rationale", "alternatives"]);
       break;
     case "revoke_work_contract":
       fixed.contract_id = contractView?.contract.id;
@@ -682,6 +947,7 @@ export function humanForm(
   if (advanced.children.length > 1) node.append(advanced);
   return {
     node,
+    commandName: () => commandName(),
     async get() {
       const result = { ...fixed };
       for (const [key, get] of Object.entries(getters)) {
@@ -690,7 +956,7 @@ export function humanForm(
           if (value !== undefined) result[key] = value;
         }
       }
-      if (getters._editor) Object.assign(result, getters._editor());
+      if (getters._editor) Object.assign(result, await getters._editor());
       if (result.blockers)
         for (const b of result.blockers) {
           const current = await request(
