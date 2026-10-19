@@ -43,6 +43,10 @@
   margin: 0;
   line-height: 1.55;
 }
+.workspace-move-preview .field-context {
+  display: grid;
+  gap: .25rem;
+}
 .workspace-move-change {
   padding: .8rem;
   border: 1px solid var(--wos-border);
@@ -247,6 +251,30 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+@media (max-width: 760px) {
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-detail > .dialog-heading {
+    padding-block: .2rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > nav.workspace-path {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: .35rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > nav.workspace-path > .workspace-reference {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    min-height: 44px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > [data-workspace-facet="work"] {
+    padding-block-start: 0;
+    gap: .35rem;
   }
 }
 .workspace-placement-summary {

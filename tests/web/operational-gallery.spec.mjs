@@ -67,7 +67,8 @@ async function geometry(page) {
       return { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
         right: rect.right, bottom: rect.bottom, clientHeight: element.clientHeight,
         scrollHeight: element.scrollHeight, scrollTop: element.scrollTop,
-        fontSize: parseFloat(style.fontSize), fontFamily: style.fontFamily };
+        fontSize: parseFloat(style.fontSize), fontFamily: style.fontFamily,
+        lineHeight: parseFloat(style.lineHeight) || null };
     };
     return { viewport: { width: innerWidth, height: innerHeight, devicePixelRatio,
       visualViewportScale: visualViewport.scale },
@@ -75,7 +76,8 @@ async function geometry(page) {
         scrollX, scrollY },
       elements: Object.fromEntries([".topbar", ".sidebar", ".outcome-heading", ".canvas-toolbar", ".canvas-viewport",
         ".canvas-footer", "#canvas-details", "#detail-title", "#detail-content", "#detail-actions",
-        ".workspace-state", ".workspace-primary-actions", "#command-form", "#fields", "#submit-command",
+        ".workspace-state", ".workspace-primary-actions", ".canvas-inspector-detail", ".canvas-inspector-slot",
+        ".workspace-path", ".detail-description", "#command-form", "#command-form .dialog-body", "#fields", "#submit-command",
         "#area-title", "#content", "#notice", ".login-panel", "#token", "#login button"]
         .map((selector) => [selector, measure(selector)])),
       canvas: { zoom: Number(document.querySelector(".canvas-viewport")?.dataset.scale || 0),
@@ -211,7 +213,8 @@ async function inspectorReady(page) {
   await panel(page).locator("#detail-content").hover();
   await page.mouse.wheel(0, -10000);
   await expect.poll(() => panel(page).locator("#detail-content").evaluate((element) => element.scrollTop)).toBe(0);
-  await panel(page).locator(".canvas-inspector-detail").focus();
+  await expect.poll(() => panel(page).evaluate((element) => [element,
+    ...element.querySelectorAll(".canvas-inspector-detail, #detail-content")].every((surface) => surface.scrollTop === 0))).toBe(true);
 }
 
 async function openAction(page, name) {
@@ -258,10 +261,25 @@ async function mainStates(page, wos, data, metadata, label, extra = {}) {
   await expect(panel(page)).toContainText("Declared assignee");
   await expect(panel(page)).toContainText("Not assessed");
   await inspectorReady(page);
+  if (!extra.nativeBrowserZoom) {
+    const initial = await geometry(page), prose = initial.elements[".detail-description"];
+    const surface = initial.elements["#canvas-details"], body = initial.elements["#detail-content"];
+    const visibleHeight = Math.min(prose.bottom, surface.bottom, body.bottom)
+      - Math.max(prose.y, surface.y, body.y);
+    expect(visibleHeight, "The actual initial Task reading position exposes its authored prose")
+      .toBeGreaterThanOrEqual(Math.min(prose.height, prose.lineHeight * 3) - 2);
+  }
   await capture(page, metadata, `task-${label}`, "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity", extra);
 }
 
 async function detailedStates(page, wos, data, metadata, label) {
+  await panel(page).locator('[data-action-id="more_actions"]').click();
+  await expect(page.locator(".canvas-inspector-actions")).toBeVisible();
+  await capture(page, metadata, `task-actions-${label}`,
+    "Read-only Task action menu with contextual groups; opening the menu does not execute an action");
+  await page.keyboard.press("Escape");
+  await expect(panel(page)).toHaveAttribute("data-surface", "detail");
+  await inspectorReady(page);
   const criteria = panel(page).locator(`[data-criterion-id="${data.criterion.id}"]`);
   await criteria.scrollIntoViewIfNeeded();
   await capture(page, metadata, `task-proof-${label}`, "Task body scrolled naturally to current success conditions and pending assessment");
@@ -306,7 +324,7 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.locator("#submit-command").focus();
   await unobscured(page.locator("#submit-command"));
   await conclusion.getByRole("heading", { name: "Review conclusion impact", exact: true }).scrollIntoViewIfNeeded();
-  await capture(page, metadata, `conclusion-impact-${label}`, "Unsaved parent conclusion reviews real open descendants and unchanged child lifecycles; no acceptance has been submitted");
+  await capture(page, metadata, `conclusion-impact-${label}`, "Unsaved parent conclusion deliberately scrolled to its open-work review; earlier Reason fields remain above, and no acceptance has been submitted");
   await page.keyboard.press("Escape");
   await selectRecord(page, data.tasks.ready);
   await openAction(page, "set_work_item_objective");
@@ -321,7 +339,7 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.locator("#submit-command").focus();
   await unobscured(page.locator("#submit-command"));
   await movement.getByRole("heading", { name: "Observed movement impact", exact: true }).scrollIntoViewIfNeeded();
-  await capture(page, metadata, `move-impact-${label}`, "Read-only preview compares actual old and proposed placement, inherited blocking and readiness before any move is saved");
+  await capture(page, metadata, `move-impact-${label}`, "Read-only move form deliberately scrolled to actual old/proposed placement, blocking and readiness; earlier destination controls remain above and no move is saved");
   await page.keyboard.press("Escape");
   await selectRecord(page, data.objective);
   await openAction(page, "create_issue");
@@ -338,7 +356,7 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.locator("#submit-command").focus();
   await unobscured(page.locator("#submit-command"));
   await blocking.getByRole("heading", { name: "Open work affected by this Blocker", exact: true }).scrollIntoViewIfNeeded();
-  await capture(page, metadata, `blocking-impact-${label}`, "Unsaved contextual Issue explicitly previews its proposed subtree Blocker and named affected open work");
+  await capture(page, metadata, `blocking-impact-${label}`, "Unsaved contextual Issue deliberately scrolled to its subtree blocking review; earlier Issue fields remain above and no records are saved");
   await page.keyboard.press("Escape");
   await selectRecord(page, data.roadmap);
   await expect(panel(page)).toContainText("Publication and activation are separate");

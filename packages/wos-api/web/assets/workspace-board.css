@@ -76,6 +76,18 @@
     min-width: 0;
   }
 }
+@media (max-width: 760px) {
+  #outcome[data-editorial-area="canvas"] .canvas-layer-filter {
+    gap: 0;
+    font-size: 0;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-layer-filter select {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    font-size: 1rem;
+  }
+}
 /* The layer selector shares this row with search. The earlier two-control
    search basis reserved almost the whole row and forced three toolbar rows
    once layers were added, especially at native browser zoom. */

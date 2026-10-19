@@ -1659,9 +1659,9 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     place-items: center;
   }
 }
-/* Short phones and zoomed desktop windows need room for the reading surface.
+/* Compact phones and zoomed desktop windows need room for the reading surface.
  * Let the whole inspector scroll within the same bounded stage. */
-@media (max-width: 360px), (max-width: 760px) and (max-height: 700px), (max-height: 600px) {
+@media (max-width: 760px), (max-height: 600px) {
   #outcome[data-editorial-area="canvas"] .canvas-inspector-slot {
     display: block;
     overflow: auto;
