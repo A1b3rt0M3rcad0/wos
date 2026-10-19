@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
 import { seedCanvas } from "./canvas-fixture.mjs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -76,6 +77,7 @@ async function select(page, record, title = record.title || record.name || "Evid
   await board(page).getByRole("option").filter({ hasText: label }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
   await expect(context(page)).toBeVisible();
+  await expandWorkspaceDetails(panel(page), {history:false});
 }
 for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844 }]) {
   test(`relationships communicate placement, evidence and real blocking at ${viewport.width} x ${viewport.height}`, async ({ page, wos }) => {
@@ -110,6 +112,7 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
       "Canonical Objective ownership and bounded, clickable related work, independent from Board loading");
     await reference(work, "work_item", data.tasks.ready.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expandWorkspaceDetails(panel(page), {history:false});
     await expect(reference(context(page).locator(".workspace-path"), "objective", data.child.id)).toHaveCount(1);
     // The old focal detail renderer is gone. The same canonical inspector
     // exposes every pertinent group without five unrelated tabs.
@@ -125,17 +128,20 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
     await expect(rows(page, "Supports")).toContainText("does not assess a criterion");
     await reference(rows(page, "Supports"), "evidence", data.evidence[0].id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText("Evidence");
+    await expandWorkspaceDetails(panel(page), {history:false});
     await expect(context(page).locator(".detail-description")).toHaveText(data.evidence[0].description);
     await expect(context(page)).toContainText("A link, an assessment and acceptance are distinct records");
     await expect(reference(rows(page, "Supports"), "work_item", data.tasks.ready.id)).toHaveCount(1);
     await rows(page, "Supports").getByRole("button", { name: "Inspect relationship", exact: true }).click();
     await expect(panel(page).locator("#detail-kind")).toContainText(/evidence.*link/i);
     await expect(panel(page).locator("#detail-title")).toHaveText("supports");
+    await expandWorkspaceDetails(panel(page), {history:false});
     const endpoints = facet(page, "record");
     await expect(reference(endpoints, "evidence", data.evidence[0].id)).toHaveCount(1);
     await expect(reference(endpoints, "work_item", data.tasks.ready.id)).toHaveCount(1);
     await reference(endpoints, "work_item", data.tasks.ready.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expandWorkspaceDetails(panel(page), {history:false});
     await expect(facet(page, "criteria").locator(`[data-criterion-id="${criterion.id}"]`)).toContainText("Not assessed");
 
     await select(page, data.issue);
@@ -147,8 +153,10 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
     await reference(impacts, "work_item", data.tasks.blocked.id).click();
     await expect(context(page).locator(".workspace-state")).toContainText("Blocked");
     await expect(facet(page, "attention")).toContainText(/block/i);
+    await expandWorkspaceDetails(panel(page), {history:false});
     await reference(rows(page, "Blocks"), "blocker", data.blocker.id).click();
     await expect(panel(page).locator("#detail-title")).toHaveText("Blocker");
+    await expandWorkspaceDetails(panel(page), {history:false});
     await expect(context(page)).toContainText("Evidence belongs to the cause or affected work");
     await expect(rows(page, "Cause of impediment")).toHaveCount(1);
     await expect(reference(rows(page, "Cause of impediment"), "issue", data.issue.id)).toHaveCount(1);

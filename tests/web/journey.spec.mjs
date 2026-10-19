@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea, clickWorkspaceTool, openWorkspaceTools, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect, chromium } from "playwright/test";
 import assert from "node:assert/strict";
@@ -691,6 +692,7 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
     await expect(page.locator("#command-error")).not.toBeEmpty();
     await page.keyboard.press("Escape");
     await entity("Objectives", "Revisão obrigatória");
+    await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
     await page.getByRole("button", { name: "Revisão humana", exact: true }).click();
     await expect(page.locator("#detail-title")).toHaveText("Revisão humana");
     await expect(page.locator("#detail-content")).toContainText("Not assessed");

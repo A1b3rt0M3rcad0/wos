@@ -146,6 +146,7 @@ const contextualKanban = createContextualKanban({
   onAction: async (action, capability, view) => {
     await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
     if (action === 'read_entity_note') await openWorkspaceNote(capability.entry,state.detailGeneration,capability.options);
+    else if (action === 'more_actions') openCommands();
     else if (action) workspaceAction(action, capability);
     else await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration);
     const actions = $('detail-actions');
@@ -3174,9 +3175,9 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
           } catch(error) { if(current()) report(error); }
           finally { activityLoading = false; }
         },
-        onKanban: (view) => contextualKanban.open(view).catch(report),
-        onVerify: (view) => contextualKanban.open(view, {mode:'criteria'}).catch(report),
-        onMaterial: (view) => contextualKanban.open(view, {mode:'materials'}).catch(report),
+        onKanban: isCanvas ? (view) => contextualKanban.open(view).catch(report) : undefined,
+        onVerify: isCanvas ? (view) => contextualKanban.open(view, {mode:'criteria'}).catch(report) : undefined,
+        onMaterial: isCanvas ? (view) => contextualKanban.open(view, {mode:'materials'}).catch(report) : undefined,
         onReference: (target) => showEntity(target).catch(report),
         onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report),
         onPlan: (plan) => viewCanvasPlan(plan),
@@ -3212,7 +3213,7 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
       if (!actions) { actions = el("div", undefined, "workspace-actions"); $("detail-actions").prepend(actions); }
       renderWorkspaceActions(actions, {
         view: state.workspaceView,
-        primaryAlreadyPresent: state.workspaceView.subject.kind === "entity" && (["outcome", "objective"].includes(state.workspaceView.subject.ref.kind) || ["done", "cancelled", "achieved", "failed", "abandoned"].includes(state.workspaceView.header.lifecycle)),
+        primaryAlreadyPresent: state.workspaceView.subject.kind === "entity" && ((isCanvas && ["outcome", "objective"].includes(state.workspaceView.subject.ref.kind)) || ["done", "cancelled", "achieved", "failed", "abandoned"].includes(state.workspaceView.header.lifecycle)),
         onAction: (action, capability) => workspaceAction(action, capability),
       });
       $("entity-actions").textContent = copy.text.workspaceMore;

@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea, clickWorkspaceTool, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
@@ -398,6 +399,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     ).toHaveCount(0);
     // The canonical inspector loads plan content only after an explicit View
     // plan action. Verify the actual published nodes on the Board it opens.
+    await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
     await page.locator('#detail-content [data-action-id="view_roadmap_revision"]').click();
     await expect(page.locator('#operational-canvas [data-kind="phase"]').filter({ hasText: "Descobrir e planejar" })).toHaveCount(1);
     await expect(page.locator('#operational-canvas')).toContainText("Validar com clientes");
@@ -412,6 +414,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#content")
       .getByRole("button", { name: /Uma experiência pronta/ })
       .click();
+    await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
     await page
       .getByRole("button", { name: /Fluxo principal validado/ })
       .click();

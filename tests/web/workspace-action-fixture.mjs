@@ -31,7 +31,8 @@ export async function clickRecordAction(page, label) {
 // real disclosures; compact-default assertions remain in contextual-kanban.spec.
 export async function expandWorkspaceDetails(scope, { history = true } = {}) {
   const management = scope.locator('.workspace-management').first();
-  if (await management.count() && !(await management.evaluate(node => node.open)))
+  await expect(management).toBeVisible();
+  if (!(await management.evaluate(node => node.open)))
     await management.locator(':scope > summary').click();
   if (history) {
     const activity = scope.locator('.workspace-history').first();

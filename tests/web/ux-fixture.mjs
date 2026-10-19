@@ -6,7 +6,7 @@ import { resolve, join } from "node:path";
 import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
-import { revealMenuAction } from "./workspace-action-fixture.mjs";
+import { revealMenuAction, expandWorkspaceDetails } from "./workspace-action-fixture.mjs";
 export { expect };
 // Specialist views live in the compact, native Views disclosure. Use the real
 // control rather than opening hidden content through DOM mutation in a test.
@@ -45,6 +45,7 @@ export async function reviewOutcome(page) {
   await chooseArea(page, "overview");
   await page.locator("#review-outcome").click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
+  await expandWorkspaceDetails(page.locator("#detail-dialog"), {history:false});
 }
 export async function outcomeActions(page) {
   await reviewOutcome(page);
@@ -235,4 +236,5 @@ export async function detail(page, section, title) {
     .first()
     .click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
+  await expandWorkspaceDetails(page.locator("#detail-dialog"), {history:false});
 }

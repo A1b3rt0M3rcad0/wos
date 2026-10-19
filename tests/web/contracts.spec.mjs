@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
@@ -11,6 +12,7 @@ import { randomUUID, randomBytes } from "node:crypto";
 
 async function fullContractRecord(page) {
   const detail = page.locator("#detail-dialog");
+  await expandWorkspaceDetails(detail, {history:false});
   await detail.locator(".workspace-audit > summary").click();
   await detail.locator('.workspace-audit [data-action-id="read_full_record"]').click();
   await expect(detail.locator(".contract-section")).toBeVisible();

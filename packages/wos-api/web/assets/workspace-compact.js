@@ -51,6 +51,14 @@ export function compactWorkspace(
     if (work.querySelector("h4,button")) management.prepend(work);
     else work.remove();
   }
+  // Authored meaning precedes potentially wrapping parent links in compact
+  // inspectors; the same real parent controls remain reachable below it.
+  intro.prepend(
+    ...[
+      intro.querySelector(".workspace-state"),
+      intro.querySelector(".detail-description"),
+    ].filter(Boolean),
+  );
   const attention = intro.querySelector('[data-workspace-facet="attention"]');
   const obligation = attention?.querySelector("li,p");
   if (obligation) {

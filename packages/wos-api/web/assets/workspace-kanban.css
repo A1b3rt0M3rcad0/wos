@@ -115,7 +115,8 @@ dialog.workspace-kanban[open] {
   padding: 12px 0;
 }
 .workspace-compact > details > summary {
-  padding: 8px 0;
+  padding: 8px 12px;
+  min-height: 44px;
   cursor: pointer;
 }
 .workspace-compact-intro {

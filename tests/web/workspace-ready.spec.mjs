@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
 import { seedCanvas } from "./canvas-fixture.mjs";
 
@@ -71,6 +72,7 @@ test("native Escape invalidates a genuine pending criterion read instead of reop
   const dialog = page.locator("#detail-dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.locator("#detail-title")).toHaveText(data.tasks.ready.title);
+  await expandWorkspaceDetails(dialog, {history:false});
   let release, arrived, delivered;
   const gate = new Promise((resolve) => { release = resolve; });
   const reached = new Promise((resolve) => { arrived = resolve; });

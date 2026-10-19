@@ -642,6 +642,7 @@ export function createContextualKanban({
       aside.append(actions);
       renderWorkspaceActions(actions, {
         view: selected,
+        onMoreActions: () => act("more_actions", null, selected),
         primaryAlreadyPresent:
           selected.subject.kind === "entity" &&
           (["outcome", "objective"].includes(selected.subject.ref.kind) ||

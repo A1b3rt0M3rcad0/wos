@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome } from "./ux-fixture.mjs";
 
 const outcomePath = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -119,6 +120,7 @@ test("editing Issue, Blocker and Criterion preserves descriptions beyond their i
   // The relation control identifies the actual caused Blocker instead of
   // relying on its deliberately repeated long description as a search title.
   await inspect(page, "A renamed Issue keeps its authored description", "canvas");
+  await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
   await page.locator(`#detail-content [data-reference-kind="blocker"][data-reference-id="${blocker.id}"]`).first().click();
   await openAction(page, "update_blocker_description");
   await expect(page.getByLabel("Description", { exact: true })).toHaveValue(long);
@@ -126,6 +128,7 @@ test("editing Issue, Blocker and Criterion preserves descriptions beyond their i
   expect((await wos.api(`${outcomePath(scope)}/blockers/${blocker.id}`)).value.description).toBe(long);
 
   await inspect(page, task.title, "canvas");
+  await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
   await page.locator("#detail-content").getByRole("button", { name: criterion.title, exact: true }).click();
   await openAction(page, "revise_criterion");
   await expect(page.getByLabel("Description", { exact: true })).toHaveValue(long);

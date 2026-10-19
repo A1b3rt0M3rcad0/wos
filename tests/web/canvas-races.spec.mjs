@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
 import { revealMenuAction } from "./workspace-action-fixture.mjs";
@@ -215,8 +216,8 @@ test("an earlier successful refresh cannot restore private Canvas content after 
 
 test("an obsolete Task history transport failure cannot replace the current Task or its notice", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
-  // The coherent inspector loads its recent page automatically. Seed enough
-  // real notes to exercise a separately paginated history read.
+  // Expand the new lazy history, then exercise its separately paginated read.
+  // Seed enough real notes to require another page.
   for (let index = 0; index < 7; index++)
     await wos.command("append_entity_note", {
       scope: data.scope, subject_ref: data.ref("work_item", data.tasks.ready),
@@ -224,6 +225,7 @@ test("an obsolete Task history transport failure cannot replace the current Task
     });
   await openCanvas(page, wos, data);
   await select(page, data.tasks.ready);
+  await expandWorkspaceDetails(panel(page));
   const failureMessage = "Obsolete Task history transport failure";
   const held = await holdOnce(page,
     (url) => url.pathname.endsWith("/workspace-timeline") && url.searchParams.get("entity_id") === data.tasks.ready.id,

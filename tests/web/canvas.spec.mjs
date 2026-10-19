@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool, openCanvasContext } from "./ux-fixture.mjs";
 import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer, seedCanvasRoadmap } from "./canvas-fixture.mjs";
@@ -81,6 +82,7 @@ test("Outcome Board is the default operational view without a Roadmap and keeps 
   await node(page, "outcome", data.outcome).click();
   await expect(panel(page).locator("#detail-title")).toHaveText(data.outcome.title);
   await choose(page, "work_item", data.tasks.ready);
+  await expandWorkspaceDetails(panel(page), {history:false});
   await expect(panel(page).getByText("Perform only the scoped task", { exact: true })).toBeVisible();
   await expect(panel(page).locator(".workspace-state")).toBeVisible();
   await expect(panel(page).locator('[data-workspace-facet="attention"]')).toBeVisible();
@@ -197,6 +199,7 @@ test("real connections distinguish hierarchy, dependency strength and Evidence s
   const links = (await wos.api(`${endpoint(data.scope)}/evidence-links`)).items;
   expect(links.some((link) => link.evidence_id === data.evidence[2].id && link.target_ref.id === data.tasks.unscoped.id && link.stance === "context")).toBe(true);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}`)).value.lifecycle).toBe("todo");
+  await expandWorkspaceDetails(panel(page), {history:false});
   const provider = panel(page).getByText("canvas-acceptance", { exact: true });
   await expect(provider).toBeVisible();
   expect(await provider.evaluate((element) => element.getClientRects().length)).toBeLessThanOrEqual(2);
@@ -398,6 +401,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   await openCanvas(page, wos, data);
   await choose(page, "roadmap", roadmap);
   await expect(panel(page).locator('[data-workspace-facet="roadmap"]')).toContainText("Draft");
+  await expandWorkspaceDetails(panel(page), {history:false});
   await panel(page).locator('[data-action-id="view_roadmap_draft"]').click();
   await expect(canvas(page)).toContainText("Discover and verify");
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
@@ -415,6 +419,7 @@ test("Roadmap Draft, immutable publication and activation stay separate from ope
   const original = JSON.stringify(published.revisions[0]);
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}/operational-state`)).state.display_state).toBe("ready");
   await choose(page, "roadmap", published);
+  await expandWorkspaceDetails(panel(page), {history:false});
   await panel(page).locator('[data-action-id="view_roadmap_revision"]').click();
   await canvas(page).getByLabel("Connections", { exact: true }).selectOption("planning");
   await expect(canvas(page).locator('[data-canvas-edge="plan_sequence"]')).toHaveCount(1);

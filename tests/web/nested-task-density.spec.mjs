@@ -5,7 +5,7 @@ const authoredDescription = "Review the recorded installation steps against a cl
 
 async function initialReading(page) {
   return page.locator("#canvas-details").evaluate((panel) => {
-    const prose = panel.querySelector('[data-workspace-facet="work"] .detail-description');
+    const prose = panel.querySelector('.workspace-compact-intro .detail-description');
     const bounds = panel.getBoundingClientRect(), rect = prose.getBoundingClientRect();
     const lineHeight = parseFloat(getComputedStyle(prose).lineHeight);
     return {
@@ -54,7 +54,7 @@ for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }
     await page.getByRole("option").filter({ hasText: task.title }).first().click();
     const panel = page.locator("#canvas-details");
     await expect(panel.locator("#detail-title")).toHaveText(task.title);
-    const prose = panel.locator('[data-workspace-facet="work"] .detail-description');
+    const prose = panel.locator('.workspace-compact-intro .detail-description');
     await expect(prose).toHaveText(authoredDescription);
     await page.evaluate(() => document.fonts.ready);
     const before = await initialReading(page);

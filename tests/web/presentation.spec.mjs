@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, intent, save, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { seedPresentation } from "./presentation-fixture.mjs";
@@ -198,6 +199,7 @@ test("standalone details, contextual forms and Roadmap revisions preserve their 
       await rowDetail(page, key, section, item);
       await dialogAccess(page, "#detail-dialog");
       if (name === "roadmap") {
+        await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
         await expect(page.locator('#detail-content [data-workspace-facet="roadmap"]')).toContainText(/revision 1/i);
         await expect(page.locator('#detail-content [data-action-id="view_roadmap_revision"]')).toBeVisible();
       }

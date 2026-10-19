@@ -1,5 +1,5 @@
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
-import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
 import { mkdir, writeFile, readdir, readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -611,4 +611,71 @@ test("partial Kanban pages preserve column scroll and reject stale continuation"
   await modal.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(modal.locator(".workspace-kanban-card")).toHaveCount(48);
   await expect(modal.getByRole("alert")).toHaveCount(0);
+});
+
+test("specialist inspection retains one native dialog without Board-only modal launchers", async ({
+  page,
+  wos,
+}) => {
+  const data = await setup(wos);
+  await wos.login(page);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await chooseArea(page, "work");
+  await page
+    .getByLabel("Work status", { exact: true })
+    .selectOption("work_items");
+  await page
+    .locator("#content")
+    .getByRole("button")
+    .filter({ hasText: data.task.title })
+    .first()
+    .click();
+  const detail = page.locator("#detail-dialog");
+  await expect(detail).toBeVisible();
+  await expect(page.locator("dialog[open]")).toHaveCount(1);
+  await expect(
+    detail.getByRole("button", { name: /Open .* Kanban/ }),
+  ).toHaveCount(0);
+  await expect(
+    detail.getByRole("button", { name: "Verify criteria", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    detail.getByRole("button", { name: "Add material", exact: true }),
+  ).toHaveCount(0);
+});
+
+test("More actions leaves the modal for the canonical inspector and can return", async ({
+  page,
+  wos,
+}) => {
+  const data = await setup(wos);
+  await wos.login(page);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await select(page, data.objective.title);
+  await panel(page)
+    .getByRole("button", { name: "Open Tasks Kanban", exact: true })
+    .click();
+  const modal = page.locator("#workspace-kanban");
+  await modal
+    .locator(".workspace-kanban-card")
+    .filter({ hasText: data.task.title })
+    .click();
+  await modal
+    .locator(".workspace-kanban-inspection")
+    .getByRole("button", { name: "More actions", exact: true })
+    .click();
+  await expect(modal).not.toBeVisible();
+  await expect(panel(page)).toHaveAttribute("data-surface", "actions");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await panel(page)
+    .getByRole("button", { name: "Close actions", exact: true })
+    .click();
+  await expect(panel(page)).toHaveAttribute("data-surface", "detail");
+  await panel(page)
+    .getByRole("button", { name: "Return to Kanban", exact: true })
+    .click();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator(".workspace-kanban-breadcrumb")).toContainText(
+    data.objective.title,
+  );
 });
