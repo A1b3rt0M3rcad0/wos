@@ -14,14 +14,15 @@ const maxResolveIssueBlockers = 64
 // it creates as one atomic domain command. The resulting Blocker always points
 // to the newly created Issue as its cause.
 type ReportIssueWithBlockerCommand struct {
-	Scope              domain.Scope
-	Title              string
-	Description        string
-	Severity           domain.IssueSeverity
-	AffectedRefs       []domain.EntityRef
-	BlockedRef         domain.EntityRef
-	BlockerDescription string
-	Propagation        domain.BlockerPropagation
+	Scope                   domain.Scope
+	Title                   string
+	Description             string
+	Severity                domain.IssueSeverity
+	AffectedRefs            []domain.EntityRef
+	BlockedRef              domain.EntityRef
+	BlockerDescription      string
+	Propagation             domain.BlockerPropagation
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type ReportIssueWithBlockerResult struct {
@@ -112,6 +113,18 @@ func (s *Service) ReportIssueWithBlocker(
 		}
 		if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, issue.AffectedRefs); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
+		}
+		if cmd.ObservedOutcomeRevision != nil {
+			current, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return ReportIssueWithBlockerResult{}, 0, err
+			}
+			if current.Revision != *cmd.ObservedOutcomeRevision {
+				return ReportIssueWithBlockerResult{}, 0, domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "the Outcome changed after the blocking impact review; review current affected work before confirming again", domain.ErrorDetails{
+					ReasonCode: "blocker_impact_changed", SubjectRef: &cmd.BlockedRef, FieldPaths: []string{"observed_outcome_revision"},
+					Remedies: []domain.ErrorRemedy{{ActionID: "review_blocker_impact", SubjectRef: &cmd.BlockedRef}},
+				})
+			}
 		}
 		if err := issues.Insert(ctx, issue); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err

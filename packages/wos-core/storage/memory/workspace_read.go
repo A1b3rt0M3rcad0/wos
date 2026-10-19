@@ -335,3 +335,85 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 }
 
 var _ ports.WorkspaceReadRepository = continuityReadRepository{}
+
+func (r continuityReadRepository) WorkspaceConclusionImpact(ctx context.Context, scope d.Scope, subject d.EntityRef, limit int) (ports.WorkspaceConclusionImpactFacts, error) {
+	result := ports.WorkspaceConclusionImpactFacts{Items: []ports.ContinuitySummary{}}
+	if e := subject.Validate(); e != nil {
+		return result, e
+	}
+	if subject.Scope != scope {
+		return result, d.NewError(d.ErrorCodeInvalidScope, "conclusion impact subject belongs to another Outcome")
+	}
+	if limit < 1 || limit > 20 {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "conclusion impact sample limit must be between 1 and 20")
+	}
+	if subject.Kind != d.EntityKindOutcome && subject.Kind != d.EntityKindObjective {
+		return result, d.NewError(d.ErrorCodeInvalidArgument, "only Outcome and Objective have conclusion scope impacts")
+	}
+	if subject.Kind == d.EntityKindOutcome && subject.ID != scope.OutcomeID {
+		return result, d.NewError(d.ErrorCodeInvalidScope, "conclusion impact Outcome does not match scope")
+	}
+	if _, e := r.Outcome(ctx, scope); e != nil {
+		return result, e
+	}
+	descendants := map[d.ID]bool{}
+	children := map[d.ID][]d.ID{}
+	found := subject.Kind == d.EntityKindOutcome
+	if subject.Kind == d.EntityKindObjective {
+		for _, o := range r.tx.objectives {
+			if o.Scope != scope {
+				continue
+			}
+			if o.ID == subject.ID {
+				found = true
+			}
+			if o.ParentObjectiveID != nil {
+				children[*o.ParentObjectiveID] = append(children[*o.ParentObjectiveID], o.ID)
+			}
+		}
+		if !found {
+			return result, d.NewError(d.ErrorCodeNotFound, "conclusion impact Objective not found")
+		}
+		descendants[subject.ID] = true
+		queue := []d.ID{subject.ID}
+		for len(queue) > 0 {
+			id := queue[0]
+			queue = queue[1:]
+			for _, child := range children[id] {
+				if !descendants[child] {
+					descendants[child] = true
+					queue = append(queue, child)
+				}
+			}
+		}
+	}
+	// Retain only the smallest `limit` keys while counting every scoped match.
+	add := func(item ports.ContinuitySummary) {
+		key := item.Ref.Kind.String() + ":" + item.Ref.ID.String()
+		at := sort.Search(len(result.Items), func(i int) bool { return result.Items[i].Ref.Kind.String()+":"+result.Items[i].Ref.ID.String() >= key })
+		if at >= limit {
+			return
+		}
+		result.Items = append(result.Items, ports.ContinuitySummary{})
+		copy(result.Items[at+1:], result.Items[at:])
+		result.Items[at] = item
+		if len(result.Items) > limit {
+			result.Items = result.Items[:limit]
+		}
+	}
+	for _, o := range r.tx.objectives {
+		if o.Scope != scope || o.Lifecycle == d.ObjectiveLifecycleAchieved || o.Lifecycle == d.ObjectiveLifecycleCancelled || subject.Kind == d.EntityKindObjective && (o.ID == subject.ID || !descendants[o.ID]) {
+			continue
+		}
+		result.OpenObjectives++
+		add(ports.Summarize(o.Ref(), o.Version, o.Title, string(o.Lifecycle), o.Priority))
+	}
+	for _, w := range r.tx.workItems {
+		if w.Scope != scope || w.Lifecycle == d.WorkItemLifecycleDone || w.Lifecycle == d.WorkItemLifecycleCancelled || subject.Kind == d.EntityKindObjective && (w.ObjectiveID == nil || !descendants[*w.ObjectiveID]) {
+			continue
+		}
+		result.OpenWorkItems++
+		add(ports.Summarize(w.Ref(), w.Version, w.Title, string(w.Lifecycle), w.Priority))
+	}
+	return result, nil
+}

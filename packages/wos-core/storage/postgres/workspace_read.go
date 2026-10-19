@@ -609,3 +609,68 @@ WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id IN ` + in + ` ORDER BY 
 func resultKind(kind d.EntityKind) string { return kind.String() }
 
 var _ ports.WorkspaceReadRepository = continuityReadRepository{}
+
+// WorkspaceConclusionImpact counts current open descendants and returns only a
+// bounded metadata sample. Recursion walks terminal parents too; UNION dedupes
+// persisted legacy cycles. The CTE materializes IDs, never proof or history.
+func (r continuityReadRepository) WorkspaceConclusionImpact(ctx context.Context, scope d.Scope, subject d.EntityRef, limit int) (ports.WorkspaceConclusionImpactFacts, error) {
+	zero := ports.WorkspaceConclusionImpactFacts{Items: []ports.ContinuitySummary{}}
+	if e := validateGraphRefs(scope, []d.EntityRef{subject}, 1); e != nil {
+		return zero, e
+	}
+	if limit < 1 || limit > 20 {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "conclusion impact sample limit must be between 1 and 20")
+	}
+	if subject.Kind != d.EntityKindOutcome && subject.Kind != d.EntityKindObjective {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "only Outcome and Objective have conclusion scope impacts")
+	}
+	if subject.Kind == d.EntityKindOutcome {
+		if subject.ID != scope.OutcomeID {
+			return zero, d.NewError(d.ErrorCodeInvalidScope, "conclusion impact Outcome does not match scope")
+		}
+		if _, e := r.Outcome(ctx, scope); e != nil {
+			return zero, e
+		}
+	} else if _, e := r.WorkspaceObjectiveHeader(ctx, scope, subject.ID); e != nil {
+		return zero, e
+	}
+	prefix := "WITH "
+	objectiveFilter := ""
+	workFilter := ""
+	args := []any{}
+	if subject.Kind == d.EntityKindObjective {
+		prefix = `WITH RECURSIVE descendants(id) AS (SELECT ? UNION SELECT o.id FROM objectives o JOIN descendants p ON o.parent_objective_id=p.id WHERE o.namespace_id=? AND o.outcome_id=?), `
+		args = append(args, subject.ID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+		objectiveFilter = " AND id IN (SELECT id FROM descendants) AND id<>?"
+		workFilter = " AND objective_id IN (SELECT id FROM descendants)"
+	}
+	query := prefix + `open_refs AS (SELECT 'objective' AS kind,id FROM objectives WHERE namespace_id=? AND outcome_id=? AND lifecycle NOT IN ('achieved','cancelled')` + objectiveFilter + ` UNION ALL SELECT 'work_item' AS kind,id FROM work_items WHERE namespace_id=? AND outcome_id=? AND lifecycle NOT IN ('done','cancelled')` + workFilter + `), totals AS (SELECT count(CASE WHEN kind='objective' THEN 1 END) AS open_objectives,count(CASE WHEN kind='work_item' THEN 1 END) AS open_tasks FROM open_refs), sample AS (SELECT kind,id FROM open_refs ORDER BY kind,id LIMIT ?), headers AS (SELECT s.kind,o.id,o.version,substr(o.title,1,512) AS title,o.lifecycle,o.priority FROM sample s JOIN objectives o ON s.kind='objective' AND o.id=s.id WHERE o.namespace_id=? AND o.outcome_id=? UNION ALL SELECT s.kind,w.id,w.version,substr(w.title,1,512) AS title,w.lifecycle,w.priority FROM sample s JOIN work_items w ON s.kind='work_item' AND w.id=s.id WHERE w.namespace_id=? AND w.outcome_id=?) SELECT t.open_objectives,t.open_tasks,h.kind,h.id,h.version,h.title,h.lifecycle,h.priority FROM totals t LEFT JOIN headers h ON 1=1 ORDER BY h.kind,h.id`
+	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
+	if subject.Kind == d.EntityKindObjective {
+		args = append(args, subject.ID.String())
+	}
+	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String(), limit, scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, query, args...)
+	if e != nil {
+		return zero, e
+	}
+	defer rows.Close()
+	result := zero
+	for rows.Next() {
+		var kind, id, title, life, priority sql.NullString
+		var version sql.Null[d.Version]
+		if e = rows.Scan(&result.OpenObjectives, &result.OpenWorkItems, &kind, &id, &version, &title, &life, &priority); e != nil {
+			return zero, e
+		}
+		if !kind.Valid {
+			continue
+		}
+		parsed, e := d.ParseID(id.String)
+		if e != nil {
+			return zero, e
+		}
+		ref := d.EntityRef{Scope: scope, Kind: d.EntityKind(kind.String), ID: parsed}
+		result.Items = append(result.Items, ports.Summarize(ref, version.V, title.String, life.String, d.Priority(priority.String)))
+	}
+	return result, rows.Err()
+}

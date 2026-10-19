@@ -27,7 +27,18 @@ type WorkspaceCriterionFact struct {
 	AssessmentApplicable bool
 	EvidenceLinked       bool
 }
+
+// WorkspaceConclusionImpactFacts contains current-placement metadata only.
+// Counts include every open descendant; Items is a bounded stable sample.
+// A terminal Objective does not prune its still-open descendants.
+type WorkspaceConclusionImpactFacts struct {
+	Items          []ContinuitySummary
+	OpenObjectives int
+	OpenWorkItems  int
+}
+
 type WorkspaceReadRepository interface {
+	WorkspaceConclusionImpact(context.Context, d.Scope, d.EntityRef, int) (WorkspaceConclusionImpactFacts, error)
 	WorkspaceOutcome(context.Context, d.Scope) (d.Outcome, error)
 	WorkspaceRevision(context.Context, d.Scope) (d.OutcomeRevision, error)
 	WorkspaceObjectiveHeader(context.Context, d.Scope, d.ID) (d.Objective, error)

@@ -478,6 +478,12 @@ func requireOpenOutcome(ctx context.Context, uow ports.UnitOfWork, scope domain.
 	if err != nil {
 		return err
 	}
+	return validateOpenOutcome(outcome)
+}
+
+// validateOpenOutcome is the shared state predicate for mutations and pinned
+// read previews. Commands still acquire their guard and load canonical state.
+func validateOpenOutcome(outcome domain.Outcome) error {
 	if outcome.IsArchived() {
 		return domain.NewError(domain.ErrorCodePreconditionFailed, "outcome must not be archived")
 	}

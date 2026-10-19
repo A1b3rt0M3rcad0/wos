@@ -267,6 +267,9 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		if err := validateConclusionImpactPreview(ctx, uow, outcome.Ref(), cmd.ObservedOutcomeRevision); err != nil {
+			return domain.Outcome{}, 0, err
+		}
 		if err := outcome.AchieveWithObligations(conclusion, requiredObjectiveIDs, now); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -356,6 +359,9 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 			return domain.Objective{}, 0, err
 		}
 		if err := s.checkObjectiveAchievement(ctx, uow, objective, commandContext.PrincipalID); err != nil {
+			return domain.Objective{}, 0, err
+		}
+		if err := validateConclusionImpactPreview(ctx, uow, objective.Ref(), cmd.ObservedOutcomeRevision); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		if err := objective.Achieve(conclusion, now); err != nil {

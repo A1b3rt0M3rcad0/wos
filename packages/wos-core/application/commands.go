@@ -70,9 +70,10 @@ type ActivateOutcomeCommand struct {
 }
 
 type AchieveOutcomeCommand struct {
-	Scope           domain.Scope
-	ExpectedVersion domain.Version
-	Reason          string
+	Scope                   domain.Scope
+	ExpectedVersion         domain.Version
+	Reason                  string
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateObjectiveCommand struct {
@@ -92,10 +93,11 @@ type StartObjectiveCommand struct {
 }
 
 type AchieveObjectiveCommand struct {
-	Scope           domain.Scope
-	ObjectiveID     domain.ID
-	ExpectedVersion domain.Version
-	Reason          string
+	Scope                   domain.Scope
+	ObjectiveID             domain.ID
+	ExpectedVersion         domain.Version
+	Reason                  string
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateWorkItemCommand struct {

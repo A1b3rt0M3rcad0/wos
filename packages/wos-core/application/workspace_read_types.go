@@ -20,11 +20,13 @@ type WorkspaceSubject struct {
 	RecordID       *d.ID       `json:"record_id,omitempty"`
 }
 type WorkspaceViewQuery struct {
-	Subject                  WorkspaceSubject `json:"subject"`
-	CriteriaCursor           string           `json:"criteria_cursor,omitempty"`
-	RequiredObjectivesCursor string           `json:"required_objectives_cursor,omitempty"`
-	RelationCursor           string           `json:"relation_cursor,omitempty"`
-	Limit                    int              `json:"limit,omitempty"`
+	Subject                  WorkspaceSubject              `json:"subject"`
+	PlacementPreview         *PlacementPreviewQuery        `json:"placement_preview,omitempty"`
+	BlockerPreview           *WorkspaceBlockerPreviewQuery `json:"blocker_preview,omitempty"`
+	CriteriaCursor           string                        `json:"criteria_cursor,omitempty"`
+	RequiredObjectivesCursor string                        `json:"required_objectives_cursor,omitempty"`
+	RelationCursor           string                        `json:"relation_cursor,omitempty"`
+	Limit                    int                           `json:"limit,omitempty"`
 }
 type WorkspaceCoverage struct {
 	Status        string `json:"status"`
@@ -92,6 +94,12 @@ type WorkspaceCapability struct {
 	ConfirmationKind     string           `json:"confirmation_kind,omitempty"`
 	PresentationPriority int              `json:"presentation_priority"`
 }
+type WorkspaceConclusionImpact struct {
+	OpenObjectives int             `json:"open_objectives"`
+	OpenTasks      int             `json:"open_tasks"`
+	OpenItems      []EntitySummary `json:"open_items"`
+	Consequences   []string        `json:"consequences"`
+}
 type EntityWorkspaceView struct {
 	Subject         WorkspaceSubject  `json:"subject"`
 	EntityVersion   d.Version         `json:"entity_version,string"`
@@ -107,6 +115,9 @@ type EntityWorkspaceView struct {
 	Work               *d.ExecutionSpec             `json:"work,omitempty"`
 	Criteria           []WorkspaceCriterion         `json:"criteria,omitempty"`
 	RequiredObjectives []EntitySummary              `json:"required_objectives,omitempty"`
+	ConclusionImpact   *WorkspaceConclusionImpact   `json:"conclusion_impact,omitempty"`
+	PlacementPreview   *WorkspacePlacementPreview   `json:"placement_preview,omitempty"`
+	BlockerPreview     *WorkspaceBlockerPreview     `json:"blocker_preview,omitempty"`
 	Delivery           *WorkspaceDelivery           `json:"delivery,omitempty"`
 	Roadmap            *WorkspaceRoadmapFacet       `json:"roadmap,omitempty"`
 	Relationships      WorkspaceRelationships       `json:"relationships"`

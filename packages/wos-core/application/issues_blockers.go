@@ -448,27 +448,45 @@ func validateBlockerTarget(ctx context.Context, uow ports.UnitOfWork, ref domain
 		if ref.ID != ref.Scope.OutcomeID {
 			return domain.NewError(domain.ErrorCodeBlocker, "outcome blocked_ref id must equal outcome scope id")
 		}
-		v, err := uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
+		value, err := uow.Outcomes().Get(ctx, ref.Scope.NamespaceID, ref.Scope.OutcomeID)
 		if err != nil {
 			return err
 		}
-		if v.IsArchived() || v.Lifecycle == domain.OutcomeLifecycleAchieved || v.Lifecycle == domain.OutcomeLifecycleFailed || v.Lifecycle == domain.OutcomeLifecycleAbandoned {
+		return validateBlockerTargetState(ref, string(value.Lifecycle), value.IsArchived())
+	case domain.EntityKindObjective:
+		value, err := uow.Objectives().Get(ctx, ref.Scope, ref.ID)
+		if err != nil {
+			return err
+		}
+		return validateBlockerTargetState(ref, string(value.Lifecycle), false)
+	case domain.EntityKindWorkItem:
+		value, err := uow.WorkItems().Get(ctx, ref.Scope, ref.ID)
+		if err != nil {
+			return err
+		}
+		return validateBlockerTargetState(ref, string(value.Lifecycle), false)
+	default:
+		return validateBlockerTargetState(ref, "", false)
+	}
+}
+
+// The target's canonical lifecycle is enough for a coherent preview; reading a
+// preview never hydrates aggregate history or grants permission to block work.
+func validateBlockerTargetState(ref domain.EntityRef, lifecycle string, archived bool) error {
+	switch ref.Kind {
+	case domain.EntityKindOutcome:
+		if ref.ID != ref.Scope.OutcomeID {
+			return domain.NewError(domain.ErrorCodeBlocker, "outcome blocked_ref id must equal outcome scope id")
+		}
+		if archived || lifecycle == string(domain.OutcomeLifecycleAchieved) || lifecycle == string(domain.OutcomeLifecycleFailed) || lifecycle == string(domain.OutcomeLifecycleAbandoned) {
 			return domain.NewError(domain.ErrorCodeInvalidTransition, "terminal or archived outcome cannot receive an active blocker")
 		}
 	case domain.EntityKindObjective:
-		v, err := uow.Objectives().Get(ctx, ref.Scope, ref.ID)
-		if err != nil {
-			return err
-		}
-		if v.Lifecycle == domain.ObjectiveLifecycleAchieved || v.Lifecycle == domain.ObjectiveLifecycleCancelled {
+		if lifecycle == string(domain.ObjectiveLifecycleAchieved) || lifecycle == string(domain.ObjectiveLifecycleCancelled) {
 			return domain.NewError(domain.ErrorCodeInvalidTransition, "terminal objective cannot receive an active blocker")
 		}
 	case domain.EntityKindWorkItem:
-		v, err := uow.WorkItems().Get(ctx, ref.Scope, ref.ID)
-		if err != nil {
-			return err
-		}
-		if v.Lifecycle == domain.WorkItemLifecycleDone || v.Lifecycle == domain.WorkItemLifecycleCancelled {
+		if lifecycle == string(domain.WorkItemLifecycleDone) || lifecycle == string(domain.WorkItemLifecycleCancelled) {
 			return domain.NewError(domain.ErrorCodeInvalidTransition, "terminal work item cannot receive an active blocker")
 		}
 	default:
@@ -476,6 +494,7 @@ func validateBlockerTarget(ctx context.Context, uow ports.UnitOfWork, ref domain
 	}
 	return nil
 }
+
 func validateBlockerCause(ctx context.Context, uow ports.UnitOfWork, issues ports.IssueRepository, ref *domain.EntityRef) error {
 	if ref == nil {
 		return nil

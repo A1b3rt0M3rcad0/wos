@@ -75,6 +75,8 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 	for _, key := range []string{"work", "criteria", "delivery", "attention"} {
 		v.Coverage[key] = WorkspaceCoverage{Status: "not_applicable"}
 	}
+	v.Coverage["placement_preview"] = WorkspaceCoverage{Status: "not_loaded"}
+	v.Coverage["blocker_preview"] = WorkspaceCoverage{Status: "not_loaded"}
 	ref := q.Subject.Ref
 	var selected any
 	set := d.NewCriterionSet()
@@ -303,6 +305,13 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 	} else {
 		v.Coverage["required_objectives"] = WorkspaceCoverage{Status: "not_applicable"}
 	}
+	if q.Subject.Kind == "entity" && (ref.Kind == d.EntityKindOutcome || ref.Kind == d.EntityKindObjective) {
+		if e = s.workspaceConclusionImpact(ctx, frame, &v, min(limit, 20)); e != nil {
+			return zero, e
+		}
+	} else {
+		v.Coverage["conclusion_impact"] = WorkspaceCoverage{Status: "not_applicable"}
+	}
 	v.Entity = workspaceRecordPreview(selected)
 	v.Coverage["entity"] = WorkspaceCoverage{Status: "partial", Reason: "Selected record preview; load the canonical record before editing"}
 	if q.Subject.Kind != "execution_record" && (ref.Kind == d.EntityKindOutcome || ref.Kind == d.EntityKindObjective || ref.Kind == d.EntityKindWorkItem) {
@@ -374,6 +383,18 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 		return zero, e
 	}
 	v.Coverage["capabilities"] = WorkspaceCoverage{Status: "complete", ReturnedCount: workspaceCount(len(v.Capabilities))}
+	if q.PlacementPreview != nil {
+		v.PlacementPreview, e = s.workspacePlacementPreview(ctx, frame, &v, q.PlacementPreview)
+		if e != nil {
+			return zero, e
+		}
+	}
+	if q.BlockerPreview != nil {
+		v.BlockerPreview, e = s.workspaceBlockerPreview(ctx, frame, &v, selected, outcome, q.BlockerPreview)
+		if e != nil {
+			return zero, e
+		}
+	}
 	raw, e := json.Marshal(v)
 	if e != nil {
 		return zero, e
