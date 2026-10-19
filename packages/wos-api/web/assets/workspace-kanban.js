@@ -39,6 +39,10 @@ export function createContextualKanban({
   function valid(token) {
     return epoch === token && sessionScope === scopeKey();
   }
+  function assertFrameRevision(view, frame = current()) {
+    if (view.outcome_revision !== (frame.revision || frame.view.outcome_revision))
+      throw new Error("The work changed. Refresh this Kanban before inspecting another revision.");
+  }
   function fail(error, token) {
     if (!valid(token)) return;
     current().error =
@@ -89,15 +93,19 @@ export function createContextualKanban({
     frame.error = "";
     render();
     try {
-      const [page, parent] = await Promise.all([
+      const [page, parent, selected] = await Promise.all([
         requestCards({
           parent_ref: frame.view.subject.ref,
           limit: 50,
           ...(append ? { cursor: frame.coverage.next_cursor } : {}),
         }),
         append ? Promise.resolve(null) : query(frame.view.subject),
+        !append && frame.selected
+          ? query(frame.selected.subject)
+          : Promise.resolve(null),
       ]);
-      if (parent && page.outcome_revision !== parent.outcome_revision)
+      if ((parent && page.outcome_revision !== parent.outcome_revision) ||
+          (selected && page.outcome_revision !== selected.outcome_revision))
         throw new Error(
           "The work changed during loading. Refresh to read one consistent revision.",
         );
@@ -107,6 +115,7 @@ export function createContextualKanban({
           "The work changed. Refresh this Kanban before loading another page.",
         );
       if (parent) frame.view = parent;
+      if (selected) frame.selected = selected;
       frame.items = append ? [...frame.items, ...page.items] : page.items;
       frame.revision = page.outcome_revision;
       frame.coverage = page.coverage;
@@ -173,6 +182,7 @@ export function createContextualKanban({
     try {
       const view = await query({ kind: "entity", ref });
       if (!valid(token)) return;
+      assertFrameRevision(view);
       current().selected = view;
       render();
       dialog.querySelector(".workspace-kanban-inspection h3")?.focus();
@@ -533,6 +543,7 @@ export function createContextualKanban({
                   criterion_id: definition.id,
                 });
                 if (valid(token)) {
+                  assertFrameRevision(view, frame);
                   frame.selected = view;
                   render();
                 }
@@ -599,6 +610,7 @@ export function createContextualKanban({
               include_activity: true,
             });
             if (valid(token)) {
+              assertFrameRevision(view, frame);
               frame.selected = view;
               render();
             }
@@ -627,6 +639,7 @@ export function createContextualKanban({
               criterion_id: definition.id,
             });
             if (!valid(token)) return;
+            assertFrameRevision(view, frame);
             frame.selected = view;
             render();
           } catch (error) {

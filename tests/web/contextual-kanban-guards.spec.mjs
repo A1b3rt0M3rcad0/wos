@@ -47,3 +47,26 @@ test('real credential revocation closes an open Kanban and clears its private co
  await modal.getByRole('button',{name:'Refresh',exact:true}).click();
  await expect(modal).not.toBeVisible();await expect(page.locator('#outcome')).toBeHidden();await expect(page.locator('#outcomes')).toBeEmpty();await expect(page.locator('#canvas-details')).not.toBeVisible();await expect(modal).not.toContainText('Private Objective');
 });
+
+test('refresh keeps the selected detail coherent and rejects newer isolated reads',async({page,wos})=>{
+ const {value:outcome,scope}=await wos.outcome('One coherent planning snapshot');
+ let objective=await wos.command('create_objective',{scope,title:'Original Objective',priority:'normal',required_for_outcome:false});
+ await wos.login(page);await openOutcome(page,outcome.title,{area:null});await select(page,outcome.title);
+ await page.locator('#canvas-details').getByRole('button',{name:'Open Objectives Kanban',exact:true}).click();
+ const modal=page.locator('#workspace-kanban');
+ await modal.getByRole('button',{name:/Original Objective/}).click();
+ const detail=modal.locator('.workspace-kanban-inspection');await expect(detail).toContainText('Original Objective');
+ objective=await wos.command('update_objective',{scope,objective_id:objective.id,expected_version:objective.version,title:'Updated Objective'});
+ await modal.getByRole('button',{name:'Refresh',exact:true}).click();
+ await expect(modal.locator('.workspace-kanban-card')).toContainText('Updated Objective');
+ await expect(detail).toContainText('Updated Objective');await expect(detail).not.toContainText('Original Objective');
+ objective=await wos.command('update_objective',{scope,objective_id:objective.id,expected_version:objective.version,title:'Newest Objective'});
+ await page.keyboard.press('Escape');await expect(detail).not.toBeVisible();
+ await modal.getByRole('button',{name:/Updated Objective/}).click();
+ await expect(modal.getByRole('alert')).toContainText('Refresh this Kanban');await expect(detail).not.toBeVisible();
+ await modal.getByRole('button',{name:'Refresh',exact:true}).click();
+ await modal.getByRole('button',{name:/Newest Objective/}).click();await expect(detail).toContainText('Newest Objective');
+ await wos.command('append_entity_note',{scope,subject_ref:{...scope,kind:'objective',id:objective.id},type:'update',body:'A later note must not be merged into an older revision.'});
+ await detail.locator('.workspace-history > summary').click();
+ await expect(modal.getByRole('alert')).toContainText('Refresh this Kanban');await expect(detail).not.toContainText('A later note must not be merged into an older revision.');
+});
