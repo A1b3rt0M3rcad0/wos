@@ -14,6 +14,16 @@ This file records the real implementation state of WOS. It must be kept synchron
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
 
+## Login viewport follow-up — 2026-10-19
+
+The login composition now fills and centers within the height below the real
+header, without increasing fonts or controls. Safe alignment preserves scrolling
+on short screens and expanded local access. Twelve desktop/mobile screenshots
+and geometry regressions are recorded in the [login guide](docs/design/editorial/operational-workspace/login-viewport/README.md).
+The broader 35-case check passed 33 cases and exposed two mobile Board Escape-close
+failures; those remain pending and are not counted as accepted. No merge or
+release is performed by this follow-up.
+
 ## Status legend
 
 - ✅ **Done** — acceptance criteria satisfied and relevant verification passes.

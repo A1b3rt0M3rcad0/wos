@@ -1133,6 +1133,1106 @@
     "scope": "Only the opt-in capture helper focuses Close before testing visibility after More-actions returns to its footer trigger. Complete functional 164-case qualification remains at the unchanged production source; all 75 capture outputs still require their own successful run and visual review."
   },
   "final_documentation_link_audit": {
+    "schema": 1,
+    "files": [
+      "docs/design/editorial/operational-workspace/login-viewport/README.md",
+      "README.md",
+      "docs/README.md",
+      "docs/operational-workspace-api.md",
+      "docs/workspace-ux.md",
+      "docs/workspace-relationships.md",
+      "docs/work-activity.md",
+      "docs/design/editorial/README.md",
+      "docs/design/editorial/operational-workspace/README.md",
+      "docs/ux/operational-workspace/README.md",
+      "docs/ux/operational-workspace/migrations.md",
+      "docs/ux/operational-workspace/performance.md",
+      "docs/ux/operational-workspace/human-study.md",
+      "docs/ux/operational-workspace/qualification.md"
+    ],
+    "valid": [
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "manifest.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "../../../../ux/operational-workspace/login-viewport-qualification.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "../README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/workspace-relationships.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/workspace-tour.gif"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/workspace-tour.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/integration-events.md"
+      },
+      {
+        "source": "README.md",
+        "target": "#license-and-brand"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/workspace-ux.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/agents.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/http.md"
+      },
+      {
+        "source": "README.md",
+        "target": "examples/remote-client"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/contracts.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/architecture.md#packages-and-interfaces"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md"
+      },
+      {
+        "source": "README.md",
+        "target": "#project-status"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md#shared-service"
+      },
+      {
+        "source": "README.md",
+        "target": ".go-version"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md#sign-in-and-persisted-data"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md"
+      },
+      {
+        "source": "README.md",
+        "target": "examples/quickstart/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md#published-container"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-workspace-profiles.md#provision-an-approved-identity"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/agents.md"
+      },
+      {
+        "source": "README.md",
+        "target": "packages/wos-cli/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-workspace-profiles.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-cli-returns.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md"
+      },
+      {
+        "source": "README.md",
+        "target": "LICENSE"
+      },
+      {
+        "source": "README.md",
+        "target": "TRADEMARKS.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/licensing.md"
+      },
+      {
+        "source": "README.md",
+        "target": "NOTICE.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/releases/1.1.0.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/stable/compatibility.md"
+      },
+      {
+        "source": "README.md",
+        "target": "ROADMAP.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/operational-canvas/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/architecture.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/stable/operational-acceptance.md"
+      },
+      {
+        "source": "README.md",
+        "target": "CONTRIBUTING.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md#report-a-vulnerability"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/releases.md"
+      },
+      {
+        "source": "README.md",
+        "target": "LICENSE"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/logo.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/badges/go.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/badges/license.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/robots-queuing-for-paperwork.png"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "getting-started.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../examples/quickstart/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-ux.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-ux.md#find-another-outcome"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md#how-it-works"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "images/workspace-tour.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md#for-developers-and-oaas"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "images/assets.json"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "agents.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "work-activity.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "central-agent-workflow/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../packages/wos-cli/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-cli-returns.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-protocol-cutover.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-migration-v2.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "http.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "contracts.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../packages/wos-api/openapi.yaml"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "client-qualification.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "integration-events.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "operational-workspace-api.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "operations.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "issuer-recovery.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "releases.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "stable/operations-reference.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "benchmarks.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../CONTRIBUTING.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../SECURITY.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../AGENTS.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../ROADMAP.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "architecture.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "adr/"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "dependencies.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "licensing.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "ux/operational-workspace/qualification.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/validation.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "WOS_Design_Arquitetura_Planejamento_Atualizado.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/README.md#main-pages"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "../packages/wos-api/openapi.yaml"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "../packages/wos-api/commands.openapi.json"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "ux/command-exposure-inventory.md"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "operations.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/README.md#acceptance-boundary"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/final-acceptance.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/experience-contract.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "adr/0027-human-workspace-client.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/editorial/README.md#main-pages"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/editorial/density/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md#screenshots"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "workspace-ux.md"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "WOS_Design_Arquitetura_Planejamento_Atualizado.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "ux/operational-workspace/README.md#record-updates-problems-and-deliverables-in-context"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "operational-workspace-api.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "../packages/wos-api/commands.openapi.json"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "http.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "contracts.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "signed-contracts-design.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "operational-density.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../adr/0038-operational-workspace.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../operational-workspace-api.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "modal-surfaces.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "woobe-palette-source.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/hand-drawn-chain.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/hand-drawn-chain-assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "component-review.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "interactions.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "responsive-scale.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../../.agents/skills/wos-art-style/SKILL.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "density/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/01-login.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/02-overview.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/03-plan.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/04-work.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/05-work-board.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/06-issues.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/07-evidence.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/08-activity.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/09-task-detail.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/10-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/11-settings.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/15-expanded-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/16-action-menu.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "modal-surfaces.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/35-technical-command.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/12-mobile-overview.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/13-mobile-work.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/17-mobile-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/18-mobile-settings.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/33-mobile-action-menu.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/34-mobile-task-detail.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/36-mobile-technical-command.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/14-outcome-loading.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/19-fixed-paper-top.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/20-fixed-paper-scrolled.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/21-mobile-outcome-navigation.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/22-area-tab-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/23-view-switch-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/24-board-card-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/25-form-controls-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/26-mobile-tabs-focus.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "responsive-scale.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/27-scale-reference.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/28-scale-full-hd.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/29-scale-2k.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/30-scale-4k.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/31-scale-2k-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/32-scale-2k-work-board.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "validation.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../ux/operational-workspace/qualification.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/README.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-1366x768.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/4d86fa1c170b/login-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/4d86fa1c170b/login-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-default-list-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-actions-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-actions-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/quick-task-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/batch-plan-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/conclusion-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/move-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/blocking-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/criterion-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/evidence-record-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/issue-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/blocker-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/overview-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/plan-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/work-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/evidence-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/issues-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/activity-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "manifest.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../../CONTRIBUTING.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "../../operational-workspace-api.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "../../operational-workspace-api.md#use-the-cli-and-recover-safely"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "migrations.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "human-study.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "migration-upgrade.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "migration-upgrade-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "../../operations.md#upgrade-cutover-for-the-operational-candidate"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "../../../tools/operations/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "owner-plan-2026-10-19.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/source-and-runner.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/database-versions.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "../../../packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-scoped-setup-harness.go.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-scoped-setup.patch"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-setup-timeout-076550b.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-attempt-076550b-setup-timeout.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-quiet.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-quiet.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-results-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-quiet-a8571c5.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-quiet-a8571c5.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-in-progress-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-in-progress-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "owner-plan-2026-10-19.md#6-teste-de-compreens\u00e3o-humana"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "human-study-results.template.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "qualification.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "owner-plan-2026-10-19.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../adr/0038-operational-workspace.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/login-viewport/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "login-viewport-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "visual-regression-076550b2fbf8/task-320x740.png"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "visual-regression-076550b2fbf8/task-390x844.png"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "migrations.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "backend-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "browser-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/manifest.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "performance.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "owner-plan-2026-10-19.md#6-teste-de-compreens\u00e3o-humana"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "human-study.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "human-study-results.template.json"
+      }
+    ],
+    "broken": [],
+    "external_links_skipped": 12,
+    "scope": "Maintained Markdown local inline/reference links, HTML image paths and local Markdown anchors; verbatim owner-plan archive and external network resources excluded."
+  },
+  "previous_bundle_documentation_link_audit": {
     "status": "passed",
     "scope": "Maintained Markdown local inline/reference links, HTML image paths and local Markdown anchors; verbatim owner-plan archive and external network resources excluded.",
     "checked_local_targets": 260,

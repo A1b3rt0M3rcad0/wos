@@ -10,6 +10,10 @@ workflow and the [qualification report](../../../ux/operational-workspace/qualif
 for executed checks and remaining acceptance. These captures describe the source
 branch, not the currently published npm package.
 
+The [login viewport correction](login-viewport/README.md) supersedes the login
+images from the original 75-image snapshot. It centers the existing composition
+below the header, with twelve new source-bound captures.
+
 ## Main pages
 
 ![Outcome Board with structural work and contextual records](screenshots/d458d4782d18/board-1280x720.png)
@@ -18,7 +22,7 @@ branch, not the currently published npm package.
 
 | Desktop login | Mobile login |
 | --- | --- |
-| [![Complete desktop credential login](screenshots/d458d4782d18/login-1280x720.png)](screenshots/d458d4782d18/login-1280x720.png) | [![Complete compact credential login](screenshots/d458d4782d18/login-390x844.png)](screenshots/d458d4782d18/login-390x844.png) |
+| [![Complete centered desktop credential login](login-viewport/4d86fa1c170b/login-1280x720.png)](login-viewport/4d86fa1c170b/login-1280x720.png) | [![Complete centered compact credential login](login-viewport/4d86fa1c170b/login-390x844.png)](login-viewport/4d86fa1c170b/login-390x844.png) |
 
 | Default mobile Board list | Mobile Task inspection |
 | --- | --- |
@@ -70,8 +74,9 @@ external work. Issues and their explicit blocking impacts remain separate.
 The [manifest](manifest.json) indexes **75 images and 75 individual receipts**
 from 11 passing capture jobs. Capture source is `d458d4782d1813b75df4264605606837c9aff73d`;
 all 40 served assets match the complete 164-journey functional run at
-`36d7d2ef7b3e663500a69008f8df335aa43981a8`. The only later change is in the
-opt-in capture helper. Representative visual review covers eleven final images;
+`36d7d2ef7b3e663500a69008f8df335aa43981a8`. Between those two revisions only the
+opt-in capture helper changed. The later login correction has its own receipt
+and manifest linked above. Representative visual review of this snapshot covers eleven images;
 its exact scope is recorded in the qualification report.
 Each receipt records the committed source, binary digest, all served JavaScript,
 CSS and HTML hashes, fixture sources, actual Chromium build, capture time, CSS

@@ -10,6 +10,16 @@ and **34 partially verified**. The latter retain their specific missing UI
 assertions, device checks or reference measurements; automated totals do not
 silently satisfy those requirements or the independent comprehension study.
 
+## Login viewport follow-up
+
+Source `4d86fa1c170b4c77613c35f6af4f00685aefd5d7` centers the login in the
+remaining viewport below the header, preserving typography and component sizes.
+See the [twelve new captures](../../design/editorial/operational-workspace/login-viewport/README.md)
+and [scoped receipt](login-viewport-qualification.json). The broader selected run
+passed 33 of 35 cases, with two mobile Board Escape-close failures. A trial
+synchronization change did not fix them and was reverted. Historical full-suite
+results below do not imply that this new run passed in full.
+
 ## Source and compatibility
 
 Baseline: `5d945d3081f85927b80c686d695849bd1df73a5d`. Core state and projections

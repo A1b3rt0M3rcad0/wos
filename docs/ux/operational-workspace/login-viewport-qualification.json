@@ -1,0 +1,392 @@
+{
+  "source_commit": "4d86fa1c170b4c77613c35f6af4f00685aefd5d7",
+  "scope": "Login viewport centering only; no workspace runtime changes.",
+  "capture_manifest": "../../design/editorial/operational-workspace/login-viewport/manifest.json",
+  "captures": 12,
+  "served_assets_verified": 40,
+  "broader_run": {
+    "stats": {
+      "startTime": "2026-10-19T19:54:07.194Z",
+      "duration": 112877.753,
+      "expected": 33,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "title": "Compact login fits its complete default composition at 1280 x 720",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 4002
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 1366 x 768",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2824
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 1024 x 768",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2594
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 390 x 844",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2620
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 360 x 640",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2103
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 320 x 740",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2283
+          }
+        ]
+      },
+      {
+        "title": "Expanded local login and enlarged text keep natural scrolling and whole controls",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2145
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1280 x 720",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 6584
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1366 x 768",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 7349
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1920 x 1080",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 6584
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 2560 x 1440",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 5970
+          }
+        ]
+      },
+      {
+        "title": "Views and Outcome context stay progressive, keyboard accessible and separate from verification",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 15340
+          }
+        ]
+      },
+      {
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 320 x 740",
+        "status": "unexpected",
+        "results": [
+          {
+            "status": "failed",
+            "duration_ms": 15826
+          }
+        ]
+      },
+      {
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 390 x 844",
+        "status": "unexpected",
+        "results": [
+          {
+            "status": "failed",
+            "duration_ms": 10844
+          }
+        ]
+      },
+      {
+        "title": "native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 4595
+          }
+        ]
+      },
+      {
+        "title": "native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 4101
+          }
+        ]
+      },
+      {
+        "title": "expanded local login stays reachable at 1280x720",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1785
+          }
+        ]
+      },
+      {
+        "title": "expanded local login stays reachable at 390x667",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1288
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2940
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2175
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1681
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1992
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1865
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1477
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1623
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1546
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1391
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 1687
+          }
+        ]
+      },
+      {
+        "title": "An empty workspace keeps bounded headings and reachable navigation/settings",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 2455
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 3914
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 5683
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 5404
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 5128
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 3874
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "duration_ms": 10275
+          }
+        ]
+      }
+    ],
+    "note": "Two mobile Board Escape-close failures remain. A trial test-only wait did not resolve them and was reverted. They are not counted as passing."
+  },
+  "earlier_broader_run": {
+    "passed": 34,
+    "failed": 1,
+    "failure": "Board mobile Escape-close at 390 x 844"
+  },
+  "manual_visual_review": [
+    "1280x720",
+    "2560x1440",
+    "390x844"
+  ],
+  "limitations": [
+    "Chromium emulation; no physical mobile keyboard or independent human study.",
+    "Prior full-suite qualification remains historical, not a new full-suite run."
+  ],
+  "final_login_only_run": {
+    "startTime": "2026-10-19T19:56:23.135Z",
+    "duration": 14069.806,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
