@@ -3289,9 +3289,12 @@ async function reviewCurrentConclusionImpact() {
   const generation = state.generation, epoch = state.formEpoch, form = state.humanForm;
   const subject = state.formSubject, scope = currentScope();
   if (!subject || !form) return;
-  const view = await workspaceQuery(subject);
-  if (generation !== state.generation || epoch !== state.formEpoch || form !== state.humanForm
-    || !sameScope(scope, currentScope()) || state.pending || state.submitting) return;
+  const current = () => generation === state.generation && epoch === state.formEpoch
+    && form === state.humanForm && sameScope(scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
   form.updateConclusionImpact(view);
   state.workspaceView = view;
   state.selected = { ...state.selected, version: view.entity_version };
@@ -3303,8 +3306,11 @@ async function reviewCurrentConclusionImpact() {
 }
 async function inspectPreparationReference(host, subject) {
   const generation = state.generation, epoch = state.formEpoch;
-  const view = await workspaceQuery(subject);
-  if (generation !== state.generation || epoch !== state.formEpoch || !host.isConnected) return;
+  const current = () => generation === state.generation && epoch === state.formEpoch && host.isConnected;
+  let view;
+  try { view = await workspaceQuery(subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
   let preview = host.querySelector(".workspace-preparation-preview");
   if (!preview) { preview = el("details", undefined, "workspace-preparation-preview"); host.append(preview); }
   preview.open = true;
@@ -3326,11 +3332,14 @@ async function openPreparationRemedy(name, remedy) {
   if (!ref) return;
   const generation = state.generation, epoch = state.formEpoch, get = formGetter;
   const scope = currentScope();
-  const view = await workspaceQuery(remedy.criterion_id
+  const current = () => generation === state.generation && epoch === state.formEpoch && get === formGetter
+    && sameScope(scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(remedy.criterion_id
     ? { kind: "criterion", ref, criterion_id: remedy.criterion_id }
-    : { kind: "entity", ref });
-  if (generation !== state.generation || epoch !== state.formEpoch || get !== formGetter
-    || !sameScope(scope, currentScope()) || state.pending || state.submitting) return;
+    : { kind: "entity", ref }); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
   const fragment = document.createDocumentFragment();
   fragment.append(...$("fields").childNodes);
   const original = {
@@ -3354,9 +3363,12 @@ async function restorePreparationDraft() {
   const original = state.formDrafts?.at(-1);
   if (!original || state.pending || state.submitting) return;
   const generation = state.generation, epoch = state.formEpoch;
-  const view = await workspaceQuery(original.view.subject);
-  if (generation !== state.generation || epoch !== state.formEpoch || state.formDrafts?.at(-1) !== original
-    || !sameScope(original.scope, currentScope()) || state.pending || state.submitting) return;
+  const current = () => generation === state.generation && epoch === state.formEpoch && state.formDrafts?.at(-1) === original
+    && sameScope(original.scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(original.view.subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
   state.formDrafts.pop();
   state.humanForm?.dispose();
   state.humanForm = original.humanForm;
@@ -4054,7 +4066,10 @@ function openCommands(name, menuTarget) {
       }
       state.contractView = { contract: result.entity };
       openCommands(name, menuTarget);
-    }).catch(report);
+    }).catch((error) => {
+      if (generation === state.generation && detailGeneration === state.detailGeneration
+        && selected === state.selected) report(error);
+    });
     return;
   }
   if (["achieve_outcome", "achieve_objective"].includes(name)) {
@@ -4070,7 +4085,10 @@ function openCommands(name, menuTarget) {
         state.workspaceView = view;
         state.selected = { ...view.entity, id: ref.id, version: view.entity_version, _kind: ref.kind };
         openCommands(name, menuTarget);
-      }).catch(report);
+      }).catch((error) => {
+        if (generation === state.generation && detailGeneration === state.detailGeneration
+          && selected === (state.selected || state.outcome)) report(error);
+      });
       return;
     }
   }

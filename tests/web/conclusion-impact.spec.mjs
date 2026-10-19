@@ -153,3 +153,117 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
     expect(errors).toEqual([]);
   });
 }
+
+test("a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector", async ({ page, wos }) => {
+  const { scope, value: outcome } = await wos.outcome("Accept the parent only after its current impact was reviewed");
+  const base = `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
+  const owner = { ...scope, kind: "outcome", id: outcome.id };
+  const criterion = await wos.command("add_criterion", {
+    owner, expected_version: outcome.version,
+    title: "The agreed parent result was independently reviewed",
+    required: true, verification_mode: "attestation",
+  });
+  let current = (await wos.api(base)).value;
+  await wos.command("attest_criterion", {
+    owner, expected_version: current.version,
+    criterion_id: criterion.id, criterion_revision: criterion.criterion_revision,
+    result: "met", rationale: "An authorized participant checked the explicit parent criterion.",
+  });
+  current = (await wos.api(base)).value;
+  await wos.command("activate_outcome", { scope, expected_version: current.version });
+  const task = await wos.command("create_work_item", {
+    scope, title: "Inspect this separate Task after closing the old conclusion",
+    lifecycle: "backlog", priority: "normal",
+  });
+  const attempts = [], errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/commands/"))
+      attempts.push(request.url().split("/").at(-1));
+  });
+  await wos.login(page);
+  await openOutcome(page, outcome.title, { area: null });
+  await selectRecord(page, outcome.title);
+  await openAction(page, "achieve_outcome");
+  await page.getByLabel("Reason", { exact: true }).fill("Reviewing this parent must not replace the next Task context.");
+  await page.getByLabel(confirmation, { exact: true }).check();
+
+  await wos.command("create_work_item", {
+    scope, title: "A different participant added this work after acknowledgement",
+    lifecycle: "backlog", priority: "normal",
+  });
+  const rejected = page.waitForResponse((response) => response.request().method() === "POST"
+    && response.url().endsWith("/commands/achieve_outcome"));
+  await page.locator("#submit-command").click();
+  const rejection = await rejected, error = await rejection.json();
+  expect(rejection.ok()).toBe(false);
+  expect(error.error.details.reason_code).toBe("conclusion_impact_changed");
+  await expect(page.locator("#conflict-review").getByRole("button", { name: "Review current impact", exact: true })).toBeVisible();
+
+  const obsoleteMessage = "Obsolete conclusion review failed after the person selected another Task";
+  let release, seen, finished, rejectRead;
+  let started = false;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const arrived = new Promise((resolve, reject) => { seen = resolve; rejectRead = reject; });
+  const done = new Promise((resolve) => { finished = resolve; });
+  const routePattern = "**/workspace-view";
+  const handler = async (route) => {
+    if (started || route.request().method() !== "POST"
+      || route.request().postDataJSON()?.subject?.ref?.id !== outcome.id)
+      return route.continue();
+    started = true;
+    try {
+      // Capture a real authorized current read, then simulate a delayed
+      // transport failure without changing any persisted state or authority.
+      const response = await route.fetch();
+      seen(response.status());
+      await gate;
+      await route.fulfill({ status: 500, contentType: "application/json",
+        body: JSON.stringify({ error: { code: "internal", message: obsoleteMessage } }) });
+    } catch (failure) {
+      rejectRead(failure);
+      throw failure;
+    } finally { finished(); }
+  };
+  await page.route(routePattern, handler);
+  try {
+    await page.locator("#conflict-review").getByRole("button", { name: "Review current impact", exact: true }).click();
+    expect(await arrived).toBe(200);
+    await panel(page).locator("#close-command").click();
+    await expect(page.locator("#command-form")).toBeHidden();
+    await selectRecord(page, task.title);
+    await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${task.id}`));
+    const selectedURL = page.url();
+    const retainedFocus = panel(page).locator("#entity-actions");
+    await retainedFocus.focus();
+    await expect(retainedFocus).toBeFocused();
+    const noticeBefore = await page.locator("#notice").evaluate((node) => ({
+      text: node.textContent, className: node.className, hidden: node.hidden,
+    }));
+    release();
+    await done;
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(selectedURL);
+    await expect(panel(page)).toHaveAttribute("data-surface", "detail");
+    await expect(panel(page).locator("#detail-title")).toHaveText(task.title);
+    await expect(page.locator("#command-form")).toBeHidden();
+    await expect(page.locator("#command-dialog")).toBeHidden();
+    await expect(page.locator("#notice")).not.toContainText(obsoleteMessage);
+    expect(await page.locator("#notice").evaluate((node) => ({
+      text: node.textContent, className: node.className, hidden: node.hidden,
+    }))).toEqual(noticeBefore);
+    await expect(retainedFocus).toBeFocused();
+    expect(attempts).toEqual(["achieve_outcome"]);
+    expect(errors).toEqual([]);
+    const persistedOutcome = (await wos.api(base)).value;
+    const persistedTask = (await wos.api(`${base}/work-items/${task.id}`)).value;
+    expect(persistedOutcome.lifecycle).toBe("active");
+    expect(persistedOutcome.conclusion).toBeUndefined();
+    expect(persistedTask.version).toBe(task.version);
+    expect(persistedTask.lifecycle).toBe("backlog");
+  } finally {
+    release();
+    if (started) await done;
+    await page.unroute(routePattern, handler);
+  }
+});
