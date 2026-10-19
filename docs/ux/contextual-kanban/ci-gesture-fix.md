@@ -41,3 +41,25 @@ The complete browser and CI checks for the correction are tracked in
 The 29 gallery captures retain their original source receipts; this input-only
 fix does not change their visual composition. The PR stays draft without merge
 or release.
+
+## Deep-link dismissal during an unfinished graph read
+
+The next [CI browser run](https://github.com/A1b3rt0M3rcad0/wos/actions/runs/39339372668)
+on `f856f93` passed 196 cases but exposed a distinct reload/route race. Escape
+closed the restored inspector while an optional graph read was pending. The
+route-restoration guard then discarded the person's explicit URL update, leaving
+an `item` parameter for an inspector that was already closed.
+
+Only an explicit inspector dismissal may now write its route during restoration.
+Background resets and normal restoration writes retain the guard. A real graph
+response is held in the new regression: Escape must clear both the inspector and
+URL before that response arrives, its late delivery cannot reopen either, and
+browser Back must reopen the selected record. This regression failed before the
+fix. It and the original CI deep-link journey passed five repetitions each:
+**10 passed**, with their existing assertions and timeouts intact.
+
+The Kanban camera assertion also records its baseline at the actual opening
+click, before its handler runs. Recording it earlier could include the initial
+selection's optional graph-centering step in the interval being attributed to
+the modal. The before/after camera equality assertion remains unchanged; no
+sleep, retry, forced click or relaxed tolerance is introduced.

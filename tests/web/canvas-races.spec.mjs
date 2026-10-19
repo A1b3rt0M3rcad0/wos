@@ -253,3 +253,31 @@ test("an obsolete Task history transport failure cannot replace the current Task
     if (held.started) await held.done;
   }
 });
+
+test("Escape during deep-link graph restoration persists dismissal and Back reopens the record", async ({ page, wos }) => {
+  const data = await seedCanvas(wos);
+  await openCanvas(page, wos, data);
+  await select(page, data.tasks.ready);
+  await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
+  await page.waitForLoadState("networkidle");
+  const held = await holdOnce(page, new RegExp(`/graph\\?.*root_id=${data.tasks.ready.id}(?:&|$)`));
+  try {
+    await page.reload();
+    expect(await held.arrived).toBe(200);
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toBeHidden();
+    await expect(page).not.toHaveURL(/item=/);
+    await settle(page, held);
+    await expect(panel(page)).toBeHidden();
+    await expect(page).not.toHaveURL(/item=/);
+    await page.goBack();
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
+  } finally {
+    held.release();
+    if (held.started) await held.done;
+  }
+});

@@ -128,7 +128,9 @@ const canvasInspector = createWorkspaceInspector({
         const key = `${selected.kind}:${selected.id}`;
         state.canvasView?.focus(key);
       }
-      writeRoute(null);
+      // Explicit dismissal must survive optional reads still restoring a link.
+      // Background resets keep the normal restoration guard.
+      writeRoute(null, false, { allowDuringRestore: reason !== "reset" });
     }
   },
 });
@@ -1485,9 +1487,9 @@ function renderTabs() {
     $("tabs").append(b);
   }
 }
-function writeRoute(item = undefined, replace = false) {
+function writeRoute(item = undefined, replace = false, { allowDuringRestore = false } = {}) {
   if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
-  if (state.restoringRoute || !state.outcome) return;
+  if ((state.restoringRoute && !allowDuringRestore) || !state.outcome) return;
   const query = routeQuery({
     namespace: state.namespace,
     outcome: state.outcome.id,

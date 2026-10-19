@@ -36,7 +36,10 @@ The CI follow-up fixes a real Board interaction defect: a fresh card press after
 panning/dragging must not inherit the preceding gesture's 250 ms click suppression.
 All three movement journeys passed five repetitions; a bounded-clock regression
 reproduces the earlier defect without weakening the existing movement assertions.
-See the [CI gesture follow-up](docs/ux/contextual-kanban/ci-gesture-fix.md).
+A second controlled regression fixes URL dismissal while a deep-linked inspector
+is still awaiting optional graph enrichment; Escape and browser Back passed five
+repetitions each. The Kanban camera check measures the actual opening gesture.
+See the [CI interaction follow-up](docs/ux/contextual-kanban/ci-gesture-fix.md).
 
 The PR remains draft. No merge, version advancement or publication is performed.
 

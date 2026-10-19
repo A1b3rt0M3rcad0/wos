@@ -13,8 +13,10 @@ browser run, per-case outcomes, Go results, explicit skips and source bindings.
 
 The subsequent GitHub browser run on `e5ac3a2` passed 195 cases and failed the
 post-pan card-inspection case. Its [gesture follow-up](ci-gesture-fix.md) records
-the reproduced production defect and correction. Earlier local suites below
-remain evidence for their own sources, not proof that that CI run was green.
+the reproduced production defect and correction. The next CI run on `f856f93` passed 196 cases and exposed a separate deep-link
+route race; the same follow-up records its controlled reproduction and correction.
+Earlier local suites below remain evidence for their own sources, not proof that
+these CI runs were green.
 
 ## Technical checks
 

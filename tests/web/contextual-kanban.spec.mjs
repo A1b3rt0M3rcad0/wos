@@ -157,10 +157,6 @@ for (const [width, height] of [
     await expect(disclosures.nth(1)).not.toHaveAttribute("open");
     await capture(page, `inspector-${width}x${height}`);
     const route = page.url();
-    const camera = await page
-      .locator(".canvas-world")
-      .getAttribute("style")
-      .catch(() => null);
     page.on("request", (request) => {
       if (request.method() === "POST" && request.url().includes("/commands/"))
         mutations.push(request.url());
@@ -169,7 +165,15 @@ for (const [width, height] of [
       name: "Open Objectives Kanban",
       exact: true,
     });
+    // Measure the camera at the actual opening gesture. Optional graph
+    // enrichment may still center the initial selection before that click.
+    await trigger.evaluate((button) => {
+      button.addEventListener("click", () => {
+        window.cameraBeforeKanbanOpen = document.querySelector(".canvas-world")?.getAttribute("style") ?? null;
+      }, { capture: true, once: true });
+    });
     await trigger.click();
+    const camera = await page.evaluate(() => window.cameraBeforeKanbanOpen);
     const modal = page.locator("#workspace-kanban");
     await expect(modal).toBeVisible();
     await expect(
