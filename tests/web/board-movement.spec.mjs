@@ -215,3 +215,25 @@ test("trackpad, background drag and keyboard pan freely without changing cards o
   await page.mouse.wheel(0, 120);
   expect(await camera(page)).toEqual(beforeControl);
 });
+
+test("a fresh card press immediately after dragging opens inspection without selecting the drag", async ({ page, wos }) => {
+  const { value } = await openBoard(page, wos);
+  const root = record(page, "outcome", value.id);
+  const panel = page.locator("#canvas-details");
+  // Keep the entire gesture and next press inside the suppression interval,
+  // independently of CI/browser speed. Native timers and business time remain real.
+  await page.evaluate(() => {
+    const now = performance.now.bind(performance);
+    window.restoreBoardMovementClock = () => Object.defineProperty(performance, "now", { configurable: true, value: now });
+    Object.defineProperty(performance, "now", { configurable: true, value: () => 1000 });
+  });
+  try {
+    await dragCard(page, root, 30, 25);
+    await expect(panel).toBeHidden();
+    await root.locator(".canvas-node-main").click();
+  } finally {
+    await page.evaluate(() => window.restoreBoardMovementClock());
+  }
+  await expect(panel).toBeVisible();
+  await expect(panel.locator("#detail-title")).toHaveText(value.title);
+});

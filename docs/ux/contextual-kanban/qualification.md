@@ -9,6 +9,13 @@ The [machine-readable receipt](qualification.json) contains the actual complete
 browser run, per-case outcomes, Go results, explicit skips and source bindings.
 [Application captures](screenshots/README.md) show the working interface.
 
+## CI follow-up
+
+The subsequent GitHub browser run on `e5ac3a2` passed 195 cases and failed the
+post-pan card-inspection case. Its [gesture follow-up](ci-gesture-fix.md) records
+the reproduced production defect and correction. Earlier local suites below
+remain evidence for their own sources, not proof that that CI run was green.
+
 ## Technical checks
 
 - Complete 193-case Playwright suite at `198fa43`, without retries: see the receipt's exact

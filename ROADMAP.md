@@ -32,6 +32,12 @@ engine, authority and signed execution remain intact.
 - [ ] Independent participant study, manual assistive/device checks and reference-environment performance qualification. The [62-scenario matrix](docs/ux/contextual-kanban/acceptance.json) identifies 56 verified for automated scope and six partially verified.
 - [ ] Dedicated aggregate Kanban read/authoritative server-filter counts are deferred using the owner's bounded V1. Loaded scope remains labelled; no new runtime or Cloud subsystem is introduced.
 
+The CI follow-up fixes a real Board interaction defect: a fresh card press after
+panning/dragging must not inherit the preceding gesture's 250 ms click suppression.
+All three movement journeys passed five repetitions; a bounded-clock regression
+reproduces the earlier defect without weakening the existing movement assertions.
+See the [CI gesture follow-up](docs/ux/contextual-kanban/ci-gesture-fix.md).
+
 The PR remains draft. No merge, version advancement or publication is performed.
 
 ## Login viewport follow-up — 2026-10-19

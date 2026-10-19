@@ -1509,6 +1509,9 @@ export function mountWorkspaceCanvas(host, options) {
         event.target.closest(".canvas-node-actions, .canvas-edge[role=button]")
       )
         return;
+      // A new press is a new intention. Only the trailing click of the
+      // preceding drag is suppressed; its timer must not swallow this click.
+      ignoreClickUntil = 0;
       const card = event.target.closest("[data-canvas-node]");
       const item = card && layout.byKey.get(card.dataset.canvasNode);
       gesture = {
