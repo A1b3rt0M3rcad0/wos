@@ -184,8 +184,6 @@ export function renderWorkspaceView(host, {
     blocker: copy.text.workspaceBlockerMeaning, artifact: copy.text.workspaceArtifactMeaning,
     decision: copy.text.workspaceDecisionMeaning,
   }[kind];
-  if (meaning) host.append(el("p", meaning, "workspace-meaning field-help"));
-
   const work = section("work", kind === "work_item" ? copy.text.workspaceWork : copy.text.description,
     copy.text.workspaceNoInstructions);
   let hasWork = false;
@@ -193,6 +191,7 @@ export function renderWorkspaceView(host, {
     && !(kind === "artifact" && view.header.description === record.uri));
   if (descriptionShown) {
     work.node.append(el("p", view.header.description, "detail-description"));
+    if (meaning) work.node.classList.add("workspace-description-intro");
     hasWork = true;
   }
   if (kind === "work_item" && view.work) {
@@ -213,6 +212,9 @@ export function renderWorkspaceView(host, {
   if (view.coverage?.work?.status === "partial" && onFullRecord)
     work.node.append(actionButton(copy.text.workspaceReadFullRecord, () => onFullRecord(view), "read_full_record"));
   if (kind === "work_item") work.finish();
+  // Authored content leads the record. Its semantic explanation remains
+  // adjacent, without displacing the observation on a short reading surface.
+  if (meaning) host.append(el("p", meaning, "workspace-meaning field-help"));
 
   const people = section("people", ["work_item", "objective", "outcome"].includes(kind)
     ? copy.text.workspacePeople : copy.text.workspaceAuthorship, copy.text.workspaceNoPeople);

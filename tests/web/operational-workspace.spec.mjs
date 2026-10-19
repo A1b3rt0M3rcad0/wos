@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
 
 const panel = (page) => page.locator("#canvas-details");
 const base = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -19,7 +20,9 @@ async function action(page, name) {
     const more = panel(page).locator("#entity-actions");
     if (await more.isVisible()) await more.click();
     else await panel(page).getByRole("button", { name: "More actions", exact: true }).click();
-    await page.locator(`#action-options [data-action-id="${name}"]`).click();
+    const target = page.locator(`#action-options [data-action-id="${name}"]`);
+    await revealMenuAction(target);
+    await target.click();
   }
   await expect(page.locator("#command-form")).toBeVisible();
   await expect(page.locator("#command-select")).not.toBeVisible();

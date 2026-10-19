@@ -20,9 +20,13 @@ async function openAction(page, name) {
     await page.locator("#entity-actions").click();
     const target = page.locator(`#action-options [data-action-id="${name}"]`);
     if (!(await target.isVisible())) {
-      const advanced = page.locator("#action-options details").filter({ has: target });
-      if (await advanced.count() && !(await advanced.evaluate((element) => element.open)))
+      const advanced = page.locator("#action-options details").filter({
+        has: page.locator(`[data-action-id="${name}"]`),
+      });
+      if (await advanced.count() && !(await advanced.evaluate((element) => element.open))) {
         await advanced.locator(":scope > summary").click();
+        await expect(advanced).toHaveAttribute("open", "");
+      }
     }
     await target.click();
   }
@@ -254,5 +258,8 @@ test("privileged v1 revocation hydrates the actual contract without requiring th
   expect(String(payload.expected_contract_version)).toBe(String(acquired.contract.version));
   expect(record.value.contract.status).toBe("revoked");
   expect(record.value.work_item.current_contract_id).toBeUndefined();
-  expect(record.value.work_item.lifecycle).toBe("todo");
+  // Revocation ends authority while preserving recorded execution progress.
+  expect(record.value.work_item.lifecycle).toBe(acquired.work_item.lifecycle);
+  expect(record.value.work_item.lifecycle).toBe("in_progress");
+  expect(record.value.work_item.conclusion).toBeUndefined();
 });

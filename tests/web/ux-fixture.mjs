@@ -6,6 +6,7 @@ import { resolve, join } from "node:path";
 import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
 export { expect };
 // Specialist views live in the compact, native Views disclosure. Use the real
 // control rather than opening hidden content through DOM mutation in a test.
@@ -184,7 +185,9 @@ export async function intent(page, label) {
     await quick.click();
   else {
     await outcomeActions(page);
-    await page.locator("#action-options").getByRole("button", { name: label, exact: true }).click();
+    const target = page.locator("#action-options").getByRole("button", { name: label, exact: true, includeHidden: true });
+    await revealMenuAction(target);
+    await target.click();
   }
   await expect(page.locator("#command-dialog")).toBeVisible();
   await expect(page.locator("#command-select")).not.toBeVisible();

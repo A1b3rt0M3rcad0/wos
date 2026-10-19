@@ -1,4 +1,5 @@
 import { test, expect, openOutcome, chooseArea } from "./ux-fixture.mjs";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
 import { seedCanvas, seedCanvasRoadmap } from "./canvas-fixture.mjs";
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
 import { createHash } from "node:crypto";
@@ -46,7 +47,7 @@ async function qualification(page, wos) {
     servedAssets[name] = actual;
   }));
   const fixtureSources = {};
-  for (const name of ["operational-gallery.spec.mjs", "ux-fixture.mjs", "canvas-fixture.mjs", "native-browser-zoom.mjs"])
+  for (const name of ["operational-gallery.spec.mjs", "ux-fixture.mjs", "workspace-action-fixture.mjs", "canvas-fixture.mjs", "native-browser-zoom.mjs"])
     fixtureSources[`tests/web/${name}`] = hash(await readFile(new URL(name, import.meta.url)));
   const session = await page.context().newCDPSession(page);
   let browser;
@@ -207,7 +208,9 @@ async function openAction(page, name) {
   if (await direct.count()) await direct.first().click();
   else {
     await panel(page).locator('[data-action-id="more_actions"]').click();
-    await page.locator(`#action-options [data-action-id="${name}"]`).click();
+    const target = page.locator(`#action-options [data-action-id="${name}"]`);
+    await revealMenuAction(target);
+    await target.click();
   }
   await expect(page.locator("#command-form")).toBeVisible();
 }

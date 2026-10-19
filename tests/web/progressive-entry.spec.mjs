@@ -1,4 +1,5 @@
 import { test, expect, openOutcome } from "./ux-fixture.mjs";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 
 const panel = (page) => page.locator("#canvas-details");
 const base = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -10,12 +11,7 @@ async function select(page, title) {
 }
 
 async function taskForm(page) {
-  const direct = panel(page).locator('[data-action-id="create_work_item"]').filter({ visible: true });
-  if (await direct.count()) await direct.first().click();
-  else {
-    await panel(page).locator("#entity-actions").click();
-    await page.locator('#action-options [data-action-id="create_work_item"]').click();
-  }
+  await clickRecordAction(page, "New task");
   await expect(page.locator("#command-form")).toBeVisible();
   return page.getByLabel("Task title", { exact: true });
 }

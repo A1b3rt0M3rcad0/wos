@@ -1,5 +1,15 @@
 import { expect } from "playwright/test";
 
+// Only expand the real disclosure that contains an already authorized action.
+// This never changes action availability or bypasses a hidden native dialog.
+export async function revealMenuAction(target) {
+  for (const disclosure of await target.locator("xpath=ancestor::details").all()) {
+    if (!(await disclosure.evaluate((element) => element.open)))
+      await disclosure.locator(":scope > summary").click();
+  }
+  await expect(target).toBeVisible();
+}
+
 // Follow the shared inspector's compact primary/secondary/More hierarchy.
 // The helper only operates visible controls; it never invokes app internals.
 export async function clickRecordAction(page, label) {
@@ -10,12 +20,8 @@ export async function clickRecordAction(page, label) {
   else {
     const more = scope.locator("[data-action-id=more_actions], #entity-actions").filter({ visible: true }).first();
     await more.click();
-    const target = page.locator("#action-options").getByRole("button", { name: label, exact: true });
-    if (!(await target.isVisible())) {
-      const advanced = page.locator("#action-options details").filter({ has: page.locator("summary").getByText("Advanced", { exact: true }) });
-      if (await advanced.count() && !(await advanced.evaluate((element) => element.open)))
-        await advanced.locator(":scope > summary").click();
-    }
+    const target = page.locator("#action-options").getByRole("button", { name: label, exact: true, includeHidden: true });
+    await revealMenuAction(target);
     await target.click();
   }
   await expect(page.locator("#command-form")).toBeVisible();

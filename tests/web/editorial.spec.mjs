@@ -217,7 +217,7 @@ test("operational density stays bounded across desktop, tablet and phone viewpor
     if (width >= 1440)
       expectStableMetrics(await dimensions(page, formTargets), formReference, ["fontSize", "paddingTop", "paddingLeft", "width"]);
     await page.getByText("Details and success conditions", { exact: true }).click();
-    await expectWholeControl(page.getByLabel("Priority", { exact: true }));
+    await expectWholeControl(page.locator("#command-dialog").getByLabel("Priority", { exact: true }));
     await expect(page.locator("#submit-command")).toBeInViewport();
     expect(await page.locator("#submit-command").evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
     if (width === 2560) await capture(page, "density-2560x1440-task-form");

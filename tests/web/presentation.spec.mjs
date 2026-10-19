@@ -53,7 +53,9 @@ async function rowDetail(page, key, section, item) {
   await expect(page.locator("#detail-title")).toHaveText(item.title || item.name || kindHeading);
   if (!item.title && !item.name) {
     await expect(page.locator(".detail-description")).toHaveText(item.description);
-    expect(await page.locator("#detail-content").getByText(item.description, { exact: true }).count()).toBe(1);
+    // The authored body appears once; named relationship endpoints may repeat
+    // the same record label without duplicating its descriptive paragraph.
+    await expect(page.locator("#detail-content .detail-description")).toHaveCount(1);
   }
 }
 async function dialogAccess(page, id) {

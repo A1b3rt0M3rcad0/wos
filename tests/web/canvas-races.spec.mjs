@@ -1,5 +1,6 @@
 import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
 
 const canvas = (page) => page.locator("#operational-canvas");
 const panel = (page) => page.locator("#canvas-details");
@@ -19,7 +20,9 @@ async function openAction(page, action) {
   const primary = panel(page).locator(`.workspace-actions [data-action-id="${action}"]`);
   if (await primary.isVisible()) return primary.click();
   await panel(page).locator('#entity-actions').click();
-  await panel(page).locator(`#action-options [data-action-id="${action}"]`).click();
+  const target = panel(page).locator(`#action-options [data-action-id="${action}"]`);
+  await revealMenuAction(target);
+  await target.click();
 }
 
 // Capture a genuine server result and gate its delivery. The optional failure

@@ -499,12 +499,15 @@ async function refreshPermissions() {
   );
   if (generation !== state.generation || namespace !== state.namespace) return;
   state.permissions = value.permissions;
-  $("actions").disabled = false;
-  $("developer-tools").hidden = !state.permissions.includes("namespace:admin");
-  $("administration").hidden = !state.permissions.includes("namespace:admin");
-  for (const id of ["create-outcome", "empty-create"]) {
-    $(id).disabled = !state.permissions.includes("outcome:write");
-  }
+  applyPermissionControls();
+}
+function applyPermissionControls() {
+  const identified = Boolean(state.principal);
+  $("actions").disabled = !identified;
+  $("developer-tools").hidden = !identified || !state.permissions.includes("namespace:admin");
+  $("administration").hidden = !identified || !state.permissions.includes("namespace:admin");
+  for (const id of ["create-outcome", "empty-create"])
+    $(id).disabled = !identified || !state.permissions.includes("outcome:write");
 }
 function placeNotice(onBoard = canvasActive() && !$("outcome").hidden && !$("canvas-view").hidden) {
   const parent = onBoard ? $("canvas-feedback") : $("main-content");
@@ -954,23 +957,51 @@ async function connect(namespace) {
   state.principal = "";
   state.actorKey = "";
   state.protocol = null;
+  applyPermissionControls();
   $("signed-protocol-info").hidden = true;
   $("connect").hidden = true;
   $("workspace").hidden = false;
-  state.catalog = (await request(`${api}/commands`)).commands;
-  await refreshNamespaceProtocol();
-  state.workspaceRules = (await request(`${api}/capabilities`)).workspace_rules;
-  await refreshPermissions();
-  const identity = await request(`${api}/identity`).catch(() => ({}));
-  state.principal = identity.principal_id || "";
-  state.actorKey = JSON.stringify([
-    identity.actor_ref?.kind,
-    identity.actor_ref?.provider,
-    identity.actor_ref?.id,
-  ]);
-  await discover();
-  $("context-name").textContent =
-    $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
+  const generation = state.generation;
+  const current = () => generation === state.generation && namespace === state.namespace;
+  $("workspace").inert = true;
+  $("workspace").setAttribute("aria-busy", "true");
+  $("empty").hidden = true;
+  $("workspace-loading").hidden = false;
+  try {
+    const catalog = await request(`${api}/commands`);
+    if (!current()) return;
+    state.catalog = catalog.commands;
+    await refreshNamespaceProtocol();
+    if (!current()) return;
+    const capabilities = await request(`${api}/capabilities`);
+    if (!current()) return;
+    state.workspaceRules = capabilities.workspace_rules;
+    await refreshPermissions();
+    if (!current()) return;
+    const identity = await request(`${api}/identity`);
+    if (!current()) return;
+    state.principal = identity.principal_id || "";
+    state.actorKey = JSON.stringify([
+      identity.actor_ref?.kind,
+      identity.actor_ref?.provider,
+      identity.actor_ref?.id,
+    ]);
+    applyPermissionControls();
+    await discover();
+    if (!current()) return;
+    $("context-name").textContent =
+      $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
+  } catch (error) {
+    if (current()) report(error);
+    throw error;
+  } finally {
+    if (current()) {
+      $("workspace").inert = false;
+      $("workspace").setAttribute("aria-busy", "false");
+      $("workspace-loading").hidden = true;
+      $("empty").hidden = Boolean(state.outcome);
+    }
+  }
 }
 async function namespaces() {
   const result = await request(`${api}/namespaces`);
@@ -3356,6 +3387,11 @@ function workspaceAction(action, capability) {
   openCommands(name);
 }
 $("close-detail").onclick = () => closeDetail();
+$("detail-dialog").addEventListener("cancel", (event) => {
+  // Native Escape closes immediately; a pending typed-context read must not
+  // reopen that dialog or restore its route after the person dismissed it.
+  if (!event.defaultPrevented) state.detailGeneration++;
+});
 $("detail-dialog").addEventListener("close", () => {
   if (!canvasActive()) writeRoute(null);
 });

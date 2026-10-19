@@ -113,11 +113,14 @@ test("Outcome Board is the default operational view without a Roadmap and keeps 
   let releaseContext, reachedContext;
   const held = new Promise((resolve) => { releaseContext = resolve; });
   const reached = new Promise((resolve) => { reachedContext = resolve; });
-  const contextPath = `**/work-items/${data.tasks.ready.id}/context`;
+  const contextPath = "**/workspace-view";
   await page.route(contextPath, async (route) => {
+    if (route.request().postDataJSON()?.subject?.ref?.id !== data.tasks.ready.id)
+      return route.continue();
+    const response = await route.fetch();
     reachedContext();
     await held;
-    await route.continue();
+    await route.fulfill({ response });
   });
   try {
     await canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }).fill(data.tasks.ready.title);
@@ -125,7 +128,8 @@ test("Outcome Board is the default operational view without a Roadmap and keeps 
     await reached;
     await panel(page).locator("#close-detail").click();
     await expect(panel(page)).not.toBeVisible();
-    const response = page.waitForResponse((value) => value.url().endsWith(`/work-items/${data.tasks.ready.id}/context`));
+    const response = page.waitForResponse((value) => value.url().endsWith("/workspace-view")
+      && value.request().postDataJSON()?.subject?.ref?.id === data.tasks.ready.id);
     releaseContext();
     await response;
     await page.evaluate(async () => { if (!(await fetch("/livez")).ok) throw Error("health fence failed"); });

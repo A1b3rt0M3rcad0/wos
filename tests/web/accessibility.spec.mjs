@@ -9,6 +9,7 @@ import {
   outcomeActions,
 } from "./ux-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 async function audit(page) {
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
@@ -215,8 +216,7 @@ test("typed participants are documentary and never acquire execution authority",
   await wos.login(page);
   await openOutcome(page);
   await detail(page, "Tasks", "Participant Task");
-  await page.locator("#entity-actions").click();
-  await page.locator('#action-options [data-action-id="set_work_item_assignees"]').click();
+  await clickRecordAction(page, "Edit participants");
   await page
     .getByRole("button", { name: "Add participant", exact: true })
     .click();

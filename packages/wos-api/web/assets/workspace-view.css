@@ -143,6 +143,55 @@
   font-weight: 400;
   margin-top: .3rem;
 }
+/* The detail footer contains one primary, two secondary actions and More.
+   Share two rows rather than stacking the primary and More as full-width rows.
+   The existing control nodes, reading order and focus handlers stay intact. */
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer:has(.workspace-actions) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .45rem;
+  padding: .6rem .85rem;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .workspace-actions {
+  display: contents;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .workspace-actions > button,
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer #entity-actions {
+  grid-column: auto;
+  min-height: 44px;
+  padding: .55rem .65rem;
+}
+@media (max-width: 760px), (max-height: 800px) {
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading {
+    padding: .7rem .85rem;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-body {
+    padding: .6rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-path .workspace-reference {
+    min-height: 44px;
+    padding: .4rem .55rem;
+    font-size: .85714rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-state {
+    margin-block: .15rem .25rem !important;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-description-intro {
+    padding-block-start: 0;
+  }
+  /* The entity title already identifies an authored documentary description.
+     Retain its section heading for assistive navigation without spending the
+     first reading lines on a second visual label. Operational headings remain. */
+  #outcome[data-editorial-area="canvas"] .workspace-description-intro > h3 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 .workspace-placement-summary {
   display: grid;
   gap: .35rem;

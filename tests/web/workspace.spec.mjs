@@ -415,7 +415,9 @@ test("workspace summary, scoped list, operational board, pagination and real hum
     await page
       .getByRole("button", { name: /Fluxo principal validado/ })
       .click();
+    await expect(page.locator("#detail-title")).toHaveText("Fluxo principal validado no navegador");
     await page.keyboard.press("Escape");
+    await expect(page.locator("#detail-dialog")).not.toBeVisible();
     await page.locator("#developer-tools").click();
     await page
       .locator("#command-select")
