@@ -5,6 +5,15 @@ execution Contract. Attention explains what the current Task still requires. Bot
 are shared server state, available through HTTP, MCP, and the Go client. Neither
 executes work or replaces an independent review.
 
+## Documentary participant notes
+
+A contextual **Record update** creates an immutable EntityNote, separate from
+signed Contract activity. It preserves authenticated authorship and recording
+time without acquiring execution authority or assessing a criterion. Corrections
+append a new same-author record. See the [operational guide](ux/operational-workspace/README.md#record-updates-problems-and-deliverables-in-context)
+and [notes API](operational-workspace-api.md). The signed operation below keeps
+its existing authority and credential requirements.
+
 ## Record an observation
 
 `POST /api/v1/commands/append_work_activity` and MCP tool

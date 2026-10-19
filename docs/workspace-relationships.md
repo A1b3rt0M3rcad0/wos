@@ -31,8 +31,8 @@ not assess a criterion. `waived` is explicitly not verified.
 
 | You want to express | Use | What it means |
 | --- | --- | --- |
-| This condition is part of another condition | **Add objective** from an Objective; select **Parent Objective** | Decomposition in the same Outcome, without an implied execution dependency. |
-| This Task contributes work to an Objective | **New task** from that Objective; review the **Objective** field | Explicit Task association. A Task may also belong directly to the Outcome. |
+| This condition is part of another condition | **Add objective** from an Objective; review its fixed placement (or explicitly change it) | Decomposition in the same Outcome, without an implied execution dependency. |
+| This Task contributes work to an Objective | **New task** from that Objective; review its fixed Objective placement | Explicit Task association. A Task may also belong directly to the Outcome. |
 | This work needs something else first | **Add dependency** on a Task or Objective | A hard prerequisite affects readiness and completion. An advisory dependency records context without blocking transitions. |
 | This observation supports or challenges a statement | **Link evidence** from Evidence | Select the target, stance (`supports`, `contradicts` or `context`) and rationale. Stance belongs to this individual EvidenceLink. |
 | This criterion was evaluated | Select a success criterion and **Assess criterion** where permitted | Record a result for the current criterion revision, with rationale and the appropriate Evidence. |
@@ -47,23 +47,16 @@ operation. A missing action is not a reason to bypass that validation.
 
 ## Read a selected item
 
-**How this fits together** explains the selected entity's role and recorded
-placement. An Objective shows its parent when present. A Task identifies its
-Objective or says that it belongs directly to the Outcome. Scope and membership
-are separate from dependency and completion.
+The Board and specialist views use the same inspector. Its context path identifies
+the Outcome and actual parent; its relationship rows identify real endpoints.
+A Task can belong directly to the Outcome. An Objective's **Required for Outcome**
+obligation remains global, including when that Objective is nested.
 
-Connection groups distinguish Objectives and Tasks, dependencies, Evidence,
-problems and blocking, and documentary sources. References open the related
-record. An **Inspect link** control opens the actual persisted relationship;
-it is useful when you need its rationale, version or other details. Longer
-groups use a disclosure to retain all loaded connections without stretching
-the initial inspector.
-
-Task inspection keeps its authoritative focal context for operational detail,
-including current attention, dependencies, inherited blocking and Evidence.
-Its membership appears once rather than repeating the same hierarchy in two
-competing summaries. Outside the Board, entity details explain direct recorded
-references and identify that the loaded Board connection index is not included.
+Task inspection groups instructions, people and recorded authority, attention,
+success conditions, Evidence, delivery and recent activity. Other entity types
+show the facets relevant to them. Capabilities explain available actions and
+preparation; every mutation still checks current permissions and domain rules.
+A contract records authority, not proof that a worker process is currently running.
 
 - **Depends on** points from the selected work to its prerequisite.
   **Required by** points to work that references the selected item.
@@ -106,10 +99,10 @@ dependencies.
    **Certify objective** and, when its own gates are satisfied,
    **Certify outcome**. Task progress percentages are not acceptance decisions.
 
-The canonical domain can achieve a qualifying Objective directly from its
-planned state; the current human action menu exposes **Certify objective**
-after **Start objective**. This guide describes the visible workspace rather
-than promising every API transition is a separate browser control.
+A qualifying Objective can be certified directly from its planned state when
+its actual gates are satisfied. Starting it first is not a fabricated requirement.
+The action explains unmet gates rather than automatically adding criteria,
+accepting Evidence or releasing blockers.
 
 ## Understand what is loaded
 
@@ -119,13 +112,15 @@ help investigate records beyond the currently visible notes. Expanding a
 branch or inspecting a Task can add context, while retaining a consistent
 Outcome revision.
 
-**Loaded connections and coverage** states the source and limits of the
-inspector summary. It uses only loaded Board edges and references recorded on
-the selected item. Missing connections do not prove that there are no Issues,
-dependencies or Evidence; they do not establish readiness or acceptance.
-Direct references remain inspectable even when a related note's details are
-not yet loaded. If another actor changes the Outcome while context is loading,
-refresh rather than combining different revisions.
+The inspector queries its own authorized, coherent workspace projection. It does
+not infer absence from the currently loaded Board edges. Facet coverage
+distinguishes complete, partial, unavailable and not-loaded data; explicit
+pagination retains the observed revision. If another actor changes the Outcome,
+refresh rather than combining incompatible pages. Timeline pagination pins a
+history frontier; descendant history describes current structural placement.
+
+See the [operational workspace guide](ux/operational-workspace/README.md) for
+progressive creation, documentary updates, typed preparation and the shared inspector.
 
 For navigation, execution authority and uncertain-response recovery, see
 [the human workspace guide](workspace-ux.md). For the domain's precise source

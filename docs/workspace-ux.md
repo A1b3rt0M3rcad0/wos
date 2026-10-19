@@ -1,5 +1,9 @@
 # Human workspace
 
+For the current progressive creation, shared inspector and documentary updates,
+start with the [operational workspace guide](ux/operational-workspace/README.md).
+This guide also covers service access, settings and specialist navigation.
+
 To understand how Outcomes, Objectives, Tasks, Evidence, Issues and Blockers
 relate, use the [relationship guide](workspace-relationships.md). The inspector
 separates recorded placement, dependencies, observations and actual blocking;

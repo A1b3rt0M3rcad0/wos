@@ -58,7 +58,7 @@ Criterion is not a new globally writable entity kind.
 
 Follow the relevant facet's `next_cursor` using `criteria_cursor`,
 `relation_cursor` or `required_objectives_cursor`. A facet reports `complete`,
-`partial`, `not_loaded`, `unavailable` or `not_applicable`; counts are present
+`partial`, `not_loaded`, `unavailable`, `not_applicable` or `unknown`; counts are present
 only when known. A missing count is not zero. A capability explains availability,
 related references and the legitimate channel; the command always revalidates
 current state.
@@ -91,7 +91,9 @@ selects the Outcome as parent. An empty preview object is invalid. The response
 names both parents, reports affected counts, and explains blocked moves with
 typed reasons and remedies. It samples at most 20 affected entities and five
 Blockers per before/after state, with coverage for each sample. Task previews
-also expose current and prospective readiness. The existing structural graph
+also expose current and prospective readiness. An invalid or cyclic destination
+returns its real typed error with unknown prospective coverage; it does not
+invent an empty Blocker set or ready state. The existing structural graph
 bounds remain enforced.
 
 For a permitted Outcome, Objective or Task target, add

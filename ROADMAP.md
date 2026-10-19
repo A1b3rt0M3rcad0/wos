@@ -3,7 +3,7 @@
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-19
-**Current target:** Stable 1.0 hardening; public npm package wosctl
+**Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
 **Current wave:** Implement the owner's operational workspace plan in draft PR #116
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
@@ -52,7 +52,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Operational workspace — 2026-10-19
 
-**Status: In progress in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116).**
+**Status: Implemented and locally qualified in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116); independent and reference-environment acceptance remain pending.**
 The owner expands this PR to progressive creation, persistent documentary notes,
 guarded definition/placement edits, atomic contextual records, coherent inspector
 and card reads, and an event-backed timeline. This scope supersedes the earlier
@@ -64,6 +64,30 @@ The [unaltered owner plan](docs/ux/operational-workspace/owner-plan-2026-10-19.m
 [24-unit / 108-scenario tracker](docs/ux/operational-workspace/acceptance.json)
 separate implementation from actual qualification. Automated and human acceptance
 are tracked independently. Continue this branch; do not merge or publish.
+
+- [x] Add shared typed preconditions and capabilities, guarded Task definition/date/placement edits and planned Objective reparenting.
+- [x] Persist immutable authenticated documentary notes with scoped corrections and verified internal observation references.
+- [x] Add explicit initial Criteria, bounded atomic plan creation and contextual Evidence, Artifact and Decision registration.
+- [x] Read inspectors, global required Objectives and batched cards from coherent authorized frames; page one event-backed timeline with frozen frontiers.
+- [x] Integrate progressive quick/full/batch forms, a shared pertinent inspector, structural Board layers and contextual actions; preserve signed-host handoff and exact-intent recovery.
+- [x] Expose the new operations through HTTP, MCP, CLI and Go SDK; retain historical wire shapes and review generated compatibility.
+- [x] Complete source-bound local browser, PostgreSQL, migration, performance and visual qualification; publish the evidence with its actual limits in this draft PR.
+- [ ] Conduct the independent five-participant comprehension study and the prescribed 2-vCPU/4-GiB/50-ms-RTT performance qualification. Automated tests do not stand in for either.
+
+Core implementation is recorded in `342dd6e`, transport exposure in `5c68f7e`
+and the initial shared workspace in `d5aecda`. Guarded impact reviews follow in
+`9b03c14` / `505f2e6`, with reviewed transports in `e36a8f4`; final workspace
+behavior is qualified at `36d7d2e` (164 browser journeys and 74 JavaScript units).
+The capture-only follow-up `d458d478` produces 75 images with identical production
+assets. The full backend has 1,703 passing tests/subtests, nine explicit skips
+and ten packages without tests; the Go/SQL fingerprint remains unchanged.
+The final local concurrent-read p95 is 216.09 ms on SQLite and 183.16 ms on
+PostgreSQL; the reference profile remains unqualified and the earlier PostgreSQL
+834.39 ms result is retained. The published/source metadata stays
+at 1.1.0; the coordinated release queue plans 1.2.0 without preparing or publishing
+it. See the [operator guide](docs/ux/operational-workspace/README.md),
+[API guide](docs/operational-workspace-api.md), [migration evidence](docs/ux/operational-workspace/migrations.md)
+and [performance scope](docs/ux/operational-workspace/performance.md).
 
 ## Board communication and navigation — 2026-10-18
 

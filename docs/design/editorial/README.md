@@ -1,13 +1,21 @@
 # WOS editorial workspace
 
-The latest [operational density correction](operational-density.md) supersedes
-the former proportional viewport enlargement. See the [current captures](board-communication/README.md)
-for compact navigation, readable inspection, grouped actions and explicit entity relationships. Earlier
-captures below remain historical records of their identified implementations.
+The [operational workspace](../../ux/operational-workspace/README.md) extends the
+editorial interface with progressive planning and one contextual inspector. See
+the [current captures](operational-workspace/README.md) for desktop, mobile,
+native browser zoom, creation, proof and specialist views. The
+[operational density correction](operational-density.md) supersedes the former
+proportional viewport enlargement. Earlier captures below remain historical
+records of their identified implementations.
 
 This design brings the locally supplied `chess-style` and `wos-art-style` directions into the existing WOS human workspace, using Woobe's operational color palette and the owner-supplied WOS web identity. Its organizing idea is **a shared notebook for intent, work, and proof**: precise structure, human marks, and state that survives the next handoff.
 
-This is a presentation change to the six existing areas, authentication screen, outcome selection, collections, board, forms, settings, and entity details. HTTP/MCP contracts, persisted lifecycle rules, authorization, independent review, and explicit completion remain the source of product behavior.
+The original presentation work covers the existing areas, authentication screen,
+Outcome selection, collections, Board, forms, settings and entity details. The
+current operational-workspace extension also adds documented Application
+operations and persistent notes; see [ADR-038](../../adr/0038-operational-workspace.md)
+and the [API reference](../../operational-workspace-api.md). Authorization,
+independent review and explicit completion remain the source of product behavior.
 
 ## Visual system
 

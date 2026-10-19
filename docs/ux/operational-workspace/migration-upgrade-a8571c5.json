@@ -1,0 +1,76 @@
+{
+  "baseline_source": "5d945d3081f85927b80c686d695849bd1df73a5d",
+  "candidate_production_sha256": "be7968d55a4a22fd8e12b8d24c178b22075fd2cb7ec85bc62c9eddc1d0fe562c",
+  "candidate_source_scope": "Core production Go/SQL, go.mod, go.sum and migration helper source; transport and presentation are qualified separately",
+  "candidate_source_verified": true,
+  "complete": true,
+  "helper_identity": {
+    "postgres_schema": 32,
+    "source": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+    "sqlite_schema": 32
+  },
+  "helper_sha256": "3338ebc214023774d5e7927d09dcc000edcd891bc72177f55ca2024b7bb5a77f",
+  "helper_source": "tools/acceptance/workspace-notes-upgrade/main.go",
+  "historical_production_sha256": "a546f035d26074cc306ea0371c7b951cc88aedf626c0177253e6287df8d2d1ae",
+  "old_binary_sha256": "777199486f1ff34e0a4e2d9c38f89de07e93dfe9d17252915048348df81c5d63",
+  "qualification": "actual_schema_30_signed_fixture_forward_upgrade",
+  "qualification_tool": "tools/acceptance/workspace-notes-upgrade.py",
+  "qualification_tool_sha256": "1202bd41c571828ce6d35d031c0c518f2e68ea22b863e56dce5ef9ce2abab713",
+  "results": [
+    {
+      "backend": "sqlite",
+      "candidate_migration_manifest_sha256": "aacfcdb5885455731f6a73c001ae4d07b00a9d8ebd919a9ace7337e25401fb42",
+      "complete_candidate_migrations_verified": true,
+      "documentary_note": {
+        "authenticated_author_recorded": true,
+        "idempotent_replay_same_note": true,
+        "original_task_unchanged": true,
+        "terminal_task_lifecycle": "done",
+        "timeline_occurrences": 1
+      },
+      "new_schema": 32,
+      "old_binary_refusal_reason": "newer_schema",
+      "old_binary_refused_new_schema": true,
+      "old_fixture_test_sha256": "f2a474cfbbd127f854d11867b0411f9bfb4bb58feca910cec7c0544784dd57c2",
+      "old_migration_rows_checked": 30,
+      "old_migration_rows_preserved": true,
+      "old_schema": 30,
+      "old_tables_unchanged_by_migration": 68,
+      "original_signed_facts": 39,
+      "preexisting_tables_checked": 69
+    },
+    {
+      "backend": "postgres",
+      "candidate_migration_manifest_sha256": "fcef3272fbb3c6fcaff7d7f2ebe13997fcdab4f1e4cba2b1015b29d1f7a4f9f6",
+      "complete_candidate_migrations_verified": true,
+      "documentary_note": {
+        "authenticated_author_recorded": true,
+        "idempotent_replay_same_note": true,
+        "original_task_unchanged": true,
+        "terminal_task_lifecycle": "done",
+        "timeline_occurrences": 1
+      },
+      "new_schema": 32,
+      "old_binary_refusal_reason": "newer_schema",
+      "old_binary_refused_new_schema": true,
+      "old_fixture_test_sha256": "027df73b8ad4af7126314545dd7fad526ef27cb4dda0c4db1f77038ee75c8cd2",
+      "old_migration_rows_checked": 30,
+      "old_migration_rows_preserved": true,
+      "old_schema": 30,
+      "old_tables_unchanged_by_migration": 68,
+      "original_signed_facts": 39,
+      "preexisting_tables_checked": 69
+    }
+  ],
+  "schema_version": 1,
+  "scope_notes": [
+    "Preservation compares all original rows immediately after migration, before the qualification note is appended.",
+    "The baseline signed journey is executed from an independently verified historical source archive for each adapter.",
+    "Old-binary startup refusal does not fence already running old processes or qualify mixed-version rolling upgrades.",
+    "Rollback requires restore into a separate pre-upgrade destination and reconciliation; no in-place downgrade is claimed.",
+    "This receipt does not replace full application, transport, browser or independent human acceptance."
+  ],
+  "source": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+  "source_verified_again_before_publication": true,
+  "test_only_historical_instrumentation": true
+}

@@ -1,0 +1,11 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkWorkspaceF08
+    workspace_f08_benchmark_test.go:51: ERROR: canceling statement due to statement timeout (SQLSTATE 57014)
+--- FAIL: BenchmarkWorkspaceF08
+FAIL
+exit status 1
+FAIL	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	109.369s
+FAIL

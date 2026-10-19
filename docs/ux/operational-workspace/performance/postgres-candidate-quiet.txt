@@ -1,0 +1,23 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkWorkspaceF08
+    workspace_f08_benchmark_test.go:116: fixture_stats_scope=current-test-schema tables=71 global_analyze=false setup_overlay=true
+    workspace_f08_benchmark_test.go:117: fixture=F08 objectives=100 tasks=1000 evidence=5000 notes=10000 note_events=10000 runner_cpus=5 GOMAXPROCS=2 adapter=PostgreSQL protocol=legacy same-process-no-network cache=preloaded-and-ANALYZE filesystem=temp-local
+BenchmarkWorkspaceF08/cards_100
+BenchmarkWorkspaceF08/cards_100-2         	      20	  35268234 ns/op	  34474360 p50_ns	  48337776 p95_ns	  80441064 p99_ns	     66648 response_bytes	        10.00 sql_statements/op
+BenchmarkWorkspaceF08/structural_page_50
+BenchmarkWorkspaceF08/structural_page_50-2         	      20	  20052915 ns/op	  18569902 p50_ns	  30060932 p95_ns	  37333434 p99_ns	     32628 response_bytes	        12.00 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector
+BenchmarkWorkspaceF08/task_inspector-2             	      20	  48685140 ns/op	  49945224 p50_ns	  62084593 p95_ns	  66630618 p99_ns	     18456 response_bytes	        44.00 sql_statements/op
+BenchmarkWorkspaceF08/objective_inspector
+BenchmarkWorkspaceF08/objective_inspector-2        	      20	  54108773 ns/op	  51650484 p50_ns	  75477771 p95_ns	  79302012 p99_ns	     19569 response_bytes	        45.00 sql_statements/op
+BenchmarkWorkspaceF08/outcome_inspector
+BenchmarkWorkspaceF08/outcome_inspector-2          	      20	  41479920 ns/op	  37550529 p50_ns	  61914120 p95_ns	  64486002 p99_ns	     31627 response_bytes	        33.00 sql_statements/op
+BenchmarkWorkspaceF08/timeline_5
+BenchmarkWorkspaceF08/timeline_5-2                 	      20	   3951334 ns/op	   3329500 p50_ns	   6024287 p95_ns	   9740463 p99_ns	      6985 response_bytes	         6.000 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector_10_sessions
+BenchmarkWorkspaceF08/task_inspector_10_sessions-2 	      20	 126622276 ns/op	 101508829 p50_request_ns	 183160945 p95_request_ns	 234384950 p99_request_ns	        10.00 requests/batch	     18456 response_bytes	        44.00 sql_statements/request
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	85.262s
