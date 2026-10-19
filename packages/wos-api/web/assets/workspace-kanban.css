@@ -217,3 +217,51 @@ dialog.workspace-kanban[open] {
     max-height: none;
   }
 }
+/* Keep expanded filters from consuming the card region through global form
+ * widths. This surface has its own finite viewport and a scrolling work area. */
+.workspace-kanban-controls {
+  flex: 0 0 auto;
+  max-height: 30%;
+  overflow-y: auto;
+}
+.workspace-kanban-filters[open] {
+  flex-basis: auto;
+}
+.workspace-kanban-filters > div {
+  flex-direction: row;
+}
+.workspace-kanban-filters select {
+  flex: 1 1 190px;
+  width: auto;
+  max-width: 280px;
+}
+.workspace-kanban-body {
+  min-height: 150px;
+}
+.workspace-kanban-header,
+.workspace-kanban-breadcrumb,
+.workspace-kanban-status,
+.workspace-kanban-footer {
+  flex-shrink: 0;
+}
+.workspace-kanban-footer .workspace-primary-actions {
+  display: flex;
+  gap: 8px;
+}
+.workspace-kanban h2,
+.workspace-kanban h3,
+.workspace-kanban-card strong {
+  font-family: var(--display);
+  font-weight: 400;
+}
+.workspace-kanban-controls > input {
+  flex: 1 1 180px;
+}
+@media (max-height: 560px) {
+  .workspace-kanban-controls {
+    max-height: none;
+  }
+  .workspace-kanban-body {
+    min-height: 240px;
+  }
+}
