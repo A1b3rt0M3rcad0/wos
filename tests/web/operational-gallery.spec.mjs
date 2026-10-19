@@ -235,10 +235,23 @@ async function mainStates(page, wos, data, metadata, label, extra = {}) {
   await capture(page, metadata, `login-${label}`, "Credential login before any secret is entered", extra);
   await wos.login(page);
   await openOutcome(page, data.outcome.title, { area: null });
+  const mapControl = page.getByRole("button", { name: "Map view", exact: true });
+  const selectedCompactMap = await mapControl.getAttribute("aria-pressed") !== "true";
+  if (selectedCompactMap) {
+    await expect(page.getByRole("list", { name: "Outcome Board list", exact: true })).toBeVisible();
+    await capture(page, metadata, `board-default-list-${label}`,
+      "Default compact Outcome Board list before switching to the spatial map",
+      { ...extra, boardView: "list", defaultBoardView: true });
+    await unobscured(mapControl);
+    await mapControl.click();
+  }
   await boardReady(page);
   const kinds = (await geometry(page)).canvas.nodeKinds;
   expect(kinds.every((kind) => ["outcome", "objective", "work_item"].includes(kind))).toBe(true);
-  await capture(page, metadata, `board-${label}`, "Default structural work map; documentary records remain contextual", extra);
+  await capture(page, metadata, `board-${label}`, selectedCompactMap
+    ? "Structural work map selected through the real Map view control; compact entry defaults to List view"
+    : "Default structural work map; documentary records remain contextual",
+    { ...extra, boardView: "map", defaultBoardView: !selectedCompactMap });
   await selectRecord(page, data.tasks.ready);
   for (const facet of ["work", "people", "attention", "criteria", "activity"])
     await expect(panel(page).locator(`[data-workspace-facet="${facet}"]`)).toBeVisible();
@@ -260,7 +273,7 @@ async function detailedStates(page, wos, data, metadata, label) {
   await capture(page, metadata, `criterion-${label}`, "Criterion within its owner; linked Evidence remains separate from assessment");
   await selectRecord(page, data.observation.evidence, "Evidence");
   await inspectorReady(page);
-  await capture(page, metadata, `evidence-${label}`, "Evidence with a recorded participant observation source; no automatic acceptance");
+  await capture(page, metadata, `evidence-record-${label}`, "Evidence with a recorded participant observation source; no automatic acceptance");
   await selectRecord(page, data.issue);
   await expect(panel(page)).toContainText(data.tasks.blocked.title);
   await inspectorReady(page);
