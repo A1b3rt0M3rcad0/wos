@@ -206,6 +206,18 @@ for (const [width, height] of [
     await expect(modal.locator("[data-column=accepted]")).not.toContainText(
       "Retired experiment",
     );
+    const columns = await modal
+      .locator(".workspace-kanban-columns")
+      .boundingBox();
+    expect(
+      columns.height,
+      "Expanded filters must leave useful height for work cards",
+    ).toBeGreaterThanOrEqual(150);
+    await expect(
+      modal
+        .locator(".workspace-kanban-card")
+        .filter({ hasText: data.task.title }),
+    ).toBeVisible();
     await capture(page, `kanban-${width}x${height}`);
     const geometry = await modal.boundingBox();
     expect(geometry.x).toBeGreaterThanOrEqual(0);
