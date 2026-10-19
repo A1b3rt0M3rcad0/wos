@@ -463,3 +463,93 @@ test("contextual Kanban remains operable at native browser zoom 125%, 150% and 2
     await browser.close();
   }
 });
+
+test("an authorized waiver is an explicit exception and never completes the Task", async ({
+  page,
+  wos,
+}) => {
+  const data = await setup(wos);
+  await wos.command("add_criterion", {
+    owner: { ...data.scope, kind: "work_item", id: data.task.id },
+    expected_version: data.task.version,
+    title: "The exception requires an explicit decision",
+    required: true,
+    verification_mode: "attestation",
+  });
+  const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
+  const grant = await wos.api("/security/commands", {
+    namespace_id: wos.namespace,
+    expected_namespace_version: snapshot.namespace_version,
+    operation: "set_grant",
+    principal_id: "waiver-reviewer",
+    permissions: ["state:read", "assessment:write", "assessment:waive"],
+  });
+  const issued = await wos.api("/security/commands", {
+    namespace_id: wos.namespace,
+    expected_namespace_version: grant.result.namespace_version,
+    operation: "issue_credential",
+    principal_id: "waiver-reviewer",
+    actor_ref: { kind: "human", provider: "acceptance", id: "waiver-reviewer" },
+    expires_at: new Date(Date.now() + 3600000).toISOString(),
+  });
+  await wos.login(page, issued.token);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await select(page, data.task.title);
+  await panel(page)
+    .getByText("Details and management", { exact: true })
+    .click();
+  await panel(page)
+    .getByRole("button", { name: "Verify criteria", exact: true })
+    .click();
+  const modal = page.locator("#workspace-kanban");
+  await modal
+    .getByRole("button", { name: "Review this criterion", exact: true })
+    .click();
+  await modal
+    .locator(
+      '.workspace-kanban-inspection [data-action-id="record_criterion_assessment"], .workspace-kanban-inspection [data-action-id="attest_criterion"]',
+    )
+    .filter({ visible: true })
+    .first()
+    .click();
+  await expect(page.locator("#command-form")).toBeVisible();
+  const result = page.getByLabel("Assessment result", { exact: true });
+  await expect(result.locator("option")).toHaveText([
+    "Met",
+    "Not met",
+    "Inconclusive",
+  ]);
+  const waiver = page.getByLabel(
+    "Record an authorized waiver instead of verification",
+    { exact: true },
+  );
+  const advanced = waiver.locator("xpath=ancestor::details").first();
+  await advanced.locator(":scope > summary").click();
+  await waiver.check();
+  await expect(result).not.toBeVisible();
+  await page
+    .getByLabel("Rationale", { exact: true })
+    .fill(
+      "Explicitly excluded this condition after reviewing the agreed scope. This is not verified success.",
+    );
+  const response = page.waitForResponse(
+    (response) =>
+      /\/commands\/(record_criterion_assessment|attest_criterion)$/.test(
+        response.url(),
+      ) && response.request().method() === "POST",
+  );
+  await page.locator("#submit-command").click();
+  const saved = await response;
+  expect(saved.ok(), await saved.text()).toBe(true);
+  const work = (
+    await wos.api(
+      `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${data.task.id}`,
+    )
+  ).value;
+  expect(work.lifecycle).toBe("backlog");
+  expect(
+    work.criteria.assessments.some(
+      (assessment) => assessment.result === "waived",
+    ),
+  ).toBe(true);
+});
