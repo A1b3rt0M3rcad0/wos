@@ -425,13 +425,13 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		}
 		a, ok := s.CurrentAssessments[c.ID]
 		if !ok {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s has no current assessment", c.ID))
+			return nil, criterionPreparationError(c, "criterion_assessment_missing", fmt.Sprintf("required criterion %s has no current assessment", c.ID))
 		}
 		if a.CriterionRevision != c.Revision {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s has stale assessment", c.ID))
+			return nil, criterionPreparationError(c, "criterion_assessment_stale", fmt.Sprintf("required criterion %s has stale assessment", c.ID))
 		}
 		if a.Result != AssessmentResultMet && a.Result != AssessmentResultWaived {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s is not satisfied", c.ID))
+			return nil, criterionPreparationError(c, "criterion_not_satisfied", fmt.Sprintf("required criterion %s is not satisfied", c.ID))
 		}
 		refs = append(refs, CriterionAssessmentRef{
 			AssessmentID:      a.ID,
@@ -441,7 +441,7 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		})
 	}
 	if len(refs) == 0 {
-		return nil, NewError(ErrorCodePreconditionFailed, "at least one required active criterion is required")
+		return nil, NewDetailedError(ErrorCodePreconditionFailed, "at least one required active criterion is required", ErrorDetails{ReasonCode: "missing_required_criterion", FieldPaths: []string{"criteria"}, Remedies: []ErrorRemedy{{ActionID: "add_criterion"}}})
 	}
 	return refs, nil
 }

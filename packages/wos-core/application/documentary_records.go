@@ -46,12 +46,14 @@ type RetractEvidenceCommand struct {
 }
 
 type CreateEvidenceLinkCommand struct {
-	Scope       domain.Scope
-	EvidenceID  domain.ID
-	TargetRef   domain.EntityRef
-	CriterionID *domain.ID
-	Stance      domain.EvidenceStance
-	Rationale   string
+	TargetExpectedVersion *domain.Version           `wos:"optional" json:"target_expected_version,string,omitempty"`
+	CriterionRevision     *domain.CriterionRevision `wos:"optional" json:"criterion_revision,string,omitempty"`
+	Scope                 domain.Scope
+	EvidenceID            domain.ID
+	TargetRef             domain.EntityRef
+	CriterionID           *domain.ID
+	Stance                domain.EvidenceStance
+	Rationale             string
 }
 
 type RetractEvidenceLinkCommand struct {
@@ -194,6 +196,9 @@ func (s *Service) RegisterEvidence(ctx context.Context, cc domain.CommandContext
 				return domain.Evidence{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "evidence cannot reference a withdrawn artifact")
 			}
 		}
+		if _, err := validateEntityNoteSource(ctx, uow, cmd.Scope, value.SourceRef); err != nil {
+			return domain.Evidence{}, 0, err
+		}
 		if err := evidence.Insert(ctx, value); err != nil {
 			return domain.Evidence{}, 0, err
 		}
@@ -259,7 +264,11 @@ func (s *Service) CreateEvidenceLink(ctx context.Context, cc domain.CommandConte
 		if ev.Lifecycle != domain.EvidenceLifecycleRegistered {
 			return domain.EvidenceLink{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "retracted evidence cannot receive a new link")
 		}
-		if err := validateEvidenceLinkTarget(ctx, uow, decisions, value.TargetRef, value.CriterionID); err != nil {
+		if _, err := validateEntityNoteSource(ctx, uow, cmd.Scope, ev.SourceRef); err != nil {
+			return domain.EvidenceLink{}, 0, err
+		}
+		input := EvidenceLinkInput{TargetRef: value.TargetRef, TargetExpectedVersion: cmd.TargetExpectedVersion, CriterionID: value.CriterionID, CriterionRevision: cmd.CriterionRevision}
+		if err := validateObservedEvidenceTarget(ctx, uow, decisions, input, false); err != nil {
 			return domain.EvidenceLink{}, 0, err
 		}
 		if err := links.Insert(ctx, value); err != nil {
@@ -698,6 +707,9 @@ func documentaryRepositories(uow ports.UnitOfWork) (ports.ArtifactRepository, po
 }
 
 func validateEvidenceLinkTarget(ctx context.Context, uow ports.UnitOfWork, decisions ports.DecisionRepository, ref domain.EntityRef, criterionID *domain.ID) error {
+	if !domain.EvidenceLinkTargetAllowed(ref.Kind) {
+		return domain.NewError(domain.ErrorCodeEvidenceLink, "unsupported evidence target kind")
+	}
 	switch ref.Kind {
 	case domain.EntityKindOutcome:
 		if ref.ID != ref.Scope.OutcomeID {

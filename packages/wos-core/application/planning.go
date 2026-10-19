@@ -889,6 +889,9 @@ func applyRoadmapDependencyChanges(
 				return err
 			}
 			relation.Reason = reason
+			if err := validateOwnObjectiveDependency(ctx, uow, relation); err != nil {
+				return err
+			}
 			existing, err := uow.Relations().ListByOutcome(ctx, roadmap.Scope)
 			if err != nil {
 				return err

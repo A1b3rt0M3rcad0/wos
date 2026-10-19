@@ -109,6 +109,9 @@ func (s *Service) AdministrativeCompleteWorkItem(
 		if err := item.CompleteAdministratively(cmd.ResultSummary, conclusion, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		if err := validateRequiredAssessmentProof(ctx, uow, item.Ref(), item.Criteria); err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

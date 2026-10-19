@@ -63,6 +63,9 @@ func (s *Service) AddDependency(
 		if sourceState.inProgress && strings.TrimSpace(cmd.Reason) == "" {
 			return domain.Relation{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "adding dependency to in-progress source requires reason")
 		}
+		if err := validateOwnObjectiveDependency(ctx, uow, relation); err != nil {
+			return domain.Relation{}, 0, err
+		}
 		existing, err := uow.Relations().ListByOutcome(ctx, cmd.Scope)
 		if err != nil {
 			return domain.Relation{}, 0, err
@@ -192,7 +195,8 @@ func requireHardDependenciesSatisfied(
 	}
 	for _, evaluation := range evaluations {
 		if evaluation.Relation.Strength == domain.DependencyStrengthHard && !evaluation.Satisfied {
-			return domain.NewError(domain.ErrorCodePreconditionFailed, "hard dependency is not satisfied")
+			target := evaluation.Relation.TargetRef
+			return domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "hard dependency is not satisfied", domain.ErrorDetails{ReasonCode: "hard_dependency_unsatisfied", SubjectRef: &source, RelatedRefs: []domain.EntityRef{target}, Remedies: []domain.ErrorRemedy{{ActionID: "inspect", SubjectRef: &target}}})
 		}
 	}
 	return nil

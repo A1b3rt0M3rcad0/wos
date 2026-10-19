@@ -172,11 +172,8 @@ func (w WorkItem) Validate() error {
 }
 
 func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
 		return err
-	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on terminal work item")
 	}
 	if c.OwnerRef != w.Ref() {
 		return NewError(ErrorCodeCriterion, "criterion owner does not match work item")
@@ -188,11 +185,8 @@ func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
 		return err
-	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal work item")
 	}
 	if err := w.Criteria.Revise(id, title, description, required, mode); err != nil {
 		return err
@@ -201,11 +195,8 @@ func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bo
 }
 
 func (w *WorkItem) RetireCriterion(id ID, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
 		return err
-	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal work item")
 	}
 	if err := w.Criteria.Retire(id); err != nil {
 		return err
@@ -297,17 +288,8 @@ func (w *WorkItem) Release(principalID string, claimID ID, fencingToken uint64, 
 }
 
 func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
-	if w.ContractsEnabled {
-		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
-	}
-	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
-		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
-	}
-	if err := w.validateLeaseOwnership(principalID, claimID, fencingToken); err != nil {
+	if err := w.CheckCompletionAuthority(principalID, claimID, fencingToken, now); err != nil {
 		return err
-	}
-	if !w.CurrentLease.ValidAt(now.UTC()) {
-		return NewError(ErrorCodeLease, "lease has expired")
 	}
 
 	var refs []CriterionAssessmentRef
@@ -460,5 +442,23 @@ func (w *WorkItem) touch(now time.Time) error {
 	}
 	w.Version = next
 	w.UpdatedAt = now.UTC()
+	return nil
+}
+
+// CheckCompletionAuthority checks the same legacy authority used by Complete.
+func (w WorkItem) CheckCompletionAuthority(principalID string, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
+	}
+	if err := w.validateLeaseOwnership(principalID, claimID, fencingToken); err != nil {
+		return err
+	}
+	if !w.CurrentLease.ValidAt(now.UTC()) {
+		return NewError(ErrorCodeLease, "lease has expired")
+	}
+
 	return nil
 }

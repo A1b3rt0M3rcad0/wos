@@ -754,6 +754,29 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 		if err != nil {
 			return err
 		}
+		// Historical writers could hash an empty assessment set as either null
+		// or []. Reads normalize the set; preserve the original storage ID
+		// rather than attempting to insert a different hash at its ordinal.
+		// All other content and provenance still pass verifyConclusionRow.
+		if len(conclusion.Assessments) == 0 {
+			alternate := conclusion
+			if conclusion.Assessments == nil {
+				alternate.Assessments = []domain.CriterionAssessmentRef{}
+			} else {
+				alternate.Assessments = nil
+			}
+			alternateID, err := conclusionStorageID(owner, ordinal, alternate)
+			if err != nil {
+				return err
+			}
+			var existing string
+			err = tx.QueryRowContext(ctx, `SELECT id FROM conclusions WHERE namespace_id=? AND outcome_id=? AND owner_id=? AND id=?`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), alternateID).Scan(&existing)
+			if err == nil {
+				storageID = existing
+			} else if err != sql.ErrNoRows {
+				return mapSQLError("resolve empty conclusion history identity", err)
+			}
+		}
 		actorJSON, err := marshalJSON(conclusion.Actor)
 		if err != nil {
 			return err

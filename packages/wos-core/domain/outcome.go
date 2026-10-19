@@ -108,8 +108,8 @@ func (o Outcome) Validate() error {
 }
 
 func (o *Outcome) AddCriterion(c SuccessCriterion, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if c.OwnerRef != o.Ref() {
 		return NewError(ErrorCodeCriterion, "criterion owner does not match outcome")
@@ -121,8 +121,8 @@ func (o *Outcome) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (o *Outcome) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Revise(id, title, description, required, mode); err != nil {
 		return err
@@ -131,8 +131,8 @@ func (o *Outcome) ReviseCriterion(id ID, title, description string, required boo
 }
 
 func (o *Outcome) RetireCriterion(id ID, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Retire(id); err != nil {
 		return err
@@ -161,14 +161,8 @@ func (o *Outcome) AssessCriterionAttestation(a CriterionAssessment, now time.Tim
 }
 
 func (o *Outcome) Activate(now time.Time) error {
-	if o.IsArchived() {
-		return NewError(ErrorCodeInvalidTransition, "archived outcome cannot be activated")
-	}
-	if o.Lifecycle != OutcomeLifecycleDraft {
-		return NewError(ErrorCodeInvalidTransition, "only draft outcome can be activated")
-	}
-	if !o.Criteria.HasRequiredActive() {
-		return NewError(ErrorCodePreconditionFailed, "outcome requires at least one required active criterion")
+	if err := o.CheckActivation(); err != nil {
+		return err
 	}
 	o.Lifecycle = OutcomeLifecycleActive
 	return o.touch(now)
@@ -179,8 +173,8 @@ func (o *Outcome) Achieve(conclusion Conclusion, now time.Time) error {
 }
 
 func (o *Outcome) AchieveWithObligations(conclusion Conclusion, requiredObjectiveIDs []ID, now time.Time) error {
-	if o.IsArchived() || o.Lifecycle != OutcomeLifecycleActive {
-		return NewError(ErrorCodeInvalidTransition, "only active non-archived outcome can be achieved")
+	if err := o.CheckAchievement(); err != nil {
+		return err
 	}
 	refs, err := o.Criteria.RequiredSatisfied()
 	if err != nil {

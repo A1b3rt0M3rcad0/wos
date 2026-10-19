@@ -1,0 +1,349 @@
+package sqlite
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+type workspaceCountingManager struct {
+	ports.TransactionManager
+	begins int
+}
+
+func (m *workspaceCountingManager) Begin(ctx context.Context) (ports.UnitOfWork, error) {
+	m.begins++
+	return m.TransactionManager.Begin(ctx)
+}
+
+func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "workspace.db"))
+			}
+			must := func(e error) {
+				t.Helper()
+				if e != nil {
+					t.Fatal(e)
+				}
+			}
+			out, e := d.NewOutcome(portID(2), portID(1), "Small page, large Outcome", "", "A usable read", d.PriorityNormal, now)
+			must(e)
+			u, e := store.Begin(ctx)
+			must(e)
+			must(u.Outcomes().Insert(ctx, out))
+			scope := out.Scope()
+			objective, e := d.NewObjective(portID(10), scope, "First condition", "", d.PriorityNormal, true, now)
+			must(e)
+			must(u.Objectives().Insert(ctx, objective))
+			refs := []d.EntityRef{}
+			for i := 0; i < 105; i++ {
+				work, e := d.NewWorkItem(portID(100+i), scope, fmt.Sprintf("Task %03d", i), "Planning record", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+				must(e)
+				if i < 4 {
+					work.ObjectiveID = &objective.ID
+				}
+				if i == 0 {
+					work.Version = d.Version(9007199254740993)
+					criterion, e := d.NewSuccessCriterion(portID(9000), work.Ref(), "Actual assessment required", "", true, d.VerificationModeAttestation)
+					must(e)
+					must(work.Criteria.Add(criterion))
+				}
+				must(u.WorkItems().Insert(ctx, work))
+				if i < 100 {
+					refs = append(refs, work.Ref())
+				}
+			}
+			_, e = u.Coordination().AdvanceOutcome(ctx, scope)
+			must(e)
+			must(u.Commit())
+			counted := &workspaceCountingManager{TransactionManager: noHydrationManager{store}}
+			service, e := a.NewService(counted, portClock{now}, &portIDs{})
+			must(e)
+			page, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: refs})
+			must(e)
+			if counted.begins != 1 || len(page.Items) != 100 || page.Items[0].Version != d.Version(9007199254740993) || page.Items[0].AuthorityState != "unknown" || page.Items[0].Criteria.Pending != 1 {
+				t.Fatalf("batch was hydrated, rounded or invented authority: begins=%d page=%+v", counted.begins, page)
+			}
+			raw, e := json.Marshal(page)
+			must(e)
+			if len(raw) > a.MaxSnapshotBytes {
+				t.Fatal("unbounded card response")
+			}
+			counted.begins = 0
+			first, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2})
+			must(e)
+			if counted.begins != 1 || len(first.Items) != 2 || first.Coverage.Status != "partial" || first.Coverage.NextCursor == "" || first.Coverage.TotalCount != nil {
+				t.Fatal("structural page fabricated a total or lost cursor", first)
+			}
+			children, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 100})
+			must(e)
+			if len(children.Items) != 4 || children.Coverage.Status != "complete" {
+				t.Fatal("direct children included another branch", children)
+			}
+			second, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2, Cursor: first.Coverage.NextCursor})
+			must(e)
+			if second.Items[0].Ref == first.Items[1].Ref {
+				t.Fatal("page duplicated boundary")
+			}
+			alice := a.WithIdentity(ctx, a.Identity{PrincipalID: "alice"})
+			alicePage, e := service.GetWorkspaceCards(alice, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2})
+			must(e)
+			bob := a.WithIdentity(ctx, a.Identity{PrincipalID: "bob"})
+			if _, e = service.GetWorkspaceCards(bob, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2, Cursor: alicePage.Coverage.NextCursor}); e == nil {
+				t.Fatal("another principal reused the structural cursor")
+			}
+			if _, e = service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: append(refs, refs[0])}); e == nil {
+				t.Fatal("101 reference batch accepted")
+			}
+			foreign := refs[0]
+			foreign.NamespaceID = portID(99)
+			if _, e = service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: []d.EntityRef{foreign}}); e == nil {
+				t.Fatal("foreign ref accepted")
+			}
+		})
+	}
+}
+func refPointerForTest(ref d.EntityRef) *d.EntityRef { return &ref }
+
+func TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "view.db"))
+			}
+			must := func(e error) {
+				t.Helper()
+				if e != nil {
+					t.Fatal(e)
+				}
+			}
+			out, e := d.NewOutcome(portID(2), portID(1), "Understand a Task", "", "Preserve acceptance", d.PriorityNormal, now)
+			must(e)
+			u, e := store.Begin(ctx)
+			must(e)
+			must(u.Outcomes().Insert(ctx, out))
+			scope := out.Scope()
+			actor := d.ActorRef{Kind: d.ActorKindService, Provider: "fixture", ID: "declared-assignee"}
+			work, e := d.NewWorkItem(portID(20), scope, "A planned Task", "Do this work", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			must(e)
+			work.AssigneeRefs = []d.ActorRef{actor}
+			work.ExecutionSpec = &d.ExecutionSpec{Instructions: []string{"Read the requested result"}, Deliverables: []string{"A reviewed change"}}
+			for i := 0; i < 3; i++ {
+				c, e := d.NewSuccessCriterion(portID(30+i), work.Ref(), fmt.Sprintf("Condition %d", i), "", true, d.VerificationModeEvidenceReview)
+				must(e)
+				must(work.Criteria.Add(c))
+			}
+			must(u.WorkItems().Insert(ctx, work))
+			docs := u.(ports.DocumentaryUnitOfWork)
+			evidence, e := d.NewEvidence(portID(50), scope, d.EvidenceTypeSource, "A supporting observation", d.SourceReference{Provider: "fixture", ID: "observation"}, actor, now, nil, nil, "v1", "", now)
+			must(e)
+			must(docs.Evidence().Insert(ctx, evidence))
+			criterionID := work.Criteria.Items[0].ID
+			link, e := d.NewEvidenceLink(portID(51), scope, evidence.ID, work.Ref(), &criterionID, d.EvidenceStanceSupports, "supports this condition; does not assess it", now)
+			must(e)
+			must(docs.EvidenceLinks().Insert(ctx, link))
+			_, e = u.Coordination().AdvanceOutcome(ctx, scope)
+			must(e)
+			must(u.Commit())
+			counted := &workspaceCountingManager{TransactionManager: store}
+			service, e := a.NewService(counted, portClock{now}, &portIDs{})
+			must(e)
+			q := a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: work.Ref()}, Limit: 2}
+			view, e := service.GetEntityWorkspaceView(ctx, scope, q)
+			must(e)
+			if counted.begins != 1 || view.Attention == nil || view.Activity == nil || view.OutcomeRevision != view.Attention.OutcomeRevision || view.OutcomeRevision != view.Activity.OutcomeRevision || !view.EvaluatedAt.Equal(view.Attention.EvaluatedAt) || !view.EvaluatedAt.Equal(view.Activity.EvaluatedAt) {
+				t.Fatalf("facets do not share one snapshot: %+v begins=%d", view, counted.begins)
+			}
+			if len(view.Criteria) != 2 || !view.Criteria[0].EvidenceLinked || view.Criteria[0].AssessmentApplicable || view.Criteria[0].Assessment != nil || view.Coverage["criteria"].Status != "partial" || view.Coverage["criteria"].NextCursor == "" {
+				t.Fatal("evidence promoted to approval or criterion paging lost", view.Criteria, view.Coverage)
+			}
+			for _, person := range view.People {
+				if person.Role == "executor" {
+					t.Fatal("assignee promoted to executor")
+				}
+			}
+			q.CriteriaCursor = view.Coverage["criteria"].NextCursor
+			next, e := service.GetEntityWorkspaceView(ctx, scope, q)
+			must(e)
+			if len(next.Criteria) != 1 || next.Criteria[0].Definition.ID == view.Criteria[1].Definition.ID {
+				t.Fatal("criterion page boundary repeated")
+			}
+			criterionView, e := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "criterion", Ref: work.Ref(), CriterionID: &criterionID}})
+			must(e)
+			if criterionView.Header.Kind != "criterion" || len(criterionView.Criteria) != 1 || criterionView.Subject.Ref != work.Ref() {
+				t.Fatal("criterion became a global entity", criterionView)
+			}
+			q.CriteriaCursor = ""
+			q.Subject.Ref = evidence.Ref()
+			document, e := service.GetEntityWorkspaceView(ctx, scope, q)
+			must(e)
+			if document.Work != nil || document.Attention != nil || document.Coverage["criteria"].Status != "not_applicable" {
+				t.Fatal("Evidence received fictitious Task facets", document)
+			}
+		})
+	}
+}
+
+func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "workspace-facts.db"))
+			}
+			must := func(e error) {
+				t.Helper()
+				if e != nil {
+					t.Fatal(e)
+				}
+			}
+			actor := d.ActorRef{Kind: d.ActorKindService, Provider: "fixture", ID: "author"}
+			out, e := d.NewOutcome(portID(2), portID(1), "Requested result", "", "Verified operation", d.PriorityNormal, now)
+			must(e)
+			scope := out.Scope()
+			outcomeCriterion, e := d.NewSuccessCriterion(portID(301), out.Ref(), "Outcome condition", "", true, d.VerificationModeEvidenceReview)
+			must(e)
+			must(out.Criteria.Add(outcomeCriterion))
+			objective, e := d.NewObjective(portID(10), scope, "Required nested condition", "", d.PriorityNormal, true, now)
+			must(e)
+			objectiveCriterion, e := d.NewSuccessCriterion(portID(302), objective.Ref(), "Objective condition", "", true, d.VerificationModeEvidenceReview)
+			must(e)
+			must(objective.Criteria.Add(objectiveCriterion))
+			work, e := d.NewWorkItem(portID(20), scope, "Publish the verified handoff", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			must(e)
+			for i := 0; i < 2; i++ {
+				criterion, e := d.NewSuccessCriterion(portID(310+i), work.Ref(), fmt.Sprintf("Task condition %d", i), "", true, d.VerificationModeEvidenceReview)
+				must(e)
+				must(work.Criteria.Add(criterion))
+			}
+			terminal, e := d.NewObjective(portID(11), scope, "Cancelled condition", "", d.PriorityNormal, false, now)
+			must(e)
+			must(terminal.Cancel(d.Conclusion{ID: portID(800), PrincipalID: "author", Actor: actor, Reason: "No longer needed", ConcludedAt: now}, now))
+			u, e := store.Begin(ctx)
+			must(e)
+			must(u.Outcomes().Insert(ctx, out))
+			must(u.Objectives().Insert(ctx, objective))
+			must(u.Objectives().Insert(ctx, terminal))
+			nested, e := d.NewObjective(portID(12), scope, "Required descendant", "", d.PriorityNormal, true, now)
+			must(e)
+			nested.ParentObjectiveID = &objective.ID
+			must(u.Objectives().Insert(ctx, nested))
+			must(u.WorkItems().Insert(ctx, work))
+			evidence, e := d.NewEvidence(portID(50), scope, d.EvidenceTypeSource, "Actual material", d.SourceReference{Provider: "fixture", ID: "material"}, actor, now, nil, nil, "v1", "", now)
+			must(e)
+			docs := u.(ports.DocumentaryUnitOfWork)
+			must(docs.Evidence().Insert(ctx, evidence))
+			for i := 0; i < 28; i++ {
+				owner := work.Ref()
+				criterionID := work.Criteria.Items[0].ID
+				if i == 25 {
+					criterionID = work.Criteria.Items[1].ID
+				}
+				if i == 26 {
+					owner = out.Ref()
+					criterionID = outcomeCriterion.ID
+				}
+				if i == 27 {
+					owner = objective.Ref()
+					criterionID = objectiveCriterion.ID
+				}
+				link, e := d.NewEvidenceLink(portID(500+i), scope, evidence.ID, owner, &criterionID, d.EvidenceStanceSupports, "Material supports the condition", now)
+				must(e)
+				must(docs.EvidenceLinks().Insert(ctx, link))
+			}
+			issue, e := d.NewIssue(portID(60), scope, "Inspect the affected Task", "Context", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+			must(e)
+			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
+			relation, e := d.NewDependencyRelation(portID(70), work.Ref(), objective.Ref(), d.DependencyStrengthAdvisory, now)
+			must(e)
+			must(u.Relations().Insert(ctx, relation))
+			_, e = u.Coordination().AdvanceOutcome(ctx, scope)
+			must(e)
+			must(u.Commit())
+			service, e := a.NewService(store, portClock{now}, &portIDs{})
+			must(e)
+			view := func(ref d.EntityRef) a.EntityWorkspaceView {
+				t.Helper()
+				v, e := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: ref}})
+				must(e)
+				return v
+			}
+			for _, ref := range []d.EntityRef{out.Ref(), objective.Ref(), work.Ref()} {
+				v := view(ref)
+				for _, criterion := range v.Criteria {
+					if !criterion.EvidenceLinked || criterion.AssessmentApplicable {
+						t.Fatalf("incorrect criterion link/proof fact for %s: %+v", ref.Kind, criterion)
+					}
+				}
+			}
+			issueView := view(issue.Ref())
+			named := false
+			for _, node := range issueView.Relationships.Nodes {
+				if node.Ref == work.Ref() && node.Title == work.Title {
+					named = true
+				}
+			}
+			if !named {
+				t.Fatal("Issue affected Task lost its actual name", issueView.Relationships)
+			}
+			relationView := view(relation.Ref())
+			if len(relationView.Relationships.Items) != 1 || len(relationView.Relationships.Nodes) != 2 || relationView.Relationships.Items[0].Strength != d.DependencyStrengthAdvisory {
+				t.Fatal("selected relation lost canonical endpoints/strength", relationView.Relationships)
+			}
+			terminalView := view(terminal.Ref())
+			found := false
+			for _, capability := range terminalView.Capabilities {
+				if capability.ActionID == "AddCriterion" {
+					found = true
+					if capability.Availability != "blocked" {
+						t.Fatal("terminal Objective advertises unavailable edit", capability)
+					}
+				}
+			}
+			if !found {
+				t.Fatal("expected explanatory blocked criterion capability")
+			}
+			_, e = service.AddCriterion(ctx, sqliteCommandContext(portID(2000).String(), ""), a.AddCriterionCommand{Owner: terminal.Ref(), ExpectedVersion: terminal.Version, Title: "Forbidden edit", Required: true, VerificationMode: d.VerificationModeAttestation})
+			if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeInvalidTransition {
+				t.Fatal("capability disagrees with actual criterion command", e)
+			}
+			outcomeView := view(out.Ref())
+			if len(outcomeView.RequiredObjectives) != 2 || outcomeView.RequiredObjectives[0].Ref != objective.Ref() || outcomeView.RequiredObjectives[0].Title != objective.Title || outcomeView.Coverage["required_objectives"].TotalCount == nil || *outcomeView.Coverage["required_objectives"].TotalCount != 2 {
+				t.Fatal("Outcome lost global required Objective fact", outcomeView.RequiredObjectives, outcomeView.Coverage)
+			}
+			q := a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: out.Ref()}, Limit: 1}
+			first, e := service.GetEntityWorkspaceView(ctx, scope, q)
+			must(e)
+			if len(first.RequiredObjectives) != 1 || first.Coverage["required_objectives"].Status != "partial" || first.Coverage["required_objectives"].NextCursor == "" {
+				t.Fatal("required Objective page was not bounded", first.RequiredObjectives, first.Coverage)
+			}
+			q.RequiredObjectivesCursor = first.Coverage["required_objectives"].NextCursor
+			next, e := service.GetEntityWorkspaceView(ctx, scope, q)
+			must(e)
+			if len(next.RequiredObjectives) != 1 || next.RequiredObjectives[0].Ref != nested.Ref() || next.Coverage["required_objectives"].Status != "complete" {
+				t.Fatal("required descendant omitted/repeated", next.RequiredObjectives, next.Coverage)
+			}
+			if _, e = service.GetEntityWorkspaceView(a.WithIdentity(ctx, a.Identity{PrincipalID: "another"}), scope, q); e == nil {
+				t.Fatal("required Objective cursor reused across principals")
+			}
+
+		})
+	}
+}

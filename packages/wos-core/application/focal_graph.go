@@ -213,19 +213,22 @@ func (s *Service) GetOutcomeGraph(ctx context.Context, scope domain.Scope, q Gra
 }
 
 type WorkContext struct {
-	Contract        *WorkContractView               `json:"contract,omitempty"`
-	Work            domain.WorkItem                 `json:"work_item"`
-	Outcome         EntitySummary                   `json:"outcome"`
-	Objective       *domain.Objective               `json:"objective,omitempty"`
-	Operational     domain.WorkItemOperationalState `json:"operational_state"`
-	Blocking        *BlockingState                  `json:"blocking,omitempty"`
-	Dependencies    []domain.Relation               `json:"dependencies"`
-	Decisions       []domain.Decision               `json:"current_decisions"`
-	EvidenceLinks   []domain.EvidenceLink           `json:"evidence_links"`
-	OutcomeRevision domain.OutcomeRevision          `json:"outcome_revision"`
-	EvaluatedAt     time.Time                       `json:"evaluated_at"`
-	Truncated       bool                            `json:"truncated"`
-	Omitted         map[string]int                  `json:"omitted"`
+	// Current proof facts are read in the caller's transaction. They are not a
+	// second persisted obligation list and do not alter the public context wire.
+	workspaceCriterionFacts map[domain.ID]ports.WorkspaceCriterionFact
+	Contract                *WorkContractView               `json:"contract,omitempty"`
+	Work                    domain.WorkItem                 `json:"work_item"`
+	Outcome                 EntitySummary                   `json:"outcome"`
+	Objective               *domain.Objective               `json:"objective,omitempty"`
+	Operational             domain.WorkItemOperationalState `json:"operational_state"`
+	Blocking                *BlockingState                  `json:"blocking,omitempty"`
+	Dependencies            []domain.Relation               `json:"dependencies"`
+	Decisions               []domain.Decision               `json:"current_decisions"`
+	EvidenceLinks           []domain.EvidenceLink           `json:"evidence_links"`
+	OutcomeRevision         domain.OutcomeRevision          `json:"outcome_revision"`
+	EvaluatedAt             time.Time                       `json:"evaluated_at"`
+	Truncated               bool                            `json:"truncated"`
+	Omitted                 map[string]int                  `json:"omitted"`
 }
 
 func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id domain.ID) (WorkContext, error) {

@@ -64,6 +64,27 @@ type Error struct {
 	Code    ErrorCode
 	Message string
 	Cause   error
+	Details *ErrorDetails
+}
+
+// ErrorDetails supplies bounded, machine-readable guidance without changing the
+// stable error classification. Adapters must not infer these facts from prose.
+type ErrorDetails struct {
+	ReasonCode  string        `json:"reason_code"`
+	SubjectRef  *EntityRef    `json:"subject_ref,omitempty"`
+	FieldPaths  []string      `json:"field_paths,omitempty"`
+	RelatedRefs []EntityRef   `json:"related_refs,omitempty"`
+	Remedies    []ErrorRemedy `json:"remedies,omitempty"`
+}
+
+type ErrorRemedy struct {
+	ActionID    string     `json:"action_id"`
+	SubjectRef  *EntityRef `json:"subject_ref,omitempty"`
+	CriterionID *ID        `json:"criterion_id,omitempty"`
+}
+
+func NewDetailedError(code ErrorCode, message string, details ErrorDetails) error {
+	return &Error{Code: code, Message: message, Details: &details}
 }
 
 func (e *Error) Error() string {

@@ -15,6 +15,7 @@ type Store struct {
 	serverIdentity           *domain.ServerIdentity
 	issuerHistory            map[domain.ID]domain.ServerIdentity
 	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
+	entityNotes              map[domain.ID]domain.EntityNote
 	workActivities           map[domain.ID]domain.WorkActivity
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
@@ -58,6 +59,7 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
+		entityNotes:     make(map[domain.ID]domain.EntityNote),
 		workActivities:  make(map[domain.ID]domain.WorkActivity),
 		signedContracts: make(map[string]domain.WorkContract), signedCheckpoints: make(map[string]domain.WorkCheckpoint), signedSubmissions: make(map[string]domain.WorkSubmission), signedReview: newMemorySignedReviewState(),
 		security:                 newMemorySecurityState(),
@@ -98,6 +100,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 
 	tx := &transaction{
 		store:           s,
+		entityNotes:     cloneEntityNotes(s.entityNotes),
 		workActivities:  cloneWorkActivities(s.workActivities),
 		signedContracts: cloneContractMap(s.signedContracts), signedCheckpoints: cloneCheckpointMap(s.signedCheckpoints), signedSubmissions: cloneSubmissionMap(s.signedSubmissions), signedReview: cloneSignedReview(s.signedReview),
 		serverIdentity:           cloneServerIdentity(s.serverIdentity),
@@ -152,6 +155,7 @@ type transaction struct {
 	serverIdentity           *domain.ServerIdentity
 	issuerHistory            map[domain.ID]domain.ServerIdentity
 	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
+	entityNotes              map[domain.ID]domain.EntityNote
 	workActivities           map[domain.ID]domain.WorkActivity
 	signedContracts          map[string]domain.WorkContract
 	signedCheckpoints        map[string]domain.WorkCheckpoint
@@ -225,6 +229,7 @@ func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.entityNotes = cloneEntityNotes(tx.entityNotes)
 	tx.store.workActivities = cloneWorkActivities(tx.workActivities)
 	tx.store.signedContracts = cloneContractMap(tx.signedContracts)
 	tx.store.signedCheckpoints = cloneCheckpointMap(tx.signedCheckpoints)

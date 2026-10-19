@@ -108,6 +108,9 @@ func transactCommand[T any, C any](
 		}
 	}
 	cutoverIntent := service.requireIdentity && signedCutoverCommand(command)
+	if err := service.authorizePlanningCommandPermissions(ctx, uow, commandContext, command); err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
 	var signedIdentity Identity
 	if signedCommand(meta.Name) {
 		selectedKey := domain.ID("")
@@ -481,6 +484,15 @@ func eventsForCommand[T any](
 	if events, handled, err := compoundDocumentaryEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if note, ok := any(value).(domain.EntityNote); ok {
+		return entityNoteEvents(s, commandContext, meta, note, revision)
+	}
+	if events, handled, err := planningCreationEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+	if events, handled, err := documentaryContextEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 
 	ref, before, after, noOp, err := commandAggregate(meta, value)
 	if err != nil {
@@ -505,6 +517,20 @@ func eventsForCommand[T any](
 			return nil, err
 		}
 		payload := append(json.RawMessage(nil), meta.Payload...)
+		if criterion, ok := any(value).(domain.SuccessCriterion); ok && meta.Name == "AddCriterion" {
+			var fact map[string]json.RawMessage
+			if err := json.Unmarshal(payload, &fact); err != nil {
+				return nil, err
+			}
+			fact["criterion_id"], err = json.Marshal(criterion.ID)
+			if err != nil {
+				return nil, err
+			}
+			payload, err = json.Marshal(fact)
+			if err != nil {
+				return nil, err
+			}
+		}
 		if meta.Name == "CompleteWorkItem" && eventType == "work_item.released" {
 			payload = json.RawMessage(`{"reason":"completion"}`)
 		}
@@ -666,12 +692,20 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"objective.reopened"}, nil
 	case "SetObjectiveOwners", "UpdateObjective":
 		return []string{"objective.updated"}, nil
+	case "SetObjectiveParent":
+		return []string{"objective.parent_changed"}, nil
 	case "CreateWorkItem":
 		return []string{"work_item.created"}, nil
 	case "ActivateWorkItem":
 		return []string{"work_item.activated"}, nil
 	case "DeferWorkItem", "SetWorkItemAssignees", "UpdateWorkItem":
 		return []string{"work_item.updated"}, nil
+	case "SetWorkItemExecutionSpec":
+		return []string{"work_item.execution_spec_changed"}, nil
+	case "SetWorkItemNotBefore":
+		return []string{"work_item.not_before_changed"}, nil
+	case "SetWorkItemObjective":
+		return []string{"work_item.objective_changed"}, nil
 	case "ClaimWorkItem":
 		return []string{"work_item.claimed"}, nil
 	case "RenewWorkItemLease":

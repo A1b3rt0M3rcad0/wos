@@ -14,6 +14,7 @@ type MutationResult[T any] struct {
 }
 
 type CreateOutcomeCommand struct {
+	InitialCriteria []InitialCriterion     `wos:"optional" json:"initial_criteria,omitempty"`
 	ExternalContext domain.ExternalContext `json:"external_context,omitempty"`
 	NamespaceID     domain.ID
 	Title           string
@@ -75,6 +76,7 @@ type AchieveOutcomeCommand struct {
 }
 
 type CreateObjectiveCommand struct {
+	InitialCriteria    []InitialCriterion `wos:"optional" json:"initial_criteria,omitempty"`
 	Scope              domain.Scope
 	Title              string
 	Description        string
@@ -97,14 +99,15 @@ type AchieveObjectiveCommand struct {
 }
 
 type CreateWorkItemCommand struct {
-	ExecutionSpec *domain.ExecutionSpec `wos:"optional" json:",omitempty"`
-	Scope         domain.Scope
-	Title         string
-	Description   string
-	Priority      domain.Priority
-	Lifecycle     domain.WorkItemLifecycle
-	ObjectiveID   *domain.ID
-	NotBefore     *time.Time
+	InitialCriteria []InitialCriterion    `wos:"optional" json:"initial_criteria,omitempty"`
+	ExecutionSpec   *domain.ExecutionSpec `wos:"optional" json:",omitempty"`
+	Scope           domain.Scope
+	Title           string
+	Description     string
+	Priority        domain.Priority
+	Lifecycle       domain.WorkItemLifecycle
+	ObjectiveID     *domain.ID
+	NotBefore       *time.Time
 }
 
 type ActivateWorkItemCommand struct {

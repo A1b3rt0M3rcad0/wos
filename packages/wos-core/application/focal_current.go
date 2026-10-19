@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"time"
 )
 
 // The focal context spans the public legacy and signed-v2 work protocols while
@@ -22,6 +23,19 @@ func focalWorkContract(ctx context.Context, u ports.UnitOfWork, legacy ports.Wor
 }
 
 func (s *Service) currentFocalWorkContext(ctx context.Context, u ports.UnitOfWork, repo ports.FocalReadRepository, scope d.Scope, id d.ID, revision d.OutcomeRevision) (WorkContext, error) {
+	now, e := s.transactionTime(ctx, u)
+	if e != nil {
+		return WorkContext{}, e
+	}
+	return s.currentFocalWorkContextWithParentProofAt(ctx, u, repo, scope, id, revision, now, true)
+}
+
+// Composed workspace reads pin one evaluation time for every facet.
+func (s *Service) currentFocalWorkContextAt(ctx context.Context, u ports.UnitOfWork, repo ports.FocalReadRepository, scope d.Scope, id d.ID, revision d.OutcomeRevision, now time.Time) (WorkContext, error) {
+	return s.currentFocalWorkContextWithParentProofAt(ctx, u, repo, scope, id, revision, now, false)
+}
+
+func (s *Service) currentFocalWorkContextWithParentProofAt(ctx context.Context, u ports.UnitOfWork, repo ports.FocalReadRepository, scope d.Scope, id d.ID, revision d.OutcomeRevision, now time.Time, parentProof bool) (WorkContext, error) {
 	selected, e := repo.CurrentWork(ctx, scope, id)
 	if e != nil {
 		return WorkContext{}, e
@@ -31,19 +45,38 @@ func (s *Service) currentFocalWorkContext(ctx context.Context, u ports.UnitOfWor
 	if e != nil {
 		return WorkContext{}, e
 	}
-	now, e := s.transactionTime(ctx, u)
-	if e != nil {
-		return WorkContext{}, e
-	}
 	value := WorkContext{Work: work, Outcome: summary(outcome.Ref(), outcome.Version, outcome.Title, string(outcome.Lifecycle), outcome.Priority), OutcomeRevision: revision, EvaluatedAt: now, Dependencies: []d.Relation{}, Decisions: []d.Decision{}, EvidenceLinks: []d.EvidenceLink{}, Omitted: map[string]int{}}
+	if len(work.Criteria.Items) > 0 {
+		if workspace, ok := repo.(ports.WorkspaceReadRepository); ok {
+			facts, err := workspace.WorkspaceCards(ctx, scope, []d.EntityRef{work.Ref()})
+			if err != nil {
+				return WorkContext{}, err
+			}
+			if len(facts) != 1 || facts[0].Ref != work.Ref() {
+				return WorkContext{}, d.NewError(d.ErrorCodeInvalidConfig, "current criterion proof projection is unavailable")
+			}
+			value.workspaceCriterionFacts = make(map[d.ID]ports.WorkspaceCriterionFact, len(facts[0].Criteria))
+			for _, fact := range facts[0].Criteria {
+				value.workspaceCriterionFacts[fact.ID] = fact
+			}
+		}
+	}
 	var objectiveHistory ports.FocalHistoryCounts
 	if work.ObjectiveID != nil {
-		selected, e := repo.CurrentObjective(ctx, scope, *work.ObjectiveID)
-		if e != nil {
-			return WorkContext{}, e
+		if workspace, ok := repo.(ports.WorkspaceReadRepository); ok && !parentProof {
+			parent, err := workspace.WorkspaceObjectiveHeader(ctx, scope, *work.ObjectiveID)
+			if err != nil {
+				return WorkContext{}, err
+			}
+			value.Objective = &parent
+		} else {
+			selected, e := repo.CurrentObjective(ctx, scope, *work.ObjectiveID)
+			if e != nil {
+				return WorkContext{}, e
+			}
+			value.Objective = &selected.Objective
+			objectiveHistory = selected.History
 		}
-		value.Objective = &selected.Objective
-		objectiveHistory = selected.History
 	}
 	records, e := repo.FocalRecords(ctx, scope, id, work.ObjectiveID)
 	if e != nil {

@@ -330,6 +330,9 @@ func (s *Service) SetOutcomeOwners(ctx context.Context, commandContext domain.Co
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		if outcome.Version != cmd.ExpectedVersion {
+			return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "outcome expected_version is stale")
+		}
 		if actorRefsEqual(outcome.OwnerRefs, cmd.OwnerRefs) {
 			return outcome, coordination.Revision, nil
 		}
@@ -356,6 +359,9 @@ func (s *Service) SetObjectiveOwners(ctx context.Context, commandContext domain.
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
 			return domain.Objective{}, 0, err
+		}
+		if objective.Version != cmd.ExpectedVersion {
+			return domain.Objective{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "objective expected_version is stale")
 		}
 		if actorRefsEqual(objective.OwnerRefs, cmd.OwnerRefs) {
 			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
@@ -387,6 +393,9 @@ func (s *Service) SetWorkItemAssignees(ctx context.Context, commandContext domai
 		item, err := uow.WorkItems().Get(ctx, cmd.Scope, cmd.WorkItemID)
 		if err != nil {
 			return domain.WorkItem{}, 0, err
+		}
+		if item.Version != cmd.ExpectedVersion {
+			return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "work item expected_version is stale")
 		}
 		if actorRefsEqual(item.AssigneeRefs, cmd.AssigneeRefs) {
 			coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)

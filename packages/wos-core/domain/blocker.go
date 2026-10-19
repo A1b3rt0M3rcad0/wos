@@ -129,11 +129,14 @@ func (b Blocker) Validate() error {
 	if !b.Propagation.Valid() {
 		return NewError(ErrorCodeBlocker, "blocker propagation is invalid")
 	}
-	if b.BlockedRef.Kind == EntityKindWorkItem && b.Propagation != BlockerPropagationDirect {
-		return NewError(ErrorCodeBlocker, "work_item blocker propagation must be direct")
-	}
-	if b.BlockedRef.Kind == EntityKindOutcome && b.Propagation != BlockerPropagationSubtree {
-		return NewError(ErrorCodeBlocker, "outcome blocker propagation must be subtree")
+	if !BlockerPropagationAllowed(b.BlockedRef.Kind, b.Propagation) {
+		if b.BlockedRef.Kind == EntityKindWorkItem {
+			return NewError(ErrorCodeBlocker, "work_item blocker propagation must be direct")
+		}
+		if b.BlockedRef.Kind == EntityKindOutcome {
+			return NewError(ErrorCodeBlocker, "outcome blocker propagation must be subtree")
+		}
+		return NewError(ErrorCodeBlocker, "blocker propagation is not supported for its target kind")
 	}
 	if b.CauseRef != nil {
 		if err := b.CauseRef.Validate(); err != nil {

@@ -644,5 +644,6 @@ func requireNotBlocked(ctx context.Context, uow ports.UnitOfWork, ref domain.Ent
 	if !state.IsBlocked {
 		return nil
 	}
-	return domain.NewError(domain.ErrorCodePreconditionFailed, "entity is blocked by active blocker "+state.ActiveBlockers[0].Blocker.ID.String())
+	blockerRef := state.ActiveBlockers[0].Blocker.Ref()
+	return domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "entity is blocked by active blocker "+state.ActiveBlockers[0].Blocker.ID.String(), domain.ErrorDetails{ReasonCode: "active_blocker", SubjectRef: &ref, RelatedRefs: []domain.EntityRef{blockerRef}, Remedies: []domain.ErrorRemedy{{ActionID: "inspect", SubjectRef: &blockerRef}}})
 }

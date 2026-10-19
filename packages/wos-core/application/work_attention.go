@@ -16,6 +16,7 @@ type WorkObligation struct {
 	CriterionRevision d.CriterionRevision `json:"criterion_revision,omitempty,string"`
 	AssessmentResult  d.AssessmentResult  `json:"assessment_result,omitempty"`
 	EvidenceLinked    bool                `json:"evidence_linked"`
+	ReasonCode        string              `json:"reason_code,omitempty"`
 }
 
 // WorkAttention derives current obligations; it never stores a second pending list
@@ -103,6 +104,12 @@ func projectWorkAttention(context WorkContext) WorkAttention {
 		v.Obligations = append(v.Obligations, WorkObligation{Kind: "readiness", Description: string(reason), Status: "requires_attention"})
 	}
 	linked := map[d.ID]bool{}
+	for _, relation := range context.Dependencies {
+		if d.IsOwnObjectiveHardDependency(w, relation) {
+			v.Obligations = append(v.Obligations, WorkObligation{Kind: "structure", ReasonCode: "own_objective_hard_dependency", Description: "This Task has a hard dependency on its own Objective. Move the Task or explicitly remove the dependency; membership does not require a dependency.", Status: "requires_attention"})
+			break
+		}
+	}
 	for _, link := range context.EvidenceLinks {
 		if link.TargetRef == w.Ref() && link.CriterionID != nil && link.Lifecycle == d.EvidenceLinkLifecycleActive {
 			linked[*link.CriterionID] = true
@@ -153,6 +160,9 @@ func projectWorkAttention(context WorkContext) WorkAttention {
 // A current criterion revision alone does not approve a fresh execution or a
 // superseding delivery. Contract work must bind proof to its current submission.
 func attentionAssessmentApplies(context WorkContext, assessment d.CriterionAssessment) bool {
+	if fact, ok := context.workspaceCriterionFacts[assessment.CriterionID]; ok {
+		return fact.AssessmentApplicable
+	}
 	if !context.Work.ContractsEnabled && context.Contract == nil {
 		return true
 	}

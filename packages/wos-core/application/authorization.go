@@ -77,6 +77,10 @@ func (s *Service) authorizeMutation(ctx context.Context, cc domain.CommandContex
 }
 func commandPermission(name string) ports.Permission {
 	switch name {
+	case "AppendEntityNote":
+		return ports.PermissionRecordsWrite
+	case "CreatePlanItems":
+		return ports.PermissionPlanningWrite
 	case "ResolveSignedReturnIntent":
 		return ports.PermissionStateRead
 	case "InterveneSignedReviewCase", "SetNamespaceWorkProtocol", "ReconcileExpiredWorkContracts":

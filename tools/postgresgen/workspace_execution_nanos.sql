@@ -1,0 +1,1 @@
+CASE WHEN substr((state_json::jsonb ->> 'acquired_at'),20,1)='.' THEN CAST(substr(substr((state_json::jsonb ->> 'acquired_at'),21,length((state_json::jsonb ->> 'acquired_at'))-20-(CASE WHEN right((state_json::jsonb ->> 'acquired_at'),1)='Z' THEN 1 ELSE 6 END))||'000000000',1,9) AS INTEGER) ELSE 0 END

@@ -452,6 +452,9 @@ func (s *Service) registerContractRecords(ctx context.Context, u ports.UnitOfWor
 				return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "artifact withdrawn")
 			}
 		}
+		if _, err := validateEntityNoteSource(ctx, u, cmd.Scope, x.SourceRef); err != nil {
+			return zero, err
+		}
 		value, err := domain.NewEvidence(id, cmd.Scope, x.EvidenceType, x.Description, x.SourceRef, cc.Actor, x.CapturedAt, x.ArtifactID, x.Measurement, x.SourceVersion, x.Checksum, now)
 		if err != nil {
 			return zero, err
@@ -486,6 +489,9 @@ func (s *Service) registerContractRecords(ctx context.Context, u ports.UnitOfWor
 		}
 		if ev.Lifecycle != domain.EvidenceLifecycleRegistered {
 			return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "evidence retracted")
+		}
+		if _, err := validateEntityNoteSource(ctx, u, cmd.Scope, ev.SourceRef); err != nil {
+			return zero, err
 		}
 		if err = validateEvidenceLinkTarget(ctx, u, decisions, x.TargetRef, x.CriterionID); err != nil {
 			return zero, err
