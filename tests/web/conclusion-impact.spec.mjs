@@ -240,7 +240,7 @@ test("a late failed conclusion-impact review cannot report an obsolete error or 
     // The optional graph enrichment belongs to this new Task selection. Let
     // its legitimate stale-map notice settle before testing the unrelated,
     // obsolete conclusion read; the old read must preserve that newer notice.
-    await expect(page.locator("#notice")).toContainText("The Outcome changed while loading the map. Refresh to view the current state.");
+    await expect(page.locator(".canvas-footer")).toContainText("The Outcome changed while loading the map. Refresh to view the current state.");
     const selectedURL = page.url();
     const retainedFocus = panel(page).locator("#entity-actions");
     await retainedFocus.focus();
