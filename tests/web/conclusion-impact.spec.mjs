@@ -232,7 +232,15 @@ test("a late failed conclusion-impact review cannot report an obsolete error or 
     await panel(page).locator("#close-command").click();
     await expect(page.locator("#command-form")).toBeHidden();
     await selectRecord(page, task.title);
+    await expect(panel(page).getByRole("heading", { name: "Operational readiness", exact: true })).toBeVisible();
+    await expect(panel(page).getByRole("heading", {
+      name: "An active blocking impact must be reviewed before work can continue.", exact: true,
+    })).toHaveCount(0);
     await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${task.id}`));
+    // The optional graph enrichment belongs to this new Task selection. Let
+    // its legitimate stale-map notice settle before testing the unrelated,
+    // obsolete conclusion read; the old read must preserve that newer notice.
+    await expect(page.locator("#notice")).toContainText("The Outcome changed while loading the map. Refresh to view the current state.");
     const selectedURL = page.url();
     const retainedFocus = panel(page).locator("#entity-actions");
     await retainedFocus.focus();

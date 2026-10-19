@@ -237,7 +237,7 @@ export function renderWorkspaceView(host, {
     const current = view.attention;
     texts(attention.node, copy.text.workspaceAttention,
       (current.obligations || []).map((item) => item.description || display(item.status)));
-    texts(attention.node, copy.text.workspaceReasonBlocked,
+    texts(attention.node, copy.text.formMoveReadiness,
       (current.operational_state?.readiness_reasons || []).map(reasonCopy));
     texts(attention.node, copy.text.changesRequested,
       (current.correction_findings || []).map((item) => item.description || item.summary || item.message).filter(Boolean));
