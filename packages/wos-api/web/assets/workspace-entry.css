@@ -1,5 +1,20 @@
 /* Entry and navigation only. The shared paper grid, sizing unit and
  * original brand/illustrations remain owned by the editorial foundation. */
+body:has(#connect:not([hidden])) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+body:has(#connect:not([hidden])) > main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+#connect {
+  flex: 1;
+  width: 100%;
+  align-content: safe center;
+}
 #connect .login-panel {
   overflow: visible;
   padding: 0;
@@ -348,6 +363,7 @@
 }
 @media (max-width: 760px) {
   #connect {
+    justify-content: safe center;
     gap: calc(14 * var(--wos-unit, 1px));
     padding: calc(16 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
   }
