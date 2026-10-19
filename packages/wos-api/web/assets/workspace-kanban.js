@@ -248,7 +248,17 @@ export function createContextualKanban({
     });
     controls.append(search);
     const filters = el("details", undefined, "workspace-kanban-filters");
-    filters.append(el("summary", "Filters"));
+    const filterCount =
+      Number(frame.cancelled) +
+      Number(frame.required && frame.content === "objectives") +
+      Number(Boolean(frame.priority)) +
+      Number(Boolean(frame.assignee));
+    filters.append(
+      el(
+        "summary",
+        filterCount ? `Filters · ${filterCount} active` : "Filters",
+      ),
+    );
     filters.open = frame.filtersOpen;
     filters.addEventListener("toggle", () => {
       frame.filtersOpen = filters.open;

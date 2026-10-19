@@ -247,6 +247,9 @@ for (const [width, height] of [
         .locator(".workspace-kanban-card")
         .filter({ hasText: data.task.title }),
     ).toBeVisible();
+    // Capture the working view after applying the filter, using the real
+    // disclosure control; active filter state remains visible in its summary.
+    await modal.locator(".workspace-kanban-filters > summary").click();
     await capture(page, `kanban-${width}x${height}`);
     const geometry = await modal.boundingBox();
     expect(geometry.x).toBeGreaterThanOrEqual(0);
