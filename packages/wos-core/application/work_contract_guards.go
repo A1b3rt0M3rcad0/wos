@@ -11,15 +11,24 @@ import (
 // Guards run after receipt replay and before mutations, under the coordination
 // lock. Observations remain writable; signed review obligations reject unsigned assessments.
 func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any) error {
-	return validateContractMutation(ctx, s, u, name, command, true)
+	return validateContractMutation(ctx, s, u, name, command, nil)
 }
 
 // inspectContractMutation uses the same predicates in an already pinned query
 // snapshot. It never substitutes for the mutation pipeline's coordination guard.
-func inspectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any) error {
-	return validateContractMutation(ctx, s, u, name, command, false)
+func inspectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any, at time.Time) error {
+	return validateContractMutation(ctx, s, u, name, command, &at)
 }
-func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any, acquireGuard bool) error {
+func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any, inspectionAt *time.Time) error {
+	// Only the inspection entrypoint supplies a time. Commands always acquire
+	// their guard and then read the current authoritative clock, as before.
+	acquireGuard := inspectionAt == nil
+	evaluationTime := func() (time.Time, error) {
+		if inspectionAt != nil {
+			return inspectionAt.UTC(), nil
+		}
+		return s.transactionTime(ctx, u)
+	}
 	var scope domain.Scope
 	var workID, objectiveID domain.ID
 	var wholeOutcome bool
@@ -69,7 +78,7 @@ func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWor
 		if err := validateStructurePreview(ctx, u, cmd.Scope, objective.Ref(), cmd.ExpectedOutcomeRevision); err != nil {
 			return err
 		}
-		now, err := s.transactionTime(ctx, u)
+		now, err := evaluationTime()
 		if err != nil {
 			return err
 		}
@@ -177,7 +186,7 @@ func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWor
 			return err
 		}
 	}
-	now, err := s.transactionTime(ctx, u)
+	now, err := evaluationTime()
 	if err != nil {
 		return err
 	}

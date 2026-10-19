@@ -251,7 +251,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			editCondition = open()
 		}
 		if editCondition == nil {
-			editCondition = inspectContractMutation(ctx, s, f.u, "UpdateObjective", UpdateObjectiveCommand{Scope: record.Scope, ObjectiveID: record.ID})
+			editCondition = inspectContractMutation(ctx, s, f.u, "UpdateObjective", UpdateObjectiveCommand{Scope: record.Scope, ObjectiveID: record.ID}, f.at)
 		}
 		if e := add("UpdateObjective", "browser_command", 25, editCondition); e != nil {
 			return nil, e
@@ -273,7 +273,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if e := add("CreateObjective", "browser_command", 20, creationCondition); e != nil {
 			return nil, e
 		}
-		criterionCondition := inspectContractMutation(ctx, s, f.u, "AddCriterion", AddCriterionCommand{Owner: record.Ref()})
+		criterionCondition := inspectContractMutation(ctx, s, f.u, "AddCriterion", AddCriterionCommand{Owner: record.Ref()}, f.at)
 		if criterionCondition == nil {
 			criterionCondition = record.CheckCriterionDefinitionEdit()
 		}
@@ -298,7 +298,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			}
 		}
 	case d.Outcome:
-		criterionCondition := inspectContractMutation(ctx, s, f.u, "AddCriterion", AddCriterionCommand{Owner: record.Ref()})
+		criterionCondition := inspectContractMutation(ctx, s, f.u, "AddCriterion", AddCriterionCommand{Owner: record.Ref()}, f.at)
 		if criterionCondition == nil {
 			criterionCondition = record.CheckCriterionDefinitionEdit()
 		}
@@ -312,7 +312,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		clone := record
 		_, editCondition := clone.UpdateDetails(nil, nil, nil, nil, f.at)
 		if editCondition == nil {
-			editCondition = inspectContractMutation(ctx, s, f.u, "UpdateOutcome", UpdateOutcomeCommand{Scope: record.Scope()})
+			editCondition = inspectContractMutation(ctx, s, f.u, "UpdateOutcome", UpdateOutcomeCommand{Scope: record.Scope()}, f.at)
 		}
 		if e := add("UpdateOutcome", "browser_command", 25, editCondition); e != nil {
 			return nil, e
@@ -394,7 +394,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if record.Lifecycle == d.RelationLifecycleActive && record.RelationType == d.RelationTypeDependsOn {
 			condition := open()
 			if condition == nil {
-				condition = inspectContractMutation(ctx, s, f.u, "RemoveDependency", RemoveDependencyCommand{Scope: record.Scope, RelationID: record.ID})
+				condition = inspectContractMutation(ctx, s, f.u, "RemoveDependency", RemoveDependencyCommand{Scope: record.Scope, RelationID: record.ID}, f.at)
 			}
 			if condition == nil {
 				state, e := dependencyEndpointState(ctx, f.u, record.SourceRef)
