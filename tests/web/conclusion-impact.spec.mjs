@@ -85,10 +85,11 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
       await expect(impact).toContainText("Criteria, Evidence and assessments on child records remain unchanged.");
       const acknowledgement = page.getByLabel(confirmation, { exact: true });
       await expect(acknowledgement).not.toBeChecked();
-      await expect(acknowledgement).toHaveJSProperty("required", true);
       const reason = `I reviewed the ${kind} criteria and the explicitly listed unfinished work.`;
       await page.getByLabel("Reason", { exact: true }).fill(reason);
-      expect(await acknowledgement.evaluate((input) => input.validity.valueMissing)).toBe(true);
+      await page.locator("#submit-command").click();
+      await expect(page.locator("#command-error")).toHaveText("Review the current impact before confirming this conclusion.");
+      expect(attempts.filter((attempt) => attempt.name === commandName)).toHaveLength(0);
       await acknowledgement.check();
 
       // A different participant adds a real Task after the person acknowledged
@@ -118,8 +119,9 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
       await expect(impact).toContainText(lateTask.title);
       await expect(page.getByLabel("Reason", { exact: true })).toHaveValue(reason);
       await expect(acknowledgement).not.toBeChecked();
-      expect(await acknowledgement.evaluate((input) => input.validity.valueMissing)).toBe(true);
       await expect(page.locator("#conflict-review")).toBeEmpty();
+      await page.locator("#submit-command").click();
+      await expect(page.locator("#command-error")).toHaveText("Review the current impact before confirming this conclusion.");
       expect(attempts.filter((attempt) => attempt.name === commandName)).toHaveLength(1);
 
       // Refreshing is a read; only a new explicit acknowledgement and submit
