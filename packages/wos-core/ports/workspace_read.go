@@ -51,3 +51,9 @@ type WorkspaceReadRepository interface {
 	WorkspaceCards(context.Context, d.Scope, []d.EntityRef) ([]WorkspaceCardFacts, error)
 	WorkspaceChildren(context.Context, d.Scope, d.EntityRef, string, int) ([]d.EntityRef, error)
 }
+
+// Complete current metadata for acceptance gates, without aggregate histories.
+// Implementations must not truncate or use a Board pagination limit.
+type CompletionWorkRepository interface {
+	CompletionWork(context.Context, d.Scope) ([]d.WorkItem, []d.Objective, error)
+}

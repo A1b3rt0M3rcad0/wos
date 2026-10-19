@@ -6,7 +6,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-func (s *Service) checkOutcomeAchievement(ctx context.Context, u ports.UnitOfWork, outcome domain.Outcome, principal string) ([]domain.ID, error) {
+func (s *Service) checkOutcomeAchievement(ctx context.Context, u ports.UnitOfWork, outcome domain.Outcome, principal string, acknowledgements ...[]domain.EntityRef) ([]domain.ID, error) {
 	if err := s.requireIndependentReview(ctx, u, outcome.Ref().Scope, principal); err != nil {
 		return nil, err
 	}
@@ -41,9 +41,15 @@ func (s *Service) checkOutcomeAchievement(ctx context.Context, u ports.UnitOfWor
 	if err := outcome.CheckAchievement(); err != nil {
 		return nil, err
 	}
-	return ids, validateRequiredAssessmentProof(ctx, u, outcome.Ref(), outcome.Criteria)
+	if err := validateRequiredAssessmentProof(ctx, u, outcome.Ref(), outcome.Criteria); err != nil {
+		return nil, err
+	}
+	if err := checkStrictCompletion(ctx, u, outcome.Ref(), outcome.CompletionPolicy, completionAcknowledgements(acknowledgements)); err != nil {
+		return nil, err
+	}
+	return ids, nil
 }
-func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfWork, objective domain.Objective, principal string) error {
+func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfWork, objective domain.Objective, principal string, acknowledgements ...[]domain.EntityRef) error {
 	if err := s.requireIndependentReview(ctx, u, objective.Scope, principal); err != nil {
 		return err
 	}
@@ -56,6 +62,16 @@ func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfW
 	if err := objective.CheckAchievement(); err != nil {
 		return err
 	}
-	return validateRequiredAssessmentProof(ctx, u, objective.Ref(), objective.Criteria)
+	parent, err := completionOutcome(ctx, u, objective.Scope)
+	if err != nil {
+		return err
+	}
+	if err := validateRequiredAssessmentProof(ctx, u, objective.Ref(), objective.Criteria); err != nil {
+		return err
+	}
+	if err := checkStrictCompletion(ctx, u, objective.Ref(), parent.CompletionPolicy, completionAcknowledgements(acknowledgements)); err != nil {
+		return err
+	}
+	return nil
 }
 func refPointer(ref domain.EntityRef) *domain.EntityRef { return &ref }

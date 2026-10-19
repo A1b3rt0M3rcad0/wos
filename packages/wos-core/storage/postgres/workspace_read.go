@@ -15,7 +15,7 @@ func (r continuityReadRepository) WorkspaceOutcome(ctx context.Context, scope d.
 		return v, e
 	}
 	var created, updated int64
-	e = r.row(ctx, `SELECT description,desired_state,created_at,updated_at FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&v.Description, &v.DesiredState, &created, &updated)
+	e = r.row(ctx, `SELECT description,desired_state,created_at,updated_at,completion_policy FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&v.Description, &v.DesiredState, &created, &updated, &v.CompletionPolicy)
 	if e != nil {
 		return v, e
 	}
@@ -673,4 +673,60 @@ func (r continuityReadRepository) WorkspaceConclusionImpact(ctx context.Context,
 		result.Items = append(result.Items, ports.Summarize(ref, version.V, title.String, life.String, d.Priority(priority.String)))
 	}
 	return result, rows.Err()
+}
+
+// Two metadata scans, independent of the amount of history on each child.
+func (r continuityReadRepository) CompletionWork(ctx context.Context, scope d.Scope) ([]d.WorkItem, []d.Objective, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, nil, err
+	}
+	tasks := []d.WorkItem{}
+	objectives := []d.Objective{}
+	for _, kind := range []d.EntityKind{d.EntityKindObjective, d.EntityKindWorkItem} {
+		table, parent := "objectives", "parent_objective_id"
+		if kind == d.EntityKindWorkItem {
+			table, parent = "work_items", "objective_id"
+		}
+		rows, err := r.rows(ctx, "SELECT w.id,w."+parent+",w.lifecycle,c.rationale FROM "+table+" w LEFT JOIN aggregate_current_conclusions a ON a.namespace_id=w.namespace_id AND a.outcome_id=w.outcome_id AND a.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE w.namespace_id=? AND w.outcome_id=? ORDER BY w.id", scope.NamespaceID.String(), scope.OutcomeID.String())
+		if err != nil {
+			return nil, nil, err
+		}
+		for rows.Next() {
+			var id, life string
+			var parentID, reason sql.NullString
+			if err = rows.Scan(&id, &parentID, &life, &reason); err != nil {
+				rows.Close()
+				return nil, nil, err
+			}
+			parsed, err := d.ParseID(id)
+			if err != nil {
+				rows.Close()
+				return nil, nil, err
+			}
+			var parentRef *d.ID
+			if parentID.Valid {
+				value, err := d.ParseID(parentID.String)
+				if err != nil {
+					rows.Close()
+					return nil, nil, err
+				}
+				parentRef = &value
+			}
+			var conclusion *d.Conclusion
+			if reason.Valid {
+				conclusion = &d.Conclusion{Reason: reason.String}
+			}
+			if kind == d.EntityKindWorkItem {
+				tasks = append(tasks, d.WorkItem{ID: parsed, Scope: scope, ObjectiveID: parentRef, Lifecycle: d.WorkItemLifecycle(life), CurrentConclusion: conclusion})
+			} else {
+				objectives = append(objectives, d.Objective{ID: parsed, Scope: scope, ParentObjectiveID: parentRef, Lifecycle: d.ObjectiveLifecycle(life), CurrentConclusion: conclusion})
+			}
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return tasks, objectives, nil
 }

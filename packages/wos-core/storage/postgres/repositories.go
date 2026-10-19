@@ -25,36 +25,38 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 		version                          int64
 		title, description, desiredState string
 		externalContext                  string
+		completionPolicy                 string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
 		createdAt, updatedAt             int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, desired_state, lifecycle, priority,
-       archived_at, created_at, updated_at,external_context_json
+       archived_at, created_at, updated_at,external_context_json,completion_policy
 FROM outcomes
 WHERE namespace_id = $1 AND id = $2 AND outcome_id = $3`,
 		namespaceID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
-		&archivedAt, &createdAt, &updatedAt, &externalContext,
+		&archivedAt, &createdAt, &updatedAt, &externalContext, &completionPolicy,
 	)
 	if err != nil {
 		return domain.Outcome{}, mapSQLError("get outcome", err)
 	}
 
 	value := domain.Outcome{
-		ID:           outcomeID,
-		NamespaceID:  namespaceID,
-		Version:      domain.Version(version),
-		Title:        title,
-		Description:  description,
-		DesiredState: desiredState,
-		Lifecycle:    domain.OutcomeLifecycle(lifecycle),
-		Priority:     domain.Priority(priority),
-		CreatedAt:    decodeTime(createdAt),
-		UpdatedAt:    decodeTime(updatedAt),
-		Criteria:     domain.NewCriterionSet(),
+		ID:               outcomeID,
+		NamespaceID:      namespaceID,
+		CompletionPolicy: domain.CompletionPolicy(completionPolicy),
+		Version:          domain.Version(version),
+		Title:            title,
+		Description:      description,
+		DesiredState:     desiredState,
+		Lifecycle:        domain.OutcomeLifecycle(lifecycle),
+		Priority:         domain.Priority(priority),
+		CreatedAt:        decodeTime(createdAt),
+		UpdatedAt:        decodeTime(updatedAt),
+		Criteria:         domain.NewCriterionSet(),
 	}
 	if err := unmarshalJSON(externalContext, &value.ExternalContext); err != nil {
 		return domain.Outcome{}, err
@@ -101,8 +103,8 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, desired_state, lifecycle, archived_at,external_context_json
-) VALUES ($1, $2, $3, 'outcome', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    title, description, priority, desired_state, lifecycle, archived_at,external_context_json,completion_policy
+) VALUES ($1, $2, $3, 'outcome', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
 		outcome.ID.String(),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
@@ -116,6 +118,7 @@ INSERT INTO outcomes (
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
 	)
 	if err != nil {
 		return mapSQLError("insert outcome", err)
@@ -147,8 +150,8 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE outcomes
 SET version = $1, updated_at = $2, title = $3, description = $4, priority = $5,
-    desired_state = $6, lifecycle = $7, archived_at = $8,external_context_json=$9
-WHERE namespace_id = $10 AND id = $11 AND outcome_id = $12 AND version = $13`,
+    desired_state = $6, lifecycle = $7, archived_at = $8,external_context_json=$9,completion_policy=$10
+WHERE namespace_id = $11 AND id = $12 AND outcome_id = $13 AND version = $14`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
 		outcome.Title,
@@ -158,6 +161,7 @@ WHERE namespace_id = $10 AND id = $11 AND outcome_id = $12 AND version = $13`,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),

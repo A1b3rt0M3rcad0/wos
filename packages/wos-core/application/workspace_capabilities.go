@@ -81,6 +81,12 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 				}
 				c.RelatedRefs = append(c.RelatedRefs, detail.Details.RelatedRefs...)
 				c.Remedies = append(c.Remedies, detail.Details.Remedies...)
+				// Opening a confirmation is available; accepting the result is
+				// still gated by the exact acknowledgement in the command.
+				if detail.Details.ReasonCode == "cancelled_work_requires_ack" && (command == "AchieveOutcome" || command == "AchieveObjective") {
+					c.Availability = "available"
+					c.ConfirmationKind = "cancelled_scope_exclusion"
+				}
 			}
 		}
 		if condition == nil && transport == "signed_host" {

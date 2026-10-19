@@ -20,6 +20,7 @@ type WorkspaceSubject struct {
 	RecordID       *d.ID       `json:"record_id,omitempty"`
 }
 type WorkspaceViewQuery struct {
+	IncludeActivity          *bool                         `json:"include_activity,omitempty"`
 	Subject                  WorkspaceSubject              `json:"subject"`
 	PlacementPreview         *PlacementPreviewQuery        `json:"placement_preview,omitempty"`
 	BlockerPreview           *WorkspaceBlockerPreviewQuery `json:"blocker_preview,omitempty"`
@@ -95,10 +96,13 @@ type WorkspaceCapability struct {
 	PresentationPriority int              `json:"presentation_priority"`
 }
 type WorkspaceConclusionImpact struct {
-	OpenObjectives int             `json:"open_objectives"`
-	OpenTasks      int             `json:"open_tasks"`
-	OpenItems      []EntitySummary `json:"open_items"`
-	Consequences   []string        `json:"consequences"`
+	CompletionPolicy d.CompletionPolicy `json:"completion_policy,omitempty"`
+	CancelledItems   []EntitySummary    `json:"cancelled_items,omitempty"`
+	RequiredOpenWork []d.EntityRef      `json:"required_open_work,omitempty"`
+	OpenObjectives   int                `json:"open_objectives"`
+	OpenTasks        int                `json:"open_tasks"`
+	OpenItems        []EntitySummary    `json:"open_items"`
+	Consequences     []string           `json:"consequences"`
 }
 type EntityWorkspaceView struct {
 	Subject         WorkspaceSubject  `json:"subject"`
@@ -149,6 +153,7 @@ type WorkspaceCriteriaSummary struct {
 	Pending  int `json:"pending"`
 }
 type WorkspaceCardSummary struct {
+	Stage              string                    `json:"stage"`
 	Ref                d.EntityRef               `json:"ref"`
 	Version            d.Version                 `json:"version,string"`
 	Title              string                    `json:"title"`

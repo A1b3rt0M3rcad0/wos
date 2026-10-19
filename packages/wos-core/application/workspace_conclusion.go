@@ -7,8 +7,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-// The impact is a read of actual open descendants, not an additional acceptance
-// condition. An eligible parent may still be concluded with this work open.
+// Compatible impact remains advisory; strict-work adds explicit operational gates.
 func (s *Service) workspaceConclusionImpact(ctx context.Context, f *continuityReadFrame, v *EntityWorkspaceView, limit int) error {
 	facts, err := f.repo.(ports.WorkspaceReadRepository).WorkspaceConclusionImpact(ctx, v.Subject.Ref.Scope, v.Subject.Ref, limit)
 	if err != nil {
@@ -23,6 +22,29 @@ func (s *Service) workspaceConclusionImpact(ctx context.Context, f *continuityRe
 		impact.Consequences = append(impact.Consequences, "outcome_operational_scope_closed")
 	} else {
 		impact.Consequences = append(impact.Consequences, "objective_closed_to_new_children", "descendant_workflow_unchanged")
+	}
+	parent, err := completionOutcome(ctx, f.u, v.Subject.Ref.Scope)
+	if err != nil {
+		return err
+	}
+	impact.CompletionPolicy = parent.CompletionPolicy.Effective()
+	if impact.CompletionPolicy == d.CompletionPolicyStrictWork {
+		open, cancelled, e := strictCompletionWork(ctx, f.u, v.Subject.Ref)
+		if e != nil {
+			return e
+		}
+		impact.RequiredOpenWork = open
+		if len(cancelled) > 0 {
+			for start := 0; start < len(cancelled); start += 100 {
+				nodes, e := f.repo.(ports.GraphReadRepository).GraphNodes(ctx, v.Subject.Ref.Scope, cancelled[start:min(start+100, len(cancelled))])
+				if e != nil {
+					return e
+				}
+				for _, item := range nodes {
+					impact.CancelledItems = append(impact.CancelledItems, summary(item.Ref, item.Version, item.Title, item.Lifecycle, item.Priority))
+				}
+			}
+		}
 	}
 	v.ConclusionImpact = impact
 	total := facts.OpenObjectives + facts.OpenWorkItems

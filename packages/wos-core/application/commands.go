@@ -14,13 +14,14 @@ type MutationResult[T any] struct {
 }
 
 type CreateOutcomeCommand struct {
-	InitialCriteria []InitialCriterion     `wos:"optional" json:"initial_criteria,omitempty"`
-	ExternalContext domain.ExternalContext `json:"external_context,omitempty"`
-	NamespaceID     domain.ID
-	Title           string
-	Description     string
-	DesiredState    string
-	Priority        domain.Priority
+	CompletionPolicy domain.CompletionPolicy `wos:"optional" json:"completion_policy,omitempty"`
+	InitialCriteria  []InitialCriterion      `wos:"optional" json:"initial_criteria,omitempty"`
+	ExternalContext  domain.ExternalContext  `json:"external_context,omitempty"`
+	NamespaceID      domain.ID
+	Title            string
+	Description      string
+	DesiredState     string
+	Priority         domain.Priority
 }
 
 type AddCriterionCommand struct {
@@ -70,10 +71,11 @@ type ActivateOutcomeCommand struct {
 }
 
 type AchieveOutcomeCommand struct {
-	Scope                   domain.Scope
-	ExpectedVersion         domain.Version
-	Reason                  string
-	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
+	AcknowledgedCancelledWork []domain.EntityRef `wos:"optional" json:"acknowledged_cancelled_work,omitempty"`
+	Scope                     domain.Scope
+	ExpectedVersion           domain.Version
+	Reason                    string
+	ObservedOutcomeRevision   *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateObjectiveCommand struct {
@@ -93,11 +95,12 @@ type StartObjectiveCommand struct {
 }
 
 type AchieveObjectiveCommand struct {
-	Scope                   domain.Scope
-	ObjectiveID             domain.ID
-	ExpectedVersion         domain.Version
-	Reason                  string
-	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
+	AcknowledgedCancelledWork []domain.EntityRef `wos:"optional" json:"acknowledged_cancelled_work,omitempty"`
+	Scope                     domain.Scope
+	ObjectiveID               domain.ID
+	ExpectedVersion           domain.Version
+	Reason                    string
+	ObservedOutcomeRevision   *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateWorkItemCommand struct {

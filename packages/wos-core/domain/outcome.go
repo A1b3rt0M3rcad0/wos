@@ -15,7 +15,25 @@ const (
 	OutcomeLifecycleAbandoned OutcomeLifecycle = "abandoned"
 )
 
+type CompletionPolicy string
+
+const (
+	CompletionPolicyCompatible CompletionPolicy = "compatible"
+	CompletionPolicyStrictWork CompletionPolicy = "strict_work"
+)
+
+func (p CompletionPolicy) Effective() CompletionPolicy {
+	if p == "" {
+		return CompletionPolicyCompatible
+	}
+	return p
+}
+func (p CompletionPolicy) Valid() bool {
+	return p.Effective() == CompletionPolicyCompatible || p == CompletionPolicyStrictWork
+}
+
 type Outcome struct {
+	CompletionPolicy  CompletionPolicy `json:"completion_policy,omitempty"`
 	ExternalContext   ExternalContext  `json:"external_context,omitempty"`
 	ID                ID               `json:"id"`
 	NamespaceID       ID               `json:"namespace_id"`
@@ -65,6 +83,9 @@ func (o Outcome) Ref() EntityRef {
 func (o Outcome) IsArchived() bool { return o.ArchivedAt != nil }
 
 func (o Outcome) Validate() error {
+	if !o.CompletionPolicy.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid completion_policy")
+	}
 	if err := o.ExternalContext.Validate(); err != nil {
 		return err
 	}
@@ -186,8 +207,9 @@ func (o *Outcome) AchieveWithObligations(conclusion Conclusion, requiredObjectiv
 		return err
 	}
 	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
-		RequiredCriteria:     o.Criteria.RequiredObligations(),
-		RequiredObjectiveIDs: append([]ID(nil), requiredObjectiveIDs...),
+		AcknowledgedCancelledWork: append([]EntityRef(nil), conclusion.Obligations.AcknowledgedCancelledWork...),
+		RequiredCriteria:          o.Criteria.RequiredObligations(),
+		RequiredObjectiveIDs:      append([]ID(nil), requiredObjectiveIDs...),
 	}); err != nil {
 		return err
 	}

@@ -68,13 +68,13 @@ func (r continuityReadRepository) FocalOutcome(ctx context.Context, scope d.Scop
 		return result, e
 	}
 	var version d.Version
-	var title, life, priority string
+	var title, life, priority, completionPolicy string
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,completion_policy FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived, &completionPolicy)
 	if e != nil {
 		return result, mapSQLError("read focal Outcome metadata", e)
 	}
-	result = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
+	result = d.Outcome{CompletionPolicy: d.CompletionPolicy(completionPolicy), ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
 	if archived.Valid {
 		at := decodeTime(archived.Int64)
 		result.ArchivedAt = &at

@@ -168,7 +168,16 @@ func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = u.Outcomes().Insert(ctx, out); e != nil {
+	// Build the historical fixture with its own schema, not the current
+	// repository writer (which legitimately requires migration 0033).
+	tx := u.(*unitOfWork).tx
+	for _, err := range []error{ensureNamespace(ctx, tx, out.NamespaceID), ensureCoordinationRow(ctx, tx, out.Scope()), insertEntityRef(ctx, tx, out.Ref())} {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, e = tx.ExecContext(ctx, `INSERT INTO outcomes(id,namespace_id,outcome_id,kind,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES($1,$2,$3,'outcome',1,$4,$5,$6,$7,$8,$9, 'draft')`, out.ID.String(), out.NamespaceID.String(), out.ID.String(), encodeTime(now), encodeTime(now), out.Title, out.Description, string(out.Priority), out.DesiredState)
+	if e != nil {
 		t.Fatal(e)
 	}
 	if e = u.Commit(); e != nil {

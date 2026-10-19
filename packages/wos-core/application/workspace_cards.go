@@ -165,13 +165,14 @@ func (s *Service) GetWorkspaceCards(ctx context.Context, scope d.Scope, q Worksp
 				}
 				v.Criteria = &counts
 			}
-			if f.PendingReview {
+			if f.PendingReview && head.Lifecycle != "done" && head.Lifecycle != "cancelled" {
 				v.DisplayState = "awaiting_review"
 				v.AttentionReason = "awaiting_independent_review"
-			} else if f.CorrectionRequired {
+			} else if f.CorrectionRequired && head.Lifecycle != "done" && head.Lifecycle != "cancelled" {
 				v.DisplayState = "corrections_requested"
 				v.AttentionReason = "corrections_requested"
 			}
+			v.Stage = workspaceKanbanStage(v.Lifecycle, v.DisplayState)
 			page.Items = append(page.Items, v)
 		}
 	}

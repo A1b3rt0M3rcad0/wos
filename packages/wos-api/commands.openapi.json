@@ -75,6 +75,36 @@
       "Catalog_achieve_objective": {
         "additionalProperties": false,
         "properties": {
+          "acknowledged_cancelled_work": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "namespace_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "outcome_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "namespace_id",
+                "outcome_id",
+                "kind",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "expected_version": {
             "type": "integer"
           },
@@ -119,6 +149,36 @@
       "Catalog_achieve_outcome": {
         "additionalProperties": false,
         "properties": {
+          "acknowledged_cancelled_work": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "namespace_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                },
+                "outcome_id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "namespace_id",
+                "outcome_id",
+                "kind",
+                "id"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "expected_version": {
             "type": "integer"
           },
@@ -2166,6 +2226,9 @@
       "Catalog_create_outcome": {
         "additionalProperties": false,
         "properties": {
+          "completion_policy": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -9122,6 +9185,74 @@
               {
                 "additionalProperties": false,
                 "properties": {
+                  "cancelled_items": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "detail_omitted": {
+                          "type": "boolean"
+                        },
+                        "lifecycle": {
+                          "maxLength": 65536,
+                          "type": "string"
+                        },
+                        "priority": {
+                          "maxLength": 65536,
+                          "type": "string"
+                        },
+                        "ref": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "maxLength": 65536,
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            "kind": {
+                              "maxLength": 65536,
+                              "type": "string"
+                            },
+                            "namespace_id": {
+                              "maxLength": 65536,
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            },
+                            "outcome_id": {
+                              "maxLength": 65536,
+                              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "namespace_id",
+                            "outcome_id",
+                            "kind",
+                            "id"
+                          ],
+                          "type": "object"
+                        },
+                        "title": {
+                          "maxLength": 65536,
+                          "type": "string"
+                        },
+                        "version": {
+                          "pattern": "^(0|[1-9][0-9]{0,19})$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ref",
+                        "detail_omitted"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10000,
+                    "type": "array"
+                  },
+                  "completion_policy": {
+                    "maxLength": 65536,
+                    "type": "string"
+                  },
                   "consequences": {
                     "items": {
                       "maxLength": 65536,
@@ -9199,6 +9330,41 @@
                   },
                   "open_tasks": {
                     "type": "integer"
+                  },
+                  "required_open_work": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "kind": {
+                          "maxLength": 65536,
+                          "type": "string"
+                        },
+                        "namespace_id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id",
+                        "kind",
+                        "id"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10000,
+                    "type": "array"
                   }
                 },
                 "required": [
@@ -15448,6 +15614,36 @@
                       "obligations": {
                         "additionalProperties": false,
                         "properties": {
+                          "acknowledged_cancelled_work": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "namespace_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "outcome_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "namespace_id",
+                                "outcome_id",
+                                "kind",
+                                "id"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
                           "required_criteria": {
                             "items": {
                               "additionalProperties": false,
@@ -15627,6 +15823,36 @@
                         "obligations": {
                           "additionalProperties": false,
                           "properties": {
+                            "acknowledged_cancelled_work": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "namespace_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "outcome_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "namespace_id",
+                                  "outcome_id",
+                                  "kind",
+                                  "id"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
                             "required_criteria": {
                               "items": {
                                 "additionalProperties": false,
@@ -16493,6 +16719,36 @@
                       "obligations": {
                         "additionalProperties": false,
                         "properties": {
+                          "acknowledged_cancelled_work": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "namespace_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "outcome_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "namespace_id",
+                                "outcome_id",
+                                "kind",
+                                "id"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
                           "required_criteria": {
                             "items": {
                               "additionalProperties": false,
@@ -16672,6 +16928,36 @@
                         "obligations": {
                           "additionalProperties": false,
                           "properties": {
+                            "acknowledged_cancelled_work": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "namespace_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "outcome_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "namespace_id",
+                                  "outcome_id",
+                                  "kind",
+                                  "id"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
                             "required_criteria": {
                               "items": {
                                 "additionalProperties": false,
@@ -17654,6 +17940,36 @@
                       "obligations": {
                         "additionalProperties": false,
                         "properties": {
+                          "acknowledged_cancelled_work": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "namespace_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "outcome_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "namespace_id",
+                                "outcome_id",
+                                "kind",
+                                "id"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
                           "required_criteria": {
                             "items": {
                               "additionalProperties": false,
@@ -17833,6 +18149,36 @@
                         "obligations": {
                           "additionalProperties": false,
                           "properties": {
+                            "acknowledged_cancelled_work": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "namespace_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "outcome_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "namespace_id",
+                                  "outcome_id",
+                                  "kind",
+                                  "id"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
                             "required_criteria": {
                               "items": {
                                 "additionalProperties": false,
@@ -18815,6 +19161,36 @@
                       "obligations": {
                         "additionalProperties": false,
                         "properties": {
+                          "acknowledged_cancelled_work": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "namespace_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                },
+                                "outcome_id": {
+                                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "namespace_id",
+                                "outcome_id",
+                                "kind",
+                                "id"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
                           "required_criteria": {
                             "items": {
                               "additionalProperties": false,
@@ -18994,6 +19370,36 @@
                         "obligations": {
                           "additionalProperties": false,
                           "properties": {
+                            "acknowledged_cancelled_work": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "namespace_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  },
+                                  "outcome_id": {
+                                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "namespace_id",
+                                  "outcome_id",
+                                  "kind",
+                                  "id"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
                             "required_criteria": {
                               "items": {
                                 "additionalProperties": false,
@@ -24994,6 +25400,10 @@
                 "required_for_outcome": {
                   "type": "boolean"
                 },
+                "stage": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
                 "title": {
                   "maxLength": 65536,
                   "type": "string"
@@ -25004,6 +25414,7 @@
                 }
               },
               "required": [
+                "stage",
                 "ref",
                 "version",
                 "title",
@@ -25514,6 +25925,16 @@
           "criteria_cursor": {
             "maxLength": 65536,
             "type": "string"
+          },
+          "include_activity": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "limit": {
             "default": 20,

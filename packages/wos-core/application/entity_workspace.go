@@ -360,23 +360,27 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 		}
 		v.Coverage["relationships"] = coverage
 	}
-	activity, e := s.workspaceTimelineInUnitOfWork(ctx, frame.u, scope, WorkspaceTimelineQuery{SubjectRef: &ref, CriterionID: q.Subject.CriterionID, Limit: 5}, frame.revision, frame.at)
-	if e != nil {
-		return zero, e
-	}
-	v.Activity = &activity
-	if len(activity.Items) > 0 {
-		entry := activity.Items[0]
-		actor := entry.Actor
-		at := entry.RecordedAt
-		v.People = append(v.People, WorkspacePerson{Role: "last_activity_author", Actor: &actor, PrincipalID: entry.PrincipalID, Source: entry.Origin, At: &at})
-		peopleCoverage := v.Coverage["people"]
-		peopleCoverage.ReturnedCount = workspaceCount(len(v.People))
-		v.Coverage["people"] = peopleCoverage
-	}
-	v.Coverage["activity"] = WorkspaceCoverage{Status: "complete", ReturnedCount: workspaceCount(len(activity.Items)), NextCursor: activity.NextCursor}
-	if activity.NextCursor != "" {
-		v.Coverage["activity"] = WorkspaceCoverage{Status: "partial", ReturnedCount: workspaceCount(len(activity.Items)), NextCursor: activity.NextCursor, Reason: "recent_activity_page"}
+	if q.IncludeActivity == nil || *q.IncludeActivity {
+		activity, e := s.workspaceTimelineInUnitOfWork(ctx, frame.u, scope, WorkspaceTimelineQuery{SubjectRef: &ref, CriterionID: q.Subject.CriterionID, Limit: 5}, frame.revision, frame.at)
+		if e != nil {
+			return zero, e
+		}
+		v.Activity = &activity
+		if len(activity.Items) > 0 {
+			entry := activity.Items[0]
+			actor := entry.Actor
+			at := entry.RecordedAt
+			v.People = append(v.People, WorkspacePerson{Role: "last_activity_author", Actor: &actor, PrincipalID: entry.PrincipalID, Source: entry.Origin, At: &at})
+			peopleCoverage := v.Coverage["people"]
+			peopleCoverage.ReturnedCount = workspaceCount(len(v.People))
+			v.Coverage["people"] = peopleCoverage
+		}
+		v.Coverage["activity"] = WorkspaceCoverage{Status: "complete", ReturnedCount: workspaceCount(len(activity.Items)), NextCursor: activity.NextCursor}
+		if activity.NextCursor != "" {
+			v.Coverage["activity"] = WorkspaceCoverage{Status: "partial", ReturnedCount: workspaceCount(len(activity.Items)), NextCursor: activity.NextCursor, Reason: "recent_activity_page"}
+		}
+	} else {
+		v.Coverage["activity"] = WorkspaceCoverage{Status: "not_loaded", Reason: "expand_activity_history"}
 	}
 	v.Capabilities, e = s.workspaceCapabilities(ctx, frame, &v, selected, workContext, outcome)
 	if e != nil {

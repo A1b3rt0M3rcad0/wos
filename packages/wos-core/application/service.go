@@ -60,6 +60,10 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 
+	outcome.CompletionPolicy = cmd.CompletionPolicy.Effective()
+	if !outcome.CompletionPolicy.Valid() {
+		return MutationResult[domain.Outcome]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid completion_policy")
+	}
 	outcome.ExternalContext = cmd.ExternalContext.Clone()
 	if err := outcome.ExternalContext.Validate(); err != nil {
 		return MutationResult[domain.Outcome]{}, err
@@ -263,13 +267,17 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		requiredObjectiveIDs, err := s.checkOutcomeAchievement(ctx, uow, outcome, commandContext.PrincipalID)
+		requiredObjectiveIDs, err := s.checkOutcomeAchievement(ctx, uow, outcome, commandContext.PrincipalID, cmd.AcknowledgedCancelledWork)
 		if err != nil {
 			return domain.Outcome{}, 0, err
+		}
+		if len(cmd.AcknowledgedCancelledWork) > 0 && cmd.ObservedOutcomeRevision == nil {
+			return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "cancellation acknowledgement requires observed_outcome_revision")
 		}
 		if err := validateConclusionImpactPreview(ctx, uow, outcome.Ref(), cmd.ObservedOutcomeRevision); err != nil {
 			return domain.Outcome{}, 0, err
 		}
+		conclusion.Obligations.AcknowledgedCancelledWork = append([]domain.EntityRef(nil), cmd.AcknowledgedCancelledWork...)
 		if err := outcome.AchieveWithObligations(conclusion, requiredObjectiveIDs, now); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -358,12 +366,16 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
-		if err := s.checkObjectiveAchievement(ctx, uow, objective, commandContext.PrincipalID); err != nil {
+		if err := s.checkObjectiveAchievement(ctx, uow, objective, commandContext.PrincipalID, cmd.AcknowledgedCancelledWork); err != nil {
 			return domain.Objective{}, 0, err
+		}
+		if len(cmd.AcknowledgedCancelledWork) > 0 && cmd.ObservedOutcomeRevision == nil {
+			return domain.Objective{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "cancellation acknowledgement requires observed_outcome_revision")
 		}
 		if err := validateConclusionImpactPreview(ctx, uow, objective.Ref(), cmd.ObservedOutcomeRevision); err != nil {
 			return domain.Objective{}, 0, err
 		}
+		conclusion.Obligations.AcknowledgedCancelledWork = append([]domain.EntityRef(nil), cmd.AcknowledgedCancelledWork...)
 		if err := objective.Achieve(conclusion, now); err != nil {
 			return domain.Objective{}, 0, err
 		}

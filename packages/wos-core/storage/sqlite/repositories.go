@@ -24,36 +24,38 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 		version                          int64
 		title, description, desiredState string
 		externalContext                  string
+		completionPolicy                 string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
 		createdAt, updatedAt             int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, desired_state, lifecycle, priority,
-       archived_at, created_at, updated_at,external_context_json
+       archived_at, created_at, updated_at,external_context_json,completion_policy
 FROM outcomes
 WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
 		namespaceID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
-		&archivedAt, &createdAt, &updatedAt, &externalContext,
+		&archivedAt, &createdAt, &updatedAt, &externalContext, &completionPolicy,
 	)
 	if err != nil {
 		return domain.Outcome{}, mapSQLError("get outcome", err)
 	}
 
 	value := domain.Outcome{
-		ID:           outcomeID,
-		NamespaceID:  namespaceID,
-		Version:      domain.Version(version),
-		Title:        title,
-		Description:  description,
-		DesiredState: desiredState,
-		Lifecycle:    domain.OutcomeLifecycle(lifecycle),
-		Priority:     domain.Priority(priority),
-		CreatedAt:    decodeTime(createdAt),
-		UpdatedAt:    decodeTime(updatedAt),
-		Criteria:     domain.NewCriterionSet(),
+		ID:               outcomeID,
+		NamespaceID:      namespaceID,
+		CompletionPolicy: domain.CompletionPolicy(completionPolicy),
+		Version:          domain.Version(version),
+		Title:            title,
+		Description:      description,
+		DesiredState:     desiredState,
+		Lifecycle:        domain.OutcomeLifecycle(lifecycle),
+		Priority:         domain.Priority(priority),
+		CreatedAt:        decodeTime(createdAt),
+		UpdatedAt:        decodeTime(updatedAt),
+		Criteria:         domain.NewCriterionSet(),
 	}
 	if err := unmarshalJSON(externalContext, &value.ExternalContext); err != nil {
 		return domain.Outcome{}, err
@@ -100,8 +102,8 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, desired_state, lifecycle, archived_at,external_context_json
-) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    title, description, priority, desired_state, lifecycle, archived_at,external_context_json,completion_policy
+) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		outcome.ID.String(),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
@@ -115,6 +117,7 @@ INSERT INTO outcomes (
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
 	)
 	if err != nil {
 		return mapSQLError("insert outcome", err)
@@ -146,7 +149,7 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE outcomes
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?
+    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?,completion_policy=?
 WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
@@ -157,6 +160,7 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),

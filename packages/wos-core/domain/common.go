@@ -43,12 +43,24 @@ func (o CriterionObligationSnapshot) Validate() error {
 }
 
 type ConclusionObligations struct {
-	RequiredCriteria      []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
-	RequiredObjectiveIDs  []ID                          `json:"required_objective_ids,omitempty"`
-	ResultSummaryRequired bool                          `json:"result_summary_required,omitempty"`
+	AcknowledgedCancelledWork []EntityRef                   `json:"acknowledged_cancelled_work,omitempty"`
+	RequiredCriteria          []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
+	RequiredObjectiveIDs      []ID                          `json:"required_objective_ids,omitempty"`
+	ResultSummaryRequired     bool                          `json:"result_summary_required,omitempty"`
 }
 
 func (o ConclusionObligations) Validate() error {
+	seen := map[EntityRef]bool{}
+	for _, ref := range o.AcknowledgedCancelledWork {
+		if err := ref.Validate(); err != nil {
+			return err
+		}
+		if seen[ref] {
+			return NewError(ErrorCodeInvalidArgument, "duplicate cancelled work acknowledgement")
+		}
+		seen[ref] = true
+	}
+
 	criteria := make(map[ID]struct{}, len(o.RequiredCriteria))
 	for _, criterion := range o.RequiredCriteria {
 		if err := criterion.Validate(); err != nil {
@@ -88,6 +100,12 @@ type Conclusion struct {
 }
 
 func (c Conclusion) Validate() error {
+	for _, ref := range c.Obligations.AcknowledgedCancelledWork {
+		if c.OwnerRef != nil && (ref.Scope != c.OwnerRef.Scope || (ref.Kind != EntityKindObjective && ref.Kind != EntityKindWorkItem)) {
+			return NewError(ErrorCodeInvalidArgument, "cancelled work must belong to the conclusion scope")
+		}
+	}
+
 	if c.SubmissionID != nil {
 		if err := c.SubmissionID.Validate(); err != nil {
 			return err

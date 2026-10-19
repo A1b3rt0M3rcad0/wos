@@ -162,7 +162,8 @@ func (o *Objective) Achieve(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
-		RequiredCriteria: o.Criteria.RequiredObligations(),
+		AcknowledgedCancelledWork: append([]EntityRef(nil), conclusion.Obligations.AcknowledgedCancelledWork...),
+		RequiredCriteria:          o.Criteria.RequiredObligations(),
 	}); err != nil {
 		return err
 	}
