@@ -203,6 +203,8 @@ async function boardReady(page) {
 }
 
 async function inspectorReady(page) {
+  await panel(page).locator("#close-detail").focus();
+  await expect(panel(page).locator("#close-detail")).toBeFocused();
   await unobscured(panel(page).locator("#close-detail"));
   await panel(page).locator('[data-action-id="more_actions"]').focus();
   await expect(panel(page).locator('[data-action-id="more_actions"]')).toBeFocused();
