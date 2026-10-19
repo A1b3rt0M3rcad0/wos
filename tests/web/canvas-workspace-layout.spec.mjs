@@ -548,3 +548,79 @@ test("native browser zoom at 125% and 150% preserves Outcome Board controls and 
     }
   } finally { await browser.close(); }
 });
+
+test("native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable", async ({ wos }) => {
+  const data = await seedCanvas(wos);
+  const browser = await nativeZoomBrowser({ width: 1366, height: 768 });
+  try {
+    const page = browser.page;
+    async function nativeArtifact(name) {
+      const session = await page.context().newCDPSession(page);
+      try {
+        const shot = await session.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, fromSurface: true });
+        const path = test.info().outputPath(`${name}.png`);
+        await writeFile(path, Buffer.from(shot.data, "base64"));
+        await test.info().attach(name, { path, contentType: "image/png" });
+      } finally { await session.detach(); }
+      const geometry = await page.evaluate(() => {
+        const bounds = (element) => {
+          const r = element.getBoundingClientRect(), s = getComputedStyle(element);
+          return { class: element.className, x: r.x, y: r.y, width: r.width, height: r.height, flex: s.flex,
+            minWidth: s.minWidth, padding: s.padding, font: s.font };
+        };
+        return {
+          viewport: { width: innerWidth, height: innerHeight, devicePixelRatio },
+          chrome: Object.fromEntries([".topbar", ".outcome-heading", ".canvas-toolbar", ".canvas-footer", ".canvas-stage"].map((selector) => [selector, bounds(document.querySelector(selector))])),
+          toolbar: [...document.querySelector(".canvas-toolbar").children].map(bounds),
+        };
+      });
+      const path = test.info().outputPath(`${name}-geometry.json`);
+      await writeFile(path, JSON.stringify(geometry, null, 2));
+      await test.info().attach(`${name}-geometry`, { path, contentType: "application/json" });
+    }
+    await openCanvas(page, wos, data);
+    await browser.setZoom(2);
+    // Native zoom gives a real 683 x 384 CSS viewport. Explicit Map remains
+    // usable alongside the automatically selected narrow-screen List view.
+    await canvas(page).getByRole("button", { name: "Map view", exact: true }).click();
+    await controls(page);
+    const geometry = await workspaceBounds(page);
+    await nativeArtifact("native-200-board");
+    expect(geometry.viewport.devicePixelRatio).toBe(2);
+    expect(geometry.viewport.visualViewportScale).toBe(1);
+    expect(geometry.height).toBeGreaterThan(100);
+    for (const name of ["Map layers", "Connections"]) {
+      const select = canvas(page).getByRole("combobox", { name, exact: true });
+      await fullyVisible(select);
+      const measurement = await select.evaluate((element) => {
+        const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
+        const drawing = document.createElement("canvas").getContext("2d");
+        drawing.font = style.font;
+        return {
+          width: bounds.width, height: bounds.height,
+          optionTextWidth: Math.max(...[...element.options].map((option) => drawing.measureText(option.textContent).width)),
+          // Chromium's native select retains an internal text inset in
+          // addition to CSS padding. Leave room for that native decoration.
+          availableTextWidth: element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 12,
+        };
+      });
+      expect(measurement.width).toBeGreaterThanOrEqual(44);
+      expect(measurement.height).toBeGreaterThanOrEqual(44);
+      expect(measurement.optionTextWidth).toBeLessThanOrEqual(measurement.availableTextWidth + 1);
+    }
+    await fullyVisible(canvas(page).getByRole("button", { name: "Auto-layout", exact: true }));
+    await task(page, data.tasks.ready).focus();
+    await page.keyboard.press("Enter");
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await fullyVisible(panel(page));
+    await nativeArtifact("native-200-inspector");
+    const attention = panel(page).getByRole("heading", { name: "What needs attention", exact: true }).first();
+    await attention.scrollIntoViewIfNeeded();
+    await fullyVisible(attention);
+    await panel(page).locator("#close-detail").scrollIntoViewIfNeeded();
+    await fullyVisible(panel(page).locator("#close-detail"));
+    await panel(page).locator("#close-detail").click();
+    await expect(task(page, data.tasks.ready)).toBeFocused();
+    await workspaceBounds(page);
+  } finally { await browser.close(); }
+});

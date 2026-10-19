@@ -2679,7 +2679,7 @@ async function renderSection(cursor = "", append = false) {
       list.append(row);
       rows++;
     } else if (section === "timeline" && item.event_type) {
-      const day = item.recorded_at ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", dateStyle: "long" })
+      const day = item.recorded_at ? new Intl.DateTimeFormat("en-US", { timeZone: "UTC", dateStyle: "long" })
         .format(new Date(item.recorded_at)) : "";
       if (!activityGroup || activityDate !== day) {
         activityDate = day;
@@ -3298,7 +3298,6 @@ async function openPreparationRemedy(name, remedy) {
   state.preparingRemedy = true;
   openCommands(name);
   state.preparingRemedy = false;
-  $("fields").prepend(actionButton(copy.text.workspaceBackToDraft, () => restorePreparationDraft().catch(report), "quiet"));
 }
 async function restorePreparationDraft() {
   const original = state.formDrafts?.at(-1);
@@ -3435,7 +3434,7 @@ function defaults() {
 function hydrateSelectedForForm(resume) {
   if (!state.workspaceView || !state.selected || state.selected._workspaceFull) return false;
   const selected = state.selected, generation = state.generation, view = state.workspaceView;
-  const detailGeneration = state.detailGeneration;
+  const detailGeneration = state.detailGeneration, preparingRemedy = state.preparingRemedy;
   const ref = view.subject.ref;
   if (ref.id !== selected.id || ref.kind !== selected._kind) return false;
   const path = ref.kind === "outcome" ? outcomeBase() : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
@@ -3457,7 +3456,9 @@ function hydrateSelectedForForm(resume) {
     }
     state.selected = { ...entity, version: view.entity_version,
       _kind: ref.kind, _workspaceFull: true, _operational_state: selected._operational_state };
-    resume();
+    const previous = state.preparingRemedy;
+    state.preparingRemedy = preparingRemedy;
+    try { resume(); } finally { state.preparingRemedy = previous; }
   }).catch(report);
   return true;
 }
@@ -4073,6 +4074,8 @@ function openCommands(name, menuTarget) {
       : []),
     state.humanForm.node,
   );
+  if (state.preparingRemedy && state.formDrafts?.length)
+    $("fields").prepend(actionButton(copy.text.workspaceBackToDraft, () => restorePreparationDraft().catch(report), "quiet"));
   $("command-error").textContent = "";
   $("conflict-review").replaceChildren();
   $("retry-command").hidden = true;

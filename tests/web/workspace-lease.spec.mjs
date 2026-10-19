@@ -18,7 +18,13 @@ async function openAction(page, name) {
   if (await direct.count()) await direct.first().click();
   else {
     await page.locator("#entity-actions").click();
-    await page.locator(`#action-options [data-action-id="${name}"]`).click();
+    const target = page.locator(`#action-options [data-action-id="${name}"]`);
+    if (!(await target.isVisible())) {
+      const advanced = page.locator("#action-options details").filter({ has: target });
+      if (await advanced.count() && !(await advanced.evaluate((element) => element.open)))
+        await advanced.locator(":scope > summary").click();
+    }
+    await target.click();
   }
   await expect(page.locator("#command-form")).toBeVisible();
 }
@@ -87,7 +93,7 @@ for (const area of ["canvas", "work"]) {
 
 test("editing Issue, Blocker and Criterion preserves descriptions beyond their inspector preview", async ({ page, wos }) => {
   const { value: outcome, scope } = await wos.outcome("Preserve full authored definitions");
-  const long = "Retain this authored definition in full. ".repeat(180);
+  const long = "Retain this authored definition in full. ".repeat(180).trim();
   const task = await wos.command("create_work_item", { scope, title: "Owner of the long criterion",
     priority: "normal", lifecycle: "backlog" });
   const taskRef = { ...scope, kind: "work_item", id: task.id };
@@ -159,6 +165,7 @@ test("criterion preparation targets a required definition beyond the first inspe
   expect((await (await rejection).json()).error.code).toBe("precondition_failed");
   await page.locator("#conflict-review").getByRole("button", { name: "Assess criterion", exact: true }).click();
   await expect(page.locator("#command-select")).toHaveValue("record_criterion_assessment");
+  await expect(page.locator("#fields").getByRole("button", { name: "Return to your draft", exact: true })).toBeVisible();
   await expect(page.locator("#fields")).toContainText(omitted.title);
   await page.getByLabel("Rationale", { exact: true }).fill("I independently reviewed the current revised condition.");
   const assessmentResponse = page.waitForResponse((response) => response.url().endsWith("/commands/record_criterion_assessment"));
