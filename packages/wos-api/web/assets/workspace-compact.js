@@ -70,6 +70,23 @@ export function compactWorkspace(
     intro.append(next);
     management.prepend(attention);
   }
+  const person =
+    (view.people || []).find(
+      (person) =>
+        person.role === "executor" &&
+        person.authority_state === "current_authority",
+    ) ||
+    (view.people || []).find((person) =>
+      ["declared_owner", "declared_assignee"].includes(person.role),
+    );
+  if (person)
+    intro.append(
+      el(
+        "p",
+        `${person.role === "executor" ? "Recorded execution authority" : person.role === "declared_owner" ? "Declared owner" : "Declared assignee"}: ${person.actor_ref?.display_name || person.actor_ref?.id || person.principal_id}`,
+        "field-help",
+      ),
+    );
   const applicable = (view.criteria || []).filter(
     (item) => item.definition?.required && item.definition.status !== "retired",
   );

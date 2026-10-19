@@ -229,6 +229,9 @@ for (const [width, height] of [
     await modal
       .getByRole("button", { name: "Show cancelled", exact: true })
       .click();
+    await expect(
+      modal.getByRole("button", { name: "Hide cancelled", exact: true }),
+    ).toBeFocused();
     await expect(modal.locator("[data-column=cancelled]")).toContainText(
       "Retired experiment",
     );
@@ -552,4 +555,60 @@ test("an authorized waiver is an explicit exception and never completes the Task
       (assessment) => assessment.result === "waived",
     ),
   ).toBe(true);
+});
+
+test("partial Kanban pages preserve column scroll and reject stale continuation", async ({
+  page,
+  wos,
+}) => {
+  const data = await setup(wos);
+  for (let offset = 0; offset < 105; offset += 50)
+    await wos.command("create_plan_items", {
+      scope: data.scope,
+      items: Array.from({ length: Math.min(50, 105 - offset) }, (_, i) => ({
+        local_key: `bulk-${offset + i}`,
+        kind: "work_item",
+        title: `Bulk task ${offset + i}`,
+        parent_objective_id: data.objective.id,
+        priority: "normal",
+      })),
+    });
+  await wos.login(page);
+  await openOutcome(page, data.outcome.title, { area: null });
+  await select(page, data.objective.title);
+  await panel(page)
+    .getByRole("button", { name: "Open Tasks Kanban", exact: true })
+    .click();
+  const modal = page.locator("#workspace-kanban");
+  await expect(modal.getByRole("status")).toContainText("Partial view");
+  const column = modal.locator("[data-column=todo]");
+  await column.hover();
+  await page.mouse.wheel(0, 420);
+  await expect
+    .poll(() => column.evaluate((node) => node.scrollTop))
+    .toBeGreaterThan(200);
+  const scroll = await column.evaluate((node) => node.scrollTop);
+  const more = modal.getByRole("button", {
+    name: "Load more children",
+    exact: true,
+  });
+  await more.click();
+  await expect(modal.locator(".workspace-kanban-card")).toHaveCount(98);
+  expect(
+    Math.abs((await column.evaluate((node) => node.scrollTop)) - scroll),
+  ).toBeLessThan(2);
+  await expect(more).toBeFocused();
+  await wos.command("create_work_item", {
+    scope: data.scope,
+    objective_id: data.objective.id,
+    title: "Concurrent work changes the page revision",
+    lifecycle: "backlog",
+    priority: "normal",
+  });
+  await more.click();
+  await expect(modal.getByRole("alert")).toContainText("Refresh this Kanban");
+  await expect(modal.locator(".workspace-kanban-card")).toHaveCount(98);
+  await modal.getByRole("button", { name: "Refresh", exact: true }).click();
+  await expect(modal.locator(".workspace-kanban-card")).toHaveCount(48);
+  await expect(modal.getByRole("alert")).toHaveCount(0);
 });

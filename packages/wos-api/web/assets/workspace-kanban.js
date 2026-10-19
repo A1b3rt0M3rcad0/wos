@@ -41,7 +41,10 @@ export function createContextualKanban({
   }
   function fail(error, token) {
     if (!valid(token)) return;
-    current().error = error.message || "Unable to load this view.";
+    current().error =
+      error.code === "precondition_failed"
+        ? "The work changed. Refresh this Kanban before loading another page."
+        : error.message || "Unable to load this view.";
     render();
   }
   function close(restore = true) {
@@ -79,6 +82,7 @@ export function createContextualKanban({
     sessionScope = "";
   }
   async function load(append = false) {
+    saveScroll();
     const frame = current(),
       token = ++epoch;
     frame.loading = true;
@@ -148,13 +152,21 @@ export function createContextualKanban({
   }
   async function navigate(view) {
     saveScroll();
-    frames.push(makeFrame(view));
+    if (key(current().view.subject.ref) === key(view.subject.ref)) {
+      current().selected = null;
+      current().mode = undefined;
+      current().content =
+        view.subject.ref.kind === "outcome" ? "objectives" : "tasks";
+    } else frames.push(makeFrame(view));
     render();
     await load();
   }
   function saveScroll() {
     for (const node of dialog.querySelectorAll("[data-column]"))
-      current()?.scroll.set(node.dataset.column, node.scrollTop);
+      current()?.scroll.set(
+        `${current().content}/${node.dataset.column}`,
+        node.scrollTop,
+      );
   }
   async function inspect(ref) {
     const token = ++epoch;
@@ -180,6 +192,13 @@ export function createContextualKanban({
     }
   }
   function render() {
+    const focused = document.activeElement;
+    const hadFocus = dialog.contains(focused);
+    const previousContext = dialog.dataset.context;
+    const selection =
+      focused?.tagName === "INPUT"
+        ? [focused.selectionStart, focused.selectionEnd]
+        : null;
     if (!current() || sessionScope !== scopeKey()) return reset();
     const frame = current();
     const header = el("header", undefined, "workspace-kanban-header");
@@ -194,13 +213,18 @@ export function createContextualKanban({
             : "Tasks Kanban",
     );
     title.id = "workspace-kanban-title";
+    title.tabIndex = -1;
     header.append(title, button("Close Kanban", close, "quiet"));
     const breadcrumb = el("nav", undefined, "workspace-kanban-breadcrumb");
     breadcrumb.setAttribute("aria-label", "Kanban context");
     for (const [i, item] of frames.entries())
       breadcrumb.append(
         button(
-          item.view.header.title,
+          item.mode === "criteria"
+            ? "Criteria review"
+            : item.mode === "materials"
+              ? "Materials"
+              : item.view.header.title,
           () => {
             saveScroll();
             ++epoch;
@@ -332,6 +356,7 @@ export function createContextualKanban({
       },
       "quiet",
     );
+    cancelled.dataset.control = "cancelled";
     cancelled.setAttribute("aria-pressed", String(frame.cancelled));
     filterBody.append(cancelled);
     controls.append(button("Refresh", () => load(), "quiet"));
@@ -394,7 +419,7 @@ export function createContextualKanban({
                   : "Optional for Outcome",
               ),
             );
-          if (item.criteria)
+          if (item.criteria?.active)
             card.append(
               el(
                 "small",
@@ -422,7 +447,7 @@ export function createContextualKanban({
         if (!matching.length)
           section.append(el("p", "No matching loaded items.", "field-help"));
         columns.append(section);
-        section.scrollTop = frame.scroll.get(stage) || 0;
+        section.scrollTop = frame.scroll.get(`${frame.content}/${stage}`) || 0;
       }
     }
     if (frame.mode === "materials") {
@@ -593,13 +618,21 @@ export function createContextualKanban({
           frames.push({ ...makeFrame(view), mode: "materials" });
           render();
         },
-        onCriterion: (definition, owner) =>
-          query({ kind: "criterion", ref: owner, criterion_id: definition.id })
-            .then((view) => {
-              frame.selected = view;
-              render();
-            })
-            .catch(onError),
+        onCriterion: async (definition, owner) => {
+          const token = ++epoch;
+          try {
+            const view = await query({
+              kind: "criterion",
+              ref: owner,
+              criterion_id: definition.id,
+            });
+            if (!valid(token)) return;
+            frame.selected = view;
+            render();
+          } catch (error) {
+            fail(error, token);
+          }
+        },
         onFullRecord: () => act(null, null, selected),
         onNote: (entry, options) =>
           act("read_entity_note", { entry, options }, selected),
@@ -626,8 +659,14 @@ export function createContextualKanban({
       footer.append(error);
     }
     if (frame.coverage.next_cursor) {
-      const more = button("Load more children", () => load(true), "quiet");
-      more.disabled = frame.loading;
+      const more = button(
+        "Load more children",
+        () => {
+          if (!frame.loading) load(true);
+        },
+        "quiet",
+      );
+      more.setAttribute("aria-disabled", String(frame.loading));
       footer.append(more);
     }
     if (!frame.mode) {
@@ -666,6 +705,41 @@ export function createContextualKanban({
       footer.append(actions);
     }
     dialog.replaceChildren(header, breadcrumb, controls, status, body, footer);
+    const context = `${key(frame.view.subject.ref)}/${frame.content}/${frame.mode || ""}`;
+    dialog.dataset.context = context;
+    // Restore after mounting: detached columns have no scroll geometry.
+    for (const column of dialog.querySelectorAll("[data-column]"))
+      column.scrollTop =
+        frame.scroll.get(`${frame.content}/${column.dataset.column}`) || 0;
+    if (hadFocus) {
+      const controls = [
+        ...dialog.querySelectorAll("button,input,select,summary"),
+      ];
+      let target;
+      if (previousContext === context && focused !== dialog)
+        target = controls.find((node) => {
+          if (focused.dataset.control)
+            return node.dataset.control === focused.dataset.control;
+          if (focused.dataset.kanbanRef)
+            return node.dataset.kanbanRef === focused.dataset.kanbanRef;
+          const label = focused.getAttribute("aria-label");
+          if (label)
+            return (
+              node.tagName === focused.tagName &&
+              node.getAttribute("aria-label") === label
+            );
+          return (
+            node.tagName === focused.tagName &&
+            node.textContent === focused.textContent
+          );
+        });
+      (target || title).focus({ preventScroll: true });
+      if (
+        target?.tagName === "INPUT" &&
+        selection?.every((value) => value !== null)
+      )
+        target.setSelectionRange(...selection);
+    }
   }
   async function resume() {
     if (!suspended || sessionScope !== scopeKey()) return;
