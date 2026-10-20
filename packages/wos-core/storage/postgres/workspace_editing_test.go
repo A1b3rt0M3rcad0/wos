@@ -82,11 +82,23 @@ func TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically(t *test
 	if err != nil || !replay.IdempotentReplay || replay.Value.Version != edited.Value.Version {
 		t.Fatal("restart lost durable receipt", err)
 	}
-	cleared, err := service.SetWorkItemObjective(ctx, cc, a.SetWorkItemObjectiveCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: loaded.Value.Version, ObjectiveID: nil})
-	if err != nil || cleared.Value.ObjectiveID != nil {
-		t.Fatal("explicit null did not persist direct membership", err)
+	eventsBeforeUnparent, err := store.SnapshotDomainEvents(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
 	}
-	clearedDate, err := service.SetWorkItemNotBefore(ctx, cc, a.SetWorkItemNotBeforeCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: cleared.Value.Version, NotBefore: nil})
+	_, err = service.SetWorkItemObjective(ctx, cc, a.SetWorkItemObjectiveCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: loaded.Value.Version, ObjectiveID: nil})
+	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodePreconditionFailed {
+		t.Fatalf("explicit null did not reject direct membership: %v", err)
+	}
+	retained, err := service.GetWorkItem(ctx, scope, work.ID)
+	if err != nil || retained.Value.Version != loaded.Value.Version || retained.Value.ObjectiveID == nil || *retained.Value.ObjectiveID != second.Value.ID {
+		t.Fatal("rejected unparenting changed Task or version", err)
+	}
+	eventsAfterUnparent, err := store.SnapshotDomainEvents(ctx, scope)
+	if err != nil || len(eventsAfterUnparent) != len(eventsBeforeUnparent) {
+		t.Fatal("rejected unparenting changed history", err)
+	}
+	clearedDate, err := service.SetWorkItemNotBefore(ctx, cc, a.SetWorkItemNotBeforeCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: retained.Value.Version, NotBefore: nil})
 	if err != nil || clearedDate.Value.NotBefore != nil {
 		t.Fatal("explicit null did not clear scheduling", err)
 	}

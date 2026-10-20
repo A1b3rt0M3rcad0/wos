@@ -92,6 +92,8 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			task := work("Move with a direct impediment", &branch.ID)
 			ready := work("Move out of inherited blocking", &child.ID)
 			executing := work("Do not move executing descendants", &frozen.ID)
+			placementTask, err := d.NewWorkItemForObjective(id(), scope, &clear.ID, "Validate required Objective", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			must(err)
 			must(executing.Claim(id(), "executor", d.ActorRef{Kind: d.ActorKindHuman, Provider: "fixture", ID: "executor"}, 30*time.Second, now.Add(-time.Minute)))
 			blocker := func(ref d.EntityRef, title string, propagation d.BlockerPropagation) d.Blocker {
 				value, err := d.NewBlocker(id(), ref, nil, &d.ExternalCause{Provider: "fixture", ID: title, Description: title}, title, propagation, now)
@@ -110,7 +112,7 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			for _, value := range []d.Objective{first, second, clear, branch, child, frozen} {
 				must(u.Objectives().Insert(ctx, value))
 			}
-			for _, value := range []d.WorkItem{task, ready, executing} {
+			for _, value := range []d.WorkItem{task, ready, executing, placementTask} {
 				must(u.WorkItems().Insert(ctx, value))
 			}
 			for _, value := range []d.Blocker{oldInherited, newInherited, direct, parentDirect} {
@@ -197,6 +199,10 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			missing := preview(task.Ref(), &missingID).PlacementPreview
 			if missing.Availability != "blocked" || missing.Error == nil || missing.Error.Code != d.ErrorCodeNotFound || missing.Coverage.Status != "unknown" || missing.ReadinessAfter != nil {
 				t.Fatalf("missing destination was presented as valid readiness: %+v", missing)
+			}
+			directOutcome := preview(placementTask.Ref(), nil).PlacementPreview
+			if directOutcome.Availability != "blocked" || directOutcome.Error == nil || directOutcome.Error.Details == nil || directOutcome.Error.Details.ReasonCode != "task_objective_required" || directOutcome.NewParent.Ref.Kind != d.EntityKindOutcome || directOutcome.Coverage.Status != "unknown" || len(directOutcome.BlockingChanges) != 0 {
+				t.Fatalf("invalid direct Outcome placement was presented as an executable move: %+v", directOutcome)
 			}
 			inExecution := preview(frozen.Ref(), &second.ID).PlacementPreview
 			if inExecution.Availability != "blocked" || inExecution.Error == nil || inExecution.ReasonCodes[0] != "work_item_planning_frozen" {

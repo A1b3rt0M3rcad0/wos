@@ -10,7 +10,8 @@ import (
 func TestWorkDefinitionSettersReplaceClearAndPreserveAuthority(t *testing.T) {
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
 	scope := d.Scope{NamespaceID: d.MustParseID("0199e300-0000-7000-8000-000000000001"), OutcomeID: d.MustParseID("0199e300-0000-7000-8000-000000000002")}
-	w, err := d.NewWorkItem(d.MustParseID("0199e300-0000-7000-8000-000000000003"), scope, "Draft work", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+	parent := d.MustParseID("0199e300-0000-7000-8000-000000000003")
+	w, err := d.NewWorkItemForObjective(d.MustParseID("0199e300-0000-7000-8000-000000000005"), scope, &parent, "Draft work", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,12 +41,13 @@ func TestWorkDefinitionSettersReplaceClearAndPreserveAuthority(t *testing.T) {
 	if _, err := w.SetNotBefore(nil, now); err != nil || w.NotBefore != nil {
 		t.Fatal("null did not clear scheduling", err)
 	}
-	parent := d.MustParseID("0199e300-0000-7000-8000-000000000004")
-	if _, err := w.SetObjective(&parent, now); err != nil || w.ObjectiveID == nil || *w.ObjectiveID != parent {
+	nextParent := d.MustParseID("0199e300-0000-7000-8000-000000000004")
+	if _, err := w.SetObjective(&nextParent, now); err != nil || w.ObjectiveID == nil || *w.ObjectiveID != nextParent {
 		t.Fatal("Objective association failed", err)
 	}
-	if _, err := w.SetObjective(nil, now); err != nil || w.ObjectiveID != nil {
-		t.Fatal("null did not restore direct Outcome membership", err)
+	version = w.Version
+	if _, err := w.SetObjective(nil, now); err == nil || w.ObjectiveID == nil || *w.ObjectiveID != nextParent || w.Version != version {
+		t.Fatal("null Objective did not fail without changing the Task", err)
 	}
 	if w.Lifecycle != d.WorkItemLifecycleBacklog || w.CurrentLease != nil || w.CurrentContractID != nil {
 		t.Fatal("definition edits granted execution authority")

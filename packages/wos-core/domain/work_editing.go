@@ -75,19 +75,17 @@ func (w *WorkItem) SetObjective(value *ID, now time.Time) (bool, error) {
 	if err := w.ValidateDefinitionEdit(now); err != nil {
 		return false, err
 	}
-	if value != nil {
-		if err := value.Validate(); err != nil {
-			return false, err
-		}
+	if value == nil {
+		return false, NewError(ErrorCodeInvalidArgument, "a Task must belong to an Objective")
+	}
+	if err := value.Validate(); err != nil {
+		return false, err
 	}
 	if optionalIDsEqual(w.ObjectiveID, value) {
 		return false, nil
 	}
-	w.ObjectiveID = nil
-	if value != nil {
-		id := *value
-		w.ObjectiveID = &id
-	}
+	id := *value
+	w.ObjectiveID = &id
 	return true, w.touch(now)
 }
 

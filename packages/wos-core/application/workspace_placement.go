@@ -10,8 +10,9 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-// ParentID is required and nullable: null deliberately places the entity
-// directly below its Outcome. This selector never changes persisted state.
+// ParentID is required and nullable: null proposes direct Outcome placement
+// for an Objective. A Task preview blocks that destination because every Task
+// must remain owned by an Objective. This selector never changes persisted state.
 type PlacementPreviewQuery struct {
 	ParentID *d.ID `json:"parent_id" wos:"required"`
 }
@@ -205,7 +206,7 @@ func (s *Service) workspacePlacementPreview(ctx context.Context, f *continuityRe
 			p.RelatedRefs = append(p.RelatedRefs, detail.Details.RelatedRefs...)
 			p.Remedies = append(p.Remedies, detail.Details.Remedies...)
 		}
-		if detail.Code == d.ErrorCodeNotFound || detail.Code == d.ErrorCodeDependencyCycle {
+		if detail.Code == d.ErrorCodeNotFound || detail.Code == d.ErrorCodeDependencyCycle || (detail.Details != nil && detail.Details.ReasonCode == "task_objective_required") {
 			// There is no valid candidate ancestry to project. Do not present
 			// missing/cyclic ancestors as an empty inherited-Blocker set.
 			p.Coverage = WorkspaceCoverage{Status: "unknown", ReturnedCount: workspaceCount(0), TotalCount: workspaceCount(len(affected)), Reason: "invalid_candidate_placement; fix the destination before reviewing operational impact"}

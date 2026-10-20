@@ -136,7 +136,7 @@ test("a batch plan retains its draft when a Task still needs an Objective", asyn
   });
 });
 
-test("replacement setters preserve exact versions and send explicit date, list and parent clears", async ({ page }) => {
+test("replacement setters preserve exact versions, allow Objective-top-level placement and require Task ownership", async ({ page }) => {
   await fixture(page, "set_work_item_not_before", {
     entity: { _kind: "work_item", id: "task", version: "9007199254740993", not_before: "2026-10-20T12:00:00Z" },
   });
@@ -148,9 +148,20 @@ test("replacement setters preserve exact versions and send explicit date, list a
   expect(await page.evaluate(async () => {
     try { await window.editor.get(); return "accepted"; } catch (error) { return error.message; }
   })).toContain("Preview this destination");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  const objectivePicker = page.getByRole("combobox", { name: "New placement", exact: true });
+  await objectivePicker.fill("Installation");
+  const objectiveOption = page.getByRole("option").first();
+  await expect(objectiveOption).toContainText("Installation works");
+  await objectiveOption.click();
   await page.getByRole("button", { name: "Preview move", exact: true }).click();
   await page.getByLabel("I reviewed the new placement and its blocking impacts", { exact: true }).check();
-  expect(await page.evaluate(() => window.editor.get())).toEqual({ scope, work_item_id: "task", expected_version: "3", expected_outcome_revision: "19", objective_id: null });
+  expect(await page.evaluate(() => window.editor.get())).toEqual({ scope, work_item_id: "task", expected_version: "3", expected_outcome_revision: "19", objective_id: "objective" });
+
+  await fixture(page, "set_objective_parent", { entity: { _kind: "objective", id: "child", version: "4" } });
+  await page.getByRole("button", { name: "Preview move", exact: true }).click();
+  await page.getByLabel("I reviewed the new placement and its blocking impacts", { exact: true }).check();
+  expect(await page.evaluate(() => window.editor.get())).toEqual({ scope, objective_id: "child", expected_version: "4", expected_outcome_revision: "19", parent_objective_id: null });
 });
 
 test("a documentary note contains authenticated-context inputs rather than a state transition", async ({ page }) => {

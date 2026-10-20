@@ -39,7 +39,8 @@ export function structuralMoveEditor({ scope, entity, kind = entity._kind,
   }
   const placement = placementField({ scope, request, parent: entity[key] ?? null,
     title: workspaceView?.placement?.parent?.title,
-    outcomeTitle, label: copy.text.formPreviousPlacement, onChange: invalidate });
+    outcomeTitle, label: copy.text.formPreviousPlacement, onChange: invalidate,
+    parentRequired: kind === "work_item" });
   const inspect = button(copy.text.formPreviewMove, review, "quiet");
   node.append(placement.node, inspect, status, preview, confirm.node,
     el("p", copy.text.formMovePreserves, "field-help"));

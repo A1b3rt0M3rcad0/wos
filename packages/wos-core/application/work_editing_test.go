@@ -124,9 +124,12 @@ func TestWorkObjectiveMovePreservesRecordsAndRejectsOwnHardDependency(t *testing
 	if err != nil || moved.Value.ID != work.ID || moved.Value.ObjectiveID == nil || *moved.Value.ObjectiveID != second.ID || len(moved.Value.Criteria.Items) != 1 || moved.Value.Criteria.Items[0].ID != criterion.Value.ID {
 		t.Fatal("move lost identity or criteria", err)
 	}
-	cleared, err := service.SetWorkItemObjective(ctx, commandContext(), a.SetWorkItemObjectiveCommand{Scope: work.Scope, WorkItemID: work.ID, ExpectedVersion: moved.Value.Version, ObjectiveID: nil})
-	if err != nil || cleared.Value.ObjectiveID != nil || cleared.Value.Criteria.Items[0].ID != criterion.Value.ID {
-		t.Fatal("clear did not preserve Task records", err)
+	eventsBeforeUnparent := len(store.SnapshotDomainEvents(work.Scope))
+	_, err = service.SetWorkItemObjective(ctx, commandContext(), a.SetWorkItemObjectiveCommand{Scope: work.Scope, WorkItemID: work.ID, ExpectedVersion: moved.Value.Version, ObjectiveID: nil})
+	requireEditingReason(t, err, d.ErrorCodePreconditionFailed, "task_objective_required")
+	unchanged, err := service.GetWorkItem(ctx, work.Scope, work.ID)
+	if err != nil || unchanged.Value.Version != moved.Value.Version || unchanged.Value.ObjectiveID == nil || *unchanged.Value.ObjectiveID != second.ID || len(unchanged.Value.Criteria.Items) != 1 || unchanged.Value.Criteria.Items[0].ID != criterion.Value.ID || len(store.SnapshotDomainEvents(work.Scope)) != eventsBeforeUnparent {
+		t.Fatal("rejected unparenting changed Task, criteria, version or history", err)
 	}
 	tx, err := store.Begin(ctx)
 	if err != nil {

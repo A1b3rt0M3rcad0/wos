@@ -203,7 +203,7 @@ func validateWorkDefinitionLifecycle(item domain.WorkItem) error {
 
 func validateWorkObjectiveChange(ctx context.Context, u ports.UnitOfWork, item domain.WorkItem, destination *domain.ID) error {
 	if destination == nil {
-		return nil
+		return definitionPrecondition(domain.ErrorCodePreconditionFailed, "task_objective_required", "a Task must belong to an Objective; choose an Objective instead of placing it directly under the Outcome", item.Ref(), []string{"objective_id"})
 	}
 	if err := destination.Validate(); err != nil {
 		return err
