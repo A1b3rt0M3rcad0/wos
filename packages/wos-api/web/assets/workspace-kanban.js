@@ -735,7 +735,7 @@ export function createContextualKanban({
         const control = button(signed ? 'Continue in authorized host'
           : blocked ? reviewNeeded ? 'Review acceptance criteria' : 'Inspect requirements'
             : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => {
-          if (continuation) act(null, null, selected);
+          if (continuation) act('inspect_execution_handoff', null, selected);
           else if (reviewNeeded) { saveScroll(); frames.push({...makeFrame(selected),mode:'criteria'}); render(); }
           else if (blocked) {
             const target = aside.querySelector('[data-workspace-facet="attention"], [data-workspace-facet="criteria"]');

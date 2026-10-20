@@ -164,6 +164,7 @@ const contextualKanban = createContextualKanban({
     await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
     if (action === 'read_entity_note') await openWorkspaceNote(capability.entry,state.detailGeneration,capability.options);
     else if (action === 'more_actions') openCommands();
+    else if (action === 'inspect_execution_handoff') await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration, {executionOnly:true});
     else if (action) {
       const fresh = state.workspaceView?.capabilities?.find(item => workspaceActionName(item.action_id) === workspaceActionName(action));
       if (!fresh) throw Error(copy.text.thisActionIsUnavailableInTheCurrentStatePermission);
@@ -3312,7 +3313,7 @@ async function correctWorkspaceNote(note) {
   state.correctionNote = note;
   openCommands("append_entity_note");
 }
-async function loadWorkspaceFullRecord(host, ref, detailGeneration) {
+async function loadWorkspaceFullRecord(host, ref, detailGeneration, {executionOnly = false} = {}) {
   try {
     const path = ref.kind === "outcome" ? outcomeBase() : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
     const result = await request(path);
@@ -3321,6 +3322,15 @@ async function loadWorkspaceFullRecord(host, ref, detailGeneration) {
       notice(copy.text.workspaceNewData, true); return;
     }
     const entity = result.value || result;
+    if (executionOnly) {
+      if (ref.kind === 'work_item' && entity.contracts_enabled) {
+        const section = el('section', undefined, 'workspace-execution-continuation');
+        host.append(section);
+        await contractSection(section, entity, detailGeneration);
+        if (detailGeneration === state.detailGeneration) { section.tabIndex = -1; section.focus(); }
+      }
+      return;
+    }
     if (state.workspaceView.subject.kind === "criterion") {
       const history = el("section", undefined, "workspace-criterion-history");
       renderCriterionHistory(history, { owner: entity, criterionId: state.workspaceView.subject.criterion_id,
@@ -3490,7 +3500,7 @@ function workspaceAction(action, capability) {
     const section = el("section", undefined, "workspace-handoff");
     section.append(el("h3", copy.text.workspaceSignedHandoff), el("p", copy.text.workspaceNoBrowserSigning));
     $("detail-content").append(section);
-    loadWorkspaceFullRecord(section, state.workspaceView.subject.ref, state.detailGeneration);
+    loadWorkspaceFullRecord(section, state.workspaceView.subject.ref, state.detailGeneration, {executionOnly:true});
     section.tabIndex = -1; section.focus(); return;
   }
   if (capability?.availability && capability.availability !== "available") {
@@ -3502,7 +3512,10 @@ function workspaceAction(action, capability) {
   }
   openCommands(name);
 }
-$("close-detail").onclick = () => closeDetail();
+$("close-detail").onclick = () => {
+  closeDetail();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
+};
 $("detail-dialog").addEventListener("cancel", (event) => {
   // Native Escape closes immediately; a pending typed-context read must not
   // reopen that dialog or restore its route after the person dismissed it.

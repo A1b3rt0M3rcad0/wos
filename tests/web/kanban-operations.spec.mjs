@@ -207,8 +207,13 @@ test('an already acquired contract has a direct readonly continuation without a 
  const writes=[];page.on('request',r=>{if(r.url().includes('/commands/'))writes.push(r.url());});
  await modal(page).getByRole('button',{name:'Continue in authorized host',exact:true}).click();
  await expect(modal(page).locator('.contract-section')).toContainText('Active reservation');
- await expect(modal(page).locator('.workspace-full-record')).toContainText(acquired.contract.id);
+ await expect(modal(page).locator('.contract-section')).toContainText(acquired.contract.id);
+ await expect(modal(page).locator('.workspace-full-record')).toHaveCount(0);
  await expect(page.locator('dialog[open]')).toHaveCount(1);expect(writes).toEqual([]);
  const actual=(await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/work-items/${task.id}`)).value;
  expect(actual.current_contract_id).toBe(acquired.contract.id);expect(actual.lifecycle).toBe('in_progress');expect(actual.current_lease).toBeUndefined();
+ await modal(page).locator('#close-detail').click();
+ await expect(modal(page).locator('.workspace-kanban-operation')).toHaveCount(0);
+ await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
+ await expect(page.locator('dialog[open]')).toHaveCount(1);
 });
