@@ -24,7 +24,7 @@ async function initialReading(page) {
 for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }, { width: 430, height: 932 }]) {
   test(`a nested Task initially exposes authored prose and retains reachable actions at ${viewport.width}px`, async ({ page, wos }) => {
     await page.setViewportSize(viewport);
-    const data = await seedCanvas(wos, { title: "Plan, deliver, and verify together" });
+    const data = await seedCanvas(wos, { title: "Plan, deliver, and verify together", planningTasks:true });
     const task = data.tasks.ready;
     await wos.command("update_work_item", { scope: data.scope, work_item_id: task.id,
       expected_version: task.version, title: task.title, description: authoredDescription, priority: task.priority });

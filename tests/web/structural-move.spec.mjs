@@ -13,7 +13,7 @@ test("a Task move previews real inherited blocking, rejects a stale revision and
     objectives.push(await wos.command("create_objective", { scope, title, priority: "normal", required_for_outcome: false }));
   const [previous, destination] = objectives;
   let task = await wos.command("create_work_item", { scope, title: "Review the installation transcript",
-    priority: "normal", lifecycle: "todo", objective_id: previous.id,
+    priority: "normal", lifecycle: "backlog", objective_id: previous.id,
     execution_spec: { instructions: ["Review the real installation transcript"], constraints: ["Do not claim missing verification"], deliverables: ["A recorded assessment"] },
     initial_criteria: [{ title: "The transcript records the actual commands", required: true, verification_mode: "attestation" }] });
   const owner = { ...scope, kind: "work_item", id: task.id };

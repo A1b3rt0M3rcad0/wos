@@ -82,13 +82,14 @@ async function select(page, record, title = record.title || record.name || "Evid
 for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844 }]) {
   test(`relationships communicate placement, evidence and real blocking at ${viewport.width} x ${viewport.height}`, async ({ page, wos }) => {
     await page.setViewportSize(viewport);
-    const data = await seedCanvas(wos);
+    const data = await seedCanvas(wos,{planningTasks:true});
     const criterion = await wos.command("add_criterion", {
       owner: data.ref("work_item", data.tasks.ready), expected_version: data.tasks.ready.version,
       title: "The requested result has been independently reviewed", required: true,
       verification_mode: "evidence_review",
     });
     data.tasks.ready.version++;
+    for(const [name, task] of Object.entries(data.tasks)) data.tasks[name]=await wos.command('activate_work_item',{scope:data.scope,work_item_id:task.id,expected_version:task.version});
     const mutations = [], errors = [];
     page.on("request", (request) => {
       if (request.method() === "POST" && request.url().includes("/commands/")) mutations.push(request.url());
@@ -249,8 +250,7 @@ test("a late bounded graph expansion preserves coherent relationship pages, keyb
     expect(originalCount).toBeGreaterThan(4);
     expect(originalCount).toBeLessThan(30);
     await expect(relationships).toContainText("Partial view of this information");
-    const audit = context(page).locator(".workspace-audit");
-    await audit.locator(":scope > summary").click();
+    const audit = context(page).locator(".workspace-management");
     await expect(audit).toHaveAttribute("open", "");
     const focused = relationships.getByRole("button", { name: "Inspect relationship", exact: true }).first();
     await focused.focus();

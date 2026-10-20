@@ -1,5 +1,11 @@
 # Workspace-mode UX and operational audit
 
+> Historical qualification/presentation. The owner's subsequent focused-modal
+> follow-up supersedes the presentation below. See [current decisions](simplification.md)
+> and [ADR-041](../../adr/0041-focused-kanban-modal-and-backlog-planning.md).
+> Receipts below retain their recorded source; they do not qualify the new implementation.
+
+
 Scope: PR #116, `fix/workspace-operational-density`, owner-approved
 [workspace-mode plan](owner-plan-workspace-mode.md). This hybrid audit uses the
 installed `laws-of-ux-auditor` and `product-design-and-ux` skills: task flows,

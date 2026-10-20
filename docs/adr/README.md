@@ -46,3 +46,5 @@ The original specification proposed numbers, not immutable file identities. Acce
 - [ADR-039 — Contextual Kanbans and opt-in strict completion](0039-contextual-kanbans-and-strict-completion.md)
 
 - [ADR-040 — Kanban workspace mode and prepared operations](0040-kanban-workspace-mode-and-prepared-operations.md)
+
+- [ADR-041 — Focused Kanban modal and Backlog-only Task planning](0041-focused-kanban-modal-and-backlog-planning.md)

@@ -14,6 +14,16 @@ This file records the real implementation state of WOS. It must be kept synchron
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
 
+## Focused modal Kanban follow-up — 2026-10-20
+
+**In progress; qualification pending.** The owner's seven simplification requests
+supersede the previous nonmodal presentation. [ADR-041](docs/adr/0041-focused-kanban-modal-and-backlog-planning.md)
+records native modal return, contextual controls, direct Overview navigation,
+criterion-scoped proof checklist and backend-enforced Backlog-only definition
+editing. Existing execution, evidence/assessment separation and acceptance gates
+remain intact. Earlier CI/captures below qualify their recorded historical sources,
+not this follow-up. No merge, release or version advancement is authorized.
+
 ## Contextual workspace Kanban follow-up — 2026-10-20
 
 **Implemented and locally qualified; final-head CI tracked separately.** The owner approved the

@@ -61,7 +61,7 @@ async function settle(page, held) {
 }
 
 test("a late form restoration preserves edge keyboard focus and exact authorized removal", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   const relation = await wos.command("add_dependency", {
     scope: data.scope, source_ref: data.ref("work_item", data.tasks.unscoped),
     target_ref: data.ref("work_item", data.tasks.ready), strength: "advisory",
@@ -103,7 +103,7 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
     expect(persisted.lifecycle).toBe("removed");
     expect(persisted.version).toBe(relation.version + 1);
     for (const task of [data.tasks.ready, data.tasks.unscoped])
-      expect((await wos.api(`${base(data.scope)}/work-items/${task.id}`)).value.lifecycle).toBe("todo");
+      expect((await wos.api(`${base(data.scope)}/work-items/${task.id}`)).value.lifecycle).toBe(task.lifecycle);
   } finally {
     held.release();
     if (held.started) await held.done;
@@ -111,7 +111,7 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
 });
 
 test("a late Task focal read cannot reopen a closed inspector or report an obsolete revision error", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   await openCanvas(page, wos, data);
   await select(page, data.tasks.ready);
   const delayedTask = data.tasks.unscoped;
@@ -142,7 +142,7 @@ test("a late Task focal read cannot reopen a closed inspector or report an obsol
 });
 
 test("a late comparison for Task A cannot replace Task B's draft or introduce an old-target save", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   await openCanvas(page, wos, data);
   const first = data.tasks.ready, second = data.tasks.unscoped;
   await select(page, first);

@@ -51,7 +51,7 @@ async function measured(page) {
       },
       elements: Object.fromEntries([
         "html", ".topbar", ".brand-logo", ".sidebar", "#title", "#area-title",
-        ".summary-purpose", "#outcome-views > summary", ".canvas-toolbar",
+        ".summary-purpose", '#area-tabs [data-area=overview]', ".canvas-toolbar",
         ".canvas-toolbar input", ".canvas-viewport", ".canvas-list",
         "#canvas-details", "#detail-title", ".detail-description",
         "#detail-content", "#detail-actions", "#entity-actions",

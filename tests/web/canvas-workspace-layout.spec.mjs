@@ -130,7 +130,7 @@ async function verifyCaptureAssets(page, wos) {
 }
 async function controls(page) {
   await fullyVisible(page.locator('#area-tabs [data-area="canvas"]'));
-  await fullyVisible(page.locator("#outcome-views > summary"));
+  await fullyVisible(page.locator('#area-tabs [data-area=overview]'));
   await fullyVisible(canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }));
   for (const name of ["Zoom in", "Zoom out", "Center view", "Fit view"]) {
     const button = canvas(page).getByRole("button", { name, exact: true });
@@ -369,10 +369,10 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await openViews(page);
   for (const key of ["overview", "plan", "work", "issues", "evidence", "activity"])
     await fullyVisible(page.locator(`#area-tabs [data-area="${key}"]`));
-  await capture(page, "canvas-views", { state: "expanded specialist Views navigation" });
+  await capture(page, "canvas-views", { state: "specialist navigation from direct Overview" });
   await page.keyboard.press("Escape");
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
   for (const area of ["overview", "plan", "work", "issues", "evidence", "activity"]) {
     await chooseArea(page, area);
     await expect(page.locator(".sidebar")).toBeVisible();
@@ -411,8 +411,10 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await workspaceBounds(page);
   await chooseArea(page, "work");
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toHaveAttribute("aria-current","page");
   await page.goBack();
   await expect(viewport(page)).toBeVisible();
   await workspaceBounds(page);
@@ -431,7 +433,7 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
 for (const [width, height] of [[320, 740], [390, 844]]) {
   test(`Compact Outcome Board keeps its own list and inspector scroll at ${width} x ${height}`, async ({ page, wos }) => {
     await page.setViewportSize({ width, height });
-    const data = await seedCanvas(wos, { extraTasks: 35 });
+    const data = await seedCanvas(wos, { extraTasks: 35, planningTasks:true });
     await openCanvas(page, wos, data);
     await expect(canvas(page).getByRole("button", { name: "List view", exact: true })).toHaveAttribute("aria-pressed", "true");
     const list = canvas(page).locator(".canvas-list");

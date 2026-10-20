@@ -70,7 +70,7 @@ async function shot(page, name, { preserveScroll = false } = {}) {
 }
 
 test("Outcome Board is the default operational view without a Roadmap and keeps contextual deep links", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos,{planningTasks:true});
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -226,7 +226,7 @@ test("large Outcomes declare partial data, load incrementally and find authorize
 });
 
 test("authorized dependency editing persists advisory links, refuses cycles and explicitly removes the selected relation", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos,{planningTasks:true});
   await openCanvas(page, wos, data);
   await choose(page, "work_item", data.tasks.unscoped);
   await clickRecordAction(page, "Add dependency");
@@ -236,7 +236,9 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   await finishInline(page);
   const relation = (await wos.api(`${endpoint(data.scope)}/relations`)).items.find((item) => item.source_ref.id === data.tasks.unscoped.id && item.target_ref.id === data.tasks.ready.id);
   expect(relation.strength).toBe("advisory");
+  const activated=await wos.command('activate_work_item',{scope:data.scope,work_item_id:data.tasks.unscoped.id,expected_version:data.tasks.unscoped.version});
   expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}/operational-state`)).state.display_state).toBe("ready");
+  data.tasks.unscoped=await wos.command('defer_work_item',{scope:data.scope,work_item_id:activated.id,expected_version:activated.version});
   await choose(page, "work_item", data.tasks.ready);
   await clickRecordAction(page, "Add dependency");
   await pick(page, "Depends on", data.tasks.unscoped.title);
@@ -256,7 +258,7 @@ test("authorized dependency editing persists advisory links, refuses cycles and 
   expect(persisted).toBeTruthy();
   expect(persisted.lifecycle).toBe("removed");
   expect(persisted.version).toBe(relation.version + 1);
-  expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}`)).value.lifecycle).toBe("todo");
+  expect((await wos.api(`${endpoint(data.scope)}/work-items/${data.tasks.unscoped.id}`)).value.lifecycle).toBe(data.tasks.unscoped.lifecycle);
 });
 
 test("read-only Outcome Board has usable keyboard and mobile views while zoom and layout never mutate state", async ({ page, wos }) => {
@@ -351,7 +353,7 @@ test("read-only Outcome Board has usable keyboard and mobile views while zoom an
 });
 
 test("inline conflicts preserve local edits and uncertain retries keep their exact bytes and key", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos,{planningTasks:true});
   await openCanvas(page, wos, data);
   await choose(page, "work_item", data.tasks.ready);
   await clickRecordAction(page, "Edit task");

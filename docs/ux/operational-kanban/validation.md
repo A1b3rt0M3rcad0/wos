@@ -1,5 +1,11 @@
 # Contextual workspace Kanban qualification
 
+> Historical qualification/presentation. The owner's subsequent focused-modal
+> follow-up supersedes the presentation below. See [current decisions](simplification.md)
+> and [ADR-041](../../adr/0041-focused-kanban-modal-and-backlog-planning.md).
+> Receipts below retain their recorded source; they do not qualify the new implementation.
+
+
 This is the owner-approved workspace-mode follow-up in draft PR #116.
 [Current audit](workspace-mode-audit.md), [behavior contract](workspace-mode-contract.md)
 and [A01–A30 acceptance matrix](workspace-mode-acceptance.json) describe its scope.

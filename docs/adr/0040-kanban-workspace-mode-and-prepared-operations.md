@@ -1,5 +1,10 @@
 # ADR-040: Contextual workspace Kanbans and prepared operations
 
+Presentation and Task definition editing are superseded by
+[ADR-041](0041-focused-kanban-modal-and-backlog-planning.md), following the owner's
+explicit subsequent request. Other domain/acceptance decisions remain in force.
+
+
 Status: accepted for implementation by the owner's follow-up plan in draft PR #116.
 
 ## Decision

@@ -22,12 +22,12 @@ async function move(page,title,lane){
  await expect(operation(page)).toBeVisible();
 }
 for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,height:844}]){
- test(`Kanban is a workspace with persistent lanes and one actual operation modal at ${size.width}`,async({page,wos})=>{
+ test(`Kanban is a modal with persistent lanes and one active dialog at ${size.width}`,async({page,wos})=>{
   await page.setViewportSize(size);const {outcome,objective,task}=await setup(wos);
   await open(page,wos,outcome,objective.title);
   const camera=await page.locator('.canvas-world').getAttribute('style');
-  await expect(board(page)).not.toHaveJSProperty('tagName','DIALOG');
-  await expect(page.locator('dialog[open]')).toHaveCount(0);
+  await expect(board(page)).toHaveJSProperty('tagName','DIALOG');
+  await expect(page.locator('dialog[open]')).toHaveCount(1);
   await expect(board(page).locator('[data-column]')).toHaveCount(5);
   for(const id of ['actions','outcome-tools','canvas-context']) await expect(page.locator(`#${id}`)).not.toBeVisible();
   await expect(board(page).locator('[data-column=backlog]')).toContainText(task.title);
@@ -37,8 +37,8 @@ for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,h
   expect(await mountedLane.evaluate(node=>node.isConnected),'Inspection retains the same mounted lane node').toBe(true);
   await expect(board(page).locator('.workspace-kanban-columns')).toBeVisible();
   await expect(board(page).getByRole('complementary',{name:'Item inspector'})).toBeVisible();
-  await expect(page.locator('dialog[open]')).toHaveCount(0);
-  if(size.width>1600){
+  await expect(page.locator('dialog[open]')).toHaveCount(1);
+  if(size.width>1900){
    const a=await board(page).locator('.workspace-kanban-inspection').boundingBox();const b=await board(page).locator('.workspace-kanban-columns').boundingBox();expect(a.x).toBeGreaterThanOrEqual(b.x+b.width-1);
   }
   await page.keyboard.press('Escape');await expect(board(page).locator('.workspace-kanban-inspection')).toHaveCount(0);
@@ -52,7 +52,7 @@ for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,h
   await operation(page).locator('#submit-command').click();expect((await response).ok()).toBe(true);
   await expect(operation(page)).not.toBeVisible();
   await expect(board(page).locator('[data-column=todo]')).toContainText(task.title);
-  await page.keyboard.press('Escape');await board(page).getByRole('button',{name:'Back to Canvas',exact:true}).click();
+  await board(page).getByRole('button',{name:'Back to Canvas',exact:true}).click();
   await expect(board(page)).not.toBeVisible();
   await expect(page.locator('#actions')).toBeVisible();
   await expect(page.locator('.canvas-world')).toHaveAttribute('style',camera);
@@ -134,9 +134,10 @@ test('a contract v1 submission does not invent a signed review fact or a Verific
  const {outcome,objective,scope}=await setup(wos);
  await wos.command('set_namespace_work_protocol',{scope,expected_protocol_version:1,phase:'draining',reason:'Drain the legacy acquisition protocol.'});
  await wos.command('set_namespace_work_protocol',{scope,expected_protocol_version:2,phase:'contracts_v1',writers_drained:true,reason:'Use the existing contract host.'});
- const task=await wos.command('create_work_item',{scope,title:'An actual delivery awaiting review',priority:'normal',lifecycle:'todo',objective_id:objective.id,execution_spec:{instructions:['Produce a reviewable delivery']}});
+ const task=await wos.command('create_work_item',{scope,title:'An actual delivery awaiting review',priority:'normal',lifecycle:'backlog',objective_id:objective.id,execution_spec:{instructions:['Produce a reviewable delivery']}});
  const criterion=await wos.command('add_criterion',{owner:{...scope,kind:'work_item',id:task.id},expected_version:task.version,title:'An inspected current criterion',required:true,verification_mode:'attestation'});
- const acquired=await wos.command('acquire_work_contract',{scope,work_item_id:task.id,expected_work_item_version:task.version+1,ttl_seconds:900}),contract=acquired.contract;
+ await wos.command('activate_work_item',{scope,work_item_id:task.id,expected_version:task.version+1});
+ const acquired=await wos.command('acquire_work_contract',{scope,work_item_id:task.id,expected_work_item_version:task.version+2,ttl_seconds:900}),contract=acquired.contract;
  await wos.command('submit_work_result',{scope,contract_id:contract.id,expected_contract_version:contract.version,authority:{execution_id:contract.execution_id,fencing_token:contract.fencing_token,spec_digest:contract.spec_digest},material:{contract_id:contract.id,work_item_id:task.id,spec_digest:contract.spec_digest,summary:'A delivery for independent review',artifacts:[],evidence_ids:[],criterion_evidence:[]}});
  await open(page,wos,outcome,objective.title);
  await expect(board(page).locator('[data-column=verification]')).not.toContainText(task.title);

@@ -13,8 +13,7 @@ import { randomUUID, randomBytes } from "node:crypto";
 async function fullContractRecord(page) {
   const detail = page.locator("#detail-dialog");
   await expandWorkspaceDetails(detail, {history:false});
-  await detail.locator(".workspace-audit > summary").click();
-  await detail.locator('.workspace-audit [data-action-id="read_full_record"]').click();
+  await detail.getByRole("button",{name:"Execution details",exact:true}).click();
   await expect(detail.locator(".contract-section")).toBeVisible();
 }
 
@@ -110,7 +109,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       scope,
       title: "Implementar fluxo contratual",
       priority: "normal",
-      lifecycle: "todo",
+      lifecycle: "backlog",
       execution_spec: {
         instructions: ["Executar somente a tarefa contratada"],
       },
@@ -123,10 +122,11 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       required: true,
       verification_mode: "attestation",
     });
+    await command("activate_work_item",{scope,work_item_id:work.id,expected_version:work.version+1});
     const acquired = await command("acquire_work_contract", {
       scope,
       work_item_id: work.id,
-      expected_work_item_version: work.version + 1,
+      expected_work_item_version: work.version + 2,
       ttl_seconds: 900,
     });
     let contract = acquired.contract;

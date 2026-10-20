@@ -60,7 +60,7 @@ test("workspace mutations remain unavailable until the real authenticated identi
 });
 
 test("native Escape invalidates a genuine pending criterion read instead of reopening its closed dialog", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   const criterion = await wos.command("add_criterion", {
     owner: data.ref("work_item", data.tasks.ready), expected_version: data.tasks.ready.version,
     title: "The recorded delivery satisfies the agreed condition", required: true, verification_mode: "evidence_review",

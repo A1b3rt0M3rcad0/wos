@@ -1692,3 +1692,15 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     z-index: 30;
   }
 }
+
+/* Specialist views follow the direct Overview control, without a dropdown. */
+#outcome #outcome-views { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 0; border: 0; box-shadow: none; background: transparent; max-height: none; min-width: 0; }
+#outcome #outcome-views[hidden] { display: none; }
+#outcome #outcome-views button { width: auto; }
+
+#outcome .outcome-heading #area-tabs { flex-wrap: wrap; min-width: 0; max-width: 100%; flex-shrink: 1; }
+#outcome #outcome-views { min-width: 0; max-width: 100%; }
+@media (max-width: 900px) {
+  #outcome #outcome-views { flex-basis: 100%; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+  #outcome #outcome-views button { flex: 0 0 auto; }
+}

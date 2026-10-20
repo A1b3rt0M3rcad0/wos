@@ -184,8 +184,6 @@ export function compactWorkspace(
   const criteria = management.querySelector(
     '[data-workspace-facet="criteria"]',
   );
-  if (criteria && onVerify)
-    criteria.append(button("Verify criteria", () => onVerify(view), "quiet"));
   if (["outcome", "objective", "work_item"].includes(ref.kind)) {
     const materials = el(
       "section",
@@ -230,15 +228,7 @@ export function compactWorkspace(
     );
     management.prepend(materials);
   }
-  if (
-    onMaterial &&
-    (view.capabilities || []).some((cap) =>
-      ["RegisterArtifactInContext", "RegisterEvidenceWithLinks"].includes(
-        cap.action_id,
-      ),
-    )
-  )
-    management.prepend(button("Add material", () => onMaterial(view), "quiet"));
+  management.querySelectorAll(".workspace-audit").forEach(node => node.remove());
   host.replaceChildren(intro, management, history);
   host.classList.add("workspace-compact");
 }

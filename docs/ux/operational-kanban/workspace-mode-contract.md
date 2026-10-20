@@ -1,5 +1,11 @@
 # Contextual workspace Kanban contract
 
+> Historical qualification/presentation. The owner's subsequent focused-modal
+> follow-up supersedes the presentation below. See [current decisions](simplification.md)
+> and [ADR-041](../../adr/0041-focused-kanban-modal-and-backlog-planning.md).
+> Receipts below retain their recorded source; they do not qualify the new implementation.
+
+
 Source plan: [owner-approved original](owner-plan-workspace-mode.md), based on
 `75a56fe`. [ADR-040](../../adr/0040-kanban-workspace-mode-and-prepared-operations.md)
 supersedes only the earlier modal/full-page presentation. Qualification is separate.

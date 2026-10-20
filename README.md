@@ -42,9 +42,9 @@ Suppose your team needs to **ship partial refunds**. Define a success criterion:
   <a href="docs/ux/contextual-kanban/screenshots/356c5e650027/inspector-1280x720.png"><img src="docs/ux/contextual-kanban/screenshots/356c5e650027/inspector-1280x720.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
-The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Outcomes open an Objectives Kanban, and Objectives open a Tasks Kanban, within the same Board. Details and activity stay expandable. [Contextual planning and review](docs/ux/operational-kanban/README.md). Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
+The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Outcomes open an Objectives Kanban, and Objectives open a Tasks Kanban, as a contextual modal over the Board. Details and activity stay expandable. [Contextual planning and review](docs/ux/operational-kanban/README.md). Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
 
-Start with a name and add detail when it is useful. New Tasks in the quick editor stay in **backlog** until you explicitly make them available; creating one does not reserve execution. Objectives are visibly required for the Outcome by default in this editor, including nested Objectives.
+Start with a name and add detail when it is useful. New Tasks in the quick editor stay in **backlog** until you explicitly make them available; creating one does not reserve execution. Prepare instructions, criteria and dependencies before activation: the Task definition is locked outside Backlog. Objectives are visibly required for the Outcome by default in this editor, including nested Objectives.
 
 The same inspector explains an item's place in the plan, instructions, people, success conditions, Evidence and recent activity across the Board and specialist views. Contextual updates preserve their authenticated author and history; they do not complete a Task or approve a criterion. [Plan, inspect and review work](docs/ux/operational-workspace/README.md).
 
@@ -55,7 +55,7 @@ Drag cards in any direction to arrange the Board locally; scroll or drag its bac
 Fonts, controls and panels keep stable operational sizes on larger monitors;
 the extra space belongs to the work. [Desktop and mobile screenshots](docs/design/editorial/operational-workspace/README.md).
 
-Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Workspace interaction guide](docs/ux/operational-workspace/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
+Its sidebar-free view gives the map the available width; **Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Workspace interaction guide](docs/ux/operational-workspace/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
 | Step | What you do | What stays recorded |
 | --- | --- | --- |
@@ -163,7 +163,7 @@ docker compose up --build -d
 > [!WARNING]
 > The example contains a public development credential. Keep it on localhost. Before sharing a deployment, configure private credentials, permissions and HTTPS using the [shared-service guide](docs/operations.md#shared-service). Do not print credentials in logs.
 
-Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Views → Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
+Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
 
 <a id="requirements-and-platforms"></a>
 <details>

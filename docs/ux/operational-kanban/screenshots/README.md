@@ -1,5 +1,11 @@
 # Operational Kanban — real-browser captures
 
+> Historical qualification/presentation. The owner's subsequent focused-modal
+> follow-up supersedes the presentation below. See [current decisions](../simplification.md)
+> and [ADR-041](../../../adr/0041-focused-kanban-modal-and-backlog-planning.md).
+> Receipts below retain their recorded source; they do not qualify the new implementation.
+
+
 These viewport captures show actual public commands and persisted state in an
 isolated test installation. Original typography, warm paper, branding and robot
 assets are retained. They are not design mockups or fabricated state transitions.

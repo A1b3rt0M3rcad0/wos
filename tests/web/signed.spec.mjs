@@ -25,8 +25,7 @@ import {
 
 async function fullSignedRecord(detail) {
   await expandWorkspaceDetails(detail, {history:false});
-  await detail.locator(".workspace-audit > summary").click();
-  await detail.locator('.workspace-audit [data-action-id="read_full_record"]').click();
+  await detail.getByRole("button",{name:"Execution details",exact:true}).click();
   await expect(detail.locator(".signed-contract-section")).toBeVisible();
 }
 
@@ -671,12 +670,12 @@ for (const decision of ["approved", "changes_requested"])
       await page.getByRole("option").filter({hasText:outcome.title}).first().click();
       await page.locator("#canvas-details").getByRole("button",{name:"Open Objectives Kanban",exact:true}).click();
       const kanban = page.locator("#workspace-kanban");
-      await kanban.getByRole("button",{name:"Direct Tasks",exact:true}).click();
+      await kanban.getByRole('combobox',{name:'Kanban context',exact:true}).selectOption('tasks');
       await expect(kanban.locator("[data-column=verification]")).toContainText(work.title);
       await expect(kanban.locator("[data-column=accepted]")).not.toContainText(work.title);
       await kanban.locator(".workspace-kanban-card").filter({hasText:work.title}).click();
       await expect(kanban.locator(".workspace-kanban-columns")).toBeVisible();
-      await expect(page.locator("dialog[open]")).toHaveCount(0);
+      await expect(page.locator("dialog[open]")).toHaveCount(1);
       assert.equal(mutations.length,beforeKanbanWrites,"Inspection does not acquire review authority or sign a delivery");
       await kanban.getByRole("button",{name:"Back to Canvas",exact:true}).click();
       await expect(kanban).not.toBeVisible();

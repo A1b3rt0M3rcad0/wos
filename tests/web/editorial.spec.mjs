@@ -181,7 +181,7 @@ test("operational density stays bounded across desktop, tablet and phone viewpor
   await wos.login(page);
   await openOutcome(page, "Ship a calmer workspace");
   const operationalTargets = [
-    ".topbar", ".brand-logo", ".sidebar", "#title", "#outcome-views > summary",
+    ".topbar", ".brand-logo", ".sidebar", "#title", '#area-tabs [data-area=overview]',
     "#area-title", ".metric-label", ".summary-purpose", ".summary-quick button",
   ];
   const desktopReference = await dimensions(page, operationalTargets);
@@ -290,7 +290,6 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
       .evaluate((element) => getComputedStyle(element).color),
   );
   await capture(page, "22-area-tab-hover");
-  await page.locator("#outcome-views > summary").click();
   const board = page.locator('#view-tabs button[data-view="board"]');
   await board.hover();
   await capture(page, "23-view-switch-hover");

@@ -213,14 +213,12 @@ for (const [width, height] of [
     ).toBeGreaterThanOrEqual(4.5);
     await capture(page, `objectives-${width}x${height}`);
     await modal
-      .getByRole("button", { name: "Direct Tasks", exact: true })
-      .click();
+      .getByRole("combobox", { name: "Kanban context", exact: true }).selectOption("tasks");
     await expect(
       modal.getByRole("button", { name: /Write release notes/ }),
     ).toBeVisible();
     await modal
-      .getByRole("button", { name: "Objectives", exact: true })
-      .click();
+      .getByRole("combobox", { name: "Kanban context", exact: true }).selectOption("objectives");
     await modal.getByRole("button", { name: /Verified payment API/ }).click();
     await expect(modal.locator(".workspace-kanban-inspection")).toBeVisible();
     await modal
@@ -265,8 +263,7 @@ for (const [width, height] of [
     expect(geometry.x + geometry.width).toBeLessThanOrEqual(width + 1);
     expect(geometry.y + geometry.height).toBeLessThanOrEqual(height + 1);
     await modal
-      .getByRole("button", { name: "Subobjectives", exact: true })
-      .click();
+      .getByRole("combobox", { name: "Kanban context", exact: true }).selectOption("objectives");
     await expect(
       modal.getByRole("button", { name: /Refund support/ }),
     ).toBeVisible();
@@ -291,7 +288,7 @@ test("criteria verification is separate from acceptance and cancelled work remai
   page,
   wos,
 }) => {
-  const { outcome, scope, task } = await setup(wos);
+  const { outcome, scope, task, objective } = await setup(wos);
   await wos.command("add_criterion", {
     owner: { ...scope, kind: "work_item", id: task.id },
     expected_version: task.version,
@@ -305,9 +302,10 @@ test("criteria verification is separate from acceptance and cancelled work remai
   await panel(page)
     .getByText("Details and management", { exact: true })
     .click();
-  await panel(page)
-    .getByRole("button", { name: "Verify criteria", exact: true })
-    .click();
+  await select(page, typeof data === 'undefined' ? objective.title : data.objective.title);
+  await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
+  await page.locator('#workspace-kanban .workspace-kanban-card').filter({hasText:typeof data === 'undefined' ? task.title : data.task.title}).click();
+  await page.locator('#workspace-kanban [data-operational-group=criteria] > summary').click();
   const modal = page.locator("#workspace-kanban");
   await expect(
     modal.locator("[data-operational-group=criteria] > summary"),
@@ -338,7 +336,7 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
     .click();
   const modal = page.locator("#workspace-kanban");
   await modal.getByRole("button", { name: "Add Task", exact: true }).click();
-  await expect(modal).toBeVisible();
+  await expect(modal).not.toBeVisible();
   await expect(page.locator("#workspace-kanban-operation #command-form")).toBeVisible();
   await expect(page.locator("#fields")).toContainText(data.objective.title);
   await page
@@ -363,7 +361,7 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
       .locator(".workspace-kanban-card")
       .filter({ hasText: "Exercise the real refund API" }),
   ).toBeVisible();
-  await expect(modal.locator(".workspace-kanban-breadcrumb")).toContainText(
+  await expect(modal.locator(".workspace-kanban-context")).toContainText(
     data.objective.title,
   );
 });
@@ -397,18 +395,16 @@ test("activity history is loaded on demand and material choices retain their mea
   await panel(page)
     .getByText("Details and management", { exact: true })
     .click();
-  await panel(page)
-    .getByRole("button", { name: "Add material", exact: true })
-    .click();
-  const modal = page.locator("#workspace-kanban");
-  const material = page.locator("#workspace-kanban-operation");
-  await expect(material).toContainText("does not approve a criterion");
-  await expect(material).toContainText("File upload is not available");
-  await capture(page, "add-material");
-  await material
-    .locator(".workspace-remedy-actions")
-    .getByRole("button", { name: "Add artifact here", exact: true })
-    .click();
+  await wos.command('add_criterion',{owner:{...data.scope,kind:'work_item',id:data.task.id},expected_version:data.task.version,title:'Delivery reviewed',required:true,verification_mode:'attestation'});
+  await select(page,data.objective.title);
+  await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
+  const modal=page.locator('#workspace-kanban');
+  const shell=modal.locator('.workspace-kanban-card-shell').filter({hasText:data.task.title});
+  await shell.locator('summary').click();await shell.getByRole('button',{name:'Move to Verification',exact:true}).click();
+  const material=page.locator('#workspace-kanban-operation');
+  await expect(material).toContainText('Evidence alone does not mark a criterion as met.');
+  await capture(page,'criterion-proof');
+  await material.getByRole('button',{name:'Add artifact',exact:true}).click();
   await expect(page.locator("#command-form")).toBeVisible();
   await page
     .getByLabel("Artifact name", { exact: true })
@@ -425,8 +421,8 @@ test("activity history is loaded on demand and material choices retain their mea
   await page.locator("#submit-command").click();
   expect((await response).ok()).toBe(true);
   await expect(page.locator("#command-form")).not.toBeVisible();
-  await expect(modal).toBeVisible();
-  await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
+  await expect(material.getByRole("heading",{name:"Review proof",exact:true})).toBeVisible();
+  await material.getByRole("button",{name:"Back to item",exact:true}).click();
   await expect(modal.locator(".workspace-kanban-columns")).toBeVisible();
 });
 
@@ -519,9 +515,10 @@ test("an authorized waiver is an explicit exception and never completes the Task
   await panel(page)
     .getByText("Details and management", { exact: true })
     .click();
-  await panel(page)
-    .getByRole("button", { name: "Verify criteria", exact: true })
-    .click();
+  await select(page, typeof data === 'undefined' ? objective.title : data.objective.title);
+  await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
+  await page.locator('#workspace-kanban .workspace-kanban-card').filter({hasText:typeof data === 'undefined' ? task.title : data.task.title}).click();
+  await page.locator('#workspace-kanban [data-operational-group=criteria] > summary').click();
   const modal = page.locator("#workspace-kanban");
   await modal
     .getByRole("button", { name: "The exception requires an explicit decision", exact: true })
@@ -662,37 +659,11 @@ test("specialist inspection retains one native dialog without Board-only modal l
   ).toHaveCount(0);
 });
 
-test("All item actions reuse the canonical surface within the same Kanban", async ({
-  page,
-  wos,
-}) => {
-  const data = await setup(wos);
-  await wos.login(page);
-  await openOutcome(page, data.outcome.title, { area: null });
-  await select(page, data.objective.title);
-  await panel(page)
-    .getByRole("button", { name: "Open Tasks Kanban", exact: true })
-    .click();
-  const modal = page.locator("#workspace-kanban");
-  await modal
-    .locator(".workspace-kanban-card")
-    .filter({ hasText: data.task.title })
-    .click();
-  await modal.locator(".workspace-operation-groups > summary").click();
-  await modal
-    .locator(".workspace-kanban-inspection")
-    .getByRole("button", { name: "All item actions", exact: true })
-    .click();
-  await expect(modal).toBeVisible();
-  await expect(panel(page)).toHaveAttribute("data-surface", "actions");
-  await expect(page.locator("dialog[open]")).toHaveCount(1);
-  await panel(page)
-    .getByRole("button", { name: "Close actions", exact: true })
-    .click();
-  await expect(panel(page)).toHaveAttribute("data-surface", "detail");
-  await expect(modal).toBeVisible();
-  await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
-  await expect(modal.locator(".workspace-kanban-breadcrumb")).toContainText(
-    data.objective.title,
-  );
+test("focused inspectors omit the action directory and technical audit", async ({page,wos}) => {
+ const data=await setup(wos);await wos.login(page);await openOutcome(page,data.outcome.title,{area:null});await select(page,data.objective.title);
+ await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
+ const modal=page.locator('#workspace-kanban');await modal.locator('.workspace-kanban-card').filter({hasText:data.task.title}).click();
+ await expect(modal.locator('.workspace-operation-groups,.workspace-audit')).toHaveCount(0);
+ await expect(modal.locator('.workspace-next-operation [data-action-id=activate_work_item]')).toBeVisible();
+ await expect(modal.locator('.workspace-kanban-context')).toHaveText(data.objective.title);
 });

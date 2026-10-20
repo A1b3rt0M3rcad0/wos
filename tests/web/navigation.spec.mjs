@@ -7,7 +7,7 @@ test("Outcome Board and six specialist areas retain the persisted Draft checklis
   await wos.login(page);
   await openOutcome(page);
   await expect(page.locator("#area-tabs button")).toHaveCount(7);
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
   await openViews(page);
   for (const name of ["Outcome Board", "Overview", "Plan", "Work", "Issues", "Evidence", "Activity"])
     await expect(page.locator("#area-tabs").getByRole("button", { name, exact: true })).toBeVisible();
@@ -18,8 +18,8 @@ test("Outcome Board and six specialist areas retain the persisted Draft checklis
     page.getByRole("button", { name: "Activate outcome", exact: true }),
   ).toBeVisible();
   await chooseArea(page, "Work");
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
   await expect(page.locator("#view-tabs button")).toHaveCount(2);
   expect(

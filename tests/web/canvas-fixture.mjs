@@ -1,6 +1,6 @@
 // Every canvas record is created through the public command API in a fresh
 // test server. Visual position never creates a dependency or changes lifecycle.
-export async function seedCanvas(wos, { title = "Ship a connected workspace", extraTasks = 0 } = {}) {
+export async function seedCanvas(wos, { title = "Ship a connected workspace", extraTasks = 0, planningTasks = false } = {}) {
   if (!Number.isInteger(extraTasks) || extraTasks < 0 || extraTasks > 300)
     throw Error("Canvas acceptance fixtures are bounded to 300 additional Tasks");
   const { scope, value: outcome } = await wos.outcome(title);
@@ -29,7 +29,7 @@ export async function seedCanvas(wos, { title = "Ship a connected workspace", ex
     ["unscoped", "Record the shared decision", null],
   ]) tasks[key] = await wos.command("create_work_item", {
     scope, title: taskTitle, priority: key === "ready" ? "high" : "normal",
-    lifecycle: "todo", ...(objectiveId ? { objective_id: objectiveId } : {}),
+    lifecycle: "backlog", ...(objectiveId ? { objective_id: objectiveId } : {}),
     description: "A bounded, independently verifiable step.",
     execution_spec: {
       instructions: ["Perform only the scoped task", "Record the actual result"],
@@ -46,6 +46,9 @@ export async function seedCanvas(wos, { title = "Ship a connected workspace", ex
     scope, source_ref: ref("work_item", tasks.advisory),
     target_ref: ref("work_item", tasks.ready), strength: "advisory",
     reason: "Editorial checking benefits from the delivery but may start earlier",
+  });
+  if (!planningTasks) for (const [name, task] of Object.entries(tasks)) tasks[name] = await wos.command('activate_work_item', {
+    scope, work_item_id: task.id, expected_version: task.version,
   });
   const issue = await wos.command("create_issue", {
     scope, title: "Access to the review environment is missing", severity: "major",

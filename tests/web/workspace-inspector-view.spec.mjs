@@ -15,7 +15,7 @@ async function selectBoardRecord(page, title, heading = title) {
 }
 
 async function setup(wos) {
-  const data = await seedCanvas(wos, { title: "Understand the recorded work" });
+  const data = await seedCanvas(wos, { title: "Understand the recorded work", planningTasks:true });
   const task = data.tasks.ready;
   const owner = ref(data.scope, "work_item", task.id);
   const criterion = await wos.command("add_criterion", {
@@ -39,6 +39,10 @@ async function setup(wos) {
     scope: data.scope, subject_ref: owner,
     decision: { title: "Use the existing installation route", proposal: "Keep the reviewed compose entry point", rationale: "Preserve documented startup behavior" },
   });
+  for (const [name,task] of Object.entries(data.tasks)) {
+    const current=(await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${task.id}`)).value;
+    data.tasks[name]=await wos.command('activate_work_item',{scope:data.scope,work_item_id:task.id,expected_version:current.version});
+  }
   return { ...data, criterion, artifact: artifact.artifact, decision: decision.decision };
 }
 

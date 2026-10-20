@@ -159,6 +159,7 @@ const contextualKanban = createContextualKanban({
     if (subject.criterion_id) q.set('criterion_id',subject.criterion_id);
     return request(`${outcomeBase()}/workspace-timeline?${q}`);
   },
+  readWork: ref => request(`${outcomeBase()}/work-items/${ref.id}`),
   query: (subject, options) => workspaceQuery(subject,options),
   onError: report,
   onReturn: async (view, trigger) => {
@@ -1474,42 +1475,20 @@ function renderTabs() {
   const navigation = $("area-tabs");
   const hadNavigationFocus = navigation.contains(document.activeElement);
   navigation.replaceChildren();
-  const views = el("details", undefined, "outcome-views");
+  const views = el("nav", undefined, "outcome-view-options");
   views.id = "outcome-views";
-  views.name = "outcome-header";
-  const viewLabel = el("summary", copy.text.workspaceViews);
-  if (state.area !== "canvas") {
-    viewLabel.append(
-      el("span", ` · ${areas[state.area].label}`, "outcome-current-view"),
-    );
-  }
-  const viewOptions = el("div", undefined, "outcome-view-options");
-  views.append(viewLabel, viewOptions);
+  views.setAttribute('aria-label', 'Specialist views');
+  views.hidden = state.area === 'canvas';
   for (const [area, definition] of Object.entries(areas)) {
-    const b = actionButton(
-      definition.label,
-      () => {
-        navigateArea(area);
-        if (area !== "canvas") {
-          const currentViews = $("outcome-views");
-          currentViews.open = false;
-          currentViews.querySelector("summary").focus({ preventScroll: true });
-        }
-      },
-      "quiet",
-    );
+    const b = actionButton(definition.label, () => navigateArea(area), "quiet");
     b.dataset.area = area;
     b.setAttribute("aria-pressed", String(state.area === area));
     b.classList.toggle("selected", state.area === area);
     if (state.area === area) b.setAttribute("aria-current", "page");
-    (area === "canvas" ? navigation : viewOptions).append(b);
+    (['canvas','overview'].includes(area) ? navigation : views).append(b);
   }
   navigation.append(views);
-  if (hadNavigationFocus)
-    (state.area === "canvas"
-      ? navigation.querySelector('[data-area="canvas"]')
-      : viewLabel
-    ).focus({ preventScroll: true });
+  if (hadNavigationFocus) navigation.querySelector(`[data-area="${state.area}"]`)?.focus({preventScroll:true});
   $("tabs").replaceChildren();
   for (const section of areas[state.area].sections) {
     const b = actionButton(
@@ -1681,7 +1660,7 @@ function applyView() {
       .querySelector('[data-area="canvas"]')
       ?.focus({ preventScroll: true });
   else if (leavingOutcomeTools)
-    $("outcome-views").querySelector("summary").focus({ preventScroll: true });
+    $("area-tabs").querySelector('[data-area="overview"]')?.focus({ preventScroll: true });
 }
 function navigateSection(section) {
   if (!allowCanvasNavigation()) return;

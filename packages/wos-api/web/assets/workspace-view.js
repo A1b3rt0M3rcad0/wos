@@ -150,6 +150,7 @@ export function renderWorkspaceView(host, {
     else onAction?.(capability.action_id, capability);
   }
   function localAction(parent, name, label) {
+    if (kind === 'work_item' && capabilities.get(name)?.reason_codes?.includes('work_item_planning_frozen')) return;
     if (capabilities.has(name)) parent.append(actionButton(label || humanActions[name]?.label,
       () => invoke(name), name));
   }
@@ -209,7 +210,11 @@ export function renderWorkspaceView(host, {
   }
   if (!hasWork && kind === "work_item") work.fallback();
   if (kind !== "work_item" && !hasWork) work.node.remove();
-  if (kind === "work_item") localAction(work.node, "set_work_item_execution_spec");
+  if (kind === "work_item") {
+    localAction(work.node, "set_work_item_execution_spec");
+    if (view.header.lifecycle === 'backlog') localAction(work.node, "update_work_item");
+    else work.node.append(el('p', 'Planning is locked outside Backlog. Execution and proof remain available.', 'field-help'));
+  }
   if (view.coverage?.work?.status === "partial" && onFullRecord)
     work.node.append(actionButton(copy.text.workspaceReadFullRecord, () => onFullRecord(view), "read_full_record"));
   if (kind === "work_item") work.finish();
@@ -229,8 +234,13 @@ export function renderWorkspaceView(host, {
   }
   if (!view.people?.length) people.fallback();
   people.node.append(el("p", copy.text.workspaceNoPresence, "field-help"));
+  if (kind === 'work_item') {
+    localAction(people.node,'set_work_item_assignees');
+    if (record.contracts_enabled && onFullRecord) people.node.append(actionButton('Execution details',()=>onFullRecord(view),'read_execution_details'));
+  }
   people.finish();
   if (kind === "criterion") people.node.remove();
+  if (kind === 'work_item') { localAction(people.node,'renew_work_item_lease'); localAction(people.node,'release_work_item'); }
 
   const attention = section("attention", copy.text.workspaceAttention, copy.text.workspaceNoAttention);
   let hasAttention = false;
@@ -554,7 +564,7 @@ export function renderWorkspaceView(host, {
     evaluated_at: view.evaluated_at, coverage: view.coverage }, null, 2);
   audit.append(payload);
   if (onFullRecord) audit.append(actionButton(copy.text.workspaceReadFullRecord, () => onFullRecord(view), "read_full_record"));
-  host.append(audit);
+  if (!operational) host.append(audit);
   if (operational) {
     host.classList.add('workspace-operational-view');
     const names = {work:'What to do',people:'Responsibility and execution authority',attention:'What is missing',criteria:'Acceptance criteria',activity:'What happened'};
@@ -575,8 +585,6 @@ export function renderWorkspaceView(host, {
     }
     const tools = el('div', undefined, 'workspace-primary-actions');
     if (onKanban && ['outcome','objective'].includes(kind)) tools.append(button(kind === 'outcome' ? 'Open Objectives Kanban' : 'Open Tasks Kanban', () => onKanban(view), 'quiet'));
-    if (onVerify && ['outcome','objective','work_item'].includes(kind)) tools.append(button('Verify criteria', () => onVerify(view), 'quiet'));
-    if (onMaterial) tools.append(button('Add material', () => onMaterial(view), 'quiet'));
     host.prepend(tools);
     if (operational === 'compact') {
       const groups = [
@@ -597,7 +605,7 @@ export function renderWorkspaceView(host, {
       // History stays lazy and last; technical audit is an explicit disclosure.
       const history = host.querySelector('.workspace-history');
       if (history) host.append(history);
-      host.append(audit);
+      audit.remove();
     }
   } else compactWorkspace(host, view, { onKanban, onVerify, onMaterial, onActivity, onReference, disclosures });
   return { actions };

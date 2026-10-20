@@ -1,7 +1,7 @@
 import { el, button } from "./ui.js";
 import { display } from "./presentation.js";
 import { humanActions } from './actions.js';
-import { kanbanOperation, kanbanLane, kanbanLanes, operationGroup } from './kanban-operations.js';
+import { kanbanOperation, kanbanLane, kanbanLanes } from './kanban-operations.js';
 import {
   renderWorkspaceView,
   workspaceActions,
@@ -10,11 +10,12 @@ import {
 
 const key = (ref) => `${ref.kind}/${ref.id}`;
 
-// A contextual workspace, a nonmodal inspector and one native operation dialog.
+// A contextual modal over the spatial Board. Operations replace, never stack over, it.
 // Every mutation leaves through the existing authorized command surface.
 export function createContextualKanban({
   requestCards,
   requestTimeline,
+  readWork,
   query,
   onAction,
   onReturn,
@@ -26,16 +27,15 @@ export function createContextualKanban({
   operationState = () => 'editing',
   onOperationEnd,
 } = {}) {
-  const dialog = el("section", undefined, "workspace-kanban");
+  const dialog = el("dialog", undefined, "workspace-kanban");
   dialog.hidden = true;
-  dialog.setAttribute("role", "region");
   const operationDialog = el("dialog", undefined, "workspace-kanban-operation");
   operationDialog.id = "workspace-kanban-operation";
   operationDialog.setAttribute("aria-labelledby", "workspace-transition-title");
   document.body.append(operationDialog);
   dialog.id = "workspace-kanban";
   dialog.setAttribute("aria-labelledby", "workspace-kanban-title");
-  (workspaceHost || document.body).append(dialog);
+  document.body.append(dialog);
   let frames = [],
     epoch = 0,
     sessionScope = "",
@@ -43,7 +43,7 @@ export function createContextualKanban({
     returnFocus,
     suspended = false;
   const disclosures = new Map();
-  let operation = false, preparation = null, dock;
+  let operation = false, preparation = null, dock, proofReturn = null;
   if (operationHost) new MutationObserver(() => {
     if (operation) {
       const phase = operationState(); operationDialog.dataset.phase = phase;
@@ -54,6 +54,8 @@ export function createContextualKanban({
   const active = () => !dialog.hidden;
   function setActive(value) {
     dialog.hidden = !value;
+    if (value && !operationDialog.open && !dialog.open) dialog.showModal();
+    if (!value && dialog.open) dialog.close();
     document.documentElement.dataset.kanbanActive = String(value);
     if (workspaceHost) {
       workspaceHost.dataset.kanbanActive = String(value);
@@ -107,7 +109,7 @@ export function createContextualKanban({
       scope = sessionScope,
       originTrigger = returnFocus;
     if (operationDialog.open) operationDialog.close();
-    preparation = null;
+    preparation = null; proofReturn = null;
     setActive(false);
     if (restore && origin && onReturn)
       Promise.resolve(onReturn(origin, originTrigger))
@@ -124,7 +126,7 @@ export function createContextualKanban({
     preparation = null;
     if (current()) current().intent = null;
     if (operation) finishOperation();
-    else { operationDialog.close(); focusSelection(); }
+    else { operationDialog.close(); if (active() && !dialog.open) dialog.showModal(); focusSelection(); }
   }
   operationDialog.addEventListener('cancel', event => { event.preventDefault(); dismissOperation(); });
   operationDialog.addEventListener('keydown', event => {
@@ -136,6 +138,7 @@ export function createContextualKanban({
     else if (event.shiftKey && (document.activeElement === first || !operationDialog.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
+  dialog.addEventListener('cancel', event => { event.preventDefault(); if (current()?.selected) backToWork(); else close(); });
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.target.closest('select, [role="combobox"][aria-expanded="true"]')) return;
     const menu = event.target.closest('details[open].workspace-card-menu, details[open].workspace-kanban-filters');
@@ -332,6 +335,16 @@ export function createContextualKanban({
     const feedback = el('p', intent.message, 'workspace-move-feedback'); feedback.setAttribute('role','status');
     body.append(feedback);
     for (const reason of intent.reasons || []) body.append(el('p', display(reason), 'workspace-requirement'));
+    if (intent.review) {
+      body.replaceChildren();
+      renderProofChecklist(body, view);
+      operationDialog.replaceChildren(operationHeader('Review proof', view), body);
+      operationDialog.dataset.phase = 'inspection';
+      if (dialog.open) dialog.close();
+      if (!operationDialog.open) operationDialog.showModal();
+      operationDialog.querySelector('h2').focus({preventScroll:true});
+      return;
+    }
     const actions = el('div', undefined, 'workspace-transition-remedies');
     const cap = intent.capability;
     if (cap && (cap.availability === 'available' || cap.transport === 'signed_host'))
@@ -351,7 +364,7 @@ export function createContextualKanban({
       if ((group.dataset.operationalGroup === 'criteria' && (intent.review || intent.reasons?.some(reason => /criterion|assessment|proof/.test(reason))))
         || (group.dataset.operationalGroup === 'impediments' && intent.reasons?.some(reason => /block|depend/.test(reason)))) group.open = true;
     const choices = el('details', undefined, 'workspace-remedy-actions'); choices.open = true;
-    choices.append(el('summary', 'Available preparation actions'));
+    choices.append(el('summary', 'Resolve requirements'));
     for (const remedy of workspaceActions(view)) {
       if (remedy === cap || remedy.availability !== 'available' || remedy.transport === 'signed_host') continue;
       const name = workspaceCommandName(remedy.action_id);
@@ -364,8 +377,72 @@ export function createContextualKanban({
     if (current().intent) body.append(button('Recheck intended operation', () => { const target = current().intent; if(target) move(target.ref,target.stage); },'quiet'));
     operationDialog.replaceChildren(operationHeader(title, view), body);
     operationDialog.dataset.phase = intent.kind;
+    if (dialog.open) dialog.close();
     if (!operationDialog.open) operationDialog.showModal();
     operationDialog.querySelector('h2').focus({preventScroll:true});
+  }
+  function renderProofChecklist(body, view) {
+    const work = el('section', undefined, 'workspace-proof-work');
+    work.append(el('h3', 'What to do'));
+    if (view.header.description) work.append(el('p', view.header.description));
+    for (const [field, title] of [['instructions','Instructions'],['deliverables','Expected result'],['constraints','Constraints'],['scope_hints','Scope hints']]) {
+      const values = view.work?.[field] || view.entity?.execution_spec?.[field];
+      if (values?.length) { work.append(el('h4',title)); const list=el('ul'); for(const text of values) list.append(el('li',text)); work.append(list); }
+    }
+    if (work.children.length === 1) work.append(el('p', 'No additional instructions recorded.'));
+    if (readWork && (view.coverage?.work?.status === 'partial' || view.entity?.description && view.entity.description !== view.header.description)) {
+      work.append(el('p','Instructions are previewed. Read the complete definition before reviewing proof.','field-help'));
+      const complete=button('Read complete instructions',async()=>{
+        const token=++epoch; complete.disabled=true;
+        try {
+          const result=await readWork(view.subject.ref); if(!valid(token))return;
+          if(String(result.outcome_revision)!==String(view.outcome_revision) || String(result.value.version)!==String(view.entity_version)) throw Error('The work changed. Return to the Kanban and refresh before reviewing its full definition.');
+          showPreparation({...view,header:{...view.header,description:result.value.description},entity:result.value,work:result.value.execution_spec,coverage:{...view.coverage,work:{status:'complete'}}},{kind:'inspection',review:true});
+        } catch(error) {if(valid(token)){const message=el('p',error.message,'error');message.setAttribute('role','alert');work.append(message);}}
+        finally {complete.disabled=false;}
+      },'quiet'); work.append(complete);
+    }
+    body.append(work);
+    const list = el('section', undefined, 'workspace-proof-checklist');
+    list.setAttribute('aria-label', 'Task criteria checklist');
+    list.append(el('h3', 'Criteria & proof'), el('p', 'Link or add evidence for each criterion, then record its assessment. Evidence alone does not mark a criterion as met.', 'field-help'));
+    const actionFor = async (definition, name) => {
+      const token = ++epoch;
+      try {
+        const criterion = await query({kind:'criterion',ref:definition.owner_ref,criterion_id:definition.id});
+        if (!valid(token)) return;
+        assertFrameRevision(criterion);
+        const capability = workspaceActions(criterion).find(cap => workspaceCommandName(cap.action_id) === name);
+        if (!capability) { const message=el('p','This operation is not available for your permissions.','error'); message.setAttribute('role','alert'); list.append(message); return; }
+        await act(capability.action_id,capability,criterion);
+      } catch(error) { if(valid(token)) {const message=el('p',error.message,'error');message.setAttribute('role','alert');list.append(message);} }
+    };
+    for (const item of view.criteria || []) {
+      const definition = item.definition;
+      if (!definition || definition.status === 'retired') continue;
+      const row = el('article',undefined,'workspace-proof-criterion'); row.dataset.criterionId=definition.id;
+      const met = Boolean(item.assessment_applicable && item.assessment?.result === 'met');
+      const assess = button(definition.title, () => actionFor(definition,'record_criterion_assessment'), 'quiet workspace-proof-check');
+      assess.setAttribute('role','checkbox'); assess.setAttribute('aria-checked',String(met));
+      assess.setAttribute('aria-label', `${definition.title}: ${met ? 'met' : 'not verified'}. Record assessment`);
+      row.append(assess,el('small',definition.required?'Required':'Optional'));
+      if (definition.description) row.append(el('p',definition.description));
+      row.append(el('p', item.assessment_applicable && item.assessment ? display(item.assessment.result) : 'Not assessed', 'workspace-proof-result'));
+      row.append(el('p', item.evidence_linked ? 'Evidence linked — review it in the assessment.' : 'No linked evidence in this snapshot.', 'field-help'));
+      row.append(button('Add or link evidence',()=>actionFor(definition,'register_evidence_with_links'),'quiet'));
+      const artifact=workspaceActions(view).find(cap=>workspaceCommandName(cap.action_id)==='register_artifact_in_context');
+      if(artifact) row.append(button('Add artifact',()=>act(artifact.action_id,artifact,view),'quiet'));
+      list.append(row);
+    }
+    if (!(view.criteria || []).some(item=>item.definition?.status!=='retired')) list.append(el('p','No active criteria recorded. The Task still requires an explicit result to complete.'));
+    if (view.coverage?.criteria?.next_cursor) list.append(button('Load more criteria',async()=>{
+      const token=++epoch;
+      try { const next=await query(view.subject,{criteria_cursor:view.coverage.criteria.next_cursor});
+        if(!valid(token))return; assertFrameRevision(next); next.criteria=[...(view.criteria||[]),...next.criteria]; showPreparation(next,{kind:'inspection',review:true});
+      } catch(error){fail(error,token);}
+    },'quiet'));
+    else if(view.coverage?.criteria?.status!=='complete') list.append(el('p','Criteria coverage is incomplete; this is not a complete acceptance checklist.','field-help'));
+    body.append(list);
   }
   async function act(action, capability, view) {
     if (operation) return;
@@ -374,7 +451,7 @@ export function createContextualKanban({
         message:'No state changed. Resolve the reported requirements before confirming this operation.'});
       return;
     }
-    saveScroll(); preparation = null;
+    saveScroll(); proofReturn = preparation?.intent.review ? preparation.view.subject : null; preparation = null;
     if (operationHost) {
       operation = true; ++epoch;
       dock ||= { parent: operationHost.parentNode, next: operationHost.nextSibling };
@@ -388,7 +465,8 @@ export function createContextualKanban({
       operationDialog.replaceChildren(operationHeader(humanActions[workspaceCommandName(action)]?.label || 'Item operation', view, explanation), operationHost);
       dialog.dataset.operation = 'true';
       operationDialog.dataset.phase = 'editing';
-      if (!operationDialog.open) operationDialog.showModal();
+      if (dialog.open) dialog.close();
+    if (!operationDialog.open) operationDialog.showModal();
       try { await onAction(action, capability, view); }
       catch(error) { onError?.(error); await finishOperation(); }
     }
@@ -422,54 +500,22 @@ export function createContextualKanban({
     title.id = "workspace-kanban-title";
     title.tabIndex = -1;
     header.append(title, button("Back to Canvas", close, "quiet"));
-    const breadcrumb = el("nav", undefined, "workspace-kanban-breadcrumb");
-    breadcrumb.setAttribute("aria-label", "Kanban context");
-    for (const [i, item] of frames.entries())
-      breadcrumb.append(
-        button(
-          item.mode === "criteria"
-            ? "Criteria review"
-            : item.mode === "materials"
-              ? "Materials"
-              : item.view.header.title,
-          () => {
-            saveScroll();
-            ++epoch;
-            const same = i === frames.length - 1;
-            frames = frames.slice(0, i + 1);
-            if (same) current().selected = current().view;
-            render();
-            if (current().coverage.status === "not_loaded") load();
-          },
-          "quiet",
-        ),
-      );
+    header.append(el("p", frame.view.header.title, "workspace-kanban-context"));
+    if (frames.length > 1) header.append(button("Back to parent", () => {
+      saveScroll(); ++epoch; frames.pop(); render();
+    }, "quiet"));
     const controls = el("div", undefined, "workspace-kanban-controls");
-    for (const [content, label] of [
-      [
-        "objectives",
-        frame.view.subject.ref.kind === "objective"
-          ? "Subobjectives"
-          : "Objectives",
-      ],
-      [
-        "tasks",
-        frame.view.subject.ref.kind === "outcome" ? "Direct Tasks" : "Tasks",
-      ],
-    ]) {
-      const control = button(
-        label,
-        () => {
-          saveScroll();
-          frame.content = content;
-          frame.selected = null;
-          render();
-        },
-        "quiet",
-      );
-      control.setAttribute("aria-pressed", String(frame.content === content));
-      controls.append(control);
+    const contextLabel = el('label', 'Context');
+    const contextSelect = el('select'); contextSelect.setAttribute('aria-label', 'Kanban context');
+    for (const [value, label] of [['objectives', frame.view.subject.ref.kind === 'objective' ? 'Subobjectives' : 'Objectives'],
+      ['tasks', frame.view.subject.ref.kind === 'outcome' ? 'Direct Tasks' : 'Tasks']]) {
+      const option = el('option', label); option.value = value; contextSelect.append(option);
     }
+    contextSelect.value = frame.content;
+    contextSelect.addEventListener('change', () => {
+      saveScroll(); frame.content = contextSelect.value; frame.selected = null; render();
+    });
+    contextLabel.append(contextSelect); controls.append(contextLabel);
     const search = el("input");
     search.type = "search";
     search.placeholder = "Find in loaded items";
@@ -751,7 +797,7 @@ export function createContextualKanban({
             : selected.header.lifecycle === 'todo' ? ['claim_work_item','acquire_signed_work_contract','acquire_work_contract']
               : ['reclaim_work_item','acquire_signed_review_contract','complete_work_item']
           : selected.subject.ref.kind === 'objective' ? ['achieve_objective','start_objective']
-            : selected.subject.ref.kind === 'issue' ? ['investigate_issue','resolve_issue']
+            : selected.subject.ref.kind === 'issue' ? ['resolve_issue','investigate_issue']
               : selected.subject.ref.kind === 'blocker' ? ['resolve_blocker'] : ['activate_outcome','achieve_outcome'];
       const candidates = primaryNames.map(name => available.find(cap => workspaceCommandName(cap.action_id) === name)).filter(Boolean);
       let next = candidates.find(cap => cap.availability === 'available' || cap.transport === 'signed_host') || candidates[0];
@@ -775,6 +821,7 @@ export function createContextualKanban({
           : blocked ? reviewNeeded ? 'Review acceptance criteria' : 'Inspect requirements'
             : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => {
           if (continuation) act('inspect_execution_handoff', null, selected);
+          else if (reviewNeeded && selected.subject.ref.kind === 'work_item') showPreparation(selected,{kind:'inspection',review:true});
           else if (reviewNeeded) { const node = aside.querySelector('[data-operational-group=criteria]'); if(node) {node.open=true;node.scrollIntoView({block:'nearest'});} }
           else if (blocked) {
             const target = aside.querySelector('[data-workspace-facet="attention"], [data-workspace-facet="criteria"]');
@@ -875,25 +922,6 @@ export function createContextualKanban({
           act("read_entity_note", { entry, options }, selected),
         onAction: (action, capability) => act(action, capability, selected),
       });
-      const actions = el("details", undefined, 'workspace-operation-groups');
-      actions.append(el("summary", "More actions"));
-      const actionsKey = `kanban-actions/${JSON.stringify(selected.subject)}`;
-      actions.open = Boolean(disclosures.get(actionsKey));
-      actions.addEventListener('toggle', () => disclosures.set(actionsKey, actions.open));
-      actions.inert = frame.loading;
-      aside.append(actions);
-      for (const label of ['Execute and conclude', 'Responsibility', 'Prove and verify', 'Resolve impediments', 'Plan and document']) {
-        const group = el('section'); group.append(el('h4', label));
-        for (const cap of workspaceActions(selected).filter(c => operationGroup(c) === label)) {
-          const name = workspaceCommandName(cap.action_id);
-          const control = button(humanActions[name]?.label || 'Continue in authorized agent host', () => act(cap.action_id, cap, selected), 'quiet');
-          control.dataset.actionId = name;
-          if (cap.availability !== 'available') control.append(el('small', cap.transport === 'signed_host' ? 'External authority required' : `Check requirements: ${(cap.reason_codes || []).map(display).join(', ')}`));
-          group.append(control);
-        }
-        if (group.children.length > 1) actions.append(group);
-      }
-      actions.append(button('All item actions', () => act('more_actions', null, selected), 'quiet'));
       body.append(aside);
     }
     const footer = el("footer", undefined, "workspace-kanban-footer");
@@ -927,7 +955,7 @@ export function createContextualKanban({
               ? "Add direct Task"
               : "Add Task",
         };
-        if (labels[name])
+        if (labels[name] && name === (frame.content === "objectives" ? "create_objective" : "create_work_item"))
           actions.append(
             button(
               labels[name],
@@ -940,7 +968,6 @@ export function createContextualKanban({
     }
 
     footer.hidden = !footer.children.length;
-    header.append(breadcrumb);
     dialog.replaceChildren(header, controls, status, body, footer);
     const detail = dialog.querySelector('.workspace-kanban-inspection');
     if (detail) detail.scrollTop = frame.detailScroll.get(detail.dataset.subject) || 0;
@@ -1006,6 +1033,7 @@ export function createContextualKanban({
     onOperationEnd?.();
     if (operationDialog.open) operationDialog.close();
     preparation = null;
+    if (active() && !dialog.open) dialog.showModal();
     render();
     if (current().mode) {
       const token = ++epoch;
@@ -1021,6 +1049,12 @@ export function createContextualKanban({
       if (card && kanbanLane(card) !== intended.stage) { await move(intended.ref, intended.stage); return; }
     }
     current().intent = null;
+    if (proofReturn && !current().error) {
+      const subject=proofReturn; proofReturn=null;
+      const token=++epoch;
+      try {const view=await query(subject); if(valid(token)){ assertFrameRevision(view); showPreparation(view,{kind:'inspection',review:true}); return; }} catch(error){fail(error,token);}
+    }
+    proofReturn=null;
     focusSelection();
   }
   return {

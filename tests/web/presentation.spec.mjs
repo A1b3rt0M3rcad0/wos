@@ -176,6 +176,7 @@ test("specialist areas show real documentary records, section-aware filters and 
 test("standalone details, contextual forms and Roadmap revisions preserve their native modal contract", async ({ page, wos }) => {
   test.setTimeout(180000);
   const data = await seedPresentation(wos);
+  data.tasks.ready=await wos.command('defer_work_item',{scope:data.scope,work_item_id:data.tasks.ready.id,expected_version:data.tasks.ready.version});
   const published = JSON.stringify(data.roadmap.revisions[0]);
   const mutations = [];
   page.on("request", (request) => {

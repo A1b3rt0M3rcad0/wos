@@ -8,17 +8,20 @@ import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
 import { revealMenuAction, expandWorkspaceDetails } from "./workspace-action-fixture.mjs";
 export { expect };
-// Specialist views live in the compact, native Views disclosure. Use the real
-// control rather than opening hidden content through DOM mutation in a test.
+// Overview exposes the specialist navigation. Follow real controls rather than
+// revealing hidden content through DOM mutation in a test.
 export async function openViews(page) {
   const views = page.locator("#outcome-views");
-  if (!(await views.evaluate((element) => element.open)))
-    await views.locator(":scope > summary").click();
+  if (!(await views.isVisible())) await page.locator('#area-tabs [data-area="overview"]').click();
   return views;
 }
 export async function chooseArea(page, area) {
   const key = area.toLowerCase() === "outcome board" ? "canvas" : area.toLowerCase();
-  if (key !== "canvas") await openViews(page);
+  if (key !== "canvas") {
+    const views=await openViews(page);
+    // An uncertain/submitting command legitimately blocks leaving the Board.
+    if (!(await views.isVisible())) return;
+  }
   await page.locator(`#area-tabs [data-area="${key}"]`).click();
 }
 export async function openWorkspaceTools(page) {
