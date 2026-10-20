@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado e implementação sequencial em andamento nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.  
+> **Status:** plano aprovado; etapas 01–10 concluídas e etapa 11 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -298,6 +298,10 @@ Cada etapa é **um único commit**, contendo alteração coesa + testes da mudan
 **Trabalho:** Introduzir `objective_id` nullable temporário, assignee opcional e índice scope/objective/lifecycle conforme schema verificado.
 
 **Aceite verificável:** Upgrade idempotente via runner; rollback/restore e dados anteriores intactos em ambos adapters.
+
+**Execução em 2026-10-20:** concluída como migração expansiva `0034`, mantendo `objective_id` e `assignee_ref_json` nullable durante o backfill e a compatibilidade de leitura. Não reconstrói a tabela `issues` nem altera dados ou FKs de `issue_affected_refs`.
+
+**Verificação:** testes SQLite e PostgreSQL cobrem upgrade de schema 0033, preservação de Issue/referências afetadas, repetição do runner, rollback transacional de DDL e dump/restore. Ambos os testes focados passaram; o gerador PostgreSQL registra o teste espelhado. O schema permanece expand até que o backfill seja verificado nas etapas seguintes.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
