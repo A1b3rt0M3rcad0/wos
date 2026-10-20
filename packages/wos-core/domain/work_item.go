@@ -62,6 +62,12 @@ type WorkItem struct {
 	UpdatedAt              time.Time         `json:"updated_at"`
 }
 
+// NewWorkItem is retained while storage and callers are migrated away from
+// Outcome-level Tasks. New application creation paths must use
+// NewWorkItemForObjective. This constructor intentionally remains able to
+// represent legacy rows without an Objective during the expand phase.
+//
+// Deprecated: use NewWorkItemForObjective for all new Tasks.
 func NewWorkItem(id ID, scope Scope, title, description string, priority Priority, lifecycle WorkItemLifecycle, createdAt time.Time) (WorkItem, error) {
 	if lifecycle == "" {
 		lifecycle = WorkItemLifecycleBacklog
@@ -85,6 +91,27 @@ func NewWorkItem(id ID, scope Scope, title, description string, priority Priorit
 		return WorkItem{}, err
 	}
 	return w, nil
+}
+
+// NewWorkItemForObjective creates a Task with its one required structural
+// Objective owner. Same-Outcome ownership is checked by the application layer,
+// which has access to persisted Objective state.
+func NewWorkItemForObjective(id ID, scope Scope, objectiveID *ID, title, description string, priority Priority, lifecycle WorkItemLifecycle, createdAt time.Time) (WorkItem, error) {
+	if objectiveID == nil {
+		return WorkItem{}, NewError(ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return WorkItem{}, WrapError(ErrorCodeInvalidArgument, "new work item Objective ID is invalid", err)
+	}
+	work, err := NewWorkItem(id, scope, title, description, priority, lifecycle, createdAt)
+	if err != nil {
+		return WorkItem{}, err
+	}
+	work.ObjectiveID = cloneID(objectiveID)
+	if err := work.ValidateForCreation(); err != nil {
+		return WorkItem{}, err
+	}
+	return work, nil
 }
 
 func (w WorkItem) Ref() EntityRef {
@@ -167,6 +194,21 @@ func (w WorkItem) Validate() error {
 	}
 	if w.CreatedAt.IsZero() || w.UpdatedAt.IsZero() {
 		return NewError(ErrorCodeInvalidArgument, "work item timestamps are required")
+	}
+	return nil
+}
+
+// ValidateForCreation adds the structural ownership invariant to the general
+// state validator, which must continue to read legacy records during rollout.
+func (w WorkItem) ValidateForCreation() error {
+	if err := w.Validate(); err != nil {
+		return err
+	}
+	if w.ObjectiveID == nil {
+		return NewError(ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
+	if err := w.ObjectiveID.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidArgument, "new work item Objective ID is invalid", err)
 	}
 	return nil
 }
