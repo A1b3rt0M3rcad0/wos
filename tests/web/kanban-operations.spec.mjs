@@ -11,10 +11,8 @@ async function capture(page,name){
 const board=page=>page.locator('#workspace-kanban');
 const modal=page=>page.locator('body:has(#workspace-kanban-operation[open]) #workspace-kanban-operation, body:not(:has(#workspace-kanban-operation[open])) #workspace-kanban');
 async function move(page,title,stage){
- const labels={todo:'To do',in_progress:'In progress',verification:'Verification',accepted:stage==='accepted'?'Accepted':''};
- const shell=board(page).locator('.workspace-kanban-card-shell').filter({has:page.locator('.workspace-kanban-card').filter({hasText:title})});
- await shell.locator('summary').click();
- await shell.getByRole('button',{name:stage==='accepted' && await shell.getByRole('button',{name:'Move to Achieved',exact:true}).count()?'Move to Achieved':`Move to ${labels[stage]}`,exact:true}).click();
+ const card=board(page).locator('.workspace-kanban-card').filter({hasText:title});
+ await card.dragTo(board(page).locator(`[data-column="${stage}"]`));
 }
 async function open(page,wos,outcome,title){
  await wos.login(page);await openOutcome(page,outcome.title,{area:null});
@@ -113,7 +111,7 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  });
 }
-test('drag and single-pointer moves prepare actual operations; blocked and read-only work never moves',async({page,wos,browser})=>{
+test('drag prepares actual operations; blocked and read-only work never moves',async({page,wos,browser})=>{
  const c=await seedCanvas(wos);await open(page,wos,c.outcome,c.objective.title);
  const moves=[];page.on('request',r=>{if(r.url().includes('/commands/'))moves.push(r.url());});
  await move(page,c.tasks.blocked.title,'in_progress');

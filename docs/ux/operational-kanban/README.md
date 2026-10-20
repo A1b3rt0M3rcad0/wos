@@ -60,8 +60,8 @@ achieving its Objective and accepting its Outcome remain distinct decisions.
 
 ## Move to prepare an operation
 
-Drag a card to a lane or open its **… Actions** menu and choose a destination.
-The menu works without drag or hover. Drop hints explain possible operations;
+Drag a card to a lane to prepare its operation. Cards have no stage menu or status
+select. Contextual operations remain in the item inspector. Drop hints explain possible operations;
 current capabilities are read again before preparation. The card stays in its
 persisted lane until an authorized command succeeds.
 

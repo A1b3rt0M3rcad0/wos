@@ -36,7 +36,7 @@ measured productivity improvement is claimed.
 | Context | Action and effect | Guard and recovery |
 |---|---|---|
 | Collection | Context changes the collection and its single create action; no write | Preserve frame filters/scroll; parent return is navigation, not reassignment |
-| Card movement | Prepare an existing command or inspect its requirements; no optimistic move | Fresh capability/version/authority check and explicit confirmation; invalid moves explain requirements |
+| Card movement | Drag to prepare an existing command or inspect its requirements; no card stage menu/select or optimistic move | Fresh capability/version/authority check and explicit confirmation; invalid moves explain requirements |
 | Task definition | Edit only in Backlog | Same backend gate across transports; no automatic defer or authority revocation |
 | Proof checklist | Add/reuse Evidence, optionally reference an Artifact, then assess a criterion explicitly | Criterion-scoped canonical forms; Evidence never checks a criterion; signed review stays external |
 | Long instructions | Read the complete Task definition | Require the same Outcome revision; a stale read asks for refresh without a write |

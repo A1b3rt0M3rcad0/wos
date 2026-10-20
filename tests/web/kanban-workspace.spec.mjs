@@ -18,7 +18,19 @@ async function setup(wos){
 }
 async function move(page,title,lane){
  const card=board(page).locator('.workspace-kanban-card-shell').filter({has:page.getByRole('button',{name:new RegExp(title)})});
- await card.locator('summary').click();await card.getByRole('button',{name:`Move to ${lane}`,exact:true}).click();
+ const stage={'To do':'todo','In progress':'in_progress','Verification':'verification','Achieved':'accepted'}[lane];
+ const source=card.locator('.workspace-kanban-card'),target=board(page).locator(`[data-column="${stage}"]`);
+ await source.scrollIntoViewIfNeeded();
+ const start=await source.boundingBox();
+ await page.mouse.move(start.x+20,start.y+20);await page.mouse.down();
+ await page.mouse.move(start.x+30,start.y+30,{steps:5});
+ // Reveal an offscreen lane after starting the native drag, rather than
+ // scrolling the source away before pointerdown on a narrow viewport.
+ await target.evaluate(node=>node.scrollIntoView({block:'nearest',inline:'center'}));
+ const end=await target.boundingBox();
+ await page.mouse.move(end.x+20,end.y+60,{steps:8});
+ await page.mouse.move(end.x+20,end.y+60);
+ await page.mouse.up();
  await expect(operation(page)).toBeVisible();
 }
 for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,height:844}]){
@@ -84,8 +96,8 @@ test('Objectives use planned, started and achieved lanes without a fabricated re
  await expect(board(page).locator('[data-column]')).toHaveCount(3);
  await expect(board(page).locator('[data-column=planned]')).toContainText(objective.title);
  await expect(board(page).locator('[data-column=verification]')).toHaveCount(0);
- await board(page).locator('.workspace-card-menu summary').click();
- await expect(board(page).getByRole('button',{name:'Move to Achieved',exact:true})).toBeVisible();
+ await expect(board(page).locator('.workspace-card-menu, .workspace-kanban-card-shell select')).toHaveCount(0);
+ await expect(board(page).locator('.workspace-kanban-card')).toHaveAttribute('draggable','true');
 });
 test('an eligible planned Objective is achieved directly without an invented Start command',async({page,wos})=>{
  const {outcome,objective,scope}=await setup(wos),owner={...scope,kind:'objective',id:objective.id};
@@ -169,13 +181,14 @@ test('blocked achievement can add its criterion and assessment in context before
  await expect(operation(page)).not.toBeVisible();await expect(board(page).locator('[data-column=accepted]')).toContainText(objective.title);
  expect(writes).toEqual(['add_criterion','record_criterion_assessment','achieve_objective']);
 });
-test('emulated touch can use the card action menu without drag or hover',async({browser,wos})=>{
+test('touch inspection keeps contextual operations without card stage menus',async({browser,wos})=>{
  const context=await browser.newContext({hasTouch:true,isMobile:true,viewport:{width:390,height:844}});
  try{
   const page=await context.newPage(),{outcome,objective,task}=await setup(wos);await open(page,wos,outcome,objective.title);
   const writes=[];page.on('request',r=>{if(r.url().includes('/commands/'))writes.push(r.url());});
-  await board(page).locator('.workspace-card-menu summary').tap();
-  await board(page).getByRole('button',{name:'Move to To do',exact:true}).tap();
+  await expect(board(page).locator('.workspace-card-menu, .workspace-kanban-card-shell select')).toHaveCount(0);
+  await board(page).locator('.workspace-kanban-card').filter({hasText:task.title}).tap();
+  await board(page).locator('.workspace-next-operation [data-action-id=activate_work_item]').tap();
   await expect(operation(page).locator('#command-select')).toHaveValue('activate_work_item');expect(writes).toEqual([]);
   await operation(page).getByRole('button',{name:'Back to item',exact:true}).tap();
   await expect(operation(page)).not.toBeVisible();await expect(board(page).locator('[data-column=backlog]')).toContainText(task.title);

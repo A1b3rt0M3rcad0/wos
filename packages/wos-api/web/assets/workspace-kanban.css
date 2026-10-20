@@ -44,10 +44,6 @@ html[data-kanban-active="true"] :is(#actions, #outcome-tools, #canvas-context) {
 .workspace-kanban-card small, .workspace-kanban-card span { font-size: 12px; }
 .workspace-kanban-card:is(:hover,:focus-visible), .workspace-kanban-card[aria-pressed="true"] { background: var(--wos-selected); border-color: var(--wos-copper); color: var(--wos-foreground); }
 .workspace-drag-handle { position: absolute; right: 12px; top: 44px; color: var(--wos-muted); }
-.workspace-card-menu { position: absolute; right: 2px; top: 2px; z-index: 1; }
-.workspace-card-menu > summary { display: flex; align-items: center; justify-content: center; list-style: none; min-height: 36px; min-width: 36px; cursor: pointer; }
-.workspace-card-menu > div { position: absolute; right: 0; top: 100%; min-width: 210px; max-width: calc(100vw - 40px); padding: 6px; background: var(--wos-surface); border: 1px solid var(--wos-border); box-shadow: 0 4px 12px color-mix(in srgb, var(--wos-foreground) 8%, transparent); }
-.workspace-card-menu > div > button { display: block; width: 100%; text-align: left; white-space: normal; }
 .workspace-kanban-column[data-drop-intent] { border-color: var(--wos-copper); }
 .workspace-drop-meaning { position: absolute; inset: 0 0 auto; z-index: 2; margin: 0; pointer-events: none; font-size: 12px; padding: 8px; background: var(--wos-surface); border-left: 2px solid var(--wos-copper); }
 .workspace-kanban-inspection { z-index: 3; flex: 0 0 clamp(400px, 26vw, 480px); width: clamp(400px, 26vw, 480px); padding: 14px; border-left: 1px solid var(--wos-border); background: var(--wos-workspace); overflow-y: auto; min-width: 0; }

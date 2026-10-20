@@ -141,7 +141,7 @@ export function createContextualKanban({
   dialog.addEventListener('cancel', event => { event.preventDefault(); if (current()?.selected) backToWork(); else close(); });
   dialog.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.target.closest('select, [role="combobox"][aria-expanded="true"]')) return;
-    const menu = event.target.closest('details[open].workspace-card-menu, details[open].workspace-kanban-filters');
+    const menu = event.target.closest('details[open].workspace-kanban-filters');
     event.preventDefault(); event.stopPropagation();
     if (menu) { menu.open = false; menu.querySelector('summary').focus(); }
     else if (current()?.selected) backToWork();
@@ -678,7 +678,7 @@ export function createContextualKanban({
           card.dataset.kanbanRef = key(item.ref);
           card.setAttribute('aria-pressed', String(frame.selected?.subject.ref.id === item.ref.id));
           card.draggable = true;
-          card.setAttribute("aria-description", "Open to inspect; use the Actions menu to prepare a move without dragging.");
+          card.setAttribute("aria-description", "Open to inspect. Drag to another lane to prepare its operation.");
           card.append(el("span", "⠿", "workspace-drag-handle"));
           card.addEventListener('dragstart', event => {
             frame.dragged = key(item.ref);
@@ -752,15 +752,7 @@ export function createContextualKanban({
           if (item.attention_reason)
             card.append(el("small", display(item.attention_reason)));
           const wrapper = el('article', undefined, 'workspace-kanban-card-shell');
-          const menu = el('details', undefined, 'workspace-card-menu');
-          const summary = el('summary', '…'); summary.setAttribute('aria-label', `Actions for ${item.title}`);
-          menu.append(summary);
-          const choices = el('div'); choices.setAttribute('aria-label', `Move ${item.title}`);
-          for (const [value, title] of laneKinds) {
-            if (value === kanbanLane(item)) continue;
-            choices.append(button(`Move to ${title}`, () => { menu.open = false; move(item.ref, value); }, 'quiet'));
-          }
-          menu.append(choices); wrapper.append(card, menu); section.append(wrapper);
+          wrapper.append(card); section.append(wrapper);
 
         }
         if (!matching.length)

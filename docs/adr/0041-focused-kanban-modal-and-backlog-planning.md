@@ -39,6 +39,15 @@ and execution authority; evidence, artifacts, assessments, issue/blocker reporti
 notes, acquisition, delivery, review and explicit conclusions remain governed by
 their existing independent rules. No migration or new persisted lifecycle is needed.
 
+## Card movement follow-up
+
+The owner subsequently requests drag-and-drop-only lane movement on cards.
+Remove the card stage menu/select and its duplicate destination controls.
+A drop still prepares the existing operation with current capabilities and
+explicit confirmation; it never persists a visual status directly. Contextual
+operations remain in the selected-item inspector, including keyboard/touch
+access to their existing canonical commands. No new domain transition is added.
+
 ## Verification
 
 Test definition mutation denial after activation, unchanged versions/state on

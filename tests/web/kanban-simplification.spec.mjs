@@ -58,14 +58,7 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   for(const text of ['Verify criteria','Record details and audit','More actions','Add material']) await expect(inspector.getByText(text,{exact:true})).toHaveCount(0);
   await expect(inspector.locator('[data-operational-group=work] > summary')).toBeVisible();
   const rect=await kanban(page).boundingBox();expect(rect.x).toBeGreaterThanOrEqual(0);expect(rect.y).toBeGreaterThanOrEqual(0);expect(rect.x+rect.width).toBeLessThanOrEqual(viewport.width);expect(rect.y+rect.height).toBeLessThanOrEqual(viewport.height);
-  expect(await inspector.evaluate(panel=>{
-    const bounds=panel.getBoundingClientRect();
-    return [...document.querySelectorAll('.workspace-card-menu > summary')].every(menu=>{
-      const rect=menu.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2;
-      if(x<bounds.left||x>bounds.right||y<bounds.top||y>bounds.bottom||x<0||y<0||x>=innerWidth||y>=innerHeight)return true;
-      return panel.contains(document.elementFromPoint(x,y));
-    });
-  }),'Lane menus must not receive pointer events through the item inspector').toBe(true);
+  await expect(kanban(page).locator('.workspace-card-menu, .workspace-kanban-card-shell select')).toHaveCount(0);
   await capture(page,wos,`kanban-${viewport.width}`);
   await page.keyboard.press('Escape');await page.keyboard.press('Escape');
   await expect(kanban(page)).not.toBeVisible();await expect(page.locator('#area-tabs [data-area=overview]')).toBeVisible();
@@ -83,7 +76,7 @@ test('proof checklist reuses existing Evidence, requires explicit assessment and
  await expect(inspector).toContainText('Planning is locked outside Backlog.');
  for(const action of ['set_work_item_execution_spec','update_work_item','add_criterion']) await expect(inspector.locator(`[data-action-id=${action}]`)).toHaveCount(0);
  await inspector.getByRole('button',{name:'Back to Kanban',exact:true}).click();
- await shell.locator('summary').click();await shell.getByRole('button',{name:'Move to Verification',exact:true}).click();
+ await shell.locator('.workspace-kanban-card').dragTo(kanban(page).locator('[data-column=verification]'));
  await expect(operation(page).getByRole('heading',{name:'What to do',exact:true})).toBeVisible();
  await expect(operation(page).getByText('Available preparation actions',{exact:true})).toHaveCount(0);
  for(const text of ['Responsibility & authority','Dependencies & impediments','Activity history','Record details and audit']) await expect(operation(page).getByText(text,{exact:true})).toHaveCount(0);
@@ -116,7 +109,7 @@ test('proof preserves complete long instructions without restoring the audit int
  await wos.command('set_work_item_execution_spec',{scope,work_item_id:task.id,expected_version:String(task.version+1),execution_spec:{instructions:[instruction],constraints:[],deliverables:[],scope_hints:[],context_refs:[]}});
  await open(page,wos,outcome,objective.title);
  const shell=kanban(page).locator('.workspace-kanban-card-shell').filter({hasText:task.title});
- await shell.locator('summary').click();await shell.getByRole('button',{name:'Move to Verification',exact:true}).click();
+ await shell.locator('.workspace-kanban-card').dragTo(kanban(page).locator('[data-column=verification]'));
  await expect(operation(page)).not.toContainText('CRITICAL FINAL INSTRUCTION');
  await operation(page).getByRole('button',{name:'Read complete instructions',exact:true}).click();
  await expect(operation(page)).toContainText('CRITICAL FINAL INSTRUCTION');

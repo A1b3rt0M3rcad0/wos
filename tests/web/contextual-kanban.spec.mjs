@@ -400,7 +400,7 @@ test("activity history is loaded on demand and material choices retain their mea
   await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
   const modal=page.locator('#workspace-kanban');
   const shell=modal.locator('.workspace-kanban-card-shell').filter({hasText:data.task.title});
-  await shell.locator('summary').click();await shell.getByRole('button',{name:'Move to Verification',exact:true}).click();
+  await shell.locator('.workspace-kanban-card').dragTo(modal.locator('[data-column=verification]'));
   const material=page.locator('#workspace-kanban-operation');
   await expect(material).toContainText('Evidence alone does not mark a criterion as met.');
   await capture(page,'criterion-proof');

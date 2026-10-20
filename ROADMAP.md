@@ -14,6 +14,20 @@ This file records the real implementation state of WOS. It must be kept synchron
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
 
+## Drag-only card movement follow-up — 2026-10-20
+
+The owner requests removal of card stage menus/selects. Cards now prepare lane
+operations through drag and drop only; contextual inspector actions and backend
+capability/confirmation gates remain. Targeted qualification covers 47 distinct
+browser cases: 36 unaffected cases passed in the initial run and all 11 workspace
+cases passed after correcting native-drag test scrolling. The initial run had
+46 passes/one failure; it is not presented as a fully green single run. All 78 JS
+units pass. Two native acceptance fixtures now define criteria in Backlog before
+activation, fixing the previous-head hosted failures; central independent-review
+and installed-binary signed smoke both pass locally. See the [follow-up receipt](docs/ux/operational-kanban/drag-only-validation.md).
+The earlier 229-case receipt below qualifies its recorded source, not this follow-up.
+No merge or release.
+
 ## Focused modal Kanban follow-up — 2026-10-20
 
 **Implemented and locally qualified; new-head hosted CI is separate.** The owner's seven simplification requests

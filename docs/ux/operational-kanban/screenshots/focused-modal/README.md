@@ -1,4 +1,8 @@
-# Focused modal Kanban — current captures
+# Focused modal Kanban — source-bound captures
+
+The subsequent drag-only follow-up removes the card ellipsis/stage menu visible
+in these captures. These receipts retain their recorded runtime source; they
+are not new captures of that follow-up.
 
 Real browser captures from runtime source
 `fa82060cf661415d2253f32ac11dedfbf54296e1`, using public commands in an isolated
