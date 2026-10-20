@@ -54,6 +54,7 @@ export function createContextualKanban({
   const active = () => !dialog.hidden;
   function setActive(value) {
     dialog.hidden = !value;
+    document.documentElement.dataset.kanbanActive = String(value);
     if (workspaceHost) {
       workspaceHost.dataset.kanbanActive = String(value);
       for (const child of workspaceHost.children) if (child !== dialog) child.inert = value;
