@@ -218,6 +218,54 @@ func (i Issue) ValidateForCreation() error {
 	return nil
 }
 
+// Assign sets or reassigns the declarative Issue assignee. Assignment does not
+// change the Issue lifecycle and grants no execution authority or Task lease.
+// The application layer remains responsible for recording the assignment
+// operation and enforcing expected-version concurrency.
+func (i *Issue) Assign(assignee ActorRef, now time.Time) error {
+	if i.Lifecycle != IssueLifecycleOpen && i.Lifecycle != IssueLifecycleInvestigating {
+		return NewError(ErrorCodeInvalidTransition, "only open or investigating issue can be assigned")
+	}
+	if err := assignee.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidActorRef, "issue assignee is invalid", err)
+	}
+	if i.AssigneeRef != nil && *i.AssigneeRef == assignee {
+		return nil
+	}
+
+	next := *i
+	next.AssigneeRef = &assignee
+	if err := next.touch(now); err != nil {
+		return err
+	}
+	*i = next
+	return nil
+}
+
+// Unassign removes the declarative Issue assignee without changing its
+// lifecycle. An in-progress investigation requires a rationale; the
+// application layer records that rationale in the operation's audit event.
+// Unassignment never releases or changes a Task lease.
+func (i *Issue) Unassign(reason string, now time.Time) error {
+	if i.Lifecycle != IssueLifecycleOpen && i.Lifecycle != IssueLifecycleInvestigating {
+		return NewError(ErrorCodeInvalidTransition, "only open or investigating issue can be unassigned")
+	}
+	if i.Lifecycle == IssueLifecycleInvestigating && strings.TrimSpace(reason) == "" {
+		return NewError(ErrorCodeInvalidArgument, "unassigning an investigating issue requires a rationale")
+	}
+	if i.AssigneeRef == nil {
+		return nil
+	}
+
+	next := *i
+	next.AssigneeRef = nil
+	if err := next.touch(now); err != nil {
+		return err
+	}
+	*i = next
+	return nil
+}
+
 func (i *Issue) Investigate(now time.Time) error {
 	if i.Lifecycle != IssueLifecycleOpen {
 		return NewError(ErrorCodeInvalidTransition, "only open issue can enter investigation")

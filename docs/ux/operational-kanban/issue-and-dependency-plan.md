@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–14 concluídas; etapa 15 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–15 concluídas; etapa 16 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -380,6 +380,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Adicionar operações Assign/Unassign para o `assignee_ref` já persistido; `reported_by` permanece imutável; estado investigating não cria controle de executor externo.
 
 **Aceite verificável:** Sem criação de lease, concorrência protegida por versão e invariantes validadas.
+
+**Execução em 2026-10-20:** `Issue.Assign` e `Issue.Unassign` agora atualizam apenas o assignee declarativo, sem mudar lifecycle ou `reported_by`. Apenas Issues `open` e `investigating` aceitam essas operações; Issues terminais falham sem mutação. Reatribuir é permitido, e atribuir novamente a mesma identidade ou remover uma atribuição ausente é no-op. Desatribuir uma Issue em investigação exige justificativa não vazia, que a Application registrará no evento de auditoria. A identidade atribuída não concede autoridade de execução nem cria, altera ou libera Task lease.
+
+**Verificação:** testes de domínio cobrem atribuição e reatribuição, no-op, remoção em Issue aberta, justificativa para Issue em investigação, rejeição atômica em estados terminais e inválidos, preservação de lifecycle/reporter e avanço de versão/timestamp apenas quando há mudança.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
