@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–20 concluídas; etapa 21 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–21 concluídas; etapa 22 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -478,6 +478,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Novo ReportIssueWithBlockers; validar destino, propagação, unique, versão observada, limite, idempotency e full rollback.
 
 **Aceite verificável:** Um erro em qualquer alvo deixa 0 Issue/Blockers; êxito cria 1 Issue e N Blockers numa revision.
+
+**Execução em 2026-10-20:** Adicionado `ReportIssueWithBlockers`, que cria uma única Issue com Objective proprietário e N Blockers explícitos na mesma UoW. Cada target passa pela validação canônica de existência, escopo e lifecycle; a Issue e todos os Blockers são validados antes da primeira escrita. O comando exige `observed_outcome_revision`, confere a revisão sob o lock do Outcome, rejeita pares alvo/propagação efetiva repetidos, limita a lista a 64 e o payload ao envelope de 256 KiB. Qualquer falha dentro da transação reverte Issue, Blockers, eventos e revisão; o mesmo `IdempotencyKey` retorna o resultado original. `ReportIssueWithBlocker` legado permanece intacto. O mapeamento de eventos emite `issue.created` e um `blocker.created` por alvo, todos vinculados ao mesmo comando e revisão.
+
+**Verificação:** passaram `go test ./packages/wos-core/application -run '^TestReportIssueWithBlockers' -count=1 -v` e `go test ./packages/wos-core/domain ./packages/wos-core/application -count=1` com Go 1.27.2. Cenários cobrem criação de três alvos, ownership/causa, uma revisão, eventos correlacionados, replay e conflito de idempotência, target inexistente, duplicação após aplicar propagação default, propagação inválida, owner de revisão ausente, lista acima do limite, payload acima de 256 KiB e revisão obsoleta, sem mutações rejeitadas. `gofmt` e `git diff --check` passaram. Os transports permanecem para as etapas 27–30.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
