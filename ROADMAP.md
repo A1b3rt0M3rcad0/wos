@@ -64,15 +64,20 @@ and [ADR-042](docs/adr/0042-objective-owned-issues-and-mandatory-work-placement.
 define required Objective placement for Tasks, explicit Objective ownership for
 Issues, an Objective achievement gate, and strict separation of Issues,
 Blockers, and `depends_on`. Stage 01 recorded an unchanged baseline with 12
-browser tests passing. Stage 02 records the accepted domain decisions; code and
-database behavior are not yet changed. Stage 03 has inventoried the actual
+browser tests passing. Stage 02 records the accepted domain decisions; domain
+and schema behavior are not yet changed. Stage 03 has inventoried the actual
 migrations, generators, repositories, query surfaces, and transport callers in
 [`hierarchy-schema-inventory.md`](docs/ux/operational-kanban/hierarchy-schema-inventory.md).
 It confirms that 0034 is only the next provisional ordinal, SQLite's Issue
 references need a careful FK-preserving migration, and no Issue CLI exists
-today. Stage 04 is a read-only orphan audit. No legacy data mapping may be
-guessed; the contract migration remains gated on a zero-orphan audit and
-reviewed mappings.
+today. Stage 04 now includes `tools/acceptance/issue_ownership_backfill.py`, a
+deterministic per-Outcome audit that reports unowned Tasks/Issues, available
+Objective choices, evidence-based Issue candidates, and dependency edges
+affected by each unowned Task. SQLite is opened with `mode=ro` and query-only;
+PostgreSQL uses the existing read-only repeatable-read snapshot helper. The
+tool is covered by read-only determinism and schema-gate fixture tests. No
+legacy data mapping may be guessed; the contract migration remains gated on a
+zero-orphan audit and reviewed mappings.
 
 The existing contract still permits direct-Outcome Tasks and Issues without an
 Objective owner until the relevant implementation and migration stages pass.
