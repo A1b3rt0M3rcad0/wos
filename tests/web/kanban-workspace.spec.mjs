@@ -29,6 +29,7 @@ for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,h
   await expect(board(page)).not.toHaveJSProperty('tagName','DIALOG');
   await expect(page.locator('dialog[open]')).toHaveCount(0);
   await expect(board(page).locator('[data-column]')).toHaveCount(5);
+  for(const id of ['actions','outcome-tools','canvas-context']) await expect(page.locator(`#${id}`)).not.toBeVisible();
   await expect(board(page).locator('[data-column=backlog]')).toContainText(task.title);
   await expect(board(page).locator('.workspace-kanban-move select')).toHaveCount(0);
   const mountedLane=await board(page).locator('[data-column=backlog]').elementHandle();
@@ -53,6 +54,7 @@ for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,h
   await expect(board(page).locator('[data-column=todo]')).toContainText(task.title);
   await page.keyboard.press('Escape');await board(page).getByRole('button',{name:'Back to Canvas',exact:true}).click();
   await expect(board(page)).not.toBeVisible();
+  await expect(page.locator('#actions')).toBeVisible();
   await expect(page.locator('.canvas-world')).toHaveAttribute('style',camera);
  });
 }

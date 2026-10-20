@@ -6,6 +6,8 @@
   color: var(--wos-foreground); background: var(--wos-canvas);
 }
 .workspace-kanban[hidden] { display: none; }
+/* Parent operations live in this workspace; hidden map inspectors cannot own them. */
+body:has(.canvas-workspace-shell[data-kanban-active="true"]) :is(#actions, #outcome-tools, #canvas-context) { display: none; }
 .workspace-kanban-header, .workspace-kanban-controls, .workspace-kanban-footer {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   padding: 8px 12px; flex-shrink: 0; border-bottom: 1px solid var(--wos-border);

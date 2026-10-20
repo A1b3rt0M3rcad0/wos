@@ -10,7 +10,9 @@ The spatial Outcome Board is the default map. Opening a parent Kanban mounts a
 nonmodal workspace region; the map remains mounted at its original geometry.
 Selecting a card opens a compact nonmodal inspector, not a replacement page.
 Wide layouts dock it; HD uses a bounded overlay; narrow layouts use a reading
-panel with an explicit return. The lanes remain mounted, with their own scroll.
+panel with an explicit return. The lanes remain mounted, with their own scroll. Duplicate map-only Outcome tools,
+context and action controls are hidden while the Kanban owns operations; its parent
+breadcrumb and contextual toolbar remain available. Returning restores map controls.
 
 A card is a reading button, a drag affordance and a separate native disclosure
 containing move actions. There are no nested interactive controls and no permanent
