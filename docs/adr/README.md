@@ -48,3 +48,5 @@ The original specification proposed numbers, not immutable file identities. Acce
 - [ADR-040 — Kanban workspace mode and prepared operations](0040-kanban-workspace-mode-and-prepared-operations.md)
 
 - [ADR-041 — Focused Kanban modal and Backlog-only Task planning](0041-focused-kanban-modal-and-backlog-planning.md)
+
+- [ADR-042 — Objective-owned Issues and mandatory Task placement](0042-objective-owned-issues-and-mandatory-work-placement.md)

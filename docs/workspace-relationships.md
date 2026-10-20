@@ -32,7 +32,7 @@ not assess a criterion. `waived` is explicitly not verified.
 | You want to express | Use | What it means |
 | --- | --- | --- |
 | This condition is part of another condition | **Add objective** from an Objective; review its fixed placement (or explicitly change it) | Decomposition in the same Outcome, without an implied execution dependency. |
-| This Task contributes work to an Objective | **New task** from that Objective; review its fixed Objective placement | Explicit Task association. A Task may also belong directly to the Outcome. |
+| This Task contributes work to an Objective | **New task** from that Objective; review its required Objective placement | Every Task belongs to exactly one Objective in the same Outcome. The Outcome remains its scope boundary, not a second structural parent. |
 | This work needs something else first | **Add dependency** on a Task or Objective | A hard prerequisite affects readiness and completion. An advisory dependency records context without blocking transitions. |
 | This observation supports or challenges a statement | **Link evidence** from Evidence | Select the target, stance (`supports`, `contradicts` or `context`) and rationale. Stance belongs to this individual EvidenceLink. |
 | This criterion was evaluated | Select a success criterion and **Assess criterion** where permitted | Record a result for the current criterion revision, with rationale and the appropriate Evidence. |
@@ -49,8 +49,12 @@ operation. A missing action is not a reason to bypass that validation.
 
 The Board and specialist views use the same inspector. Its context path identifies
 the Outcome and actual parent; its relationship rows identify real endpoints.
-A Task can belong directly to the Outcome. An Objective's **Required for Outcome**
-obligation remains global, including when that Objective is nested.
+Every Task has one Objective parent. An Objective's **Required for Outcome**
+obligation remains global, including when that Objective is nested. Objective-owned
+Issues and required Task placement are being implemented in stages in PR #116;
+the [live roadmap](../ROADMAP.md) records the current state. Existing installations
+must pass the explicit orphan audit and reviewed mapping before final database
+constraints are applied.
 
 Task inspection groups instructions, people and recorded authority, attention,
 success conditions, Evidence, delivery and recent activity. Other entity types
@@ -83,7 +87,7 @@ dependencies.
 2. Add an Objective for a verifiable intermediate condition. Mark
    **Required for Outcome** only when achieving that Objective must be a gate
    for the Outcome. Define the Objective's own criteria.
-3. From the Objective, choose **New task** and review its preselected Objective.
+3. From the Objective, choose **New task** and review its required Objective.
    Add concrete instructions and deliverables. Add an explicit dependency only
    when prerequisite work is actually required.
 4. Activate the Outcome when preparation is ready. Use the Task's current

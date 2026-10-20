@@ -56,6 +56,25 @@ for source binding, local PostgreSQL skips and manual screen-reader/device limit
 Final-head hosted checks remain a separate gate; no merge, release or publication
 is authorized.
 
+## Hierarchy, Issue ownership, and dependency implementation — 2026-10-20
+
+**In progress in Draft PR #116; implementation is deliberately staged.** The
+approved [44-stage plan](docs/ux/operational-kanban/issue-and-dependency-plan.md)
+and [ADR-042](docs/adr/0042-objective-owned-issues-and-mandatory-work-placement.md)
+define required Objective placement for Tasks, explicit Objective ownership for
+Issues, an Objective achievement gate, and strict separation of Issues,
+Blockers, and `depends_on`. Stage 01 recorded an unchanged baseline with 12
+browser tests passing. Stage 02 records the accepted domain decisions; code and
+database behavior are not yet changed. Stage 03 must inventory migrations,
+generators, and repositories before any schema work. No legacy data mapping may
+be guessed; the contract migration remains gated on a zero-orphan audit and
+reviewed mappings.
+
+The existing contract still permits direct-Outcome Tasks and Issues without an
+Objective owner until the relevant implementation and migration stages pass.
+This roadmap section will be updated as each stage is completed; the Draft PR
+must remain unmerged and no release/tag is part of this work.
+
 ## Operational Kanban UX audit — 2026-10-20
 
 Historical presentation: the workspace-mode follow-up above supersedes the
