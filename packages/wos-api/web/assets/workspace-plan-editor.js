@@ -16,6 +16,8 @@ export function validatePlanItems(items) {
     if (!["objective", "work_item"].includes(item.kind))
       throw Error(copy.text.formBatchInvalidKind);
     if (!item.title?.trim()) throw Error(copy.text.formBatchMissingTitle);
+    if (item.kind === "work_item" && !item.parent_local_key && !item.parent_objective_id)
+      throw Error(copy.text.formBatchTaskObjectiveRequired);
     if (item.parent_local_key && item.parent_objective_id)
       throw Error(copy.text.formBatchMultipleParents);
     criteriaCount += item.initial_criteria?.length || 0;
@@ -85,19 +87,23 @@ export function planEditor({ kind = "work_item", parent, parentTitle, outcomeTit
   function refreshParents() {
     for (const entry of entries) {
       const current = entry.parent.get();
+      const localObjectives = entries.filter((other) => other !== entry && other.kind.get() === "objective")
+        .map((other) => [`local:${other.key}`, other.title.get() || copy.text.objective]);
+      const objectiveParents = [
+        ...(parent ? [["existing", parentLabel]] : []),
+        ...localObjectives,
+      ];
+      const choices = entry.kind.get() === "objective"
+        ? [["outcome", copy.text.formDirectOutcome], ...objectiveParents]
+        : objectiveParents;
       entry.parent.input.replaceChildren(
-        ...[
-          ["outcome", copy.text.formDirectOutcome],
-          ...(parent ? [["existing", parentLabel]] : []),
-          ...entries.filter((other) => other !== entry && other.kind.get() === "objective")
-            .map((other) => [`local:${other.key}`, other.title.get() || copy.text.objective]),
-        ].map(([value, label]) => Object.assign(el("option", label), { value })),
+        ...choices.map(([value, label]) => Object.assign(el("option", label), { value })),
       );
       // Keep invalidated local selections visible so changing a parent type
       // cannot silently reparent an existing draft to the Outcome.
       if (current && ![...entry.parent.input.options].some((option) => option.value === current))
         entry.parent.input.append(Object.assign(el("option", copy.text.formBatchInvalidParent), { value: current }));
-      entry.parent.input.value = current || (parent ? "existing" : "outcome");
+      entry.parent.input.value = current || (parent ? "existing" : entry.kind.get() === "objective" ? "outcome" : "");
       entry.required.node.hidden = entry.kind.get() !== "objective";
     }
     updateSummary();
@@ -105,7 +111,8 @@ export function planEditor({ kind = "work_item", parent, parentTitle, outcomeTit
   function buildPreview() {
     try {
       const titles = (source.get() || "").split(/\r?\n/).map((title) => title.trim()).filter(Boolean);
-      validatePlanItems(titles.map((title, index) => ({ local_key: `item-${index + 1}`, kind, title })));
+      if (!titles.length) throw Error(copy.text.formBatchEmpty);
+      if (titles.length > 50) throw Error(copy.text.formBatchItemLimit);
       entries = [];
       preview.replaceChildren();
       for (const [index, text] of titles.entries()) {
@@ -115,7 +122,7 @@ export function planEditor({ kind = "work_item", parent, parentTitle, outcomeTit
           options: [["objective", copy.text.objective], ["work_item", kindName("work_item")]], value: kind,
         });
         const parentField = inputField(copy.text.formBatchParent, { options: [["outcome", copy.text.formDirectOutcome]] });
-        parentField.input.value = "outcome";
+        parentField.input.value = kind === "objective" && !parent ? "outcome" : "";
         if (parent) {
           parentField.input.append(Object.assign(el("option", parentLabel), { value: "existing" }));
           parentField.input.value = "existing";
@@ -127,7 +134,10 @@ export function planEditor({ kind = "work_item", parent, parentTitle, outcomeTit
         const entry = { key: `item-${index + 1}`, title, kind: type, parent: parentField, required, criteria };
         entries.push(entry);
         row.append(el("legend", String(index + 1)), title.node, type.node, parentField.node, required.node, extra);
-        for (const field of [title, type]) field.input.addEventListener("input", refreshParents);
+        for (const field of [title, type]) {
+          field.input.addEventListener("input", refreshParents);
+          field.input.addEventListener("change", refreshParents);
+        }
         required.input.addEventListener("change", updateSummary);
         preview.append(row);
       }

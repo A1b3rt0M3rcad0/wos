@@ -268,6 +268,11 @@ func validatePlanItems(cmd CreatePlanItemsCommand) ([]int, error) {
 		if item.Kind == domain.EntityKindWorkItem && item.RequiredForOutcome {
 			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "required_for_outcome applies only to Objectives")
 		}
+		if item.Kind == domain.EntityKindWorkItem && item.ParentObjectiveID == nil && item.ParentLocalKey == "" {
+			return nil, domain.NewDetailedError(domain.ErrorCodeInvalidArgument, "every Task in a plan must belong to an Objective", domain.ErrorDetails{
+				ReasonCode: "task_objective_required", FieldPaths: []string{fmt.Sprintf("items[%d].parent_objective_id", i)},
+			})
+		}
 		if item.ParentObjectiveID != nil {
 			if err := item.ParentObjectiveID.Validate(); err != nil {
 				return nil, err
@@ -380,11 +385,10 @@ func (s *Service) CreatePlanItems(ctx context.Context, cc domain.CommandContext,
 				}
 				created = CreatedPlanItem{LocalKey: input.LocalKey, Ref: value.Ref(), Version: value.Version, Criteria: value.Criteria.Items}
 			} else {
-				value, err := domain.NewWorkItem(id, cmd.Scope, input.Title, input.Description, priority, domain.WorkItemLifecycleBacklog, now)
+				value, err := domain.NewWorkItemForObjective(id, cmd.Scope, parent, input.Title, input.Description, priority, domain.WorkItemLifecycleBacklog, now)
 				if err != nil {
 					return zero, 0, err
 				}
-				value.ObjectiveID = parent
 				create := CreateWorkItemCommand{Scope: cmd.Scope, ObjectiveID: parent, InitialCriteria: input.InitialCriteria}
 				if err := s.insertWorkItemCreation(ctx, uow, cc, create, &value, now); err != nil {
 					return zero, 0, err

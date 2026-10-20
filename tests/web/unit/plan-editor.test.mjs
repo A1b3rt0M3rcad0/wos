@@ -12,7 +12,7 @@ test("a mixed new plan keeps explicit Outcome obligations and parents without mu
     task("endpoint", { parent_local_key: "refunds" }),
     objective("refunds"),
     objective("docs", { parent_local_key: "refunds", required_for_outcome: false }),
-    task("release"),
+    task("release", { parent_local_key: "docs" }),
   ];
   for (const item of draft) Object.freeze(item);
   Object.freeze(draft);
@@ -27,6 +27,7 @@ test("a mixed new plan keeps explicit Outcome obligations and parents without mu
 
 test("ambiguous, absent and incompatible local parents cannot enter the preview", () => {
   assert.throws(() => validatePlanItems([task("same"), objective("same")]));
+  assert.throws(() => validatePlanItems([task("orphan")]));
   assert.throws(() => validatePlanItems([task("missing", { parent_local_key: "unknown" })]));
   assert.throws(() => validatePlanItems([task("parent"), task("child", { parent_local_key: "parent" })]));
   assert.throws(() => validatePlanItems([objective("parent"), task("child", {
@@ -50,12 +51,16 @@ test("self cycles and long cycles are rejected while forward parent references r
 
 test("the draft honors the specific endpoint's item and criterion limits", () => {
   assert.throws(() => validatePlanItems([]));
-  assert.doesNotThrow(() => validatePlanItems(Array.from({ length: 50 }, (_, i) => task(`task-${i}`))));
-  assert.throws(() => validatePlanItems(Array.from({ length: 51 }, (_, i) => task(`task-${i}`))));
+  assert.doesNotThrow(() => validatePlanItems([
+    objective("owner"), ...Array.from({ length: 49 }, (_, i) => task(`task-${i}`, { parent_local_key: "owner" })),
+  ]));
+  assert.throws(() => validatePlanItems([
+    objective("owner"), ...Array.from({ length: 50 }, (_, i) => task(`task-${i}`, { parent_local_key: "owner" })),
+  ]));
   const condition = { title: "Expected response", required: true, verification_mode: "evidence_review" };
   assert.doesNotThrow(() => validatePlanItems([objective("a", { initial_criteria: Array(100).fill(condition) })]));
   assert.throws(() => validatePlanItems([
     objective("a", { initial_criteria: Array(100).fill(condition) }),
-    task("b", { initial_criteria: [condition] }),
+    task("b", { parent_local_key: "a", initial_criteria: [condition] }),
   ]));
 });

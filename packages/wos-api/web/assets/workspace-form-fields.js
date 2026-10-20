@@ -109,13 +109,13 @@ export function localDateTime(value) {
 // Its label is presentation; authorization is always revalidated by the command.
 export function placementField({
   scope, request, parent, title, label = copy.text.formCurrentPlacement,
-  outcomeTitle, allowChange = true, onChange,
+  outcomeTitle, allowChange = true, onChange, parentRequired = false,
 }) {
   const node = el("section", undefined, "field-context workspace-placement");
   const context = el("p", undefined, "workspace-placement-summary");
   context.append(el("small", label), el("strong", parent
-    ? title || copy.text.objective : copy.text.formDirectOutcome));
-  if (!parent && outcomeTitle) context.append(el("span", outcomeTitle));
+    ? title || copy.text.objective : parentRequired ? copy.text.formObjectiveRequired : copy.text.formDirectOutcome));
+  if (!parent && outcomeTitle && !parentRequired) context.append(el("span", outcomeTitle));
   node.append(context);
   let picker;
   const selectedParent = () => picker ? picker.get()?.id ?? null : parent ?? null;
@@ -129,7 +129,7 @@ export function placementField({
     }
   });
   observer.observe(node, { childList: true, subtree: true });
-  if (allowChange) node.append(button(copy.text.formChangePlacement, () => {
+  if (allowChange) node.append(button(parentRequired && !parent ? copy.text.formChooseObjective : copy.text.formChangePlacement, () => {
     if (picker) return picker.node.querySelector("input")?.focus();
     picker = referencePicker({
       label: copy.text.formNewPlacement, kinds: ["objective"], scope, request,
@@ -141,7 +141,11 @@ export function placementField({
   }, "quiet"));
   return {
     node,
-    get: selectedParent,
+    get() {
+      const value = selectedParent();
+      if (parentRequired && !value) throw Error(copy.text.formObjectiveRequired);
+      return value;
+    },
     dispose() { observer.disconnect(); picker?.dispose(); },
   };
 }

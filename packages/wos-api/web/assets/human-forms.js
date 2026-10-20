@@ -102,13 +102,13 @@ export function humanForm(
       return value.length ? value : undefined;
     };
   }
-  function placement(key, parent, label) {
+  function placement(key, parent, label, parentRequired = false) {
     const creating = name === "create_objective" || name === "create_work_item";
     const editor = placementField({
       scope, request, parent, label, outcomeTitle,
       title: creating && kind === "objective" ? entity.title
         : workspaceView?.placement?.parent?.title || workspaceView?.placement?.objective?.title,
-      allowChange: mode !== "quick",
+      allowChange: mode !== "quick" || (parentRequired && !parent), parentRequired,
     });
     node.append(editor.node);
     getters[key] = editor.get;
@@ -222,7 +222,7 @@ export function humanForm(
       break;
     case "create_work_item": {
       title(copy.text.taskTitle);
-      placement("objective_id", kind === "objective" ? entity.id : null);
+      placement("objective_id", kind === "objective" ? entity.id : null, undefined, true);
       node.append(el("p", copy.text.formPlannedTask, "status-badge"),
         el("p", copy.text.formPlannedTaskHelp, "field-help"));
       const extra = details(copy.text.formDetails);
@@ -262,7 +262,7 @@ export function humanForm(
     }
     case "create_plan_items": {
       const editor = planEditor({
-        kind: batchKind, parent: kind === "objective" ? entity.id : undefined,
+        kind: kind === "outcome" ? "objective" : batchKind, parent: kind === "objective" ? entity.id : undefined,
         parentTitle: contextTitle || entity.title, outcomeTitle,
       });
       node.append(editor.node);

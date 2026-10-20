@@ -91,12 +91,49 @@ test("Objective obligations and criterion review mode are explicit human default
 test("a full Task form makes availability a separate explicit choice", async ({ page }) => {
   await fixture(page, "create_work_item", { entity: { _kind: "outcome", id: "outcome" } });
   await page.getByLabel("Task title", { exact: true }).fill("Run the installation check");
-  expect(await page.evaluate(() => window.editor.get())).toMatchObject({ lifecycle: "backlog", objective_id: null });
+  await expect(page.getByText("Choose an Objective", { exact: true })).toBeVisible();
+  const missingObjective = await page.evaluate(async () => {
+    try { await window.editor.get(); return "accepted"; } catch (error) { return error.message; }
+  });
+  expect(missingObjective).toContain("Choose an Objective");
+  await expect(page.getByLabel("Task title", { exact: true })).toHaveValue("Run the installation check");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  const placement = page.getByRole("combobox", { name: "New placement", exact: true });
+  await placement.fill("Installation");
+  const objectiveOption = page.getByRole("option").first();
+  await expect(objectiveOption).toContainText("Installation works");
+  await objectiveOption.click();
+  expect(await page.evaluate(() => window.editor.get())).toMatchObject({ lifecycle: "backlog", objective_id: "objective" });
   await page.getByText("Advanced", { exact: true }).click();
   await page.getByLabel("Create as available", { exact: true }).check();
   const payload = await page.evaluate(() => window.editor.get());
   expect(payload.lifecycle).toBe("todo");
   expect(payload.claim_id).toBeUndefined();
+});
+
+test("a batch plan retains its draft when a Task still needs an Objective", async ({ page }) => {
+  await fixture(page, "create_plan_items", {
+    entity: { _kind: "outcome", id: "outcome", title: "Ship a usable release" },
+  });
+  await page.getByLabel("One title per line", { exact: true }).fill("Installation works\nRun the installation check");
+  await page.getByRole("button", { name: "Preview plan", exact: true }).click();
+  const rows = page.locator(".workspace-plan-row");
+  await rows.nth(1).getByLabel("Item type", { exact: true }).selectOption("work_item");
+
+  const invalid = await page.evaluate(async () => {
+    try { await window.editor.get(); return "accepted"; } catch (error) { return error.message; }
+  });
+  expect(invalid).toContain("Every Task needs a parent Objective");
+  await expect(rows.nth(0).getByLabel("Title", { exact: true })).toHaveValue("Installation works");
+  await expect(rows.nth(1).getByLabel("Title", { exact: true })).toHaveValue("Run the installation check");
+
+  await rows.nth(1).getByLabel("Parent Objective", { exact: true }).selectOption("local:item-1");
+  expect(await page.evaluate(() => window.editor.get())).toMatchObject({
+    items: [
+      { local_key: "item-1", kind: "objective", title: "Installation works" },
+      { local_key: "item-2", kind: "work_item", title: "Run the installation check", parent_local_key: "item-1" },
+    ],
+  });
 });
 
 test("replacement setters preserve exact versions and send explicit date, list and parent clears", async ({ page }) => {

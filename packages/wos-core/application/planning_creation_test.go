@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -68,13 +69,14 @@ func TestCreatePlanItemsResolvesForwardParentsAndReplaysSameIdentities(t *testin
 		{LocalKey: "task", Kind: domain.EntityKindWorkItem, Title: "Write example", ParentLocalKey: "child", InitialCriteria: []application.InitialCriterion{initialProof("Example runs")}},
 		{LocalKey: "child", Kind: domain.EntityKindObjective, Title: "Runnable example", ParentLocalKey: "parent", RequiredForOutcome: true},
 		{LocalKey: "parent", Kind: domain.EntityKindObjective, Title: "Installation documentation", RequiredForOutcome: true},
-		{LocalKey: "direct", Kind: domain.EntityKindWorkItem, Title: "Check terminology"},
+		{LocalKey: "direct", Kind: domain.EntityKindWorkItem, Title: "Check terminology", ParentLocalKey: "direct-owner"},
+		{LocalKey: "direct-owner", Kind: domain.EntityKindObjective, Title: "Terminology review"},
 	}}
 	result, err := service.CreatePlanItems(ctx, cc, cmd)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Value.Items[0].LocalKey != "task" || len(result.Value.Refs) != 4 {
+	if result.Value.Items[0].LocalKey != "task" || len(result.Value.Refs) != 5 {
 		t.Fatalf("result=%#v", result.Value)
 	}
 	work, err := service.GetWorkItem(ctx, outcome.Scope(), result.Value.Refs["task"].ID)
@@ -92,7 +94,7 @@ func TestCreatePlanItemsResolvesForwardParentsAndReplaysSameIdentities(t *testin
 		t.Fatalf("child=%#v", child.Value)
 	}
 	direct, err := service.GetWorkItem(ctx, outcome.Scope(), result.Value.Refs["direct"].ID)
-	if err != nil || direct.Value.ObjectiveID != nil {
+	if err != nil || direct.Value.ObjectiveID == nil || *direct.Value.ObjectiveID != result.Value.Refs["direct-owner"].ID {
 		t.Fatalf("direct=%#v err=%v", direct, err)
 	}
 	replay, err := service.CreatePlanItems(ctx, cc, cmd)
@@ -106,8 +108,9 @@ func TestCreatePlanItemsBoundariesAndRollback(t *testing.T) {
 	service, store := newWave09Service(t)
 	outcome := setupActiveOutcome(t, service)
 	items := make([]application.PlanItemInput, 50)
-	for i := range items {
-		items[i] = application.PlanItemInput{LocalKey: fmt.Sprintf("task-%d", i), Kind: domain.EntityKindWorkItem, Title: "Planned work", InitialCriteria: []application.InitialCriterion{initialProof("First condition"), initialProof("Second condition")}}
+	items[0] = application.PlanItemInput{LocalKey: "owner", Kind: domain.EntityKindObjective, Title: "Planned work owner", InitialCriteria: []application.InitialCriterion{initialProof("First condition"), initialProof("Second condition")}}
+	for i := 1; i < len(items); i++ {
+		items[i] = application.PlanItemInput{LocalKey: fmt.Sprintf("task-%d", i), Kind: domain.EntityKindWorkItem, ParentLocalKey: "owner", Title: "Planned work", InitialCriteria: []application.InitialCriterion{initialProof("First condition"), initialProof("Second condition")}}
 	}
 	result, err := service.CreatePlanItems(ctx, planningIntent(t.Name()), application.CreatePlanItemsCommand{Scope: outcome.Scope(), Items: items})
 	if err != nil || len(result.Value.Items) != 50 {
@@ -119,7 +122,11 @@ func TestCreatePlanItemsBoundariesAndRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 	missing := id("0199ed90-0000-7000-8000-999999999999")
-	bad := []application.PlanItemInput{{LocalKey: "written-first", Kind: domain.EntityKindWorkItem, Title: "Must roll back"}, {LocalKey: "bad-last", Kind: domain.EntityKindWorkItem, Title: "Missing parent", ParentObjectiveID: &missing}}
+	bad := []application.PlanItemInput{
+		{LocalKey: "written-first", Kind: domain.EntityKindWorkItem, Title: "Must roll back", ParentLocalKey: "valid-owner"},
+		{LocalKey: "valid-owner", Kind: domain.EntityKindObjective, Title: "Valid owner"},
+		{LocalKey: "bad-last", Kind: domain.EntityKindObjective, Title: "Missing parent", ParentObjectiveID: &missing},
+	}
 	if _, err = service.CreatePlanItems(ctx, planningIntent(t.Name()+"-rollback"), application.CreatePlanItemsCommand{Scope: outcome.Scope(), Items: bad}); err == nil {
 		t.Fatal("expected missing parent rejection")
 	}
@@ -129,7 +136,7 @@ func TestCreatePlanItemsBoundariesAndRollback(t *testing.T) {
 	}
 	for name, mutate := range map[string]func([]application.PlanItemInput) []application.PlanItemInput{
 		"51 items": func(v []application.PlanItemInput) []application.PlanItemInput {
-			return append(v, application.PlanItemInput{LocalKey: "extra", Kind: domain.EntityKindWorkItem, Title: "Extra"})
+			return append(v, application.PlanItemInput{LocalKey: "extra", Kind: domain.EntityKindWorkItem, ParentLocalKey: "owner", Title: "Extra"})
 		},
 		"101 criteria": func(v []application.PlanItemInput) []application.PlanItemInput {
 			v[0].InitialCriteria = append(v[0].InitialCriteria, initialProof("Extra"))
@@ -156,17 +163,46 @@ func TestCreatePlanItemsRejectsInvalidLocalStructure(t *testing.T) {
 	service, _ := newWave09Service(t)
 	outcome := setupActiveOutcome(t, service)
 	for name, items := range map[string][]application.PlanItemInput{
-		"duplicate":        {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A"}, {LocalKey: "a", Kind: domain.EntityKindWorkItem, Title: "B"}},
-		"cycle":            {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A", ParentLocalKey: "b"}, {LocalKey: "b", Kind: domain.EntityKindObjective, Title: "B", ParentLocalKey: "a"}},
-		"missing":          {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A", ParentLocalKey: "absent"}},
-		"Task parent":      {{LocalKey: "a", Kind: domain.EntityKindWorkItem, Title: "A"}, {LocalKey: "b", Kind: domain.EntityKindWorkItem, Title: "B", ParentLocalKey: "a"}},
-		"unsupported kind": {{LocalKey: "a", Kind: domain.EntityKindIssue, Title: "A"}},
+		"duplicate":              {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A"}, {LocalKey: "a", Kind: domain.EntityKindWorkItem, Title: "B"}},
+		"cycle":                  {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A", ParentLocalKey: "b"}, {LocalKey: "b", Kind: domain.EntityKindObjective, Title: "B", ParentLocalKey: "a"}},
+		"missing":                {{LocalKey: "a", Kind: domain.EntityKindObjective, Title: "A", ParentLocalKey: "absent"}},
+		"Task without Objective": {{LocalKey: "a", Kind: domain.EntityKindWorkItem, Title: "A"}},
+		"Task parent":            {{LocalKey: "owner", Kind: domain.EntityKindObjective, Title: "Owner"}, {LocalKey: "a", Kind: domain.EntityKindWorkItem, Title: "A", ParentLocalKey: "owner"}, {LocalKey: "b", Kind: domain.EntityKindWorkItem, Title: "B", ParentLocalKey: "a"}},
+		"unsupported kind":       {{LocalKey: "a", Kind: domain.EntityKindIssue, Title: "A"}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := service.CreatePlanItems(ctx, planningIntent(t.Name()), application.CreatePlanItemsCommand{Scope: outcome.Scope(), Items: items}); err == nil {
 				t.Fatal("invalid local structure accepted")
 			}
 		})
+	}
+}
+
+func TestCreatePlanItemsRejectsTaskWithoutObjectiveWithoutWrites(t *testing.T) {
+	ctx := context.Background()
+	service, store := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	before, err := service.GetOutcomeState(ctx, outcome.Scope())
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := len(store.SnapshotDomainEvents(outcome.Scope()))
+	_, err = service.CreatePlanItems(ctx, planningIntent(t.Name()), application.CreatePlanItemsCommand{
+		Scope: outcome.Scope(), Items: []application.PlanItemInput{{LocalKey: "orphan", Kind: domain.EntityKindWorkItem, Title: "Unplaced Task"}},
+	})
+	if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeInvalidArgument {
+		t.Fatalf("unplaced Task error=%v", err)
+	}
+	var typed *domain.Error
+	if !errors.As(err, &typed) || typed.Details == nil || typed.Details.ReasonCode != "task_objective_required" {
+		t.Fatalf("unplaced Task reason=%+v", typed)
+	}
+	after, err := service.GetOutcomeState(ctx, outcome.Scope())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.OutcomeRevision != before.OutcomeRevision || len(after.WorkItems) != 0 || len(store.SnapshotDomainEvents(outcome.Scope())) != events {
+		t.Fatal("rejected batch changed revision, work or domain events")
 	}
 }
 
@@ -199,7 +235,7 @@ func TestCreatePlanItemsChecksPermissionsForEachKindInsideTransaction(t *testing
 		t.Fatal(err)
 	}
 	cc.IdempotencyKey = t.Name()
-	_, err = service.CreatePlanItems(ctx, cc, application.CreatePlanItemsCommand{Scope: outcome.Value.Scope(), Items: []application.PlanItemInput{{LocalKey: "o", Kind: domain.EntityKindObjective, Title: "Allowed"}, {LocalKey: "t", Kind: domain.EntityKindWorkItem, Title: "Forbidden"}}})
+	_, err = service.CreatePlanItems(ctx, cc, application.CreatePlanItemsCommand{Scope: outcome.Value.Scope(), Items: []application.PlanItemInput{{LocalKey: "o", Kind: domain.EntityKindObjective, Title: "Allowed"}, {LocalKey: "t", Kind: domain.EntityKindWorkItem, Title: "Forbidden", ParentLocalKey: "o"}}})
 	if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeForbidden {
 		t.Fatalf("err=%v", err)
 	}
@@ -241,7 +277,7 @@ func TestPlanningReplayRechecksConstituentPermissions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := application.CreatePlanItemsCommand{Scope: owner.Value.Scope(), Items: []application.PlanItemInput{{LocalKey: "task", Kind: domain.EntityKindWorkItem, Title: "Bounded work"}}}
+	cmd := application.CreatePlanItemsCommand{Scope: owner.Value.Scope(), Items: []application.PlanItemInput{{LocalKey: "objective", Kind: domain.EntityKindObjective, Title: "Bounded work owner"}, {LocalKey: "task", Kind: domain.EntityKindWorkItem, Title: "Bounded work", ParentLocalKey: "objective"}}}
 	cc.IdempotencyKey = t.Name()
 	if _, err := service.CreatePlanItems(ctx, cc, cmd); err != nil {
 		t.Fatal(err)
@@ -282,7 +318,7 @@ func TestSingleAndBatchCreationRejectTerminalObjectiveParents(t *testing.T) {
 	if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeInvalidTransition {
 		t.Fatalf("single parent error=%v", err)
 	}
-	_, err = service.CreatePlanItems(ctx, planningIntent(t.Name()), application.CreatePlanItemsCommand{Scope: outcome.Scope(), Items: []application.PlanItemInput{{LocalKey: "first", Kind: domain.EntityKindWorkItem, Title: "Must roll back"}, {LocalKey: "invalid", Kind: domain.EntityKindObjective, Title: "Invalid child", ParentObjectiveID: &parent.Value.ID}}})
+	_, err = service.CreatePlanItems(ctx, planningIntent(t.Name()), application.CreatePlanItemsCommand{Scope: outcome.Scope(), Items: []application.PlanItemInput{{LocalKey: "first", Kind: domain.EntityKindWorkItem, Title: "Must roll back", ParentObjectiveID: &parent.Value.ID}, {LocalKey: "invalid", Kind: domain.EntityKindObjective, Title: "Invalid child", ParentObjectiveID: &parent.Value.ID}}})
 	if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeInvalidTransition {
 		t.Fatalf("batch parent error=%v", err)
 	}
