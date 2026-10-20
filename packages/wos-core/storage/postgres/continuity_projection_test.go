@@ -45,11 +45,13 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 			_, e = service.ActivateOutcome(ctx, cc, a.ActivateOutcomeCommand{Scope: out.Value.Scope(), ExpectedVersion: 2})
 			must(e)
 			for i := 0; i < 2; i++ {
-				w, e := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), Title: "claimed", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+				w, e := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), Title: "claimed", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog})
 				must(e)
 				_, e = service.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: w.Value.Ref(), ExpectedVersion: 1, Title: "Lease completion contract", Required: true, VerificationMode: d.VerificationModeAttestation})
 				must(e)
-				_, e = service.ClaimWorkItem(ctx, cc, a.ClaimWorkItemCommand{Scope: out.Value.Scope(), WorkItemID: w.Value.ID, ExpectedVersion: 2, TTL: 30 * time.Second})
+				_, e = service.ActivateWorkItem(ctx, cc, a.ActivateWorkItemCommand{Scope: out.Value.Scope(), WorkItemID: w.Value.ID, ExpectedVersion: 2})
+				must(e)
+				_, e = service.ClaimWorkItem(ctx, cc, a.ClaimWorkItemCommand{Scope: out.Value.Scope(), WorkItemID: w.Value.ID, ExpectedVersion: 3, TTL: 30 * time.Second})
 				must(e)
 			}
 			first, e := service.GetContinuitySection(ctx, out.Value.Scope(), "in_progress_work", 1, "")

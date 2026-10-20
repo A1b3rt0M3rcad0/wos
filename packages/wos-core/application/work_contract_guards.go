@@ -198,6 +198,17 @@ func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWor
 		if err != nil {
 			return err
 		}
+		if cmd, ok := command.(SetWorkItemObjectiveCommand); ok {
+			if err := validateStructurePreview(ctx, u, cmd.Scope, w.Ref(), cmd.ExpectedOutcomeRevision); err != nil {
+				return err
+			}
+		}
+		switch name {
+		case "UpdateWorkItem", "SetWorkItemExecutionSpec", "SetWorkItemNotBefore", "SetWorkItemObjective", "AddCriterion", "ReviseCriterion", "RetireCriterion", "AddDependency", "RemoveDependency":
+			if err := w.CheckPlanningEdit(); err != nil {
+				return err
+			}
+		}
 		return check(w)
 	}
 	if wholeOutcome || !objectiveID.IsZero() {

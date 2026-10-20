@@ -11,6 +11,23 @@ received delivery does not grant execution authority, assess a Criterion or
 achieve an Outcome. Signed execution and independent review retain their
 authorized profile and recovery workflows.
 
+## Task planning boundary
+
+Task definition commands require the current lifecycle to be `backlog`:
+`UpdateWorkItem`, execution-spec/schedule/Objective setters, criterion definition
+add/revise/retire, and outgoing dependency add/remove. Otherwise the command returns
+`precondition_failed` with reason `work_item_planning_frozen` (HTTP 409); the
+workspace capability reports the same reason. HTTP resource routes, command routes,
+MCP, CLI and SDK share this Application/domain gate. The rejected command does not
+change entity versions, dependencies or domain events.
+
+Prepare before activation. Atomic creation with initial criteria and `todo` remains
+supported. An explicit eligible `DeferWorkItem` returns To do work to Backlog for
+replanning. Release/Reopen return to To do. Operational assignment, observations,
+Artifacts, Evidence, assessments, incidents and execution retain their existing
+independent permissions, versions and authority requirements. See
+[ADR-041](adr/0041-focused-kanban-modal-and-backlog-planning.md).
+
 ## Read the workspace
 
 Let `O` mean `/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}`.

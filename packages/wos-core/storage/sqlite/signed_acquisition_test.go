@@ -96,7 +96,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			must(uow.Outcomes().Insert(ctx, outcome))
 			works := []d.WorkItem{}
 			for i := 0; i < 4; i++ {
-				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
 				w.ContractsEnabled = true
 				if i == 0 {
@@ -104,6 +104,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					must(e)
 					must(w.AddCriterion(criterion, now))
 				}
+				must(w.Activate(now))
 				must(uow.WorkItems().Insert(ctx, w))
 				works = append(works, w)
 			}

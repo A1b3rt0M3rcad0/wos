@@ -19,6 +19,9 @@ func (o Objective) CheckCriterionDefinitionEdit() error {
 	return nil
 }
 func (w WorkItem) CheckCriterionDefinitionEdit() error {
+	if err := w.CheckPlanningEdit(); err != nil {
+		return err
+	}
 	if err := w.requireUncontracted(); err != nil {
 		return err
 	}

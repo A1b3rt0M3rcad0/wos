@@ -134,7 +134,7 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			}
 			moved := preview(task.Ref(), &second.ID)
 			impact := moved.PlacementPreview
-			if impact.Availability != "available" || !impact.Changed || impact.OldParent.Ref != branch.Ref() || impact.NewParent.Ref != second.Ref() || impact.AffectedTasks != 1 || impact.AffectedObjectives != 0 {
+			if impact.Availability != "blocked" || len(impact.ReasonCodes) != 1 || impact.ReasonCodes[0] != "work_item_planning_frozen" || !impact.Changed || impact.OldParent.Ref != branch.Ref() || impact.NewParent.Ref != second.Ref() || impact.AffectedTasks != 1 || impact.AffectedObjectives != 0 {
 				t.Fatalf("incorrect Task impact: %+v", impact)
 			}
 			assertBlockers := func(value WorkspacePlacementBlocking, want ...d.ID) {
@@ -199,7 +199,7 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 				t.Fatalf("missing destination was presented as valid readiness: %+v", missing)
 			}
 			inExecution := preview(frozen.Ref(), &second.ID).PlacementPreview
-			if inExecution.Availability != "blocked" || inExecution.Error == nil || inExecution.ReasonCodes[0] != "objective_subtree_in_execution" {
+			if inExecution.Availability != "blocked" || inExecution.Error == nil || inExecution.ReasonCodes[0] != "work_item_planning_frozen" {
 				t.Fatalf("executing subtree was not guarded: %+v", inExecution)
 			}
 			unchanged, err := service.GetEntityWorkspaceView(ctx, scope, WorkspaceViewQuery{Subject: WorkspaceSubject{Kind: "entity", Ref: task.Ref()}})

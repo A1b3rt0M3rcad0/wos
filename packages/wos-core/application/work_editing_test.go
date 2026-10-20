@@ -181,10 +181,10 @@ func TestDefinitionSettersDoNotRevokeActiveOrExpiredContracts(t *testing.T) {
 	}
 	cmd := a.SetWorkItemExecutionSpecCommand{Scope: work.Scope, WorkItemID: work.ID, ExpectedVersion: acquired.Value.WorkItem.Version, ExecutionSpec: &d.ExecutionSpec{Instructions: []string{"Changed work"}}}
 	_, err = service.SetWorkItemExecutionSpec(ctx, commandContext(), cmd)
-	requireEditingReason(t, err, d.ErrorCodeWorkAlreadyClaimed, "definition_frozen")
+	requireEditingReason(t, err, d.ErrorCodePreconditionFailed, "work_item_planning_frozen")
 	clock.set(acquired.Value.Contract.ExpiresAt.Add(time.Second))
 	_, err = service.SetWorkItemExecutionSpec(ctx, commandContext(), cmd)
-	requireEditingReason(t, err, d.ErrorCodeContractProtocolRequired, "definition_frozen")
+	requireEditingReason(t, err, d.ErrorCodePreconditionFailed, "work_item_planning_frozen")
 	loaded, err := service.GetWorkItem(ctx, work.Scope, work.ID)
 	if err != nil || loaded.Value.CurrentContractID == nil || *loaded.Value.CurrentContractID != acquired.Value.Contract.ID || loaded.Value.Version != cmd.ExpectedVersion {
 		t.Fatal("definition edit implicitly revoked or reconciled a contract", err)
@@ -257,7 +257,7 @@ func TestStructureMovementRejectsStaleImpactPreviewWithoutChangingSource(t *test
 	outcome := setupActiveOutcome(t, service)
 	first := editingObjective(t, service, outcome.Scope(), "First", nil)
 	second := editingObjective(t, service, outcome.Scope(), "Second", nil)
-	work := createTodoWork(t, service, outcome.Scope(), "Task")
+	work := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "Task"))
 	observed, err := service.GetWorkItem(ctx, work.Scope, work.ID)
 	if err != nil {
 		t.Fatal(err)

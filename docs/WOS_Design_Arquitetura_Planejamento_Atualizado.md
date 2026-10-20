@@ -438,6 +438,16 @@ stateDiagram-v2
 
 Criar uma tarefa não significa disponibilizá-la imediatamente: o default é `backlog`. O consumidor pode criar com lifecycle `todo` quando já tiver decidido ativá-la.
 
+Accepted owner follow-up: [ADR-041](adr/0041-focused-kanban-modal-and-backlog-planning.md)
+restricts Task definition editing to Backlog across all transports. Activation seals
+the current instructions, criteria, outgoing dependencies, priority, schedule and
+Objective placement. Atomic creation with initial criteria and lifecycle `todo`
+remains supported. Explicit Defer returns eligible To do work to planning; release
+and reopen do not. Assignment, Evidence, assessments, incidents and execution keep
+their independent operational rules. This supersedes earlier examples allowing
+late dependency or criterion definition changes during execution.
+
+
 ### 7.2 Estado de apresentação
 
 | Lifecycle | Condição operacional | `display_state` |

@@ -279,7 +279,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 	workBody := []byte(`{
 		"title":"Execute HTTP work",
 		"priority":"normal",
-		"lifecycle":"todo"
+		"lifecycle":"backlog"
 	}`)
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
@@ -324,6 +324,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		t.Fatalf("patched work title = %q", patchedWork.Value.Value.Title)
 	}
 	work = patchedWork.Value.Value
+	activatedWork := doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, workURL+"/actions/activate", []byte(`{}`), map[string]string{"Idempotency-Key": "http-work-activate-0001", "If-Match": patchedWork.Header.Get("ETag")}, http.StatusOK)
 
 	claimResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
@@ -333,7 +334,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		[]byte(`{"lease_ttl_seconds":300}`),
 		map[string]string{
 			"Idempotency-Key": "http-work-claim-0001",
-			"If-Match":        patchedWork.Header.Get("ETag"),
+			"If-Match":        activatedWork.Header.Get("ETag"),
 		},
 		http.StatusOK,
 	)

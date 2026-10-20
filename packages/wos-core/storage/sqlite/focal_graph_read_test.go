@@ -96,7 +96,7 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			u, e := store.Begin(ctx)
 			must(e)
 			defer u.Rollback()
-			work, e := d.NewWorkItem(portID(100), scope, "Focal work", "all fields survive", d.PriorityHigh, d.WorkItemLifecycleTodo, now)
+			work, e := d.NewWorkItem(portID(100), scope, "Focal work", "all fields survive", d.PriorityHigh, d.WorkItemLifecycleBacklog, now)
 			must(e)
 			criterion, e := d.NewSuccessCriterion(portID(101), work.Ref(), "Current attestation", "retain definition", true, d.VerificationModeAttestation)
 			must(e)
@@ -105,9 +105,10 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 				assessment := d.CriterionAssessment{ID: portID(1000 + i), CriterionID: criterion.ID, CriterionRevision: 1, Result: d.AssessmentResultMet, Rationale: "Current proof with superseded history", PrincipalID: cc.PrincipalID, Actor: cc.Actor, AssessedAt: now.Add(time.Duration(i) * time.Nanosecond)}
 				must(work.RecordCriterionAssessment(assessment, false, now))
 			}
+			must(work.Activate(now))
 			must(u.WorkItems().Insert(ctx, work))
 			for i := 0; i < 101; i++ {
-				target, e := d.NewWorkItem(portID(3000+i), scope, "Target", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				target, e := d.NewWorkItem(portID(3000+i), scope, "Target", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
 				must(u.WorkItems().Insert(ctx, target))
 				strength := d.DependencyStrengthAdvisory
@@ -167,7 +168,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			defer u.Rollback()
 			works := []d.WorkItem{}
 			for i := 0; i < 4; i++ {
-				w, e := d.NewWorkItem(portID(100+i), scope, "Node", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				w, e := d.NewWorkItem(portID(100+i), scope, "Node", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
 				must(u.WorkItems().Insert(ctx, w))
 				works = append(works, w)

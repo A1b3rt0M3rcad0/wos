@@ -205,9 +205,12 @@ func (s *Service) insertWorkItemCreation(ctx context.Context, uow ports.UnitOfWo
 		spec := *cmd.ExecutionSpec
 		value.ExecutionSpec = &spec
 	}
+	initialLifecycle := value.Lifecycle
+	value.Lifecycle = domain.WorkItemLifecycleBacklog
 	if err := s.initialCriteria(ctx, uow, cc, value.Ref(), cmd.InitialCriteria, now, value.AddCriterion); err != nil {
 		return err
 	}
+	value.Lifecycle = initialLifecycle
 	return uow.WorkItems().Insert(ctx, *value)
 }
 

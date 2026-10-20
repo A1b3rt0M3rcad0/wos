@@ -70,7 +70,7 @@ func TestHardDependencyControlsReadyWorkAndRemovalRestoresReadiness(t *testing.T
 	service, store := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	target := createTodoWork(t, service, outcome.Scope(), "Target")
-	source := createTodoWork(t, service, outcome.Scope(), "Source")
+	source := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "Source"))
 
 	added, err := service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{
 		Scope:     outcome.Scope(),
@@ -83,6 +83,7 @@ func TestHardDependencyControlsReadyWorkAndRemovalRestoresReadiness(t *testing.T
 		t.Fatal(err)
 	}
 
+	source = activatePlanningWork(t, service, source)
 	ready, err := service.ListReadyWork(ctx, outcome.Scope())
 	if err != nil {
 		t.Fatal(err)
@@ -94,6 +95,7 @@ func TestHardDependencyControlsReadyWorkAndRemovalRestoresReadiness(t *testing.T
 		t.Fatal("source should not be ready while hard dependency is unsatisfied")
 	}
 
+	source = deferPlanningWork(t, service, source)
 	removed, err := service.RemoveDependency(ctx, commandContext(), application.RemoveDependencyCommand{
 		Scope:           outcome.Scope(),
 		RelationID:      added.Value.ID,
@@ -107,6 +109,7 @@ func TestHardDependencyControlsReadyWorkAndRemovalRestoresReadiness(t *testing.T
 		t.Fatalf("relation lifecycle = %q, want removed", removed.Value.Lifecycle)
 	}
 
+	source = activatePlanningWork(t, service, source)
 	ready, err = service.ListReadyWork(ctx, outcome.Scope())
 	if err != nil {
 		t.Fatal(err)
@@ -135,7 +138,7 @@ func TestAdvisoryDependencyDoesNotBlockReadyWork(t *testing.T) {
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	target := createTodoWork(t, service, outcome.Scope(), "Advisory target")
-	source := createTodoWork(t, service, outcome.Scope(), "Advisory source")
+	source := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "Advisory source"))
 
 	if _, err := service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{
 		Scope:     outcome.Scope(),
@@ -146,6 +149,7 @@ func TestAdvisoryDependencyDoesNotBlockReadyWork(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+	source = activatePlanningWork(t, service, source)
 	ready, err := service.ListReadyWork(ctx, outcome.Scope())
 	if err != nil {
 		t.Fatal(err)
@@ -159,9 +163,9 @@ func TestDependencyCycleRejectsIndirectCycle(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
-	a := createTodoWork(t, service, outcome.Scope(), "A")
-	b := createTodoWork(t, service, outcome.Scope(), "B")
-	c := createTodoWork(t, service, outcome.Scope(), "C")
+	a := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "A"))
+	b := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "B"))
+	c := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "C"))
 
 	for _, cmd := range []application.AddDependencyCommand{
 		{Scope: outcome.Scope(), SourceRef: a.Ref(), TargetRef: b.Ref(), Strength: domain.DependencyStrengthHard},
@@ -191,7 +195,7 @@ func TestCancelledTargetDoesNotSatisfyHardDependency(t *testing.T) {
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	target := createTodoWork(t, service, outcome.Scope(), "Cancelled target")
-	source := createTodoWork(t, service, outcome.Scope(), "Blocked source")
+	source := deferPlanningWork(t, service, createTodoWork(t, service, outcome.Scope(), "Blocked source"))
 
 	if _, err := service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{
 		Scope:     outcome.Scope(),
@@ -209,6 +213,7 @@ func TestCancelledTargetDoesNotSatisfyHardDependency(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+	source = activatePlanningWork(t, service, source)
 	ready, err := service.ListReadyWork(ctx, outcome.Scope())
 	if err != nil {
 		t.Fatal(err)
@@ -218,62 +223,51 @@ func TestCancelledTargetDoesNotSatisfyHardDependency(t *testing.T) {
 	}
 }
 
-func TestAddingDependencyToInProgressSourceRequiresReasonAndCompletionGate(t *testing.T) {
+func TestAddingDependencyToInProgressSourceIsRejectedWithoutChangingWork(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	target := createTodoWork(t, service, outcome.Scope(), "Late dependency target")
 	source := createTodoWork(t, service, outcome.Scope(), "Already running source")
-
-	claimed, err := service.ClaimWorkItem(ctx, commandContext(), application.ClaimWorkItemCommand{
-		Scope:           outcome.Scope(),
-		WorkItemID:      source.ID,
-		ExpectedVersion: source.Version,
-		TTL:             domain.DefaultLeaseTTL,
-	})
+	claimed, err := service.ClaimWorkItem(ctx, commandContext(), application.ClaimWorkItemCommand{Scope: source.Scope, WorkItemID: source.ID, ExpectedVersion: source.Version, TTL: domain.DefaultLeaseTTL})
 	if err != nil {
 		t.Fatal(err)
 	}
 	source = claimed.Value
-
-	_, err = service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{
-		Scope:     outcome.Scope(),
-		SourceRef: source.Ref(),
-		TargetRef: target.Ref(),
-		Strength:  domain.DependencyStrengthHard,
-	})
-	if err == nil {
-		t.Fatal("in-progress dependency mutation without reason unexpectedly succeeded")
+	for _, reason := range []string{"", "new prerequisite discovered during execution"} {
+		_, err = service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{Scope: source.Scope, SourceRef: source.Ref(), TargetRef: target.Ref(), Strength: domain.DependencyStrengthHard, Reason: reason})
+		code, _ := domain.ErrorCodeOf(err)
+		if code != domain.ErrorCodePreconditionFailed {
+			t.Fatalf("expected frozen planning, got %v", err)
+		}
 	}
-	code, ok := domain.ErrorCodeOf(err)
-	if !ok || code != domain.ErrorCodeInvalidArgument {
-		t.Fatalf("error code = %q, want invalid_argument: %v", code, err)
+	loaded, err := service.GetWorkItem(ctx, source.Scope, source.ID)
+	if err != nil || loaded.Value.Version != source.Version {
+		t.Fatal("rejected edits changed work", err)
 	}
+	completed, err := service.CompleteWorkItem(ctx, commandContext(), application.CompleteWorkItemCommand{Scope: source.Scope, WorkItemID: source.ID, ExpectedVersion: source.Version, ClaimID: source.CurrentLease.ClaimID, FencingToken: source.CurrentLease.FencingToken, ResultSummary: "Finished the agreed work", Reason: "No late dependency was persisted"})
+	if err != nil || completed.Value.Lifecycle != domain.WorkItemLifecycleDone {
+		t.Fatal("rejected dependency changed completion gates", err)
+	}
+}
 
-	if _, err := service.AddDependency(ctx, commandContext(), application.AddDependencyCommand{
-		Scope:     outcome.Scope(),
-		SourceRef: source.Ref(),
-		TargetRef: target.Ref(),
-		Strength:  domain.DependencyStrengthHard,
-		Reason:    "new prerequisite discovered during execution",
-	}); err != nil {
+func deferPlanningWork(t *testing.T, service *application.Service, value domain.WorkItem) domain.WorkItem {
+	t.Helper()
+	result, err := service.DeferWorkItem(context.Background(), commandContext(), application.DeferWorkItemCommand{Scope: value.Scope, WorkItemID: value.ID, ExpectedVersion: value.Version})
+	if err != nil {
 		t.Fatal(err)
 	}
-
-	_, err = service.CompleteWorkItem(ctx, commandContext(), application.CompleteWorkItemCommand{
-		Scope:           outcome.Scope(),
-		WorkItemID:      source.ID,
-		ExpectedVersion: source.Version,
-		ClaimID:         source.CurrentLease.ClaimID,
-		FencingToken:    source.CurrentLease.FencingToken,
-		ResultSummary:   "source work finished",
-		Reason:          "attempt completion while dependency is unmet",
-	})
-	if err == nil {
-		t.Fatal("completion unexpectedly ignored an unsatisfied hard dependency")
+	return result.Value
+}
+func activatePlanningWork(t *testing.T, service *application.Service, value domain.WorkItem) domain.WorkItem {
+	t.Helper()
+	loaded, err := service.GetWorkItem(context.Background(), value.Scope, value.ID)
+	if err != nil {
+		t.Fatal(err)
 	}
-	code, ok = domain.ErrorCodeOf(err)
-	if !ok || code != domain.ErrorCodePreconditionFailed {
-		t.Fatalf("error code = %q, want precondition_failed: %v", code, err)
+	result, err := service.ActivateWorkItem(context.Background(), commandContext(), application.ActivateWorkItemCommand{Scope: value.Scope, WorkItemID: value.ID, ExpectedVersion: loaded.Value.Version})
+	if err != nil {
+		t.Fatal(err)
 	}
+	return result.Value
 }

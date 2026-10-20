@@ -110,6 +110,9 @@ func (w *WorkItem) UpdateDetails(
 	priority *Priority,
 	now time.Time,
 ) (bool, error) {
+	if err := w.CheckPlanningEdit(); err != nil {
+		return false, err
+	}
 	if err := w.requireUncontracted(); err != nil {
 		return false, err
 	}

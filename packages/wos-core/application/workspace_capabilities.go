@@ -139,9 +139,9 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 	}
 	switch record := selected.(type) {
 	case d.WorkItem:
-		criterionCondition := protectWorkContractMutation(ctx, f.u, record, f.at, false, false)
+		criterionCondition := record.CheckCriterionDefinitionEdit()
 		if criterionCondition == nil {
-			criterionCondition = record.CheckCriterionDefinitionEdit()
+			criterionCondition = protectWorkContractMutation(ctx, f.u, record, f.at, false, false)
 		}
 		priority := 25
 		if !record.Criteria.HasRequiredActive() {
@@ -150,7 +150,10 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if e := add("AddCriterion", "browser_command", priority, criterionCondition); e != nil {
 			return nil, e
 		}
-		condition := validateWorkDefinitionChange(ctx, s, f.u, record, f.at)
+		condition := record.CheckPlanningEdit()
+		if condition == nil {
+			condition = validateWorkDefinitionChange(ctx, s, f.u, record, f.at)
+		}
 		if condition == nil {
 			condition = open()
 		}

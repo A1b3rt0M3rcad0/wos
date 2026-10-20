@@ -7,7 +7,21 @@ import (
 
 // Definition editing never grants execution authority or discards a contract.
 // Application predicates additionally validate the current scoped repositories.
+// CheckPlanningEdit keeps the agreed definition stable outside Backlog.
+// Explicit Defer is the existing, audited route back to planning; release/reopen
+// return to To do and never unlock definition editing.
+func (w WorkItem) CheckPlanningEdit() error {
+	if w.Lifecycle != WorkItemLifecycleBacklog {
+		ref := w.Ref()
+		return NewDetailedError(ErrorCodePreconditionFailed, "Task planning is locked outside Backlog; explicitly defer eligible To do work before replanning", ErrorDetails{ReasonCode: "work_item_planning_frozen", SubjectRef: &ref})
+	}
+	return nil
+}
+
 func (w WorkItem) ValidateDefinitionEdit(now time.Time) error {
+	if err := w.CheckPlanningEdit(); err != nil {
+		return err
+	}
 	if w.isTerminal() {
 		return NewError(ErrorCodeInvalidTransition, "terminal work must be reopened before editing its definition")
 	}
