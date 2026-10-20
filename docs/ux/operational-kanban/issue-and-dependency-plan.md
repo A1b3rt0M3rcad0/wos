@@ -415,6 +415,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 
 **Aceite verificável:** Duplicata aberta/canônica aberta não permite bypass do gate; sem alterações retroativas silenciosas.
 
+**Execução em 2026-10-20:** `ReopenIssue` agora verifica a versão esperada antes da política do owner, lê Issue e Objective no mesmo UoW/lock e impede reabrir uma Issue cujo Objective esteja `achieved`. A falha traz `reason_code=issue_objective_achieved`, referência da Issue e remedy `reopen_objective`; nenhuma versão, revisão, evento ou decisão existente é alterada. Issues de Objectives ainda abertos continuam reabríveis. A validação de cadeia de duplicatas agora detecta ciclos preexistentes com conjunto de visitados, rejeita cadeia faltante/inconsistente e fornece um resolvedor canônico para o gate: somente `resolved` ou `wont_fix` no terminal satisfazem o fechamento; cadeia inválida retorna erro e nunca é tratada como fechada. `wont_fix` continua sendo decisão de triagem, sem atestar critérios.
+
+**Verificação:** testes de aplicação cobrem bloqueio estruturado em Objective alcançado, paridade de expected-version, ausência de mutação em Issue/Objective/revisão/eventos, reabertura válida em Objective aberto, e rejeição de self/missing target sem mutação. Testes do resolvedor cobrem cadeia duplicada cujo terminal está resolvido, terminal aberto, alvo ausente e ciclo persistido. `go test ./packages/wos-core/domain ./packages/wos-core/application -count=1` passou com Go 1.27.2; `gofmt` e `git diff --check` passaram.
+
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
 ### Etapa 18 — Gate backend de Issues

@@ -141,7 +141,64 @@ func (s *Service) MarkIssueWontFix(ctx context.Context, cc domain.CommandContext
 	return s.mutateIssue(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, func(v *domain.Issue) error { return v.MarkWontFix(cmd.ResolutionSummary, s.clock.Now().UTC()) })
 }
 func (s *Service) ReopenIssue(ctx context.Context, cc domain.CommandContext, cmd ReopenIssueCommand) (MutationResult[domain.Issue], error) {
-	return s.mutateIssue(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, func(v *domain.Issue) error { return v.Reopen(s.clock.Now().UTC()) })
+	if err := cc.Validate(); err != nil {
+		return MutationResult[domain.Issue]{}, err
+	}
+	if err := cmd.Scope.Validate(); err != nil {
+		return MutationResult[domain.Issue]{}, err
+	}
+	if err := cmd.IssueID.Validate(); err != nil {
+		return MutationResult[domain.Issue]{}, err
+	}
+	if err := cmd.ExpectedVersion.Validate(); err != nil {
+		return MutationResult[domain.Issue]{}, err
+	}
+	now := s.clock.Now().UTC()
+	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (domain.Issue, domain.OutcomeRevision, error) {
+		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.Issue{}, 0, err
+		}
+		issues, _, err := issueBlockerRepositories(uow)
+		if err != nil {
+			return domain.Issue{}, 0, err
+		}
+		issue, err := issues.Get(ctx, cmd.Scope, cmd.IssueID)
+		if err != nil {
+			return domain.Issue{}, 0, err
+		}
+		if issue.Version != cmd.ExpectedVersion {
+			return domain.Issue{}, 0, domain.NewError(domain.ErrorCodeVersionConflict, "issue expected_version is stale")
+		}
+		reopened := issue
+		if err := reopened.Reopen(now); err != nil {
+			return domain.Issue{}, 0, err
+		}
+		if issue.ObjectiveID != nil {
+			objective, err := uow.Objectives().Get(ctx, cmd.Scope, *issue.ObjectiveID)
+			if err != nil {
+				return domain.Issue{}, 0, err
+			}
+			if objective.Scope != cmd.Scope || objective.ID != *issue.ObjectiveID {
+				return domain.Issue{}, 0, domain.NewError(domain.ErrorCodeInvalidScope, "issue Objective must belong to the command Outcome")
+			}
+			if objective.Lifecycle == domain.ObjectiveLifecycleAchieved {
+				issueRef := issue.Ref()
+				objectiveRef := objective.Ref()
+				return domain.Issue{}, 0, domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "reopen the Objective before reopening its Issue", domain.ErrorDetails{
+					ReasonCode:  "issue_objective_achieved",
+					SubjectRef:  &issueRef,
+					FieldPaths:  []string{"objective_id"},
+					RelatedRefs: []domain.EntityRef{objectiveRef},
+					Remedies:    []domain.ErrorRemedy{{ActionID: "reopen_objective", SubjectRef: &objectiveRef}},
+				})
+			}
+		}
+		if err := issues.Save(ctx, reopened, cmd.ExpectedVersion); err != nil {
+			return domain.Issue{}, 0, err
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		return reopened, revision, err
+	})
 }
 
 func (s *Service) mutateIssue(ctx context.Context, cc domain.CommandContext, command any, scope domain.Scope, id domain.ID, expected domain.Version, mutate func(*domain.Issue) error) (MutationResult[domain.Issue], error) {
@@ -458,21 +515,72 @@ func validateIssueDuplicateChain(ctx context.Context, issues ports.IssueReposito
 	if source == target {
 		return domain.NewError(domain.ErrorCodeIssue, "issue duplicate chain cannot reference itself")
 	}
-	current := target
-	for depth := 0; depth < maxIssueDuplicateDepth; depth++ {
-		v, err := issues.Get(ctx, scope, current)
+	_, err := canonicalIssueDuplicateTarget(ctx, issues, scope, target, &source)
+	return err
+}
+
+// issueDuplicateChainClosed reports whether an Issue is closed for the
+// Objective gate. A duplicate is closed only when its finite, valid chain ends
+// at an Issue resolved or marked wont_fix; the latter is a triage decision, not
+// evidence that any Task or Objective criteria were met.
+func issueDuplicateChainClosed(ctx context.Context, issues ports.IssueRepository, scope domain.Scope, issue domain.Issue) (bool, domain.Issue, error) {
+	switch issue.Lifecycle {
+	case domain.IssueLifecycleResolved, domain.IssueLifecycleWontFix:
+		return true, issue, nil
+	case domain.IssueLifecycleOpen, domain.IssueLifecycleInvestigating:
+		return false, issue, nil
+	case domain.IssueLifecycleDuplicate:
+		if issue.DuplicateOfIssueID == nil {
+			return false, domain.Issue{}, domain.NewError(domain.ErrorCodeIssue, "duplicate issue has no canonical target")
+		}
+		canonical, err := canonicalIssueDuplicateTarget(ctx, issues, scope, *issue.DuplicateOfIssueID, nil)
 		if err != nil {
-			return err
+			return false, domain.Issue{}, err
 		}
-		if v.ID == source {
-			return domain.NewError(domain.ErrorCodeIssue, "issue duplicate chain would create a cycle")
-		}
-		if v.DuplicateOfIssueID == nil {
-			return nil
-		}
-		current = *v.DuplicateOfIssueID
+		return canonical.Lifecycle == domain.IssueLifecycleResolved || canonical.Lifecycle == domain.IssueLifecycleWontFix, canonical, nil
+	default:
+		return false, domain.Issue{}, domain.NewError(domain.ErrorCodeIssue, "issue lifecycle is invalid for the completion gate")
 	}
-	return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "issue duplicate chain validation limit exceeded")
+}
+
+// canonicalIssueDuplicateTarget follows duplicate links to their canonical
+// Issue. A forbidden ID is supplied while assigning a duplicate edge so a
+// chain that reaches its source cannot introduce a cycle. Every read stays
+// within the command scope, and missing or corrupt links fail closed.
+func canonicalIssueDuplicateTarget(ctx context.Context, issues ports.IssueRepository, scope domain.Scope, start domain.ID, forbidden *domain.ID) (domain.Issue, error) {
+	if err := start.Validate(); err != nil {
+		return domain.Issue{}, domain.WrapError(domain.ErrorCodeIssue, "duplicate target id is invalid", err)
+	}
+	seen := make(map[domain.ID]struct{})
+	current := start
+	for depth := 0; depth < maxIssueDuplicateDepth; depth++ {
+		if forbidden != nil && current == *forbidden {
+			return domain.Issue{}, domain.NewError(domain.ErrorCodeIssue, "issue duplicate chain would create a cycle")
+		}
+		if _, exists := seen[current]; exists {
+			return domain.Issue{}, domain.NewError(domain.ErrorCodeIssue, "issue duplicate chain contains a cycle")
+		}
+		seen[current] = struct{}{}
+
+		issue, err := issues.Get(ctx, scope, current)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		if issue.ID != current || issue.Scope != scope {
+			return domain.Issue{}, domain.NewError(domain.ErrorCodeInvalidScope, "issue duplicate target does not match the requested scope and id")
+		}
+		if err := issue.Validate(); err != nil {
+			return domain.Issue{}, domain.WrapError(domain.ErrorCodeIssue, "issue duplicate chain contains an invalid Issue", err)
+		}
+		if issue.DuplicateOfIssueID == nil {
+			return issue, nil
+		}
+		if issue.Lifecycle != domain.IssueLifecycleDuplicate {
+			return domain.Issue{}, domain.NewError(domain.ErrorCodeIssue, "issue duplicate link is inconsistent with its lifecycle")
+		}
+		current = *issue.DuplicateOfIssueID
+	}
+	return domain.Issue{}, domain.NewError(domain.ErrorCodeGraphLimitExceeded, "issue duplicate chain validation limit exceeded")
 }
 func validateBlockerTarget(ctx context.Context, uow ports.UnitOfWork, ref domain.EntityRef) error {
 	switch ref.Kind {
