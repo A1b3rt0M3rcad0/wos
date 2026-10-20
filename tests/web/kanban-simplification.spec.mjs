@@ -58,6 +58,14 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   for(const text of ['Verify criteria','Record details and audit','More actions','Add material']) await expect(inspector.getByText(text,{exact:true})).toHaveCount(0);
   await expect(inspector.locator('[data-operational-group=work] > summary')).toBeVisible();
   const rect=await kanban(page).boundingBox();expect(rect.x).toBeGreaterThanOrEqual(0);expect(rect.y).toBeGreaterThanOrEqual(0);expect(rect.x+rect.width).toBeLessThanOrEqual(viewport.width);expect(rect.y+rect.height).toBeLessThanOrEqual(viewport.height);
+  expect(await inspector.evaluate(panel=>{
+    const bounds=panel.getBoundingClientRect();
+    return [...document.querySelectorAll('.workspace-card-menu > summary')].every(menu=>{
+      const rect=menu.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+      if(x<bounds.left||x>bounds.right||y<bounds.top||y>bounds.bottom||x<0||y<0||x>=innerWidth||y>=innerHeight)return true;
+      return panel.contains(document.elementFromPoint(x,y));
+    });
+  }),'Lane menus must not receive pointer events through the item inspector').toBe(true);
   await capture(page,wos,`kanban-${viewport.width}`);
   await page.keyboard.press('Escape');await page.keyboard.press('Escape');
   await expect(kanban(page)).not.toBeVisible();await expect(page.locator('#area-tabs [data-area=overview]')).toBeVisible();

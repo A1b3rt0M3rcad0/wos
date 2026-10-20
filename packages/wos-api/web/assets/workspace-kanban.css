@@ -50,7 +50,7 @@ html[data-kanban-active="true"] :is(#actions, #outcome-tools, #canvas-context) {
 .workspace-card-menu > div > button { display: block; width: 100%; text-align: left; white-space: normal; }
 .workspace-kanban-column[data-drop-intent] { border-color: var(--wos-copper); }
 .workspace-drop-meaning { position: absolute; inset: 0 0 auto; z-index: 2; margin: 0; pointer-events: none; font-size: 12px; padding: 8px; background: var(--wos-surface); border-left: 2px solid var(--wos-copper); }
-.workspace-kanban-inspection { flex: 0 0 clamp(400px, 26vw, 480px); width: clamp(400px, 26vw, 480px); padding: 14px; border-left: 1px solid var(--wos-border); background: var(--wos-workspace); overflow-y: auto; min-width: 0; }
+.workspace-kanban-inspection { z-index: 3; flex: 0 0 clamp(400px, 26vw, 480px); width: clamp(400px, 26vw, 480px); padding: 14px; border-left: 1px solid var(--wos-border); background: var(--wos-workspace); overflow-y: auto; min-width: 0; }
 .workspace-kanban-inspection > h3 { font-size: 24px; }
 .workspace-next-operation { padding: 12px; margin-block: 12px; border-left: 2px solid var(--wos-copper); background: var(--wos-surface); }
 .workspace-next-operation h4 { margin: 0 0 6px; }
