@@ -67,7 +67,9 @@ fencing token. The previous holder cannot complete with stale authority.
 
 Contract-backed work uses **Continue in authorized host**. Use the supported
 configured external host for acquisition, signed delivery, independent review,
-correction and continuation. The existing handoff shows the exact record/context.
+correction and continuation. The same entry remains visible after acquisition, so delivery/continuation does
+not require discovering a technical record. The existing human-readable
+contract/review component shows the exact record/context.
 The browser does not generate signatures, assume an agent identity or execute work.
 These operations are not advertised as browser-complete when the protocol requires
 an external actor. Legacy recovery actions are unavailable under contract protocols.

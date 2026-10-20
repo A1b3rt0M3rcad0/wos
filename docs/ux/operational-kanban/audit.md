@@ -103,3 +103,24 @@ not attributed to the original baseline. The canonical form now has a bounded
 scrolling body and a separate footer in normal flex flow. The complete operation
 journey asserts that the focused final field ends above the footer at every tested
 viewport. The final-source gallery replaces intermediate captures.
+
+## Acquired-contract continuation
+
+The final source review also found that an in-progress contract-backed Task could
+lack an execution capability in the common action list until review opened.
+Requiring technical-record discovery here would fragment the handoff. A read-only
+**Continue in authorized host** entry now opens the existing human-readable
+contract/review component directly, with its real identity and protocol. It does
+not synthesize a submit/finalize permission or run a host operation. Closing the
+read returns to the focused Task in the same Kanban. A real acquired-contract
+browser scenario asserts the current contract, no browser commands, one dialog,
+no top-level technical JSON record and the contextual return.
+
+The acquired-contract return scenario was expanded to assert the exact spatial
+camera style. At intermediate source `9e7db06`, closing the embedded read changed
+its horizontal translation from `-180.391px` to `-317.45px` in the controlled
+1280×900 fixture. The old detail-close callback was revealing the Task on the
+background map. The embedded-read close now invalidates its pending reads without
+dismissing/revealing the spatial selection; leaving the Kanban restores a freshly
+read origin without optional map expansion. The exact assertion is retained;
+no tolerance, retry or timeout increase masks the regression.

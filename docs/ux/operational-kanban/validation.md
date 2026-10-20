@@ -37,7 +37,7 @@ assumptions in tests; they are not reported as passing final qualification.
 - After the final focused-content and form-scroll corrections, all **29 contextual/operational Kanban cases passed** at `28a1f04` (including HD/QHD/4K/mobile complete operations and 400% native zoom). These cases overlap the full suite and are not added together.
 - JavaScript units: **76 passed**. Both affected Go packages (`application` and `web`) passed; workspace capability/race checks passed. Local default tests explicitly skip tests requiring an actual PostgreSQL service; full CI supplies PostgreSQL and remains the acceptance gate for those checks.
 - The supplied audit skill passed its structure/link validator and **four package tests**.
-- **16 final-source screenshots** have clean runtime-source receipts, binary/source binding, image hashes and asset-file hashes in the [gallery manifest](screenshots/manifest.json). Source `28a1f04` is the final runtime implementation; later documentation commits do not change those assets.
+- **16 final-source screenshots** have clean runtime-source receipts, binary/source binding, image hashes and asset-file hashes in the [gallery manifest](screenshots/manifest.json). Source `ee31cb8` is the final runtime implementation; later documentation commits do not change those assets.
 
 [Structured browser results](test-results.json) · [Gallery](screenshots/README.md) · [Live GitHub checks](https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks).
 

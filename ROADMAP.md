@@ -33,7 +33,7 @@ record the findings before product changes.
   in the authorized external host. No runtime or signing authority is added.
 - Separate work, responsibility, authority, impediments, proof, acceptance and history.
   Optional map enrichment cannot block a legitimate Kanban form or recovery.
-- Local verification: 207-case complete browser run, then 29 overlapping final-source
+- Local verification: 207-case complete browser run, then 30 overlapping final-source
   contextual/operational cases after focused-content and footer corrections; 76 JS units,
   affected Go packages, workspace race checks and 16 final-source captures. See
   [qualification and live CI](docs/ux/operational-kanban/validation.md). Earlier

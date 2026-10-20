@@ -2497,11 +2497,11 @@
     ]
   },
   "final_focused_browser": {
-    "source": "28a1f04bff67b7875c807d44f1ad24a9b9987421",
+    "source": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
     "stats": {
-      "startTime": "2026-10-20T00:55:18.289Z",
-      "duration": 84177.675,
-      "expected": 29,
+      "startTime": "2026-10-20T01:16:50.417Z",
+      "duration": 77893.111,
+      "expected": 30,
       "skipped": 0,
       "unexpected": 0,
       "flaky": 0
@@ -2847,6 +2847,18 @@
         "title": "related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
         "file": "kanban-operations.spec.mjs",
         "line": 184,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an already acquired contract has a direct readonly continuation without a parallel browser workflow",
+        "file": "kanban-operations.spec.mjs",
+        "line": 200,
         "status": "expected",
         "results": [
           {
