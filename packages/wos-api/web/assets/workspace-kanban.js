@@ -722,6 +722,7 @@ export function createContextualKanban({
         section.scrollTop = frame.scroll.get(`${frame.content}/${stage}`) || 0;
       }
     }
+    if (!keepColumns) renderColumns();
     for (const card of columns.querySelectorAll('[data-kanban-ref]'))
       card.setAttribute('aria-pressed', String(card.dataset.kanbanRef === (frame.selected && key(frame.selected.subject.ref))));
     if (frame.selected) {
