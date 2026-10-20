@@ -718,10 +718,13 @@ export function createContextualKanban({
       let next = available.find(cap => primaryNames.includes(workspaceCommandName(cap.action_id)));
       if (next?.reason_codes?.some(code => ['missing_required_criterion','required_active_criterion_missing'].includes(code)))
         next = available.find(cap => workspaceCommandName(cap.action_id) === 'add_criterion') || next;
-      if (next) {
+      const continuation = !next && selected.subject.kind === 'entity'
+        && selected.subject.ref.kind === 'work_item' && selected.entity?.contracts_enabled
+        && selected.header.lifecycle === 'in_progress';
+      if (next || continuation) {
         const guide = el('section', undefined, 'workspace-next-operation');
         guide.append(el('h4', 'Next operation'));
-        const signed = next.transport === 'signed_host';
+        const signed = continuation || next.transport === 'signed_host';
         const blocked = !signed && next.availability !== 'available';
         const reviewNeeded = blocked && (next.reason_codes || []).some(reason => /criterion|assessment|proof/.test(reason));
         guide.append(el('p', signed
@@ -732,14 +735,15 @@ export function createContextualKanban({
         const control = button(signed ? 'Continue in authorized host'
           : blocked ? reviewNeeded ? 'Review acceptance criteria' : 'Inspect requirements'
             : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => {
-          if (reviewNeeded) { saveScroll(); frames.push({...makeFrame(selected),mode:'criteria'}); render(); }
+          if (continuation) act(null, null, selected);
+          else if (reviewNeeded) { saveScroll(); frames.push({...makeFrame(selected),mode:'criteria'}); render(); }
           else if (blocked) {
             const target = aside.querySelector('[data-workspace-facet="attention"], [data-workspace-facet="criteria"]');
             if (target) { target.tabIndex = -1; target.focus({preventScroll:true}); target.scrollIntoView({block:'start'}); }
           }
           else act(next.action_id, next, selected);
         }, 'workspace-primary-action');
-        control.dataset.actionId = blocked ? 'inspect_requirements' : workspaceCommandName(next.action_id);
+        control.dataset.actionId = continuation ? 'inspect_execution_handoff' : blocked ? 'inspect_requirements' : workspaceCommandName(next.action_id);
         control.inert = frame.loading;
         guide.append(control); aside.append(guide);
       }

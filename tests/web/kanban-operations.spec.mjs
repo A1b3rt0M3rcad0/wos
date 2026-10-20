@@ -196,3 +196,19 @@ test('related Issues and Blockers remain operable in place and resolution never 
  await expect(modal(page).locator('[data-workspace-facet=attention]')).not.toContainText(/work is blocked/i);
  await action(page,'claim_work_item');const claimed=await save(page,'claim_work_item');expect(claimed.current_lease.principal_id).toBe('owner');
 });
+
+test('an already acquired contract has a direct readonly continuation without a parallel browser workflow',async({page,wos})=>{
+ const {outcome,scope,objective}=await fixture(wos);
+ await wos.command('set_namespace_work_protocol',{scope,expected_protocol_version:1,phase:'draining',reason:'Drain legacy acquisition before contract operation.'});
+ await wos.command('set_namespace_work_protocol',{scope,expected_protocol_version:2,phase:'contracts_v1',writers_drained:true,reason:'Operate the existing contract protocol.'});
+ const task=await wos.command('create_work_item',{scope,title:'Continue acquired external work',priority:'normal',lifecycle:'todo',objective_id:objective.id,execution_spec:{instructions:['Continue only in the authorized host and submit actual material']}});
+ const acquired=await wos.command('acquire_work_contract',{scope,work_item_id:task.id,expected_work_item_version:task.version,ttl_seconds:900});
+ await open(page,wos,outcome,objective.title);await modal(page).getByRole('button',{name:new RegExp(task.title)}).click();
+ const writes=[];page.on('request',r=>{if(r.url().includes('/commands/'))writes.push(r.url());});
+ await modal(page).getByRole('button',{name:'Continue in authorized host',exact:true}).click();
+ await expect(modal(page).locator('.contract-section')).toContainText('Active reservation');
+ await expect(modal(page).locator('.workspace-full-record')).toContainText(acquired.contract.id);
+ await expect(page.locator('dialog[open]')).toHaveCount(1);expect(writes).toEqual([]);
+ const actual=(await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/work-items/${task.id}`)).value;
+ expect(actual.current_contract_id).toBe(acquired.contract.id);expect(actual.lifecycle).toBe('in_progress');expect(actual.current_lease).toBeUndefined();
+});
