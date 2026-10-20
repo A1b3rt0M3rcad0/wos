@@ -833,6 +833,49 @@ func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) 
 	return items, nil
 }
 
+func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, 0, err
+	}
+	if err := scope.Validate(); err != nil {
+		return nil, 0, err
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid Objective ID", err)
+	}
+	if limit < 1 || limit > 101 {
+		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid pending Issue page limit")
+	}
+	if after != "" {
+		if _, err := domain.ParseID(after); err != nil {
+			return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor: invalid Issue key")
+		}
+	}
+
+	items := make([]domain.Issue, 0)
+	total := 0
+	for _, item := range r.tx.issues {
+		if item.Scope != scope || item.ObjectiveID == nil || *item.ObjectiveID != objectiveID {
+			continue
+		}
+		if item.Lifecycle != domain.IssueLifecycleOpen && item.Lifecycle != domain.IssueLifecycleInvestigating {
+			continue
+		}
+		total++
+		if item.ID.String() > after {
+			items = append(items, cloneIssue(item))
+		}
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
+	if len(items) > limit {
+		items = items[:limit]
+	}
+	return items, total, nil
+}
+
 func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -1831,6 +1874,10 @@ func cloneDecision(v domain.Decision) domain.Decision {
 
 func cloneIssue(v domain.Issue) domain.Issue {
 	v.AffectedRefs = append([]domain.EntityRef(nil), v.AffectedRefs...)
+	if v.AssigneeRef != nil {
+		actor := *v.AssigneeRef
+		v.AssigneeRef = &actor
+	}
 	if v.DuplicateOfIssueID != nil {
 		id := *v.DuplicateOfIssueID
 		v.DuplicateOfIssueID = &id

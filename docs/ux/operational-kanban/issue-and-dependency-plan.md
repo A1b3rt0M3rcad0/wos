@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–13 concluídas; etapa 14 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–14 concluídas; etapa 15 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -365,6 +365,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 
 **Aceite verificável:** SQLite/Postgres/memory retornam conjunto idêntico com paginação e isolamento.
 
+**Execução em 2026-10-20:** `IssueRepository` agora expõe `ListPendingIssuesByObjective`, com cursor por ID estável, contagem completa independente do cursor e hidratação de `affected_refs` no mesmo snapshot da unidade de trabalho. A projeção considera `open` e `investigating`, filtra pela propriedade estrutural `objective_id` e usa o índice existente de scope/Objective/lifecycle/ID; não infere owner por `affected_refs`. O campo opcional `assignee_ref` e seu JSON foram conectados ao domínio e aos adapters Memory, SQLite e PostgreSQL, mantendo `reported_by` distinto e imutável. A coluna de armazenamento já havia sido criada de forma aditiva na etapa 10; as operações Assign/Unassign permanecem para a etapa 15.
+
+**Verificação:** teste focal de paginação e isolamento passou em Memory e SQLite; o mesmo contrato passou em PostgreSQL real no banco de integração dedicado. Os casos verificam IDs ordenados, cursor, total completo, exclusão de Issues terminais, filtragem de Objective, hidratação de refs e persistência/hidratação de assignee. `gofmt` e `git diff --check` passaram.
+
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
 ### Etapa 15 — Issue assignment no domínio
@@ -373,7 +377,7 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Dependência:** etapa 14 concluída.  
 **Arquivos envolvidos (existentes, salvo marcados [P]):** `domain/issue.go; domain/issue_assignment_test.go [P]`.
 
-**Trabalho:** Adicionar assignee opcional e operações Assign/Unassign; reported_by imutável; estado investigating sem controle de executor externo.
+**Trabalho:** Adicionar operações Assign/Unassign para o `assignee_ref` já persistido; `reported_by` permanece imutável; estado investigating não cria controle de executor externo.
 
 **Aceite verificável:** Sem criação de lease, concorrência protegida por versão e invariantes validadas.
 

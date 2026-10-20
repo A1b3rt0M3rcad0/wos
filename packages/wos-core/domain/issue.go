@@ -53,6 +53,7 @@ type Issue struct {
 	Lifecycle          IssueLifecycle `json:"lifecycle"`
 	AffectedRefs       []EntityRef    `json:"affected_refs,omitempty"`
 	ReportedBy         ActorRef       `json:"reported_by"`
+	AssigneeRef        *ActorRef      `json:"assignee_ref,omitempty"`
 	ResolutionSummary  string         `json:"resolution_summary,omitempty"`
 	DuplicateOfIssueID *ID            `json:"duplicate_of_issue_id,omitempty"`
 	CreatedAt          time.Time      `json:"created_at"`
@@ -149,6 +150,11 @@ func (i Issue) Validate() error {
 	}
 	if err := i.ReportedBy.Validate(); err != nil {
 		return WrapError(ErrorCodeIssue, "issue reported_by is invalid", err)
+	}
+	if i.AssigneeRef != nil {
+		if err := i.AssigneeRef.Validate(); err != nil {
+			return WrapError(ErrorCodeIssue, "issue assignee_ref is invalid", err)
+		}
 	}
 	seen := make(map[EntityRef]struct{}, len(i.AffectedRefs))
 	for _, ref := range i.AffectedRefs {

@@ -36,6 +36,12 @@ type RelationRepository interface {
 type IssueRepository interface {
 	Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Issue, error)
 	ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Issue, error)
+	// ListPendingIssuesByObjective returns the Objective-owned Issues that are
+	// still open or under investigation. Results are ordered by Issue ID and
+	// continue strictly after the optional ID cursor. total is the complete
+	// pending count, independent of the cursor. Implementations read all page
+	// data and its count from the caller's unit-of-work snapshot.
+	ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error)
 	Insert(ctx context.Context, issue domain.Issue) error
 	Save(ctx context.Context, issue domain.Issue, expected domain.Version) error
 }
