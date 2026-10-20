@@ -14,6 +14,19 @@ This file records the real implementation state of WOS. It must be kept synchron
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
 
+## Contextual workspace Kanban follow-up — 2026-10-20
+
+**In implementation; qualification pending.** The owner approved the
+[workspace-mode plan](docs/ux/operational-kanban/owner-plan-workspace-mode.md) in the
+same draft PR #116. [ADR-040](docs/adr/0040-kanban-workspace-mode-and-prepared-operations.md)
+supersedes the previous modal/in-place-page presentation, preserving all domain
+and strict-completion invariants. Objectives use three typed lanes; Tasks separate
+Backlog and To do, with actual review facts only in Verification. The public stage
+contract remains unchanged. A nonmodal inspector preserves lanes; a single native
+operation dialog reuses existing forms and intent recovery. Accessible card menus
+replace permanent move selects. Final-source browser evidence and A01–A30 results
+remain pending; no merge, release or publication is authorized.
+
 ## Operational Kanban UX audit — 2026-10-20
 
 **Implemented and locally qualified; draft PR #116 remains unmerged.** The owner requests a hybrid

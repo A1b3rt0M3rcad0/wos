@@ -44,3 +44,5 @@ The original specification proposed numbers, not immutable file identities. Acce
 - [ADR-038 — Operational workspace projections and contextual writes](0038-operational-workspace.md)
 
 - [ADR-039 — Contextual Kanbans and opt-in strict completion](0039-contextual-kanbans-and-strict-completion.md)
+
+- [ADR-040 — Kanban workspace mode and prepared operations](0040-kanban-workspace-mode-and-prepared-operations.md)
