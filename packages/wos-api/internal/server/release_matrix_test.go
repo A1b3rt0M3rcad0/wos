@@ -114,7 +114,8 @@ func TestReleaseVerificationModesTransportStorageMatrix(t *testing.T) {
 				}
 				activated := releaseValue[domain.Outcome](c, "activate_outcome", application.ActivateOutcomeCommand{Scope: outcome.Scope(), ExpectedVersion: outcome.Version})
 				outcome = activated
-				work := releaseValue[domain.WorkItem](c, "create_work_item", application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "Explicit work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
+				objective := releaseValue[domain.Objective](c, "create_objective", application.CreateObjectiveCommand{Scope: outcome.Scope(), Title: "Explicit work owner", Priority: domain.PriorityNormal})
+				work := releaseValue[domain.WorkItem](c, "create_work_item", application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: &objective.ID, Title: "Explicit work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
 				claimed := releaseValue[domain.WorkItem](c, "claim_work_item", application.ClaimWorkItemCommand{Scope: outcome.Scope(), WorkItemID: work.ID, ExpectedVersion: work.Version, TTL: time.Minute})
 				_ = releaseValue[domain.WorkItem](c, "complete_work_item", application.CompleteWorkItemCommand{Scope: outcome.Scope(), WorkItemID: work.ID, ExpectedVersion: claimed.Version, ClaimID: claimed.CurrentLease.ClaimID, FencingToken: claimed.CurrentLease.FencingToken, ResultSummary: "Delivered", Reason: "Done"})
 				conclusion := releaseValue[domain.Outcome](c, "achieve_outcome", application.AchieveOutcomeCommand{Scope: outcome.Scope(), ExpectedVersion: outcome.Version, Reason: "All three verification modes satisfied"})

@@ -69,7 +69,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	targetResult, err := service.CreateWorkItem(ctx, sqliteCommandContext(
 		"0199ef01-0000-7000-8000-000000000104", "",
 	), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "target", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "target", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {
@@ -79,7 +79,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	sourceResult, err := service.CreateWorkItem(ctx, sqliteCommandContext(
 		"0199ef01-0000-7000-8000-000000000105", "",
 	), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "source", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "source", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleBacklog, NotBefore: &future,
 	})
 	if err != nil {

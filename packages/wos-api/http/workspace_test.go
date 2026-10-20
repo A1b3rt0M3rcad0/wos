@@ -52,7 +52,11 @@ func TestWorkspaceHTTPMCPAndSDKShareContextNotesAndTypedErrors(t *testing.T) {
 		t.Fatal(err)
 	}
 	scope := created.Value.Scope()
-	work, err := client.CreateWorkItem(ctx, "workspace-parity-work-000001", application.CreateWorkItemCommand{Scope: scope, Title: "Document one observation", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog})
+	objective, err := client.CreateObjective(ctx, "workspace-parity-objective-000001", application.CreateObjectiveCommand{Scope: scope, Title: "Task owner", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work, err := client.CreateWorkItem(ctx, "workspace-parity-work-000001", application.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: "Document one observation", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -45,7 +45,7 @@ func setupActiveOutcome(t *testing.T, service *application.Service) domain.Outco
 func createTodoWork(t *testing.T, service *application.Service, scope domain.Scope, title string) domain.WorkItem {
 	t.Helper()
 	result, err := service.CreateWorkItem(context.Background(), commandContext(), application.CreateWorkItemCommand{
-		Scope:     scope,
+		Scope: scope, ObjectiveID: objectiveForWorkFixture(t, service, scope),
 		Title:     title,
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,

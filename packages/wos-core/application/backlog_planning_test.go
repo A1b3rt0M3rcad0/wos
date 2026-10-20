@@ -11,7 +11,7 @@ func TestActivatedTaskFreezesDefinitionButKeepsProofAndCompletionOperational(t *
 	ctx := context.Background()
 	s, store := newService(t)
 	outcome := setupActiveOutcome(t, s)
-	created, err := s.CreateWorkItem(ctx, commandContext(), a.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "Agreed work", Priority: d.PriorityNormal})
+	created, err := s.CreateWorkItem(ctx, commandContext(), a.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, s, outcome.Scope()), Title: "Agreed work", Priority: d.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

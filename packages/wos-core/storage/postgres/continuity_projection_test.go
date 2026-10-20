@@ -45,7 +45,7 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 			_, e = service.ActivateOutcome(ctx, cc, a.ActivateOutcomeCommand{Scope: out.Value.Scope(), ExpectedVersion: 2})
 			must(e)
 			for i := 0; i < 2; i++ {
-				w, e := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), Title: "claimed", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog})
+				w, e := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, out.Value.Scope()), Title: "claimed", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog})
 				must(e)
 				_, e = service.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: w.Value.Ref(), ExpectedVersion: 1, Title: "Lease completion contract", Required: true, VerificationMode: d.VerificationModeAttestation})
 				must(e)

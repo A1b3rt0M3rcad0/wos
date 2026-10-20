@@ -163,7 +163,7 @@ func TestContextualArtifactAndDecisionUseCanonicalRelations(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newWave09Service(t)
 	owner := documentaryOwner(t, service)
-	work, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Scope(), Title: "Write README", Priority: domain.PriorityNormal})
+	work, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, owner.Scope()), Title: "Write README", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

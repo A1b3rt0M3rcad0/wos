@@ -62,7 +62,7 @@ func TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommi
 	outcome, err := service.CreateOutcome(ctx, command(), CreateOutcomeCommand{NamespaceID: namespace, Title: "Concurrent workspace reads", DesiredState: "A reader keeps a coherent snapshot without holding up writers", Priority: d.PriorityNormal})
 	must(err)
 	scope := outcome.Value.Scope()
-	work, err := service.CreateWorkItem(ctx, command(), CreateWorkItemCommand{Scope: scope, Title: "Before concurrent edit", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog})
+	work, err := service.CreateWorkItem(ctx, command(), CreateWorkItemCommand{Scope: scope, ObjectiveID: objectiveForWorkFixture(t, service, scope), Title: "Before concurrent edit", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog})
 	must(err)
 	frame, handled, err := service.openWorkspaceFrame(ctx, scope)
 	must(err)

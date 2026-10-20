@@ -246,19 +246,16 @@ func TestPlanningReplayRechecksConstituentPermissions(t *testing.T) {
 	if _, err := service.CreatePlanItems(ctx, cc, cmd); err != nil {
 		t.Fatal(err)
 	}
+	objectiveID := objectiveForWorkFixture(t, service, owner.Value.Scope())
 	policy.denied = ports.PermissionWorkWrite
 	if _, err := service.CreatePlanItems(ctx, cc, cmd); err == nil {
 		t.Fatal("replay disclosed work after constituent permission was revoked")
 	}
 	policy.denied = ports.PermissionOutcomeWrite
-	plain, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), Title: "Old creation contract", Priority: domain.PriorityNormal})
-	if err != nil {
-		t.Fatal(err)
+	if _, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), Title: "Old creation contract", Priority: domain.PriorityNormal}); err == nil {
+		t.Fatal("CreateWorkItem accepted a missing Objective")
 	}
-	if plain.Value.Lifecycle != domain.WorkItemLifecycleBacklog {
-		t.Fatal("legacy creation default changed")
-	}
-	_, err = service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), Title: "Creation with criterion", Priority: domain.PriorityNormal, InitialCriteria: []application.InitialCriterion{initialProof("Verified")}})
+	_, err = service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), ObjectiveID: objectiveID, Title: "Creation with criterion", Priority: domain.PriorityNormal, InitialCriteria: []application.InitialCriterion{initialProof("Verified")}})
 	if err == nil {
 		t.Fatal("initial criteria bypassed outcome:write")
 	}
@@ -295,6 +292,29 @@ func TestSingleAndBatchCreationRejectTerminalObjectiveParents(t *testing.T) {
 	}
 	if len(before.Objectives) != len(after.Objectives) || len(before.WorkItems) != len(after.WorkItems) || eventCount != len(store.SnapshotDomainEvents(outcome.Scope())) || before.OutcomeRevision != after.OutcomeRevision {
 		t.Fatal("terminal parent creation persisted partial state")
+	}
+}
+
+func TestCreateWorkItemWithoutObjectiveDoesNotMutateOutcome(t *testing.T) {
+	ctx := context.Background()
+	service, store := newWave09Service(t)
+	outcome := setupActiveOutcome(t, service)
+	before, err := service.GetOutcomeState(ctx, outcome.Scope())
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := len(store.SnapshotDomainEvents(outcome.Scope()))
+	if _, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{
+		Scope: outcome.Scope(), Title: "Orphan Task", Priority: domain.PriorityNormal,
+	}); err == nil {
+		t.Fatal("CreateWorkItem accepted a missing Objective")
+	}
+	after, err := service.GetOutcomeState(ctx, outcome.Scope())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.OutcomeRevision != before.OutcomeRevision || len(after.WorkItems) != len(before.WorkItems) || len(store.SnapshotDomainEvents(outcome.Scope())) != events {
+		t.Fatal("rejected Task creation changed Outcome revision, work or events")
 	}
 }
 

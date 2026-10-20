@@ -270,7 +270,7 @@ func TestStructureMovementRejectsStaleImpactPreviewWithoutChangingSource(t *test
 	_, err = service.SetObjectiveParent(ctx, commandContext(), a.SetObjectiveParentCommand{Scope: first.Scope, ObjectiveID: first.ID, ExpectedVersion: first.Version, ExpectedOutcomeRevision: &observed.OutcomeRevision, ParentObjectiveID: &second.ID})
 	requireEditingReason(t, err, d.ErrorCodePreconditionFailed, "structure_preview_changed")
 	loaded, err := service.GetWorkItem(ctx, work.Scope, work.ID)
-	if err != nil || loaded.Value.Version != work.Version || loaded.Value.ObjectiveID != nil {
+	if err != nil || loaded.Value.Version != work.Version || loaded.Value.ObjectiveID == nil || *loaded.Value.ObjectiveID != *work.ObjectiveID {
 		t.Fatal("stale preview changed Task placement", err)
 	}
 }

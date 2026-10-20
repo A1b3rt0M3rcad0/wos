@@ -53,7 +53,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 		must(store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}))
 		_, e = seed.ConfigureTrigger(ctx, cc, a.ConfigureTriggerCommand{Scope: scope, Name: "health signal", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []d.ID{endpoint.ID}, SignalType: "private.body"})
 		must(e)
-		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "private documentary body", Priority: d.PriorityNormal})
+		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: postgresObjectiveForWorkFixture(t, seed, scope), Title: "private documentary body", Priority: d.PriorityNormal})
 		must(e)
 	}
 	q := a.DeliveryHealthQuery{NamespaceID: ns}

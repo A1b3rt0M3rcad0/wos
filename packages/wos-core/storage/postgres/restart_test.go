@@ -346,10 +346,11 @@ func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	cmd := application.CreateWorkItemCommand{
-		Scope:     outcomeResult.Value.Scope(),
-		Title:     "Persistent replay",
-		Priority:  domain.PriorityNormal,
-		Lifecycle: domain.WorkItemLifecycleTodo,
+		Scope:       outcomeResult.Value.Scope(),
+		ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcomeResult.Value.Scope()),
+		Title:       "Persistent replay",
+		Priority:    domain.PriorityNormal,
+		Lifecycle:   domain.WorkItemLifecycleTodo,
 	}
 	key := "sqlite-restart-replay-0001"
 	first, err := service.CreateWorkItem(ctx, sqliteCommandContext(

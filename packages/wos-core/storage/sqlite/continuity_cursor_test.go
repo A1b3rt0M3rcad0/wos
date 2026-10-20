@@ -72,7 +72,7 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 	}
 	scope := out.Value.Scope()
 	for i := 0; i < 7; i++ {
-		if _, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "work", Priority: d.PriorityNormal}); e != nil {
+		if _, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, scope), Title: "work", Priority: d.PriorityNormal}); e != nil {
 			t.Fatal(e)
 		}
 	}
@@ -180,7 +180,7 @@ func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
 	if _, e = bounded.GetContinuitySection(ctx, scope, "work_items", 2, future); securityErrorCode(e) != d.ErrorCodeInvalidArgument {
 		t.Fatal("future evaluation time accepted", e)
 	}
-	_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "revision changed", Priority: d.PriorityNormal})
+	_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, scope), Title: "revision changed", Priority: d.PriorityNormal})
 	if e != nil {
 		t.Fatal(e)
 	}

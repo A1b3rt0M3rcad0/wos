@@ -112,15 +112,19 @@ func assertConcurrentOppositeEdges(
 		t.Fatal(err)
 	}
 	outcome = activated.Value
+	objective, err := setup.CreateObjective(ctx, commands.Context(), application.CreateObjectiveCommand{Scope: outcome.Scope(), Title: "Concurrent work owner", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	aResult, err := setup.CreateWorkItem(ctx, commands.Context(), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "A", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog,
+		Scope: outcome.Scope(), ObjectiveID: &objective.Value.ID, Title: "A", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	bResult, err := setup.CreateWorkItem(ctx, commands.Context(), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "B", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog,
+		Scope: outcome.Scope(), ObjectiveID: &objective.Value.ID, Title: "B", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleBacklog,
 	})
 	if err != nil {
 		t.Fatal(err)

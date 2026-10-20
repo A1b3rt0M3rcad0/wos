@@ -24,7 +24,7 @@ func TestIndependentReviewUsesPrincipalRatherThanActorAlias(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	work, err := s.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "Execution", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
+	work, err := s.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), ObjectiveID: objectiveForWorkFixture(t, s, outcome.Value.Scope()), Title: "Execution", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
 	if err != nil {
 		t.Fatal(err)
 	}

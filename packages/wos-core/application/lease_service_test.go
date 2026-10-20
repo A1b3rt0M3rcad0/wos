@@ -50,7 +50,7 @@ func TestLeaseRenewAndReclaimAreAuditedAndFenceStaleClaimant(t *testing.T) {
 	outcome = activated.Value
 
 	createdWork, err := service.CreateWorkItem(ctx, ccOld, application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "leased work", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()), Title: "leased work", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {

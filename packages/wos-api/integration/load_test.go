@@ -108,6 +108,7 @@ func seedDeliveryLoad(t *testing.T, store deliveryFixtureStore, url string, n in
 	}
 	cc := d.CommandContext{PrincipalID: "fixture", Actor: d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "fixture"}}
 	scopes := []d.Scope{}
+	objectiveIDs := []d.ID{}
 	for i := 0; i < 4; i++ {
 		cc.CommandID, _ = ids.NewID()
 		out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: ns, Title: fmt.Sprint("Outcome ", i), DesiredState: "signals delivered", Priority: d.PriorityNormal})
@@ -116,6 +117,12 @@ func seedDeliveryLoad(t *testing.T, store deliveryFixtureStore, url string, n in
 		}
 		scopes = append(scopes, out.Value.Scope())
 		cc.CommandID, _ = ids.NewID()
+		objective, e := service.CreateObjective(ctx, cc, a.CreateObjectiveCommand{Scope: out.Value.Scope(), Title: "Delivery work owner", Priority: d.PriorityNormal})
+		if e != nil {
+			t.Fatal(e)
+		}
+		objectiveIDs = append(objectiveIDs, objective.Value.ID)
+		cc.CommandID, _ = ids.NewID()
 		_, e = service.ConfigureTrigger(ctx, cc, a.ConfigureTriggerCommand{Scope: out.Value.Scope(), Name: "signal", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []d.ID{endpoint.ID}, SignalType: "load.work"})
 		if e != nil {
 			t.Fatal(e)
@@ -123,7 +130,7 @@ func seedDeliveryLoad(t *testing.T, store deliveryFixtureStore, url string, n in
 	}
 	for i := 0; i < n; i++ {
 		cc.CommandID, _ = ids.NewID()
-		_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scopes[i%4], Title: fmt.Sprint("Signal ", i), Priority: d.PriorityNormal})
+		_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scopes[i%4], ObjectiveID: &objectiveIDs[i%4], Title: fmt.Sprint("Signal ", i), Priority: d.PriorityNormal})
 		if e != nil {
 			t.Fatal(e)
 		}

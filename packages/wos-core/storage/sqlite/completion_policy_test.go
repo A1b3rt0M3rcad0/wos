@@ -51,6 +51,10 @@ func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledg
 					assess(obj.Value.Ref(), obj.Value.Version, obj.Value.Criteria.Items[0])
 					owner = obj.Value.Ref()
 					parent = &obj.Value.ID
+				} else {
+					obj, e := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Work ownership", Priority: d.PriorityNormal})
+					must(e)
+					parent = &obj.Value.ID
 				}
 				work, e := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: "Actual remaining work", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog, ObjectiveID: parent})
 				must(e)
@@ -72,8 +76,19 @@ func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledg
 					return e
 				}
 				before := view()
-				if before.ConclusionImpact.CompletionPolicy != d.CompletionPolicyStrictWork || len(before.ConclusionImpact.RequiredOpenWork) != 1 {
+				if before.ConclusionImpact.CompletionPolicy != d.CompletionPolicyStrictWork {
 					t.Fatalf("missing authoritative strict impact: %+v", before.ConclusionImpact)
+				}
+				if kind == d.EntityKindOutcome {
+					if before.ConclusionImpact.OpenObjectives != 1 || before.ConclusionImpact.OpenTasks != 1 || len(before.ConclusionImpact.OpenItems) != 2 {
+						t.Fatalf("strict Outcome impact omitted the Objective-owned Task: %+v", before.ConclusionImpact)
+					}
+					if e = achieve(before, nil, true); e != nil {
+						t.Fatalf("optional Objective-owned work should not become an Outcome obligation: %v", e)
+					}
+					return
+				} else if len(before.ConclusionImpact.RequiredOpenWork) != 1 {
+					t.Fatalf("strict Objective impact omitted its Task: %+v", before.ConclusionImpact)
 				}
 				if e = achieve(before, nil, true); e == nil {
 					t.Fatal("strict completion ignored open work")

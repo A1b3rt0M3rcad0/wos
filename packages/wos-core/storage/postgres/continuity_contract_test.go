@@ -57,7 +57,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 	}
 	outcome := outcomes[0]
 	for i := 0; i < 7; i++ {
-		if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "Work", Priority: domain.PriorityNormal}); err != nil {
+		if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "Work", Priority: domain.PriorityNormal}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -83,7 +83,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 		t.Fatalf("continued %d work items", count)
 	}
 	originalCursor := snap.SectionCursors["work_items"]
-	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "Changed", Priority: domain.PriorityNormal}); err != nil {
+	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "Changed", Priority: domain.PriorityNormal}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = service.GetContinuitySection(ctx, outcome.Scope(), "work_items", 2, originalCursor); err == nil {
@@ -102,8 +102,8 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 		}
 		cursor = page.NextCursor
 	}
-	if events != 9 {
-		t.Fatalf("timeline contains %d facts, want 9", events)
+	if events != 10 {
+		t.Fatalf("timeline contains %d facts, want 10", events)
 	}
 	foreign := domain.Scope{NamespaceID: testID("0199d022-0000-7000-8000-000000000002"), OutcomeID: outcome.ID}
 	if _, err = service.GetContinuitySection(ctx, foreign, "work_items", 2, originalCursor); err == nil {

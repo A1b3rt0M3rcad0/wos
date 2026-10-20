@@ -21,6 +21,7 @@ func TestReferenceHTTPQueryContract(t *testing.T) {
 	base := s.URL + "/api/v1/namespaces/0199ec00-0000-7000-8000-000000000001/outcomes"
 	out := doJSON[application.MutationResult[domain.Outcome]](t, client, http.MethodPost, base, []byte(`{"title":"Reference HTTP","desired_state":"Bounded search","priority":"normal"}`), map[string]string{"Idempotency-Key": "refs-outcome-00001"}, http.StatusCreated).Value.Value
 	path := base + "/" + out.ID.String() + "/references"
+	objective := createHTTPTestObjective(t, client, base+"/"+out.ID.String(), "refs-owner-00001")
 	for _, bad := range []string{"?kind=outcome&limit=0", "?kind=invalid", "?kind=outcome&limit=101", "?kind=outcome&cursor=malformed"} {
 		r := doRequest(t, client, http.MethodGet, path+bad, nil, nil)
 		if r.StatusCode != http.StatusUnprocessableEntity {
@@ -39,14 +40,14 @@ func TestReferenceHTTPQueryContract(t *testing.T) {
 	}
 	// The HTTP adapter preserves the existing domain-error status convention.
 	for i := 0; i < 3; i++ {
-		body, _ := json.Marshal(map[string]any{"command": map[string]any{"scope": out.Scope(), "title": "HTTP duplicate task", "priority": "normal", "lifecycle": "todo"}})
+		body, _ := json.Marshal(map[string]any{"command": map[string]any{"scope": out.Scope(), "objective_id": objective.ID, "title": "HTTP duplicate task", "priority": "normal", "lifecycle": "todo"}})
 		doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, s.URL+"/api/v1/commands/create_work_item", body, map[string]string{"Idempotency-Key": fmt.Sprintf("ref-http-work-%04d", i)}, http.StatusOK)
 	}
 	old := doJSON[application.ReferencePage](t, client, http.MethodGet, path+"?kind=work_item&limit=1", nil, nil, http.StatusOK).Value
 	if old.NextCursor == "" {
 		t.Fatal("missing task cursor")
 	}
-	body, _ := json.Marshal(map[string]any{"command": map[string]any{"scope": out.Scope(), "title": "Change revision", "priority": "normal", "lifecycle": "todo"}})
+	body, _ := json.Marshal(map[string]any{"command": map[string]any{"scope": out.Scope(), "objective_id": objective.ID, "title": "Change revision", "priority": "normal", "lifecycle": "todo"}})
 	doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, s.URL+"/api/v1/commands/create_work_item", body, map[string]string{"Idempotency-Key": "ref-http-work-change"}, http.StatusOK)
 	stale := doRequest(t, client, http.MethodGet, path+"?kind=work_item&cursor="+old.NextCursor, nil, nil)
 	if stale.StatusCode != http.StatusConflict {

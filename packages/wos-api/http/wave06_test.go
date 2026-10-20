@@ -26,6 +26,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 	)
 	outcome := createdOutcome.Value.Value
 	outcomeURL := base + "/" + outcome.ID.String()
+	objective := createHTTPTestObjective(t, client, outcomeURL, "wave06-owner-create-0001")
 
 	criterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t, client, http.MethodPost, outcomeURL+"/criteria",
@@ -52,7 +53,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 	createWork := func(title, key string) decodedResponse[application.MutationResult[domain.WorkItem]] {
 		return doJSON[application.MutationResult[domain.WorkItem]](
 			t, client, http.MethodPost, outcomeURL+"/work-items",
-			[]byte(`{"title":"`+title+`","priority":"normal","lifecycle":"backlog"}`),
+			testWorkItemBody(objective.ID, title, "backlog"),
 			map[string]string{"Idempotency-Key": key},
 			http.StatusCreated,
 		)

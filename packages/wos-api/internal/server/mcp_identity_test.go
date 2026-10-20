@@ -73,7 +73,12 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		args := map[string]any{"idempotency_key": "remote-work-create-00001", "command": map[string]any{"scope": outcome.Value.Scope(), "title": "Agent writes shared work", "priority": "normal", "lifecycle": "todo"}}
+		ownerKey, _ := wossdk.NewIdempotencyKey()
+		objective, err := humanSDK.CreateObjective(ctx, ownerKey, application.CreateObjectiveCommand{Scope: outcome.Value.Scope(), Title: "Agent work owner", Priority: domain.PriorityNormal})
+		if err != nil {
+			t.Fatal(err)
+		}
+		args := map[string]any{"idempotency_key": "remote-work-create-00001", "command": map[string]any{"scope": outcome.Value.Scope(), "objective_id": objective.Value.ID, "title": "Agent writes shared work", "priority": "normal", "lifecycle": "todo"}}
 		created, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_work_item", Arguments: args})
 		if err != nil || created.IsError {
 			t.Fatalf("agent create: %v %+v", err, created)

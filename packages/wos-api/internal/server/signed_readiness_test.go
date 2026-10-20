@@ -74,7 +74,9 @@ func TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory(t *testing.T) {
 			_, e = client.SetNamespaceWorkProtocol(ctx, "readiness-cutover-"+string(phase), a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: d.Version(i + 1), Phase: phase, WritersDrained: phase == d.WorkProtocolContracts || phase == d.WorkProtocolSigned, Reason: "explicit fixture writer drain"})
 			must(e)
 		}
-		work, e := client.CreateWorkItem(ctx, "readiness-work-task", a.CreateWorkItemCommand{Scope: scope, Title: "No emission without signer", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+		objective, e := client.CreateObjective(ctx, "readiness-work-owner", a.CreateObjectiveCommand{Scope: scope, Title: "Readiness work owner", Priority: d.PriorityNormal})
+		must(e)
+		work, e := client.CreateWorkItem(ctx, "readiness-work-task", a.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: "No emission without signer", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 		must(e)
 		endpoint.Close()
 		must(runtime.Close())

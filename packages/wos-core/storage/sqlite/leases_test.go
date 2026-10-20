@@ -72,7 +72,7 @@ func createSQLiteClaimedWork(
 	outcome = activated.Value
 
 	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
+		Scope: outcome.Scope(), ObjectiveID: sqliteObjectiveForWorkFixture(t, service, outcome.Scope()),
 		Title:     "leased work",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,

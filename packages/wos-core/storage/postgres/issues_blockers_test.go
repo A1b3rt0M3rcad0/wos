@@ -51,7 +51,7 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 	}
 	outcome = activated.Value
 	workResult, err := service.CreateWorkItem(ctx, sqliteCommandContext("0199f101-0000-7000-8000-000000000104", ""), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "blocked work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo,
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "blocked work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {
 		t.Fatal(err)

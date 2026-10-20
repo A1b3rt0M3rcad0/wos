@@ -34,7 +34,7 @@ func TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	work, err := trusted.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "Shared work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
+	work, err := trusted.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, trusted, outcome.Value.Scope()), Title: "Shared work", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
 	if err != nil {
 		t.Fatal(err)
 	}

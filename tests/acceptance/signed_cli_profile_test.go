@@ -236,8 +236,10 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	must(e)
 	_, e = operator.ActivateOutcome(ctx, "cli-batch-outcome-active", a.ActivateOutcomeCommand{Scope: batchScope, ExpectedVersion: created.Value.Version + 1})
 	must(e)
+	objective, e := operator.CreateObjective(ctx, "cli-batch-owner-0001", a.CreateObjectiveCommand{Scope: batchScope, Title: "CLI task owner", Priority: d.PriorityNormal})
+	must(e)
 	for i := 0; i < 2; i++ {
-		work, e := operator.CreateWorkItem(ctx, fmt.Sprintf("cli-batch-task-%d", i), a.CreateWorkItemCommand{Scope: batchScope, Title: fmt.Sprintf("bounded CLI task %d", i), Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+		work, e := operator.CreateWorkItem(ctx, fmt.Sprintf("cli-batch-task-%d", i), a.CreateWorkItemCommand{Scope: batchScope, ObjectiveID: &objective.Value.ID, Title: fmt.Sprintf("bounded CLI task %d", i), Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 		must(e)
 		if !work.Value.ContractsEnabled {
 			t.Fatal("new Task in signed Namespace was not contract-enabled")

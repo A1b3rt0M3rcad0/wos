@@ -59,7 +59,7 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc.IdempotencyKey = "outbox-work-create-0001"
-	command := application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "Client chooses execution", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo}
+	command := application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, s, outcome.Value.Scope()), Title: "Client chooses execution", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo}
 	created, err := s.CreateWorkItem(ctx, cc, command)
 	if err != nil {
 		t.Fatal(err)
@@ -192,7 +192,7 @@ func TestDeliveryCrashBudgetRequiresExplicitRedelivery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = s.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: scope, Title: "Signal", Priority: domain.PriorityNormal})
+	_, err = s.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: scope, ObjectiveID: postgresObjectiveForWorkFixture(t, s, scope), Title: "Signal", Priority: domain.PriorityNormal})
 	if err != nil {
 		t.Fatal(err)
 	}

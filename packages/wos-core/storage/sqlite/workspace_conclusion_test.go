@@ -60,6 +60,9 @@ func TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren(t *t
 				must(err)
 				nested, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Nested unfinished child", Priority: d.PriorityNormal, ParentObjectiveID: &child.Value.ID})
 				must(err)
+				if parent == nil {
+					parent = &child.Value.ID
+				}
 				tasks := []d.WorkItem{}
 				for i := 0; i < 23; i++ {
 					placement := parent

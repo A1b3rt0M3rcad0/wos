@@ -129,10 +129,14 @@ func runReadinessScenario(t *testing.T, tx ports.TransactionManager, clock *read
 		t.Fatal(err)
 	}
 	outcome = activated.Value
+	objective, err := service.CreateObjective(ctx, commands.Context(), application.CreateObjectiveCommand{Scope: outcome.Scope(), Title: "Readiness work owner", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	createWork := func(title string, notBefore *time.Time) domain.WorkItem {
 		result, err := service.CreateWorkItem(ctx, commands.Context(), application.CreateWorkItemCommand{
-			Scope:     outcome.Scope(),
+			Scope: outcome.Scope(), ObjectiveID: &objective.Value.ID,
 			Title:     title,
 			Priority:  domain.PriorityNormal,
 			Lifecycle: domain.WorkItemLifecycleBacklog,

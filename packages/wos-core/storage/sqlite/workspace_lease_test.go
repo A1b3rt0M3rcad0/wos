@@ -39,7 +39,7 @@ func TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand(t *te
 			scope := outcome.Value.Scope()
 			_, err = service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: outcome.Value.Version})
 			must(err)
-			work, err := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: "Reserved outside the browser", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+			work, err := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, scope), Title: "Reserved outside the browser", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 			must(err)
 			owner := command()
 			claimed, err := service.ClaimWorkItem(ctx, owner, a.ClaimWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: work.Value.Version, TTL: 5 * time.Minute})

@@ -26,6 +26,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	)
 	outcome := createdOutcome.Value.Value
 	outcomeURL := base + "/" + outcome.ID.String()
+	objective := createHTTPTestObjective(t, client, outcomeURL, "wave07-owner-create-0001")
 
 	criterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t, client, http.MethodPost, outcomeURL+"/criteria",
@@ -48,7 +49,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t, client, http.MethodPost, outcomeURL+"/work-items",
-		[]byte(`{"title":"Coordinated work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Coordinated work", "todo"),
 		map[string]string{"Idempotency-Key": "wave07-work-create-0001"},
 		http.StatusCreated,
 	)
@@ -234,7 +235,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	externalWork := doJSON[application.MutationResult[domain.WorkItem]](
 		t, client, http.MethodPost, outcomeURL+"/work-items",
-		[]byte(`{"title":"External dependency work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "External dependency work", "todo"),
 		map[string]string{"Idempotency-Key": "wave07-external-work-0001"},
 		http.StatusCreated,
 	)

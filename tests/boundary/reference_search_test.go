@@ -203,14 +203,14 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 	if _, e := s.SearchReferences(ctx, domain.Scope{NamespaceID: otherNS, OutcomeID: scope.OutcomeID}, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindEvidence}, Cursor: p.NextCursor}); e == nil {
 		t.Fatal("cross namespace cursor/read accepted")
 	}
-	if _, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, Title: "Revision change", Priority: domain.PriorityNormal}); e != nil {
+	if _, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: "Revision change", Priority: domain.PriorityNormal}); e != nil {
 		t.Fatal(e)
 	}
 	if _, e := s.SearchReferences(ctx, scope, application.ReferenceQuery{Kinds: []domain.EntityKind{domain.EntityKindEvidence}, Cursor: p.NextCursor}); e == nil {
 		t.Fatal("stale revision accepted")
 	}
 	for _, title := range []string{"Écho", "écho", "İnfo", "Info"} {
-		if _, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, Title: title, Priority: domain.PriorityNormal}); e != nil {
+		if _, e := s.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: title, Priority: domain.PriorityNormal}); e != nil {
 			t.Fatal(e)
 		}
 	}

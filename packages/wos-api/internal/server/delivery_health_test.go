@@ -37,11 +37,18 @@ func TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness(t *testing.T) {
 		if e != nil {
 			t.Fatal(e)
 		}
+		cc.CommandID = d.MustParseID("0199d129-0000-7000-8000-000000000004")
+		objective, e := seed.CreateObjective(ctx, cc, a.CreateObjectiveCommand{Scope: out.Value.Scope(), Title: "Health signal owner", Priority: d.PriorityNormal})
+		if e != nil {
+			t.Fatal(e)
+		}
+		cc.CommandID = d.MustParseID("0199d129-0000-7000-8000-000000000005")
 		_, e = seed.ConfigureTrigger(ctx, cc, a.ConfigureTriggerCommand{Scope: out.Value.Scope(), Name: "signal", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []d.ID{endpoint.ID}, SignalType: "test.ready"})
 		if e != nil {
 			t.Fatal(e)
 		}
-		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), Title: "emit signal", Priority: d.PriorityNormal})
+		cc.CommandID = d.MustParseID("0199d129-0000-7000-8000-000000000006")
+		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), ObjectiveID: &objective.Value.ID, Title: "emit signal", Priority: d.PriorityNormal})
 		if e != nil {
 			t.Fatal(e)
 		}

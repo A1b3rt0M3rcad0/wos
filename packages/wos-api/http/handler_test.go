@@ -276,11 +276,7 @@ func TestHumanHTTPVerticalSlice(t *testing.T) {
 		t.Fatalf("objective lifecycle = %q, want in_progress", startedObjective.Value.Value.Lifecycle)
 	}
 
-	workBody := []byte(`{
-		"title":"Execute HTTP work",
-		"priority":"normal",
-		"lifecycle":"backlog"
-	}`)
+	workBody := testWorkItemBody(startedObjective.Value.Value.ID, "Execute HTTP work", "backlog")
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
 		client,

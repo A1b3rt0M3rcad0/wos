@@ -241,7 +241,7 @@ func TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts(t *test
 			// A preview is not an authority token and cannot be silently reused
 			// after another mutation advances the Outcome's coordination state.
 			cc := d.CommandContext{CommandID: id(), PrincipalID: "owner", Actor: d.ActorRef{Kind: d.ActorKindHuman, Provider: "fixture", ID: "owner"}}
-			_, err = service.CreateWorkItem(ctx, cc, CreateWorkItemCommand{Scope: scope, Title: "Concurrent authored work", Priority: d.PriorityNormal})
+			_, err = service.CreateWorkItem(ctx, cc, CreateWorkItemCommand{Scope: scope, ObjectiveID: &second.ID, Title: "Concurrent authored work", Priority: d.PriorityNormal})
 			must(err)
 			cc.CommandID = id()
 			_, err = service.SetWorkItemObjective(ctx, cc, SetWorkItemObjectiveCommand{Scope: scope, WorkItemID: task.ID, ExpectedVersion: task.Version, ExpectedOutcomeRevision: &moved.OutcomeRevision, ObjectiveID: &second.ID})

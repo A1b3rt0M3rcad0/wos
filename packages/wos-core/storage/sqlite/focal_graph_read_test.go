@@ -245,7 +245,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			}
 			first, e := bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1})
 			must(e)
-			_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "Revision change", Priority: d.PriorityNormal})
+			_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, scope), Title: "Revision change", Priority: d.PriorityNormal})
 			must(e)
 			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1, Cursor: first.NextCursor}); securityErrorCode(e) != d.ErrorCodePreconditionFailed {
 				t.Fatal("stale graph cursor was accepted", e)

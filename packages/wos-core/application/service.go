@@ -391,6 +391,9 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
+	if cmd.ObjectiveID == nil {
+		return MutationResult[domain.WorkItem]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
 	if len(cmd.InitialCriteria) > 0 {
 		if err := validateInitialCriteria(cmd.InitialCriteria); err != nil {
 			return MutationResult[domain.WorkItem]{}, err
@@ -404,11 +407,10 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	item, err := domain.NewWorkItem(id, cmd.Scope, cmd.Title, cmd.Description, cmd.Priority, cmd.Lifecycle, now)
+	item, err := domain.NewWorkItemForObjective(id, cmd.Scope, cmd.ObjectiveID, cmd.Title, cmd.Description, cmd.Priority, cmd.Lifecycle, now)
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	item.ObjectiveID = cloneIDPtr(cmd.ObjectiveID)
 	item.NotBefore = cloneTimePtrUTC(cmd.NotBefore)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {

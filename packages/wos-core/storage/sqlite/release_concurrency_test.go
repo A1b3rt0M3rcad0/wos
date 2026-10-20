@@ -116,7 +116,7 @@ func TestReleaseConcurrentActiveSlotsOnSeparateConnections(t *testing.T) {
 func TestReleaseConcurrentIdempotencyOnSeparateConnections(t *testing.T) {
 	ctx := context.Background()
 	a, b, outcome := releaseServices(t)
-	cmd := application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "One intent", Priority: domain.PriorityNormal}
+	cmd := application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: sqliteObjectiveForWorkFixture(t, a, outcome.Scope()), Title: "One intent", Priority: domain.PriorityNormal}
 	key := "release-concurrent-create-0001"
 	run := func(s *application.Service, n int) func() error {
 		return func() error { _, err := s.CreateWorkItem(ctx, releaseCC(n, key), cmd); return err }
@@ -183,7 +183,7 @@ func TestReleaseConcurrentClaimsOnSeparateConnections(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	work, err := a.CreateWorkItem(ctx, releaseCC(52, ""), application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: "One claimant", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
+	work, err := a.CreateWorkItem(ctx, releaseCC(52, ""), application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: sqliteObjectiveForWorkFixture(t, a, outcome.Scope()), Title: "One claimant", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,13 +221,14 @@ func TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a, b, outcome := releaseServices(t)
+	objectiveID := sqliteObjectiveForWorkFixture(t, a, outcome.Scope())
 	done := make(chan error, 1)
 	firstCommitted := make(chan struct{})
 	resume := make(chan struct{})
 	go func() {
 		for i := 0; i < 30; i++ {
 			var err error
-			cmd := application.CreateWorkItemCommand{Scope: outcome.Scope(), Title: fmt.Sprintf("Concurrent work %d", i), Priority: domain.PriorityNormal}
+			cmd := application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: objectiveID, Title: fmt.Sprintf("Concurrent work %d", i), Priority: domain.PriorityNormal}
 			for attempt := 0; attempt < 10; attempt++ {
 				_, err = a.CreateWorkItem(ctx, releaseCC(100+i, fmt.Sprintf("release-snapshot-%04d", i)), cmd)
 				if err == nil {
@@ -260,7 +261,7 @@ func TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites(t *testing.T) {
 	<-firstCommitted
 	first, err := b.GetOutcomeState(ctx, outcome.Scope())
 	close(resume)
-	if err != nil || first.OutcomeRevision != 2 || len(first.WorkItems) != 1 {
+	if err != nil || first.OutcomeRevision != 3 || len(first.WorkItems) != 1 {
 		t.Fatalf("initial snapshot: revision %d work %d error %v", first.OutcomeRevision, len(first.WorkItems), err)
 	}
 	samples := 1
@@ -273,7 +274,7 @@ func TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites(t *testing.T) {
 			}
 		} else {
 			samples++
-			if int(snapshot.OutcomeRevision) != 1+len(snapshot.WorkItems) {
+			if int(snapshot.OutcomeRevision) != 2+len(snapshot.WorkItems) {
 				t.Fatalf("mixed snapshot: revision %d, work %d", snapshot.OutcomeRevision, len(snapshot.WorkItems))
 			}
 		}
@@ -283,7 +284,7 @@ func TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites(t *testing.T) {
 				t.Fatal(err)
 			}
 			last, err := b.GetOutcomeState(ctx, outcome.Scope())
-			if err != nil || len(last.WorkItems) != 30 || last.OutcomeRevision != 31 || samples == 0 {
+			if err != nil || len(last.WorkItems) != 30 || last.OutcomeRevision != 32 || samples == 0 {
 				t.Fatalf("incomplete history: revision %d work %d error %v samples %d", last.OutcomeRevision, len(last.WorkItems), err, samples)
 			}
 			return
