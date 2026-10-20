@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–19 concluídas; etapa 20 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–20 concluídas; etapa 21 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -462,6 +462,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Preservar liberação explícita; Issue resolvida não limpa Blocker; escolha de resultado final sem aceitar critérios automaticamente.
 
 **Aceite verificável:** Regressões de resolução Issue/Blocker passam; rastreabilidade causal intacta.
+
+**Execução em 2026-10-20:** A auditoria confirmou que o fluxo já mantinha as decisões separadas: `ResolveIssue` não altera Blockers; `ResolveIssueAndBlockers` requer confirmação individual, versão esperada e motivo para cada Blocker explicitamente informado; a resolução composta valida que cada Blocker foi causado pela Issue e reverte todos os registros em qualquer conflito. Resultado de triagem continua separado da prova de critérios. Nenhuma alteração de produção foi necessária nesta etapa; foram preservados os contratos existentes.
+
+**Verificação:** passaram os testes direcionados `TestInheritedBlockersControlReadinessAndResolveIndependently`, `TestResolveIssueAndBlockersRollsBackEveryAggregateOnConflict`, `TestResolveIssueAndBlockersRequiresExplicitReleaseAndOnlyResolvesListedBlockers` e `TestObjectiveIssueCompletionDoesNotUseWontFixAsCriterionProof` via Go 1.27.2. Eles verificam bloqueio/readiness após resolver Issue, liberação independente, confirmação explícita, preservação de Blockers não listados, rollback em versão obsoleta e critérios ainda pendentes após `wont_fix`.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
