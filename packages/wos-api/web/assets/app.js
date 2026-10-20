@@ -120,6 +120,9 @@ const canvasInspector = createWorkspaceInspector({
     }
     if (!nextSurface && surface !== "form") {
       state.detailGeneration++;
+      // Closing an embedded read returns to the Kanban item. It must not
+      // dismiss/reveal the spatial selection or pan the background Board.
+      if (surface === 'detail' && contextualKanban.operating && reason !== 'reset') return;
       const selected = state.canvasSelected;
       state.canvasSelected = null;
       if (state.canvasModel)
@@ -156,8 +159,7 @@ const contextualKanban = createContextualKanban({
   query: (subject, options) => workspaceQuery(subject,options),
   onError: report,
   onReturn: async (view) => {
-    if (JSON.stringify(state.workspaceView?.subject) !== JSON.stringify(view.subject))
-      await showEntity(view.subject.ref, {preserveCamera:true,subject:view.subject});
+    await showEntity(view.subject.ref, {preserveCamera:true,subject:view.subject,expandMap:false});
     return $('canvas-details').querySelector('.workspace-kanban-open,.canvas-inspector-detail');
   },
   onAction: async (action, capability, view) => {

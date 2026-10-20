@@ -212,8 +212,10 @@ test('an already acquired contract has a direct readonly continuation without a 
  await expect(page.locator('dialog[open]')).toHaveCount(1);expect(writes).toEqual([]);
  const actual=(await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/work-items/${task.id}`)).value;
  expect(actual.current_contract_id).toBe(acquired.contract.id);expect(actual.lifecycle).toBe('in_progress');expect(actual.current_lease).toBeUndefined();
+ const cameraBeforeClose=await page.locator('.canvas-world').getAttribute('style');
  await modal(page).locator('#close-detail').click();
  await expect(modal(page).locator('.workspace-kanban-operation')).toHaveCount(0);
  await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
+ await expect(page.locator('.canvas-world')).toHaveAttribute('style',cameraBeforeClose);
  await expect(page.locator('dialog[open]')).toHaveCount(1);
 });
