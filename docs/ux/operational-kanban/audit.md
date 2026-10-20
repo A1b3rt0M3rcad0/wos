@@ -94,3 +94,12 @@ The existing automated signed journeys verify protocol semantics; the new comple
 browser work journey uses supported legacy authority and authorized Assessment.
 It does not claim independent signed review happened in the browser. The external
 handoff fixture verifies that no such authority is fabricated.
+
+## Validation-found regression in the intermediate implementation
+
+Visual review of the intermediate `e403c80` completion form found its sticky footer
+covering part of the final authored field. This was introduced during this follow-up,
+not attributed to the original baseline. The canonical form now has a bounded
+scrolling body and a separate footer in normal flex flow. The complete operation
+journey asserts that the focused final field ends above the footer at every tested
+viewport. The final-source gallery replaces intermediate captures.

@@ -16,7 +16,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Operational Kanban UX audit — 2026-10-20
 
-**In progress; draft PR #116 remains unmerged.** The owner requests a hybrid
+**Implemented and locally qualified; draft PR #116 remains unmerged.** The owner requests a hybrid
 UX/domain audit and operational Kanbans using the locally installed
 `laws-of-ux-auditor` and `product-design-and-ux` skills. The
 [audit, baseline evidence and acceptance gates](docs/ux/operational-kanban/audit.md)
@@ -33,8 +33,11 @@ record the findings before product changes.
   in the authorized external host. No runtime or signing authority is added.
 - Separate work, responsibility, authority, impediments, proof, acceptance and history.
   Optional map enrichment cannot block a legitimate Kanban form or recovery.
-- Validation and new captures are pending the complete final-source regression run.
-  Do not treat earlier PR receipts or intermediate passing runs as final qualification.
+- Local verification: 207-case complete browser run, then 29 overlapping final-source
+  contextual/operational cases after focused-content and footer corrections; 76 JS units,
+  affected Go packages, workspace race checks and 16 final-source captures. See
+  [qualification and live CI](docs/ux/operational-kanban/validation.md). Earlier
+  receipts retain their recorded sources; independent/manual acceptance remains separate.
 
 ## Contextual Kanbans and compact inspector — 2026-10-19
 
