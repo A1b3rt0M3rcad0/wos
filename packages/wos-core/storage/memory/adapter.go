@@ -834,6 +834,14 @@ func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) 
 }
 
 func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, false)
+}
+
+func (r issueRepository) ListDuplicateIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, true)
+}
+
+func (r issueRepository) listIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int, duplicateOnly bool) ([]domain.Issue, int, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, 0, err
 	}
@@ -847,7 +855,7 @@ func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope
 		return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid Objective ID", err)
 	}
 	if limit < 1 || limit > 101 {
-		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid pending Issue page limit")
+		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid Objective Issue page limit")
 	}
 	if after != "" {
 		if _, err := domain.ParseID(after); err != nil {
@@ -861,17 +869,28 @@ func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope
 		if item.Scope != scope || item.ObjectiveID == nil || *item.ObjectiveID != objectiveID {
 			continue
 		}
-		if item.Lifecycle != domain.IssueLifecycleOpen && item.Lifecycle != domain.IssueLifecycleInvestigating {
+		matchesLifecycle := item.Lifecycle == domain.IssueLifecycleOpen || item.Lifecycle == domain.IssueLifecycleInvestigating
+		if duplicateOnly {
+			matchesLifecycle = item.Lifecycle == domain.IssueLifecycleDuplicate
+		}
+		if !matchesLifecycle {
 			continue
 		}
 		total++
-		if item.ID.String() > after {
-			items = append(items, cloneIssue(item))
+		if item.ID.String() <= after {
+			continue
 		}
-	}
-	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
-	if len(items) > limit {
-		items = items[:limit]
+		// Keep at most one page detached from the transaction state. The
+		// in-memory adapter has no SQL index, but must not clone all matches.
+		index := sort.Search(len(items), func(index int) bool { return items[index].ID > item.ID })
+		if index >= limit {
+			continue
+		}
+		if len(items) < limit {
+			items = append(items, domain.Issue{})
+		}
+		copy(items[index+1:], items[index:])
+		items[index] = cloneIssue(item)
 	}
 	return items, total, nil
 }

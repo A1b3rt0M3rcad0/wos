@@ -26,6 +26,10 @@ func (r duplicateChainIssues) ListPendingIssuesByObjective(context.Context, doma
 	return nil, 0, nil
 }
 
+func (r duplicateChainIssues) ListDuplicateIssuesByObjective(context.Context, domain.Scope, domain.ID, string, int) ([]domain.Issue, int, error) {
+	return nil, 0, nil
+}
+
 func (r duplicateChainIssues) Insert(context.Context, domain.Issue) error { return nil }
 
 func (r duplicateChainIssues) Save(context.Context, domain.Issue, domain.Version) error { return nil }

@@ -59,6 +59,9 @@ func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfW
 	if err := requireHardDependenciesSatisfied(ctx, u, objective.Ref()); err != nil {
 		return err
 	}
+	if err := requireObjectiveIssuesClosed(ctx, u, objective.Ref()); err != nil {
+		return err
+	}
 	if err := objective.CheckAchievement(); err != nil {
 		return err
 	}

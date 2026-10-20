@@ -42,6 +42,9 @@ type IssueRepository interface {
 	// pending count, independent of the cursor. Implementations read all page
 	// data and its count from the caller's unit-of-work snapshot.
 	ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error)
+	// ListDuplicateIssuesByObjective uses the same stable paging/count snapshot
+	// contract for duplicate Issues, including their canonical target reference.
+	ListDuplicateIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error)
 	Insert(ctx context.Context, issue domain.Issue) error
 	Save(ctx context.Context, issue domain.Issue, expected domain.Version) error
 }

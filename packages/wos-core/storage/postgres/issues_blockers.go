@@ -4,6 +4,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
@@ -157,6 +158,14 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 }
 
 func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, false)
+}
+
+func (r issueRepository) ListDuplicateIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, true)
+}
+
+func (r issueRepository) listIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int, duplicateOnly bool) ([]domain.Issue, int, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return nil, 0, err
 	}
@@ -167,7 +176,7 @@ func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope
 		return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid Objective ID", err)
 	}
 	if limit < 1 || limit > 101 {
-		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid pending Issue page limit")
+		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid Objective Issue page limit")
 	}
 	if after != "" {
 		if _, err := domain.ParseID(after); err != nil {
@@ -175,25 +184,33 @@ func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope
 		}
 	}
 
-	var total int
-	if err := r.uow.tx.QueryRowContext(ctx, `
+	// This private predicate is fixed by the typed repository entry point;
+	// caller input is bound only as SQL parameters. Both branches use the
+	// scope/Objective/lifecycle index and share the bounded page hydration.
+	predicate := "lifecycle IN ('open', 'investigating')"
+	if duplicateOnly {
+		predicate = "lifecycle = 'duplicate'"
+	}
+	countQuery := fmt.Sprintf(`
 SELECT count(*) FROM issues
 WHERE namespace_id = $1 AND outcome_id = $2 AND objective_id = $3
-  AND lifecycle IN ('open', 'investigating')`,
+  AND %s`, predicate)
+	var total int
+	if err := r.uow.tx.QueryRowContext(ctx, countQuery,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), objectiveID.String(),
 	).Scan(&total); err != nil {
-		return nil, 0, mapSQLError("count pending Objective Issues", err)
+		return nil, 0, mapSQLError("count Objective Issues", err)
 	}
 
 	// Fetch the page and its affected references in one bounded query. The
 	// count and rows use the same serializable unit-of-work snapshot.
-	rows, err := r.uow.tx.QueryContext(ctx, `
+	pageQuery := fmt.Sprintf(`
 WITH page AS (
     SELECT id, version, title, description, objective_id, severity, lifecycle,
            reported_by_json, assignee_ref_json, resolution_summary, duplicate_of_issue_id, created_at, updated_at
     FROM issues
     WHERE namespace_id = $1 AND outcome_id = $2 AND objective_id = $3
-      AND lifecycle IN ('open', 'investigating') AND id > $4
+      AND %s AND id > $4
     ORDER BY id
     LIMIT $5
 )
@@ -203,12 +220,13 @@ SELECT p.id, p.version, p.title, p.description, p.objective_id, p.severity, p.li
 FROM page p
 LEFT JOIN issue_affected_refs r
   ON r.namespace_id = $6 AND r.outcome_id = $7 AND r.issue_id = p.id
-ORDER BY p.id, r.affected_kind, r.affected_id`,
+ORDER BY p.id, r.affected_kind, r.affected_id`, predicate)
+	rows, err := r.uow.tx.QueryContext(ctx, pageQuery,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), objectiveID.String(), after, limit,
 		scope.NamespaceID.String(), scope.OutcomeID.String(),
 	)
 	if err != nil {
-		return nil, 0, mapSQLError("list pending Objective Issues", err)
+		return nil, 0, mapSQLError("list Objective Issues", err)
 	}
 	defer rows.Close()
 
@@ -371,7 +389,7 @@ func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected 
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE issues
 SET version = $1, title = $2, description = $3, severity = $4, lifecycle = $5,
-	    assignee_ref_json = $6, resolution_summary = $7, duplicate_of_issue_id = $8, updated_at = $9
+    assignee_ref_json = $6, resolution_summary = $7, duplicate_of_issue_id = $8, updated_at = $9
 WHERE namespace_id = $10 AND outcome_id = $11 AND id = $12 AND version = $13`,
 		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle),
 		assigneeJSON, issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
