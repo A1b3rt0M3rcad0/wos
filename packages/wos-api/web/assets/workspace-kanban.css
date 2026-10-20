@@ -335,3 +335,17 @@ dialog.workspace-kanban[open] {
 .workspace-next-operation h4 { margin: 0 0 8px; }
 .workspace-next-operation p { font-size: 13px; margin: 0 0 8px; }
 .workspace-kanban-controls[hidden], .workspace-kanban-footer[hidden] { display: none; }
+/* The canonical form keeps a real scrolling body and a footer in normal flex
+   flow. A sticky overlay must not cover the final authored field. */
+.workspace-kanban-operation { overflow: hidden; }
+.workspace-kanban-operation #canvas-details { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.workspace-kanban-operation .canvas-inspector-slot {
+  display: flex; flex-direction: column; height: 100%; max-height: 100%; overflow: hidden;
+}
+.workspace-kanban-operation .canvas-inspector-slot[hidden] { display: none; }
+.workspace-kanban-operation .canvas-inspector-slot > .dialog-form {
+  display: flex; flex-direction: column; height: 100%; max-height: 100%; min-height: 0;
+}
+.workspace-kanban-operation :is(.dialog-body, .action-options) { flex: 1; min-height: 0; overflow: auto; }
+.workspace-kanban-operation #command-form > footer { position: static; flex-shrink: 0; }
+.workspace-kanban-operation .canvas-inspector-detail > footer { max-height: 40%; overflow: auto; }

@@ -87,6 +87,9 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
   await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
   await action(page,'complete_work_item');await page.getByLabel('Task result',{exact:true}).fill('The installation guide was exercised and its output is linked.');await page.getByLabel('Reason',{exact:true}).fill('The current required criterion was assessed with actual evidence.');
+  const footerBounds=await page.locator('#command-form > footer').boundingBox();
+  const reasonBounds=await page.getByLabel('Reason',{exact:true}).boundingBox();
+  expect(reasonBounds.y+reasonBounds.height,'The footer must not cover the focused completion field').toBeLessThanOrEqual(footerBounds.y+1);
   await capture(page,`completion-${viewport.width}`);
   const done=await save(page,'complete_work_item');expect(done.lifecycle).toBe('done');expect(done.conclusion).toBeTruthy();
   expect((await wos.api(`${base}/objectives/${objective.id}`)).value.lifecycle).toBe('planned');
