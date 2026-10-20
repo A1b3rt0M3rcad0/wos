@@ -13,11 +13,12 @@ import (
 var continuitySectionsOrdered = []string{"objectives", "work_items", "ready_work", "in_progress_work", "blocked_work", "scheduled_work", "attention_needed_work", "waiting_dependencies_work", "waiting_scope_work", "backlog_work", "done_work", "cancelled_work", "external_references", "external_context", "relations", "blocking_states", "conclusion_contestations", "issues", "blockers", "artifacts", "evidence", "decisions", "evidence_links", "active_roadmaps", "active_plan_references"}
 
 type continuityReadFrame struct {
-	u          ports.UnitOfWork
-	repo       ports.ContinuityReadRepository
-	projection ports.ContinuityProjectionRepository
-	revision   d.OutcomeRevision
-	at         time.Time
+	u               ports.UnitOfWork
+	repo            ports.ContinuityReadRepository
+	projection      ports.ContinuityProjectionRepository
+	revision        d.OutcomeRevision
+	at              time.Time
+	objectiveIssues *objectiveIssueReport
 }
 
 func (s *Service) openContinuityFrame(ctx context.Context, scope d.Scope) (*continuityReadFrame, bool, error) {

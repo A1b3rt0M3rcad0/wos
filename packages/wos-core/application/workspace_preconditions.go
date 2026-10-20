@@ -50,6 +50,10 @@ func (s *Service) checkOutcomeAchievement(ctx context.Context, u ports.UnitOfWor
 	return ids, nil
 }
 func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfWork, objective domain.Objective, principal string, acknowledgements ...[]domain.EntityRef) error {
+	return s.checkObjectiveAchievementWithIssueReport(ctx, u, objective, principal, nil, acknowledgements...)
+}
+
+func (s *Service) checkObjectiveAchievementWithIssueReport(ctx context.Context, u ports.UnitOfWork, objective domain.Objective, principal string, issues *objectiveIssueReport, acknowledgements ...[]domain.EntityRef) error {
 	if err := s.requireIndependentReview(ctx, u, objective.Scope, principal); err != nil {
 		return err
 	}
@@ -59,7 +63,7 @@ func (s *Service) checkObjectiveAchievement(ctx context.Context, u ports.UnitOfW
 	if err := requireHardDependenciesSatisfied(ctx, u, objective.Ref()); err != nil {
 		return err
 	}
-	if err := requireObjectiveIssuesClosed(ctx, u, objective.Ref()); err != nil {
+	if err := requireObjectiveIssuesClosedWithReport(ctx, u, objective.Ref(), issues); err != nil {
 		return err
 	}
 	if err := objective.CheckAchievement(); err != nil {

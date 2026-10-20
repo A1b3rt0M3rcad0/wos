@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–16 concluídas; etapa 17 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–19 concluídas; etapa 20 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -446,6 +446,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Usar mesmo predicate Issue gate em affordance e preview; mostrar count, sample refs, cobertura completa/partial explícita.
 
 **Aceite verificável:** Capability 'Achieve' indisponível em exata paridade com comando; não inventa ausência de Issues com página parcial.
+
+**Execução em 2026-10-20:** O preview de conclusão de Objective agora usa o mesmo avaliador de Issues que alimenta a capability e o comando, no mesmo frame/UoW coerente. A resposta inclui `pending_issues` quando a classificação está completa, `pending_issue_refs` como amostra limitada e a cobertura `conclusion_impact_issues`; total zero é serializado explicitamente, enquanto páginas pendentes incompletas, contagens inconsistentes e cadeias de duplicatas inválidas deixam o total ausente e reportam cobertura parcial. A capability `AchieveObjective` reaproveita a avaliação do preview para não percorrer novamente todas as duplicatas e preserva a precedência do guard de Outcome ativo do comando.
+
+**Verificação:** `go test ./packages/wos-core/domain ./packages/wos-core/application -count=1` passou com Go 1.27.2. Os testes novos validam amostra/contagem, Issues `open`/`investigating`, ownership estrutural, fontes de duplicata e terminal canônico, zero explícito versus classificação desconhecida em JSON, páginas underfilled/inconsistentes, cache de travessia, paridade de motivo/referências entre capability e comando, precedência de Outcome inativo e ausência de mutação. `gofmt` e `git diff --check` passaram. Nenhuma alteração de schema, OpenAPI, HTTP, MCP, SDK ou UI foi incluída; a paridade de transporte continua nas etapas 27–30.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

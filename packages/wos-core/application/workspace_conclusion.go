@@ -46,6 +46,26 @@ func (s *Service) workspaceConclusionImpact(ctx context.Context, f *continuityRe
 			}
 		}
 	}
+	if v.Subject.Ref.Kind == d.EntityKindObjective {
+		report := evaluateObjectiveIssues(ctx, f.u, v.Subject.Ref, limit, true)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		f.objectiveIssues = &report
+		impact.PendingIssueRefs = append([]d.EntityRef(nil), report.pendingRefs...)
+		coverage := WorkspaceCoverage{Status: "partial", ReturnedCount: workspaceCount(len(report.pendingRefs)), Reason: "objective_issue_check_incomplete"}
+		if report.complete {
+			impact.PendingIssues = workspaceCount(report.pendingCount)
+			coverage.TotalCount = workspaceCount(report.pendingCount)
+			coverage.Status = "complete"
+			coverage.Reason = ""
+			if len(report.pendingRefs) < report.pendingCount {
+				coverage.Status = "partial"
+				coverage.Reason = "bounded_pending_issue_sample; inspect owned Issues and their canonical targets"
+			}
+		}
+		v.Coverage["conclusion_impact_issues"] = coverage
+	}
 	v.ConclusionImpact = impact
 	total := facts.OpenObjectives + facts.OpenWorkItems
 	coverage := WorkspaceCoverage{Status: "complete", ReturnedCount: workspaceCount(len(impact.OpenItems)), TotalCount: workspaceCount(total)}

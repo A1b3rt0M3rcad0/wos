@@ -72,7 +72,7 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 	}
 	outHead := summary(outcome.Ref(), outcome.Version, outcome.Title, string(outcome.Lifecycle), outcome.Priority)
 	v := EntityWorkspaceView{Subject: q.Subject, Rules: CanonicalWorkspaceRules(), OutcomeRevision: frame.revision, EvaluatedAt: frame.at, Placement: WorkspacePlacement{Outcome: outHead, Path: []EntitySummary{outHead}}, People: []WorkspacePerson{}, Relationships: WorkspaceRelationships{Items: []WorkspaceRelationship{}, Nodes: []EntitySummary{}}, Capabilities: []WorkspaceCapability{}, Coverage: map[string]WorkspaceCoverage{}}
-	for _, key := range []string{"work", "criteria", "delivery", "attention"} {
+	for _, key := range []string{"work", "criteria", "delivery", "attention", "conclusion_impact_issues"} {
 		v.Coverage[key] = WorkspaceCoverage{Status: "not_applicable"}
 	}
 	v.Coverage["placement_preview"] = WorkspaceCoverage{Status: "not_loaded"}

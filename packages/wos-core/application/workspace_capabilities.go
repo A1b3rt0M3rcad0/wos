@@ -332,9 +332,9 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			return nil, e
 		}
 		if record.Lifecycle == d.ObjectiveLifecyclePlanned || record.Lifecycle == d.ObjectiveLifecycleInProgress {
-			condition := s.checkObjectiveAchievement(ctx, f.u, record, identity.PrincipalID)
+			condition := requireActiveOutcome(ctx, f.u, record.Scope)
 			if condition == nil {
-				condition = open()
+				condition = s.checkObjectiveAchievementWithIssueReport(ctx, f.u, record, identity.PrincipalID, f.objectiveIssues)
 			}
 			if e := add("AchieveObjective", "browser_command", 15, condition); e != nil {
 				return nil, e

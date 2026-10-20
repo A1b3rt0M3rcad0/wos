@@ -103,6 +103,10 @@ type WorkspaceConclusionImpact struct {
 	OpenTasks        int                `json:"open_tasks"`
 	OpenItems        []EntitySummary    `json:"open_items"`
 	Consequences     []string           `json:"consequences"`
+	// Objective-only: nil means classification is incomplete. Coverage describes
+	// whether the bounded source-reference sample includes every pending Issue.
+	PendingIssues    *int          `json:"pending_issues,omitempty"`
+	PendingIssueRefs []d.EntityRef `json:"pending_issue_refs,omitempty"`
 }
 type EntityWorkspaceView struct {
 	Subject         WorkspaceSubject  `json:"subject"`
