@@ -36,8 +36,9 @@ export async function verifySignedPackage(serverBinary, clientBinary, {requireTe
   identity=await api('/security/signing-identity',token);
   await signing({namespace_id:namespace,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:namespace,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
   for(const [index,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:index+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit signed browser fixture drain'});
-  const createdWork=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Executar somente esta obrigação']}});
+  const createdWork=await command('create_work_item',{scope,title:'Tarefa com avaliação independente',priority:'normal',lifecycle:'backlog',execution_spec:{instructions:['Executar somente esta obrigação']}});
   const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:createdWork.id},expected_version:createdWork.version,title:'Original installed-package obligation checked',required:true,verification_mode:'attestation'});
+  await command('activate_work_item',{scope,work_item_id:createdWork.id,expected_version:Number(createdWork.version)+1});
   assert.ok(criterion.id);assert.match(String(criterion.criterion_revision),/^[1-9][0-9]*$/);
   const work=(await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${createdWork.id}`,token)).value;
   const trust=await api(`/namespaces/${namespace}/signed-trust`,token);

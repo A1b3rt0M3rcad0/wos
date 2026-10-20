@@ -58,8 +58,9 @@ export async function verifyCentralAgentWorkflow(binary, {postgresDSN} = {}) {
     identity=await api('/security/signing-identity');
     await signing({namespace_id:ns,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:ns,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
     for(const [i,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:i+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit isolated native acceptance cutover'});
-    const task=await command('create_work_item',{scope,title:'Verify centralized continuation',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Use the CLI without operational file editing.']}});
+    const task=await command('create_work_item',{scope,title:'Verify centralized continuation',priority:'normal',lifecycle:'backlog',execution_spec:{instructions:['Use the CLI without operational file editing.']}});
     const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:task.id},expected_version:task.version,title:'The delivered material was independently checked',required:true,verification_mode:'attestation'});
+    await command('activate_work_item',{scope,work_item_id:task.id,expected_version:Number(task.version)+1});
     const trust=await api(`/namespaces/${ns}/signed-trust`);
     async function provision(name,permissions) {
       const admin=await api('/security/signing-identity');
