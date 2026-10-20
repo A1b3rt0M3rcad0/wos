@@ -65,9 +65,13 @@ define required Objective placement for Tasks, explicit Objective ownership for
 Issues, an Objective achievement gate, and strict separation of Issues,
 Blockers, and `depends_on`. Stage 01 recorded an unchanged baseline with 12
 browser tests passing. Stage 02 records the accepted domain decisions; code and
-database behavior are not yet changed. Stage 03 must inventory migrations,
-generators, and repositories before any schema work. No legacy data mapping may
-be guessed; the contract migration remains gated on a zero-orphan audit and
+database behavior are not yet changed. Stage 03 has inventoried the actual
+migrations, generators, repositories, query surfaces, and transport callers in
+[`hierarchy-schema-inventory.md`](docs/ux/operational-kanban/hierarchy-schema-inventory.md).
+It confirms that 0034 is only the next provisional ordinal, SQLite's Issue
+references need a careful FK-preserving migration, and no Issue CLI exists
+today. Stage 04 is a read-only orphan audit. No legacy data mapping may be
+guessed; the contract migration remains gated on a zero-orphan audit and
 reviewed mappings.
 
 The existing contract still permits direct-Outcome Tasks and Issues without an
