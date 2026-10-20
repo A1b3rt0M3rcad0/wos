@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–12 concluídas e etapa 13 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–13 concluídas; etapa 14 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -347,7 +347,13 @@ Cada etapa é **um único commit**, contendo alteração coesa + testes da mudan
 
 **Aceite verificável:** 0 órfãos por scope antes de contract; mappings auditáveis e nenhum dado sobrescrito incorretamente.
 
+**Execução em 2026-10-20:** a ferramenta existente continua read-only por padrão e agora aceita mapeamento JSON versionado. A prévia valida cada registro sem escrita. A aplicação exige `--apply`, confirmação `--writers-stopped` e recibo novo com permissões privadas; usa transação serializável/`BEGIN IMMEDIATE`, owner explícito, escopo, Objective existente, versão esperada e justificativa por registro. Não infere candidatos, não cria Objectives, não sobrescreve proprietário diferente e falha em lote diante de qualquer conflito. Tasks só podem ser recuperadas se ainda estiverem em Backlog, sem lease/contrato ativo e sem dependência hard do Objective que será seu owner. O replay do mesmo mapeamento é no-op. Mudanças incrementam cada versão, avançam a revisão do Outcome uma vez e registram evento de domínio vinculado ao hash do mapeamento e à identidade ativa do operador. O recibo guarda o mapeamento e o resultado; não contém credenciais.
+
+**Verificação:** auditoria read-only sem alteração, prévia, aplicação, evento e revisão do Outcome, replay, conflito de owner, Task ativa, versão obsoleta e rollback atômico passaram em SQLite; o teste opcional PostgreSQL passou em schema isolado usando transação serializável, inserção de eventos, replay e rejeição de CAS obsoleto. O resultado da auditoria pós-aplicação registra se o checkpoint de órfãos está zerado; isto sozinho ainda não libera a migração contract, que depende das etapas de paridade e validação seguintes.
+
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
+
+O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](issue-ownership-backfill.md).
 
 ### Etapa 14 — Repository parity e índices de Issues
 

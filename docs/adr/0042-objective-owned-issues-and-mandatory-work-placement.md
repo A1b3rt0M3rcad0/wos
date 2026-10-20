@@ -91,11 +91,16 @@ changes.
 ### Storage rollout and compatibility
 
 Schema changes use expand, explicit backfill, validation, and contract stages.
-The audit and backfill are read-only/dry-run by default and identify candidates
+The audit and mapping preview are read-only by default and identify candidates
 without assigning them. Any actual mapping must be explicit, deterministic,
-reviewable, scoped, and recorded. Ambiguous or unmapped legacy records stop the
-contract migration; no migration may guess an Objective from `affected_refs`,
-title, hierarchy proximity, or a sole available Objective.
+reviewable, scoped, and recorded with an active operator, expected version, and
+reason. The maintenance backfill is an offline repair: it increments record
+versions and the Outcome revision, appends a maintenance event, and writes a
+private receipt. It does not dispatch webhook triggers; operators must review
+external systems separately. Replaying the same mapping is a no-op. Ambiguous
+or unmapped legacy records stop the contract migration; no migration may guess
+an Objective from `affected_refs`, title, hierarchy proximity, or a sole
+available Objective.
 
 The final contract can make Task placement and Issue ownership required only
 after all supported storage adapters and persisted data have passed the
