@@ -447,6 +447,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if result, ok := any(value).(issueAssignmentResult); ok {
+		return issueAssignmentEvents(s, commandContext, meta, result, revision)
+	}
 	if activity, ok := any(value).(WorkActivityResult); ok {
 		return workActivityEvents(s, commandContext, meta, activity, revision)
 	}
@@ -568,8 +571,78 @@ func eventsForCommand[T any](
 	return events, nil
 }
 
+func issueAssignmentEvents(
+	s *Service,
+	commandContext domain.CommandContext,
+	meta commandMetadata,
+	result issueAssignmentResult,
+	revision domain.OutcomeRevision,
+) ([]domain.DomainEvent, error) {
+	ref, before, after, noOp, err := commandAggregate(meta, result)
+	if err != nil {
+		return nil, err
+	}
+	if noOp {
+		return nil, nil
+	}
+	if revision == 0 {
+		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "confirmed issue assignment must have an outcome_revision")
+	}
+	eventTypes, err := eventTypesForCommand(meta)
+	if err != nil {
+		return nil, err
+	}
+	payload, err := json.Marshal(struct {
+		PreviousAssigneeRef *domain.ActorRef `json:"previous_assignee_ref"`
+		AssigneeRef         *domain.ActorRef `json:"assignee_ref"`
+		Reason              string           `json:"reason,omitempty"`
+	}{
+		PreviousAssigneeRef: cloneIssueActorRef(result.PreviousAssigneeRef),
+		AssigneeRef:         cloneIssueActorRef(result.AssigneeRef),
+		Reason:              result.Reason,
+	})
+	if err != nil {
+		return nil, domain.WrapError(domain.ErrorCodeInvalidEvent, "issue assignment event payload cannot be encoded", err)
+	}
+	now := s.clock.Now().UTC()
+	events := make([]domain.DomainEvent, 0, len(eventTypes))
+	for index, eventType := range eventTypes {
+		eventID, err := s.ids.NewID()
+		if err != nil {
+			return nil, err
+		}
+		event := domain.DomainEvent{
+			EventID:                eventID,
+			EventType:              eventType,
+			SchemaVersion:          domain.DomainEventSchemaVersion,
+			NamespaceID:            ref.NamespaceID,
+			OutcomeID:              ref.OutcomeID,
+			OutcomeRevision:        revision,
+			EventIndex:             uint32(index),
+			AggregateRef:           ref,
+			AggregateVersionBefore: before,
+			AggregateVersionAfter:  after,
+			PrincipalID:            commandContext.PrincipalID,
+			Actor:                  commandContext.Actor,
+			RecordedAt:             now,
+			CommandID:              commandContext.CommandID,
+			CorrelationID:          commandContext.CorrelationID,
+			CausationID:            cloneIDPointer(commandContext.CausationID),
+			ExecutionContext:       commandContext.Execution,
+			Payload:                payload,
+		}
+		if err := event.Validate(); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	return events, nil
+}
+
 func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *domain.Version, *domain.Version, bool, error) {
 	switch result := any(value).(type) {
+	case issueAssignmentResult:
+		return aggregateVersions(meta, result.Issue.Ref(), result.Issue.Version)
 	case domain.Outcome:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Objective:
@@ -733,6 +806,12 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 	case "UpdateIssue":
 		return []string{"issue.updated"}, nil
 	case "InvestigateIssue":
+		return []string{"issue.investigating"}, nil
+	case "AssignIssue":
+		return []string{"issue.assigned"}, nil
+	case "UnassignIssue":
+		return []string{"issue.unassigned"}, nil
+	case "StartIssueInvestigation":
 		return []string{"issue.investigating"}, nil
 	case "ResolveIssue":
 		return []string{"issue.resolved"}, nil

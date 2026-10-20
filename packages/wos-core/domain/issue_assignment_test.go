@@ -182,3 +182,39 @@ func TestIssueAssignRejectsInvalidActor(t *testing.T) {
 		t.Fatalf("invalid assignment mutated Issue: before=%#v after=%#v", before, issue)
 	}
 }
+
+func TestIssueStartInvestigationWithAssigneeAdvancesOnceAtomically(t *testing.T) {
+	now := time.Date(2026, 10, 20, 17, 0, 0, 0, time.UTC)
+	issue := assignmentIssue(t, now)
+	assignee := assignmentActor("investigator")
+	startedAt := now.Add(time.Minute)
+	if err := issue.StartInvestigationWithAssignee(assignee, startedAt); err != nil {
+		t.Fatal(err)
+	}
+	if issue.Lifecycle != IssueLifecycleInvestigating || issue.AssigneeRef == nil || *issue.AssigneeRef != assignee {
+		t.Fatalf("started Issue = %#v", issue)
+	}
+	if issue.Version != 2 || !issue.UpdatedAt.Equal(startedAt) {
+		t.Fatalf("combined operation version/time = %d/%v, want 2/%v", issue.Version, issue.UpdatedAt, startedAt)
+	}
+
+	before := issue
+	if err := issue.StartInvestigationWithAssignee(assignmentActor("another"), startedAt.Add(time.Minute)); err == nil {
+		t.Fatal("already investigating Issue accepted a second start")
+	}
+	if !reflect.DeepEqual(issue, before) {
+		t.Fatalf("failed combined operation mutated Issue: before=%#v after=%#v", before, issue)
+	}
+}
+
+func TestIssueStartInvestigationWithInvalidAssigneeDoesNotMutate(t *testing.T) {
+	now := time.Date(2026, 10, 20, 18, 0, 0, 0, time.UTC)
+	issue := assignmentIssue(t, now)
+	before := issue
+	if err := issue.StartInvestigationWithAssignee(ActorRef{}, now.Add(time.Minute)); err == nil {
+		t.Fatal("invalid assignee accepted for investigation")
+	}
+	if !reflect.DeepEqual(issue, before) {
+		t.Fatalf("invalid combined operation mutated Issue: before=%#v after=%#v", before, issue)
+	}
+}

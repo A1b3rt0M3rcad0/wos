@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–15 concluídas; etapa 16 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–16 concluídas; etapa 17 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -396,6 +396,12 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Implementar AssignIssue, UnassignIssue, StartIssueInvestigation com atomicidade, permissão e eventos; evitar race para assumir.
 
 **Aceite verificável:** Apenas um vencedor em disputas simultâneas; histórico identifica responsável anterior/novo.
+
+**Execução em 2026-10-20:** `AssignIssue` permite que um principal autorizado atribua ou reatribua a Issue a um `ActorRef` explícito e validado; `UnassignIssue` remove essa atribuição e exige justificativa durante investigação. Ambos carregam a Issue sob o lock do Outcome, verificam `expected_version`, salvam por CAS e avançam uma única revisão. Operações no-op não salvam a Issue, não emitem evento e não avançam a revisão, mas retornam a revisão atual observada; idempotency replay retorna o resultado original sem duplicar histórico. `StartIssueInvestigation` deriva o assignee exclusivamente de `CommandContext.Actor` confiável e combina atribuição com `open→investigating` em uma única mutação/versionamento/revisão. O comando `InvestigateIssue` legado usa a mesma operação atômica para não criar uma investigação sem responsável e preserva seu nome/event type. Eventos `issue.assigned`, `issue.unassigned` e `issue.investigating` registram `previous_assignee_ref`, `assignee_ref`, justificativa quando aplicável e a identidade autenticada no envelope do evento. A atribuição é declarativa: não concede autoridade sobre Tasks nem cria ou altera leases.
+
+**Limite de autorização confirmado:** o serviço autoriza o principal no escopo do Outcome/namespace pela permissão existente (`work:write`) e valida a estrutura de `ActorRef`; a plataforma ainda não possui um registro de membros/atores para provar que o ator escolhido para `AssignIssue` pertence ao namespace. Esta etapa não afirma nem simula essa pertença. `StartIssueInvestigation` evita seleção de alvo e usa o ActorRef fornecido pela identidade confiável do adapter.
+
+**Verificação:** testes de aplicação cobrem designar outro ator sem confundir o autor do comando, reatribuição/desatribuição, início atômico da investigação pelos comandos novo e legado, transição inválida, identidade incompatível, stale-version/CAS, disputa concorrente com um vencedor, histórico com responsável anterior/novo e principal/ator, no-ops e replay idempotente. Testes focalizados de domínio e aplicação passaram em Go 1.27.2; integração de transporte permanece para etapas posteriores.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

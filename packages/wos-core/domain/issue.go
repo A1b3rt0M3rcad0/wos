@@ -274,6 +274,28 @@ func (i *Issue) Investigate(now time.Time) error {
 	return i.touch(now)
 }
 
+// StartInvestigationWithAssignee atomically records the authenticated actor as
+// the Issue's assignee and moves an open Issue into investigation. The
+// combined operation advances the Issue version exactly once and does not
+// grant execution authority over related Tasks.
+func (i *Issue) StartInvestigationWithAssignee(assignee ActorRef, now time.Time) error {
+	if i.Lifecycle != IssueLifecycleOpen {
+		return NewError(ErrorCodeInvalidTransition, "only open issue can enter investigation")
+	}
+	if err := assignee.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidActorRef, "issue assignee is invalid", err)
+	}
+
+	next := *i
+	next.AssigneeRef = &assignee
+	next.Lifecycle = IssueLifecycleInvestigating
+	if err := next.touch(now); err != nil {
+		return err
+	}
+	*i = next
+	return nil
+}
+
 func (i *Issue) Resolve(summary string, now time.Time) error {
 	if i.Lifecycle != IssueLifecycleOpen && i.Lifecycle != IssueLifecycleInvestigating {
 		return NewError(ErrorCodeInvalidTransition, "issue cannot be resolved from current lifecycle")

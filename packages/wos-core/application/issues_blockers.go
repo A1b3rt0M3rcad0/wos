@@ -129,7 +129,10 @@ func validateIssueObjective(ctx context.Context, uow ports.UnitOfWork, scope dom
 	return nil
 }
 func (s *Service) InvestigateIssue(ctx context.Context, cc domain.CommandContext, cmd InvestigateIssueCommand) (MutationResult[domain.Issue], error) {
-	return s.mutateIssue(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, func(v *domain.Issue) error { return v.Investigate(s.clock.Now().UTC()) })
+	result, err := s.mutateIssueAssignment(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, "", func(v *domain.Issue) error {
+		return v.StartInvestigationWithAssignee(cc.Actor, s.clock.Now().UTC())
+	})
+	return publicIssueAssignmentResult(result), err
 }
 func (s *Service) ResolveIssue(ctx context.Context, cc domain.CommandContext, cmd ResolveIssueCommand) (MutationResult[domain.Issue], error) {
 	return s.mutateIssue(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, func(v *domain.Issue) error { return v.Resolve(cmd.ResolutionSummary, s.clock.Now().UTC()) })
@@ -437,11 +440,19 @@ func blockerRepositoryIfAvailable(uow ports.UnitOfWork) (ports.BlockerRepository
 	return x.Blockers(), true
 }
 func lockExistingOutcome(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope) error {
-	if _, err := uow.Coordination().LockOutcome(ctx, scope); err != nil {
-		return err
-	}
-	_, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	_, err := lockExistingOutcomeRevision(ctx, uow, scope)
 	return err
+}
+
+func lockExistingOutcomeRevision(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope) (domain.OutcomeRevision, error) {
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return 0, err
+	}
+	if _, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID); err != nil {
+		return 0, err
+	}
+	return coordination.Revision, nil
 }
 func validateIssueDuplicateChain(ctx context.Context, issues ports.IssueRepository, scope domain.Scope, source, target domain.ID) error {
 	if source == target {
