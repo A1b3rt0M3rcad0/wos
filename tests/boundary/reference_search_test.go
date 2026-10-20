@@ -240,6 +240,11 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 	if _, e = s.CreateEvidenceLink(ctx, commandContext(), application.CreateEvidenceLinkCommand{Scope: scope, EvidenceID: lastEvidence.ID, TargetRef: lastTask.Ref(), Stance: domain.EvidenceStanceSupports, Rationale: "Linked observation"}); e != nil {
 		t.Fatal(e)
 	}
+	deferred, e := s.DeferWorkItem(ctx, commandContext(), application.DeferWorkItemCommand{Scope: scope, WorkItemID: lastTask.ID, ExpectedVersion: lastTask.Version})
+	if e != nil {
+		t.Fatal(e)
+	}
+	lastTask = deferred.Value
 	if _, e = s.AddDependency(ctx, commandContext(), application.AddDependencyCommand{Scope: scope, SourceRef: lastTask.Ref(), TargetRef: firstTask.Ref(), Strength: domain.DependencyStrengthHard}); e != nil {
 		t.Fatal(e)
 	}
