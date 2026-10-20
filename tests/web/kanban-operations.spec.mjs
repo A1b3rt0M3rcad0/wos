@@ -173,7 +173,7 @@ test('Objective moves use StartObjective and explicit assessed achievement; hier
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
  await move(page,objective.title,'accepted');
  await expect(modal(page).locator('.workspace-move-feedback')).toContainText('No state changed');
- await modal(page).getByRole('button',{name:criterion.title,exact:true}).click();await expect(board(page).locator('.workspace-kanban-inspection > h3')).toHaveText(criterion.title);await action(page,'record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('The agreed condition was inspected and confirmed.');await save(page,'record_criterion_assessment',{nextCommand:'achieve_objective'});
+ await modal(page).getByRole('button',{name:criterion.title,exact:true}).click();await expect(page.locator('#workspace-kanban-operation .workspace-transition-header')).toContainText(criterion.title);await action(page,'record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('The agreed condition was inspected and confirmed.');await save(page,'record_criterion_assessment',{nextCommand:'achieve_objective'});
  await expect(modal(page).locator('#command-select')).toHaveValue('achieve_objective');await page.getByLabel('Reason',{exact:true}).fill('Accept the objective against the current assessed condition.');const achieved=await save(page,'achieve_objective');expect(achieved.lifecycle).toBe('achieved');
  expect((await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}`)).value.lifecycle).toBe('active');
 });
