@@ -334,3 +334,4 @@ dialog.workspace-kanban[open] {
 .workspace-next-operation { max-width: 1050px; margin: 12px auto; padding: 12px 16px; border-left: 2px solid var(--wos-copper); background: var(--wos-surface); }
 .workspace-next-operation h4 { margin: 0 0 8px; }
 .workspace-next-operation p { font-size: 13px; margin: 0 0 8px; }
+.workspace-kanban-controls[hidden], .workspace-kanban-footer[hidden] { display: none; }

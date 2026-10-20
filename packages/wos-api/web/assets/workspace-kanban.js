@@ -722,13 +722,24 @@ export function createContextualKanban({
         const guide = el('section', undefined, 'workspace-next-operation');
         guide.append(el('h4', 'Next operation'));
         const signed = next.transport === 'signed_host';
+        const blocked = !signed && next.availability !== 'available';
+        const reviewNeeded = blocked && (next.reason_codes || []).some(reason => /criterion|assessment|proof/.test(reason));
         guide.append(el('p', signed
           ? 'Continue acquisition, delivery or independent review in your authorized agent host. WOS records coordination; the browser does not sign or execute work.'
           : next.availability === 'available'
             ? 'Review and confirm the next operation. Assignment, execution, proof and acceptance are separate records.'
             : `Requirements are not satisfied: ${(next.reason_codes || []).map(display).join(', ')}. Inspect the impediments and acceptance criteria before continuing.`));
-        const control = button(signed ? 'Continue in authorized host' : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => act(next.action_id, next, selected), 'workspace-primary-action');
-        control.dataset.actionId = workspaceCommandName(next.action_id);
+        const control = button(signed ? 'Continue in authorized host'
+          : blocked ? reviewNeeded ? 'Review acceptance criteria' : 'Inspect requirements'
+            : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => {
+          if (reviewNeeded) { saveScroll(); frames.push({...makeFrame(selected),mode:'criteria'}); render(); }
+          else if (blocked) {
+            const target = aside.querySelector('[data-workspace-facet="attention"], [data-workspace-facet="criteria"]');
+            if (target) { target.tabIndex = -1; target.focus({preventScroll:true}); target.scrollIntoView({block:'start'}); }
+          }
+          else act(next.action_id, next, selected);
+        }, 'workspace-primary-action');
+        control.dataset.actionId = blocked ? 'inspect_requirements' : workspaceCommandName(next.action_id);
         control.inert = frame.loading;
         guide.append(control); aside.append(guide);
       }
@@ -847,7 +858,7 @@ export function createContextualKanban({
       error.setAttribute("role", "alert");
       footer.append(error);
     }
-    if (frame.coverage.next_cursor) {
+    if (frame.coverage.next_cursor && !frame.selected) {
       const more = button(
         "Load more children",
         () => {
@@ -858,7 +869,7 @@ export function createContextualKanban({
       more.setAttribute("aria-disabled", String(frame.loading));
       footer.append(more);
     }
-    if (!frame.mode) {
+    if (!frame.mode && !frame.selected) {
       const actions = el("div", undefined, "workspace-primary-actions");
       for (const capability of workspaceActions(frame.view)) {
         const name = workspaceCommandName(capability.action_id);
@@ -893,6 +904,11 @@ export function createContextualKanban({
       );
       footer.append(actions);
     }
+    if (frame.selected) {
+      controls.hidden = true;
+      if (!frame.mode) header.insertBefore(button('Refresh', () => load(), 'quiet'), header.lastChild);
+    }
+    footer.hidden = !footer.children.length;
     dialog.replaceChildren(header, breadcrumb, controls, status, body, footer);
     const detail = dialog.querySelector('.workspace-kanban-inspection');
     if (detail) detail.scrollTop = frame.detailScroll.get(detail.dataset.subject) || 0;

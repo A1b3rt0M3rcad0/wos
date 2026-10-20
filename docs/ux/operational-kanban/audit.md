@@ -25,10 +25,10 @@ success, accessibility conformance or a quantified productivity gain.
 | UX-002 | All cards are read buttons; no move controls or draggable elements. Execution requires leaving the modal for another surface. | High / medium; P1, high confidence | Drag or named action opens the legitimate operation, never commits a visual stage. Same-context canonical forms and recovery. |
 | UX-003 | `StartObjective` exists in the application but is absent from workspace capabilities. | High / low; P1, high confidence in source | Add authorized capability evaluated against the same readiness gates as the existing command. No new command or lifecycle. |
 | UX-004 | Instructions and full responsibility/authority are behind generic management disclosure; primary actions are chosen by numeric priority, including definition actions. | High / medium; P1, source-verified | Focused item headings explain work, responsibility, authority, readiness, proof, acceptance and history; group actions by user goal. |
+| UX-005 | Actions suspend/close Kanban and require manual Return. An uncertain response must retain the exact draft, rather than treating close as cancellation. | High / medium; P1, source-verified | Host existing forms inside the same dialog; retain canonical authorization, fencing/version/idempotency checks, conflict and exact-intent recovery. |
 | UX-006 | Existing renewal/reacquisition commands were developer-only, leaving legacy reservation recovery undiscoverable in human flows. | High / medium; P1, source-verified | Explicit legacy-only human forms/capabilities; ownership, expiry and fresh fencing remain enforced. |
 | UX-007 | A real concurrent edit test exposed optional stale map enrichment preventing the next authorized form from opening. | High / low; P1, reproduced | Kanban record hydration bypasses optional map expansion; conflict and exact-intent recovery stay on the same surface. |
 | UX-008 | Native 400% zoom later reproduced an entry control hidden under Board chrome in a 320×225 CSS viewport. | High / low; P1, reproduced | Bound the Board inspector to the viewport at very short heights; retain ordinary HD/mobile layout. |
-| UX-005 | Actions suspend/close Kanban and require manual Return. An uncertain response must retain the exact draft, rather than treating close as cancellation. | High / medium; P1, source-verified | Host existing forms inside the same dialog; retain canonical authorization, fencing/version/idempotency checks, conflict and exact-intent recovery. |
 
 Impact/effort are qualitative engineering estimates, not measured reach or ROI.
 Ordering follows critical operational paths and shared root causes (recognition
@@ -71,3 +71,26 @@ and continuity, not a magic limit on visible controls).
 Manual screen-reader/device sessions, independent novice usability and production
 load profiling are not performed by this audit. Existing CI is a regression
 baseline, not evidence that a novice understands the experience.
+
+## Source traceability and exception paths
+
+The original skill files retain their supplied language and MIT license. New
+product documentation is English. The baseline source remains inspectable at
+[`496be90`](https://github.com/A1b3rt0M3rcad0/wos/tree/496be90b8201d7fce9ea64eae2ffb4ecbcb58acb).
+
+| Finding | Root-cause source | Recovery / disconfirming check |
+|---|---|---|
+| UX-001 | `workspace-kanban.js` selected-item append and `workspace-kanban.css` 340px inspection layout | The original Board inspector must remain usable; only Kanban selection changes. |
+| UX-002 | `workspace-kanban.js` card button and read-only stages | A drag must issue zero commands until explicit confirmation; a viewer gets explanation, not write authority. |
+| UX-003 | `workspace_capabilities.go` Objective branch versus `Service.StartObjective` and `Objective.CheckStart` | Missing criterion, inactive Outcome and real Blocker must still prevent starting. |
+| UX-004 | `workspace-compact.js` moving work/people into generic management | Compact Board remains compact; focused Kanban shows actual instructions and distinct participants. No online-presence inference. |
+| UX-005 | `app.js` Kanban `onAction` / canonical submit, `workspace-kanban.js` suspend/resume | Conflict retains input; a committed response loss retries the same immutable intent; unresolved intent cannot be dismissed. |
+| UX-006 | `command-exposure.json`, lease commands and `work_item_lease.go` | A non-holder cannot renew. Expiry requires reacquisition with a new claim/fencing token. Contract protocols never get a parallel legacy lease. |
+| UX-007 | `app.js` `showEntity` awaiting optional graph expansion before command preparation | Real concurrent edit → conflict → fresh creation works even if the map projection is older. The graph is not a second source of business authority. |
+| UX-008 | `canvas.css` bounded stage and narrow-height inspector | Actual Chromium native zoom 400%, measured 320×225 CSS viewport; the trigger must receive a normal click. No force-click workaround. |
+
+These are bounded reproductions and source mechanisms, not measured prevalence.
+The existing automated signed journeys verify protocol semantics; the new complete
+browser work journey uses supported legacy authority and authorized Assessment.
+It does not claim independent signed review happened in the browser. The external
+handoff fixture verifies that no such authority is fabricated.

@@ -66,6 +66,9 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   const criterion=await save(page,'add_criterion');
   await action(page,'activate_work_item');await page.getByLabel('Reason',{exact:true}).fill('The bounded guide check is ready to acquire.');await save(page,'activate_work_item');
   await action(page,'claim_work_item');const claimed=await save(page,'claim_work_item');expect(claimed.current_lease.principal_id).toBe('owner');
+  await expect(modal(page).locator('.workspace-kanban-controls')).toBeHidden();
+  await expect(modal(page).getByRole('button',{name:'Review acceptance criteria',exact:true})).toBeVisible();
+  await expect(modal(page).getByRole('button',{name:'Add Task',exact:true})).toHaveCount(0);
   await action(page,'renew_work_item_lease');const renewed=await save(page,'renew_work_item_lease');expect(renewed.current_lease.claim_id).toBe(claimed.current_lease.claim_id);expect(renewed.current_lease.fencing_token).toBe(claimed.current_lease.fencing_token);
   await capture(page,`executing-${viewport.width}`);
   await action(page,'register_artifact_in_context');

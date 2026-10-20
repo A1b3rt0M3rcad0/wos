@@ -10,7 +10,12 @@ loaded cards; use Load more rather than assuming the visible page is the whole p
 Select a card to replace the columns with its focused work page. No second sidebar
 or additional modal is opened. Back to Kanban restores its filters, horizontal
 position and column scroll; Back to previous item returns from a criterion or
-related record. Escape returns one level; an unresolved mutation keeps its form.
+related record. Escape leaves an item first, then closes the Kanban; breadcrumbs
+return to earlier Kanban contexts. An unresolved mutation keeps its form.
+
+Collection filters and parent-creation actions are hidden while an item is focused;
+Refresh stays available. A missing assessment directs the primary action to
+review criteria, rather than presenting blocked completion as the next operation.
 
 The work page brings together:
 
