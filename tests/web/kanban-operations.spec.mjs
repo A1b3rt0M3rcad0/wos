@@ -198,6 +198,7 @@ test('related Issues and Blockers remain operable in place and resolution never 
  await open(page,wos,c.outcome,c.objective.title);await modal(page).getByRole('button',{name:new RegExp(c.tasks.blocked.title)}).click();
  await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=blocker][data-reference-id="${c.blocker.id}"]`).first().click();
+ await expect(board(page).locator(".workspace-kanban-inspection")).toHaveAttribute("data-subject",new RegExp(c.blocker.id));
  await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=issue][data-reference-id="${c.issue.id}"]`).first().click();
  await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(c.issue.title);
