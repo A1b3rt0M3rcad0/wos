@@ -219,3 +219,36 @@ test('an already acquired contract has a direct readonly continuation without a 
  await expect(page.locator('.canvas-world')).toHaveAttribute('style',cameraBeforeClose);
  await expect(page.locator('dialog[open]')).toHaveCount(1);
 });
+
+for(const origin of ['outcome','task']){
+ test(`delayed origin restoration returns focus to the rebuilt ${origin} trigger`,async({page,wos})=>{
+  const {outcome,scope,objective}=await fixture(wos);
+  let ref={...scope,kind:'outcome',id:outcome.id},name='Open Objectives Kanban';
+  if(origin==='outcome') await open(page,wos,outcome,outcome.title);
+  else{
+   const task=await wos.command('create_work_item',{scope,title:'Inspect a criterion in context',priority:'normal',lifecycle:'backlog',objective_id:objective.id});
+   await wos.command('add_criterion',{owner:{...scope,kind:'work_item',id:task.id},expected_version:task.version,title:'An explicit Task condition',required:true,verification_mode:'attestation'});
+   ref={...scope,kind:'work_item',id:task.id};name='Verify criteria';
+   await wos.login(page);await openOutcome(page,outcome.title,{area:null});
+   await page.getByRole('combobox',{name:'Search Outcome Board',exact:true}).fill(task.title);await page.getByRole('option').filter({hasText:task.title}).first().click();
+   await page.locator('#canvas-details .workspace-management > summary').click();
+   await page.locator('#canvas-details').getByRole('button',{name,exact:true}).click();
+  }
+  await expect(modal(page)).toBeVisible();
+  if(origin==='outcome')await expect(modal(page).locator('.workspace-kanban-card')).toHaveCount(1);
+  const trigger=page.locator('#canvas-details').getByRole('button',{name,exact:true}),oldTrigger=await trigger.elementHandle();
+  let release,begin,first=true;
+  const gate=new Promise(resolve=>{release=resolve;}),started=new Promise(resolve=>{begin=resolve;});
+  await page.route('**/workspace-view',async route=>{
+   const subject=route.request().postDataJSON()?.subject;
+   if(first&&subject?.kind==='entity'&&subject.ref.id===ref.id){
+    first=false;const response=await route.fetch();expect(response.ok()).toBe(true);begin();await gate;await route.fulfill({response});
+   }else await route.continue();
+  });
+  try{
+   await modal(page).getByRole('button',{name:'Close Kanban',exact:true}).click();await started;await expect(modal(page)).not.toBeVisible();
+   release();await expect.poll(()=>oldTrigger.evaluate(node=>node.isConnected)).toBe(false);
+   await expect(trigger).toBeFocused();
+  }finally{release();}
+ });
+}

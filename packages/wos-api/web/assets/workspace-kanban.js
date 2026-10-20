@@ -83,13 +83,14 @@ export function createContextualKanban({
     ++epoch;
     suspended = false;
     const origin = frames[0]?.view,
-      scope = sessionScope;
+      scope = sessionScope,
+      originTrigger = returnFocus;
     if (dialog.open) dialog.close();
     if (restore && origin && onReturn)
-      Promise.resolve(onReturn(origin))
+      Promise.resolve(onReturn(origin, originTrigger))
         .then((target) => {
           if (sessionScope !== scope || scopeKey() !== scope) return;
-          const focus = returnFocus?.isConnected ? returnFocus : target;
+          const focus = originTrigger?.isConnected ? originTrigger : target;
           focus?.focus({ preventScroll: true });
         })
         .catch(onError);

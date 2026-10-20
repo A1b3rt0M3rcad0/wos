@@ -158,9 +158,18 @@ const contextualKanban = createContextualKanban({
   },
   query: (subject, options) => workspaceQuery(subject,options),
   onError: report,
-  onReturn: async (view) => {
+  onReturn: async (view, trigger) => {
+    const label = trigger?.getAttribute('aria-label') || trigger?.textContent.trim();
     await showEntity(view.subject.ref, {preserveCamera:true,subject:view.subject,expandMap:false});
-    return $('canvas-details').querySelector('.workspace-kanban-open,.canvas-inspector-detail');
+    const host = $('canvas-details');
+    const replacement = [...host.querySelectorAll('button')].find(button =>
+      (trigger?.id && button.id === trigger.id) || (label && (button.getAttribute('aria-label') || button.textContent.trim()) === label));
+    if (replacement) {
+      for (let parent = replacement.parentElement; parent && parent !== host; parent = parent.parentElement)
+        if (parent.tagName === 'DETAILS') parent.open = true;
+      return replacement;
+    }
+    return host.querySelector('.workspace-kanban-open') || host.querySelector('.canvas-inspector-detail');
   },
   onAction: async (action, capability, view) => {
     await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
