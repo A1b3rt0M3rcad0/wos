@@ -210,6 +210,15 @@ function buildModel(
   for (const graph of graphs.values()) {
     for (const summary of graph.page.nodes || []) addNode(summary);
     for (const edge of graph.page.edges || []) {
+      // Legacy/direct Task edges do not establish a valid Outcome placement.
+      // Tasks are owned by Objectives; keep the Task as an unplaced record,
+      // but never project the Outcome as its parent.
+      if (
+        edge.kind === "ownership" &&
+        edge.source_of_truth === "work_item" &&
+        edge.source_ref?.kind === "outcome" &&
+        edge.target_ref?.kind === "work_item"
+      ) continue;
       addEdge(
         `graph:${edge.source_of_truth}:${edge.id}`,
         edge.source_ref,
@@ -795,17 +804,15 @@ export function createCanvasData({
       append("relations", value.dependencies || []);
       append("evidence_links", value.evidence_links || []);
       const nextContexts = new Map(contexts);
-      const parents = [
-        {
-          id: `work:${work.id}`,
-          source: work.objective_id
-            ? { ...scope, kind: "objective", id: work.objective_id }
-            : { ...scope, kind: "outcome", id: scope.outcome_id },
-          target: workRef,
-          kind: "ownership",
-          truth: "work_item",
-        },
-      ];
+      const parents = work.objective_id
+        ? [{
+            id: `work:${work.id}`,
+            source: { ...scope, kind: "objective", id: work.objective_id },
+            target: workRef,
+            kind: "ownership",
+            truth: "work_item",
+          }]
+        : [];
       if (value.objective)
         parents.push({
           id: `objective:${value.objective.id}`,

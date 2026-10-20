@@ -37,12 +37,6 @@ async function setup(wos) {
     lifecycle: "backlog",
     objective_id: objective.id,
   });
-  const direct = await wos.command("create_work_item", {
-    scope,
-    title: "Write release notes",
-    priority: "normal",
-    lifecycle: "backlog",
-  });
   const cancelled = await wos.command("create_work_item", {
     scope,
     title: "Retired experiment",
@@ -56,7 +50,7 @@ async function setup(wos) {
     expected_version: cancelled.version,
     reason: "Removed from agreed scope",
   });
-  return { outcome, scope, objective, nested, task, direct };
+  return { outcome, scope, objective, nested, task };
 }
 async function capture(page, name) {
   if (!process.env.WOS_CAPTURE_CONTEXTUAL_KANBAN) return;
@@ -146,6 +140,13 @@ for (const [width, height] of [
   }) => {
     await page.setViewportSize({ width, height });
     const data = await setup(wos);
+    await wos.command("add_criterion", {
+      owner: { ...data.scope, kind: "work_item", id: data.task.id },
+      expected_version: data.task.version,
+      title: "Payment endpoint handles partial refunds",
+      required: true,
+      verification_mode: "attestation",
+    });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     const mutations = [];
@@ -182,6 +183,10 @@ for (const [width, height] of [
     ).toBeVisible();
     await expect(modal.locator(".workspace-kanban-card")).toHaveCount(1);
     await expect(modal).not.toContainText(data.nested.title);
+    await expect(modal).not.toContainText("Direct Tasks");
+    await expect(modal.getByRole("combobox", { name: "Kanban context", exact: true })).toHaveCount(0);
+    await expect(modal.getByRole("button", { name: "Add Task", exact: true })).toHaveCount(0);
+    await expect(modal.getByRole("button", { name: "Add Objective", exact: true })).toBeVisible();
     const contrast = await modal
       .locator(".workspace-kanban-card")
       .first()
@@ -212,13 +217,6 @@ for (const [width, height] of [
       "Card text must remain legible on the actual paper surface",
     ).toBeGreaterThanOrEqual(4.5);
     await capture(page, `objectives-${width}x${height}`);
-    await modal
-      .getByRole("combobox", { name: "Kanban context", exact: true }).selectOption("tasks");
-    await expect(
-      modal.getByRole("button", { name: /Write release notes/ }),
-    ).toBeVisible();
-    await modal
-      .getByRole("combobox", { name: "Kanban context", exact: true }).selectOption("objectives");
     await modal.getByRole("button", { name: /Verified payment API/ }).click();
     await expect(modal.locator(".workspace-kanban-inspection")).toBeVisible();
     await modal
@@ -228,6 +226,27 @@ for (const [width, height] of [
       modal.getByRole("button", { name: /Implement payment endpoint/ }),
     ).toBeVisible();
     await expect(modal.locator(".workspace-kanban-card")).toHaveCount(1);
+    await modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title }).click();
+    await expect(modal.locator(".workspace-kanban-inspection")).toContainText(data.task.title);
+    await modal.locator("[data-operational-group=criteria] > summary").click();
+    await modal.getByRole("button", { name: "Payment endpoint handles partial refunds", exact: true }).click();
+    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    await modal.getByRole("button", { name: "Refresh", exact: true }).click();
+    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    const cameraWhileInspecting = await page.locator(".canvas-world").getAttribute("style");
+    const collection = modal.getByRole("combobox", { name: "Kanban context", exact: true });
+    await collection.selectOption("objectives");
+    await expect(modal.locator(".workspace-kanban-inspection")).toHaveCount(0);
+    expect(await page.locator(".canvas-world").getAttribute("style")).toBe(cameraWhileInspecting);
+    await collection.selectOption("tasks");
+    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    const returnPrevious = modal.getByRole("button", { name: "Back to previous item", exact: true });
+    await expect(returnPrevious).toBeVisible();
+    await expect(modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title })).toHaveAttribute("aria-pressed", "true");
+    expect(await page.locator(".canvas-world").getAttribute("style")).toBe(cameraWhileInspecting);
+    await returnPrevious.click();
+    await expect(modal.locator(".workspace-kanban-inspection")).toContainText(data.task.title);
+    await modal.getByRole("button", { name: "Back to Kanban", exact: true }).click();
     await modal.locator(".workspace-kanban-filters > summary").click();
     await modal
       .getByRole("button", { name: "Show cancelled", exact: true })

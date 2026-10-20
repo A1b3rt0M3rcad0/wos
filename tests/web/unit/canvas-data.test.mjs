@@ -146,6 +146,44 @@ test("the adapter preserves actual hierarchy and dependency strengths without in
   assert.notEqual(model.nodes[0].title, source.nodes[0].title);
 });
 
+test("legacy direct Task references stay unplaced instead of becoming Outcome children", async () => {
+  const orphan = summary("work_item", 6);
+  const source = structure();
+  source.nodes.push(orphan);
+  source.edges.push({
+    id: `work:${orphan.ref.id}`,
+    source_ref: root.ref,
+    target_ref: orphan.ref,
+    kind: "ownership",
+    source_of_truth: "work_item",
+  });
+  const loader = createCanvasData({ scope, request: async () => source });
+  const initial = await loader.load(snapshot());
+  const orphanNode = initial.nodes.find((entry) => entry.key === canvasKey(orphan.ref));
+  assert.ok(orphanNode, "legacy Task data remains inspectable");
+  assert.equal(orphanNode.parentKey, undefined);
+  assert.equal(initial.edges.some((edge) =>
+    edge.kind === "ownership" && edge.sourceKey === canvasKey(root.ref) && edge.targetKey === canvasKey(orphan.ref)), false);
+
+  const updated = loader.context({
+    outcome_revision: "42",
+    outcome: root,
+    work_item: {
+      id: orphan.ref.id,
+      scope,
+      title: orphan.title,
+      version: 2,
+      lifecycle: "todo",
+    },
+    dependencies: [],
+    evidence_links: [],
+  });
+  const selectedOrphan = updated.nodes.find((entry) => entry.key === canvasKey(orphan.ref));
+  assert.equal(selectedOrphan.parentKey, undefined);
+  assert.equal(updated.edges.some((edge) =>
+    edge.kind === "ownership" && edge.targetKey === canvasKey(orphan.ref)), false);
+});
+
 test("unknown dependency strength and evidence stance remain explicit, separate from assessment", async () => {
   const source = structure(),
     evidence = summary("evidence", 6),

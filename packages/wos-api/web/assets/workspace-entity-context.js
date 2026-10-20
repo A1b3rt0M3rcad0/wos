@@ -68,7 +68,9 @@ export function buildEntityContext({ ref, entity = {}, model, placementOnly = fa
   if (ref.kind === "objective" || ref.kind === "work_item") {
     const id = ref.kind === "objective" ? entity.parent_objective_id : entity.objective_id;
     placement = {
-      label: id ? text(ref.kind === "objective" ? "Parent" : "Objective") : text("Direct"),
+      label: id
+        ? text(ref.kind === "objective" ? "Parent" : "Objective")
+        : ref.kind === "objective" ? text("Direct") : text("Unassigned"),
       target: id ? descriptor(reference("objective", id)) : null,
     };
   }

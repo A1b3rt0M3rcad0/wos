@@ -58,7 +58,10 @@ test("ownership is recorded explicitly; hierarchy, plan grouping and dependencie
   const task = build("work_item", { objective_id: "objective" }, model);
   assert.equal(task.placement.target.title, "objective objective");
   assert.equal(group(task, "Dependencies")[0].qualifier, "Hard prerequisite");
-  assert.equal(build("work_item", {}, model).placement.label, "Directly in this Outcome");
+  const unplacedTask = build("work_item", {}, model);
+  assert.equal(unplacedTask.placement.label, "No Objective assigned");
+  assert.equal(unplacedTask.placement.target, null);
+  assert.equal(build("objective", {}, model).placement.label, "Directly in this Outcome");
 });
 
 test("dependency direction, unknown strength and distinct records remain visible without readiness inference", () => {

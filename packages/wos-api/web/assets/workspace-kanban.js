@@ -92,6 +92,13 @@ export function createContextualKanban({
     if (view.outcome_revision !== (frame.revision || frame.view.outcome_revision))
       throw new Error("The work changed. Refresh this Kanban before inspecting another revision.");
   }
+  const optionalQuery = async (subject) => {
+    try { return await query(subject); }
+    catch (error) {
+      if (error.code === "not_found" || error.status === 404) return null;
+      throw error;
+    }
+  };
   function fail(error, token) {
     if (!valid(token)) return;
     current().error =
@@ -178,13 +185,13 @@ export function createContextualKanban({
         }),
         append ? Promise.resolve(null) : query(frame.view.subject),
         !append && frame.selected
-          ? query(frame.selected.subject)
+          ? optionalQuery(frame.selected.subject)
           : Promise.resolve(null),
-        !append ? Promise.all((frame.selectionStack || []).map(view => query(view.subject))) : Promise.resolve([]),
+        !append ? Promise.all((frame.selectionStack || []).map(view => optionalQuery(view.subject))) : Promise.resolve([]),
       ]);
       if ((parent && page.outcome_revision !== parent.outcome_revision) ||
           (selected && page.outcome_revision !== selected.outcome_revision) ||
-          ancestors.some(view => view.outcome_revision !== page.outcome_revision))
+          ancestors.filter(Boolean).some(view => view.outcome_revision !== page.outcome_revision))
         throw new Error(
           "The work changed during loading. Refresh to read one consistent revision.",
         );
@@ -194,8 +201,13 @@ export function createContextualKanban({
           "The work changed. Refresh this Kanban before loading another page.",
         );
       if (parent) frame.view = parent;
-      if (selected) frame.selected = selected;
-      if (!append) frame.selectionStack = ancestors;
+      if (!append) {
+        const expectedKind = frame.content === "tasks" ? "work_item" : "objective";
+        const compatible = (view) => view?.subject?.ref?.kind === expectedKind;
+        frame.selectionStack = ancestors.filter(compatible);
+        if (compatible(selected)) frame.selected = selected;
+        else frame.selected = frame.selectionStack.pop() || null;
+      }
       frame.items = append ? [...frame.items, ...page.items] : page.items;
       frame.revision = page.outcome_revision;
       frame.coverage = page.coverage;
@@ -212,6 +224,7 @@ export function createContextualKanban({
     return {
       view,
       content: view.subject.ref.kind === "outcome" ? "objectives" : "tasks",
+      collectionState: new Map(),
       items: [],
       coverage: { status: "not_loaded" },
       search: "",
@@ -265,6 +278,22 @@ export function createContextualKanban({
     } else frames.push(makeFrame(view));
     render();
     await load();
+  }
+  function switchCollection(frame, content) {
+    if (frame.view.subject.ref.kind !== "objective" ||
+        !["objectives", "tasks"].includes(content)) return;
+    frame.collectionState ||= new Map();
+    frame.collectionState.set(frame.content, {
+      selected: frame.selected || null,
+      selectionStack: [...(frame.selectionStack || [])],
+    });
+    frame.content = content;
+    const saved = frame.collectionState.get(content);
+    const expectedKind = content === "tasks" ? "work_item" : "objective";
+    const compatible = (view) => view?.subject?.ref?.kind === expectedKind;
+    frame.selected = compatible(saved?.selected) ? saved.selected : null;
+    frame.selectionStack = (saved?.selectionStack || []).filter(compatible);
+    frame.mode = undefined;
   }
   function saveScroll() {
     if (current() && !operation)
@@ -482,6 +511,13 @@ export function createContextualKanban({
         : null;
     if (!current() || sessionScope !== scopeKey()) return reset();
     const frame = current();
+    if (frame.view.subject.ref.kind === "outcome") {
+      frame.content = "objectives";
+      if (frame.selected?.subject?.ref?.kind === "work_item") {
+        frame.selected = null;
+        frame.selectionStack = [];
+      }
+    }
     dialog.dataset.phase = frame.transitionState || 'idle';
     const previousDetail = dialog.querySelector('.workspace-kanban-inspection');
     if (previousDetail?.dataset.subject)
@@ -505,17 +541,18 @@ export function createContextualKanban({
       saveScroll(); ++epoch; frames.pop(); render();
     }, "quiet"));
     const controls = el("div", undefined, "workspace-kanban-controls");
-    const contextLabel = el('label', 'Context');
-    const contextSelect = el('select'); contextSelect.setAttribute('aria-label', 'Kanban context');
-    for (const [value, label] of [['objectives', frame.view.subject.ref.kind === 'objective' ? 'Subobjectives' : 'Objectives'],
-      ['tasks', frame.view.subject.ref.kind === 'outcome' ? 'Direct Tasks' : 'Tasks']]) {
-      const option = el('option', label); option.value = value; contextSelect.append(option);
+    if (frame.view.subject.ref.kind === "objective") {
+      const contextLabel = el('label', 'Context');
+      const contextSelect = el('select'); contextSelect.setAttribute('aria-label', 'Kanban context');
+      for (const [value, label] of [['objectives', 'Subobjectives'], ['tasks', 'Tasks']]) {
+        const option = el('option', label); option.value = value; contextSelect.append(option);
+      }
+      contextSelect.value = frame.content;
+      contextSelect.addEventListener('change', () => {
+        saveScroll(); switchCollection(frame, contextSelect.value); render();
+      });
+      contextLabel.append(contextSelect); controls.append(contextLabel);
     }
-    contextSelect.value = frame.content;
-    contextSelect.addEventListener('change', () => {
-      saveScroll(); frame.content = contextSelect.value; frame.selected = null; render();
-    });
-    contextLabel.append(contextSelect); controls.append(contextLabel);
     const search = el("input");
     search.type = "search";
     search.placeholder = "Find in loaded items";
@@ -938,16 +975,14 @@ export function createContextualKanban({
       for (const capability of workspaceActions(frame.view)) {
         const name = workspaceCommandName(capability.action_id);
         const labels = {
-          create_objective:
-            frame.view.subject.ref.kind === "objective"
-              ? "Add subobjective"
-              : "Add Objective",
-          create_work_item:
-            frame.view.subject.ref.kind === "outcome"
-              ? "Add direct Task"
-              : "Add Task",
+          create_objective: frame.view.subject.ref.kind === "objective"
+            ? "Add subobjective" : "Add Objective",
+          create_work_item: "Add Task",
         };
-        if (labels[name] && name === (frame.content === "objectives" ? "create_objective" : "create_work_item"))
+        const allowedCommand = frame.content === "objectives"
+          ? "create_objective"
+          : frame.view.subject.ref.kind === "objective" ? "create_work_item" : "";
+        if (labels[name] && name === allowedCommand)
           actions.append(
             button(
               labels[name],
@@ -1003,20 +1038,8 @@ export function createContextualKanban({
   async function resume() {
     if (!suspended || sessionScope !== scopeKey()) return;
     suspended = false;
-    current().selected = null;
     setActive(true);
-    if (current().mode) {
-      const token = ++epoch;
-      try {
-        const view = await query(current().view.subject);
-        if (valid(token)) {
-          current().view = view;
-          render();
-        }
-      } catch (error) {
-        fail(error, token);
-      }
-    } else await load();
+    await load();
   }
   async function finishOperation({committed = false} = {}) {
     if (!operation) return;
@@ -1027,11 +1050,7 @@ export function createContextualKanban({
     preparation = null;
     if (active() && !dialog.open) dialog.showModal();
     render();
-    if (current().mode) {
-      const token = ++epoch;
-      try { const view = await query(current().view.subject); if (valid(token)) { current().view = view; current().selected = null; render(); } }
-      catch(error) { fail(error, token); }
-    } else await load();
+    await load();
     if (committed && current().error) {
       current().intent = null;
       current().error = 'Saved, but the refreshed view could not be loaded. Refresh reads the state; do not repeat the write.';

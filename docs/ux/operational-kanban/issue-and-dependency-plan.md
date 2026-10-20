@@ -283,6 +283,10 @@ Cada etapa é **um único commit**, contendo alteração coesa + testes da mudan
 
 **Aceite verificável:** Task é mostrada sob Objective; Outcome não cria nem sugere Task direta.
 
+**Execução em 2026-10-20:** concluída. O Outcome Kanban contém Objectives e não oferece criação de Tasks órfãs; o Objective Kanban permite alternar entre Subobjectives e Tasks. Registros Task legados sem pai continuam inspecionáveis sem receber uma aresta de ownership inventada. A troca de coleção e a atualização preservam seleção, contexto e câmera. As mudanças de lane seguem exclusivamente por drag-and-drop; os selects permanecem para contexto e filtros.
+
+**Verificação:** `npm run test:unit` (79/79); `contextual-kanban.spec.mjs` (18/18 em HD, Full HD, QHD, 4K, mobile e zoom de navegador); jornada tátil confirma que o cartão não expõe menu/seletor de status. Playwright serviu os assets fonte desta branch contra a API de teste porque o binário local embute assets anteriores; a alteração temporária do fixture foi restaurada.
+
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
 ### Etapa 10 — Migração expand: Issue owner e assignee

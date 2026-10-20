@@ -335,6 +335,7 @@ export const copy = Object.freeze({
     "entityContextParent": "Parent Objective",
     "entityContextObjective": "Objective",
     "entityContextDirect": "Directly in this Outcome",
+    "entityContextUnassigned": "No Objective assigned",
     "entityContextPlanWork": "Objectives and Tasks",
     "entityContextChildObjective": "Child Objective",
     "entityContextTask": "Task",
