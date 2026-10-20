@@ -122,7 +122,7 @@ const canvasInspector = createWorkspaceInspector({
       state.detailGeneration++;
       // Closing an embedded read returns to the Kanban item. It must not
       // dismiss/reveal the spatial selection or pan the background Board.
-      if (surface === 'detail' && contextualKanban.operating && reason !== 'reset') return;
+      if (contextualKanban.operating) return;
       const selected = state.canvasSelected;
       state.canvasSelected = null;
       if (state.canvasModel)
@@ -139,7 +139,10 @@ const canvasInspector = createWorkspaceInspector({
 });
 const workspaceDisclosures = new Map();
 const contextualKanban = createContextualKanban({
+  workspaceHost: document.querySelector('.canvas-workspace-shell'),
   operationHost: $('canvas-details'),
+  operationState: () => state.submitting ? 'submitting' : state.pending ? 'uncertain'
+    : $('conflict-review').children.length ? 'conflict' : 'editing',
   onOperationEnd: () => { if (canvasInspector.isVisible('actions')) closeActions(); },
   canLeaveOperation: () => {
     if (state.submitting || state.pending) {
@@ -3165,7 +3168,7 @@ async function workspaceQuery(subject, options = {}) {
     method: "POST", body: JSON.stringify({ subject, include_activity:false, ...options }),
   });
 }
-async function showEntity(ref, { internal = false, preserveCamera = false, subject, expandMap = !contextualKanban.operating } = {}) {
+async function showEntity(ref, { internal = false, preserveCamera = contextualKanban.isOpen, subject, expandMap = !contextualKanban.isOpen } = {}) {
   if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
   const generation = state.generation, isCanvas = canvasActive();
@@ -4438,7 +4441,12 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
         },
         { internal: true },
       );
-    if (contextualKanban.operating) await contextualKanban.finishOperation();
+    if (contextualKanban.operating) {
+      // The write is already confirmed and its intent cleared. A sequential
+      // intention may now prepare a second form, never submit its command.
+      state.submitting = false;
+      await contextualKanban.finishOperation({committed:true});
+    }
     notice(
       pending.name === "create_outcome"
         ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks
@@ -4458,6 +4466,7 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
       $("command-error").focus({ preventScroll: true });
     }
     if (committed) {
+      if (contextualKanban.operating) { state.submitting = false; await contextualKanban.finishOperation({committed:true}); }
       notice(copy.text.workspaceSavedRefreshPending, true);
       return;
     }

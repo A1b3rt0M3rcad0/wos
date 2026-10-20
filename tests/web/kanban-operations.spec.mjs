@@ -8,7 +8,14 @@ async function capture(page,name){
  const dir=process.env.WOS_CAPTURE_OPERATIONAL_KANBAN;await mkdir(dir,{recursive:true});await page.screenshot({path:`${dir}/${name}.png`});
  await writeFile(`${dir}/${name}.json`,JSON.stringify({source:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),workingTree:execFileSync('git',['status','--porcelain','--','packages','tests/web'],{encoding:'utf8'}),viewport:page.viewportSize(),browser:page.context().browser().version()},null,2));
 }
-const modal=page=>page.locator('#workspace-kanban');
+const board=page=>page.locator('#workspace-kanban');
+const modal=page=>page.locator('body:has(#workspace-kanban-operation[open]) #workspace-kanban-operation, body:not(:has(#workspace-kanban-operation[open])) #workspace-kanban');
+async function move(page,title,stage){
+ const labels={todo:'To do',in_progress:'In progress',verification:'Verification',accepted:stage==='accepted'?'Accepted':''};
+ const shell=board(page).locator('.workspace-kanban-card-shell').filter({has:page.locator('.workspace-kanban-card').filter({hasText:title})});
+ await shell.locator('summary').click();
+ await shell.getByRole('button',{name:stage==='accepted' && await shell.getByRole('button',{name:'Move to Achieved',exact:true}).count()?'Move to Achieved':`Move to ${labels[stage]}`,exact:true}).click();
+}
 async function open(page,wos,outcome,title){
  await wos.login(page);await openOutcome(page,outcome.title,{area:null});
  await page.getByRole('combobox',{name:'Search Outcome Board',exact:true}).fill(title);
@@ -16,13 +23,17 @@ async function open(page,wos,outcome,title){
  await page.locator('#canvas-details').getByRole('button',{name:title===outcome.title?'Open Objectives Kanban':'Open Tasks Kanban',exact:true}).click();
 }
 async function action(page,name){
+ if(!(await page.locator("#workspace-kanban-operation").evaluate(node=>node.open))) await expect(board(page).locator(".workspace-kanban-inspection")).toBeVisible();
+ const more=modal(page).locator('.workspace-operation-groups');
+ if(await more.count() && !(await more.evaluate(n=>n.open))) await more.locator(':scope > summary').click();
  await modal(page).locator(`[data-action-id="${name}"]`).filter({visible:true}).first().click();
  await expect(modal(page).locator('#command-form')).toBeVisible();
  await expect(page.locator('dialog[open]')).toHaveCount(1);
 }
-async function save(page,name){
+async function save(page,name,{nextCommand}={}){
  const response=page.waitForResponse(r=>r.request().method()==='POST'&&r.url().endsWith('/commands/'+name));
  await page.locator('#submit-command').click();const r=await response;const json=await r.json();expect(r.ok(),JSON.stringify(json)).toBe(true);
+ if(nextCommand){await expect(modal(page).locator('#command-select')).toHaveValue(nextCommand);return json.value;}
  await expect(modal(page).locator('#command-form')).toHaveCount(0);
  await expect(modal(page)).toBeVisible();await expect(modal(page).locator('.workspace-kanban-status')).not.toHaveText('Loading work…');return json.value;
 }
@@ -43,7 +54,8 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   await page.getByLabel('Task title',{exact:true}).fill('Verify installation commands');
   const task=await save(page,'create_work_item');expect(task.lifecycle).toBe('backlog');expect(task.objective_id).toBe(objective.id);
   await modal(page).getByRole('button',{name:/Verify installation commands/}).click();
-  await expect(modal(page).locator('.workspace-kanban-columns')).toBeHidden();
+  await expect(modal(page).locator('.workspace-kanban-columns')).toBeVisible();
+  await modal(page).locator('[data-operational-group=people] > summary').click();
   await expect(modal(page).getByRole('heading',{name:'Responsibility and execution authority',exact:true})).toBeVisible();
   await capture(page,`item-${viewport.width}`);
   await action(page,'set_work_item_assignees');
@@ -66,15 +78,16 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   const criterion=await save(page,'add_criterion');
   await action(page,'activate_work_item');await page.getByLabel('Reason',{exact:true}).fill('The bounded guide check is ready to acquire.');await save(page,'activate_work_item');
   await action(page,'claim_work_item');const claimed=await save(page,'claim_work_item');expect(claimed.current_lease.principal_id).toBe('owner');
-  await expect(modal(page).locator('.workspace-kanban-controls')).toBeHidden();
+  await expect(modal(page).locator('.workspace-kanban-controls')).toBeVisible();
   await expect(modal(page).getByRole('button',{name:'Review acceptance criteria',exact:true})).toBeVisible();
-  await expect(modal(page).getByRole('button',{name:'Add Task',exact:true})).toHaveCount(0);
+  await expect(modal(page).getByRole('button',{name:'Add Task',exact:true})).toBeVisible();
   await action(page,'renew_work_item_lease');const renewed=await save(page,'renew_work_item_lease');expect(renewed.current_lease.claim_id).toBe(claimed.current_lease.claim_id);expect(renewed.current_lease.fencing_token).toBe(claimed.current_lease.fencing_token);
   await capture(page,`executing-${viewport.width}`);
   await action(page,'register_artifact_in_context');
   await page.getByLabel('Relationship to this item',{exact:true}).selectOption('produces');
   await page.getByLabel('Artifact name',{exact:true}).fill('Installation output');await page.getByLabel('Artifact type',{exact:true}).fill('test_log');await page.getByLabel('URL',{exact:true}).fill('https://example.test/build/42');
   await save(page,'register_artifact_in_context');
+  await modal(page).getByRole('button',{name:'Review acceptance criteria',exact:true}).click();
   await modal(page).getByRole('button',{name:criterion.title,exact:true}).click();
   await action(page,'register_evidence_with_links');
   await page.getByLabel('Evidence source',{exact:true}).selectOption('observation');await page.getByLabel('Description',{exact:true}).fill('The documented installation completed in the isolated environment.');await page.getByLabel('Why is this relevant?',{exact:true}).fill('This records the criterion-specific command observation.');
@@ -102,7 +115,7 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
 test('drag and single-pointer moves prepare actual operations; blocked and read-only work never moves',async({page,wos,browser})=>{
  const c=await seedCanvas(wos);await open(page,wos,c.outcome,c.objective.title);
  const moves=[];page.on('request',r=>{if(r.url().includes('/commands/'))moves.push(r.url());});
- await modal(page).getByLabel(`Move ${c.tasks.blocked.title} to`,{exact:true}).selectOption('in_progress');
+ await move(page,c.tasks.blocked.title,'in_progress');
  await expect(modal(page).locator('.workspace-move-feedback')).toContainText('No state changed');expect(moves).toEqual([]);
  await expect(modal(page).locator('[data-workspace-facet=attention]')).toContainText(/Blocked|blocked/);
  await page.keyboard.press('Escape');
@@ -113,13 +126,13 @@ test('drag and single-pointer moves prepare actual operations; blocked and read-
  await page.keyboard.press('Escape');await expect(modal(page).locator('.workspace-kanban-operation')).toHaveCount(0);
  await expect(modal(page)).toBeVisible();
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
- await modal(page).getByLabel(`Move ${c.tasks.advisory.title} to`,{exact:true}).selectOption('verification');
- await expect(modal(page).locator('.workspace-move-feedback')).toContainText('does not submit work or accept');expect(moves).toEqual([]);
+ await move(page,c.tasks.advisory.title,'verification');
+ await expect(modal(page).locator('.workspace-move-feedback')).toContainText('does not submit work');expect(moves).toEqual([]);
  const viewer=await provisionCanvasViewer(wos),context=await browser.newContext();
  try{
   const p=await context.newPage();await wos.login(p,viewer.token);await openOutcome(p,c.outcome.title,{area:null});
   await p.getByRole('combobox',{name:'Search Outcome Board',exact:true}).fill(c.objective.title);await p.getByRole('option').filter({hasText:c.objective.title}).first().click();await p.locator('#canvas-details').getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
-  await modal(p).getByLabel(`Move ${c.tasks.advisory.title} to`,{exact:true}).selectOption('in_progress');await expect(modal(p).locator('.workspace-move-feedback')).toContainText('permissions');await expect(modal(p).locator('#command-form')).toHaveCount(0);
+  await move(p,c.tasks.advisory.title,'in_progress');await expect(modal(p).locator('.workspace-move-feedback')).toContainText('authorized operation');await expect(modal(p).locator('#command-form')).toHaveCount(0);
  }finally{await context.close();}
 });
 
@@ -155,14 +168,13 @@ test('Objective moves use StartObjective and explicit assessed achievement; hier
  const {outcome,scope,objective}=await fixture(wos),owner={...scope,kind:'objective',id:objective.id};
  const criterion=await wos.command('add_criterion',{owner,expected_version:objective.version,title:'Guide checked against agreed condition',required:true,verification_mode:'attestation'});
  await open(page,wos,outcome,outcome.title);
- await modal(page).getByLabel(`Move ${objective.title} to`,{exact:true}).selectOption('in_progress');
+ await move(page,objective.title,'in_progress');
  await expect(modal(page).locator('#command-select')).toHaveValue('start_objective');await page.getByLabel('Reason',{exact:true}).fill('Begin the agreed objective with its current required criterion.');await save(page,'start_objective');
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
- await modal(page).getByLabel(`Move ${objective.title} to`,{exact:true}).selectOption('accepted');
+ await move(page,objective.title,'accepted');
  await expect(modal(page).locator('.workspace-move-feedback')).toContainText('No state changed');
- await modal(page).getByRole('button',{name:criterion.title,exact:true}).click();await action(page,'record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('The agreed condition was inspected and confirmed.');await save(page,'record_criterion_assessment');
- await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
- await action(page,'achieve_objective');await page.getByLabel('Reason',{exact:true}).fill('Accept the objective against the current assessed condition.');const achieved=await save(page,'achieve_objective');expect(achieved.lifecycle).toBe('achieved');
+ await modal(page).getByRole('button',{name:criterion.title,exact:true}).click();await action(page,'record_criterion_assessment');await page.getByLabel('Rationale',{exact:true}).fill('The agreed condition was inspected and confirmed.');await save(page,'record_criterion_assessment',{nextCommand:'achieve_objective'});
+ await expect(modal(page).locator('#command-select')).toHaveValue('achieve_objective');await page.getByLabel('Reason',{exact:true}).fill('Accept the objective against the current assessed condition.');const achieved=await save(page,'achieve_objective');expect(achieved.lifecycle).toBe('achieved');
  expect((await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}`)).value.lifecycle).toBe('active');
 });
 
@@ -173,7 +185,7 @@ test('contract-backed movement stays an explicit external handoff without browse
  const task=await wos.command('create_work_item',{scope,title:'Externally authorized execution',priority:'normal',lifecycle:'todo',objective_id:objective.id,execution_spec:{instructions:['Execute only in the authorized host']}});
  await open(page,wos,outcome,objective.title);
  const writes=[];page.on('request',r=>{if(r.url().includes('/commands/'))writes.push(r.url());});
- await modal(page).getByLabel(`Move ${task.title} to`,{exact:true}).selectOption('in_progress');
+ await move(page,task.title,'in_progress');
  await expect(modal(page).locator('.workspace-handoff')).toBeVisible();
  await expect(modal(page).locator('#command-form')).not.toBeVisible();
  await expect(page.locator('dialog[open]')).toHaveCount(1);expect(writes).toEqual([]);
@@ -184,7 +196,9 @@ test('contract-backed movement stays an explicit external handoff without browse
 test('related Issues and Blockers remain operable in place and resolution never silently releases an impediment',async({page,wos})=>{
  const c=await seedCanvas(wos),base=`/namespaces/${wos.namespace}/outcomes/${c.outcome.id}`;
  await open(page,wos,c.outcome,c.objective.title);await modal(page).getByRole('button',{name:new RegExp(c.tasks.blocked.title)}).click();
+ await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=blocker][data-reference-id="${c.blocker.id}"]`).first().click();
+ await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=issue][data-reference-id="${c.issue.id}"]`).first().click();
  await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(c.issue.title);
  await action(page,'resolve_issue');await page.getByLabel('Resolution summary',{exact:true}).fill('Review environment access has been restored.');await save(page,'resolve_issue');
@@ -217,7 +231,7 @@ test('an already acquired contract has a direct readonly continuation without a 
  await expect(modal(page).locator('.workspace-kanban-operation')).toHaveCount(0);
  await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
  await expect(page.locator('.canvas-world')).toHaveAttribute('style',cameraBeforeClose);
- await expect(page.locator('dialog[open]')).toHaveCount(1);
+ await expect(page.locator('dialog[open]')).toHaveCount(0);
 });
 
 for(const origin of ['outcome','task']){
@@ -236,7 +250,7 @@ for(const origin of ['outcome','task']){
   }
   await expect(modal(page)).toBeVisible();
   if(origin==='outcome')await expect(modal(page).locator('.workspace-kanban-card')).toHaveCount(1);
-  const trigger=page.locator('#canvas-details').getByRole('button',{name,exact:true}),oldTrigger=await trigger.elementHandle();
+  const trigger=page.locator('#canvas-details').getByRole('button',{name,exact:true}),oldTrigger=await page.locator('#canvas-details').getByRole('button',{name,exact:true,includeHidden:true}).elementHandle();
   let release,begin,first=true;
   const gate=new Promise(resolve=>{release=resolve;}),started=new Promise(resolve=>{begin=resolve;});
   await page.route('**/workspace-view',async route=>{
@@ -246,7 +260,7 @@ for(const origin of ['outcome','task']){
    }else await route.continue();
   });
   try{
-   await modal(page).getByRole('button',{name:'Close Kanban',exact:true}).click();await started;await expect(modal(page)).not.toBeVisible();
+   await modal(page).getByRole('button',{name:'Back to Canvas',exact:true}).click();await started;await expect(modal(page)).not.toBeVisible();
    release();await expect.poll(()=>oldTrigger.evaluate(node=>node.isConnected)).toBe(false);
    await expect(trigger).toBeFocused();
   }finally{release();}

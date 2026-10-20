@@ -132,6 +132,7 @@ for (const [width, height] of [
   [1024, 768],
   [1280, 720],
   [1366, 768],
+  [1440, 900],
   [1920, 1080],
   [2560, 1440],
   [3840, 2160],
@@ -309,12 +310,12 @@ test("criteria verification is separate from acceptance and cancelled work remai
     .click();
   const modal = page.locator("#workspace-kanban");
   await expect(
-    modal.getByRole("heading", { name: "Verify criteria", exact: true }),
+    modal.locator("[data-operational-group=criteria] > summary"),
   ).toBeVisible();
-  await expect(modal).toContainText("Not verified");
+  await expect(modal.locator("[data-operational-group=criteria]")).toContainText("Not assessed");
   await capture(page, "verify-criteria");
   await modal
-    .getByRole("button", { name: "Review this criterion", exact: true })
+    .getByRole("button", { name: "The expired token is rejected", exact: true })
     .click();
   await expect(modal.locator(".workspace-kanban-inspection")).toContainText(
     "The expired token is rejected",
@@ -338,7 +339,7 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
   const modal = page.locator("#workspace-kanban");
   await modal.getByRole("button", { name: "Add Task", exact: true }).click();
   await expect(modal).toBeVisible();
-  await expect(modal.locator("#command-form")).toBeVisible();
+  await expect(page.locator("#workspace-kanban-operation #command-form")).toBeVisible();
   await expect(page.locator("#fields")).toContainText(data.objective.title);
   await page
     .getByLabel("Task title", { exact: true })
@@ -400,11 +401,13 @@ test("activity history is loaded on demand and material choices retain their mea
     .getByRole("button", { name: "Add material", exact: true })
     .click();
   const modal = page.locator("#workspace-kanban");
-  await expect(modal).toContainText("does not approve a criterion");
-  await expect(modal).toContainText("File upload is not available");
+  const material = page.locator("#workspace-kanban-operation");
+  await expect(material).toContainText("does not approve a criterion");
+  await expect(material).toContainText("File upload is not available");
   await capture(page, "add-material");
-  await modal
-    .getByRole("button", { name: "What was produced — Artifact", exact: true })
+  await material
+    .locator(".workspace-remedy-actions")
+    .getByRole("button", { name: "Add artifact here", exact: true })
     .click();
   await expect(page.locator("#command-form")).toBeVisible();
   await page
@@ -424,7 +427,7 @@ test("activity history is loaded on demand and material choices retain their mea
   await expect(page.locator("#command-form")).not.toBeVisible();
   await expect(modal).toBeVisible();
   await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
-  await expect(modal).toContainText("Add material");
+  await expect(modal.locator(".workspace-kanban-columns")).toBeVisible();
 });
 
 test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%", async ({
@@ -457,8 +460,23 @@ test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200%
       await expect(modal.locator(".workspace-kanban-inspection")).toHaveCount(
         0,
       );
+      if (factor === 4) {
+        await modal.getByRole("button", { name: "Add Task", exact: true }).click();
+        const operation = page.locator("#workspace-kanban-operation");
+        await expect(operation).toBeVisible();
+        await expect(page.locator("dialog[open]")).toHaveCount(1);
+        await operation.getByLabel("Task title", {exact:true}).fill("A short-viewport operation");
+        const last = operation.locator("#fields input:visible, #fields textarea:visible, #fields select:visible").last();
+        await last.focus();
+        await last.scrollIntoViewIfNeeded();
+        await expect(last).toBeFocused();
+        await operation.locator("#submit-command").scrollIntoViewIfNeeded();
+        await expect(operation.locator("#submit-command")).toBeInViewport();
+        await page.keyboard.press("Escape");
+        await expect(operation).not.toBeVisible();
+      }
       await modal
-        .getByRole("button", { name: "Close Kanban", exact: true })
+        .getByRole("button", { name: "Back to Canvas", exact: true })
         .click();
       await expect(modal).not.toBeVisible();
     }
@@ -506,7 +524,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
     .click();
   const modal = page.locator("#workspace-kanban");
   await modal
-    .getByRole("button", { name: "Review this criterion", exact: true })
+    .getByRole("button", { name: "The exception requires an explicit decision", exact: true })
     .click();
   await modal
     .locator(
@@ -581,7 +599,7 @@ test("partial Kanban pages preserve column scroll and reject stale continuation"
     .click();
   const modal = page.locator("#workspace-kanban");
   await expect(modal.getByRole("status")).toContainText("Partial view");
-  const column = modal.locator("[data-column=todo]");
+  const column = modal.locator("[data-column=backlog]");
   await column.hover();
   await page.mouse.wheel(0, 420);
   await expect
@@ -660,6 +678,7 @@ test("All item actions reuse the canonical surface within the same Kanban", asyn
     .locator(".workspace-kanban-card")
     .filter({ hasText: data.task.title })
     .click();
+  await modal.locator(".workspace-operation-groups > summary").click();
   await modal
     .locator(".workspace-kanban-inspection")
     .getByRole("button", { name: "All item actions", exact: true })

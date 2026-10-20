@@ -1,89 +1,87 @@
-# Operate work without leaving the Kanban
+# Operate work in its contextual Kanban
 
-The spatial Outcome Board remains the central map. Open an Outcome's Objectives
-Kanban or an Objective's Tasks Kanban to plan and operate its **direct** children.
-Subobjectives and direct Outcome Tasks stay separate. Counts and search describe
-loaded cards; use Load more rather than assuming the visible page is the whole plan.
+The spatial Outcome Board remains the default map. Open **Objectives Kanban** from
+an Outcome or **Tasks Kanban** from an Objective to operate its direct children.
+Switch to Direct Tasks or Subobjectives without changing their ownership.
 
-## Read and operate an item
+## Inspect without leaving the lanes
 
-Select a card to replace the columns with its focused work page. No second sidebar
-or additional modal is opened. Back to Kanban restores its filters, horizontal
-position and column scroll; Back to previous item returns from a criterion or
-related record. Escape leaves an item first, then closes the Kanban; breadcrumbs
-return to earlier Kanban contexts. An unresolved mutation keeps its form.
+Click a card to open its compact inspector. The Kanban remains a workspace, not a
+modal. Its search, filters, lanes, loaded pages and scroll remain available. Wide
+screens dock the inspector; HD and mobile provide a bounded reading panel. Use
+Back to Kanban to close it, or Back to previous item when inspecting a related record.
+Back to Canvas restores the map selection, camera and opening control.
 
-Collection filters and parent-creation actions are hidden while an item is focused;
-Refresh stays available. A missing assessment directs the primary action to
-review criteria, rather than presenting blocked completion as the next operation.
+The inspector provides:
 
-The work page brings together:
+- **Overview and Next operation:** current state, context and the next pertinent
+  capability or a concrete explanation of its requirements.
+- **What to do:** actual instructions, constraints, deliverables and definition.
+- **Responsibility & authority:** declared responsibility and recorded execution
+  authority. Assignment does not acquire a lease; a contract does not mean an Agent
+  is online or executing.
+- **Criteria & proof:** current definitions, applicable assessments and linked
+  material. Open a criterion to inspect and assess its actual condition.
+- **Dependencies & impediments:** related work, Issues and Blockers. Resolving an
+  Issue does not release its Blocker; release is an explicit operation.
+- **Activity history:** loaded on demand, with its frozen history cursor.
+- **More actions and audit:** less frequent authorized operations and technical reads.
 
-- **Next operation:** a current server capability, with a confirmation form or a
-  concrete explanation of its requirements. It never silently changes status.
-- **What to do:** authored instructions, constraints, expected deliverables and
-  context. An empty definition is described honestly; use its definition action.
-- **Responsibility and execution authority:** declared assignees/owners, recorded
-  executor/reviewer and expiry. Assignment grants no lease or permission. Recorded
-  authority does not establish live presence or that an external process is running.
-- **What is missing:** readiness, dependencies, real blockers and pending criteria.
-  Open their references in the same work page, resolve the correct entity and return.
-- **Prove and verify:** register the produced Artifact, record or link Evidence,
-  inspect each Criterion, and explicitly record an Assessment. Evidence alone never
-  marks a criterion met. A waiver is an exception, not verified success.
-- **Execute and conclude:** acquire current authority, perform the work externally,
-  record its actual result and explicitly conclude when all backend gates permit it.
-- **What happened:** Activity history loads on demand; its continuation stays bound
-  to the actual frozen history cursor. Authored updates and decisions remain records.
+## Move to prepare an operation
 
-Less frequent operations remain grouped by purpose and in All item actions. The
-same existing forms, permission checks, expected versions, fencing and idempotency
-pipeline are used inside the Kanban.
+Drag a card to a lane or open its **… Actions** menu and choose a destination.
+The menu works without drag or hover. Drop hints explain possible operations;
+current capabilities are read again before preparation. The card stays in its
+persisted lane until an authorized command succeeds.
 
-## Move a card to prepare an operation
-
-Drag onto a column, or use the card's labelled **Move to…** select with a single
-pointer or keyboard. A drop is a request to prepare the next operation. Review
-and confirm the existing form; only a persisted response changes the projection.
-
-| Target column | Legitimate next operation |
+| Objectives | Tasks |
 |---|---|
-| To do | Activate a backlog Task or explicitly release a live legacy reservation, when available. Objectives have no invented reverse transition. |
-| In progress | Acquire a ready Task's lease/contract, reacquire expired legacy authority, or Start Objective. A backlog Task must first be made available. |
-| Verification | Inspect delivery, criteria and review requirements. This does not invent a submission lifecycle. Signed submission/review stays external. |
-| Accepted | Explicitly Complete Task or Achieve Objective, subject to current criteria, assessments, dependencies, blockers, authority and conclusion policy. |
+| Planned | Backlog: planned work, not yet available |
+| In progress | To do: available; acquisition still requires readiness and authority |
+| Achieved | In progress: acquired execution, not inferred online presence |
+| No invented verification queue | Verification: actual pending review only |
+| Cancelled is separate | Accepted: explicit Task completion; cancelled is separate |
 
-Invalid or unauthorized moves leave the persisted work unchanged. Required
-criteria, blockers and execution authority are revalidated on the server, including
-when they change between opening and saving a form. Completing a Task never
-achieves its Objective; achieving an Objective never automatically accepts the Outcome.
+A planned Objective can be achieved directly when the existing domain permits it;
+Start is not an artificial prerequisite. Backlog → In progress has **two separately
+confirmed commands**: make the Task available, then acquire its execution authority.
+Reviewing proof never invents a submission lifecycle or moves a legacy Task into
+Verification.
 
-## Reservations and external execution
+## Confirm or resolve requirements
 
-For a legacy Task, Reserve task acquires the real exclusive time-limited lease.
-Extend my reservation retains its claim and fencing token. Once expired, use
-Reacquire expired reservation: the existing command issues a new claim and higher
-fencing token. The previous holder cannot complete with stale authority.
+The only modal is the prepared operation. It shows its item, consequence and
+existing canonical form, or the current requirements and available preparation
+actions. Add or inspect the relevant criterion, proof or impediment, then recheck
+the intention. Each command needs its own confirmation.
 
-Contract-backed work uses **Continue in authorized host**. Use the supported
-configured external host for acquisition, signed delivery, independent review,
-correction and continuation. The same entry remains visible after acquisition, so delivery/continuation does
-not require discovering a technical record. The existing human-readable
-contract/review component shows the exact record/context.
-The browser does not generate signatures, assume an agent identity or execute work.
-These operations are not advertised as browser-complete when the protocol requires
-an external actor. Legacy recovery actions are unavailable under contract protocols.
+| Record | Meaning |
+|---|---|
+| Criterion | A versioned condition that must be true |
+| Artifact | A produced deliverable or reference |
+| Evidence | An observation or source linked with an explicit stance |
+| Assessment | An explicit evaluation against the current criterion definition |
+| Conclusion | The explicit decision to conclude the entity |
 
-## Recover without losing intent
+Evidence does not approve a criterion. A waiver remains an exception, not verified
+success. Completing a Task does not achieve its Objective; achieving an Objective
+does not accept its Outcome. The existing strict-work policy and cancellation
+acknowledgements still apply.
 
-A version conflict retains your input and offers the canonical comparison/remedy
-flow. Refresh and review the actual state; the UI never silently replaces the
-expected version or retries a changed semantic operation.
+Legacy reservations can be renewed by their holder; expired recovery obtains new
+fencing. Contract/signed acquisition, delivery and independent review continue in
+the configured authorized host. The browser does not sign or execute work.
 
-If a response may have been lost after commit, the form retains its pending intent.
-Retry uses the **same body and idempotency key**. Escape/Close cannot discard an
-unresolved intent. Confirmed saves refresh parent, child, ancestors and cards against
-one coherent revision. Optional spatial graph enrichment cannot prevent this
-operation; the Board can be refreshed independently after returning.
+## Recover and retain context
 
-[Audit and priorities](audit.md) · [Verification](validation.md)
+A conflict retains your text and requires explicit review of the changed state.
+An uncertain response retains its original body and idempotency key; use Retry the
+same intention. Exit is guarded while submitting or uncertain. If a write is
+confirmed but the refreshed view fails, retry reading the state, not the write.
+
+Search and counters describe **loaded items**. Load more retains lane scroll and
+uses the current authenticated cursor. A changed revision requires Refresh;
+pages from different revisions are never silently merged.
+
+[Interaction contract](workspace-mode-contract.md) · [Current audit](workspace-mode-audit.md) ·
+[Qualification](validation.md) · [Screenshots](screenshots/README.md)

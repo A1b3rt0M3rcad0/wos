@@ -18,3 +18,24 @@ test('verification is a read, signed authority remains external, and Objective a
  assert.equal(kanbanOperation(v,'accepted').capability.action_id,'AchieveObjective');
  assert.equal(kanbanOperation(v,'in_progress').capability,undefined);
 });
+
+test('typed lanes preserve the public projection while separating lifecycle facts',async()=>{
+ const {kanbanLane,kanbanLanes}=await import('../../../packages/wos-api/web/assets/kanban-operations.js');
+ assert.deepEqual(kanbanLanes('objective').map(([id])=>id),['planned','in_progress','accepted']);
+ assert.deepEqual(kanbanLanes('work_item').map(([id])=>id),['backlog','todo','in_progress','verification','accepted']);
+ const item=(kind,lifecycle,display_state,stage='todo')=>({ref:{kind},lifecycle,display_state,stage});
+ for(const [kind,life,shown,lane] of [
+  ['work_item','backlog','backlog','backlog'],['work_item','todo','ready','todo'],['work_item','in_progress','blocked','in_progress'],
+  ['work_item','in_progress','awaiting_review','verification'],['work_item','done','awaiting_review','accepted'],
+  ['work_item','cancelled','awaiting_review','cancelled'],['objective','planned','awaiting_review','planned'],['objective','achieved','awaiting_review','accepted']])
+  assert.equal(kanbanLane(item(kind,life,shown)),lane);
+});
+test('two-step acquisition is explicit, Objective achievement needs no artificial start and terminal moves cannot reopen',()=>{
+ const backlog=kanbanOperation(view([{action_id:'ActivateWorkItem'}],'backlog'),'in_progress');
+ assert.equal(backlog.kind,'needs_preparation');assert.equal(backlog.sequential,true);assert.equal(backlog.capability.action_id,'ActivateWorkItem');
+ const s={kind:'entity',ref:{...subject.ref,kind:'objective'}};
+ const objective={subject:s,header:{lifecycle:'planned'},capabilities:[{subject:s,action_id:'AchieveObjective',transport:'browser_command',availability:'available'}]};
+ assert.equal(kanbanOperation(objective,'accepted').kind,'command');
+ assert.equal(kanbanOperation(objective,'verification').kind,'unsupported');
+ assert.equal(kanbanOperation(view([{action_id:'ClaimWorkItem'}],'done'),'in_progress').kind,'unsupported');
+});

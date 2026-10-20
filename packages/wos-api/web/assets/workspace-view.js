@@ -578,6 +578,27 @@ export function renderWorkspaceView(host, {
     if (onVerify && ['outcome','objective','work_item'].includes(kind)) tools.append(button('Verify criteria', () => onVerify(view), 'quiet'));
     if (onMaterial) tools.append(button('Add material', () => onMaterial(view), 'quiet'));
     host.prepend(tools);
+    if (operational === 'compact') {
+      const groups = [
+        ['work', 'What to do', ['work']],
+        ['people', 'Responsibility & authority', ['people','execution']],
+        ['criteria', 'Criteria & proof', ['criteria','delivery','conclusion','observation']],
+        ['impediments', 'Dependencies & impediments', ['attention','relationships','required_objectives']],
+      ];
+      for (const [name, title, facets] of groups) {
+        const nodes = [...host.children].filter(node => facets.includes(node.dataset.workspaceFacet));
+        if (!nodes.length) continue;
+        const group = details(title); group.dataset.operationalGroup = name;
+        const id = `kanban-group/${JSON.stringify(view.subject)}/${name}`;
+        group.open = disclosures?.has(id) ? disclosures.get(id) : name === 'work';
+        group.append(...nodes); host.append(group);
+        group.addEventListener('toggle', () => disclosures?.set(id, group.open));
+      }
+      // History stays lazy and last; technical audit is an explicit disclosure.
+      const history = host.querySelector('.workspace-history');
+      if (history) host.append(history);
+      host.append(audit);
+    }
   } else compactWorkspace(host, view, { onKanban, onVerify, onMaterial, onActivity, onReference, disclosures });
   return { actions };
 }

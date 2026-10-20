@@ -664,6 +664,22 @@ for (const decision of ["approved", "changes_requested"])
       assert.ok(canvasHandoff.includes(`review checkout ${pendingReview.id} --version ${pendingReview.version}`));
       assert.ok(canvasHandoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
       assert.ok(!canvasHandoff.includes(token));
+      // A real signed submission (not a mock display_state) projects to review.
+      const beforeKanbanWrites = mutations.length;
+      const searchBoard = page.getByRole("combobox", {name:"Search Outcome Board",exact:true});
+      await searchBoard.fill(outcome.title);
+      await page.getByRole("option").filter({hasText:outcome.title}).first().click();
+      await page.locator("#canvas-details").getByRole("button",{name:"Open Objectives Kanban",exact:true}).click();
+      const kanban = page.locator("#workspace-kanban");
+      await kanban.getByRole("button",{name:"Direct Tasks",exact:true}).click();
+      await expect(kanban.locator("[data-column=verification]")).toContainText(work.title);
+      await expect(kanban.locator("[data-column=accepted]")).not.toContainText(work.title);
+      await kanban.locator(".workspace-kanban-card").filter({hasText:work.title}).click();
+      await expect(kanban.locator(".workspace-kanban-columns")).toBeVisible();
+      await expect(page.locator("dialog[open]")).toHaveCount(0);
+      assert.equal(mutations.length,beforeKanbanWrites,"Inspection does not acquire review authority or sign a delivery");
+      await kanban.getByRole("button",{name:"Back to Canvas",exact:true}).click();
+      await expect(kanban).not.toBeVisible();
       await chooseArea(page, "work");
       await page.getByRole("button", { name: "Task Board", exact: true }).click();
       await page
