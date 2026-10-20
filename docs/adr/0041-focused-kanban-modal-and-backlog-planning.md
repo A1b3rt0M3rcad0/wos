@@ -10,7 +10,7 @@ Board. An operation temporarily replaces that modal: two modal dialogs are never
 open together. Returning preserves the Kanban context, filters, selection and
 scroll. The Board camera remains mounted and unchanged.
 
-Inspectors omit the standalone Verify criteria/Add material controls, technical
+Kanban inspectors omit the standalone Verify criteria/Add material controls, technical
 audit disclosure and More actions directory. Meaningful work, responsibility,
 criteria/proof, impediments and history remain. The header uses a plain context
 caption rather than breadcrumbs. A context selector controls both the entity

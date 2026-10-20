@@ -9,11 +9,11 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
-| Use contextual Objectives/Tasks Kanbans, compact inspection and strict completion | [Contextual Kanbans](ux/contextual-kanban/README.md) |
+| Use contextual Objectives/Tasks Kanbans, compact inspection and strict completion | [Contextual Kanbans](ux/operational-kanban/README.md) |
 | Use progressive creation and the shared contextual inspector | [Operational workspace](ux/operational-workspace/README.md) |
 | Connect Objectives, Tasks, Evidence and problems without confusing completion with acceptance | [Understand the relationships](workspace-relationships.md) |
 | Find Outcomes through live search and filters      | [Outcome discovery](workspace-ux.md#find-another-outcome)               |
-| View the current desktop and mobile interface       | [Current Board and workspace screenshots](design/editorial/operational-workspace/README.md) |
+| View the current desktop and mobile interface       | [Current Board and Kanban screenshots](ux/operational-kanban/screenshots/focused-modal/README.md) |
 | Inspect earlier specialist pages, native forms and recovery states | [Earlier complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
 | See real navigation through the earlier interface   | [Recorded workspace tour](images/workspace-tour.md)                    |

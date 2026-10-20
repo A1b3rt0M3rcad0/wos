@@ -16,13 +16,13 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Focused modal Kanban follow-up — 2026-10-20
 
-**In progress; qualification pending.** The owner's seven simplification requests
+**Implemented and locally qualified; new-head hosted CI is separate.** The owner's seven simplification requests
 supersede the previous nonmodal presentation. [ADR-041](docs/adr/0041-focused-kanban-modal-and-backlog-planning.md)
 records native modal return, contextual controls, direct Overview navigation,
 criterion-scoped proof checklist and backend-enforced Backlog-only definition
 editing. Existing execution, evidence/assessment separation and acceptance gates
 remain intact. Earlier CI/captures below qualify their recorded historical sources,
-not this follow-up. No merge, release or version advancement is authorized.
+not this follow-up. The [current qualification](docs/ux/operational-kanban/simplification-validation.md) records 229 passing browser cases, 78 JavaScript units, the complete default Go suite, vet and Domain/Application race checks; local PostgreSQL skips remain explicit. [Seven current captures](docs/ux/operational-kanban/screenshots/focused-modal/README.md) bind the tested runtime and served assets. Native dialog return, frozen planning, criterion-scoped proof, mobile pointer layers and delayed permission navigation have regressions. No merge, release or version advancement is authorized.
 
 ## Contextual workspace Kanban follow-up — 2026-10-20
 

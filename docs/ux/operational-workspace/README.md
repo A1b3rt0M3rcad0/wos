@@ -1,6 +1,6 @@
 # Operate an Outcome from its Board
 
-The current Board interaction adds [contextual Kanbans and a compact inspector](../contextual-kanban/README.md).
+The current Board interaction adds [contextual Kanbans and a compact inspector](../operational-kanban/README.md).
 The map stays primary; Outcome and Objective inspectors open one navigable modal.
 Details and activity start collapsed. New browser Outcomes visibly default to
 strict work; historical/API omission retains compatible completion.
@@ -27,9 +27,10 @@ for implemented behavior, executed checks and remaining qualification.
    execution contract.
 4. Add instructions, constraints, deliverables, context references, scheduling
    and declared participants when the work becomes clearer. Use the item's
-   contextual actions; there is no need to recreate it.
+   contextual actions while the Task remains in Backlog; there is no need to recreate it.
 5. Make a Task available explicitly when it is ready to enter the permitted
-   acquisition workflow. Availability does not acquire execution authority.
+   acquisition workflow. Availability does not acquire execution authority. Task planning
+   is then locked; an eligible To do Task must explicitly Defer to Backlog to replan.
 
 Quick creation keeps the selected parent visible and offers more details without
 requiring them up front. Objectives visibly default to **Required for Outcome**;

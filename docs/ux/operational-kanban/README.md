@@ -25,6 +25,7 @@ The inspector provides:
 - **Dependencies & impediments:** related work, Issues and Blockers. Resolving an
   Issue does not release its Blocker; release is an explicit operation.
 - **Activity history:** loaded on demand, with its frozen history cursor.
+
 The inspector omits the standalone Verify criteria/Add material buttons, the action
 directory and technical audit disclosure. Relevant operations stay with their
 work, responsibility or proof context. Administrative tools remain separate.
@@ -114,4 +115,4 @@ uses the current authenticated cursor. A changed revision requires Refresh;
 pages from different revisions are never silently merged.
 
 [Current decisions and audit](simplification.md) · [Previous interaction contract](workspace-mode-contract.md) ·
-[Qualification](validation.md) · [Screenshots](screenshots/README.md)
+[Qualification](simplification-validation.md) · [Screenshots](screenshots/focused-modal/README.md)
