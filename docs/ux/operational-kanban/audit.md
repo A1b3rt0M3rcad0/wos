@@ -1,5 +1,7 @@
 # Operational Kanban audit — 2026-10-20
 
+> Historical audit: [workspace-mode audit](workspace-mode-audit.md) supersedes its modal/full-page presentation decisions. Domain findings remain applicable.
+
 Scope: PR #116, `fix/workspace-operational-density`, baseline `496be90`.
 Hybrid audit: Chromium against a real isolated SQLite API, public commands and
 workspace reads, plus source/contract inspection. Synthetic data only. Product

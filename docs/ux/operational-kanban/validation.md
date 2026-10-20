@@ -1,47 +1,57 @@
-# Operational Kanban qualification
+# Contextual workspace Kanban qualification
 
-## Scope and evidence
+This is the owner-approved workspace-mode follow-up in draft PR #116.
+[Current audit](workspace-mode-audit.md), [behavior contract](workspace-mode-contract.md)
+and [A01–A30 acceptance matrix](workspace-mode-acceptance.json) describe its scope.
+The previous modal/full-page presentation is superseded. Its receipts remain
+[immutable historical evidence](https://github.com/A1b3rt0M3rcad0/wos/blob/75a56fe43ddd20ff55835fd2ba22ca8af9588d1c/docs/ux/operational-kanban/validation.md).
 
-This is the 2026-10-20 follow-up in draft PR #116. It extends the original contextual
-Kanban implementation; older receipts/captures still describe their exact sources.
-[Audit](audit.md) records the pre-change investigation. [Operation guide](README.md)
-describes the implemented user flow. Final source/run identifiers and captures are
-recorded below.
+## Executed results
 
-No participant study, manual screen-reader session, physical touch-device test or
-production throughput claim is substituted by these automated tests.
+- Runtime source: `57e76f4741c4e483c304cf35c648550c0349c460`; clean runtime/test working tree and correctly stamped server binary.
+- Complete local browser run: **220 passed, 2 failed**, zero skipped or flaky retries (821.6 seconds), two workers. The unmodified full receipt retains both failures.
+- Corrective targeted qualification covers **both failed cases**, on identical production assets. The Objective assertion now targets the active requirements modal. The traced diagnostic passes that case but records a browser interruption in the administrative case; the separate one-worker administrative run passes without tracing. All original failures remain in the structured receipt. No timeout, assertion or browser test was removed. These runs are not a new all-green full run.
+- The 222 distinct cases are covered across these local runs. **The final-head hosted browser job is the complete-suite acceptance gate**; its result is separate from the local receipts.
+- JavaScript units: **78 passed**, zero failures/skips.
+- Both Go packages `application` and `web` pass. Local default-environment tests that require PostgreSQL are explicitly listed as skipped in the structured receipt; hosted CI supplies the real PostgreSQL gate.
+- **16 current screenshots**, HD/QHD/4K/mobile, each with source/viewport/browser receipt. The manifest binds source, stamped binary, asset hashes and image hashes. Later test/documentation-only commits do not change these assets; the production-file diff is checked before finalizing this receipt.
+- Four real pre-change Task journeys passed and produced [before captures](before-workspace-mode/README.md). Focused and historical executions overlap the complete suite and are not additional acceptance counts.
 
-## Executable acceptance
+[Structured results](test-results.json) retain each browser case, source, hashes,
+Go results/skips and manual limitations. [Hosted PR checks](https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks)
+are the separate final-head CI gate; a historical green commit does not qualify a new head.
 
-| Contract | Evidence |
-|---|---|
-| Real create → assign → define → activate → acquire → renew → Artifact → Evidence → Assessment → Conclusion | `tests/web/kanban-operations.spec.mjs` repeats the actual browser/API journey at 1280×720, 2560×1440, 3840×2160, 390×844 |
-| Assignment does not acquire authority; evidence does not assess; Task completion does not achieve Objective | Persisted state asserted between the steps in the same journey |
-| Drag / single-pointer / keyboard alternatives prepare operations | Native drag and named select; blocked and read-only fixtures assert zero command dispatches |
-| Objective start and assessed achievement are real commands | Current Criterion, explicit Start and Achieve; Outcome remains active |
-| Issues and Blockers remain distinct | Resolve the Issue, assert Blocker stays active, explicitly confirm release, then acquire newly available work |
-| Exact-intent recovery and conflict handling | Concurrent real API edit retains local form input; actual commit followed by aborted response, then identical body/key retry and one created Task |
-| External signed/contract authority is not invented | Real contract-protocol fixture: movement shows external host handoff, no browser mutation/lease/contract |
-| Current Objective gates / lease ownership and expiry | `workspace_objective_capability_test.go`; existing readiness, domain, authorization and race suites remain |
-| Context preservation, partial pages, revision coherence, cancellation exclusions and credential revocation | Existing contextual Kanban and guard suites retained; expected surface updated to the single embedded dialog |
-| HD, QHD, 4K, narrow widths and actual native zoom | Existing nine-width contextual suite plus native Chromium Settings zoom 125%, 150%, 200%, 400%; viewport/DPR are measured by the existing helper |
-| Accessibility triage | Native modal/controls, keyboard Escape/back/focus assertions, scoped Axe checks; no global WCAG conformance claim |
+## Operational and exception coverage
 
-No retries, skipped browser tests, forced clicks or enlarged timeouts are introduced
-for this follow-up. Intermediate failures exposed real integration issues or stale
-assumptions in tests; they are not reported as passing final qualification.
+The real-browser cycle creates, assigns, defines, activates, acquires and renews a
+Task, then registers Artifact, Evidence, current Criterion Assessment and explicit
+Conclusion. Persisted intermediate states are checked; completion does not achieve
+the parent Objective. It runs at 1280×720, 2560×1440, 3840×2160 and 390×844.
 
-## Final run
+Objective tests cover authorized Start, direct planned→Achieved, blocked acceptance
+remediation and explicit open-work acknowledgements. Actual signed-review fixtures
+prove Verification without browser signing; legacy submission does not invent that
+fact. Issue resolution and Blocker release remain distinct writes.
 
-- Complete local browser regression at `5ef10fc`: **210 passed**, zero skipped, zero flaky retries (498.9 seconds). The API binary was built from this source; its runtime commit metadata was `unknown` and its SHA-256 is retained in the structured result.
-- After rebuilding the same source with the correct server commit stamp, **32 contextual/operational cases passed** and produced the final captures. This changes version metadata only; the production source is identical.
-- The nine-width context matrix and both delayed-origin focus regressions also passed **three repetitions: 33 executions**, zero skipped or flaky retries. These are overlapping scenarios, not 33 additional acceptance cases. The deterministic delayed-response tests wait for the original trigger to detach before asserting focus on its replacement.
-- The complete run includes the full create/assign/acquire/prove/assess/conclude journey at HD/QHD/4K/mobile, existing contract/signed-protocol checks, native browser zoom through 400%, permission/conflict/recovery cases and contextual navigation. Intermediate failures are not counted as passing qualification.
-- JavaScript units: **76 passed**. Both affected Go packages (`application` and `web`) passed; workspace capability/race checks passed. Local default tests explicitly skip tests requiring an actual PostgreSQL service; full CI supplies PostgreSQL and remains the acceptance gate for those checks.
-- The supplied audit skill passed its structure/link validator and **four package tests**.
-- **16 final-source screenshots** have clean runtime-source receipts, binary/source binding, image hashes and 44 asset-file hashes in the [gallery manifest](screenshots/manifest.json). Source `5ef10fc` is the final runtime implementation; later documentation commits do not change those assets.
-- Historical successful runs at `f765f5d` (207 cases) and `ee31cb8` (30 focused cases) retain their separate source/statistics in the structured result. They are not added to the final count.
+Native drag and card menus prepare rather than write. Backlog→execution has two
+explicit confirmations with a fresh To do projection between them. Nonmodal item
+selection retains the same lane nodes. Only the canonical operation is modal.
 
-[Structured browser results](test-results.json) · [Gallery](screenshots/README.md) · [Live GitHub checks](https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks).
+Recovery tests cover conflict/input retention, persisted command with lost response
+and exact body/key replay, confirmed write with failed refresh and reads-only retry,
+revocation, partial pages, stale cursors and delayed origin focus restoration.
 
-GitHub check status is recorded live on the PR, separately from these local receipts. No merge, tag, version advance or publication is performed.
+## Responsive and accessibility scope
+
+The ten-width context matrix includes 320, 390, 430, 1024, 1280, 1366, 1440, 1920,
+2560 and 3840 CSS-pixel widths. Actual Chromium Settings zoom 125%, 150%, 200% and
+400% measures effective viewport/DPR; the 400% case opens a real operation, focuses
+its last field, reaches Save and exits. It is separate from equivalent-width reflow.
+
+Keyboard, Escape, Tab trapping, accessible card menus, emulated touch and scoped Axe
+checks pass. No automatic Playwright retries, forced clicks, skipped browser tests or relaxed timeouts
+were introduced. Physical-device touch, manual screen-reader combinations, other
+engines, participant studies and production performance remain unqualified. These
+checks do not establish global WCAG conformance or measured productivity gains.
+
+No merge, release, tag, version change or publication is performed.

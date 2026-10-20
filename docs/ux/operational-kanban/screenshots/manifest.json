@@ -1,8 +1,8 @@
 {
-  "runtime_source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
+  "runtime_source": "57e76f4741c4e483c304cf35c648550c0349c460",
   "binary": {
     "built_at": "unknown",
-    "commit": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
+    "commit": "57e76f4741c4e483c304cf35c648550c0349c460",
     "supported_work_protocols": [
       "contracts_v1",
       "signed_contracts_v2"
@@ -14,13 +14,13 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "1bdb96b53e7f2288efeeb2a5c780ea3644027574cbb75eb6c9752b0c93e6f31d"
+    "sha256": "ced8ff977352f8e508c8dc0729026bca9b4d632bf0c771122f964e3e4ad56e4a"
   },
   "assets_on_disk_sha256": {
     "actions.js": "8b7a797ad3459cc877bac867db6cd21b6dc1ea87c9731ae1a1b90bdbdb3d634b",
     "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
-    "app.js": "6ab1c59b848a87b5b22daaf9788e767e5bf20c8cad477d16d8bd74b528b50b07",
+    "app.js": "37b5c5bfb9156405bcecfb05516bd737fb936a1b82fc12278b1a7459cdf23cb3",
     "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
     "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
     "canvas.css": "0011b1cb0454fb7b4ff362ff9180e0c3bb54f5ffe85c90902f9139cb1ffa1441",
@@ -32,7 +32,7 @@
     "human-forms.js": "8241da0a1b7fa212255c1bad2c8cd45b5a8d49e42adb69ede52d9fd0908ea505",
     "index.html": "23dd44d7c24a69c086f76efad60c8283d2c49e6122f3c862f77b206a628de14d",
     "intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
-    "kanban-operations.js": "a3eb4d33890657537cd480acf98ddaa1cb3315a075784261ad8e6ebe249c5753",
+    "kanban-operations.js": "ea63b66e08dfbcea12ed80b2e3da37f9cd4e2a0f66c0ffa09885f51e0df79edc",
     "navigation.js": "46b0ed04e300445801930046a9443dd723b6cf912b7b845c6752494305fb2a8a",
     "presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
     "reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
@@ -54,17 +54,17 @@
     "workspace-evidence-form.js": "fb7ee146a9e446ff7030aea5749984a7dd9f251e81d796b717ce57c03e060032",
     "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
     "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
-    "workspace-kanban.css": "5c5ad89a9cdef0d3fd72e1477b892b233a75e8ecfaf30bf081a173f7e745d325",
-    "workspace-kanban.js": "ffe32b2c03d3646a3273e11f530bd7c415980a7396f9f645158bcbb56400aee5",
+    "workspace-kanban.css": "51cd1342f01670c2bd72522c6f3ec5018fe2708c032b62f709500aa9320e3548",
+    "workspace-kanban.js": "38a337c9599e597d2d7035f9545f0b88235b965ab6f24026075b4aa46f8c59b5",
     "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
     "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
     "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
-    "workspace-view.js": "eacede958271e0652645f06bafbe1df0ef6d62c697552533b63e3b04e90f60f6",
+    "workspace-view.js": "688e97015c9bebcd367867263925eed8838a9f1d629f7691810c9c0db717f8ec",
     "workspace-workflows.css": "3a3e7f8d9ff9bf516c7e4d623d1cb7671df9aac334a8edc5212aadb5f31888ca"
   },
   "screenshots": {
     "accepted-1280.png": {
-      "sha256": "6b37dca751699f31d9f381c22a31d2f15822879dceaebf95665ec3e3616a3f49",
+      "sha256": "1bc618c265a2ac72266a52e562decbd443a30c64052b8baacbbaa3e6a3136f5b",
       "pixels": {
         "width": 1280,
         "height": 720
@@ -72,7 +72,7 @@
       "receipt": "accepted-1280.json"
     },
     "accepted-2560.png": {
-      "sha256": "bcb0fd9395c5ec7f3aac363ec036e5e2ded22ae766de6cd73d7cdd1ff5a0bb59",
+      "sha256": "d8c9a3b9067311a5bb12dc2192b5b277afa9fd638bc429dd46f8b658e402a812",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -80,7 +80,7 @@
       "receipt": "accepted-2560.json"
     },
     "accepted-3840.png": {
-      "sha256": "aad8e377b04aad19c816a1036979a58592e1e2184acac1ee65c3dcb973346882",
+      "sha256": "6e3da508d608621f6970e53e1431e86b22cad6365fed3d2c76fc27fd47eb8f00",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -88,7 +88,7 @@
       "receipt": "accepted-3840.json"
     },
     "accepted-390.png": {
-      "sha256": "01c8ed40fb78fb6de958c05ac1d0257644498c2876d883a06a1a2f565cc7d56d",
+      "sha256": "713a3fa2d23a76af3cb36459a3a02514417548bb1cadfe5e3586513a1751bb18",
       "pixels": {
         "width": 390,
         "height": 844
@@ -96,7 +96,7 @@
       "receipt": "accepted-390.json"
     },
     "completion-1280.png": {
-      "sha256": "8b520c8671d70a958e6562207a776a48fc30e1b59d8cc2e937c53261c063550d",
+      "sha256": "644d24e5488e35e9e43f98302bbf7cb658db0f5ea62e5e32a8cf4bd9a6453cb5",
       "pixels": {
         "width": 1280,
         "height": 720
@@ -104,7 +104,7 @@
       "receipt": "completion-1280.json"
     },
     "completion-2560.png": {
-      "sha256": "6ee5c03c11c03a1aac41bf72fd2fbfc1d7a7f4e90c0261547be50cbaeabfc8e6",
+      "sha256": "06cf30957170159d3c235103fe7d4c75028759ba2a74809e1ab4d2bfbe8f1076",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -112,7 +112,7 @@
       "receipt": "completion-2560.json"
     },
     "completion-3840.png": {
-      "sha256": "e549a54be922152de00ee56aa4becea18cbec2884059a0f881b0a33c68505c82",
+      "sha256": "63ffe6021fa7f00beaa4f0cd73c5ca28b7e967b90e0ce98ab8429cbb7f223746",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -120,7 +120,7 @@
       "receipt": "completion-3840.json"
     },
     "completion-390.png": {
-      "sha256": "b7bf3c00e24c4972cfd19463bcfa6f49d97dbfeca80f9e7b64283dc0b67fb2fe",
+      "sha256": "a00fdca01f2169baf493e1bc07198d9a04477b6ef844a12f9e265f0862ff826b",
       "pixels": {
         "width": 390,
         "height": 844
@@ -128,7 +128,7 @@
       "receipt": "completion-390.json"
     },
     "executing-1280.png": {
-      "sha256": "34cd4f5b718d0ce7fb90fb58be3f55379e25a6ea1edef662fa41f3892fde0288",
+      "sha256": "30305313acd61a3ba98bc4b9bfe6303a98bb463d6b3152e53aa38edf0d74f01a",
       "pixels": {
         "width": 1280,
         "height": 720
@@ -136,7 +136,7 @@
       "receipt": "executing-1280.json"
     },
     "executing-2560.png": {
-      "sha256": "07bbeb91e3ced9f889510d90f6573e0c3b8ba8c3967fa6154abb61bcc0230e3f",
+      "sha256": "c3a4f90056e9a79a02dd4243b3f001ed592ce3ba9da90aaad094c6e00f35d0d5",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -144,7 +144,7 @@
       "receipt": "executing-2560.json"
     },
     "executing-3840.png": {
-      "sha256": "9addf8917a341bba6df459a1e8fa870020b20f4b3dabda6c5a2d9a8b23096515",
+      "sha256": "0ff930d6770d8bae8747ec80fcd7ad0302edd26e947c7f83323e67116f7f8f2e",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -152,7 +152,7 @@
       "receipt": "executing-3840.json"
     },
     "executing-390.png": {
-      "sha256": "ac23b7c66fdd3a7fe9cb36a1d1b511f504d08f9a4039142b7e95319501753577",
+      "sha256": "e5617278278318514f89b90687a58edc05b1bea0201058a0925f5c6580666848",
       "pixels": {
         "width": 390,
         "height": 844
@@ -160,7 +160,7 @@
       "receipt": "executing-390.json"
     },
     "item-1280.png": {
-      "sha256": "49ac08527dd7b10538d55d393994052f97ebac84b0498dc21afec6698459f5c5",
+      "sha256": "d27863cb3e38ec21f40b85ca8c318be78a31faa022d96c720ff98cc5fb00eaa0",
       "pixels": {
         "width": 1280,
         "height": 720
@@ -168,7 +168,7 @@
       "receipt": "item-1280.json"
     },
     "item-2560.png": {
-      "sha256": "48b923ded8e50ca634a5013b8cec97f8a04d1b516169dbaef7bf20e7f7175cae",
+      "sha256": "29ddaeca363110ffa5ea69d693bd2b23b3732317df98428dd7bc9adbc36b768f",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -176,7 +176,7 @@
       "receipt": "item-2560.json"
     },
     "item-3840.png": {
-      "sha256": "12305315ac9f1403d03547fca162f7c9aa6f4004550c3027854381f7aa96481f",
+      "sha256": "7420bcc27133503e0e9161fcf6dbd91b4fd7f7256f640150e56030b20d95190a",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -184,7 +184,7 @@
       "receipt": "item-3840.json"
     },
     "item-390.png": {
-      "sha256": "e40f95b7f9962035b3fc2081a6ffb77ddba6d94f294c9a9e3e624b4507233daf",
+      "sha256": "85c9b7eace99a0c62b8338f251e0f4f8bb747f9f68291d4a2caefb3f684d6855",
       "pixels": {
         "width": 390,
         "height": 844

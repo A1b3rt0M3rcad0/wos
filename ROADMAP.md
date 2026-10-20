@@ -16,7 +16,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 ## Contextual workspace Kanban follow-up — 2026-10-20
 
-**In implementation; qualification pending.** The owner approved the
+**Implemented and locally qualified; final-head CI tracked separately.** The owner approved the
 [workspace-mode plan](docs/ux/operational-kanban/owner-plan-workspace-mode.md) in the
 same draft PR #116. [ADR-040](docs/adr/0040-kanban-workspace-mode-and-prepared-operations.md)
 supersedes the previous modal/in-place-page presentation, preserving all domain
@@ -24,10 +24,18 @@ and strict-completion invariants. Objectives use three typed lanes; Tasks separa
 Backlog and To do, with actual review facts only in Verification. The public stage
 contract remains unchanged. A nonmodal inspector preserves lanes; a single native
 operation dialog reuses existing forms and intent recovery. Accessible card menus
-replace permanent move selects. Final-source browser evidence and A01–A30 results
-remain pending; no merge, release or publication is authorized.
+replace permanent move selects. Final-source local qualification covers 222 browser cases through a 220-pass
+full run and two passing corrective cases; its original failures remain recorded.
+There are 78 passing JavaScript units, passing Application/web checks, 16 current
+captures and the A01–A30 contract matrix. See [qualification](docs/ux/operational-kanban/validation.md)
+for source binding, local PostgreSQL skips and manual screen-reader/device limits.
+Final-head hosted checks remain a separate gate; no merge, release or publication
+is authorized.
 
 ## Operational Kanban UX audit — 2026-10-20
+
+Historical presentation: the workspace-mode follow-up above supersedes the
+modal/full-page interaction below; its domain additions remain included.
 
 **Implemented and locally qualified; draft PR #116 remains unmerged.** The owner requests a hybrid
 UX/domain audit and operational Kanbans using the locally installed

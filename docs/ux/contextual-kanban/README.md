@@ -1,5 +1,7 @@
 # Contextual Kanbans and the operational inspector
 
+> Historical V1 guide. [Current workspace-mode operation](../operational-kanban/README.md) and [ADR-040](../../adr/0040-kanban-workspace-mode-and-prepared-operations.md) supersede the modal/in-place-page presentation below; domain rules and historical evidence remain applicable.
+
 This follows the [owner's preserved plan](owner-plan-2026-10-19.md) and
 [ADR-039](../../adr/0039-contextual-kanbans-and-strict-completion.md).
 The local [product-design-and-ux skill](../../../.agents/skills/product-design-and-ux/SKILL.md)

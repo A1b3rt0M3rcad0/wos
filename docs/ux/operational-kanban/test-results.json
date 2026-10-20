@@ -1,12 +1,13 @@
 {
+  "source": "57e76f4741c4e483c304cf35c648550c0349c460",
   "complete_browser": {
-    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
+    "source": "57e76f4741c4e483c304cf35c648550c0349c460",
     "stats": {
-      "startTime": "2026-10-20T01:29:55.645Z",
-      "duration": 498946.954,
-      "expected": 210,
+      "startTime": "2026-10-20T04:33:31.247Z",
+      "duration": 821642.7810000001,
+      "expected": 220,
       "skipped": 0,
-      "unexpected": 0,
+      "unexpected": 2,
       "flaky": 0
     },
     "cases": [
@@ -889,7 +890,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -901,7 +902,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -913,7 +914,19 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1440x900",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -925,7 +938,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -937,7 +950,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -949,7 +962,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -961,7 +974,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -973,7 +986,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -985,7 +998,7 @@
       {
         "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
         "file": "contextual-kanban.spec.mjs",
-        "line": 142,
+        "line": 143,
         "status": "expected",
         "results": [
           {
@@ -997,7 +1010,7 @@
       {
         "title": "criteria verification is separate from acceptance and cancelled work remains historical",
         "file": "contextual-kanban.spec.mjs",
-        "line": 289,
+        "line": 290,
         "status": "expected",
         "results": [
           {
@@ -1009,7 +1022,7 @@
       {
         "title": "creation in Objective Kanban preserves parent and returns to the same context",
         "file": "contextual-kanban.spec.mjs",
-        "line": 327,
+        "line": 328,
         "status": "expected",
         "results": [
           {
@@ -1021,7 +1034,7 @@
       {
         "title": "activity history is loaded on demand and material choices retain their meaning",
         "file": "contextual-kanban.spec.mjs",
-        "line": 370,
+        "line": 371,
         "status": "expected",
         "results": [
           {
@@ -1033,7 +1046,7 @@
       {
         "title": "contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%",
         "file": "contextual-kanban.spec.mjs",
-        "line": 430,
+        "line": 433,
         "status": "expected",
         "results": [
           {
@@ -1045,7 +1058,7 @@
       {
         "title": "an authorized waiver is an explicit exception and never completes the Task",
         "file": "contextual-kanban.spec.mjs",
-        "line": 470,
+        "line": 488,
         "status": "expected",
         "results": [
           {
@@ -1057,7 +1070,7 @@
       {
         "title": "partial Kanban pages preserve column scroll and reject stale continuation",
         "file": "contextual-kanban.spec.mjs",
-        "line": 560,
+        "line": 578,
         "status": "expected",
         "results": [
           {
@@ -1069,7 +1082,7 @@
       {
         "title": "specialist inspection retains one native dialog without Board-only modal launchers",
         "file": "contextual-kanban.spec.mjs",
-        "line": 616,
+        "line": 634,
         "status": "expected",
         "results": [
           {
@@ -1081,7 +1094,7 @@
       {
         "title": "All item actions reuse the canonical surface within the same Kanban",
         "file": "contextual-kanban.spec.mjs",
-        "line": 647,
+        "line": 665,
         "status": "expected",
         "results": [
           {
@@ -1525,7 +1538,7 @@
       {
         "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 1280px",
         "file": "kanban-operations.spec.mjs",
-        "line": 37,
+        "line": 48,
         "status": "expected",
         "results": [
           {
@@ -1537,7 +1550,7 @@
       {
         "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 2560px",
         "file": "kanban-operations.spec.mjs",
-        "line": 37,
+        "line": 48,
         "status": "expected",
         "results": [
           {
@@ -1549,7 +1562,7 @@
       {
         "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 3840px",
         "file": "kanban-operations.spec.mjs",
-        "line": 37,
+        "line": 48,
         "status": "expected",
         "results": [
           {
@@ -1561,7 +1574,7 @@
       {
         "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 390px",
         "file": "kanban-operations.spec.mjs",
-        "line": 37,
+        "line": 48,
         "status": "expected",
         "results": [
           {
@@ -1573,7 +1586,7 @@
       {
         "title": "drag and single-pointer moves prepare actual operations; blocked and read-only work never moves",
         "file": "kanban-operations.spec.mjs",
-        "line": 102,
+        "line": 115,
         "status": "expected",
         "results": [
           {
@@ -1585,7 +1598,7 @@
       {
         "title": "embedded forms preserve conflicting input and recover the same uncertain creation intent",
         "file": "kanban-operations.spec.mjs",
-        "line": 126,
+        "line": 139,
         "status": "expected",
         "results": [
           {
@@ -1597,11 +1610,11 @@
       {
         "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
         "file": "kanban-operations.spec.mjs",
-        "line": 154,
-        "status": "expected",
+        "line": 167,
+        "status": "unexpected",
         "results": [
           {
-            "status": "passed",
+            "status": "failed",
             "retry": 0
           }
         ]
@@ -1609,7 +1622,7 @@
       {
         "title": "contract-backed movement stays an explicit external handoff without browser acquisition or delivery",
         "file": "kanban-operations.spec.mjs",
-        "line": 169,
+        "line": 181,
         "status": "expected",
         "results": [
           {
@@ -1621,7 +1634,7 @@
       {
         "title": "related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
         "file": "kanban-operations.spec.mjs",
-        "line": 184,
+        "line": 196,
         "status": "expected",
         "results": [
           {
@@ -1633,7 +1646,7 @@
       {
         "title": "an already acquired contract has a direct readonly continuation without a parallel browser workflow",
         "file": "kanban-operations.spec.mjs",
-        "line": 200,
+        "line": 215,
         "status": "expected",
         "results": [
           {
@@ -1645,7 +1658,7 @@
       {
         "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
         "file": "kanban-operations.spec.mjs",
-        "line": 224,
+        "line": 239,
         "status": "expected",
         "results": [
           {
@@ -1657,7 +1670,139 @@
       {
         "title": "delayed origin restoration returns focus to the rebuilt task trigger",
         "file": "kanban-operations.spec.mjs",
-        "line": 224,
+        "line": 239,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 1280",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 2560",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 390",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Backlog to In progress requires two explicit confirmed commands and a fresh projection",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 61,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Objectives use planned, started and achieved lanes without a fabricated review queue",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 82,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an eligible planned Objective is achieved directly without an invented Start command",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 90,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native Backlog drag prepares activation without writing and the real modal retains keyboard focus",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 107,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a confirmed command with a failed refresh retries reads without duplicating the write",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 117,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a contract v1 submission does not invent a signed review fact or a Verification lifecycle",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 133,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "blocked achievement can add its criterion and assessment in context before explicit acceptance",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 149,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "emulated touch can use the card action menu without drag or hover",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 171,
         "status": "expected",
         "results": [
           {
@@ -2102,10 +2247,10 @@
         "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
         "file": "presentation.spec.mjs",
         "line": 176,
-        "status": "expected",
+        "status": "unexpected",
         "results": [
           {
-            "status": "passed",
+            "status": "failed",
             "retry": 0
           }
         ]
@@ -2531,786 +2676,83 @@
         ]
       }
     ],
-    "binary": {
-      "built_at": "unknown",
-      "commit": "unknown",
-      "supported_work_protocols": [
-        "contracts_v1",
-        "signed_contracts_v2"
-      ],
-      "supported_workspace_schemas": [
-        1,
-        2
-      ],
-      "version": "dev",
-      "work_protocol": "signed_contracts_v2",
-      "workspace_schema": 2,
-      "sha256": "446e5e36d1c8fe0b410e29c89cac55f0010af18c056af4749c56c7da8950e104",
-      "build_source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d"
-    }
+    "report_sha256": "34ba8d6826719b9b088fac77f6d0381a1caa5def29ac443f91b767dbca498ae6"
   },
-  "repeated_focus_boundary": {
-    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
-    "stats": {
-      "startTime": "2026-10-20T01:28:38.553Z",
-      "duration": 68920.2,
-      "expected": 33,
-      "skipped": 0,
-      "unexpected": 0,
-      "flaky": 0
-    },
-    "cases": [
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      }
-    ]
+  "binary": {
+    "built_at": "unknown",
+    "commit": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2,
+    "sha256": "ced8ff977352f8e508c8dc0729026bca9b4d632bf0c771122f964e3e4ad56e4a"
   },
-  "historical_runs": [
-    {
-      "source": "f765f5d",
-      "stats": {
-        "startTime": "2026-10-20T00:42:41.846Z",
-        "duration": 537548.329,
-        "expected": 207,
-        "skipped": 0,
-        "unexpected": 0,
-        "flaky": 0
-      }
+  "javascript_units": {
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0,
+    "log_sha256": "9efe1293f6037c0b6e7b5a7824b583f1b3a599d9f4c31be22f9977b690675699"
+  },
+  "go": {
+    "command": "go test -json ./packages/wos-api/web ./packages/wos-core/application",
+    "results": {
+      "pass": 114,
+      "skip": 3
     },
-    {
-      "source": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
-      "stats": {
-        "startTime": "2026-10-20T01:16:50.417Z",
-        "duration": 77893.111,
-        "expected": 30,
-        "skipped": 0,
-        "unexpected": 0,
-        "flaky": 0
+    "package_results": {
+      "pass": 2
+    },
+    "skips": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts/postgres"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime/postgres"
       }
-    }
+    ],
+    "log_sha256": "7e574576a1ead9704877f7ae65bb4b71aed60dfc35103092ec959b9b3e15f28f",
+    "boundary": "Default local environment; tests requiring PostgreSQL remain skipped locally. Hosted CI provides actual PostgreSQL."
+  },
+  "screenshots": {
+    "count": 16,
+    "manifest": "screenshots/manifest.json",
+    "source": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "clean_runtime_source": true
+  },
+  "baseline": {
+    "source": "75a56fe43ddd20ff55835fd2ba22ca8af9588d1c",
+    "full_task_journeys": 4,
+    "gallery": "before-workspace-mode/README.md"
+  },
+  "historical_evidence": "https://github.com/A1b3rt0M3rcad0/wos/blob/75a56fe43ddd20ff55835fd2ba22ca8af9588d1c/docs/ux/operational-kanban/test-results.json",
+  "hosted_checks": "https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks",
+  "manual_limits": [
+    "Physical touch-device operation",
+    "Manual screen-reader/browser combinations",
+    "Independent participant comprehension"
   ],
-  "overlap": "Repeated focus scenarios and historical focused runs overlap the complete suite; counts must not be added.",
-  "github_checks": "https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks",
-  "final_focused_browser": {
-    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
-    "stats": {
-      "startTime": "2026-10-20T01:38:56.535Z",
-      "duration": 83574.679,
-      "expected": 32,
-      "skipped": 0,
-      "unexpected": 0,
-      "flaky": 0
-    },
-    "cases": [
-      {
-        "title": "strict cancellation acknowledgement in the browser persists its exact excluded scope",
-        "file": "contextual-kanban-guards.spec.mjs",
-        "line": 8,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "real credential revocation closes an open Kanban and clears its private content",
-        "file": "contextual-kanban-guards.spec.mjs",
-        "line": 37,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "refresh keeps the selected detail coherent and rejects newer isolated reads",
-        "file": "contextual-kanban-guards.spec.mjs",
-        "line": 51,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 142,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "criteria verification is separate from acceptance and cancelled work remains historical",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 289,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "creation in Objective Kanban preserves parent and returns to the same context",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 327,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "activity history is loaded on demand and material choices retain their meaning",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 370,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 430,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "an authorized waiver is an explicit exception and never completes the Task",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 470,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "partial Kanban pages preserve column scroll and reject stale continuation",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 560,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "specialist inspection retains one native dialog without Board-only modal launchers",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 616,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "All item actions reuse the canonical surface within the same Kanban",
-        "file": "contextual-kanban.spec.mjs",
-        "line": 647,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 1280px",
-        "file": "kanban-operations.spec.mjs",
-        "line": 37,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 2560px",
-        "file": "kanban-operations.spec.mjs",
-        "line": 37,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 3840px",
-        "file": "kanban-operations.spec.mjs",
-        "line": 37,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 390px",
-        "file": "kanban-operations.spec.mjs",
-        "line": 37,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "drag and single-pointer moves prepare actual operations; blocked and read-only work never moves",
-        "file": "kanban-operations.spec.mjs",
-        "line": 102,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "embedded forms preserve conflicting input and recover the same uncertain creation intent",
-        "file": "kanban-operations.spec.mjs",
-        "line": 126,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
+  "counts": "Focused and historical runs overlap these 222 cases and must not be added to the complete-suite total.",
+  "corrected_browser": {
+    "tests_source": "d7cb2286fec8b81186ae6ca179b58af40de8e3c0",
+    "runtime_source": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "qualifying_cases": [
       {
         "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
         "file": "kanban-operations.spec.mjs",
-        "line": 154,
+        "line": 167,
         "status": "expected",
         "results": [
           {
@@ -3320,57 +2762,9 @@
         ]
       },
       {
-        "title": "contract-backed movement stays an explicit external handoff without browser acquisition or delivery",
-        "file": "kanban-operations.spec.mjs",
-        "line": 169,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
-        "file": "kanban-operations.spec.mjs",
-        "line": 184,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "an already acquired contract has a direct readonly continuation without a parallel browser workflow",
-        "file": "kanban-operations.spec.mjs",
-        "line": 200,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
-        "status": "expected",
-        "results": [
-          {
-            "status": "passed",
-            "retry": 0
-          }
-        ]
-      },
-      {
-        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
-        "file": "kanban-operations.spec.mjs",
-        "line": 224,
+        "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+        "file": "presentation.spec.mjs",
+        "line": 176,
         "status": "expected",
         "results": [
           {
@@ -3379,6 +2773,76 @@
           }
         ]
       }
-    ]
+    ],
+    "diagnostic_run": {
+      "stats": {
+        "startTime": "2026-10-20T04:49:14.010Z",
+        "duration": 99734.67000000001,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "cases": [
+        {
+          "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
+          "file": "kanban-operations.spec.mjs",
+          "line": 167,
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0
+            }
+          ]
+        },
+        {
+          "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+          "file": "presentation.spec.mjs",
+          "line": 176,
+          "status": "unexpected",
+          "results": [
+            {
+              "status": "failed",
+              "retry": 0
+            }
+          ]
+        }
+      ],
+      "report_sha256": "954a16d0314ec06f5d77a3120837b069b2bf67c6c205cf900127d7bd873097eb"
+    },
+    "administrative_untraced_run": {
+      "stats": {
+        "startTime": "2026-10-20T04:52:03.774Z",
+        "duration": 35833.136,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "cases": [
+        {
+          "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+          "file": "presentation.spec.mjs",
+          "line": 176,
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0
+            }
+          ]
+        }
+      ],
+      "report_sha256": "9035c67466fc388790458979980327dc221ca4f66f2d14b6ade841ee6b2d7ca6"
+    }
+  },
+  "qualification": {
+    "distinct_cases": 222,
+    "passing_in_full_run": 220,
+    "passing_targeted_cases": 2,
+    "single_all_green_local_full_run": false,
+    "production_assets_unchanged_between_runs": true,
+    "note": "The full run is retained with both failures. Targeted runs verify the corrected requirements-modal assertion and the unchanged administrative focus case. The traced diagnostic retains an administrative interruption; the separate untraced one-worker run passes. No timeout/assertion was weakened. Hosted CI remains the final all-case gate."
   }
 }

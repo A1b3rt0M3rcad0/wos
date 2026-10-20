@@ -16,13 +16,17 @@ measured CSS viewport and Chromium version. The manifest binds the stamped binar
 asset files and image hashes; it does not claim production-environment testing.
 No live credentials or customer data are included.
 
-The focused Task page hides collection filters and parent creation actions. It
-shows an actionable next step without creating a second sidebar. Required
-assessments direct the person to criteria review. In the form, editable content
-scrolls above the Save footer; the footer does not overlay the final field.
+The Kanban is a nonmodal workspace. Selecting a card keeps its lanes mounted and
+opens a compact inspector: docked on wide screens, bounded on HD, and a reading
+panel on mobile. The operation form is the only native modal. Its editable body
+scrolls without the Save footer covering the final field.
+
+[Before workspace mode](../before-workspace-mode/README.md) records the same Task
+journey before this change. [Manifest](manifest.json) identifies the exact current
+runtime source; later documentation-only commits retain identical runtime assets.
 
 Native 125%, 150%, 200% and 400% browser zoom is verified separately by changing
 Chromium's Settings zoom and asserting the effective CSS viewport and DPR. These
 four viewport sizes are not substitutes for that zoom test.
 
-[Operate the interface](../README.md) · [Audit](../audit.md) · [Qualification](../validation.md)
+[Operate the interface](../README.md) · [Current audit](../workspace-mode-audit.md) · [Qualification](../validation.md)

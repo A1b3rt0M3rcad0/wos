@@ -47,6 +47,26 @@ shown there. Recorded assignment, execution authority and actual online presence
 are not interchangeable. No backend API/schema, permission or business lifecycle
 is introduced by this presentation change.
 
+## Decisions and tradeoffs
+
+- A full-page item view or modal collection would simplify focus isolation, but
+  would violate the approved requirement to keep the planning lanes available.
+  The nonmodal region instead owns selection and return; only operations trap focus.
+- A permanent split pane at every width would preserve side-by-side reading but
+  compress HD/mobile lanes. Docking on wide screens and a bounded overlay/reading
+  panel on narrow screens preserve card dimensions, with explicit return controls.
+- Reusing canonical nodes avoids a second form/command implementation, at the cost
+  of explicit docking, inertness, focus restoration and scope invalidation. Native
+  drag likewise needs stable source geometry until dragend.
+- A direct visual status mutation or automatic two-command chain would be shorter
+  but misrepresent readiness and authority. Separately confirmed real operations
+  retain an intermediate To do state and backend validation.
+- The Kanban toolbar and parent breadcrumb replace duplicate map-only operations
+  while active. An explicit document mode attribute scopes that presentation rule;
+  it does not change commands or persist business state.
+- Read reconciliation after confirmed writes is deliberately distinct from exact
+  uncertain-write replay. This retains recoverability without duplicating effects.
+
 ## Coverage and limits
 
 Read, move, create, assign, acquire, renew, record material, assess, conclude,
