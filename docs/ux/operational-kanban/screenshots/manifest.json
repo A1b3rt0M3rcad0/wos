@@ -1,8 +1,8 @@
 {
-  "runtime_source": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
+  "runtime_source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
   "binary": {
     "built_at": "unknown",
-    "commit": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
+    "commit": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
     "supported_work_protocols": [
       "contracts_v1",
       "signed_contracts_v2"
@@ -14,13 +14,13 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "f530d67c53f494b7c32e86a5cf7f028dc61260c47e0fbfc164aa7819d0f33c14"
+    "sha256": "1bdb96b53e7f2288efeeb2a5c780ea3644027574cbb75eb6c9752b0c93e6f31d"
   },
   "assets_on_disk_sha256": {
     "actions.js": "8b7a797ad3459cc877bac867db6cd21b6dc1ea87c9731ae1a1b90bdbdb3d634b",
     "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
     "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
-    "app.js": "b3b9ac909bd856167f5704b02a7a97db8a1105530f2ae72677fb9513045fced1",
+    "app.js": "6ab1c59b848a87b5b22daaf9788e767e5bf20c8cad477d16d8bd74b528b50b07",
     "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
     "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
     "canvas.css": "0011b1cb0454fb7b4ff362ff9180e0c3bb54f5ffe85c90902f9139cb1ffa1441",
@@ -55,7 +55,7 @@
     "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
     "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
     "workspace-kanban.css": "5c5ad89a9cdef0d3fd72e1477b892b233a75e8ecfaf30bf081a173f7e745d325",
-    "workspace-kanban.js": "06df15d54fa27a4aa2438298771ccd26e13ae2ca927d75f213b305b36f65afee",
+    "workspace-kanban.js": "ffe32b2c03d3646a3273e11f530bd7c415980a7396f9f645158bcbb56400aee5",
     "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
     "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
     "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
@@ -72,7 +72,7 @@
       "receipt": "accepted-1280.json"
     },
     "accepted-2560.png": {
-      "sha256": "5b0eebfc30bd6aebf49be1149d62f2b93801868b34b2cbb29cb44d60b80906f1",
+      "sha256": "bcb0fd9395c5ec7f3aac363ec036e5e2ded22ae766de6cd73d7cdd1ff5a0bb59",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -80,7 +80,7 @@
       "receipt": "accepted-2560.json"
     },
     "accepted-3840.png": {
-      "sha256": "4f6fa9a70a6425f35e7b50911227e75f1c084efb98b77c4be7bc178d0407291d",
+      "sha256": "aad8e377b04aad19c816a1036979a58592e1e2184acac1ee65c3dcb973346882",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -136,7 +136,7 @@
       "receipt": "executing-1280.json"
     },
     "executing-2560.png": {
-      "sha256": "86f974c57a85bf17499e90883b20596f81cd7a6a4e08fb7e1926480f6075330a",
+      "sha256": "07bbeb91e3ced9f889510d90f6573e0c3b8ba8c3967fa6154abb61bcc0230e3f",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -144,7 +144,7 @@
       "receipt": "executing-2560.json"
     },
     "executing-3840.png": {
-      "sha256": "f177b63e736a9df560b0022226f042d384bfd564e6b2fa8ca56456afb767704c",
+      "sha256": "9addf8917a341bba6df459a1e8fa870020b20f4b3dabda6c5a2d9a8b23096515",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -168,7 +168,7 @@
       "receipt": "item-1280.json"
     },
     "item-2560.png": {
-      "sha256": "5c9e0310dfb29c4af57c51eaa299bcc24a895cb352d805e3fa47dcd8f8c5f713",
+      "sha256": "48b923ded8e50ca634a5013b8cec97f8a04d1b516169dbaef7bf20e7f7175cae",
       "pixels": {
         "width": 2560,
         "height": 1440
@@ -176,7 +176,7 @@
       "receipt": "item-2560.json"
     },
     "item-3840.png": {
-      "sha256": "c818f16673390b06e076e15c143b748d32027388c6e09bc6110dcb30d9ae716d",
+      "sha256": "12305315ac9f1403d03547fca162f7c9aa6f4004550c3027854381f7aa96481f",
       "pixels": {
         "width": 3840,
         "height": 2160
@@ -184,7 +184,7 @@
       "receipt": "item-3840.json"
     },
     "item-390.png": {
-      "sha256": "9d9e39041cda79f10b90d874197f0007f92c3de0998c838c3d7bbb882af8094d",
+      "sha256": "e40f95b7f9962035b3fc2081a6ffb77ddba6d94f294c9a9e3e624b4507233daf",
       "pixels": {
         "width": 390,
         "height": 844

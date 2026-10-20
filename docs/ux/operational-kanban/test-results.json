@@ -1,10 +1,10 @@
 {
   "complete_browser": {
-    "source": "f765f5d",
+    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
     "stats": {
-      "startTime": "2026-10-20T00:42:41.846Z",
-      "duration": 537548.329,
-      "expected": 207,
+      "startTime": "2026-10-20T01:29:55.645Z",
+      "duration": 498946.954,
+      "expected": 210,
       "skipped": 0,
       "unexpected": 0,
       "flaky": 0
@@ -1573,7 +1573,7 @@
       {
         "title": "drag and single-pointer moves prepare actual operations; blocked and read-only work never moves",
         "file": "kanban-operations.spec.mjs",
-        "line": 96,
+        "line": 102,
         "status": "expected",
         "results": [
           {
@@ -1585,7 +1585,7 @@
       {
         "title": "embedded forms preserve conflicting input and recover the same uncertain creation intent",
         "file": "kanban-operations.spec.mjs",
-        "line": 120,
+        "line": 126,
         "status": "expected",
         "results": [
           {
@@ -1597,7 +1597,7 @@
       {
         "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
         "file": "kanban-operations.spec.mjs",
-        "line": 148,
+        "line": 154,
         "status": "expected",
         "results": [
           {
@@ -1609,7 +1609,7 @@
       {
         "title": "contract-backed movement stays an explicit external handoff without browser acquisition or delivery",
         "file": "kanban-operations.spec.mjs",
-        "line": 163,
+        "line": 169,
         "status": "expected",
         "results": [
           {
@@ -1621,7 +1621,43 @@
       {
         "title": "related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
         "file": "kanban-operations.spec.mjs",
-        "line": 178,
+        "line": 184,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an already acquired contract has a direct readonly continuation without a parallel browser workflow",
+        "file": "kanban-operations.spec.mjs",
+        "line": 200,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
         "status": "expected",
         "results": [
           {
@@ -2494,14 +2530,466 @@
           }
         ]
       }
+    ],
+    "binary": {
+      "built_at": "unknown",
+      "commit": "unknown",
+      "supported_work_protocols": [
+        "contracts_v1",
+        "signed_contracts_v2"
+      ],
+      "supported_workspace_schemas": [
+        1,
+        2
+      ],
+      "version": "dev",
+      "work_protocol": "signed_contracts_v2",
+      "workspace_schema": 2,
+      "sha256": "446e5e36d1c8fe0b410e29c89cac55f0010af18c056af4749c56c7da8950e104",
+      "build_source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d"
+    }
+  },
+  "repeated_focus_boundary": {
+    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
+    "stats": {
+      "startTime": "2026-10-20T01:28:38.553Z",
+      "duration": 68920.2,
+      "expected": 33,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      }
     ]
   },
+  "historical_runs": [
+    {
+      "source": "f765f5d",
+      "stats": {
+        "startTime": "2026-10-20T00:42:41.846Z",
+        "duration": 537548.329,
+        "expected": 207,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "source": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
+      "stats": {
+        "startTime": "2026-10-20T01:16:50.417Z",
+        "duration": 77893.111,
+        "expected": 30,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    }
+  ],
+  "overlap": "Repeated focus scenarios and historical focused runs overlap the complete suite; counts must not be added.",
+  "github_checks": "https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks",
   "final_focused_browser": {
-    "source": "ee31cb81beff207ed59ec27e1646f2284ed6190a",
+    "source": "5ef10fc7681ca4a9caad7903538f0a2cf2d6689d",
     "stats": {
-      "startTime": "2026-10-20T01:16:50.417Z",
-      "duration": 77893.111,
-      "expected": 30,
+      "startTime": "2026-10-20T01:38:56.535Z",
+      "duration": 83574.679,
+      "expected": 32,
       "skipped": 0,
       "unexpected": 0,
       "flaky": 0
@@ -2866,9 +3354,31 @@
             "retry": 0
           }
         ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 224,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
       }
     ]
-  },
-  "overlap": "The focused suite overlaps the complete suite. Do not add the counts.",
-  "github_checks": "https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks"
+  }
 }

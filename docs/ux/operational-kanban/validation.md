@@ -6,7 +6,7 @@ This is the 2026-10-20 follow-up in draft PR #116. It extends the original conte
 Kanban implementation; older receipts/captures still describe their exact sources.
 [Audit](audit.md) records the pre-change investigation. [Operation guide](README.md)
 describes the implemented user flow. Final source/run identifiers and captures are
-recorded below when the final regression completes.
+recorded below.
 
 No participant study, manual screen-reader session, physical touch-device test or
 production throughput claim is substituted by these automated tests.
@@ -33,11 +33,14 @@ assumptions in tests; they are not reported as passing final qualification.
 
 ## Final run
 
-- Complete local browser regression at `f765f5d`: **207 passed**, zero skipped, zero flaky retries (537.5 seconds).
-- After the final focused-content and form-scroll corrections, all **29 contextual/operational Kanban cases passed** at `28a1f04` (including HD/QHD/4K/mobile complete operations and 400% native zoom). These cases overlap the full suite and are not added together.
+- Complete local browser regression at `5ef10fc`: **210 passed**, zero skipped, zero flaky retries (498.9 seconds). The API binary was built from this source; its runtime commit metadata was `unknown` and its SHA-256 is retained in the structured result.
+- After rebuilding the same source with the correct server commit stamp, **32 contextual/operational cases passed** and produced the final captures. This changes version metadata only; the production source is identical.
+- The nine-width context matrix and both delayed-origin focus regressions also passed **three repetitions: 33 executions**, zero skipped or flaky retries. These are overlapping scenarios, not 33 additional acceptance cases. The deterministic delayed-response tests wait for the original trigger to detach before asserting focus on its replacement.
+- The complete run includes the full create/assign/acquire/prove/assess/conclude journey at HD/QHD/4K/mobile, existing contract/signed-protocol checks, native browser zoom through 400%, permission/conflict/recovery cases and contextual navigation. Intermediate failures are not counted as passing qualification.
 - JavaScript units: **76 passed**. Both affected Go packages (`application` and `web`) passed; workspace capability/race checks passed. Local default tests explicitly skip tests requiring an actual PostgreSQL service; full CI supplies PostgreSQL and remains the acceptance gate for those checks.
 - The supplied audit skill passed its structure/link validator and **four package tests**.
-- **16 final-source screenshots** have clean runtime-source receipts, binary/source binding, image hashes and asset-file hashes in the [gallery manifest](screenshots/manifest.json). Source `ee31cb8` is the final runtime implementation; later documentation commits do not change those assets.
+- **16 final-source screenshots** have clean runtime-source receipts, binary/source binding, image hashes and 44 asset-file hashes in the [gallery manifest](screenshots/manifest.json). Source `5ef10fc` is the final runtime implementation; later documentation commits do not change those assets.
+- Historical successful runs at `f765f5d` (207 cases) and `ee31cb8` (30 focused cases) retain their separate source/statistics in the structured result. They are not added to the final count.
 
 [Structured browser results](test-results.json) · [Gallery](screenshots/README.md) · [Live GitHub checks](https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks).
 

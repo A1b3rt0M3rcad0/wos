@@ -124,3 +124,18 @@ background map. The embedded-read close now invalidates its pending reads withou
 dismissing/revealing the spatial selection; leaving the Kanban restores a freshly
 read origin without optional map expansion. The exact assertion is retained;
 no tolerance, retry or timeout increase masks the regression.
+
+## Asynchronous return focus
+
+The subsequent complete regression exposed intermittent lost keyboard focus when
+the origin inspector was rebuilt after closing the Kanban. Returning focus before
+the refreshed read completed could target a detached control; a selector list
+also preferred the inspector container over its action button. The return now
+captures the opening trigger, awaits the real origin refresh, identifies its
+replacement button and reopens its containing disclosure when necessary.
+
+Two deterministic browser regressions hold the actual successful workspace
+response until the dialog closes, then require the original control to be detached
+and the replacement to receive focus. Both Outcome entry and Task criteria entry
+are covered. This tests the asynchronous boundary rather than relying on an early
+focus assertion that could pass before reconstruction.
