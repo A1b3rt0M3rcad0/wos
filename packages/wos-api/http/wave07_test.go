@@ -58,6 +58,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	independentIssue := doJSON[application.MutationResult[domain.Issue]](
 		t, client, http.MethodPost, outcomeURL+"/issues",
 		[]byte(`{
+			"objective_id":"`+objective.ID.String()+`",
 			"title":"Observed but non-blocking",
 			"description":"A problem can exist without being an impediment.",
 			"severity":"minor",
@@ -92,6 +93,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	compoundBody := []byte(`{
 		"issue":{
+			"objective_id":"` + objective.ID.String() + `",
 			"title":"Dependency incident",
 			"description":"The dependency is unavailable.",
 			"severity":"major",

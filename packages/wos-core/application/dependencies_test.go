@@ -56,6 +56,11 @@ func createTodoWork(t *testing.T, service *application.Service, scope domain.Sco
 	return result.Value
 }
 
+func issueObjectiveForTest(t *testing.T, service *application.Service, scope domain.Scope) domain.ID {
+	t.Helper()
+	return *objectiveForWorkFixture(t, service, scope)
+}
+
 func containsReady(items []application.ReadyWorkItem, id domain.ID) bool {
 	for _, item := range items {
 		if item.WorkItem.ID == id {

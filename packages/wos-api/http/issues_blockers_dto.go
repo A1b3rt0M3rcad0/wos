@@ -3,6 +3,7 @@ package httptransport
 import "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 
 type createIssueRequest struct {
+	ObjectiveID  string                    `json:"objective_id"`
 	Title        string                    `json:"title"`
 	Description  string                    `json:"description,omitempty"`
 	Severity     domain.IssueSeverity      `json:"severity"`
@@ -42,6 +43,7 @@ type duplicateIssueRequest struct {
 
 type reportIssueWithBlockerRequest struct {
 	Issue struct {
+		ObjectiveID  string                    `json:"objective_id"`
 		Title        string                    `json:"title"`
 		Description  string                    `json:"description,omitempty"`
 		Severity     domain.IssueSeverity      `json:"severity"`

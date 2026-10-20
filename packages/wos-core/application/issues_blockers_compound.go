@@ -15,6 +15,7 @@ const maxResolveIssueBlockers = 64
 // to the newly created Issue as its cause.
 type ReportIssueWithBlockerCommand struct {
 	Scope                   domain.Scope
+	ObjectiveID             domain.ID
 	Title                   string
 	Description             string
 	Severity                domain.IssueSeverity
@@ -73,9 +74,10 @@ func (s *Service) ReportIssueWithBlocker(
 		return MutationResult[ReportIssueWithBlockerResult]{}, err
 	}
 	now := s.clock.Now().UTC()
-	issue, err := domain.NewIssue(
+	issue, err := domain.NewIssueForObjective(
 		issueID,
 		cmd.Scope,
+		&cmd.ObjectiveID,
 		cmd.Title,
 		cmd.Description,
 		cmd.Severity,
@@ -102,6 +104,9 @@ func (s *Service) ReportIssueWithBlocker(
 
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (ReportIssueWithBlockerResult, domain.OutcomeRevision, error) {
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
+			return ReportIssueWithBlockerResult{}, 0, err
+		}
+		if err := validateIssueObjective(ctx, uow, cmd.Scope, cmd.ObjectiveID); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
 		}
 		issues, blockers, err := issueBlockerRepositories(uow)

@@ -34,11 +34,12 @@ func TestObservedImpactRevisionIsOptionalExactAndPreservesLegacyIntention(t *tes
 			Reason          string
 		}{scope, objectiveID, 17, reason}},
 		{"report_issue_with_blocker", application.ReportIssueWithBlockerCommand{
-			Scope: scope, Title: "A recorded operational problem", Description: reason,
+			Scope: scope, ObjectiveID: objectiveID, Title: "A recorded operational problem", Description: reason,
 			Severity: domain.IssueSeverityMinor, AffectedRefs: []domain.EntityRef{blockedRef},
 			BlockedRef: blockedRef, BlockerDescription: "Explicitly prevents the selected Task", Propagation: domain.BlockerPropagationDirect,
 		}, struct {
 			Scope              domain.Scope
+			ObjectiveID        domain.ID
 			Title              string
 			Description        string
 			Severity           domain.IssueSeverity
@@ -46,7 +47,7 @@ func TestObservedImpactRevisionIsOptionalExactAndPreservesLegacyIntention(t *tes
 			BlockedRef         domain.EntityRef
 			BlockerDescription string
 			Propagation        domain.BlockerPropagation
-		}{scope, "A recorded operational problem", reason, domain.IssueSeverityMinor, []domain.EntityRef{blockedRef}, blockedRef, "Explicitly prevents the selected Task", domain.BlockerPropagationDirect}},
+		}{scope, objectiveID, "A recorded operational problem", reason, domain.IssueSeverityMinor, []domain.EntityRef{blockedRef}, blockedRef, "Explicitly prevents the selected Task", domain.BlockerPropagationDirect}},
 	} {
 		t.Run(fixture.name, func(t *testing.T) {
 			before, err := json.Marshal(fixture.legacy)

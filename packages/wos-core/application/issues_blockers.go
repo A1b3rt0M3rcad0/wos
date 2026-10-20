@@ -12,6 +12,7 @@ const maxIssueDuplicateDepth = 10000
 
 type CreateIssueCommand struct {
 	Scope        domain.Scope
+	ObjectiveID  domain.ID
 	Title        string
 	Description  string
 	Severity     domain.IssueSeverity
@@ -85,12 +86,15 @@ func (s *Service) CreateIssue(ctx context.Context, cc domain.CommandContext, cmd
 	if err != nil {
 		return MutationResult[domain.Issue]{}, err
 	}
-	issue, err := domain.NewIssue(id, cmd.Scope, cmd.Title, cmd.Description, cmd.Severity, cmd.AffectedRefs, cc.Actor, s.clock.Now().UTC())
+	issue, err := domain.NewIssueForObjective(id, cmd.Scope, &cmd.ObjectiveID, cmd.Title, cmd.Description, cmd.Severity, cmd.AffectedRefs, cc.Actor, s.clock.Now().UTC())
 	if err != nil {
 		return MutationResult[domain.Issue]{}, err
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (domain.Issue, domain.OutcomeRevision, error) {
 		if err := lockExistingOutcome(ctx, uow, cmd.Scope); err != nil {
+			return domain.Issue{}, 0, err
+		}
+		if err := validateIssueObjective(ctx, uow, cmd.Scope, cmd.ObjectiveID); err != nil {
 			return domain.Issue{}, 0, err
 		}
 		issues, blockers, err := issueBlockerRepositories(uow)
@@ -106,6 +110,23 @@ func (s *Service) CreateIssue(ctx context.Context, cc domain.CommandContext, cmd
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
 		return issue, rev, err
 	})
+}
+
+func validateIssueObjective(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope, id domain.ID) error {
+	if err := id.Validate(); err != nil {
+		return domain.WrapError(domain.ErrorCodeInvalidArgument, "issue Objective ID is required and must be valid", err)
+	}
+	objective, err := uow.Objectives().Get(ctx, scope, id)
+	if err != nil {
+		return err
+	}
+	if objective.Scope != scope || objective.ID != id {
+		return domain.NewError(domain.ErrorCodeInvalidScope, "issue Objective must belong to the command Outcome")
+	}
+	if objective.Lifecycle == domain.ObjectiveLifecycleAchieved || objective.Lifecycle == domain.ObjectiveLifecycleCancelled {
+		return definitionPrecondition(domain.ErrorCodePreconditionFailed, "objective_terminal", "choose a nonterminal Objective to own this Issue", objective.Ref(), []string{"objective_id"})
+	}
+	return nil
 }
 func (s *Service) InvestigateIssue(ctx context.Context, cc domain.CommandContext, cmd InvestigateIssueCommand) (MutationResult[domain.Issue], error) {
 	return s.mutateIssue(ctx, cc, cmd, cmd.Scope, cmd.IssueID, cmd.ExpectedVersion, func(v *domain.Issue) error { return v.Investigate(s.clock.Now().UTC()) })

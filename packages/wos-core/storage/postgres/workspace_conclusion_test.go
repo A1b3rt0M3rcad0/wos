@@ -194,7 +194,7 @@ func TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound
 			must(err)
 			storedWork, err := service.GetWorkItem(ctx, scope, work.Value.ID)
 			must(err)
-			request := a.ReportIssueWithBlockerCommand{Scope: scope, Title: "Missing required access", Description: "A documented issue affecting the selected branch", Severity: d.IssueSeverityMinor,
+			request := a.ReportIssueWithBlockerCommand{Scope: scope, ObjectiveID: objective.Value.ID, Title: "Missing required access", Description: "A documented issue affecting the selected branch", Severity: d.IssueSeverityMinor,
 				AffectedRefs: []d.EntityRef{objective.Value.Ref()}, BlockedRef: objective.Value.Ref(), BlockerDescription: "Wait for the documented access to be restored", Propagation: d.BlockerPropagationSubtree, ObservedOutcomeRevision: &before.OutcomeRevision}
 			_, err = service.ReportIssueWithBlocker(ctx, command(), request)
 			var detail *d.Error

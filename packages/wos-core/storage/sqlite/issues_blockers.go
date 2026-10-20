@@ -17,17 +17,17 @@ func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.
 		version                                 int64
 		title, description, severity, lifecycle string
 		reportedByJSON, resolutionSummary       string
-		duplicateRaw                            sql.NullString
+		objectiveRaw, duplicateRaw              sql.NullString
 		createdAt, updatedAt                    int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, title, description, severity, lifecycle, reported_by_json,
+SELECT version, title, description, objective_id, severity, lifecycle, reported_by_json,
        resolution_summary, duplicate_of_issue_id, created_at, updated_at
 FROM issues
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
-		&version, &title, &description, &severity, &lifecycle, &reportedByJSON,
+		&version, &title, &description, &objectiveRaw, &severity, &lifecycle, &reportedByJSON,
 		&resolutionSummary, &duplicateRaw, &createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -49,6 +49,13 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		ResolutionSummary: resolutionSummary,
 		CreatedAt:         decodeTime(createdAt),
 		UpdatedAt:         decodeTime(updatedAt),
+	}
+	if objectiveRaw.Valid {
+		parsed, err := domain.ParseID(objectiveRaw.String)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		value.ObjectiveID = &parsed
 	}
 	if duplicateRaw.Valid {
 		parsed, err := domain.ParseID(duplicateRaw.String)
@@ -153,12 +160,12 @@ func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
 	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO issues (
-    id, namespace_id, outcome_id, kind, version, title, description, severity,
+    id, namespace_id, outcome_id, kind, version, title, description, objective_id, severity,
     lifecycle, reported_by_json, resolution_summary, duplicate_of_issue_id,
     created_at, updated_at
-) VALUES (?, ?, ?, 'issue', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+) VALUES (?, ?, ?, 'issue', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		issue.ID.String(), issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(),
-		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity),
+		int64(issue.Version), issue.Title, issue.Description, nullableID(issue.ObjectiveID), string(issue.Severity),
 		string(issue.Lifecycle), reportedByJSON, issue.ResolutionSummary,
 		nullableID(issue.DuplicateOfIssueID), encodeTime(issue.CreatedAt), encodeTime(issue.UpdatedAt),
 	)

@@ -65,17 +65,56 @@ func createIssueForExpandMigration(t *testing.T, store *Store) (domain.Scope, do
 	if err != nil {
 		t.Fatal(err)
 	}
-	created, err := service.CreateIssue(ctx, sqliteCommandContext("0199f132-0000-7000-8000-000000000002", ""), application.CreateIssueCommand{
-		Scope:        outcome.Value.Scope(),
-		Title:        "Preserve this issue",
-		Description:  "Legacy lifecycle and affected reference survive expansion and restore.",
-		Severity:     domain.IssueSeverityMajor,
-		AffectedRefs: []domain.EntityRef{outcome.Value.Ref()},
+	objective, err := service.CreateObjective(ctx, sqliteCommandContext("0199f132-0000-7000-8000-000000000002", ""), application.CreateObjectiveCommand{
+		Scope: outcome.Value.Scope(), Title: "Legacy owner target", Priority: domain.PriorityNormal,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return outcome.Value.Scope(), created.Value
+	now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+	issue, err := domain.NewIssue(
+		testID("0199f134-0000-7000-8000-000000000002"), outcome.Value.Scope(),
+		"Preserve this issue", "Legacy lifecycle and affected reference survive expansion and restore.",
+		domain.IssueSeverityMajor, []domain.EntityRef{objective.Value.Ref()}, sqliteCommandContext("0199f132-0000-7000-8000-000000000003", "").Actor, now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reporterJSON, err := marshalJSON(issue.ReportedBy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if err := insertEntityRef(ctx, tx, issue.Ref()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO issues (
+		id, namespace_id, outcome_id, kind, version, title, description, severity,
+		lifecycle, reported_by_json, resolution_summary, duplicate_of_issue_id,
+		created_at, updated_at
+	) VALUES (?, ?, ?, 'issue', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		issue.ID.String(), issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), int64(issue.Version),
+		issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle), reporterJSON,
+		issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.CreatedAt), encodeTime(issue.UpdatedAt),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO issue_affected_refs (
+		namespace_id, outcome_id, issue_id, affected_id, affected_kind
+	) VALUES (?, ?, ?, ?, ?)`,
+		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+		objective.Value.ID.String(), domain.EntityKindObjective.String(),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	return outcome.Value.Scope(), issue
 }
 
 func assertIssueExpandData(t *testing.T, store *Store, scope domain.Scope, issue domain.Issue) {

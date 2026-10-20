@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–11 concluídas e etapa 12 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–12 concluídas e etapa 13 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -330,6 +330,10 @@ Cada etapa é **um único commit**, contendo alteração coesa + testes da mudan
 **Trabalho:** Exigir owner no CreateIssue, checar Objectivo não terminal e same scope, evolução de DTO; sem autoinferência por affected_refs.
 
 **Aceite verificável:** Issue sem owner rejeitada; nenhuma Task bloqueada por Issue nova isolada.
+
+**Execução em 2026-10-20:** concluída. `CreateIssue` e o comando atômico compatível `ReportIssueWithBlocker` exigem um Objective existente, no mesmo Outcome e não terminal. A Issue retornada e persistida mantém `objective_id`; `affected_refs` permanece independente. O transporte HTTP requer o ID explícito. A rejeição por owner ausente, inexistente ou terminal não grava Issue/Blocker nem avança a revisão.
+
+**Verificação:** testes Application, SQLite e commands passaram; testes PostgreSQL focados passaram para leitura após restart, rollback, migração 0033→0034, replay e dump/restore real; `go build ./packages/wos-api/http` passou. A suíte HTTP não pôde ser executada porque o proxy Go respondeu 403 ao baixar `github.com/segmentio/encoding`; o handler compila. A persistência owner é a base mínima necessária nesta etapa; consulta indexada e listagem por Objective permanecem para a etapa 14.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

@@ -27,7 +27,7 @@ func TestInheritedBlockersControlReadinessAndResolveIndependently(t *testing.T) 
 		t.Fatal(err)
 	}
 	work := workResult.Value
-	issueResult, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), Title: "Shared cause", Severity: domain.IssueSeverityMajor, AffectedRefs: []domain.EntityRef{work.Ref()}})
+	issueResult, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), ObjectiveID: child.ID, Title: "Shared cause", Severity: domain.IssueSeverityMajor, AffectedRefs: []domain.EntityRef{work.Ref()}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,11 +120,12 @@ func TestIssueDuplicateChainRejectsCycle(t *testing.T) {
 	ctx := context.Background()
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
-	ar, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), Title: "A", Severity: domain.IssueSeverityMinor})
+	owner := issueObjectiveForTest(t, service, outcome.Scope())
+	ar, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), ObjectiveID: owner, Title: "A", Severity: domain.IssueSeverityMinor})
 	if err != nil {
 		t.Fatal(err)
 	}
-	br, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), Title: "B", Severity: domain.IssueSeverityMinor})
+	br, err := service.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: outcome.Scope(), ObjectiveID: owner, Title: "B", Severity: domain.IssueSeverityMinor})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,6 +18,11 @@ func (h *Handler) createIssue(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, err)
 		return
 	}
+	objectiveID, err := domain.ParseID(request.ObjectiveID)
+	if err != nil {
+		writeError(w, r, domain.WrapError(domain.ErrorCodeInvalidArgument, "objective_id is required and must be a valid ID", err))
+		return
+	}
 	affected, err := requestEntityRefs(scope, request.AffectedRefs)
 	if err != nil {
 		writeError(w, r, err)
@@ -29,7 +34,7 @@ func (h *Handler) createIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.service.CreateIssue(r.Context(), cc, application.CreateIssueCommand{
-		Scope: scope, Title: request.Title, Description: request.Description,
+		Scope: scope, ObjectiveID: objectiveID, Title: request.Title, Description: request.Description,
 		Severity: request.Severity, AffectedRefs: affected,
 	})
 	if err != nil {
@@ -186,6 +191,11 @@ func (h *Handler) reportIssueWithBlocker(w http.ResponseWriter, r *http.Request)
 		writeError(w, r, err)
 		return
 	}
+	objectiveID, err := domain.ParseID(request.Issue.ObjectiveID)
+	if err != nil {
+		writeError(w, r, domain.WrapError(domain.ErrorCodeInvalidArgument, "issue.objective_id is required and must be a valid ID", err))
+		return
+	}
 	affected, err := requestEntityRefs(scope, request.Issue.AffectedRefs)
 	if err != nil {
 		writeError(w, r, err)
@@ -202,7 +212,7 @@ func (h *Handler) reportIssueWithBlocker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	result, err := h.service.ReportIssueWithBlocker(r.Context(), cc, application.ReportIssueWithBlockerCommand{
-		Scope: scope, Title: request.Issue.Title, Description: request.Issue.Description,
+		Scope: scope, ObjectiveID: objectiveID, Title: request.Issue.Title, Description: request.Issue.Description,
 		Severity: request.Issue.Severity, AffectedRefs: affected, BlockedRef: blocked,
 		BlockerDescription: request.Blocker.Description, Propagation: request.Blocker.Propagation,
 	})

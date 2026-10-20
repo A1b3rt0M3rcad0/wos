@@ -56,7 +56,7 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 	}
 	work := workResult.Value
 	issueResult, err := service.CreateIssue(ctx, sqliteCommandContext("0199f101-0000-7000-8000-000000000105", ""), application.CreateIssueCommand{
-		Scope: outcome.Scope(), Title: "root cause", Severity: domain.IssueSeverityMajor,
+		Scope: outcome.Scope(), ObjectiveID: *work.ObjectiveID, Title: "root cause", Severity: domain.IssueSeverityMajor,
 		AffectedRefs: []domain.EntityRef{work.Ref()},
 	})
 	if err != nil {
@@ -92,7 +92,7 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if readIssue.Value.Title != issue.Title || len(readIssue.Value.AffectedRefs) != 1 {
+	if readIssue.Value.Title != issue.Title || len(readIssue.Value.AffectedRefs) != 1 || readIssue.Value.ObjectiveID == nil || *readIssue.Value.ObjectiveID != *issue.ObjectiveID {
 		t.Fatalf("issue after restart = %#v", readIssue.Value)
 	}
 	state, _, err := restarted.GetBlockingState(ctx, work.Ref())
