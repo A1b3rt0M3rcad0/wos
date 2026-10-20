@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–10 concluídas e etapa 11 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–11 concluídas e etapa 12 em implementação nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -314,6 +314,10 @@ Cada etapa é **um único commit**, contendo alteração coesa + testes da mudan
 **Trabalho:** Adicionar ObjectiveID obrigatório na nova construção e serialização; manter leitor legado no ciclo expand; affected_refs independente.
 
 **Aceite verificável:** Issue nova tem owner exato; Objective inconsistente rejeitado; lifecycle legado inalterado.
+
+**Execução em 2026-10-20:** concluída. `Issue.ObjectiveID` é opcional apenas na representação de registros legados durante a expansão do schema. Novas instâncias devem passar por `NewIssueForObjective`/`ValidateForCreation`; a validação geral continua lendo dados legados. O owner estrutural é independente de `affected_refs`; existência e mesmo Outcome serão validados pela Application.
+
+**Verificação:** `go test ./packages/wos-core/domain` passou com Go 1.27.2; `gofmt` e `git diff --check` passaram.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

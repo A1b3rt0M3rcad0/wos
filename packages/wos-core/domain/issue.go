@@ -48,6 +48,7 @@ type Issue struct {
 	Version            Version        `json:"version"`
 	Title              string         `json:"title"`
 	Description        string         `json:"description,omitempty"`
+	ObjectiveID        *ID            `json:"objective_id,omitempty"`
 	Severity           IssueSeverity  `json:"severity"`
 	Lifecycle          IssueLifecycle `json:"lifecycle"`
 	AffectedRefs       []EntityRef    `json:"affected_refs,omitempty"`
@@ -58,6 +59,8 @@ type Issue struct {
 	UpdatedAt          time.Time      `json:"updated_at"`
 }
 
+// NewIssue constructs an ownerless legacy Issue while existing creation paths
+// are being migrated. All new Issue creation must use NewIssueForObjective.
 func NewIssue(
 	id ID,
 	scope Scope,
@@ -86,6 +89,36 @@ func NewIssue(
 	return value, nil
 }
 
+// NewIssueForObjective creates an Issue with its one required structural
+// Objective owner. Same-Outcome ownership is checked by the application layer,
+// which has access to the persisted Objective state.
+func NewIssueForObjective(
+	id ID,
+	scope Scope,
+	objectiveID *ID,
+	title, description string,
+	severity IssueSeverity,
+	affectedRefs []EntityRef,
+	reportedBy ActorRef,
+	now time.Time,
+) (Issue, error) {
+	if objectiveID == nil {
+		return Issue{}, NewError(ErrorCodeInvalidArgument, "new issue requires an Objective")
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return Issue{}, WrapError(ErrorCodeInvalidArgument, "new issue Objective ID is invalid", err)
+	}
+	issue, err := NewIssue(id, scope, title, description, severity, affectedRefs, reportedBy, now)
+	if err != nil {
+		return Issue{}, err
+	}
+	issue.ObjectiveID = cloneID(objectiveID)
+	if err := issue.ValidateForCreation(); err != nil {
+		return Issue{}, err
+	}
+	return issue, nil
+}
+
 func (i Issue) Ref() EntityRef {
 	return EntityRef{Scope: i.Scope, Kind: EntityKindIssue, ID: i.ID}
 }
@@ -102,6 +135,11 @@ func (i Issue) Validate() error {
 	}
 	if strings.TrimSpace(i.Title) == "" {
 		return NewError(ErrorCodeIssue, "issue title is required")
+	}
+	if i.ObjectiveID != nil {
+		if err := i.ObjectiveID.Validate(); err != nil {
+			return WrapError(ErrorCodeIssue, "issue Objective ID is invalid", err)
+		}
 	}
 	if !i.Severity.Valid() {
 		return NewError(ErrorCodeIssue, "issue severity is invalid")
@@ -153,6 +191,23 @@ func (i Issue) Validate() error {
 	}
 	if i.CreatedAt.IsZero() || i.UpdatedAt.IsZero() {
 		return NewError(ErrorCodeIssue, "issue timestamps are required")
+	}
+	return nil
+}
+
+// ValidateForCreation adds the structural ownership invariant to the general
+// state validator, which continues to accept legacy records without an owner
+// during the expand phase. Objective existence and same-Outcome ownership are
+// validated by the application layer.
+func (i Issue) ValidateForCreation() error {
+	if err := i.Validate(); err != nil {
+		return err
+	}
+	if i.ObjectiveID == nil {
+		return NewError(ErrorCodeInvalidArgument, "new issue requires an Objective")
+	}
+	if err := i.ObjectiveID.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidArgument, "new issue Objective ID is invalid", err)
 	}
 	return nil
 }
