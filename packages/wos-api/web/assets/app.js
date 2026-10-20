@@ -1349,7 +1349,6 @@ async function refresh() {
         if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
       }
     $("empty").hidden = true;
-    $("outcome").hidden = false;
     $("title").textContent = snapshot.outcome.title;
     $("title").title = snapshot.outcome.title;
     $("state").textContent = display(snapshot.outcome.lifecycle);
@@ -1370,6 +1369,9 @@ async function refresh() {
     renderMetrics();
     renderTabs();
     renderSummary();
+    // Opening an Outcome keeps stale navigation hidden until its permissions
+    // and controls agree; a single Overview click must not be lost in a rebuild.
+    $("outcome").hidden = false;
     applyView();
     await renderSection();
     if (canvasActive()) {

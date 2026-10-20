@@ -123,3 +123,25 @@ test("queued search cannot discard a page after explicit status navigation", asy
   expect(restarted).toBe(0);
   await expect(page.locator(".list-row")).toHaveCount(32);
 });
+
+test('a new Outcome exposes coherent navigation after pending permissions and accepts one Overview click',async({page,wos})=>{
+ const first=await wos.outcome('First navigation context'),second=await wos.outcome('Second navigation context');
+ await wos.login(page);await openOutcome(page,first.value.title);
+ let release,arrive;
+ const gate=new Promise(resolve=>{release=resolve;}),seen=new Promise(resolve=>{arrive=resolve;});
+ await page.route(`**/effective-permissions?outcome_id=${second.value.id}`,async route=>{
+  const response=await route.fetch();expect(response.ok()).toBe(true);arrive();await gate;await route.fulfill({response});
+ });
+ try {
+  await page.locator(`#outcomes [data-outcome-id="${second.value.id}"]`).click();await seen;
+  await expect(page.locator('#workspace-loading')).toBeVisible();
+  await expect(page.locator('#outcome')).not.toBeVisible();
+  const navigation=page.locator('#area-tabs [data-area=overview]').click();
+  release();await navigation;
+  await expect(page.locator('#workspace-loading')).not.toBeVisible();
+  await expect(page.locator('#title')).toHaveText(second.value.title);
+  await expect(page.locator('#area-tabs [data-area=overview]')).toHaveAttribute('aria-current','page');
+  await expect(page.locator('.sidebar')).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`outcome=${second.value.id}.*area=overview`));
+ } finally {release();}
+});
