@@ -1679,3 +1679,16 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     overflow: visible;
   }
 }
+/* At high native browser zoom, the remaining map stage can be shorter than
+   its chrome. Keep the selected record reachable within the actual viewport. */
+@media (max-height: 360px) {
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel:not([hidden]) {
+    position: fixed;
+    inset: 4px;
+    width: auto;
+    height: calc(100dvh - 8px);
+    max-height: calc(100dvh - 8px);
+    margin: 0;
+    z-index: 30;
+  }
+}

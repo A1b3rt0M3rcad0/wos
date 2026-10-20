@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "laws-of-ux-auditor",
+  "audit": {
+    "product": "{{PRODUCT}}",
+    "scope": "{{SCOPE}}",
+    "date": "{{DATE}}",
+    "mode": "{{MODE}}",
+    "build_or_version": "",
+    "environment": "",
+    "roles": [],
+    "viewports_css": [],
+    "tested_screens": [],
+    "tested_flows": [],
+    "access_limits": []
+  },
+  "coverage": [
+    { "area": "A", "label": "Navegação e orientação", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "B", "label": "Hierarquia e densidade", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "C", "label": "Jornadas e modelos mentais", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "D", "label": "Interações e feedback", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "E", "label": "Formulários", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "F", "label": "Responsividade", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "G", "label": "Acessibilidade", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "H", "label": "Estados e recuperação", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "I", "label": "Canvas, boards e edição rica", "status": "nao_testado", "evidence": [], "notes": "" },
+    { "area": "J", "label": "Conteúdo e confiança", "status": "nao_testado", "evidence": [], "notes": "" }
+  ],
+  "findings": [],
+  "summary": {
+    "executive_summary": "",
+    "key_findings": [],
+    "quick_wins": [],
+    "unverified_hypotheses": [],
+    "recommendation_order": []
+  },
+  "validation_plan": []
+}

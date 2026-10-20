@@ -279,11 +279,15 @@ export const humanActions = Object.freeze({
     states: ["in_progress"],
     lease: "holder",
   },
+  renew_work_item_lease: { label: 'Extend my reservation', contexts: ['work_item'], states: ['in_progress'], lease: 'holder' },
+  reclaim_work_item: { label: 'Reacquire expired reservation', contexts: ['work_item'], states: ['in_progress'], lease: 'expired' },
 });
 const legacyLeaseNames = new Set([
   "claim_work_item",
   "complete_work_item",
   "release_work_item",
+  "renew_work_item_lease",
+  "reclaim_work_item",
 ]);
 export function availableActions({
   context,
@@ -345,6 +349,9 @@ export function availableActions({
           entity._operational_state?.lease_status !== "active")
       )
         return false;
+      if (
+        a.lease === 'expired' && (!entity.current_lease || entity._operational_state?.lease_status !== 'expired')
+      ) return false;
       if (
         a.lease === "empty" &&
         (entity.current_lease ||

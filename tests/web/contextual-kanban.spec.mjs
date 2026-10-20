@@ -337,8 +337,8 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
     .click();
   const modal = page.locator("#workspace-kanban");
   await modal.getByRole("button", { name: "Add Task", exact: true }).click();
-  await expect(modal).not.toBeVisible();
-  await expect(page.locator("#command-form")).toBeVisible();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator("#command-form")).toBeVisible();
   await expect(page.locator("#fields")).toContainText(data.objective.title);
   await page
     .getByLabel("Task title", { exact: true })
@@ -355,10 +355,8 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
   expect(value.objective_id).toBe(data.objective.id);
   expect(value.lifecycle).toBe("backlog");
   await expect(page.locator("#command-form")).not.toBeVisible();
-  await panel(page)
-    .getByRole("button", { name: "Return to Kanban", exact: true })
-    .click();
   await expect(modal).toBeVisible();
+  await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
   await expect(
     modal
       .locator(".workspace-kanban-card")
@@ -424,20 +422,18 @@ test("activity history is loaded on demand and material choices retain their mea
   await page.locator("#submit-command").click();
   expect((await response).ok()).toBe(true);
   await expect(page.locator("#command-form")).not.toBeVisible();
-  await panel(page)
-    .getByRole("button", { name: "Return to Kanban", exact: true })
-    .click();
   await expect(modal).toBeVisible();
+  await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
   await expect(modal).toContainText("Add material");
 });
 
-test("contextual Kanban remains operable at native browser zoom 125%, 150% and 200%", async ({
+test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%", async ({
   wos,
 }) => {
   const data = await setup(wos);
   const browser = await nativeZoomBrowser({ width: 1280, height: 900 });
   try {
-    for (const factor of [1.25, 1.5, 2]) {
+    for (const factor of [1.25, 1.5, 2, 4]) {
       await browser.setZoom(factor);
       const page = browser.page;
       await page.context().clearCookies();
@@ -648,7 +644,7 @@ test("specialist inspection retains one native dialog without Board-only modal l
   ).toHaveCount(0);
 });
 
-test("More actions leaves the modal for the canonical inspector and can return", async ({
+test("All item actions reuse the canonical surface within the same Kanban", async ({
   page,
   wos,
 }) => {
@@ -666,19 +662,17 @@ test("More actions leaves the modal for the canonical inspector and can return",
     .click();
   await modal
     .locator(".workspace-kanban-inspection")
-    .getByRole("button", { name: "More actions", exact: true })
+    .getByRole("button", { name: "All item actions", exact: true })
     .click();
-  await expect(modal).not.toBeVisible();
+  await expect(modal).toBeVisible();
   await expect(panel(page)).toHaveAttribute("data-surface", "actions");
-  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await expect(page.locator("dialog[open]")).toHaveCount(1);
   await panel(page)
     .getByRole("button", { name: "Close actions", exact: true })
     .click();
   await expect(panel(page)).toHaveAttribute("data-surface", "detail");
-  await panel(page)
-    .getByRole("button", { name: "Return to Kanban", exact: true })
-    .click();
   await expect(modal).toBeVisible();
+  await expect(modal.locator(".workspace-kanban-operation")).toHaveCount(0);
   await expect(modal.locator(".workspace-kanban-breadcrumb")).toContainText(
     data.objective.title,
   );

@@ -5,6 +5,10 @@ This follows the [owner's preserved plan](owner-plan-2026-10-19.md) and
 The local [product-design-and-ux skill](../../../.agents/skills/product-design-and-ux/SKILL.md)
 guides the interaction contracts; existing editorial styling and illustration assets remain.
 
+The [operational Kanban audit follow-up](../operational-kanban/README.md) extends
+this V1 with in-place item pages, command-preparing moves and embedded canonical
+forms. Original screenshot/qualification receipts retain their recorded sources.
+
 ## Experience contract
 
 | Entry / user intent | Observable behavior | Persistence and recovery |
@@ -18,13 +22,13 @@ guides the interaction contracts; existing editorial styling and illustration as
 | Verify criteria | Current definition and applicable assessment, then explicit assessment action | An assessment is not a Conclusion; waiver is not verification |
 | Add material | Choose produced Artifact or verification Evidence | Existing atomic commands; external source is participant supplied |
 | Open a partial child page | Loaded counts and an explicit partial notice | Cursor pins the Outcome revision; refresh after conflicts |
-| Start a contextual change | Controlled return to the existing inspector/form | Return to Kanban preserves its navigation stack |
+| Start a contextual change | Existing forms run inside the same Kanban dialog | Confirmed saves return to refreshed work; unresolved intent stays in its form |
 | Close modal / Escape | Board and originating focus return | No implicit mutation, lifecycle or relationship change |
 
 The modal uses native focus isolation; the background is inert. Narrow screens
-retain readable, horizontally scrollable columns and a contained item inspector.
-All operational transitions use explicit existing actions; cross-column drag is
-not enabled. Selection, search and presentation ordering grant no authority.
+retain readable, horizontally scrollable columns and an in-place item page.
+Cross-column drag and Move to prepare explicit existing actions; neither writes
+a presentation stage. Selection, search and ordering grant no authority.
 
 ## Plan and operate
 
@@ -34,14 +38,15 @@ not enabled. Selection, search and presentation ordering grant no authority.
    Its **Subobjectives** tab preserves the real hierarchy. The breadcrumb returns
    to the preceding context instead of opening another modal.
 3. Select a Task to see its current state, explanation and permitted next action.
-   **Details and management** holds the complete definition and relationships;
-   **Activity history** loads actual events when expanded.
+   Inside Kanban, work, authority, impediments and criteria are in the focused
+   item page; Board inspectors retain **Details and management**. **Activity
+   history** loads actual events when expanded.
 4. **Verify criteria** shows current assessments before offering an authorized
    assessment form. **Add material** distinguishes a produced Artifact from
    supporting or contradicting Evidence. Neither action accepts the work.
-5. A contextual mutation temporarily returns to the existing inspector/form.
-   **Return to Kanban** restores the visual navigation stack. **More actions**
-   uses the same canonical action menu, not a second command implementation.
+5. A contextual mutation uses the existing form inside the same modal. Confirmed
+   saves refresh the same context; Back restores the preceding work. **All item
+   actions** uses the canonical action menu, not a second command implementation.
 
 Search applies to **loaded cards**. Counts identify the loaded subset, and **Load
 more** uses a revision-bound cursor. Selected details, criteria and lazy history must match the visible revision.

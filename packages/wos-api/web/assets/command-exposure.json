@@ -303,7 +303,7 @@
     "exposure": "L",
     "journey": "Legacy v0 leases",
     "permission": "work:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "reconcile_expired_work_contracts": {
     "exposure": "A",
@@ -393,7 +393,7 @@
     "exposure": "L",
     "journey": "Legacy v0 leases",
     "permission": "work:write",
-    "surface": "developer"
+    "surface": "human"
   },
   "reopen_issue": {
     "exposure": "C",

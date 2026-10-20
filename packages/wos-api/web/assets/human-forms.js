@@ -931,6 +931,10 @@ export function humanForm(
       help.textContent =
         copy.text.administrativeRevocationEndsThisContractAuthorityItDoesNot;
       break;
+    case "renew_work_item_lease":
+      fixed.claim_id = entity.current_lease?.claim_id;
+      fixed.fencing_token = entity.current_lease?.fencing_token;
+    case "reclaim_work_item":
     case "claim_work_item":
       id("work_item");
       f("_duration", copy.text.reservationDurationMinutes, {

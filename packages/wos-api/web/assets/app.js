@@ -136,8 +136,23 @@ const canvasInspector = createWorkspaceInspector({
 });
 const workspaceDisclosures = new Map();
 const contextualKanban = createContextualKanban({
+  operationHost: $('canvas-details'),
+  onOperationEnd: () => { if (canvasInspector.isVisible('actions')) closeActions(); },
+  canLeaveOperation: () => {
+    if (state.submitting || state.pending) {
+      notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
+      return false;
+    }
+    if (canvasInspector.isVisible('form')) { $('close-command').click(); return false; }
+    return true;
+  },
   scopeKey: () => `${state.generation}/${state.namespace}/${state.outcome?.id}/${state.principal}`,
   requestCards: (body) => request(`${outcomeBase()}/workspace-cards`, { method: 'POST', body: JSON.stringify(body) }),
+  requestTimeline: (subject, cursor) => {
+    const q = new URLSearchParams({kind:subject.ref.kind,entity_id:subject.ref.id,limit:'5',cursor});
+    if (subject.criterion_id) q.set('criterion_id',subject.criterion_id);
+    return request(`${outcomeBase()}/workspace-timeline?${q}`);
+  },
   query: (subject, options) => workspaceQuery(subject,options),
   onError: report,
   onReturn: async (view) => {
@@ -149,10 +164,15 @@ const contextualKanban = createContextualKanban({
     await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
     if (action === 'read_entity_note') await openWorkspaceNote(capability.entry,state.detailGeneration,capability.options);
     else if (action === 'more_actions') openCommands();
-    else if (action) workspaceAction(action, capability);
+    else if (action) {
+      const fresh = state.workspaceView?.capabilities?.find(item => workspaceActionName(item.action_id) === workspaceActionName(action));
+      if (!fresh) throw Error(copy.text.thisActionIsUnavailableInTheCurrentStatePermission);
+      workspaceAction(action, fresh);
+    }
     else await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration);
     const actions = $('detail-actions');
     let back = actions.querySelector('[data-return-kanban]');
+    if (contextualKanban.operating) return;
     if (!back) { back = actionButton('Return to Kanban', () => {
       if (allowCanvasNavigation()) contextualKanban.resume().catch(report);
     }, 'quiet'); back.dataset.returnKanban = ''; actions.prepend(back); }
@@ -242,6 +262,7 @@ $("outcome-tools").addEventListener("click", (event) => {
 function closeForm() {
   if (canvasInspector.enabled) canvasInspector.close("form");
   if ($("command-dialog").open) $("command-dialog").close();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
 }
 function closeDetail({ clearSelection = true } = {}) {
   state.detailGeneration++;
@@ -3132,7 +3153,7 @@ async function workspaceQuery(subject, options = {}) {
     method: "POST", body: JSON.stringify({ subject, include_activity:false, ...options }),
   });
 }
-async function showEntity(ref, { internal = false, preserveCamera = false, subject } = {}) {
+async function showEntity(ref, { internal = false, preserveCamera = false, subject, expandMap = !contextualKanban.operating } = {}) {
   if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
   const generation = state.generation, isCanvas = canvasActive();
@@ -3237,7 +3258,9 @@ async function showEntity(ref, { internal = false, preserveCamera = false, subje
       // replacing the coherent inspector projection or moving its focus.
       const expansionFocus = document.activeElement;
       const graphRoot = ["outcome", "objective", "work_item", "issue", "blocker", "evidence", "artifact", "decision"].includes(ref.kind);
-      const model = graphRoot ? await state.canvasData?.expand(ref) : null;
+      // Kanban operations hydrate their authorized record independently. A
+      // stale optional spatial graph must not block a legitimate form/retry.
+      const model = graphRoot && expandMap ? await state.canvasData?.expand(ref) : null;
       if (!current()) return;
       if (model) acceptCanvas(model);
       state.canvasView?.update(canvasPresentation(), { selectedKey: `${ref.kind}:${ref.id}` });
@@ -4153,7 +4176,7 @@ function openCommands(name, menuTarget) {
     }
   }
   const fullRecordForms = new Set(["update_outcome", "update_objective", "update_work_item",
-    "update_issue", "update_blocker_description", "revise_criterion", "complete_work_item", "release_work_item",
+    "update_issue", "update_blocker_description", "revise_criterion", "complete_work_item", "release_work_item", "renew_work_item_lease", "reclaim_work_item",
     "set_work_item_execution_spec", "set_outcome_owners", "set_objective_owners", "set_work_item_assignees",
     "record_criterion_assessment", "replace_external_context", "replace_roadmap_draft",
     "open_roadmap_draft", "publish_roadmap_draft", "discard_roadmap_draft",
@@ -4235,7 +4258,10 @@ function openCommands(name, menuTarget) {
   if (!canvasInspector.enabled) $("detail-dialog").close();
   presentForm();
 }
-$("close-actions").onclick = closeActions;
+$("close-actions").onclick = () => {
+  closeActions();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
+};
 $("developer-tools").onclick = () => {
   if (state.pending) {
     openCommands();
@@ -4388,6 +4414,7 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
         },
         { internal: true },
       );
+    if (contextualKanban.operating) await contextualKanban.finishOperation();
     notice(
       pending.name === "create_outcome"
         ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks

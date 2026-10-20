@@ -56,7 +56,7 @@ Workspace planning and documentary commands use the same authenticated Applicati
 | `propose_decision` | H | Decisions | `records:write` | human |
 | `propose_decision_in_context` | C | Contextual decisions | `records:write` | human |
 | `publish_roadmap_draft` | C | Roadmap publication and lifecycle | `planning:write` | human |
-| `reclaim_work_item` | L | Legacy v0 leases | `work:write` | developer |
+| `reclaim_work_item` | L | Legacy v0 leases | `work:write` | human |
 | `reconcile_expired_work_contracts` | A | Legacy v1 contracts | `namespace:admin` | developer |
 | `record_criterion_assessment` | H | Success criteria | `assessment:write` | human |
 | `redeliver_delivery` | I | Protocol and integrations | `integration:write` | developer |
@@ -71,7 +71,7 @@ Workspace planning and documentary commands use the same authenticated Applicati
 | `renew_signed_review_contract` | S | Signed v2 review | `work.review.acquire` | profile |
 | `renew_signed_work_contract` | S | Signed v2 execution | `work:write` | profile |
 | `renew_work_contract` | L | Legacy v1 contracts | `work:write` | developer |
-| `renew_work_item_lease` | L | Legacy v0 leases | `work:write` | developer |
+| `renew_work_item_lease` | L | Legacy v0 leases | `work:write` | human |
 | `reopen_issue` | C | Issues and blockers | `work:write` | human |
 | `reopen_objective` | H | Objectives | `conclusion:write` | human |
 | `reopen_outcome` | C | Outcome transitions | `conclusion:write` | human |

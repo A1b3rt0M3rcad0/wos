@@ -2,7 +2,7 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-19
+**Last reviewed:** 2026-10-20
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
 **Current wave:** Implement the owner's operational workspace plan in draft PR #116
 
@@ -13,6 +13,28 @@
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
+
+## Operational Kanban UX audit — 2026-10-20
+
+**In progress; draft PR #116 remains unmerged.** The owner requests a hybrid
+UX/domain audit and operational Kanbans using the locally installed
+`laws-of-ux-auditor` and `product-design-and-ux` skills. The
+[audit, baseline evidence and acceptance gates](docs/ux/operational-kanban/audit.md)
+record the findings before product changes.
+
+- In-place item work page replaces the second Kanban sidebar; preserve hierarchy,
+  filters, scroll, focus and coherent revisions. Board's compact inspector remains.
+- Drag and single-pointer/keyboard move controls prepare existing domain commands;
+  no status setter, optimistic stage change, fabricated review or automatic acceptance.
+- Canonical forms/actions live inside the same native modal, preserving versions,
+  current authority, explicit confirmation and exact-intent recovery.
+- Expose existing Objective start and legacy renewal/reacquisition capabilities;
+  legacy-only human exposure is explicit. Signed acquisition/delivery/review stays
+  in the authorized external host. No runtime or signing authority is added.
+- Separate work, responsibility, authority, impediments, proof, acceptance and history.
+  Optional map enrichment cannot block a legitimate Kanban form or recovery.
+- Validation and new captures are pending the complete final-source regression run.
+  Do not treat earlier PR receipts or intermediate passing runs as final qualification.
 
 ## Contextual Kanbans and compact inspector — 2026-10-19
 

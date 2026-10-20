@@ -98,7 +98,7 @@ const authorityCopy = (state) => ({
 
 export function renderWorkspaceView(host, {
   view, onReference, onAction, onBlocked, onCriterion, onTimelineMore, onNote,
-  onFullRecord, onFacetMore, onSubject, onPlan, principalId, onKanban, onVerify, onMaterial, onActivity, disclosures,
+  onFullRecord, onFacetMore, onSubject, onPlan, principalId, onKanban, onVerify, onMaterial, onActivity, disclosures, operational = false,
 } = {}) {
   host.replaceChildren();
   host.classList.add("workspace-view");
@@ -555,7 +555,30 @@ export function renderWorkspaceView(host, {
   audit.append(payload);
   if (onFullRecord) audit.append(actionButton(copy.text.workspaceReadFullRecord, () => onFullRecord(view), "read_full_record"));
   host.append(audit);
-  compactWorkspace(host, view, { onKanban, onVerify, onMaterial, onActivity, onReference, disclosures });
+  if (operational) {
+    host.classList.add('workspace-operational-view');
+    const names = {work:'What to do',people:'Responsibility and execution authority',attention:'What is missing',criteria:'Acceptance criteria',activity:'What happened'};
+    for (const node of host.querySelectorAll('[data-workspace-facet]')) {
+      const name = names[node.dataset.workspaceFacet];
+      if (name && node.querySelector('h3')) node.querySelector('h3').textContent = name;
+    }
+    const history = host.querySelector('[data-workspace-facet="activity"]');
+    if (history) {
+      const disclosure = details('Activity history'); disclosure.className = 'workspace-history';
+      const key = `operational/${JSON.stringify(view.subject)}`;
+      disclosure.open = Boolean(disclosures?.get(key)?.history);
+      disclosure.append(history); host.append(disclosure);
+      disclosure.addEventListener('toggle', () => {
+        disclosures?.set(key, { history: disclosure.open });
+        if (disclosure.open && view.coverage?.activity?.status === 'not_loaded') onActivity?.();
+      });
+    }
+    const tools = el('div', undefined, 'workspace-primary-actions');
+    if (onKanban && ['outcome','objective'].includes(kind)) tools.append(button(kind === 'outcome' ? 'Open Objectives Kanban' : 'Open Tasks Kanban', () => onKanban(view), 'quiet'));
+    if (onVerify && ['outcome','objective','work_item'].includes(kind)) tools.append(button('Verify criteria', () => onVerify(view), 'quiet'));
+    if (onMaterial) tools.append(button('Add material', () => onMaterial(view), 'quiet'));
+    host.prepend(tools);
+  } else compactWorkspace(host, view, { onKanban, onVerify, onMaterial, onActivity, onReference, disclosures });
   return { actions };
 }
 

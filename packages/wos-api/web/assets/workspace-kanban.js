@@ -1,8 +1,9 @@
 import { el, button } from "./ui.js";
 import { display } from "./presentation.js";
+import { humanActions } from './actions.js';
+import { kanbanOperation, operationGroup } from './kanban-operations.js';
 import {
   renderWorkspaceView,
-  renderWorkspaceActions,
   workspaceActions,
   workspaceCommandName,
 } from "./workspace-view.js";
@@ -19,11 +20,15 @@ const key = (ref) => `${ref.kind}/${ref.id}`;
 // Every mutation leaves through the existing authorized command surface.
 export function createContextualKanban({
   requestCards,
+  requestTimeline,
   query,
   onAction,
   onReturn,
   scopeKey,
   onError,
+  operationHost,
+  canLeaveOperation = () => true,
+  onOperationEnd,
 } = {}) {
   const dialog = el("dialog", undefined, "workspace-kanban");
   dialog.id = "workspace-kanban";
@@ -35,7 +40,28 @@ export function createContextualKanban({
     returnFocus,
     suspended = false;
   const disclosures = new Map();
+  let operation = false, dock;
+  function restoreHost() {
+    if (dock) { dock.parent.insertBefore(operationHost, dock.next?.parentNode === dock.parent ? dock.next : null); dock = null; }
+    operation = false;
+    delete dialog.dataset.operation;
+  }
   const current = () => frames.at(-1);
+  function selectView(view) {
+    const frame = current();
+    if (frame.selected) (frame.selectionStack ||= []).push(frame.selected);
+    frame.selected = view;
+  }
+  function backToWork() {
+    const frame = current(), ref = frame.selected?.subject.ref;
+    ++epoch;
+    frame.loading = false;
+    frame.selected = frame.selectionStack?.pop() || null;
+    frame.moveMessage = '';
+    render();
+    if (frame.selected) dialog.querySelector('.workspace-kanban-inspection h3')?.focus();
+    else if (ref) dialog.querySelector(`[data-kanban-ref="${key(ref)}"]`)?.focus();
+  }
   function valid(token) {
     return epoch === token && sessionScope === scopeKey();
   }
@@ -52,6 +78,8 @@ export function createContextualKanban({
     render();
   }
   function close(restore = true) {
+    if (restore && operation && !canLeaveOperation()) return;
+    restoreHost();
     ++epoch;
     suspended = false;
     const origin = frames[0]?.view,
@@ -68,11 +96,9 @@ export function createContextualKanban({
   }
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();
+    if (operation) { if (canLeaveOperation()) finishOperation(); return; }
     if (current()?.selected) {
-      const ref = current().selected.subject.ref;
-      current().selected = null;
-      render();
-      dialog.querySelector(`[data-kanban-ref="${key(ref)}"]`)?.focus();
+      backToWork();
     } else close();
   });
   dialog.addEventListener("close", () => {
@@ -93,7 +119,7 @@ export function createContextualKanban({
     frame.error = "";
     render();
     try {
-      const [page, parent, selected] = await Promise.all([
+      const [page, parent, selected, ancestors] = await Promise.all([
         requestCards({
           parent_ref: frame.view.subject.ref,
           limit: 50,
@@ -103,9 +129,11 @@ export function createContextualKanban({
         !append && frame.selected
           ? query(frame.selected.subject)
           : Promise.resolve(null),
+        !append ? Promise.all((frame.selectionStack || []).map(view => query(view.subject))) : Promise.resolve([]),
       ]);
       if ((parent && page.outcome_revision !== parent.outcome_revision) ||
-          (selected && page.outcome_revision !== selected.outcome_revision))
+          (selected && page.outcome_revision !== selected.outcome_revision) ||
+          ancestors.some(view => view.outcome_revision !== page.outcome_revision))
         throw new Error(
           "The work changed during loading. Refresh to read one consistent revision.",
         );
@@ -116,6 +144,7 @@ export function createContextualKanban({
         );
       if (parent) frame.view = parent;
       if (selected) frame.selected = selected;
+      if (!append) frame.selectionStack = ancestors;
       frame.items = append ? [...frame.items, ...page.items] : page.items;
       frame.revision = page.outcome_revision;
       frame.coverage = page.coverage;
@@ -142,6 +171,7 @@ export function createContextualKanban({
       filtersOpen: false,
       loading: false,
       scroll: new Map(),
+      detailScroll: new Map(),
     };
   }
   async function open(view, { mode } = {}) {
@@ -171,6 +201,9 @@ export function createContextualKanban({
     await load();
   }
   function saveScroll() {
+    if (current() && !current().selected && !operation)
+      current().horizontalScroll = dialog.querySelector('.workspace-kanban-columns')?.scrollLeft || 0;
+    if (current()?.selected || operation) return;
     for (const node of dialog.querySelectorAll("[data-column]"))
       current()?.scroll.set(
         `${current().content}/${node.dataset.column}`,
@@ -178,20 +211,66 @@ export function createContextualKanban({
       );
   }
   async function inspect(ref) {
+    if (operation) return;
+    saveScroll();
     const token = ++epoch;
     try {
       const view = await query({ kind: "entity", ref });
       if (!valid(token)) return;
       assertFrameRevision(view);
-      current().selected = view;
+      selectView(view);
+      current().moveMessage = '';
       render();
       dialog.querySelector(".workspace-kanban-inspection h3")?.focus();
     } catch (error) {
       fail(error, token);
     }
   }
-  async function act(action, capability, view) {
+  async function move(ref, stage) {
+    if (operation) return;
     saveScroll();
+    const token = ++epoch;
+    try {
+      const view = await query({ kind: 'entity', ref });
+      if (!valid(token)) return;
+      assertFrameRevision(view);
+      current().selected = view;
+      const intent = kanbanOperation(view, stage);
+      current().moveMessage = intent.message || '';
+      const cap = intent.capability;
+      if (cap && cap.availability !== 'available' && cap.transport !== 'signed_host')
+        current().moveMessage = `No state changed. ${(cap.reason_codes || []).map(display).join('. ')}. Review the impediments and requirements below.`;
+      render();
+      if (intent.review) {
+        current().moveMessage += view.entity?.contracts_enabled
+          ? ' Signed delivery and independent review must be completed in the authorized host.'
+          : ' This Task has no separate submission stage; assess its criteria and record explicit completion when satisfied.';
+        render();
+      } else if (cap && (cap.availability === 'available' || cap.transport === 'signed_host')) {
+        await act(cap.action_id, cap, view);
+      }
+      dialog.querySelector('.workspace-kanban-inspection h3')?.focus();
+    } catch (error) { fail(error, token); }
+  }
+  async function act(action, capability, view) {
+    if (operation) return;
+    saveScroll();
+    if (operationHost) {
+      operation = true;
+      ++epoch;
+      dock ||= { parent: operationHost.parentNode, next: operationHost.nextSibling };
+      const body = dialog.querySelector('.workspace-kanban-body');
+      const surface = el('section', undefined, 'workspace-kanban-operation');
+      surface.append(button('Back to item', () => { if (canLeaveOperation()) finishOperation(); }, 'quiet'));
+      surface.append(operationHost);
+      body.replaceChildren(surface);
+      dialog.querySelector('.workspace-kanban-controls').hidden = true;
+      dialog.querySelector('.workspace-kanban-footer').hidden = true;
+      dialog.dataset.operation = 'true';
+      try { await onAction(action, capability, view); }
+      catch (error) { onError?.(error); await finishOperation(); }
+      return;
+    }
     suspended = true;
     ++epoch;
     dialog.close();
@@ -202,6 +281,7 @@ export function createContextualKanban({
     }
   }
   function render() {
+    if (operation) return;
     const focused = document.activeElement;
     const hadFocus = dialog.contains(focused);
     const previousContext = dialog.dataset.context;
@@ -211,6 +291,9 @@ export function createContextualKanban({
         : null;
     if (!current() || sessionScope !== scopeKey()) return reset();
     const frame = current();
+    const previousDetail = dialog.querySelector('.workspace-kanban-inspection');
+    if (previousDetail?.dataset.subject)
+      frame.detailScroll.set(previousDetail.dataset.subject, previousDetail.scrollTop);
     const header = el("header", undefined, "workspace-kanban-header");
     const title = el(
       "h2",
@@ -405,6 +488,14 @@ export function createContextualKanban({
       ]) {
         const section = el("section", undefined, "workspace-kanban-column");
         section.dataset.column = stage;
+        section.addEventListener('dragover', event => {
+          if (event.dataTransfer?.types.includes('application/x-wos-kanban')) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }
+        });
+        section.addEventListener('drop', event => {
+          event.preventDefault();
+          const item = frame.items.find(item => key(item.ref) === event.dataTransfer?.getData('application/x-wos-kanban'));
+          if (item && item.stage !== stage) move(item.ref, stage);
+        });
         const matching = items.filter((item) => item.stage === stage);
         section.append(el("h3", `${label} · ${matching.length} loaded`));
         for (const item of matching) {
@@ -414,6 +505,11 @@ export function createContextualKanban({
             "workspace-kanban-card",
           );
           card.dataset.kanbanRef = key(item.ref);
+          card.draggable = true;
+          card.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('application/x-wos-kanban', key(item.ref));
+            event.dataTransfer.effectAllowed = 'move';
+          });
           card.append(
             el("strong", item.title),
             el("small", display(item.lifecycle)),
@@ -453,6 +549,15 @@ export function createContextualKanban({
               ),
             );
           section.append(card);
+          const label = el('label', 'Move to…', 'workspace-kanban-move');
+          const target = el('select');
+          target.setAttribute('aria-label', `Move ${item.title} to`);
+          target.append(Object.assign(el('option', 'Choose an operation'), {value: ''}));
+          for (const [value, title] of stages) {
+            if (value !== item.stage) target.append(Object.assign(el('option', title), {value}));
+          }
+          target.addEventListener('change', () => { const value = target.value; target.value = ''; if (value) move(item.ref, value); });
+          label.append(target); section.append(label);
         }
         if (!matching.length)
           section.append(el("p", "No matching loaded items.", "field-help"));
@@ -544,7 +649,7 @@ export function createContextualKanban({
                 });
                 if (valid(token)) {
                   assertFrameRevision(view, frame);
-                  frame.selected = view;
+                  selectView(view);
                   render();
                 }
               } catch (error) {
@@ -571,36 +676,104 @@ export function createContextualKanban({
             "field-help",
           ),
         );
+      if (frame.view.coverage?.criteria?.next_cursor) checklist.append(button('Load more criteria', async () => {
+        const token = ++epoch;
+        try {
+          const next = await query(frame.view.subject, {criteria_cursor:frame.view.coverage.criteria.next_cursor});
+          if (!valid(token)) return;
+          assertFrameRevision(next, frame);
+          frame.view.criteria.push(...next.criteria); frame.view.coverage.criteria = next.coverage.criteria; render();
+        } catch (error) { fail(error, token); }
+      }, 'quiet'));
       columns.replaceChildren(checklist);
       controls.hidden = true;
       status.hidden = true;
     } else renderColumns();
     if (frame.selected) {
+      columns.hidden = true;
       const selected = frame.selected,
         aside = el("section", undefined, "workspace-kanban-inspection");
+      aside.dataset.subject = JSON.stringify(selected.subject);
       const heading = el("h3", selected.header.title);
       heading.tabIndex = -1;
       aside.append(
         heading,
         button(
-          "Close item",
+          frame.selectionStack?.length ? "Back to previous item" : "Back to Kanban",
           () => {
-            frame.selected = null;
-            render();
-            dialog
-              .querySelector(`[data-kanban-ref="${key(selected.subject.ref)}"]`)
-              ?.focus();
+            backToWork();
           },
           "quiet",
         ),
       );
+      const available = workspaceActions(selected);
+      const primaryNames = selected.subject.kind === 'criterion' ? ['record_criterion_assessment']
+        : selected.subject.ref.kind === 'work_item'
+          ? selected.header.lifecycle === 'backlog' ? ['activate_work_item']
+            : selected.header.lifecycle === 'todo' ? ['claim_work_item','acquire_signed_work_contract','acquire_work_contract']
+              : ['reclaim_work_item','acquire_signed_review_contract','complete_work_item']
+          : selected.subject.ref.kind === 'objective' ? ['start_objective','achieve_objective']
+            : selected.subject.ref.kind === 'issue' ? ['investigate_issue','resolve_issue']
+              : selected.subject.ref.kind === 'blocker' ? ['resolve_blocker'] : ['activate_outcome','achieve_outcome'];
+      let next = available.find(cap => primaryNames.includes(workspaceCommandName(cap.action_id)));
+      if (next?.reason_codes?.some(code => ['missing_required_criterion','required_active_criterion_missing'].includes(code)))
+        next = available.find(cap => workspaceCommandName(cap.action_id) === 'add_criterion') || next;
+      if (next) {
+        const guide = el('section', undefined, 'workspace-next-operation');
+        guide.append(el('h4', 'Next operation'));
+        const signed = next.transport === 'signed_host';
+        guide.append(el('p', signed
+          ? 'Continue acquisition, delivery or independent review in your authorized agent host. WOS records coordination; the browser does not sign or execute work.'
+          : next.availability === 'available'
+            ? 'Review and confirm the next operation. Assignment, execution, proof and acceptance are separate records.'
+            : `Requirements are not satisfied: ${(next.reason_codes || []).map(display).join(', ')}. Inspect the impediments and acceptance criteria before continuing.`));
+        const control = button(signed ? 'Continue in authorized host' : humanActions[workspaceCommandName(next.action_id)]?.label || 'Check requirements', () => act(next.action_id, next, selected), 'workspace-primary-action');
+        control.dataset.actionId = workspaceCommandName(next.action_id);
+        control.inert = frame.loading;
+        guide.append(control); aside.append(guide);
+      }
       const content = el("div");
+      content.inert = frame.loading;
       aside.append(content);
+      if (frame.moveMessage) {
+        const feedback = el('p', frame.moveMessage, 'workspace-move-feedback');
+        feedback.setAttribute('role', 'status');
+        aside.append(feedback);
+      }
       renderWorkspaceView(content, {
         view: selected,
+        operational: true,
         disclosures,
         onKanban: (view) => navigate(view),
         onReference: inspect,
+        onSubject: async (subject) => {
+          const token = ++epoch;
+          try { const view = await query(subject); if (valid(token)) { assertFrameRevision(view, frame); selectView(view); render(); } }
+          catch (error) { fail(error, token); }
+        },
+        onTimelineMore: requestTimeline ? async (page) => {
+          const token = ++epoch;
+          try {
+            const next = await requestTimeline(selected.subject, page.next_cursor);
+            if (!valid(token)) return;
+            if (next.history_through_revision !== page.history_through_revision) throw new Error('History changed. Refresh this item before continuing.');
+            selected.activity = {...next, items:[...(selected.activity?.items || []), ...next.items]};
+            selected.coverage.activity = {status:next.next_cursor?'partial':'complete',next_cursor:next.next_cursor}; render();
+          } catch (error) { fail(error, token); }
+        } : undefined,
+        onFacetMore: async (facet, cursor) => {
+          const token = ++epoch;
+          try {
+            const name = {criteria:'criteria',roadmap:'roadmap',relationships:'relation',required_objectives:'required_objectives'}[facet] || 'relation';
+            const next = await query(selected.subject, { [`${name}_cursor`]: cursor });
+            if (!valid(token)) return;
+            assertFrameRevision(next, frame);
+            if (['criteria','required_objectives'].includes(facet)) selected[facet].push(...next[facet]);
+            else if (facet === 'roadmap') selected.roadmap.revisions.push(...next.roadmap.revisions);
+            else { selected.relationships.items.push(...next.relationships.items); selected.relationships.nodes.push(...next.relationships.nodes); }
+            selected.coverage[facet] = next.coverage[facet]; render();
+          } catch (error) { fail(error, token); }
+        },
         onActivity: async () => {
           if (frame.activityLoading) return;
           frame.activityLoading = true;
@@ -640,7 +813,7 @@ export function createContextualKanban({
             });
             if (!valid(token)) return;
             assertFrameRevision(view, frame);
-            frame.selected = view;
+            selectView(view);
             render();
           } catch (error) {
             fail(error, token);
@@ -651,19 +824,21 @@ export function createContextualKanban({
           act("read_entity_note", { entry, options }, selected),
         onAction: (action, capability) => act(action, capability, selected),
       });
-      const actions = el("div");
+      const actions = el("div", undefined, 'workspace-operation-groups');
+      actions.inert = frame.loading;
       aside.append(actions);
-      renderWorkspaceActions(actions, {
-        view: selected,
-        onMoreActions: () => act("more_actions", null, selected),
-        primaryAlreadyPresent:
-          selected.subject.kind === "entity" &&
-          (["outcome", "objective"].includes(selected.subject.ref.kind) ||
-            ["done", "cancelled", "achieved", "failed", "abandoned"].includes(
-              selected.header.lifecycle,
-            )),
-        onAction: (action, capability) => act(action, capability, selected),
-      });
+      for (const label of ['Execute and conclude', 'Responsibility', 'Prove and verify', 'Resolve impediments', 'Plan and document']) {
+        const group = el('section'); group.append(el('h4', label));
+        for (const cap of workspaceActions(selected).filter(c => operationGroup(c) === label)) {
+          const name = workspaceCommandName(cap.action_id);
+          const control = button(humanActions[name]?.label || 'Continue in authorized agent host', () => act(cap.action_id, cap, selected), 'quiet');
+          control.dataset.actionId = name;
+          if (cap.availability !== 'available') control.append(el('small', cap.transport === 'signed_host' ? 'External authority required' : `Check requirements: ${(cap.reason_codes || []).map(display).join(', ')}`));
+          group.append(control);
+        }
+        if (group.children.length > 1) actions.append(group);
+      }
+      actions.append(button('All item actions', () => act('more_actions', null, selected), 'quiet'));
       body.append(aside);
     }
     const footer = el("footer", undefined, "workspace-kanban-footer");
@@ -719,6 +894,9 @@ export function createContextualKanban({
       footer.append(actions);
     }
     dialog.replaceChildren(header, breadcrumb, controls, status, body, footer);
+    const detail = dialog.querySelector('.workspace-kanban-inspection');
+    if (detail) detail.scrollTop = frame.detailScroll.get(detail.dataset.subject) || 0;
+    dialog.querySelector('.workspace-kanban-columns').scrollLeft = frame.horizontalScroll || 0;
     const context = `${key(frame.view.subject.ref)}/${frame.content}/${frame.mode || ""}`;
     dialog.dataset.context = context;
     // Restore after mounting: detached columns have no scroll geometry.
@@ -773,11 +951,26 @@ export function createContextualKanban({
       }
     } else await load();
   }
+  async function finishOperation() {
+    if (!operation) return;
+    restoreHost();
+    onOperationEnd?.();
+    delete dialog.dataset.operation;
+    render();
+    if (current().mode) {
+      const token = ++epoch;
+      try { const view = await query(current().view.subject); if (valid(token)) { current().view = view; current().selected = null; render(); } }
+      catch (error) { fail(error, token); }
+    } else await load();
+    dialog.querySelector('.workspace-kanban-inspection h3, #workspace-kanban-title')?.focus({ preventScroll: true });
+  }
   return {
     open,
     close,
     reset,
     resume,
+    finishOperation,
+    get operating() { return operation; },
     get suspended() {
       return suspended;
     },

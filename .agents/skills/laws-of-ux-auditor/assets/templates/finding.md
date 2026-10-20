@@ -1,0 +1,26 @@
+# UX-XXX — [título operacional, descritivo e verificável]
+
+- **Status da evidência:** `observed` / `verified` / `hypothesis`.
+- **Área:** [A–J do checklist].
+- **Localização:** [rota, tela, DOM selector ou arquivo/linha; role].
+- **Contexto:** [viewport CSS, browser/dispositivo, zoom, dados e estados].
+- **Meta do usuário:** [resultado da tarefa afetado].
+- **Pré-condições:** [estado e permissões necessárias].
+- **Reprodução:** 1. [...] 2. [...] 3. [...].
+- **Observado:** [fato, não opinião].
+- **Esperado:** [comportamento verificável].
+- **Evidência rastreável:** [print, vídeo com timestamps, DOM, código, sessão, resultado de teste].
+- **Custo para o usuário:** [erro, retrabalho, bloqueio, descoberta, redundância etc.; não inventar %].
+- **Lei(s) aplicável(is):** [Fitts/Hick/Jakob/Miller/Zeigarnik/gradiente/Von Restorff, **somente com explicação causal**].
+- **Outros critérios:** [WCAG 2.2 SC específico e nível/heurística pertinente, se testado].
+- **Limites da inferência:** [por que a lei não prova o impacto, dados que faltam].
+- **Causa provável:** [com grau de confiança; hipóteses alternativas].
+- **Proposta de remediação:** [componente/layout/copy/estado/teclado/responsividade; a mudança concreta].
+- **Alternativa/trade-off:** [custo, restrição de negócio, impacto em experts].
+- **Critérios de aceite:** [testes reproduzíveis, viewports, acessibilidade, semântica e regressão].
+- **Impacto:** `S=?`, `C=?`, `R=?`, `I=?` + justificativa e origem de dados/estimativa.
+- **Esforço:** `T=?`, `D=?`, `V=?`, `E=?` + dependências reais, ou hipóteses explícitas.
+- **Oportunidade e prioridade:** `O=I/E`; `P0/P1/P2/P3` + justificativa; P0 exige motivo de bloqueio.
+- **Confiança:** `alto` / `medio` / `baixo` no achado e em suas premissas.
+- **Validação pós-implementação:** [métrica/experimento/teste e baseline disponível ou “não disponível”].
+- **Não verificado:** [lista de lacunas].

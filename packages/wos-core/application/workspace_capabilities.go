@@ -3,6 +3,8 @@ package application
 import (
 	"context"
 	"errors"
+	"time"
+
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
@@ -196,7 +198,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			}
 			var reason error
 			if work != nil && len(work.Operational.ReadinessReasons) > 0 {
-				reason = d.NewError(d.ErrorCodePreconditionFailed, string(work.Operational.ReadinessReasons[0]))
+				reason = d.NewDetailedError(d.ErrorCodePreconditionFailed, string(work.Operational.ReadinessReasons[0]), d.ErrorDetails{ReasonCode: string(work.Operational.ReadinessReasons[0]), SubjectRef: refPointer(record.Ref())})
 			}
 			if e := add(command, transport, 10, reason); e != nil {
 				return nil, e
@@ -209,6 +211,26 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		}
 		if record.Lifecycle == d.WorkItemLifecycleInProgress && !record.ContractsEnabled && record.CurrentLease != nil {
 			lease := record.CurrentLease
+			clone := record
+			leaseCopy := *lease
+			clone.CurrentLease = &leaseCopy
+			command := "RenewWorkItemLease"
+			condition := clone.RenewLease(identity.PrincipalID, lease.ClaimID, lease.FencingToken, 5*time.Minute, f.at)
+			if !lease.ValidAt(f.at) {
+				command = "ReclaimWorkItem"
+				// Evaluate on a copy with an existing distinct valid ID. No ID is
+				// allocated or persisted by this explanatory read.
+				condition = clone.Reclaim(record.ID, identity.PrincipalID, identity.Actor, 5*time.Minute, f.at)
+			}
+			if condition == nil && (outcome.IsArchived() || outcome.Lifecycle != d.OutcomeLifecycleActive) {
+				condition = d.NewError(d.ErrorCodePreconditionFailed, "outcome must be active and not archived")
+			}
+			if condition == nil {
+				condition = protectWorkProtocol(protocol, command)
+			}
+			if e := add(command, "browser_command", 20, condition); e != nil {
+				return nil, e
+			}
 			released := record
 			releaseCondition := released.Release(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
 			if releaseCondition == nil {
@@ -220,7 +242,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			if e := add("ReleaseWorkItem", "browser_command", 35, releaseCondition); e != nil {
 				return nil, e
 			}
-			condition := record.CheckCompletionAuthority(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
+			condition = record.CheckCompletionAuthority(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
 			if condition == nil {
 				condition = open()
 			}
@@ -247,6 +269,18 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			}
 		}
 	case d.Objective:
+		if record.Lifecycle == d.ObjectiveLifecyclePlanned {
+			condition := record.CheckStart()
+			if condition == nil && (outcome.IsArchived() || outcome.Lifecycle != d.OutcomeLifecycleActive) {
+				condition = d.NewError(d.ErrorCodePreconditionFailed, "outcome must be active and not archived")
+			}
+			if condition == nil {
+				condition = requireObjectiveReady(ctx, f.u, record, f.at)
+			}
+			if e := add("StartObjective", "browser_command", 10, condition); e != nil {
+				return nil, e
+			}
+		}
 		creationCondition := open()
 		if creationCondition == nil && (record.Lifecycle == d.ObjectiveLifecycleAchieved || record.Lifecycle == d.ObjectiveLifecycleCancelled) {
 			creationCondition = d.NewDetailedError(d.ErrorCodeInvalidTransition, "reopen the parent Objective before adding work", d.ErrorDetails{ReasonCode: "objective_terminal", SubjectRef: refPointer(record.Ref()), Remedies: []d.ErrorRemedy{{ActionID: "reopen_objective", SubjectRef: refPointer(record.Ref())}}})
