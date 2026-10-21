@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–23 concluídas; etapa 24 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–24 concluídas; etapa 25 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -526,6 +526,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Verificar existing relates_to endpoints; habilitar Issue/Task para relação informativa somente se necessário, sem criar coluna related_work_refs.
 
 **Aceite verificável:** Issue mostra Task corretiva e vice-versa; nenhuma influência indevida em readiness.
+
+**Execução em 2026-10-21:** O registro `Relation(relates_to)` já aceitava refs Issue e Task e o workspace já lia relações tipadas em ambos os sentidos; não foi necessário alterar `domain/relation.go` nem criar `related_work_refs`. Como a operação pública existente escrevia apenas `depends_on`, foi adicionado o comando tipado `RelateIssueWorkItem`/método `RelateIssueToWorkItem`, com versões observadas de Issue e Task, confirmação de existência no Outcome, prevenção de duplicata sob lock e criação da relação informativa canônica. `RemoveIssueWorkItemRelation` permite removê-la por versão e motivo sem permitir que esse comando remova outras relações. Ambos emitem eventos `relation.created`/`relation.removed`. Nenhum dos comandos muda lifecycle, readiness, dependências, Blockers ou `affected_refs`.
+
+**Verificação:** `go test ./packages/wos-core/domain ./packages/wos-core/application -count=1` passou com Go 1.27.2; os testes focalizados de dependência/adjacência passaram em SQLite e PostgreSQL. A suíte de Application verifica Issue→Task e Task→Issue nas views do workspace, associação duplicada, versões obsoletas, remoção versionada e readiness inalterada antes, durante e depois do vínculo. `gofmt` e `git diff --check` passaram.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

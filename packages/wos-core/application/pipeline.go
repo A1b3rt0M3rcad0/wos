@@ -804,6 +804,10 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"relation.created"}, nil
 	case "RemoveDependency":
 		return []string{"relation.removed"}, nil
+	case "RelateIssueWorkItem":
+		return []string{"relation.created"}, nil
+	case "RemoveIssueWorkItemRelation":
+		return []string{"relation.removed"}, nil
 	case "CreateIssue":
 		return []string{"issue.created"}, nil
 	case "UpdateIssue":

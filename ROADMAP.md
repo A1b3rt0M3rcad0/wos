@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 24 is next
+**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 25 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -100,8 +100,15 @@ final-graph DAG validation, and per-Relation events at one revision. Its tests
 cover read-only preview, valid edge replacement against the final graph,
 all-or-nothing cycle rejection, stale source/relation versions, frozen sources,
 invalid endpoints, stale Outcome snapshots, and idempotent replay. Stage 24
-(corrective Issue↔Task relation contract) is next. The Draft PR must remain
-unmerged and no release/tag is part of this work.
+uses the existing `relates_to` relation for corrective Issue↔Task links; a typed,
+version-checked Application operation writes and removes the association and
+exposes it through both entity workspace views without affecting readiness or
+creating a parallel relation field. Tests cover stale Issue/Task versions,
+invalid removal, bidirectional reads, atomic relation events/revisions and
+unchanged readiness. Stage 25 is next: require an Objective for persisted Tasks
+after the explicit zero-orphan backfill checkpoint, with a safe SQLite rebuild
+and matching PostgreSQL contract. The Draft PR must remain unmerged and no
+release/tag is part of this work.
 
 ## Operational Kanban UX audit — 2026-10-20
 
