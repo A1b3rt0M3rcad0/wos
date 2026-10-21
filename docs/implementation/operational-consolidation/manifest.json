@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "623ba2eb6aa7faaed908586887659fdab9c745ca",
+  "execution_head_sha": "0e47810ee0b0fc83de117fd4de1fc8265ffff375",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -44,20 +44,26 @@
     {
       "id": "E02",
       "title": "Registrar ADRs e defaults do novo contrato",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E01"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "0e47810ee0b0fc83de117fd4de1fc8265ffff375",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E02.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "Review against implementation-plan sections 3–8 and signed protocol constraints — pass",
+        "Local Markdown link validation for changed architecture and ADR files — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Runtime feature tests — no runtime implementation is part of E02."
+      ]
     },
     {
       "id": "E03",
       "title": "Preparar fixtures operacionais e testes de caracterização",
-      "state": "planned",
+      "state": "in_progress",
       "depends_on": [
         "E01",
         "E02"
@@ -1602,5 +1608,6 @@
       "mapped_to": "E76, E79-E84",
       "evidence": "pending in consolidated plan"
     }
-  ]
+  ],
+  "execution_copy_sha256": "19a6bd7e18973258d2b9471c0ee8451a69faffd09a991ca7c249c86b27a60545"
 }
