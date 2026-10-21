@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	DefaultLeaseTTL = 5 * time.Minute
-	MinLeaseTTL     = 30 * time.Second
-	MaxLeaseTTL     = 60 * time.Minute
+	DefaultLeaseTTL                    = 5 * time.Minute
+	MinLeaseTTL                        = 30 * time.Second
+	MaxLeaseTTL                        = 60 * time.Minute
+	WorkLeaseCredentialBindingV1 uint8 = 1
 )
 
 type WorkItemLifecycle string
@@ -23,12 +24,15 @@ const (
 )
 
 type WorkLease struct {
-	ClaimID      ID        `json:"claim_id"`
-	PrincipalID  string    `json:"principal_id"`
-	Actor        ActorRef  `json:"actor_ref"`
-	FencingToken uint64    `json:"fencing_token"`
-	AcquiredAt   time.Time `json:"acquired_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ClaimID                  ID        `json:"claim_id"`
+	PrincipalID              string    `json:"principal_id"`
+	Actor                    ActorRef  `json:"actor_ref"`
+	FencingToken             uint64    `json:"fencing_token"`
+	AcquiredAt               time.Time `json:"acquired_at"`
+	ExpiresAt                time.Time `json:"expires_at"`
+	CredentialBindingVersion uint8     `json:"credential_binding_version,omitempty"`
+	HolderCredentialID       ID        `json:"holder_credential_id,omitempty"`
+	SessionCredentialID      *ID       `json:"session_credential_id,omitempty"`
 }
 
 func (l WorkLease) ValidAt(now time.Time) bool {
@@ -277,6 +281,25 @@ func (w *WorkItem) Defer(now time.Time) error {
 }
 
 func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time) error {
+	return w.claim(claimID, principalID, actor, ttl, now, nil)
+}
+
+// ClaimForCredential creates a legacy-protocol lease bound to the trusted
+// credential identity resolved by Application. sessionCredentialID records
+// optional authenticated-session provenance; it is not the lease holder.
+func (w *WorkItem) ClaimForCredential(claimID ID, principalID string, holderCredentialID ID, sessionCredentialID *ID, actor ActorRef, ttl time.Duration, now time.Time) error {
+	binding := WorkLease{
+		CredentialBindingVersion: WorkLeaseCredentialBindingV1,
+		HolderCredentialID:       holderCredentialID,
+		SessionCredentialID:      cloneID(sessionCredentialID),
+	}
+	if err := binding.validateCredentialBinding(); err != nil {
+		return err
+	}
+	return w.claim(claimID, principalID, actor, ttl, now, &binding)
+}
+
+func (w *WorkItem) claim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time, binding *WorkLease) error {
 	if w.ContractsEnabled {
 		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
 	}
@@ -302,7 +325,7 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 		return NewError(ErrorCodeLease, "fencing token is exhausted")
 	}
 	w.LastFencingToken++
-	w.CurrentLease = &WorkLease{
+	lease := &WorkLease{
 		ClaimID:      claimID,
 		PrincipalID:  principalID,
 		Actor:        actor,
@@ -310,6 +333,12 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 		AcquiredAt:   now.UTC(),
 		ExpiresAt:    now.UTC().Add(ttl),
 	}
+	if binding != nil {
+		lease.CredentialBindingVersion = binding.CredentialBindingVersion
+		lease.HolderCredentialID = binding.HolderCredentialID
+		lease.SessionCredentialID = cloneID(binding.SessionCredentialID)
+	}
+	w.CurrentLease = lease
 	w.Lifecycle = WorkItemLifecycleInProgress
 	return w.touch(now)
 }
@@ -329,11 +358,41 @@ func (w *WorkItem) Release(principalID string, claimID ID, fencingToken uint64, 
 	return w.touch(now)
 }
 
+// ReleaseForCredential releases a bound lease only for the credential that
+// acquired it. The caller must provide authenticated identity, never payload
+// data selected by the lease holder.
+func (w *WorkItem) ReleaseForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "work item is not currently claimed")
+	}
+	if err := w.validateLeaseCredentialOwnership(principalID, credentialID, claimID, fencingToken); err != nil {
+		return err
+	}
+	w.CurrentLease = nil
+	w.Lifecycle = WorkItemLifecycleTodo
+	return w.touch(now)
+}
+
 func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
 	if err := w.CheckCompletionAuthority(principalID, claimID, fencingToken, now); err != nil {
 		return err
 	}
+	return w.complete(resultSummary, conclusion, now)
+}
 
+// CompleteForCredential completes work only when the authenticated credential
+// matches the holder bound to the current lease.
+func (w *WorkItem) CompleteForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
+	if err := w.CheckCompletionAuthorityForCredential(principalID, credentialID, claimID, fencingToken, now); err != nil {
+		return err
+	}
+	return w.complete(resultSummary, conclusion, now)
+}
+
+func (w *WorkItem) complete(resultSummary string, conclusion Conclusion, now time.Time) error {
 	var refs []CriterionAssessmentRef
 	var err error
 	if w.Criteria.HasRequiredActive() {
@@ -471,8 +530,33 @@ func (w WorkItem) validateLeaseOwnership(principalID string, claimID ID, fencing
 	if w.CurrentLease == nil {
 		return NewError(ErrorCodeLease, "work item has no active lease")
 	}
+	if err := w.CurrentLease.Validate(); err != nil {
+		return err
+	}
+	if w.CurrentLease.CredentialBindingVersion != 0 {
+		return NewError(ErrorCodeLease, "credential-bound lease requires credential identity")
+	}
 	if w.CurrentLease.PrincipalID != principalID || w.CurrentLease.ClaimID != claimID || w.CurrentLease.FencingToken != fencingToken {
 		return NewError(ErrorCodeLease, "lease ownership or fencing token does not match")
+	}
+	return nil
+}
+
+func (w WorkItem) validateLeaseCredentialOwnership(principalID string, credentialID ID, claimID ID, fencingToken uint64) error {
+	if w.CurrentLease == nil {
+		return NewError(ErrorCodeLease, "work item has no active lease")
+	}
+	if err := w.CurrentLease.Validate(); err != nil {
+		return err
+	}
+	if w.CurrentLease.CredentialBindingVersion != WorkLeaseCredentialBindingV1 {
+		return NewError(ErrorCodeLease, "lease is not bound to a credential")
+	}
+	if err := credentialID.Validate(); err != nil {
+		return WrapError(ErrorCodeLease, "credential id is invalid", err)
+	}
+	if w.CurrentLease.PrincipalID != principalID || w.CurrentLease.HolderCredentialID != credentialID || w.CurrentLease.ClaimID != claimID || w.CurrentLease.FencingToken != fencingToken {
+		return NewError(ErrorCodeLease, "lease credential, principal, claim, or fencing token does not match")
 	}
 	return nil
 }
@@ -502,5 +586,23 @@ func (w WorkItem) CheckCompletionAuthority(principalID string, claimID ID, fenci
 		return NewError(ErrorCodeLease, "lease has expired")
 	}
 
+	return nil
+}
+
+// CheckCompletionAuthorityForCredential checks lifecycle, bound identity,
+// claim, fencing token, and expiry before a credential-aware completion.
+func (w WorkItem) CheckCompletionAuthorityForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
+	}
+	if err := w.validateLeaseCredentialOwnership(principalID, credentialID, claimID, fencingToken); err != nil {
+		return err
+	}
+	if !w.CurrentLease.ValidAt(now.UTC()) {
+		return NewError(ErrorCodeLease, "lease has expired")
+	}
 	return nil
 }
