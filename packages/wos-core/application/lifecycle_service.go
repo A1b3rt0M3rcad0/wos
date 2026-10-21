@@ -236,7 +236,16 @@ func (s *Service) ReleaseWorkItem(ctx context.Context, commandContext domain.Com
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if err := item.Release(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, now); err != nil {
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "ReleaseWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if authority != nil {
+			err = item.ReleaseForCredential(commandContext.PrincipalID, authority.holderID, cmd.ClaimID, cmd.FencingToken, now)
+		} else {
+			err = item.Release(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {

@@ -234,13 +234,33 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			clone := record
 			leaseCopy := *lease
 			clone.CurrentLease = &leaseCopy
+			authority, authorityErr := s.resolveLeaseCredentialAuthority(ctx, f.u, d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor}, v.Subject.Ref.Scope, lease, "", f.at)
 			command := "RenewWorkItemLease"
-			condition := clone.RenewLease(identity.PrincipalID, lease.ClaimID, lease.FencingToken, 5*time.Minute, f.at)
+			condition := error(nil)
+			if authorityErr != nil {
+				condition = authorityErr
+			} else if authority != nil {
+				if lease.CredentialBindingVersion == 0 {
+					condition = leaseCredentialBindingUnavailable()
+				} else if authority.holderID != lease.HolderCredentialID {
+					condition = leaseOwnerMismatch()
+				} else {
+					condition = clone.RenewLeaseForCredential(identity.PrincipalID, authority.holderID, lease.ClaimID, lease.FencingToken, 5*time.Minute, f.at)
+				}
+			} else {
+				condition = clone.RenewLease(identity.PrincipalID, lease.ClaimID, lease.FencingToken, 5*time.Minute, f.at)
+			}
 			if !lease.ValidAt(f.at) {
 				command = "ReclaimWorkItem"
 				// Evaluate on a copy with an existing distinct valid ID. No ID is
 				// allocated or persisted by this explanatory read.
-				condition = clone.Reclaim(record.ID, identity.PrincipalID, identity.Actor, 5*time.Minute, f.at)
+				if authorityErr != nil {
+					condition = authorityErr
+				} else if authority != nil {
+					condition = clone.ReclaimForCredential(record.ID, identity.PrincipalID, authority.holderID, authority.sessionID, identity.Actor, 5*time.Minute, f.at)
+				} else {
+					condition = clone.Reclaim(record.ID, identity.PrincipalID, identity.Actor, 5*time.Minute, f.at)
+				}
 			}
 			if condition == nil && (outcome.IsArchived() || outcome.Lifecycle != d.OutcomeLifecycleActive) {
 				condition = d.NewError(d.ErrorCodePreconditionFailed, "outcome must be active and not archived")
@@ -252,7 +272,20 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 				return nil, e
 			}
 			released := record
-			releaseCondition := released.Release(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
+			var releaseCondition error
+			if authorityErr != nil {
+				releaseCondition = authorityErr
+			} else if authority != nil {
+				if lease.CredentialBindingVersion == 0 {
+					releaseCondition = leaseCredentialBindingUnavailable()
+				} else if authority.holderID != lease.HolderCredentialID {
+					releaseCondition = leaseOwnerMismatch()
+				} else {
+					releaseCondition = released.ReleaseForCredential(identity.PrincipalID, authority.holderID, lease.ClaimID, lease.FencingToken, f.at)
+				}
+			} else {
+				releaseCondition = released.Release(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
+			}
 			if releaseCondition == nil {
 				releaseCondition = open()
 			}
@@ -262,7 +295,19 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			if e := add("ReleaseWorkItem", "browser_command", 35, releaseCondition); e != nil {
 				return nil, e
 			}
-			condition = record.CheckCompletionAuthority(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
+			if authorityErr != nil {
+				condition = authorityErr
+			} else if authority != nil {
+				if lease.CredentialBindingVersion == 0 {
+					condition = leaseCredentialBindingUnavailable()
+				} else if authority.holderID != lease.HolderCredentialID {
+					condition = leaseOwnerMismatch()
+				} else {
+					condition = record.CheckCompletionAuthorityForCredential(identity.PrincipalID, authority.holderID, lease.ClaimID, lease.FencingToken, f.at)
+				}
+			} else {
+				condition = record.CheckCompletionAuthority(identity.PrincipalID, lease.ClaimID, lease.FencingToken, f.at)
+			}
 			if condition == nil {
 				condition = open()
 			}

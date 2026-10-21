@@ -27,13 +27,22 @@ func (s *Service) RenewWorkItemLease(
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "RenewWorkItemLease", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		candidate := item
 		candidate.Lifecycle = domain.WorkItemLifecycleTodo
 		candidate.CurrentLease = nil
 		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if err := item.RenewLease(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.TTL, now); err != nil {
+		if authority != nil {
+			err = item.RenewLeaseForCredential(commandContext.PrincipalID, authority.holderID, cmd.ClaimID, cmd.FencingToken, cmd.TTL, now)
+		} else {
+			err = item.RenewLease(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.TTL, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
@@ -68,13 +77,22 @@ func (s *Service) ReclaimWorkItem(
 		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "ReclaimWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		candidate := item
 		candidate.Lifecycle = domain.WorkItemLifecycleTodo
 		candidate.CurrentLease = nil
 		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if err := item.Reclaim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
+		if authority != nil {
+			err = item.ReclaimForCredential(claimID, commandContext.PrincipalID, authority.holderID, authority.sessionID, commandContext.Actor, cmd.TTL, now)
+		} else {
+			err = item.Reclaim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {

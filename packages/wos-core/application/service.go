@@ -483,7 +483,16 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if err := item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "ClaimWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if authority != nil {
+			err = item.ClaimForCredential(claimID, commandContext.PrincipalID, authority.holderID, authority.sessionID, commandContext.Actor, cmd.TTL, now)
+		} else {
+			err = item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
@@ -521,7 +530,16 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 			return domain.WorkItem{}, 0, err
 		}
 		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
-		if err := item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now); err != nil {
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "CompleteWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if authority != nil {
+			err = item.CompleteForCredential(commandContext.PrincipalID, authority.holderID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now)
+		} else {
+			err = item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := validateRequiredAssessmentProof(ctx, uow, item.Ref(), item.Criteria); err != nil {
