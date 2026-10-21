@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "321e2d9fbc6f44f0a6152e8fdc1302226548440a",
+  "execution_head_sha": "c9eb1497c2aafd9c45d11ae5b85c84d69d4dd355",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -170,62 +170,89 @@
     {
       "id": "E08",
       "title": "Aplicar o gate a todas as aquisições e ready queries",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E07"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "f36bbe11e107e62b037dfb9639e44383df11c0b0",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E08.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application ./packages/wos-core/storage/sqlite -run 'Test(ClaimAndReclaimRespectPlannedObjectiveWithoutMutation|ReadyWorkAndContractDetailSharePlannedObjectiveReason|UnsignedNextSkipsTaskUnderPlannedObjectiveAndReplaysEmptySearch|SignedAcquisitionAndNextRespectPlannedObjective)$' -count=1 -timeout=90s — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Live PostgreSQL acquisition/concurrency integration — not run.",
+        "HTTP/MCP/CLI parity — deferred to E13.",
+        "Large-Outcome readiness-query cost qualification — deferred to E78."
+      ]
     },
     {
       "id": "E09",
       "title": "Fechar bypass de ativação e criação em To Do",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E07",
         "E08"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "7680bbfb8a6563e4f9b2bac42e4fd4a1712a69f9",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E09.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application -run 'Test(ActivateWorkItemOperationalGatesAreAtomicAndProfileAware|CreateWorkItemDirectToDoGatesAreAtomicAndProfileAware|TaskActivationAndDirectToDoRejectArchivedOrTerminalOutcome)$' -count=1 — pass",
+        "gofmt and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full repository suite and HTTP/MCP/CLI parity — deferred to E13.",
+        "Direct-To-Do transaction behavior was tested with the memory adapter; SQL persistence acceptance — not run."
+      ]
     },
     {
       "id": "E10",
       "title": "Validar hierarquia e dependências contra esperas impossíveis",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E07",
         "E09"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "f46fa26",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E10.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application -count=1 -timeout=120s — pass",
+        "Focused hierarchy-dependency tests cover deadlocks, final batch state, advisory links, bounded legacy ownership, placement preview parity, compatibility_v1, and concurrent opposing edges — pass",
+        "gofmt and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Live SQLite/PostgreSQL transaction-level concurrency — not run.",
+        "HTTP/MCP/SDK/CLI parity — deferred to E13.",
+        "Large-Outcome read-cost qualification — deferred to E78."
+      ]
     },
     {
       "id": "E11",
       "title": "Fortalecer cancelamento e reabertura hierárquicos",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E09",
         "E10"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "8af169be72c6b9ede205ddea0aa4ed360d55b7e1",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E11.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "Eight focused lifecycle tests with -v -timeout=30s: hierarchical reopen, historical compatibility, Objective conclusion history/cycles, descendant execution/lease/review blocks, bounded snapshot failure, and cancellation/acquisition race — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Live SQLite/PostgreSQL cancellation/acquisition concurrency — not run.",
+        "HTTP/MCP/SDK/CLI parity for E11 recovery actions — not run."
+      ]
     },
     {
       "id": "E12",
       "title": "Alinhar capabilities e erros estruturados",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E07",
         "E08",
@@ -233,15 +260,25 @@
         "E11"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "53087a49918b169d792f29f09837dcad10be943c",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E12.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test -v ./packages/wos-core/application — pass, including Outcome and Objective Backlog/To Do target capabilities",
+        "Focused application capability/readiness and write parity tests — pass",
+        "node --test tests/web/unit/workspace-view.test.mjs tests/web/unit/workspace-actions.test.mjs — 7 passed",
+        "node --check on changed browser assets — pass",
+        "go run ./tools/openapigen — pass; generated schema includes additive target_lifecycle and ErrorDetails.reason_codes",
+        "go test ./packages/wos-core/application ./packages/wos-api/commands -count=1 -timeout=120s — pass (primary implementation; follow-up c9eb149 covers Outcome-level creation targets)"
+      ],
+      "tests_not_run": [
+        "HTTP/MCP package tests could not compile because fetching github.com/segmentio/encoding@v0.5.4 returned HTTP 403.",
+        "Browser Playwright and accessibility manual review — deferred to E72/E77/E83."
+      ]
     },
     {
       "id": "E13",
       "title": "Qualificar verticalmente os gates antes de ampliar UX",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E08",
         "E09",
@@ -249,24 +286,40 @@
         "E12"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "129b4bd5ed8db6bbcbe99b4262f5056509d9a474",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E13.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./tests/acceptance -run ^TestOperationalLifecycleDenialParityAcrossTransports$ -count=1 -timeout=30s — pass",
+        "The shared fixture compared historical REST, command catalog HTTP, SDK, MCP, and CLI denials for activation, acquisition, and direct To Do creation; state, versions, events, receipts, leases, contracts, and structured reasons remained unchanged/equivalent.",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "HTTP/MCP package suite beyond the acceptance test — blocked by unavailable dependency download (HTTP 403).",
+        "E11 cancellation/reopen transport parity — not included in this vertical fixture."
+      ]
     },
     {
       "id": "E14",
       "title": "Substituir autorização por nome por catálogo explícito",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E02",
         "E03"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "58ef02f62134f4135e45c87f610e5e33a4440830",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E14.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "Authorization registry focused tests: 111 public command totality, unknown/type mismatch fail-closed, conditional permission compositions, resource resolvers, signed return envelopes, and replay reauthorization — pass",
+        "go test ./packages/wos-api/web -run ^TestEveryCommandHasExplicitExposure$ -count=1 -timeout=60s — pass",
+        "go build ./packages/wos-core/application ./packages/wos-api/commands — pass",
+        "go test ./packages/wos-core/application ./packages/wos-api/commands -run TestAuthorizationCatalog|TestCommandAuthorization|TestCommandResourceResolver|TestSignedReturnAuthorization|TestPublicCatalog.*Authorization|TestPlanningReplayRechecksConstituentPermissions -count=1 -timeout=90s — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full HTTP/MCP transport suites — blocked by dependency download HTTP 403.",
+        "Granular permission policy matrix — E15/E16."
+      ]
     },
     {
       "id": "E15",
