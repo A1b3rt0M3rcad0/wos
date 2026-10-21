@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
@@ -54,35 +53,29 @@ func openWorkItemObjectiveSchema34(t *testing.T) (*Store, string, migration) {
 func createWorkItemObjectiveMigrationFixture(t *testing.T, store *Store) (domain.Scope, domain.ID, domain.ID) {
 	t.Helper()
 	ctx := context.Background()
-	service, err := application.NewService(store,
-		sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)},
-		&sqliteSequenceIDs{prefix: "0199f235", next: 1},
-	)
+	namespaceID := testID("0199f237-0000-7000-8000-000000000001")
+	outcomeID := testID("0199f237-0000-7000-8000-000000000002")
+	objectiveID := testID("0199f237-0000-7000-8000-000000000003")
+	workID := testID("0199f237-0000-7000-8000-000000000004")
+	scope := seedLegacyOutcomeObjective(t, store, namespaceID, outcomeID, objectiveID,
+		"Migration contract", "Every Task remains explicitly owned", "Task owner")
+	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	outcome, err := service.CreateOutcome(ctx, sqliteCommandContext("0199f236-0000-7000-8000-000000000001", ""), application.CreateOutcomeCommand{
-		NamespaceID:  testID("0199f237-0000-7000-8000-000000000001"),
-		Title:        "Migration contract",
-		DesiredState: "Every Task remains explicitly owned",
-		Priority:     domain.PriorityNormal,
-	})
-	if err != nil {
+	defer tx.Rollback()
+	if err := insertEntityRef(ctx, tx, domain.EntityRef{Scope: scope, Kind: domain.EntityKindWorkItem, ID: workID}); err != nil {
 		t.Fatal(err)
 	}
-	objective, err := service.CreateObjective(ctx, sqliteCommandContext("0199f236-0000-7000-8000-000000000002", ""), application.CreateObjectiveCommand{
-		Scope: outcome.Value.Scope(), Title: "Task owner", Priority: domain.PriorityNormal,
-	})
-	if err != nil {
+	now := encodeTime(time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC))
+	if _, err := tx.ExecContext(ctx, `INSERT INTO work_items(id,namespace_id,outcome_id,version,created_at,updated_at,title,description,priority,objective_id,lifecycle) VALUES(?,?,?,1,?,?,?,'Migration fixture task','high',?,'backlog')`,
+		workID.String(), namespaceID.String(), outcomeID.String(), now, now, "Preserved Task", objectiveID.String()); err != nil {
 		t.Fatal(err)
 	}
-	work, err := service.CreateWorkItem(ctx, sqliteCommandContext("0199f236-0000-7000-8000-000000000003", ""), application.CreateWorkItemCommand{
-		Scope: outcome.Value.Scope(), ObjectiveID: &objective.Value.ID, Title: "Preserved Task", Priority: domain.PriorityHigh,
-	})
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
-	return outcome.Value.Scope(), objective.Value.ID, work.Value.ID
+	return scope, objectiveID, workID
 }
 
 func addWorkContractForeignKeyFixtures(t *testing.T, store *Store, scope domain.Scope, workID domain.ID) {
@@ -190,8 +183,8 @@ func TestWorkItemObjectiveContractMigrationRejectsOrphanAndCanRetry(t *testing.T
 		t.Fatalf("repaired Task was not preserved: title=%q err=%v scope=%+v", title, err, scope)
 	}
 	version, err = store.SchemaVersion(ctx)
-	if err != nil || version != 36 {
-		t.Fatalf("retry schema version = %d, err=%v; want 36", version, err)
+	if err != nil || version != 37 {
+		t.Fatalf("retry schema version = %d, err=%v; want 37", version, err)
 	}
 }
 
@@ -207,7 +200,7 @@ func TestFreshSchemaRequiresWorkItemObjective(t *testing.T) {
 		t.Fatal("fresh schema accepted a Task without Objective")
 	}
 	version, err := store.SchemaVersion(ctx)
-	if err != nil || version != 36 {
-		t.Fatalf("fresh schema version = %d, err=%v; want 36", version, err)
+	if err != nil || version != 37 {
+		t.Fatalf("fresh schema version = %d, err=%v; want 37", version, err)
 	}
 }

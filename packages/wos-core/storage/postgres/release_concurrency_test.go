@@ -72,7 +72,7 @@ func expectedContention(t *testing.T, errs []error) int {
 	return success
 }
 func TestReleaseConcurrentActiveSlotsOnSeparateConnections(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	a, b, outcome := releaseServices(t)
 	scope := outcome.Scope()
@@ -116,7 +116,7 @@ func TestReleaseConcurrentActiveSlotsOnSeparateConnections(t *testing.T) {
 	}
 }
 func TestReleaseConcurrentIdempotencyOnSeparateConnections(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	a, b, outcome := releaseServices(t)
 	cmd := application.CreateWorkItemCommand{Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, a, outcome.Scope()), Title: "One intent", Priority: domain.PriorityNormal}
@@ -146,7 +146,7 @@ func TestReleaseConcurrentIdempotencyOnSeparateConnections(t *testing.T) {
 	}
 }
 func TestReleaseConcurrentAssessmentsOnSeparateConnections(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	a, b, outcome := releaseServices(t)
 	added, err := a.AddCriterion(ctx, releaseCC(40, ""), application.AddCriterionCommand{Owner: outcome.Ref(), ExpectedVersion: outcome.Version, Title: "Reviewed", Required: true, VerificationMode: domain.VerificationModeAttestation})
@@ -177,7 +177,7 @@ func TestReleaseConcurrentAssessmentsOnSeparateConnections(t *testing.T) {
 }
 
 func TestReleaseConcurrentClaimsOnSeparateConnections(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	a, b, outcome := releaseServices(t)
 	_, err := a.AddCriterion(ctx, releaseCC(50, ""), application.AddCriterionCommand{Owner: outcome.Ref(), ExpectedVersion: 1, Title: "Required", Required: true, VerificationMode: domain.VerificationModeAttestation})
@@ -223,7 +223,7 @@ func TestReleaseConcurrentClaimsOnSeparateConnections(t *testing.T) {
 }
 
 func TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a, b, outcome := releaseServices(t)

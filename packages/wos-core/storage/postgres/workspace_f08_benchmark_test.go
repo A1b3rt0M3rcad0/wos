@@ -8,8 +8,8 @@ import (
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"os"
 	"path/filepath"
-"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -21,7 +21,9 @@ import (
 // This measures embedded, indexed SQLite reads on the actual runner. It does not
 // simulate network RTT, HTTP rendering, a 2-vCPU machine or independent users.
 func BenchmarkWorkspaceF08(b *testing.B) {
- if os.Getenv("WOS_TEST_POSTGRES_DSN")=="" {b.Skip("real PostgreSQL required")}
+	if os.Getenv("WOS_TEST_POSTGRES_DSN") == "" {
+		b.Skip("real PostgreSQL required")
+	}
 	ctx := context.Background()
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
 	store, e := openTestPostgres(filepath.Join(b.TempDir(), "f08.db"), Options{MigrateOnOpen: true})

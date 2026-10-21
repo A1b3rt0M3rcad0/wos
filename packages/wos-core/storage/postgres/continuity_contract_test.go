@@ -13,7 +13,7 @@ import (
 )
 
 func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "continuity.db"))
 	clock := sqliteFixedClock{now: time.Now().UTC()}
@@ -111,7 +111,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 	}
 }
 func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store, err := openTestPostgres(filepath.Join(t.TempDir(), "upgrade.db"), Options{})
 	if err != nil {

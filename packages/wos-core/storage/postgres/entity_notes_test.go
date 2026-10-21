@@ -17,7 +17,7 @@ import (
 
 func noteTestID(n int) d.ID { return d.MustParseID(fmt.Sprintf("019a3101-0000-7000-8000-%012x", n)) }
 func TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -148,7 +148,7 @@ func TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart
 // immutable storage hashes. Loading, archiving and reopening must retain the
 // original row, rather than rehashing an equivalent empty set into a new ID.
 func TestWorkspaceEmptyConclusionIdentitySurvivesArchiveReopenAndRejectsRewrite(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, emptySlice := range []bool{false, true} {
 			name := fmt.Sprintf("%s/explicit_empty_%t", backend, emptySlice)

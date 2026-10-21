@@ -8,8 +8,7 @@ import (
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-	
-	
+
 	"math/rand/v2"
 	"os"
 	"path/filepath"
@@ -44,7 +43,7 @@ func loadQuantile(values []float64, q float64) float64 {
 	return values[int(float64(len(values)-1)*q)]
 }
 func TestWorkContractLoadMatrix(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	if os.Getenv("WOS_CONTRACT_LOAD") != "1" {
 		t.Skip("opt-in measured fixture; set WOS_CONTRACT_LOAD=1")
 	}
@@ -90,7 +89,8 @@ func TestWorkContractLoadMatrix(t *testing.T) {
 				}
 				contracts = append(contracts, got.Value.Contract)
 			}
-			var sqlCount atomic.Uint64; sqlMeasured:=false
+			var sqlCount atomic.Uint64
+			sqlMeasured := false
 			previous := 0
 			for _, history := range []int{0, 10, 100} {
 				// Checkpoint density is exercised on one representative active contract,

@@ -17,7 +17,7 @@ import (
 )
 
 func TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, ownerKind := range []d.EntityKind{d.EntityKindOutcome, d.EntityKindObjective} {
 			t.Run(backend+"/"+ownerKind.String(), func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren(t *t
 }
 
 func TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()

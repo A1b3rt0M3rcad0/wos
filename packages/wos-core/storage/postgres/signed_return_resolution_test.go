@@ -163,7 +163,7 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	return resolutionFixture{store, service, agentCtx, returnCC, request, envelope, agentPrivate, credential.ID, server, private}
 }
 func TestSignedReturnResolutionRepository(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			f := newResolutionFixture(t, backend)
@@ -239,7 +239,7 @@ func resolutionIntent(t *testing.T, f resolutionFixture, reason string, suffix i
 	return cc, a.ResolveSignedReturnIntentCommand{Scope: d.Scope{NamespaceID: d.ID(p.NamespaceID), OutcomeID: d.ID(p.OutcomeID)}, OriginalEnvelope: f.envelope, Envelope: envelope}
 }
 func TestSignedReturnTerminalResolution(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend+"/closed-first", func(t *testing.T) {
 			f := newResolutionFixture(t, backend)
@@ -345,7 +345,7 @@ func TestSignedReturnTerminalResolution(t *testing.T) {
 }
 
 func TestSignedReturnResolutionRaces(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, mode := range []string{"return-vs-resolution", "same-resolution", "different-resolution"} {
 			t.Run(backend+"/"+mode, func(t *testing.T) {
@@ -410,7 +410,7 @@ func TestSignedReturnResolutionRaces(t *testing.T) {
 }
 
 func TestSignedReturnResolutionRevalidatesAuthority(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, probe := range []string{"credential", "signer", "digest", "scope", "issuer", "revoked", "retired-key", "revoked-contract"} {
 			t.Run(backend+"/"+probe, func(t *testing.T) {
@@ -506,7 +506,7 @@ func TestSignedReturnResolutionRevalidatesAuthority(t *testing.T) {
 }
 
 func TestSignedReturnResolutionSurvivesCleanRestore(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	f := newResolutionFixture(t, "sql")
 	cc, cmd := resolutionIntent(t, f, "terminal proof must survive a clean database restore", 1)
 	closed, e := f.service.ResolveSignedReturnIntent(f.ctx, cc, cmd)
@@ -549,7 +549,7 @@ type resolutionRealClock struct{}
 
 func (resolutionRealClock) Now() time.Time { return time.Now().UTC() }
 func TestSignedReturnResolutionRejectsActualExpiredLease(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			t.Parallel()

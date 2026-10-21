@@ -17,7 +17,7 @@ import (
 // Acquisition is a timestamp, not the UUID creation order. Exercise the actual
 // indexed repositories, both histories and restart with nanoseconds and offsets.
 func TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -116,7 +116,7 @@ func TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime(t *testing.T) {
 // EXPLAIN verifies that a last-executor read can stop at the first indexed
 // header for each history, without sorting or scanning the Task's full history.
 func TestWorkspaceLastExecutionUsesScopedTimestampIndexes(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "execution-indexes.db"))
 	u, e := store.Begin(ctx)

@@ -25,37 +25,39 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 		title, description, desiredState string
 		externalContext                  string
 		completionPolicy                 string
+		operationalProfile               string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
 		createdAt, updatedAt             int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, desired_state, lifecycle, priority,
-       archived_at, created_at, updated_at,external_context_json,completion_policy
+       archived_at, created_at, updated_at,external_context_json,completion_policy,operational_profile
 FROM outcomes
 WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
 		namespaceID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
-		&archivedAt, &createdAt, &updatedAt, &externalContext, &completionPolicy,
+		&archivedAt, &createdAt, &updatedAt, &externalContext, &completionPolicy, &operationalProfile,
 	)
 	if err != nil {
 		return domain.Outcome{}, mapSQLError("get outcome", err)
 	}
 
 	value := domain.Outcome{
-		ID:               outcomeID,
-		NamespaceID:      namespaceID,
-		CompletionPolicy: domain.CompletionPolicy(completionPolicy),
-		Version:          domain.Version(version),
-		Title:            title,
-		Description:      description,
-		DesiredState:     desiredState,
-		Lifecycle:        domain.OutcomeLifecycle(lifecycle),
-		Priority:         domain.Priority(priority),
-		CreatedAt:        decodeTime(createdAt),
-		UpdatedAt:        decodeTime(updatedAt),
-		Criteria:         domain.NewCriterionSet(),
+		ID:                 outcomeID,
+		NamespaceID:        namespaceID,
+		CompletionPolicy:   domain.CompletionPolicy(completionPolicy),
+		OperationalProfile: domain.OperationalProfile(operationalProfile),
+		Version:            domain.Version(version),
+		Title:              title,
+		Description:        description,
+		DesiredState:       desiredState,
+		Lifecycle:          domain.OutcomeLifecycle(lifecycle),
+		Priority:           domain.Priority(priority),
+		CreatedAt:          decodeTime(createdAt),
+		UpdatedAt:          decodeTime(updatedAt),
+		Criteria:           domain.NewCriterionSet(),
 	}
 	if err := unmarshalJSON(externalContext, &value.ExternalContext); err != nil {
 		return domain.Outcome{}, err
@@ -102,8 +104,8 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, desired_state, lifecycle, archived_at,external_context_json,completion_policy
-) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    title, description, priority, desired_state, lifecycle, archived_at,external_context_json,completion_policy,operational_profile
+) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		outcome.ID.String(),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
@@ -118,6 +120,7 @@ INSERT INTO outcomes (
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
 		string(outcome.CompletionPolicy.Effective()),
+		string(outcome.OperationalProfile.Effective()),
 	)
 	if err != nil {
 		return mapSQLError("insert outcome", err)
@@ -142,6 +145,9 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if outcome.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "outcome version must advance exactly once per save")
 	}
+	if err := r.validateExistingObjectivePolicies(ctx, outcome); err != nil {
+		return err
+	}
 	contextJSON, err := marshalJSON(outcome.ExternalContext)
 	if err != nil {
 		return err
@@ -149,7 +155,7 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE outcomes
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?,completion_policy=?
+    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?,completion_policy=?,operational_profile=?
 WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
@@ -161,6 +167,7 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
 		string(outcome.CompletionPolicy.Effective()),
+		string(outcome.OperationalProfile.Effective()),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),
@@ -183,17 +190,61 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 	)
 }
 
+// validateExistingObjectivePolicies prevents an Outcome policy update from
+// leaving persisted automatic Objectives in a configuration that is no longer
+// allowed. The check is scoped to actual policy changes, so ordinary Outcome
+// edits do not scan the Objective set.
+func (r outcomeRepository) validateExistingObjectivePolicies(ctx context.Context, outcome domain.Outcome) error {
+	var oldProfile, oldCompletionPolicy string
+	err := r.uow.tx.QueryRowContext(ctx, `
+SELECT operational_profile, completion_policy
+FROM outcomes
+WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
+		outcome.NamespaceID.String(), outcome.ID.String(), outcome.ID.String(),
+	).Scan(&oldProfile, &oldCompletionPolicy)
+	if err != nil {
+		return mapSQLError("read current outcome completion policy", err)
+	}
+	if domain.OperationalProfile(oldProfile).Effective() == outcome.OperationalProfile.Effective() &&
+		domain.CompletionPolicy(oldCompletionPolicy).Effective() == outcome.CompletionPolicy.Effective() {
+		return nil
+	}
+
+	rows, err := r.uow.tx.QueryContext(ctx, `
+SELECT completion_mode
+FROM objectives
+WHERE namespace_id = ? AND outcome_id = ?`, outcome.NamespaceID.String(), outcome.ID.String())
+	if err != nil {
+		return mapSQLError("check objective completion policies", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var mode string
+		if err := rows.Scan(&mode); err != nil {
+			return err
+		}
+		objective := domain.Objective{Scope: outcome.Scope(), CompletionMode: domain.ObjectiveCompletionMode(mode)}
+		if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidArgument, "outcome policy change would invalidate an objective completion configuration", err)
+		}
+	}
+	return rows.Err()
+}
+
 func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Objective, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Objective{}, err
 	}
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
-       required_for_outcome, created_at, updated_at
+       required_for_outcome, created_at, updated_at, completion_mode, completion_cycle
 FROM objectives
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanObjective(row, scope)
 	if err != nil {
+		return domain.Objective{}, err
+	}
+	if err := r.validateObjectivePolicy(ctx, value); err != nil {
 		return domain.Objective{}, err
 	}
 	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "owner")
@@ -210,20 +261,32 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(
 	return value, nil
 }
 
+func (r objectiveRepository) validateObjectivePolicy(ctx context.Context, objective domain.Objective) error {
+	outcome, err := r.uow.outcomes.Get(ctx, objective.Scope.NamespaceID, objective.Scope.OutcomeID)
+	if err != nil {
+		return err
+	}
+	if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+		return domain.WrapError(domain.ErrorCodeInvalidArgument, "objective completion configuration is invalid", err)
+	}
+	return nil
+}
+
 func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, error) {
 	var rawID string
 	var (
-		version              int64
-		title, description   string
-		parent               sql.NullString
-		lifecycle, priority  string
-		required             int
-		createdAt, updatedAt int64
+		version                         int64
+		title, description              string
+		parent                          sql.NullString
+		lifecycle, priority             string
+		required                        int
+		createdAt, updatedAt            int64
+		completionMode, completionCycle string
 	)
 	err := scanner.Scan(
 		&rawID,
 		&version, &title, &description, &parent, &lifecycle, &priority,
-		&required, &createdAt, &updatedAt,
+		&required, &createdAt, &updatedAt, &completionMode, &completionCycle,
 	)
 	if err != nil {
 		return domain.Objective{}, mapSQLError("get objective", err)
@@ -243,8 +306,13 @@ func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, er
 		RequiredForOutcome: required == 1,
 		CreatedAt:          decodeTime(createdAt),
 		UpdatedAt:          decodeTime(updatedAt),
+		CompletionMode:     domain.ObjectiveCompletionMode(completionMode),
 		Criteria:           domain.NewCriterionSet(),
 		OwnerRefs:          []domain.ActorRef{}, ConclusionHistory: []domain.Conclusion{},
+	}
+	value.CompletionCycle, err = parseObjectiveCompletionCycle(completionCycle)
+	if err != nil {
+		return domain.Objective{}, err
 	}
 	if parent.Valid {
 		parsed, err := domain.ParseID(parent.String)
@@ -256,16 +324,27 @@ func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, er
 	return value, nil
 }
 
+func parseObjectiveCompletionCycle(value string) (uint64, error) {
+	cycle, err := strconv.ParseUint(value, 10, 64)
+	if err != nil || cycle == 0 {
+		if err == nil {
+			err = fmt.Errorf("completion_cycle must be at least 1")
+		}
+		return 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective completion_cycle is invalid", err)
+	}
+	return cycle, nil
+}
+
 func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Objective, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return nil, err
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
-       required_for_outcome, created_at, updated_at
+       required_for_outcome, created_at, updated_at, completion_mode, completion_cycle
 FROM objectives
 WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list objective aggregates", err)
 	}
@@ -286,6 +365,10 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	}
 	if len(values) == 0 {
 		return values, nil
+	}
+	owner, err := r.uow.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return nil, err
 	}
 	owned, err := ownedAggregateIDs(ctx, r.uow.tx, scope)
 	if err != nil {
@@ -311,6 +394,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective is invalid", err)
 		}
+		if err := values[i].ValidateCompletionConfiguration(owner); err != nil {
+			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", err)
+		}
 	}
 	return values, nil
 }
@@ -322,14 +408,17 @@ func (r objectiveRepository) Insert(ctx context.Context, objective domain.Object
 	if err := objective.Validate(); err != nil {
 		return err
 	}
+	if err := r.validateObjectivePolicy(ctx, objective); err != nil {
+		return err
+	}
 	if err := insertEntityRef(ctx, r.uow.tx, objective.Ref()); err != nil {
 		return err
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO objectives (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, parent_objective_id, lifecycle, required_for_outcome
-) VALUES (?, ?, ?, 'objective', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	title, description, priority, parent_objective_id, lifecycle, required_for_outcome, completion_mode, completion_cycle
+) VALUES (?, ?, ?, 'objective', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		objective.ID.String(),
 		objective.Scope.NamespaceID.String(),
 		objective.Scope.OutcomeID.String(),
@@ -342,6 +431,8 @@ INSERT INTO objectives (
 		nullableID(objective.ParentObjectiveID),
 		string(objective.Lifecycle),
 		boolInt(objective.RequiredForOutcome),
+		string(objective.CompletionMode.Effective()),
+		strconv.FormatUint(objective.EffectiveCompletionCycle(), 10),
 	)
 	if err != nil {
 		return mapSQLError("insert objective", err)
@@ -360,13 +451,16 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	if err := objective.Validate(); err != nil {
 		return err
 	}
+	if err := r.validateObjectivePolicy(ctx, objective); err != nil {
+		return err
+	}
 	if objective.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "objective version must advance exactly once per save")
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE objectives
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    parent_objective_id = ?, lifecycle = ?, required_for_outcome = ?
+    parent_objective_id = ?, lifecycle = ?, required_for_outcome = ?, completion_mode = ?, completion_cycle = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(objective.Version),
 		encodeTime(objective.UpdatedAt),
@@ -376,6 +470,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		nullableID(objective.ParentObjectiveID),
 		string(objective.Lifecycle),
 		boolInt(objective.RequiredForOutcome),
+		string(objective.CompletionMode.Effective()),
+		strconv.FormatUint(objective.EffectiveCompletionCycle(), 10),
 		objective.Scope.NamespaceID.String(),
 		objective.Scope.OutcomeID.String(),
 		objective.ID.String(),

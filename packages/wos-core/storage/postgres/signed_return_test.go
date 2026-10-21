@@ -21,7 +21,7 @@ import (
 )
 
 func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, floor := range []d.AcceptanceMode{d.AcceptanceDirect, d.AcceptanceIndependentReview} {
 			for _, hasCriteria := range []bool{true, false} {

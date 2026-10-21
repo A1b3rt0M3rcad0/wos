@@ -29,7 +29,7 @@ func (tx *beforeReadTransaction) Begin(ctx context.Context) (ports.UnitOfWork, e
 }
 
 func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store interface {

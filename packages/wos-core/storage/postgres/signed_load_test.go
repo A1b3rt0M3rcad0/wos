@@ -32,7 +32,7 @@ type signedLoadParticipant struct {
 // cost estimate or production/network SLA. Every delivery has an independent
 // review and a required original attestation criterion.
 func TestSignedWorkReviewLoadMatrix(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	if os.Getenv("WOS_SIGNED_LOAD") != "1" {
 		t.Skip("opt-in signed workload; set WOS_SIGNED_LOAD=1")
 	}

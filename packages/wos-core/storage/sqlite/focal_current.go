@@ -43,9 +43,16 @@ func (r continuityReadRepository) CurrentObjective(ctx context.Context, scope d.
 	if e := id.Validate(); e != nil {
 		return result, e
 	}
-	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
 	if e != nil {
 		return result, e
+	}
+	owner, e := r.u.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if e != nil {
+		return result, e
+	}
+	if e = v.ValidateCompletionConfiguration(owner); e != nil {
+		return result, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", e)
 	}
 	criteria, current, history, e := r.currentOwnerProof(ctx, v.Ref())
 	if e != nil {
@@ -67,13 +74,13 @@ func (r continuityReadRepository) FocalOutcome(ctx context.Context, scope d.Scop
 		return result, e
 	}
 	var version d.Version
-	var title, life, priority, completionPolicy string
+	var title, life, priority, completionPolicy, operationalProfile string
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,completion_policy FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived, &completionPolicy)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,completion_policy,operational_profile FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived, &completionPolicy, &operationalProfile)
 	if e != nil {
 		return result, mapSQLError("read focal Outcome metadata", e)
 	}
-	result = d.Outcome{CompletionPolicy: d.CompletionPolicy(completionPolicy), ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
+	result = d.Outcome{CompletionPolicy: d.CompletionPolicy(completionPolicy), OperationalProfile: d.OperationalProfile(operationalProfile), ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
 	if archived.Valid {
 		at := decodeTime(archived.Int64)
 		result.ArchivedAt = &at

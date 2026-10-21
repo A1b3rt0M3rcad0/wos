@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
@@ -51,32 +50,16 @@ func openStoreAtSchema33(t *testing.T) (*Store, string) {
 func createIssueForExpandMigration(t *testing.T, store *Store) (domain.Scope, domain.Issue) {
 	t.Helper()
 	ctx := context.Background()
-	clock := sqliteFixedClock{now: time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)}
-	service, err := application.NewService(store, clock, &sqliteSequenceIDs{prefix: "0199f134", next: 1})
-	if err != nil {
-		t.Fatal(err)
-	}
 	namespaceID := testID("0199f133-0000-7000-8000-000000000001")
-	outcome, err := service.CreateOutcome(ctx, sqliteCommandContext("0199f132-0000-7000-8000-000000000001", ""), application.CreateOutcomeCommand{
-		NamespaceID:  namespaceID,
-		Title:        "Legacy Issue migration fixture",
-		DesiredState: "Existing issue state stays valid during expand migration",
-		Priority:     domain.PriorityNormal,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	objective, err := service.CreateObjective(ctx, sqliteCommandContext("0199f132-0000-7000-8000-000000000002", ""), application.CreateObjectiveCommand{
-		Scope: outcome.Value.Scope(), Title: "Legacy owner target", Priority: domain.PriorityNormal,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	outcomeID := testID("0199f133-0000-7000-8000-000000000002")
+	objectiveID := testID("0199f133-0000-7000-8000-000000000003")
+	scope := seedLegacyOutcomeObjective(t, store, namespaceID, outcomeID, objectiveID,
+		"Legacy Issue migration fixture", "Existing issue state stays valid during expand migration", "Legacy owner target")
 	now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
 	issue, err := domain.NewIssue(
-		testID("0199f134-0000-7000-8000-000000000002"), outcome.Value.Scope(),
+		testID("0199f134-0000-7000-8000-000000000002"), scope,
 		"Preserve this issue", "Legacy lifecycle and affected reference survive expansion and restore.",
-		domain.IssueSeverityMajor, []domain.EntityRef{objective.Value.Ref()}, sqliteCommandContext("0199f132-0000-7000-8000-000000000003", "").Actor, now,
+		domain.IssueSeverityMajor, []domain.EntityRef{{Scope: scope, Kind: domain.EntityKindObjective, ID: objectiveID}}, sqliteCommandContext("0199f132-0000-7000-8000-000000000003", "").Actor, now,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -108,14 +91,14 @@ func createIssueForExpandMigration(t *testing.T, store *Store) (domain.Scope, do
 		namespace_id, outcome_id, issue_id, affected_id, affected_kind
 	) VALUES ($1, $2, $3, $4, $5)`,
 		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
-		objective.Value.ID.String(), domain.EntityKindObjective.String(),
+		objectiveID.String(), domain.EntityKindObjective.String(),
 	); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
-	return outcome.Value.Scope(), issue
+	return scope, issue
 }
 
 func assertIssueExpandData(t *testing.T, store *Store, scope domain.Scope, issue domain.Issue) {

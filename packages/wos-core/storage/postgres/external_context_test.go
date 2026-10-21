@@ -12,7 +12,7 @@ import (
 )
 
 func TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "external.db")
 	store := openTestStore(t, path)
@@ -54,7 +54,7 @@ func TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable(t *testing.T) {
 	}
 }
 func TestBrowserSessionRevokedWithParentCredential(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "session.db"))
 	security := application.SecurityService{Store: store, Clock: sqliteFixedClock{now: time.Now().UTC()}, IDs: &sqliteSequenceIDs{prefix: "0199d075", next: 1}}

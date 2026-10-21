@@ -15,7 +15,7 @@ func (r continuityReadRepository) WorkspaceOutcome(ctx context.Context, scope d.
 		return v, e
 	}
 	var created, updated int64
-	e = r.row(ctx, `SELECT description,desired_state,created_at,updated_at,completion_policy FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&v.Description, &v.DesiredState, &created, &updated, &v.CompletionPolicy)
+	e = r.row(ctx, `SELECT description,desired_state,created_at,updated_at,completion_policy,operational_profile FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&v.Description, &v.DesiredState, &created, &updated, &v.CompletionPolicy, &v.OperationalProfile)
 	if e != nil {
 		return v, e
 	}
@@ -44,7 +44,18 @@ func (r continuityReadRepository) WorkspaceObjectiveHeader(ctx context.Context, 
 	if e := validateGraphRefs(scope, []d.EntityRef{{Scope: scope, Kind: d.EntityKindObjective, ID: id}}, 1); e != nil {
 		return d.Objective{}, e
 	}
-	return scanObjective(r.row(ctx, `SELECT id,version,title,substr(description,1,1024),parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	value, e := scanObjective(r.row(ctx, `SELECT id,version,title,substr(description,1,1024),parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	if e != nil {
+		return d.Objective{}, e
+	}
+	owner, e := r.u.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if e != nil {
+		return d.Objective{}, e
+	}
+	if e = value.ValidateCompletionConfiguration(owner); e != nil {
+		return d.Objective{}, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", e)
+	}
+	return value, nil
 }
 
 // These exact expressions match migration0032. Strip the fractional component
@@ -134,24 +145,34 @@ func (r continuityReadRepository) WorkspaceRequiredObjectives(ctx context.Contex
 	if e := scope.Validate(); e != nil {
 		return nil, e
 	}
-	rows, e := r.rows(ctx, `SELECT id,lifecycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, `SELECT id,lifecycle,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
 	defer rows.Close()
 	result := []d.Objective{}
 	for rows.Next() {
-		var id, life string
-		if e = rows.Scan(&id, &life); e != nil {
+		var id, life, mode, cycle string
+		if e = rows.Scan(&id, &life, &mode, &cycle); e != nil {
 			return nil, e
 		}
 		oid, e := d.ParseID(id)
 		if e != nil {
 			return nil, e
 		}
-		result = append(result, d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life), RequiredForOutcome: true})
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, e
+		}
+		result = append(result, d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life), RequiredForOutcome: true, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle})
 	}
-	return result, rows.Err()
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, e
+	}
+	return r.validateObjectiveCompletionList(ctx, result)
 }
 
 func (r continuityReadRepository) WorkspaceRequiredObjectivePage(ctx context.Context, scope d.Scope, after string, limit int) ([]d.Objective, int, error) {
@@ -165,7 +186,7 @@ func (r continuityReadRepository) WorkspaceRequiredObjectivePage(ctx context.Con
 	if e := r.row(ctx, `SELECT count(*) FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&total); e != nil {
 		return nil, 0, e
 	}
-	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
 	if e != nil {
 		return nil, 0, e
 	}
@@ -173,8 +194,8 @@ func (r continuityReadRepository) WorkspaceRequiredObjectivePage(ctx context.Con
 	result := []d.Objective{}
 	for rows.Next() {
 		var v d.Objective
-		var id, life, priority string
-		if e = rows.Scan(&id, &v.Version, &v.Title, &life, &priority); e != nil {
+		var id, life, priority, mode, cycle string
+		if e = rows.Scan(&id, &v.Version, &v.Title, &life, &priority, &mode, &cycle); e != nil {
 			return nil, 0, e
 		}
 		v.ID, e = d.ParseID(id)
@@ -185,9 +206,21 @@ func (r continuityReadRepository) WorkspaceRequiredObjectivePage(ctx context.Con
 		v.Lifecycle = d.ObjectiveLifecycle(life)
 		v.Priority = d.Priority(priority)
 		v.RequiredForOutcome = true
+		v.CompletionMode = d.ObjectiveCompletionMode(mode)
+		v.CompletionCycle, e = parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, 0, e
+		}
 		result = append(result, v)
 	}
-	return result, total, rows.Err()
+	if e = rows.Err(); e != nil {
+		return nil, 0, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, 0, e
+	}
+	result, e = r.validateObjectiveCompletionList(ctx, result)
+	return result, total, e
 }
 
 func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope d.Scope, limit int) ([]d.Objective, []d.WorkItem, error) {
@@ -198,14 +231,14 @@ func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope 
 		return nil, nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid structural validation limit")
 	}
 	objectives := []d.Objective{}
-	rows, e := r.rows(ctx, `SELECT id,parent_objective_id,lifecycle FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), limit)
+	rows, e := r.rows(ctx, `SELECT id,parent_objective_id,lifecycle,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), limit)
 	if e != nil {
 		return nil, nil, e
 	}
 	for rows.Next() {
-		var id, life string
+		var id, life, mode, cycle string
 		var parent sql.NullString
-		if e = rows.Scan(&id, &parent, &life); e != nil {
+		if e = rows.Scan(&id, &parent, &life, &mode, &cycle); e != nil {
 			rows.Close()
 			return nil, nil, e
 		}
@@ -214,7 +247,12 @@ func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope 
 			rows.Close()
 			return nil, nil, e
 		}
-		o := d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life)}
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			rows.Close()
+			return nil, nil, e
+		}
+		o := d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life), CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle}
 		if parent.Valid {
 			pid, e := d.ParseID(parent.String)
 			if e != nil {
@@ -224,6 +262,17 @@ func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope 
 			o.ParentObjectiveID = &pid
 		}
 		objectives = append(objectives, o)
+	}
+	if e = rows.Err(); e != nil {
+		rows.Close()
+		return nil, nil, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, nil, e
+	}
+	objectives, e = r.validateObjectiveCompletionList(ctx, objectives)
+	if e != nil {
+		return nil, nil, e
 	}
 	e = rows.Err()
 	rows.Close()
@@ -263,6 +312,22 @@ func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope 
 		items = append(items, w)
 	}
 	return objectives, items, rows.Err()
+}
+
+func (r continuityReadRepository) validateObjectiveCompletionList(ctx context.Context, objectives []d.Objective) ([]d.Objective, error) {
+	if len(objectives) == 0 {
+		return objectives, nil
+	}
+	owner, err := r.u.outcomes.Get(ctx, objectives[0].Scope.NamespaceID, objectives[0].Scope.OutcomeID)
+	if err != nil {
+		return nil, err
+	}
+	for _, objective := range objectives {
+		if err := objective.ValidateCompletionConfiguration(owner); err != nil {
+			return nil, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", err)
+		}
+	}
+	return objectives, nil
 }
 
 func (r continuityReadRepository) WorkspaceRoadmap(ctx context.Context, scope d.Scope, id d.ID, revision uint64) (d.Roadmap, error) {
@@ -684,17 +749,25 @@ func (r continuityReadRepository) CompletionWork(ctx context.Context, scope d.Sc
 	objectives := []d.Objective{}
 	for _, kind := range []d.EntityKind{d.EntityKindObjective, d.EntityKindWorkItem} {
 		table, parent := "objectives", "parent_objective_id"
+		policyColumns := ",w.completion_mode,w.completion_cycle"
 		if kind == d.EntityKindWorkItem {
 			table, parent = "work_items", "objective_id"
+			policyColumns = ""
 		}
-		rows, err := r.rows(ctx, "SELECT w.id,w."+parent+",w.lifecycle,c.rationale FROM "+table+" w LEFT JOIN aggregate_current_conclusions a ON a.namespace_id=w.namespace_id AND a.outcome_id=w.outcome_id AND a.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE w.namespace_id=? AND w.outcome_id=? ORDER BY w.id", scope.NamespaceID.String(), scope.OutcomeID.String())
+		rows, err := r.rows(ctx, "SELECT w.id,w."+parent+",w.lifecycle,c.rationale"+policyColumns+" FROM "+table+" w LEFT JOIN aggregate_current_conclusions a ON a.namespace_id=w.namespace_id AND a.outcome_id=w.outcome_id AND a.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE w.namespace_id=? AND w.outcome_id=? ORDER BY w.id", scope.NamespaceID.String(), scope.OutcomeID.String())
 		if err != nil {
 			return nil, nil, err
 		}
 		for rows.Next() {
 			var id, life string
+			var mode, cycle string
 			var parentID, reason sql.NullString
-			if err = rows.Scan(&id, &parentID, &life, &reason); err != nil {
+			if kind == d.EntityKindObjective {
+				err = rows.Scan(&id, &parentID, &life, &reason, &mode, &cycle)
+			} else {
+				err = rows.Scan(&id, &parentID, &life, &reason)
+			}
+			if err != nil {
 				rows.Close()
 				return nil, nil, err
 			}
@@ -719,7 +792,12 @@ func (r continuityReadRepository) CompletionWork(ctx context.Context, scope d.Sc
 			if kind == d.EntityKindWorkItem {
 				tasks = append(tasks, d.WorkItem{ID: parsed, Scope: scope, ObjectiveID: parentRef, Lifecycle: d.WorkItemLifecycle(life), CurrentConclusion: conclusion})
 			} else {
-				objectives = append(objectives, d.Objective{ID: parsed, Scope: scope, ParentObjectiveID: parentRef, Lifecycle: d.ObjectiveLifecycle(life), CurrentConclusion: conclusion})
+				completionCycle, err := parseObjectiveCompletionCycle(cycle)
+				if err != nil {
+					rows.Close()
+					return nil, nil, err
+				}
+				objectives = append(objectives, d.Objective{ID: parsed, Scope: scope, ParentObjectiveID: parentRef, Lifecycle: d.ObjectiveLifecycle(life), CurrentConclusion: conclusion, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle})
 			}
 		}
 		err = rows.Err()
@@ -728,5 +806,6 @@ func (r continuityReadRepository) CompletionWork(ctx context.Context, scope d.Sc
 			return nil, nil, err
 		}
 	}
-	return tasks, objectives, nil
+	objectives, err := r.validateObjectiveCompletionList(ctx, objectives)
+	return tasks, objectives, err
 }

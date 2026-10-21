@@ -16,7 +16,7 @@ import (
 )
 
 func TestListDuplicateIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -180,7 +180,7 @@ func TestListDuplicateIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
 }
 
 func TestListPendingIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store, err := openTestPostgres(filepath.Join(t.TempDir(), "pending-issues.db"), Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
@@ -320,7 +320,7 @@ func TestListPendingIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
 }
 
 func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})

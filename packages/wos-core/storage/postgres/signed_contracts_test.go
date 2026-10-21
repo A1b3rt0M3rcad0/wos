@@ -19,7 +19,7 @@ import (
 )
 
 func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()

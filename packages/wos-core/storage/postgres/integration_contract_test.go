@@ -14,7 +14,7 @@ import (
 )
 
 func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "outbox.db")
 	store := openTestStore(t, path)
@@ -172,7 +172,7 @@ func TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing(t *testing.T) {
 }
 
 func TestDeliveryCrashBudgetRequiresExplicitRedelivery(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "crash-budget.db")
 	store := openTestStore(t, path)

@@ -37,7 +37,7 @@ func (s acquisitionIssuer) SignCanonical(purpose string, payload []byte) (json.R
 	return json.Marshal(doc.Proof)
 }
 func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store interface {

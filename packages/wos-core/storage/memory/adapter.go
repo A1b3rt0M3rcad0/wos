@@ -538,6 +538,13 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	); err != nil {
 		return err
 	}
+	for _, objective := range r.tx.objectives {
+		if objective.Scope == outcome.Scope() {
+			if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+				return err
+			}
+		}
+	}
 	r.tx.outcomes[key] = cloneOutcome(outcome)
 	return nil
 }
@@ -555,6 +562,9 @@ func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id dom
 	if !ok {
 		return domain.Objective{}, domain.NewError(domain.ErrorCodeNotFound, "objective not found")
 	}
+	if err := r.validateCompletionConfiguration(ctx, value); err != nil {
+		return domain.Objective{}, err
+	}
 	return cloneObjective(value), nil
 }
 
@@ -568,6 +578,9 @@ func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Sco
 	items := make([]domain.Objective, 0)
 	for _, item := range r.tx.objectives {
 		if item.Scope == scope {
+			if err := r.validateCompletionConfiguration(ctx, item); err != nil {
+				return nil, err
+			}
 			items = append(items, cloneObjective(item))
 		}
 	}
@@ -583,6 +596,9 @@ func (r objectiveRepository) Insert(ctx context.Context, objective domain.Object
 		return err
 	}
 	if err := objective.Validate(); err != nil {
+		return err
+	}
+	if err := r.validateCompletionConfiguration(ctx, objective); err != nil {
 		return err
 	}
 	key := entityKey(objective.Scope, objective.ID)
@@ -601,6 +617,9 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 		return err
 	}
 	if err := objective.Validate(); err != nil {
+		return err
+	}
+	if err := r.validateCompletionConfiguration(ctx, objective); err != nil {
 		return err
 	}
 	key := entityKey(objective.Scope, objective.ID)
@@ -626,6 +645,20 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	}
 	r.tx.objectives[key] = cloneObjective(objective)
 	return nil
+}
+
+func (r objectiveRepository) validateCompletionConfiguration(ctx context.Context, objective domain.Objective) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	outcome, ok := r.tx.outcomes[outcomeKey(objective.Scope.NamespaceID, objective.Scope.OutcomeID)]
+	if !ok {
+		if objective.CompletionMode.Effective() == domain.ObjectiveCompletionModeAutomatic {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "automatic objective completion requires a persisted owning Outcome")
+		}
+		return nil
+	}
+	return objective.ValidateCompletionConfiguration(outcome)
 }
 
 type workItemRepository struct{ tx *transaction }

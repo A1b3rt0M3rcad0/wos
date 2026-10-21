@@ -13,7 +13,7 @@ import (
 )
 
 func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, kind := range []d.EntityKind{d.EntityKindOutcome, d.EntityKindObjective} {
 			t.Run(backend+"/"+kind.String(), func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledg
 }
 
 func TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "strict-pages.db"))
 	must := func(err error) {

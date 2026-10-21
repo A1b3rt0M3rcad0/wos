@@ -12,7 +12,7 @@ import (
 )
 
 func TestIndexedExternalContextPreservesTypeAndRestart(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "context.db")
 	store := openTestStore(t, path)

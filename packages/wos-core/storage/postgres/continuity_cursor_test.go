@@ -60,7 +60,7 @@ func legacySectionCursor(scope d.Scope, section string, revision d.OutcomeRevisi
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 func TestContinuityDirectLegacyCursorAndNoHydration(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "direct.db")
 	store := openTestStore(t, path)

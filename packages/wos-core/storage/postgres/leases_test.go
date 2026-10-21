@@ -95,7 +95,7 @@ func createSQLiteClaimedWork(
 }
 
 func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
@@ -252,7 +252,7 @@ func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 }
 
 func TestSQLiteConcurrentReclaimAllowsSingleWinner(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: 2 * time.Second, MigrateOnOpen: true})

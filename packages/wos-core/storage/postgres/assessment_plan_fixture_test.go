@@ -12,7 +12,7 @@ import (
 )
 
 func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "assessment-plan.db"))
 	now := time.Now().UTC()

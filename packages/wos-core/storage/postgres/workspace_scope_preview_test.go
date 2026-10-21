@@ -100,7 +100,7 @@ func workspaceScopeFixture(t *testing.T, backend string) (ports.TransactionManag
 }
 
 func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -170,7 +170,7 @@ func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWitho
 }
 
 func TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
