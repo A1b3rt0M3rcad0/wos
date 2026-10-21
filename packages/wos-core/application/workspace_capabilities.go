@@ -185,7 +185,15 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			return nil, e
 		}
 		if record.Lifecycle == d.WorkItemLifecycleBacklog {
-			if e := add("ActivateWorkItem", "browser_command", 10, protectWorkProtocol(protocol, "ActivateWorkItem")); e != nil {
+			activationCondition := protectWorkProtocol(protocol, "ActivateWorkItem")
+			if activationCondition == nil {
+				readiness, e := evaluateTaskActivation(ctx, f.u, record, f.at)
+				if e != nil {
+					return nil, e
+				}
+				activationCondition = operationalReadinessError(readiness, "Task cannot be activated")
+			}
+			if e := add("ActivateWorkItem", "browser_command", 10, activationCondition); e != nil {
 				return nil, e
 			}
 		}

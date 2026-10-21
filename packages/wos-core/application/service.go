@@ -438,6 +438,13 @@ func (s *Service) ActivateWorkItem(ctx context.Context, commandContext domain.Co
 		if err := item.Activate(now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		readiness, err := evaluateTaskActivation(ctx, uow, item, now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := operationalReadinessError(readiness, "Task cannot be activated"); err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

@@ -211,7 +211,26 @@ func (s *Service) insertWorkItemCreation(ctx context.Context, uow ports.UnitOfWo
 		return err
 	}
 	value.Lifecycle = initialLifecycle
-	return uow.WorkItems().Insert(ctx, *value)
+	if err := uow.WorkItems().Insert(ctx, *value); err != nil {
+		return err
+	}
+	if value.Lifecycle == domain.WorkItemLifecycleTodo {
+		// Insert inside the still-open UnitOfWork before evaluating so reads that
+		// inspect the final Task (including its blocker state) see the complete
+		// definition. Any failed gate aborts the enclosing transaction.
+		final, err := uow.WorkItems().Get(ctx, cmd.Scope, value.ID)
+		if err != nil {
+			return err
+		}
+		readiness, err := evaluateTaskActivation(ctx, uow, final, now)
+		if err != nil {
+			return err
+		}
+		if err := operationalReadinessError(readiness, "Task cannot be created directly in To Do"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func requireOpenCreationParent(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope, id domain.ID, kind string) error {
