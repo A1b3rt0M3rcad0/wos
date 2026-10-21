@@ -82,6 +82,12 @@ test('released v0.4.2 baseline stays immutable and candidate breaking inputs are
  const reviewedConstraintValues=new Map([
   ['SigningSecurityIntentV2.credential_policy.permitted_operations.maxItems',128],
  ]);
+ const uuid={pattern:'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',type:'string'};
+ for(const name of ['Catalog_create_issue','Catalog_report_issue_with_blocker']){
+  const schema=after.components.schemas[name];
+  assert.ok(schema.required?.includes('objective_id'),name+' must continue requiring its Objective owner');
+  assert.deepEqual(schema.properties?.objective_id,uuid,name+'.objective_id differs from the reviewed UUID wire shape');
+ }
  for(const [name,schema] of Object.entries(before.components.schemas))additiveSchema(schema,after.components.schemas[name],name,reviewedRequiredAdds,reviewedConstraintValues);
  for(const [route,operations] of Object.entries(before.paths)){
   assert.ok(after.paths[route],route+' removed');
