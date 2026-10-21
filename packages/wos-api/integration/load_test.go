@@ -54,7 +54,8 @@ func openDeliveryLoadStores(t *testing.T, backend string) (deliveryFixtureStore,
 	t.Helper()
 	if backend == "sqlite" {
 		path := filepath.Join(t.TempDir(), "queue.db")
-		one, e := sqlite.Open(path, sqlite.Options{MigrateOnOpen: true})
+		// The workload measures queue behavior, not race-instrumented schema setup.
+		one, e := sqlite.Open(path, sqlite.Options{MigrateOnOpen: true, StartupTimeout: 2 * time.Minute})
 		if e != nil {
 			t.Fatal(e)
 		}
