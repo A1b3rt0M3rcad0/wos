@@ -12,7 +12,7 @@ import (
 )
 
 func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "assessment-plan.db"))
 	now := time.Now().UTC()
@@ -65,7 +65,7 @@ func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
 		if err = work.Activate(now); err != nil {
 			t.Fatal(err)
 		}
-		if err = u.WorkItems().Insert(ctx, work); err != nil {
+		if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
 			t.Fatal(err)
 		}
 		if i == 0 {

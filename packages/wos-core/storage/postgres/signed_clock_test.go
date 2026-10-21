@@ -69,7 +69,7 @@ func TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T
 		w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 		must(e)
 		w.ContractsEnabled = true
-		must(uow.WorkItems().Insert(ctx, w))
+		must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 		works = append(works, w)
 	}
 	protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

@@ -19,7 +19,7 @@ type advancingContinuityClock struct{ now time.Time }
 
 func (c *advancingContinuityClock) Now() time.Time { return c.now }
 func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "expiry.db")
@@ -90,7 +90,7 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 	}
 }
 func TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -162,7 +162,7 @@ func TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction(t 
 }
 
 func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -183,11 +183,15 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 			u, e := store.Begin(ctx)
 			must(e)
 			must(u.Outcomes().Insert(ctx, out))
+			owner, e := d.NewObjective(portID(5002), scope, "Blocking owner", "", d.PriorityNormal, false, now)
+			must(e)
+			must(u.Objectives().Insert(ctx, owner))
 			works := []d.WorkItem{}
 			for _, id := range []int{5010, 5011} {
 				w, e := d.NewWorkItem(portID(id), scope, "work", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, w))
+				w.ObjectiveID = &owner.ID
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 				works = append(works, w)
 			}
 			actor := d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "fixture"}
@@ -207,22 +211,45 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 			service, _ := a.NewService(store, sqliteFixedClock{now}, &portIDs{})
 			full, e := service.GetOutcomeState(ctx, scope)
 			must(e)
-			legacyRows := []json.RawMessage{}
+			type blockingRow struct {
+				ref d.EntityRef
+				raw json.RawMessage
+			}
+			legacyRows := make([]blockingRow, 0, len(full.BlockingStates))
 			for _, v := range full.BlockingStates {
 				raw, e := json.Marshal(v)
 				must(e)
-				legacyRows = append(legacyRows, raw)
+				legacyRows = append(legacyRows, blockingRow{ref: v.Ref, raw: raw})
 			}
-			sort.Slice(legacyRows, func(i, j int) bool { return string(legacyRows[i]) < string(legacyRows[j]) })
-			oldCursor := legacySectionCursor(scope, "blocking_states", full.OutcomeRevision, full.EvaluatedAt, legacyRows[0])
+			sort.Slice(legacyRows, func(i, j int) bool { return string(legacyRows[i].raw) < string(legacyRows[j].raw) })
+			targetIndex := -1
+			for i, row := range legacyRows {
+				if row.ref == works[0].Ref() {
+					targetIndex = i
+					break
+				}
+			}
+			if targetIndex <= 0 {
+				t.Fatal("Task blocking state did not follow a cursor predecessor", targetIndex)
+			}
+			oldCursor := legacySectionCursor(scope, "blocking_states", full.OutcomeRevision, full.EvaluatedAt, legacyRows[targetIndex-1].raw)
 			page, e := service.GetContinuitySection(ctx, scope, "blocking_states", 1, oldCursor)
 			must(e)
-			if len(page.Items) != 1 || string(page.Items[0]) != string(legacyRows[1]) || page.Omitted != 1 {
+			if len(page.Items) != 1 || string(page.Items[0]) != string(legacyRows[targetIndex].raw) || page.Omitted != len(legacyRows)-targetIndex-1 {
 				t.Fatal("legacy blocking digest/order/inherited proof changed", page)
 			}
 			var state a.BlockingState
 			must(json.Unmarshal(page.Items[0], &state))
-			if len(state.ActiveBlockers) != 2 || !state.ActiveBlockers[0].Inherited || state.ActiveBlockers[0].Blocker.Description != root.Description || state.ActiveBlockers[1].Blocker.Description != direct.Description {
+			rootInherited, directLocal := false, false
+			for _, blocker := range state.ActiveBlockers {
+				if blocker.Blocker.Description == root.Description && blocker.Inherited {
+					rootInherited = true
+				}
+				if blocker.Blocker.Description == direct.Description && !blocker.Inherited {
+					directLocal = true
+				}
+			}
+			if len(state.ActiveBlockers) != 2 || !rootInherited || !directLocal {
 				t.Fatal("selected blocker bodies/order lost", state)
 			}
 			// A large shared cause is loaded once for selected records; the final byte
@@ -243,7 +270,7 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 			must(e)
 			raw, e := json.Marshal(snapshot)
 			must(e)
-			if len(raw) > a.MaxSnapshotBytes || !snapshot.Truncated || snapshot.Counts["blocking_states"] != 3 || snapshot.Limit != 1 {
+			if len(raw) > a.MaxSnapshotBytes || !snapshot.Truncated || snapshot.Counts["blocking_states"] != 4 || snapshot.Limit != 1 {
 				t.Fatal("large blocker bypassed response bound or lost counts", len(raw), snapshot.Limit)
 			}
 		})

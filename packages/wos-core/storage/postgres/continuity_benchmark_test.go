@@ -8,7 +8,8 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-
+	
+	
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,9 +21,7 @@ import (
 )
 
 func BenchmarkContinuity(b *testing.B) {
-	if os.Getenv("WOS_TEST_POSTGRES_DSN") == "" {
-		b.Skip("real PostgreSQL required")
-	}
+ if os.Getenv("WOS_TEST_POSTGRES_DSN")=="" {b.Skip("real PostgreSQL required")}
 	historySize := 100
 	if requested := os.Getenv("WOS_CONTINUITY_BENCHMARK_HISTORY"); requested != "" {
 		var err error
@@ -84,8 +83,7 @@ func BenchmarkContinuity(b *testing.B) {
 	for _, name := range []string{"discovery_101_outcomes", fmt.Sprintf("snapshot_%d_work_items", historySize), fmt.Sprintf("snapshot_%d_work_items_with_proof", historySize), fmt.Sprintf("work_context_%d_work_items_with_proof", historySize), fmt.Sprintf("section_%d_work_items_with_proof", historySize)} {
 		b.Run(name, func(b *testing.B) {
 			b.ReportAllocs()
-			var before int64
-			_ = store.db.QueryRowContext(ctx, "SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&before)
+			var before int64; _ = store.db.QueryRowContext(ctx,"SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&before)
 			poolBefore := store.db.Stats()
 			var samples []time.Duration
 			for b.Loop() {
@@ -124,10 +122,7 @@ func BenchmarkContinuity(b *testing.B) {
 				index := (len(samples)*quantile+99)/100 - 1
 				b.ReportMetric(float64(samples[index].Nanoseconds()), fmt.Sprintf("p%d_ns", quantile))
 			}
-			var after int64
-			if err := store.db.QueryRowContext(ctx, "SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&after); err == nil {
-				b.ReportMetric(float64(after-before-1)/float64(b.N), "sql_statements/op")
-			}
+			var after int64; if err:=store.db.QueryRowContext(ctx,"SELECT coalesce(sum(calls),0) FROM public.pg_stat_statements").Scan(&after); err==nil {b.ReportMetric(float64(after-before-1)/float64(b.N), "sql_statements/op")}
 			b.ReportMetric(float64(store.db.Stats().WaitDuration-poolBefore.WaitDuration)/float64(b.N), "pool_wait_ns/op")
 		})
 	}

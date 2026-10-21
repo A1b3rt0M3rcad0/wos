@@ -12,7 +12,7 @@ import (
 )
 
 func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
@@ -125,7 +125,7 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 }
 
 func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})

@@ -101,8 +101,36 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("read migration checksum", err)
 	}
 
+	var workItemObjects []string
+	if item.version == 35 {
+		var orphanCount int64
+		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM work_items WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
+			return mapSQLError("check Task Objective ownership before migration 35", err)
+		}
+		if orphanCount != 0 {
+			return fmt.Errorf("migration 35 requires zero Tasks without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
+		}
+		workItemObjects, err = snapshotWorkItemSchemaObjects(ctx, tx)
+		if err != nil {
+			return err
+		}
+	}
+
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply sqlite migration %d", item.version), err)
+	}
+	if item.version == 35 {
+		for _, statement := range workItemObjects {
+			if _, err := tx.ExecContext(ctx, statement); err != nil {
+				return mapSQLError("restore explicit work_items index or trigger after migration 35", err)
+			}
+		}
+		if err := verifyWorkItemMigrationForeignKeys(ctx, tx); err != nil {
+			return err
+		}
+		if err := releaseWorkItemForeignKeyDeferral(ctx, tx); err != nil {
+			return err
+		}
 	}
 	if item.version == 29 {
 		if err := backfillExternalContinuityKeys(ctx, tx); err != nil {
@@ -123,6 +151,67 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	}
 	return nil
 }
+
+// SQLITE_WORK_ITEM_SCHEMA_OBJECTS_BEGIN
+func snapshotWorkItemSchemaObjects(ctx context.Context, tx *sql.Tx) ([]string, error) {
+	rows, err := tx.QueryContext(ctx, `
+SELECT sql
+FROM sqlite_master
+WHERE tbl_name = 'work_items'
+  AND type IN ('index', 'trigger')
+  AND sql IS NOT NULL
+ORDER BY type, name`)
+	if err != nil {
+		return nil, mapSQLError("snapshot work_items indexes and triggers", err)
+	}
+	defer rows.Close()
+	var statements []string
+	for rows.Next() {
+		var statement string
+		if err := rows.Scan(&statement); err != nil {
+			return nil, mapSQLError("read work_items index or trigger definition", err)
+		}
+		statements = append(statements, statement)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, mapSQLError("iterate work_items index or trigger definitions", err)
+	}
+	return statements, nil
+}
+
+func verifyWorkItemMigrationForeignKeys(ctx context.Context, tx *sql.Tx) error {
+	rows, err := tx.QueryContext(ctx, "PRAGMA foreign_key_check")
+	if err != nil {
+		return mapSQLError("verify foreign keys after migration 35", err)
+	}
+	defer rows.Close()
+	if rows.Next() {
+		var table, parent string
+		var rowID sql.NullInt64
+		var foreignKey int64
+		if err := rows.Scan(&table, &rowID, &parent, &foreignKey); err != nil {
+			return mapSQLError("read foreign-key violation after migration 35", err)
+		}
+		return fmt.Errorf("sqlite migration 35 left a foreign-key violation in %s (row %v references %s, constraint %d)", table, rowID, parent, foreignKey)
+	}
+	if err := rows.Err(); err != nil {
+		return mapSQLError("iterate foreign-key check after migration 35", err)
+	}
+	return nil
+}
+
+func releaseWorkItemForeignKeyDeferral(ctx context.Context, tx *sql.Tx) error {
+	// SQLite keeps a deferred-FK violation counter for DROP TABLE even when the
+	// replacement has restored every referenced key. foreign_key_check above
+	// verifies the complete transactional database state; turning deferral off
+	// now clears that stale counter while foreign_keys itself remains enabled.
+	if _, err := tx.ExecContext(ctx, "PRAGMA defer_foreign_keys = OFF"); err != nil {
+		return mapSQLError("finish deferred foreign-key checks after migration 35", err)
+	}
+	return nil
+}
+
+// SQLITE_WORK_ITEM_SCHEMA_OBJECTS_END
 
 func loadMigrations() ([]migration, error) {
 	entries, err := fs.ReadDir(migrationFiles, "migrations")

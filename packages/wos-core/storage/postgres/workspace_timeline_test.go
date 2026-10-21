@@ -15,7 +15,7 @@ import (
 )
 
 func TestWorkspaceNotesAndTimelinePreserveDeclarationsReplayCorrectionsAndFrozenPages(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -196,7 +196,7 @@ func TestWorkspaceNotesAndTimelinePreserveDeclarationsReplayCorrectionsAndFrozen
 }
 
 func TestWorkspaceTimelineSameCommitOrderingActivityDedupCriteriaAndDescendantOrigin(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -228,7 +228,7 @@ func TestWorkspaceTimelineSameCommitOrderingActivityDedupCriteriaAndDescendantOr
 			must(err)
 			must(u.Outcomes().Insert(ctx, outcome))
 			must(u.Objectives().Insert(ctx, objective))
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			revision, err := u.Coordination().AdvanceOutcome(ctx, scope)
 			must(err)
 			activity := d.WorkActivity{ID: noteTestID(1005), Scope: scope, ContractID: noteTestID(1006), WorkItemID: work.ID, Sequence: uint64(revision), Type: d.WorkActivityProgress, Description: "External executor declaration", PrincipalID: "executor", Actor: d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor", DisplayName: strings.Repeat("x", 80<<10)}, RecordedAt: now, CriterionRefs: []d.WorkActivityCriterionRef{{CriterionID: criterion.ID, CriterionRevision: 1}}}

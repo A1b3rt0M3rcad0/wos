@@ -15,7 +15,7 @@ import (
 )
 
 func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			f := newResolutionFixture(t, backend)
@@ -69,7 +69,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 				w, e := d.NewWorkItem(portID(5000+i), target, "Concurrent quota target", "", d.PriorityNormal, d.WorkItemLifecycleTodo, clock.Now())
 				must(e)
 				w.ContractsEnabled = true
-				must(u.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 				works = append(works, w)
 			}
 			must(u.Commit())
@@ -174,7 +174,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 }
 
 func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			f := newResolutionFixture(t, backend)

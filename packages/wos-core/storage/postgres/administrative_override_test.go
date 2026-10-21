@@ -33,7 +33,7 @@ func (a sqliteAdministrativeAuthorizer) Authorize(_ context.Context, request por
 }
 
 func TestSQLiteAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})

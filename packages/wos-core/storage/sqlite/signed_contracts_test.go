@@ -67,7 +67,7 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			must(err)
 			signed := uow.(ports.SignedContractUnitOfWork)
 			must(uow.Outcomes().Insert(ctx, outcome))
-			must(uow.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &work))
 			must(signed.SignedWorkContracts().Insert(ctx, contract))
 			issuerKey := d.SigningKey{ID: keyID, NamespaceID: ns, PrincipalID: "issuer", Purpose: "issuer", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}
 			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveKey(ctx, issuerKey, 0))

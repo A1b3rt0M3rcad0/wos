@@ -70,7 +70,7 @@ func BenchmarkWorkspaceF08(b *testing.B) {
 		must(w.Criteria.Add(c))
 		assessment := d.CriterionAssessment{ID: portID(40000 + i), CriterionID: c.ID, CriterionRevision: 1, Result: d.AssessmentResultMet, Rationale: "Fixture records a real explicit assessment, separate from Task completion.", EvidenceIDs: []d.ID{portID(30000 + i)}, PrincipalID: cc.PrincipalID, Actor: cc.Actor, AssessedAt: now}
 		must(w.Criteria.RecordAssessment(assessment, false))
-		must(u.WorkItems().Insert(ctx, w))
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 		works = append(works, w)
 		if i < 100 {
 			refs = append(refs, w.Ref())

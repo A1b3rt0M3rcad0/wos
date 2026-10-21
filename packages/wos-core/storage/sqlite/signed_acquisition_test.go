@@ -105,7 +105,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					must(w.AddCriterion(criterion, now))
 				}
 				must(w.Activate(now))
-				must(uow.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 				works = append(works, w)
 			}
 			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

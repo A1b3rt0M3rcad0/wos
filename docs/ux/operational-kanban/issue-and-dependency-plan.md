@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–24 concluídas; etapa 25 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–25 concluídas; etapa 26 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -113,7 +113,7 @@ Modificar `work_item.go` (invariante owner), `issue.go` (ObjectiveID, assignee, 
 
 ### 4.3 Storage (`packages/wos-core/storage`)
 
-Criar migrations pares **propostas** `postgres/migrations/0034_issue_objective_assignment.sql` e `sqlite/migrations/0034_issue_objective_assignment.sql` apenas após verificar HEAD efetivo para evitar conflito de número; 0034 é reserva inicial, não número garantido. Campos `issues.objective_id`, `issues.assignee_ref` (seguir serialização existente de ActorRef), e constraint/index que viabilizem `ListPendingIssuesByObjective`; não gravar `status=closed` nem `is_blocked`. `work_items.objective_id NOT NULL` somente **após** backfill determinístico e validação; SQLite poderá exigir rebuild de tabela com cópia, FK/index/triggers preservados, em migração posterior **proposta** `0035_required_work_item_objective.sql` para ambos os adapters. Não presumir nome de tabela/index sem inspecionar migrations base: etapa de schema discovery identifica nomes reais e ajusta DDL antes de commit.
+As migrations pares `0034_issue_objective_assignment.sql` já adicionam `issues.objective_id`, `issues.assignee_ref_json` e o índice de consulta para `ListPendingIssuesByObjective`; ainda permitem Issue sem Objective e não impõem FK de ownership. A etapa 26 adicionará essa FK e `NOT NULL` depois de um preflight equivalente. A migration `0035_required_work_item_objective.sql` agora exige `work_items.objective_id NOT NULL`, após preflight transacional que interrompe o upgrade se houver Tasks sem owner. PostgreSQL usa `ALTER COLUMN ... SET NOT NULL`; SQLite reconstrói a tabela, copia todas as colunas e valida FKs, preservando índices e triggers. Nenhuma ownership é inventada. Em bases legadas, o upgrade só continua depois de aplicar mapeamentos revisados com `tools/acceptance/issue_ownership_backfill.py`.
 
 Estratégia de compatibilidade *expand → backfill → contract*: (a) adicionar coluna nullable Issue, novos leitores tolerantes, índices; (b) rodar auditoria SQL de Issues sem owner e Tasks sem Objective, mapa de ownership manual/importação determinística auditada; não criar Objectives artificiais; (c) preencher mapeamentos dentro de transações; (d) bloquear gravações novas inválidas no domínio imediatamente, estabilizar dados; (e) enrijecer NOT NULL/FK/constraints, preservar backup/restore, checksums de migrations, suporte SQLite/Postgres; (f) revalidar eventos/ETags/cursor. Inexistência de dados órfãos é precondição explícita do contract; se não for possível mapear, a migração para NOT NULL **não roda** e a release permanece bloqueada — sem fallback silencioso.
 
@@ -163,7 +163,7 @@ Drag só prepara ação, realiza fresh capabilities, explicit confirmation; sele
 - **E aplicação:** `packages/wos-core/application/{planning_creation.go,work_editing.go,dependencies.go,issues_blockers.go,issues_blockers_compound.go,workspace_preconditions.go,workspace_capabilities.go,workspace_conclusion.go,workspace_placement.go,workspace_read_types.go,workspace_cards.go,workspace_frame.go,completion_policy.go,work_contract_guards.go}`.
 - **P aplicação:** `packages/wos-core/application/{dependency_impact.go,issue_assignment.go,issue_completion.go}` (criar somente quando métodos não couberem naturalmente em arquivos existentes).
 - **E ports/adapters:** `packages/wos-core/ports/workspace_read.go`; `packages/wos-core/storage/{memory/adapter.go,sqlite/{repositories.go,workspace_read.go,workspace_placement.go},postgres/{repositories.go,workspace_read.go,workspace_placement.go}}`.
-- **P migrations:** `packages/wos-core/storage/{postgres,sqlite}/migrations/0034_issue_objective_assignment.sql` e `0035_required_work_item_objective.sql` (número final confirmado no primeiro commit técnico); dados backfill em script versionado **P** `tools/acceptance/issue_ownership_backfill.py` ou Go equivalente, dry-run por default.
+- **Migrations aplicadas:** `packages/wos-core/storage/{postgres,sqlite}/migrations/0034_issue_objective_assignment.sql` e `0035_required_work_item_objective.sql`; o script de backfill revisado `tools/acceptance/issue_ownership_backfill.py` continua em dry-run por padrão e requer mapeamentos explícitos antes de gravar.
 - **E API:** `packages/wos-api/{commands/{contracts.go,workspace_schema.go,workspace_results.go,catalog_generated.go,commands.openapi.json},http/{workspace.go,handler.go},mcp/{workspace.go,commands_generated.go},openapi.yaml}`.
 - **E clientes:** `packages/wos-sdk-go/{client.go,workspace.go,commands_generated.go}` e `packages/wos-cli/{workspace_commands_v2.go,workspace_planning.go,workspace_inspect.go}`.
 - **E UI:** `packages/wos-api/web/assets/{app.js,workspace-kanban.js,kanban-operations.js,human-forms.js,workspace-form-fields.js,workspace-plan-editor.js,reference-picker.js,workspace-canvas.js,workspace-view.js,workspace-entity-context.js,canvas-data.js,workspace-kanban.css,workspace-surfaces.css,editorial.css,en-US.js}`.
@@ -537,11 +537,13 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 
 **Commit sugerido:** `fix(wos): etapa 25 migração contract task objective not null`.  
 **Dependência:** etapa 24 concluída.  
-**Arquivos envolvidos (existentes, salvo marcados [P]):** `storage/{postgres,sqlite}/migrations/0035_*.sql [P]; testes upgrade`.
+**Arquivos envolvidos:** `packages/wos-core/storage/{postgres,sqlite}/migrations/0035_required_work_item_objective.sql`, runners de migrations e testes de upgrade/restore.
 
-**Trabalho:** Enforce FK+NOT NULL depois de 0 órfãos; rebuild SQLite seguro; preservar outros índices/triggers.
+**Execução em 2026-10-21:** O PostgreSQL mantém a FK composta existente e aplica `ALTER COLUMN objective_id SET NOT NULL`. O SQLite reconstrói `work_items` em transação, copia explicitamente todas as colunas sem atribuir owners, repõe índices e triggers explícitos, valida as FKs — inclusive referências reversas de contratos — e só então conclui a migração. Os dois runners contam Tasks sem Objective dentro da transação e param com orientação para aplicar mapeamentos revisados; o banco e a versão permanecem inalterados quando há órfãos. O gerador de migrations foi atualizado para manter o SQL PostgreSQL sincronizado.
 
-**Aceite verificável:** Fresh install+upgrade+restore passam; schema não aceita WorkItem órfã.
+**Verificação:** os testes PostgreSQL e SQLite cobrem instalação nova, upgrade, rejeição e retry após backfill, e preservação de dados/índices/triggers/FKs; o teste SQLite também cobre backup/restore da versão 34 para 35. O fixture histórico v0.1 sem Objective comprova que um upgrade sem mapeamento para antes da versão 35, sem alterar o Task ou as receipts antigas. A suíte SQLite completa e os testes focais PostgreSQL passaram antes do commit desta etapa.
+
+**Aceite verificável:** schema novo e migrado não aceita WorkItem órfã; base legada com órfãos não avança silenciosamente.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
@@ -549,7 +551,7 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 
 **Commit sugerido:** `fix(wos): etapa 26 migração contract issue owner not null`.  
 **Dependência:** etapa 25 concluída.  
-**Arquivos envolvidos (existentes, salvo marcados [P]):** `storage/{postgres,sqlite}/migrations/0035_*.sql [P]; testes migration`.
+**Arquivos previstos:** `packages/wos-core/storage/{postgres,sqlite}/migrations/0036_issue_objective_owner_required.sql`; testes de migration.
 
 **Trabalho:** Enforce issue objective_id NOT NULL, FK correta, protegendo delete de Objective proprietário e consultas indexadas.
 

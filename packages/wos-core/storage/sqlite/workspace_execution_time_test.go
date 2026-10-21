@@ -50,7 +50,7 @@ func TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime(t *testing.T) {
 			for index, times := range samples {
 				work, e := d.NewWorkItem(noteTestID(7200+index), scope, "Historical executions", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, work))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 				for branch := 0; branch < 2; branch++ {
 					for i, raw := range times {
 						at, e := time.Parse(time.RFC3339Nano, raw)

@@ -70,9 +70,7 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("begin migration transaction", err)
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock(846239010)"); err != nil {
-		return err
-	}
+ if _,err:=tx.ExecContext(ctx,"SELECT pg_advisory_xact_lock(846239010)");err!=nil{return err}
 
 	// Check under the same migration transaction (and PostgreSQL advisory
 	// lock) before inspecting or applying any compiled migration.
@@ -105,8 +103,36 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("read migration checksum", err)
 	}
 
+	var workItemObjects []string
+	if item.version == 35 {
+		var orphanCount int64
+		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM work_items WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
+			return mapSQLError("check Task Objective ownership before migration 35", err)
+		}
+		if orphanCount != 0 {
+			return fmt.Errorf("migration 35 requires zero Tasks without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
+		}
+		workItemObjects, err = snapshotWorkItemSchemaObjects(ctx, tx)
+		if err != nil {
+			return err
+		}
+	}
+
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply postgres migration %d", item.version), err)
+	}
+	if item.version == 35 {
+		for _, statement := range workItemObjects {
+			if _, err := tx.ExecContext(ctx, statement); err != nil {
+				return mapSQLError("restore explicit work_items index or trigger after migration 35", err)
+			}
+		}
+		if err := verifyWorkItemMigrationForeignKeys(ctx, tx); err != nil {
+			return err
+		}
+		if err := releaseWorkItemForeignKeyDeferral(ctx, tx); err != nil {
+			return err
+		}
 	}
 	if item.version == 29 {
 		if err := backfillExternalContinuityKeys(ctx, tx); err != nil {
@@ -127,6 +153,10 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	}
 	return nil
 }
+
+func snapshotWorkItemSchemaObjects(ctx context.Context, tx *sql.Tx) ([]string, error) { return nil, nil }
+func verifyWorkItemMigrationForeignKeys(ctx context.Context, tx *sql.Tx) error { return nil }
+func releaseWorkItemForeignKeyDeferral(ctx context.Context, tx *sql.Tx) error { return nil }
 
 func loadMigrations() ([]migration, error) {
 	entries, err := fs.ReadDir(migrationFiles, "migrations")

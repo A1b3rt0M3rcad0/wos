@@ -13,7 +13,7 @@ import (
 )
 
 func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	path := filepath.Join(t.TempDir(), "admin.db")
 	store := openTestStore(t, path)
 	clock := sqliteFixedClock{now: time.Now().UTC()}
@@ -116,7 +116,7 @@ func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
 func securityErrorCode(err error) domain.ErrorCode { code, _ := domain.ErrorCodeOf(err); return code }
 
 func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	store := openTestStore(t, filepath.Join(t.TempDir(), "namespace.db"))
 	security := application.SecurityService{Store: store, Clock: sqliteFixedClock{now: time.Now().UTC()}, IDs: &sqliteSequenceIDs{prefix: "0199d093", next: 1}}
 	ns := testID("0199d093-0000-7000-8000-000000000010")
@@ -166,7 +166,7 @@ func (t *revokeBeforeTransaction) Begin(ctx context.Context) (ports.UnitOfWork, 
 	return t.store.Begin(ctx)
 }
 func TestPermissionRevokedWhileAwaitingTransactionCannotMutate(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	store := openTestStore(t, filepath.Join(t.TempDir(), "transaction-auth.db"))
 	clock := sqliteFixedClock{now: time.Now().UTC()}
 	ids := &sqliteSequenceIDs{prefix: "0199d091", next: 1}

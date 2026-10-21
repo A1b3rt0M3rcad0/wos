@@ -96,7 +96,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						if hasCriteria {
 							must(w.Criteria.Add(criterion))
 						}
-						must(uow.WorkItems().Insert(ctx, w))
+						must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 						works = append(works, w)
 					}
 					protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

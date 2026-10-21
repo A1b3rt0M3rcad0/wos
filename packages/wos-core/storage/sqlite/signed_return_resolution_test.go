@@ -112,7 +112,7 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 		if hasCriteria {
 			must(w.Criteria.Add(criterion))
 		}
-		must(uow.WorkItems().Insert(ctx, w))
+		must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 		works = append(works, w)
 	}
 	protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

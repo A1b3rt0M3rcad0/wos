@@ -63,7 +63,7 @@ func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
 		if err = work.Activate(now); err != nil {
 			t.Fatal(err)
 		}
-		if err = u.WorkItems().Insert(ctx, work); err != nil {
+		if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
 			t.Fatal(err)
 		}
 		if i == 0 {

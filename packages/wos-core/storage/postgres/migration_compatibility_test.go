@@ -10,7 +10,7 @@ import (
 )
 
 func TestFutureDatabaseSchemaRefusesStartupAndMigrationWithoutRewritingHistory(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "future.db")
 	store := openTestStore(t, path)

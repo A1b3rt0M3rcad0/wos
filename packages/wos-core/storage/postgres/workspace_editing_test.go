@@ -13,7 +13,7 @@ import (
 )
 
 func TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "editing.db")
 	store, err := openTestPostgres(path, Options{MigrateOnOpen: true})

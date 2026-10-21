@@ -141,7 +141,7 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 						must(w.Criteria.Add(criterion))
 						u, e := store.Begin(ctx)
 						must(e)
-						must(u.WorkItems().Insert(ctx, w))
+						must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 						must(u.Commit())
 						return w
 					}

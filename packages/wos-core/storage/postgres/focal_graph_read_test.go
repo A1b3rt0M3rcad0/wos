@@ -68,7 +68,7 @@ func assertFocalJSON(t *testing.T, want, got any) {
 	}
 }
 func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -108,11 +108,11 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 				must(work.RecordCriterionAssessment(assessment, false, now))
 			}
 			must(work.Activate(now))
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			for i := 0; i < 101; i++ {
 				target, e := d.NewWorkItem(portID(3000+i), scope, "Target", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, target))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &target))
 				strength := d.DependencyStrengthAdvisory
 				if i == 100 {
 					strength = d.DependencyStrengthHard
@@ -143,7 +143,7 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 	}
 }
 func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -173,7 +173,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			for i := 0; i < 4; i++ {
 				w, e := d.NewWorkItem(portID(100+i), scope, "Node", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 				works = append(works, w)
 			}
 			// Cycles are legal for relates_to, and depth-boundary induced edges must stay.
@@ -246,11 +246,14 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Root: &unsupported, Depth: 1}); securityErrorCode(e) != d.ErrorCodeNotFound {
 				t.Fatal("non-node entity became a graph root", e)
 			}
-			first, e := bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1})
+			first, e := bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 2, Limit: 1})
 			must(e)
+			if first.NextCursor == "" {
+				t.Fatal("owned Task graph did not fill a page")
+			}
 			_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: postgresObjectiveForWorkFixture(t, service, scope), Title: "Revision change", Priority: d.PriorityNormal})
 			must(e)
-			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1, Cursor: first.NextCursor}); securityErrorCode(e) != d.ErrorCodePreconditionFailed {
+			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 2, Limit: 1, Cursor: first.NextCursor}); securityErrorCode(e) != d.ErrorCodePreconditionFailed {
 				t.Fatal("stale graph cursor was accepted", e)
 			}
 		})
@@ -258,7 +261,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 }
 
 func TestGraphAdjacentPreservesHardAndAdvisoryDependencyStrength(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -295,7 +298,7 @@ func TestGraphAdjacentPreservesHardAndAdvisoryDependencyStrength(t *testing.T) {
 				t.Fatal(err)
 			}
 			for _, work := range []d.WorkItem{first, second, third} {
-				if err = u.WorkItems().Insert(ctx, work); err != nil {
+				if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
 					t.Fatal(err)
 				}
 			}

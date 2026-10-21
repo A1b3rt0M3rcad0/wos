@@ -20,7 +20,7 @@ import (
 )
 
 func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			floor := d.AcceptanceIndependentReview
@@ -90,7 +90,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				if hasCriteria {
 					must(w.Criteria.Add(criterion))
 				}
-				must(uow.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 				works = append(works, w)
 			}
 			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

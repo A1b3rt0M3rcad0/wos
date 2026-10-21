@@ -148,7 +148,7 @@ func assertIssueExpandData(t *testing.T, store *Store, scope domain.Scope, issue
 }
 
 func TestIssueObjectiveAssigneeExpandMigrationUpgradeIdempotencyAndRestore(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store, path := openStoreAtSchema33(t)
 	scope, issue := createIssueForExpandMigration(t, store)
@@ -184,7 +184,7 @@ func TestIssueObjectiveAssigneeExpandMigrationUpgradeIdempotencyAndRestore(t *te
 }
 
 func TestIssueObjectiveAssigneeExpandMigrationRollsBackDDLAtomically(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store, _ := openStoreAtSchema33(t)
 	failed := migration{

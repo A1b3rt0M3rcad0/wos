@@ -12,7 +12,7 @@ import (
 )
 
 func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	now := time.Date(2026, 10, 2, 15, 0, 0, 0, time.UTC)

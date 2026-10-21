@@ -11,7 +11,7 @@ import (
 )
 
 func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "protocol.db")
 	store := openTestStore(t, path)

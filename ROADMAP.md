@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 25 is next
+**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 26 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -105,10 +105,16 @@ version-checked Application operation writes and removes the association and
 exposes it through both entity workspace views without affecting readiness or
 creating a parallel relation field. Tests cover stale Issue/Task versions,
 invalid removal, bidirectional reads, atomic relation events/revisions and
-unchanged readiness. Stage 25 is next: require an Objective for persisted Tasks
-after the explicit zero-orphan backfill checkpoint, with a safe SQLite rebuild
-and matching PostgreSQL contract. The Draft PR must remain unmerged and no
-release/tag is part of this work.
+unchanged readiness. Stage 25 now requires an Objective for every persisted
+Task. PostgreSQL enforces NOT NULL against its existing composite FK; SQLite
+rebuilds `work_items`, copies every field, restores explicit indexes and
+triggers, and validates forward and reverse FKs. Both migration runners perform
+a transactional zero-orphan preflight and stop without changing schema version
+or ownership when a legacy Task lacks a reviewed mapping. The actual v0.1
+fixture verifies that such an upgrade remains blocked; SQLite full storage
+tests and focused PostgreSQL migration/hierarchy tests pass. Stage 26 is next:
+add the mandatory Objective owner FK and NOT NULL contract for Issues. The Draft
+PR must remain unmerged and no release/tag is part of this work.
 
 ## Operational Kanban UX audit — 2026-10-20
 

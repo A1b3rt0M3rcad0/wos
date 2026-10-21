@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -59,8 +61,27 @@ func testActualV010DatasetMigrations(t *testing.T) {
 	if err = os.WriteFile(path, raw, 0600); err != nil {
 		t.Fatal(err)
 	}
-	store := openTestStore(t, path)
+	store, err := Open(path, Options{MigrateOnOpen: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
 	ctx := context.Background()
+	migrations, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range migrations {
+		if item.version > 34 {
+			break
+		}
+		if err := store.applyMigration(ctx, item); err != nil {
+			t.Fatalf("apply historical migration %s: %v", item.name, err)
+		}
+	}
+	if version, err := store.SchemaVersion(ctx); err != nil || version != 34 {
+		t.Fatalf("legacy fixture schema = %d, err=%v; want 34 before the ownership contract", version, err)
+	}
 	scope := d.Scope{NamespaceID: fixture.NamespaceID, OutcomeID: fixture.OutcomeID}
 	// Replay at the backup's last command, while its original receipts are retained.
 	// The bubble also controls SQLite's internal retention clock. Application Clock
@@ -111,5 +132,18 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 	after, err := service.ClaimWorkItem(ctx, cc, claim)
 	if err != nil || !after.IdempotentReplay || after.CommandID != replay.CommandID || after.OutcomeRevision != replay.OutcomeRevision {
 		t.Fatal("old receipt not replayable after cutover", err)
+	}
+	// The historical dataset contains no Objective at all, so it has no
+	// reviewed ownership mapping. The final contract migration must stop rather
+	// than invent a parent and leave the legacy state available for remediation.
+	if err := store.Migrate(ctx); err == nil || !strings.Contains(err.Error(), "requires zero Tasks without an Objective") {
+		t.Fatalf("unmapped legacy Task did not block schema 35: %v", err)
+	}
+	if version, err := store.SchemaVersion(ctx); err != nil || version != 34 {
+		t.Fatalf("blocked migration changed schema version: version=%d err=%v", version, err)
+	}
+	var objectiveID sql.NullString
+	if err := store.db.QueryRowContext(ctx, `SELECT objective_id FROM work_items WHERE id = ?`, fixture.WorkItemID.String()).Scan(&objectiveID); err != nil || objectiveID.Valid {
+		t.Fatalf("blocked migration changed legacy ownership: objective=%v err=%v", objectiveID, err)
 	}
 }

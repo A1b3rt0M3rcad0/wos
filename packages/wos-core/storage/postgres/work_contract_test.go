@@ -40,7 +40,7 @@ func contractStorageFixture(t *testing.T, store *Store, now time.Time) d.WorkIte
 	if err := tx.Outcomes().Insert(ctx, o); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.WorkItems().Insert(ctx, w); err != nil {
+	if err := insertWorkItemFixture(ctx, tx.Objectives(), tx.WorkItems(), &w); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Commit(); err != nil {
@@ -49,7 +49,7 @@ func contractStorageFixture(t *testing.T, store *Store, now time.Time) d.WorkIte
 	return w
 }
 func TestWorkContractStorageRestartPrecisionAndExpiry(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "contracts.db")
 	store := openTestStore(t, path)
@@ -110,7 +110,7 @@ func TestWorkContractStorageRestartPrecisionAndExpiry(t *testing.T) {
 	}
 }
 func TestWorkContractStorageConcurrentIndependentConnections(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	path := filepath.Join(t.TempDir(), "concurrent.db")
 	first := openTestStore(t, path)
 	second := openTestStore(t, path)
@@ -156,7 +156,7 @@ func TestWorkContractStorageConcurrentIndependentConnections(t *testing.T) {
 	}
 }
 func TestWorkContractStorageUnsignedMaximum(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "unsigned.db"))
 	now := time.Now().UTC()
@@ -183,7 +183,7 @@ func TestWorkContractStorageUnsignedMaximum(t *testing.T) {
 }
 
 func TestWorkContractFinalizationProofSurvivesRestore(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "contract-results.db")
 	store := openTestStore(t, path)

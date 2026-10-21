@@ -51,16 +51,14 @@ func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
 			for i := 0; i < 105; i++ {
 				work, e := d.NewWorkItem(portID(100+i), scope, fmt.Sprintf("Task %03d", i), "Planning record", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
-				if i < 4 {
-					work.ObjectiveID = &objective.ID
-				}
+				work.ObjectiveID = &objective.ID
 				if i == 0 {
 					work.Version = d.Version(9007199254740993)
 					criterion, e := d.NewSuccessCriterion(portID(9000), work.Ref(), "Actual assessment required", "", true, d.VerificationModeAttestation)
 					must(e)
 					must(work.Criteria.Add(criterion))
 				}
-				must(u.WorkItems().Insert(ctx, work))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 				if i < 100 {
 					refs = append(refs, work.Ref())
 				}
@@ -82,26 +80,26 @@ func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
 				t.Fatal("unbounded card response")
 			}
 			counted.begins = 0
-			first, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2})
+			first, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 2})
 			must(e)
 			if counted.begins != 1 || len(first.Items) != 2 || first.Coverage.Status != "partial" || first.Coverage.NextCursor == "" || first.Coverage.TotalCount != nil {
 				t.Fatal("structural page fabricated a total or lost cursor", first)
 			}
 			children, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 100})
 			must(e)
-			if len(children.Items) != 4 || children.Coverage.Status != "complete" {
+			if len(children.Items) != 100 || children.Coverage.Status != "partial" {
 				t.Fatal("direct children included another branch", children)
 			}
-			second, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2, Cursor: first.Coverage.NextCursor})
+			second, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 2, Cursor: first.Coverage.NextCursor})
 			must(e)
 			if second.Items[0].Ref == first.Items[1].Ref {
 				t.Fatal("page duplicated boundary")
 			}
 			alice := a.WithIdentity(ctx, a.Identity{PrincipalID: "alice"})
-			alicePage, e := service.GetWorkspaceCards(alice, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2})
+			alicePage, e := service.GetWorkspaceCards(alice, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 2})
 			must(e)
 			bob := a.WithIdentity(ctx, a.Identity{PrincipalID: "bob"})
-			if _, e = service.GetWorkspaceCards(bob, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(out.Ref()), Limit: 2, Cursor: alicePage.Coverage.NextCursor}); e == nil {
+			if _, e = service.GetWorkspaceCards(bob, scope, a.WorkspaceCardsQuery{ParentRef: refPointerForTest(objective.Ref()), Limit: 2, Cursor: alicePage.Coverage.NextCursor}); e == nil {
 				t.Fatal("another principal reused the structural cursor")
 			}
 			if _, e = service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: append(refs, refs[0])}); e == nil {
@@ -148,7 +146,7 @@ func TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence(t *testing.T
 				must(e)
 				must(work.Criteria.Add(c))
 			}
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			docs := u.(ports.DocumentaryUnitOfWork)
 			evidence, e := d.NewEvidence(portID(50), scope, d.EvidenceTypeSource, "A supporting observation", d.SourceReference{Provider: "fixture", ID: "observation"}, actor, now, nil, nil, "v1", "", now)
 			must(e)
@@ -228,6 +226,7 @@ func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *tes
 			must(objective.Criteria.Add(objectiveCriterion))
 			work, e := d.NewWorkItem(portID(20), scope, "Publish the verified handoff", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 			must(e)
+			work.ObjectiveID = &objective.ID
 			for i := 0; i < 2; i++ {
 				criterion, e := d.NewSuccessCriterion(portID(310+i), work.Ref(), fmt.Sprintf("Task condition %d", i), "", true, d.VerificationModeEvidenceReview)
 				must(e)
@@ -245,7 +244,7 @@ func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *tes
 			must(e)
 			nested.ParentObjectiveID = &objective.ID
 			must(u.Objectives().Insert(ctx, nested))
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			evidence, e := d.NewEvidence(portID(50), scope, d.EvidenceTypeSource, "Actual material", d.SourceReference{Provider: "fixture", ID: "material"}, actor, now, nil, nil, "v1", "", now)
 			must(e)
 			docs := u.(ports.DocumentaryUnitOfWork)

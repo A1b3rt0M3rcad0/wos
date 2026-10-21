@@ -18,7 +18,7 @@ type diagnosticFixture struct{ status ports.DeliveryWorkerStatus }
 
 func (f diagnosticFixture) DeliveryWorkerStatus() ports.DeliveryWorkerStatus { return f.status }
 func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	now := time.Now().UTC()
 	old := now.Add(-10 * time.Minute)

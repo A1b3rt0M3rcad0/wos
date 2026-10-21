@@ -39,7 +39,7 @@ func contractStorageFixture(t *testing.T, store *Store, now time.Time) d.WorkIte
 	if err := tx.Outcomes().Insert(ctx, o); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.WorkItems().Insert(ctx, w); err != nil {
+	if err := insertWorkItemFixture(ctx, tx.Objectives(), tx.WorkItems(), &w); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Commit(); err != nil {

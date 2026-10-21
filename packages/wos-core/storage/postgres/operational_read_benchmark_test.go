@@ -80,7 +80,7 @@ func BenchmarkOperationalReads(b *testing.B) {
 		if e = w.RecordCriterionAssessment(assessment, false, now); e != nil {
 			b.Fatal(e)
 		}
-		if e = u.WorkItems().Insert(ctx, w); e != nil {
+		if e = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w); e != nil {
 			b.Fatal(e)
 		}
 	}

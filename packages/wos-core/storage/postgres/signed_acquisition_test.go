@@ -37,7 +37,7 @@ func (s acquisitionIssuer) SignCanonical(purpose string, payload []byte) (json.R
 	return json.Marshal(doc.Proof)
 }
 func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store interface {
@@ -107,7 +107,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					must(w.AddCriterion(criterion, now))
 				}
 				must(w.Activate(now))
-				must(uow.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 				works = append(works, w)
 			}
 			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

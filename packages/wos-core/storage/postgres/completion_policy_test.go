@@ -13,7 +13,7 @@ import (
 )
 
 func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		for _, kind := range []d.EntityKind{d.EntityKindOutcome, d.EntityKindObjective} {
 			t.Run(backend+"/"+kind.String(), func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledg
 }
 
 func TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "strict-pages.db"))
 	must := func(err error) {
@@ -179,27 +179,32 @@ func TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet(t *testi
 	must(err)
 	_, err = service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: out.Value.Scope(), ExpectedVersion: current.Value.Version})
 	must(err)
+	owner, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{
+		Scope: out.Value.Scope(), Title: "Required work set", Priority: d.PriorityNormal, RequiredForOutcome: true,
+	})
+	must(err)
 	u, err := store.Begin(ctx)
 	must(err)
 	var last d.WorkItem
 	for i := 0; i < 105; i++ {
 		last, err = d.NewWorkItem(portID(2000+i), out.Value.Scope(), "Unfinished direct work", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 		must(err)
-		must(u.WorkItems().Insert(ctx, last))
+		last.ObjectiveID = &owner.Value.ID
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &last))
 	}
 	must(u.Commit())
-	owner := out.Value.Ref()
-	page, err := service.GetWorkspaceCards(ctx, out.Value.Scope(), a.WorkspaceCardsQuery{ParentRef: &owner, Limit: 1})
+	ownerRef := owner.Value.Ref()
+	page, err := service.GetWorkspaceCards(ctx, out.Value.Scope(), a.WorkspaceCardsQuery{ParentRef: &ownerRef, Limit: 1})
 	must(err)
 	if len(page.Items) != 1 || page.Coverage.Status != "partial" {
 		t.Fatal("fixture does not exercise a partial child page")
 	}
-	view, err := service.GetEntityWorkspaceView(ctx, out.Value.Scope(), a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: owner}})
+	view, err := service.GetEntityWorkspaceView(ctx, out.Value.Scope(), a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: ownerRef}})
 	must(err)
 	if len(view.ConclusionImpact.RequiredOpenWork) != 105 {
 		t.Fatal("strict obligations were truncated to a loaded page")
 	}
-	_, err = service.AchieveOutcome(ctx, command(), a.AchieveOutcomeCommand{Scope: out.Value.Scope(), ExpectedVersion: view.EntityVersion, Reason: "Must fail for work beyond the loaded page"})
+	_, err = service.AchieveObjective(ctx, command(), a.AchieveObjectiveCommand{Scope: out.Value.Scope(), ObjectiveID: owner.Value.ID, ExpectedVersion: view.EntityVersion, Reason: "Must fail for work beyond the loaded page"})
 	if err == nil {
 		t.Fatal("unfinished work beyond the page was ignored")
 	}

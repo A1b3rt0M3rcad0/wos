@@ -12,7 +12,7 @@ import (
 )
 
 func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "identity.db"))
 	clock := sqliteFixedClock{now: time.Now().UTC()}

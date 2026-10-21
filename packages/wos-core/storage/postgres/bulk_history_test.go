@@ -12,7 +12,7 @@ import (
 )
 
 func TestBulkCollectionsPreserveSingleAggregateHistory(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	s, _, outcome := releaseServices(t)
 	scope := outcome.Scope()
@@ -92,7 +92,7 @@ func TestBulkCollectionsPreserveSingleAggregateHistory(t *testing.T) {
 }
 
 func TestActivePlanProjectsLiveStateWithoutRewritingPublication(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	s, _, outcome := releaseServices(t)
 	scope := outcome.Scope()

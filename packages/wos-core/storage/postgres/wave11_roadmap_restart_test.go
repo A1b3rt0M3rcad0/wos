@@ -12,7 +12,7 @@ import (
 )
 
 func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
@@ -158,7 +158,7 @@ func TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart(t *testing.T) {
 }
 
 func TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "snapshots.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})

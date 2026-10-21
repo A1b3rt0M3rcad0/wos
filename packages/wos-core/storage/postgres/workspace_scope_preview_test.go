@@ -62,7 +62,7 @@ func workspaceScopeFixture(t *testing.T, backend string) (ports.TransactionManag
 		must(u.Objectives().Insert(ctx, obj))
 		refs[name] = obj.Ref()
 	}
-	for i, name := range []string{"root_task", "child_task", "terminal_parent_task", "grandchild_task", "terminal_task", "outcome_task", "other_task", "foreign_task"} {
+	for i, name := range []string{"root_task", "child_task", "terminal_parent_task", "grandchild_task", "terminal_task", "other_task", "foreign_task"} {
 		taskScope := scope
 		if name == "other_task" {
 			taskScope = other.Scope()
@@ -80,7 +80,7 @@ func workspaceScopeFixture(t *testing.T, backend string) (ports.TransactionManag
 			parent = "terminal_child"
 		case "grandchild_task":
 			parent = "open_grandchild"
-		case "outcome_task", "other_task", "foreign_task":
+		case "other_task", "foreign_task":
 			parent = ""
 		}
 		if parent != "" {
@@ -90,7 +90,7 @@ func workspaceScopeFixture(t *testing.T, backend string) (ports.TransactionManag
 		if name == "terminal_task" {
 			must(work.Cancel(d.Conclusion{ID: portID(801), PrincipalID: "author", Actor: actor, Reason: "Only this Task was cancelled", ConcludedAt: now}, now))
 		}
-		must(u.WorkItems().Insert(ctx, work))
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 		refs[name] = work.Ref()
 	}
 	_, err = u.Coordination().AdvanceOutcome(ctx, scope)
@@ -100,7 +100,7 @@ func workspaceScopeFixture(t *testing.T, backend string) (ports.TransactionManag
 }
 
 func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -133,7 +133,7 @@ func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWitho
 					t.Fatal("missing actual open descendant", name)
 				}
 			}
-			for _, name := range []string{"root", "terminal_child", "empty", "terminal_task", "outcome_task", "other_task", "foreign_task"} {
+			for _, name := range []string{"root", "terminal_child", "empty", "terminal_task", "other_task", "foreign_task"} {
 				if included[refs[name]] {
 					t.Fatal("impact crossed placement/scope or included a terminal record", name)
 				}
@@ -149,7 +149,7 @@ func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWitho
 			if err != nil {
 				t.Fatal(err)
 			}
-			if entire.OpenObjectives != 4 || entire.OpenWorkItems != 5 || len(entire.Items) != 9 {
+			if entire.OpenObjectives != 4 || entire.OpenWorkItems != 4 || len(entire.Items) != 8 {
 				t.Fatal("Outcome scope omitted direct work or crossed namespace", entire)
 			}
 			empty, err := repo.WorkspaceConclusionImpact(ctx, scope, refs["empty"], 20)
@@ -170,7 +170,7 @@ func TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWitho
 }
 
 func TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -209,7 +209,7 @@ func TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWritin
 				t.Fatal("Task direct preview invented descendants", task.BlockerPreview)
 			}
 			outcome := view("outcome", d.BlockerPropagationSubtree)
-			if outcome.BlockerPreview.AffectedOutcomes != 1 || outcome.BlockerPreview.AffectedObjectives != 4 || outcome.BlockerPreview.AffectedTasks != 5 || len(outcome.BlockerPreview.AffectedItems) != 10 {
+			if outcome.BlockerPreview.AffectedOutcomes != 1 || outcome.BlockerPreview.AffectedObjectives != 4 || outcome.BlockerPreview.AffectedTasks != 4 || len(outcome.BlockerPreview.AffectedItems) != 9 {
 				t.Fatal("Outcome subtree omitted its direct target or open work", outcome.BlockerPreview)
 			}
 			for _, choice := range []struct {
@@ -239,7 +239,7 @@ func TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWritin
 					t.Fatal(err)
 				}
 				work.ObjectiveID = &rootID
-				if err = u.WorkItems().Insert(ctx, work); err != nil {
+				if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
 					t.Fatal(err)
 				}
 			}

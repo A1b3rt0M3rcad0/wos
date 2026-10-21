@@ -21,7 +21,7 @@ import (
 )
 
 func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store interface {
@@ -85,7 +85,7 @@ func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T)
 				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(e)
 				w.ContractsEnabled = true
-				must(uow.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 				works = append(works, w)
 			}
 			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()
@@ -118,7 +118,7 @@ func TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor(t *testing.T)
 			work, e := d.NewWorkItem(future, scope, "new task after original empty intention", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 			must(e)
 			work.ContractsEnabled = true
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			must(u.Commit())
 			noCache, e := a.NewService(signedNoCacheManager{base: store}, clock, ids)
 			must(e)

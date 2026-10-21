@@ -42,7 +42,7 @@ func sqliteCommandContext(commandID, key string) domain.CommandContext {
 }
 
 func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
@@ -317,7 +317,7 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 }
 
 func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
-	requirePostgres(t)
+ requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
 	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
