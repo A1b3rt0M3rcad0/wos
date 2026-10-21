@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "c9eb1497c2aafd9c45d11ae5b85c84d69d4dd355",
+  "execution_head_sha": "d72e216",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -324,15 +324,23 @@
     {
       "id": "E15",
       "title": "Introduzir permissões granulares e limites coerentes",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E14"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "d72e216",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E15.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/ports ./packages/wos-core/domain ./packages/wos-core/application ./packages/wos-core/storage/memory ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres ./packages/wos-api/commands ./packages/wos-api/web ./packages/wos-api/authentication/local ./packages/wos-api/internal/server ./packages/wos-api/mcp -count=1 -timeout=180s — pass",
+        "go run ./tools/openapigen — pass; generated schemas consistent",
+        "node --check actions.js app.js contracts-view.js human-forms.js; command-exposure.json parse — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full repository Go suite — not run at E15.",
+        "Live PostgreSQL integration — WOS_TEST_POSTGRES_DSN was unset; adapter package tests passed but skipped integration tests are unqualified."
+      ]
     },
     {
       "id": "E16",
