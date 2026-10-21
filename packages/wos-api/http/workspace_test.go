@@ -138,6 +138,9 @@ func ptrWorkspaceRef(ref domain.EntityRef) *domain.EntityRef { return &ref }
 
 func TestWorkspaceOversizedBatchRetainsEveryCreatedIDOnReplayAndReceiptLookup(t *testing.T) {
 	handler := newTestHandler(t)
+	// Exercise receipt completeness under the runtime's 15-second budget; the
+	// small-fixture deadline is not a throughput assertion, especially with -race.
+	handler.requestTimeout = 15 * time.Second
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	client, err := sdk.New(server.URL, "", server.Client())
