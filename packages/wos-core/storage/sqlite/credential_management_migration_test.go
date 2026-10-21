@@ -12,8 +12,8 @@ func TestCredentialManagementMigrationCreatesAtomicMetadataSchema(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if version != 41 {
-		t.Fatalf("schema version = %d, want 41", version)
+	if version != 42 {
+		t.Fatalf("schema version = %d, want 42", version)
 	}
 
 	rows, err := store.db.QueryContext(context.Background(), `PRAGMA table_info(credential_metadata)`)

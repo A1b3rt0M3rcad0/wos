@@ -498,7 +498,8 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
 FROM work_items
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
@@ -531,6 +532,8 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		contractID, executionSpec                     sql.NullString
 		pendingReview, latestReview, correctionReview sql.NullString
 		claimID, leasePrincipal, leaseActor           sql.NullString
+		holderCredentialID, sessionCredentialID       sql.NullString
+		credentialBindingVersion                      int64
 		notBefore, acquiredAt, expiresAt              sql.NullInt64
 		createdAt, updatedAt                          int64
 	)
@@ -539,6 +542,7 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
 		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec, &pendingReview, &latestReview, &correctionReview,
+		&credentialBindingVersion, &holderCredentialID, &sessionCredentialID,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
@@ -625,6 +629,29 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 			AcquiredAt:   decodeTime(acquiredAt.Int64),
 			ExpiresAt:    decodeTime(expiresAt.Int64),
 		}
+		if credentialBindingVersion < 0 || credentialBindingVersion > int64(^uint8(0)) {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted lease credential binding version is invalid")
+		}
+		value.CurrentLease.CredentialBindingVersion = uint8(credentialBindingVersion)
+		if holderCredentialID.Valid {
+			parsed, err := domain.ParseID(holderCredentialID.String)
+			if err != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted lease holder credential id is invalid", err)
+			}
+			value.CurrentLease.HolderCredentialID = parsed
+		}
+		if sessionCredentialID.Valid {
+			parsed, err := domain.ParseID(sessionCredentialID.String)
+			if err != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted lease session credential id is invalid", err)
+			}
+			value.CurrentLease.SessionCredentialID = &parsed
+		}
+		if err := value.CurrentLease.Validate(); err != nil {
+			return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted work lease is invalid", err)
+		}
+	} else if credentialBindingVersion != 0 || holderCredentialID.Valid || sessionCredentialID.Valid {
+		return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted lease credential binding has no lease")
 	}
 	return value, nil
 }
@@ -636,7 +663,8 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
 FROM work_items
 WHERE namespace_id = ? AND outcome_id = ?
 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
@@ -713,8 +741,9 @@ INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
-    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id
-) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+    lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
+) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ID.String(),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
@@ -735,6 +764,7 @@ INSERT INTO work_items (
 		lease.acquiredAt,
 		lease.expiresAt,
 		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
+		lease.credentialBindingVersion, lease.holderCredentialID, lease.sessionCredentialID,
 	)
 	if err != nil {
 		return mapSQLError("insert work item", err)
@@ -770,7 +800,8 @@ UPDATE work_items
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     objective_id = ?, lifecycle = ?, not_before = ?, result_summary = ?, last_fencing_token = ?,
     lease_claim_id = ?, lease_principal_id = ?, lease_actor_json = ?,
-    lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?, pending_review_case_id = ?, latest_review_case_id = ?, correction_review_case_id = ?
+    lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?, pending_review_case_id = ?, latest_review_case_id = ?, correction_review_case_id = ?,
+    lease_credential_binding_version = ?, lease_holder_credential_id = ?, lease_session_credential_id = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(item.Version),
 		encodeTime(item.UpdatedAt),
@@ -788,6 +819,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		lease.acquiredAt,
 		lease.expiresAt,
 		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
+		lease.credentialBindingVersion, lease.holderCredentialID, lease.sessionCredentialID,
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
 		item.ID.String(),
@@ -972,16 +1004,19 @@ func boolInt(value bool) int {
 }
 
 type encodedLease struct {
-	claimID     any
-	principalID any
-	actorJSON   any
-	acquiredAt  any
-	expiresAt   any
+	claimID                  any
+	principalID              any
+	actorJSON                any
+	acquiredAt               any
+	expiresAt                any
+	credentialBindingVersion int64
+	holderCredentialID       any
+	sessionCredentialID      any
 }
 
 func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 	if lease == nil {
-		return encodedLease{}, nil
+		return encodedLease{credentialBindingVersion: 0}, nil
 	}
 	if err := lease.Validate(); err != nil {
 		return encodedLease{}, err
@@ -991,12 +1026,22 @@ func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 		return encodedLease{}, err
 	}
 	return encodedLease{
-		claimID:     lease.ClaimID.String(),
-		principalID: lease.PrincipalID,
-		actorJSON:   actorJSON,
-		acquiredAt:  encodeTime(lease.AcquiredAt),
-		expiresAt:   encodeTime(lease.ExpiresAt),
+		claimID:                  lease.ClaimID.String(),
+		principalID:              lease.PrincipalID,
+		actorJSON:                actorJSON,
+		acquiredAt:               encodeTime(lease.AcquiredAt),
+		expiresAt:                encodeTime(lease.ExpiresAt),
+		credentialBindingVersion: int64(lease.CredentialBindingVersion),
+		holderCredentialID:       credentialID(lease.CredentialBindingVersion, lease.HolderCredentialID),
+		sessionCredentialID:      nullableID(lease.SessionCredentialID),
 	}, nil
+}
+
+func credentialID(version uint8, id domain.ID) any {
+	if version == 0 {
+		return nil
+	}
+	return id.String()
 }
 
 func nowUTC() time.Time {

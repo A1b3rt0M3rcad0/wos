@@ -8,7 +8,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-const focalWorkColumns = `id,version,title,description,objective_id,lifecycle,priority,not_before,result_summary,COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)),lease_claim_id,lease_principal_id,lease_actor_json,lease_acquired_at,lease_expires_at,created_at,updated_at,contracts_enabled,current_contract_id,execution_spec_json,pending_review_case_id,latest_review_case_id,correction_review_case_id`
+const focalWorkColumns = `id,version,title,description,objective_id,lifecycle,priority,not_before,result_summary,COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)),lease_claim_id,lease_principal_id,lease_actor_json,lease_acquired_at,lease_expires_at,created_at,updated_at,contracts_enabled,current_contract_id,execution_spec_json,pending_review_case_id,latest_review_case_id,correction_review_case_id,lease_credential_binding_version,lease_holder_credential_id,lease_session_credential_id`
 
 func (r continuityReadRepository) CurrentWork(ctx context.Context, scope d.Scope, id d.ID) (ports.FocalCurrentWork, error) {
 	var result ports.FocalCurrentWork

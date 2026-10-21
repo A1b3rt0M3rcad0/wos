@@ -2001,6 +2001,10 @@ func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
 	}
 	if v.CurrentLease != nil {
 		lease := *v.CurrentLease
+		if v.CurrentLease.SessionCredentialID != nil {
+			sessionCredentialID := *v.CurrentLease.SessionCredentialID
+			lease.SessionCredentialID = &sessionCredentialID
+		}
 		v.CurrentLease = &lease
 	}
 	return v

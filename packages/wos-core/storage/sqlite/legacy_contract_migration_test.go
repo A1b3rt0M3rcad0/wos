@@ -122,11 +122,22 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 2, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "Validated historical backup"}); err != nil {
 		t.Fatal(err)
 	}
-	tx, _ := store.Begin(ctx)
-	work, err := tx.WorkItems().Get(ctx, scope, fixture.WorkItemID)
-	tx.Rollback()
-	if err != nil || work.ID != fixture.WorkItemID || work.Version != fixture.WorkVersion || work.Lifecycle != d.WorkItemLifecycleDone || work.CurrentConclusion == nil || work.CurrentConclusion.ID != fixture.ConclusionID || !work.ContractsEnabled || work.CurrentContractID != nil {
-		t.Fatal("historical completion was rewritten", err, work)
+	var workID, lifecycle string
+	var version int64
+	var contractsEnabled int
+	var currentContractID, conclusionID sql.NullString
+	if err := store.db.QueryRowContext(ctx, `
+SELECT w.id,w.version,w.lifecycle,w.contracts_enabled,w.current_contract_id,c.public_id
+FROM work_items w
+LEFT JOIN aggregate_current_conclusions p ON p.namespace_id=w.namespace_id AND p.outcome_id=w.outcome_id AND p.owner_id=w.id
+LEFT JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id
+WHERE w.namespace_id=? AND w.outcome_id=? AND w.id=?`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), fixture.WorkItemID.String(),
+	).Scan(&workID, &version, &lifecycle, &contractsEnabled, &currentContractID, &conclusionID); err != nil {
+		t.Fatal("read historical completion", err)
+	}
+	if workID != fixture.WorkItemID.String() || d.Version(version) != fixture.WorkVersion || d.WorkItemLifecycle(lifecycle) != d.WorkItemLifecycleDone || !conclusionID.Valid || conclusionID.String != fixture.ConclusionID.String() || contractsEnabled != 1 || currentContractID.Valid {
+		t.Fatal("historical completion was rewritten", workID, version, lifecycle, contractsEnabled, currentContractID, conclusionID)
 	}
 	cc.IdempotencyKey = "legacy-fixture-claim_work_item"
 	after, err := service.ClaimWorkItem(ctx, cc, claim)
