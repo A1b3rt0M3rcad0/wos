@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": null,
+  "execution_head_sha": "623ba2eb6aa7faaed908586887659fdab9c745ca",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -16,21 +16,29 @@
     {
       "id": "E01",
       "title": "Congelar baseline e reconciliar o plano existente",
-      "state": "in_progress",
+      "state": "verified",
       "depends_on": [],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "623ba2eb6aa7faaed908586887659fdab9c745ca",
       "evidence_path": "docs/implementation/operational-consolidation/baseline.md",
       "tests_run": [
-        "GOVET ./... (pass)",
-        "GO_TEST_ALL ./... (pass with E01 fixture corrections)",
-        "WEB_UNIT (79 pass)",
-        "PLAYWRIGHT_KANBAN_LOGIN (47 pass)",
-        "PLAYWRIGHT_LOGIN_CAPTURE (12 pass)"
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go test -p 1 -count=1 ./... — exit 0; 1m28s",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go vet ./... — exit 0",
+        "npm run test:unit — 79 passed, 0 failed; 0.759s",
+        "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium npm exec playwright -- test login-viewport.spec.mjs kanban-workspace.spec.mjs kanban-simplification.spec.mjs contextual-kanban.spec.mjs — 47 passed; 2.1m",
+        "WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium WOS_CAPTURE_LOGIN_VIEWPORT=... npm exec playwright -- test login-viewport.spec.mjs — 12 passed; 19.1s; source-bound captures recorded"
       ],
       "tests_not_run": [
-        "live PostgreSQL: WOS_TEST_POSTGRES_DSN unset",
-        "hosted CI: not queried"
+        "Real PostgreSQL acceptance — WOS_TEST_POSTGRES_DSN was unset; skipped tests are unqualified.",
+        "Hosted CI for the new execution commit — not queried or run."
+      ],
+      "previous_plan_steps": [
+        1,
+        2,
+        3,
+        4,
+        25,
+        26
       ]
     },
     {

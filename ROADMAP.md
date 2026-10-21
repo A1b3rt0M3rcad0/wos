@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01 baseline is verified and E02 is next
+**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01 is verified at `623ba2e` and E02 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
